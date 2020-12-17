@@ -1,0 +1,42 @@
+grub-core/lib/minilzo/libgrubmods_a-minilzo.o: \
+ grub-core/lib/minilzo/minilzo.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ config.h config-util.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ grub-core/lib/minilzo/minilzo.h grub-core/lib/minilzo/lzoconf.h \
+ grub-core/lib/minilzo/lzodefs.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+config.h:
+
+config-util.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+grub-core/lib/minilzo/minilzo.h:
+
+grub-core/lib/minilzo/lzoconf.h:
+
+grub-core/lib/minilzo/lzodefs.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h:

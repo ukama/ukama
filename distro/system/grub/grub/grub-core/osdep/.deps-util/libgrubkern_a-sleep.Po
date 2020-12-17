@@ -1,0 +1,33 @@
+grub-core/osdep/libgrubkern_a-sleep.o: grub-core/osdep/sleep.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ grub-core/osdep/unix/sleep.c grub-core/lib/gnulib/time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ include/grub/time.h include/grub/types.h config.h config-util.h \
+ include/grub/symbol.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+grub-core/osdep/unix/sleep.c:
+
+grub-core/lib/gnulib/time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+include/grub/time.h:
+
+include/grub/types.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/symbol.h:

@@ -1,0 +1,29 @@
+boot/i386/pc/lzma_decompress_image-startup_raw.o: \
+ boot/i386/pc/startup_raw.S ../config.h ../include/grub/symbol.h \
+ ../include/grub/offsets.h ../include/grub/machine/boot.h \
+ ../include/grub/machine/memory.h ../include/grub/i386/memory.h \
+ ../include/grub/i386/memory_raw.h ../include/grub/machine/kernel.h \
+ boot/i386/pc/../../../kern/i386/realmode.S rs_decoder.h \
+ boot/i386/pc/lzma_decode.S
+
+../config.h:
+
+../include/grub/symbol.h:
+
+../include/grub/offsets.h:
+
+../include/grub/machine/boot.h:
+
+../include/grub/machine/memory.h:
+
+../include/grub/i386/memory.h:
+
+../include/grub/i386/memory_raw.h:
+
+../include/grub/machine/kernel.h:
+
+boot/i386/pc/../../../kern/i386/realmode.S:
+
+rs_decoder.h:
+
+boot/i386/pc/lzma_decode.S:

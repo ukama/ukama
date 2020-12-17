@@ -1,0 +1,51 @@
+malloca.o: malloca.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h malloca.h alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ stdint.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h \
+ limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h \
+ xalloc-oversized.h verify.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+malloca.h:
+
+alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+stdint.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h:
+
+limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h:
+
+xalloc-oversized.h:
+
+verify.h:

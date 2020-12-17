@@ -1,0 +1,58 @@
+libgrubmods_a-libgrub_a_init.o: libgrub_a_init.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/emu/misc.h config.h config-util.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ include/grub/compiler.h include/grub/symbol.h include/grub/types.h \
+ include/grub/misc.h include/grub/err.h include/grub/i18n.h \
+ include/grub/util/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/emu/misc.h:
+
+config.h:
+
+config-util.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+include/grub/compiler.h:
+
+include/grub/symbol.h:
+
+include/grub/types.h:
+
+include/grub/misc.h:
+
+include/grub/err.h:
+
+include/grub/i18n.h:
+
+include/grub/util/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:

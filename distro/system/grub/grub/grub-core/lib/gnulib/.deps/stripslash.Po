@@ -1,0 +1,23 @@
+stripslash.o: stripslash.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h dirname.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdbool.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ dosname.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+dirname.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdbool.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+dosname.h:

@@ -1,0 +1,117 @@
+grub-core/disk/libgrubmods_a-lvm.o: grub-core/disk/lvm.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/dl.h include/grub/symbol.h config.h config-util.h \
+ include/grub/err.h include/grub/compiler.h include/grub/types.h \
+ include/grub/elf.h include/grub/list.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h include/grub/disk.h include/grub/device.h \
+ include/grub/mm.h include/grub/lvm.h include/grub/diskfilter.h \
+ include/grub/partition.h include/grub/emu/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ include/grub/util/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h \
+ include/grub/emu/hostdisk.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h \
+ include/grub/emu/hostfile.h include/grub/osdep/hostfile.h \
+ include/grub/osdep/hostfile_unix.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/dirent.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/dirent.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/dl.h:
+
+include/grub/symbol.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/list.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+include/grub/disk.h:
+
+include/grub/device.h:
+
+include/grub/mm.h:
+
+include/grub/lvm.h:
+
+include/grub/diskfilter.h:
+
+include/grub/partition.h:
+
+include/grub/emu/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+include/grub/util/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:
+
+include/grub/emu/hostdisk.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h:
+
+include/grub/emu/hostfile.h:
+
+include/grub/osdep/hostfile.h:
+
+include/grub/osdep/hostfile_unix.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/dirent.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/dirent.h:

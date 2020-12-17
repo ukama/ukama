@@ -1,0 +1,48 @@
+grub-core/disk/libgrubmods_a-raid5_recover.o: \
+ grub-core/disk/raid5_recover.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/dl.h include/grub/symbol.h config.h config-util.h \
+ include/grub/err.h include/grub/compiler.h include/grub/types.h \
+ include/grub/elf.h include/grub/list.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h include/grub/disk.h include/grub/device.h \
+ include/grub/mm.h include/grub/diskfilter.h include/grub/crypto.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/dl.h:
+
+include/grub/symbol.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/list.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+include/grub/disk.h:
+
+include/grub/device.h:
+
+include/grub/mm.h:
+
+include/grub/diskfilter.h:
+
+include/grub/crypto.h:

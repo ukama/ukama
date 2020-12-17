@@ -1,0 +1,92 @@
+fs/zfs/zfs_module-zfs.o: fs/zfs/zfs.c ../include/grub/err.h \
+ ../include/grub/symbol.h ../config.h ../include/grub/compiler.h \
+ ../include/grub/file.h ../include/grub/types.h \
+ ../include/grub/cpu/types.h ../include/grub/device.h \
+ ../include/grub/fs.h ../include/grub/list.h ../include/grub/disk.h \
+ ../include/grub/mm.h ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/i18n.h ../include/grub/partition.h ../include/grub/dl.h \
+ ../include/grub/elf.h ../include/grub/zfs/zfs.h ../include/grub/crypto.h \
+ ../include/grub/zfs/zio.h ../include/grub/zfs/spa.h \
+ ../include/grub/zfs/dnode.h ../include/grub/zfs/uberblock_impl.h \
+ ../include/grub/zfs/vdev_impl.h ../include/grub/zfs/zio_checksum.h \
+ ../include/grub/zfs/zap_impl.h ../include/grub/zfs/zap_leaf.h \
+ ../include/grub/zfs/zfs_znode.h ../include/grub/zfs/zfs_acl.h \
+ ../include/grub/zfs/dmu.h ../include/grub/zfs/dmu_objset.h \
+ ../include/grub/zfs/zil.h ../include/grub/zfs/sa_impl.h \
+ ../include/grub/zfs/dsl_dir.h ../include/grub/zfs/dsl_dataset.h \
+ ../include/grub/deflate.h
+
+../include/grub/err.h:
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/compiler.h:
+
+../include/grub/file.h:
+
+../include/grub/types.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/device.h:
+
+../include/grub/fs.h:
+
+../include/grub/list.h:
+
+../include/grub/disk.h:
+
+../include/grub/mm.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/i18n.h:
+
+../include/grub/partition.h:
+
+../include/grub/dl.h:
+
+../include/grub/elf.h:
+
+../include/grub/zfs/zfs.h:
+
+../include/grub/crypto.h:
+
+../include/grub/zfs/zio.h:
+
+../include/grub/zfs/spa.h:
+
+../include/grub/zfs/dnode.h:
+
+../include/grub/zfs/uberblock_impl.h:
+
+../include/grub/zfs/vdev_impl.h:
+
+../include/grub/zfs/zio_checksum.h:
+
+../include/grub/zfs/zap_impl.h:
+
+../include/grub/zfs/zap_leaf.h:
+
+../include/grub/zfs/zfs_znode.h:
+
+../include/grub/zfs/zfs_acl.h:
+
+../include/grub/zfs/dmu.h:
+
+../include/grub/zfs/dmu_objset.h:
+
+../include/grub/zfs/zil.h:
+
+../include/grub/zfs/sa_impl.h:
+
+../include/grub/zfs/dsl_dir.h:
+
+../include/grub/zfs/dsl_dataset.h:
+
+../include/grub/deflate.h:

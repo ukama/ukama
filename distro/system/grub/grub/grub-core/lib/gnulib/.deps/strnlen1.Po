@@ -1,0 +1,32 @@
+strnlen1.o: strnlen1.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h strnlen1.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+strnlen1.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:

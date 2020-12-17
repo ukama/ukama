@@ -1,0 +1,118 @@
+openat-proc.o: openat-proc.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h openat-priv.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/errno.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/errno.h \
+ limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h \
+ stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h \
+ sys/stat.h time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h \
+ fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h \
+ unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h \
+ getopt-cdefs.h getopt-pfx-core.h getopt-core.h stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ intprops.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+openat-priv.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/errno.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/errno.h:
+
+limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h:
+
+stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h:
+
+sys/stat.h:
+
+time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h:
+
+fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h:
+
+unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:
+
+getopt-cdefs.h:
+
+getopt-pfx-core.h:
+
+getopt-core.h:
+
+stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+intprops.h:

@@ -1,0 +1,44 @@
+nl_langinfo.o: nl_langinfo.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h langinfo.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/langinfo.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/nl_types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ locale.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/locale.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+langinfo.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/langinfo.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/nl_types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+locale.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/locale.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:

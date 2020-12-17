@@ -1,0 +1,80 @@
+grub-core/partmap/libgrubmods_a-bsdlabel.o: grub-core/partmap/bsdlabel.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/partition.h include/grub/dl.h include/grub/symbol.h \
+ config.h config-util.h include/grub/err.h include/grub/compiler.h \
+ include/grub/types.h include/grub/elf.h include/grub/list.h \
+ include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h include/grub/bsdlabel.h include/grub/disk.h \
+ include/grub/device.h include/grub/mm.h include/grub/msdos_partition.h \
+ include/grub/emu/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ include/grub/util/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/partition.h:
+
+include/grub/dl.h:
+
+include/grub/symbol.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/list.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+include/grub/bsdlabel.h:
+
+include/grub/disk.h:
+
+include/grub/device.h:
+
+include/grub/mm.h:
+
+include/grub/msdos_partition.h:
+
+include/grub/emu/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+include/grub/util/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:

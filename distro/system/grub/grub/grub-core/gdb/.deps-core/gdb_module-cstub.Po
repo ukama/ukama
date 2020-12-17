@@ -1,0 +1,52 @@
+gdb/gdb_module-cstub.o: gdb/cstub.c ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/types.h ../config.h ../include/grub/cpu/types.h \
+ ../include/grub/symbol.h ../include/grub/err.h \
+ ../include/grub/compiler.h ../include/grub/i18n.h \
+ ../include/grub/cpu/gdb.h ../include/grub/gdb.h ../include/grub/serial.h \
+ ../include/grub/cpu/io.h ../include/grub/usb.h ../include/grub/usbdesc.h \
+ ../include/grub/usbtrans.h ../include/grub/list.h ../include/grub/term.h \
+ ../include/grub/unicode.h ../include/grub/mm.h \
+ ../include/grub/backtrace.h
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/types.h:
+
+../config.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/symbol.h:
+
+../include/grub/err.h:
+
+../include/grub/compiler.h:
+
+../include/grub/i18n.h:
+
+../include/grub/cpu/gdb.h:
+
+../include/grub/gdb.h:
+
+../include/grub/serial.h:
+
+../include/grub/cpu/io.h:
+
+../include/grub/usb.h:
+
+../include/grub/usbdesc.h:
+
+../include/grub/usbtrans.h:
+
+../include/grub/list.h:
+
+../include/grub/term.h:
+
+../include/grub/unicode.h:
+
+../include/grub/mm.h:
+
+../include/grub/backtrace.h:

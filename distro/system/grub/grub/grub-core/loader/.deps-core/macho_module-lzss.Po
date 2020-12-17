@@ -1,0 +1,10 @@
+loader/macho_module-lzss.o: loader/lzss.c ../include/grub/types.h \
+ ../config.h ../include/grub/cpu/types.h ../include/grub/macho.h
+
+../include/grub/types.h:
+
+../config.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/macho.h:

@@ -1,0 +1,94 @@
+grub-core/lib/libgcrypt-grub/cipher/libgrubgcry_a-sha1.o: \
+ grub-core/lib/libgcrypt-grub/cipher/sha1.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/dl.h include/grub/symbol.h config.h config-util.h \
+ include/grub/err.h include/grub/compiler.h include/grub/types.h \
+ include/grub/elf.h include/grub/list.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h grub-core/lib/libgcrypt-grub/cipher/g10lib.h \
+ grub-core/lib/libgcrypt_wrap/cipher_wrap.h include/grub/mm.h \
+ include/grub/crypto.h grub-core/lib/posix_wrap/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ grub-core/lib/posix_wrap/string.h include/grub/gcrypt/g10lib.h \
+ grub-core/lib/posix_wrap/stdio.h include/grub/file.h \
+ include/grub/device.h include/grub/fs.h include/grub/partition.h \
+ include/grub/disk.h grub-core/lib/libgcrypt-grub/src/visibility.h \
+ include/grub/gcrypt/gcrypt.h include/grub/gcrypt/gpg-error.h \
+ grub-core/lib/libgcrypt-grub/src/gcrypt-module.h \
+ grub-core/lib/libgcrypt-grub/src/types.h \
+ grub-core/lib/libgcrypt-grub/cipher/bithelp.h \
+ grub-core/lib/libgcrypt-grub/cipher/cipher.h \
+ grub-core/lib/libgcrypt-grub/cipher/hash-common.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/dl.h:
+
+include/grub/symbol.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/list.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+grub-core/lib/libgcrypt-grub/cipher/g10lib.h:
+
+grub-core/lib/libgcrypt_wrap/cipher_wrap.h:
+
+include/grub/mm.h:
+
+include/grub/crypto.h:
+
+grub-core/lib/posix_wrap/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+grub-core/lib/posix_wrap/string.h:
+
+include/grub/gcrypt/g10lib.h:
+
+grub-core/lib/posix_wrap/stdio.h:
+
+include/grub/file.h:
+
+include/grub/device.h:
+
+include/grub/fs.h:
+
+include/grub/partition.h:
+
+include/grub/disk.h:
+
+grub-core/lib/libgcrypt-grub/src/visibility.h:
+
+include/grub/gcrypt/gcrypt.h:
+
+include/grub/gcrypt/gpg-error.h:
+
+grub-core/lib/libgcrypt-grub/src/gcrypt-module.h:
+
+grub-core/lib/libgcrypt-grub/src/types.h:
+
+grub-core/lib/libgcrypt-grub/cipher/bithelp.h:
+
+grub-core/lib/libgcrypt-grub/cipher/cipher.h:
+
+grub-core/lib/libgcrypt-grub/cipher/hash-common.h:

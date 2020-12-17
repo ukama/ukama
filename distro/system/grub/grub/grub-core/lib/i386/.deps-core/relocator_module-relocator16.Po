@@ -1,0 +1,13 @@
+lib/i386/relocator_module-relocator16.o: lib/i386/relocator16.S \
+ ../include/grub/i386/relocator_private.h lib/i386/relocator_common.S \
+ ../include/grub/symbol.h ../config.h ../include/grub/i386/memory.h
+
+../include/grub/i386/relocator_private.h:
+
+lib/i386/relocator_common.S:
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/i386/memory.h:

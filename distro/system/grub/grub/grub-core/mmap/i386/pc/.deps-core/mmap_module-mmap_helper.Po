@@ -1,0 +1,6 @@
+mmap/i386/pc/mmap_module-mmap_helper.o: mmap/i386/pc/mmap_helper.S \
+ ../include/grub/symbol.h ../config.h
+
+../include/grub/symbol.h:
+
+../config.h:

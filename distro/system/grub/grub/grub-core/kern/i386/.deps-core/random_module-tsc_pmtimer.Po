@@ -1,0 +1,43 @@
+kern/i386/random_module-tsc_pmtimer.o: kern/i386/tsc_pmtimer.c \
+ ../include/grub/types.h ../config.h ../include/grub/cpu/types.h \
+ ../include/grub/time.h ../include/grub/symbol.h \
+ ../include/grub/cpu/time.h ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/err.h ../include/grub/compiler.h ../include/grub/i18n.h \
+ ../include/grub/i386/tsc.h ../include/grub/i386/cpuid.h \
+ ../include/grub/i386/pmtimer.h ../include/grub/i386/io.h \
+ ../include/grub/acpi.h ../include/grub/cpu/io.h
+
+../include/grub/types.h:
+
+../config.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/time.h:
+
+../include/grub/symbol.h:
+
+../include/grub/cpu/time.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/err.h:
+
+../include/grub/compiler.h:
+
+../include/grub/i18n.h:
+
+../include/grub/i386/tsc.h:
+
+../include/grub/i386/cpuid.h:
+
+../include/grub/i386/pmtimer.h:
+
+../include/grub/i386/io.h:
+
+../include/grub/acpi.h:
+
+../include/grub/cpu/io.h:

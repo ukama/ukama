@@ -1,0 +1,57 @@
+grub-core/lib/zstd/libgrubmods_a-zstd_decompress.o: \
+ grub-core/lib/zstd/zstd_decompress.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ grub-core/lib/zstd/compiler.h grub-core/lib/zstd/cpu.h \
+ grub-core/lib/zstd/mem.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h \
+ grub-core/lib/zstd/fse.h grub-core/lib/zstd/bitstream.h \
+ grub-core/lib/zstd/debug.h grub-core/lib/zstd/error_private.h \
+ grub-core/lib/zstd/zstd_errors.h grub-core/lib/zstd/huf.h \
+ grub-core/lib/zstd/zstd_internal.h grub-core/lib/zstd/zstd.h \
+ grub-core/lib/zstd/xxhash.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+grub-core/lib/zstd/compiler.h:
+
+grub-core/lib/zstd/cpu.h:
+
+grub-core/lib/zstd/mem.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h:
+
+grub-core/lib/zstd/fse.h:
+
+grub-core/lib/zstd/bitstream.h:
+
+grub-core/lib/zstd/debug.h:
+
+grub-core/lib/zstd/error_private.h:
+
+grub-core/lib/zstd/zstd_errors.h:
+
+grub-core/lib/zstd/huf.h:
+
+grub-core/lib/zstd/zstd_internal.h:
+
+grub-core/lib/zstd/zstd.h:
+
+grub-core/lib/zstd/xxhash.h:

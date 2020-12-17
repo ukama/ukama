@@ -1,0 +1,10 @@
+kern/i386/pc/kernel_exec-startup.o: kern/i386/pc/startup.S ../config.h \
+ ../include/grub/symbol.h ../include/multiboot.h kern/i386/pc/../int.S
+
+../config.h:
+
+../include/grub/symbol.h:
+
+../include/multiboot.h:
+
+kern/i386/pc/../int.S:

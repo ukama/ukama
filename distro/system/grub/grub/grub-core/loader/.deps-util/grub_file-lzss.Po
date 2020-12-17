@@ -1,0 +1,13 @@
+grub-core/loader/grub_file-lzss.o: grub-core/loader/lzss.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/types.h config.h config-util.h include/grub/macho.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/types.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/macho.h:

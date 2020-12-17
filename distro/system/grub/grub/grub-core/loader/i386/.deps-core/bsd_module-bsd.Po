@@ -1,0 +1,133 @@
+loader/i386/bsd_module-bsd.o: loader/i386/bsd.c ../include/grub/loader.h \
+ ../include/grub/file.h ../include/grub/types.h ../config.h \
+ ../include/grub/cpu/types.h ../include/grub/err.h \
+ ../include/grub/symbol.h ../include/grub/compiler.h \
+ ../include/grub/device.h ../include/grub/fs.h ../include/grub/list.h \
+ ../include/grub/disk.h ../include/grub/mm.h ../include/grub/i386/bsd.h \
+ ../include/grub/relocator.h ../include/grub/memory.h \
+ ../include/grub/cpu/memory.h ../include/grub/i386/freebsd_reboot.h \
+ ../include/grub/i386/netbsd_reboot.h \
+ ../include/grub/i386/openbsd_reboot.h \
+ ../include/grub/i386/freebsd_linker.h \
+ ../include/grub/i386/netbsd_bootinfo.h \
+ ../include/grub/i386/openbsd_bootarg.h ../include/grub/i386/cpuid.h \
+ ../include/grub/i386/memory.h ../include/grub/dl.h ../include/grub/elf.h \
+ ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/i18n.h ../include/grub/elfload.h ../include/grub/env.h \
+ ../include/grub/menu.h ../include/grub/aout.h ../include/grub/command.h \
+ ../include/grub/extcmd.h ../include/grub/lib/arg.h \
+ ../include/grub/script_sh.h ../include/grub/parser.h \
+ ../include/grub/reader.h ../include/grub/ns8250.h \
+ ../include/grub/cpu/io.h ../include/grub/bsdlabel.h \
+ ../include/grub/crypto.h ../include/grub/verify.h \
+ ../include/grub/machine/int.h ../include/grub/i386/pc/int_types.h \
+ ../include/grub/video.h ../include/grub/machine/biosnum.h \
+ ../include/grub/i386/pc/vbe.h ../include/grub/partition.h \
+ ../include/grub/i386/relocator.h loader/i386/bsd_pagetable.c
+
+../include/grub/loader.h:
+
+../include/grub/file.h:
+
+../include/grub/types.h:
+
+../config.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/err.h:
+
+../include/grub/symbol.h:
+
+../include/grub/compiler.h:
+
+../include/grub/device.h:
+
+../include/grub/fs.h:
+
+../include/grub/list.h:
+
+../include/grub/disk.h:
+
+../include/grub/mm.h:
+
+../include/grub/i386/bsd.h:
+
+../include/grub/relocator.h:
+
+../include/grub/memory.h:
+
+../include/grub/cpu/memory.h:
+
+../include/grub/i386/freebsd_reboot.h:
+
+../include/grub/i386/netbsd_reboot.h:
+
+../include/grub/i386/openbsd_reboot.h:
+
+../include/grub/i386/freebsd_linker.h:
+
+../include/grub/i386/netbsd_bootinfo.h:
+
+../include/grub/i386/openbsd_bootarg.h:
+
+../include/grub/i386/cpuid.h:
+
+../include/grub/i386/memory.h:
+
+../include/grub/dl.h:
+
+../include/grub/elf.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/i18n.h:
+
+../include/grub/elfload.h:
+
+../include/grub/env.h:
+
+../include/grub/menu.h:
+
+../include/grub/aout.h:
+
+../include/grub/command.h:
+
+../include/grub/extcmd.h:
+
+../include/grub/lib/arg.h:
+
+../include/grub/script_sh.h:
+
+../include/grub/parser.h:
+
+../include/grub/reader.h:
+
+../include/grub/ns8250.h:
+
+../include/grub/cpu/io.h:
+
+../include/grub/bsdlabel.h:
+
+../include/grub/crypto.h:
+
+../include/grub/verify.h:
+
+../include/grub/machine/int.h:
+
+../include/grub/i386/pc/int_types.h:
+
+../include/grub/video.h:
+
+../include/grub/machine/biosnum.h:
+
+../include/grub/i386/pc/vbe.h:
+
+../include/grub/partition.h:
+
+../include/grub/i386/relocator.h:
+
+loader/i386/bsd_pagetable.c:

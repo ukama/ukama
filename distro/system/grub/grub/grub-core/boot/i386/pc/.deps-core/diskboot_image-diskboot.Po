@@ -1,0 +1,11 @@
+boot/i386/pc/diskboot_image-diskboot.o: boot/i386/pc/diskboot.S \
+ ../include/grub/symbol.h ../config.h ../include/grub/machine/boot.h \
+ ../include/grub/offsets.h
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/machine/boot.h:
+
+../include/grub/offsets.h:

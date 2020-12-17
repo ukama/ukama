@@ -1,0 +1,16 @@
+boot/i386/pc/lnxboot_image-lnxboot.o: boot/i386/pc/lnxboot.S ../config.h \
+ ../include/grub/symbol.h ../include/grub/machine/boot.h \
+ ../include/grub/offsets.h ../include/grub/machine/kernel.h \
+ ../include/multiboot.h
+
+../config.h:
+
+../include/grub/symbol.h:
+
+../include/grub/machine/boot.h:
+
+../include/grub/offsets.h:
+
+../include/grub/machine/kernel.h:
+
+../include/multiboot.h:

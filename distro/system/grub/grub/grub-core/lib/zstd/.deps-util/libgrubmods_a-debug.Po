@@ -1,0 +1,7 @@
+grub-core/lib/zstd/libgrubmods_a-debug.o: grub-core/lib/zstd/debug.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ grub-core/lib/zstd/debug.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+grub-core/lib/zstd/debug.h:

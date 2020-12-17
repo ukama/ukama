@@ -1,0 +1,8 @@
+lib/i386/relocator_module-relocator_asm.o: lib/i386/relocator_asm.S \
+ ../include/grub/symbol.h ../config.h ../include/grub/i386/memory.h
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/i386/memory.h:

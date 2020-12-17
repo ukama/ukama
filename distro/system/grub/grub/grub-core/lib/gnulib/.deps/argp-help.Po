@@ -1,0 +1,124 @@
+argp-help.o: argp-help.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/errno.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/errno.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdbool.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/ctype.h \
+ limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h \
+ gettext.h argp.h stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h \
+ getopt.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/getopt.h \
+ getopt-cdefs.h getopt-pfx-core.h getopt-core.h getopt-pfx-ext.h \
+ getopt-ext.h argp-fmtstream.h unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h \
+ argp-namefrob.h dirname.h dosname.h mbswidth.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/errno.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/errno.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdbool.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/ctype.h:
+
+limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h:
+
+gettext.h:
+
+argp.h:
+
+stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h:
+
+getopt.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/getopt.h:
+
+getopt-cdefs.h:
+
+getopt-pfx-core.h:
+
+getopt-core.h:
+
+getopt-pfx-ext.h:
+
+getopt-ext.h:
+
+argp-fmtstream.h:
+
+unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:
+
+argp-namefrob.h:
+
+dirname.h:
+
+dosname.h:
+
+mbswidth.h:

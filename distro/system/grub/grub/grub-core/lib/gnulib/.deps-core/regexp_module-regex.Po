@@ -1,0 +1,104 @@
+lib/gnulib/regexp_module-regex.o: lib/gnulib/regex.c \
+ ../grub-core/lib/gnulib/libc-config.h ../config.h \
+ ../grub-core/lib/posix_wrap/errno.h ../include/grub/err.h \
+ ../include/grub/symbol.h ../include/grub/compiler.h \
+ ../grub-core/lib/gnulib/cdefs.h ../grub-core/lib/posix_wrap/limits.h \
+ ../include/grub/types.h ../include/grub/cpu/types.h \
+ ../grub-core/lib/gnulib/regex.h ../grub-core/lib/posix_wrap/sys/types.h \
+ ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/i18n.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stddef.h \
+ lib/gnulib/regex_internal.h ../grub-core/lib/posix_wrap/assert.h \
+ ../grub-core/lib/posix_wrap/ctype.h ../grub-core/lib/posix_wrap/stdio.h \
+ ../include/grub/file.h ../include/grub/device.h ../include/grub/fs.h \
+ ../include/grub/list.h ../include/grub/disk.h ../include/grub/mm.h \
+ ../grub-core/lib/posix_wrap/stdlib.h \
+ ../grub-core/lib/posix_wrap/string.h \
+ ../grub-core/lib/posix_wrap/langinfo.h \
+ ../grub-core/lib/posix_wrap/localcharset.h \
+ ../grub-core/lib/posix_wrap/locale.h ../grub-core/lib/posix_wrap/wchar.h \
+ ../include/grub/charset.h ../grub-core/lib/posix_wrap/wctype.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdbool.h \
+ ../grub-core/lib/posix_wrap/stdint.h ../grub-core/lib/gnulib/intprops.h \
+ lib/gnulib/regex_internal.c lib/gnulib/regcomp.c lib/gnulib/regexec.c
+
+../grub-core/lib/gnulib/libc-config.h:
+
+../config.h:
+
+../grub-core/lib/posix_wrap/errno.h:
+
+../include/grub/err.h:
+
+../include/grub/symbol.h:
+
+../include/grub/compiler.h:
+
+../grub-core/lib/gnulib/cdefs.h:
+
+../grub-core/lib/posix_wrap/limits.h:
+
+../include/grub/types.h:
+
+../include/grub/cpu/types.h:
+
+../grub-core/lib/gnulib/regex.h:
+
+../grub-core/lib/posix_wrap/sys/types.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/i18n.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stddef.h:
+
+lib/gnulib/regex_internal.h:
+
+../grub-core/lib/posix_wrap/assert.h:
+
+../grub-core/lib/posix_wrap/ctype.h:
+
+../grub-core/lib/posix_wrap/stdio.h:
+
+../include/grub/file.h:
+
+../include/grub/device.h:
+
+../include/grub/fs.h:
+
+../include/grub/list.h:
+
+../include/grub/disk.h:
+
+../include/grub/mm.h:
+
+../grub-core/lib/posix_wrap/stdlib.h:
+
+../grub-core/lib/posix_wrap/string.h:
+
+../grub-core/lib/posix_wrap/langinfo.h:
+
+../grub-core/lib/posix_wrap/localcharset.h:
+
+../grub-core/lib/posix_wrap/locale.h:
+
+../grub-core/lib/posix_wrap/wchar.h:
+
+../include/grub/charset.h:
+
+../grub-core/lib/posix_wrap/wctype.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdbool.h:
+
+../grub-core/lib/posix_wrap/stdint.h:
+
+../grub-core/lib/gnulib/intprops.h:
+
+lib/gnulib/regex_internal.c:
+
+lib/gnulib/regcomp.c:
+
+lib/gnulib/regexec.c:

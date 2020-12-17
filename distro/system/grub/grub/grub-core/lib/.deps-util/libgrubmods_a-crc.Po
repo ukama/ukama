@@ -1,0 +1,13 @@
+grub-core/lib/libgrubmods_a-crc.o: grub-core/lib/crc.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/types.h config.h config-util.h include/grub/lib/crc.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/types.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/lib/crc.h:

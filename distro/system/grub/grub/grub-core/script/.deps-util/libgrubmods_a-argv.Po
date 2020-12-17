@@ -1,0 +1,43 @@
+grub-core/script/libgrubmods_a-argv.o: grub-core/script/argv.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/mm.h include/grub/types.h config.h config-util.h \
+ include/grub/symbol.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/err.h include/grub/compiler.h include/grub/i18n.h \
+ include/grub/script_sh.h include/grub/parser.h include/grub/reader.h \
+ include/grub/command.h include/grub/list.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/mm.h:
+
+include/grub/types.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/symbol.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/i18n.h:
+
+include/grub/script_sh.h:
+
+include/grub/parser.h:
+
+include/grub/reader.h:
+
+include/grub/command.h:
+
+include/grub/list.h:

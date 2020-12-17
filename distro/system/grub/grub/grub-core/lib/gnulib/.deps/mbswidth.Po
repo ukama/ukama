@@ -1,0 +1,90 @@
+mbswidth.o: mbswidth.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ ../../../config.h ../../../config-util.h mbswidth.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ alloca.h string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/ctype.h \
+ wchar.h stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h \
+ time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/wchar.h \
+ wctype.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/wctype.h \
+ limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+../../../config.h:
+
+../../../config-util.h:
+
+mbswidth.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+alloca.h:
+
+string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/ctype.h:
+
+wchar.h:
+
+stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h:
+
+time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/wchar.h:
+
+wctype.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/wctype.h:
+
+limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/limits.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/limits.h:

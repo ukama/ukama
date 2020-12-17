@@ -1,0 +1,204 @@
+util/grub_mkrescue-grub-mkimage32.o: util/grub-mkimage32.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ util/grub-mkimagexx.c config.h config-util.h include/grub/types.h \
+ include/grub/elf.h include/grub/aout.h include/grub/file.h \
+ include/grub/err.h include/grub/symbol.h include/grub/compiler.h \
+ include/grub/device.h include/grub/fs.h include/grub/list.h \
+ include/grub/partition.h include/grub/dl.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h include/grub/disk.h include/grub/mm.h \
+ include/grub/kernel.h include/grub/emu/misc.h \
+ grub-core/lib/gnulib/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ grub-core/lib/gnulib/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h \
+ include/grub/util/misc.h grub-core/lib/gnulib/stdlib.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h \
+ grub-core/lib/gnulib/alloca.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h \
+ grub-core/lib/gnulib/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h \
+ grub-core/lib/gnulib/getopt-cdefs.h \
+ grub-core/lib/gnulib/getopt-pfx-core.h \
+ grub-core/lib/gnulib/getopt-core.h include/grub/util/resolve.h \
+ include/grub/offsets.h include/grub/crypto.h grub-core/lib/gnulib/time.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h \
+ include/multiboot.h grub-core/lib/gnulib/string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ grub-core/lib/gnulib/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h \
+ include/grub/efi/pe32.h include/grub/efi/memory.h \
+ include/grub/uboot/image.h include/grub/arm/reloc.h \
+ include/grub/arm64/reloc.h include/grub/ia64/reloc.h \
+ include/grub/osdep/hostfile.h include/grub/osdep/hostfile_unix.h \
+ grub-core/lib/gnulib/sys/stat.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h \
+ grub-core/lib/gnulib/fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h \
+ grub-core/lib/gnulib/dirent.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/dirent.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/dirent.h \
+ include/grub/util/install.h include/grub/emu/hostfile.h \
+ include/grub/util/mkimage.h include/xen/elfnote.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+util/grub-mkimagexx.c:
+
+config.h:
+
+config-util.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/aout.h:
+
+include/grub/file.h:
+
+include/grub/err.h:
+
+include/grub/symbol.h:
+
+include/grub/compiler.h:
+
+include/grub/device.h:
+
+include/grub/fs.h:
+
+include/grub/list.h:
+
+include/grub/partition.h:
+
+include/grub/dl.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+include/grub/disk.h:
+
+include/grub/mm.h:
+
+include/grub/kernel.h:
+
+include/grub/emu/misc.h:
+
+grub-core/lib/gnulib/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdio.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+grub-core/lib/gnulib/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/types.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/endian.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/select.h:
+
+include/grub/util/misc.h:
+
+grub-core/lib/gnulib/stdlib.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdlib.h:
+
+grub-core/lib/gnulib/alloca.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/setjmp.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/setjmp.h:
+
+grub-core/lib/gnulib/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/unistd.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/posix.h:
+
+grub-core/lib/gnulib/getopt-cdefs.h:
+
+grub-core/lib/gnulib/getopt-pfx-core.h:
+
+grub-core/lib/gnulib/getopt-core.h:
+
+include/grub/util/resolve.h:
+
+include/grub/offsets.h:
+
+include/grub/crypto.h:
+
+grub-core/lib/gnulib/time.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/time.h:
+
+include/multiboot.h:
+
+grub-core/lib/gnulib/string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+grub-core/lib/gnulib/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/assert.h:
+
+include/grub/efi/pe32.h:
+
+include/grub/efi/memory.h:
+
+include/grub/uboot/image.h:
+
+include/grub/arm/reloc.h:
+
+include/grub/arm64/reloc.h:
+
+include/grub/ia64/reloc.h:
+
+include/grub/osdep/hostfile.h:
+
+include/grub/osdep/hostfile_unix.h:
+
+grub-core/lib/gnulib/sys/stat.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/sys/stat.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stat.h:
+
+grub-core/lib/gnulib/fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/fcntl.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/fcntl.h:
+
+grub-core/lib/gnulib/dirent.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/dirent.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/dirent.h:
+
+include/grub/util/install.h:
+
+include/grub/emu/hostfile.h:
+
+include/grub/util/mkimage.h:
+
+include/xen/elfnote.h:

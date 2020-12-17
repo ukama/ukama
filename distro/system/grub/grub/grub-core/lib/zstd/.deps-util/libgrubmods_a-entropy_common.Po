@@ -1,0 +1,44 @@
+grub-core/lib/zstd/libgrubmods_a-entropy_common.o: \
+ grub-core/lib/zstd/entropy_common.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ grub-core/lib/zstd/mem.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h \
+ grub-core/lib/zstd/error_private.h grub-core/lib/zstd/zstd_errors.h \
+ grub-core/lib/zstd/fse.h grub-core/lib/zstd/bitstream.h \
+ grub-core/lib/zstd/debug.h grub-core/lib/zstd/huf.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+grub-core/lib/zstd/mem.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stddef.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/string.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/features.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/strings.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdint.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/stdint.h:
+
+grub-core/lib/zstd/error_private.h:
+
+grub-core/lib/zstd/zstd_errors.h:
+
+grub-core/lib/zstd/fse.h:
+
+grub-core/lib/zstd/bitstream.h:
+
+grub-core/lib/zstd/debug.h:
+
+grub-core/lib/zstd/huf.h:

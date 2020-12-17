@@ -1,0 +1,64 @@
+grub-core/disk/libgrubmods_a-loopback.o: grub-core/disk/loopback.c \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h \
+ include/grub/dl.h include/grub/symbol.h config.h config-util.h \
+ include/grub/err.h include/grub/compiler.h include/grub/types.h \
+ include/grub/elf.h include/grub/list.h include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h \
+ include/grub/i18n.h include/grub/file.h include/grub/device.h \
+ include/grub/fs.h include/grub/partition.h include/grub/disk.h \
+ include/grub/mm.h include/grub/extcmd.h include/grub/lib/arg.h \
+ include/grub/command.h include/grub/script_sh.h include/grub/parser.h \
+ include/grub/reader.h
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
+
+include/grub/dl.h:
+
+include/grub/symbol.h:
+
+config.h:
+
+config-util.h:
+
+include/grub/err.h:
+
+include/grub/compiler.h:
+
+include/grub/types.h:
+
+include/grub/elf.h:
+
+include/grub/list.h:
+
+include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdarg.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/bits/alltypes.h:
+
+include/grub/i18n.h:
+
+include/grub/file.h:
+
+include/grub/device.h:
+
+include/grub/fs.h:
+
+include/grub/partition.h:
+
+include/grub/disk.h:
+
+include/grub/mm.h:
+
+include/grub/extcmd.h:
+
+include/grub/lib/arg.h:
+
+include/grub/command.h:
+
+include/grub/script_sh.h:
+
+include/grub/parser.h:
+
+include/grub/reader.h:

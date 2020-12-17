@@ -1,0 +1,92 @@
+loader/i386/pc/chain_module-chainloader.o: loader/i386/pc/chainloader.c \
+ ../include/grub/loader.h ../include/grub/file.h ../include/grub/types.h \
+ ../config.h ../include/grub/cpu/types.h ../include/grub/err.h \
+ ../include/grub/symbol.h ../include/grub/compiler.h \
+ ../include/grub/device.h ../include/grub/fs.h ../include/grub/list.h \
+ ../include/grub/disk.h ../include/grub/mm.h \
+ ../include/grub/machine/chainloader.h ../include/grub/dl.h \
+ ../include/grub/elf.h ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/i18n.h ../include/grub/machine/biosdisk.h \
+ ../include/grub/machine/memory.h ../include/grub/memory.h \
+ ../include/grub/i386/memory.h ../include/grub/i386/memory_raw.h \
+ ../include/grub/offsets.h ../include/grub/partition.h \
+ ../include/grub/command.h ../include/grub/msdos_partition.h \
+ ../include/grub/machine/biosnum.h ../include/grub/cpu/floppy.h \
+ ../include/grub/cpu/io.h ../include/grub/video.h ../include/grub/fat.h \
+ ../include/grub/ntfs.h ../include/grub/i386/relocator.h \
+ ../include/grub/relocator.h ../include/grub/cpu/memory.h
+
+../include/grub/loader.h:
+
+../include/grub/file.h:
+
+../include/grub/types.h:
+
+../config.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/err.h:
+
+../include/grub/symbol.h:
+
+../include/grub/compiler.h:
+
+../include/grub/device.h:
+
+../include/grub/fs.h:
+
+../include/grub/list.h:
+
+../include/grub/disk.h:
+
+../include/grub/mm.h:
+
+../include/grub/machine/chainloader.h:
+
+../include/grub/dl.h:
+
+../include/grub/elf.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/i18n.h:
+
+../include/grub/machine/biosdisk.h:
+
+../include/grub/machine/memory.h:
+
+../include/grub/memory.h:
+
+../include/grub/i386/memory.h:
+
+../include/grub/i386/memory_raw.h:
+
+../include/grub/offsets.h:
+
+../include/grub/partition.h:
+
+../include/grub/command.h:
+
+../include/grub/msdos_partition.h:
+
+../include/grub/machine/biosnum.h:
+
+../include/grub/cpu/floppy.h:
+
+../include/grub/cpu/io.h:
+
+../include/grub/video.h:
+
+../include/grub/fat.h:
+
+../include/grub/ntfs.h:
+
+../include/grub/i386/relocator.h:
+
+../include/grub/relocator.h:
+
+../include/grub/cpu/memory.h:

@@ -1,0 +1,132 @@
+kernel_exec-symlist.o: symlist.c ../config.h ../include/grub/cache.h \
+ ../include/grub/symbol.h ../config.h ../include/grub/types.h \
+ ../include/grub/cpu/types.h ../include/grub/command.h \
+ ../include/grub/err.h ../include/grub/compiler.h ../include/grub/list.h \
+ ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/i18n.h ../include/grub/device.h ../include/grub/disk.h \
+ ../include/grub/device.h ../include/grub/mm.h ../include/grub/dl.h \
+ ../include/grub/elf.h ../include/grub/env.h ../include/grub/menu.h \
+ ../include/grub/env_private.h ../include/grub/env.h \
+ ../include/grub/err.h ../include/grub/file.h ../include/grub/fs.h \
+ ../include/grub/disk.h ../include/grub/fs.h ../include/grub/i18n.h \
+ ../include/grub/kernel.h ../include/grub/list.h ../include/grub/misc.h \
+ ../include/grub/compiler-rt.h ../include/grub/mm.h \
+ ../include/grub/parser.h ../include/grub/reader.h \
+ ../include/grub/partition.h ../include/grub/dl.h ../include/grub/term.h \
+ ../include/grub/unicode.h ../include/grub/time.h \
+ ../include/grub/cpu/time.h ../include/grub/mm_private.h \
+ ../include/grub/net.h ../include/grub/file.h \
+ ../include/grub/net/netbuff.h ../include/grub/memory.h \
+ ../include/grub/machine/kernel.h ../include/grub/offsets.h \
+ ../include/grub/machine/pxe.h ../include/grub/machine/int.h \
+ ../include/grub/i386/pc/int_types.h ../include/grub/i386/tsc.h \
+ ../include/grub/i386/cpuid.h
+
+../config.h:
+
+../include/grub/cache.h:
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/types.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/command.h:
+
+../include/grub/err.h:
+
+../include/grub/compiler.h:
+
+../include/grub/list.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/i18n.h:
+
+../include/grub/device.h:
+
+../include/grub/disk.h:
+
+../include/grub/device.h:
+
+../include/grub/mm.h:
+
+../include/grub/dl.h:
+
+../include/grub/elf.h:
+
+../include/grub/env.h:
+
+../include/grub/menu.h:
+
+../include/grub/env_private.h:
+
+../include/grub/env.h:
+
+../include/grub/err.h:
+
+../include/grub/file.h:
+
+../include/grub/fs.h:
+
+../include/grub/disk.h:
+
+../include/grub/fs.h:
+
+../include/grub/i18n.h:
+
+../include/grub/kernel.h:
+
+../include/grub/list.h:
+
+../include/grub/misc.h:
+
+../include/grub/compiler-rt.h:
+
+../include/grub/mm.h:
+
+../include/grub/parser.h:
+
+../include/grub/reader.h:
+
+../include/grub/partition.h:
+
+../include/grub/dl.h:
+
+../include/grub/term.h:
+
+../include/grub/unicode.h:
+
+../include/grub/time.h:
+
+../include/grub/cpu/time.h:
+
+../include/grub/mm_private.h:
+
+../include/grub/net.h:
+
+../include/grub/file.h:
+
+../include/grub/net/netbuff.h:
+
+../include/grub/memory.h:
+
+../include/grub/machine/kernel.h:
+
+../include/grub/offsets.h:
+
+../include/grub/machine/pxe.h:
+
+../include/grub/machine/int.h:
+
+../include/grub/i386/pc/int_types.h:
+
+../include/grub/i386/tsc.h:
+
+../include/grub/i386/cpuid.h:

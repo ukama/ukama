@@ -1,0 +1,11 @@
+boot/i386/pc/boot_hybrid_image-boot.o: boot/i386/pc/boot.S \
+ ../include/grub/symbol.h ../config.h ../include/grub/machine/boot.h \
+ ../include/grub/offsets.h
+
+../include/grub/symbol.h:
+
+../config.h:
+
+../include/grub/machine/boot.h:
+
+../include/grub/offsets.h:

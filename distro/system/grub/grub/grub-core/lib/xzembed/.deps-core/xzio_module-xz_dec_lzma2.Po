@@ -1,0 +1,51 @@
+lib/xzembed/xzio_module-xz_dec_lzma2.o: lib/xzembed/xz_dec_lzma2.c \
+ lib/xzembed/xz_private.h lib/xzembed/xz_config.h lib/xzembed/xz.h \
+ ../config.h lib/posix_wrap/stdint.h lib/posix_wrap/sys/types.h \
+ ../include/grub/misc.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h \
+ ../include/grub/types.h ../include/grub/cpu/types.h \
+ ../include/grub/symbol.h ../include/grub/err.h \
+ ../include/grub/compiler.h ../include/grub/i18n.h \
+ /home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stddef.h \
+ lib/posix_wrap/unistd.h lib/posix_wrap/string.h lib/posix_wrap/stdlib.h \
+ ../include/grub/mm.h lib/xzembed/xz_lzma2.h
+
+lib/xzembed/xz_private.h:
+
+lib/xzembed/xz_config.h:
+
+lib/xzembed/xz.h:
+
+../config.h:
+
+lib/posix_wrap/stdint.h:
+
+lib/posix_wrap/sys/types.h:
+
+../include/grub/misc.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stdarg.h:
+
+../include/grub/types.h:
+
+../include/grub/cpu/types.h:
+
+../include/grub/symbol.h:
+
+../include/grub/err.h:
+
+../include/grub/compiler.h:
+
+../include/grub/i18n.h:
+
+/home/cnode/ukama_fw/musl-cross-make/output/lib/gcc/x86_64-linux-musl/9.2.0/include/stddef.h:
+
+lib/posix_wrap/unistd.h:
+
+lib/posix_wrap/string.h:
+
+lib/posix_wrap/stdlib.h:
+
+../include/grub/mm.h:
+
+lib/xzembed/xz_lzma2.h:
