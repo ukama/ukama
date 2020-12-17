@@ -1,0 +1,3 @@
+=============== sspm release 201907=============
+1. support basic environment
+2. support SSPM_IDLE and SPM_COMMON
