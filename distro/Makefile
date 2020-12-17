@@ -13,10 +13,6 @@ endif
 
 # XGCC PATH
 XGCCPATH := $(DISTRODIR)tools/musl-cross-make/output/bin/
-ifeq (,$(wildcard $(XGCCPATH)))
-    $(error XGCCPATH not found at default $(XGCCPATH))
-    $(info  Provide XGCCPATH to make .) 
-endif
 
 .PHONY: subdirs $(DISTROSUBDIRS) clean
 

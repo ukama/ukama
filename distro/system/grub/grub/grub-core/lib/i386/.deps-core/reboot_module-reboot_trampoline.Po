@@ -1,8 +1,0 @@
-lib/i386/reboot_module-reboot_trampoline.o: lib/i386/reboot_trampoline.S \
- ../include/grub/symbol.h ../config.h ../include/grub/i386/reboot.h
-
-../include/grub/symbol.h:
-
-../config.h:
-
-../include/grub/i386/reboot.h:

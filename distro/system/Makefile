@@ -15,6 +15,14 @@ ifndef ROOTFSPATH
 override ROOTFSPATH = $(CURPATH)_ukamafs
 endif
 
+# Check for cross compiler
+ifdef XGCCPATH
+ifeq (,$(wildcard $(XGCCPATH)))
+    $(error XGCCPATH not found at default $(XGCCPATH))
+    $(info  Provide XGCCPATH to make .)
+endif
+endif
+
 #Export variables
 export
 

@@ -1,8 +1,0 @@
-gdb/i386/gdb_module-machdep.o: gdb/i386/machdep.S \
- ../include/grub/cpu/gdb.h ../include/grub/symbol.h ../config.h
-
-../include/grub/cpu/gdb.h:
-
-../include/grub/symbol.h:
-
-../config.h:

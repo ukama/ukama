@@ -1,4 +1,0 @@
-argp-pv.o: argp-pv.c \
- /home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h
-
-/home/cnode/ukama_fw/musl-cross-make/output/x86_64-linux-musl/include/stdc-predef.h:
