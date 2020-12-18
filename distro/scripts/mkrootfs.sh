@@ -502,6 +502,6 @@ sync
 
 # Building initramfs
 echo "Info:: Creating initrd.img"
-find . | cpio --quiet -H newc -o | gzip -9 -n > ../${DISTRO_NAME}_initrd_${DISTRO_VERSION}.img
+find . | cpio --quiet -H newc -o | gzip -9 -n > ../${DISTRO_NAME}_initrd_${UNITTYPE}_${DISTRO_VERSION}.img
 sync
 echo "Info:: Initramfs image ${DISTRO_NAME}_initrd_${UNITTYPE}_${DISTRO_VERSION}.img is ready and available at ${WD}."
