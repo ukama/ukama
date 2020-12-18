@@ -18,7 +18,7 @@ ifndef XGCCPATH
 $(error XGCCPATH missing.)
 endif
 
-override CC = "$(XGCCPATH)/$(XGCC) --static"
+XCROSSCC = "$(XGCCPATH)$(XCROSS_COMPILER)"
 
 #Config for Builds
 BBCONFIG = ukama_defconfig
@@ -36,9 +36,9 @@ $(SRCDIR):
 	@echo Building busybox for $(ARCH) using $(CC)
 	mkdir -p $(ROOTFSPATH)
 	#Config
-	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CC=$(CC) $(BBCONFIG)
+	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILER=$(XCROSSCC) $(BBCONFIG)
 	#Make
-	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CC=$(CC) install CONFIG_PREFIX=$(ROOTFSPATH)
+	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILER=$(XCROSSCC) install CONFIG_PREFIX=$(ROOTFSPATH)
 
 clean:
 	@echo Cleaning $(SRCDIR).

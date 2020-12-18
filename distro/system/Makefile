@@ -14,12 +14,14 @@ SYSSUBDIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' -printf '%h'
 ifndef ROOTFSPATH
 override ROOTFSPATH = $(CURPATH)_ukamafs
 endif
-
+$(info Called for $(MAKECMDGOALS))
+ifeq ($(MAKECMDGOALS),"clean")
 # Check for cross compiler
 ifdef XGCCPATH
 ifeq (,$(wildcard $(XGCCPATH)))
     $(error XGCCPATH not found at default $(XGCCPATH))
     $(info  Provide XGCCPATH to make .)
+endif
 endif
 endif
 

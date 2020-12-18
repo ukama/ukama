@@ -45,16 +45,18 @@ KERNELHEADERS = $(CURPATH)/distro/helpers/kernelheaders/usr/include
 ifeq ($(ANODEBOARD), $(TARGETBOARD))
 override CC = arm-linux-gnueabihf-gcc
 override ARCH = $(ARCHARM)
-XGCC := arm-linux-musleabihf-gcc
-XLD := arm-linux-musleabihf-ld
+XCROSS_COMPILER := arm-linux-musleabihf-
+XGCC := $(XCROSS_COMPILER)gcc
+XLD := $(XCROSS_COMPILER)ld
 endif
 
 #GCC Compiler for Firmware cNode
 ifeq ($(CNODEBOARD), $(TARGETBOARD))
 override CC =
 override ARCH = $(ARCHX86)
-XGCC := x86_64-linux-musl-gcc
-XLD := x86_64-linux-musl-ld
+XCROSS_COMPILER := x86_64-linux-musl-
+XGCC := $(XCROSS_COMPILER)gcc
+XLD := $(XCROSS_COMPILER)ld
 endif
 
 
