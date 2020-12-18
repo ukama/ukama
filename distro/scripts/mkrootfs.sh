@@ -182,6 +182,15 @@ iface eth0 inet static
 	netmask 255.255.255.0
 EOF
 
+if [ ${UNITTYPE} = ${ANODE} ] ; then
+        MODPROBECMD=
+elif [ ${UNITTYPE} = ${CNODE} ] ; then
+        MODPROBECMD=modprobe igb
+else
+        echo "${UNITTYPE} is not added."
+        exit 1;
+fi
+
 # init
 echo "Info:: Adding init script"
 cat << EOF > init
@@ -204,7 +213,7 @@ sleep 1
 echo "Init:: UkamaOS init started."
 sleep 1
 echo "Init:: Install ethernet driver."
-modprobe igb;
+$MODPROBECMD
 sleep 5;
 echo "Try eth0 interface up."
 ifconfig eth0 up;

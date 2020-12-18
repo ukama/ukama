@@ -25,7 +25,7 @@ endif
 override CC = "$(XGCCPATH)/$(XGCC) --static"
 
 #Build flags
-BUILDFLAGS = --disable-zlib
+BUILDFLAGS = --disable-zlib --enable-static
 
 .PHONY: subdirs $(SRCDIR) clean info
 

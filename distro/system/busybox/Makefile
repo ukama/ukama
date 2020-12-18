@@ -36,9 +36,9 @@ $(SRCDIR):
 	@echo Building busybox for $(ARCH) using $(CC)
 	mkdir -p $(ROOTFSPATH)
 	#Config
-	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILER=$(XCROSSCC) $(BBCONFIG)
+	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILE=$(XCROSSCC) $(BBCONFIG)
 	#Make
-	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILER=$(XCROSSCC) install CONFIG_PREFIX=$(ROOTFSPATH)
+	$(MAKE) -j$(NPROCS) -C $@ ARCH=$(ARCH) CROSS_COMPILE=$(XCROSSCC) install CONFIG_PREFIX=$(ROOTFSPATH)
 
 clean:
 	@echo Cleaning $(SRCDIR).
