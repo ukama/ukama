@@ -41,6 +41,11 @@ make initramfs TARGETBOARD=<cnode|anode|homenode>
 ```
 make clean TARGETBOARD=<cnode|anode|homenode>
 ```
+
+## Clean buid and toolchains used aswell
+```
+make distclean TARGETBOARD=<cnode|anode|homenode>
+```
 ## Stand alone build
 Each component could be build  individaully by providing target name to make.
 ### Distro/RootFS
