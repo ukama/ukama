@@ -47,5 +47,12 @@ clean:
                 $(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
         done
 
+distclean:
+	@echo DistClean $(SRCDIR).
+	rm -rf $(ROOTFSPATH)
+	for dir in $(SRCDIR); do \
+                $(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
+        done
+
 info: ; 
 	$(info [$@] Building $(SRCDIR) $(TARGETBOARD) for $(ARCH) with $(CC) )

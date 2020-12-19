@@ -40,12 +40,16 @@ clean:
 	for dir in $(SYSSUBDIRS); do \
                 $(MAKE) -C $$dir -f Makefile $@; \
         done
+
+#DistClean sub-directories
+distclean:
+	@echo "DistClean System build."
+	rm -rf $(CURPATH)_ukamafs
+	for dir in $(SYSSUBDIRS); do \
+                $(MAKE) -C $$dir -f Makefile $@; \
+        done
+
 info: 
 	@echo $(SYSSUBDIRS)
-	#@echo $(ALLDIR)
-	#@echo $(FDIR)
-	#@echo $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' -printf '%h\0' | sort -zu | awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
-	#@echo $(shell find . -type f -name 'Makefile' -printf '%h' | sort -zu | sed -z 's/$$/ /')
-	#@echo $(shell find ./*/ -type f -name 'Makefile' -printf '%h'| awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
 
 

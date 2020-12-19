@@ -42,10 +42,20 @@ $(SUBDIRS):
 
 #Clean sub-directories
 clean:
+	@echo "Cleaning tools."
 	rm -rf musl-cross-make/output
 	for dir in $(SUBDIRS); do \
                 $(MAKE) -C $$dir -f Makefile $@; \
         done
+
+#DistClean sub-directories
+distclean:
+	@echo "DistClean tools."
+	rm -rf musl-cross-make/output
+	for dir in $(SUBDIRS); do \
+                $(MAKE) -C $$dir -f Makefile $@; \
+        done
+
 info: 
 	@echo $(SUBDIRS)
 

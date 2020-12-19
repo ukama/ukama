@@ -41,6 +41,13 @@ clean:
 		$(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
         done
 
+distclean:
+	@echo DistClean $(SRCDIR).
+	rm -rf $(ROOTFSPATH)
+	for dir in $(SRCDIR); do \
+		$(MAKE) -j$(NPROCS) -C $$dir -f Makefile clean; \
+        done
+
 info:
 	@echo Building ukamaEDR for Ukama
 

@@ -3,7 +3,8 @@ DISTROMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
 DISTRODIR := $(dir $(DISTROMAKE))
 
 #Targets for the makefile
-DISTROSUBDIRS := tools system addons utils  
+CROSSCCDIR := tools
+DISTROSUBDIRS := $(CROSSCCDIR) system addons utils  
 
 #Final UKAMA ROOTFS path and name
 ifndef ROOTFSPATH
@@ -37,5 +38,15 @@ clean:
 	echo "Cleaning Distro."
 	rm -rf $(ROOTFSPATH)
 	for dir in $(DISTROSUBDIRS); do \
-		$(MAKE) -C $$dir -f Makefile $@; \
+		if [ $$dir != $(CROSSCCDIR) ]; then \
+			$(MAKE) -C $$dir -f Makefile $@; \
+		fi \
   	done
+
+distclean :
+	@echo "DistClean Distro subdirs."
+	rm -rf $(ROOTFSPATH);
+	for dir in $(DISTROSUBDIRS); do \
+                $(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
+        done
+

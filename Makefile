@@ -32,12 +32,22 @@ initramfs:
 	(chmod +x $(RAMFSSCRIPT))
 	($(RAMFSSCRIPT) -p $(ROOTFSPATH) -u $(TARGETBOARD))
 	
-#Clean sub-directories
+#Clean
 clean:
 	@echo Starting cleaning process.
 	for dir in $(BUILDSUBDIRS); do \
 		$(MAKE) -C $$dir -f Makefile $@; \
   	done
+	rm -rf $(ROOTFSPATH)
+	rm -rf *.img
+
+#Distclean
+
+distclean:
+	@echo Starting distclean process.
+	for dir in $(BUILDSUBDIRS); do \
+                $(MAKE) -C $$dir -f Makefile $@; \
+	done
 	rm -rf $(ROOTFSPATH)
 	rm -rf *.img
 
