@@ -185,7 +185,7 @@ EOF
 if [ ${UNITTYPE} = ${ANODE} ] ; then
         MODPROBECMD=
 elif [ ${UNITTYPE} = ${CNODE} ] ; then
-        MODPROBECMD=modprobe igb
+        MODPROBECMD="modprobe igb"
 else
         echo "${UNITTYPE} is not added."
         exit 1;
