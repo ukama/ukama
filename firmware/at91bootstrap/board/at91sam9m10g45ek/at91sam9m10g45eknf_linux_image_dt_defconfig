@@ -1,0 +1,7 @@
+CONFIG_AT91SAM9M10G45EK=y
+CONFIG_NANDFLASH=y
+CONFIG_LOAD_LINUX=y
+CONFIG_LINUX_KERNEL_ARG_STRING="mem=64M console=ttyS0,115200 mtdparts=atmel_nand:8M(bootstrap/kernel),60M(rootfs),-(spare) root=/dev/mtdblock1 rw rootfstype=jffs2"
+CONFIG_DEBUG=y
+CONFIG_THUMB=y
+CONFIG_SCLK=y
