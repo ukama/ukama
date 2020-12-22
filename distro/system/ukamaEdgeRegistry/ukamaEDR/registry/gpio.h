@@ -11,7 +11,7 @@
 #define EDRDB_GPIO_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 
 #define GPIO_TYPE_INPUT 	"in\n"
 #define GPIO_TYPE_OUTPUT 	"out\n"

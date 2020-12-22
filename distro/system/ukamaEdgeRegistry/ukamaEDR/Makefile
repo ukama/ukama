@@ -6,8 +6,8 @@ BUILDLIBS = $(BUILDSATICLIB)
 CJSONLIB = lib/ubsp/third-party/libcjson.a
 UBSPLIB = $(BUILDSATICLIB)
 # Directories specification for LIBS
-SRCDIRS := src utils registry
-INCDIRS := $(CURDIR) 
+SRCDIRS := src utils registry ../../common/src
+INCDIRS := $(CURDIR) ../../common/inc
 BUILDDIR := build
 
 # Directories specification for Executable
@@ -76,7 +76,7 @@ all: $(UBSPLIB) $(EXCECUTABLE)
 $(UBSPLIB):
 	@echo "Building UBSP libarary."
 	cd lib/ubsp && make CC=$(CC) LD=$(LD)
-	
+
 # Print commands
 help:
 	@echo "Some useful make targets:"
@@ -145,7 +145,7 @@ endif
 ifdef LIBS
 $(BUILDSATICLIB): $(LIBOBJECTS)
 	ar rcs $@ $^
-        
+
 $(BUILDDYNLIB): $(LIBOBJECTS)
 	$(CC) -o $@ $^ $(LDPATH) $(LDLIBS) -shared
 endif
@@ -175,7 +175,7 @@ cpplint:
 # Static code analysis tool for the C and C++
 cppcheck:
 	@$(CPPCHECK) $(CPPCHECKFLAGS) $(SOURCES) $(INCLUDES) $(INCFLAGS)
-	
+
 # Prints out project configurations
 info:
 	@echo Project: $(PROJECT)

@@ -14,7 +14,7 @@
 #include "inc/alarmhandler.h"
 #include "inc/telemhandler.h"
 #include "headers/errorcode.h"
-#include "headers/edr/msghandler.h"
+#include "msghandler.h"
 #include "headers/globalheader.h"
 #include "headers/ubsp/devices.h"
 #include "headers/utils/file.h"

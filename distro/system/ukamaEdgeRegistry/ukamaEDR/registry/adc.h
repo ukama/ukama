@@ -11,8 +11,8 @@
 #ifndef EDRDB_ADC_H_
 #define EDRDB_ADC_H_
 
+#include "ifmsg.h"
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
 
 typedef struct {
 	PData outputcurr; /*  TODO: Check if we just report other value like in dB */

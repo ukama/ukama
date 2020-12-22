@@ -11,7 +11,7 @@
 #define EDRDB_PWR_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 #include "headers/utils/list.h"
 
 typedef struct {

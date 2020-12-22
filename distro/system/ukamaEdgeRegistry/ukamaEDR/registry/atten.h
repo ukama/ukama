@@ -12,7 +12,7 @@
 #define EDRDB_ATTEN_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 
 typedef struct {
 	PData attvalue;

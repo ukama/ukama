@@ -11,7 +11,7 @@
 #define EDRDB_TMP_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 
 #define MAX_TMP_RANGE	(125000)
 #define MIN_TMP_RANGE	(-40000)
