@@ -1,0 +1,15 @@
+config	SAM9X60EK
+	bool "sam9x60ek"
+	select SAM9X60
+	select DDRC
+	select ALLOW_DATAFLASH
+	select ALLOW_NANDFLASH
+	select ALLOW_SDCARD
+	select HAS_HW_INFO
+	select HAS_EEPROM
+	select ALLOW_CPU_CLK_600MHZ
+	select ALLOW_CRYSTAL_24_000MHZ
+	select SUPPORT_BUS_SPEED_200MHZ
+	select FLEXCOM
+	help
+	    Use the SAM9X60-EK Development board
