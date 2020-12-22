@@ -5,6 +5,8 @@
 CURMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURPATH := $(dir $(CURMAKE))
 
+SYSTEMDIR := $(CURRPATH)
+
 SYSSUBDIRS = $(shell find ./*/ -maxdepth 1 -type f -name 'Makefile' -printf '%h'| awk -F './' '{ for (i=1; i<=NF; i++) printf $$i" " }')
 
 #Add a flag with supported architecures so no package which is specfic for X86 get build for arm.

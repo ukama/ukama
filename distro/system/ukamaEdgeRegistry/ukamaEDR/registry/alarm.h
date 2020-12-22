@@ -10,8 +10,8 @@
 #ifndef REGISTRY_ALARM_H_
 #define REGISTRY_ALARM_H_
 
+#include "ifmsg.h"
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
 
 #define PROPERY_IDX_NOT_APPLICABLE		(-1)
 

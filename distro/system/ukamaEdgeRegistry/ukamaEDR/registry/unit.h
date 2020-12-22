@@ -11,7 +11,7 @@
 #define REGISTRY_UNIT_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 #include "headers/ubsp/ukdblayout.h"
 
 typedef struct {

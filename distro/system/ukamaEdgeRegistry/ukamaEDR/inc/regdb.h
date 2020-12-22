@@ -11,7 +11,7 @@
 #define INC_EDRDB_H_
 
 #include "inc/registry.h"
-#include "headers/edr/ifmsg.h"
+#include "ifmsg.h"
 
 
 typedef void (*DBInit)();

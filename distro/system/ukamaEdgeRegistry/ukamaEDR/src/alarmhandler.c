@@ -11,8 +11,8 @@
 
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
-#include "headers/edr/ifmsg.h"
-#include "headers/edr/msghandler.h"
+#include "ifmsg.h"
+#include "msghandler.h"
 #include "headers/utils/file.h"
 #include "headers/utils/list.h"
 #include "headers/utils/log.h"

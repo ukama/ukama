@@ -10,9 +10,9 @@
 #ifndef INC_REGHELPER_H_
 #define INC_REGHELPER_H_
 
+#include "ifmsg.h"
 
 #include "headers/globalheader.h"
-#include "headers/edr/ifmsg.h"
 #include "headers/ubsp/devices.h"
 #include "headers/ubsp/property.h"
 #include "registry/alarm.h"
