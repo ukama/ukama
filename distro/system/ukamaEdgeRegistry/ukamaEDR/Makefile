@@ -5,9 +5,18 @@ BUILDDYNAMICLIB = lib/ubsp/build/libubsp.so
 BUILDLIBS = $(BUILDSATICLIB)
 CJSONLIB = lib/ubsp/third-party/libcjson.a
 UBSPLIB = $(BUILDSATICLIB)
-# Directories specification for LIBS
-SRCDIRS := src utils registry ../../common/src
-INCDIRS := $(CURDIR) ../../common/inc
+
+ifdef SYSTEMDIR
+    COMMONSRCDIR := $(SYSTEMDIR)common/src
+    COMMONINCDIR := $(SYSTEMDIR)common/inc
+else
+    COMMONSRCDIR := $(CURDIR)/../../common/src
+    COMMONINCDIR := $(CURDIR)/../../common/inc
+endif	
+
+$(info SYTEMDIR $(SYSTEMDIR) CURRENTDIR: $(CURDIR) COMMONDIR $(COMMONSRCDIR) COMMONINC $(COMMONINCDIR))
+SRCDIRS := src utils registry $(COMMONSRCDIR)
+INCDIRS := $(CURDIR) $(COMMONINCDIR)
 BUILDDIR := build
 
 # Directories specification for Executable
