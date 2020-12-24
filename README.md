@@ -25,7 +25,7 @@ Distro as mentioned above is leight weight busybox based on musl-libc.
 
 ## Prerequisites
 ```
-sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabi automake-1.15
+sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabi automake-1.15 bison
 ```
 ## Coreboot toolchain:
 cd firmware/coreboot 
