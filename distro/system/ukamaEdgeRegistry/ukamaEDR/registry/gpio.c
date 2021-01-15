@@ -8,6 +8,7 @@
  */
 
 #include "registry/gpio.h"
+#include "dmt.h"
 
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
@@ -46,7 +47,7 @@ void *copy_gpio_data(void *pdata) {
     DigitalData *data = pdata;
     DigitalData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(DigitalData));
+        ndata = dmt_malloc(sizeof(DigitalData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(DigitalData));
             /* Try deep  copy for properties of pdata now */
@@ -87,11 +88,11 @@ void drdb_add_gpio_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
     int pidx = 0;
     DigitalData *data = NULL;
     Property *prop = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(DigitalData));
+        data = dmt_malloc(sizeof(DigitalData));
         if (data) {
             memset(data, '\0', sizeof(DigitalData));
 
@@ -145,9 +146,9 @@ void drdb_add_gpio_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
 cleanup:
     if (ret) {
         free_gpio_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
     free_reg(&reg);
 }
 
@@ -169,9 +170,9 @@ int drdb_read_gpio_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 			 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(DigObjInfo));
+        msgdata = dmt_malloc(sizeof(DigObjInfo));
         if (!msgdata) {
             return -1;
         }

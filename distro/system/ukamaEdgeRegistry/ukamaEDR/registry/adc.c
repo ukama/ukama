@@ -9,6 +9,7 @@
 
 #include "registry/adc.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
 #include "inc/dbhandler.h"
@@ -41,7 +42,7 @@ void *copy_adc_data(void *pdata) {
     AdcData *data = pdata;
     AdcData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(AdcData));
+        ndata = dmt_malloc(sizeof(AdcData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(AdcData));
             /* Try deep  copy for properties of pdata now */
@@ -69,11 +70,11 @@ int drdb_add_ads1015_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
     int pcount = 0;
     int pidx = 0;
     AdcData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(AdcData));
+        data = dmt_malloc(sizeof(AdcData));
         if (data) {
             memset(data, '\0', sizeof(AdcData));
             /* If Property table of the sensor exist. */
@@ -119,7 +120,7 @@ int drdb_add_ads1015_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
 cleanup:
     if (ret) {
         free_adc_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
     return ret;
@@ -140,7 +141,7 @@ void drdb_add_adc_dev_to_reg(void *pdev) {
         if (!ret) {
         }
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
 }
 
 int drdb_read_adc_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
@@ -153,10 +154,10 @@ int drdb_read_adc_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
 
-        msgdata = malloc(sizeof(AdcObjInfo));
+        msgdata = dmt_malloc(sizeof(AdcObjInfo));
         if (!msgdata) {
             return -1;
         }

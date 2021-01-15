@@ -43,7 +43,7 @@ CC := gcc
 LDLIBS = -lubsp -lcjson -lpthread -lm
 LDPATH = -L$(CURDIR)/lib/ubsp/build -L$(CURDIR)/lib/ubsp/third-party
 LINKFLAG = --static
-override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H
+override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DDMT_ABORT_NULL
 override LDFLAGS +=  $(LDPATH) $(LDLIBS) 
 INCFLAGS := $(INCDIRS:%=-I%)
 DEPFLAGS := -MMD -MP
