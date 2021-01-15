@@ -64,14 +64,6 @@ char * print_map(const struct _u_map * map) {
   }
 }
 
-static struct option long_options[] = {
-    { "port", required_argument, 0, 'p' },
-    { "verbose", required_argument, 0, 'v' },
-    { "help", no_argument, 0, 'h' },
-    { "version", no_argument, 0, 'V' },
-    { 0, 0, 0, 0 }
-};
-
 /* 
  * usage -- Usage options for the microCE. 
  *
@@ -83,7 +75,7 @@ void usage() {
   printf("Usage: microCE [options] \n");
   printf("Options:\n");
   printf("--h, --help                         Help menu.\n");
-  printf("--v, --verbose <TRACE | DEBUG | INFO>  Log level for the process.\n");
+  printf("--l, --level <TRACE | DEBUG | INFO>  Log level for the process.\n");
   printf("--p, --port                         Port to listen.\n");
   printf("--V, --version                      Version.\n");
 }
@@ -119,8 +111,17 @@ int main(int argc, char **argv) {
   while (true) {
     int opt = 0;
     int opdidx = 0;
+
+    static struct option long_options[] = {
+      { "port",    required_argument, 0, 'p' },
+      { "level",   required_argument, 0, 'l' },
+      { "help",    no_argument,       0, 'h' },
+      { "version", no_argument,       0, 'V' },
+      { 0,         0,                 0,   0 }
+    };
+
     
-    opt = getopt_long(argc, argv, "h:v:p:V:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "v:p:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -135,7 +136,7 @@ int main(int argc, char **argv) {
       listen_port = atoi(optarg);
       break;
       
-    case 'v':
+    case 'l':
       debug = optarg;
       set_log_level(debug);
       break;
