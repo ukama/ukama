@@ -14,11 +14,15 @@
 #include <string.h>
 #include <ulfius.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "log.h"
 
 #define PREFIX "/container"
 #define DEF_LOG_LEVEL "TRACE"
+#define DEF_STATUS_FILE "./status" 
+
 #define VERSION "0.0.0"
 
 /*
@@ -30,6 +34,40 @@ int callback_post_create_container (const struct _u_request *request,
 				    void *user_data);
 int callback_default (const struct _u_request *request,
 		      struct _u_response *response, void *user_data);
+
+/*
+ * update_status_file -- function to open/append/close the status
+ *                       file. It is used to log PID and exit status.
+ *                       If PID is 0, we write the exit status else pid.
+ */
+
+void update_status_file(char *fileName, pid_t pid, int status) {
+
+  FILE *ptr = NULL;
+
+  /* if file already exist and its a new start, overwrite it otherwise
+   * append it.
+   */
+
+  if ( pid ){
+    ptr = fopen(fileName, "w");
+  } else {
+    ptr = fopen(fileName, "a+");
+  }
+
+  if ( ptr ){
+    if ( pid ) {
+      fprintf(ptr, "%d", pid);
+    } else {
+      fprintf(ptr, ",%d", status);
+    }
+  } else {
+    log_error("Unable to open file to update status.\n");
+  }
+
+  fclose(ptr);
+}
+
 
 /*
  * decode a u_map into a string
@@ -77,6 +115,7 @@ void usage() {
   printf("--h, --help                         Help menu.\n");
   printf("--l, --level <TRACE | DEBUG | INFO>  Log level for the process.\n");
   printf("--p, --port                         Port to listen.\n");
+  printf("--f, --file                         Status file\n");
   printf("--V, --version                      Version.\n");
 }
 
@@ -104,8 +143,9 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret, listen_port;
+  int ret=0, listen_port;
   char *debug = DEF_LOG_LEVEL;
+  char *statusFile = DEF_STATUS_FILE;
   
   /* Parsing command line args. */
   while (true) {
@@ -113,15 +153,16 @@ int main(int argc, char **argv) {
     int opdidx = 0;
 
     static struct option long_options[] = {
-      { "port",    required_argument, 0, 'p' },
-      { "level",   required_argument, 0, 'l' },
-      { "help",    no_argument,       0, 'h' },
-      { "version", no_argument,       0, 'V' },
-      { 0,         0,                 0,   0 }
+      { "port",    required_argument, 0, 'p'},
+      { "level",   required_argument, 0, 'l'},
+      { "file",    required_argument, 0, 'f'},
+      { "help",    no_argument,       0, 'h'},
+      { "version", no_argument,       0, 'V'},
+      { 0,         0,                 0,  0}
     };
 
     
-    opt = getopt_long(argc, argv, "v:p:hV:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "f:v:p:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -139,6 +180,10 @@ int main(int argc, char **argv) {
     case 'l':
       debug = optarg;
       set_log_level(debug);
+      break;
+
+    case 'f':
+      statusFile = optarg;
       break;
 
     case 'V':
@@ -174,6 +219,10 @@ int main(int argc, char **argv) {
   ret = ulfius_start_framework(&instance);
   
   if (ret == U_OK) {
+    
+    /* write PID to the status file. */
+    update_status_file(statusFile, getpid(), 0);
+    
     log_debug("Listening on port %d\n", instance.port);
     getchar(); /* For now. XXX */
   } else {
@@ -184,6 +233,8 @@ int main(int argc, char **argv) {
   
   ulfius_stop_framework(&instance);
   ulfius_clean_instance(&instance);
+
+  update_status_file(statusFile, 0, 0); /* 0=exit status */
   
   return 0;
 }
