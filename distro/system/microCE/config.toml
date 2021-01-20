@@ -1,0 +1,48 @@
+# Config file for the Micro Container Engine. 
+
+# applies to overall Micro CE config.
+[config]
+	port = "3030"
+	statusFile = "statusfile"
+	stdout = "/dev/null"
+	stderr = "/dev/null"
+	level = "debug"
+	enableShutdown = "true" 
+
+# There are three type of containers. 
+# boot, service and shutdown.
+ 
+# Each individual container config. 
+[[boot-container]]
+        name = "abc-1"
+        path = "/a/b/c/"
+        version = "1.1.1"
+        policy = "singleshot"
+        config = "/a/b/c/config.json"
+        log = "true"
+
+[[boot-container]]
+        name = "abc-2"
+        path = "/a/b/c/"
+        version = "1.1.1"
+        policy = "singleshot"
+        config = "/a/b/c/config.json"
+        log = "true"
+
+[[service-container]]
+        name = "abc-3"
+        path = "/a/b/c/"
+        version = "1.1.1"
+        policy = "singleshot"
+        config = "/a/b/c/config.json"
+        log = "true"
+
+[[shutdown-container]]
+        name = "abc-4"
+        path = "/a/b/c/"
+        version = "1.1.1"
+        policy = "singleshot"
+        config = "/a/b/c/config.json"
+        log = "true"
+
+#nothing here.

@@ -10,8 +10,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "log.h"
+#include "toml.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -19,45 +22,55 @@
 #define PREFIX "/container"
 #define DEF_LOG_LEVEL "TRACE"
 #define DEF_STATUS_FILE "status"
-#define DEF_STARTUP_FILE "startup.cfg"
+#define DEF_CONFIG_FILE "config.toml"
 
-#define VERSION "0.0.0"
+#define CONFIG "config"
+#define BOOT_CONTAINER     "boot-container"
+#define SERVICE_CONTAINER  "service-container"
+#define SHUTDOWN_CONTAINER "shutdown-container"
 
-#define MAXL 1024
-#define MAXC 128
+#define PORT        "port"
+#define STATUS_FILE "statusFile"
+#define STDOUT      "stdout"
+#define STDERR      "stderr"
+#define LEVEL       "level"
+#define ENABLE_SHUTDOWN "enableShutdown"
 
-#define TYPE_CENT_INIT    1
-#define TYPE_CENT_ONBOOT  2
-#define TYPE_CENT_SERVICE 3
+#define NAME    "name"
+#define PATH    "path"
+#define VERSION "version"
+#define POLICY  "policy"
+#define CONFIG  "config"
+#define LOG     "log"
 
-#define HEADER_TOKEN "#startup"
-#define INIT_TOKEN "[init]"
-#define ONBOOT_TOKEN "[onboot]"
-#define SERVICE_TOKEN "[service]"
+#define MAX_BUFFER 256
 
-#define STARTUP_VERSION 1
+typedef struct {
 
-#define DELIM ";"
+  char *port; /* Port on which the CE is listening for REST calls. */
+  char *statusFile;
+  char *stdout;
+  char *stderr;
+  char *level;
+  char *enableShutdown;
+} Config;
 
 typedef struct {
 
   char *name;
-  char *image;
-  char *version;
   char *path;
-  char *json;
+  char *version;
   char *policy;
+  char *config;
+  char *log;
+} Container;
 
-  int type; /* init, onboot, service. */
-} sFileEntries;
+typedef struct _containers {
 
-typedef struct _sType {
+  Container *entry;
 
-  sFileEntries *entry;
-  struct _sType *next;
-
-} sType;
-
+  struct _containers *next;
+} Containers;
 
 /*
  * callback functions declaration
@@ -70,122 +83,102 @@ int callback_default (const struct _u_request *request,
 		      struct _u_response *response, void *user_data);
 
 /*
- * type_to_str -- Convert the type into string for printing.
+ * prase_containers --
  *
  *
  */
 
-char* type_to_str(int type) {
+int parse_containers(Containers *containers, toml_array_t *array) {
 
-  switch(type) {
-  case TYPE_CENT_INIT:
-    return INIT_TOKEN;
-    break;
+  int ret = TRUE;
+  toml_table_t* tab = NULL;
+  Container *ent;
+  Containers *tmp = containers;
+  
+  for (int i=0; (tab = toml_table_at(array, i)) != 0; i++){
 
-  case TYPE_CENT_ONBOOT:
-    return ONBOOT_TOKEN;
-    break;
+    toml_datum_t name, path, version, policy, config, log;
 
-  case TYPE_CENT_SERVICE:
-    return SERVICE_TOKEN;
-    break;
+    name = toml_string_in(tab, NAME);
+    path = toml_string_in(tab, PATH);
+    version = toml_string_in(tab, VERSION);
+    policy = toml_string_in(tab, POLICY);
+    config = toml_string_in(tab, CONFIG);
+    log = toml_string_in(tab, LOG);
 
-  default:
-     return "";
+    /* Invalid? */
+
+    if (!name.ok || !path.ok || !version.ok || !policy.ok || !config.ok ||
+	!log.ok) {
+      log_error("Cannot read valid container data\n");
+      return FALSE;
+    } else {
+      if (!containers->entry) {
+	ent = (Container *)calloc(sizeof(Container), 1);
+	if ( !ent ){
+	  /* XXX */
+	}
+      } else {
+	ent = containers->entry;
+      }
+
+      ent->name = strdup(name.u.s);
+      ent->path = strdup(path.u.s);
+      ent->version = strdup(version.u.s);
+      ent->policy = strdup(policy.u.s);
+      ent->config = strdup(config.u.s);
+      ent->log = strdup(log.u.s); /* XXX - it can be boolean. */
+
+      
+      if (!containers->entry) {
+	containers->entry = ent;
+      }
+
+      if (!containers->next) {
+	containers->next = (Containers *)calloc(sizeof(Containers),1);
+	/* XXX */
+      }
+
+      containers=containers->next;
+    }
   }
 
-  return "";
-}
-
-/*
- * valid_config_file -- check if the config file had valid header, if so
- *                      return the version number else -1
- *
- *                      #startup:<version>
- */
-
-int valid_config_file(char *line) {
-
-  int ret = -1;
-
-  /* We expect [0]=#, [1-6]="config", [7]=":" and [8-]=digits */
-
-  char *token = strtok(line, ":");
-
-  if (strcmp(token, HEADER_TOKEN)==0){
-    char *ver = strtok(NULL, ":");
-    ret = atoi(ver); /*XXX - no error handling, better to use strtol() */
-  } else {
-    log_error("Invalid header for the startup file\n");
-  }
-
+  containers = tmp;
   return ret;
 }
 
+
 /*
- * is_comment -- check to see if the line is a comment.
- *
+ *  prase_config(configData, config);
  *
  */
 
-int is_comment(char *line) {
-
-  const char whitespace[] = " \f\n\r\t\v";
-  int index;
-
-  index = strspn(line, whitespace);
-
-  if (line[index] == '#') {
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-/*
- * is_token -- check to see if the line is a token.
- *
- *
- */
-
-int is_token(char *line) {
-
-  const char whitespace[] = " \f\n\r\t\v";
-
-  char *token = line + strspn(line, whitespace);
-
-  if (strncmp(token, INIT_TOKEN, strlen(INIT_TOKEN))==0) {
-    return TYPE_CENT_INIT;
-  } else if (strncmp(token, ONBOOT_TOKEN, strlen(ONBOOT_TOKEN))==0) {
-    return TYPE_CENT_ONBOOT;
-  } else if (strncmp(token, SERVICE_TOKEN, strlen(SERVICE_TOKEN))==0) {
-    return TYPE_CENT_SERVICE;
-  }
-
-  return FALSE;
-}
-
-/*
- * allocate_entry -- allocate memory to the entry structure.
- *
- *
- */
-
-int allocate_entry(sFileEntries *ptr) {
+int parse_config(Config *config, toml_table_t *configData) {
 
   int ret=FALSE;
+  toml_datum_t port, statusFile, stdout, stderr, level, enableShutdown;
+  
+  /* Read the config data from the config.toml and load into Config. */
 
-  if (ptr) {
+  port = toml_string_in(configData, PORT);
+  statusFile = toml_string_in(configData, STATUS_FILE);
+  stdout = toml_string_in(configData, STDOUT);
+  stderr = toml_string_in(configData, STDERR);
+  level = toml_string_in(configData, LEVEL);
+  enableShutdown = toml_string_in(configData, ENABLE_SHUTDOWN);
+  
+  /* If any of the above entry is invalid, scream. */
+  if (!port.ok || !statusFile.ok || !stdout.ok || !stderr.ok || !level.ok ||
+      !enableShutdown.ok ){
+    log_error("Cannot read valid config data \n");
+  } else {
 
-    ptr->name = (char *)malloc(MAXC);
-    ptr->image = (char *)malloc(MAXC);
-    ptr->version = (char *)malloc(MAXC);
-    ptr->path = (char *)malloc(MAXC);
-    ptr->policy = (char *)malloc(MAXC);
-    ptr->json = (char *)malloc(MAXC);
-    /* XXX - Fix me. */
-
-    ptr->type = -1;
+    config->port = strdup(port.u.s);
+    config->statusFile = strdup(statusFile.u.s);
+    config->stdout = strdup(stdout.u.s);
+    config->stderr = strdup(stderr.u.s);
+    config->level = strdup(level.u.s);
+    config->enableShutdown = strdup(enableShutdown.u.s);
 
     ret = TRUE;
   }
@@ -194,197 +187,118 @@ int allocate_entry(sFileEntries *ptr) {
 }
 
 /*
- * process_line -- process the configuration line and update the respective
- *                 list.
- *
+ * print_config_table -- print the config table. 
  *
  */
 
-int process_line(char *line, int tokenType,  sType *initCon,  sType *onbootCon,
-			  sType *serviceCon) {
+void print_config_table(Config *config) {
 
-  sType *ptr=NULL;
-  sFileEntries *ePtr = NULL;
-  char *token;
 
-  if (tokenType == TYPE_CENT_INIT) {
-    ptr = initCon;
-  } else if (tokenType == TYPE_CENT_ONBOOT) {
-    ptr = onbootCon;
-  } else if (tokenType == TYPE_CENT_SERVICE) {
-    ptr = serviceCon;
+  if (config->port) {
+    fprintf(stdout, "Port: %s\n", config->port);
   }
 
-  /* Forward to the last entry in the list */
-  while (ptr->next) {
-    ptr = ptr->next;
+  if (config->statusFile) {
+    fprintf(stdout, "StatusFile: %s\n", config->statusFile);
   }
 
-  ptr->entry = (sFileEntries *)malloc(sizeof(sFileEntries));
-  if (ptr->entry == NULL){
-    /* XXX Fix me. */
-    return 0;
-  }
+  if (config->stdout) {
+    fprintf(stdout, "stdout: %s\n", config->stdout);
+  }    
 
-  ePtr = ptr->entry;
+  if (config->stderr) {
+    fprintf(stdout, "stderr: %s\n", config->stderr);
+  }    
 
-  if (allocate_entry(ptr->entry) == FALSE) {
-    /* Fix me. */
-    free(ptr->entry);
-    return FALSE;
-  }
+  if (config->level) {
+    fprintf(stdout, "level: %s\n", config->level);
+  }    
 
-  /* Process each token in given order. */
-
-  /* 1. Name */
-  token = strtok(line, DELIM);
-  strcpy(ePtr->name, token);
-
-  /* 2. Image */
-  token = strtok(NULL, DELIM);
-  strcpy(ePtr->image, token);
-
-  /* 3. version */
-  token = strtok(NULL, DELIM);
-  strcpy(ePtr->version, token);
-
-  /* 4. path */
-  token = strtok(NULL, DELIM);
-  strcpy(ePtr->path, token);
-
-  /* 5. policy */
-  token = strtok(NULL, DELIM);
-  strcpy(ePtr->policy, token);
-
-  /* 6. JSON file */
-  token = strtok(NULL, DELIM);
-  strcpy(ePtr->json, token);
-
-  ePtr->type = tokenType;
-
-  return TRUE;
-}
-
-/*
- * print_startup_file -- Print the info on the stdout.
- *
- */
-void print_startupFile_info (sType *ptr) {
-
-  int count=1;
-
-  while (ptr) {
-
-    sFileEntries *sPtr = ptr->entry;
-
-    if (sPtr) {
-      fprintf(stdout, "Entry:%d Type: %s\n", count, type_to_str(sPtr->type));
-      fprintf(stdout, "Name: %s\n", sPtr->name);
-      fprintf(stdout, "Image: %s\n", sPtr->image);
-      fprintf(stdout, "Version: %s\n", sPtr->version);
-      fprintf(stdout, "Path: %s\n", sPtr->path);
-      fprintf(stdout, "Policy: %s\n", sPtr->policy);
-      fprintf(stdout, "Json: %s\n", sPtr->json);
-    } else {
-      return;
-    }
-
-    count++;
-    ptr = ptr->next;
+  if (config->enableShutdown) {
+    fprintf(stdout, "EnableShutdown: %s\n", config->enableShutdown);
   }
 
 }
-
+  
 /*
- * process_startup_file -- read and parse the startup file.
- *
+ * process_config_file -- read and parse the config file. 
+ *                       
  *
  */
-int process_startup_file(char *fileName, sType *initCon,  sType *onbootCon,
-			 sType *serviceCon) {
-
-  int ret=FALSE, ver=-1, lineCount=0;
-  int curr_token, nread;
-  int processedToken[4] = {0, 0, 0, 0};
+int process_config_file(char *fileName, Config *config, Containers *boot,
+			Containers *service, Containers *shutdown) {
 
   FILE *fp;
-  size_t len=0;
-  char *line=NULL;
 
-
+  toml_table_t *fileData, *configData;
+  toml_array_t *containersData;
+  
+  char errBuf[MAX_BUFFER];
+  
   if ((fp = fopen(fileName, "r")) == NULL) {
-    log_error("Error opening startup file: %s: %s\n", fileName,
+    log_error("Error opening config file: %s: %s\n", fileName,
 	      strerror(errno));
     return FALSE;
   }
 
-  /* Frist line needs to be "#startup:<version> */
-  if ((nread=getline(&line, &len, fp)) != -1){
-
-    ver = valid_config_file(line);
-    lineCount++;
-
-    if (ver==-1) {
-      log_error("%s:%d Invalid header\n");
-      goto done;
-    }
-
-    if (ver > STARTUP_VERSION){
-      log_error("%s:%d Startup file version mismatch. Expected:%d, Got:%d\n",
-		fileName, lineCount, STARTUP_VERSION, ver);
-      goto done;
-    }
-   } else {
-    log_error("%s:%d Error reading startup file\n", fileName, lineCount);
-    goto done;
-  }
-
-  while ((nread=getline(&line, &len, fp)) != -1){ /* read each line in file  */
-
-    int token=0;
-
-    lineCount++;
-
-    /* Skip empty lines. */
-    if (line[0] == '\n' || line[0] == 0)
-      continue;
-
-    /* Skip comment lines. */
-    if (is_comment(line))
-      continue;
-
-    /* Process token */
-    token = is_token(line);
-
-    if (token) {
-      curr_token = token;
-      processedToken[curr_token]++;
-
-      /* If this was a duplicate token, throw error and exit. */
-
-      if (processedToken[curr_token] > 1){
-	log_error("%s:%d Duplicate token of type %s found!\n");
-	return FALSE; /* XXX memory LEAK. */
-      }
-      continue;
-    }
-
-    /* Line is valid of type "curr_token" */
-    if (process_line(line, curr_token, initCon, onbootCon, serviceCon)
-	== FALSE){
-      log_error("%s:%d. Error processing the line\n", fileName, lineCount);
-      goto done;
-    }
-  }
-
-  ret = TRUE;
-
- done:
-
-  free(line);
+  /* Prase the TOML file entries. */
+  fileData = toml_parse_file(fp, errBuf, sizeof(errBuf));
+  
   fclose(fp);
+ 
+  if (!fileData) {
+    log_error("Error parsing the config file %s: %s\n", fileName, errBuf);
+    return FALSE;
+  }
 
-  return ret;
+  /* Parse the config. */
+  configData = toml_table_in(fileData, CONFIG);
+
+  if (configData == NULL) {
+    log_error("[Config] section parsing error in file: %s\n", fileName);
+    toml_free(fileData);
+    return FALSE;
+  }
+    
+  parse_config(config, configData);
+
+  /* 1. boot containers. */
+  containersData = toml_array_in(fileData, BOOT_CONTAINER);
+
+  if (containersData == NULL ){
+    log_error("[%s] section parsing error in file: %s\n", BOOT_CONTAINER,
+	      fileName);
+    toml_free(fileData);
+    return FALSE;
+  }
+  parse_containers(boot, containersData);
+
+  /* 2. service containers. */
+  /* XXX code repition - fix this. */
+  containersData = toml_array_in(fileData, SERVICE_CONTAINER);
+
+  if (containersData == NULL ){
+    log_error("[%s] section parsing error in file: %s\n", SERVICE_CONTAINER,
+	      fileName);
+    toml_free(fileData);
+    return FALSE;
+  }
+  parse_containers(service, containersData);
+
+  /* 3. shutdown containers. */
+  containersData = toml_array_in(fileData, SHUTDOWN_CONTAINER);
+
+  if (containersData == NULL ){
+    log_error("[%s] section parsing error in file: %s\n", SHUTDOWN_CONTAINER,
+	      fileName);
+    toml_free(fileData);
+    return FALSE;
+  }
+  parse_containers(shutdown, containersData);
+  
+  toml_free(fileData);
+  return TRUE;
+  
 }
 
 /*
@@ -464,7 +378,7 @@ void usage() {
   printf("Usage: microCE [options] \n");
   printf("Options:\n");
   printf("--h, --help                         Help menu.\n");
-  printf("--s, --startFile                      Startup File.\n");
+  printf("--c, --config                       Config file.\n");
   printf("--l, --level <TRACE | DEBUG | INFO>  Log level for the process.\n");
   printf("--p, --port                         Port to listen.\n");
   printf("--f, --file                         Status file\n");
@@ -498,12 +412,10 @@ int main(int argc, char **argv) {
   int ret=0, listen_port;
   char *debug = DEF_LOG_LEVEL;
   char *statusFile = DEF_STATUS_FILE;
-  char *startupFile = DEF_STARTUP_FILE;
+  char *configFile = DEF_CONFIG_FILE;
 
-  /* Three type of containers in the startup file. */
-  sType *initCon=NULL;
-  sType *onbootCon=NULL;
-  sType *serviceCon=NULL;
+  Config *config = NULL;
+  Containers *boot=NULL, *service=NULL, *shutdown=NULL;
   
   /* Parsing command line args. */
   while (true) {
@@ -514,7 +426,7 @@ int main(int argc, char **argv) {
       { "port",      required_argument, 0, 'p'},
       { "level",     required_argument, 0, 'l'},
       { "file",      required_argument, 0, 'f'},
-      { "startFile", required_argument, 0, 's'},
+      { "config",    required_argument, 0, 's'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},
       { 0,           0,                 0,  0}
@@ -544,8 +456,8 @@ int main(int argc, char **argv) {
       statusFile = optarg;
       break;
 
-    case 's':
-      startupFile = optarg;
+    case 'c':
+      configFile = optarg;
       break;
 
     case 'V':
@@ -563,27 +475,25 @@ int main(int argc, char **argv) {
   
   log_debug("Starting micro container engine ...\n");
 
-  /* Before we open the socket for REST, process the startup file and
+  /* Before we open the socket for REST, process the config file and
    * start them containers.
    */
-  initCon = (sType *)calloc(sizeof(sType), 1);
-  onbootCon = (sType *)calloc(sizeof(sType), 1);
-  serviceCon = (sType *)calloc(sizeof(sType), 1);
-
-  if (initCon == NULL || onbootCon == NULL || serviceCon == NULL) {
+  config = (Config *)calloc(sizeof(Config), 1);
+  if (!config) {
     log_error("Memory allocation failure\n");
     exit(1);
   }
 
-  if (process_startup_file(startupFile, initCon, onbootCon, serviceCon)
+  boot     = (Containers *)calloc(sizeof(Containers), 1);
+  service  = (Containers *)calloc(sizeof(Containers), 1);
+  shutdown = (Containers *)calloc(sizeof(Containers), 1);
+  /* XXX */
+  
+  if (process_config_file(configFile, config, boot, service, shutdown)
       != TRUE){
     log_error("Error processing the startup file\n");
     exit(1);
   }
-
-  print_startupFile_info(initCon);
-  print_startupFile_info(onbootCon);
-  print_startupFile_info(serviceCon);
 
   if (ulfius_init_instance(&instance, listen_port, NULL, NULL) != U_OK) {
     log_error("Error initializing ulfius instance. Exit!\n");
