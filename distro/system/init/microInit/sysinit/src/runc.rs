@@ -15,7 +15,7 @@ fn wait_for_child(mut child: std::process::Child) -> Result<Option<i32>, io::Err
         Some(status) => status.code(),
         None => {
             // child hasn't exited yet
-            error!("Having issues with container.");
+            error!("Time out..!! Having issues with container.");
             child.kill().unwrap();
             child.wait().unwrap().code()
         }
@@ -24,8 +24,8 @@ fn wait_for_child(mut child: std::process::Child) -> Result<Option<i32>, io::Err
     Ok(status_code)
 }
 
-pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
-    let runc_bin = "/usr/bin/runc";
+pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, io::Error> {
+    //TODO: Read from config
     let logdir = "/run/log/onboot";
     let varlog = "/var/log/onboot";
 
@@ -79,7 +79,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
         
         //Not taking care of stdio and err right now
         //TODO: Error and logging
-        let child = match Command::new(runc_bin)
+        let child = match Command::new(ocibin)
             .arg("create")
             .arg("--bundle")
             .arg(lpath)
@@ -99,7 +99,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
 
         trace!(
             "{} create --bundle {} --pidifle {} {}",
-            runc_bin, lpath, pidfile, ctr.name
+            ocibin, lpath, pidfile, ctr.name
         );
 
         match wait_for_child(child) {
@@ -134,7 +134,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
         };
 
         //Start container
-        let schild = match Command::new(runc_bin)
+        let schild = match Command::new(ocibin)
             .arg("start")
             .arg(&ctr.name)
             .stdout(Stdio::piped())
@@ -148,7 +148,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
             }
         };
 
-        trace!("{} start {}", runc_bin, ctr.name);
+        trace!("{} start {}", ocibin, ctr.name);
 
         match wait_for_child(schild) {
             Ok(val) => match val {
@@ -156,7 +156,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
                 None => error!("Having issues while starting conatiner {}.", ctr.name),
             },
             Err(err) => error!(
-                "Error while starting  container {} process : {}",
+                "Error while starting container {} process : {}",
                 ctr.name, err
             ),
         }
@@ -181,10 +181,29 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
 }
 
 pub fn onboot() -> i32 {
+    // Read OCI Config
+    let init = uconfig::Config::get_oci_runtime();
+    let init = match init {
+        Some(init) => init,
+        None => {
+            panic!("No OCI runtime config provided in config.");
+        }
+    };
+
+    //Read path if provided otherwise default
+    let oci_path = match &init.path {
+        Some(path) => path,
+        None => "/usr/bin/crun",
+    };
+    debug!("OCI runtime :: {}", oci_path);
+
+    //Read onboot config
     let onboot = uconfig::Config::get_onboot_config();
     trace!("Onboot Container list {:?}", onboot);
-    //println!("{:?}", uconfig::Config::get_onboot_config());
-    let _ = runc_init(onboot).unwrap();
+    
+    //Execute containers
+    let _ = runc_init(onboot, &oci_path).unwrap();
+    
     0
 }
 

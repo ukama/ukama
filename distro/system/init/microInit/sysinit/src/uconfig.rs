@@ -67,6 +67,20 @@ impl Config {
     //println!("{:#?}", config.onboot);
     &CONFIG.onshutdown
   }
+
+  pub fn get_oci_runtime()-> Option<&'static AppConfig> {
+    let init = Config::get_init_config();
+    let list = init.iter();  
+    for app in list { 
+      if app.name == "oci-runtime" {
+       return Some(&app);
+      } else {
+        continue;
+      }
+    }
+    None
+  }
+
   #[allow(dead_code)]
   pub fn get_sysservice_config() -> &'static Vec<AppConfig> {
     //let config = CONFIG.to_owned();
