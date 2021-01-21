@@ -9,9 +9,9 @@ use serde::Deserialize;
 use system_shutdown::{reboot, shutdown};
 use rlimit::{setrlimit, Resource, Rlim};
 use nix::{ libc, mount, sys, unistd, sys::stat };
-use std::{ env, fs, io, fs::File, io::Write,
-           path::Path, process::Command, io::prelude::*,
-           os::unix::fs::PermissionsExt};
+use std::{ env, fs, io, fs::File, io::Write, thread::sleep,
+           path::Path, process::Command, time::Duration,
+           io::prelude::*, os::unix::fs::PermissionsExt};
 
 
 //Cgroup info
@@ -80,7 +80,7 @@ fn cgroup_parse() -> Result<Vec<Box<String>>, Error> {
         //Deserialize the enteries read. 
         for result in reader.deserialize::<Record>() {
         let record = result?;
-        println!("{:?}", record);
+        trace!("{:?}", record);
         let data = match record.enabled {
             None => continue,
             Some(s) => s,
@@ -124,7 +124,7 @@ fn exists(path: &str) -> bool {
 // Make directory
 fn mkdir(dir: &str, mode: stat::Mode) {
     match unistd::mkdir(dir, mode) {
-        Ok(_) => trace!("created {:?}", dir),
+        Ok(_) => trace!("Created {:?}", dir),
         Err(err) => error!("Error creating directory: {}", err),
     }
 }
@@ -135,7 +135,7 @@ fn mkchar(dir: &str, perm: stat::Mode, major: u64, minor: u64) {
     let dev = sys::stat::makedev(major, minor);
     
     match sys::stat::mknod(dir, mode, perm, dev) {
-        Ok(_) => trace!("created device  {:?} file ", dir),
+        Ok(_) => trace!("Created device  {:?} file ", dir),
         Err(err) => error!("Error creating dev {:?} file: {}", dir, err),
     }
 }
@@ -143,7 +143,7 @@ fn mkchar(dir: &str, perm: stat::Mode, major: u64, minor: u64) {
 // Make symlink
 fn symlink(path: &str, newpath: &str) {
     match unistd::symlinkat(path, None, newpath) {
-        Ok(_) => trace!("created link  for {} file at {} ", path, newpath),
+        Ok(_) => trace!("Created link  for {} file at {} ", path, newpath),
         Err(err) => error!(
             "Error creating link {} file failed at {} :: {}",
             path, newpath, err
@@ -764,7 +764,9 @@ fn run_init(path: &str) {
         println!("Exec {}", file);
         Command::new(file)
             .spawn()
-            .expect("failed to execute process");   
+            .expect("failed to execute process"); 
+        
+        sleep(Duration::from_secs(5));  
     }
 }
 

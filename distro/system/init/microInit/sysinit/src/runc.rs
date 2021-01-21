@@ -10,8 +10,8 @@ use std::{ fs, io, path::Path,process::Command,
 //Wiat for child process.
 fn wait_for_child(mut child: std::process::Child) -> Result<Option<i32>, io::Error> {
     //Waited time out as sometime your conatiner may get stuck
-    let one_sec = Duration::from_secs(10);
-    let status_code = match child.wait_timeout(one_sec).unwrap() {
+    let ten_sec = Duration::from_secs(10);
+    let status_code = match child.wait_timeout(ten_sec).unwrap() {
         Some(status) => status.code(),
         None => {
             // child hasn't exited yet
@@ -124,7 +124,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
         };
 
         //convert to integer
-        let _pid: i32 = match contents.parse() {
+        let pid: i32 = match contents.parse() {
             Ok(val) => val,
             Err(err) => {
                 error!("Error reading pid file for {} : {}", ctr.name, err);
@@ -152,28 +152,29 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>) -> Result<i32, io::Error> {
 
         match wait_for_child(schild) {
             Ok(val) => match val {
-                Some(ret) => debug!("Container {} created successfully ret {}.", ctr.name, ret),
-                None => error!("Having issues while conatiner {} creation.", ctr.name),
+                Some(ret) => debug!("Container {} started successfully ret {}.", ctr.name, ret),
+                None => error!("Having issues while starting conatiner {}.", ctr.name),
             },
             Err(err) => error!(
-                "Error while check container {} creation  process : {}",
+                "Error while starting  container {} process : {}",
                 ctr.name, err
             ),
         }
 
-        //Cleaning pid file
-        match fs::remove_file(&pidfile) {
-            Ok(_) => debug!(
-                "PID file {} cleaned for onboot container {}.",
-                pidfile, ctr.name
-            ),
-            Err(err) => {
-                error!(
-                    "PID file {} couldn't be cleaned for onboot container {} : {}",
-                    pidfile, ctr.name, err
-                );
-            }
-        }
+        debug!("PID file {} is storing {} for container {}",pidfile, pid, ctr.name ); 
+        // //Cleaning pid file
+        // match fs::remove_file(&pidfile) {
+        //     Ok(_) => debug!(
+        //         "PID file {} cleaned for onboot container {}.",
+        //         pidfile, ctr.name
+        //     ),
+        //     Err(err) => {
+        //         error!(
+        //             "PID file {} couldn't be cleaned for onboot container {} : {}",
+        //             pidfile, ctr.name, err
+        //         );
+        //     }
+        // }
     }
 
     Ok(status)
