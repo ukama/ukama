@@ -23,8 +23,8 @@ ifeq ($(ARCH), $(ARCHARM))
 TARGETFLAG := armv7-unknown-linux-musleabihf
 ADDITIONALLINKERFLAG := CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gnueabihf-ld
 else
-TARGETFLAG = "x86_64-unknown-linux-musl"
-ADDITIONALLINKERFLAG=""
+TARGETFLAG := x86_64-unknown-linux-musl
+ADDITIONALLINKERFLAG :=
 endif
 
 subdirs: $(SRCDIR)
