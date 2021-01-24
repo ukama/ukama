@@ -1,0 +1,1177 @@
+
+Changes with njs 0.4.4                                           29 Sep 2020
+
+    nginx modules:
+
+    *) Bugfix: fixed location merge.
+
+    *) Bugfix: fixed r.httpVersion for HTTP/2.
+
+    Core:
+
+    *) Feature: added support for numeric separators (ES12).
+
+    *) Feature: added remaining methods for %TypedArray%.prototype.
+       The following methods were added: every(), filter(), find(),
+       findIndex(), forEach(), includes(), indexOf(), lastIndexOf(),
+       map(), reduce(), reduceRight(), reverse(), some().
+
+    *) Feature: added %TypedArray% remaining methods.
+       The following methods were added: from(), of().
+
+    *) Feature: added DataView object.
+
+    *) Feature: added Buffer object implementation.
+
+    *) Feature: added support for ArrayBuffer in
+       TextDecoder.prototype.decode().
+
+    *) Feature: added support for Buffer object in "crypto" methods.
+
+    *) Feature: added support for Buffer object in "fs" methods.
+
+    *) Change: Hash.prototype.digest() and Hmac.prototype.digest()
+       now return a Buffer instance instead of a byte string when
+       encoding is not provided.
+
+    *) Change: fs.readFile() and friends now return a Buffer instance
+       instead of a byte string when encoding is not provided.
+
+    *) Bugfix: fixed function "prototype" property handler while
+       setting.
+
+    *) Bugfix: fixed function "constructor" property handler while
+       setting.
+
+    *) Bugfix: fixed String.prototype.indexOf() for byte strings.
+
+    *) Bugfix: fixed RegExpBuiltinExec() with a global flag and
+       byte strings.
+
+    *) Bugfix: fixed RegExp.prototype[Symbol.replace] when the
+       replacement value is a function.
+
+    *) Bugfix: fixed TextDecoder.prototype.decode() with non-zero
+       TypedArray offset.
+
+Changes with njs 0.4.3                                           11 Aug 2020
+
+    Core:
+
+    *) Feature: added Query String module.
+
+    *) Feature: improved fs.mkdir() to support recursive directory creation.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: improved fs.rmdir() to support recursive directory removal.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: introduced UTF-8 decoder according to WHATWG encoding spec.
+
+    *) Feature: added TextEncoder/TextDecoder implementation.
+
+    *) Bugfix: fixed parsing return statement without semicolon.
+
+    *) Bugfix: fixed njs_number_to_int32() for big-endian platforms.
+
+    *) Bugfix: fixed unit test on big-endian platforms.
+
+    *) Bugfix: fixed regexp-literals parsing with '=' characters.
+
+    *) Bugfix: fixed pre/post increment/decrement in assignment operations.
+
+Changes with njs 0.4.2                                           07 Jul 2020
+
+    Core:
+
+    *) Feature: added RegExp.prototype[Symbol.replace].
+
+    *) Feature: introduced line level backtrace.
+
+    *) Feature: added %TypedArray%.prototype.sort().
+
+    *) Feature: extended "fs" module. Added mkdir(), readdir(), rmdir()
+       and friends.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Improvement: parser refactoring.
+
+    *) Bugfix: fixed TypedScript API description for HTTP headers.
+
+    *) Bugfix: fixed TypedScript API description for NjsByteString type.
+
+    *) Bugfix: fixed String.prototype.repeat() according to the
+       specification.
+
+    *) Bugfix: fixed parsing of flags for regexp literals.
+
+    *) Bugfix: fixed index generation for global objects in generator.
+
+    *) Bugfix: fixed String.prototype.replace() according to the
+       specification.
+
+    *) Bugfix: fixed %TypedArray%.prototype.copyWithin() with nonzero
+       byte offset.
+
+    *) Bugfix: fixed Array.prototype.splice() for sparse arrays.
+
+    *) Bugfix: fixed Array.prototype.reverse() for sparse arrays.
+
+    *) Bugfix: fixed Array.prototype.sort() for sparse arrays.
+
+Changes with njs 0.4.1                                           19 May 2020
+
+    *) Feature: added support for multi-value headers in r.headersIn.
+
+    *) Feature: introduced raw headers API.
+
+    *) Feature: added TypedScript API description.
+
+    Core:
+
+    *) Bugfix: fixed Array.prototype.slice() for sparse arrays.
+
+Changes with njs 0.4.0                                           23 Apr 2020
+
+    nginx modules:
+
+    *) Feature: added js_import directive.
+
+    *) Feature: added support for multi-value headers in r.headersOut.
+
+    *) Improvement: iteration over r.headersOut with special headers.
+
+    *) Improvement: iteration over r.headersOut with duplicates.
+
+    *) Change: r.responseBody property handler now returns "undefined"
+       instead of throwing an exception if response body is not available.
+
+    Core:
+
+    *) Feature: added script arguments support in CLI.
+
+    *) Feature: converting externals values to native js objects.
+
+    *) Bugfix: fixed NULL-pointer dereference in "__proto__" property
+       handler.
+
+    *) Bugfix: fixed handling of no-newline at the end of the script.
+
+    *) Bugfix: fixed RegExp() constructor with empty pattern and
+       non-empty flags.
+
+    *) Bugfix: fixed String.prototype.replace() when function
+       returns non-string.
+
+    *) Bugfix: fixed reading of pseudofiles in "fs".
+
+Changes with njs 0.3.9                                           03 Mar 2020
+
+    nginx modules:
+
+    *) Feature: added detached mode for r.subrequest(). Responses to
+       detached subrequests are ignored. Unlike ordinary subrequests,
+       a detached subrequest can be created inside a variable handler.
+
+    Core:
+
+    *) Feature: added promises API for "fs" module.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: extended "fs" module. Added access(), symlink(), unlink(),
+       realpath() and friends.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Improvement: introduced memory-efficient ordinary arrays.
+
+    *) Improvement: lexer refactoring.
+
+    *) Bugfix: fixed matching of native functions in backtraces.
+
+    *) Bugfix: fixed callback invocations in "fs" module.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Bugfix: fixed Object.getOwnPropertySymbols().
+
+    *) Bugfix: fixed heap-buffer-overflow in njs_json_append_string().
+
+    *) Bugfix: fixed encodeURI() and decodeURI() according to
+       the specification.
+
+    *) Bugfix: fixed Number.prototype.toPrecision().
+
+    *) Bugfix: fixed handling of space argument in JSON.stringify().
+
+    *) Bugfix: fixed JSON.stringify() with Number() and String() objects.
+
+    *) Bugfix: fixed Unicode Escaping in JSON.stringify() according
+       to specification.
+
+    *) Bugfix: fixed non-native module importing.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Bugfix: fixed njs.dump() with the Date() instance in a container.
+
+Changes with njs 0.3.8                                           21 Jan 2020
+
+    nginx modules:
+
+    *) Feature: added Promise support for r.subrequest(). If callback
+       is not provided r.subrequest() returns an ordinary Promise object
+       that resolves to subrequest response object.
+
+    *) Change: r.parent property handler now returns "undefined"
+      instead of throwing exception if parent object is not available.
+
+    Core:
+
+    *) Feature: added Promise support. Implemented according to
+       the specification without: Promise.all(), Promise.allSettled(),
+       Promise.race().
+
+    *) Feature: added initial Typed-arrays support.
+       Thanks to Tiago Natel de Moura.
+
+    *) Feature: added ArrayBuffer support.
+       Thanks to Tiago Natel de Moura.
+
+    *) Feature: added initial Symbol support.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: added externals support for JSON.stringify().
+
+    *) Feature: added Object.is().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: added Object.setPrototypeOf().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: introduced nullish coalescing operator.
+       Thanks to Valentin Bartenev.
+
+    *) Bugfix: fixed Object.getPrototypeOf() according to the
+       specification.
+
+    *) Bugfix: fixed Object.prototype.valueOf() according to the
+       specification.
+
+    *) Bugfix: fixed JSON.stringify() with unprintable values and
+       replacer function.
+
+    *) Bugfix: fixed operator "in" according to the specification.
+
+    *) Bugfix: fixed Object.defineProperties() according to the
+       specification.
+
+    *) Bugfix: fixed Object.create() according to the specification.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Bugfix: fixed Number.prototype.toString(radix) when
+       fast-math is enabled.
+
+    *) Bugfix: fixed RegExp() instance properties.
+
+    *) Bugfix: fixed import segfault.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+Changes with njs 0.3.7                                           19 Nov 2019
+
+    nginx modules:
+
+    *) Improvement: refactored iteration over external objects.
+
+    Core:
+
+    *) Feature: added Object.assign().
+
+    *) Feature: added Array.prototype.copyWithin().
+
+    *) Feature: added support for labels in console.time().
+
+    *) Change: removed console.help() from CLI.
+
+    *) Improvement: moved constructors and top-level objects to
+       global object.
+
+    *) Improvement: arguments validation for configure script.
+
+    *) Improvement: refactored JSON methods.
+
+    *) Bugfix: fixed heap-buffer-overflow in njs_array_reverse_iterator()
+       function. The following functions were affected:
+       Array.prototype.lastIndexOf(), Array.prototype.reduceRight().
+
+    *) Bugfix: fixed [[Prototype]] slot of NativeErrors.
+
+    *) Bugfix: fixed NativeError.prototype.message properties.
+
+    *) Bugfix: added conversion of "this" value to object in
+       Array.prototype functions.
+
+    *) Bugfix: fixed iterator for Array.prototype.find() and
+       Array.prototype.findIndex() functions.
+
+    *) Bugfix: fixed Array.prototype.includes() and
+       Array.prototype.join() with "undefined" argument.
+
+    *) Bugfix: fixed "constructor" property of "Hash" and "Hmac"
+       objects.
+
+    *) Bugfix: fixed "__proto__" property of getters and setters.
+
+    *) Bugfix: fixed "Date" object string formatting.
+
+    *) Bugfix: fixed handling of NaN and -0 arguments in Math.min()
+       and Math.max().
+
+    *) Bugfix: fixed Math.round() according to the specification.
+
+    *) Bugfix: reimplemented "bound" functions according to
+       the specification.
+
+Changes with njs 0.3.6                                           22 Oct 2019
+
+    nginx modules:
+
+    *) Improvement: getting special headers from r.headersIn.
+
+    Core:
+
+    *) Feature: added new Function() support.
+
+    *) Feature: added Number.prototype.toFixed().
+
+    *) Feature: added Number.prototype.toPrecision().
+
+    *) Feature: added Number.prototype.toExponential().
+
+    *) Improvement: making "prototype" property of function
+       instances writable.
+
+    *) Improvement: limiting recursion depth while compiling.
+
+    *) Improvement: moving global functions to the global object.
+
+    *) Bugfix: fixed prototype mutation for object literals.
+
+    *) Bugfix: fixed heap-buffer-overflow while parsing regexp literals.
+
+    *) Bugfix: fixed integer-overflow while parsing exponent
+       of number literals.
+
+    *) Bugfix: fixed parseFloat().
+
+    *) Bugfix: fixed Array.prototype functions according to the specification.
+       The following functions were fixed: every, includes, indexOf, filter,
+       find, findIndex, forEach, lastIndexOf, map, pop, push, reduce,
+       reduceRight, shift, some, unshift.
+
+    *) Bugfix: fixed handing of accessor descriptors in Object.freeze().
+
+    *) Bugfix: fixed String.prototype.replace() when first argument
+       is not a string.
+
+    *) Bugfix: fixed stack-use-after-scope in Array.prototype.map().
+
+    *) Bugfix: Date.prototype.toUTCString() format was aligned to ES9.
+
+    *) Bugfix: fixed buffer overflow in Number.prototype.toString(radix).
+
+    *) Bugfix: fixed Regexp.prototype.test() for regexps with backreferences.
+
+    *) Bugfix: fixed Array.prototype.map() for objects with nonexistent values.
+
+    *) Bugfix: fixed Array.prototype.pop() and shift() for sparse objects.
+
+    *) Bugfix: fixed Date.UTC() according to the specification.
+
+    *) Bugfix: fixed Date() constructor according to the specification.
+
+    *) Bugfix: fixed type of Date.prototype.
+       Thanks to Artem S. Povalyukhin.
+
+    *) Bugfix: fixed Date.prototype.setTime().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Bugfix: fixed default number of arguments expected by built-in functions.
+
+    *) Bugfix: fixed "caller" and "arguments" properties of a function instance.
+       Thanks to Artem S. Povalyukhin.
+
+Changes with njs 0.3.5                                           15 Aug 2019
+
+    Core:
+
+    *) Bugfix: fixed module importing using require(). The bug was
+       introduced in 0.3.4.
+
+    *) Bugfix: fixed [[SetPrototypeOf]].
+
+Changes with njs 0.3.4                                           13 Aug 2019
+
+    Core:
+
+    *) Feature: added Object shorthand methods and computed property
+       names. Thanks to 洪志道 (Hong Zhi Dao) and Artem S. Povalyukhin.
+
+    *) Feature: added getter/setter literal support.
+       Thanks to 洪志道 (Hong Zhi Dao) and Artem S. Povalyukhin.
+
+    *) Feature: added fs.renameSync().
+
+    *) Feature: added String.prototype.trimStart() and
+       String.prototype.trimEnd().
+
+    *) Improvement: added memory-sanitizer support.
+
+    *) Improvement: Unicode case tables updated to version 12.1.
+
+    *) Improvement: added UTF8 validation for string literals.
+
+    *) Bugfix: fixed reading files with zero size in fs.readFileSync().
+
+    *) Bugfix: extended the list of space separators in
+       String.prototype.trim().
+
+    *) Bugfix: fixed using of uninitialized value in
+       String.prototype.padStart().
+
+    *) Bugfix: fixed String.prototype.replace() for '$0' and '$&'
+       replacement string.
+
+    *) Bugfix: fixed String.prototype.replace() for byte strings with
+       regex argument.
+
+    *) Bugfix: fixed global match in String.prototype.replace()
+       with regexp argument.
+
+    *) Bugfix: fixed Array.prototype.slice() for primitive types.
+
+    *) Bugfix: fixed heap-buffer-overflow while importing module.
+
+    *) Bugfix: fixed UTF-8 character escaping.
+
+    *) Bugfix: fixed Object.values() and Object.entries() for shared
+       objects.
+
+    *) Bugfix: fixed uninitialized memory access in
+       String.prototype.match().
+
+    *) Bugfix: fixed String.prototype.match() for byte strings with
+       regex argument.
+
+    *) Bugfix: fixed Array.prototype.lastIndexOf() with undefined
+       arguments.
+
+    *) Bugfix: fixed String.prototype.substring() with empty substring.
+
+    *) Bugfix: fixed invalid memory access in
+       String.prototype.substring().
+
+    *) Bugfix: fixed String.fromCharCode() for code points > 65535
+       and NaN.
+
+    *) Bugfix: fixed String.prototype.toLowerCase() and
+       String.prototype.toUpperCase().
+
+    *) Bugfix: fixed Error() constructor with no arguments.
+
+    *) Bugfix: fixed "in" operator for values with accessor descriptors.
+
+    *) Bugfix: fixed Object.defineProperty() for non-boolean descriptor
+       props.
+
+    *) Bugfix: fixed Error.prototype.toString() with UTF8 string
+       properties.
+
+    *) Bugfix: fixed Error.prototype.toString() with non-string values
+       for "name" and "message".
+
+Changes with njs 0.3.3                                           25 Jun 2019
+
+    nginx modules:
+
+    *) Improvement: getting of special response headers in headersOut.
+
+    *) Improvement: working with unknown methods in subrequest().
+
+    *) Improvement: added support for null as a second argument
+       of r.subrequest().
+
+    *) Bugfix: fixed processing empty output chain in stream body filter.
+
+    Core:
+
+    *) Feature: added runtime support for property getter/setter.
+       Thanks to 洪志道 (Hong Zhi Dao) and Artem S. Povalyukhin.
+
+    *) Feature: added "process" global object.
+
+    *) Feature: writable most of built-in properties and methods.
+
+    *) Feature: added generic implementation of Array.prototype.fill().
+
+    *) Bugfix: fixed integer-overflow in String.prototype.concat().
+
+    *) Bugfix: fixed setting of object properties.
+
+    *) Bugfix: fixed Array.prototype.toString().
+
+    *) Bugfix: fixed Date.prototype.toJSON().
+
+    *) Bugfix: fixed overwriting "constructor" property of built-in
+       prototypes.
+
+    *) Bugfix: fixed processing of invalid surrogate pairs in strings.
+
+    *) Bugfix: fixed processing of invalid surrogate pairs in JSON
+       strings.
+
+    *) Bugfix: fixed heap-buffer-overflow in toUpperCase() and
+       toLowerCase().
+
+    *) Bugfix: fixed escaping lone closing square brackets in RegExp()
+       constructor.
+
+    *) Bugfix: fixed String.prototype.toBytes() for ASCII strings.
+
+    *) Bugfix: fixed handling zero byte characters inside RegExp
+       pattern strings.
+
+    *) Bugfix: fixed String.prototype.toBytes() for ASCII strings.
+
+    *) Bugfix: fixed truth value of JSON numbers in JSON.parse().
+
+    *) Bugfix: fixed use-of-uninitialized-value in
+       njs_string_replace_join().
+
+    *) Bugfix: fixed parseInt('-0').
+       Thanks to Artem S. Povalyukhin.
+
+Changes with njs 0.3.2                                           21 May 2019
+
+    Core:
+
+    *) Feature: added support for template literals.
+       Thanks to 洪志道 (Hong Zhi Dao) and Artem S. Povalyukhin.
+
+    *) Feature: executing command from command line arguments.
+
+    *) Feature: added support for RegExp "groups" object (ES9).
+
+    *) Feature: added block scoped function definitions support.
+
+    *) Feature: added support for building with GNU Readline library.
+
+    *) Feature: made configurable "length", "name", and most of built-in
+       methods.
+
+    *) Feature: made all constructor properties configurable.
+
+    *) Bugfix: fixed Regexp.prototype.exec() for Unicode-only regexps.
+
+    *) Bugfix: fixed njs_vm_value_dump() for empty string values.
+
+    *) Bugfix: fixed RegExp constructor for regexp value arguments.
+
+    *) Bugfix: fixed walking over prototypes chain during iteration
+       over an object.
+
+    *) Bugfix: fixed overflow in Array.prototype.concat().
+
+    *) Bugfix: fixed length calculation for UTF-8 string with escape
+       characters.
+
+    *) Bugfix: fixed parsing surrogate pair presents as UTF-16 escape
+       sequences.
+
+    *) Bugfix: fixed processing asterisk quantifier for
+       String.prototype.match().
+
+    *) Bugfix: fixed Date() constructor with one argument.
+
+    *) Bugfix: fixed arrays expansion.
+
+    *) Bugfix: fixed heap-buffer-overflow in String.prototype.replace().
+
+    *) Bugfix: fixed heap-buffer-overflow in
+       String.prototype.lastIndexOf().
+
+    *) Bugfix: fixed regexp literals parsing with escaped backslash and
+       backslash in square brackets.
+
+    *) Bugfix: fixed regexp literals with lone closing brackets.
+
+    *) Bugfix: fixed uninitialized-memory-access in
+       Object.defineProperties().
+
+    *) Bugfix: fixed processing "*" quantifier for
+       String.prototype.replace().
+
+    *) Bugfix: fixed Array.prototype.slice() for UTF8-invalid byte
+       strings.
+
+    *) Bugfix: fixed String.prototype.split() for UTF8-invalid byte
+       strings.
+
+    *) Bugfix: fixed handling of empty block statements.
+
+Changes with njs 0.3.1                                           16 Apr 2019
+
+    Core:
+
+    *) Feature: added arrow functions support.
+       Thanks to 洪志道 (Hong Zhi Dao) and Artem S. Povalyukhin.
+
+    *) Feature: added Object.getOwnPropertyNames().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: added Object.getOwnPropertyDescriptors().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Feature: making __proto__ accessor descriptor of Object instances
+       mutable.
+
+    *) Feature: added shebang support in CLI.
+
+    *) Feature: added support for module mode execution in CLI. In module
+       mode global this is unavailable.
+
+    *) Bugfix: fixed editline detection.
+
+    *) Bugfix: fixed Function.prototype.bind().
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Bugfix: fixed checking of duplication of parameters for functions.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Bugfix: fixed function declaration with the same name as a variable.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Improvement: code related to parsing of objects, variables and
+       functions is refactored.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Improvement: console.log() improved for outputting large values.
+
+    *) Improvement: console.log() improved for outputting strings in a
+       compliant way (without escaping and quotes).
+
+    *) Improvement: using ES6 version of ToInt32(), ToUint32(), ToLength().
+
+Changes with njs 0.3.0                                           26 Mar 2019
+
+    nginx modules:
+
+    *) Feature: added js_path directive.
+
+    *) Change: returning undefined value instead of empty strings
+       for absent properties in the following objects: r.args,
+       r.headersIn, r.headersOut, r.variables, s.variables.
+
+    *) Change: returning undefined value instead of throwing an
+       exception for r.requestBody when request body is unavailable.
+
+    *) Bugfix: fixed crash while iterating over r.args when a value is
+       absent in a key-value pair.
+
+    Core:
+
+    *) Feature: added initial ES6 modules support. Default import and
+       default export statements are supported.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Feature: added Object.prototype.propertyIsEnumerable().
+
+    *) Feature: reporting file name and function name in disassembler
+       output.
+
+    *) Bugfix: fixed function redeclarations in interactive shell.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Bugfix: fixed RegExp literals parsing.
+
+    *) Bugfix: fixed setting length of UTF8 string in fs.readFileSync().
+
+    *) Bugfix: fixed nxt_file_dirname() for paths with no dir component.
+
+Changes with njs 0.2.8                                           26 Feb 2019
+
+    nginx modules:
+
+    *) Change: properties of HTTP request deprecarted in 0.2.2 are
+       removed.
+
+    *) Feature: added support for delete operation in r.headersOut.
+
+    *) Feature: added support for setting nginx variables.
+
+    *) Bugfix: fixed r.subrequest() for empty body value.
+
+    *) Improvement: setting special response headers in r.headersOut.
+
+    Core:
+
+    *) Feature: added labels support.
+
+    *) Feature: added setImmediate() method.
+
+    *) Feature: added support for shorthand property names for Object
+       literals.
+
+    *) Bugfix: fixed Function.prototype.bind().
+
+    *) Bugfix: fixed parsing of string literals containing newline
+       characters.
+
+    *) Bugfix: fixed line number in reporting variable reference errors.
+
+    *) Bugfix: fixed creation of long UTF8 strings.
+
+    *) Bugfix: fixed String.prototype.split() for unicode strings.
+
+    *) Bugfix: fixed heap-buffer-overflow in String.prototype.split().
+
+    *) Bugfix: fixed Array.prototype.fill().
+       Thanks to Artem S. Povalyukhin.
+
+    *) Improvement: code related to function invocation is refactored.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Improvement: code related to variables is refactored.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Improvement: parser is refactored.
+       Thanks to 洪志道 (Hong Zhi Dao).
+
+    *) Improvement: reporting filenames in exceptions.
+
+Changes with njs 0.2.7                                           25 Dec 2018
+
+    Core:
+
+    *) Feature: rest parameters syntax (destructuring is not supported).
+       Thanks to Alexander Pyshchev.
+
+    *) Feature: added Object.entries() method.
+
+    *) Feature: added Object.values() method.
+
+    *) Improvement: code generator refactored and simplified.
+
+    *) Bugfix: fixed automatic semicolon insertion.
+
+    *) Bugfix: fixed assignment expression from compound assignment.
+
+    *) Bugfix: fixed comparison of Byte and UTF8 strings.
+
+    *) Bugfix: fixed type of iteration variable in for-in with array
+       values.
+
+    *) Bugfix: fixed building on paltforms without librt.
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.6                                           27 Nov 2018
+
+    Core:
+
+    *) Feature: making built-in prototypes mutable.
+
+    *) Feature: making global object mutable.
+
+    *) Feature: console.time() and console.timeEnd() methods.
+
+    *) Feature: allowing variables and functions to be redeclared.
+
+    *) Feature: extending Object.defineProperty() spec conformance.
+
+    *) Feature: introduced quiet mode for CLI to handle simple expressions
+       from stdin.
+
+    *) Feature: introduced compact form of backtraces to handle stack
+       overflows.
+
+    *) Improvement: improved wording for various exceptions.
+
+    *) Bugfix: fixed closure values handling.
+
+    *) Bugfix: fixed equality operator for various value types.
+
+    *) Bugfix: fixed handling of "this" keyword in various scopes.
+
+    *) Bugfix: fixed handling non-object values in Object.keys().
+
+    *) Bugfix: fixed parsing of throw statement inside if statement.
+
+    *) Bugfix: fixed parsing of newline after throw statement.
+
+    *) Bugfix: fixed parsing of statements in if statement without newline.
+
+    *) Bugfix: fixed size uint32_t overflow in njs_array_expand().
+
+    *) Bugfix: fixed typeof operator for object_value type.
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.5                                           30 Oct 2018
+
+    nginx modules:
+
+    *) Bugfix: fixed counting pending events in stream module.
+
+    *) Bugfix: fixed s.off() in stream module.
+
+    *) Bugfix: fixed processing of data chunks in js_filter in stream module.
+
+    *) Bugfix: fixed http status and contentType getter in http module.
+
+    *) Bugfix: fixed http response and parent getters in http module.
+
+    Core:
+
+    *) Feature: arguments object support.
+
+    *) Feature: non-integer fractions support.
+
+    *) Improvement: handling non-array values in Array.prototype.slice().
+
+    *) Bugfix: fixed Array.prototype.length setter.
+
+    *) Bugfix: fixed njs_array_alloc() for length > 2**31.
+
+    *) Bugfix: handling int overflow in njs_array_alloc() on 32bit
+       archs.
+
+    *) Bugfix: fixed code size mismatch error message.
+
+    *) Bugfix: fixed delete operator in a loop.
+
+    *) Bugfix: fixed Object.getOwnPropertyDescriptor() for complex
+       object (inherited from Array and string values).
+
+    *) Bugfix: fixed Object.prototype.hasOwnProperty() for non-object
+       properties.
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.4                                           18 Aug 2018
+
+    nginx modules:
+
+    *) Change: stream module handlers are refactored.
+
+       New methods and properties:
+       s.on(), s.off(), s.allow(), s.done(), s.decline(),
+       s.deny().
+
+       Removed properties of Stream object:
+       s.OK, s.ABORT, s.AGAIN, s.DECLINED, s.ERROR (replaced
+       with s.allow(), s.done([code]), s.deny()).
+
+       s.buffer (for reading replaced with data argument of
+       the corresponding callback, for writing use s.send()).
+
+       s.fromUpstream (replaced with a callback for a corresponding
+       event).
+
+       s.eof (replaced with flags.last).
+
+    Core:
+
+    *) Feature: added Function.prototype.length.
+
+    *) Feature: introduced sandboxing mode.
+
+    *) Improvement: added exception strings where appropriate.
+
+    *) Improvement: improved wording for primitive type conversion
+       exception.
+
+    *) Bugfix: throwing TypeError for attempts to change frozen
+       properties.
+
+    *) Bugfix: fixed Object.defineProperty() for existing properties.
+
+    *) Bugfix: respecting the enumerable attribute while iterating
+       by for in.
+
+    *) Bugfix: respecting writable attribute for property handlers.
+
+    *) Bugfix: fixed exception handling in arguments of a function.
+
+    *) Bugfix: fixed Object.prototype.toString for different
+       value types.
+
+    *) Bugfix: fixed Object() constructor for object types arguments.
+
+    *) Bugfix: fixed comparison of objects and strings.
+
+    *) Bugfix: fixed String.slice() for undefined arguments.
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.3                                           31 Jul 2018
+
+    nginx modules:
+
+    *) Bugfix: making a subrequest from a Reply object caused
+        a segmentation fault.
+
+    *) Bugfix: getting the parent property of the main Request
+        object caused a segmentation fault.
+
+    Core:
+
+    *) Feature: added the pretty string representation for values.
+
+    *) Feature: correctly printing floating point numbers.
+
+    *) Feature: correctly parsing floating point numbers.
+
+    *) Feature: String.bytesFrom() method (decoding hex, base64,
+        base64url into a byte string).
+
+    *) Feature: String.padStart() and String.padEnd() methods.
+
+    *) Feature: added support of binary literals.
+
+    *) Improvement: added information about illegal token in number parsing.
+
+    *) Improvement: allowed uppercased O in octal literal values.
+
+    *) Improvement: added support for multiple arguments in console.log().
+
+    *) Bugfix: fixed applying call() to methods of external values.
+
+    *) Bugfix: fixed addition operator applied to an object.
+
+    *) Bugfix: fixed exception handling in njs_vm_value_to_ext_string().
+
+    *) Bugfix: fixed Number() with boolean, null and undefined arguments.
+
+    *) Bugfix: fixed error handling of setting non-numeric Array.length.
+
+    *) Bugfix: fixed autocompletion for global objects.
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.2                                           19 Jun 2018
+
+    nginx modules:
+
+    *) Change: merged HTTP Response and Reply into Request.
+        New members of Request:
+        req.status (res.status)
+        req.parent (reply.parent)
+        req.requestBody (req.body)
+        req.responseBody (reply.body)
+        req.headersIn (req.headers)
+        req.headersOut (res.headers)
+        req.sendHeader() (res.sendHeader())
+        req.send() (res.send())
+        req.finish() (res.finish())
+        req.return() (res.return())
+
+        Deprecated members of Request:
+        req.body (use req.requestBody or req.responseBody)
+        req.headers (use req.headersIn or req.headersOut)
+        req.response
+
+        Deprecated members of Response:
+        res.contentLength (use req.headersOut['Content-Length'])
+        res.contentType (use req.headersOut['Content-Type'])
+
+        The deprecated properties will be removed in the following
+        releases.
+
+    *) Feature: HTTP internalRedirect() method.
+
+    Core:
+
+    *) Bugfix: fixed heap-buffer-overflow in crypto.createHmac().
+
+Changes with njs 0.2.1                                           31 May 2018
+
+    nginx modules:
+
+    *) Feature: HTTP request body getter.
+
+    *) Improvement: moved njs vm to the main configuration.
+
+    *) Improvement: improved logging for js_set and js_content directives.
+
+    *) Improvement: setting status code to 500 by default in
+       js_content handler.
+
+    *) Improvement: added the debug for the returned status code in
+       js_content.
+
+    *) Bugfix: fixed error logging in js_include.
+
+    Core:
+
+    *) Feature: added array length setter.
+
+    *) Improvement: public header cleanup. njscript.h is renamed to njs.h.
+
+    *) Bugfix: fixed crypto update() method after digest() is called.
+
+    *) Bugfix: fixed crypto.createHmac() for keys with size >= alg size
+       and < 64.
+
+    *) Bugfix: fixed JSON.stringify() for arrays with empty cells.
+
+    *) Bugfix: fixed exception type for unsupported types in
+       JSON.stringify().
+
+    *) Bugfix: fixed handling of undefined arguments of functions.
+
+    *) Bugfix: fixed handling of missing arg of
+       Object.getOwnPropertyDescriptor().
+
+    *) Bugfix: fixed handling of properties in
+       Object.getOwnPropertyDescriptor().
+
+    *) Bugfix: fixed the writeable flag of Array.length property.
+
+    *) Bugfix: fixed return value type of clearTimeout().
+
+    *) Bugfix: fixed njs_vm_external_bind().
+
+    *) Bugfix: miscellaneous additional bugs have been fixed.
+
+Changes with njs 0.2.0                                           3 Apr 2018
+
+    *) Feature: reporting njs version by CLI.
+
+    *) Feature: textual description for type converting exceptions.
+
+    *) Feature: setTimeout() and clearTimeout() methods.
+
+    *) Feature: Byte string to hex, base64, base64url encodings.
+
+    *) Feature: Node.js style crypto methods.
+
+    *) Feature: HTTP and stream warn() and error() methods.
+
+    *) Feature: HTTP subrequest() method.
+
+    *) Feature: HTTP return() method.
+
+    *) Bugfix: miscellaneous bugs have been fixed in the core and
+       interactive shell.
+
+Changes with njs 0.1.15                                          20 Nov 2017
+
+    *) Feature: Error, EvalError, InternalError, RangeError,
+       ReferenceError, SyntaxError, TypeError, URIError objects.
+
+    *) Feature: octal literals support.
+
+    *) Feature: File system access fs.readFile(), fs.readFileSync(),
+       fs.appendFile(),  fs.appendFileSync(), fs.writeFile(),
+       fs.writeFileSync() methods.
+
+    *) Feature: nginx modules print backtrace on exception.
+
+    *) Bugfix: miscellaneous bugs have been fixed.
+
+Changes with njs 0.1.14                                          09 Oct 2017
+
+    *) Feature: JSON object.
+
+    *) Feature: object level completions in interactive shell.
+
+    *) Feature: various configure improvements.
+
+    *) Bugfix: miscellaneous bugs have been fixed in the core and
+       interactive shell.
+
+Changes with njs 0.1.13                                          31 Aug 2017
+
+    *) Feature: console.log() and console.help() methods in interactive
+       shell.
+
+    *) Feature: interactive shell prints backtrace on exception.
+
+    *) Feature: interactive shell by default if libedit is available.
+
+    *) Bugfix: processing of large files from stdin in command line mode.
+
+    *) Bugfix: improved editline detection.
+
+Changes with njs 0.1.12                                          08 Aug 2017
+
+    *) Feature: Interactive shell.
+
+    *) Bugfix: in Object.isSealed().
+
+Changes with njs 0.1.11                                          27 Jun 2017
+
+    *) Feature: Object.keys(), Object.prototype.hasOwnProperty() methods.
+
+    *) Feature: Object.defineProperty(), Object.defineProperties(),
+       Object.getOwnPropertyDescriptor() methods.
+
+    *) Feature: Object.getPrototypeOf(), Object.prototype.isPrototypeOf()
+       methods.
+
+    *) Feature: Object.preventExtensions(), Object.isExtensible(),
+       Object.freeze(), Object.isFrozen(), Object.seal(), Object.isSealed()
+       methods.
+
+    *) Feature: scientific notation literals support.
+
+    *) Feature: hexadecimal literals support.
+
+    *) Bugfix: processing of large array indexes.
+
+    *) Bugfix: in parseInt() and Date.parse().
+
+Changes with njs 0.1.10                                          04 Apr 2017
+
+    *) Feature: nested functions and function closures.
+
+    *) Feature: Array.of(), Array.prototype.fill(), Array.prototype.find(),
+       Array.prototype.findIndex() methods.
+
+    *) Bugfix: miscellaneous bugs and segmentation faults have been fixed.
+
+Changes with njs 0.1.9                                           01 Feb 2017
+
+    *) Bugfix: global variables were not initialized when njs was used
+       in nginx.
+
+Changes with njs 0.1.8                                           24 Jan 2017
+
+    *) Change: the "strict" mode is enforced, variables must be explicitly
+       declared.
+
+    *) Feature: "for" and "for-in" loops support variable declaration.
+
+    *) Bugfix: global and function scopes have been fixed.
+
+    *) Bugfix: now "for-in" loop does not discard the last value of property
+       variable.
+
+    *) Bugfix: miscellaneous bugs and segmentation faults have been fixed.
+
+Changes with njs 0.1.7                                           27 Dec 2016
+
+    *) Change: the "js_include" directive has been disabled at server and
+       location levels.
+
+    *) Feature: exponentiation operators.
+
+    *) Bugfix: miscellaneous bugs and segmentation faults have been fixed.
+
+Changes with njs 0.1.6                                           13 Dec 2016
+
+    *) Change: the "js_set" directive has been disabled at server and
+       location levels.
+
+    *) Feature: ES6 Math methods.
+
+    *) Bugfix: miscellaneous bugs and segmentation faults have been fixed.
+

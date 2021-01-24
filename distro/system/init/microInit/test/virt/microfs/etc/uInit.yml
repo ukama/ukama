@@ -1,0 +1,43 @@
+init:
+    - name: "init"
+      image: "init"
+      version: "v0.0.1"
+    - name: "oci-runtime"
+      image: "crun"
+      version: "v0.0.1"
+      path: "/usr/bin/crun"
+    - name: "microCE"
+      image: "microCE"
+      version: "v0.0.1" 
+      path: "/usr/bin/microCE.d" 
+onboot:
+    - name: sysctl
+      image: "harbor/ukama/sysctl"
+      version: "v0.0.1"
+      path: "/containers/onboot/000-sysctl"
+    - name: "dhcpcd"
+      image: "harbor/ukama/dhcpcd"
+      version: "v0.0.1"
+      path: "/containers/onboot/001-dhcpcd"
+
+onshutdown:
+    - name: poweroff
+      image: "harbor/ukama/poweroff"
+      version: "v0.0.1"
+sysservice:
+    - name: dm
+      image: "harbor/ukama/dm"
+      version: "v0.0.1"
+      path: "/containers/onboot/dm"
+    - name: "edr"
+      image: "harbor/ukama/edr"
+      version: "v0.0.1"
+      path: "/containers/onboot/edr"
+userservice:
+    - name: lte
+      image: "harbor/ukama/lte"
+      version: "v0.0.1"
+      path: "/containers/onboot/lte"
+
+
+

@@ -1,0 +1,39 @@
+{
+    "cgroups": [],
+    "mounts": [
+        {
+            "destination": "/containers/services/nginx/tmp",
+            "type": "tmpfs",
+            "source": "tmpfs"
+        },
+        {
+            "destination": "/containers/services/nginx/tmp",
+            "options": [
+                "remount",
+                "private"
+            ]
+        },
+        {
+            "destination": "/containers/services/nginx/rootfs",
+            "type": "overlay",
+            "source": "overlay",
+            "options": [
+                "lowerdir=/containers/services/nginx/lower",
+                "upperdir=/containers/services/nginx/tmp/upper",
+                "workdir=/containers/services/nginx/tmp/work"
+            ]
+        }
+    ],
+    "mkdir": [],
+    "interfaces": [],
+    "bindNS": {
+        "cgroup": "",
+        "ipc": "",
+        "mnt": "",
+        "net": "",
+        "pid": "",
+        "user": "",
+        "uts": ""
+    },
+    "namespace": ""
+}
