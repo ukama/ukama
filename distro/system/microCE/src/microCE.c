@@ -19,12 +19,12 @@
 #define TRUE 1
 #define FALSE 0
 
-#define PREFIX "/container"
-#define DEF_LOG_LEVEL "TRACE"
+#define PREFIX          "/container"
+#define DEF_LOG_LEVEL   "TRACE"
 #define DEF_STATUS_FILE "status"
 #define DEF_CONFIG_FILE "config.toml"
 
-#define CONFIG "config"
+#define CONFIG             "config"
 #define BOOT_CONTAINER     "boot-container"
 #define SERVICE_CONTAINER  "service-container"
 #define SHUTDOWN_CONTAINER "shutdown-container"
@@ -36,12 +36,18 @@
 #define LEVEL       "level"
 #define ENABLE_SHUTDOWN "enableShutdown"
 
-#define NAME    "name"
-#define PATH    "path"
-#define VERSION "version"
-#define POLICY  "policy"
-#define CONFIG  "config"
-#define LOG     "log"
+#define NAME         "name"
+#define BUNDLE_PATH  "bundle-path"
+#define VERSION      "version"
+#define POLICY       "policy"
+#define PID_FILE     "pid-file"
+#define CONSOLE_SOCK "console-sock"
+#define CONFIG_FILE  "config-file"
+#define DELAY        "delay"
+
+#define POLICY_ONE_TIME       "none"
+#define POLICY_ALWAYS_RESTART "always"
+#define POLICY_EXIT_0_RESTART "exit-0"
 
 #define MAX_BUFFER 256
 
@@ -58,11 +64,13 @@ typedef struct {
 typedef struct {
 
   char *name;
-  char *path;
+  char *bundlePath;
   char *version;
   char *policy;
-  char *config;
-  char *log;
+  char *pidFile;
+  char *configFile;
+  char *console;
+  int   delay;
 } Container;
 
 typedef struct _containers {
@@ -97,20 +105,21 @@ int parse_containers(Containers *containers, toml_array_t *array) {
   
   for (int i=0; (tab = toml_table_at(array, i)) != 0; i++){
 
-    toml_datum_t name, path, version, policy, config, log;
+    toml_datum_t name, path, version, policy, config, pidFile, delay, console;
 
     name = toml_string_in(tab, NAME);
-    path = toml_string_in(tab, PATH);
+    path = toml_string_in(tab, BUNDLE_PATH);
     version = toml_string_in(tab, VERSION);
     policy = toml_string_in(tab, POLICY);
-    config = toml_string_in(tab, CONFIG);
-    log = toml_string_in(tab, LOG);
+    config = toml_string_in(tab, CONFIG_FILE);
+    pidFile = toml_string_in(tab, PID_FILE);
+    delay = toml_string_in(tab, DELAY);
+    console = toml_string_in(tab, CONSOLE_SOCK);
 
-    /* Invalid? */
+    /* Check for mandatory options. */
 
-    if (!name.ok || !path.ok || !version.ok || !policy.ok || !config.ok ||
-	!log.ok) {
-      log_error("Cannot read valid container data\n");
+    if (!name.ok || !path.ok || !version.ok || !policy.ok) {
+      log_error("Missing mandatory key-value \n");
       return FALSE;
     } else {
       if (!containers->entry) {
@@ -123,13 +132,31 @@ int parse_containers(Containers *containers, toml_array_t *array) {
       }
 
       ent->name = strdup(name.u.s);
-      ent->path = strdup(path.u.s);
+      ent->bundlePath = strdup(path.u.s);
       ent->version = strdup(version.u.s);
       ent->policy = strdup(policy.u.s);
-      ent->config = strdup(config.u.s);
-      ent->log = strdup(log.u.s); /* XXX - it can be boolean. */
 
-      
+      /* For optional, default them if not defined. */
+      /* delay = 0 */
+
+      if (!delay.ok) {
+	ent->delay = 0;
+      } else {
+	ent->delay = atoi(delay.u.s);
+      }
+
+      if (console.ok)
+	ent->console = strdup(console.u.s);
+
+      if (pidFile.ok) {
+	ent->pidFile = strdup(pidFile.u.s);
+      } else {
+	ent->pidFile = strdup("container.pid");
+      }
+
+      if (config.ok)
+	ent->configFile = strdup(config.u.s);
+
       if (!containers->entry) {
 	containers->entry = ent;
       }

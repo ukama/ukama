@@ -11,38 +11,70 @@
 
 # There are three type of containers. 
 # boot, service and shutdown.
- 
+#
+# boot is run first, always. Service are run once all the boot
+
+# Each container is defined by following key-value pair:
+#
+# Mandatory fields
+#
+# name := unique name of container which will be use to interact with it
+# bundle-path := OCI bundle path. This needs to be complete path. It is
+# 	      	 expected to have 'config.json' at the path root.
+# version := OCI image version. Default is "latest"
+# policy := There are three types of policies:
+# 	 a. one-time: container is not restarted if exit (with any code)
+#	 b. always-restart: container is auto-restarted if exit (with any code)
+#        c. exit-0-restart: container is restarted only if it exit with 0
+#        "one-time | always-restart | exit0-restart"
+#
+# Optional fields
+#
+# pid-file:= where to write the PID of the container (used by crun). Default is
+# 	     'pid-file'
+# console-socket:= path to a socket that wil receive the TTY. (used by crun)
+# config-file:= override the config file (config.json) in the bundle.
+# delay:= time to wait before starting the container. This is only valid for
+#         the service containers. Ignored for boot and shutdown. In seconds.
+#
+
 # Each individual container config. 
 [[boot-container]]
-        name = "abc-1"
-        path = "/a/b/c/"
-        version = "1.1.1"
-        policy = "singleshot"
-        config = "/a/b/c/config.json"
-        log = "true"
+	name = "busybox-1"
+	bundle-path = "/home/kashif/containers/busybox-bundle/"
+	version = "latest"
+	policy = "none"
+	pid-file = "/home/kashif/containers/busybox.pid"
+	console-sock = "/home/kashif/containers/sock.tty.1"
+	config-file = "/home/kashif/containers/busybox-bundle/config.json"
+	delay = "0"
 
 [[boot-container]]
-        name = "abc-2"
-        path = "/a/b/c/"
-        version = "1.1.1"
-        policy = "singleshot"
-        config = "/a/b/c/config.json"
-        log = "true"
+	name = "abc-123"
+	bundle-path = "/a/b/c/"
+	version = "latest"
+	policy = "none"
+	pid-file = "/a/b/c/file.pid"
+	delay = "0"
 
 [[service-container]]
-        name = "abc-3"
-        path = "/a/b/c/"
-        version = "1.1.1"
-        policy = "singleshot"
-        config = "/a/b/c/config.json"
-        log = "true"
+	name = "busybox-456"
+	bundle-path = "/home/kashif/containers/busybox-bundle/"
+	version = "latest"
+	policy = "none"
+	pid-file = "/home/kashif/containers/busybox.pid"
+	console-sock = "/home/kashif/containers/sock.tty.1"
+	config-file = "/home/kashif/containers/busybox-bundle/config.json"
+	delay = "0"
 
 [[shutdown-container]]
-        name = "abc-4"
-        path = "/a/b/c/"
-        version = "1.1.1"
-        policy = "singleshot"
-        config = "/a/b/c/config.json"
-        log = "true"
+	name = "busybox-1"
+	bundle-path = "/home/kashif/containers/busybox-bundle/"
+	version = "latest"
+	policy = "none"
+	pid-file = "/home/kashif/containers/busybox.pid"
+	console-sock = "/home/kashif/containers/sock.tty.1"
+	config-file = "/home/kashif/containers/busybox-bundle/config.json"
+	delay = "0"
 
 #nothing here.
