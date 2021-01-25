@@ -1,4 +1,3 @@
-
 use prctl;
 use log::*;
 use simplelog::*;
@@ -125,7 +124,7 @@ fn exists(path: &str) -> bool {
 fn mkdir(dir: &str, mode: stat::Mode) {
     match unistd::mkdir(dir, mode) {
         Ok(_) => trace!("Created {:?}", dir),
-        Err(err) => error!("Error creating directory: {}", err),
+        Err(err) => warn!("Error creating directory: {}", err),
     }
 }
 
@@ -136,7 +135,7 @@ fn mkchar(dir: &str, perm: stat::Mode, major: u64, minor: u64) {
     
     match sys::stat::mknod(dir, mode, perm, dev) {
         Ok(_) => trace!("Created device  {:?} file ", dir),
-        Err(err) => error!("Error creating dev {:?} file: {}", dir, err),
+        Err(err) => warn!("Error creating dev {:?} file: {}", dir, err),
     }
 }
 
@@ -173,7 +172,7 @@ fn mount(source: &str, target: &str, fstype: &str, flags: mount::MsFlags, data: 
     };
 
     if !mnt {
-        error!("Error mounting {} to {}", source, target);
+        warn!("Error mounting {} to {}", source, target);
     }
 
     mnt
@@ -183,7 +182,7 @@ fn mount(source: &str, target: &str, fstype: &str, flags: mount::MsFlags, data: 
 fn mount_silent(source: &str, target: &str, fstype: &str, flags: mount::MsFlags, data: &str) {
     match mount::mount(Some(source), target, Some(fstype), flags, Some(data)) {
         Ok(_) => trace!("Mounting {} to {}", source, target),
-        Err(err) => error!("Error mounting {} to {}: {}", source, target, err),
+        Err(err) => warn!("Error mounting {} to {}: {}", source, target, err),
     }
 }
 
@@ -191,7 +190,7 @@ fn mount_silent(source: &str, target: &str, fstype: &str, flags: mount::MsFlags,
 fn unmount(target: &str, flags: mount::MntFlags) {
     match mount::umount2(target, flags) {
         Ok(_) => trace!("Unmounting {} done", target),
-        Err(err) => error!("Unmounting {} failed :: {}", target, err),
+        Err(err) => warn!("Unmounting {} failed :: {}", target, err),
     }
 }
 
@@ -232,6 +231,7 @@ fn do_umounts() {
 
 //Mounting FS
 fn do_mounts() {
+    
     // mount proc filesystem
     mount(
         "proc",
@@ -244,15 +244,7 @@ fn do_mounts() {
         "",
     );
 
-    // remount rootfs read only if it is not already
-    // mount_silent(
-    //     "",
-    //     "/",
-    //     "",
-    //     mount::MsFlags::MS_REMOUNT | mount::MsFlags::MS_RDONLY,
-    //     "",
-    // );
-
+    //mount root
     mount_silent(
         "",
         "/",
@@ -273,6 +265,7 @@ fn do_mounts() {
         "size=10%,mode=755",
     );
     
+    //mount /tmp
     mount(
         "tmpfs",
         "/tmp",
@@ -309,6 +302,8 @@ fn do_mounts() {
         | stat::Mode::S_IRGRP
         | stat::Mode::S_IXGRP;
     let rwx_rwx_rwx = stat::Mode::S_IRWXU | stat::Mode::S_IRWXG | stat::Mode::S_IRWXO;
+    
+    //Make required directories
     mkdir("/var/cache", rwx_rx_rx);
     mkdir("/var/empty", rx_rx_rx);
     mkdir("/var/lib", rwx_rx_rx);
@@ -318,6 +313,7 @@ fn do_mounts() {
     mkdir("/var/opt", rwx_rx_rx);
     mkdir("/var/spool", rwx_rx_rx);
     mkdir("/var/tmp", stat::Mode::S_ISVTX | rwx_rwx_rwx);
+    
     // mount devfs
     mount(
         "dev",
@@ -339,22 +335,26 @@ fn do_mounts() {
     let rw_rw_ =
         stat::Mode::S_IRUSR | stat::Mode::S_IWUSR | stat::Mode::S_IRGRP | stat::Mode::S_IWGRP;
 
+    // Make char devices
     mkchar("/dev/console", rw__, 5, 1);
     mkchar("/dev/tty1", rw_w_, 4, 1);
     mkchar("/dev/tty", rw_rw_rw, 5, 0);
     mkchar("/dev/null", rw_rw_rw, 1, 3);
     mkchar("/dev/kmsg", rw_rw_, 1, 11);
-    // make standard symlinks
+    
+    // Make standard symlinks
     symlink("/proc/self/fd", "/dev/fd");
     symlink("/proc/self/fd/0", "/dev/stdin");
     symlink("/proc/self/fd/1", "/dev/stdout");
     symlink("/proc/self/fd/2", "/dev/stderr");
     symlink("/proc/kcore", "/dev/kcore");
-    // dev mountpoints
+    
+    // Dev mountpoints
     mkdir("/dev/mqueue", stat::Mode::S_ISVTX | rwx_rwx_rwx);
     mkdir("/dev/shm", stat::Mode::S_ISVTX | rwx_rwx_rwx);
     mkdir("/dev/pts", rwx_rx_rx);
-    // mounts on /dev
+    
+    // Mounts on /dev
     mount(
         "mqueue",
         "/dev/mqueue",
@@ -362,6 +362,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+
     mount(
         "shm",
         "/dev/shm",
@@ -377,7 +378,7 @@ fn do_mounts() {
         "gid=5,mode=0620",
     );
 
-    // sysfs
+    // Mount sysfs
     mount(
         "sysfs",
         "/sys",
@@ -385,6 +386,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+    
     // some of the subsystems may not exist, so ignore errors
     mount_silent(
         "securityfs",
@@ -393,6 +395,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+
     mount_silent(
         "debugfs",
         "/sys/kernel/debug",
@@ -400,6 +403,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+
     mount_silent(
         "configfs",
         "/sys/kernel/config",
@@ -407,6 +411,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+    
     mount_silent(
         "fusectl",
         "/sys/fs/fuse/connections",
@@ -414,6 +419,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+    
     mount_silent(
         "selinuxfs",
         "/sys/fs/selinux",
@@ -421,6 +427,7 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
+    
     mount_silent(
         "pstore",
         "/sys/fs/pstore",
@@ -428,7 +435,13 @@ fn do_mounts() {
         mount::MsFlags::MS_NODEV | mount::MsFlags::MS_NOSUID | mount::MsFlags::MS_NOEXEC,
         "",
     );
-    mount_silent("bpffs", "/sys/fs/bpf", "bpf", mount::MsFlags::MS_NOSUID, "");
+    
+    mount_silent(
+        "bpffs",
+        "/sys/fs/bpf",
+        "bpf",
+        mount::MsFlags::MS_NOSUID,
+        "");
 
     mount_silent(
         "efivarfs",
@@ -474,14 +487,15 @@ fn do_mounts() {
         );
     }
 
-    // use hierarchy for memory
+    // Use hierarchy for memory
     match write("/sys/fs/cgroup/memory/memory.use_hierarchy", "1") {
         Ok(_) => trace!("Write  Sucessfull on file."),
-        Err(_) => error!("Error while writing to file."),
+        Err(_) => warn!("Error while writing to file."),
     }
 
     // many things assume systemd
     mkdir("/sys/fs/cgroup/systemd", rw_rw_rw);
+    
     mount(
         "cgroup",
         "/sys/fs/cgroup/systemd",
@@ -507,17 +521,17 @@ fn do_hotplug() {
     // start mdev for hotplug
     match write("/proc/sys/kernel/hotplug", mdev) {
         Ok(_) => debug!("Succesfully wrote to hotplug"),
-        Err(_) => error!("Failed to write to hotplug."),
+        Err(_) => warn!("Failed to write to hotplug."),
     }
 
+    //Read devices
     let devpath = "/sys/devices";
-
     let files = match readdir(devpath) {
         Ok(fvec) => fvec,
         Err(_) => return,
     };
-
     trace!("Device files present in {:?} are {:?}", devpath, files);
+    
     let file_iter = files.iter();
     for f in file_iter {
         let ufile = match f.to_str() {
@@ -529,7 +543,7 @@ fn do_hotplug() {
         if ufile.starts_with("usb") && exists(&uevent) {
             match write(&uevent, "add") {
                 Ok(_) => trace!("Succesfully wrote to {}", uevent),
-                Err(_) => error!("Failed to write to {}.", uevent),
+                Err(_) => warn!("Failed to write to {}.", uevent),
             }
         }
     }
@@ -552,7 +566,7 @@ fn do_hotplug() {
                 modalias(&pstr);
             }
             Err(err) => {
-                error!("Error while matching pattern. Moving to next {:?}", err);
+                warn!("Error while matching pattern. Moving to next {:?}", err);
                 continue;
             }
         }
@@ -612,7 +626,7 @@ fn do_loopback() {
 fn rlimits(resource: Resource, soft: Rlim, hard: Rlim) {
     match setrlimit(resource, soft, hard) {
         Ok(_) => debug!("Limits set for {:?} {:?} {:?}.", resource, soft, hard),
-        Err(err) => error!(
+        Err(err) => warn!(
             "Limits set failed for {:?} {:?} {:?} with err {:?}.",
             resource, soft, hard, err
         ),
@@ -641,7 +655,7 @@ fn do_hostname() {
     if hname != "" {
         match unistd::sethostname(&hname) {
             Ok(_) => println!("Hostname set to {}", hname),
-            Err(err) => error!("Failed to set host name to {} :: {}", hname, err),
+            Err(err) => warn!("Failed to set host name to {} :: {}", hname, err),
         }
     }
 
@@ -663,13 +677,13 @@ fn do_hostname() {
         warn!("No mac address found.");
         return;
     }
+
     let mac = mac.replace(":", "");
-    let hname = format!("{}{}", "ukama-", mac);
-    
+    let hname = format!("{}{}", "ukama-", mac); 
     //Set hostname with mac as a postfix to ukama
     match unistd::sethostname(&hname) {
         Ok(_) => info!("Hostname set to {}", hname),
-        Err(err) => error!("Failed to set host name to {} :: {}", hname, err),
+        Err(err) => warn!("Failed to set host name to {} :: {}", hname, err),
     }
 
 }
@@ -683,12 +697,7 @@ fn do_resolvconf() {
     };
 
     let parent = link.parent().unwrap();
-    let dir = parent.to_str().unwrap();
-    // {
-    //     None => "",
-    //     Some(str) => str,
-    // };
-    
+    let dir = parent.to_str().unwrap();    
 
     let link = link.to_str().unwrap();
     let rwx_rx_rx = stat::Mode::S_IRWXU
@@ -696,11 +705,12 @@ fn do_resolvconf() {
         | stat::Mode::S_IXOTH
         | stat::Mode::S_IRGRP
         | stat::Mode::S_IXGRP;
+    
     mkdir(dir, rwx_rx_rx);
 
     match write(link, "") {
         Ok(_) => debug!("Write is success to {}.", link),
-        Err(err) => error!("Write failed to {} :: {}", link, err),
+        Err(err) => warn!("Write failed to {} :: {}", link, err),
     }
 }
 
@@ -724,8 +734,8 @@ fn run_init(path: &str) {
         Ok(fvec) => fvec,
         Err(_) => return,
     };
-
-    println!("All files present in {:?} are {:?}", path, files);
+    trace!("All files present in {:?} are {:?}", path, files);
+    
     let file_iter = files.iter();
     for f in file_iter {
         let file = Path::new(path).join(f);
@@ -736,32 +746,31 @@ fn run_init(path: &str) {
 
         let stat = match sys::stat::stat(file) {
             Ok(fs) => {
-                println!("Found {} file for execution", file);
+                trace!("Found {} file for execution", file);
                 fs
             }
             Err(err) => {
-                println!("{} not found : {}", file, err);
+                error!("{} not found : {}", file, err);
                 continue;
             }
         };
-
-        println!("Stat: {:?}", stat);
+        trace!("Stat: {:?}", stat);
 
         //Mode is a not regular file
-        //continue;
         let metadata = match fs::metadata(file) {
             Ok(data) => data,
             Err(err) => {
-                println!("Failed to get meta data for {}: {}", file, err);
+                error!("Failed to get meta data for {}: {}", file, err);
                 continue;
             }
         };
 
         if !metadata.is_file() {
-            println!("File {} is not regular file, Stat: {:?} ", file, metadata);
+            error!("File {} is not regular file, Stat: {:?} ", file, metadata);
             continue;
         }
-        println!("Exec {}", file);
+
+        trace!("Exec {}", file);
         Command::new(file)
             .spawn()
             .expect("failed to execute process"); 
@@ -790,6 +799,7 @@ fn do_shutdown(action: &str) {
 
 
 fn main() {
+    
     //Logger
     CombinedLogger::init(vec![
         #[cfg(feature = "termcolor")]
@@ -820,7 +830,6 @@ fn main() {
     }
 
     let userspace = exists("/proc/self");
-
     if userspace {
         set_subreaper(true);
     } else {
@@ -834,7 +843,7 @@ fn main() {
     do_hostname();
     do_resolvconf();
 
-    //start the executables from /etc/init.d path
+    //Start the executables from /etc/init.d path
     run_init("/etc/init.d");
 
     if userspace {
