@@ -31,7 +31,7 @@
     name = "oci-runtime"
     image = "crun"
     version = "v0.0.1"
-    path = "/usr/local/bin/crun"
+    path = "/usr/bin/crun"
 
 [[init]]
     name = "microCE"
@@ -56,5 +56,5 @@
 	name = "000-shutdown"
     image = "shutdown"
     version = "v0.0.1"
-	path = "/containers/bundles/000-000-shutdown"	
+	path = "/containers/bundles/000-shutdown"	
 

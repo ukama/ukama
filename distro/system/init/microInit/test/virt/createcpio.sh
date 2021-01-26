@@ -2,6 +2,12 @@
 # Only meant for test purpose. This temporary test file will be replaced by ukamaOS virtual test suit which
 # will mock devices.   
 
+#Run script with sudo
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
 #Cleaning files
 echo "Cleaning microfs...!"
 sudo rm -rf ./microfs/init ./microfs/bin/rc.init ./microfs/usr/bin/usysinit

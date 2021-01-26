@@ -31,7 +31,7 @@
     name = "oci-runtime"
     image = "crun"
     version = "v0.0.1"
-    path = "/usr/local/bin/crun"
+    path = "/usr/bin/crun"
 
 [[init]]
     name = "microCE"
@@ -53,8 +53,8 @@
 	path = "/containers/bundles/001-dhcpcd"
 
 [[shutdown_bundle]]
-	name = "000-dhcpcd"
-    image = "dhcpcd"
+	name = "000-shutdown"
+    image = "shutdown"
     version = "v0.0.1"
-	path = "/containers/bundles/000-dhcpcd"	
+	path = "/containers/bundles/000-shutdown"	
 
