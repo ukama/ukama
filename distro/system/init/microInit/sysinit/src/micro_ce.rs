@@ -5,10 +5,10 @@ use procfs::process::Process;
 use log::*;
 use std::{thread, time};
 
-//Read micro_ce config
+//Read microCE config
 fn read_micro_ce_config () -> Option<&'static uconfig::AppConfig> {
     let initcfg = uconfig::Config::get_init_config();
-    trace!("micro_ce init:: {:?}", initcfg);
+    trace!("microCE init:: {:?}", initcfg);
 
     //Capture micro_ce config
     let mut cecfg: Option<&uconfig::AppConfig> = None;
@@ -21,6 +21,7 @@ fn read_micro_ce_config () -> Option<&'static uconfig::AppConfig> {
     cecfg
 }
 
+// Read process ID for microCE
 fn read_pid(pidfile: &str) -> Option<i32> {
     let mut pid : Option<i32> = None;
     //Read pid file for the container
@@ -45,7 +46,7 @@ fn read_pid(pidfile: &str) -> Option<i32> {
     pid
 }
 
-// Starting micro_ce
+// Starting microCE
 pub fn init() {
     
     let pidfile ="/var/log/microCE.pid";
@@ -56,14 +57,12 @@ pub fn init() {
             return;
         },
     };
-
     debug!("microCE config:: {:?}", ucfg);
     
     let micro_ce_path = match &ucfg.path {
         None => "/usr/bin/microCE.d".to_string(),
         Some(path) => path.to_string(),
     };
-
 
     //starting micro_ce
     let _child = match Command::new(&micro_ce_path)

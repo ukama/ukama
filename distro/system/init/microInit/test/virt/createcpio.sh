@@ -11,6 +11,7 @@ sync
 echo "Copying init files...!"
 sudo cp -v ../../init/target/x86_64-unknown-linux-musl/release/init ./microfs/init
 sudo cp -v ../../rcinit/target/x86_64-unknown-linux-musl/release/rcinit ./microfs/bin/rc.init
+sudo cp -v ../../sysinit/config/microInit.toml ./microfs/etc/microInit.toml
 sudo cp -v ../../sysinit/target/x86_64-unknown-linux-musl/release/sysinit ./microfs/usr/bin/usysinit
 sync
 

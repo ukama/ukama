@@ -1,11 +1,9 @@
 use crate::uconfig;
 
-use prctl;
 use log::*;
+use prctl;
+use std::{fs, io, path::Path, process::Command, process::Stdio, time::Duration};
 use wait_timeout::ChildExt;
-use std::{ fs, io, path::Path,process::Command,
-           process::Stdio, time::Duration };
-
 
 //Wiat for child process.
 fn wait_for_child(mut child: std::process::Child) -> Result<Option<i32>, io::Error> {
@@ -24,10 +22,10 @@ fn wait_for_child(mut child: std::process::Child) -> Result<Option<i32>, io::Err
     Ok(status_code)
 }
 
-pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, io::Error> {
+pub fn runc_exec(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, io::Error> {
     //TODO: Read from config
-    let logdir = "/run/log/onboot";
-    let varlog = "/var/log/onboot";
+    let logdir = "/run/log/bundles";
+    let varlog = "/var/log/bundles";
 
     //Set Subreaper
     let _ = prctl::set_child_subreaper(true).unwrap();
@@ -63,20 +61,20 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, 
         let lpath = match ctr.path {
             Some(ref path) => path,
             None => {
-                println!("Missing {} container path in uConfig.ml.", ctr.name);
+                warn!("Missing {} container path in microInit.toml", ctr.name);
                 continue;
             }
         };
 
         // Check if container directory exist or not.
         if !Path::new(lpath).exists() {
-            error!("Container {} rootfs missing.", ctr.name);
+            error!("Container {} rootfs missing {}.", ctr.name, lpath);
             continue;
         }
 
         //pid file
         let pidfile = format!("{}{}{}", logdir, "/", ctr.name);
-        
+        trace!("PID file for {} is set at {}", ctr.name, pidfile);
         //Not taking care of stdio and err right now
         //TODO: Error and logging
         let child = match Command::new(ocibin)
@@ -97,9 +95,12 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, 
             }
         };
 
-        trace!(
+        debug!(
             "{} create --bundle {} --pidifle {} {}",
-            ocibin, lpath, pidfile, ctr.name
+            ocibin,
+            lpath,
+            pidfile,
+            ctr.name
         );
 
         match wait_for_child(child) {
@@ -148,7 +149,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, 
             }
         };
 
-        trace!("{} start {}", ocibin, ctr.name);
+        debug!("{} start {}", ocibin, ctr.name);
 
         match wait_for_child(schild) {
             Ok(val) => match val {
@@ -161,7 +162,10 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, 
             ),
         }
 
-        debug!("PID file {} is storing {} for container {}",pidfile, pid, ctr.name ); 
+        debug!(
+            "PID file {} is storing {} for container {}",
+            pidfile, pid, ctr.name
+        );
         // //Cleaning pid file
         // match fs::remove_file(&pidfile) {
         //     Ok(_) => debug!(
@@ -181,7 +185,7 @@ pub fn runc_init(onboot: &Vec<uconfig::AppConfig>, ocibin: &str) -> Result<i32, 
 }
 
 pub fn onboot() -> i32 {
-    // Read OCI Config
+    // Read OCI runtime
     let init = uconfig::Config::get_oci_runtime();
     let init = match init {
         Some(init) => init,
@@ -197,17 +201,36 @@ pub fn onboot() -> i32 {
     };
     debug!("OCI runtime :: {}", oci_path);
 
-    //Read onboot config
-    let onboot = uconfig::Config::get_onboot_config();
+    //Read init bundles config
+    let onboot = uconfig::Config::get_init_bundle_config();
     trace!("Onboot Container list {:?}", onboot);
-    
     //Execute containers
-    let _ = runc_init(onboot, &oci_path).unwrap();
-    
+    let _ = runc_exec(onboot, &oci_path).unwrap();
     0
 }
 
 pub fn onshutdown() -> i32 {
-    trace!("{:?}", uconfig::Config::get_onshutdown_config());
+    // Read OCI runtime
+    let init = uconfig::Config::get_oci_runtime();
+    let init = match init {
+        Some(init) => init,
+        None => {
+            panic!("No OCI runtime config provided in config.");
+        }
+    };
+
+    //Read path if provided otherwise default
+    let oci_path = match &init.path {
+        Some(path) => path,
+        None => "/usr/bin/crun",
+    };
+    debug!("OCI runtime :: {}", oci_path);
+
+     //Read init bundles config
+     let onshutdown = uconfig::Config::get_shutdown_bundle_config();
+     trace!("OnShutdown Container list {:?}", onshutdown);
+     //Execute containers
+     let _ = runc_exec(onshutdown, &oci_path).unwrap();
+    
     0
 }
