@@ -10,7 +10,7 @@ LIBS=-lmbedtls -lmbedx509 -lmbedcrypto
 
 CC=gcc
 CFLAGS+=-c -Wall -I./inc -I$(MBEDTLS_INCLUDE) -I$(COMMON_INC)  \
-	-D_REENTRANT -g -O0
+	-D_REENTRANT -g -O0 -DTEST_EMBED_CERT
 LDFLAGS+=-L$(MBEDTLS_LOCATION)/library
 
 all: mesh.d

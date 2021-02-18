@@ -4,6 +4,7 @@
  */
 
 #include "mesh.h"
+#include "mbedtls/certs.h"
 
 #define VERSION "0.0.1"
 
@@ -136,12 +137,12 @@ void init_connection(Connection *conn) {
 
 void free_connection(Connection *conn) {
 
-    mbedtls_net_free(&conn->fd);
-    mbedtls_x509_crt_free(&conn->cert);
-    mbedtls_ssl_free(&conn->ssl);
-    mbedtls_ssl_config_free(&conn->conf);
-    mbedtls_ctr_drbg_free(&conn->ctr_drbg);
-    mbedtls_entropy_free(&conn->entropy);
+  mbedtls_net_free(&conn->fd);
+  mbedtls_x509_crt_free(&conn->cert);
+  mbedtls_ssl_free(&conn->ssl);
+  mbedtls_ssl_config_free(&conn->conf);
+  mbedtls_ctr_drbg_free(&conn->ctr_drbg);
+  mbedtls_entropy_free(&conn->entropy);
 }
 
 /*
@@ -160,25 +161,37 @@ int connect_to_secure_server(Connection *conn, const char *serverName,
 			      &conn->entropy, NULL, 0);
   
   if (ret != 0) {
-    log_error("RNG seeding failed: %d\n", ret);
+    log_error("RNG seeding failed: %d", ret);
     goto done;
   }
 
+#if defined(TEST_EMBED_CERT)
+  log_debug("Loading embed cert and key");
+
+  ret = mbedtls_x509_crt_parse(&conn->cert,
+			       (const unsigned char *) mbedtls_test_cas_pem,
+			       mbedtls_test_cas_pem_len );
+  if(ret != 0) {
+    log_error("Error loading cert!");
+    goto done;
+  }
+#else
   ret = mbedtls_x509_crt_parse_file(&conn->cert, certFile);
   if (ret != 0){
-    log_error("CRT parsing failed for file: %s with error: %d\n", certFile,
+    log_error("CRT parsing failed for file: %s with error: %d", certFile,
 	      ret);
     goto done;
   }
+#endif /* TEST_EMBED_CERT */
 
   /* Start connecting to the server. */
-  log_debug("Connecting to SSL/TLS server at %s:%s\n", serverName, portNumber);
+  log_debug("Connecting to SSL/TLS server at %s:%s", serverName, portNumber);
   
   ret = mbedtls_net_connect(&conn->fd, serverName, portNumber,
 			    MBEDTLS_NET_PROTO_TCP);
 
   if (ret != 0) {
-    log_error("Failed connecting to server: %s at port: %s\n", serverName,
+    log_error("Failed connecting to server: %s at port: %s", serverName,
 	      portNumber);
     goto done;
   }
@@ -188,7 +201,7 @@ int connect_to_secure_server(Connection *conn, const char *serverName,
 				    MBEDTLS_SSL_PRESET_DEFAULT);
   
   if (ret != 0) {
-    log_error("Failed to setup SSL/TLS structure: %s\n", ret);
+    log_error("Failed to setup SSL/TLS structure: %s", ret);
     goto done;
   }
 
@@ -205,7 +218,7 @@ int connect_to_secure_server(Connection *conn, const char *serverName,
 
   ret = mbedtls_ssl_set_hostname(&conn->ssl, serverName);
   if (ret != 0) {
-    log_error("Failed to setup hostname\n");
+    log_error("Failed to setup hostname");
     goto done;
   }
 
@@ -374,12 +387,37 @@ int main (int argc, char **argv) {
   if (server) {
   
     log_debug("Starting mesh data plane ... [Server]");
+
+#if defined(TEST_EMBED_CERT)
+    log_debug("Loading embed cert and key.");
+    ret = mbedtls_x509_crt_parse(&srvcert,
+				 (const unsigned char *) mbedtls_test_srv_crt,
+				 mbedtls_test_srv_crt_len);
+    if(ret != 0) {
+      log_error("Loading server cert and key failed");
+      goto exit;
+    }
+
+    ret = mbedtls_x509_crt_parse(&srvcert,
+				 (const unsigned char *) mbedtls_test_cas_pem,
+				 mbedtls_test_cas_pem_len);
+    if(ret != 0) {
+      log_error("Loading server cert and key failed.");
+      goto exit;
+    }
     
+    ret =  mbedtls_pk_parse_key(&key, (const unsigned char *) mbedtls_test_srv_key,
+				mbedtls_test_srv_key_len, NULL, 0 );
+    if(ret != 0) {
+      log_error("Loading key file failed");
+      goto exit;
+    }
+#else
     /* Load the cert and private key. */
     if (caFile) {
       ret = mbedtls_x509_crt_parse_file(&srvcert, caFile);
       if (ret != 0){
-	log_error("CRT parsing failed: %d\n", ret);
+	log_error("CRT parsing failed: %d", ret);
 	goto exit;
       }
     }
@@ -387,10 +425,11 @@ int main (int argc, char **argv) {
     if (keyFile) {
       ret = mbedtls_pk_parse_keyfile(&key, keyFile, NULL);
       if (ret != 0){
-	log_error("Key file parsing failed: %d\n", ret );
+	log_error("Key file parsing failed: %d", ret );
 	goto exit;
       }
   }
+#endif  /* TEST_EMBED_CERT */
     
     /*
      * 2. Setup the listening TCP socket
@@ -399,7 +438,7 @@ int main (int argc, char **argv) {
 			   MBEDTLS_NET_PROTO_TCP);
     
     if (ret != 0) {
-      log_error("Failed to bind on port: %d. Code: %d\n", tlsListenPort, ret);
+      log_error("Failed to bind on port: %d. Code: %d", tlsListenPort, ret);
       goto exit;
     }
     
@@ -411,7 +450,7 @@ int main (int argc, char **argv) {
 				0);
     
     if (ret != 0) {
-      log_error("Failed to seed the random number generator. \n");
+      log_error("Failed to seed the random number generator.");
       goto exit;
     }
     
@@ -420,7 +459,7 @@ int main (int argc, char **argv) {
 				      MBEDTLS_SSL_PRESET_DEFAULT);
     
     if (ret != 0) {
-      log_error("Failed to setup SSL data. \n");
+      log_error("Failed to setup SSL data.");
       goto exit;
     }
     
@@ -432,14 +471,14 @@ int main (int argc, char **argv) {
     ret = mbedtls_ssl_conf_own_cert(&conf, &srvcert, &key);
     
     if (ret !=0 ) {
-      log_error("Failed to setup SSL data.\n");
+      log_error("Failed to setup SSL data.");
       goto exit;
     }
     
     ret = mbedtls_ssl_setup(&ssl, &conf);
     
     if (ret != 0) {
-      log_error("Failed to setup SSL data. \n");
+      log_error("Failed to setup SSL data.");
       goto exit;
     }
     
@@ -455,7 +494,7 @@ int main (int argc, char **argv) {
     ret = mbedtls_net_accept(&tlsListenFd, &tlsClientFd, NULL, 0, NULL);
     
     if (ret != 0) {
-      log_error("Accept failed: %d\n", ret);
+      log_error("Accept failed: %d", ret);
       goto exit;
     }
     
@@ -465,7 +504,7 @@ int main (int argc, char **argv) {
     while ((ret = mbedtls_ssl_handshake(&ssl)) != 0) {
       if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
 	  ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-	log_error("Handshake failed: %d \n", ret);
+	log_error("Handshake failed: %d", ret);
 	goto reset;
       }
     }
@@ -480,13 +519,15 @@ int main (int argc, char **argv) {
 			     DEF_CLOUD_SERVER_PORT,
 			     DEF_CLOUD_SERVER_CERT);
   }
-
   
   /* Connection established. */
 
+  log_debug("All done. Exiting ...");
+  return 0;
+
  exit:
 
-  log_error("FAIL!\n");
+  log_error("FAIL!. Exiting ...");
   
   mbedtls_net_free(&tlsListenFd);
   mbedtls_ctr_drbg_free(&ctr_drbg);
