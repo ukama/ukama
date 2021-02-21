@@ -44,10 +44,8 @@ void usage() {
   printf("Usage: mesh.d [options] \n");
   printf("Options:\n");
   printf("--h, --help                         Help menu.\n");
-  printf("--P, --port                         Port to listen SSL/TLS\n");
-  printf("--C, --ca                           CRT file\n");
-  printf("--k, --key                          Key file\n");
-  printf("--l, --level <TRACE | DEBUG | INFO> Log level for the process.\n");
+  printf("--C, --config                       Config file.\n");
+  printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process.\n");
   printf("--V, --version                      Version.\n");
 }
 
@@ -264,25 +262,25 @@ int connect_to_secure_server(Connection *conn, const char *serverName,
  *   CRT file.
  *   TLS server listening port.
  *   debug-level
+ *   stats.
+ *   proxy setting.
  * 
  * [nonTLS-client-config]
  *   listen port
  *   debug-level
  *
  * [cloud-config]
+ *   Default server
  *   CA cert file path
+ *   bootstrap service info.
  *
  */
 
 int main (int argc, char **argv) {
 
   int ret = 0;
-  char *tlsListenPort;
-  char *keyFile=NULL, *caFile=NULL, *crlFile=NULL;
-  char *caPath = NULL;
   char *debug = DEF_LOG_LEVEL;
-
-  int server, client; 
+  char *configFile;
 
   mbedtls_net_context tlsListenFd, tlsClientFd;
   mbedtls_entropy_context entropy;
@@ -293,6 +291,7 @@ int main (int argc, char **argv) {
   mbedtls_pk_context key;
 
   Connection cloud;
+  Configs *configs = NULL;
   
   /* Initalize some values. */
   mbedtls_net_init(&tlsListenFd);
@@ -317,20 +316,14 @@ int main (int argc, char **argv) {
     int opdidx = 0;
 
     static struct option long_options[] = {
-      { "port",      required_argument, 0, 'P'},
+      { "config",    required_argument, 0, 'C'},
       { "level",     required_argument, 0, 'l'},
-      { "key",       required_argument, 0, 'k'},
-      { "ca",        required_argument, 0, 'A'},
-      { "crl",       required_argument, 0, 'c'},
-      { "path",      required_argument, 0, 'p'},
-      { "server",    no_argument,       0, 'S'},
-      { "client",    no_argument,       0, 'C'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},
       { 0,           0,                 0,  0}
     };
 
-    opt = getopt_long(argc, argv, "P:l:k:A:c:p:hVSC:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "l:C:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -341,37 +334,13 @@ int main (int argc, char **argv) {
       exit(0);
       break;
 
-    case 'S':
-      server = TRUE;
-      break;
-
     case 'C':
-      client = TRUE;
+      configFile = optarg;
       break;
       
-    case 'P':
-      tlsListenPort = optarg;
-      break;
-
     case 'l':
       debug = optarg;
       set_log_level(debug);
-      break;
-      
-    case 'k':
-      keyFile = optarg;
-      break;
-
-    case 'A':
-      caFile = optarg;
-      break;
-
-    case 'c':
-      crlFile = optarg;
-      break;
-
-    case 'p':
-      caPath = optarg;
       break;
       
     case 'V':
@@ -384,7 +353,20 @@ int main (int argc, char **argv) {
     }
   } /* while */
 
-  if (server) {
+  /* Read config file. */
+
+  configs = (Configs *)calloc(sizeof(Configs), 1);
+  if (!configs) {
+    log_error("Memory allocation failure: %d", sizeof(Configs));
+    exit(1);
+  }
+
+  if (process_config_file(configFile, configs) != TRUE) {
+    fprintf(stderr, "Error parsing config file: %s. Exiting ... \n", configFile);
+    exit(1);
+  }
+
+  if (configs->baseConfig->mode == MODE_SERVER) {
   
     log_debug("Starting mesh data plane ... [Server]");
 
@@ -405,18 +387,19 @@ int main (int argc, char **argv) {
       log_error("Loading server cert and key failed.");
       goto exit;
     }
-    
+
     ret =  mbedtls_pk_parse_key(&key, (const unsigned char *) mbedtls_test_srv_key,
 				mbedtls_test_srv_key_len, NULL, 0 );
     if(ret != 0) {
       log_error("Loading key file failed");
       goto exit;
     }
+
 #else
     /* Load the cert and private key. */
     if (caFile) {
       ret = mbedtls_x509_crt_parse_file(&srvcert, caFile);
-      if (ret != 0){
+      if (ret != 0) {
 	log_error("CRT parsing failed: %d", ret);
 	goto exit;
       }
@@ -428,17 +411,20 @@ int main (int argc, char **argv) {
 	log_error("Key file parsing failed: %d", ret );
 	goto exit;
       }
-  }
+    }
 #endif  /* TEST_EMBED_CERT */
-    
+
     /*
      * 2. Setup the listening TCP socket
      */
-    ret = mbedtls_net_bind(&tlsListenFd, NULL, tlsListenPort,
+    ret = mbedtls_net_bind(&tlsListenFd, NULL,
+			   configs->serverConfig->remotePort,
+			   // tlsListenPort,
 			   MBEDTLS_NET_PROTO_TCP);
-    
+
     if (ret != 0) {
-      log_error("Failed to bind on port: %d. Code: %d", tlsListenPort, ret);
+      log_error("Failed to bind on port: %s. Code: %d",
+		configs->serverConfig->remotePort, ret);
       goto exit;
     }
     
@@ -489,7 +475,8 @@ int main (int argc, char **argv) {
     
     /* Wait for client connection ... */
     
-    log_debug("Waiting for client on port: %s ...", tlsListenPort);
+    log_debug("Waiting for client on port: %s ...",
+	      configs->serverConfig->remotePort);
     
     ret = mbedtls_net_accept(&tlsListenFd, &tlsClientFd, NULL, 0, NULL);
     
@@ -510,7 +497,7 @@ int main (int argc, char **argv) {
     }
   } /* if (server) */
 
-  if (client) {
+  if (configs->baseConfig->mode == MODE_CLIENT) {
     
     /* Connect to the secure cloud server at given port. Mesh.d can be server
      * and client at same time.

@@ -1,0 +1,56 @@
+# Config file for mesh.d
+
+# There are 3 modes.
+#
+# 1. Server only (running in the cloud, North-South)
+# 2. Client only (running on the devices, North-South)
+# 3. Server and client. (running on the devices, East-West)
+
+[base-config]
+	mode  = "server"   	      # server | client | all
+	admin = "enable"   	      # enable | disable 
+	remote-clients = "10"      # Max. remote client to support (tpool)
+	local-clients  = "30"      # Max. local client (tpool)
+
+[admin-config]
+	admin-endpoint = "/admin"	# REST endpoint for admin commands
+	stats-endpoint = "/stats"	# Prometheous stats endpoint
+	admin-port = "4444"		# admin port for REST
+
+# Configuration specific to the mode.
+# Only the config which apply to the mode is legit, rest is ignored.
+# E.g., if mode is "client", [server-config] is ignored.
+
+[server-config]
+	local-host = "localhost"	# binding host
+	local-port = "4433"		# port for local clients.
+	remote-port = "4434"		# port for remote devices.
+	cert = "/a/b/x/cert.crt"	# location for the CA Cert
+	key  = "/a/b/z/pem.key"		# Key file
+	proxy = "none"			# none | forward | reverse | all
+
+[client-config]
+	remote-host = "localhost"
+	remote-port = "4433"
+	cert = "/a/b/x/cert.crt"
+	key = "/a/b/z/pem.key"
+	proxy = "none"
+
+# configuration for reverse proxies. Only when proxy is enabled, otherwise
+# these are ignored.
+
+#[[reverse-proxy]]
+#	server-name = "name-1"
+#	end-point = "/metric"		# HTTP endpoint 
+#	server-name = "127.0.0.1"	# sink
+#	server-port = "7777"
+#	enable = "true"			# true | false
+#	
+#[[reverse-proxy]]
+#	server-name = "name-2"		# Unique name.
+#	end-point = "/containers"	# unique end-point for sink
+#	server-name = "127.0.0.1"
+#	server-port = "7777"
+#	enable = "false"		# true | false
+	
+#nothing here.

@@ -31,6 +31,7 @@
 
 /* Others. */
 #include "log.h"
+#include "config.h"
 
 #define DEF_FILENAME "cert.crt"
 #define DEF_CA_FILE  ""
@@ -46,6 +47,10 @@
 #define TRUE 1
 #define FALSE 0
 
+#define PROXY_NONE    0x01
+#define PROXY_FORWARD 0x02
+#define PROXY_REVERSE 0x04
+
 typedef struct {
 
   int cloud; /* TRUE if current context is for cloud connection. */
@@ -56,7 +61,8 @@ typedef struct {
   mbedtls_ssl_context ssl;
   mbedtls_ssl_config conf;
   mbedtls_x509_crt cert;
-
 }Connection;
+
+extern int process_config_file(char *fileName, Configs *config);
 
 #endif /* MESH_H */
