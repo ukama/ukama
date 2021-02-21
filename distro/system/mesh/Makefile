@@ -1,7 +1,7 @@
 #
 # Simple Makefile for the Mesh.d
 #
-
+TARGET_EXEC=mesh.d
 PREFIX=/usr/local
 MBEDTLS_LOCATION=third_party/mbedtls/
 TOML_LOCATION=third_party/tomlc99
@@ -15,7 +15,18 @@ CFLAGS+=-c -Wall -I./inc -I$(MBEDTLS_INCLUDE) -I$(COMMON_INC)  \
 	-D_REENTRANT -g -O0 -DTEST_EMBED_CERT
 LDFLAGS+=-L$(MBEDTLS_LOCATION)/library
 
-all: mesh.d
+
+CFILES   = $(wildcard ./src/*.c)
+OBJFILES = $(CFILES:.c=.o)
+
+all: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(OBJFILES) libmbedtls toml
+	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 libmbedtls:
 	cd $(MBEDTLS_LOCATION) && $(MAKE) -C library
@@ -23,21 +34,9 @@ libmbedtls:
 toml:
 	cd $(TOML_LOCATION) && $(MAKE) DEBUG=1
 
-mesh.o: log.o config.o
-	$(CC) $(CFLAGS) src/mesh.c
-
-log.o:
-	$(CC) $(CFLAGS) src/log.c
-
-config.o:
-	$(CC) $(CFLAGS) src/config.c
-
-mesh.d: toml libmbedtls mesh.o
-	$(CC) -o mesh.d mesh.o log.o config.o $(LDFLAGS) $(LIBS)
-	echo "Done!"
-
 clean:
-	rm -f *.o mesh.d; cd ./third_party/mbedtls/ && make clean && cd -;
+	rm -f $(TARGET_EXEC) $(OBJFILES);
+	cd ./third_party/mbedtls/ && make clean && cd -;
 	cd $(TOML_LOCATION) && make clean
 
 

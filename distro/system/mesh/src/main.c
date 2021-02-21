@@ -115,144 +115,6 @@ int start_non_TLS_server(char *port) {
 }
 #endif
 
-/*
- * init_connection -- Initialize the Connection struct. 
- *
- */
-
-void init_connection(Connection *conn) {
-
-  mbedtls_net_init(&conn->fd);
-  mbedtls_ssl_init(&conn->ssl);
-  mbedtls_ssl_config_init(&conn->conf);
-  mbedtls_x509_crt_init(&conn->cert);
-  mbedtls_ctr_drbg_init(&conn->ctr_drbg);
-  mbedtls_entropy_init(&conn->entropy);
-
-  conn->cloud = TRUE; /* XXX - for now. */
-  
-}
-
-void free_connection(Connection *conn) {
-
-  mbedtls_net_free(&conn->fd);
-  mbedtls_x509_crt_free(&conn->cert);
-  mbedtls_ssl_free(&conn->ssl);
-  mbedtls_ssl_config_free(&conn->conf);
-  mbedtls_ctr_drbg_free(&conn->ctr_drbg);
-  mbedtls_entropy_free(&conn->entropy);
-}
-
-/*
- * connect_to_secure_server -- Connect to SSL/TLS server and return SSL context.
- *
- */
-
-int connect_to_secure_server(Connection *conn, const char *serverName,
-			     const char *portNumber, const char *certFile) {
-  
-  int ret;
-
-  init_connection(conn);
-
-  ret = mbedtls_ctr_drbg_seed(&conn->ctr_drbg, mbedtls_entropy_func,
-			      &conn->entropy, NULL, 0);
-  
-  if (ret != 0) {
-    log_error("RNG seeding failed: %d", ret);
-    goto done;
-  }
-
-#if defined(TEST_EMBED_CERT)
-  log_debug("Loading embed cert and key");
-
-  ret = mbedtls_x509_crt_parse(&conn->cert,
-			       (const unsigned char *) mbedtls_test_cas_pem,
-			       mbedtls_test_cas_pem_len );
-  if(ret != 0) {
-    log_error("Error loading cert!");
-    goto done;
-  }
-#else
-  ret = mbedtls_x509_crt_parse_file(&conn->cert, certFile);
-  if (ret != 0){
-    log_error("CRT parsing failed for file: %s with error: %d", certFile,
-	      ret);
-    goto done;
-  }
-#endif /* TEST_EMBED_CERT */
-
-  /* Start connecting to the server. */
-  log_debug("Connecting to SSL/TLS server at %s:%s", serverName, portNumber);
-  
-  ret = mbedtls_net_connect(&conn->fd, serverName, portNumber,
-			    MBEDTLS_NET_PROTO_TCP);
-
-  if (ret != 0) {
-    log_error("Failed connecting to server: %s at port: %s", serverName,
-	      portNumber);
-    goto done;
-  }
-  
-  ret = mbedtls_ssl_config_defaults(&conn->conf, MBEDTLS_SSL_IS_CLIENT,
-				    MBEDTLS_SSL_TRANSPORT_STREAM,
-				    MBEDTLS_SSL_PRESET_DEFAULT);
-  
-  if (ret != 0) {
-    log_error("Failed to setup SSL/TLS structure: %s", ret);
-    goto done;
-  }
-
-  mbedtls_ssl_conf_authmode(&conn->conf, MBEDTLS_SSL_VERIFY_OPTIONAL); /* XXX */
-  mbedtls_ssl_conf_ca_chain(&conn->conf, &conn->cert, NULL);
-  mbedtls_ssl_conf_rng(&conn->conf, mbedtls_ctr_drbg_random, &conn->ctr_drbg);
-  mbedtls_ssl_conf_dbg(&conn->conf, my_debug, stdout);
-
-  ret = mbedtls_ssl_setup(&conn->ssl, &conn->conf);
-  if (ret != 0) {
-    log_error("Failed to setup SSL");
-    goto done;
-  }
-
-  ret = mbedtls_ssl_set_hostname(&conn->ssl, serverName);
-  if (ret != 0) {
-    log_error("Failed to setup hostname");
-    goto done;
-  }
-
-  mbedtls_ssl_set_bio(&conn->ssl, &conn->fd, mbedtls_net_send,
-		      mbedtls_net_recv, NULL );
-  
-  /* Perform SSL/TLS handshake with the server. */
-  while ((ret = mbedtls_ssl_handshake(&conn->ssl)) != 0) {
-    if (ret != MBEDTLS_ERR_SSL_WANT_READ &&
-	ret != MBEDTLS_ERR_SSL_WANT_WRITE) {
-      log_error("Failed to handshake with server: %d", ret);
-      goto done;
-    }
-  }
-
-  log_debug("Handshake with %s:%d succesful", serverName, portNumber);
-  
-  /* Verify. */
-  ret = mbedtls_ssl_get_verify_result(&conn->ssl);
-  if (ret != 0) {
-    log_error("Cert verification failed!");
-    goto done;
-  }
-     
-  log_debug("Cert verified, all systems are go");
-
-  /* ssl will be use to/from read/write to the server. */
-
-  return TRUE;
-  
- done:
-    
-  free_connection(conn);
-  return FALSE;
-}
-
 /* 
  * Cloud-config-file. 
  *
@@ -362,7 +224,8 @@ int main (int argc, char **argv) {
   }
 
   if (process_config_file(configFile, configs) != TRUE) {
-    fprintf(stderr, "Error parsing config file: %s. Exiting ... \n", configFile);
+    fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
+	    configFile);
     exit(1);
   }
 
@@ -388,7 +251,8 @@ int main (int argc, char **argv) {
       goto exit;
     }
 
-    ret =  mbedtls_pk_parse_key(&key, (const unsigned char *) mbedtls_test_srv_key,
+    ret =  mbedtls_pk_parse_key(&key,
+				(const unsigned char *)mbedtls_test_srv_key,
 				mbedtls_test_srv_key_len, NULL, 0 );
     if(ret != 0) {
       log_error("Loading key file failed");

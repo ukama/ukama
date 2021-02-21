@@ -5,33 +5,11 @@
 #ifndef MESH_H
 #define MESH_H
 
-
-#include "mbedtls/config.h"
-#include "mbedtls/platform.h"
-
-#include <arpa/inet.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <getopt.h>
 
-/* mbed TLS includes */
-#include "mbedtls/entropy.h"
-#include "mbedtls/ctr_drbg.h"
-#include "mbedtls/net_sockets.h"
-#include "mbedtls/ssl.h"
-#include "mbedtls/x509.h"
-#include "mbedtls/debug.h"
-
-/* Others. */
 #include "log.h"
 #include "config.h"
+#include "ssl.h"
 
 #define DEF_FILENAME "cert.crt"
 #define DEF_CA_FILE  ""
@@ -51,18 +29,9 @@
 #define PROXY_FORWARD 0x02
 #define PROXY_REVERSE 0x04
 
-typedef struct {
-
-  int cloud; /* TRUE if current context is for cloud connection. */
-
-  mbedtls_net_context fd;
-  mbedtls_entropy_context entropy;
-  mbedtls_ctr_drbg_context ctr_drbg;
-  mbedtls_ssl_context ssl;
-  mbedtls_ssl_config conf;
-  mbedtls_x509_crt cert;
-}Connection;
-
+extern int connect_to_secure_server(Connection *conn, const char *serverName,
+				    const char *portNumber,
+				    const char *certFile);
 extern int process_config_file(char *fileName, Configs *config);
 
 #endif /* MESH_H */
