@@ -10,6 +10,7 @@
 #include "log.h"
 #include "config.h"
 #include "ssl.h"
+#include "cpool.h"
 
 #define DEF_FILENAME "cert.crt"
 #define DEF_CA_FILE  ""

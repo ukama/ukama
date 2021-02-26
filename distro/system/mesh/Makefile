@@ -7,7 +7,7 @@ MBEDTLS_LOCATION=third_party/mbedtls/
 TOML_LOCATION=third_party/tomlc99
 MBEDTLS_INCLUDE=third_party/mbedtls/include
 COMMON_INC=../common/inc
-LIBS=-lmbedtls -lmbedx509 -lmbedcrypto $(TOML_LOCATION)/libtoml.a
+LIBS=-lpthread -lmbedtls -lmbedx509 -lmbedcrypto $(TOML_LOCATION)/libtoml.a
 
 CC=gcc
 CFLAGS+=-c -Wall -I./inc -I$(MBEDTLS_INCLUDE) -I$(COMMON_INC)  \

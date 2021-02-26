@@ -154,6 +154,9 @@ int main (int argc, char **argv) {
 
   Connection cloud;
   Configs *configs = NULL;
+
+  /* CPool Threads. */
+  CPool **cpool = NULL;
   
   /* Initalize some values. */
   mbedtls_net_init(&tlsListenFd);
@@ -232,6 +235,8 @@ int main (int argc, char **argv) {
   if (configs->baseConfig->mode == MODE_SERVER) {
   
     log_debug("Starting mesh data plane ... [Server]");
+
+    /* Start connection thread pool. XXX */
 
 #if defined(TEST_EMBED_CERT)
     log_debug("Loading embed cert and key.");
