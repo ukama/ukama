@@ -15,33 +15,6 @@
  */
 
 /*
- * get_queues_pointers --
- *
- */
-void get_queue_pointers(CPool *cp, CPoolWork *ptr1, CPoolWork *ptr2,
-			pthread_mutex_t *mutex, int *stop, int *exit,
-			int *other) {
-  
-  if (cp->tddFlag == RX) {
-    ptr1 = cp->firstRX;
-    ptr2 = cp->lastRX;
-    mutex = &(cp->rxMutex);
-    stop = &(cp->stopRX);
-    exit = &(cp->exitRX);
-    other = &(cp->exitTX);
-  } else if (cp->tddFlag == TX) {
-    ptr1 = cp->firstTX;
-    ptr2 = cp->lastTX;
-    mutex = &(cp->txMutex);
-    stop = &(cp->stopTX);
-    exit = &(cp->exitTX);
-    other = &(cp->exitRX);
-  } else {
-    ptr1 = ptr2 = mutex = stop = exit = other = NULL;
-  }
-}
-
-/*
  * create_work --
  *
  */
@@ -131,16 +104,38 @@ static CPoolWork *get_work(CPool *cp) {
 static void *cpool_worker(void *arg) {
 
   CPool *cp = arg;
-  CPoolWork *work;
+  CPoolWork *work=NULL;
 
   CPoolWork *first, *last;
   pthread_mutex_t *mutex;
-  int *stop, *exit, *other;
+  pthread_cond_t  *cond;
+  int stop, exit, other;
 
-  /* Get the right pointers: TX or RX. */
-  get_queue_pointers(cp, first, last, mutex, stop, exit, other);
+  pid_t tID;
+
+  if (cp->tddFlag == RX) {
+    first  = cp->firstRX;
+    last  = cp->lastRX;
+    mutex = &(cp->rxMutex);
+    cond = &(cp->rxCondWait);
+    stop  = cp->stopRX;
+    exit  = cp->exitRX;
+    other = cp->exitTX;
+  } else if (cp->tddFlag == TX) {
+    first  = cp->firstTX;
+    last  = cp->lastTX;
+    mutex = &(cp->txMutex);
+    cond = &(cp->txCondWait);
+    stop  = cp->stopTX;
+    exit  = cp->exitTX;
+    other = cp->exitRX;
+  }
+
+  tID = syscall(__NR_gettid);
 
   while (TRUE) {
+
+    log_debug("TID-%d: Acquring lock", tID);
     
     pthread_mutex_lock(mutex);
     
@@ -148,26 +143,42 @@ static void *cpool_worker(void *arg) {
     if (exit) {
       break; 
     }
-    
-    /* There is no work in the queue. Release. */
-    if (first == NULL) {
+
+    /* Don't process any packet. */
+    if (stop) {
       pthread_mutex_unlock(mutex);
       continue;
+    }
+
+    /* There is no work in the queue, conditional wait */
+    if (first == NULL) {
+      log_debug("TID-%d: Waiting on work cond", tID);
+      pthread_cond_wait(cond, mutex);
     }
 
     /* We have some work to do. */
     work = get_work(cp);
 
     if (work != NULL) {
-      work->preFunc(work->preArgs);
-      work->postFunc(work->postArgs);
+      if (work->preFunc) {
+	work->preFunc(work->preArgs);
+      }
+      if (work->postFunc) {
+	work->postFunc(work->postArgs);
+      }
       destroy_work(work);
     }
-
+    
     pthread_mutex_unlock(mutex); /* pre/post func could delay the unlock. */
   }
-  
+
   /* Thread is done. */
+
+  /* check if we need to close the socket connection. */
+  if (other) {
+    /* Close the secure socket connection. */
+    //    close_connection(cp);
+  }
   
   return NULL;
 }
@@ -226,25 +237,21 @@ int add_work(CPool *cp, Packet data, thread_func_t pre, void *preArgs,
  * create_cpool -- create x-many connection pool threads and detach them.
  *
  */
-int create_cpool(CPool **cpArray, int num, int flag) {
+int create_cpool(pthread_t *tArray, CPool *cpArray, int num, int flag) {
 
   int i, count, ret;
-  pthread_t thread;
+  pthread_t *thread; // XXX should be arrayyyyyy.
   
   if (num == 0) {
-    return TRUE; /* Default do nothing. */
+    return FALSE; /* Default do nothing. */
   }
 
   /* Loop through. */
   for (i=0; i<num; i++) {
     CPool *cp;
 
-    cp = (CPool *)calloc(1, sizeof(CPool));
-    if (!cp) {
-      log_error("Error allocating memory: %d", sizeof(CPool));
-      goto cleanup;
-      return FALSE;
-    }
+    cp = &cpArray[i];
+    thread = &tArray[i];
 
     /* Initialize mutexs. */
     pthread_mutex_init(&(cp->txMutex), NULL);
@@ -252,6 +259,8 @@ int create_cpool(CPool **cpArray, int num, int flag) {
     pthread_mutex_init(&(cp->rxMutex), NULL);
     pthread_mutex_init(&(cp->rxDataFlag), NULL);
     pthread_mutex_init(&(cp->tddMutex), NULL);
+    pthread_cond_init(&(cp->txCondWait), NULL);
+    pthread_cond_init(&(cp->rxCondWait), NULL);
 
     cp->firstTX = NULL;
     cp->lastTX  = NULL;
@@ -269,16 +278,16 @@ int create_cpool(CPool **cpArray, int num, int flag) {
     } else {
       cp->tddFlag = flag;
     }
-    
+
     /* Now create the real thread and detach!. */
-    ret = pthread_create(&thread, NULL, cpool_worker, cp);
+    ret = pthread_create(thread, NULL, cpool_worker, cp);
     if (ret != 0) {
       log_error("Error creating Connector pool thread: %d with error: %d",
 		i, ret);
       goto cleanup;
     }
 
-    ret = pthread_detach(thread);
+    ret = pthread_detach(*thread);
     if (ret != 0) {
       log_error("Error creating Connector pool thread: %d with error: %d",
 		i, ret);
@@ -286,7 +295,6 @@ int create_cpool(CPool **cpArray, int num, int flag) {
     }
 
     count++;
-    cpArray[i] = cp;
   }
 
   log_debug("Successfully created %d connection thread pools", num);
@@ -294,11 +302,9 @@ int create_cpool(CPool **cpArray, int num, int flag) {
 
  cleanup:
   
-  /* Cleanup allocated memory, KILL THREADS XXXX and return. */
+  /* KILL THREADS XXXX and return. */
   for (i=0; i<count; i++) {
-    destroy_cpool(cpArray[i]);
-    free(cpArray[i]);
-    cpArray[i] = NULL;
+    destroy_cpool(&cpArray[i]);
   }
   
   return FALSE;
@@ -313,7 +319,7 @@ void destroy_cpool(CPool *cp) {
 
   CPoolWork *ptr1, *ptr2;
   pthread_mutex_t *mutex;
-  int *stop, *exit, *other;
+  int stop, exit, other;
   
   /* Destroying a connection thread means following steps:
    *
@@ -328,7 +334,21 @@ void destroy_cpool(CPool *cp) {
     return;
   }
 
-  get_queue_pointers(cp, ptr1, ptr2, mutex, stop, exit, other);
+  if (cp->tddFlag == RX) {
+    ptr1  = cp->firstRX;
+    ptr2  = cp->lastRX;
+    mutex = &(cp->rxMutex);
+    stop  = cp->stopRX;
+    exit  = cp->exitRX;
+    other = cp->exitTX;
+  } else if (cp->tddFlag == TX) {
+    ptr1  = cp->firstTX;
+    ptr2  = cp->lastTX;
+    mutex = &(cp->txMutex);
+    stop  = cp->stopTX;
+    exit  = cp->exitTX;
+    other = cp->exitRX;
+  }
       
   pthread_mutex_lock(mutex);
 
@@ -339,11 +359,16 @@ void destroy_cpool(CPool *cp) {
   }
 
   /* Set the flags. */
-  *stop = TRUE;
-  *exit = TRUE;
+  if (cp->tddFlag == RX) {
+    cp->stopRX = TRUE;
+    cp->exitRX = TRUE;
+  } else if (cp->tddFlag == TX) {
+    cp->stopTX = TRUE;
+    cp->exitTX = TRUE;
+  }
 
   /* If we are the last thread on this connection, close the socket. */
-  if (*other == TRUE) {
+  if (other == TRUE) {
     /* XXXX */
   }
   

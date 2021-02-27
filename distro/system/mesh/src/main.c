@@ -156,7 +156,8 @@ int main (int argc, char **argv) {
   Configs *configs = NULL;
 
   /* CPool Threads. */
-  CPool **cpool = NULL;
+  CPool *cpoolTX = NULL, *cpoolRX = NULL;
+  pthread_t *tArrayTX = NULL, *tArrayRX = NULL;
   
   /* Initalize some values. */
   mbedtls_net_init(&tlsListenFd);
@@ -233,10 +234,30 @@ int main (int argc, char **argv) {
   }
 
   if (configs->baseConfig->mode == MODE_SERVER) {
-  
+
+    int max = configs->baseConfig->maxRemoteClients;
+
     log_debug("Starting mesh data plane ... [Server]");
 
-    /* Start connection thread pool. XXX */
+    /* Start connection TX and RX connection threads. */
+    cpoolTX = (CPool *)calloc(max, sizeof(CPool));
+    cpoolRX = (CPool *)calloc(max, sizeof(CPool));
+
+    tArrayTX  = (pthread_t *)calloc(max, sizeof(pthread_t));
+    tArrayRX  = (pthread_t *)calloc(max, sizeof(pthread_t));
+
+    ret = create_cpool(tArrayTX, cpoolTX, max, TX);
+    if (ret == FALSE) {
+      log_error("Error creating %d TX threads. Exiting.", max);
+      exit(1);
+    }
+
+    ret = create_cpool(tArrayRX, cpoolRX, max, RX);
+    if (ret == FALSE) {
+      log_error("Error creating %d RX threads. Exiting.", max);
+      destroy_cpool(cpoolTX);
+      exit(1);
+    }
 
 #if defined(TEST_EMBED_CERT)
     log_debug("Loading embed cert and key.");

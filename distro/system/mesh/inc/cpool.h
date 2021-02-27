@@ -5,6 +5,9 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 
 #include "ssl.h"
 
@@ -17,8 +20,8 @@
 #define FALSE 0
 #define TRUE  1
 
-typedef void (*thread_func_t)(void *arg);
 typedef char* Packet;
+typedef void (*thread_func_t)(void *arg);
 
 /*
  * Link list of object connection thread waiting to process.
@@ -48,6 +51,7 @@ typedef struct cpool_t {
   CPoolWork       *lastTX;    /* Pointer to last item in the TX queue. */
   pthread_mutex_t txMutex;    /* Mutex for insert and remove */
   pthread_mutex_t txDataFlag; /* Flag to identify there are data packets. */
+  pthread_cond_t  txCondWait; /* Cond to signal when there is work. */
   int             stopTX;     /* Stop transmiting the packets. */
   int             exitTX;     /* if TX thread is to exit or exited. */
   
@@ -56,6 +60,7 @@ typedef struct cpool_t {
   CPoolWork       *lastRX;    /* Pointer to last item in the RX queue. */
   pthread_mutex_t rxMutex;    /* Mutex for insert and remove */
   pthread_mutex_t rxDataFlag; /* Flag to identify there are data packets. */
+  pthread_cond_t  rxCondWait; /* Cond to signal when there is work. */
   int             stopRX;     /* Stop receiving of data packets. */
   int             exitRX;     /* if RX thread is to exit or exited. */
 
