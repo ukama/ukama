@@ -854,7 +854,6 @@ void print_usage(void)
     fprintf(stdout, "Usage: lwm2mclient [OPTION]\r\n");
     fprintf(stdout, "Launch a LWM2M client.\r\n");
     fprintf(stdout, "Options:\r\n");
-    fprintf(stdout, "  -n NAME\tSet the endpoint name of the Client. Default: testlwm2mclient\r\n");
     fprintf(stdout, "  -l PORT\tSet the local UDP port of the Client. Default: 56830\r\n");
     fprintf(stdout, "  -h HOST\tSet the hostname of the LWM2M Server to connect to. Default: localhost\r\n");
     fprintf(stdout, "  -p PORT\tSet the port of the LWM2M Server to connect to. Default: "LWM2M_STANDARD_PORT_STR"\r\n");
@@ -878,7 +877,7 @@ int main(int argc, char *argv[])
     const char * localPort = "56830";
     const char * server = NULL;
     const char * serverPort = LWM2M_STANDARD_PORT_STR;
-    char * name = "testlwm2mclient";
+    char name[64] = {'\0'};
     int lifetime = 300;
     int batterylevelchanging = 0;
     time_t reboot_time = 0;
@@ -984,15 +983,6 @@ int main(int argc, char *argv[])
             psk = argv[opt];
             break;
 #endif
-        case 'n':
-            opt++;
-            if (opt >= argc)
-            {
-                print_usage();
-                return 0;
-            }
-            name = argv[opt];
-            break;
         case 'l':
             opt++;
             if (opt >= argc)
@@ -1151,7 +1141,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    objArray[8] = get_unit_info_object();
+    objArray[8] = get_unit_info_object(name);
     if (NULL == objArray[8])
     {
         fprintf(stderr, "Failed to create unit info object\r\n");

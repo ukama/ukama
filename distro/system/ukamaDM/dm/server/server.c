@@ -74,6 +74,7 @@
 #include "commandline.h"
 #include "connection.h"
 #include "liblwm2m.h"
+#include "ifhandler.h"
 
 #define MAX_PACKET_SIZE 1024
 
@@ -177,7 +178,7 @@ static void prv_dump_client(lwm2m_client_t * targetP)
 }
 
 static void prv_output_clients(char * buffer,
-                               void * user_data)
+                               void * user_data, void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     lwm2m_client_t * targetP;
@@ -218,6 +219,50 @@ static int prv_read_id(char * buffer,
     return nb;
 }
 
+static int prv_read_name(char * buffer,
+		char * name)
+{
+	int length;
+	int ret = 0;
+	// find end of command name
+	length = 0;
+	while (buffer[length] != 0 && !isspace(buffer[length]&0xFF))
+		length++;
+
+	if (length) {
+		strncpy(name, buffer, length);
+		ret = 1;
+	}
+	return ret;
+}
+
+/* Convert client name to Id */
+static int prv_name_to_id(char *name, void *user_data, uint16_t* idP) {
+	int ret = 0;
+	lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
+	lwm2m_client_t * targetP;
+
+	targetP = lwm2mH->clientList;
+
+	if (targetP == NULL)
+	{
+		fprintf(stdout, "No client.\r\n");
+		return ret;
+	}
+
+	// Loop through the list
+	for (targetP = lwm2mH->clientList ; targetP != NULL ; targetP = targetP->next)
+	{
+		if ( (strcmp(name, targetP->name)) == 0) {
+			*idP = targetP->internalID;
+			ret = 1;
+			break;
+		}
+	}
+
+	return ret;
+}
+
 static void prv_printUri(const lwm2m_uri_t * uriP)
 {
     fprintf(stdout, "/%d", uriP->objectId);
@@ -253,6 +298,11 @@ static void prv_result_callback(uint16_t clientID,
 
     fprintf(stdout, "\r\n> ");
     fflush(stdout);
+    if (userData) {
+    	uint32_t reqid = *(uint32_t*)userData;
+    	response_handler(reqid, status, format, data, dataLength);
+    }
+
 }
 
 static void prv_notify_callback(uint16_t clientID,
@@ -273,17 +323,22 @@ static void prv_notify_callback(uint16_t clientID,
     fflush(stdout);
 }
 
-static void prv_read_client(char * buffer,
-                            void * user_data)
+static uint32_t prv_read_client(char * buffer,
+                            void * user_data,
+							void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+    int ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -293,33 +348,40 @@ static void prv_read_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_read(lwm2mH, clientId, &uri, prv_result_callback, NULL);
+    result = lwm2m_dm_read(lwm2mH, clientId, &uri, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_discover_client(char * buffer,
-                                void * user_data)
+static uint32_t prv_discover_client(char * buffer,
+                                void * user_data,
+								void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -329,33 +391,40 @@ static void prv_discover_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_discover(lwm2mH, clientId, &uri, prv_result_callback, NULL);
+    result = lwm2m_dm_discover(lwm2mH, clientId, &uri, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_write_client(char * buffer,
-                             void * user_data)
+static uint32_t prv_write_client(char * buffer,
+                             void * user_data,
+							 void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -368,25 +437,28 @@ static void prv_write_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_write(lwm2mH, clientId, &uri, LWM2M_CONTENT_TEXT, (uint8_t *)buffer, end - buffer, prv_result_callback, NULL);
+    result = lwm2m_dm_write(lwm2mH, clientId, &uri, LWM2M_CONTENT_TEXT, (uint8_t *)buffer, end - buffer, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
 
-static void prv_time_client(char * buffer,
-                            void * user_data)
+static uint32_t prv_time_client(char * buffer,
+                            void * user_data,
+							void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
@@ -396,9 +468,13 @@ static void prv_time_client(char * buffer,
     lwm2m_attributes_t attr;
     int nb;
     int value;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -427,25 +503,28 @@ static void prv_time_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_write_attributes(lwm2mH, clientId, &uri, &attr, prv_result_callback, NULL);
+    result = lwm2m_dm_write_attributes(lwm2mH, clientId, &uri, &attr, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
 
-static void prv_attr_client(char * buffer,
-                            void * user_data)
+static uint32_t prv_attr_client(char * buffer,
+                            void * user_data,
+							void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
@@ -455,9 +534,13 @@ static void prv_attr_client(char * buffer,
     lwm2m_attributes_t attr;
     int nb;
     float value;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -494,25 +577,29 @@ static void prv_attr_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_write_attributes(lwm2mH, clientId, &uri, &attr, prv_result_callback, NULL);
+    result = lwm2m_dm_write_attributes(lwm2mH, clientId, &uri, &attr, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
+
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
 
-static void prv_clear_client(char * buffer,
-                             void * user_data)
+static uint32_t prv_clear_client(char * buffer,
+                             void * user_data,
+							 void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
@@ -520,9 +607,14 @@ static void prv_clear_client(char * buffer,
     char * end = NULL;
     int result;
     lwm2m_attributes_t attr;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
+
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -541,29 +633,36 @@ static void prv_clear_client(char * buffer,
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
 
-static void prv_exec_client(char * buffer,
-                            void * user_data)
+static uint32_t prv_exec_client(char * buffer,
+                            void * user_data,
+							void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char * end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -576,31 +675,34 @@ static void prv_exec_client(char * buffer,
 
     if (buffer[0] == 0)
     {
-        result = lwm2m_dm_execute(lwm2mH, clientId, &uri, 0, NULL, 0, prv_result_callback, NULL);
+        result = lwm2m_dm_execute(lwm2mH, clientId, &uri, 0, NULL, 0, prv_result_callback, ctx);
     }
     else
     {
         if (!check_end_of_args(end)) goto syntax_error;
 
-        result = lwm2m_dm_execute(lwm2mH, clientId, &uri, LWM2M_CONTENT_TEXT, (uint8_t *)buffer, end - buffer, prv_result_callback, NULL);
+        result = lwm2m_dm_execute(lwm2mH, clientId, &uri, LWM2M_CONTENT_TEXT, (uint8_t *)buffer, end - buffer, prv_result_callback, ctx);
     }
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_create_client(char * buffer,
-                              void * user_data)
+static uint32_t  prv_create_client(char * buffer,
+                              void * user_data,
+							  void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
@@ -611,10 +713,13 @@ static void prv_create_client(char * buffer,
     uint8_t * temp_buffer = NULL;
     int temp_length = 0;
     lwm2m_media_type_t format = LWM2M_CONTENT_TEXT;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    //Get Client ID
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     //Get Uri
     buffer = get_next_arg(buffer, &end);
@@ -640,51 +745,59 @@ static void prv_create_client(char * buffer,
         if (1 != sscanf(buffer, "%"PRId64, &value))
         {
             fprintf(stdout, "Invalid value !");
-            return;
+            return ret;
         }
 
         dataP = lwm2m_data_new(1);
         if (dataP == NULL)
         {
             fprintf(stdout, "Allocation error !");
-            return;
+            return ret;
         }
         lwm2m_data_encode_int(value, dataP);
         dataP->id = 1;
 
         format = LWM2M_CONTENT_TLV;
+        //format = LWM2M_CONTENT_JSON;
         temp_length = lwm2m_data_serialize(NULL, 1, dataP, &format, &temp_buffer);
     }
    /* End Client dependent part*/
 
     //Create
-    result = lwm2m_dm_create(lwm2mH, clientId, &uri, format, temp_buffer, temp_length, prv_result_callback, NULL);
+    result = lwm2m_dm_create(lwm2mH, clientId, &uri, format, temp_buffer, temp_length, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_delete_client(char * buffer,
-                              void * user_data)
+static uint32_t prv_delete_client(char * buffer,
+                              void * user_data,
+							  void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -694,33 +807,40 @@ static void prv_delete_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_dm_delete(lwm2mH, clientId, &uri, prv_result_callback, NULL);
+    result = lwm2m_dm_delete(lwm2mH, clientId, &uri, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_observe_client(char * buffer,
-                               void * user_data)
+static uint32_t prv_observe_client(char * buffer,
+                               void * user_data,
+							   void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -730,33 +850,40 @@ static void prv_observe_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_observe(lwm2mH, clientId, &uri, prv_notify_callback, NULL);
+    result = lwm2m_observe(lwm2mH, clientId, &uri, prv_notify_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
-static void prv_cancel_client(char * buffer,
-                              void * user_data)
+static uint32_t prv_cancel_client(char * buffer,
+                              void * user_data,
+							  void *ctx)
 {
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     uint16_t clientId;
     lwm2m_uri_t uri;
     char* end = NULL;
     int result;
+    uint32_t ret = COAP_500_INTERNAL_SERVER_ERROR;
+    char name[64]= {"\0"};
+    result = prv_read_name(buffer, name);
+    if (result == 0) goto syntax_error;
 
-    result = prv_read_id(buffer, &clientId);
-    if (result != 1) goto syntax_error;
+    result = prv_name_to_id(name, user_data, &clientId);
+    if (result == 0) goto syntax_error;
 
     buffer = get_next_arg(buffer, &end);
     if (buffer[0] == 0) goto syntax_error;
@@ -766,20 +893,23 @@ static void prv_cancel_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_observe_cancel(lwm2mH, clientId, &uri, prv_result_callback, NULL);
+    result = lwm2m_observe_cancel(lwm2mH, clientId, &uri, prv_result_callback, ctx);
 
     if (result == 0)
     {
         fprintf(stdout, "OK");
+        ret = 0;
     }
     else
     {
         prv_print_error(result);
+
     }
-    return;
+    return ret;
 
 syntax_error:
     fprintf(stdout, "Syntax error !");
+    return ret;
 }
 
 static void prv_monitor_callback(uint16_t clientID,
@@ -846,21 +976,7 @@ void print_usage(void)
     fprintf(stdout, "\r\n");
 }
 
-
-int main(int argc, char *argv[])
-{
-    int sock;
-    fd_set readfds;
-    struct timeval tv;
-    int result;
-    lwm2m_context_t * lwm2mH = NULL;
-    int i;
-    connection_t * connList = NULL;
-    int addressFamily = AF_INET6;
-    int opt;
-    const char * localPort = LWM2M_STANDARD_PORT_STR;
-
-    command_desc_t commands[] =
+ command_desc_t commands[] =
     {
             {"list", "List registered clients.", NULL, prv_output_clients, NULL},
             {"read", "Read from a client.", " read CLIENT# URI\r\n"
@@ -920,6 +1036,20 @@ int main(int argc, char *argv[])
             COMMAND_END_LIST
     };
 
+
+int main(int argc, char *argv[])
+{
+    int sock;
+    fd_set readfds;
+    struct timeval tv;
+    int result;
+    lwm2m_context_t * lwm2mH = NULL;
+    int i;
+    connection_t * connList = NULL;
+    int addressFamily = AF_INET6;
+    int opt;
+    const char * localPort = LWM2M_STANDARD_PORT_STR;
+
     opt = 1;
     while (opt < argc)
     {
@@ -966,6 +1096,12 @@ int main(int argc, char *argv[])
     }
 
     signal(SIGINT, handle_sigint);
+
+    /*
+     * Server started Aysnc messages from Server
+     */
+    pthread_t conn_id = connection_handler_start((void*) lwm2mH);
+    fprintf(stdout, "Connection Handler server started with thread id %ld.\r\n", conn_id);
 
     for (i = 0 ; commands[i].name != NULL ; i++)
     {
@@ -1082,6 +1218,7 @@ int main(int argc, char *argv[])
     close(sock);
     connection_free(connList);
 
+    connection_handler_stop(conn_id);
 #ifdef MEMORY_TRACE
     if (g_quit == 1)
     {
@@ -1090,4 +1227,14 @@ int main(int argc, char *argv[])
 #endif
 
     return 0;
+}
+
+uint32_t handle_server_req(RequestMsg* req) {
+	  int ret = COAP_404_NOT_FOUND;
+#ifdef DEBUG_GATEWAYIF
+	  fprintf(stdout," Received command for id %llu sock %d length %d msg: %s\r\n", req->reqid, req->sock, req->length, req->msg);
+	  fflush(stdout);
+#endif
+	  ret = handle_request_command(commands, req->msg, &req->reqid);
+	  return ret;
 }

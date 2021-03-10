@@ -341,7 +341,7 @@ unit_info_t * create_unit_info_instance(uint8_t inst)
 	return unitInfoInstance;
 }
 
-lwm2m_object_t * get_unit_info_object()
+lwm2m_object_t * get_unit_info_object(char *name)
 {
 	lwm2m_object_t * unitInfoObj = create_unit_info_object();
 	if (unitInfoObj == NULL)
@@ -359,6 +359,9 @@ lwm2m_object_t * get_unit_info_object()
 		return NULL;
 	}
 
+	//Copy the UUID for the device
+	//Max length can't be more than 64 defined in ubsp lib.
+	memcpy(name, unitInfoInstance->data.uuid, 64);
 	/* add the module info instance to the module info object. */
 	unitInfoObj->instanceList = LWM2M_LIST_ADD(unitInfoObj->instanceList, unitInfoInstance);
 
