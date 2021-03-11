@@ -845,6 +845,7 @@ typedef struct
     uint16_t                client;
     lwm2m_uri_t             uri;
     lwm2m_result_callback_t callback;
+    lwm2m_notify_callback_t notifycb;
     void *                  userData;
     lwm2m_context_t *       contextP;
 } observation_data_t;
@@ -951,6 +952,7 @@ static void prv_obsRequestCallback(lwm2m_context_t * contextP,
             // give the user chance to free previous observation userData
             // indicator: COAP_202_DELETED and (Length ==0)
             observationP->callback(observationP->clientP->internalID,
+            		observationP->clientP->name,
                     &observationP->uri,
                     COAP_202_DELETED,
                     0, NULL, 0,
@@ -960,7 +962,7 @@ static void prv_obsRequestCallback(lwm2m_context_t * contextP,
         observationP->id = observationData->id;
         observationP->clientP = clientP;
 
-        observationP->callback = observationData->callback;
+        observationP->callback = observationData->notifycb;
         observationP->userData = observationData->userData;
         observationP->status = STATE_REGISTERED;
         memcpy(&observationP->uri, uriP, sizeof(lwm2m_uri_t));
@@ -1038,6 +1040,7 @@ int lwm2m_observe(lwm2m_context_t * contextP,
         uint16_t clientID,
         lwm2m_uri_t * uriP,
         lwm2m_result_callback_t callback,
+		lwm2m_notify_callback_t notifycb,
         void * userData)
 {
     lwm2m_client_t * clientP;
@@ -1075,6 +1078,7 @@ int lwm2m_observe(lwm2m_context_t * contextP,
     // don't hold refer to the clientP
     observationData->client = clientP->internalID;
     observationData->callback = callback;
+    observationData->notifycb = notifycb;
     observationData->userData = userData;
     observationData->contextP = contextP;
 
@@ -1226,15 +1230,16 @@ bool observe_handleNotify(lwm2m_context_t * contextP,
     }
     else
     {
-        if (message->type == COAP_TYPE_CON ) {
-            coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
-            message_send(contextP, response, fromSessionH);
-        }
-        observationP->callback(clientID,
-                               &observationP->uri,
-                               (int)count,
-                               message->content_type, message->payload, message->payload_len,
-                               observationP->userData);
+    	if (message->type == COAP_TYPE_CON ) {
+    		coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
+    		message_send(contextP, response, fromSessionH);
+    	}
+    	observationP->callback(clientID,
+    			clientP->name,
+				&observationP->uri,
+				(int)count,
+				message->content_type, message->payload, message->payload_len,
+				observationP->userData);
     }
     return true;
 }

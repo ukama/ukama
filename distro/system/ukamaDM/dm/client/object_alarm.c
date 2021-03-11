@@ -138,7 +138,11 @@ static int read_alarm_inst_data(uint16_t instanceId, alarm_info_t** targetP) {
 	(*targetP)->data.srsrcid = data->srsrcid;
 	(*targetP)->data.sensorvalue = data->sensorvalue;
 	(*targetP)->data.instanceId = data->instanceId;
-	strcpy((*targetP)->data.disc, data->disc);
+	if(!strcmp(data->disc,"")){
+		strcpy((*targetP)->data.disc, "No Data.");
+	} else {
+		strcpy((*targetP)->data.disc, data->disc);
+	}
 	strcpy((*targetP)->data.sensorunits, data->sensorunits);
 	strcpy((*targetP)->data.applicationtype, data->applicationtype);
 
@@ -204,6 +208,8 @@ static uint8_t prv_alarm_info_read(uint16_t instanceId,
 		i++;
 	} while (i < *numDataP && result == COAP_205_CONTENT);
 
+	fprintf(stdout, "Return for reading alarm value is %d\r\n", result);
+	fflush(stdout);
 	return result;
 }
 
@@ -540,7 +546,11 @@ int alarm_change(void * pdata,
 		(targetP)->data.srsrcid = data->srsrcid;
 		(targetP)->data.sensorvalue = data->sensorvalue;
 		(targetP)->data.instanceId = data->instanceId;
-		strcpy((targetP)->data.disc, data->disc);
+		if(!strcmp(data->disc,"")){
+			strcpy((targetP)->data.disc, "No Data.");
+		} else {
+			strcpy((targetP)->data.disc, data->disc);
+		}
 		strcpy((targetP)->data.sensorunits, data->sensorunits);
 		strcpy((targetP)->data.applicationtype, data->applicationtype);
 	} else {

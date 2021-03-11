@@ -75,8 +75,16 @@
 #include "connection.h"
 #include "liblwm2m.h"
 #include "ifhandler.h"
+#include "notification.h"
+#include "request.h"
 
 #define MAX_PACKET_SIZE 1024
+
+#ifdef LWM2M_VERSION_1_0
+#define URI_MAX_STRING_LEN    18      // /65535/65535/65535
+#else
+#define URI_MAX_STRING_LEN    24      // /65535/65535/65535/65535
+#endif
 
 static int g_quit = 0;
 
@@ -263,6 +271,33 @@ static int prv_name_to_id(char *name, void *user_data, uint16_t* idP) {
 	return ret;
 }
 
+/* Convert client Id to Name */
+static int prv_id_to_name(char *name, void *user_data, uint16_t* idP) {
+	int ret = 0;
+	lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
+	lwm2m_client_t * targetP;
+
+	targetP = lwm2mH->clientList;
+
+	if (targetP == NULL)
+	{
+		fprintf(stdout, "No client.\r\n");
+		return ret;
+	}
+
+	// Loop through the list
+	for (targetP = lwm2mH->clientList ; targetP != NULL ; targetP = targetP->next)
+	{
+		if ( *idP == targetP->internalID) {
+			strcpy(name, targetP->name);
+			ret = 1;
+			break;
+		}
+	}
+
+	return ret;
+}
+
 static void prv_printUri(const lwm2m_uri_t * uriP)
 {
     fprintf(stdout, "/%d", uriP->objectId);
@@ -298,6 +333,8 @@ static void prv_result_callback(uint16_t clientID,
 
     fprintf(stdout, "\r\n> ");
     fflush(stdout);
+
+    /* Sending response to LwM2M Gateway */
     if (userData) {
     	uint32_t reqid = *(uint32_t*)userData;
     	response_handler(reqid, status, format, data, dataLength);
@@ -313,7 +350,7 @@ static void prv_notify_callback(uint16_t clientID,
                                 int dataLength,
                                 void * userData)
 {
-    fprintf(stdout, "\r\nNotify from client #%d ", clientID);
+    fprintf(stdout, "\r\n Observe response from client #%d ", clientID);
     prv_printUri(uriP);
     fprintf(stdout, " number %d\r\n", count);
 
@@ -321,6 +358,54 @@ static void prv_notify_callback(uint16_t clientID,
 
     fprintf(stdout, "\r\n> ");
     fflush(stdout);
+
+    /* Sending response to LwM2M Gateway */
+    if (userData) {
+    	uint32_t reqid = *(uint32_t*)userData;
+    	response_handler(reqid, COAP_204_CHANGED, format, data, dataLength);
+    }
+
+}
+
+static void prv_notify_cb(uint16_t clientID,
+								char* name,
+                                lwm2m_uri_t * uriP,
+                                int count,
+                                lwm2m_media_type_t format,
+                                uint8_t * data,
+                                int dataLength,
+                                void * userData)
+{
+    fprintf(stdout, "\r\n Notify from client #%d ", clientID);
+    prv_printUri(uriP);
+    fprintf(stdout, " number %d\r\n", count);
+
+    output_data(stdout, format, data, dataLength, 1);
+
+    fprintf(stdout, "\r\n> ");
+    fflush(stdout);
+
+    /* URI to String */
+    uint8_t baseUriStr[URI_MAX_STRING_LEN] = {'\0'};
+    int baseUriLen = uri_toString(uriP, baseUriStr, URI_MAX_STRING_LEN, NULL);
+    if (baseUriLen < 0){
+        fprintf(stdout, "Failed to build URI for notification.\r\n> ");
+        fflush(stdout);
+    	return ;
+    }
+
+    /* Get UUID for client ID */
+    char uuid[32] = {'\0'};
+    //TODO: Pass the lwm2m context as userData
+    if (!prv_id_to_name(&uuid, userData, clientID)) {
+    	fprintf(stdout, "Failed to get uuid for cleint id %d notification.\r\n> ", clientID);
+    	fflush(stdout);
+    	return;
+    }
+
+    /* Sending notification to gateway */
+    notify_handler(uuid, baseUriStr, count, format, data, dataLength);
+
 }
 
 static uint32_t prv_read_client(char * buffer,
@@ -850,7 +935,7 @@ static uint32_t prv_observe_client(char * buffer,
 
     if (!check_end_of_args(end)) goto syntax_error;
 
-    result = lwm2m_observe(lwm2mH, clientId, &uri, prv_notify_callback, ctx);
+    result = lwm2m_observe(lwm2mH, clientId, &uri, prv_notify_callback, prv_notify_cb, ctx);
 
     if (result == 0)
     {

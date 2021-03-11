@@ -10,22 +10,19 @@
 
 #include <stdint.h>
 
-typedef struct {
-	uint32_t reqid;
-	int sock;
-	uint32_t length;
-	char* msg;
-} RequestMsg;
+#define ATTR_MAX_LEN 	(32)
+#define MAX_LENGTH 		4096
+#define LWM2M_GW_ADDRESS "127.0.0.0"
+#define LWM2M_GW_PORT 3100
+#define STATUS_OK 200
+#define SADDR struct sockaddr
 
 
-typedef struct {
-	uint32_t reqid;
-	uint32_t status;
-	uint32_t format;
-	uint32_t length;
-	uint8_t * msg; // DATA_OFFSET depends on this structure
-}ResponseMsg;
+int connection_handler_create_sock();
+int connection_handler_sock_connect(int sockfd, char* addr, uint32_t port);
+void connection_handler_close_connection(int sockfd);
+void connection_handler_stop(pthread_t thread);
 
-int response_handler(uint32_t reqid, uint32_t status, uint32_t format, uint8_t* data, int length) ;
+pthread_t connection_handler_start(void *data);
 
 #endif /* SERVIFACE_IFHANDLER_H_ */
