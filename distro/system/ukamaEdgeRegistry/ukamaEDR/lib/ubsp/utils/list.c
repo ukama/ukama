@@ -249,7 +249,7 @@ void list_for_each(ListInfo *list, listIterator iterator) {
         return;
     }
     ListNode *node = list->head;
-    uint8_t result = true;
+    int result = true;
     while (node != NULL && result) {
         result = iterator(node->data);
         node = node->next;
