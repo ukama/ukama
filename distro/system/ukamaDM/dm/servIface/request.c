@@ -22,7 +22,7 @@
 #include "headers/errorcode.h"
 
 #define DATA_OFFSET  (4*sizeof(uint32_t))
-
+#define DEBUG_GATEWAYIF
 /* For storing incoming request */
 static ListInfo req_list;
 
@@ -107,7 +107,7 @@ static void *copy_req_node(void *pdata) {
 /* Add a new request to list */
 static void add_request(RequestMsg* msg) {
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Adding Request id %llu to list.\r\n", msg->reqid);
+	fprintf(stdout, "IFHANDLER:: Adding Request id %llu to list.\r\n", msg->reqid);
 	fflush(stdout);
 #endif
 	list_append(&req_list, msg);
@@ -118,7 +118,7 @@ static void remove_request(uint32_t id) {
 	RequestMsg msg;
 	msg.reqid = id;
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Removing Request id %llu to list.\r\n", msg.reqid);
+	fprintf(stdout, "IFHANDLER:: Removing Request id %llu to list.\r\n", msg.reqid);
 	fflush(stdout);
 #endif
 	/* Remove element */
@@ -130,7 +130,7 @@ static RequestMsg* search_req_id(uint32_t id) {
 	RequestMsg msg;
 	msg.reqid = id;
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Searching Request id %llu to list.\r\n", msg.reqid);
+	fprintf(stdout, "IFHANDLER:: Searching Request id %llu to list.\r\n", msg.reqid);
 	fflush(stdout);
 #endif
 	return list_search(&req_list, &msg);
@@ -141,9 +141,9 @@ static RequestMsg* search_req_id(uint32_t id) {
 static void print_req_node(void* data) {
 	if( data) {
 		RequestMsg* msg = data;
-		fprintf(stdout,"Request ID is: %llu\r\n", msg->reqid);
-		fprintf(stdout,"Request message Length: %d\r\n", msg->length);
-		fprintf(stdout,"Request message: %s\r\n", msg->msg);
+		fprintf(stdout,"IFHANDLER:: Request ID is: %llu\r\n", msg->reqid);
+		fprintf(stdout,"IFHANDLER:: Request message Length: %d\r\n", msg->length);
+		fprintf(stdout,"IFHANDLER:: Request message: %s\r\n", msg->msg);
 		fflush(stdout);
 	}
 }
@@ -152,7 +152,7 @@ static void print_req_node(void* data) {
 static void print_req_list() {
 	fprintf(stdout,
 			"********************************************************************************\r\n");
-	fprintf(stdout, "Length of the request list %llu.", req_list.logicalLength);
+	fprintf(stdout, "IFHANDLER:: Length of the request list %llu.", req_list.logicalLength);
 	fprintf(stdout,
 			"****************************** Request list *************************************\r\n");
 	fflush(stdout);
@@ -163,7 +163,7 @@ static void print_req_list() {
 				"********************************************************************************\r\n");
 		fflush(stdout);
 	} else {
-		fprintf(stdout,"Request list is empty.\r\n");
+		fprintf(stdout,"IFHANDLER:: Request list is empty.\r\n");
 		fflush(stdout);
 	}
 }
@@ -225,7 +225,7 @@ static int send_response(ResponseMsg* resp) {
 	/* Get socket */
 	send_sock = get_response_socket(resp->reqid);
 	if (send_sock < 0) {
-		fprintf(stdout, "Failed to respond for %llu request Id and status %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, send_sock);
+		fprintf(stdout, "IFHANDLER:: Failed to respond for %llu request Id and status %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, send_sock);
 		fflush(stdout);
 		goto cleanup;
 	}
@@ -241,15 +241,15 @@ static int send_response(ResponseMsg* resp) {
 		/* Post response */
 		int post = send(send_sock, respArray, length, 0);
 		if (post>0) {
-			fprintf(stdout, "Response message for %llu request Id with status %d type %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, resp->format, send_sock);
+			fprintf(stdout, "IFHANDLER:: Response message for %llu request Id with status %d type %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, resp->format, send_sock);
 			fflush(stdout);
 		} else {
-			fprintf(stdout, "Failed to respond for %llu request Id and status %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, send_sock);
+			fprintf(stdout, "IFHANDLER:: Failed to respond for %llu request Id and status %d sent over sock %d sent.\r\n", resp->reqid,  resp->status, send_sock);
 			fflush(stdout);
 		}
 
 	} else {
-		fprintf(stdout, "No data available to respond for %llu request Id.\r\n", resp->reqid);
+		fprintf(stdout, "IFHANDLER:: No data available to respond for %llu request Id.\r\n", resp->reqid);
 		fflush(stdout);
 	}
 
@@ -273,7 +273,7 @@ void serve_request(char* msg, int sock) {
 	RequestMsg* rmsg = deserailize_request(msg);
 	if (rmsg) {
 		rmsg->sock = sock;
-		fprintf(stdout, "Received request message id %llu, socket %d, length %d message %s.\r\n",
+		fprintf(stdout, "IFHANDLER:: Received request message id %llu, socket %d, length %d message %s.\r\n",
 				rmsg->reqid, rmsg->sock, rmsg->length, rmsg->msg);
 		fflush(stdout);
 
@@ -290,7 +290,7 @@ void serve_request(char* msg, int sock) {
 
 	/* If got error than it would have non null values */
 	if (ret) {
-		fprintf(stdout, "Received request message is not parsed properly error %d.", ret);
+		fprintf(stdout, "IFHANDLER:: Received request message is not parsed properly error %d.", ret);
 		fflush(stdout);
 		response_handler(rmsg->reqid, ret, 0, NULL, 0);
 	}

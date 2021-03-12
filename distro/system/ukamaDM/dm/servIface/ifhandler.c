@@ -60,7 +60,7 @@ int connection_handler_sock_connect(int sockfd, char* addr, uint32_t port) {
     servaddr.sin_port = htons(port);
 
     /* connect the client socket to server socket */
-    if (connect(sockfd, (SADDR *)&servaddr, sizeof(servaddr)) != 0) {
+    if (connect(sockfd, (SADDR *)&servaddr, sizeof(servaddr)) < 0) {
         ret = -1;
         fprintf(stderr,
             "Err(%d): IFHandler:: Connection with the server failed...\r\n",
@@ -79,7 +79,7 @@ void *request_handler(void *socket_desc)
   int n;
 
   char req_arr[CLIENT_REQ_MSG_LEN];
-  fprintf(stdout, "Waiting for incoming message Request handler thread id %lld\r\n", pthread_self());
+  fprintf(stdout, "IFHANDLER:: Waiting for incoming message Request handler thread id %lld\r\n", pthread_self());
   fflush(stdout);
   while ((n = recv(sock, req_arr, CLIENT_REQ_MSG_LEN, 0)) > 0)
   {
@@ -90,7 +90,7 @@ void *request_handler(void *socket_desc)
 	  serve_request(req_arr, sock);
   }
 
-  fprintf(stdout, "Exiting thread id %lld\r\n", pthread_self());
+  fprintf(stdout, "IFHANDLER:: Exiting thread id %lld\r\n", pthread_self());
   fflush(stdout);
   pthread_exit(NULL);
 }
@@ -113,7 +113,7 @@ void *connection_handler()
 
 	int flag = 1;
 	if (-1 == setsockopt(socket_desc, SOL_SOCKET, (SO_REUSEADDR|SO_REUSEPORT), &flag, sizeof(flag))) {
-		fprintf(stderr, "Err: setsockopt fail for lwm2m gateway server.");
+		fprintf(stderr, "IFHANDLER:: Err: setsockopt fail for lwm2m gateway server.");
 		ret = -1;
 		goto cleanup;
 	}
@@ -139,7 +139,7 @@ void *connection_handler()
         fprintf(stderr, "Err(%d): IFHANDLER:: Listen failed...\r\n", ret);
         goto cleanup;
     } else {
-        fprintf(stdout, "IFHandler Server is listening..\n");
+        fprintf(stdout, "IFHANDLER::  Server is listening..\n");
     }
 
 	c = sizeof(struct sockaddr_in);
@@ -147,7 +147,7 @@ void *connection_handler()
 	{
 		while (client_sock = accept(socket_desc, (struct sockaddr *)&client, (socklen_t *)&c))
 		{
-			fprintf(stdout, "Connection accepted\r\n");
+			fprintf(stdout, "IFHANDLER:: Connection accepted\r\n");
 			fflush(stdout);
 			pthread_t subthread;
 			new_sock = malloc(sizeof(int));
@@ -155,21 +155,21 @@ void *connection_handler()
 
 			if (pthread_create(&subthread, NULL, request_handler, (void *)new_sock) < 0)
 			{
-				perror("Could not create thread for client request.");
+				perror("IFHANDLER::  Could not create thread for client request.");
 				ret = -1;
 				break;
 			}
 
-			fprintf(stdout, "Handler assigned\r\n");
+			fprintf(stdout, "IFHANDLER:: handler assigned\r\n");
 			fflush(stdout);
 		}
 
 		if (client_sock < 0) {
-			perror("Connection handler failed to accept message");
+			perror("IFHANDLER:: Connection handler failed to accept message");
 		}
 
 		if (ret) {
-			perror("Connection failed to create thread for request.");
+			perror("IFHANDLER:: Connection failed to create thread for request.");
 		}
 		connection_handler_close_connection(client_sock);
 

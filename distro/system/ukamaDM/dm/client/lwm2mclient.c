@@ -137,7 +137,7 @@ int handle_alarm_changed(lwm2m_context_t * lwm2mH,
         if (uri->objectId != OBJ_TYPE_ALARM)
         {
         	ret = alarm_change(data, object, uri->instanceId);
-        	if (ret  = 0) {
+        	if (ret == 0) {
         		lwm2m_resource_value_changed(lwm2mH, uri);
         	}
         }

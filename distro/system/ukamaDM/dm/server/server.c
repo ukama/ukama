@@ -389,22 +389,15 @@ static void prv_notify_cb(uint16_t clientID,
     uint8_t baseUriStr[URI_MAX_STRING_LEN] = {'\0'};
     int baseUriLen = uri_toString(uriP, baseUriStr, URI_MAX_STRING_LEN, NULL);
     if (baseUriLen < 0){
-        fprintf(stdout, "Failed to build URI for notification.\r\n> ");
-        fflush(stdout);
+        fprintf(stderr, "Failed to build URI for notification.\r\n> ");
+        fflush(stderr);
     	return ;
     }
 
-    /* Get UUID for client ID */
-    char uuid[32] = {'\0'};
-    //TODO: Pass the lwm2m context as userData
-    if (!prv_id_to_name(&uuid, userData, clientID)) {
-    	fprintf(stdout, "Failed to get uuid for cleint id %d notification.\r\n> ", clientID);
-    	fflush(stdout);
-    	return;
-    }
-
+    fprintf(stdout, "Received notification from uuid %s for client id %d notification.\r\n> ", name, clientID);
+    fflush(stdout);
     /* Sending notification to gateway */
-    notify_handler(uuid, baseUriStr, count, format, data, dataLength);
+    notify_handler(name, baseUriStr, count, format, data, dataLength);
 
 }
 

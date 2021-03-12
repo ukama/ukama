@@ -12,7 +12,7 @@
 
 #define ATTR_MAX_LEN 	(32)
 #define MAX_LENGTH 		4096
-#define LWM2M_GW_ADDRESS "127.0.0.0"
+#define LWM2M_GW_ADDRESS "0.0.0.0"
 #define LWM2M_GW_PORT 3100
 #define STATUS_OK 200
 #define SADDR struct sockaddr

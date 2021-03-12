@@ -528,7 +528,11 @@ int alarm_change(void * pdata,
 	int  ret  = 0;
 	alarm_info_t * targetP = NULL;
 	targetP = (alarm_info_t *)lwm2m_list_find(objectP->instanceList, instanceId);
-	if (NULL == targetP) return COAP_404_NOT_FOUND;
+	if (NULL == targetP) {
+		fprintf(stderr, "Failed to find instance id %d in ObjectP list.\r\n", instanceId);
+		fflush(stderr);
+		return COAP_404_NOT_FOUND;
+	}
 
 	if (pdata) {
 		AlarmObjInfo* data = pdata;
@@ -545,7 +549,7 @@ int alarm_change(void * pdata,
 		(targetP)->data.sinstid = data->sinstid;
 		(targetP)->data.srsrcid = data->srsrcid;
 		(targetP)->data.sensorvalue = data->sensorvalue;
-		(targetP)->data.instanceId = data->instanceId;
+		//(targetP)->data.instanceId = data->instanceId;
 		if(!strcmp(data->disc,"")){
 			strcpy((targetP)->data.disc, "No Data.");
 		} else {
@@ -553,7 +557,11 @@ int alarm_change(void * pdata,
 		}
 		strcpy((targetP)->data.sensorunits, data->sensorunits);
 		strcpy((targetP)->data.applicationtype, data->applicationtype);
+		fprintf(stdout, "Received alarm for instance id %d\r\n", instanceId);
+		fflush(stdout);
 	} else {
+		fprintf(stderr, "Failed to get alarm data\r\n");
+		fflush(stderr);
 		ret = COAP_500_INTERNAL_SERVER_ERROR;
 	}
 	return ret;

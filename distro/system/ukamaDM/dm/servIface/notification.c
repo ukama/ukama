@@ -14,6 +14,7 @@
 #include "notification.h"
 #include "headers/errorcode.h"
 
+#define DEBUG_GATEWAYIF
 /* For storing outgoing notification.*/
 static ListInfo evt_list;
 
@@ -78,7 +79,7 @@ static void *copy_evt_node(void *pdata) {
 /* Add a new event to list*/
 static void add_event(NotifyEvent* evt) {
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Adding Event id %llu to list.\r\n", evt->id);
+	fprintf(stdout, "IFHANDLER:: Adding Event id %llu to list.\r\n", evt->id);
 	fflush(stdout);
 #endif
 	list_append(&evt_list, evt);
@@ -89,7 +90,7 @@ static void remove_event(uint32_t id) {
 	NotifyEvent evt;
 	evt.id = id;
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Removing Request id %llu to list.\r\n", evt.id);
+	fprintf(stdout, "IFHANDLER:: Removing event id %llu to list.\r\n", evt.id);
 	fflush(stdout);
 #endif
 	/* Remove element */
@@ -101,7 +102,7 @@ static NotifyEvent* search_evt_id(uint32_t id) {
 	NotifyEvent evt;
 	evt.id = id;
 #ifdef DEBUG_GATEWAYIF
-	fprintf(stdout, "Searching Request id %llu to list.\r\n", evt.id);
+	fprintf(stdout, "IFHANDLER:: Searching event id %llu to list.\r\n", evt.id);
 	fflush(stdout);
 #endif
 	return list_search(&evt_list, &evt);
@@ -117,7 +118,7 @@ static char *evt_serialize(NotifyEvent *evt, size_t *sz) {
         if (data) {
             memset(data, '\0', *sz);
             memcpy(data, evt, sizeof(NotifyEvent));
-            memcpy(&data[sizeof(NotifyEvent)], evt->data, evt->length);
+            memcpy(&data[sizeof(NotifyEvent)-sizeof(uint8_t*)], evt->data, evt->length);
         } else {
             *sz = 0;
         }
@@ -226,6 +227,10 @@ static int send_notification(NotifyEvent *evt ) {
 
 	/* If status is ok. remove the event from list.*/
 	if (rmsg->status == STATUS_OK) {
+#ifdef DEBUG_GATEWAYIF
+		fprintf(stdout, "IFHANDLER:: Received response for Event ID %d with response %d.\r\n", rmsg->id, rmsg->status);
+		fflush(stdout);
+#endif
 		remove_event(rmsg->id);
 		ret = 0;
 	}
