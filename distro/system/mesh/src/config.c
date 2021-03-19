@@ -182,11 +182,11 @@ static int parse_host_config(HostConfig *config, toml_table_t *configData,
     }
 
     if (!localPort.ok) {
-      log_debug("[%s] is missing, setting to default: %d", LOCAL_PORT,
+      log_debug("[%s] is missing, setting to default: %s", LOCAL_PORT,
 		DEF_LOCAL_PORT);
-      config->localPort = DEF_LOCAL_PORT;
+      config->localPort = strdup(DEF_LOCAL_PORT);
     } else {
-      config->localPort = atoi(localPort.u.s);
+      config->localPort = strdup(localPort.u.s);
     }
   } else {
     config->type = 2;

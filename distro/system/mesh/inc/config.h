@@ -38,7 +38,7 @@
 #define PROXY       "proxy"
 
 #define LOCALHOST   "localhost"
-#define DEF_LOCAL_PORT  5534
+#define DEF_LOCAL_PORT  "5534"
 #define DEF_REMOTE_PORT "5535" /* String due to mbedTLS lib. */
 
 /* defs related to proxy. */
@@ -99,7 +99,7 @@ typedef struct {
   int type;             /* client or server. */
   
   char *localHostname;  /* Binding local host. */
-  int localPort;        /* port for local clients. */
+  char *localPort;      /* port for local clients. */
   char *remoteHostname; /* Binding remote host. */
   char *remotePort;     /* port for remote clients (devices) */
   char *certFile;       /* CA Cert file name. */

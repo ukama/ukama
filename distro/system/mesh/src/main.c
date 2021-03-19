@@ -398,6 +398,11 @@ int main (int argc, char **argv) {
   }
   
   /* Connection established. */
+  if (configs->baseConfig->mode == MODE_SERVER) {
+    enable_local_clients(configs->serverConfig);
+  } else if (configs->baseConfig->mode == MODE_CLIENT) {
+    enable_local_clients(configs->clientConfig);
+  }
 
   log_debug("All done. Exiting ...");
   return 0;
