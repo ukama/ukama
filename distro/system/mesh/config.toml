@@ -9,8 +9,9 @@
 [base-config]
 	mode  = "server"   	      # server | client | all
 	admin = "enable"   	      # enable | disable 
-	remote-clients = "10"      # Max. remote client to support (tpool)
-	local-clients  = "30"      # Max. local client (tpool)
+	remote-clients = "100"        # Max. remote client to support (tpool)
+	local-clients  = "30"         # Max. local client (tpool)
+	interface = "eth0"            # Interface to listen on
 
 [admin-config]
 	admin-endpoint = "/admin"	# REST endpoint for admin commands

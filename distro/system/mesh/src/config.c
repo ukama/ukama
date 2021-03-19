@@ -31,7 +31,7 @@ static void set_default_base_config(BaseConfig *base) {
 static int parse_base_config(BaseConfig *base, toml_table_t *configData) {
   
   int ret=FALSE;
-  toml_datum_t mode, admin, remoteClients, localClients;
+  toml_datum_t mode, admin, remoteClients, localClients, interface;
   
   set_default_base_config(base);
   
@@ -40,6 +40,7 @@ static int parse_base_config(BaseConfig *base, toml_table_t *configData) {
   admin = toml_string_in(configData, ADMIN);
   remoteClients = toml_string_in(configData, REMOTE_CLIENTS);
   localClients = toml_string_in(configData, LOCAL_CLIENTS);
+  interface = toml_string_in(configData, INTERFACE);
 
   /* Mode is mandatory. For others default is used if not defined. */
   if (!mode.ok) {
@@ -55,6 +56,18 @@ static int parse_base_config(BaseConfig *base, toml_table_t *configData) {
     } else {
       log_error("[%s] invalid entry: %s", MODE, mode.u.s);
       goto exit;
+    }
+  }
+
+  /* Interface on which mesh.d will listen. */
+  if (!interface.ok) {
+    log_error("[%s] is mandatory but missing.", INTERFACE);
+  } else {
+    /* Validate the interface is right. */
+    if (is_valid_iface(interface.u.s)) {
+      base->interface = strdup(interface.u.s);
+    } else {
+      log_error("[%s] is defined (%s) but invalid", INTERFACE, interface.u.s);
     }
   }
 
@@ -299,7 +312,8 @@ int process_config_file(char *fileName, Configs *config) {
     serverConfig = toml_table_in(fileData, SERVER_CONFIG);
 
     if (serverConfig == NULL) {
-      log_error("[%s] section parsing error in file: %s\n", SERVER_CONFIG, fileName);
+      log_error("[%s] section parsing error in file: %s\n", SERVER_CONFIG,
+		fileName);
       toml_free(fileData);
       return FALSE;
     }

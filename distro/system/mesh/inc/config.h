@@ -17,6 +17,7 @@
 #define ADMIN             "admin"
 #define REMOTE_CLIENTS    "remote-clients"
 #define LOCAL_CLIENTS     "local-clients"
+#define INTERFACE         "interface"
 
 /* defs for admin-config. */
 #define ADMIN_ENDPOINT "admin-endpoint"
@@ -81,6 +82,7 @@ typedef struct {
   int admin;            /* Flag to enable or disable admin port. */  
   int maxRemoteClients; /* Max number of remote client, (server or dual mode) */
   int maxLocalClients;  /* Max number of local client (device or cluster) */
+  char *interface;      /* Interface to listen on. */
 }BaseConfig;
 
 typedef struct {
@@ -114,6 +116,9 @@ typedef struct {
 
   /* XXX - reverse proxy. */
 }Configs;
+
+
+extern int is_valid_iface(char *ifname);
 
 
 #endif /* CONFIG_H */
