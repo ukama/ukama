@@ -1356,9 +1356,8 @@ int test_ukdb_with_db_from_json_schema(JSONInput *ip, SystemdbMap *sysdbmap) {
 }
 
 /* Writing a newly parsed json to DB (sysfs/eeprom) */
-int test_create_db_hook(char *puuid, char *json_schema) {
+int test_create_db_hook(char *puuid, JSONInput *ip) {
     int ret = 0;
-    JSONInput ip;
     UnitCfg *udata = (UnitCfg[]){
         { .mod_uuid = "UK5001-RFCTRL",
           .mod_name = "RF CTRL BOARD",
@@ -1408,13 +1407,12 @@ int test_create_db_hook(char *puuid, char *json_schema) {
         }
     }
 
-    ret = ubsp_devdb_init(json_schema);
+    ret = ubsp_devdb_init(ip->pname);
     TEST_RET("ubsp_devdb_init", ret, 0);
     if (ret) {
         goto cleanup;
     }
-    ip.count = 1;
-    ip.fname = &json_schema;
+    
     ret = ubsp_idb_init(&ip);
     TEST_RET("ubsp_idb_init", ret, 0);
     if (ret) {
@@ -1694,12 +1692,17 @@ int main(int argc, char **argv) {
     /* Testing tnode*/
     test_tnode();
 
+     JSONInput ip = { .fname = (char *[]){ "mfgdata/schema/rfctrl.json",
+                                          "mfgdata/schema/rffe.json" },
+                     .pname = PROPERTYJSON,
+                     .count = 2 };
+
     /* testing creation of db from new schema */
-    test_create_db_hook("UK5001-RFCTRL", PROPERTYJSON);
+    test_create_db_hook("UK5001-RFCTRL", &ip);
     TEST_RET("test_create_db_hook", ret, 0);
 
     /* testing creation of db from new schema */
-    test_create_db_hook("UK4001-RFFE", PROPERTYJSON);
+    test_create_db_hook("UK4001-RFFE", &ip);
     TEST_RET("test_create_db_hook", ret, 0);
 
     log_debug(
