@@ -14,6 +14,43 @@
  * destroy cpool - destroy the connection thread.
  */
 
+extern CPool *cpoolTX, *cpoolRX;
+extern int maxCpoolTh;
+
+/*
+ * find_assigned_thread --
+ *
+ */
+CPool *find_assigned_thread(unsigned char *ipAddress, int flag) {
+
+  int i;
+  CPool *ptr;
+
+  if (ipAddress == NULL) {
+    return NULL;
+  }
+
+  if (flag == TX) {
+    ptr = &cpoolTX[0];
+  } else if (flag == RX) {
+    ptr = &cpoolRX[0];
+  } else {
+    return NULL;
+  }
+
+  for (i=0; i<maxCpoolTh; i++) {
+
+    if (ptr[i].state != THREAD_READY)
+      continue;
+
+    if (strcmp(ptr[i].clientIP, ipAddress) == 0) {
+      return &ptr[i];
+    }
+  }
+
+  return NULL;
+}
+
 /*
  * create_work --
  *
@@ -133,6 +170,13 @@ static void *cpool_worker(void *arg) {
 
   tID = syscall(__NR_gettid);
 
+  /* Thread wait for the parent to assign it the SSL connection handler and ask
+   * for it to execute on it. It can be long wait. Thread is on stand-by mode.
+   * Once it has the lock, it will let it go only when it is asked to "stop"
+   */
+  log_debug("TID-%s: standby mode. Waiting for SSL connection handler.", tID);
+  pthread_mutex_lock(&cp->active);
+
   while (TRUE) {
 
     log_debug("TID-%d: Acquring lock", tID);
@@ -146,6 +190,7 @@ static void *cpool_worker(void *arg) {
 
     /* Don't process any packet. */
     if (stop) {
+      pthread_mutex_unlock(&cp->active); /* back in stand-by mode. */
       pthread_mutex_unlock(mutex);
       continue;
     }
@@ -184,17 +229,26 @@ static void *cpool_worker(void *arg) {
 }
 
 /*
- * add_work -- Add work to the thread (cp) queue.
+ * add_work -- Add work to the thread (cp) queue assigned to the remote
+ *             client at destIP.
  *
  */
-int add_work(CPool *cp, Packet data, thread_func_t pre, void *preArgs,
-	     thread_func_t post, void *postArgs) {
+int add_work(unsigned char *destIP, Packet data, thread_func_t pre,
+	     void *preArgs, thread_func_t post, void *postArgs, int flag) {
+
 
   CPoolWork *work;
   pthread_mutex_t *mutex;
   CPoolWork *fPtr, *lPtr;
+  CPool *cp;
+
+  if (destIP == NULL) {
+    return FALSE;
+  }
+
+  cp = find_assigned_thread(destIP, flag);
   
-  if (!cp) {
+  if (cp == NULL) {
     return FALSE;
   }
 
@@ -213,7 +267,7 @@ int add_work(CPool *cp, Packet data, thread_func_t pre, void *preArgs,
     fPtr = cp->firstRX;
     lPtr = cp->lastRX;
   }
-  
+
   pthread_mutex_lock(mutex);
 
   if (fPtr == NULL) {
@@ -258,7 +312,7 @@ int create_cpool(pthread_t *tArray, CPool *cpArray, int num, int flag) {
     pthread_mutex_init(&(cp->txDataFlag), NULL);
     pthread_mutex_init(&(cp->rxMutex), NULL);
     pthread_mutex_init(&(cp->rxDataFlag), NULL);
-    pthread_mutex_init(&(cp->tddMutex), NULL);
+    pthread_mutex_init(&(cp->active), NULL);
     pthread_cond_init(&(cp->txCondWait), NULL);
     pthread_cond_init(&(cp->rxCondWait), NULL);
 
@@ -272,12 +326,19 @@ int create_cpool(pthread_t *tArray, CPool *cpArray, int num, int flag) {
     cp->stopRX = FALSE;
     cp->exitTX = FALSE;
     cp->exitRX = FALSE;
+    cp->clientIP = calloc(sizeof(unsigned char), 32);
 
     if (flag != TX || flag != RX) {
       cp->tddFlag = TX; /* default is TX queue. */
     } else {
       cp->tddFlag = flag;
     }
+
+    /* Put thread in the stand-by mode. Thread will be put into ready state
+     * once/if remote client shows up.
+     */
+    pthread_mutex_lock(&cp->active);
+    cp->state = THREAD_STANDBY;
 
     /* Now create the real thread and detach!. */
     ret = pthread_create(thread, NULL, cpool_worker, cp);
@@ -387,3 +448,53 @@ void destroy_cpool(CPool *cp) {
 
   free(cp);
 }
+
+/*
+ * assign_thread -- assign cpool 'stand-by' thread to the remote client.
+ *
+ */
+
+int assign_thread(unsigned char *clientIP, CPool *cpArrayTX,
+		  CPool *cpArrayRX, int num, mbedtls_ssl_context *ssl) {
+
+  int i;
+
+  if (num == 0) {
+    return FALSE; /* Default do nothing. */
+  }
+
+  /* Loop through. */
+  for (i=0; i<num; i++) {
+
+    CPool *cpTX, *cpRX;
+
+    cpTX = &cpArrayTX[i];
+    cpTX = &cpArrayRX[i];
+
+    if (cpTX->state == THREAD_STANDBY) {
+
+      cpTX->state = THREAD_READY;
+      cpRX->state = THREAD_READY;
+
+      cpTX->ssl = ssl;
+      cpRX->ssl = ssl;
+
+      sprintf(cpTX->clientIP, "%d.%d.%d.%d", clientIP[0], clientIP[1],
+	      clientIP[2], clientIP[3]);
+      sprintf(cpRX->clientIP, "%d.%d.%d.%d", clientIP[0], clientIP[1],
+	      clientIP[2], clientIP[3]);
+
+      pthread_mutex_unlock(&cpTX->active);
+      pthread_mutex_unlock(&cpRX->active);
+
+      return i;
+    }
+  }
+
+  log_debug("No available thread to assign");
+
+  return FALSE;
+}
+
+/* unassign. de-active, etc. etc. */
+

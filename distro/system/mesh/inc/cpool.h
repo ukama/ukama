@@ -17,6 +17,11 @@
 #define TX_QUEUE 1
 #define RX_QUEUE 2
 
+#define THREAD_IDLE     1
+#define THREAD_STANDBY  2
+#define THREAD_READY    3
+#define THREAD_DEACTIVE 4
+
 #define FALSE 0
 #define TRUE  1
 
@@ -65,8 +70,11 @@ typedef struct cpool_t {
   int             exitRX;     /* if RX thread is to exit or exited. */
 
   /* Misc. */
-  pthread_mutex_t     tddMutex; /* Mutex for the SSL connection handler. */
-  mbedtls_ssl_context *ssl;     /* SSL connection handler. */
-  int tddFlag;                  /* Thread is TX or RX. */
-}CPool;
+  pthread_mutex_t     active; /* Mutex for the SSL connection handler. */
+  mbedtls_ssl_context *ssl;   /* SSL connection handler. */
 
+  int tddFlag;                /* Thread is TX or RX. */
+  int state;                  /* state of thread, stand-by, active, de-active,
+			       * idle. */
+  unsigned char *clientIP;    /* client IP (remote) this thread is serving. */
+}CPool;

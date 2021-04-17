@@ -3,8 +3,12 @@
  *
  */
 
+#include "cpool.h"
 #include "sniffer.h"
 #include "log.h"
+
+extern CPool *cpoolTX, *cpoolRX;
+extern int maxCpoolTh;
 
 /* 
  * is_valid_iface -- Check if the given interface is up and running.
@@ -144,28 +148,23 @@ void print_udp_packet(unsigned char *buffer, int size) {
  */
 int is_valid_device_ip(char *dIP) {
 
-  int index=-1, size, i;
-  ConnInfo *conn=NULL;
+  int i;
   
-  /* IP is valid iff:
-   * 1. there exists Node with 'dIP', and 
-   * 2. there connection is live mesh.d and the Node. 
-   */
-  //  size = get_conn_info(conn); XXX
+  if (maxCpoolTh == 0) {
+    return FALSE; /* Default do nothing. */
+  }
 
-  for (i=0; i<size; i++) {
-    if (strcmp(conn[i].node->ip, dIP) == 0) {
-      if (conn[i].isLive) {
-	index = i;
-	log_debug("Matching Node found");
-      } else {
-	log_error("Matching Node found but is not Live: %s", dIP);
+  /* Loop through. */
+  for (i=0; i<maxCpoolTh; i++) {
+
+    if (cpoolTX[i].state == THREAD_READY) {
+      if (strcmp(cpoolTX[i].clientIP, dIP) == 0) {
+	return i;
       }
-      break;
     }
   }
 
-  return index;
+  return -1;
 }
 
 /* 
@@ -319,6 +318,7 @@ int inspect_packets(int sock, unsigned char *buffer, int buffSize,
 
     if (ret) { /* is valid packet. */
       /* XXX */
+      add_work(&destIP[0], buffer, NULL, NULL, NULL, NULL, TX);
     }
   }
 

@@ -32,6 +32,10 @@
 #define PKT_UDP 1
 #define PKT_TCP 2
 
+/* XXX move to common location. */
+#define TX 1
+#define RX 2
+
 /*
  * NodeInfo utilized by mesh.d for housekeeping, via MQQT.
  *
@@ -65,5 +69,7 @@ typedef struct {
 
 extern int get_conn_info(ConnInfo *conn);
 extern int run_policy_check(char *sIP, char *dIP, int index, int pkyType);
-
+extern int add_work(unsigned char *destIP, Packet data, thread_func_t pre,
+		    void *preArgs, thread_func_t post, void *postArgs,
+		    int flag);
 #endif /* SNIFFER_H */

@@ -138,11 +138,19 @@ int start_non_TLS_server(char *port) {
  *
  */
 
+/* Some global variables. XXX */
+
+/* CPool Threads. */
+CPool *cpoolTX = NULL, *cpoolRX = NULL;
+pthread_t *tArrayTX = NULL, *tArrayRX = NULL;
+int maxCpoolTh=0;
+
 int main (int argc, char **argv) {
 
   int ret = 0;
   char *debug = DEF_LOG_LEVEL;
   char *configFile;
+  unsigned char clientIP[4]; /* 4 bytes, one for each octet */
 
   mbedtls_net_context tlsListenFd, tlsClientFd;
   mbedtls_entropy_context entropy;
@@ -155,10 +163,6 @@ int main (int argc, char **argv) {
   Connection cloud;
   Configs *configs = NULL;
 
-  /* CPool Threads. */
-  CPool *cpoolTX = NULL, *cpoolRX = NULL;
-  pthread_t *tArrayTX = NULL, *tArrayRX = NULL;
-  
   /* Initalize some values. */
   mbedtls_net_init(&tlsListenFd);
   mbedtls_net_init(&tlsClientFd);
@@ -235,26 +239,26 @@ int main (int argc, char **argv) {
 
   if (configs->baseConfig->mode == MODE_SERVER) {
 
-    int max = configs->baseConfig->maxRemoteClients;
+    maxCpoolTh = configs->baseConfig->maxRemoteClients;
 
     log_debug("Starting mesh data plane ... [Server]");
 
     /* Start connection TX and RX connection threads. */
-    cpoolTX = (CPool *)calloc(max, sizeof(CPool));
-    cpoolRX = (CPool *)calloc(max, sizeof(CPool));
+    cpoolTX = (CPool *)calloc(maxCpoolTh, sizeof(CPool));
+    cpoolRX = (CPool *)calloc(maxCpoolTh, sizeof(CPool));
 
-    tArrayTX  = (pthread_t *)calloc(max, sizeof(pthread_t));
-    tArrayRX  = (pthread_t *)calloc(max, sizeof(pthread_t));
+    tArrayTX  = (pthread_t *)calloc(maxCpoolTh, sizeof(pthread_t));
+    tArrayRX  = (pthread_t *)calloc(maxCpoolTh, sizeof(pthread_t));
 
-    ret = create_cpool(tArrayTX, cpoolTX, max, TX);
+    ret = create_cpool(tArrayTX, cpoolTX, maxCpoolTh, TX);
     if (ret == FALSE) {
-      log_error("Error creating %d TX threads. Exiting.", max);
+      log_error("Error creating %d TX threads. Exiting.", maxCpoolTh);
       exit(1);
     }
 
-    ret = create_cpool(tArrayRX, cpoolRX, max, RX);
+    ret = create_cpool(tArrayRX, cpoolRX, maxCpoolTh, RX);
     if (ret == FALSE) {
-      log_error("Error creating %d RX threads. Exiting.", max);
+      log_error("Error creating %d RX threads. Exiting.", maxCpoolTh);
       destroy_cpool(cpoolTX);
       exit(1);
     }
@@ -368,7 +372,8 @@ int main (int argc, char **argv) {
     log_debug("Waiting for client on port: %s ...",
 	      configs->serverConfig->remotePort);
     
-    ret = mbedtls_net_accept(&tlsListenFd, &tlsClientFd, NULL, 0, NULL);
+    ret = mbedtls_net_accept(&tlsListenFd, &tlsClientFd, clientIP,
+			     sizeof(clientIP), NULL);
     
     if (ret != 0) {
       log_error("Accept failed: %d", ret);
@@ -385,6 +390,19 @@ int main (int argc, char **argv) {
 	goto reset;
       }
     }
+
+    /*
+       1. Accept the connection, get the client IP, add to ConnInfo
+       2. Implement function to return ConnInfo instance based on the given
+          IP as parameter.
+       3. Assign cpool threads to the new remote client.
+       4. Ability to update the certs remotely. (future)
+       5. Brige between local client and remote cpool thead.
+       6. Add work.
+    */
+
+    assign_thread(clientIP, cpoolTX, cpoolRX, maxCpoolTh, ssl);
+
   } /* if (server) */
 
   if (configs->baseConfig->mode == MODE_CLIENT) {

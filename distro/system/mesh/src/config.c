@@ -68,6 +68,7 @@ static int parse_base_config(BaseConfig *base, toml_table_t *configData) {
       base->interface = strdup(interface.u.s);
     } else {
       log_error("[%s] is defined (%s) but invalid", INTERFACE, interface.u.s);
+      goto exit;
     }
   }
 
