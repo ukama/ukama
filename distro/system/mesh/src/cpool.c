@@ -146,7 +146,7 @@ static void *cpool_worker(void *arg) {
   CPoolWork *first, *last;
   pthread_mutex_t *mutex;
   pthread_cond_t  *cond;
-  int stop, exit, other;
+  int stop, exit, other, ret;
 
   pid_t tID;
 
@@ -208,6 +208,17 @@ static void *cpool_worker(void *arg) {
       if (work->preFunc) {
 	work->preFunc(work->preArgs);
       }
+
+      /* Send the actual packet over SSL/TLS to remote client. */
+      while ((ret = mbedtls_ssl_write(cp->ssl, work, strlen(work))) <= 0) {
+        if( ret != MBEDTLS_ERR_SSL_WANT_READ &&
+	    ret != MBEDTLS_ERR_SSL_WANT_WRITE ) {
+	  log_error("ssl_write failed with error code: %d", ret);
+	  goto post_func;
+        }
+      }
+
+    post_func:
       if (work->postFunc) {
 	work->postFunc(work->postArgs);
       }
@@ -278,10 +289,7 @@ int add_work(unsigned char *destIP, Packet data, thread_func_t pre,
     lPtr = work;
   }
 
-  /* XXXX
-  pthread_cond_broadcast(&(tp->work_cond));
-  */
-  
+  pthread_cond_broadcast(&(cp->txCondWait));
   pthread_mutex_unlock(mutex);
   
   return TRUE;
