@@ -1356,15 +1356,17 @@ UKDB *parser_get_mfg_data_by_uuid(char *puuid) {
             "PARSER:: MFG Data set to the Module UUID %s with %d entries in Index Table.",
             db->modinfo.uuid, db->header.idx_cur_tpl);
     } else {
-        /* Searching for Module MFG data index.*/
-        for (uint8_t iter = 0; iter < MAX_JSON_SCHEMA; iter++) {
-            if (!strcmp(puuid, g_pukdb[iter]->modinfo.uuid)) {
-                db = g_pukdb[iter];
-                log_trace(
-                    "PARSER:: MFG Data set to the Module UUID %s with %d entries in Index Table.",
-                    db->modinfo.uuid, db->header.idx_cur_tpl);
-                break;
-            }
+    	/* Searching for Module MFG data index.*/
+    	for (uint8_t iter = 0; iter < MAX_JSON_SCHEMA; iter++) {
+    		if (g_pukdb[iter]) {
+    			if (!strcmp(puuid, g_pukdb[iter]->modinfo.uuid)) {
+    				db = g_pukdb[iter];
+    				log_trace(
+    						"PARSER:: MFG Data set to the Module UUID %s with %d entries in Index Table.",
+							db->modinfo.uuid, db->header.idx_cur_tpl);
+    				break;
+    			}
+    		}
         }
     }
     return db;
