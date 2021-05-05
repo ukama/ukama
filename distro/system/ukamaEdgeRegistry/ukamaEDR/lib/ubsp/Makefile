@@ -1,5 +1,7 @@
 PROJECT := $(notdir $(CURDIR))
 EXCECUTABLE = $(BUILDDIR)/$(PROJECT)
+MFGREGEXCECUTABLE = $(BUILDDIR)/mfgutil
+MFGSCHEXCECUTABLE = $(BUILDDIR)/schema
 BUILDSATICLIB = $(BUILDDIR)/lib$(PROJECT).a
 BUILDDYNLIB = $(BUILDDIR)/lib$(PROJECT).so
 BUILDLIBS = $(BUILDSATICLIB) 
@@ -12,6 +14,12 @@ BUILDDIR := build
 
 # Directories specification for Executable
 SRCDIRS := $(LIBSRCDIRS) test
+
+# Directories specification for MFG registry
+MFGREGSRCDIRS := $(LIBSRCDIRS) mfg/registry
+
+# Directories specification for MFG schema
+MFGSCHSRCDIRS := mfg/schema
 
 # Source extensions
 SRCEXTS := c
@@ -26,6 +34,15 @@ LIBOBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $
 # List of all recognized files found in the specified directories for test
 SOURCES := $(foreach dir, $(SRCDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
 OBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(SOURCES))))
+
+
+# List of all recognized files found in the specified directories for mfg util
+MFGSCHSOURCES := $(foreach dir, $(MFGSCHSRCDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
+MFGSCHOBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(MFGSCHSOURCES))))
+
+# List of all recognized files found in the specified directories for mfg util
+MFGREGSOURCES := $(foreach dir, $(MFGREGSRCDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
+MFGREGOBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(MFGREGSOURCES))))
 
 INCLUDES := $(foreach dir, $(INCDIRS), $(foreach ext, $(HDREXTS), $(wildcard $(dir)/*.$(ext))))
 
@@ -69,7 +86,7 @@ $(BUILDDIR)/%.d: ;
 .PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug
 
 # Main target for building
-all: $(CJSONLIB) $(EXCECUTABLE)
+all: $(CJSONLIB) $(EXCECUTABLE) $(MFGSCHEXCECUTABLE) $(MFGREGEXCECUTABLE)
 	@echo Done.
 
 #Third-party lib cJSON
@@ -130,6 +147,25 @@ check-style:
 # Include the dependency files here (should not be before first target)
 include $(wildcard $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.d, $(filter %.$(ext), $(SOURCES)))))
 
+# Compile binary if necessary, checks for modified files first
+$(MFGSCHEXCECUTABLE): $(MFGSCHOBJECTS) $(BUILDLIBS) $(MAKEFILE) $@
+ifeq ($(filter-out %.c,$(MFGSCHSOURCES)),$(blank))
+	@$(CC) -o $@ $(MFGSCHOBJECTS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS)
+	@echo CC: $@ 
+else
+	$(CXX) -o $@ $(MFGSCHOBJECTS) $(CXXFLAGS) $(LDFLAGS)
+	@echo CXX: $@
+endif
+
+# Compile binary if necessary, checks for modified files first
+$(MFGREGEXCECUTABLE): $(MFGREGOBJECTS) $(BUILDLIBS) $(MAKEFILE) $@
+ifeq ($(filter-out %.c,$(MFGREGSOURCES)),$(blank))
+	@$(CC) -o $@ $(MFGREGOBJECTS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS)
+	@echo CC: $@ 
+else
+	$(CXX) -o $@ $(MFGREGOBJECTS) $(CXXFLAGS) $(LDFLAGS)
+	@echo CXX: $@
+endif
 
 # Compile binary if necessary, checks for modified files first
 $(EXCECUTABLE): $(OBJECTS) $(BUILDLIBS) $(MAKEFILE) $@
