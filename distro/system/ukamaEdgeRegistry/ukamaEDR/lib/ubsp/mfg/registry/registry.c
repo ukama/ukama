@@ -36,6 +36,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 //#define PROPERTYJSON "mfgdata/property/property.json"
@@ -56,19 +57,22 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     UnitCfg *pcfg = NULL;
     DevI2cCfg *i2c_cfg = NULL;
 
+    /* Initializes for device DB */
     ret = ubsp_devdb_init(jip.pname);
 	if (ret) {
 		log_error("MFGUTIL:: UBSP DEVDB init failed %d", ret);
 		goto cleanup;
 	}
 
+	/* Initializes for input DB like cstructs or JSON file */
 	ret = ubsp_idb_init(&jip);
 	if (ret) {
 		log_error("MFGUTIL:: UBSP IDB init failed %d", ret);
 		goto cleanup;
 	}
 
-	ret = ubsp_ukdb_init(NULL); /* Will just initialize the db if NULL is passed*/
+	/* Will just initialize the db if NULL is passed*/
+	ret = ubsp_ukdb_init(NULL);
 	if (ret) {
 		log_info("MFGUTIL:: UBSP init failed %d (Expected -1)", ret);
 	}
@@ -76,7 +80,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     for(int idx = 0; idx < count; idx++) {
     	log_debug("UUID[%d] = %24s Name[%d] = %24s Schema[%d] = %s \n", idx, puuid[idx], idx, name[idx], idx, jip.fname[idx]);
 
-
+    	/* Assumption Module Name in argument should match */
     	UnitCfg *udata = (UnitCfg[]){
     		{ .mod_uuid = "UK-5001-RFC-1101",
     			.mod_name = "RF_CTRL",
@@ -100,39 +104,49 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 												.eeprom_cfg = &(DevI2cCfg){ .bus = 1, .add = 0x51ul } },
     	};
 
-
+    	/* Find and Read unitCfg of the module from above UnitCfg struct */
     	for (int iter = 0; iter < MAX_BOARDS; iter++) {
     		if (!strcmp(name[idx], udata[iter].mod_name)) {
+
     			pcfg = malloc(sizeof(UnitCfg));
     			if (pcfg) {
+
     				memset(pcfg, '\0', sizeof(UnitCfg));
     				memcpy(pcfg, &udata[iter], sizeof(UnitCfg));
+
     				if (udata[iter].eeprom_cfg) {
+
     					i2c_cfg = malloc(sizeof(DevI2cCfg));
     					if (i2c_cfg) {
     						memset(i2c_cfg, '\0', sizeof(DevI2cCfg));
     						memcpy(i2c_cfg, udata[iter].eeprom_cfg,
     								sizeof(DevI2cCfg));
     					}
-    				}
-    				pcfg->eeprom_cfg = i2c_cfg;
 
+    				}
+
+    				pcfg->eeprom_cfg = i2c_cfg;
     				memcpy(pcfg->mod_uuid, puuid[idx], strlen(puuid[idx]));
     				memcpy(pcfg->mod_name, name[idx], strlen(name[idx]));
 
     				break;
+
     			} else {
+
     				log_error("MFGUTIL:: Err(%d): Memory exhausted while getting unit"
     						" config from Test data.",
 							ERR_UBSP_MEMORY_EXHAUSTED);
     				goto cleanup;
+
     			}
     		}
     	}
 
-    	/* register Module */
+    	/* Register Module */
     	ret = ubsp_register_module(pcfg);
     	if (!ret) {
+
+    		/* Create a EEPROM DB */
     		ret = ubsp_create_ukdb(pcfg->mod_uuid);
     		if (!ret) {
     			log_info("MFGUTIL:: Created registry for module %s.", name[idx]);
@@ -140,12 +154,15 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     			log_error("MFGUTIL:: UBSP registry creation failed %d", ret);
     			goto cleanup;
     		}
+
     	} else {
     		log_error("MFGUTIL:: Registering module failed %d", ret);
     		goto cleanup;
     	}
     }
-cleanup:
+
+    /* Cleanup */
+    cleanup:
     ubsp_idb_exit();
     ubsp_exit();
     UBSP_FREE(pcfg->eeprom_cfg);
@@ -192,22 +209,25 @@ void usage() {
     printf("--v, --version                       Software Version.\n");
 }
 
+/* Utility to Create a EEPROM DB for devices.*/
 int main(int argc, char** argv) {
     char *name[MAX_BOARDS] = {"\0"};
     char *uuid[MAX_BOARDS] = {"\0"};
     char *schema[MAX_BOARDS] = {"\0"};
     char *debug = "TRACE";
-    char *ip = "";
+
     set_log_level(debug);
 
     if (argc < 2 ) {
     	log_error("Not enough arguments.");
+    	usage();
     	exit(1);
     }
 
     int uidx = 0;
     int nidx = 0;
     int sidx = 0;
+
     /* Parsing command line args. */
     while (true) {
         int opt = 0;
@@ -254,15 +274,18 @@ int main(int argc, char** argv) {
         }
     }
 
+    /* Args check  for schema info.*/
     if ((sidx != uidx) || (sidx != nidx) || (sidx > MAX_BOARDS)) {
     	log_error("MFGUTIL:: Name, schema and UUID entries have to match in count.");
     	exit(0);
     }
 
+    /* Input args */
     for(int idx = 0; idx < uidx;idx++) {
-    	log_debug("UUID[%d] = %24s Name[%d] = %24s Schema[%d] = %s \n", idx, uuid[idx], idx, name[idx], idx, schema[idx]);
+    	log_trace("UUID[%d] = %24s Name[%d] = %24s Schema[%d] = %s \n", idx, uuid[idx], idx, name[idx], idx, schema[idx]);
     }
 
+    /* Create EEPROM DB */
     int ret = create_db_hook(uuid, name, schema, uidx);
     if (ret) {
     	log_error("MFGUTIL:: Error:: Failed to create registry DB for %s device.", name);

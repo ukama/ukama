@@ -193,8 +193,8 @@ memcheck: $(EXCECUTABLE)
 
 # Clean all build files
 clean:
-	@rm -rf $(EXCECUTABLE)
-	@rm -rf $(BUILDLIBS)	
+	rm -rf $(EXCECUTABLE) $(MFGREGEXCECUTABLE) $(MFGSCHEXCECUTABLE)
+	rm -rf $(BUILDLIBS)	
 	@rm -rf $(BUILDDIR)
 	@rm -rf *.db
 	@cd third-party && make $@

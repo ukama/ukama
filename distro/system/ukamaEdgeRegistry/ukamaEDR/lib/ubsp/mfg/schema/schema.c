@@ -26,16 +26,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define VERSION					"0.0.1"
+
 #define NUMBERS_IN_ID			4
 #define NUMBER_OFFSET_IN_ID		2
 
 #define MAX_BOARDS				5
-#define VERSION					"0.0.1"
+
 #define MAX_JSON_TAGS 			3
 
 #define MODULE_OFFSET			12
 #define UNIT_OFFSET				19
 
+/* JSON TAGS */
 static char* jsontags[MAX_JSON_TAGS] = {
 		"unit_info",
 		"unit_config",
@@ -44,15 +47,15 @@ static char* jsontags[MAX_JSON_TAGS] = {
 
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
-    int ilevel = LOG_TRACE;
-    if (!strcmp(slevel, "TRACE")) {
-        ilevel = LOG_TRACE;
-    } else if (!strcmp(slevel, "DEBUG")) {
-        ilevel = LOG_DEBUG;
-    } else if (!strcmp(slevel, "INFO")) {
-        ilevel = LOG_INFO;
-    }
-    log_set_level(ilevel);
+	int ilevel = LOG_TRACE;
+	if (!strcmp(slevel, "TRACE")) {
+		ilevel = LOG_TRACE;
+	} else if (!strcmp(slevel, "DEBUG")) {
+		ilevel = LOG_DEBUG;
+	} else if (!strcmp(slevel, "INFO")) {
+		ilevel = LOG_INFO;
+	}
+	log_set_level(ilevel);
 }
 
 /* Write to JSON file */
@@ -61,15 +64,18 @@ int write_file(char *filename, char *out)
 	int ret = 0;
 	FILE *fp = NULL;
 
+	/* Open file */
 	fp = fopen(filename,"w");
 	if(fp == NULL)
 	{
 		fprintf(stderr,"open file failed\n");
 		exit(-1);
 	}
-	//ret= fprintf(fp,"%s",out);
+
+	/* Write to a file */
 	ret= fputs(out, fp);
 
+	/* Close file */
 	if(fp != NULL)
 		fclose(fp);
 
@@ -84,6 +90,8 @@ int read_file(char *filename, char **data) {
 
 	/* Open file */
 	f=fopen(filename,"rb");
+
+	/* Length of file */
 	fseek(f,0,SEEK_END);
 	len=ftell(f);
 	fseek(f,0,SEEK_SET);
@@ -99,7 +107,7 @@ int read_file(char *filename, char **data) {
 	/* Close file */
 	fclose(f);
 
-	return (ret+1);
+	return ret;
 }
 
 /* Perform the parsing operation on the JSON file */
@@ -128,8 +136,11 @@ cJSON *dofile(char *filename)
 		ret = json;
 	}
 
+	/* Cleanup */
 	EXIT:
-	free(data);
+	if (data) {
+		free(data);
+	}
 	return ret;
 }
 
@@ -139,19 +150,25 @@ cJSON *dofile(char *filename)
 int modify_uuid(cJSON * obj, char* value, unsigned short int offset) {
 	int ret = 0;
 
+	/* Get UUID value */
 	cJSON *juuid = cJSON_GetObjectItem(obj,"UUID");
 	if (juuid) {
+
+		/* Assumption is we have some UUID present in file. Read current UUID string */
 		char *currval = cJSON_GetStringValue(juuid);
 		if (currval) {
+
+			/* Update the numbers in UUID */
 			memcpy(currval+offset, value, NUMBERS_IN_ID);
 			if (!cJSON_SetValuestring(juuid, currval)) {
 				log_error("Schema:: Error:: Setting UUID to %s failed.", currval);
 				ret = -1;
 			} else {
-				log_info("Schema:: UUID set to %s.", currval);
+				log_debug("Schema:: UUID set to %s.", currval);
 			}
+
 		}else {
-			log_info("Schema:: UUID set to %s.", value);
+			log_debug("Schema:: UUID set to %s.", value);
 		}
 
 	} else {
@@ -177,10 +194,11 @@ int modify_json(char* fileName, char* value)
 	/* Debug Info */
 	out = cJSON_Print(root);
 	if (out) {
-		log_debug("Before modification file %s is::\n %s\n",fileName, out);
+		log_trace("Before modification file %s is::\n %s\n",fileName, out);
 		free(out);
 	}
 
+	/* Update all available tags in JSON */
 	for (int tag = 0; tag < MAX_JSON_TAGS; tag++) {
 
 		obj = cJSON_GetObjectItem(root, jsontags[tag]);
@@ -210,6 +228,7 @@ int modify_json(char* fileName, char* value)
 				}
 
 			} else {
+
 				/* Offset */
 				unsigned short int offset = 0;
 				if (!strcmp(jsontags[tag], "module_info")) {
@@ -230,7 +249,7 @@ int modify_json(char* fileName, char* value)
 
 	/* Debug Info */
 	out = cJSON_Print(root);
-	log_debug("After modification file %s is::\n %s\n",fileName, out);
+	log_trace("After modification file %s is::\n %s\n",fileName, out);
 
 	/* Update the JSON file */
 	if(write_file(fileName,out) > 0 ) {
@@ -246,95 +265,100 @@ int modify_json(char* fileName, char* value)
 	return 0;
 }
 
+/* Command line args */
 static struct option long_options[] = {
-    { "id", required_argument, 0, 'i' },
-    { "file", required_argument, 0, 'f' },
-    { "logs", required_argument, 0, 'l' },
-    { "help", no_argument, 0, 'h' },
-    { "version", no_argument, 0, 'v' },
-    { 0, 0, 0, 0 }
+		{ "id", required_argument, 0, 'i' },
+		{ "file", required_argument, 0, 'f' },
+		{ "logs", required_argument, 0, 'l' },
+		{ "help", no_argument, 0, 'h' },
+		{ "version", no_argument, 0, 'v' },
+		{ 0, 0, 0, 0 }
 };
 
 /* Usage options for the ukamaEDR */
 void usage() {
-    printf("Usage: ukamaEDR [options] \n");
-    printf("Options:\n");
-    printf("--h, --help                             Help menu.\n");
-    printf(
-        "--l, --logs <TRACE> <DEBUG> <INFO>       Log level for the process.\n");
-    printf(
-        "--i, --id <Numbers in Id>                 ID for file.\n");
-    printf(
-        "--f, --file <Files>                  Schema files.\n");
-    printf("--v, --version                       Software Version.\n");
+	printf("Usage: schema [options] \n");
+	printf("Options:\n");
+	printf("--h, --help                             Help menu.\n");
+	printf(
+			"--l, --logs <TRACE> <DEBUG> <INFO>       Log level for the process.\n");
+	printf(
+			"--i, --id <Numbers in Id>                 ID for file.\n");
+	printf(
+			"--f, --file <Files>                  Schema files.\n");
+	printf("--v, --version                       Software Version.\n");
 }
 
+/* JSON Schema UUID Update utility */
 int main(int argc, char** argv) {
-    char *uuid = {"\0"};
-    char *file[MAX_BOARDS] = {"\0"};
-    char *debug = "TRACE";
-    char *ip = "";
-    set_log_level(debug);
+	char *uuid = {"\0"};
+	char *file[MAX_BOARDS] = {"\0"};
+	char *debug = "TRACE";
+	char *ip = "";
+	set_log_level(debug);
 
-    if (argc < 2 ) {
-    	log_error("Not enough arguments.");
-    	exit(1);
-    }
+	if (argc < 2 ) {
+		log_error("Not enough arguments.");
+		usage();
+		exit(1);
+	}
 
-    int fidx = 0;
+	int fidx = 0;
 
-    /* Parsing command line args. */
-    while (true) {
-        int opt = 0;
-        int opdidx = 0;
+	/* Parsing command line args. */
+	while (true) {
+		int opt = 0;
+		int opdidx = 0;
 
-        opt = getopt_long(argc, argv, "h:v:i:f:l:", long_options, &opdidx);
-        if (opt == -1) {
-        	break;
-        }
+		opt = getopt_long(argc, argv, "h:v:i:f:l:", long_options, &opdidx);
+		if (opt == -1) {
+			break;
+		}
 
-        switch (opt) {
-        case 'h':
-        	usage();
-        	exit(0);
-        	break;
+		switch (opt) {
+		case 'h':
+		usage();
+		exit(0);
+		break;
 
-        case 'v':
-        	puts(VERSION);
-        	break;
+		case 'v':
+			puts(VERSION);
+			break;
 
-        case 'i':
-        	uuid = optarg;
-        	break;
+		case 'i':
+			uuid = optarg;
+			break;
 
-        case 'f':
-        	file[fidx] = optarg;
-        	fidx++;
-        	break;
+		case 'f':
+			file[fidx] = optarg;
+			fidx++;
+			break;
 
-        case 'l':
-        	debug = optarg;
-        	set_log_level(debug);
-        	break;
+		case 'l':
+			debug = optarg;
+			set_log_level(debug);
+			break;
 
-        default:
-        	usage();
-        	exit(0);
-        }
-    }
-    /* modify every file provided in input.*/
-    for(int idx = 0; idx < fidx;idx++) {
-    	log_debug("Files[%d] = %s ID %s Length %d \n", idx, file[idx], uuid, strlen(uuid));
+		default:
+			usage();
+			exit(0);
+		}
+	}
 
-    	/* Update JSON */
-    	int ret = modify_json(file[idx], uuid);
-    	if (ret) {
-    		log_error("Schema:: Error:: Failed to update schema %s.", file[idx]);
-    	} else {
-    		log_info("Schema:: Updated schema %s.", file[idx]);
-    	}
+	/* Modify every file provided in input.*/
+	for(int idx = 0; idx < fidx;idx++) {
+		unsigned int len = strlen(uuid);
+		log_trace("Files[%d] = %s ID %s Length %d \n", idx, file[idx], uuid, len);
 
-    }
+		/* Update JSON */
+		int ret = modify_json(file[idx], uuid);
+		if (ret) {
+			log_error("Schema:: Error:: Failed to update schema %s.", file[idx]);
+		} else {
+			log_info("Schema:: Updated schema %s.", file[idx]);
+		}
 
-    return 0;
+	}
+
+	return 0;
 }

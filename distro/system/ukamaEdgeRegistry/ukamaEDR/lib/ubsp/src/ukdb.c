@@ -64,32 +64,32 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
     } UnitData;
 
     UnitData *udata = (UnitData[]){
-        { .id = "UK1001-COMV1",
+        { .id = "UK-1001-COM-1101",
           .count = 3,
           .cfg =
               (UnitCfg[]){
-                  { .mod_uuid = "UK1001-COMV1",
+                  { .mod_uuid = "UK-1001-COM-1101",
                     .mod_name = "COMv1",
                     .sysfs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
                     .eeprom_cfg = &(DevI2cCfg){ .bus = 0, .add = 0x50ul } },
-                  { .mod_uuid = "UK2001-LTE",
+                  { .mod_uuid = "UK-2001-LTE-1101",
                     .mod_name = "LTE",
                     .sysfs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0050/eeprom",
                     .eeprom_cfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul } },
-                  { .mod_uuid = "UK3001-MASK",
+                  { .mod_uuid = "UK-3001-MSK-1101",
                     .mod_name = "MASK",
                     .sysfs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0051/eeprom",
                     .eeprom_cfg = &(DevI2cCfg){ .bus = 1, .add = 0x51ul } },
               } },
-        { .id = "UK5001-RFCTRL",
+        { .id = "UK-5001-RFC-1101",
           .count = 2,
           .cfg =
               (UnitCfg[]){
-                  { .mod_uuid = "UK5001-RFCTRL",
+                  { .mod_uuid = "UK-5001-RFC-1101",
                     .mod_name = "RF CTRL BOARD",
                     .sysfs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
                     .eeprom_cfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul } },
-                  { .mod_uuid = "UK4001-RFFE",
+                  { .mod_uuid = "UK-4001-RFA-1101",
                     .mod_name = "RF BOARD",
                     .sysfs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0052/eeprom",
                     .eeprom_cfg = &(DevI2cCfg){ .bus = 2, .add = 0x50ul } },
