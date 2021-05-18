@@ -32,11 +32,11 @@ void ifhandler_print(char* data, int size) {
 	int iter  = 0;
 	while(iter<size) {
 
-		if (iter%16 == 0) {
-			fprintf(stdout, "\r\n 0x%02X", (data[iter]&0xFF));
+		if (iter%8 == 0) {
+			fprintf(stdout, "\r\n [%03d]= 0x%02X", iter, (data[iter]&0xFF));
 		}
 		else {
-			fprintf(stdout, "\t 0x%02X", (data[iter]&0xFF));
+			fprintf(stdout, "\t [%03d]=0x%02X", iter, (data[iter]&0xFF));
 		}
 
 		iter++;
@@ -152,7 +152,7 @@ static void print_req_node(void* data) {
 static void print_req_list() {
 	fprintf(stdout,
 			"********************************************************************************\r\n");
-	fprintf(stdout, "IFHANDLER:: Length of the request list %llu.", req_list.logicalLength);
+	fprintf(stdout, "IFHANDLER:: Length of the request list %d.", req_list.logicalLength);
 	fprintf(stdout,
 			"****************************** Request list *************************************\r\n");
 	fflush(stdout);
@@ -186,7 +186,7 @@ static int get_response_socket(uint32_t id) {
 }
 
 /* Deserialize  request message */
-static RequestMsg* deserailize_request(char* rmsg) {
+static RequestMsg* deserialize_request(char* rmsg) {
 	RequestMsg* req  = malloc(sizeof(RequestMsg));
 	if (req) {
 		req->reqid = *(uint32_t*)(rmsg);
@@ -270,7 +270,7 @@ static int send_response(ResponseMsg* resp) {
 void serve_request(char* msg, int sock) {
 	uint32_t ret = 0;
 
-	RequestMsg* rmsg = deserailize_request(msg);
+	RequestMsg* rmsg = deserialize_request(msg);
 	if (rmsg) {
 		rmsg->sock = sock;
 		fprintf(stdout, "IFHANDLER:: Received request message id %llu, socket %d, length %d message %s.\r\n",

@@ -15,6 +15,7 @@
 #include "notification.h"
 #include "headers/errorcode.h"
 
+#define DEBUG_GATEWAYIF
 #define IF_LWM2M_SERVER_PORT 3000
 
 #define CLIENT_REQ_MSG_LEN 512
