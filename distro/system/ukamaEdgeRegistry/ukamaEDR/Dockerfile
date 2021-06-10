@@ -1,12 +1,15 @@
 FROM ubuntu:18.04
 
 # Install supervisord
-RUN apt-get update && apt-get install -y supervisor
+RUN apt-get update && apt-get install -y supervisor vim htop
 RUN mkdir -p /var/log/supervisor
 COPY container/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Prepare FS for ukamaEDR
-RUN mkdir -p /etc/ukamaEDR/schema 
+RUN mkdir -p /etc/certs
+RUN mkdir -p /etc/ip
+RUN mkdir -p /etc/ukamaEDR/schema
+RUN mkdir -p /etc/ukamaEDR/config 
 RUN mkdir -p /tmp/json/
 RUN mkdir /history
 
@@ -24,6 +27,7 @@ COPY container/sys /tmp/sys
 
 #lwm2m Client
 COPY container/lwm2m/client /sbin/lwm2mClient
+#COPY container/lwm2m/client.toml /etc/ukamaEDR/config/client.toml
 
 #LTE mediator, acsMifClient(stub), random metric genrator
 COPY container/lte/* /sbin/
