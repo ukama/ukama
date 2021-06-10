@@ -17,4 +17,7 @@ uint8_t objh_set_double_value(lwm2m_data_t * dataArray, double * data);
 uint8_t objh_set_int_value(lwm2m_data_t * dataArray, uint32_t * data);
 uint8_t objh_set_str_value(lwm2m_data_t * dataArray, char* data);
 
+int objh_store_data(char* filename, char* data, int size);
+int objh_parse_addr(char* data, int size, char** addr);
+
 #endif /* CLIENT_OBJECT_HELPER_H_ */
