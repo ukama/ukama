@@ -48,7 +48,7 @@ int extract_string(const toml_table_t* table, const char* tag, char** data)
 	toml_datum_t tstr = toml_string_in(table, tag);
 	if (!tstr.ok)
 	{
-		fprintf(stderr, "Error:: Failed to read tag %s\n", tag);
+		fprintf(stderr, "Config:: Error:: Failed to read tag %s\n", tag);
 		*data = NULL;
 
 	}
@@ -63,7 +63,7 @@ int extract_string(const toml_table_t* table, const char* tag, char** data)
 			memcpy(*data,tstr.u.s, len);
 		}
 
-		fprintf(stdout, "%s tag read %s value.\n", tag, *data);
+		fprintf(stdout, "Config:: %s tag read %s value.\n", tag, *data);
 		free(tstr.u.s);
 
 		ret = 0;
@@ -82,7 +82,7 @@ int extract_integer(const toml_table_t* table, const char* tag, int* data)
 	if (!tint.ok)
 	{
 
-		fprintf(stderr, "Error:: Failed to read tag %s\n", tag);
+		fprintf(stderr, "Config:: Error:: Failed to read tag %s\n", tag);
 		*data = 0;
 
 	}
@@ -127,7 +127,7 @@ int parse_server_subtable(toml_table_t* conf, char* tag, server_cfg_t** cfgdata)
 	}
 	else
 	{
-		fprintf(stderr, "Error:: Missing %s \n", tag);
+		fprintf(stderr, "Config:: Error:: Missing %s \n", tag);
 	}
 
 	/* error handling */
@@ -171,7 +171,7 @@ int parse_file_store_subtable(toml_table_t* conf, char* tag, file_store_t** cfgd
 	}
 	else
 	{
-		fprintf(stderr, "Error:: Missing %s \n", tag);
+		fprintf(stderr, "Config:: Error:: Missing %s \n", tag);
 	}
 
 	/* error handling */
@@ -196,7 +196,7 @@ int parse_config(char* cfgName)
 	fp = fopen(cfgName, "r");
 	if (!fp)
 	{
-		fprintf(stderr, "ERROR:: cannot open %s file error %s\n", cfgName, strerror(errno));
+		fprintf(stderr, "Config:: ERROR:: cannot open %s file error %s\n", cfgName, strerror(errno));
 		ret = -1;
 		return ret;
 	}
@@ -207,7 +207,7 @@ int parse_config(char* cfgName)
 
 	if (!conf)
 	{
-		fprintf(stderr, "ERROR:: cannot parse %s file error %s\n", cfgName, errbuf);
+		fprintf(stderr, "Config:: ERROR:: cannot parse %s file error %s\n", cfgName, errbuf);
 		ret = -1;
 		goto error;
 	}
