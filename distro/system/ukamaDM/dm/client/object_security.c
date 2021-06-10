@@ -49,6 +49,10 @@
 #include <stdio.h>
 
 #include "object_helper.h"
+#include "parser.h"
+
+/* Client config */
+extern client_config_t lw_cfg;
 
 typedef struct _security_instance_
 {
@@ -224,7 +228,7 @@ static uint8_t prv_security_write(uint16_t instanceId,
                 int ret = objh_parse_addr(targetP->uri,dataArray[i].value.asBuffer.length, &addr);
                 if (!ret) {
                 	/* Store IP */
-                	ret = objh_store_data(ipfilename, addr, strlen(addr));
+                	ret = objh_store_data(lw_cfg.file_store->addr, addr, strlen(addr));
                 	if (addr) free(addr);
                 }
 
@@ -304,7 +308,7 @@ static uint8_t prv_security_write(uint16_t instanceId,
                 fprintf(stdout,"Public key: %s\r\n",  targetP->serverPublicKey);
 
                 /* Ukama Specific :: Storing server certificates */
-                int ret = objh_store_data(certfilename, targetP->serverPublicKey, targetP->serverPublicKeyLen);
+                int ret = objh_store_data(lw_cfg.file_store->certs, targetP->serverPublicKey, targetP->serverPublicKeyLen);
                 if( ret ) {
                 	result = COAP_500_INTERNAL_SERVER_ERROR;
                 } else {

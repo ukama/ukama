@@ -8,6 +8,6 @@ ENTRYPOINT []
 WORKDIR /
 
 COPY build/bin/server /sbin/lwm2mServer
-COPY configs /etc/configs
+COPY config /etc/configs
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/configs/ssupervisord.conf"]
