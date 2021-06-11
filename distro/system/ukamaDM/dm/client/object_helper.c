@@ -103,9 +103,12 @@ uint8_t objh_set_double_value(lwm2m_data_t * dataArray, double * data) {
 uint8_t objh_send_data_ukama_edr(uint16_t instanceId, uint16_t rid, int objectType, void* data, size_t *size) {
 	int ret = 0;
 	ret = ereg_write_inst(instanceId, objectType, rid, data, size);
-	if (ret) {
+	if (ret)
+	{
 		return COAP_500_INTERNAL_SERVER_ERROR;
-	} else {
+	}
+	else
+	{
 		return COAP_204_CHANGED;
 	}
 }
@@ -117,18 +120,22 @@ int objh_store_data(char* filename, char* data, int size) {
 
 	/* Open file to write */
 	fd = fopen(filename, "w+");
-	if (fd == NULL) {
+	if (fd == NULL)
+	{
 		fprintf(stderr, "Opening file %s failed.\r\n", filename);
 		return -1;
 	}
 
 	/* Write data */
 	ret = fwrite(data,size, blocks, fd);
-	if (ret != blocks ) {
+	if (ret != blocks )
+	{
 		fprintf(stderr, "Failed to write all data to file %s. Expected %d bytes Written %d bytes.\r\n", filename, size, ret);
 		ret = -1;
 		goto close;
-	} else {
+	}
+	else
+	{
 		fprintf(stdout, "Wrote %d blocks to file %s.\r\n", blocks, filename);
 		ret = 0;
 	}
@@ -139,9 +146,10 @@ int objh_store_data(char* filename, char* data, int size) {
 	return ret;
 }
 
+/* Read IP address of organization */
 int objh_parse_addr(char* url, int size, char** addr) {
 
-	char *local_url = (char *) malloc(sizeof(char) * (strlen(url) + 1));
+
 	char *token;
 	char *token_host;
 	char *token_port;
@@ -159,18 +167,29 @@ int objh_parse_addr(char* url, int size, char** addr) {
 	int port;
 
 	int ret = 0;
+
 	// Copy our string
+	char *local_url = (char *) malloc(sizeof(char) * (strlen(url) + 1));
+	if (!local_url)
+	{
+		ret = -1;
+		fprintf(stderr, "Error in memory allocation for URL.\n");
+		goto error;
+	}
 	strcpy(local_url, url);
 
 	/* Protocol */
 	token = strtok_r(local_url, ":", &token_ptr);
-	if (token) {
+	if (token)
+	{
 		protocol = (char *) malloc(sizeof(char) * strlen(token) + 1);
-		if (protocol) {
+		if (protocol)
+		{
 			strcpy(protocol, token);
 			fprintf(stdout, "protocol: %s\n", protocol);
 		}
-	} else {
+	} else
+	{
 		ret = -1;
 		fprintf(stderr, "Error parsing protocol.\n");
 		goto error;
@@ -178,13 +197,17 @@ int objh_parse_addr(char* url, int size, char** addr) {
 
 	/* Host:Port */
 	token = strtok_r(NULL, "/", &token_ptr);
-	if (token) {
-
+	if (token)
+	{
 		host_port = (char *) malloc(sizeof(char) * (strlen(token) + 1));
-		if (host_port) {
+		if (host_port)
+		{
 			strcpy(host_port, token);
-		} else {
+		}
+		else
+		{
 			ret = -1;
+			fprintf(stderr, "Error in memory allocation for host:port string.\n");
 			goto error;
 		}
 
@@ -197,17 +220,23 @@ int objh_parse_addr(char* url, int size, char** addr) {
 
 	/* Host */
 	token_host = strtok_r(host_port, ":", &host_token_ptr);
-	if (token_host) {
+	if (token_host)
+	{
 		host_addr = (char *) malloc(sizeof(char) * strlen(token_host) + 1);
-		if (host_addr){
+		if (host_addr)
+		{
 			strcpy(host_addr, token_host);
 			fprintf(stdout, "host_addr: %s\n", host_addr);
-		} else {
+		}
+		else
+		{
 			ret = -1;
 			fprintf(stderr, "Error in memory allocation for host_addr.\n");
 			goto error;
 		}
-	} else {
+	}
+	else
+	{
 		ret = -1;
 		fprintf(stderr, "Error parsing host.\n");
 		goto error;
@@ -215,24 +244,31 @@ int objh_parse_addr(char* url, int size, char** addr) {
 
 	/* Port */
 	token_port = strtok_r(NULL, ":", &host_token_ptr);
-	if (token_port) {
+	if (token_port)
+	{
 		port = atoi(token_port);
 		fprintf(stdout, "token_port: %d\n", port);
-	} else {
+	}
+	else
+	{
+		/* No need to report error as only IP is required.*/
 		port = 0;
 		ret = -1;
 		fprintf(stderr, "Error parsing token_port.\n");
-		/* No need to report error */
+
 	}
 
 	*addr = host_addr;
 
 	/* Only error case */
 	error:
+	if(local_url) free (local_url);
 	if (protocol) free(protocol);
 	if (host_port) free(host_port);
-	if (ret) {
-		if (host_addr) {
+	if (ret)
+	{
+		if (host_addr)
+		{
 			free(host_addr);
 			host_addr = NULL;
 		}

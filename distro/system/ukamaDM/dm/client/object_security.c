@@ -220,22 +220,27 @@ static uint8_t prv_security_write(uint16_t instanceId,
             {
                 strncpy(targetP->uri, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
 
+                /* Ukama Specific :: Storing IP for server */
                 fprintf(stdout,"Server URI is of length %d\r\n",   dataArray[i].value.asBuffer.length);
                 fprintf(stdout,"Server URI: %s\r\n", targetP->uri);
 
-                /* Ukama Specific :: Storing IP for server */
+
                 char* addr ;
                 int ret = objh_parse_addr(targetP->uri,dataArray[i].value.asBuffer.length, &addr);
-                if (!ret) {
+                if (!ret)
+                {
                 	/* Store IP */
                 	ret = objh_store_data(lw_cfg.file_store->addr, addr, strlen(addr));
                 	if (addr) free(addr);
                 }
 
                 /* Set return value */
-                if( ret ) {
+                if( ret )
+                {
                 	result = COAP_500_INTERNAL_SERVER_ERROR;
-                } else {
+                }
+                else
+                {
                 	result = COAP_204_CHANGED;
                 }
 
@@ -309,9 +314,12 @@ static uint8_t prv_security_write(uint16_t instanceId,
 
                 /* Ukama Specific :: Storing server certificates */
                 int ret = objh_store_data(lw_cfg.file_store->certs, targetP->serverPublicKey, targetP->serverPublicKeyLen);
-                if( ret ) {
+                if( ret )
+                {
                 	result = COAP_500_INTERNAL_SERVER_ERROR;
-                } else {
+                }
+                else
+                {
                 	result = COAP_204_CHANGED;
                 }
 
