@@ -20,6 +20,14 @@ docker build . -t lwm2mserver:v0.0.1
 
 ## Starting Container Image
 
+Server:
+
 ```
  docker run --network host -p 3000:3000 lwm2mserver:v0.0.1
+```
+
+Client:
+
+```
+docker run --network host -v ${PWD}/container/lwm2m/clientconf:/etc/lwclient lwm2mClient:v0.0.1
 ```

@@ -5,9 +5,9 @@
 # Depends on the code in core and common
 #
 
-#CC=/home/vishal/cdrive/work/git/ukamaOS/distro/tools/musl-cross-make/output/bin/x86_64-linux-musl-gcc
-CC=/usr/bin/musl-gcc
-INCS=-I"./core" -I"./common" -I"./ukamaedr" -I"./servIface" -I"."
+CC=/home/vishal/cdrive/work/git/ukama/ukamaOS/distro/tools/musl-cross-make/output/bin/x86_64-linux-musl-gcc
+#CC=/usr/bin/musl-gcc
+INCS=-I"./core" -I"./common" -I"./ukamaedr" -I"./servIface" -I"." -I"./config"
 CFLAGS=$(INCS) -g
 CDEFINES=-DLWM2M_BOOTSTRAP -DLWM2M_CLIENT_MODE -DLWM2M_LITTLE_ENDIAN \
 -DLWM2M_SUPPORT_JSON 
@@ -19,6 +19,7 @@ EDR_SRC=$(wildcard ukamaedr/src/*.c)
 SERVIFACE_SRC=$(wildcard servIface/*.c)
 BOOTSTRAP_SRC=$(wildcard bootstrap/*.c)
 SERVER_SRC=$(wildcard server/*.c)
+PARSER_SRC=$(wildcard config/*.c)
 BINDIR=build/bin
 LINKFLAG = --static
 
@@ -29,8 +30,8 @@ LINKFLAG = --static
 all: client bootstrap server
 	@echo "All Done."
 
-client: mktree $(SRC) $(CLIENT_SRC) $(EDR_SRC)
-	$(CC) $(CFLAGS) $(CDEFINES) $(SRC) $(CLIENT_SRC) $(EDR_SRC) \
+client: mktree $(SRC) $(CLIENT_SRC) $(EDR_SRC) $(PARSER_SRC)
+	$(CC) $(CFLAGS) $(CDEFINES) $(SRC) $(CLIENT_SRC) $(EDR_SRC) $(PARSER_SRC) \
 	-o $(BINDIR)/client $(LINKFLAG) $(LIBS)
 	@echo "Client executable at: $(BINDIR)/client"
 

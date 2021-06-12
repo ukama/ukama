@@ -80,6 +80,7 @@
 #include <errno.h>
 #include <signal.h>
 
+#include "parser.h"
 #include "storage_interface.h"
 #include "inc/msghandler.h"
 #include "objects/objects.h"
@@ -93,6 +94,9 @@ static int g_quit = 0;
 
 #define OBJ_COUNT 21
 #define LAST_OBJ  20
+
+/* Client config */
+extern client_config_t lw_cfg;
 
 lwm2m_object_t * objArray[OBJ_COUNT];
 
@@ -861,6 +865,7 @@ void print_usage(void)
     fprintf(stdout, "  -t TIME\tSet the lifetime of the Client. Default: 300\r\n");
     fprintf(stdout, "  -b\t\tBootstrap requested.\r\n");
     fprintf(stdout, "  -c\t\tChange battery level over time.\r\n");
+    fprintf(stdout, "  -f\t\tConfig file name.\r\n");
 #ifdef WITH_TINYDTLS
     fprintf(stdout, "  -i STRING\tSet the device management or bootstrap server PSK identity. If not set use none secure mode\r\n");
     fprintf(stdout, "  -s HEXSTRING\tSet the device management or bootstrap server Pre-Shared-Key. If not set use none secure mode\r\n");
@@ -884,6 +889,7 @@ int main(int argc, char *argv[])
     int opt;
     bool bootstrapRequested = false;
     bool serverPortChanged = false;
+    const char * fileName = "./config/Lwm2mClient.toml";
 
 #ifdef LWM2M_BOOTSTRAP
     lwm2m_client_state_t previousState = STATE_INITIAL;
@@ -930,6 +936,7 @@ int main(int argc, char *argv[])
 
     memset(&data, 0, sizeof(client_data_t));
     data.addressFamily = AF_INET6;
+
 
     opt = 1;
     while (opt < argc)
@@ -1012,8 +1019,17 @@ int main(int argc, char *argv[])
             serverPortChanged = true;
             break;
         case '4':
-            data.addressFamily = AF_INET;
-            break;
+        	data.addressFamily = AF_INET;
+        	break;
+        case 'f':
+        	opt++;
+        	if (opt >= argc)
+        	{
+        		print_usage();
+        		return 0;
+        	}
+        	fileName = argv[opt];
+        	break;
         default:
             print_usage();
             return 0;
@@ -1021,10 +1037,33 @@ int main(int argc, char *argv[])
         opt += 1;
     }
 
-    if (!server)
+    /* Parsing Client config */
+    int ret = parse_config(fileName);
+    if (ret)
     {
-        server = (AF_INET == data.addressFamily ? DEFAULT_SERVER_IPV4 : DEFAULT_SERVER_IPV6);
+    	fprintf(stderr, "Error:: LwM2M Client parse config file %s.\r\n", fileName);
+    	return -1;
     }
+
+    /* Update server port */
+    if(lw_cfg.server) {
+
+    	/* Configuration read from file */
+    	char port[8] = {'\0'};
+    	sprintf(port, "%d", lw_cfg.server->port);
+    	serverPort = port;
+    	server = lw_cfg.server->addr;
+    	fprintf(stderr, "LwM2M using bootstrap server at %s:%s.\r\n", server, serverPort);
+
+    } else {
+
+    	if (!server)
+    	{
+    		server = (AF_INET == data.addressFamily ? DEFAULT_SERVER_IPV4 : DEFAULT_SERVER_IPV6);
+    	}
+
+    }
+
 
     /*
      *This call an internal function that create an IPV6 socket on the port 5683.
