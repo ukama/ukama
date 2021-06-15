@@ -19,14 +19,18 @@ ULFIUS_INC=$(COMMON_DIR)/third_party/ulfius/include
 COMMON_INC=$(COMMON_DIR)/inc
 BUILD=./build
 SRC=./src
+PROVIDER_SRC=./provider
 SRCS=$(wildcard $(SRC)/*.c)
+PROVIDER_SRCS=$(wildcard $(PROVIDER_SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(SRCS))
 EXE=wimc.d
+PROVIDER=mock_provider
 
 CC=gcc
 CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
 LDFLAGS=-L$(ULFIUS)
-LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson	
+LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson
+PROVIDER_LIBS=-lulfius -lsqlite3
 
 .PHONY: all run clean
 
@@ -38,7 +42,11 @@ libulfius:
 $(EXE): $(BUILD) libulfius $(OBJS)
 	$(CC) $(OBJS) -o $(BUILD)/$@ $(LDFLAGS) $(LIBS)
 
-$(BUILD)/%.o: $(SRC)/%.c $(OBJ)
+$(PROVIDER): $(BUILD)
+	$(CC) -g -o $(BUILD)/$(PROVIDER) $(PROVIDER_SRCS) $(PROVIDER_LIBS)
+	echo "Binary available at: $(BUILD)/$(PROVIDER)"
+
+$(BUILD)/%.o: $(SRC)/%.c $(OBJ) $(PROVIDER_SRC)/%.c $(PROVIDER_OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD):
