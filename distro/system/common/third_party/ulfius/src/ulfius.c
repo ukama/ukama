@@ -362,11 +362,11 @@ static int mhd_iterate_post_data (void * coninfo_cls, enum MHD_ValueKind kind, c
   }
 }
 
-#if MHD_VERSION >= 0x00096100
-  #define MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED(len, buf, flag) MHD_create_response_from_buffer_with_free_callback((len), (buf), &o_free)
-#else
+//#if MHD_VERSION >= 0x00096100
+//  #define MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED(len, buf, flag) MHD_create_response_from_buffer_with_free_callback((len), (buf), &o_free)
+//#else
   #define MHD_CREATE_RESPONSE_FROM_BUFFER_PIMPED(len, buf, flag) MHD_create_response_from_buffer((len), (buf), (flag))
-#endif
+//#endif
 
 /**
  * ulfius_webservice_dispatcher

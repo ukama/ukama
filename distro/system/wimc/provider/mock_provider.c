@@ -13,9 +13,18 @@
 #include <stdlib.h>
 #include <sqlite3.h>
 #include <string.h>
-#include "ulfius.h"
+#include <jansson.h>
+#include <ulfius.h>
 
 #define CONTAINERS "/containers"
+
+#define JSON_AGENT_CB     "agent-cbURL"
+#define JSON_AGENT_METHOD "method"
+#define JSON_AGENT_URL    "url"
+
+#define WIMC_MAX_NAME_LEN 128
+#define WIMC_MAX_TAG_LEN  128
+#define WIMC_MAX_PATH_LEN 1024
 
 #define TRUE 1
 #define FALSE 0
@@ -94,11 +103,110 @@ static sqlite3 *open_db(char *dbFile) {
   return db;
 }
 
-/* Callback function for the web application on /validation url call */
+static int container_name_and_tag(char *str, char *name, char *tag) {
+
+  char *c, *t;
+
+  c = strtok(str, ":");
+  t = strtok(NULL, ":");
+
+  if (c == NULL || t == NULL) {
+    goto failure;
+  }
+
+  /* sanity check. */
+  if (strlen(c) > WIMC_MAX_NAME_LEN ||
+      strlen(t) > WIMC_MAX_TAG_LEN) {
+    goto failure;
+  }
+
+  strncpy(name, c, strlen(c));
+  strncpy(tag, t, strlen(t));
+
+  return TRUE;
+ failure:
+  return FALSE;
+}
+
+static int get_container_name(char *http, char *name, char *tag) {
+
+  int val=FALSE;
+  char *token1, *token2;
+
+  token1 = strtok(http, "?"); /* will return /container */
+  token2 = strtok(NULL, "?");
+
+  if (token1 == NULL || token2 == NULL) {
+    goto failure;
+  }
+
+  if (strcasecmp(CONTAINERS, token1) == 0){
+    val = container_name_and_tag(token2, name, tag); /* name:tag */
+
+    if (val == FALSE) {
+      goto failure;
+    }
+  }
+
+ failure:
+  return val;
+}
+
+/* Callback function for the web application on /validation url call
+ * Lookup db entries, if match found return the method and URL as JSON,
+ * otherwise 404
+ */
 int callback_get_containers(req_t *req, resp_t * resp, void * user_data) {
 
-  DB *db = (DB *)user_data;
-  
+  char name[WIMC_MAX_NAME_LEN] = {0};
+  char tag[WIMC_MAX_PATH_LEN] = {0};
+  char *params, *str;
+  DB *db;
+  int ret, i, found=FALSE;
+  json_t *root, *agentArray;
+
+  root = json_object();
+  json_object_set_new(root, JSON_AGENT_CB,  json_array());
+  agentArray = json_object_get(root, JSON_AGENT_CB);
+
+  params = (char *)req->http_url;
+  db = (DB *)user_data;
+
+  ret = get_container_name(params, &name[0], &tag[0]);
+
+  if (ret && agentArray) {
+    fprintf(stdout, "Valid GET request for %s: name[%s] tag[%s]",
+	    CONTAINERS, name, tag);
+
+    /* Look up db. */
+    for (i=0; i<db->numEnt; i++) {
+      if (strcmp(db->ent[i].name, name) == 0 &&
+	  strcmp(db->ent[i].tag, tag) == 0) {
+
+	found = TRUE;
+	/* Add to the JSON array. */
+	json_t *agent = json_object();
+	json_object_set_new(agent, JSON_AGENT_METHOD,
+			    json_string(db->ent[i].method));
+	json_object_set_new(agent, JSON_AGENT_URL,
+			    json_string(db->ent[i].url));
+	json_array_append(agentArray, agent);
+      }
+    }
+  }
+
+  if (found) {
+    str = json_dumps(root, 0);
+    fprintf(stdout, "JSON Object: %s\n", str);
+
+    ulfius_set_json_body_response(resp, 200, root);
+  } else {
+     ulfius_set_string_body_response(resp, 404, "Not found\n");
+  }
+
+  json_decref(agentArray);
+  json_decref(root);
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -110,7 +218,7 @@ int callback_default_ok(req_t *req, resp_t * resp, void * user_data) {
   return U_CALLBACK_CONTINUE;
 }
 
-static int read_entries(void *arg, int argc, char **argv, char **colName) {
+int read_entries(void *arg, int argc, char **argv, char **colName) {
   
   int i, ent;
   DB *db = (DB *)arg;
@@ -143,7 +251,7 @@ static int read_entries(void *arg, int argc, char **argv, char **colName) {
   return 0;
 }
 
-static int read_all_db_entries(DB *db) {
+int read_all_db_entries(DB *db) {
   
   int val=FALSE;
   char buf[128];
@@ -169,7 +277,7 @@ static int read_all_db_entries(DB *db) {
   return val;
 }
 
-static void create_db_entries_endpoint(DB *db, struct _u_instance *inst) {
+void create_db_entries_endpoint(DB *db, struct _u_instance *inst) {
 
   int i;
 
@@ -180,7 +288,7 @@ static void create_db_entries_endpoint(DB *db, struct _u_instance *inst) {
   }
 }
 
-static void free_db_entries(DB *db) {
+void free_db_entries(DB *db) {
 
   int i;
 
@@ -224,11 +332,11 @@ int main(int argc, char **argv) {
     fprintf(stderr, "Error ulfius_init_instance, abort\n");
     return 1;
   }
-  
+
   /* Endpoint list declaration */
   ulfius_add_endpoint_by_val(&inst, "GET", CONTAINERS, NULL, 0,
 			     &callback_get_containers, db);
-
+  
   /* Read all db entries and process them. */
   if (read_all_db_entries(db)) {
     create_db_entries_endpoint(db, &inst);

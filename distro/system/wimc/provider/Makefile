@@ -8,46 +8,40 @@
 #
 
 #
-# Makefile for WIMC.d
+# Makefile for Mock Provider
 #
 
 UKAMAOS=/home/kashif/work/ukama/ukamaOS
 COMMON_DIR=$(UKAMAOS)/distro/system/common
-PREFIX=/usr/local
+SRC_DIR=$(UKAMAOS)/distro/system/wimc/provider
 ULFIUS=$(COMMON_DIR)/third_party/ulfius/src
 ULFIUS_INC=$(COMMON_DIR)/third_party/ulfius/include
 COMMON_INC=$(COMMON_DIR)/inc
+
 BUILD=./build
-SRC=./src
-PROVIDER_SRC=./provider
+SRC=./
 SRCS=$(wildcard $(SRC)/*.c)
-PROVIDER_SRCS=$(wildcard $(PROVIDER_SRC)/*.c)
 OBJS=$(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(SRCS))
-EXE=wimc.d
-PROVIDER=mock_provider
+EXE=mock_provider
 
 CC=gcc
 CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
-LDFLAGS=-L$(ULFIUS)
-LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson
-PROVIDER_LIBS=-lulfius -lsqlite3 -ljansson
+LDFLAGS=-L$(SRC_DIR)/$(BUILD)
+LIBS=-lulfius -lsqlite3 -ljansson -lorcania -lmicrohttpd -lcurl
 
 .PHONY: all run clean
 
 all: $(EXE)
 
 libulfius:
-	cd $(ULFIUS) && $(MAKE) debug CURLFLAG=1 GNUTLSFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 UWSCFLAG=1
+	cd $(ULFIUS) && $(MAKE) static GNUTLSFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 UWSCFLAG=1 && cp libulfius.a $(SRC_DIR)/$(BUILD)
 
 $(EXE): $(BUILD) libulfius $(OBJS)
 	$(CC) $(OBJS) -o $(BUILD)/$@ $(LDFLAGS) $(LIBS)
-
-$(PROVIDER): $(BUILD) libulfius
-	$(CC) -I$(ULFIUS_INC) -I$(COMMON_INC) -g -o $(BUILD)/$(PROVIDER) $(PROVIDER_SRCS) -L$(ULFIUS) $(PROVIDER_LIBS)
-	echo "Binary available at: $(BUILD)/$(PROVIDER)"
+	echo "Binary available at: $(BUILD)/$(EXE)"
 
 $(BUILD)/%.o: $(SRC)/%.c $(OBJ)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -c $< -o $@
 
 $(BUILD):
 	mkdir -p $@
