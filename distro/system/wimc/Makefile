@@ -29,7 +29,7 @@ PROVIDER=mock_provider
 CC=gcc
 CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
 LDFLAGS=-L$(ULFIUS)
-LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson
+LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson -lcurl
 PROVIDER_LIBS=-lulfius -lsqlite3 -ljansson
 
 .PHONY: all run clean

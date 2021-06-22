@@ -13,6 +13,7 @@
 
 #include "callback.h"
 #include "wimc.h"
+#include "agent.h"
 
 /*
  * decode a u_map into a string
@@ -406,6 +407,42 @@ int callback_get_stats(const struct _u_request *request,
   
   return U_CALLBACK_CONTINUE;
 }
+
+/*
+ * callback_post_agent --
+ *
+ */
+int callback_post_agent(const struct _u_request *request,
+			struct _u_response *response,
+			void *user_data) {
+  int ret, retCode;
+  char *params, *resBody;
+  json_t *jreq=NULL;
+  Agent *agents=NULL;
+  AgentReq req;
+
+  agents = (Agent *)user_data;
+
+  jreq = ulfius_get_json_body_response(request, NULL);
+  deserialize_agent_request(&req, jreq);
+
+  ret = process_agent_request(agents, &req);
+  if (ret == WIMC_AGENT_OK) {
+    retCode = 200;
+  } else {
+    retCode = 400;
+  }
+
+  params = print_map(request->map_post_body);
+  resBody = msprintf("%s\n%s", agent_error_to_str(ret), params);
+
+  ulfius_set_string_body_response(response, retCode, resBody);
+  o_free(resBody);
+  o_free(params);
+
+  return U_CALLBACK_CONTINUE;
+}
+
 
 /*
  * callback_not_allowed -- 

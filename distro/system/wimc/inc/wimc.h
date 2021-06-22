@@ -14,6 +14,8 @@
 #include <ulfius.h>
 #include <sqlite3.h>
 
+#include "agent.h"
+
 #define WIMC_CMD_TRANSFER 1
 #define WIMC_CMD_INFO     2
 #define WIMC_CMD_INSPECT  3
@@ -37,6 +39,7 @@
 #define WIMC_EP_STATS  "/stats"
 #define WIMC_EP_CLIENT "/container/*"
 #define WIMC_EP_ADMIN  "/admin"
+#define WIMC_EP_AGENT  "/admin/agent"
 
 #define WIMC_MAX_EP_LEN     1024
 #define WIMC_MAX_NAME_LEN   256
@@ -59,6 +62,46 @@ typedef struct {
   char    *adminPort;
   char    *cloud;      /* cloud-based service provider URL. */
   sqlite3 *db;         /* SQLite3 db for various stats */
+  int     maxAgents;   /* Max. number of agents allowed. */
+  Agent   *agents;     /* Ptr to Agents, needed for http callback func() */
 } WimcCfg;
+
+
+typedef enum {
+
+  AGENT = 1,
+  PROVIDER
+} WReqType;
+
+typedef enum {
+
+  ACTION_FETCH=1,
+  ACTION_UPDATE,
+  ACTION_CANCEL
+} ActionType;
+
+typedef enum {
+  CHUNK=1,
+  OCI,
+  FTP
+} MethodType;
+
+typedef struct {
+
+  char       *name;
+  char       *tag;
+  MethodType method;
+  char       *providerURL;
+} Content;
+
+typedef struct {
+
+  WReqType   type;
+  ActionType action;
+  int        id;
+  char       *callbackURL;
+  int        interval;
+  Content    *content;
+} WimcReq;
 
 #endif /* WIMC_H */

@@ -13,6 +13,9 @@
 
 #include <stdio.h>
 
+#include "wimc.h"
+#include "agent.h"
+
 #define TRUE 1
 #define FALSE 0
 
@@ -30,3 +33,19 @@ int is_valid_url(char *url) {
   
   return TRUE;
 } 
+
+char *convert_action_to_str(ActionType action) {
+
+}
+
+char *convert_method_to_str(MethodType method) {
+
+}
+
+char *convert_state_to_str(TransferState state) {
+
+}
+
+char *convert_type_to_str(WReqType type) {
+
+}

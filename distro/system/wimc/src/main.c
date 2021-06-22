@@ -20,6 +20,7 @@
 #include "log.h"
 #include "ulfius.h"
 #include "wimc.h"
+#include "agent.h"
 
 #define ENV_CLIENT_PORT "WIMC_CLIENT_PORT"
 #define ENV_ADMIN_PORT  "WMIN_ADMIN_PORT"
@@ -48,7 +49,8 @@ void usage() {
   printf("--u, --url                          Cloud URL - http://host:port/\n");
   printf("--d, --dbFile                       Full path for db file. \n");
   printf("--p, --port                         Client listening port. \n");
-  printf("--a, --admin                        Admin listneing port. \n");
+  printf("--P, --aPort                        Admin listneing port. \n");
+  printf("--a, --agent                        Max. number of agents. \n");
   printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process. \n");
   printf("--v, --version                      Version. \n");
 }
@@ -118,7 +120,9 @@ int main (int argc, char **argv) {
 
   sqlite3 *db=NULL;
   struct _u_instance adminInst, clientInst;
-  WimcCfg *cfg = NULL;
+  WimcCfg *cfg=NULL;
+  Agent *agents=NULL;
+
   char *debug = DEF_LOG_LEVEL;
 
   cfg = (WimcCfg *)calloc(sizeof(WimcCfg), 1);
@@ -131,6 +135,7 @@ int main (int argc, char **argv) {
   cfg->adminPort  = getenv(ENV_ADMIN_PORT);
   cfg->dbFile     = getenv(ENV_DB_FILE);
   cfg->cloud      = getenv(ENV_UKAMA_CLOUD);
+  cfg->maxAgents  = 1;
   
   if (argc == 1 ||
       (cfg->clientPort == NULL && cfg->adminPort == NULL
@@ -150,8 +155,9 @@ int main (int argc, char **argv) {
       { "url",       required_argument, 0, 'u'},
       { "dbFile",    required_argument, 0, 'd'},
       { "port",      required_argument, 0, 'p'},
-      { "admin",     required_argument, 0, 'a'},
+      { "aPort",     required_argument, 0, 'P'},
       { "level",     required_argument, 0, 'l'},
+      { "agents",    required_argument, 0, 'a'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'v'},
       { 0,           0,                 0,  0}
@@ -181,10 +187,14 @@ int main (int argc, char **argv) {
       }
       break;
 
-    case 'a':
+    case 'P':
       if (cfg->adminPort == NULL){ /* ignore this otherwise. */
 	cfg->adminPort = optarg;
       }
+      break;
+
+    case 'a':
+      cfg->maxAgents = atoi(optarg);
       break;
       
     case 'h':
@@ -207,6 +217,13 @@ int main (int argc, char **argv) {
     }
   } /* while */
 
+  agents = (Agent *)calloc(cfg->maxAgents, sizeof(Agent));
+  if (agents == NULL) {
+    log_error("Error allocating memory: %d", (int)sizeof(Agent)*cfg->maxAgents);
+    exit(1);
+  }
+
+  cfg->agents = agents;
   is_valid_config(cfg);
   
   /* Steps are as follows:
@@ -234,7 +251,7 @@ int main (int argc, char **argv) {
   }
 
   /* Step-2, setup all endpoints, cb and run webservice at ports */
-  if (start_web_services(cfg, &adminInst, &clientInst) != TRUE) {
+  if (start_web_services(cfg, agents, &adminInst, &clientInst) != TRUE) {
     log_error("Webservice failed to setup for admin/clients. Exiting");
     exit(0);
   }

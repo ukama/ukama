@@ -120,6 +120,7 @@ static void *process_response(WimcCfg *cfg, resp_t *resp, int cmd) {
   
   json_t *jresp = NULL;
   AgentCB **agent = NULL;
+  char *agentURL = NULL;
 
   int count, i;
   
@@ -138,10 +139,15 @@ static void *process_response(WimcCfg *cfg, resp_t *resp, int cmd) {
     /* If response is HTTP_RESPONSE_OK, de-seralize JSON response. */
     if (cmd == WIMC_CMD_TRANSFER) {
       
-      deserialize_transfer_response(jresp, &agent[0], &count);
+      deserialize_provider_response(jresp, &agent[0], &count);
 
       for (i=0; i<count; i++) {
-	log_debug("%s: type: %s URL: %s", i, agent[i]->method, agent[i]->url);
+	log_debug("Received Agent %s: of type: %s with URL: %s",
+		  i, agent[i]->method, agent[i]->url);
+#if 0
+	/* lookup registered matching Agents*/
+	agentURL = find_matching_agent_url(agent[i]->method, cfg->agents);
+#endif
       }
       
     } else if (cmd == WIMC_CMD_INFO) {
