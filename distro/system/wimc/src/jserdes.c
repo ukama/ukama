@@ -434,10 +434,286 @@ int serialize_agent_request_unregister(AgentReq *req, json_t *json) {
 }
 
 /*
+ * deserialize_agent_request_register --
+ *
+ */
+static int deserialize_agent_request_register(Register *reg, json_t *json) {
+
+  json_t *jreg, *jmethod, *jurl;
+
+  jreg = json_object_get(json, JSON_TYPE_REGISTER);
+
+  if (jreg == NULL) {
+    return FALSE;
+  }
+
+  reg = (Register *)calloc(sizeof(Register), 1);
+  if (reg == NULL) {
+    return FALSE;
+  }
+
+  jmethod = json_object_get(jreg, JSON_METHOD);
+  jurl = json_object_get(jreg, JSON_AGENT_URL);
+  if (jurl == NULL || jmethod == NULL) {
+    return FALSE;
+  }
+
+  reg->method = json_string_value(jmethod);
+  reg->url = json_string_value(jurl);
+
+  return TRUE;
+}
+
+/*
+ * deserialize_agent_request_update --
+ */
+static int deserialize_agent_request_update(Update *update, json_t *json) {
+
+  json_t *jupdate, *obj;
+
+  jupdate = json_object_get(json, JSON_TYPE_UPDATE);
+
+  if (jupdate==NULL) {
+    return FALSE;
+  }
+
+  update = (Update *)calloc(sizeof(Update), 1);
+  if (update == NULL) {
+    return FALSE;
+  }
+
+  /* All updates must have the ID. */
+  obj = json_object_get(jupdate, JSON_ID);
+  if (obj == NULL) {
+    return FALSE;
+  } else {
+    update->id = json_integer_value(obj);
+  }
+
+  /* Total data to be transfered as part of this fetch (in KB) */
+  obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
+  if (obj) {
+    update->totalKB = json_integer_value(obj);
+  }
+
+  /* Activity so far. */
+  obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
+  if (obj) {
+    update->transferKB = json_integer_value(obj);
+  }
+
+  /* Activity state. */
+  obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
+  if (obj) {
+    update->transferState = convert_str_to_state(json_string_value(obj));
+
+    if (update->transferState == (TransferState)ERR ||
+	update->transferState == (TransferState)DONE) {
+      obj = json_object_get(jupdate, JSON_VOID_STR);
+      if (obj) {
+	update->voidStr = json_string_value(obj);
+      }
+    }
+  }
+
+  return TRUE;
+}
+
+/*
+ * deserialize_agent_request_unreg --
+ */
+static int deserialize_agent_request_unreg(UnRegister *unReg, json_t *json) {
+
+  json_t *jreq, *obj;
+
+  jreq = json_object_get(json, JSON_TYPE_UNREGISTER);
+
+  if (jreq == NULL) {
+    return FALSE;
+  }
+
+  unReg = (UnRegister *)calloc(sizeof(UnRegister), 1);
+  if (unReg == NULL) {
+    return FALSE;
+  }
+
+  obj = json_object_get(jreq, JSON_ID);
+  if (obj) {
+    unReg->id = json_integer_value(obj);
+  } else {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*
  * deserialize_agent_request --
  *
  */
-int deserialize_agent_request(AgentReq *re, json_t *json) {
+int deserialize_agent_request(AgentReq *req, json_t *json) {
 
+  int ret=FALSE;
+  json_t *jreq, *jtype, *content;
+  ReqType type;
 
+  jreq = json_object_get(json, JSON_AGENT_REQUEST);
+  if (jreq == NULL) {
+    return FALSE;
+  }
+
+  jtype = json_object_get(jreq, JSON_TYPE);
+
+  if (jtype==NULL) {
+    return FALSE;
+  }
+
+  type = convert_str_to_type(json_string_value(jtype));
+
+  if (type == (ReqType)REQ_REG) {
+    ret = deserialize_agent_request_register(req->reg, jreq);
+  } else if (type == (ReqType)REQ_UPDATE) {
+    ret = deserialize_agent_request_update(req->update, jreq);
+  } else if (type == (ReqType)REQ_UNREG) {
+    ret = deserialize_agent_request_unreg(req->unReg, jreq);
+  }
+
+  return ret;
+}
+
+/*
+ * deserialize_wimc_request_to_agent --
+ *
+ */
+int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
+
+  json_t *obj, *jcont;
+
+  if (json==NULL) {
+    return FALSE;
+  }
+
+  obj = json_object_get(json, JSON_TYPE);
+  if (obj) {
+     req->type = convert_str_to_wType(json_string_value(obj));
+  } else {
+    return FALSE;
+  }
+
+  obj = json_object_get(json, JSON_ACTION);
+  if (obj) {
+     req->action = convert_str_to_action(json_string_value(obj));
+  } else {
+    return FALSE;
+  }
+
+  obj = json_object_get(json, JSON_ID);
+  if (obj) {
+    req->id = json_integer_value(obj);
+  } else {
+    return FALSE;
+  }
+
+  if (req->action == (ActionType)ACTION_FETCH ||
+      req->action == (ActionType)ACTION_UPDATE) {
+
+    obj = json_object_get(json, JSON_CALLBACK_URL);
+    if (obj) {
+      req->callbackURL = json_string_value(obj);
+    } else {
+      return FALSE;
+    }
+
+    obj = json_object_get(req, JSON_UPDATE_INTERVAL);
+    if (obj) {
+      req->interval = json_integer_value(obj);
+    } else {
+      return FALSE;
+    }
+  }
+
+  if (req->action == (ActionType)ACTION_FETCH) {
+
+    /* Get content object. */
+    jcont = json_object_get(req, JSON_CONTENT);
+    if (jcont==NULL) {
+      return FALSE;
+    }
+
+    req->content = (Content *)calloc(sizeof(Content), 1);
+    if (req->content == NULL) {
+      return FALSE;
+    }
+
+    obj = json_object_get(jcont, JSON_NAME);
+    if (obj) {
+      req->content.name = json_string_value(obj);
+    } else {
+      free(req->content);
+      return FALSE;
+    }
+
+    obj = json_object_get(jcont, JSON_TAG);
+    if (obj) {
+      req->content.tag = json_string_value(obj);
+    } else {
+      free(req->content);
+      return FALSE;
+    }
+
+    obj = json_object_get(jcont, JSON_METHOD);
+    if (obj) {
+      req->content.method = convert_str_to_method(obj);
+    } else {
+      free(req->content);
+      return FALSE;
+    }
+
+    obj = json_object_get(jcont, JSON_PROVIDER_URL);
+    if (obj) {
+      req->content.providerURL = json_string_value(obj);
+    } else {
+      free(req->content);
+      return FALSE;
+    }
+  }
+
+  if (req->action == (ActionType)ACTION_CANCEL) {
+    /* Do nothing. */
+  }
+
+  return TRUE;
+}
+
+/*
+ * deserialize_wimc_request --
+ *
+ */
+int deserialize_wimc_request(WimcReq *req, json_t *json) {
+
+  int ret=FALSE;
+  json_t *jreq, *jtype;
+  WReqType type;
+
+  jreq = json_object_get(json, JSON_WIMC_REQUEST);
+
+  if (jreq==NULL) {
+    return FALSE;
+  }
+
+  jtype = json_object_get(jreq, JSON_TYPE);
+  if (jtype == NULL) {
+    return FALSE;
+  }
+
+  type = convert_str_to_wType(json_string_value(jtype));
+  req->type = type;
+
+  if (type == (WReqType)AGENT) {
+    ret = deserialize_wimc_request_to_agent(req, jreq);
+  } else if (type == (WReqType)PROVIDER) {
+    ret = deserialize_wimc_request_to_provider(req, jreq);
+  }
+
+  return ret;
 }
