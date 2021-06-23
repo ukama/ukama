@@ -647,7 +647,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
 
     obj = json_object_get(jcont, JSON_NAME);
     if (obj) {
-      req->content.name = json_string_value(obj);
+      req->content->name = json_string_value(obj);
     } else {
       free(req->content);
       return FALSE;
@@ -655,7 +655,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
 
     obj = json_object_get(jcont, JSON_TAG);
     if (obj) {
-      req->content.tag = json_string_value(obj);
+      req->content->tag = json_string_value(obj);
     } else {
       free(req->content);
       return FALSE;
@@ -663,7 +663,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
 
     obj = json_object_get(jcont, JSON_METHOD);
     if (obj) {
-      req->content.method = convert_str_to_method(obj);
+      req->content->method = convert_str_to_method(obj);
     } else {
       free(req->content);
       return FALSE;
@@ -671,7 +671,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
 
     obj = json_object_get(jcont, JSON_PROVIDER_URL);
     if (obj) {
-      req->content.providerURL = json_string_value(obj);
+      req->content->providerURL = json_string_value(obj);
     } else {
       free(req->content);
       return FALSE;
@@ -681,6 +681,11 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
   if (req->action == (ActionType)ACTION_CANCEL) {
     /* Do nothing. */
   }
+
+  return TRUE;
+}
+
+static int deserialize_wimc_request_to_provider(WimcReq *req, json_t *json) {
 
   return TRUE;
 }

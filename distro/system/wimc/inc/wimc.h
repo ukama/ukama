@@ -44,6 +44,16 @@
 #define WIMC_MAX_EP_LEN     1024
 #define WIMC_MAX_NAME_LEN   256
 
+#define WIMC_ACTION_FETCH_STR      "fetch"
+#define WIMC_ACTION_UPDATE_STR     "update"
+#define WIMC_ACTION_CANCEL_STR     "cancel"
+
+#define WIMC_METHOD_CHUNK_STR      "chunk"
+#define WIMC_METHOD_OCI_STR        "oci"
+
+#define WIMC_REQ_TYPE_AGENT_STR    "agent"
+#define WIMC_REQ_TYPE_PROVIDER_STR "provider"
+
 #define TRUE 1
 #define FALSE 0
 
@@ -83,7 +93,6 @@ typedef enum {
 typedef enum {
   CHUNK=1,
   OCI,
-  FTP
 } MethodType;
 
 typedef struct {

@@ -33,6 +33,21 @@
 #define WIMC_AGENT_ERROR_BAD_URL_STR    "Invalid ULR"
 #define WIMC_AGENT_ERROR_MEMORY_STR     "Internal memory error"
 
+#define AGENT_TX_STATE_REQUEST_STR "request";
+#define AGENT_TX_STATE_FETCH_STR   "fetch"
+#define AGENT_TX_STATE_UNPACK_STR  "unpack"
+#define AGENT_TX_STATE_DONE_STR    "done"
+#define AGENT_TX_STATE_ERR_STR     "error"
+
+#define AGENT_STATE_REGISTER_STR   "register"
+#define AGENT_STATE_ACTIVE_STR     "active"
+#define AGENT_STATE_UNREGISTER_STR "unregister"
+#define AGENT_STATE_INACTIVE_STR   "inactive"
+
+#define AGENT_REQ_TYPE_REG_STR    "register"
+#define AGENT_REQ_TYPE_UNREG_STR  "unregister"
+#define AGENT_REQ_TYPE_UPDATE_STR "update"
+
 /* Type of request originating from the agent. */
 typedef enum {
   REQ_REG = 1,

@@ -34,34 +34,176 @@ int is_valid_url(char *url) {
   return TRUE;
 } 
 
+/* Some utility functions for serdes */
+
 char *convert_action_to_str(ActionType action) {
 
+  char *str;
+
+  switch (action) {
+  case ACTION_FETCH:
+    str = WIMC_ACTION_FETCH_STR;
+    break;
+
+  case ACTION_UPDATE:
+    str = WIMC_ACTION_UPDATE_STR;
+    break;
+
+  case ACTION_CANCEL:
+    str = WIMC_ACTION_CANCEL_STR;
+    break;
+
+  default:
+    str = "";
+  }
+
+  return str;
 }
 
 char *convert_method_to_str(MethodType method) {
 
+  char *str;
+
+  switch(method) {
+
+  case CHUNK:
+    str = WIMC_METHOD_CHUNK_STR;
+    break;
+
+  case OCI:
+    str = WIMC_METHOD_OCI_STR;
+    break;
+
+  default:
+    str = "";
+  }
+
+  return str;
+}
+
+MethodType convert_str_to_method(char *str) {
+
+  MethodType method;
+
+  if (strcmp(str, WIMC_METHOD_CHUNK_STR)==0) {
+    method = CHUNK;
+  } else if (strcmp(str, WIMC_METHOD_OCI_STR)==0) {
+    method = OCI;
+  }
+
+  return method;
 }
 
 char *convert_state_to_str(TransferState state) {
 
+  char *str;
+
+  switch(state) {
+
+  case REQUEST:
+    str = AGENT_TX_STATE_REQUEST_STR;
+    break;
+
+  case FETCH:
+    str = AGENT_TX_STATE_FETCH_STR;
+    break;
+
+  case UNPACK:
+    str = AGENT_TX_STATE_UNPACK_STR;
+    break;
+
+  case DONE:
+    str = AGENT_TX_STATE_DONE_STR;
+    break;
+
+  case ERR:
+    str = AGENT_TX_STATE_ERR_STR;
+    break;
+
+  default:
+    str = "";
+  }
+
+  return str;
 }
 
 char *convert_type_to_str(WReqType type) {
 
+  char *str;
+
+  switch(type) {
+
+  case AGENT:
+    str = WIMC_REQ_TYPE_AGENT_STR;
+    break;
+
+  case PROVIDER:
+    str = WIMC_REQ_TYPE_PROVIDER_STR;
+    break;
+
+  default:
+    str = "";
+  }
+
+  return str;
 }
 
 AgentState convert_str_to_state(char *str) {
 
+  AgentState state;
+
+  if (strcmp(str, AGENT_STATE_REGISTER_STR)==0) {
+    state = REGISTER;
+  } else if (strcmp(str, AGENT_STATE_ACTIVE_STR)==0) {
+    state = ACTIVE;
+  }  else if (strcmp(str, AGENT_STATE_UNREGISTER_STR)==0) {
+    state = UNREGISTER;
+  }  else if (strcmp(str, AGENT_STATE_INACTIVE_STR)==0) {
+    state = INACTIVE;
+  }
+
+  return state;
 }
 
 ReqType convert_str_to_type(char *str) {
 
+  ReqType req;
+
+  if (strcmp(str, AGENT_REQ_TYPE_REG_STR)==0) {
+    req = REQ_REG;
+  } else if (strcmp(str, AGENT_REQ_TYPE_UNREG_STR)==0) {
+    req = REQ_UNREG;
+  } else if (strcmp(str, AGENT_REQ_TYPE_UPDATE_STR)==0) {
+    req = REQ_UPDATE;
+  }
+
+  return req;
 }
 
 WReqType convert_str_to_wType(char *str) {
 
+  WReqType req;
+
+  if (strcmp(str, WIMC_REQ_TYPE_AGENT_STR)==0) {
+    req = AGENT;
+  } else if (strcmp(str, WIMC_REQ_TYPE_PROVIDER_STR)==0) {
+    req = PROVIDER;
+  }
+
+  return req;
 }
 
 ActionType convert_str_to_action(char *str) {
 
+  ActionType action;
+
+  if (strcmp(str, WIMC_ACTION_FETCH_STR)==0) {
+    action = ACTION_FETCH;
+  } else if (strcmp(str, WIMC_ACTION_UPDATE_STR)==0) {
+    action = ACTION_UPDATE;
+  } else if (strcmp(str, WIMC_ACTION_CANCEL_STR)==0) {
+    action = ACTION_CANCEL;
+  }
+
+  return action;
 }
