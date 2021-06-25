@@ -5,7 +5,7 @@ BUILDDYNAMICLIB = lib/ubsp/build/libubsp.so
 BUILDLIBS = $(BUILDSATICLIB)
 CJSONLIB = lib/ubsp/third-party/libcjson.a
 UBSPLIB = $(BUILDSATICLIB)
-
+VERSION = v0.0.1
 ifdef SYSTEMDIR
     COMMONSRCDIR := $(SYSTEMDIR)common/src
     COMMONINCDIR := $(SYSTEMDIR)common/inc
@@ -75,10 +75,10 @@ $(BUILDDIR)/%.o: %.c $(BUILDDIR)/%.d $(MAKEFILE) $@
 $(BUILDDIR)/%.d: ;
 
 
-.PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug
+.PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug container
 
 # Main target for building
-all: $(UBSPLIB) $(EXCECUTABLE)
+all: $(UBSPLIB) $(EXCECUTABLE) container
 	@echo Done.
 
 #UBSP lib
@@ -173,6 +173,10 @@ clean:
 	@rm -rf $(BUILDDIR)
 	@cd lib/ubsp && make $@
 	@echo Cleaned.
+
+container:
+	@echo Building container
+	docker build . -t ukama/edr:${VERSION}
 
 # Force build of all files
 force: clean all
