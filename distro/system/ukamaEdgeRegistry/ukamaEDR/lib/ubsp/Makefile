@@ -16,10 +16,10 @@ BUILDDIR := build
 SRCDIRS := $(LIBSRCDIRS) test
 
 # Directories specification for MFG registry
-MFGREGSRCDIRS := $(LIBSRCDIRS) mfg/registry
+MFGREGSRCDIRS := $(LIBSRCDIRS) mfg/registry mfg/common
 
 # Directories specification for MFG schema
-MFGSCHSRCDIRS := mfg/schema
+MFGSCHSRCDIRS := mfg/schema mfg/common
 
 # Source extensions
 SRCEXTS := c
