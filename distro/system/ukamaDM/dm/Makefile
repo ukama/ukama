@@ -30,7 +30,7 @@ VERSION = v0.0.1
 	$(CC) $(CFLAGS) $(CDEFINES) $(EXTRA_FLAGS) -c -o \
 	$(OBJDIR)/$(notdir $@) $^
 
-all: client bootstrap server container
+all: container client bootstrap server 
 	@echo "All Done."
 
 client: mktree $(SRC) $(CLIENT_SRC) $(EDR_SRC) $(PARSER_SRC)
@@ -51,7 +51,7 @@ server:  mktree $(SRC) $(SERVER_SRC) $(SERVIFACE_SRC)
 mktree:
 	mkdir -p $(BINDIR)
 
-container:
+container: client
 	@echo Building container
 	docker build . -t ukama/lwclient:${VERSION}
 clean:

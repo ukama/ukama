@@ -15,6 +15,7 @@ else
 endif	
 
 $(info SYTEMDIR $(SYSTEMDIR) CURRENTDIR: $(CURDIR) COMMONDIR $(COMMONSRCDIR) COMMONINC $(COMMONINCDIR))
+
 SRCDIRS := src utils registry $(COMMONSRCDIR)
 INCDIRS := $(CURDIR) $(COMMONINCDIR)
 BUILDDIR := build
@@ -78,7 +79,7 @@ $(BUILDDIR)/%.d: ;
 .PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug container
 
 # Main target for building
-all: $(UBSPLIB) $(EXCECUTABLE) container
+all: container $(UBSPLIB) $(EXCECUTABLE)
 	@echo Done.
 
 #UBSP lib
@@ -174,8 +175,9 @@ clean:
 	@cd lib/ubsp && make $@
 	@echo Cleaned.
 
-container:
+container: $(EXCECUTABLE)
 	@echo Building container
+	@echo Warning:: Make sure you have copied required sysfs to container/root/tmp/sys
 	docker build . -t ukama/edr:${VERSION}
 
 # Force build of all files
