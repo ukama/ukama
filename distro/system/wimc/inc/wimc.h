@@ -37,11 +37,12 @@
 #define WIMC_METHOD_TYPE_POST "POST"
 
 #define WIMC_EP_STATS  "/stats"
-#define WIMC_EP_CLIENT "/container/*"
+#define WIMC_EP_CLIENT "/content/containers/*"
+#define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_ADMIN  "/admin"
 #define WIMC_EP_AGENT  "/admin/agent"
 
-#define WIMC_MAX_EP_LEN     1024
+#define WIMC_MAX_URL_LEN     1024
 #define WIMC_MAX_NAME_LEN   256
 
 #define WIMC_ACTION_FETCH_STR      "fetch"
@@ -49,10 +50,12 @@
 #define WIMC_ACTION_CANCEL_STR     "cancel"
 
 #define WIMC_METHOD_CHUNK_STR      "chunk"
-#define WIMC_METHOD_OCI_STR        "oci"
+#define WIMC_METHOD_TEST_STR       "test"
 
 #define WIMC_REQ_TYPE_AGENT_STR    "agent"
 #define WIMC_REQ_TYPE_PROVIDER_STR "provider"
+
+#define MAX_AGENTS 20
 
 #define TRUE 1
 #define FALSE 0
@@ -73,7 +76,7 @@ typedef struct {
   char    *cloud;      /* cloud-based service provider URL. */
   sqlite3 *db;         /* SQLite3 db for various stats */
   int     maxAgents;   /* Max. number of agents allowed. */
-  Agent   *agents;     /* Ptr to Agents, needed for http callback func() */
+  Agent   **agents;     /* Ptr to Agents, needed for http callback func() */
 } WimcCfg;
 
 
@@ -91,8 +94,8 @@ typedef enum {
 } ActionType;
 
 typedef enum {
-  CHUNK=1,
-  OCI,
+  TEST=1,
+  CHUNK,
 } MethodType;
 
 typedef struct {
