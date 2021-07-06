@@ -13,4 +13,8 @@
 #include <stdio.h>
 #include <string.h>
 
+extern int deserialize_provider_response(json_t *resp, AgentCB **agent,
+					 int *counter);
+extern req_t* create_http_request(char *url, char* ep, char *req_type);
+
 #endif /* WIMC_PROVIDER_H */

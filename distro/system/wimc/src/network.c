@@ -41,10 +41,9 @@ int init_frameworks(struct _u_instance *adminInst,
   }
 
   /* Set few params. */
-  u_map_put(adminInst->default_headers, "Access-Control-Allow-Origin", "*");
   adminInst->max_post_body_size = 1024;
   clientInst->max_post_body_size = 1024;
-  
+
   return TRUE;
 }
     
@@ -53,8 +52,7 @@ int init_frameworks(struct _u_instance *adminInst,
  *
  */
 
-void setup_admin_endpoints(WimcCfg *cfg, Agent *agents,
-			   struct _u_instance *instance) {
+void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
 
   /* Endpoint decelrations. We have two endpoints:
    * 1. /admin (acting on 'containers' table)
@@ -77,12 +75,11 @@ void setup_admin_endpoints(WimcCfg *cfg, Agent *agents,
    */
   ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_STATS, NULL, 0,
                              &callback_get_stats, cfg);
-
   /* 3. /admin/agent:
    *    POST - agent related stuff
    */
   ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_AGENT, NULL, 0,
-                             &callback_post_agent, agents);
+                             &callback_post_agent, cfg);
 
   /* default endpoint. */
   ulfius_set_default_endpoint(instance, &callback_default, cfg);
@@ -144,8 +141,7 @@ int start_framework(struct _u_instance *instance) {
  *
  */
 
-int start_web_services(WimcCfg *cfg, Agent *agents,
-		       struct _u_instance *adminInst,
+int start_web_services(WimcCfg *cfg, struct _u_instance *adminInst,
 		       struct _u_instance *clientInst) {
   
   /* Initialize the admin and client webservices framework. */
@@ -156,7 +152,7 @@ int start_web_services(WimcCfg *cfg, Agent *agents,
   }
   
   /* setup endpoints and methods callback. */
-  setup_admin_endpoints(cfg, agents, adminInst);
+  setup_admin_endpoints(cfg,  adminInst);
   setup_client_endpoints(cfg, clientInst);
   
   /* open connection for both admin and client webservices */

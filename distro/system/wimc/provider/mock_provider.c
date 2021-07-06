@@ -16,11 +16,12 @@
 #include <jansson.h>
 #include <ulfius.h>
 
-#define CONTAINERS "/containers"
+#define EP_CONTAINERS "/content/containers"
 
-#define JSON_AGENT_CB     "agent-cbURL"
-#define JSON_AGENT_METHOD "method"
-#define JSON_AGENT_URL    "url"
+#define JSON_PROVIDER_RESPONSE "provider_response"
+#define JSON_AGENT_CB          "agent-cbURL"
+#define JSON_AGENT_METHOD      "method"
+#define JSON_AGENT_URL         "url"
 
 #define WIMC_MAX_NAME_LEN 128
 #define WIMC_MAX_TAG_LEN  128
@@ -103,109 +104,73 @@ static sqlite3 *open_db(char *dbFile) {
   return db;
 }
 
-static int container_name_and_tag(char *str, char *name, char *tag) {
-
-  char *c, *t;
-
-  c = strtok(str, ":");
-  t = strtok(NULL, ":");
-
-  if (c == NULL || t == NULL) {
-    goto failure;
-  }
-
-  /* sanity check. */
-  if (strlen(c) > WIMC_MAX_NAME_LEN ||
-      strlen(t) > WIMC_MAX_TAG_LEN) {
-    goto failure;
-  }
-
-  strncpy(name, c, strlen(c));
-  strncpy(tag, t, strlen(t));
-
-  return TRUE;
- failure:
-  return FALSE;
-}
-
-static int get_container_name(char *http, char *name, char *tag) {
-
-  int val=FALSE;
-  char *token1, *token2;
-
-  token1 = strtok(http, "?"); /* will return /container */
-  token2 = strtok(NULL, "?");
-
-  if (token1 == NULL || token2 == NULL) {
-    goto failure;
-  }
-
-  if (strcasecmp(CONTAINERS, token1) == 0){
-    val = container_name_and_tag(token2, name, tag); /* name:tag */
-
-    if (val == FALSE) {
-      goto failure;
-    }
-  }
-
- failure:
-  return val;
-}
-
 /* Callback function for the web application on /validation url call
  * Lookup db entries, if match found return the method and URL as JSON,
  * otherwise 404
  */
-int callback_get_containers(req_t *req, resp_t * resp, void * user_data) {
+int callback_get_containers(req_t *request, resp_t *response,
+			    void * user_data) {
 
-  char name[WIMC_MAX_NAME_LEN] = {0};
-  char tag[WIMC_MAX_PATH_LEN] = {0};
-  char *params, *str;
+  int resCode=200;
+  char *name=NULL, *tag=NULL;
+  char *str=NULL, *response_body=NULL;
   DB *db;
   int ret, i, found=FALSE;
-  json_t *root, *agentArray;
+  json_t *json, *resp, *agentArray;
 
-  root = json_object();
-  json_object_set_new(root, JSON_AGENT_CB,  json_array());
-  agentArray = json_object_get(root, JSON_AGENT_CB);
+  json = json_object();
+  db   = (DB *)user_data;
 
-  params = (char *)req->http_url;
-  db = (DB *)user_data;
+  json_object_set_new(json, JSON_PROVIDER_RESPONSE, json_object());
+  resp = json_object_get(json, JSON_PROVIDER_RESPONSE);
+  json_object_set_new(resp, JSON_AGENT_CB,  json_array());
 
-  ret = get_container_name(params, &name[0], &tag[0]);
+  agentArray = json_object_get(resp, JSON_AGENT_CB);
 
-  if (ret && agentArray) {
-    fprintf(stdout, "Valid GET request for %s: name[%s] tag[%s]",
-	    CONTAINERS, name, tag);
+  name = (char *)u_map_get(request->map_url, "name");
+  tag  = (char *)u_map_get(request->map_url, "tag");
 
-    /* Look up db. */
-    for (i=0; i<db->numEnt; i++) {
-      if (strcmp(db->ent[i].name, name) == 0 &&
-	  strcmp(db->ent[i].tag, tag) == 0) {
+  if (!name || !tag) {
+    fprintf(stderr, "Invalid name and tage in GET response for EP: %s. \n",
+	    EP_CONTAINERS);
+    response_body = msprintf("Invalid container name and/or tag.");
+    resCode = 400;
+    goto reply;
+  }
 
-	found = TRUE;
-	/* Add to the JSON array. */
-	json_t *agent = json_object();
-	json_object_set_new(agent, JSON_AGENT_METHOD,
-			    json_string(db->ent[i].method));
-	json_object_set_new(agent, JSON_AGENT_URL,
-			    json_string(db->ent[i].url));
-	json_array_append(agentArray, agent);
-      }
+  fprintf(stdout, "Valid GET request for %s name:%s tag:%s\n", EP_CONTAINERS,
+	  name, tag);
+
+  /* Look up db. */
+  for (i=0; i<db->numEnt; i++) {
+    if (strcmp(db->ent[i].name, name) == 0 &&
+	strcmp(db->ent[i].tag, tag) == 0) {
+
+      found = TRUE;
+      /* Add to the JSON array. */
+      json_t *agent = json_object();
+      json_object_set_new(agent, JSON_AGENT_METHOD,
+			  json_string(db->ent[i].method));
+      json_object_set_new(agent, JSON_AGENT_URL,
+			  json_string(db->ent[i].url));
+      json_array_append(agentArray, agent);
     }
   }
 
-  if (found) {
-    str = json_dumps(root, 0);
-    fprintf(stdout, "JSON Object: %s\n", str);
+  str = json_dumps(json, 0);
+  fprintf(stdout, "JSON Object: %s\n", str);
 
-    ulfius_set_json_body_response(resp, 200, root);
-  } else {
-     ulfius_set_string_body_response(resp, 404, "Not found\n");
+ reply:
+
+  if (resCode==200) {
+    ulfius_set_json_body_response(response, resCode, json);
+  } else if (resCode == 400) {
+    ulfius_set_string_body_response(response, 404, response_body);
   }
 
   json_decref(agentArray);
-  json_decref(root);
+  json_decref(json);
+  o_free(response_body);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -270,7 +235,7 @@ int read_all_db_entries(DB *db) {
     fprintf(stderr, "SQL read error, query failure: %s\n", err);
     sqlite3_free(err);
   } else {
-    fprintf(stdout, " Query: %s\n Response ok", buf);
+    fprintf(stdout, " Query: %s\n Response ok\n", buf);
     val = TRUE;
   }
   
@@ -302,13 +267,12 @@ void free_db_entries(DB *db) {
   free(db);
 }
 
-
 int main(int argc, char **argv) {
 
   int port;
   struct _u_instance inst;
   DB *db;
-  
+
   if (argc<2) {
     fprintf(stderr, "USAGE: %s port dbFile\n", argv[0]);
     return 0;
@@ -334,9 +298,9 @@ int main(int argc, char **argv) {
   }
 
   /* Endpoint list declaration */
-  ulfius_add_endpoint_by_val(&inst, "GET", CONTAINERS, NULL, 0,
+  ulfius_add_endpoint_by_val(&inst, "GET", EP_CONTAINERS, NULL, 0,
 			     &callback_get_containers, db);
-  
+
   /* Read all db entries and process them. */
   if (read_all_db_entries(db)) {
     create_db_entries_endpoint(db, &inst);

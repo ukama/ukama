@@ -10,8 +10,14 @@
 #ifndef WIMC_AGENT_H
 #define WIMC_AGENT_H
 
+#include "err.h"
+#include "log.h"
+
 #define TRUE 1
 #define FALSE 0
+
+#define METHOD_TEST  1
+#define METHOD_CHUNK 2
 
 #define AGENT_REQ_TYPE_REG    "register"
 #define AGENT_REQ_TYPE_UNREG  "unregister"
@@ -20,18 +26,6 @@
 #define WIMC_AGENT_STATE_REGISTER   1
 #define WIMC_AGENT_STATE_ACTIVE     2
 #define WIMC_AGENT_STATE_UNREGISTER 3
-
-#define WIMC_AGENT_OK               0x01
-#define WIMC_AGENT_ERROR_EXIST      0x02 /* Agent already exists */
-#define WIMC_AGENT_ERROR_BAD_METHOD 0x04
-#define WIMC_AGENT_ERROR_BAD_URL    0x08
-#define WIMC_AGENT_ERROR_MEMORY     0X16 
-
-#define WIMC_AGENT_OK_STR               "OK"
-#define WIMC_AGENT_ERROR_EXIST_STR      "Already Registered" 
-#define WIMC_AGENT_ERROR_BAD_METHOD_STR "Bad method"
-#define WIMC_AGENT_ERROR_BAD_URL_STR    "Invalid ULR"
-#define WIMC_AGENT_ERROR_MEMORY_STR     "Internal memory error"
 
 #define AGENT_TX_STATE_REQUEST_STR "request";
 #define AGENT_TX_STATE_FETCH_STR   "fetch"
@@ -75,7 +69,7 @@ typedef enum {
   UNREGISTER,
   INACTIVE
 } AgentState;
-  
+
 typedef struct {
 
   int  id;
@@ -117,19 +111,13 @@ typedef struct Content_ {
   struct Content_ *next; /* Next item */
 } AgentContent;
 
-typedef struct {
-
-  int          state;    /* Register, active and un-register. */
-  AgentContent *content; /* Content related activity */
-} AgentWork;
-
 typedef struct _Agent {
   
   int           id;       /* Internal ID. */
   char          *method;  /* Mechanisim supported by the agent */
   char          *url;     /* callback URL for the agent */
-  AgentWork     *work;
-  struct _Agent *next;    /* Pointer to next. */
+  int           state;    /* Register, active, un-register */
+  AgentContent  *content; /* Activity*/
 } Agent;
 
 #endif /* WIMC_AGENT_H */

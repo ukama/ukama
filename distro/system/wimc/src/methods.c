@@ -12,8 +12,9 @@
  *
  */
 
+#include <ulfius.h>
+
 #include "methods.h"
-#include "ulfius.h"
 
 /* 
  * log_response --
@@ -58,7 +59,7 @@ req_t* create_http_request(char *url, char* ep, char *req_type) {
  failure:
   ulfius_clean_request(req);
   free(req);
-  
+
   return NULL;
 }
 

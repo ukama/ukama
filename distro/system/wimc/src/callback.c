@@ -12,8 +12,6 @@
  */
 
 #include "callback.h"
-#include "wimc.h"
-#include "agent.h"
 
 /*
  * decode a u_map into a string
@@ -144,35 +142,6 @@ static int get_key_value(char *str, char *key, char *value, char *keyName,
 }
 
 /*
- * get_container_name -- return the requested container name from the url.
- *
- */
-
-static int get_container_name(char *http, char *name, char *tag) {
-
-  int val=FALSE;
-  char *token1, *token2;
-
-  token1 = strtok(http, "?"); /* will return /container */
-  token2 = strtok(NULL, "?");
-  
-  if (token1 == NULL || token2 == NULL) {
-    goto failure;
-  }		  
-  
-  if (strcasecmp(WIMC_EP_CONTAINER, token1) == 0){
-    val = container_name_and_tag(token2, name, tag); /* name:tag */
-
-    if (val == FALSE) {
-      goto failure;
-    }
-  }
-
- failure:
-  return val;
-}
-
-/*
  * get_post_params -- get params for the POST method.
  *                    param is of format name=container:tag&path=/some/path
  *
@@ -245,58 +214,55 @@ static void log_request(const struct _u_request *request) {
  *
  */
 
-/* 
-   {http_protocol = 0x7fffec000ee0 "HTTP/1.1", 
-   http_verb = 0x7fffec000f00 "GET", 
-   http_url = 0x7fffec000ea0 "/container?container_name:tag", 
-   url_path = 0x7fffec000ec0 "/container", 
-*/
-
 int callback_get_container(const struct _u_request *request,
 			   struct _u_response *response,
 			   void *user_data) {
 
   int val=FALSE, found=FALSE;
+  int resCode=200;
   
-  char name[WIMC_MAX_NAME_LEN] = {0};
-  char tag[WIMC_MAX_TAG_LEN]  = {0};
   char path[WIMC_MAX_PATH_LEN] = {0};
-  char *params, *post_params, *response_body;
-  WimcCfg *cfg;
+  char *post_params=NULL, *response_body=NULL;
+  char *name=NULL, *tag=NULL;
+  WimcCfg *cfg=NULL;
   
   cfg = (WimcCfg *)user_data;
   
   log_request(request);
-  params = (char *)request->http_url;
+
+  name = (char *)u_map_get(request->map_url, "name");
+  tag  = (char *)u_map_get(request->map_url, "tag");
+
+  if (!name || !tag) {
+    log_error("Invalid name and tag in GET request for EP: %s. Ignoring.",
+	      WIMC_EP_CONTAINER);
+    /* XXX Send error on bad name. */
+    response_body = msprintf("Invalid container name and/or tag.");
+    resCode = 400;
+    goto reply;
+  }
+
+  log_debug("Processing container name: %s and tag: %s", name, tag);
   
-  val = get_container_name(params, &name[0], &tag[0]);
-
-  if (val) {
-    log_debug("Valid GET request for %s: name[%s] tag[%s]",
-	      WIMC_EP_CONTAINER, name, tag);
-    if (db_read_path(cfg->db, name, tag, &path[0])) {
+  if (db_read_path(cfg->db, name, tag, &path[0])) {
       /* we have the contents stored locally. Return the location. */
-
-      /* XXX - TODO. */
-    } else {
+    response_body = msprintf("%s", path);
+    goto reply;
+  } else {
 
       /* Ask cloud based service provider for the content. 
        * dB will be kept updated with the status.
        * Special CB URL will be return to the callee. 
        */
       
-      fetch_content_from_service_provider(cfg, name, tag, WIMC_TYPE_CONTAINER);
-    }
-  } else {
-    log_debug("Invalid GET request received for %s. Ignoring!",
-	      WIMC_EP_CONTAINER);
-    /* XXX */
+    fetch_content_from_service_provider(cfg, name, tag);
+    goto reply;
   }
   
-  post_params = print_map(request->map_post_body);
-  response_body = msprintf("OK!\n%s", post_params);
+reply:
 
-  ulfius_set_string_body_response(response, 200, response_body);
+  ulfius_set_string_body_response(response, resCode, response_body);
+  
   o_free(response_body);
   o_free(post_params);
 
@@ -408,6 +374,17 @@ int callback_get_stats(const struct _u_request *request,
   return U_CALLBACK_CONTINUE;
 }
 
+static void free_agent_request(AgentReq *req) {
+
+  if (req->type == REQ_REG) {
+    free(req->reg->method);
+    free(req->reg->url);
+    free(req->reg);
+  }
+
+  free(req);
+}
+
 /*
  * callback_post_agent --
  *
@@ -415,31 +392,38 @@ int callback_get_stats(const struct _u_request *request,
 int callback_post_agent(const struct _u_request *request,
 			struct _u_response *response,
 			void *user_data) {
-  int ret, retCode;
-  char *params, *resBody;
+  int ret=WIMC_OK, retCode, id=0;
+  char *resBody;
   json_t *jreq=NULL;
-  Agent *agents=NULL;
-  AgentReq req;
+  json_error_t jerr;
+  AgentReq *req=NULL;
 
-  agents = (Agent *)user_data;
-
-  jreq = ulfius_get_json_body_response(request, NULL);
-  deserialize_agent_request(&req, jreq);
-
-  ret = process_agent_request(agents, &req);
-  if (ret == WIMC_AGENT_OK) {
-    retCode = 200;
+  WimcCfg *cfg = (WimcCfg *)user_data;
+  
+  req = (AgentReq *)calloc(sizeof(AgentReq), 1);
+  
+  jreq = ulfius_get_json_body_request(request, &jerr);
+  if (!jreq) {
+    log_error("json error: %s", jerr.text);
   } else {
-    retCode = 400;
+    deserialize_agent_request(&req, jreq);
   }
 
-  params = print_map(request->map_post_body);
-  resBody = msprintf("%s\n%s", agent_error_to_str(ret), params);
-
+  ret = process_agent_request(cfg->agents, req, &id);
+  
+  if (ret == WIMC_OK) {
+    retCode = 200;
+    resBody = msprintf("%d\n", id);
+  } else {
+    retCode = 400;
+    resBody = msprintf("%s\n", error_to_str(ret));
+  }
+  
   ulfius_set_string_body_response(response, retCode, resBody);
   o_free(resBody);
-  o_free(params);
-
+  free_agent_request(req);
+  json_decref(jreq);
+  
   return U_CALLBACK_CONTINUE;
 }
 

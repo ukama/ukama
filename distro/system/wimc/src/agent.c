@@ -18,97 +18,44 @@
 #include <curl/easy.h>
 
 #include "agent.h"
-#include "log.h"
-
-/*
- * agent_error_to_str -- return string representation of the error code.
- *
- */
-
-const char *agent_error_to_str(int error) {
-
-  switch (error) {
-
-  case WIMC_AGENT_OK:
-    return WIMC_AGENT_OK_STR;
-    
-  case WIMC_AGENT_ERROR_EXIST:
-    return  WIMC_AGENT_ERROR_EXIST_STR;
-
-  case WIMC_AGENT_ERROR_BAD_METHOD:
-    return  WIMC_AGENT_ERROR_BAD_METHOD_STR;
-
-  case WIMC_AGENT_ERROR_BAD_URL:
-    return  WIMC_AGENT_ERROR_BAD_URL_STR;
-
-  case WIMC_AGENT_ERROR_MEMORY:
-    return  WIMC_AGENT_ERROR_MEMORY_STR;
-
-  default:
-    return "";
-  }
-
-  return "";
-}
-
-/*
- * validate_agent_url -- validate agent URL by doing CURL request. 
- */
-static int validate_url(char *url) {
-
-  CURL *curl;
-  CURLcode response;
-
-  curl = curl_easy_init();
-
-  if (curl) {
-    
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
-
-    response = curl_easy_perform(curl);
-
-    curl_easy_cleanup(curl);
-  }
-
-  if (response != CURLE_OK) {
-    return WIMC_AGENT_ERROR_BAD_URL;
-  }
-
-  return WIMC_AGENT_OK;
-}
+#include "wimc.h"
 
 /*
  * register_agent -- register new agent
  */
 
-int register_agent(Agent *agents, char *method, char *url) {
+int register_agent(Agent **agents, char *method, char *url, int *id) {
 
-  Agent *ptr;
+  int i;
+  Agent *ptr = *agents;
 
-  for (ptr = agents; ptr != NULL; ptr=ptr->next) {
-
-    if (strcmp(method, ptr->method)==0 &&
-	strcmp(url, ptr->url)==0) {
-      /* An existing entry. */
-      return WIMC_AGENT_ERROR_EXIST;
-    }
-    
-    if (ptr->method == NULL && ptr->url == NULL) {
-      ptr->method = method;
-      ptr->url    = url;
-
-      ptr->work = (AgentWork *)calloc(sizeof(AgentWork), 1);
-      if (ptr->work == NULL){
-	log_error("Error allocating the memory: %d", sizeof(AgentWork));
-	return WIMC_AGENT_ERROR_MEMORY;
+  for (i=0; i < MAX_AGENTS; i++) {
+  
+    if (ptr[i].id) { /* have valid agent id. */
+      if (strcmp(method, ptr[i].method)==0 &&
+	  strcmp(url, ptr[i].url)==0) {
+	*id = ptr[i].id;
+	/* An existing entry. */
+	log_debug("Found similar agent at id: %d, method %s and url: %s",
+		  ptr[i].id, ptr[i].method, ptr[i].url);
+	return WIMC_ERROR_EXIST;
       }
-	  
-      ptr->work->state = WIMC_AGENT_STATE_REGISTER;
+    } else {
+      ptr[i].id     = i+1;  /* XXX, need better way to create ID. */
+      ptr[i].method = strndup(method, strlen(method));
+      ptr[i].url    = strndup(url, strlen(url));
+      ptr[i].state  = WIMC_AGENT_STATE_REGISTER;
+
+      /* Return the ID. */
+      *id = i+1;
+
+      return WIMC_OK;
     }
   }
 
-  return WIMC_AGENT_OK;
+  /* Max. reached */
+  log_debug("Max. allowable number of agents reached. Ignoring");
+  return WIMC_ERROR_MAX_AGENTS;
 }
 
 /*
@@ -116,9 +63,9 @@ int register_agent(Agent *agents, char *method, char *url) {
  *
  */
 
-int process_agent_request(Agent *agents, AgentReq *req){
+int process_agent_request(Agent **agents, AgentReq *req, int *id){
 
-  int ret=WIMC_AGENT_OK;
+  int ret=WIMC_OK;
   Register *reg;
   
   if (req->type == (ReqType)REQ_REG) {
@@ -127,24 +74,26 @@ int process_agent_request(Agent *agents, AgentReq *req){
     
     /* validate the URL. */
     ret = validate_url(reg->url);
-    if (ret != WIMC_AGENT_OK) {
+    if (ret != WIMC_OK) {
+      log_debug("Agent process failed, unreachable URL: %s: %s", reg->url,
+		error_to_str(ret));
       goto done;
     }
     
-    ret = register_agent(agents, reg->method, reg->url);
-    if (ret != WIMC_AGENT_OK) {
+    ret = register_agent(agents, reg->method, reg->url, id);
+    if (ret != WIMC_OK) {
       goto done;
     }
 
-    log_debug("Agent successfully registered. Method: %s URL: %s",
-	      reg->method, reg->url);
+    log_debug("Agent successfully registered. Id: %d Method: %s URL: %s",
+	      *id, reg->method, reg->url);
   } else if (req->type == (ReqType)REQ_UNREG) {
     
   } else if (req->type == (ReqType)REQ_UPDATE) {
 
   } else {
     log_debug("Invalid Agent request command: %d", req->type);
-    ret = WIMC_AGENT_ERROR_BAD_METHOD;
+    ret = WIMC_ERROR_BAD_METHOD;
     goto done;
   }
   
@@ -157,21 +106,23 @@ int process_agent_request(Agent *agents, AgentReq *req){
  *                        method. If there are multiple URL in the list
  *                        currently, we always send the first match.
  */
-
+#if 0
 Agent *find_matching_agent(char *method, Agent *agents) {
 
   Agent *curr;
 
   for (curr=agents; curr!=NULL; curr=curr->next) {
-    if (strcmp(curr->method, method)==0 &&
-	curr->work->state != WIMC_AGENT_STATE_UNREGISTER) {
-      return curr;
+    if (curr->id) {
+      if (strcmp(curr->method, method)==0 &&
+	  curr->state != WIMC_AGENT_STATE_UNREGISTER) {
+	return curr;
+      }
     }
   }
 
   return NULL;
 }
-
+#endif
 /*
  * send_agent_request -- send Agent the request to do something. Currently,
  *                       they fetch data from provider using the specified 
@@ -180,7 +131,7 @@ Agent *find_matching_agent(char *method, Agent *agents) {
 int send_request_to_agent(char *method, Agent *agents) {
 
   Agent *dest=NULL;
-
+#if 0
   dest = find_matching_agent(method, agents);
 
   if (!dest) {
@@ -190,7 +141,7 @@ int send_request_to_agent(char *method, Agent *agents) {
      */
     return FALSE;
   }
-
+#endif
   /* req: WIMC.d --> Agent
    * req -> { id: "some_id", 
    *          cmd: "fetch",

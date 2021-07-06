@@ -15,15 +15,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <jansson.h>
 
 #include "ulfius.h"
 #include "log.h"
+#include "err.h"
+#include "wimc.h"
+#include "agent.h"
 
 #define WIMC_EP_STATS  "/stats"
-#define WIMC_EP_CLIENT "/container/*"
+#define WIMC_EP_CLIENT "/content/containers/*"
 #define WIMC_EP_ADMIN  "/admin"
 
-#define WIMC_EP_CONTAINER     "/container"
+#define WIMC_EP_CONTAINER     "/content/containers"
 #define WIMC_QUERY_KEY_NAME   "name"
 #define WIMC_MAX_NAME_LEN 128
 #define WIMC_MAX_TAG_LEN  32

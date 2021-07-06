@@ -11,11 +11,12 @@
 #define WIMC_JSERDES_J
 
 #include "wimc.h"
+#include "agent.h"
+#include "err.h"
 
 #define JSON_AGENT_CB     "agent-cbURL"
 #define JSON_AGENT_CMD    "cmd"
 #define JSON_AGENT_METHOD "method"
-#define JSON_AGENT_URL    "url"
 
 #define JSON_TYPE            "type"
 #define JSON_TYPE_REGISTER   "type_register"
@@ -23,7 +24,7 @@
 #define JSON_TYPE_UPDATE     "type_update"
 
 #define JSON_METHOD          "method"
-
+#define JSON_URL             "url"
 #define JSON_ID              "unique_id"
 #define JSON_CMD             "cmd"
 #define JSON_ACTION          "action"
@@ -44,5 +45,7 @@
 
 #define JSON_WIMC_REQUEST    "wimc_request"
 #define JSON_AGENT_REQUEST   "agent_request"
+
+#define JSON_PROVIDER_RESPONSE "provider_response"
 
 #endif /* WIMC_JSERDES_H */

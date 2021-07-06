@@ -12,27 +12,12 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include "wimc.h"
 #include "agent.h"
 
-#define TRUE 1
-#define FALSE 0
-
-/*
- * is_valid_url -- A valid URL is of format http://host:port/
- */
-
-int is_valid_url(char *url) {
-
-  if (url == NULL) {
-    return FALSE;
-  }
-
-  /* XXX */
-  
-  return TRUE;
-} 
+#include "utils.h"
 
 /* Some utility functions for serdes */
 
@@ -70,8 +55,8 @@ char *convert_method_to_str(MethodType method) {
     str = WIMC_METHOD_CHUNK_STR;
     break;
 
-  case OCI:
-    str = WIMC_METHOD_OCI_STR;
+  case TEST:
+    str = WIMC_METHOD_TEST_STR;
     break;
 
   default:
@@ -87,8 +72,8 @@ MethodType convert_str_to_method(char *str) {
 
   if (strcmp(str, WIMC_METHOD_CHUNK_STR)==0) {
     method = CHUNK;
-  } else if (strcmp(str, WIMC_METHOD_OCI_STR)==0) {
-    method = OCI;
+  } else if (strcmp(str, WIMC_METHOD_TEST_STR)==0) {
+    method = TEST;
   }
 
   return method;
