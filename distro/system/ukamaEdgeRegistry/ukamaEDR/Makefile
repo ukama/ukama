@@ -178,7 +178,7 @@ clean:
 container: $(EXCECUTABLE)
 	@echo Building container
 	@echo Warning:: Make sure you have copied required sysfs to container/root/tmp/sys
-	docker build . -t ukama/edr:${VERSION}
+	sudo buildah bud -f . -t ukamaos/edr:${VERSION}
 
 # Force build of all files
 force: clean all

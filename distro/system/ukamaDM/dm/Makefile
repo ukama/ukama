@@ -53,6 +53,6 @@ mktree:
 
 container: client
 	@echo Building container
-	docker build . -t ukama/lwclient:${VERSION}
+	sudo buildah bud -f . -t ukamaos/lwclient:v0.0.1
 clean:
 	rm -rf build
