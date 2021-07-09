@@ -233,7 +233,7 @@ int deserialize_agent_request(AgentReq **request, json_t *json) {
 
   int ret=FALSE;
   char *str;
-  json_t *jreq, *jtype, *content;
+  json_t *jreq, *jtype;
 
   AgentReq *req = *request;
   

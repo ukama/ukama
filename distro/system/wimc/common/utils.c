@@ -140,6 +140,8 @@ ReqType convert_str_to_type(char *str) {
     req = REQ_UNREG;
   } else if (strcmp(str, AGENT_REQ_TYPE_UPDATE_STR)==0) {
     req = REQ_UPDATE;
+  } else if (strcmp(str, WIMC_REQ_TYPE_FETCH)==0) {
+    req = WREQ_FETCH;
   }
 
   return req;

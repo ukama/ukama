@@ -162,11 +162,13 @@ int main(int argc, char **argv) {
   }
   
   /* Step3. trigger the modules using CB */
-
+  
 
   /* Exit. unregister. */
   //  code = communicate_with_wimc(REQ_UNREG, wimcURL, port, NULL, &id);
 
+  getchar(); /*. For now. xxx */
+  
   log_debug("Ukama.\n");
 
  cleanup:

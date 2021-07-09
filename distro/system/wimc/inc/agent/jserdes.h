@@ -14,7 +14,8 @@ int serialize_agent_request(AgentReq *request, json_t **json);
 int serialize_agent_request_register(AgentReq *req, json_t **json);
 int serialize_agent_request_update(AgentReq *req, json_t **json);
 int serialize_agent_request_unregister(AgentReq *req, json_t **json);
-int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json);
-int deserialize_wimc_request(WimcReq *req, json_t *json);
+
+int deserialize_wimc_request(WimcReq **request, json_t *json);
+static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
 
 #endif /* AGENT_JSERDES_H */

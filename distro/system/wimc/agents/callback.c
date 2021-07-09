@@ -211,36 +211,69 @@ int agent_callback_post(const struct _u_request *request,
   int ret, retCode;
   char *params, *resBody;
   json_t *jreq=NULL;
+  json_error_t jerr;
   MethodType *method = (MethodType *)user_data;
-  WimcReq req;
+  WimcReq *req=NULL;
 
-  /*
-  jreq = ulfius_get_json_body_response(request, NULL);
-  deserialize_wimc_request(&req, jreq);
-  
-  
-  ret = validate_post_request(&req, method);
-
-  if (ret == WIMC_OK) {
-    //    ret = process_post_request(agents, &req);
-    // XXX
-  }
-  
-  if (ret == WIMC_OK) {
-    retCode = 200;
+    jreq = ulfius_get_json_body_request(request, &jerr);
+  if (!jreq) {
+    log_error("json error: %s", jerr.text);
   } else {
-    retCode = 400;
+    req = (WimcReq *)calloc(1, sizeof(WimcReq));
+    
+    ret = deserialize_wimc_request(&req, jreq);
+
+    if (ret) {
+      char *jStr;
+      
+      jStr = json_dumps(jreq, 0);
+      if (jStr) {
+	log_debug("Wimc request received str: %s", jStr);
+	free(jStr);
+      }
+    }
   }
-  */
+  
   params = print_map(request->map_post_body);
   resBody = msprintf("%s\n%s", error_to_str(ret), params);
 
   ulfius_set_string_body_response(response, retCode, resBody);
+  free_wimc_request(req);
   o_free(resBody);
   o_free(params);
 
   return U_CALLBACK_CONTINUE;
 }
+
+/*
+ * free_wimc_request --
+ *
+ */
+
+void free_wimc_request(WimcReq *req) {
+
+  if (!req)
+    return;
+  
+  if (req->type == WREQ_FETCH) {
+    WContent *content;
+    
+    free(req->fetch->cbURL);
+    content = req->fetch->content;
+
+    if (content) {
+      free(content->name);
+      free(content->tag);
+      free(content->method);
+      free(content->providerURL);
+      free(content);
+    }
+
+    free(req->fetch);
+  }
+  
+  free(req);
+}  
 
 /*
  * agent_callback_stats 
