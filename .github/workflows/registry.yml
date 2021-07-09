@@ -1,0 +1,118 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-registry
+on:
+  push:
+    paths:
+      - "registry/**"
+      - ".github/workflows/registry.yml"
+
+jobs:
+  build:
+    env:
+      working-directory: registry
+
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+        # init vars required for tag generation
+      - name: Init vars
+        id: vars_step
+        run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.15
+
+      - name: Setup protoc
+        uses: arduino/setup-protoc@v1.1.2
+        with:
+          version: 3.16
+
+      - name: Setup protobuf-go
+        run: >
+          go get google.golang.org/protobuf/cmd/protoc-gen-go
+          google.golang.org/grpc/cmd/protoc-gen-go-grpc 
+          github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
+
+      - name: Build registry
+        run: make build
+        working-directory: ${{ env.working-directory }}
+
+      - name: Test
+        run: make test
+        working-directory: ${{ env.working-directory }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # push image
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ env.working-directory }}
+          push: true
+          tags: |
+            003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ env.working-directory }}:${{ steps.vars_step.outputs.sha_short }}
+            003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ env.working-directory }}:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}
+
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env:
+      working-directory: registry
+    steps:
+      - uses: actions/checkout@v2
+      - name: lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          working-directory: ${{ env.working-directory }}
+
+  release:
+    name: release
+    needs: build
+    #if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      working-directory: registry
+    steps:
+      # init vars required for tag generation
+      - uses: actions/checkout@v2
+      - name: Init vars
+        id: vars_step
+        run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+      - name: update gitops
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64 -O yq && chmod +x $GITHUB_WORKSPACE/yq
+          git config --global user.email "service@ukama.com"
+          git config --global user.name "Service User"
+          git clone https://${{  secrets.GIT_ACCESS_TOKEN }}@github.com/ukama/infra-as-code.git  infra-as-code
+          cd infra-as-code/releases
+          $GITHUB_WORKSPACE/yq eval '(.environments.default.values[] | select(has("${{ env.working-directory }}ImageTag")) | .${{ env.working-directory }}ImageTag)="${{ steps.vars_step.outputs.sha_short }}"' helmfile.yaml --inplace
+          git add .
+          git commit -m"Release of tag for ${{ env.working-directory }} service"
+          git push

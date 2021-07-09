@@ -1,0 +1,83 @@
+{
+    "version": 2,
+    "extra_config": {
+      "github_com/devopsfaith/krakend-gologging": {
+        "level": "ERROR",
+        "prefix": "[KRAKEND]",
+        "syslog": false,
+        "stdout": true,
+        "format": "default"
+      },
+      "github_com/devopsfaith/krakend-metrics": {
+        "collection_time": "60s",
+        "proxy_disabled": false,
+        "router_disabled": false,
+        "backend_disabled": false,
+        "endpoint_disabled": false,
+        "listen_address": ":8090"
+      }
+    },
+    "timeout": "3000ms",
+    "cache_ttl": "300s",
+    "output_encoding": "json",
+    "name": "BootstapAPI",
+    "endpoints": [
+      {
+        "endpoint": "/orgs/{name}",
+        "method": "POST",
+        "output_encoding": "no-op",
+        "extra_config": {},
+        "backend": [
+          {
+            "url_pattern": "/orgs/{name}",
+            "encoding": "no-op",
+            "sd": "static",
+            "method": "POST",
+            "extra_config": {},
+            "host": [
+              "http://lookup"
+            ],
+            "disable_host_sanitize": false
+          }
+        ]
+      },
+      {
+        "endpoint": "/ping",
+        "method": "GET",
+        "output_encoding": "no-op",
+        "extra_config": {},
+        "backend": [
+          {
+            "url_pattern": "/ping",
+            "encoding": "no-op",
+            "sd": "static",
+            "method": "GET",
+            "extra_config": {},
+            "host": [
+              "http://lookup"
+            ],
+            "disable_host_sanitize": false
+          }
+        ]
+      },
+      {
+        "endpoint": "/devices/{id}",
+        "method": "POST",
+        "output_encoding": "no-op",
+        "extra_config": {},
+        "backend": [
+          {
+            "url_pattern": "/devices/{id}",
+            "encoding": "no-op",
+            "sd": "static",
+            "method": "POST",
+            "extra_config": {},
+            "host": [
+              "http://lookup"
+            ],
+            "disable_host_sanitize": false
+          }
+        ]
+      }
+    ]
+  }
