@@ -14,39 +14,91 @@
 #include "jserdes.h"
 
 /*
- * serialize_wimc_request -- Serialize WIMC.d request.
- *
- * WIMC requests are of two types:
- * 1. Provider: asking provider for content (URL for Agent).
- * 2. Agent: asking agent to initiate content transfer using provider CB url.
- *
- * wimc_request -> { type:   "agent",
- *                   action: "fetch",
- *                   id:     "some_id",
- *                   callback_url: "/a/b/c/",
- *                   interval: 10,
- *                   content { name:   "name",
- *                             tag:    "tag",
- *                             method: "raw",
- *                             provider_url: "/a/b/c" }
- *                 }
- *
- * wimc_request -> {type:   "agent",
- *                  action: "cancel",
- *                  id:     "some_id"}
- *
- * wimc_request -> {type:     "agent",
- *                  action:   "update",
- *                  id:       "some_id",
- *                  interval: "100",
- *                  callback_url: "/a/b/d"}
- *
- * wimc_request -> {type:   "provider",
- *                  action: "request",
- *                  content { name : "name",
- *                            tag: "tag"}
+ * serialize_wimc_request --
  *
  */
+int serialize_wimc_request(WimcReq *request, json_t **json) {
+
+  int ret=FALSE;
+  json_t *req=NULL;
+
+  *json = json_object();
+  if (*json == NULL)
+    return ret;
+
+  json_object_set_new(*json, JSON_WIMC_REQUEST, json_object());
+  req = json_object_get(*json, JSON_WIMC_REQUEST);
+
+  if (req==NULL) {
+    return ret;
+  }
+
+  if (request->type == (WReqType)WREQ_FETCH) {
+    ret = serialize_wimc_request_fetch(request, &req);
+  } else if (request->type == (WReqType)WREQ_UPDATE) {
+
+  }
+
+  if (ret) {
+    char *str;
+    str = json_dumps(*json, 0);
+
+    if (str) {
+      log_debug("Wimc request str: %s", str);
+      free(str);
+    }
+    ret = TRUE;
+  }
+
+  return ret;
+}
+
+/*
+ * serialize_wimc_request_fetch --
+ *
+ */
+static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
+
+  json_t *jfetch=NULL, *jcontent=NULL;;
+  WFetch *fetch=NULL;
+  WContent *content=NULL;
+
+  if (req==NULL && req->fetch==NULL) {
+    return FALSE;
+  }
+
+  fetch = req->fetch;
+
+  if (fetch->content==NULL) {
+    return FALSE;
+  }
+
+  content = fetch->content;
+
+  json_object_set_new(*json, JSON_TYPE, json_string(WIMC_REQ_TYPE_FETCH));
+
+  /* Add fetch object */
+  json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
+  jfetch = json_object_get(*json, JSON_TYPE_FETCH);
+
+  json_object_set_new(jfetch, JSON_ID, json_integer(fetch->id));
+  json_object_set_new(jfetch, JSON_CALLBACK_URL, json_string(fetch->cbURL));
+  json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
+		      json_integer(fetch->interval));
+
+  json_object_set_new(jfetch, JSON_CONTENT, json_object());
+  jcontent = json_object_get(jfetch, JSON_CONTENT);
+
+  /* Add content object. */
+  json_object_set_new(jcontent, JSON_NAME, json_string(content->name));
+  json_object_set_new(jcontent, JSON_TAG, json_string(content->tag));
+  json_object_set_new(jcontent, JSON_METHOD, json_string(content->method));
+  json_object_set_new(jcontent, JSON_PROVIDER_URL,
+		      json_string(content->providerURL));
+
+  return TRUE;
+}
+
 
 /*
  * serialize_wimc_request_to_provider --
@@ -57,135 +109,6 @@ int serialize_wimc_request_to_provider(WimcReq *req, json_t *json) {
    * name and tag. Probably good idea to use JSON so we can expand
    * this interface as needed.
    */
-}
-
-/*
- * serialize_wimc_request_to_agent --
- *
- */
-int serialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
-
-  json_t *jreq, *jcont;
-
-  jreq = json_object_get(json, JSON_WIMC_REQUEST);
-
-  if (req==NULL) {
-    return FALSE;
-  }
-  json_object_set_new(jreq, JSON_TYPE,
-	      json_string((const char *)convert_type_to_str(req->type)));
-  json_object_set_new(jreq, JSON_ID, json_integer(req->id));
-  json_object_set_new(jreq, JSON_ACTION,
-		      json_string(convert_action_to_str(req->action)));
-
-  /* Three types of action: 1. Fetch, 2. Update and 3. Cancel */
-  if (req->action == (ActionType)ACTION_FETCH) {
-
-    Content *content = req->content;
-
-    json_object_set_new(req, JSON_CALLBACK_URL, json_string(req->callbackURL));
-    json_object_set_new(req, JSON_UPDATE_INTERVAL, json_integer(req->interval));
-
-    /* Add Content object */
-    json_object_set_new(jreq, JSON_CONTENT, json_object());
-    jcont = json_object_get(req, JSON_CONTENT);
-
-    json_object_set_new(jcont, JSON_NAME, json_string(content->name));
-    json_object_set_new(jcont, JSON_TAG, json_string(content->tag));
-    json_object_set_new(jcont, JSON_METHOD,
-			json_string(convert_method_to_str(content->method)));
-    json_object_set_new(jcont, JSON_PROVIDER_URL,
-			json_string(content->providerURL));
-  }
-
-  if (req->action == (ActionType)ACTION_UPDATE) {
-
-    if (req->callbackURL) {
-      json_object_set_new(req, JSON_CALLBACK_URL,
-			  json_string(req->callbackURL));
-    }
-
-    if (req->interval>0) {
-      json_object_set_new(req, JSON_UPDATE_INTERVAL,
-			  json_integer(req->interval));
-    }
-  }
-
-  if (req->action == (ActionType)ACTION_CANCEL) {
-    /* Do nothing. */
-  }
-
-  return TRUE;
-}
-
-json_t *serialize_wimc_request(WimcReq *request) {
-
-  int ret=FALSE;
-  json_t *json, *req;
-
-  json = json_object();
-  if (json == NULL) {
-    return NULL;
-  }
-
-  json_object_set_new(json, JSON_WIMC_REQUEST, json_object());
-
-  req = json_object_get(json, JSON_WIMC_REQUEST);
-
-  if (req==NULL) {
-    return NULL;
-  }
-
-  if (request->type == (WReqType)AGENT) {
-    ret = serialize_wimc_request_to_agent(request, json);
-  } else if (request->type == (WReqType)PROVIDER) {
-    ret = serialize_wimc_request_to_provider(request, json);
-  }
-
-  if (ret) {
-    return json;
-  }
-
-  return NULL;
-}
-
-/*
- * serialize_request_to_provider --
- *
- */
-
-/* wimc_request -> {type:   "provider",
- *                  action: "request",
- *                  content { name : "name",
- *                            tag: "tag"}
- */
-static int serialize_request_to_provider(WimcReq *req, json_t *json) {
-
-  json_t *jreq, *jcont;
-  Content *content;
-
-  jreq = json_object_get(json, JSON_WIMC_REQUEST);
-
-  if (req==NULL) {
-    return FALSE;
-  }
-
-  content = req->content;
-
-  json_object_set_new(jreq, JSON_TYPE,
-		      json_string(convert_type_to_str(req->type)));
-  json_object_set_new(jreq, JSON_ID, json_integer(req->id));
-  json_object_set_new(jreq, JSON_ACTION,
-		      json_string(convert_action_to_str(req->action)));
-
-  /* Add Content object */
-  json_object_set_new(jreq, JSON_CONTENT, json_object());
-  jcont = json_object_get(req, JSON_CONTENT);
-
-  json_object_set_new(jcont, JSON_NAME, json_string(content->name));
-  json_object_set_new(jcont, JSON_TAG, json_string(content->tag));
-
-  return TRUE;
 }
 
 /*
@@ -213,8 +136,8 @@ static int deserialize_agent_request_register(Register **reg, json_t *json) {
     return FALSE;
   }
 
-  (*reg)->method = json_string_value(jmethod);
-  (*reg)->url = json_string_value(jurl);
+  (*reg)->method = strdup(json_string_value(jmethod));
+  (*reg)->url = strdup(json_string_value(jurl));
 
   return TRUE;
 }
@@ -388,7 +311,8 @@ int deserialize_wimc_request(WimcReq *req, json_t *json) {
  *
  */
 
-int deserialize_provider_response(AgentCB **agent, int *counter, json_t *json) {
+int deserialize_provider_response(ServiceURL **urls, int *counter,
+				  json_t *json) {
 
   int i=0, j=0, count=0;
   json_t *root=NULL, *jArray=NULL;
@@ -409,7 +333,7 @@ int deserialize_provider_response(AgentCB **agent, int *counter, json_t *json) {
       return TRUE;
     }
     
-    *agent = (AgentCB *)calloc(sizeof(AgentCB), count);
+    *urls = (ServiceURL *)calloc(sizeof(ServiceURL), count);
     
     for (i=0; i<count; i++) {
       elem = json_array_get(jArray, i);
@@ -422,8 +346,8 @@ int deserialize_provider_response(AgentCB **agent, int *counter, json_t *json) {
       url    = json_object_get(elem, JSON_URL);
 
       if (method && url) {
-	agent[i]->method = strdup(json_string_value(method));
-	agent[i]->url    = strdup(json_string_value(url));
+	urls[i]->method = strdup(json_string_value(method));
+	urls[i]->url    = strdup(json_string_value(url));
       }
     }
   }
@@ -432,12 +356,12 @@ int deserialize_provider_response(AgentCB **agent, int *counter, json_t *json) {
   
  failure:
   for (j=0; j<i; j++) {
-    free(agent[j]->method);
-    free(agent[j]->url);
+    free(urls[j]->method);
+    free(urls[j]->url);
   }
   
-  if (*agent)
-    free(*agent);
+  if (*urls)
+    free(*urls);
   
   return FALSE;
 }

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern int deserialize_provider_response(json_t *resp, AgentCB **agent,
+extern int deserialize_provider_response(json_t *resp, ServiceURL **urls,
 					 int *counter);
 extern req_t* create_http_request(char *url, char* ep, char *req_type);
 

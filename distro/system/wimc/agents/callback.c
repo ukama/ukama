@@ -85,6 +85,7 @@ static int process_post_request(WimcReq *req) {
  */
 static int validate_post_request(WimcReq *req, MethodType *method) {
 
+#if 0
   Content *content;
 
   if (req->type != (WReqType)AGENT) {
@@ -134,7 +135,7 @@ static int validate_post_request(WimcReq *req, MethodType *method) {
   if (validate_url(content->providerURL)) {
     return WIMC_ERROR_BAD_URL;
   }
-  
+#endif
   return WIMC_OK;
 }
 
@@ -213,9 +214,11 @@ int agent_callback_post(const struct _u_request *request,
   MethodType *method = (MethodType *)user_data;
   WimcReq req;
 
+  /*
   jreq = ulfius_get_json_body_response(request, NULL);
   deserialize_wimc_request(&req, jreq);
-
+  
+  
   ret = validate_post_request(&req, method);
 
   if (ret == WIMC_OK) {
@@ -228,7 +231,7 @@ int agent_callback_post(const struct _u_request *request,
   } else {
     retCode = 400;
   }
-
+  */
   params = print_map(request->map_post_body);
   resBody = msprintf("%s\n%s", error_to_str(ret), params);
 

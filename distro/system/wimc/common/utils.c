@@ -20,7 +20,7 @@
 #include "utils.h"
 
 /* Some utility functions for serdes */
-
+#if 0
 char *convert_action_to_str(ActionType action) {
 
   char *str;
@@ -44,6 +44,7 @@ char *convert_action_to_str(ActionType action) {
 
   return str;
 }
+#endif
 
 char *convert_method_to_str(MethodType method) {
 
@@ -112,27 +113,6 @@ char *convert_state_to_str(TransferState state) {
   return str;
 }
 
-char *convert_type_to_str(WReqType type) {
-
-  char *str;
-
-  switch(type) {
-
-  case AGENT:
-    str = WIMC_REQ_TYPE_AGENT_STR;
-    break;
-
-  case PROVIDER:
-    str = WIMC_REQ_TYPE_PROVIDER_STR;
-    break;
-
-  default:
-    str = "";
-  }
-
-  return str;
-}
-
 AgentState convert_str_to_state(char *str) {
 
   AgentState state;
@@ -168,16 +148,17 @@ ReqType convert_str_to_type(char *str) {
 WReqType convert_str_to_wType(char *str) {
 
   WReqType req;
-
+#if 0
   if (strcmp(str, WIMC_REQ_TYPE_AGENT_STR)==0) {
     req = AGENT;
   } else if (strcmp(str, WIMC_REQ_TYPE_PROVIDER_STR)==0) {
     req = PROVIDER;
   }
-
+#endif
   return req;
 }
 
+#if 0
 ActionType convert_str_to_action(char *str) {
 
   ActionType action;
@@ -192,3 +173,4 @@ ActionType convert_str_to_action(char *str) {
 
   return action;
 }
+#endif

@@ -16,6 +16,11 @@
 
 #include "agent.h"
 
+#define WIMC_REQ_TYPE_FETCH  "fetch"
+#define WIMC_REQ_TYPE_UPDATE "update"
+#define WIMC_REQ_TYPE_CANCEL "cancel"
+
+
 #define WIMC_CMD_TRANSFER 1
 #define WIMC_CMD_INFO     2
 #define WIMC_CMD_INSPECT  3
@@ -41,6 +46,7 @@
 #define WIMC_EP_PROVIDER "/content/containers"
 #define WIMC_EP_ADMIN  "/admin"
 #define WIMC_EP_AGENT  "/admin/agent"
+#define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
 #define WIMC_MAX_URL_LEN     1024
 #define WIMC_MAX_NAME_LEN   256
@@ -56,6 +62,7 @@
 #define WIMC_REQ_TYPE_PROVIDER_STR "provider"
 
 #define MAX_AGENTS 20
+#define DEFAULT_INTERVAL 10 /* 10 seconds. */
 
 #define TRUE 1
 #define FALSE 0
@@ -64,9 +71,9 @@ typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
 
 typedef struct {
-  int  *method; /* Mechanisim supported by service at the url. */
+  char *method; /* Mechanisim supported by service at the url. */
   char *url;    /* callback URL for the agent. */
-} AgentCB;
+} ServiceURL;
 
 typedef struct {
 
@@ -76,22 +83,15 @@ typedef struct {
   char    *cloud;      /* cloud-based service provider URL. */
   sqlite3 *db;         /* SQLite3 db for various stats */
   int     maxAgents;   /* Max. number of agents allowed. */
-  Agent   **agents;     /* Ptr to Agents, needed for http callback func() */
+  Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
 } WimcCfg;
 
-
 typedef enum {
 
-  AGENT = 1,
-  PROVIDER
+  WREQ_FETCH=1,
+  WREQ_UPDATE,
+  WREQ_CANCEL
 } WReqType;
-
-typedef enum {
-
-  ACTION_FETCH=1,
-  ACTION_UPDATE,
-  ACTION_CANCEL
-} ActionType;
 
 typedef enum {
   TEST=1,
@@ -100,20 +100,39 @@ typedef enum {
 
 typedef struct {
 
-  char       *name;
-  char       *tag;
-  MethodType method;
-  char       *providerURL;
-} Content;
+  char *name;        /* to fetch. */
+  char *tag;         /* to fetch. */
+  char *method;       /* Method to use with provider. */
+  char *providerURL; /* service provider URL. */
+} WContent;
 
 typedef struct {
 
-  WReqType   type;
-  ActionType action;
-  int        id;
-  char       *callbackURL;
-  int        interval;
-  Content    *content;
+  int      id;       /* UID for future transactions */
+  char     *cbURL;   /* Callback URL to send update (from Agent to wimc) */
+  int      interval; /* update interval */
+  WContent *content; /* Content definition */
+} WFetch;
+
+typedef struct {
+
+  int  id;
+  int  interval;
+  char *cbURL;
+} WUpdate;
+
+typedef struct {
+
+  int id;
+} WCancel;
+
+/* struct to define the request originating from wimc to agent. */
+typedef struct {
+
+  WReqType type;
+  WFetch   *fetch;
+  WUpdate  *update;
+  WCancel  *cancel;
 } WimcReq;
 
 #endif /* WIMC_H */

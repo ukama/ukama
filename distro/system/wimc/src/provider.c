@@ -31,13 +31,14 @@ struct Response {
 /* Function def. */
 static void log_request(req_t *req);
 static void log_response(resp_t *resp);
-static void process_response_from_provider(WimcCfg *cfg, long statusCode,
-					   void *resp);
+static int process_response_from_provider(WimcCfg *cfg, long statusCode,
+					   void *resp, ServiceURL **urls);
 static void create_provider_url(WimcCfg *cfg, char *url, char *name,
 				char *tag);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
-int fetch_content_from_service_provider(WimcCfg *cfg, char *name, char *tag);
+int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
+				  ServiceURL **urls, int *count);
 
 /*
  * log_request --
@@ -55,17 +56,14 @@ static void log_response(resp_t *resp) {
  * process_response_from_provider --
  *
  */
-
-static void process_response_from_provider(WimcCfg *cfg, long statusCode,
-					   void *resp) {
+static int process_response_from_provider(WimcCfg *cfg, long statusCode,
+					   void *resp, ServiceURL **urls) {
 
   struct Response *response;
   json_t *json;
   int count=0, i=0, ret=FALSE;
-  AgentCB **agents=NULL;
   
   response = (struct Response *)resp;
-  agents = (AgentCB **)calloc(sizeof(AgentCB *), 1);
   
   json = json_loads(response->buffer, JSON_DECODE_ANY, NULL);
 
@@ -74,7 +72,7 @@ static void process_response_from_provider(WimcCfg *cfg, long statusCode,
     goto done;
   }
 
-  ret = deserialize_provider_response(&agents[0], &count, json);
+  ret = deserialize_provider_response(&urls[0], &count, json);
 
   if (ret==FALSE) {
     log_error("Deserialization failed for %s", response->buffer);
@@ -88,31 +86,28 @@ static void process_response_from_provider(WimcCfg *cfg, long statusCode,
   
   for (i=0; i<count; i++) {
     log_debug("Received Agent CB URL from provider. %d: Method: %s URL: %s",
-	      i, agents[i]->method, agents[i]->url);
-
-#if 0
-	/* lookup registered matching Agents*/
-	agentURL = find_matching_agent_url(agent[i]->method, cfg->agents);
-#endif
+	      i, urls[i]->method, urls[i]->url);
   }
 
  done:
-  
+
+  /*
   for (i=0; i<count; i++) {
-    if (agents[i]->method && agents[i]->url) {
-      free(agents[i]->method);
-      free(agents[i]->url);
+    if (urls[i]->method && urls[i]->url) {
+      free(urls[i]->method);
+      free(urls[i]->url);
     }
-    free(agents[i]);
+    free(urls[i]);
   }
-  
-  free(agents);
+
+  free(urls);
+  */
 
   json_decref(json);
-  return;
+  return count;
 }
 
-/* 
+/*
  * create_provider_url -- create EP for the provider.
  *
  */
@@ -149,11 +144,11 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 }
 
 /*
- * send_get_request_to_provider -- 
+ * get_service_url_from_provider -- 
  *
  */
-
-static int send_request_to_provider(WimcCfg *cfg, char *name, char *tag) {
+int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
+				  ServiceURL **urls, int *count) {
   
   int ret;
   long code=0;
@@ -193,7 +188,7 @@ static int send_request_to_provider(WimcCfg *cfg, char *name, char *tag) {
   } else {
     /* get status code. */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    process_response_from_provider(cfg, code, &response);
+    *count = process_response_from_provider(cfg, code, &response, urls);
   }
 
  done:
@@ -202,24 +197,4 @@ static int send_request_to_provider(WimcCfg *cfg, char *name, char *tag) {
   curl_easy_cleanup(curl);
   
   return code;
-}
-
-/*
- * fetch_container_from_service_provider -- 
- *
- */ 
-
-int fetch_content_from_service_provider(WimcCfg *cfg, char *name, char *tag) {
-
-  /* Logic is as follows:
-   * 1. Issue GET command to the cloud-based service provider for name:tag
-   * 2. Provider will either:
-   *    a. reject the request with 404 or
-   *    b. accept and return remote_cb URL. 
-   * 3. Remote_cb URL is then passed to the Agent, along with status_CB.
-   * 4. status_cb keep the db updated for the content.
-   */
-
-  send_request_to_provider(cfg, name, tag); 
-
 }

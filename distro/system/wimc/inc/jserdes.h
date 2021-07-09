@@ -22,6 +22,8 @@
 #define JSON_TYPE_REGISTER   "type_register"
 #define JSON_TYPE_UNREGISTER "type_unregister"
 #define JSON_TYPE_UPDATE     "type_update"
+#define JSON_TYPE_FETCH      "type_fetch"
+#define JSON_TYPE_CANCEL     "type_cancel"
 
 #define JSON_METHOD          "method"
 #define JSON_URL             "url"
@@ -35,6 +37,7 @@
 #define JSON_PROVIDER_URL    "provider_url"
 #define JSON_CALLBACK_URL    "callback_url"
 #define JSON_UPDATE_INTERVAL "update_interval"
+#define JSON_CONTENT         "content"
 
 #define JSON_EVENT           "event_type"
 #define JSON_EVENT_UPDATE    "update"
@@ -47,5 +50,10 @@
 #define JSON_AGENT_REQUEST   "agent_request"
 
 #define JSON_PROVIDER_RESPONSE "provider_response"
+
+/* function def. */
+int serialize_wimc_request(WimcReq *request, json_t **json);
+static int serialize_wimc_request_fetch(WimcReq *req, json_t **json);
+
 
 #endif /* WIMC_JSERDES_H */

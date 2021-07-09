@@ -220,14 +220,20 @@ int callback_get_container(const struct _u_request *request,
 
   int val=FALSE, found=FALSE;
   int resCode=200;
+  int count=0, i, id;
   
   char path[WIMC_MAX_PATH_LEN] = {0};
   char *post_params=NULL, *response_body=NULL;
   char *name=NULL, *tag=NULL;
   WimcCfg *cfg=NULL;
+  ServiceURL **urls=NULL;
+
+  Agent *agent=NULL;
+  char *providerURL=NULL;
   
   cfg = (WimcCfg *)user_data;
-  
+  urls = (ServiceURL **)calloc(sizeof(ServiceURL *), 1);
+
   log_request(request);
 
   name = (char *)u_map_get(request->map_url, "name");
@@ -248,23 +254,56 @@ int callback_get_container(const struct _u_request *request,
       /* we have the contents stored locally. Return the location. */
     response_body = msprintf("%s", path);
     goto reply;
-  } else {
+  }
 
-      /* Ask cloud based service provider for the content. 
-       * dB will be kept updated with the status.
-       * Special CB URL will be return to the callee. 
-       */
-      
-    fetch_content_from_service_provider(cfg, name, tag);
+  /* Step-1: Ask service provider for the link. */
+  resCode = get_service_url_from_provider(cfg, name, tag, &urls[0], &count);
+  if (resCode != 200) {
+    resCode = 404;
+    response_body = msprintf("No service provider found");
     goto reply;
   }
   
+  /* Step-2: find out which register agent can handle the method
+   *         returned by the service provider.
+   */
+  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL);
+  if (agent == NULL) {
+    resCode = 404; /*Not found but might be available in furture. */
+    response_body = msprintf("No service provider found");
+    goto reply;
+  } else {
+    log_debug("Matching agent found. Agent Id: %d Method: %s URL: %s",
+	      agent->id, agent->method, agent->url);
+  }
+
+  /* Step-3: Ask agent to fetch the data. Agent will update the status
+   *         of this transfer via special status CB url and UID.
+   */
+
+  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
+				       agent, cfg, &id);
+
+  /* Step-4: setup client cb URL where they can monitor the status
+   *         of the request.
+   */
+
 reply:
 
   ulfius_set_string_body_response(response, resCode, response_body);
   
   o_free(response_body);
   o_free(post_params);
+
+  for (i=0; i<count; i++) {
+    if (urls[i]->method && urls[i]->url) {
+      free(urls[i]->method);
+      free(urls[i]->url);
+    }
+    free(urls[i]);
+  }
+
+  free(urls);
 
   return U_CALLBACK_CONTINUE;
 }

@@ -49,7 +49,7 @@ static char *create_cb_url(char *port) {
   char *cbURL=NULL;
   
   if (port==NULL) {
-    return FALSE;
+    return NULL;
   }
 
   cbURL = (char *)malloc(WIMC_MAX_URL_LEN);
@@ -112,7 +112,7 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
   Register *reg;
   UnRegister *unreg;
   
-  request = (AgentReq *)calloc(sizeof(AgentReq), 1);
+  request = (AgentReq *)calloc(1, sizeof(AgentReq));
   if (request==NULL) {
     goto done;
   }

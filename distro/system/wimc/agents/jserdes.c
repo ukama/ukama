@@ -112,7 +112,7 @@ int serialize_agent_request_register(AgentReq *req, json_t **json) {
   json_t *jreg;
   Register *reg;
 
-  if (req==NULL || req->reg==NULL) {
+  if (req==NULL && req->reg==NULL) {
     return FALSE;
   }
 
@@ -215,6 +215,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
 
   json_t *obj, *jcont;
 
+#if 0
   if (json==NULL) {
     return FALSE;
   }
@@ -307,7 +308,7 @@ int deserialize_wimc_request_to_agent(WimcReq *req, json_t *json) {
   if (req->action == (ActionType)ACTION_CANCEL) {
     /* Do nothing. */
   }
-
+#endif
   return TRUE;
 }
 
@@ -320,7 +321,7 @@ int deserialize_wimc_request(WimcReq *req, json_t *json) {
   int ret=FALSE;
   json_t *jreq, *jtype;
   WReqType type;
-
+#if 0
   jreq = json_object_get(json, JSON_WIMC_REQUEST);
 
   if (jreq==NULL) {
@@ -340,6 +341,6 @@ int deserialize_wimc_request(WimcReq *req, json_t *json) {
   } else {
     log_error("Invalid type recevied. Ignoring");
   }
-
+#endif
   return ret;
 }
