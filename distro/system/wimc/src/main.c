@@ -55,20 +55,6 @@ static void usage() {
   printf("--v, --version                      Version. \n");
 }
 
-static void clear_agents(Agent *agent) {
-
-  int i;
-
-  for (i=0; i<MAX_AGENTS; i++){
-    if (agent[i].id) {
-      free(agent[i].method);
-      free(agent[i].url);
-    }
-
-    free(&agent[i]);
-  }
-}
-
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
 
@@ -135,11 +121,11 @@ int main (int argc, char **argv) {
   sqlite3 *db=NULL;
   struct _u_instance adminInst, clientInst;
   WimcCfg *cfg=NULL;
-  Agent *agents;
+  Agent *agents=NULL;
+  WTasks *tasks=NULL;
+  char *debug=DEF_LOG_LEVEL;
 
-  char *debug = DEF_LOG_LEVEL;
-
-  cfg = (WimcCfg *)calloc(sizeof(WimcCfg), 1);
+  cfg = (WimcCfg *)calloc(1, sizeof(WimcCfg));
   if (cfg == NULL) {
     exit(1);
   }
@@ -227,9 +213,21 @@ int main (int argc, char **argv) {
   }
 
   agents = (Agent *)calloc(MAX_AGENTS, sizeof(Agent));
+  if (!agents) {
+    log_error("Memory failure. Exiting");
+    exit(1);
+  }
   cfg->agents = &agents;
   is_valid_config(cfg);
   curl_global_init(CURL_GLOBAL_ALL);
+  /*
+  tasks = (WTasks *)calloc(1, sizeof(WTasks));
+  if (!tasks) {
+    log_error("Memory failure. Exiting");
+    exit(1);
+  }
+  */
+  cfg->tasks = &tasks;
 
   /* Steps are as follows:
    * 1. Check if db exits, otherwise create one.
@@ -275,7 +273,10 @@ int main (int argc, char **argv) {
   sqlite3_close(db);
   
   clear_agents(&agents);
+  clear_tasks(&tasks);
+
   free(agents);
+  free(tasks);
   free(cfg);
   
   return 1;

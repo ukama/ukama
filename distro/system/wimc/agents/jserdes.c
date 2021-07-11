@@ -387,7 +387,7 @@ static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
   jObj = json_object_get(jfetch, JSON_CALLBACK_URL);
   (*fetch)->cbURL = strdup(json_string_value(jObj));
 
-  jcontent = json_object_get(json, JSON_CONTENT);
+  jcontent = json_object_get(jfetch, JSON_CONTENT);
   if (jcontent == NULL) {
     return FALSE;
   }

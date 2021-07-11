@@ -27,7 +27,7 @@
 
 #define JSON_METHOD          "method"
 #define JSON_URL             "url"
-#define JSON_ID              "unique_id"
+#define JSON_ID              "id"
 #define JSON_CMD             "cmd"
 #define JSON_ACTION          "action"
 #define JSON_CONTENT         "content"
@@ -38,6 +38,7 @@
 #define JSON_CALLBACK_URL    "callback_url"
 #define JSON_UPDATE_INTERVAL "update_interval"
 #define JSON_CONTENT         "content"
+#define JSON_TASK            "task"
 
 #define JSON_EVENT           "event_type"
 #define JSON_EVENT_UPDATE    "update"

@@ -210,17 +210,17 @@ static void log_request(const struct _u_request *request) {
 
 
 /*
- * callback_get_container --
+ * callback_post_container --
  *
  */
 
-int callback_get_container(const struct _u_request *request,
+int callback_post_container(const struct _u_request *request,
 			   struct _u_response *response,
 			   void *user_data) {
 
   int val=FALSE, found=FALSE;
   int resCode=200;
-  int count=0, i, id;
+  int count=0, i=0, id=0;
   
   char path[WIMC_MAX_PATH_LEN] = {0};
   char *post_params=NULL, *response_body=NULL;
@@ -240,7 +240,7 @@ int callback_get_container(const struct _u_request *request,
   tag  = (char *)u_map_get(request->map_url, "tag");
 
   if (!name || !tag) {
-    log_error("Invalid name and tag in GET request for EP: %s. Ignoring.",
+    log_error("Invalid name and tag in POST request for EP: %s. Ignoring.",
 	      WIMC_EP_CONTAINER);
     /* XXX Send error on bad name. */
     response_body = msprintf("Invalid container name and/or tag.");
@@ -279,14 +279,20 @@ int callback_get_container(const struct _u_request *request,
 
   /* Step-3: Ask agent to fetch the data. Agent will update the status
    *         of this transfer via special status CB url and UID.
+   *         Tasks list is also updated.
    */
 
   resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
 				       agent, cfg, &id);
 
-  /* Step-4: setup client cb URL where they can monitor the status
-   *         of the request.
+  /* Step-4: setup client URL where they can monitor the status
+   *         of the request. 
    */
+  if (resCode == 200) { /* Task is assigned to Agent. Return ID. */
+    response_body = msprintf("%d", id);
+  } else {
+    response_body = msprintf("No resource found. Error");
+  }
 
 reply:
 
@@ -304,57 +310,6 @@ reply:
   }
 
   free(urls);
-
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_post_container --
- *
- */
-int callback_post_container(const struct _u_request *request,
-			    struct _u_response *response,
-			    void *user_data) {
-  int ret;
-  char *params, *post_params, *response_body;
-  WimcCfg *cfg;
-
-  cfg = (WimcCfg *)user_data;
-    
-  char name[WIMC_MAX_NAME_LEN] = {0};
-  char tag[WIMC_MAX_TAG_LEN]   = {0};
-  char path[WIMC_MAX_PATH_LEN] = {0};
-
-  log_request(request);
-  
-  params = (char *)request->binary_body;
-
-  ret = get_post_params(params, &name[0], &tag[0], &path[0]);
-
-  /* Validate the path is correct: 
-   * 1. path exists and 2. config.json exists in the root.
-   */
-  if (validate_path(path)) {
-    /* Add entry to the db and return OK. */
-    if (db_insert_entry(cfg->db, name, tag, path)) {
-      response_body = msprintf("OK!\n%s", post_params);
-    } else {
-      response_body = msprintf("Error inserting into db!\n%s", post_params);
-    }
-  } else {
-    response_body = msprintf("Invalid path. Ignoring\n%s", post_params);
-  }
-  
-  post_params = print_map(request->map_post_body);
-
-  if (!ret) {
-    log_debug("Invalid POST request recevied for %s. Ignoring!",
-	      WIMC_EP_ADMIN);
-  }
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -466,6 +421,71 @@ int callback_post_agent(const struct _u_request *request,
   return U_CALLBACK_CONTINUE;
 }
 
+/*
+ * callback_get_task --
+ *
+ */
+int callback_get_task(const struct _u_request *request,
+		      struct _u_response *response, void *user_data) {
+
+  int ret, statusCode=200;
+  long id=0;
+  WimcCfg *cfg=NULL;
+  WTasks *task=NULL;
+  char *idStr=NULL, *resBody=NULL;
+
+  cfg = (WimcCfg *)user_data;
+
+  idStr = (char *)u_map_get(request->map_url, "id");
+  if (!idStr) {
+    statusCode = 400;
+    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    goto done;
+  }
+
+  id = atol(idStr);
+
+  /* Find matching task. */
+  task = *(cfg->tasks);
+  while (task != NULL) {
+    if (task->id == id) {
+      break;
+    }
+    task = task->next;
+  }
+
+  if (task) {
+    char *str;
+    /* if ID found, serialize the tasks status and send it back, yo. */
+    str = process_task_request(task);
+    if (!str) {
+      statusCode = 400;
+      resBody = msprintf("%s", WIMC_ERROR_MEMORY_STR);
+    } else {
+      statusCode = 200;
+      resBody = msprintf("%s", str);
+      free(str);
+    }
+  } else {
+    statusCode = 400;
+    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+  }
+
+ done:
+  ulfius_set_string_body_response(response, statusCode, resBody);
+  o_free(resBody);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+/*
+ * callback_delete_task --
+ *
+ */
+int callback_delete_task(const struct _u_request *request,
+			 struct _u_response *response, void *user_data) {
+
+}
 
 /*
  * callback_not_allowed -- 

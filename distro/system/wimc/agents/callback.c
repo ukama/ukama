@@ -81,61 +81,73 @@ static int process_post_request(WimcReq *req) {
 }
 
 /*
- * validate_post_request -- validate all parameters of POST are valid. 
+ * valid_req_type --
+ *
  */
-static int validate_post_request(WimcReq *req, MethodType *method) {
 
-#if 0
-  Content *content;
+static int valid_req_type(WimcReq *req, MethodType method) {
 
-  if (req->type != (WReqType)AGENT) {
+  if (req->type == (WReqType)WREQ_FETCH)
+    return TRUE;
+
+  if (req->type == (WReqType)WREQ_UPDATE)
+    return TRUE;
+
+  if (req->type == (WReqType)WREQ_CANCEL)
+    return TRUE;
+
+  return FALSE;
+}
+
+/*
+ * validate_post_request -- validate all parameters of POST are valid. 
+ *
+ */
+
+static int validate_post_request(WimcReq *req, MethodType method) {
+
+  WFetch *fetch=NULL;
+  WUpdate *update=NULL;
+  WContent *content=NULL;
+
+  if (!valid_req_type(req, method)){
     return WIMC_ERROR_BAD_TYPE;
   }
 
-  /* Only Fetch is via the POST. update and delete is via put and
-   * delete respectively.
-   */
-  if (req->action != (ActionType)ACTION_FETCH) {
-    return WIMC_ERROR_BAD_ACTION;
+  if (req->type == (WReqType)WREQ_FETCH) {
+    fetch = req->fetch;
+  } else {
+    goto done;
   }
 
   /* Id and interval are always positive. */
-  if (req->id <= 0) { 
+  if (fetch->id <= 0) {
     return WIMC_ERROR_BAD_ID;
   }
 
-  if (req->interval <= 0){
+  if (fetch->interval <= 0) {
     return WIMC_ERROR_BAD_INTERVAL;
   }
+
+  if (validate_url(fetch->cbURL) != WIMC_OK) {
+    return WIMC_ERROR_BAD_URL;
+  }
       
-  if (!req->content) {
+  if (!fetch->content) {
     return WIMC_ERROR_MISSING_CONTENT;
   } else {
-    content = req->content;
+    content = fetch->content;
   }
   
   if (!content->name || !content->tag) {
     return WIMC_ERROR_BAD_NAME;
   }
 
-  if (content->method != (MethodType)ACTION_FETCH) {
-    log_error("Invalid method recevied for the POST. Ignoring");
-    return WIMC_ERROR_BAD_METHOD;
-  }
-
-  if (!req->callbackURL || !content->providerURL) {
+  if (validate_url(content->providerURL) != WIMC_OK) {
     return WIMC_ERROR_BAD_URL;
   }
 
-  /* check if URL are reachable by the agent. */
-  if (validate_url(req->callbackURL)) {
-    return WIMC_ERROR_BAD_URL;
-  }
-
-  if (validate_url(content->providerURL)) {
-    return WIMC_ERROR_BAD_URL;
-  }
-#endif
+ done:
   return WIMC_OK;
 }
 
@@ -190,10 +202,10 @@ int agent_callback_put(const struct _u_request *request,
 		       void *user_data) {
   
   char *post_params, *response_body;
-  
+
   post_params = print_map(request->map_post_body);
   response_body = msprintf("OK!\n%s", post_params);
-  
+
   ulfius_set_string_body_response(response, 200, response_body);
   o_free(response_body);
   o_free(post_params);
@@ -215,32 +227,43 @@ int agent_callback_post(const struct _u_request *request,
   MethodType *method = (MethodType *)user_data;
   WimcReq *req=NULL;
 
-    jreq = ulfius_get_json_body_request(request, &jerr);
+  jreq = ulfius_get_json_body_request(request, &jerr);
   if (!jreq) {
     log_error("json error: %s", jerr.text);
-  } else {
-    req = (WimcReq *)calloc(1, sizeof(WimcReq));
-    
-    ret = deserialize_wimc_request(&req, jreq);
+    goto done;
+  }
 
-    if (ret) {
-      char *jStr;
-      
-      jStr = json_dumps(jreq, 0);
-      if (jStr) {
-	log_debug("Wimc request received str: %s", jStr);
-	free(jStr);
-      }
+  req = (WimcReq *)calloc(1, sizeof(WimcReq));
+
+  ret = deserialize_wimc_request(&req, jreq);
+
+  if (ret) {
+    char *jStr;
+
+    jStr = json_dumps(jreq, 0);
+    if (jStr) {
+      log_debug("Wimc request received str: %s", jStr);
+      free(jStr);
     }
   }
+
+  ret = validate_post_request(req, *method);
+  if (ret != WIMC_OK) {
+    retCode = 400;
+    resBody = msprintf("%s\n%s", error_to_str(ret), params);
+    goto done;
+  } else {
+    retCode = 200;
+    resBody = msprintf("OK");
+  }
   
-  params = print_map(request->map_post_body);
-  resBody = msprintf("%s\n%s", error_to_str(ret), params);
+ done:
 
   ulfius_set_string_body_response(response, retCode, resBody);
   free_wimc_request(req);
   o_free(resBody);
   o_free(params);
+  json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
 }

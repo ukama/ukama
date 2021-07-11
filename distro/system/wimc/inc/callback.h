@@ -54,6 +54,10 @@ int callback_get_stats(const struct _u_request *request,
 		       struct _u_response *response, void *user_data);
 int callback_post_agent(const struct _u_request *request,
 			struct _u_response *response, void *user_data);
+int callback_get_task(const struct _u_request *request,
+		      struct _u_response *response, void *user_data);
+int callback_delete_task(const struct _u_request *request,
+			 struct _u_response *response, void *user_data);
 int callback_not_allowed(const struct _u_request *request,
 			 struct _u_response *response, void *user_data);
 int callback_default(const struct _u_request *request,

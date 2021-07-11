@@ -61,6 +61,7 @@ void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
    *     PUT    - update an existing entry in db.
    *     DELETE - remove existing entry in db.
    */
+#if 0
   ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_ADMIN, NULL, 0,
                              &callback_get_container, cfg);
   ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_ADMIN, NULL, 0,
@@ -69,7 +70,7 @@ void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
                              &callback_put_container, cfg);
   ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_ADMIN, NULL, 0,
                              &callback_delete_container, cfg);
-  
+#endif
   /* 2. /stats:
    *     GET  - get various WIMC.d internal stats.
    */
@@ -93,16 +94,30 @@ void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
 void setup_client_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
 
   /* Endpoint decelrations. 
-   * 1. /containers (acting on 'containers' table)
+   * 1. /content/containers (acting on 'containers' table)
    *     GET    - query the db.
    */
   ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_CLIENT, NULL, 0,
-                             &callback_get_container, cfg);
-  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_CLIENT, NULL, 0,
                              &callback_not_allowed, cfg);
+  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_CLIENT, NULL, 0,
+                             &callback_post_container, cfg);
   ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_CLIENT, NULL, 0,
                              &callback_not_allowed, cfg);
   ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_CLIENT, NULL, 0,
+                             &callback_not_allowed, cfg);
+
+  /* 2. /content/tasks - /content/tasks/?ID:id (id as returned by POST earlier)
+   *    GET    - Get the current status (of task)
+   *    DELETE - Delete the content request (task)
+   *    POST/PUT - Not allowed.
+   */
+  ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_TASKS, NULL, 0,
+                             &callback_get_task, cfg);
+  ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_TASKS, NULL, 0,
+                             &callback_delete_task, cfg);
+  ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_TASKS, NULL, 0,
+                             &callback_not_allowed, cfg);
+  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_TASKS, NULL, 0,
                              &callback_not_allowed, cfg);
   
   /* default endpoint. */

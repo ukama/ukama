@@ -24,6 +24,10 @@ int validate_url(char *url) {
   CURL *curl;
   CURLcode response;
 
+  if (url==NULL) {
+    return WIMC_ERROR_BAD_URL;
+  }
+
   curl = curl_easy_init();
 
   if (curl) {

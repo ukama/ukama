@@ -41,11 +41,12 @@
 #define WIMC_METHOD_TYPE_GET  "GET"
 #define WIMC_METHOD_TYPE_POST "POST"
 
-#define WIMC_EP_STATS  "/stats"
-#define WIMC_EP_CLIENT "/content/containers/*"
+#define WIMC_EP_STATS    "/stats"
+#define WIMC_EP_CLIENT   "/content/containers/*"
 #define WIMC_EP_PROVIDER "/content/containers"
-#define WIMC_EP_ADMIN  "/admin"
-#define WIMC_EP_AGENT  "/admin/agent"
+#define WIMC_EP_TASKS    "/content/tasks"
+#define WIMC_EP_ADMIN    "/admin"
+#define WIMC_EP_AGENT    "/admin/agent"
 #define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
 #define WIMC_MAX_URL_LEN     1024
@@ -75,17 +76,6 @@ typedef struct {
   char *url;    /* callback URL for the agent. */
 } ServiceURL;
 
-typedef struct {
-
-  char    *clientPort; 
-  char    *dbFile;
-  char    *adminPort;
-  char    *cloud;      /* cloud-based service provider URL. */
-  sqlite3 *db;         /* SQLite3 db for various stats */
-  int     maxAgents;   /* Max. number of agents allowed. */
-  Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
-} WimcCfg;
-
 typedef enum {
 
   WREQ_FETCH=1,
@@ -102,7 +92,7 @@ typedef struct {
 
   char *name;        /* to fetch. */
   char *tag;         /* to fetch. */
-  char *method;       /* Method to use with provider. */
+  char *method;      /* Method to use with provider. */
   char *providerURL; /* service provider URL. */
 } WContent;
 
@@ -134,5 +124,38 @@ typedef struct {
   WUpdate  *update;
   WCancel  *cancel;
 } WimcReq;
+
+/* struct to define the contents activites within wimc. Each
+ * client request, not found in the local db, results in adding to the
+ * WTasks list.
+ *
+ * Client can query the task (GET) or cancel it (DELETE), both, using ID
+ * as handle.
+ */
+
+typedef struct wtask {
+
+  long     id;        /* Unique ID. */
+  WContent *content;  /* define the content. */
+  Update   *update;   /* define status of the content activity. */
+  char     *localPath;/* Path where content is available at */
+
+  TransferState state; /* current state of the task. */
+
+  struct wtask *next; /* pointer to next record. */
+} WTasks;
+
+typedef struct {
+
+  char    *clientPort;
+  char    *dbFile;
+  char    *adminPort;
+  char    *cloud;      /* cloud-based service provider URL. */
+  sqlite3 *db;         /* SQLite3 db for various stats */
+  int     maxAgents;   /* Max. number of agents allowed. */
+  Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
+  WTasks  **tasks;     /* Ptr to Tasks, mostly for http cb */
+} WimcCfg;
+
 
 #endif /* WIMC_H */

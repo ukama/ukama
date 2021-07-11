@@ -1,0 +1,159 @@
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+#include <string.h>
+
+#include "wimc.h"
+#include "agent.h"
+
+/* Functions related to tasks. */
+
+void clear_tasks(WTasks **tasks) {
+
+  WTasks *curr=NULL, *tmp;
+
+  curr = *tasks;
+
+  while (curr) {
+    
+    WContent *content = curr->content;
+    
+    if (content) {
+      free(content->name);
+      free(content->tag);
+      free(content->method);
+      free(content->providerURL);
+    }
+
+    free(curr->content);
+    free(curr->update);
+    if (curr->localPath)
+      free(curr->localPath);
+
+    tmp = curr->next;
+    free(curr);
+    curr = tmp; /*next entry */
+  }
+  
+}
+
+/*
+ * copy_contents --
+ *
+ */
+
+static void copy_contents(WContent *src, WContent *dest) {
+
+  /* sanity check. */
+  if (!src && !dest) {
+    return;
+  }
+
+  dest->name        = strndup(src->name, strlen(src->name));
+  dest->tag         = strndup(src->tag, strlen(src->tag));
+  dest->method      = strndup(src->method, strlen(src->method));
+  dest->providerURL = strndup(src->providerURL, strlen(src->providerURL));
+}
+
+/*
+ * add_task_entry --
+ *
+ */
+
+static void add_task_entry(WTasks **task, WimcReq *req) {
+
+  WTasks *ptr;
+  Update *update;
+
+  /* sanity check. */
+  if (!req && !req->fetch && !task)
+    return;
+
+  ptr = *task;
+
+  ptr->content = (WContent *)calloc(1, sizeof(WContent));
+  ptr->update  = (Update *)calloc(1, sizeof(Update));
+  if (!ptr->content && !ptr->update) {
+    return;
+  }
+
+  ptr->id = req->fetch->id;
+  copy_contents(req->fetch->content, ptr->content);
+  ptr->state = (TransferState)REQUEST;
+
+  update                = ptr->update;
+  update->id            = ptr->id;
+  update->totalKB       = 0;
+  update->transferKB    = 0;
+  update->transferState = (int)ptr->state;
+  update->voidStr       = NULL;
+
+  ptr->localPath = NULL;
+}
+
+/*
+ * add_to_tasks --
+ *
+ */
+
+void add_to_tasks(WTasks **tasks, WimcReq *req) {
+
+  WTasks *curr;
+
+  /* Base case - first entry. */
+  if (*tasks == NULL) {
+    *tasks = (WTasks *)calloc(1, sizeof(WTasks));
+    if (!*tasks) {
+      return;
+    }
+
+    add_task_entry(tasks, req);
+    (*tasks)->next = NULL;
+    return;
+  }
+
+  curr = *tasks;
+  
+  while (curr->next != NULL) {
+    curr = curr->next;
+  }
+
+  curr->next = (WTasks *)calloc(1, sizeof(WTasks));
+  if (!curr->next) {
+    return;
+  }
+
+  add_task_entry(&(curr->next), req);
+  curr->next->next = NULL;
+}
+
+/*
+ * process_task_request --
+ *
+ */
+
+char *process_task_request(WTasks *task) {
+
+  int ret;
+  json_t *json=NULL;
+  char *retStr=NULL;
+
+  ret = serialize_task(task, &json);
+  
+  if (ret) {
+
+    retStr = json_dumps(json, 0);
+    if (retStr) {
+      log_debug("Task json-str: %s", retStr);
+    }
+  }
+
+  json_decref(json);
+  return retStr;
+}

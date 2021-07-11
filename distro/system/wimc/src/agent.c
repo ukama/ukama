@@ -404,6 +404,10 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 	      code, agentRetCode);
   }
 
+  if (code == 200) { /* Add to tasks list. */
+    add_to_tasks(cfg->tasks, request);
+  }
+
  done:
   json_decref(json);
   cleanup_wimc_request(request);
@@ -412,4 +416,18 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
   }
 
   return code;
+}
+
+void clear_agents(Agent *agent) {
+
+  int i;
+
+  for (i=0; i<MAX_AGENTS; i++){
+    if (agent[i].id) {
+      free(agent[i].method);
+      free(agent[i].url);
+    }
+
+    free(&agent[i]);
+  }
 }

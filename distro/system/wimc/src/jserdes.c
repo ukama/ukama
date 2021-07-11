@@ -365,3 +365,59 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
   
   return FALSE;
 }
+
+/*
+ * serialize_task -- Serialize task struct.
+ *
+ */
+int serialize_task(WTasks *task, json_t **json) {
+
+  int ret=FALSE;
+  json_t *jtask=NULL;
+  WContent *content=NULL;
+  Update *update=NULL;
+
+  /* Sanity check. */
+  if (task==NULL) {
+    return ret;
+  }
+
+  content = task->content;
+  update  = task->update;
+  if (task->id == 0 && content==NULL && update == NULL){
+    return ret;
+  }
+
+  /* Go ahead, serialize them all objects. */
+  *json = json_object();
+  if (*json == NULL) {
+    return ret;
+  }
+
+  json_object_set_new(*json, JSON_TASK, json_object());
+  jtask = json_object_get(*json, JSON_TASK);
+
+  if (jtask==NULL) {
+    return ret;
+  }
+
+  json_object_set_new(jtask, JSON_ID, json_integer(task->id));
+  json_object_set_new(jtask, JSON_NAME, json_string(content->name));
+  json_object_set_new(jtask, JSON_TAG, json_string(content->tag));
+  json_object_set_new(jtask, JSON_METHOD,
+		      json_string(convert_method_to_str(content->method)));
+
+  json_object_set_new(jtask, JSON_TOTAL_KBYTES, json_integer(update->totalKB));
+  json_object_set_new(jtask, JSON_TRANSFER_KBYTES,
+		      json_integer(update->transferKB));
+  json_object_set_new(jtask, JSON_TRANSFER_STATE,
+		      json_string(convert_state_to_str(update->transferState)));
+
+  if (update->voidStr) {
+    json_object_set_new(jtask, JSON_VOID_STR, json_string(update->voidStr));
+  } else {
+    json_object_set_new(jtask, JSON_VOID_STR, json_string(""));
+  }
+
+  return TRUE;
+}
