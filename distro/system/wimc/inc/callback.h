@@ -14,6 +14,7 @@
 #include <sqlite3.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <uuid/uuid.h>
 #include <unistd.h>
 #include <jansson.h>
 

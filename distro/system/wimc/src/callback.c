@@ -220,8 +220,10 @@ int callback_post_container(const struct _u_request *request,
 
   int val=FALSE, found=FALSE;
   int resCode=200;
-  int count=0, i=0, id=0;
-  
+  int count=0, i=0;
+  uuid_t uuid;
+
+  char idStr[36+1] = {0};
   char path[WIMC_MAX_PATH_LEN] = {0};
   char *post_params=NULL, *response_body=NULL;
   char *name=NULL, *tag=NULL;
@@ -233,6 +235,7 @@ int callback_post_container(const struct _u_request *request,
   
   cfg = (WimcCfg *)user_data;
   urls = (ServiceURL **)calloc(sizeof(ServiceURL *), 1);
+  uuid_clear(uuid);
 
   log_request(request);
 
@@ -273,8 +276,9 @@ int callback_post_container(const struct _u_request *request,
     response_body = msprintf("No service provider found");
     goto reply;
   } else {
-    log_debug("Matching agent found. Agent Id: %d Method: %s URL: %s",
-	      agent->id, agent->method, agent->url);
+    uuid_unparse(agent->uuid, &idStr[0]);
+    log_debug("Matching agent found. Agent Id: %s Method: %s URL: %s",
+	      idStr, agent->method, agent->url);
   }
 
   /* Step-3: Ask agent to fetch the data. Agent will update the status
@@ -283,13 +287,14 @@ int callback_post_container(const struct _u_request *request,
    */
 
   resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
-				       agent, cfg, &id);
+				       agent, cfg, &uuid);
 
   /* Step-4: setup client URL where they can monitor the status
    *         of the request. 
    */
   if (resCode == 200) { /* Task is assigned to Agent. Return ID. */
-    response_body = msprintf("%d", id);
+    uuid_unparse(uuid, &idStr[0]);
+    response_body = msprintf("%s", idStr);
   } else {
     response_body = msprintf("No resource found. Error");
   }
@@ -386,16 +391,18 @@ static void free_agent_request(AgentReq *req) {
 int callback_post_agent(const struct _u_request *request,
 			struct _u_response *response,
 			void *user_data) {
-  int ret=WIMC_OK, retCode, id=0;
+  int ret=WIMC_OK, retCode;
+  uuid_t uuid;
   char *resBody;
   json_t *jreq=NULL;
   json_error_t jerr;
   AgentReq *req=NULL;
+  char idStr[36+1];
 
   WimcCfg *cfg = (WimcCfg *)user_data;
-  
+
   req = (AgentReq *)calloc(sizeof(AgentReq), 1);
-  
+
   jreq = ulfius_get_json_body_request(request, &jerr);
   if (!jreq) {
     log_error("json error: %s", jerr.text);
@@ -403,21 +410,22 @@ int callback_post_agent(const struct _u_request *request,
     deserialize_agent_request(&req, jreq);
   }
 
-  ret = process_agent_request(cfg->agents, req, &id);
-  
+  ret = process_agent_request(cfg->agents, req, &uuid);
+
   if (ret == WIMC_OK) {
     retCode = 200;
-    resBody = msprintf("%d\n", id);
+    uuid_unparse(uuid, &idStr[0]);
+    resBody = msprintf("%s\n", idStr);
   } else {
     retCode = 400;
     resBody = msprintf("%s\n", error_to_str(ret));
   }
-  
+
   ulfius_set_string_body_response(response, retCode, resBody);
   o_free(resBody);
   free_agent_request(req);
   json_decref(jreq);
-  
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -429,12 +437,13 @@ int callback_get_task(const struct _u_request *request,
 		      struct _u_response *response, void *user_data) {
 
   int ret, statusCode=200;
-  long id=0;
+  uuid_t uuid;
   WimcCfg *cfg=NULL;
   WTasks *task=NULL;
   char *idStr=NULL, *resBody=NULL;
 
   cfg = (WimcCfg *)user_data;
+  uuid_clear(uuid);
 
   idStr = (char *)u_map_get(request->map_url, "id");
   if (!idStr) {
@@ -443,12 +452,17 @@ int callback_get_task(const struct _u_request *request,
     goto done;
   }
 
-  id = atol(idStr);
+  if (uuid_parse(idStr, uuid)==-1) {
+    log_error("Error parsing the UUID into binary: %s", idStr);
+    statusCode = 400;
+    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    goto done;
+  }
 
   /* Find matching task. */
   task = *(cfg->tasks);
   while (task != NULL) {
-    if (task->id == id) {
+    if (uuid_compare(task->uuid, uuid) == 0) {
       break;
     }
     task = task->next;
@@ -467,6 +481,7 @@ int callback_get_task(const struct _u_request *request,
       free(str);
     }
   } else {
+    log_debug("No matching task found: %s", idStr);
     statusCode = 400;
     resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
   }

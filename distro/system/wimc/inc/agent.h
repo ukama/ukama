@@ -10,6 +10,7 @@
 #ifndef WIMC_AGENT_H
 #define WIMC_AGENT_H
 
+#include <uuid/uuid.h>
 #include "err.h"
 #include "log.h"
 
@@ -72,11 +73,11 @@ typedef enum {
 
 typedef struct {
 
-  int  id;
-  int  totalKB;
-  int  transferKB;
-  int  transferState;
-  char *voidStr;
+  uuid_t uuid;
+  int    totalKB;
+  int    transferKB;
+  int    transferState;
+  char   *voidStr;
 } Update;
 
 typedef struct {
@@ -86,7 +87,7 @@ typedef struct {
 } Register;
 
 typedef struct {
-  int id;
+  uuid_t uuid;
 }UnRegister;
 
 /* Struct to define the request originating from the agent. */
@@ -113,7 +114,7 @@ typedef struct Content_ {
 
 typedef struct _Agent {
   
-  int           id;       /* Internal ID. */
+  uuid_t        uuid;     /* Internal UUID. */
   char          *method;  /* Mechanisim supported by the agent */
   char          *url;     /* callback URL for the agent */
   int           state;    /* Register, active, un-register */
@@ -122,8 +123,8 @@ typedef struct _Agent {
 
 /* Functions header */
 
-int register_agent(Agent **agents, char *method, char *url, int *id);
-int process_agent_request(Agent **agents, AgentReq *req, int *id);
+int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid);
+int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid);
 Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
 			   char **providerURL);
 static char *create_cb_url_for_agent(char *port);

@@ -121,7 +121,7 @@ static int validate_post_request(WimcReq *req, MethodType method) {
   }
 
   /* Id and interval are always positive. */
-  if (fetch->id <= 0) {
+  if (uuid_is_null(fetch->uuid)) {
     return WIMC_ERROR_BAD_ID;
   }
 

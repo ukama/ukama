@@ -50,9 +50,9 @@ AGENT=agent
 CC=gcc
 CFLAGS+=-g -Wall -D_REENTRANT
 #LDFLAGS=-L$(ULFIUS)
-LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson -lcurl
-PROVIDER_LIBS=-lulfius -lsqlite3 -ljansson
-AGENTS_LIBS=-lulfius -lorcania -ljansson -lcurl
+LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson -lcurl -luuid
+PROVIDER_LIBS=-lulfius -lsqlite3 -ljansson -luuid
+AGENTS_LIBS=-lulfius -lorcania -ljansson -lcurl -luuid
 
 INCFLAGS:=$(INC_DIRS:%=-I%)
 DEPFLAGS := -MMD -MP

@@ -33,13 +33,13 @@ static char *create_cb_url(char *port);
 static char *create_wimc_url(char *url);
 static void cleanup_agent_request(AgentReq *request);
 static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      int *id);
+				      uuid_t *uuid);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
 static void process_response_from_wimc(ReqType reqType, long statusCode,
-				       void *resp, int *id);
+				       void *resp, uuid_t *uuid);
 static long send_request_to_wimc(ReqType reqType, char *wimcURL, json_t *json,
-				 int *id);
+				 uuid_t *uuid);
 
 /*
  * create_cb_url --
@@ -106,7 +106,7 @@ static void cleanup_agent_request(AgentReq *request) {
  *
  */
 static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      int *id) {
+				      uuid_t *uuid) {
 
   AgentReq *request;
   Register *reg;
@@ -142,7 +142,7 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
       goto done;
     }	 
 
-    unreg->id = *id;
+    uuid_copy(unreg->uuid, *uuid);
 
     request->type = REQ_UNREG;
     request->unReg = unreg;
@@ -197,7 +197,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  *
  */
 static void process_response_from_wimc(ReqType reqType, long statusCode,
-				       void *resp, int *id) {
+				       void *resp, uuid_t *uuid) {
 
   struct Response *response;
 
@@ -205,9 +205,9 @@ static void process_response_from_wimc(ReqType reqType, long statusCode,
   
   if (reqType == (ReqType)REQ_REG) {
     if (statusCode == 200) { /* Success, response has ID. */
-      *id = atoi(response->buffer);
-      log_debug("Registration successful. Status code: 200 Recevied ID: %d",
-		*id);
+      uuid_parse(response->buffer, *uuid);
+      log_debug("Registration successful. Status code: 200 Recevied ID: %s",
+		response->buffer);
     } else if (statusCode == 400) { /* Failure. Report. */
       log_debug("Registration unsuccessful. Status Code: 400 Response: %s",
 		response->buffer);
@@ -225,7 +225,7 @@ static void process_response_from_wimc(ReqType reqType, long statusCode,
  *
  */
 static long send_request_to_wimc(ReqType reqType, char *wimcURL,
-				 json_t *json, int *id) {
+				 json_t *json, uuid_t *uuid) {
 
   long code=0;
   CURL *curl=NULL;
@@ -266,7 +266,7 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
   } else {
     /* get status code. */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    process_response_from_wimc(reqType, code, &response, id);
+    process_response_from_wimc(reqType, code, &response, uuid);
   }
 
   free(json_str);
@@ -284,7 +284,7 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
  */
 
 long communicate_with_wimc(ReqType reqType, char *url, char *port,
-			   int method, int *id) {
+			   int method, int *uuid) {
 
   int ret;
   long code=0;
@@ -304,7 +304,7 @@ long communicate_with_wimc(ReqType reqType, char *url, char *port,
     goto done;
   }
 
-  request = create_agent_request(reqType, method, cbURL, id);
+  request = create_agent_request(reqType, method, cbURL, uuid);
   if (!request) {
     goto done;
   }
@@ -314,7 +314,7 @@ long communicate_with_wimc(ReqType reqType, char *url, char *port,
     goto done;
   }
 
-  code = send_request_to_wimc(reqType, wimcURL, json, id);
+  code = send_request_to_wimc(reqType, wimcURL, json, uuid);
   if (code == 200) {
     log_debug("WIMC.d registration: success. Return code: %d", code);
   } else {

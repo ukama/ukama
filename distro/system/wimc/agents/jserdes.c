@@ -36,7 +36,7 @@
  *
  * Update:
  * { type: "update",
- *   id: "some_id",
+ *   uuid: "some_id",
  *   cmd: "fetch",
  *          content: {name: "name",
  *                     tag: "tag",
@@ -46,7 +46,7 @@
  *
  * Unregister:
  * {type: "unregister",
- *  id: "same_id"}
+ *  uuid: "same_id"}
  */
 
 /*
@@ -133,7 +133,7 @@ int serialize_agent_request_register(AgentReq *req, json_t **json) {
 /*
  * agent_request -> { type: "update",
  *                  type_update: {
- *                      id: "same_id",
+ *                      uuid: "same_id",
  *                      total_kbytes: "1234"
  *                      transfer_kbytes:  "34"
  *                      transfer_state: "fetch"
@@ -147,6 +147,7 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
 
   json_t *jupdate=NULL;
   Update *update;
+  char idStr[36+1];
 
   if (req==NULL || req->update==NULL) {
     return FALSE;
@@ -160,7 +161,8 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   json_object_set_new(*json, JSON_TYPE_UPDATE, json_object());
   jupdate = json_object_get(*json, JSON_TYPE_UPDATE);
 
-  json_object_set_new(jupdate, JSON_ID, json_integer(update->id));
+  uuid_unparse(update->uuid, &idStr[0]);
+  json_object_set_new(jupdate, JSON_ID, json_string(idStr));
   json_object_set_new(jupdate, JSON_TOTAL_KBYTES,
 		      json_integer(update->totalKB));
   json_object_set_new(jupdate, JSON_TRANSFER_KBYTES,
@@ -179,7 +181,7 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
 /*
  * agent_request -> { type: "unregister",
  *                    type_unregister: {
- *                          id: "same_id",
+ *                          uuid: "same_id",
  *                    }
  *                 }
  */
@@ -188,6 +190,7 @@ int serialize_agent_request_unregister(AgentReq *req, json_t **json) {
 
   json_t *jUnReg=NULL;
   UnRegister *unReg;
+  char idStr[36+1];
 
   if (req==NULL || req->unReg==NULL) {
     return FALSE;
@@ -201,7 +204,8 @@ int serialize_agent_request_unregister(AgentReq *req, json_t **json) {
   json_object_set_new(*json, JSON_TYPE_UNREGISTER, json_object());
   jUnReg = json_object_get(*json, JSON_TYPE_UNREGISTER);
 
-  json_object_set_new(jUnReg, JSON_ID, json_integer(unReg->id));
+  uuid_unparse(unReg->uuid, &idStr[0]);
+  json_object_set_new(jUnReg, JSON_ID, json_string(idStr));
 
   return TRUE;
 }
@@ -379,7 +383,7 @@ static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
   }
 
   jObj = json_object_get(jfetch, JSON_ID);
-  (*fetch)->id = json_integer_value(jObj);
+  uuid_parse(json_string_value(jObj), (*fetch)->uuid);
 
   jObj = json_object_get(jfetch, JSON_UPDATE_INTERVAL);
   (*fetch)->interval = json_integer_value(jObj);

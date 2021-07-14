@@ -147,32 +147,13 @@ ReqType convert_str_to_type(char *str) {
   return req;
 }
 
-WReqType convert_str_to_wType(char *str) {
+char *convert_uuid_to_str(uuid_t uuid) {
 
-  WReqType req;
-#if 0
-  if (strcmp(str, WIMC_REQ_TYPE_AGENT_STR)==0) {
-    req = AGENT;
-  } else if (strcmp(str, WIMC_REQ_TYPE_PROVIDER_STR)==0) {
-    req = PROVIDER;
-  }
-#endif
-  return req;
+  char *str;
+
+  str = (char *)malloc(36+1); /* 36-byte string + trailing '\0' */
+  uuid_unparse(uuid, str);
+
+  return str;
 }
 
-#if 0
-ActionType convert_str_to_action(char *str) {
-
-  ActionType action;
-
-  if (strcmp(str, WIMC_ACTION_FETCH_STR)==0) {
-    action = ACTION_FETCH;
-  } else if (strcmp(str, WIMC_ACTION_UPDATE_STR)==0) {
-    action = ACTION_UPDATE;
-  } else if (strcmp(str, WIMC_ACTION_CANCEL_STR)==0) {
-    action = ACTION_CANCEL;
-  }
-
-  return action;
-}
-#endif

@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <ulfius.h>
 #include <sqlite3.h>
+#include <uuid/uuid.h>
 
 #include "agent.h"
 
@@ -98,7 +99,7 @@ typedef struct {
 
 typedef struct {
 
-  int      id;       /* UID for future transactions */
+  uuid_t   uuid;       /* UID for future transactions */
   char     *cbURL;   /* Callback URL to send update (from Agent to wimc) */
   int      interval; /* update interval */
   WContent *content; /* Content definition */
@@ -106,14 +107,14 @@ typedef struct {
 
 typedef struct {
 
-  int  id;
-  int  interval;
-  char *cbURL;
+  uuid_t uuid;
+  int    interval;
+  char   *cbURL;
 } WUpdate;
 
 typedef struct {
 
-  int id;
+  uuid_t uuid;
 } WCancel;
 
 /* struct to define the request originating from wimc to agent. */
@@ -129,13 +130,13 @@ typedef struct {
  * client request, not found in the local db, results in adding to the
  * WTasks list.
  *
- * Client can query the task (GET) or cancel it (DELETE), both, using ID
+ * Client can query the task (GET) or cancel it (DELETE), both, using UUID
  * as handle.
  */
 
 typedef struct wtask {
 
-  long     id;        /* Unique ID. */
+  uuid_t   uuid;      /* Unique ID. */
   WContent *content;  /* define the content. */
   Update   *update;   /* define status of the content activity. */
   char     *localPath;/* Path where content is available at */

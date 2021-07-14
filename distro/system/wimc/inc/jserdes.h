@@ -27,7 +27,7 @@
 
 #define JSON_METHOD          "method"
 #define JSON_URL             "url"
-#define JSON_ID              "id"
+#define JSON_ID              "uuid"
 #define JSON_CMD             "cmd"
 #define JSON_ACTION          "action"
 #define JSON_CONTENT         "content"
@@ -55,6 +55,5 @@
 /* function def. */
 int serialize_wimc_request(WimcReq *request, json_t **json);
 static int serialize_wimc_request_fetch(WimcReq *req, json_t **json);
-
 
 #endif /* WIMC_JSERDES_H */

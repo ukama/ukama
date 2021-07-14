@@ -62,6 +62,7 @@ static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
   json_t *jfetch=NULL, *jcontent=NULL;;
   WFetch *fetch=NULL;
   WContent *content=NULL;
+  char idStr[36+1]; /* 36-bytes for UUID + trailing '\0' */
 
   if (req==NULL && req->fetch==NULL) {
     return FALSE;
@@ -81,7 +82,8 @@ static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
   json_object_set_new(*json, JSON_TYPE_FETCH, json_object());
   jfetch = json_object_get(*json, JSON_TYPE_FETCH);
 
-  json_object_set_new(jfetch, JSON_ID, json_integer(fetch->id));
+  uuid_unparse(fetch->uuid, idStr);
+  json_object_set_new(jfetch, JSON_ID, json_string(idStr));
   json_object_set_new(jfetch, JSON_CALLBACK_URL, json_string(fetch->cbURL));
   json_object_set_new(jfetch, JSON_UPDATE_INTERVAL,
 		      json_integer(fetch->interval));
@@ -165,7 +167,7 @@ static int deserialize_agent_request_update(Update *update, json_t *json) {
   if (obj == NULL) {
     return FALSE;
   } else {
-    update->id = json_integer_value(obj);
+    uuid_unparse(json_string_value(obj), update->uuid);
   }
 
   /* Total data to be transfered as part of this fetch (in KB) */
@@ -217,7 +219,7 @@ static int deserialize_agent_request_unreg(UnRegister *unReg, json_t *json) {
 
   obj = json_object_get(jreq, JSON_ID);
   if (obj) {
-    unReg->id = json_integer_value(obj);
+    uuid_unparse(json_string_value(obj), unReg->uuid);
   } else {
     return FALSE;
   }
@@ -376,6 +378,7 @@ int serialize_task(WTasks *task, json_t **json) {
   json_t *jtask=NULL;
   WContent *content=NULL;
   Update *update=NULL;
+  char idStr[36+1];
 
   /* Sanity check. */
   if (task==NULL) {
@@ -384,7 +387,7 @@ int serialize_task(WTasks *task, json_t **json) {
 
   content = task->content;
   update  = task->update;
-  if (task->id == 0 && content==NULL && update == NULL){
+  if (uuid_is_null(task->uuid) && content==NULL && update == NULL){
     return ret;
   }
 
@@ -401,7 +404,8 @@ int serialize_task(WTasks *task, json_t **json) {
     return ret;
   }
 
-  json_object_set_new(jtask, JSON_ID, json_integer(task->id));
+  uuid_unparse(task->uuid, &idStr[0]);
+  json_object_set_new(jtask, JSON_ID, json_string(idStr));
   json_object_set_new(jtask, JSON_NAME, json_string(content->name));
   json_object_set_new(jtask, JSON_TAG, json_string(content->tag));
   json_object_set_new(jtask, JSON_METHOD,

@@ -83,16 +83,16 @@ static void add_task_entry(WTasks **task, WimcReq *req) {
     return;
   }
 
-  ptr->id = req->fetch->id;
+  uuid_copy(ptr->uuid, req->fetch->uuid);
   copy_contents(req->fetch->content, ptr->content);
   ptr->state = (TransferState)REQUEST;
 
   update                = ptr->update;
-  update->id            = ptr->id;
   update->totalKB       = 0;
   update->transferKB    = 0;
   update->transferState = (int)ptr->state;
   update->voidStr       = NULL;
+  uuid_copy(update->uuid, ptr->uuid);
 
   ptr->localPath = NULL;
 }

@@ -29,31 +29,32 @@ struct Response {
  * register_agent -- register new agent
  */
 
-int register_agent(Agent **agents, char *method, char *url, int *id) {
+int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
 
   int i;
+  char idStr[36+1];
   Agent *ptr = *agents;
 
   for (i=0; i < MAX_AGENTS; i++) {
-  
-    if (ptr[i].id) { /* have valid agent id. */
+
+    if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
       if (strcasecmp(method, ptr[i].method)==0 &&
 	  strcasecmp(url, ptr[i].url)==0) {
-	*id = ptr[i].id;
+	uuid_unparse(ptr[i].uuid, &idStr[0]);
+	uuid_copy(*uuid, ptr[i].uuid);
 	/* An existing entry. */
-	log_debug("Found similar agent at id: %d, method %s and url: %s",
-		  ptr[i].id, ptr[i].method, ptr[i].url);
+	log_debug("Found similar agent at id: %s, method %s and url: %s",
+		  idStr, ptr[i].method, ptr[i].url);
 	return WIMC_ERROR_EXIST;
       }
     } else {
-      ptr[i].id     = i+1;  /* XXX, need better way to create ID. */
+      uuid_generate(ptr[i].uuid);
       ptr[i].method = strndup(method, strlen(method));
       ptr[i].url    = strndup(url, strlen(url));
       ptr[i].state  = WIMC_AGENT_STATE_REGISTER;
 
       /* Return the ID. */
-      *id = i+1;
-
+      uuid_copy(*uuid, ptr[i].uuid);
       return WIMC_OK;
     }
   }
@@ -68,10 +69,11 @@ int register_agent(Agent **agents, char *method, char *url, int *id) {
  *
  */
 
-int process_agent_request(Agent **agents, AgentReq *req, int *id){
+int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
 
   int ret=WIMC_OK;
   Register *reg;
+  char idStr[36+1];
   
   if (req->type == (ReqType)REQ_REG) {
 
@@ -85,13 +87,14 @@ int process_agent_request(Agent **agents, AgentReq *req, int *id){
       goto done;
     }
     
-    ret = register_agent(agents, reg->method, reg->url, id);
+    ret = register_agent(agents, reg->method, reg->url, uuid);
     if (ret != WIMC_OK) {
       goto done;
     }
 
-    log_debug("Agent successfully registered. Id: %d Method: %s URL: %s",
-	      *id, reg->method, reg->url);
+    uuid_unparse(uuid, &idStr[0]);
+    log_debug("Agent successfully registered. Id: %s Method: %s URL: %s",
+	      idStr, reg->method, reg->url);
   } else if (req->type == (ReqType)REQ_UNREG) {
     
   } else if (req->type == (ReqType)REQ_UPDATE) {
@@ -126,7 +129,7 @@ Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
 
   for (i=0; i < MAX_AGENTS; i++) {
 
-    if (ptr[i].id) { /* have valid agent id. */
+    if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
       for (j=0; j < count; j++) {
 	if (strcasecmp(urls[i].method, ptr[i].method)==0) {
 	  *providerURL = urls[i].url;
@@ -134,7 +137,6 @@ Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
 	}
       }
     }
-
   }
 
   /* NULL if no match found. */
@@ -242,7 +244,7 @@ static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
 
     request->type = WREQ_FETCH;
 
-    fetch->id = 1; /* XXX */
+    uuid_generate(fetch->uuid);
     fetch->cbURL = strdup(cbURL);
     fetch->interval = interval;
 
@@ -351,14 +353,14 @@ static long send_request_to_agent(WReqType reqType, char *agentURL,
  */
 long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 				char *providerURL, Agent *agent,
-				WimcCfg *cfg, int *id) {
+				WimcCfg *cfg, uuid_t *uuid) {
 
   /* steps are:
    * 0. Generate unique ID for the content request and CB url.
    * 1. create wimc request for agent.
    * 2. serialize the request as JSON object.
    * 3. send the request to the Agent using provided URL.
-   * 4. Update the ID and return HTTP status code.
+   * 4. Update the UUID and return HTTP status code.
    */
 
   int ret=FALSE;
@@ -406,6 +408,7 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 
   if (code == 200) { /* Add to tasks list. */
     add_to_tasks(cfg->tasks, request);
+    uuid_copy(*uuid, request->fetch->uuid);
   }
 
  done:
@@ -423,7 +426,7 @@ void clear_agents(Agent *agent) {
   int i;
 
   for (i=0; i<MAX_AGENTS; i++){
-    if (agent[i].id) {
+    if (uuid_is_null(agent[i].uuid)==0) {
       free(agent[i].method);
       free(agent[i].url);
     }
