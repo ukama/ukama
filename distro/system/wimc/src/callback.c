@@ -225,10 +225,11 @@ int callback_post_container(const struct _u_request *request,
 
   char idStr[36+1] = {0};
   char path[WIMC_MAX_PATH_LEN] = {0};
-  char *post_params=NULL, *response_body=NULL;
-  char *name=NULL, *tag=NULL;
+  char *errStr=NULL;
+  char *respBody=NULL, *name=NULL, *tag=NULL;
   WimcCfg *cfg=NULL;
   ServiceURL **urls=NULL;
+  WRespType respType=WRESP_ERROR;
 
   Agent *agent=NULL;
   char *providerURL=NULL;
@@ -245,8 +246,7 @@ int callback_post_container(const struct _u_request *request,
   if (!name || !tag) {
     log_error("Invalid name and tag in POST request for EP: %s. Ignoring.",
 	      WIMC_EP_CONTAINER);
-    /* XXX Send error on bad name. */
-    response_body = msprintf("Invalid container name and/or tag.");
+    errStr = msprintf("Invalid container name and/or tag.");
     resCode = 400;
     goto reply;
   }
@@ -254,8 +254,8 @@ int callback_post_container(const struct _u_request *request,
   log_debug("Processing container name: %s and tag: %s", name, tag);
   
   if (db_read_path(cfg->db, name, tag, &path[0])) {
-      /* we have the contents stored locally. Return the location. */
-    response_body = msprintf("%s", path);
+    /* we have the contents stored locally. Return the location. */
+    respType = WRESP_RESULT;
     goto reply;
   }
 
@@ -263,7 +263,7 @@ int callback_post_container(const struct _u_request *request,
   resCode = get_service_url_from_provider(cfg, name, tag, &urls[0], &count);
   if (resCode != 200) {
     resCode = 404;
-    response_body = msprintf("No service provider found");
+    errStr = msprintf("No service provider found");
     goto reply;
   }
   
@@ -273,7 +273,7 @@ int callback_post_container(const struct _u_request *request,
   agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL);
   if (agent == NULL) {
     resCode = 404; /*Not found but might be available in furture. */
-    response_body = msprintf("No service provider found");
+    errStr = msprintf("No service provider found");
     goto reply;
   } else {
     uuid_unparse(agent->uuid, &idStr[0]);
@@ -294,17 +294,27 @@ int callback_post_container(const struct _u_request *request,
    */
   if (resCode == 200) { /* Task is assigned to Agent. Return ID. */
     uuid_unparse(uuid, &idStr[0]);
-    response_body = msprintf("%s", idStr);
+    respType = WRESP_PROCESSING;
+    goto reply;
   } else {
-    response_body = msprintf("No resource found. Error");
+    errStr = msprintf("No resource found. Error");
   }
 
 reply:
 
-  ulfius_set_string_body_response(response, resCode, response_body);
+  respBody = process_cli_response(respType, &path[0], &idStr[0], NULL,
+				  errStr);
+  if (respBody) {
+    ulfius_set_string_body_response(response, resCode, respBody);
+  } else {
+    ulfius_set_string_body_response(response, resCode, "");
+  }
   
-  o_free(response_body);
-  o_free(post_params);
+  if (respBody)
+    free(respBody);
+
+  if (errStr)
+    free(errStr);
 
   for (i=0; i<count; i++) {
     if (urls[i]->method && urls[i]->url) {
@@ -440,7 +450,8 @@ int callback_get_task(const struct _u_request *request,
   uuid_t uuid;
   WimcCfg *cfg=NULL;
   WTasks *task=NULL;
-  char *idStr=NULL, *resBody=NULL;
+  char *idStr=NULL, *resBody=NULL, *errStr=NULL;
+  WRespType respType= WRESP_ERROR;
 
   cfg = (WimcCfg *)user_data;
   uuid_clear(uuid);
@@ -448,14 +459,14 @@ int callback_get_task(const struct _u_request *request,
   idStr = (char *)u_map_get(request->map_url, "id");
   if (!idStr) {
     statusCode = 400;
-    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    errStr = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
     goto done;
   }
 
   if (uuid_parse(idStr, uuid)==-1) {
     log_error("Error parsing the UUID into binary: %s", idStr);
     statusCode = 400;
-    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    errStr = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
     goto done;
   }
 
@@ -468,27 +479,21 @@ int callback_get_task(const struct _u_request *request,
     task = task->next;
   }
 
-  if (task) {
-    char *str;
-    /* if ID found, serialize the tasks status and send it back, yo. */
-    str = process_task_request(task);
-    if (!str) {
-      statusCode = 400;
-      resBody = msprintf("%s", WIMC_ERROR_MEMORY_STR);
-    } else {
-      statusCode = 200;
-      resBody = msprintf("%s", str);
-      free(str);
-    }
-  } else {
+  if (!task) {
     log_debug("No matching task found: %s", idStr);
     statusCode = 400;
-    resBody = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    errStr = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
   }
 
+  statusCode = 200;
+
  done:
+
+  resBody = process_cli_response(respType, NULL, NULL, task, errStr);
+
   ulfius_set_string_body_response(response, statusCode, resBody);
   o_free(resBody);
+  o_free(errStr);
 
   return U_CALLBACK_CONTINUE;
 }

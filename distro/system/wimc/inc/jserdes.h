@@ -24,6 +24,9 @@
 #define JSON_TYPE_UPDATE     "type_update"
 #define JSON_TYPE_FETCH      "type_fetch"
 #define JSON_TYPE_CANCEL     "type_cancel"
+#define JSON_TYPE_PROCESS    "type_processing"
+#define JSON_TYPE_RESULT     "type_result"
+#define JSON_TYPE_STATUS     "type_status"
 
 #define JSON_METHOD          "method"
 #define JSON_URL             "url"
@@ -39,18 +42,20 @@
 #define JSON_UPDATE_INTERVAL "update_interval"
 #define JSON_CONTENT         "content"
 #define JSON_TASK            "task"
+#define JSON_STATUS          "status"
 
 #define JSON_EVENT           "event_type"
 #define JSON_EVENT_UPDATE    "update"
 #define JSON_TOTAL_KBYTES    "total_kilobytes"
 #define JSON_TRANSFER_KBYTES "transfer_kilobytes"
 #define JSON_TRANSFER_STATE  "transfer_state"
-#define JSON_VOID_STR        "void_str"
+#define JSON_VOID_STR        "void"
 
 #define JSON_WIMC_REQUEST    "wimc_request"
 #define JSON_AGENT_REQUEST   "agent_request"
 
 #define JSON_PROVIDER_RESPONSE "provider_response"
+#define JSON_WIMC_RESPONSE     "wimc_response"
 
 /* function def. */
 int serialize_wimc_request(WimcReq *request, json_t **json);

@@ -21,6 +21,11 @@
 #define WIMC_REQ_TYPE_UPDATE "update"
 #define WIMC_REQ_TYPE_CANCEL "cancel"
 
+#define WIMC_RESP_TYPE_STATUS "status"
+#define WIMC_RESP_TYPE_RESULT "result"
+#define WIMC_RESP_TYPE_ERROR  "error"
+#define WIMC_RESP_TYPE_PROCESSING "processing"
+
 
 #define WIMC_CMD_TRANSFER 1
 #define WIMC_CMD_INFO     2
@@ -83,6 +88,14 @@ typedef enum {
   WREQ_UPDATE,
   WREQ_CANCEL
 } WReqType;
+
+typedef enum {
+
+  WRESP_PROCESSING=1,
+  WRESP_UPDATE,
+  WRESP_RESULT,
+  WRESP_ERROR
+} WRespType;
 
 typedef enum {
   TEST=1,

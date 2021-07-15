@@ -375,7 +375,7 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
 int serialize_task(WTasks *task, json_t **json) {
 
   int ret=FALSE;
-  json_t *jtask=NULL;
+  json_t *jtask=NULL, *jresp=NULL;
   WContent *content=NULL;
   Update *update=NULL;
   char idStr[36+1];
@@ -397,8 +397,15 @@ int serialize_task(WTasks *task, json_t **json) {
     return ret;
   }
 
-  json_object_set_new(*json, JSON_TASK, json_object());
-  jtask = json_object_get(*json, JSON_TASK);
+  json_object_set_new(*json, JSON_WIMC_RESPONSE, json_object());
+  jresp = json_object_get(*json, JSON_WIMC_RESPONSE);
+  if (jresp==NULL) {
+    return ret;
+  }
+
+  json_object_set_new(jresp, JSON_TYPE, json_string(WIMC_RESP_TYPE_STATUS));
+  json_object_set_new(*json, JSON_STATUS, json_object());
+  jtask = json_object_get(*json, JSON_STATUS);
 
   if (jtask==NULL) {
     return ret;
@@ -421,6 +428,45 @@ int serialize_task(WTasks *task, json_t **json) {
     json_object_set_new(jtask, JSON_VOID_STR, json_string(update->voidStr));
   } else {
     json_object_set_new(jtask, JSON_VOID_STR, json_string(""));
+  }
+
+  return TRUE;
+}
+
+/*
+ * serialize_result -- Serialize result string as wimc_response{}.
+ *
+ */
+int serialize_result(WRespType type, char *str, json_t **json) {
+
+  int ret=FALSE;
+  json_t *jresp=NULL;
+
+  /* Go ahead, serialize them all objects. */
+  *json = json_object();
+  if (*json == NULL) {
+    return ret;
+  }
+
+  json_object_set_new(*json, JSON_WIMC_RESPONSE, json_object());
+  jresp = json_object_get(*json, JSON_WIMC_RESPONSE);
+  if (jresp==NULL) {
+    return ret;
+  }
+
+  if (type == (WRespType)WRESP_RESULT) {
+    json_object_set_new(jresp, JSON_TYPE, json_string(WIMC_RESP_TYPE_RESULT));
+  } else if (type == (WRespType)WRESP_PROCESSING) {
+    json_object_set_new(jresp, JSON_TYPE,
+			json_string(WIMC_RESP_TYPE_PROCESSING));
+  } else if (type == (WRespType)WRESP_ERROR) {
+    json_object_set_new(jresp, JSON_TYPE, json_string(WIMC_RESP_TYPE_ERROR));
+  }
+
+  if (str != NULL) {
+    json_object_set_new(jresp, JSON_VOID_STR, json_string(str));
+  } else {
+    json_object_set_new(jresp, JSON_VOID_STR, json_string(""));
   }
 
   return TRUE;

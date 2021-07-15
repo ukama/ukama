@@ -157,3 +157,54 @@ char *process_task_request(WTasks *task) {
   json_decref(json);
   return retStr;
 }
+
+/*
+ * process_cli response -- Handle response back to the client.
+ *                     There are three type of responses:
+ *                     1. Type: Result, Str: local path, Task: void
+ *                     2. Type: Processing, Str: ID (for CB), Task: void
+ *                     3. Type: Update, Str: void, Task: update_status
+ *
+ */
+
+char *process_cli_response(WRespType type, char *path, char *idStr,
+			   WTasks *task, char *errStr) {
+
+  int ret=FALSE;
+  char *retStr=NULL;
+  json_t *json=NULL;
+
+  /* Sanity check. */
+  if (type == WRESP_RESULT && path == NULL) {
+    return NULL;
+  }
+
+  if (type == WRESP_UPDATE && task == NULL) {
+    return NULL;
+  }
+
+  if (type == WRESP_PROCESSING && idStr == NULL){
+    return NULL;
+  }
+
+  if (type == WRESP_UPDATE) {
+    ret = serialize_task(task, &json);
+    if (ret) {
+      retStr = json_dumps(json, 0);
+    }
+  } else if (type == (WRespType)WRESP_PROCESSING) {
+    ret = serialize_result(type, idStr, &json);
+  } else if (type == (WRespType)WRESP_RESULT) {
+    ret = serialize_result(type, path, &json);
+  } else if (type == (WRespType)WRESP_ERROR) {
+    ret = serialize_result(type, errStr, &json);
+  }
+
+  if (ret && json) {
+    retStr = json_dumps(json, 0);
+    log_debug("Sending JSON response: %s", retStr);
+    json_decref(json);
+  }
+
+  return retStr;
+}
