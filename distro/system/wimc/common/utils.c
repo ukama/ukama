@@ -20,31 +20,6 @@
 #include "utils.h"
 
 /* Some utility functions for serdes */
-#if 0
-char *convert_action_to_str(ActionType action) {
-
-  char *str;
-
-  switch (action) {
-  case ACTION_FETCH:
-    str = WIMC_ACTION_FETCH_STR;
-    break;
-
-  case ACTION_UPDATE:
-    str = WIMC_ACTION_UPDATE_STR;
-    break;
-
-  case ACTION_CANCEL:
-    str = WIMC_ACTION_CANCEL_STR;
-    break;
-
-  default:
-    str = "";
-  }
-
-  return str;
-}
-#endif
 
 char *convert_method_to_str(MethodType method) {
 

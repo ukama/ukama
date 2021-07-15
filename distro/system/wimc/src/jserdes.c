@@ -101,18 +101,6 @@ static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
   return TRUE;
 }
 
-
-/*
- * serialize_wimc_request_to_provider --
- *
- */
-int serialize_wimc_request_to_provider(WimcReq *req, json_t *json) {
-  /* Currently we are using simple GET with URL specifying the container
-   * name and tag. Probably good idea to use JSON so we can expand
-   * this interface as needed.
-   */
-}
-
 /*
  * deserialize_agent_request_register --
  *
@@ -266,47 +254,6 @@ int deserialize_agent_request(AgentReq **request, json_t *json) {
 
   return ret;
 }
-
-static int deserialize_wimc_request_to_provider(WimcReq *req, json_t *json) {
-
-  return TRUE;
-}
-
-#if 0
-// XXX Move this code to provider. 
-/*
- * deserialize_wimc_request --
- *
- */
-int deserialize_wimc_request(WimcReq *req, json_t *json) {
-
-  int ret=FALSE;
-  json_t *jreq, *jtype;
-  WReqType type;
-
-  jreq = json_object_get(json, JSON_WIMC_REQUEST);
-
-  if (jreq==NULL) {
-    return FALSE;
-  }
-
-  jtype = json_object_get(jreq, JSON_TYPE);
-  if (jtype == NULL) {
-    return FALSE;
-  }
-
-  type = convert_str_to_wType(json_string_value(jtype));
-  req->type = type;
-
-  if (type == (WReqType)AGENT) {
-    ret = deserialize_wimc_request_to_agent(req, jreq);
-  } else if (type == (WReqType)PROVIDER) {
-    ret = deserialize_wimc_request_to_provider(req, jreq);
-  }
-
-  return ret;
-}
-#endif
 
 /*
  * deserialize_provider_response --
