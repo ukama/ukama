@@ -48,6 +48,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "object_helper.h"
+#include "parser.h"
+
+/* Client config */
+extern client_config_t lw_cfg;
+
 typedef struct _security_instance_
 {
     struct _security_instance_ * next;        // matches lwm2m_list_t::next
@@ -70,6 +76,9 @@ typedef struct _security_instance_
     uint32_t                     clientHoldOffTime;
     uint32_t                     bootstrapServerAccountTimeout;
 } security_instance_t;
+
+char* certfilename = "/etc/certs/server.crt";
+char* ipfilename = "/etc/certs/serverip.file";
 
 static uint8_t prv_get_value(lwm2m_data_t * dataP,
                              security_instance_t * targetP)
@@ -210,7 +219,31 @@ static uint8_t prv_security_write(uint16_t instanceId,
             if (targetP->uri != NULL)
             {
                 strncpy(targetP->uri, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
-                result = COAP_204_CHANGED;
+
+                /* Ukama Specific :: Storing IP for server */
+                fprintf(stdout,"Server URI is of length %d\r\n",   dataArray[i].value.asBuffer.length);
+                fprintf(stdout,"Server URI: %s\r\n", targetP->uri);
+
+
+                char* addr ;
+                int ret = objh_parse_addr(targetP->uri,dataArray[i].value.asBuffer.length, &addr);
+                if (!ret)
+                {
+                	/* Store IP */
+                	ret = objh_store_data(lw_cfg.file_store->addr, addr, strlen(addr));
+                	if (addr) free(addr);
+                }
+
+                /* Set return value */
+                if( ret )
+                {
+                	result = COAP_500_INTERNAL_SERVER_ERROR;
+                }
+                else
+                {
+                	result = COAP_204_CHANGED;
+                }
+
             }
             else
             {
@@ -275,7 +308,21 @@ static uint8_t prv_security_write(uint16_t instanceId,
             {
                 memcpy(targetP->serverPublicKey, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
                 targetP->serverPublicKeyLen = dataArray[i].value.asBuffer.length;
-                result = COAP_204_CHANGED;
+
+                fprintf(stdout,"Public key is of length %d\r\n",  targetP->serverPublicKeyLen);
+                fprintf(stdout,"Public key: %s\r\n",  targetP->serverPublicKey);
+
+                /* Ukama Specific :: Storing server certificates */
+                int ret = objh_store_data(lw_cfg.file_store->certs, targetP->serverPublicKey, targetP->serverPublicKeyLen);
+                if( ret )
+                {
+                	result = COAP_500_INTERNAL_SERVER_ERROR;
+                }
+                else
+                {
+                	result = COAP_204_CHANGED;
+                }
+
             }
             else
             {

@@ -1,27 +1,33 @@
-Use the following method to build client,server and bootstrap together.
-### Server, Client, Bootstrap Build:
- * Create a build directory and change to that.
- * ``cmake [device-mangement git folder]``
- * ``make``
- * ``./server/server [Options]``
- * ``./client/client [Options]``
- * ``./bootstrap/bootstrap [Options]``
+# LwM2M 
 
-Alternatively you can also build client, server and bootstap individually using the following method.
-### Server Build:
- * Create a build directory and change to that.
- * ``cmake [device-mangement git folder]/server``
- * ``make``
- * ``./server [Options]``
+## Build
 
-### Client Build:
- * Create a build directory and change to that.
- * ``cmake [device-mangement git folder]/client``
- * ``make``
- * ``./client [Options]``
+Follow the instructions mentioned at [Build ukamaOS](https://github.com/ukama/ukamaOS#readme)
 
- ### Bootstrap Build:
- * Create a build directory and change to that.
- * ``cmake [device-mangement git folder]/bootstrap``
- * ``make``
- * ``./bootstrap [Options]``
+Make sure you have ukama tool chain build for OS. After that we can just do a make for Lwm2m without building complete ukamaOS
+ 
+```
+ make CC=<Path to musl-gcc>
+```
+
+## Preparing Container Image
+
+Before building the container image for LwM2M server make sure build is done.
+
+```
+docker build . -t lwm2mserver:v0.0.1
+```
+
+## Starting Container Image
+
+Server:
+
+```
+ docker run --network host -p 3000:3000 lwm2mserver:v0.0.1
+```
+
+Client:
+
+```
+docker run --network host -v ${PWD}/container/lwm2m/clientconf:/etc/lwclient lwm2mClient:v0.0.1
+```

@@ -399,7 +399,7 @@ int alarmhandler_proc_node(void *node) {
                 aschema->obj.mod_UUID);
             alarmdb_pop(aschema);
         } else {
-            ret = -1;
+            ret = 0;
         }
     }
 
@@ -410,6 +410,7 @@ int alarmhandler_proc_node(void *node) {
             aschema->rsrcid, aschema->obj.name, aschema->obj.disc,
             aschema->obj.mod_UUID);
         alarmdb_update(aschema);
+        ret = 0;
     }
     return ret;
 }

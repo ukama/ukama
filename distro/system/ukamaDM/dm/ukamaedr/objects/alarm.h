@@ -53,10 +53,10 @@ typedef struct _alarm_info
 #define RES_M_AL_EVENTTYPE         	6011
 #define RES_M_AL_REALTIME         	6012
 #define RES_M_AL_STATE              1
-#define RES_M_AL_LOW_LIMIT      	2
+#define RES_M_AL_LOW_LIMIT      	2 // Low limit alarm
 #define RES_M_AL_HIGH_LIMIT		    3
 #define RES_M_AL_CRIT_LIMIT		    4
-#define RES_M_AL_LOW_THRESHOLD      5
+#define RES_M_AL_LOW_THRESHOLD      5 // Low limit
 #define RES_M_AL_HIGH_THRESHOLD     6
 #define RES_M_AL_CRIT_THRESHOLD     7
 #define RES_M_AL_EVT_COUNT          6018
@@ -65,8 +65,8 @@ typedef struct _alarm_info
 #define RES_M_AL_OBJ_ID		        8
 #define RES_M_AL_INST_ID            9
 #define RES_M_AL_RSRC_ID		    10
-#define RES_M_AL_ENABLE		        11
-#define RES_M_AL_DISABLE	        12
+#define RES_M_AL_ENABLE		        11 /* TODO: Enable alarms */
+#define RES_M_AL_DISABLE	        12 /* TODO: Disable alarms */
 #define RES_O_AL_DESCRIPTION        13
 #define RES_M_SENSOR_VALUE          5700
 #define RES_M_SENSOR_UNITS          5701

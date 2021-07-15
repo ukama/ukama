@@ -112,6 +112,10 @@ size_t size_of_schema_data(ObjectType type) {
 
 void *copy_schema_data(ObjectType type, void *srcdata) {
     switch (type) {
+    case OBJ_TYPE_UNIT:
+    	return copy_unit_data(srcdata);
+    case OBJ_TYPE_MOD:
+        return copy_module_data(srcdata);
     case OBJ_TYPE_TMP:
         return copy_tmp_data(srcdata);
     case OBJ_TYPE_VOLT:

@@ -540,6 +540,13 @@ typedef struct _lwm2m_context_ lwm2m_context_t;
 typedef void (*lwm2m_result_callback_t) (uint16_t clientID, lwm2m_uri_t * uriP, int status, lwm2m_media_type_t format, uint8_t * data, int dataLength, void * userData);
 
 /*
+ * LWM2M notify callback
+ *
+ * When used with an observe, if 'data' is not nil, 'status' holds the observe counter.
+ */
+typedef void (*lwm2m_notify_callback_t) (uint16_t clientID, char* name, lwm2m_uri_t * uriP, int status, lwm2m_media_type_t format, uint8_t * data, int dataLength, void * userData);
+
+/*
  * LWM2M Observations
  *
  * Used to store latest user operation on the observation of remote clients resources.
@@ -556,7 +563,7 @@ typedef struct _lwm2m_observation_
     struct _lwm2m_client_ * clientP;
     lwm2m_uri_t             uri;
     lwm2m_status_t          status;     // latest user operation
-    lwm2m_result_callback_t callback;
+    lwm2m_notify_callback_t callback;
     void *                  userData;
 } lwm2m_observation_t;
 
@@ -778,7 +785,7 @@ int lwm2m_dm_create(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t *
 int lwm2m_dm_delete(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
 
 // Information Reporting APIs
-int lwm2m_observe(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
+int lwm2m_observe(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, lwm2m_notify_callback_t notifycb, void * userData);
 int lwm2m_observe_cancel(lwm2m_context_t * contextP, uint16_t clientID, lwm2m_uri_t * uriP, lwm2m_result_callback_t callback, void * userData);
 #endif
 

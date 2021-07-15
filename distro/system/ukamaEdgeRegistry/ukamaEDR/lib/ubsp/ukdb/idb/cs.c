@@ -79,7 +79,7 @@ static int get_mfgdata_by_uuid(char *p_uuid) {
     if (ret) {
         ret = ERR_UBSP_DB_MISSING_MODULE;
         log_error("Err(%d) CS:: No module with UUID %s found in MFG Data.",
-                  p_uuid);
+                  ret, p_uuid);
     }
     return ret;
 }
