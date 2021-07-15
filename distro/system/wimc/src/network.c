@@ -113,8 +113,9 @@ void setup_client_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
    */
   ulfius_add_endpoint_by_val(instance, "GET", WIMC_EP_TASKS, NULL, 0,
                              &callback_get_task, cfg);
+  /* Delete is special handling in GET method implementation. */
   ulfius_add_endpoint_by_val(instance, "DELETE", WIMC_EP_TASKS, NULL, 0,
-                             &callback_delete_task, cfg);
+                             &callback_get_task, cfg);
   ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_TASKS, NULL, 0,
                              &callback_not_allowed, cfg);
   ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_TASKS, NULL, 0,

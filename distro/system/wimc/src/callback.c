@@ -483,28 +483,27 @@ int callback_get_task(const struct _u_request *request,
     log_debug("No matching task found: %s", idStr);
     statusCode = 400;
     errStr = msprintf("%s", WIMC_ERROR_BAD_ID_STR);
+    goto done;
   }
 
   statusCode = 200;
 
  done:
-
-  resBody = process_cli_response(respType, NULL, NULL, task, errStr);
+  /* DELETE method require additional processing. */
+  if (statusCode == 200 && strcasecmp(request->http_verb, "DELETE")==0) {
+    respType = WRESP_RESULT;
+    /* Delete the task from the list. */
+    delete_from_tasks(cfg->tasks, task);
+    resBody = process_cli_response(respType, "OK", NULL, NULL, NULL);
+  } else {
+    resBody = process_cli_response(respType, NULL, NULL, task, errStr);
+  }
 
   ulfius_set_string_body_response(response, statusCode, resBody);
   o_free(resBody);
   o_free(errStr);
 
   return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_delete_task --
- *
- */
-int callback_delete_task(const struct _u_request *request,
-			 struct _u_response *response, void *user_data) {
-
 }
 
 /*

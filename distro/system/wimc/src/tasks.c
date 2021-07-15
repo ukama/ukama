@@ -134,6 +134,67 @@ void add_to_tasks(WTasks **tasks, WimcReq *req) {
 }
 
 /*
+ * free_task_element --
+ */
+
+static void free_task_element(WTasks *task) {
+
+  WContent *content = task->content;
+
+  if (content) {
+    free(content->name);
+    free(content->tag);
+    free(content->method);
+    free(content->providerURL);
+  }
+
+  free(task->content);
+  free(task->update);
+  if (task->localPath)
+    free(task->localPath);
+
+  free(task);
+  task = NULL;
+
+  return;
+}
+
+/*
+ * delete_from_tasks --
+ *
+ */
+
+void delete_from_tasks(WTasks **tasks, WTasks *target) {
+
+  WTasks *curr;
+
+  /* Sanity check */
+  if (target == NULL && *tasks == NULL)
+    return;
+
+  curr =*tasks;
+
+  /* Cases: 1. first 2. middle and 3. last */
+  if (curr == target) { /* First. */
+    free_task_element(target);
+    *tasks=NULL;
+    return;
+  }
+
+  /* Middle and last element in the list. */
+  while (curr->next !=NULL && curr->next != target) {
+    curr = curr->next;
+  }
+
+  if (curr->next == target) {
+    curr->next = target->next;
+    free_task_element(target);
+  }
+
+  return;
+}
+
+/*
  * process_task_request --
  *
  */
