@@ -8,6 +8,7 @@
  */
 
 #include "inc/dbhandler.h"
+#include "dmt.h"
 
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
@@ -38,7 +39,7 @@ UnitInfo *db_read_unit_info(char *puuid) {
     }
 
     if (ret) {
-        UKAMA_FREE(uinfo);
+        dmt_free(uinfo);
     }
 
     return uinfo;
@@ -67,7 +68,7 @@ UnitCfg *db_read_unit_cfg(char *puuid, uint8_t count) {
     }
 
     if (ret) {
-        UKAMA_FREE(ucfg);
+        dmt_free(ucfg);
     }
 
     return ucfg;
@@ -95,7 +96,7 @@ ModuleInfo *db_read_module_info(char *puuid) {
     }
 
     if (ret) {
-        UKAMA_FREE(minfo);
+        dmt_free(minfo);
     }
     return minfo;
 }
@@ -122,7 +123,7 @@ ModuleCfg *db_read_module_cfg(char *puuid, uint8_t count) {
     }
 
     if (ret) {
-        UKAMA_FREE(mcfg);
+        dmt_free(mcfg);
     }
 
     return mcfg;
@@ -150,7 +151,7 @@ Property *db_read_dev_property(DevObj *obj, int *pcount) {
     Property *prop = NULL;
     ret = upsb_read_dev_prop_count(obj, &count);
     if (count > 0) {
-        prop = malloc(sizeof(Property) * count);
+        prop = dmt_malloc(sizeof(Property) * count);
         if (prop) {
             ret = ubsp_read_dev_props(obj, prop);
             if (!ret) {
@@ -171,7 +172,7 @@ Property *db_read_dev_property(DevObj *obj, int *pcount) {
         }
     }
     if (ret) {
-        UKAMA_FREE(prop);
+        dmt_free(prop);
         *pcount = 0;
     }
     *pcount = count;

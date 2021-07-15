@@ -21,6 +21,7 @@
 #include "headers/utils/log.h"
 #include "headers/ubsp/ubsp.h"
 #include "headers/ubsp/ukdblayout.h"
+#include "dmt.h"
 
 #include <getopt.h>
 #include <pthread.h>
@@ -273,6 +274,8 @@ int main(int argc, char **argv) {
 
     /* Should never reach here */
     ukama_exit();
+    
+    dmt_dump();
 
     log_debug(
         "UKAMADR:: Exiting Ukama Driver Registry and Monitoring process.");

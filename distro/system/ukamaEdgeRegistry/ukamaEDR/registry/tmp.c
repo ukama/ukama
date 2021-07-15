@@ -9,6 +9,7 @@
 
 #include "registry/tmp.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
 #include "inc/dbhandler.h"
@@ -78,7 +79,7 @@ void *copy_tmp_data(void *pdata) {
     TempData *data = pdata;
     TempData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(TempData));
+        ndata = dmt_malloc(sizeof(TempData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(TempData));
             /* Try deep  copy for properties of pdata now */
@@ -157,11 +158,11 @@ int drdb_add_tmp_inst_to_reg(Device *dev, Property *prop, uint8_t instance,
     int pcount = 0;
     int pidx = 0;
     TempData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        reg->data = malloc(sizeof(TempData));
+        reg->data = dmt_malloc(sizeof(TempData));
         if (reg->data) {
             memset(reg->data, '\0', sizeof(TempData));
             /* If Property table of the sensor exist. */
@@ -227,7 +228,7 @@ int drdb_add_tmp_inst_to_reg(Device *dev, Property *prop, uint8_t instance,
 cleanup:
     if (ret) {
         free_tmp_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
     return ret;
@@ -287,7 +288,7 @@ void drdb_add_tmp_dev_to_reg(void *pdev) {
             }
         }
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
 }
 
 int drdb_read_tmp_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
@@ -300,10 +301,10 @@ int drdb_read_tmp_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
     	 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
 
-        msgdata = malloc(sizeof(TempObjInfo));
+        msgdata = dmt_malloc(sizeof(TempObjInfo));
         if (!msgdata) {
             return -1;
         }

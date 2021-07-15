@@ -9,6 +9,7 @@
 
 #include "registry/unit.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
 #include "inc/dbhandler.h"
@@ -53,7 +54,7 @@ void *copy_unit_data(void *pdata) {
     UnitData *data = pdata;
     UnitData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(UnitData));
+        ndata = dmt_malloc(sizeof(UnitData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(UnitData));
             /* Try deep  copy for properties of pdata now */
@@ -95,11 +96,11 @@ static void populate_unit_resource_id(void **pdata) {
 void drdb_add_unit_inst_to_reg(UnitInfo *uinfo, uint8_t instance,
                                uint8_t subdev) {
     UnitData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(reg->UUID, uinfo->uuid, strlen(uinfo->uuid));
-        data = malloc(sizeof(UnitData));
+        data = dmt_malloc(sizeof(UnitData));
         if (data) {
             memset(data, '\0', sizeof(UnitData));
 
@@ -188,9 +189,9 @@ int drdb_read_unit_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(UnitObjInfo));
+        msgdata = dmt_malloc(sizeof(UnitObjInfo));
         if (!msgdata) {
             return -1;
         }

@@ -9,6 +9,7 @@
 
 #include "registry/alarm.h"
 
+#include "dmt.h"
 #include "headers/ubsp/property.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
@@ -80,7 +81,7 @@ void *copy_alarm_data(void *pdata) {
     AlarmData *data = pdata;
     AlarmData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(AlarmData));
+        ndata = dmt_malloc(sizeof(AlarmData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(AlarmData));
             /* Try deep  copy for properties of pdata now */
@@ -133,12 +134,12 @@ void drdb_add_alarm_inst_to_reg(DevObj *obj, DevIDT *idt,
     int ret = 0;
     uint16_t instid = 0;
     AlarmData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, obj, sizeof(DevObj));
 
-        data = malloc(sizeof(AlarmData));
+        data = dmt_malloc(sizeof(AlarmData));
         if (data) {
             memset(data, '\0', sizeof(AlarmData));
 
@@ -228,7 +229,7 @@ void drdb_add_alarm_inst_to_reg(DevObj *obj, DevIDT *idt,
 cleanup:
     if (ret) {
         free_alarm_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
 }
@@ -243,9 +244,9 @@ int drdb_read_alarm_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
     	 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(AlarmObjInfo));
+        msgdata = dmt_malloc(sizeof(AlarmObjInfo));
         if (!msgdata) {
             return -1;
         }
@@ -460,7 +461,7 @@ DRDBSchema *drdb_search_alarm_inst(DevObj *obj, int pidx) {
                     DRDBSchema *ndata = head->data;
                     ret = drdb_compare_alarm_node(ndata, obj, pidx);
                     if (ret) {
-                        nalarmreg = malloc(sizeof(DRDBSchema));
+                        nalarmreg = dmt_malloc(sizeof(DRDBSchema));
                         if (nalarmreg) {
                             memset(nalarmreg, '\0', sizeof(DRDBSchema));
                             memcpy(nalarmreg, ndata, sizeof(DRDBSchema));
@@ -581,7 +582,7 @@ void drdb_alarm_cb(DevObj *obj, AlertCallBackData **acbdata, int *count) {
             int didx = prop[pidx].dep_prop->curr_idx;
             alertstate = adata->alertstate;
             int size = get_sizeof(prop[didx].data_type);
-            void *value = malloc(sizeof(size));
+            void *value = dmt_malloc(sizeof(size));
             if (value) {
                 memcpy(value, adata->svalue, size);
             }
@@ -590,8 +591,8 @@ void drdb_alarm_cb(DevObj *obj, AlertCallBackData **acbdata, int *count) {
                 "ALARM:: Alert %d received for Property[%d], Name: %s , Value %lf %s.",
                 alertstate, pidx, prop[pidx].name, *(double *)value,
                 prop[didx].units);
-            UKAMA_FREE(adata->svalue);
-            UKAMA_FREE(adata);
+            dmt_free(adata->svalue);
+            dmt_free(adata);
 
             /* Search the alarm instance in registry  based on Object and
              *  alarm dependent property. For each sensor value we can have

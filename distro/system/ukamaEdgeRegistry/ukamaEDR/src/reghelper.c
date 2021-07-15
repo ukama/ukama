@@ -24,6 +24,7 @@
 #include "registry/tmp.h"
 #include "registry/unit.h"
 #include "headers/utils/log.h"
+#include "dmt.h"
 
 ListInfo ukamadevdb[OBJ_TYPE_MAX] = { 0 };
 
@@ -62,7 +63,7 @@ int reg_validate_dev_type(ObjectType type) {
 Property *reg_copy_pdata_prop(Property *sdata) {
     Property *prop = NULL;
     if (sdata) {
-        prop = malloc(sizeof(Property));
+        prop = dmt_malloc(sizeof(Property));
         if (prop) {
             memcpy(prop, sdata, sizeof(Property));
         }
@@ -72,8 +73,7 @@ Property *reg_copy_pdata_prop(Property *sdata) {
 
 void free_sdata(Property **prop) {
     if (*prop) {
-        free(*prop);
-        *prop = NULL;
+        dmt_free(*prop);
     }
 }
 
@@ -164,7 +164,7 @@ void free_reg_data(DRDBSchema *reg) {
     default: {
     }
     }
-    UKAMA_FREE(reg->data);
+    dmt_free(reg->data);
 }
 
 /* Remove the Data(DRDBSchema) from the Registry node */
@@ -173,11 +173,9 @@ void free_reg(DRDBSchema **reg) {
         if ((*reg)->data) {
             /* Deletes the property for the DRDBSchema data.*/
             free_reg_data(*reg);
-            (*reg)->data = NULL;
         }
         /*Delete DRDB SChema*/
-        free(*reg);
-        *reg = NULL;
+        dmt_free(*reg);
     }
 }
 
@@ -187,10 +185,9 @@ static void remove_inst_from_reg(void *ip) {
     if (node) {
         if (node->data) {
             free_reg_data(node->data);
-            free(node->data);
         }
         /* Delete Registry Node*/
-        free(node);
+        dmt_free(node);
     }
 }
 
@@ -233,7 +230,7 @@ static void *cpy_inst_in_reg(void *srschema) {
     DRDBSchema *dschema = NULL;
     DRDBSchema *sschema = srschema;
     if (sschema) {
-        dschema = malloc(sizeof(DRDBSchema));
+        dschema = dmt_malloc(sizeof(DRDBSchema));
         if (dschema) {
             memcpy(dschema, sschema, sizeof(DRDBSchema));
             dschema->data = NULL;
@@ -253,7 +250,7 @@ DRDBSchema *reg_search_inst(int instance, uint16_t misc, ObjectType type) {
     if (!drdb) {
         goto cleanup;
     }
-    sdev = malloc(sizeof(DRDBSchema));
+    sdev = dmt_malloc(sizeof(DRDBSchema));
     if (sdev) {
         memset(sdev, '\0', sizeof(DRDBSchema));
         sdev->instance = instance;
@@ -271,8 +268,7 @@ DRDBSchema *reg_search_inst(int instance, uint16_t misc, ObjectType type) {
         }
     }
     if (sdev) {
-        free(sdev);
-        sdev = NULL;
+        dmt_free(sdev);
     }
 cleanup:
     return fdev;
@@ -373,8 +369,8 @@ DRDBSchema *reg_read_instance(int instance, DeviceType type) {
             reg->obj.name, reg->obj.disc, reg->obj.type, reg->obj.mod_UUID,
             reg->instance);
     } else {
-        UKAMA_FREE(reg->data);
-        UKAMA_FREE(reg);
+        dmt_free(reg->data);
+        dmt_free(reg);
         log_debug(
             "REGHELPER:: Device Name: %s, Disc: %s, Type: %d, Module Id %s Instance %d not found in DB.",
             reg->obj.name, reg->obj.disc, reg->obj.type, reg->obj.mod_UUID,
@@ -486,7 +482,7 @@ int reg_read_inst_count(MsgFrame *req) {
     if (db) {
         size = list_size(db);
         if (!(req->data)) {
-            req->data = malloc(sizeof(int));
+            req->data = dmt_malloc(sizeof(int));
         }
         if (req->data) {
             memcpy(req->data, &size, sizeof(int));
@@ -544,7 +540,7 @@ int reg_register_modules(char *puuid) {
     minfo = db_read_module_info(puuid);
     if (minfo) {
         drdb_add_mod_to_reg(minfo);
-        UKAMA_FREE(minfo);
+        dmt_free(minfo);
     } else {
         ret = ERR_EDGEREG_REGCREFAILED;
     }
@@ -563,7 +559,7 @@ int reg_register_devices() {
         log_debug("REGHELPER::Read %d registered devices for device type 0x%x.",
                   count, typeiter);
         if (count > 0) {
-            Device *dev = malloc(sizeof(Device) * count);
+            Device *dev = dmt_malloc(sizeof(Device) * count);
             if (dev) {
                 ret = ubsp_read_registered_dev(typeiter, dev);
                 if (!ret) {
@@ -573,7 +569,7 @@ int reg_register_devices() {
                     }
                 } else {
                 }
-                UKAMA_FREE(dev);
+                dmt_free(dev);
             } else {
                 ret = ERR_UBSP_MEMORY_EXHAUSTED;
             }
@@ -609,7 +605,7 @@ int reg_register_misc() {
 cleanucfg:
     db_free_unit_cfg(&ucfg, uinfo->mod_count);
 cleanunit:
-    UKAMA_FREE(uinfo);
+    dmt_free(uinfo);
     return ret;
 }
 
@@ -618,7 +614,7 @@ Property *assign_property(int propid, Property *prop) {
     Property *data = NULL;
     if (prop) {
         if (prop[propid].available == PROP_AVAIL) {
-            data = malloc(sizeof(Property));
+            data = dmt_malloc(sizeof(Property));
             if (data) {
                 memcpy(data, &prop[propid], sizeof(Property));
             }
@@ -630,7 +626,7 @@ Property *assign_property(int propid, Property *prop) {
 /* Add propersty to registry schema from senor properties*/
 void reg_data_add_property(int pidx, Property *prop, PData *pdata) {
     if (prop[pidx].available == PROP_AVAIL) {
-        pdata->prop = malloc(sizeof(Property));
+        pdata->prop = dmt_malloc(sizeof(Property));
         if (pdata->prop) {
             memcpy(pdata->prop, &prop[pidx], sizeof(Property));
         }
@@ -639,7 +635,7 @@ void reg_data_add_property(int pidx, Property *prop, PData *pdata) {
 
 void reg_data_copy_property(Property **destp, Property *srcp) {
     if (srcp) {
-        *destp = malloc(sizeof(Property));
+        *destp = dmt_malloc(sizeof(Property));
         if (*destp) {
             memcpy(*destp, srcp, sizeof(Property));
         }
@@ -650,40 +646,32 @@ void reg_free_alarm_prop(AlarmPropertyData **pdata) {
     AlarmPropertyData *data = *pdata;
     if (data) {
         if (data->pcritthreshold) {
-            free(data->pcritthreshold);
-            (data)->pcritthreshold = NULL;
+            dmt_free(data->pcritthreshold);
         }
         if (data->phighthreshold) {
-            free(data->phighthreshold);
-            data->phighthreshold = NULL;
+            dmt_free(data->phighthreshold);
         }
         if (data->plowthreshold) {
-            free(data->plowthreshold);
-            data->plowthreshold = NULL;
+            dmt_free(data->plowthreshold);
         }
         if (data->plowlimitalarm) {
-            free(data->plowlimitalarm);
-            data->plowlimitalarm = NULL;
+            dmt_free(data->plowlimitalarm);
         }
         if (data->phighlimitalarm) {
-            free(data->phighlimitalarm);
-            data->phighlimitalarm = NULL;
+            dmt_free(data->phighlimitalarm);
         }
         if (data->pcrilimitalarm) {
-            free(data->pcrilimitalarm);
-            data->pcrilimitalarm = NULL;
+            dmt_free(data->pcrilimitalarm);
         }
         if (data->psensorvalue) {
-            free(data->psensorvalue);
-            data->psensorvalue = NULL;
+            dmt_free(data->psensorvalue);
         }
-        free(data);
-        data = NULL;
+        dmt_free(data);
     }
 }
 
 void *reg_initialize_alarm_prop(Property *prop, const AlarmSensorData *sdata) {
-    AlarmPropertyData *data = malloc(sizeof(AlarmPropertyData));
+    AlarmPropertyData *data = dmt_malloc(sizeof(AlarmPropertyData));
     if (data) {
         memset(data, '\0', sizeof(AlarmPropertyData));
 
