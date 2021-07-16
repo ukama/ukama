@@ -8,6 +8,7 @@
  */
 
 #include "inc/alarmhandler.h"
+#include "dmt.h"
 
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
@@ -51,18 +52,16 @@ static void rmv_alarm(void *ip) {
     ListNode *node = (ListNode *)ip;
     if (node) {
         if (node->data) {
-            free(node->data);
-            node->data = NULL;
+            dmt_free(node->data);
         }
-        free(node);
-        node = NULL;
+        dmt_free(node);
     }
 }
 
 static void *cpy_alarm(void *ndata) {
     AlarmSchema *data = NULL;
     if (ndata) {
-        data = malloc(sizeof(AlarmSchema));
+        data = dmt_malloc(sizeof(AlarmSchema));
         if (data) {
             memcpy(data, ndata, sizeof(AlarmSchema));
         }
@@ -122,7 +121,7 @@ AlarmSchema *alarmdb_search_node(AlarmSchema *snode) {
 AlarmSchema *alarmdb_create_node(DevObj *obj, uint16_t objid, uint16_t instid,
                                  uint16_t rsrcid) {
     AlarmSchema *node = NULL;
-    node = malloc(sizeof(AlarmSchema));
+    node = dmt_malloc(sizeof(AlarmSchema));
     if (node) {
         memset(node, '\0', sizeof(AlarmSchema));
         node->instid = instid;
@@ -173,7 +172,7 @@ int alramdb_record_data(AlarmSchema *node) {
 }
 
 AlarmObjInfo *alarm_drdbschema_to_objectdb(AlarmData *ndata) {
-    AlarmObjInfo *obj = malloc(sizeof(AlarmObjInfo));
+    AlarmObjInfo *obj = dmt_malloc(sizeof(AlarmObjInfo));
     if (obj) {
         memset(obj, '\0', sizeof(AlarmObjInfo));
         /* All values are already read from sensors during alert trigger so just need to copy these*/
@@ -214,15 +213,14 @@ void alarmdb_push(DRDBSchema *node) {
             /* Update the entry in database i.e remove the old and add new one to front.*/
             alarmdb_remove(snode);
             /* Free snode */
-            free(snode);
-            snode = NULL;
+            dmt_free(snode);
             alarmdb_push(node);
         } else {
             /* Translate DRDBschema to ObjectInfo */
             AlarmObjInfo *obj = alarm_drdbschema_to_objectdb(adata);
             if (obj) {
                 /* Add new entry in the database*/
-                AlarmSchema *aschema = malloc(sizeof(AlarmSchema));
+                AlarmSchema *aschema = dmt_malloc(sizeof(AlarmSchema));
                 if (aschema) {
                     memset(aschema, '\0', sizeof(AlarmSchema));
                     aschema->instid = adata->sinstid.value.sintval;
@@ -245,12 +243,12 @@ void alarmdb_push(DRDBSchema *node) {
                     obj->instanceId, aschema->objid, aschema->instid,
                     aschema->rsrcid, aschema->obj.name, aschema->obj.disc,
                     aschema->obj.mod_UUID);
-                UKAMA_FREE(aschema);
-                UKAMA_FREE(obj);
+                dmt_free(aschema);
+                dmt_free(obj);
             }
         }
     }
-    UKAMA_FREE(cnode);
+    dmt_free(cnode);
 }
 
 /* Remove node from the AlarmDB */
@@ -401,7 +399,7 @@ int alarmhandler_proc_node(void *node) {
                 aschema->obj.mod_UUID);
             alarmdb_pop(aschema);
         } else {
-            ret = -1;
+            ret = 0;
         }
     }
 
@@ -412,6 +410,7 @@ int alarmhandler_proc_node(void *node) {
             aschema->rsrcid, aschema->obj.name, aschema->obj.disc,
             aschema->obj.mod_UUID);
         alarmdb_update(aschema);
+        ret = 0;
     }
     return ret;
 }

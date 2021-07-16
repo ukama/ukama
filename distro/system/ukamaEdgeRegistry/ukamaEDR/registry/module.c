@@ -9,6 +9,7 @@
 
 #include "registry/module.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
 #include "inc/dbhandler.h"
@@ -54,7 +55,7 @@ void *copy_module_data(void *pdata) {
     ModuleData *data = pdata;
     ModuleData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(ModuleData));
+        ndata = dmt_malloc(sizeof(ModuleData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(ModuleData));
             /* Try deep  copy for properties of pdata now */
@@ -99,11 +100,11 @@ int drdb_reset_mod_counters(void *data) {
 void drdb_add_mod_inst_to_reg(ModuleInfo *minfo, uint8_t instance,
                               uint8_t subdev) {
     ModuleData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(reg->UUID, minfo->uuid, strlen(minfo->uuid));
-        data = malloc(sizeof(ModuleData));
+        data = dmt_malloc(sizeof(ModuleData));
         if (data) {
             memset(data, '\0', sizeof(ModuleData));
             /* DB read module info */
@@ -187,9 +188,9 @@ int drdb_read_mod_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(ModuleObjInfo));
+        msgdata = dmt_malloc(sizeof(ModuleObjInfo));
         if (!msgdata) {
             return -1;
         }

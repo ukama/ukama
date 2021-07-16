@@ -26,6 +26,7 @@
 #include "headers/utils/list.h"
 #include "headers/utils/log.h"
 #include "utils/timer.h"
+#include "dmt.h"
 
 #include <stdint.h>
 #include <string.h>

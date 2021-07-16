@@ -8,6 +8,7 @@
  */
 
 #include "registry/atten.h"
+#include "dmt.h"
 
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
@@ -44,7 +45,7 @@ void *copy_att_data(void *pdata) {
     AttData *data = pdata;
     AttData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(AttData));
+        ndata = dmt_malloc(sizeof(AttData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(AttData));
             /* Try deep  copy for properties of pdata now */
@@ -77,11 +78,11 @@ void drdb_add_att_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
     int pidx = 0;
     AttData *data = NULL;
     Property *prop = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(AttData));
+        data = dmt_malloc(sizeof(AttData));
         if (data) {
             memset(data, '\0', sizeof(AttData));
             /* Read Property table of the sensor. */
@@ -132,9 +133,9 @@ void drdb_add_att_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
 cleanup:
     if (ret) {
         free_att_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
     free_reg(&reg);
 }
 
@@ -156,9 +157,9 @@ int drdb_read_att_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(AttObjInfo));
+        msgdata = dmt_malloc(sizeof(AttObjInfo));
         if (!msgdata) {
             return -1;
         }

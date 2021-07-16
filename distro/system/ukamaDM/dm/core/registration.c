@@ -1764,6 +1764,7 @@ uint8_t registration_handleRequest(lwm2m_context_t * contextP,
                     if (objP == NULL)
                     {
                         observationP->callback(clientP->internalID,
+                        					   clientP->name,
                                                &observationP->uri,
                                                COAP_202_DELETED,
                                                LWM2M_CONTENT_TEXT, NULL, 0,
@@ -1777,6 +1778,7 @@ uint8_t registration_handleRequest(lwm2m_context_t * contextP,
                             if (lwm2m_list_find((lwm2m_list_t *)objP->instanceList, observationP->uri.instanceId) == NULL)
                             {
                                 observationP->callback(clientP->internalID,
+                                					   clientP->name,
                                                        &observationP->uri,
                                                        COAP_202_DELETED,
                                                        LWM2M_CONTENT_TEXT, NULL, 0,

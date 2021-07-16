@@ -9,6 +9,7 @@
 
 #include "registry/pwr.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "inc/dbhandler.h"
 #include "inc/reghelper.h"
@@ -81,7 +82,7 @@ void *copy_pwr_data(void *pdata) {
     GenPwrData *data = pdata;
     GenPwrData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(GenPwrData));
+        ndata = dmt_malloc(sizeof(GenPwrData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(GenPwrData));
             /* Try deep  copy for properties of pdata now */
@@ -179,17 +180,17 @@ void drdb_add_volt_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
                                int pidx) {
     int ret = 0;
     VoltData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(VoltData));
+        data = dmt_malloc(sizeof(VoltData));
         if (data) {
             memset(data, '\0', sizeof(VoltData));
 
             if (prop && prop[pidx].available) {
                 /* Sensor value */
-                data->value.prop = malloc(sizeof(Property));
+                data->value.prop = dmt_malloc(sizeof(Property));
                 if (data->value.prop) {
                     memcpy(data->value.prop, &prop[pidx], sizeof(Property));
                 }
@@ -248,7 +249,7 @@ void drdb_add_volt_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
 cleanup:
     if (ret) {
         free_pwr_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
 }
@@ -257,17 +258,17 @@ void drdb_add_curr_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
                                int pidx) {
     int ret = 0;
     CurrData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(CurrData));
+        data = dmt_malloc(sizeof(CurrData));
         if (data) {
             memset(data, '\0', sizeof(CurrData));
 
             if (prop && prop[pidx].available) {
                 /* Sensor value */
-                data->value.prop = malloc(sizeof(Property));
+                data->value.prop = dmt_malloc(sizeof(Property));
                 if (data->value.prop) {
                     memcpy(data->value.prop, &prop[pidx], sizeof(Property));
                 }
@@ -319,7 +320,7 @@ void drdb_add_curr_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
 cleanup:
     if (ret) {
         free_pwr_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
 }
@@ -328,17 +329,17 @@ void drdb_add_pwr_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
                               int pidx) {
     int ret = 0;
     PwrData *data = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
         memcpy(&reg->obj, &dev->obj, sizeof(DevObj));
-        data = malloc(sizeof(PwrData));
+        data = dmt_malloc(sizeof(PwrData));
         if (data) {
             memset(data, '\0', sizeof(PwrData));
 
             if (prop && prop[pidx].available) {
                 /* Sensor value */
-                data->value.prop = malloc(sizeof(Property));
+                data->value.prop = dmt_malloc(sizeof(Property));
                 if (data->value.prop) {
                     memcpy(data->value.prop, &prop[pidx], sizeof(Property));
                 }
@@ -397,7 +398,7 @@ void drdb_add_pwr_inst_to_reg(Device *dev, Property *prop, uint8_t inst,
 cleanup:
     if (ret) {
         free_pwr_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
     free_reg(&reg);
 }
@@ -443,7 +444,7 @@ void drdb_add_pwr_dev_to_reg(void *pdev) {
             }
         }
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
 }
 
 int drdb_read_pwr_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
@@ -456,9 +457,9 @@ int drdb_read_pwr_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(GenPwrObjInfo));
+        msgdata = dmt_malloc(sizeof(GenPwrObjInfo));
         if (!msgdata) {
             return -1;
         }

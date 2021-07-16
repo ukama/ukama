@@ -138,7 +138,11 @@ static int read_alarm_inst_data(uint16_t instanceId, alarm_info_t** targetP) {
 	(*targetP)->data.srsrcid = data->srsrcid;
 	(*targetP)->data.sensorvalue = data->sensorvalue;
 	(*targetP)->data.instanceId = data->instanceId;
-	strcpy((*targetP)->data.disc, data->disc);
+	if(!strcmp(data->disc,"")){
+		strcpy((*targetP)->data.disc, "No Data.");
+	} else {
+		strcpy((*targetP)->data.disc, data->disc);
+	}
 	strcpy((*targetP)->data.sensorunits, data->sensorunits);
 	strcpy((*targetP)->data.applicationtype, data->applicationtype);
 
@@ -204,6 +208,8 @@ static uint8_t prv_alarm_info_read(uint16_t instanceId,
 		i++;
 	} while (i < *numDataP && result == COAP_205_CONTENT);
 
+	fprintf(stdout, "Return for reading alarm value is %d\r\n", result);
+	fflush(stdout);
 	return result;
 }
 
@@ -522,7 +528,11 @@ int alarm_change(void * pdata,
 	int  ret  = 0;
 	alarm_info_t * targetP = NULL;
 	targetP = (alarm_info_t *)lwm2m_list_find(objectP->instanceList, instanceId);
-	if (NULL == targetP) return COAP_404_NOT_FOUND;
+	if (NULL == targetP) {
+		fprintf(stderr, "Failed to find instance id %d in ObjectP list.\r\n", instanceId);
+		fflush(stderr);
+		return COAP_404_NOT_FOUND;
+	}
 
 	if (pdata) {
 		AlarmObjInfo* data = pdata;
@@ -539,11 +549,19 @@ int alarm_change(void * pdata,
 		(targetP)->data.sinstid = data->sinstid;
 		(targetP)->data.srsrcid = data->srsrcid;
 		(targetP)->data.sensorvalue = data->sensorvalue;
-		(targetP)->data.instanceId = data->instanceId;
-		strcpy((targetP)->data.disc, data->disc);
+		//(targetP)->data.instanceId = data->instanceId;
+		if(!strcmp(data->disc,"")){
+			strcpy((targetP)->data.disc, "No Data.");
+		} else {
+			strcpy((targetP)->data.disc, data->disc);
+		}
 		strcpy((targetP)->data.sensorunits, data->sensorunits);
 		strcpy((targetP)->data.applicationtype, data->applicationtype);
+		fprintf(stdout, "Received alarm for instance id %d\r\n", instanceId);
+		fflush(stdout);
 	} else {
+		fprintf(stderr, "Failed to get alarm data\r\n");
+		fflush(stderr);
 		ret = COAP_500_INTERNAL_SERVER_ERROR;
 	}
 	return ret;

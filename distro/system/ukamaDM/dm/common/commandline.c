@@ -104,7 +104,7 @@ void handle_command(command_desc_t * commandArray,
     {
         while (buffer[length] != 0 && isspace(buffer[length]&0xFF))
             length++;
-        cmdP->callback(buffer + length, cmdP->userData);
+        cmdP->callback(buffer + length, cmdP->userData, NULL);
     }
     else
     {
@@ -119,6 +119,42 @@ void handle_command(command_desc_t * commandArray,
             fprintf(stdout, UNKNOWN_CMD_MSG"\r\n");
         }
     }
+}
+
+uint32_t handle_request_command(command_desc_t * commandArray,
+        char * buffer, void* reqCtx) {
+	 int ret = COAP_404_NOT_FOUND;
+	 command_desc_t * cmdP;
+	    int length;
+
+	    // find end of command name
+	    length = 0;
+	    while (buffer[length] != 0 && !isspace(buffer[length]&0xFF))
+	        length++;
+
+	    cmdP = prv_find_command(commandArray, buffer, length);
+	    if (cmdP != NULL)
+	    {
+	        while (buffer[length] != 0 && isspace(buffer[length]&0xFF))
+	            length++;
+	        ret = cmdP->callback(buffer + length, cmdP->userData, reqCtx);
+
+	    }
+	    else
+	    {
+	        if (!strncmp(buffer, HELP_COMMAND, length))
+	        {
+	            while (buffer[length] != 0 && isspace(buffer[length]&0xFF))
+	                length++;
+	            prv_displayHelp(commandArray, buffer + length);
+	        }
+	        else
+	        {
+	            fprintf(stdout, UNKNOWN_CMD_MSG"\r\n");
+	            return COAP_501_NOT_IMPLEMENTED;
+	        }
+	    }
+	    return ret;
 }
 
 static char* prv_end_of_space(char* buffer)

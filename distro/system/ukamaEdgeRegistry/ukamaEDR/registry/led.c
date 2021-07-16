@@ -9,6 +9,7 @@
 
 #include "registry/led.h"
 
+#include "dmt.h"
 #include "headers/errorcode.h"
 #include "headers/globalheader.h"
 #include "inc/dbhandler.h"
@@ -45,7 +46,7 @@ void *copy_led_data(void *pdata) {
     LedData *data = pdata;
     LedData *ndata = NULL;
     if (data) {
-        ndata = malloc(sizeof(LedData));
+        ndata = dmt_malloc(sizeof(LedData));
         if (ndata) {
             memcpy(ndata, pdata, sizeof(LedData));
             /* Try deep  copy for properties of pdata now */
@@ -81,10 +82,10 @@ void drdb_add_led_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
     int pidx = 0;
     LedData *data = NULL;
     Property *prop = NULL;
-    DRDBSchema *reg = malloc(sizeof(DRDBSchema));
+    DRDBSchema *reg = dmt_malloc(sizeof(DRDBSchema));
     if (reg) {
         memset(reg, '\0', sizeof(DRDBSchema));
-        data = malloc(sizeof(LedData));
+        data = dmt_malloc(sizeof(LedData));
         if (data) {
             char str[32] = { '\0' };
             memset(data, '\0', sizeof(LedData));
@@ -144,9 +145,9 @@ void drdb_add_led_inst_to_reg(Device *dev, uint8_t inst, uint8_t subdev) {
 cleanup:
     if (ret) {
         free_led_data(data);
-        UKAMA_FREE(data);
+        dmt_free(data);
     }
-    UKAMA_FREE(prop);
+    dmt_free(prop);
     free_reg(&reg);
 }
 
@@ -170,9 +171,9 @@ int drdb_read_led_inst_data_from_dev(DRDBSchema *reg, MsgFrame *rqmsg) {
 		 * Property requested will be updated and rest all will be zero. */
         /* free any memory if allocated and re-assign*/
         if (rqmsg->data) {
-            UKAMA_FREE(rqmsg->data);
+            dmt_free(rqmsg->data);
         }
-        msgdata = malloc(sizeof(LedObjInfo));
+        msgdata = dmt_malloc(sizeof(LedObjInfo));
         if (!msgdata) {
             return -1;
         }

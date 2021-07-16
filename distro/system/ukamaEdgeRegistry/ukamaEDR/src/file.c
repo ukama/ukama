@@ -8,6 +8,7 @@
  */
 
 #include "headers/utils/file.h"
+#include "dmt.h"
 
 #include "headers/utils/log.h"
 
@@ -96,18 +97,18 @@ char *file_read_sym_link(char *fname) {
         perror("lstat");
         return NULL;
     }
-    char *linkname = malloc(sb.st_size + 1);
+    char *linkname = dmt_malloc(sb.st_size + 1);
     if (linkname) {
         readbytes = readlink(fname, linkname, sb.st_size + 1);
         if (readbytes < 0) {
             perror("lstat");
-            free(linkname);
+            dmt_free(linkname);
             return NULL;
         }
         if (readbytes > sb.st_size) {
             log_error("Err: FILE: symlink increased in size "
                       "between lstat() and readlink()");
-            free(linkname);
+            dmt_free(linkname);
             return NULL;
         }
         linkname[sb.st_size] = '\0';
@@ -205,7 +206,7 @@ int file_append(void *fname, void *buff, off_t offset, uint16_t size) {
 int file_erase(void *fname, off_t offset, uint16_t size) {
     int write_bytes = 0;
     int fd = -1;
-    char *buff = malloc(sizeof(char) * size);
+    char *buff = dmt_malloc(sizeof(char) * size);
     if (buff) {
         memset(buff, 0xff, size);
         fd = file_open(fname, O_WRONLY);
@@ -220,8 +221,7 @@ int file_erase(void *fname, off_t offset, uint16_t size) {
         file_close(fd);
     }
     if (buff) {
-        free(buff);
-        buff = NULL;
+        dmt_free(buff);
     }
     log_trace("FILE:: Erased bytes: %d from %d", write_bytes, fd);
     return write_bytes;
