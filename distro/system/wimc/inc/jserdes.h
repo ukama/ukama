@@ -57,8 +57,11 @@
 #define JSON_PROVIDER_RESPONSE "provider_response"
 #define JSON_WIMC_RESPONSE     "wimc_response"
 
-/* function def. */
 int serialize_wimc_request(WimcReq *request, json_t **json);
-static int serialize_wimc_request_fetch(WimcReq *req, json_t **json);
+int deserialize_agent_request(AgentReq **request, json_t *json);
+int deserialize_provider_response(ServiceURL **urls, int *counter,
+				  json_t *json);
+int serialize_task(WTasks *task, json_t **json);
+int serialize_result(WRespType type, char *str, json_t **json);
 
 #endif /* WIMC_JSERDES_H */

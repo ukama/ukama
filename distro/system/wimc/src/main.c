@@ -22,6 +22,9 @@
 #include "log.h"
 #include "wimc.h"
 #include "agent.h"
+#include "common/utils.h"
+#include "network.h"
+#include "tasks.h"
 
 #define ENV_CLIENT_PORT "WIMC_CLIENT_PORT"
 #define ENV_ADMIN_PORT  "WMIN_ADMIN_PORT"
@@ -272,10 +275,9 @@ int main (int argc, char **argv) {
 
   sqlite3_close(db);
   
-  clear_agents(&agents);
+  clear_agents(agents);
   clear_tasks(&tasks);
 
-  free(agents);
   free(tasks);
   free(cfg);
   

@@ -13,8 +13,6 @@
 #include <stdio.h>
 #include <string.h>
 
-extern int deserialize_provider_response(json_t *resp, ServiceURL **urls,
-					 int *counter);
-extern req_t* create_http_request(char *url, char* ep, char *req_type);
-
+int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
+				  ServiceURL **urls, int *count);
 #endif /* WIMC_PROVIDER_H */

@@ -21,6 +21,7 @@
 #include "log.h"
 #include "provider.h"
 #include "jserdes.h"
+#include "methods.h"
 
 
 struct Response {
@@ -29,8 +30,6 @@ struct Response {
 };
 
 /* Function def. */
-static void log_request(req_t *req);
-static void log_response(resp_t *resp);
 static int process_response_from_provider(WimcCfg *cfg, long statusCode,
 					   void *resp, ServiceURL **urls);
 static void create_provider_url(WimcCfg *cfg, char *url, char *name,
@@ -39,19 +38,6 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
 int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
 				  ServiceURL **urls, int *count);
-
-/*
- * log_request --
- *
- */
-static void log_request(req_t *req) {
-
-}
-
-static void log_response(resp_t *resp) {
-
-}
-
 /*
  * process_response_from_provider --
  *
@@ -72,7 +58,7 @@ static int process_response_from_provider(WimcCfg *cfg, long statusCode,
     goto done;
   }
 
-  ret = deserialize_provider_response(&urls[0], &count, json);
+  ret = deserialize_provider_response(urls, &count, json);
 
   if (ret==FALSE) {
     log_error("Deserialization failed for %s", response->buffer);
@@ -155,7 +141,6 @@ int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
   char providerEP[WIMC_MAX_URL_LEN] = {0};
   CURL *curl=NULL;
   CURLcode res;
-  struct curl_slist *headers=NULL;
   struct Response response;
   
   /* Sanity check. */
@@ -163,7 +148,7 @@ int get_service_url_from_provider(WimcCfg *cfg, char *name, char *tag,
     goto done;
   }
      
-  create_provider_url(cfg, &providerEP, name, tag);
+  create_provider_url(cfg, &providerEP[0], name, tag);
 
   curl = curl_easy_init();
   if (curl == NULL) {

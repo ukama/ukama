@@ -18,10 +18,16 @@
 #include "log.h"
 #include "err.h"
 #include "agent/jserdes.h"
+#include "common/utils.h"
 
 /*
  * Callback functions for various endpoints.
  */
+
+static void free_wimc_request(WimcReq *req);
+static int valid_req_type(WimcReq *req, MethodType method);
+static int validate_post_request(WimcReq *req, MethodType method);
+
 
 /*
  * decode a u_map into a string
@@ -60,26 +66,6 @@ static char *print_map(const struct _u_map * map) {
   }
 }
 
-/* 
- * log_request -- log various parameters for the incoming request. 
- *
- */
-
-static void log_request(const struct _u_request *request) {
-
-  log_debug("Recevied: %s %s %s", request->http_protocol, request->http_verb,
-	    request->http_url);
-}
-
-/*
- * process_post_request --handle post request from WIMC.d
- *
- */
-
-static int process_post_request(WimcReq *req) {
-
-}
-
 /*
  * valid_req_type --
  *
@@ -107,7 +93,6 @@ static int valid_req_type(WimcReq *req, MethodType method) {
 static int validate_post_request(WimcReq *req, MethodType method) {
 
   WFetch *fetch=NULL;
-  WUpdate *update=NULL;
   WContent *content=NULL;
 
   if (!valid_req_type(req, method)){
@@ -221,7 +206,7 @@ int agent_callback_post(const struct _u_request *request,
 			struct _u_response *response, void *user_data) {
 
   int ret, retCode;
-  char *params, *resBody;
+  char *resBody=NULL;
   json_t *jreq=NULL;
   json_error_t jerr;
   MethodType *method = (MethodType *)user_data;
@@ -250,7 +235,7 @@ int agent_callback_post(const struct _u_request *request,
   ret = validate_post_request(req, *method);
   if (ret != WIMC_OK) {
     retCode = 400;
-    resBody = msprintf("%s\n%s", error_to_str(ret), params);
+    resBody = msprintf("%s\n", error_to_str(ret));
     goto done;
   } else {
     retCode = 200;
@@ -262,7 +247,6 @@ int agent_callback_post(const struct _u_request *request,
   ulfius_set_string_body_response(response, retCode, resBody);
   free_wimc_request(req);
   o_free(resBody);
-  o_free(params);
   json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
@@ -273,7 +257,7 @@ int agent_callback_post(const struct _u_request *request,
  *
  */
 
-void free_wimc_request(WimcReq *req) {
+static void free_wimc_request(WimcReq *req) {
 
   if (!req)
     return;

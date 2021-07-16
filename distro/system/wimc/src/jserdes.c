@@ -12,6 +12,9 @@
 #include <jansson.h>
 
 #include "jserdes.h"
+#include "common/utils.h"
+
+static int serialize_wimc_request_fetch(WimcReq *req, json_t **json);
 
 /*
  * serialize_wimc_request --
@@ -222,7 +225,6 @@ static int deserialize_agent_request_unreg(UnRegister *unReg, json_t *json) {
 int deserialize_agent_request(AgentReq **request, json_t *json) {
 
   int ret=FALSE;
-  char *str;
   json_t *jreq, *jtype;
 
   AgentReq *req = *request;
@@ -362,8 +364,7 @@ int serialize_task(WTasks *task, json_t **json) {
   json_object_set_new(jtask, JSON_ID, json_string(idStr));
   json_object_set_new(jtask, JSON_NAME, json_string(content->name));
   json_object_set_new(jtask, JSON_TAG, json_string(content->tag));
-  json_object_set_new(jtask, JSON_METHOD,
-		      json_string(convert_method_to_str(content->method)));
+  json_object_set_new(jtask, JSON_METHOD, json_string(content->method));
 
   json_object_set_new(jtask, JSON_TOTAL_KBYTES, json_integer(update->totalKB));
   json_object_set_new(jtask, JSON_TRANSFER_KBYTES,

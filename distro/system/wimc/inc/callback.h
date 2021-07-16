@@ -30,9 +30,6 @@
 
 #define WIMC_EP_CONTAINER     "/content/containers"
 #define WIMC_QUERY_KEY_NAME   "name"
-#define WIMC_MAX_NAME_LEN 128
-#define WIMC_MAX_TAG_LEN  32
-#define WIMC_MAX_PATH_LEN     256
 
 #define WIMC_PARAM_CONTAINER_NAME    "name"
 #define WIMC_PARAM_CONTAINER_TAG     "tag"
@@ -63,5 +60,7 @@ int callback_not_allowed(const struct _u_request *request,
 			 struct _u_response *response, void *user_data);
 int callback_default(const struct _u_request *request,
 		     struct _u_response *response, void *user_data);
+
+extern int db_read_path(sqlite3 *db, char *name, char *tag, char *path);
 
 #endif /* CALLBACK_H */

@@ -40,4 +40,6 @@
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
 
+req_t* create_http_request(char *url, char* ep, char *req_type);
+
 #endif /* WIMC_METHODS_H */

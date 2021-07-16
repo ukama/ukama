@@ -19,6 +19,8 @@
 
 #include "agent/jserdes.h"
 
+static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json);
+
 /* JSON (de)-serialization functions. */
 
 /*
@@ -217,7 +219,6 @@ int serialize_agent_request_unregister(AgentReq *req, json_t **json) {
 int deserialize_wimc_request(WimcReq **request, json_t *json) {
 
   int ret=FALSE;
-  char *str;
   json_t *jreq=NULL, *jtype=NULL;
 
   WimcReq *req = *request;

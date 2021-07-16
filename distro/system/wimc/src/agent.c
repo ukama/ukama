@@ -19,11 +19,16 @@
 
 #include "agent.h"
 #include "wimc.h"
+#include "tasks.h"
+#include "jserdes.h"
+#include "common/utils.h"
 
 struct Response {
   char *buffer;
   size_t size;
 };
+
+static char *create_cb_url_for_agent(char *port);
 
 /*
  * register_agent -- register new agent
@@ -92,7 +97,7 @@ int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
       goto done;
     }
 
-    uuid_unparse(uuid, &idStr[0]);
+    uuid_unparse(*uuid, &idStr[0]);
     log_debug("Agent successfully registered. Id: %s Method: %s URL: %s",
 	      idStr, reg->method, reg->url);
   } else if (req->type == (ReqType)REQ_UNREG) {

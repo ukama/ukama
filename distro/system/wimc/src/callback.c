@@ -12,6 +12,8 @@
  */
 
 #include "callback.h"
+#include "tasks.h"
+#include "jserdes.h"
 
 /*
  * decode a u_map into a string
@@ -50,153 +52,6 @@ static char *print_map(const struct _u_map * map) {
   }
 }
 
-/*
- * validate_path --
- *
- */
-
-static int validate_path(char *path) {
-
-  int val=FALSE;
-  struct stat sb;
-  char buf[256];
-
-  sprintf(buf, "%s/config.json", path); 
-  
-  if (stat(path, &sb) == 0 && S_ISDIR(sb.st_mode)) {
-    /* Now check for config.json file. */
-    if (access(&buf[0], F_OK) == 0) {
-      log_debug("Config.json found at: %s", path);
-      val = TRUE;
-    } else {
-      log_debug("Valid path but config.json NOT found!");
-    }      
-  } else {
-    log_debug("Invalid path: %s", path);
-  }
-  
-  return val;
-}
-
-/*
- * container_name_and_tag -- 
- *
- */
-static int container_name_and_tag(char *str, char *name, char *tag) { 
-
-  char *c, *t;
-
-  c = strtok(str, ":");
-  t = strtok(NULL, ":");
-
-  if (c == NULL || t == NULL) {
-    goto failure;
-  }
-
-  /* sanity check. */
-  if (strlen(c) > WIMC_MAX_NAME_LEN ||
-      strlen(t) > WIMC_MAX_TAG_LEN) {
-    goto failure;
-  }
-
-  strncpy(name, c, strlen(c));
-  strncpy(tag, t, strlen(t));
-
-  return TRUE;
- failure:
-  return FALSE;
-}
-
-/* 
- * get_key_value -- extract key value pair from the passed string. It is in
- *                  format key=value. If keyName is valid, also compared it 
- *                  against it.
- *
- */
-
-static int get_key_value(char *str, char *key, char *value, char *keyName,
-			 int maxKeyLen) {
-
-  int val = FALSE;
-  char *k, *v;
-  
-  k = strtok(str, "=");
-  v = strtok(NULL, "=");
-  
-  if (k == NULL || v == NULL) {
-    goto failure;
-  }
-  
-  if ( keyName != NULL && maxKeyLen > 0) { /* Validate. */
-    if ((strcasecmp(keyName, k)==0) || (strlen(v) < maxKeyLen)) {
-      val = TRUE;
-    }
-  }
-  
-  /* We still copy even if the keyname doesn't match so we can log this. */
-  strncpy(value, v, strlen(v));
-  strncpy(key, k, strlen(k));
-  
- failure:
-  return val;
-}
-
-/*
- * get_post_params -- get params for the POST method.
- *                    param is of format name=container:tag&path=/some/path
- *
- */
-
-static int get_post_params(char *params, char *name, char *tag, char *path) {
-
-  int val=FALSE;
-  char *token1, *token2;
-  char key[256]={0}, value[256]={0};
-
-  /* Extract the first token: container name and tag. */
-  token1 = strtok(params, "&");
-  token2 = strtok(NULL, "&"); 
-  
-  if (token1 == NULL || token2 == NULL) {
-    goto failure;
-  }
-  
-  val = get_key_value(token1, &key[0], &value[0], WIMC_PARAM_CONTAINER_NAME,
-		      WIMC_MAX_NAME_LEN + WIMC_MAX_PATH_LEN + 1);
-  
-  if (val == TRUE) {
-    /* Extract the container name and its tag. It is in format
-     * container_name:tag 
-     */
-    val = container_name_and_tag(value, name, tag);
-    if (!val) {
-      log_debug("Invalid container name and/or tag. Ignoring");
-      goto failure;
-    }
-  } else {
-    log_debug("Invalid key %s. Expected %s", key, WIMC_PARAM_CONTAINER_NAME);
-    goto failure;
-  }
-  
-  /* Process the path. */
-  memset(key, 0, sizeof(char)*256);
-  memset(value, 0, sizeof(char)*256);
-  
-  val = get_key_value(token2, &key[0], &value[0], WIMC_PARAM_CONTAINER_PATH,
-		      WIMC_MAX_PATH_LEN);
-  if (val == TRUE){
-    strncpy(path, value, strlen(value));
-  } else {
-    goto failure;
-  }
-
-  log_debug("Valid POST params recevied. Name: %s Tag: %s Path: %s",
-	    name, tag, path);
-
- failure:
-  return val;
-}
-
 /* 
  * log_request -- log various parameters for the incoming request. 
  *
@@ -218,7 +73,6 @@ int callback_post_container(const struct _u_request *request,
 			   struct _u_response *response,
 			   void *user_data) {
 
-  int val=FALSE, found=FALSE;
   int resCode=200;
   int count=0, i=0;
   uuid_t uuid;
@@ -446,7 +300,7 @@ int callback_post_agent(const struct _u_request *request,
 int callback_get_task(const struct _u_request *request,
 		      struct _u_response *response, void *user_data) {
 
-  int ret, statusCode=200;
+  int statusCode=200;
   uuid_t uuid;
   WimcCfg *cfg=NULL;
   WTasks *task=NULL;

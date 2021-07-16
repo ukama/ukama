@@ -284,7 +284,7 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
  */
 
 long communicate_with_wimc(ReqType reqType, char *url, char *port,
-			   int method, int *uuid) {
+			   int method, uuid_t *uuid) {
 
   int ret;
   long code=0;

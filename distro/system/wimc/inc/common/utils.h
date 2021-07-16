@@ -20,4 +20,8 @@ ReqType convert_str_to_type(char *str);
 WReqType convert_str_to_wType(char *str);
 //ActionType convert_str_to_action(char *str);
 
+/* defined in url.c */
+int validate_url(char *url);
+int valid_url_format(char *url);
+
 #endif /* UTILS_H */

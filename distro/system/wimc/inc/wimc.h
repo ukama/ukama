@@ -55,8 +55,9 @@
 #define WIMC_EP_AGENT    "/admin/agent"
 #define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
-#define WIMC_MAX_URL_LEN     1024
+#define WIMC_MAX_URL_LEN    1024
 #define WIMC_MAX_NAME_LEN   256
+#define WIMC_MAX_PATH_LEN   256
 
 #define WIMC_ACTION_FETCH_STR      "fetch"
 #define WIMC_ACTION_UPDATE_STR     "update"

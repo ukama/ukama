@@ -20,6 +20,7 @@
 #include "wimc.h"
 #include "agent/network.h"
 #include "agent/jserdes.h"
+#include "agent/callback.h"
 
 #define AGENT_EP "/container"
 #define STAT_EP  "/stats"

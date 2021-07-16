@@ -17,6 +17,7 @@
 #include <sqlite3.h>
 #include <getopt.h>
 #include <ulfius.h>
+#include <uuid/uuid.h>
 
 #include "log.h"
 #include "wimc.h"
@@ -82,7 +83,7 @@ int set_method(char *method) {
 
 int main(int argc, char **argv) {
 
-  int id=0;
+  uuid_t uuid;
   long code;
   char *wimcURL = NULL, *port=NULL;
   char *debug = DEF_LOG_LEVEL;
@@ -148,6 +149,8 @@ int main(int argc, char **argv) {
     }
   } /* while */
 
+  uuid_clear(uuid);
+
   /* Step-1. setup the EP with respective CB and run webservice. */
   if (start_web_service(port, &method, &inst) != TRUE) {
     log_error("Failed to start webservice. Exiting.");
@@ -155,7 +158,7 @@ int main(int argc, char **argv) {
   }
   
   /* Step2. register itself on the WIMC. */
-  code = communicate_with_wimc(REQ_REG, wimcURL, port, method, &id);
+  code = communicate_with_wimc(REQ_REG, wimcURL, port, method, &uuid);
   if (!code || code == 400) { /* Failure to register. */
     log_error("Failed to register to wimc.d. Exiting");
     goto cleanup;

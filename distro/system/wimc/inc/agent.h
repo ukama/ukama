@@ -127,11 +127,6 @@ int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid);
 int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid);
 Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
 			   char **providerURL);
-static char *create_cb_url_for_agent(char *port);
-
-/*static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
-				    char *providerURL, char *cbURL,
-				    MethodType method, int interval);
-*/
+void clear_agents(Agent *agent);
 
 #endif /* WIMC_AGENT_H */

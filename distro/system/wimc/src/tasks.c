@@ -11,6 +11,7 @@
 
 #include "wimc.h"
 #include "agent.h"
+#include "jserdes.h"
 
 /* Functions related to tasks. */
 
