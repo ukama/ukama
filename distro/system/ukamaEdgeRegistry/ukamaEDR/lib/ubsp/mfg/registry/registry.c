@@ -40,8 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 
-//#define PROPERTYJSON "mfgdata/property/property.json"
-#define PROPERTYJSON "lib/ubsp/mfgdata/property/property.json"
+#define PROPERTYJSON "mfgdata/property/property.json"
+//#define PROPERTYJSON "lib/ubsp/mfgdata/property/property.json"
 #define VERSION	"0.0.1"
 #define MAX_BOARDS	5
 

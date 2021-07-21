@@ -43,13 +43,13 @@ Manufacturing json schema for EEPROM with serail Id's.Only last four digit are p
 **For HNODE board with LTE and Mask board**
 
 ```
-./lib/ubsp/build/mfgutil -n COM -u UK-1001-COM-1102 -s mfgdata/schema/com.json -n LTE -u UK-2001-LTE-1102 -s mfgdata/schema/lte.json -n MASK -u UK-3001-MSK-1102 -s mfgdata/schema/mask.json 
+./lib/ubsp/build/mfgutil -n ComV1 -m UK-1001-COM-1102 -s mfgdata/schema/com.json -n LTE -m UK-2001-LTE-1102 -s mfgdata/schema/lte.json -n MASK -m UK-3001-MSK-1102 -s mfgdata/schema/mask.json
 ```
 
 ** For ANODE **
 
 ```
-./lib/ubsp/build/mfgutil -n "RF CTRL BOARD" -u UK-5001-RFC-1102 -s mfgdata/schema/rfctrl.json -n "RF BOARD" -u UK-4001-RFA-1102 -s mfgdata/schema/rffe.json
+./lib/ubsp/build/mfgutil -n "RF CTRL BOARD" -m UK-5001-RFC-1102 -s mfgdata/schema/rfctrl.json -n "RF BOARD" -m UK-4001-RFA-1102 -s mfgdata/schema/rffe.json
 ```
 
 ### Copy the SYS FS of the device to container
