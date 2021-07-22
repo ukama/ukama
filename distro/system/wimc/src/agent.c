@@ -122,7 +122,8 @@ int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
  *                        We can be more intelligent in future.
  */
 Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
-			   char **providerURL, char **indexURL, char **storeURL) {
+			   char **providerURL, char **indexURL,
+			   char **storeURL) {
 
   int i, j;
   Agent *ptr = agents;
@@ -230,7 +231,8 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  */
 
 static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
-				    char *providerURL, char *cbURL, char *iURL, char *sURL,
+				    char *providerURL, char *cbURL,
+				    char *iURL, char *sURL,
 				    char *method, int interval) {
 
   WimcReq *request=NULL;
@@ -365,8 +367,9 @@ static long send_request_to_agent(WReqType reqType, char *agentURL,
  *
  */
 long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
-				char *providerURL, char *indexURL, char *storeURL,
-				Agent *agent, WimcCfg *cfg, uuid_t *uuid) {
+				char *providerURL, char *indexURL,
+				char *storeURL, Agent *agent, WimcCfg *cfg,
+				uuid_t *uuid) {
 
   /* steps are:
    * 0. Generate unique ID for the content request and CB url.
@@ -378,7 +381,7 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 
   int ret=FALSE;
   long code=0;
-  char *cbURL=NULL, *method=NULL;
+  char *cbURL=NULL;
   WimcReq *request=NULL;
   json_t *json=NULL;
   int agentRetCode=0;
@@ -387,9 +390,6 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
   if (!agent && !cfg) {
     return code;
   }
-
-  /* Get the method type supported by the agent. */
-  method = agent->method;
 
   if (reqType == (WReqType)WREQ_FETCH) {
     if (!indexURL && !storeURL && !providerURL) {
@@ -406,8 +406,9 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
     goto done;
   }
 
-  request = create_wimc_request(reqType, name, tag, providerURL, cbURL, indexURL, storeURL,
-				agent->method, DEFAULT_INTERVAL);
+  request = create_wimc_request(reqType, name, tag, providerURL, cbURL,
+				indexURL, storeURL, agent->method,
+				DEFAULT_INTERVAL);
   if (!request) {
     goto done;
   }
@@ -449,8 +450,10 @@ void clear_agents(Agent *agent) {
     if (uuid_is_null(agent[i].uuid)==0) {
       free(agent[i].method);
       free(agent[i].url);
-    }
 
-    free(&agent[i]);
+      free(&agent[i]);
+    }
   }
+
+  free(agent);
 }
