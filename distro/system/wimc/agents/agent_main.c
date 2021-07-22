@@ -29,6 +29,10 @@
 #define FALSE 0
 #define VERSION "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
+
+extern long communicate_with_wimc(ReqType reqType, char *url, char *port, int method,
+				  uuid_t *uuid);
+
 /*
  * usage -- Usage options for the Agent.
  *

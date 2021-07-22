@@ -71,8 +71,8 @@ static int process_response_from_provider(WimcCfg *cfg, long statusCode,
   }
   
   for (i=0; i<count; i++) {
-    log_debug("Received Agent CB URL from provider. %d: Method: %s URL: %s",
-	      i, urls[i]->method, urls[i]->url);
+    log_debug("Received URLs from provider. %d: Method: %s URL: %s index: %s store: %s",
+	      i, urls[i]->method, urls[i]->url, urls[i]->iURL, urls[i]->sURL);
   }
 
  done:

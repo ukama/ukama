@@ -39,6 +39,8 @@
 #define JSON_AGENT_URL       "agent_url"
 #define JSON_PROVIDER_URL    "provider_url"
 #define JSON_CALLBACK_URL    "callback_url"
+#define JSON_INDEX_URL       "index_url"
+#define JSON_STORE_URL       "store_url"
 #define JSON_UPDATE_INTERVAL "update_interval"
 #define JSON_CONTENT         "content"
 #define JSON_TASK            "task"

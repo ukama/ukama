@@ -86,7 +86,7 @@ int callback_post_container(const struct _u_request *request,
   WRespType respType=WRESP_ERROR;
 
   Agent *agent=NULL;
-  char *providerURL=NULL;
+  char *providerURL=NULL, *indexURL=NULL, *storeURL=NULL;
   
   cfg = (WimcCfg *)user_data;
   urls = (ServiceURL **)calloc(sizeof(ServiceURL *), 1);
@@ -124,7 +124,8 @@ int callback_post_container(const struct _u_request *request,
   /* Step-2: find out which register agent can handle the method
    *         returned by the service provider.
    */
-  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL);
+  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL, &indexURL,
+			      &storeURL);
   if (agent == NULL) {
     resCode = 404; /*Not found but might be available in furture. */
     errStr = msprintf("No service provider found");
@@ -140,8 +141,8 @@ int callback_post_container(const struct _u_request *request,
    *         Tasks list is also updated.
    */
 
-  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
-				       agent, cfg, &uuid);
+  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL, indexURL,
+				       storeURL, agent, cfg, &uuid);
 
   /* Step-4: setup client URL where they can monitor the status
    *         of the request. 
@@ -174,6 +175,8 @@ reply:
     if (urls[i]->method && urls[i]->url) {
       free(urls[i]->method);
       free(urls[i]->url);
+      free(urls[i]->iURL);
+      free(urls[i]->sURL);
     }
     free(urls[i]);
   }

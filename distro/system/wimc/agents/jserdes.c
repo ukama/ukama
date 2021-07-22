@@ -305,5 +305,11 @@ static int deserialize_wimc_request_fetch(WFetch **fetch, json_t *json) {
   jObj = json_object_get(jcontent, JSON_METHOD);
   (*fetch)->content->method = strdup(json_string_value(jObj));
 
+  jObj = json_object_get(jcontent, JSON_INDEX_URL);
+  (*fetch)->content->indexURL = strdup(json_string_value(jObj));
+
+  jObj = json_object_get(jcontent, JSON_STORE_URL);
+  (*fetch)->content->storeURL = strdup(json_string_value(jObj));
+
   return TRUE;
 }

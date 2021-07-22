@@ -128,8 +128,18 @@ static int validate_post_request(WimcReq *req, MethodType method) {
     return WIMC_ERROR_BAD_NAME;
   }
 
-  if (validate_url(content->providerURL) != WIMC_OK) {
-    return WIMC_ERROR_BAD_URL;
+  if (method == (MethodType)CHUNK) {
+    if (validate_url(content->indexURL) != WIMC_OK) {
+      return WIMC_ERROR_BAD_URL;
+    }
+
+    if (validate_url(content->storeURL) != WIMC_OK) {
+      return WIMC_ERROR_BAD_URL;
+    }
+  } else {
+    if (validate_url(content->providerURL) != WIMC_OK) {
+      return WIMC_ERROR_BAD_URL;
+    }
   }
 
  done:
@@ -273,6 +283,8 @@ static void free_wimc_request(WimcReq *req) {
       free(content->tag);
       free(content->method);
       free(content->providerURL);
+      free(content->indexURL);
+      free(content->storeURL);
       free(content);
     }
 

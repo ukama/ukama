@@ -122,7 +122,7 @@ int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
  *                        We can be more intelligent in future.
  */
 Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
-			   char **providerURL) {
+			   char **providerURL, char **indexURL, char **storeURL) {
 
   int i, j;
   Agent *ptr = agents;
@@ -138,6 +138,8 @@ Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
       for (j=0; j < count; j++) {
 	if (strcasecmp(urls[i].method, ptr[i].method)==0) {
 	  *providerURL = urls[i].url;
+	  *indexURL    = urls[i].iURL;
+	  *storeURL    = urls[i].sURL;
 	  return ptr;
 	}
       }
@@ -163,6 +165,8 @@ static void cleanup_wimc_request(WimcReq *request) {
       free(content->tag);
       free(content->method);
       free(content->providerURL);
+      free(content->indexURL);
+      free(content->storeURL);
       free(content);
     }
 
@@ -226,7 +230,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  */
 
 static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
-				    char *providerURL, char *cbURL,
+				    char *providerURL, char *cbURL, char *iURL, char *sURL,
 				    char *method, int interval) {
 
   WimcReq *request=NULL;
@@ -254,9 +258,11 @@ static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
     fetch->interval = interval;
 
     content->name = strdup(name);
-    content->tag = strdup(tag);
+    content->tag  = strdup(tag);
     content->providerURL = strdup(providerURL);
     content->method = strdup(method);
+    content->indexURL = strdup(iURL);
+    content->storeURL = strdup(sURL);
 
     fetch->content = content;
     request->fetch = fetch;
@@ -272,6 +278,8 @@ static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
     free(content->name);
     free(content->tag);
     free(content->providerURL);
+    free(content->indexURL);
+    free(content->storeURL);
     free(content);
   }
 
@@ -357,8 +365,8 @@ static long send_request_to_agent(WReqType reqType, char *agentURL,
  *
  */
 long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
-				char *providerURL, Agent *agent,
-				WimcCfg *cfg, uuid_t *uuid) {
+				char *providerURL, char *indexURL, char *storeURL,
+				Agent *agent, WimcCfg *cfg, uuid_t *uuid) {
 
   /* steps are:
    * 0. Generate unique ID for the content request and CB url.
@@ -370,7 +378,7 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 
   int ret=FALSE;
   long code=0;
-  char *cbURL=NULL;
+  char *cbURL=NULL, *method=NULL;
   WimcReq *request=NULL;
   json_t *json=NULL;
   int agentRetCode=0;
@@ -380,8 +388,15 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
     return code;
   }
 
+  /* Get the method type supported by the agent. */
+  method = agent->method;
+
   if (reqType == (WReqType)WREQ_FETCH) {
-    if (!name && !tag && !providerURL) {
+    if (!indexURL && !storeURL && !providerURL) {
+      return code;
+    }
+
+    if (!name && !tag) {
       return code;
     }
   }
@@ -391,7 +406,7 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
     goto done;
   }
 
-  request = create_wimc_request(reqType, name, tag, providerURL, cbURL,
+  request = create_wimc_request(reqType, name, tag, providerURL, cbURL, indexURL, storeURL,
 				agent->method, DEFAULT_INTERVAL);
   if (!request) {
     goto done;

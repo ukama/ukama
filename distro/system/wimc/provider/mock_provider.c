@@ -22,6 +22,8 @@
 #define JSON_AGENT_CB          "agent-cbURL"
 #define JSON_AGENT_METHOD      "method"
 #define JSON_AGENT_URL         "url"
+#define JSON_AGENT_INDEX_URL   "index_url"
+#define JSON_AGENT_STORE_URL   "store_url"
 
 #define WIMC_MAX_NAME_LEN 128
 #define WIMC_MAX_TAG_LEN  128
@@ -43,6 +45,8 @@ typedef struct {
   int  type;    /* */
   char *method; /* Mechanisim supported by service at the url. */
   char *url;    /* callback URL for the agent. */
+  char *iURL;   /* index URL */
+  char *sURL;   /* chunk store URL */
 } dbEntry;
 
 typedef struct {
@@ -110,12 +114,10 @@ static sqlite3 *open_db(char *dbFile) {
  */
 int callback_get_containers(req_t *request, resp_t *response,
 			    void * user_data) {
-
-  int resCode=200;
+  int resCode=200, i;
   char *name=NULL, *tag=NULL;
   char *str=NULL, *response_body=NULL;
   DB *db;
-  int ret, i, found=FALSE;
   json_t *json, *resp, *agentArray;
 
   json = json_object();
@@ -146,13 +148,22 @@ int callback_get_containers(req_t *request, resp_t *response,
     if (strcmp(db->ent[i].name, name) == 0 &&
 	strcmp(db->ent[i].tag, tag) == 0) {
 
-      found = TRUE;
       /* Add to the JSON array. */
       json_t *agent = json_object();
       json_object_set_new(agent, JSON_AGENT_METHOD,
 			  json_string(db->ent[i].method));
       json_object_set_new(agent, JSON_AGENT_URL,
 			  json_string(db->ent[i].url));
+      if (strcmp(db->ent[i].method, "CHUNK") == 0) {
+	json_object_set_new(agent, JSON_AGENT_INDEX_URL,
+			    json_string(db->ent[i].iURL));
+	json_object_set_new(agent, JSON_AGENT_STORE_URL,
+			    json_string(db->ent[i].sURL));
+      } else {
+	json_object_set_new(agent, JSON_AGENT_INDEX_URL, json_string(""));
+	json_object_set_new(agent, JSON_AGENT_STORE_URL, json_string(""));
+      }
+
       json_array_append(agentArray, agent);
     }
   }
@@ -207,6 +218,10 @@ int read_entries(void *arg, int argc, char **argv, char **colName) {
       db->ent[ent].method = strdup(argv[i]);
     } else if (strcmp(colName[i], "URL") == 0) {
       db->ent[ent].url = strdup(argv[i]);
+    } else if (strcmp(colName[i], "iURL") == 0) {
+      db->ent[ent].iURL = strdup(argv[i]);
+    } else if (strcmp(colName[i], "sURL") == 0) {
+      db->ent[ent].sURL = strdup(argv[i]);
     }
   }
   
@@ -250,6 +265,10 @@ void create_db_entries_endpoint(DB *db, struct _u_instance *inst) {
   for (i=0; i<db->numEnt; i++) {
     ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].url, NULL, 0,
 			       &callback_default_ok, db);
+    ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].iURL, NULL, 0,
+			       &callback_default_ok, db);
+    ulfius_add_endpoint_by_val(inst, "GET", db->ent[i].sURL, NULL, 0,
+			       &callback_default_ok, db);
   }
 }
 
@@ -262,6 +281,8 @@ void free_db_entries(DB *db) {
     free(db->ent[i].tag);
     free(db->ent[i].method);
     free(db->ent[i].url);
+    free(db->ent[i].iURL);
+    free(db->ent[i].sURL);
   }
 
   free(db);

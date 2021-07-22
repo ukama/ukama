@@ -81,6 +81,8 @@ typedef struct _u_response resp_t;
 typedef struct {
   char *method; /* Mechanisim supported by service at the url. */
   char *url;    /* callback URL for the agent. */
+  char *iURL;   /* Index URL - only when method is chunk */
+  char *sURL;   /* Chunk store URL - only when method is chunk */
 } ServiceURL;
 
 typedef enum {
@@ -109,6 +111,8 @@ typedef struct {
   char *tag;         /* to fetch. */
   char *method;      /* Method to use with provider. */
   char *providerURL; /* service provider URL. */
+  char *indexURL;    /* index URL for CA */
+  char *storeURL;    /* chunk store */
 } WContent;
 
 typedef struct {

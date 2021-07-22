@@ -26,8 +26,7 @@ EXE=mock_provider
 
 CC=gcc
 CFLAGS+=-c -Wall -I$(ULFIUS_INC) -I$(COMMON_INC) -I./inc -D_REENTRANT -g -O0
-LDFLAGS=-L$(SRC_DIR)/$(BUILD)
-LIBS=-lulfius -lsqlite3 -ljansson -lorcania -lmicrohttpd -lcurl
+LIBS=-lulfius -lsqlite3 -ljansson -lorcania -lcurl
 
 .PHONY: all run clean
 
@@ -36,7 +35,7 @@ all: $(EXE)
 libulfius:
 	cd $(ULFIUS) && $(MAKE) static GNUTLSFLAG=1 WEBSOCKETFLAG=1 YDERFLAG=1 UWSCFLAG=1 && cp libulfius.a $(SRC_DIR)/$(BUILD)
 
-$(EXE): $(BUILD) libulfius $(OBJS)
+$(EXE): $(BUILD) $(OBJS)
 	$(CC) $(OBJS) -o $(BUILD)/$@ $(LDFLAGS) $(LIBS)
 	echo "Binary available at: $(BUILD)/$(EXE)"
 

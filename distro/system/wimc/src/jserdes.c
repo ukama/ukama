@@ -98,8 +98,9 @@ static int serialize_wimc_request_fetch(WimcReq *req, json_t **json) {
   json_object_set_new(jcontent, JSON_NAME, json_string(content->name));
   json_object_set_new(jcontent, JSON_TAG, json_string(content->tag));
   json_object_set_new(jcontent, JSON_METHOD, json_string(content->method));
-  json_object_set_new(jcontent, JSON_PROVIDER_URL,
-		      json_string(content->providerURL));
+  json_object_set_new(jcontent, JSON_PROVIDER_URL, json_string(content->method));
+  json_object_set_new(jcontent, JSON_INDEX_URL, json_string(content->indexURL));
+  json_object_set_new(jcontent, JSON_STORE_URL, json_string(content->storeURL));
 
   return TRUE;
 }
@@ -268,6 +269,7 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
   int i=0, j=0, count=0;
   json_t *root=NULL, *jArray=NULL;
   json_t *elem=NULL, *method=NULL, *url=NULL;
+  json_t *iURL=NULL, *sURL=NULL;
 
   /* sanity check */
   if (!json) return FALSE;
@@ -295,10 +297,15 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
       
       method = json_object_get(elem, JSON_METHOD);
       url    = json_object_get(elem, JSON_URL);
+      iURL   = json_object_get(elem, JSON_INDEX_URL);
+      sURL   = json_object_get(elem, JSON_STORE_URL);
 
-      if (method && url) {
+      if (method && url && iURL && sURL) {
 	urls[i]->method = strdup(json_string_value(method));
 	urls[i]->url    = strdup(json_string_value(url));
+	/* index and store URL will be strlen=0 if method!=chunk */
+	urls[i]->iURL   = strdup(json_string_value(iURL));
+	urls[i]->sURL   = strdup(json_string_value(sURL));
       }
     }
   }
@@ -309,6 +316,8 @@ int deserialize_provider_response(ServiceURL **urls, int *counter,
   for (j=0; j<i; j++) {
     free(urls[j]->method);
     free(urls[j]->url);
+    free(urls[j]->iURL);
+    free(urls[j]->sURL);
   }
   
   if (*urls)
