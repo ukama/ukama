@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: LGPL-2.1+
+
+[Distribution]
+Distribution=fedora
+Release=31
+
+[Output]
+Format=raw_gpt
+Bootable=yes
+
+[Partitions]
+RootSize=2G
+
+[Packages]
+BuildPackages=
+        diffutils
+        fuse-devel
+        gcc
+        libacl-devel
+        libcurl-devel
+        libzstd-devel
+        openssl-devel
+        meson
+        /usr/bin/sphinx-build
+        pkgconfig
+        rsync
+        xz-devel
+Packages=
+        fuse

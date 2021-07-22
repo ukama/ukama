@@ -1,0 +1,8 @@
+#!/bin/sh -ex
+# SPDX-License-Identifier: LGPL-2.1+
+
+export LC_CTYPE=C.UTF-8
+meson build
+ninja -C build all
+ninja -C build test
+ninja -C build install
