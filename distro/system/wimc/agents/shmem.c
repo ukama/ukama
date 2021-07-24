@@ -23,23 +23,23 @@
 
 void *create_shared_memory(char *memFile, size_t size) {
 
+  int memFd;
   int prot=0, flags=0, ret;
-  int memFd=0;
   char *path=NULL;
-  
+
   if (memFile == NULL) {
     path = DEFAULT_SHMEM;
   } else {
     path = memFile;
   }
-  
+
   memFd = shm_open(path, O_CREAT | O_RDWR, S_IRWXU);
   if (memFd == -1) {
     log_error("Error creating shared memory object. Error: %s",
 	      strerror(errno));
     goto fail;
   }
-  
+
   /* Truncate to the right size. */
   ret = ftruncate(memFd, size);
   if (ret == -1) {
@@ -47,7 +47,7 @@ void *create_shared_memory(char *memFile, size_t size) {
 	      size, strerror(errno));
     goto fail;
   }
-  
+
   /* readable and writeable */
   prot = PROT_READ | PROT_WRITE;
 
@@ -61,18 +61,49 @@ void *create_shared_memory(char *memFile, size_t size) {
 }
 
 /*
+ * delete_shared_memory --
+ *
+ */
+void delete_shared_memory(char *memFile, void *shMem, size_t size) {
+
+  int ret;
+
+  ret = munmap(shMem, size);
+  if (ret==-1) {
+    log_error("Failed to unmap shared memory of size: %d. Error: %s", size,
+	      strerror(errno));
+    return;
+  }
+  free(shMem);
+  shMem = NULL;
+
+  ret = shm_unlink(memFile);
+  if (ret==-1) {
+    log_error("Failed to close shared memory object. Error: %s",
+	      strerror(errno));
+    return;
+  }
+}
+
+/*
  * read_data_and_update_wimc -- Read data available at the shmem after 
  *                              certain interval and send it back to wimc 
  *                              callback URL.
  */
 void read_stats_and_update_wimc(TStats *stats, WFetch *fetch) {
 
-  int ret, interval;
+  int interval;
   long code;
   
   /* sanity check. */
-  if (stats == NULL && fetch == NULL)
+  if (fetch == NULL)
     return;
+
+  if (stats == NULL) {
+    /* This can happen when 1. not yet created or 2. is freed */
+    log_error("Trying to access invalid shared memory object");
+    return;
+  }
   
   if (fetch->interval==0) {
     interval=DEFAULT_INTERVAL;
@@ -87,22 +118,22 @@ void read_stats_and_update_wimc(TStats *stats, WFetch *fetch) {
       log_error("Failed to send update to the wimc.d. Exit");
       goto cleanup;
     }
-    
+
     /* We exit if agent is done. */
     if (stats->stop == TRUE) {
       goto cleanup;
     }
-    
+
     /* Also exit if task is done or if there is an error. */
     if (stats->status == (TaskStatus)WSTATUS_DONE ||
 	stats->status == (TaskStatus)WSTATUS_ERROR) {
       goto cleanup;
     }
-    
+
     /* Otherwise sleep for 'interval' and repeat again. */
     wait(interval);
   } while(TRUE);
-       
+
  cleanup:
 
   return;

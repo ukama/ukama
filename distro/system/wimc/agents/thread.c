@@ -31,14 +31,19 @@ typedef struct {
   WFetch  *fetch;
 } TParams;
 
+/* For shared memory object and map */
+static char *memFile=NULL;
+static void *shMem=NULL;
+
 static int is_valid_folder(char *folder);
 static void log_wait_status(int status);
-static void configure_runtime_args(WFetch *fetch, char *memFile, char **arg);
+static void configure_runtime_args(WFetch *fetch, char **arg);
 static void *execute_agent(void *data);
 void request_handler(WFetch *fetch);
 
 /* from shmem. */
 extern void *create_shared_memory(char *memFile, size_t size);
+extern void delete_shared_memory(char *memFile, void *shMem, size_t size);
 extern void read_stats_and_update_wimc(TStats *stats, WFetch *fetch);
 
 /*
@@ -97,13 +102,12 @@ static void exit_thread(void *retVal) {
  * configure_runtime_args -- setup runtime argument for the agent. 
  *
  */
-static void configure_runtime_args(WFetch *fetch, char *memFile, char **arg) {
+static void configure_runtime_args(WFetch *fetch, char **arg) {
 
   char *argv=NULL;
   WContent *content=NULL;
   char folder[WIMC_MAX_PATH_LEN];
   char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
-  char *shMem=NULL;
   
   /* sanity check. */
   if (content->indexURL==NULL && content->storeURL==NULL) 
@@ -133,16 +137,9 @@ static void configure_runtime_args(WFetch *fetch, char *memFile, char **arg) {
     mkdir(folder, 0700);
   }
 
-  if (memFile) {
-    shMem = memFile;
-  } else {
-    shMem = DEFAULT_SHMEM;
-  }
-  
   /* Put everything together */
   sprintf(argv, "%s extract %s --store %s --shmem %s %s", AGENT_EXEC,
-	  content->indexURL, content->storeURL, shMem, folder);
-  log_debug("Agent runtime arguments: %s", argv);
+	  content->indexURL, content->storeURL, memFile, folder);
   
   return;
   
@@ -159,43 +156,61 @@ static void configure_runtime_args(WFetch *fetch, char *memFile, char **arg) {
 static void *execute_agent(void *data) {
 
   WFetch *fetch;
-  char *args=NULL, *memFile=NULL;
+  char *args=NULL;
   TStats *stats=NULL;
   TParams *params;
-  void *shMem=NULL;
   pid_t pid=0;
   int ret;
   pthread_t tid;
+  char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
   
   fetch = (WFetch *)data;
 
   stats = (TStats *)calloc(1, sizeof(TStats));
-  if (stats==NULL) {
-    log_error("Memory allocation error. size: %s", sizeof(TStats));
-    exit_thread(NULL);
+  params = (TParams *)malloc(sizeof(TParams));
+
+  if (stats==NULL && params==NULL) {
+    log_error("Memory allocation error. size: %s %s", sizeof(TStats),
+	      sizeof(TParams));
+    return (void *)0;
   }
       
   /* de-attach itself from the parent. */
   pthread_detach(pthread_self());
 
-  /* 1. configure runtime argument for agent. */
-  configure_runtime_args(fetch, shMem, &args); /* XXX - free args. */
+  /* Step 1. configure runtime argument for agent. */
+  if (!uuid_is_null(fetch->uuid)) {
+    memFile = (char *)calloc(1, WIMC_MAX_PATH_LEN);
+    if (memFile==NULL) {
+      log_error("Memory allocation error. size: %s", WIMC_MAX_PATH_LEN);
+      return (void *)0;
+    }
+    uuid_unparse(fetch->uuid, idStr);
+    sprintf(memFile, "%s.shmem", idStr);
+  } else {
+    memFile = strdup(DEFAULT_SHMEM);
+  }
+
+  configure_runtime_args(fetch, &args);
   if (args == NULL) {
     log_error("Can not setup runtime argument for the Agent");
     exit_thread(NULL);
+  } else {
+    log_debug("Agent runtime arguments: %s", args);
   }
   
-  /* 2. configure shared memory */
+  /* Step 2. configure shared memory */
   shMem = create_shared_memory(memFile, sizeof(stats)); /* use default file */
   if (shMem == MAP_FAILED || shMem == NULL) {
     log_error("Error creating shared memory of size: %d. Error: %s",
 	      sizeof(stats), strerror(errno));
+    return (void *)0;
     exit_thread(NULL);
   }
 
   stats = (TStats *)shMem;
   
-  /* 3. Fork and exec */
+  /* Step 3. Fork and exec */
   pid = fork();
   if (pid < 0) {
     log_error("Failed to fork for agent");
@@ -207,20 +222,28 @@ static void *execute_agent(void *data) {
     _exit(127);
   } else {
 
-    params = (TParams *)malloc(sizeof(TParams));
     params->stats = stats;
     params->fetch = fetch;
     
-    /* 4. process status chanage and update wimc.d */
+    /* Step 4. process status chanage and update wimc.d */
     /* Thread to read the update status from agent and send to WIMC */
     ret = pthread_create(&tid, NULL, read_stats_and_update_wimc, params);
     if (ret) { /* Some error. */
       log_error("Error creating agent thread. Return code: %s", ret);
-      return (void *) 0;
+      goto failure;
     }
+    free(args);
+    free(params);
     return (void *) pid;
   }
-  
+
+ failure:
+  delete_shared_memory(memFile, shMem, sizeof(TStats));
+  free(params);
+  free(memFile);
+  free(args);
+
+  return (void *)0;
 }
 
 /*
@@ -235,16 +258,16 @@ void request_handler(WFetch *fetch) {
    * 2. Setup runtime argument for CA-Sync.
    * 3. setup shared memory space for status update etc.
    * 3. Fork and run ca-sysnc.
-   * 4. monitor child process exit and its status.
-   * 5. update the wimc.d, on the callback URL, transfer status after 'interval'
+   * 4. update the wimc.d, on the callback URL, transfer status after 'interval'
+   * 5. monitor child process exit and its status.
+   *
    */
-
   int ret, wstatus;
   pthread_t tid;
   void *status;
   pid_t pid, w;
-  
-  /* Thread which will fork/exec the agent. */
+
+  /* Step1-4: Thread which will fork/exec the agent and send status via CB */
   ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
   if (ret) { /* Some error. */
     log_error("Error creating agent thread. Return code: %s", ret);
@@ -258,7 +281,8 @@ void request_handler(WFetch *fetch) {
   if (!pid) { /* XXX */
     return;
   }
-  
+
+  /* Step 5. wait for the agent to exit. */
   do {
     w = waitpid(pid, &wstatus, WUNTRACED | WCONTINUED);
     
@@ -280,5 +304,10 @@ void request_handler(WFetch *fetch) {
       printf("continued\n");
     }
   } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
-  
+
+  /* Agent is done. clearup shared the shared memory object and mapping */
+  delete_shared_memory(memFile, shMem, sizeof(TStats));
+  free(memFile);
+  memFile = NULL;
+  shMem = NULL;
 }
