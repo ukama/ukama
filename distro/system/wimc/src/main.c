@@ -280,6 +280,7 @@ int main (int argc, char **argv) {
 
   free(tasks);
   free(cfg);
+  free(agents);
   
   return 1;
 }

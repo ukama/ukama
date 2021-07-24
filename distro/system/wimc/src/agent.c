@@ -450,10 +450,6 @@ void clear_agents(Agent *agent) {
     if (uuid_is_null(agent[i].uuid)==0) {
       free(agent[i].method);
       free(agent[i].url);
-
-      free(&agent[i]);
     }
   }
-
-  free(agent);
 }
