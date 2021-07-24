@@ -55,9 +55,11 @@
 #define WIMC_EP_AGENT    "/admin/agent"
 #define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
-#define WIMC_MAX_URL_LEN    1024
 #define WIMC_MAX_NAME_LEN   256
 #define WIMC_MAX_PATH_LEN   256
+#define WIMC_MAX_ARGS_LEN   1024
+#define WIMC_MAX_URL_LEN    1024
+#define WIMC_MAX_ERR_STR    1024
 
 #define WIMC_ACTION_FETCH_STR      "fetch"
 #define WIMC_ACTION_UPDATE_STR     "update"
@@ -74,6 +76,8 @@
 
 #define TRUE 1
 #define FALSE 0
+
+#define DEFAULT_SHMEM "shared_memory"
 
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;
@@ -105,6 +109,14 @@ typedef enum {
   CHUNK,
 } MethodType;
 
+typedef enum {
+  WSTATUS_PEND=1,
+  WSTATUS_START,
+  WSTATUS_RUNNING,
+  WSTATUS_DONE,
+  WSTATUS_ERROR
+} TaskStatus;
+
 typedef struct {
 
   char *name;        /* to fetch. */
@@ -117,7 +129,7 @@ typedef struct {
 
 typedef struct {
 
-  uuid_t   uuid;       /* UID for future transactions */
+  uuid_t   uuid;     /* UID for future transactions */
   char     *cbURL;   /* Callback URL to send update (from Agent to wimc) */
   int      interval; /* update interval */
   WContent *content; /* Content definition */
@@ -164,6 +176,31 @@ typedef struct wtask {
   struct wtask *next; /* pointer to next record. */
 } WTasks;
 
+typedef struct tStats {
+
+  int start;
+  int stop;
+  int exitStatus;  /* as returned by waitpid */
+
+  /* various stats */
+  uint64_t n_bytes;
+  uint64_t n_requests;
+  uint64_t n_local_requests;
+  uint64_t n_seed_requests;
+  uint64_t n_remote_requests;
+  uint64_t n_local_bytes;
+  uint64_t n_seed_bytes;
+  uint64_t n_remote_bytes;
+  uint64_t total_requests;
+  uint64_t total_bytes;
+  uint64_t nsec;
+  uint64_t runtime_nsec;
+
+  TaskStatus status;
+  char statusStr[WIMC_MAX_ERR_STR];
+} TStats;
+
+
 typedef struct {
 
   char    *clientPort;
@@ -175,6 +212,5 @@ typedef struct {
   Agent   **agents;    /* Ptr to Agents, needed for http callback func() */
   WTasks  **tasks;     /* Ptr to Tasks, mostly for http cb */
 } WimcCfg;
-
 
 #endif /* WIMC_H */

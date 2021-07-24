@@ -33,7 +33,7 @@ static char *create_cb_url(char *port);
 static char *create_wimc_url(char *url);
 static void cleanup_agent_request(AgentReq *request);
 static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      uuid_t *uuid);
+				      uuid_t *uuid, TStats *stats);
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp);
 static void process_response_from_wimc(ReqType reqType, long statusCode,
@@ -77,7 +77,7 @@ static char *create_wimc_url(char *url) {
 }
 
 /* 
- *
+ * cleanup_agent_request --
  *
  */
 static void cleanup_agent_request(AgentReq *request) {
@@ -102,15 +102,35 @@ static void cleanup_agent_request(AgentReq *request) {
 }
 
 /*
+ * get_task_status --
+ *
+ */
+
+static int get_task_status(TaskStatus state) {
+
+  if (state == (TaskStatus)WSTATUS_PEND) {
+    return REQUEST;
+  } else if (state == (TaskStatus)WSTATUS_START ||
+	     state == (TaskStatus)WSTATUS_RUNNING) {
+    return FETCH;
+  } else if (state == (TaskStatus)WSTATUS_DONE) {
+    return DONE;
+  } else if (state == (TaskStatus)WSTATUS_ERROR) {
+    return ERR;
+  }
+}
+
+/*
  * create_agent_request --
  *
  */
 static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
-				      uuid_t *uuid) {
+				      uuid_t *uuid, TStats *stats) {
 
-  AgentReq *request;
-  Register *reg;
-  UnRegister *unreg;
+  AgentReq *request=NULL;
+  Register *reg=NULL;
+  UnRegister *unreg=NULL;
+  Update *update=NULL;
   
   request = (AgentReq *)calloc(1, sizeof(AgentReq));
   if (request==NULL) {
@@ -146,6 +166,25 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
 
     request->type = REQ_UNREG;
     request->unReg = unreg;
+  } else if (type == (ReqType)REQ_UPDATE) {
+
+    update = (Update *)malloc(sizeof(Update));
+    if (!update) {
+      goto done;
+    }
+
+    uuid_copy(update->uuid, *uuid);
+    update->totalKB = stats->total_requests / 1024; /* in kilobytes */
+    update->transferKB = stats->total_bytes / 1024;
+    update->transferState = get_task_status(stats->status);
+
+    if (update->transferState == WSTATUS_DONE ||  /* content path */
+	update->transferState == WSTATUS_ERROR) { /* error str */
+      update->voidStr = strdup(stats->statusStr);
+    }
+
+    request->type = REQ_UPDATE;
+    request->update = update;
   }
 
   return request;
@@ -164,12 +203,19 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
  if (request) {
    free(request);
  }
+
+ if (update) {
+   if (update->voidStr)
+     free(update->voidStr);
+   free(update);
+ }
  
  return NULL;
 }
 
 /*
  * response_callback --
+ *
  */
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
 				void *userp) {
@@ -284,27 +330,37 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
  */
 
 long communicate_with_wimc(ReqType reqType, char *url, char *port,
-			   int method, uuid_t *uuid) {
+			   int method, uuid_t *uuid, void *data) {
 
   int ret;
   long code=0;
   char *cbURL=NULL, *wimcURL=NULL;
   AgentReq *request=NULL;
   json_t *json=NULL;
+  TStats *stats=NULL;
 
   /* Sanity check. Method can be NULL; only for REQ_REG */
-  if (!url && !port) {
-    return code;
-  }
-  
-  cbURL   = create_cb_url(port);
-  wimcURL = create_wimc_url(url);
-  
-  if (!cbURL || !wimcURL) {
-    goto done;
+  if (reqType == (ReqType)REQ_UPDATE) {
+    if (!url && !data) {
+      return code;
+    }
+
+    cbURL = url;
+    stats = (TStats *)data;
+  } else if (reqType == (ReqType)REQ_REG) {
+    if (!url && !port) {
+      return code;
+    }
+
+    cbURL   = create_cb_url(port);
+    wimcURL = create_wimc_url(url);
+
+    if (!cbURL || !wimcURL) {
+      goto done;
+    }
   }
 
-  request = create_agent_request(reqType, method, cbURL, uuid);
+  request = create_agent_request(reqType, method, cbURL, uuid, stats);
   if (!request) {
     goto done;
   }

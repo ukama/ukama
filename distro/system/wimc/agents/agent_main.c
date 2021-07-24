@@ -30,8 +30,8 @@
 #define VERSION "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
 
-extern long communicate_with_wimc(ReqType reqType, char *url, char *port, int method,
-				  uuid_t *uuid);
+extern long communicate_with_wimc(ReqType reqType, char *url, char *port,
+				  int method, uuid_t *uuid, void *data);
 
 /*
  * usage -- Usage options for the Agent.
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
   }
   
   /* Step2. register itself on the WIMC. */
-  code = communicate_with_wimc(REQ_REG, wimcURL, port, method, &uuid);
+  code = communicate_with_wimc(REQ_REG, wimcURL, port, method, &uuid, NULL);
   if (!code || code == 400) { /* Failure to register. */
     log_error("Failed to register to wimc.d. Exiting");
     goto cleanup;

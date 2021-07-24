@@ -52,7 +52,7 @@ CFLAGS+=-g -Wall -D_REENTRANT
 #LDFLAGS=-L$(ULFIUS)
 LIBS=-lc -lulfius -lorcania -lsqlite3 -ljansson -lcurl -luuid
 PROVIDER_LIBS=-lulfius -lsqlite3 -ljansson -luuid
-AGENTS_LIBS=-lulfius -lorcania -ljansson -lcurl -luuid
+AGENTS_LIBS=-lulfius -lorcania -ljansson -lcurl -luuid -lpthread -lrt
 
 INCFLAGS:=$(INC_DIRS:%=-I%)
 DEPFLAGS := -MMD -MP

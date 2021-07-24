@@ -251,6 +251,8 @@ int agent_callback_post(const struct _u_request *request,
     retCode = 200;
     resBody = msprintf("OK");
   }
+
+  request_handler(req->fetch);
   
  done:
 
