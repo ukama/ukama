@@ -200,7 +200,6 @@ typedef struct tStats {
   char statusStr[WIMC_MAX_ERR_STR];
 } TStats;
 
-
 typedef struct {
 
   char    *clientPort;

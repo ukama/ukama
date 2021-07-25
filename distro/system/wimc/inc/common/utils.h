@@ -14,7 +14,7 @@
 char *convert_method_to_str(MethodType method);
 MethodType convert_str_to_method(char *str);
 char *convert_state_to_str(TransferState state);
-char *convert_type_to_str(WReqType type);
+char *convert_type_to_str(ReqType type);
 AgentState convert_str_to_state(char *str);
 ReqType convert_str_to_type(char *str);
 WReqType convert_str_to_wType(char *str);

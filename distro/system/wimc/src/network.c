@@ -82,6 +82,12 @@ void setup_admin_endpoints(WimcCfg *cfg, struct _u_instance *instance) {
   ulfius_add_endpoint_by_val(instance, "POST", WIMC_EP_AGENT, NULL, 0,
                              &callback_post_agent, cfg);
 
+  /* 4. /admin/agent/update:
+   *    PUT - task update from agent.
+   */
+  ulfius_add_endpoint_by_val(instance, "PUT", WIMC_EP_AGENT_UPDATE, NULL, 0,
+                             &callback_put_agent_update, cfg);
+
   /* default endpoint. */
   ulfius_set_default_endpoint(instance, &callback_default, cfg);
 }

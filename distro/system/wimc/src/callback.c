@@ -240,6 +240,24 @@ int callback_get_stats(const struct _u_request *request,
   return U_CALLBACK_CONTINUE;
 }
 
+/*
+ * callback_put_agent_update --
+ *
+ */
+int callback_put_agent_update(const struct _u_request *request,
+			      struct _u_response *response,
+			      void *user_data) {
+
+  char *post_params = print_map(request->map_post_body);
+  char *response_body = msprintf("OK!\n%s", post_params);
+
+  ulfius_set_string_body_response(response, 200, response_body);
+  o_free(response_body);
+  o_free(post_params);
+
+  return U_CALLBACK_CONTINUE;
+}
+
 static void free_agent_request(AgentReq *req) {
 
   if (req->type == REQ_REG) {

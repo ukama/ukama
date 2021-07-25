@@ -17,7 +17,7 @@
 
 #include "wimc.h"
 #include "err.h"
-#include "utils.h"
+#include "common/utils.h"
 #include "agent/jserdes.h"
 
 #define AGENT_EP "container/"
@@ -96,6 +96,12 @@ static void cleanup_agent_request(AgentReq *request) {
 
   if (request->unReg) {
     free(request->unReg);
+  }
+
+  if (request->update) {
+    if (request->update->voidStr)
+      free(request->update->voidStr);
+    free(request->update);
   }
   
   free(request);
@@ -204,11 +210,7 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
    free(request);
  }
 
- if (update) {
-   if (update->voidStr)
-     free(update->voidStr);
-   free(update);
- }
+
  
  return NULL;
 }
@@ -294,21 +296,27 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
   headers = curl_slist_append(headers, "Accept: application/json");
   headers = curl_slist_append(headers, "Content-Type: application/json");
   headers = curl_slist_append(headers, "charset: utf-8");
-  
+
   curl_easy_setopt(curl, CURLOPT_URL, wimcURL);
-  
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+
+  if (reqType == REQ_UPDATE) {
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+  } else {
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+  }
+
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json_str);
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "agent/0.1");
-  
+
   res = curl_easy_perform(curl);
 
   if (res != CURLE_OK) {
-    log_error("Error sending request to WIMC: %s", curl_easy_strerror(res));
+    log_error("Error sending request to WIMC at URL %s: %s", wimcURL,
+	      curl_easy_strerror(res));
   } else {
     /* get status code. */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
@@ -320,7 +328,7 @@ static long send_request_to_wimc(ReqType reqType, char *wimcURL,
   curl_slist_free_all(headers);
   curl_easy_cleanup(curl);
   curl_global_cleanup();
-  
+
   return code;
 }
 
@@ -345,7 +353,7 @@ long communicate_with_wimc(ReqType reqType, char *url, char *port,
       return code;
     }
 
-    cbURL = url;
+    wimcURL = strdup(url);
     stats = (TStats *)data;
   } else if (reqType == (ReqType)REQ_REG) {
     if (!url && !port) {
@@ -372,13 +380,15 @@ long communicate_with_wimc(ReqType reqType, char *url, char *port,
 
   code = send_request_to_wimc(reqType, wimcURL, json, uuid);
   if (code == 200) {
-    log_debug("WIMC.d registration: success. Return code: %d", code);
+    log_debug("WIMC.d %s: success. URL: %s Return code: %d", 
+	      convert_type_to_str(reqType), wimcURL, code);
   } else {
-    log_debug("WIMC.d registration: failed. Return code: %d", code);
+    log_error("WIMC.d %s: failed. URL: %s Return code: %d",
+	      convert_type_to_str(reqType), wimcURL, code);
   }
-  
+
  done:
-  
+
   json_decref(json);
   cleanup_agent_request(request);
   if (cbURL) {

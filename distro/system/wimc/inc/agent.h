@@ -71,6 +71,13 @@ typedef enum {
   INACTIVE
 } AgentState;
 
+/* For passing thread arguments */
+typedef struct {
+
+  void *stats;
+  void *fetch;
+} TParams;
+
 typedef struct {
 
   uuid_t uuid;

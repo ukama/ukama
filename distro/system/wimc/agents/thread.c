@@ -21,15 +21,8 @@
 #include "agent.h"
 #include "wimc.h"
 
-#define AGENT_EXEC "ca-sync"
+#define AGENT_EXEC "/usr/bin/casync"
 #define DEFAULT_PATH "/tmp/"
-
-/* For passing thread arguments */
-typedef struct {
-
-  TStats *stats;
-  WFetch  *fetch;
-} TParams;
 
 /* For shared memory object and map */
 static char *memFile=NULL;
@@ -39,6 +32,7 @@ static int is_valid_folder(char *folder);
 static void log_wait_status(int status);
 static void configure_runtime_args(WFetch *fetch, char **arg);
 static void *execute_agent(void *data);
+static void copy_fetch_request(WFetch **dest, WFetch *src);
 void request_handler(WFetch *fetch);
 
 /* from shmem. */
@@ -64,6 +58,100 @@ static int is_valid_folder(char *folder) {
   } else {
     return FALSE;
   }
+}
+
+/*
+ * reset_stat_counter --
+ *
+ */
+static void reset_stat_counter(void *ptr) {
+
+  TStats *stat = (TStats *)ptr;
+
+  stat->start = 0;
+  stat->stop = 0;
+  stat->exitStatus =0;
+
+  stat->n_bytes=UINT64_MAX;
+  stat->n_requests=UINT64_MAX;
+  stat->n_local_requests=UINT64_MAX;
+  stat->n_seed_requests=UINT64_MAX;
+  stat->n_remote_requests=UINT64_MAX;
+  stat->n_local_bytes=UINT64_MAX;
+  stat->n_seed_bytes=UINT64_MAX;
+  stat->n_remote_bytes=UINT64_MAX;
+  stat->total_requests=UINT64_MAX;
+  stat->total_bytes=UINT64_MAX;
+  stat->nsec=UINT64_MAX;
+  stat->runtime_nsec=UINT64_MAX;
+
+  stat->status=WSTATUS_PEND;
+  memset(stat->statusStr, 0, WIMC_MAX_ERR_STR);
+}
+
+/*
+ * copy_fetch_request --
+ *
+ */
+static void copy_fetch_request(WFetch **dest, WFetch *src) {
+
+  WContent *content;
+  WFetch *df;
+
+  if (src == NULL)
+    return;
+
+  *dest = (WFetch *)calloc(1, sizeof(WFetch));
+  if (*dest == NULL) return;
+
+  df = *dest;
+
+  uuid_copy(df->uuid, src->uuid);
+  df->cbURL = strdup(src->cbURL);
+  df->interval = src->interval;
+
+  df->content = (WContent *)calloc(1, sizeof(WContent));
+  if (df->content == NULL) {
+    goto fail;
+  }
+
+  content = df->content;
+  content->name = strdup(src->content->name);
+  content->tag  = strdup(src->content->tag);
+  content->method = strdup(src->content->method);
+  content->providerURL = strdup(src->content->providerURL);
+  content->indexURL = strdup(src->content->indexURL);
+  content->storeURL = strdup(src->content->storeURL);
+
+  return;
+
+ fail:
+  free(df->cbURL);
+  free(df);
+}
+
+/*
+ * free_fetch_request --
+ *
+ */
+void free_fetch_request(WFetch *ptr) {
+
+  WContent *cPtr;
+
+  if (!ptr) return;
+
+  free(ptr->cbURL);
+  cPtr = ptr->content;
+
+  if (!cPtr) return;
+
+  free(cPtr->name);
+  free(cPtr->tag);
+  free(cPtr->method);
+  free(cPtr->providerURL);
+  free(cPtr->indexURL);
+  free(cPtr->storeURL);
+  free(cPtr);
 }
 
 /*
@@ -110,11 +198,12 @@ static void configure_runtime_args(WFetch *fetch, char **arg) {
   char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
   
   /* sanity check. */
-  if (content->indexURL==NULL && content->storeURL==NULL) 
-    return;
+  if (fetch==NULL) return;
 
   content = fetch->content;
   
+  if (content->indexURL==NULL && content->storeURL==NULL) return;
+
   *arg = (char *)calloc(1, WIMC_MAX_ARGS_LEN);
   if (*arg==NULL) 
     return;
@@ -166,17 +255,15 @@ static void *execute_agent(void *data) {
   
   fetch = (WFetch *)data;
 
-  stats = (TStats *)calloc(1, sizeof(TStats));
   params = (TParams *)malloc(sizeof(TParams));
 
-  if (stats==NULL && params==NULL) {
-    log_error("Memory allocation error. size: %s %s", sizeof(TStats),
-	      sizeof(TParams));
+  if (params==NULL) {
+    log_error("Memory allocation error. size: %s", sizeof(TParams));
     return (void *)0;
   }
       
   /* de-attach itself from the parent. */
-  pthread_detach(pthread_self());
+  // pthread_detach(pthread_self()); XXX remove me.
 
   /* Step 1. configure runtime argument for agent. */
   if (!uuid_is_null(fetch->uuid)) {
@@ -200,15 +287,14 @@ static void *execute_agent(void *data) {
   }
   
   /* Step 2. configure shared memory */
-  shMem = create_shared_memory(memFile, sizeof(stats)); /* use default file */
+  shMem = create_shared_memory(memFile, sizeof(TStats)); /* use default file */
   if (shMem == MAP_FAILED || shMem == NULL) {
     log_error("Error creating shared memory of size: %d. Error: %s",
-	      sizeof(stats), strerror(errno));
+	      sizeof(TStats), strerror(errno));
     return (void *)0;
     exit_thread(NULL);
   }
-
-  stats = (TStats *)shMem;
+  reset_stat_counter(shMem);
   
   /* Step 3. Fork and exec */
   pid = fork();
@@ -222,8 +308,8 @@ static void *execute_agent(void *data) {
     _exit(127);
   } else {
 
-    params->stats = stats;
-    params->fetch = fetch;
+    params->stats = shMem;
+    copy_fetch_request((WFetch **)&params->fetch, fetch);
     
     /* Step 4. process status chanage and update wimc.d */
     /* Thread to read the update status from agent and send to WIMC */
@@ -266,14 +352,19 @@ void request_handler(WFetch *fetch) {
   pthread_t tid;
   void *status;
   pid_t pid, w;
-
+  
+#if 0
   /* Step1-4: Thread which will fork/exec the agent and send status via CB */
   ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
   if (ret) { /* Some error. */
     log_error("Error creating agent thread. Return code: %s", ret);
     return;
   }
+#endif
 
+  execute_agent((void *)fetch);
+
+#if 0
   pthread_join(tid, &status);
 
   pid = (pid_t)status;
@@ -307,6 +398,8 @@ void request_handler(WFetch *fetch) {
 
   /* Agent is done. clearup shared the shared memory object and mapping */
   delete_shared_memory(memFile, shMem, sizeof(TStats));
+#endif
+  
   free(memFile);
   memFile = NULL;
   shMem = NULL;

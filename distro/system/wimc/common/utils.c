@@ -132,3 +132,13 @@ char *convert_uuid_to_str(uuid_t uuid) {
   return str;
 }
 
+char *convert_type_to_str(ReqType req) {
+
+  if (req == REQ_REG) {
+    return AGENT_REQ_TYPE_REG_STR;
+  } else if (req == REQ_UNREG) {
+    return AGENT_REQ_TYPE_UNREG_STR;
+  } else if (req == REQ_UPDATE) {
+    return AGENT_REQ_TYPE_UPDATE_STR;
+  }
+}

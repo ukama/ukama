@@ -50,6 +50,9 @@ int callback_delete_container(const struct _u_request *request,
 			      struct _u_response *response, void *user_data);
 int callback_get_stats(const struct _u_request *request,
 		       struct _u_response *response, void *user_data);
+int callback_put_agent_update(const struct _u_request *request,
+			      struct _u_response *response,
+			      void *user_data);
 int callback_post_agent(const struct _u_request *request,
 			struct _u_response *response, void *user_data);
 int callback_get_task(const struct _u_request *request,

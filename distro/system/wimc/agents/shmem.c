@@ -90,14 +90,22 @@ void delete_shared_memory(char *memFile, void *shMem, size_t size) {
  *                              certain interval and send it back to wimc 
  *                              callback URL.
  */
-void read_stats_and_update_wimc(TStats *stats, WFetch *fetch) {
+void read_stats_and_update_wimc(void *args) {
 
+  TParams *params;
+  TStats *stats;
+  WFetch *fetch;
   int interval;
   long code;
+
+  params = (TParams *)args;
   
   /* sanity check. */
-  if (fetch == NULL)
+  if (params == NULL)
     return;
+
+  stats = (TStats *)params->stats;
+  fetch = (WFetch *)params->fetch;
 
   if (stats == NULL) {
     /* This can happen when 1. not yet created or 2. is freed */
@@ -112,10 +120,11 @@ void read_stats_and_update_wimc(TStats *stats, WFetch *fetch) {
   }
 
   do {
+    log_debug("Sending update to wimc.d ...");
     code = communicate_with_wimc(REQ_UPDATE, fetch->cbURL, NULL, NULL,
 				 fetch->uuid, (void *)stats);
-    if (!code || code == 400) {
-      log_error("Failed to send update to the wimc.d. Exit");
+    if (!code || code == 400 || code == 404) {
+      log_error("Failed to send update to the wimc.d. Thread Exit");
       goto cleanup;
     }
 
@@ -131,10 +140,11 @@ void read_stats_and_update_wimc(TStats *stats, WFetch *fetch) {
     }
 
     /* Otherwise sleep for 'interval' and repeat again. */
-    wait(interval);
+    sleep(interval);
   } while(TRUE);
 
  cleanup:
-
+  free_fetch_request(fetch);
+  free(fetch);
   return;
 }
