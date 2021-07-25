@@ -92,6 +92,8 @@ libshared_sources = files('''
         set.h
         siphash24.c
         siphash24.h
+	wimc.c
+	wimc.h
 '''.split())
 
 libshared = static_library(

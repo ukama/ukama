@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <time.h>
+#include <sys/mman.h>
 
 #include "caformat-util.h"
 #include "caformat.h"
@@ -30,6 +31,7 @@
 #include "signal-handler.h"
 #include "time-util.h"
 #include "util.h"
+#include "wimc.h"
 
 #if HAVE_UDEV
 #include <libudev.h>
@@ -73,6 +75,8 @@ static bool arg_uid_shift_apply = false;
 static bool arg_mkdir = true;
 static CaDigestType arg_digest = CA_DIGEST_DEFAULT;
 static CaCompressionType arg_compression = CA_COMPRESSION_DEFAULT;
+static char *arg_mem_file = NULL;
+static void *shMem=NULL;
 
 static void help(void) {
         printf("%1$s [OPTIONS...] make [ARCHIVE|ARCHIVE_INDEX|BLOB_INDEX] [PATH]\n"
@@ -347,6 +351,7 @@ static int parse_argv(int argc, char *argv[]) {
                 ARG_DIGEST,
                 ARG_COMPRESSION,
                 ARG_VERSION,
+		ARG_MEM_FILE,
         };
 
         static const struct option options[] = {
@@ -380,6 +385,7 @@ static int parse_argv(int argc, char *argv[]) {
                 { "mkdir",             required_argument, NULL, ARG_MKDIR             },
                 { "digest",            required_argument, NULL, ARG_DIGEST            },
                 { "compression",       required_argument, NULL, ARG_COMPRESSION       },
+		{ "mem-file",          required_argument, NULL, ARG_MEM_FILE          },
                 {}
         };
 
@@ -683,6 +689,12 @@ static int parse_argv(int argc, char *argv[]) {
                         arg_compression = cc;
                         break;
                 }
+
+		case ARG_MEM_FILE: {
+
+		  arg_mem_file = strdup(optarg);
+		  break;
+		}
 
                 case '?':
                         return -EINVAL;
@@ -1694,6 +1706,16 @@ static int verb_extract(int argc, char *argv[]) {
                         return log_error_errno(r, "Failed to seek to %s: %m", seek_path);
         }
 
+	/* setup shared memory. */
+	if (arg_mem_file) {
+	  shMem = create_shared_memory(arg_mem_file, sizeof(TStats));
+	  if (shMem == MAP_FAILED || shMem == NULL) {
+	    log_error("Error creating shared memory of size: %d. Error: %s",
+		      (int)sizeof(TStats), strerror(errno));
+	  }
+	  reset_stat_counter(shMem);
+	}
+
         (void) send_notify("READY=1");
 
         for (;;) {
@@ -1743,6 +1765,9 @@ static int verb_extract(int argc, char *argv[]) {
                 }
 
                 verbose_print_feature_flags(s);
+
+		/* Update counters in the WIMC shared memory */
+		update_shmem_counters(s, shMem);
 
                 if (arg_verbose)
                         progress();

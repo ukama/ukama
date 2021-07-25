@@ -158,6 +158,7 @@ conf.set10('HAVE_UDEV', get_option('udev'))
 
 threads = dependency('threads')
 math = cc.find_library('m')
+rt = cc.find_library('rt')
 
 if want_libfuzzer
         fuzzing_engine = meson.get_compiler('cpp').find_library('Fuzzer')
@@ -199,6 +200,7 @@ casync = executable(
                 libz,
                 libzstd,
                 math,
+		rt,
                 openssl],
         install : true)
 
@@ -212,6 +214,7 @@ casync_http = executable(
                 libz,
                 libzstd,
                 math,
+		rt,
                 openssl],
         install : true,
         install_dir : protocoldir)
@@ -351,6 +354,7 @@ test_dependencies = [
         libz,
         libzstd,
         math,
+	rt,
         openssl,
         threads]
 
