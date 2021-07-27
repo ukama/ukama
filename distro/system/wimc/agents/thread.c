@@ -22,7 +22,8 @@
 #include "wimc.h"
 
 #define AGENT_EXEC "/usr/bin/casync"
-#define DEFAULT_PATH "/tmp/"
+#define DEFAULT_PATH "/tmp"
+#define MAX_ARGS 10
 
 /* For shared memory object and map */
 static char *memFile=NULL;
@@ -39,7 +40,7 @@ void request_handler(WFetch *fetch);
 /* from shmem. */
 extern void *create_shared_memory(int *shmId, char *memFile, size_t size);
 extern void delete_shared_memory(int shmId, void *shMem);
-extern void read_stats_and_update_wimc(TStats *stats, WFetch *fetch);
+extern void read_stats_and_update_wimc(void *args);
 
 /*
  * is_valid_folder -- If 'folder' is valid directory
@@ -58,6 +59,42 @@ static int is_valid_folder(char *folder) {
     return TRUE;
   } else {
     return FALSE;
+  }
+}
+
+/*
+ * create_working_dir_file --
+ *
+ */
+static void create_working_dir_file(WFetch *fetch) {
+
+  FILE *fp;
+  char folder[WIMC_MAX_PATH_LEN]={0};
+  char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
+  WContent *content;
+
+  if (fetch==NULL || uuid_is_null(fetch->uuid))
+    return;
+
+  content = fetch->content;
+
+  uuid_unparse(fetch->uuid, idStr);
+  sprintf(folder, "%s/%s", DEFAULT_PATH, idStr);
+
+  /* check if directory exists */
+  if (!is_valid_folder(&folder[0])) {
+    log_debug("Creating default folder for Agent at: %s", folder);
+    if (mkdir(folder, 0700) == -1) {
+      log_error("Error creating dir: %s. Error: %s", folder, strerror(errno));
+    }
+  }
+
+  /* Create shared memory file. */
+  sprintf(memFile, "%s/%s/shared.mem", DEFAULT_PATH, idStr);
+  log_debug("Creating default shared memory file for Agent at: %s", memFile);
+  fp = fopen(memFile, "a");
+  if (fp) {
+    fclose(fp);
   }
 }
 
@@ -177,23 +214,12 @@ static void log_wait_status(int status) {
   }
 }
 
-
-/*
- * exit_thread -- exit thread, inform whomever, etc. 
- *
- */
-static void exit_thread(void *retVal) {
-
-  pthread_exit(retVal);
-}
-
 /*
  * configure_runtime_args -- setup runtime argument for the agent. 
  *
  */
-static void configure_runtime_args(WFetch *fetch, char **arg) {
+static void configure_runtime_args(WFetch *fetch, char **args) {
 
-  char *argv=NULL;
   WContent *content=NULL;
   char folder[WIMC_MAX_PATH_LEN];
   char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
@@ -205,11 +231,6 @@ static void configure_runtime_args(WFetch *fetch, char **arg) {
   
   if (content->indexURL==NULL && content->storeURL==NULL) return;
 
-  *arg = (char *)calloc(1, WIMC_MAX_ARGS_LEN);
-  if (*arg==NULL) 
-    return;
-
-  argv = *arg;
   memset(&folder[0], 0, WIMC_MAX_PATH_LEN);
 
   /* Setup download path */
@@ -220,22 +241,21 @@ static void configure_runtime_args(WFetch *fetch, char **arg) {
   } else {
     goto done;
   }
-  
-  /* check if directory exists */
-  if (!is_valid_folder(&folder[0])) {
-    log_debug("Creating default folder for Agent at: %s", folder);
-    mkdir(folder, 0700);
-  }
 
   /* Put everything together */
-  sprintf(argv, "%s extract %s --store %s --shmem %s %s", AGENT_EXEC,
-	  content->indexURL, content->storeURL, memFile, folder);
-  
+  args[0] = strdup(AGENT_EXEC);
+  args[1] = strdup("extract");
+  args[2] = strdup(content->indexURL);
+  args[3] = strdup("--store");
+  args[4] = strdup(content->storeURL);
+  args[5] = strdup("--mem-file");
+  args[6] = strdup(memFile);
+  args[7] = strdup(folder);
+  args[8] = NULL; /* Null terminate for execv */
+
   return;
-  
  done:
-  free(*arg);
-  *arg=NULL;
+  args[0] = NULL;
   return;
 }
 
@@ -246,54 +266,45 @@ static void configure_runtime_args(WFetch *fetch, char **arg) {
 static void *execute_agent(void *data) {
 
   WFetch *fetch;
-  char *args=NULL;
+  char *args[MAX_ARGS];
   TStats *stats=NULL;
   TParams *params;
   pid_t pid=0;
-  int ret;
-  pthread_t tid;
+  int ret=0, i=0;
   char idStr[36+1]; /* 36-bytes for UUID + trailing `\0` */
-  
+  char buffer[1024] = {0};
+  FILE *fp;
+
   fetch = (WFetch *)data;
 
   params = (TParams *)malloc(sizeof(TParams));
-
-  if (params==NULL) {
+  memFile = (char *)calloc(1, WIMC_MAX_PATH_LEN);
+  if (params==NULL || memFile==NULL) {
     log_error("Memory allocation error. size: %s", sizeof(TParams));
-    return (void *)0;
+    pthread_exit(&ret);
   }
-      
-  /* de-attach itself from the parent. */
-  // pthread_detach(pthread_self()); XXX remove me.
+
+  /* create working directory anf file (for shared memory) */
+  create_working_dir_file(fetch);
 
   /* Step 1. configure runtime argument for agent. */
-  if (!uuid_is_null(fetch->uuid)) {
-    memFile = (char *)calloc(1, WIMC_MAX_PATH_LEN);
-    if (memFile==NULL) {
-      log_error("Memory allocation error. size: %s", WIMC_MAX_PATH_LEN);
-      return (void *)0;
-    }
-    uuid_unparse(fetch->uuid, idStr);
-    sprintf(memFile, "%s.shmem", idStr);
+  configure_runtime_args(fetch, args);
+  if (args[0] == NULL) {
+    log_error("Can not setup runtime argument for the Agent");
+    pthread_exit(&ret);
   } else {
-    memFile = strdup(DEFAULT_SHMEM);
+    for (i=0; args[i] != NULL && i < MAX_ARGS; i++) {
+      sprintf(buffer, "%s %s", buffer, args[i]);
+    }
+    log_debug("Agent runtime arguments: %s", buffer);
   }
 
-  configure_runtime_args(fetch, &args);
-  if (args == NULL) {
-    log_error("Can not setup runtime argument for the Agent");
-    exit_thread(NULL);
-  } else {
-    log_debug("Agent runtime arguments: %s", args);
-  }
-  
   /* Step 2. configure shared memory */
   shMem = create_shared_memory(&shmId, memFile, sizeof(TStats));
   if (shMem == MAP_FAILED || shMem == NULL) {
     log_error("Error creating shared memory of size: %d. Error: %s",
 	      sizeof(TStats), strerror(errno));
-    return (void *)0;
-    exit_thread(NULL);
+    goto failure;
   }
   reset_stat_counter(shMem);
   
@@ -301,7 +312,7 @@ static void *execute_agent(void *data) {
   pid = fork();
   if (pid < 0) {
     log_error("Failed to fork for agent");
-    return (void *) 0;
+    goto failure;
   }
   
   if (pid==0) { /* Child process. */
@@ -314,23 +325,20 @@ static void *execute_agent(void *data) {
     
     /* Step 4. process status chanage and update wimc.d */
     /* Thread to read the update status from agent and send to WIMC */
-    ret = pthread_create(&tid, NULL, read_stats_and_update_wimc, params);
-    if (ret) { /* Some error. */
-      log_error("Error creating agent thread. Return code: %s", ret);
-      goto failure;
-    }
-    free(args);
-    free(params);
-    return (void *) pid;
+    read_stats_and_update_wimc(params);
+    ret = 1; /* We are good. */
   }
 
- failure:
+failure:
   delete_shared_memory(shmId, shMem);
+  shMem = NULL;
   free(params);
   free(memFile);
-  free(args);
+  for (i=0; args[i] != NULL && i < MAX_ARGS; i++) {
+    if (args[i]) free(args[i]);
+  }
 
-  return (void *)0;
+  pthread_exit(&ret);
 }
 
 /*
@@ -351,57 +359,23 @@ void request_handler(WFetch *fetch) {
    */
   int ret, wstatus;
   pthread_t tid;
-  void *status;
+  int status;
   pid_t pid, w;
-  
-#if 0
+
   /* Step1-4: Thread which will fork/exec the agent and send status via CB */
   ret = pthread_create(&tid, NULL, execute_agent, (void *)fetch);
   if (ret) { /* Some error. */
     log_error("Error creating agent thread. Return code: %s", ret);
     return;
   }
-#endif
 
-  execute_agent((void *)fetch);
+  log_debug("Waiting for agent thread to finish it work ...");
 
-#if 0
   pthread_join(tid, &status);
 
-  pid = (pid_t)status;
-
-  if (!pid) { /* XXX */
-    return;
+  if (status == 0) {
+    log_error("Error executing agent for request handler.");
+  } else if (status == 1) {
+    log_debug("Successfully executed request handler. Forward and upward");
   }
-
-  /* Step 5. wait for the agent to exit. */
-  do {
-    w = waitpid(pid, &wstatus, WUNTRACED | WCONTINUED);
-    
-    /* Once child exit, kill the stats updating thread. 
-       XXXX
-      */
-    if (w == -1) {
-      perror("waitpid");
-      exit(EXIT_FAILURE);
-    }
-    
-    if (WIFEXITED(wstatus)) {
-      printf("exited, status=%d\n", WEXITSTATUS(wstatus));
-    } else if (WIFSIGNALED(wstatus)) {
-      printf("killed by signal %d\n", WTERMSIG(wstatus));
-    } else if (WIFSTOPPED(wstatus)) {
-      printf("stopped by signal %d\n", WSTOPSIG(wstatus));
-    } else if (WIFCONTINUED(wstatus)) {
-      printf("continued\n");
-    }
-  } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
-
-  /* Agent is done. clearup shared the shared memory object and mapping */
-  delete_shared_memory(shmId, shMem);
-#endif
-  
-  free(memFile);
-  memFile = NULL;
-  shMem = NULL;
 }

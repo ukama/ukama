@@ -78,6 +78,8 @@
 #define FALSE 0
 
 #define DEFAULT_SHMEM "shared_memory"
+#define AGENT_EXEC "/usr/bin/casync"
+#define DEFAULT_PATH "/tmp"
 
 typedef struct _u_request req_t;
 typedef struct _u_response resp_t;

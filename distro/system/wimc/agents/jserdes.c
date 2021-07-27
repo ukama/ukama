@@ -172,9 +172,14 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   json_object_set_new(jupdate, JSON_TRANSFER_STATE,
 		      json_string(convert_state_to_str(update->transferState)));
   
-  /* void str is non-zero only if there was an error otherwise is empty */
-  if (update->transferState == (TransferState)ERR) {
+  /* void str is non-zero only if there was an error or we are done (will
+   * have final path. Otherwise is empty
+   */
+  if (update->transferState == (TransferState)ERR ||
+      update->transferState == (TransferState)DONE) {
     json_object_set_new(jupdate, JSON_VOID_STR, json_string(update->voidStr));
+  } else {
+    json_object_set_new(jupdate, JSON_VOID_STR, json_string(""));
   }
   
   return TRUE;

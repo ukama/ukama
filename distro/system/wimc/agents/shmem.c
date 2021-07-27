@@ -78,8 +78,10 @@ void read_stats_and_update_wimc(void *args) {
   TParams *params;
   TStats *stats;
   WFetch *fetch;
+  WContent *content;
   int interval;
   long code;
+  char idStr[36+1], folder[WIMC_MAX_PATH_LEN]={0};
 
   params = (TParams *)args;
   
@@ -113,21 +115,35 @@ void read_stats_and_update_wimc(void *args) {
 
     /* We exit if agent is done. */
     if (stats->stop == TRUE) {
-      goto cleanup;
+      goto last;
     }
 
     /* Also exit if task is done or if there is an error. */
     if (stats->status == (TaskStatus)WSTATUS_DONE ||
 	stats->status == (TaskStatus)WSTATUS_ERROR) {
-      goto cleanup;
+      goto last;
     }
 
     /* Otherwise sleep for 'interval' and repeat again. */
     sleep(interval);
   } while(TRUE);
 
+ last:
+  if (stats->stop == TRUE) {
+
+    content = fetch->content;
+    uuid_unparse(fetch->uuid, idStr);
+    sprintf(folder, "%s/%s/%s_%s", DEFAULT_PATH, idStr, content->name,
+	    content->tag);
+
+    /* Update the path location and notify WIMC of it */
+    stats->status = WSTATUS_DONE;
+    strcpy(stats->statusStr, folder);
+    communicate_with_wimc(REQ_UPDATE, fetch->cbURL, NULL, NULL,
+			  fetch->uuid, (void *)stats);
+  }
+
  cleanup:
   free_fetch_request(fetch);
   free(fetch);
-  return;
 }

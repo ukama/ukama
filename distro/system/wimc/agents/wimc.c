@@ -174,19 +174,20 @@ static AgentReq *create_agent_request(ReqType type, int method, char *cbURL,
     request->unReg = unreg;
   } else if (type == (ReqType)REQ_UPDATE) {
 
-    update = (Update *)malloc(sizeof(Update));
+    update = (Update *)calloc(1, sizeof(Update));
     if (!update) {
       goto done;
     }
 
     uuid_copy(update->uuid, *uuid);
-    update->totalKB = stats->total_requests / 1024; /* in kilobytes */
+    update->totalKB = stats->total_bytes / 1024; /* in kilobytes */
     update->transferKB = stats->total_bytes / 1024;
     update->transferState = get_task_status(stats->status);
 
-    if (update->transferState == WSTATUS_DONE ||  /* content path */
-	update->transferState == WSTATUS_ERROR) { /* error str */
+    if (stats->stop == TRUE) {
       update->voidStr = strdup(stats->statusStr);
+    } else {
+      update->voidStr = strdup("");
     }
 
     request->type = REQ_UPDATE;
