@@ -27,6 +27,7 @@
 /* For shared memory object and map */
 static char *memFile=NULL;
 static void *shMem=NULL;
+static int shmId=0;
 
 static int is_valid_folder(char *folder);
 static void log_wait_status(int status);
@@ -36,8 +37,8 @@ static void copy_fetch_request(WFetch **dest, WFetch *src);
 void request_handler(WFetch *fetch);
 
 /* from shmem. */
-extern void *create_shared_memory(char *memFile, size_t size);
-extern void delete_shared_memory(char *memFile, void *shMem, size_t size);
+extern void *create_shared_memory(int *shmId, char *memFile, size_t size);
+extern void delete_shared_memory(int shmId, void *shMem);
 extern void read_stats_and_update_wimc(TStats *stats, WFetch *fetch);
 
 /*
@@ -287,7 +288,7 @@ static void *execute_agent(void *data) {
   }
   
   /* Step 2. configure shared memory */
-  shMem = create_shared_memory(memFile, sizeof(TStats)); /* use default file */
+  shMem = create_shared_memory(&shmId, memFile, sizeof(TStats));
   if (shMem == MAP_FAILED || shMem == NULL) {
     log_error("Error creating shared memory of size: %d. Error: %s",
 	      sizeof(TStats), strerror(errno));
@@ -324,7 +325,7 @@ static void *execute_agent(void *data) {
   }
 
  failure:
-  delete_shared_memory(memFile, shMem, sizeof(TStats));
+  delete_shared_memory(shmId, shMem);
   free(params);
   free(memFile);
   free(args);
@@ -397,7 +398,7 @@ void request_handler(WFetch *fetch) {
   } while (!WIFEXITED(wstatus) && !WIFSIGNALED(wstatus));
 
   /* Agent is done. clearup shared the shared memory object and mapping */
-  delete_shared_memory(memFile, shMem, sizeof(TStats));
+  delete_shared_memory(shmId, shMem);
 #endif
   
   free(memFile);

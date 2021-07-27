@@ -10,23 +10,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <sys/mman.h>
+#include <sys/shm.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/ipc.h>
 
 #include "parse-util.h"
 #include "casync.h"
 #include "wimc.h"
 
+#define SECRET_ID 46504650 /* Project ID for ftok() */
+
 /*
  * reset_stat_counter --
  *
  */
-
 void reset_stat_counter(void *ptr) {
 
   TStats *stat = (TStats *)ptr;
@@ -53,51 +55,66 @@ void reset_stat_counter(void *ptr) {
 }
 
 /*
+ * flag_end_shared_memory --
+ */
+void flag_end_shared_memory(void *ptr) {
+
+  TStats *stat = (TStats *)ptr;
+
+  stat->stop = 1;
+  stat->status = WSTATUS_DONE;
+
+  if (shmdt(ptr) == -1) {
+    log_error("Error deattaching. Error: %s \n", strerror(errno));
+    return;
+  }
+}
+
+/*
+ * flag_start_shared_memory --
+ *
+ */
+void flag_start_shared_memory(void *ptr) {
+
+  TStats *stat = (TStats *)ptr;
+
+  stat->status = WSTATUS_RUNNING;
+  stat->start = 1;
+}
+
+/*
  * create_shared_memory --
  *
  */
-
 void *create_shared_memory(char *memFile, size_t size) {
 
-  int memFd;
-  int prot=0, flags=0, ret;
+  key_t key;
+  int shmid;
 
-  if (memFile == NULL) {
+  /* sanity check. */
+  if (memFile == NULL) return NULL;
+
+  key = ftok(memFile, SECRET_ID);
+  if (key == -1) {
+    log_error("Error generating key token for shared memory. Error: %s",
+	      strerror(errno));
     return NULL;
   }
 
-  memFd = shm_open(memFile, O_RDWR, S_IRWXU);
-  if (memFd == -1) {
-    log_error("Error creating shared memory object. Error: %s",
-              strerror(errno));
-    goto fail;
+  shmid = shmget(key, size, 0644|IPC_CREAT);
+  if (shmid == -1) {
+    log_error("Error creating shared memory of size %d. Error: %s",
+	      (int)size, strerror(errno));
+    return NULL;
   }
 
-  /* Truncate to the right size. */
-  ret = ftruncate(memFd, size);
-  if (ret == -1) {
-    log_error("Error truncating the shared memory file to size: %d. Error: %s",
-              (int)size, strerror(errno));
-    goto fail;
-  }
-
-  /* readable and writeable */
-  prot = PROT_READ | PROT_WRITE;
-
-  /* only visible for parent/child and none other. */
-  flags = MAP_SHARED | MAP_ANONYMOUS;
-
-  return mmap(NULL, size, prot, flags, memFd, 0);
-
- fail:
-  return NULL;
+  return shmat(shmid, NULL, 0);
 }
 
 /*
  * update_shmem_counters --
  *
  */
-
 void update_shmem_counters(CaSync *s, void *shMem) {
   
   char buffer[FORMAT_BYTES_MAX];

@@ -9,78 +9,61 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
+#include <sys/shm.h>
 
 #include "wimc.h"
+
+#define SECRET_ID 46504650 /* Id for ftok() */
 
 /*
  * create_shared_memory --
  *
  */
+void *create_shared_memory(int *shmId, char *memFile, size_t size) {
 
-void *create_shared_memory(char *memFile, size_t size) {
+  key_t key;
 
-  int memFd;
-  int prot=0, flags=0, ret;
-  char *path=NULL;
+  /* Sanity check. */
+  if (memFile == NULL) return NULL;
 
-  if (memFile == NULL) {
-    path = DEFAULT_SHMEM;
-  } else {
-    path = memFile;
-  }
-
-  memFd = shm_open(path, O_CREAT | O_RDWR, S_IRWXU);
-  if (memFd == -1) {
-    log_error("Error creating shared memory object. Error: %s",
+  key = ftok(memFile, SECRET_ID);
+  if (key == -1) {
+    log_error("Error generating key token for shared memory. Error: %s",
 	      strerror(errno));
-    goto fail;
+    return NULL;
   }
 
-  /* Truncate to the right size. */
-  ret = ftruncate(memFd, size);
-  if (ret == -1) {
-    log_error("Error truncating the shared memory file to size: %d. Error: %s",
-	      size, strerror(errno));
-    goto fail;
+  *shmId = shmget(key, size, 0644|IPC_CREAT);
+  if (*shmId == -1) {
+    log_error("Error creating shared memory of size %d. Error: %s",
+	      (int)size, strerror(errno));
+    return NULL;
   }
 
-  /* readable and writeable */
-  prot = PROT_READ | PROT_WRITE;
-
-  /* only visible for parent/child and none other. */
-  flags = MAP_SHARED | MAP_ANONYMOUS;
-
-  return mmap(NULL, size, prot, flags, memFd, 0);
-
- fail:
-  return NULL;
+  return shmat(*shmId, NULL, 0);
 }
 
 /*
  * delete_shared_memory --
  *
  */
-void delete_shared_memory(char *memFile, void *shMem, size_t size) {
+void delete_shared_memory(int shmid, void *shMem) {
 
-  int ret;
-
-  ret = munmap(shMem, size);
-  if (ret==-1) {
-    log_error("Failed to unmap shared memory of size: %d. Error: %s", size,
-	      strerror(errno));
+  if (shmdt(shMem) == -1) {
+    log_error("Error deattaching. Error: %s \n", strerror(errno));
     return;
   }
-  free(shMem);
-  shMem = NULL;
 
-  ret = shm_unlink(memFile);
-  if (ret==-1) {
-    log_error("Failed to close shared memory object. Error: %s",
-	      strerror(errno));
+  /*Mark it to be destroyed */
+  if (shmctl(shmid, IPC_RMID, 0) == -1) {
+    log_error("Error destroying shared memory. Error: %s", strerror(errno));
     return;
   }
 }

@@ -1709,7 +1709,7 @@ static int verb_extract(int argc, char *argv[]) {
 	/* setup shared memory. */
 	if (arg_mem_file) {
 	  shMem = create_shared_memory(arg_mem_file, sizeof(TStats));
-	  if (shMem == MAP_FAILED || shMem == NULL) {
+	  if (shMem == (void *)-1 || shMem == NULL) {
 	    log_error("Error creating shared memory of size: %d. Error: %s",
 		      (int)sizeof(TStats), strerror(errno));
 	  }
@@ -1717,6 +1717,7 @@ static int verb_extract(int argc, char *argv[]) {
 	}
 
         (void) send_notify("READY=1");
+	flag_start_shared_memory(shMem);
 
         for (;;) {
                 if (quit) {
@@ -1733,6 +1734,7 @@ static int verb_extract(int argc, char *argv[]) {
                 switch (r) {
 
                 case CA_SYNC_FINISHED:
+		        flag_end_shared_memory(shMem);
                         verbose_print_done_extract(s);
                         return 0;
 

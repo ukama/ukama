@@ -49,5 +49,8 @@ typedef struct tStats {
 void reset_stat_counter(void *ptr);
 void *create_shared_memory(char *memFile, size_t size);
 void update_shmem_counters(CaSync *s, void *shMem);
+void flag_end_shared_memory(void *ptr);
+void flag_start_shared_memory(void *ptr);
+
 
 #endif /* WIMC_H */
