@@ -24,9 +24,22 @@ Distro as mentioned above is leight weight busybox based on musl-libc.
 # Build
 
 ## Prerequisites
+
+### Dependencies
 ```
 sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabi automake-1.15 bison python libelf-dev
 ```
+
+### Buildah
+```
+. /etc/os-release
+sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
+wget -nv https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable/x${ID^}_${VERSION_ID}/Release.key -O Release.key
+sudo apt-key add - < Release.key
+sudo apt-get update -qq
+sudo apt-get -qq -y install buildah
+```
+
 ## Coreboot toolchain:
 cd firmware/coreboot 
 ```

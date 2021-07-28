@@ -32,6 +32,7 @@
 #include "ukdb/db/file.h"
 #include "ukdb/idb/cs.h"
 #include "ukdb/idb/idb.h"
+#include "mfg/common/mfg_helper.h"
 
 #include <getopt.h>
 #include <stdio.h>
@@ -39,8 +40,8 @@
 #include <string.h>
 #include <unistd.h>
 
-//#define PROPERTYJSON "mfgdata/property/property.json"
-#define PROPERTYJSON "lib/ubsp/mfgdata/property/property.json"
+#define PROPERTYJSON "mfgdata/property/property.json"
+//#define PROPERTYJSON "lib/ubsp/mfgdata/property/property.json"
 #define VERSION	"0.0.1"
 #define MAX_BOARDS	5
 
@@ -83,15 +84,15 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     	/* Assumption Module Name in argument should match */
     	UnitCfg *udata = (UnitCfg[]){
     		{ .mod_uuid = "UK-5001-RFC-1101",
-    			.mod_name = "RF_CTRL",
+    			.mod_name = "RF CTRL BOARD",
 				.sysfs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
 				.eeprom_cfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul } },
 				{ .mod_uuid = "UK-4001-RFA-1101",
-						.mod_name = "RF_AMP",
+						.mod_name = "RF BOARD",
 						.sysfs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0052/eeprom",
 						.eeprom_cfg = &(DevI2cCfg){ .bus = 2, .add = 0x50ul } },
 						{ .mod_uuid = "UK-1001-COM-1101",
-								.mod_name = "COM",
+								.mod_name = "ComV1",
 								.sysfs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
 								.eeprom_cfg = &(DevI2cCfg){ .bus = 0, .add = 0x50ul } },
 								{ .mod_uuid = "UK-2001-LTE-1101",
@@ -173,7 +174,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 
 static struct option long_options[] = {
     { "name", required_argument, 0, 'n' },
-    { "uuid", required_argument, 0, 'u' },
+    { "muuid", required_argument, 0, 'm' },
     { "logs", required_argument, 0, 'l' },
     { "help", no_argument, 0, 'h' },
     { "version", no_argument, 0, 'v' },
@@ -197,16 +198,12 @@ void set_log_level(char *slevel) {
 void usage() {
     printf("Usage: ukamaEDR [options] \n");
     printf("Options:\n");
-    printf("--h, --help                             Help menu.\n");
-    printf(
-        "--l, --logs <TRACE> <DEBUG> <INFO>       Log level for the process.\n");
-    printf(
-        "--n, --name <ModuleName>                 Unit Type RF or COM.\n");
-    printf(
-        "--u, --uuid <unique Id>                  Unit unique Id.\n");
-    printf(
-        "--s, --schema <unique Id>               Schema file.\n");
-    printf("--v, --version                       Software Version.\n");
+    printf("--h, --help                                                      Help menu.\n");
+    printf("--l, --logs <TRACE> <DEBUG> <INFO>                               Log level for the process.\n");
+    printf("--n, --name <ComV1>|<LTE>|<MASK>|<RF CTRL BOARD>,<RF BOARD>      Name of module.\n");
+    printf("--m, --muuid <Module UUID>                                       Module UUID.\n");
+    printf("--s, --schema <json file path>                                   JSON Schema file.\n");
+    printf("--v, --version                                                   Software Version.\n");
 }
 
 /* Utility to Create a EEPROM DB for devices.*/
@@ -233,7 +230,7 @@ int main(int argc, char** argv) {
         int opt = 0;
         int opdidx = 0;
 
-        opt = getopt_long(argc, argv, "h:v:u:n:s:l:", long_options, &opdidx);
+        opt = getopt_long(argc, argv, "h:v:m:n:s:l:", long_options, &opdidx);
         if (opt == -1) {
         	break;
         }
@@ -253,7 +250,7 @@ int main(int argc, char** argv) {
         	nidx++;
         	break;
 
-        case 'u':
+        case 'm':
         	uuid[uidx] = optarg;
         	uidx++;
         	break;
@@ -274,14 +271,20 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Args check  for schema info.*/
-    if ((sidx != uidx) || (sidx != nidx) || (sidx > MAX_BOARDS)) {
+    /* Args check for schema info.*/
+    if ((sidx != uidx) || (sidx != nidx) || (!sidx) || (sidx > MAX_BOARDS)  ) {
     	log_error("MFGUTIL:: Name, schema and UUID entries have to match in count.");
+    	log_error("MFGUTIL:: At least one set of entries or %d set of entries can be made simultaneously.", MAX_BOARDS);
     	exit(0);
     }
 
-    /* Input args */
+    /* Input args and their verification */
     for(int idx = 0; idx < uidx;idx++) {
+    	/* Verify module uuid and name */
+    	if (verify_uuid(uuid[idx]) || verify_boardname(name[idx]) ) {
+    		usage();
+    		exit(0);
+    	}
     	log_trace("UUID[%d] = %24s Name[%d] = %24s Schema[%d] = %s \n", idx, uuid[idx], idx, name[idx], idx, schema[idx]);
     }
 

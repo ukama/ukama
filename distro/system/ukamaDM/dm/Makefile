@@ -22,12 +22,15 @@ SERVER_SRC=$(wildcard server/*.c)
 PARSER_SRC=$(wildcard config/*.c)
 BINDIR=build/bin
 LINKFLAG = --static
+VERSION = v0.0.1
+
+.PHONY: all client container
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CDEFINES) $(EXTRA_FLAGS) -c -o \
 	$(OBJDIR)/$(notdir $@) $^
 
-all: client bootstrap server
+all: container client bootstrap server 
 	@echo "All Done."
 
 client: mktree $(SRC) $(CLIENT_SRC) $(EDR_SRC) $(PARSER_SRC)
@@ -48,5 +51,8 @@ server:  mktree $(SRC) $(SERVER_SRC) $(SERVIFACE_SRC)
 mktree:
 	mkdir -p $(BINDIR)
 
+container: client
+	@echo Building container
+	sudo buildah bud -f . -t ukamaos/lwclient:v0.0.1
 clean:
 	rm -rf build
