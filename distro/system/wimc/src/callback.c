@@ -107,8 +107,8 @@ int callback_post_container(const struct _u_request *request,
     goto reply;
   }
 
-  log_debug("Processing container name: %s and tag: %s", name, tag);
-  
+  log_debug("Processing container name: %s with tag: %s", name, tag);
+
   if (db_read_path(cfg->db, name, tag, &path[0])) {
     /* we have the contents stored locally. Return the location. */
     respType = WRESP_RESULT;
@@ -267,7 +267,7 @@ int callback_put_agent_update(const struct _u_request *request,
     deserialize_agent_request(&req, jreq);
   }
 
-  ret = process_agent_update_request(cfg->tasks, req, &uuid);
+  ret = process_agent_update_request(cfg->tasks, req, &uuid, cfg->db);
 
   if (ret == WIMC_OK) {
     retCode = 200;

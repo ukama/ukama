@@ -121,7 +121,6 @@ void is_valid_config(WimcCfg *cfg) {
 
 int main (int argc, char **argv) {
 
-  sqlite3 *db=NULL;
   struct _u_instance adminInst, clientInst;
   WimcCfg *cfg=NULL;
   Agent *agents=NULL;
@@ -249,9 +248,9 @@ int main (int argc, char **argv) {
    */
   
   /* Step-1 */
-  db = open_db(cfg->dbFile, WIMC_FLAG_CREATE_DB);
+  cfg->db = open_db(cfg->dbFile, WIMC_FLAG_CREATE_DB);
 
-  if (db == NULL) {
+  if (cfg->db == NULL) {
     log_error("Error creating db at: %s. Exiting", cfg->dbFile);
     exit(0);
   }
@@ -273,7 +272,7 @@ int main (int argc, char **argv) {
   ulfius_clean_instance(&clientInst);
   curl_global_cleanup();
 
-  sqlite3_close(db);
+  sqlite3_close(cfg->db);
   
   clear_agents(agents);
   clear_tasks(&tasks);

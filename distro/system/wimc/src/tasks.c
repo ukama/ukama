@@ -33,6 +33,8 @@ void clear_tasks(WTasks **tasks) {
     }
 
     free(curr->content);
+    if (curr->update->voidStr)
+      free(curr->update->voidStr);
     free(curr->update);
     if (curr->localPath)
       free(curr->localPath);

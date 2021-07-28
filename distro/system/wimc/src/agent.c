@@ -116,7 +116,8 @@ int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid) 
  *
  */
 
-int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid) {
+int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid,
+				 sqlite3 *db) {
 
   int ret=WIMC_OK;
   Update *update;
@@ -165,7 +166,9 @@ int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid) {
     }
 
     if (task->state == DONE) {
-	task->localPath = strdup(req->update->voidStr);
+      task->localPath = strdup(req->update->voidStr);
+      update_local_db(db, task->content->name, task->content->tag,
+		      task->localPath);
     }
 
   } else {

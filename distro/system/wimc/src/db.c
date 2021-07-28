@@ -15,8 +15,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sqlite3.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "log.h"
+#include "wimc.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -25,7 +30,7 @@
  * insert_entry -- 
  *
  */
-int db_insert_entry(sqlite3 *db, char *name, char *tag, char *path) {
+static int db_insert_entry(sqlite3 *db, char *name, char *tag, char *path) {
 
   int val=FALSE;
   char *buff, *err=NULL;
@@ -64,14 +69,14 @@ int db_insert_entry(sqlite3 *db, char *name, char *tag, char *path) {
  *
  */
 
-static int parse_response(void *arg, int argc, char **argv, char **colName) {
+static int parse_response(void **arg, int argc, char **argv, char **colName) {
   
   int i;
-  char *path = (char *)arg;
+  char **path = (char **)arg;
   
   for(i=0; i<argc; i++){
     if (strcmp(colName[i], "Path") == 0) {
-      strcpy(path, argv[1]);
+      strcpy(*path, argv[1]);
       return 0;
     }
   }
@@ -79,12 +84,11 @@ static int parse_response(void *arg, int argc, char **argv, char **colName) {
   return 0;
 }
 
-
 /*
  * read_path -- for given container name and tag, return the path.
  *
  */
-int db_read_path(sqlite3 *db, char *name, char *tag, char *path) {
+int db_read_path(sqlite3 *db, char *name, char *tag, char **path) {
   
   int val=FALSE;
   char buf[1024];
@@ -95,7 +99,7 @@ int db_read_path(sqlite3 *db, char *name, char *tag, char *path) {
     goto failure;
   }
   
-  sprintf(buf, "SELECT * FROM Containers WHERE (Name =`%s` AND Tag=`%s');",
+  sprintf(buf, "SELECT * FROM Containers WHERE (Name='%s' AND Tag='%s');",
 	  name, tag);
 
   val = sqlite3_exec(db, buf, parse_response, path, &err);
@@ -106,12 +110,56 @@ int db_read_path(sqlite3 *db, char *name, char *tag, char *path) {
     val = FALSE;
     goto failure;
   } else {
-    log_debug("db query. Name: %s Tag: %s Path: %s",
-	      name, tag, path);
-  }
+    if (*path==NULL) {
+      goto failure;
+    }
 
+    log_debug("db query. Name: %s Tag: %s Path: %s",
+	      name, tag, *path);
+  }
   val = TRUE;
 
  failure:
   return val;
+}
+
+/*
+ * update_local_db -- update entries in local db.
+ */
+
+void update_local_db(sqlite3 *db, char *name, char *tag, char *path) {
+
+  FILE *fp;
+  struct stat sb;
+  char fileName[WIMC_MAX_PATH_LEN]={0};
+
+  /* sanity checks. */
+  if (db == NULL || name == NULL || tag == NULL || path == NULL) {
+    return;
+  }
+
+  /* Check if its a valid path and json exist. */
+  if (stat(path, &sb) == -1) {
+    log_error("Invalid path for db entry: %s", path);
+    return;
+  }
+
+  /* Check to see if it was file. */
+  if (!S_ISDIR(sb.st_mode)) {
+    log_error("Not valid directory for db entry: %s", path);
+    return;
+  }
+
+  sprintf(fileName, "%s/index.json", path);
+
+  fp = fopen(fileName, "a");
+
+  if (fp == NULL) {
+    log_error("Failed to read index.json at: %s Error: %s", path,
+	      strerror(errno));
+    return;
+  }
+
+  /* All check passed. Add into the db for future generations. */
+  db_insert_entry(db, name, tag, path);
 }
