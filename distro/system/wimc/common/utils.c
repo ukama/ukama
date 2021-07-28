@@ -55,7 +55,7 @@ MethodType convert_str_to_method(char *str) {
   return method;
 }
 
-char *convert_state_to_str(TransferState state) {
+char *convert_tx_state_to_str(TransferState state) {
 
   char *str;
 
@@ -140,5 +140,20 @@ char *convert_type_to_str(ReqType req) {
     return AGENT_REQ_TYPE_UNREG_STR;
   } else if (req == REQ_UPDATE) {
     return AGENT_REQ_TYPE_UPDATE_STR;
+  }
+}
+
+TransferState convert_str_to_tx_state(char *state) {
+
+  if (strcmp(state, AGENT_TX_STATE_REQUEST_STR)==0) {
+    return REQUEST;
+  } else if (strcmp(state, AGENT_TX_STATE_FETCH_STR)==0) {
+    return FETCH;
+  }  else if (strcmp(state, AGENT_TX_STATE_UNPACK_STR)==0) {
+    return UNPACK;
+  }  else if (strcmp(state, AGENT_TX_STATE_DONE_STR)==0) {
+    return DONE;
+  }  else if (strcmp(state, AGENT_TX_STATE_ERR_STR)==0) {
+    return ERR;
   }
 }

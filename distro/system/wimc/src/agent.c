@@ -70,16 +70,16 @@ int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid) {
 }
 
 /*
- * process_agent_request --
+ * process_agent_register_request --
  *
  */
 
-int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
+int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid) {
 
   int ret=WIMC_OK;
   Register *reg;
   char idStr[36+1];
-  
+
   if (req->type == (ReqType)REQ_REG) {
 
     reg = req->reg;
@@ -100,18 +100,82 @@ int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid){
     uuid_unparse(*uuid, &idStr[0]);
     log_debug("Agent successfully registered. Id: %s Method: %s URL: %s",
 	      idStr, reg->method, reg->url);
-  } else if (req->type == (ReqType)REQ_UNREG) {
-    
-  } else if (req->type == (ReqType)REQ_UPDATE) {
 
   } else {
     log_debug("Invalid Agent request command: %d", req->type);
     ret = WIMC_ERROR_BAD_METHOD;
     goto done;
   }
-  
+
  done:
-    return ret;
+  return ret;
+}
+
+/*
+ * process_agent_update_request --
+ *
+ */
+
+int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid) {
+
+  int ret=WIMC_OK;
+  Update *update;
+  char idStr1[36+1], idStr2[36+1];
+  WTasks *task=NULL;
+  
+  if (*tasks == NULL)
+    return;
+
+  if (req->type == (ReqType)REQ_UPDATE) { /* sanity check */
+
+    update = req->update;
+    task = *tasks;
+
+    uuid_unparse(update->uuid, &idStr1[0]);
+    log_debug("Looking up task with ID: %s", idStr1);
+
+    /* Find matching task in our list. */
+    while (task != NULL) {
+      uuid_unparse(task->uuid, &idStr2[0]);
+      if (uuid_compare(task->uuid, update->uuid) == 0) {
+	log_debug("Found. Ask: %s Match: %s", idStr1, idStr2);
+	break;
+      } else {
+	log_debug("Mismatch. Ask: %s Found: %s", idStr1, idStr2);
+      }
+      task = task->next;
+    }
+
+    if (task==NULL) {
+      log_error("Agent sending task update for: %s. found no record. Ignore",
+		idStr1);
+      ret = WIMC_ERROR_BAD_ID;
+      goto done;
+    }
+
+    /* update the task entry. */
+    task->update->totalKB = req->update->totalKB;
+    task->update->transferKB = req->update->transferKB;
+
+    /* Update the status */
+    task->update->transferState = req->update->transferState;
+    task->state = req->update->transferState;
+    if (req->update->voidStr) {
+      task->update->voidStr = strdup(req->update->voidStr);
+    }
+
+    if (task->state == DONE) {
+	task->localPath = strdup(req->update->voidStr);
+    }
+
+  } else {
+    log_debug("Invalid Agent request command: %d", req->type);
+    ret = WIMC_ERROR_BAD_METHOD;
+    goto done;
+  }
+
+ done:
+  return ret;
 }
 
 /*
@@ -418,6 +482,9 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
     goto done;
   }
 
+  add_to_tasks(cfg->tasks, request);
+  uuid_copy(*uuid, request->fetch->uuid);
+
   code = send_request_to_agent(reqType, agent->url, json, &agentRetCode);
   if (code == 200) {
     log_debug("Agent command success. CURL return code: %d Agent code: %d",
@@ -425,11 +492,6 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
   } else {
     log_debug("Agent command success. CURL return code: %d Agent code: %d",
 	      code, agentRetCode);
-  }
-
-  if (code == 200) { /* Add to tasks list. */
-    add_to_tasks(cfg->tasks, request);
-    uuid_copy(*uuid, request->fetch->uuid);
   }
 
  done:

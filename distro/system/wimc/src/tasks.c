@@ -237,7 +237,11 @@ char *process_cli_response(WRespType type, char *path, char *idStr,
   json_t *json=NULL;
 
   /* Sanity check. */
-  if (type == WRESP_RESULT && path == NULL) {
+  if (type == WRESP_RESULT && task == NULL) {
+    return NULL;
+  }
+
+  if (type == WRESP_RESULT && task->localPath == NULL){
     return NULL;
   }
 
@@ -257,7 +261,7 @@ char *process_cli_response(WRespType type, char *path, char *idStr,
   } else if (type == (WRespType)WRESP_PROCESSING) {
     ret = serialize_result(type, idStr, &json);
   } else if (type == (WRespType)WRESP_RESULT) {
-    ret = serialize_result(type, path, &json);
+    ret = serialize_result(type, task->localPath, &json);
   } else if (type == (WRespType)WRESP_ERROR) {
     ret = serialize_result(type, errStr, &json);
   }

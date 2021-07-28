@@ -15,6 +15,8 @@
 #include "tasks.h"
 #include "jserdes.h"
 
+static void free_agent_request(AgentReq *req);
+
 /*
  * decode a u_map into a string
  */
@@ -124,8 +126,8 @@ int callback_post_container(const struct _u_request *request,
   /* Step-2: find out which register agent can handle the method
    *         returned by the service provider.
    */
-  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL, &indexURL,
-			      &storeURL);
+  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL,
+			      &indexURL, &storeURL);
   if (agent == NULL) {
     resCode = 404; /*Not found but might be available in furture. */
     errStr = msprintf("No service provider found");
@@ -141,8 +143,8 @@ int callback_post_container(const struct _u_request *request,
    *         Tasks list is also updated.
    */
 
-  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL, indexURL,
-				       storeURL, agent, cfg, &uuid);
+  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
+				       indexURL, storeURL, agent, cfg, &uuid);
 
   /* Step-4: setup client URL where they can monitor the status
    *         of the request. 
@@ -157,8 +159,7 @@ int callback_post_container(const struct _u_request *request,
 
 reply:
 
-  respBody = process_cli_response(respType, &path[0], &idStr[0], NULL,
-				  errStr);
+  respBody = process_cli_response(respType, &path[0], &idStr[0], NULL, errStr);
   if (respBody) {
     ulfius_set_string_body_response(response, resCode, respBody);
   } else {
@@ -248,12 +249,39 @@ int callback_put_agent_update(const struct _u_request *request,
 			      struct _u_response *response,
 			      void *user_data) {
 
-  char *post_params = print_map(request->map_post_body);
-  char *response_body = msprintf("OK!\n%s", post_params);
+  int ret=WIMC_OK, retCode;
+  uuid_t uuid;
+  char *resBody;
+  json_t *jreq=NULL;
+  json_error_t jerr;
+  AgentReq *req=NULL;
 
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
+  WimcCfg *cfg = (WimcCfg *)user_data;
+
+  req = (AgentReq *)calloc(sizeof(AgentReq), 1);
+
+  jreq = ulfius_get_json_body_request(request, &jerr);
+  if (!jreq) {
+    log_error("json error: %s", jerr.text);
+  } else {
+    deserialize_agent_request(&req, jreq);
+  }
+
+  ret = process_agent_update_request(cfg->tasks, req, &uuid);
+
+  if (ret == WIMC_OK) {
+    retCode = 200;
+  } else if (ret == WIMC_ERROR_BAD_ID){
+    retCode = 404;
+  } else {
+    retCode = 400;
+  }
+
+  resBody = msprintf("%s\n", error_to_str(ret));
+  ulfius_set_string_body_response(response, retCode, resBody);
+  o_free(resBody);
+  free_agent_request(req);
+  json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -264,6 +292,9 @@ static void free_agent_request(AgentReq *req) {
     free(req->reg->method);
     free(req->reg->url);
     free(req->reg);
+  } else if (req->type == REQ_UPDATE) {
+    if (req->update->voidStr) free(req->update->voidStr);
+    free(req->update);
   }
 
   free(req);
@@ -295,7 +326,7 @@ int callback_post_agent(const struct _u_request *request,
     deserialize_agent_request(&req, jreq);
   }
 
-  ret = process_agent_request(cfg->agents, req, &uuid);
+  ret = process_agent_register_request(cfg->agents, req, &uuid);
 
   if (ret == WIMC_OK) {
     retCode = 200;
@@ -361,18 +392,35 @@ int callback_get_task(const struct _u_request *request,
     goto done;
   }
 
+  /* Set proper response type. */
+  switch(task->state) {
+  case REQUEST:
+  case FETCH:
+  case UNPACK:
+    respType = WRESP_PROCESSING;
+    break;
+  case DONE:
+    respType = WRESP_RESULT;
+    break;
+  case ERR:
+    respType = WRESP_ERROR;
+    break;
+  default:
+    respType = WRESP_PROCESSING;
+    break;
+  }
   statusCode = 200;
 
  done:
   /* DELETE method require additional processing. */
-  if (statusCode == 200 && strcasecmp(request->http_verb, "DELETE")==0) {
-    respType = WRESP_RESULT;
-    /* Delete the task from the list. */
-    delete_from_tasks(cfg->tasks, task);
-    resBody = process_cli_response(respType, "OK", NULL, NULL, NULL);
-  } else {
-    resBody = process_cli_response(respType, NULL, NULL, task, errStr);
+  if (statusCode == 200) {
+    if (strcasecmp(request->http_verb, "DELETE")==0) {
+      /* Delete the task from the list. */
+      delete_from_tasks(cfg->tasks, task);
+    }
   }
+
+  resBody = process_cli_response(respType, NULL, idStr, task, errStr);
 
   ulfius_set_string_body_response(response, statusCode, resBody);
   o_free(resBody);

@@ -170,7 +170,7 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   json_object_set_new(jupdate, JSON_TRANSFER_KBYTES,
 		      json_integer(update->transferKB));
   json_object_set_new(jupdate, JSON_TRANSFER_STATE,
-		      json_string(convert_state_to_str(update->transferState)));
+		      json_string(convert_tx_state_to_str(update->transferState)));
   
   /* void str is non-zero only if there was an error or we are done (will
    * have final path. Otherwise is empty

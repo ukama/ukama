@@ -28,7 +28,7 @@
 #define WIMC_AGENT_STATE_ACTIVE     2
 #define WIMC_AGENT_STATE_UNREGISTER 3
 
-#define AGENT_TX_STATE_REQUEST_STR "request";
+#define AGENT_TX_STATE_REQUEST_STR "request"
 #define AGENT_TX_STATE_FETCH_STR   "fetch"
 #define AGENT_TX_STATE_UNPACK_STR  "unpack"
 #define AGENT_TX_STATE_DONE_STR    "done"
@@ -80,11 +80,11 @@ typedef struct {
 
 typedef struct {
 
-  uuid_t uuid;
-  int    totalKB;
-  int    transferKB;
-  int    transferState;
-  char   *voidStr;
+  uuid_t        uuid;
+  int           totalKB;
+  int           transferKB;
+  TransferState transferState;
+  char          *voidStr;
 } Update;
 
 typedef struct {
@@ -131,7 +131,7 @@ typedef struct _Agent {
 /* Functions header */
 
 int register_agent(Agent **agents, char *method, char *url, uuid_t *uuid);
-int process_agent_request(Agent **agents, AgentReq *req, uuid_t *uuid);
+int process_agent_register_request(Agent **agents, AgentReq *req, uuid_t *uuid);
 Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
 			   char **providerURL, char **iURL, char **sURL);
 void clear_agents(Agent *agent);

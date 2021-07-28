@@ -120,7 +120,7 @@ static int deserialize_agent_request_register(Register **reg, json_t *json) {
   }
 
   *reg = (Register *)calloc(sizeof(Register), 1);
-  if (reg == NULL) {
+  if (*reg == NULL) {
     return FALSE;
   }
 
@@ -139,7 +139,7 @@ static int deserialize_agent_request_register(Register **reg, json_t *json) {
 /*
  * deserialize_agent_request_update --
  */
-static int deserialize_agent_request_update(Update *update, json_t *json) {
+static int deserialize_agent_request_update(Update **update, json_t *json) {
 
   json_t *jupdate, *obj;
 
@@ -149,8 +149,8 @@ static int deserialize_agent_request_update(Update *update, json_t *json) {
     return FALSE;
   }
 
-  update = (Update *)calloc(sizeof(Update), 1);
-  if (update == NULL) {
+  *update = (Update *)calloc(sizeof(Update), 1);
+  if (*update == NULL) {
     return FALSE;
   }
 
@@ -159,32 +159,28 @@ static int deserialize_agent_request_update(Update *update, json_t *json) {
   if (obj == NULL) {
     return FALSE;
   } else {
-    uuid_unparse(json_string_value(obj), update->uuid);
+    uuid_parse(json_string_value(obj), (*update)->uuid);
   }
 
   /* Total data to be transfered as part of this fetch (in KB) */
   obj = json_object_get(jupdate, JSON_TOTAL_KBYTES);
   if (obj) {
-    update->totalKB = json_integer_value(obj);
+    (*update)->totalKB = json_integer_value(obj);
   }
 
   /* Activity so far. */
   obj = json_object_get(jupdate, JSON_TRANSFER_KBYTES);
   if (obj) {
-    update->transferKB = json_integer_value(obj);
+    (*update)->transferKB = json_integer_value(obj);
   }
 
   /* Activity state. */
   obj = json_object_get(jupdate, JSON_TRANSFER_STATE);
   if (obj) {
-    update->transferState = convert_str_to_state(json_string_value(obj));
-
-    if (update->transferState == (TransferState)ERR ||
-	update->transferState == (TransferState)DONE) {
-      obj = json_object_get(jupdate, JSON_VOID_STR);
-      if (obj) {
-	update->voidStr = json_string_value(obj);
-      }
+    (*update)->transferState = convert_str_to_tx_state(json_string_value(obj));
+    obj = json_object_get(jupdate, JSON_VOID_STR);
+    if (obj) {
+      (*update)->voidStr = strdup(json_string_value(obj));
     }
   }
 
@@ -250,7 +246,7 @@ int deserialize_agent_request(AgentReq **request, json_t *json) {
   if (req->type == (ReqType)REQ_REG) {
     ret = deserialize_agent_request_register(&req->reg, jreq);
   } else if (req->type == (ReqType)REQ_UPDATE) {
-    ret = deserialize_agent_request_update(req->update, jreq);
+    ret = deserialize_agent_request_update(&req->update, jreq);
   } else if (req->type == (ReqType)REQ_UNREG) {
     ret = deserialize_agent_request_unreg(req->unReg, jreq);
   }
@@ -379,7 +375,7 @@ int serialize_task(WTasks *task, json_t **json) {
   json_object_set_new(jtask, JSON_TRANSFER_KBYTES,
 		      json_integer(update->transferKB));
   json_object_set_new(jtask, JSON_TRANSFER_STATE,
-		      json_string(convert_state_to_str(update->transferState)));
+		      json_string(convert_tx_state_to_str(update->transferState)));
 
   if (update->voidStr) {
     json_object_set_new(jtask, JSON_VOID_STR, json_string(update->voidStr));

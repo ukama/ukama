@@ -108,7 +108,8 @@ void read_stats_and_update_wimc(void *args) {
     log_debug("Sending update to wimc.d ...");
     code = communicate_with_wimc(REQ_UPDATE, fetch->cbURL, NULL, NULL,
 				 fetch->uuid, (void *)stats);
-    if (!code || code == 400 || code == 404) {
+    /* code 404 means ID is not yet register. We try again. */
+    if (!code || code == 400 ) {
       log_error("Failed to send update to the wimc.d. Thread Exit");
       goto cleanup;
     }
