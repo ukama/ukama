@@ -5,7 +5,7 @@ BUILDDYNAMICLIB = lib/ubsp/build/libubsp.so
 BUILDLIBS = $(BUILDSATICLIB)
 CJSONLIB = lib/ubsp/third-party/libcjson.a
 UBSPLIB = $(BUILDSATICLIB)
-
+VERSION = v0.0.1
 ifdef SYSTEMDIR
     COMMONSRCDIR := $(SYSTEMDIR)common/src
     COMMONINCDIR := $(SYSTEMDIR)common/inc
@@ -15,6 +15,7 @@ else
 endif	
 
 $(info SYTEMDIR $(SYSTEMDIR) CURRENTDIR: $(CURDIR) COMMONDIR $(COMMONSRCDIR) COMMONINC $(COMMONINCDIR))
+
 SRCDIRS := src utils registry $(COMMONSRCDIR)
 INCDIRS := $(CURDIR) $(COMMONINCDIR)
 BUILDDIR := build
@@ -75,10 +76,10 @@ $(BUILDDIR)/%.o: %.c $(BUILDDIR)/%.d $(MAKEFILE) $@
 $(BUILDDIR)/%.d: ;
 
 
-.PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug
+.PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug container
 
 # Main target for building
-all: $(UBSPLIB) $(EXCECUTABLE)
+all: container $(UBSPLIB) $(EXCECUTABLE)
 	@echo Done.
 
 #UBSP lib
@@ -173,6 +174,11 @@ clean:
 	@rm -rf $(BUILDDIR)
 	@cd lib/ubsp && make $@
 	@echo Cleaned.
+
+container: $(EXCECUTABLE)
+	@echo Building container
+	@echo Warning:: Make sure you have copied required sysfs to container/root/tmp/sys
+	sudo buildah bud -f . -t ukamaos/edr:${VERSION}
 
 # Force build of all files
 force: clean all

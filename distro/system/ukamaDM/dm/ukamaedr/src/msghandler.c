@@ -157,7 +157,7 @@ int msg_handler_create_sock() {
     if (sockfd == -1) {
         fprintf(stderr, "Err(%d): MSGHANDLER:: Socket creation failed...\r\n", ret);
     } else {
-        fprintf(stdout, "MSGHANDLER:: Socket %dsuccessfully created \r\n", sockfd);
+        fprintf(stdout, "MSGHANDLER:: Socket %d successfully created \r\n", sockfd);
     }
     return sockfd;
 }
@@ -237,7 +237,7 @@ int msghandler_server(void* ctx) {
 
     int flag = 1;
     if (-1 == setsockopt(sockfd, SOL_SOCKET, (SO_REUSEADDR|SO_REUSEPORT), &flag, sizeof(flag))) {
-    	fprintf(stderr, "Err: setsockopt fail for UkamaEDR.");
+    	fprintf(stderr, "Err: setsockopt fail for UkamaEDR.\r\n");
     	goto cleanup;
     }
 
@@ -256,7 +256,7 @@ int msghandler_server(void* ctx) {
         fprintf(stderr, "Err(%d): MSGHANDLER:: Listen failed...\r\n", ret);
         goto cleanup;
     } else
-        fprintf(stdout, "Server listening..\n");
+        fprintf(stdout, "Server listening..\r\n");
     len = sizeof(cli);
 
     while (TRUE) {

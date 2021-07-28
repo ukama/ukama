@@ -20,23 +20,25 @@
  */
 #include "utils/cJSON.h"
 #include "headers/utils/log.h"
+#include "mfg/common/mfg_helper.h"
 
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define VERSION					"0.0.1"
 
-#define NUMBERS_IN_ID			4
-#define NUMBER_OFFSET_IN_ID		2
-
-#define MAX_BOARDS				5
-
 #define MAX_JSON_TAGS 			3
 
-#define MODULE_OFFSET			12
-#define UNIT_OFFSET				19
+/* Schema struct */
+typedef struct {
+	char *name;
+	char *uuid;
+	char *muuid;
+	char *fileName;
+} UnitSchema;
 
 /* JSON TAGS */
 static char* jsontags[MAX_JSON_TAGS] = {
@@ -44,6 +46,8 @@ static char* jsontags[MAX_JSON_TAGS] = {
 		"unit_config",
 		"module_info"
 };
+
+UnitSchema unitschema[MAX_BOARDS] = {'\0'};
 
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
@@ -147,7 +151,7 @@ cJSON *dofile(char *filename)
 
 
 /* Modify UUID field in JSON */
-int modify_uuid(cJSON * obj, char* value, unsigned short int offset) {
+int modify_uuid(cJSON * obj, char* value) {
 	int ret = 0;
 
 	/* Get UUID value */
@@ -158,13 +162,12 @@ int modify_uuid(cJSON * obj, char* value, unsigned short int offset) {
 		char *currval = cJSON_GetStringValue(juuid);
 		if (currval) {
 
-			/* Update the numbers in UUID */
-			memcpy(currval+offset, value, NUMBERS_IN_ID);
-			if (!cJSON_SetValuestring(juuid, currval)) {
-				log_error("Schema:: Error:: Setting UUID to %s failed.", currval);
+			/* Update the UUID */
+			if (!cJSON_SetValuestring(juuid, value)) {
+				log_error("Schema:: Error:: Setting UUID to %s failed.", value);
 				ret = -1;
 			} else {
-				log_debug("Schema:: UUID set to %s.", currval);
+				log_debug("Schema:: UUID %s is updated to %s.", currval, value);
 			}
 
 		}else {
@@ -179,14 +182,62 @@ int modify_uuid(cJSON * obj, char* value, unsigned short int offset) {
 	return ret;
 }
 
+/* Search unit name and return the UUID for it */
+char* read_uuid_for_module_name(char* name) {
+	for(unsigned short int idx = 0; idx < MAX_BOARDS; idx++) {
+		if ( (unitschema[idx].name) && (!strcasecmp(name, unitschema[idx].name))) {
+			return unitschema[idx].muuid;
+		}
+	}
+	return NULL;
+}
+
+/* Update Unit config */
+int  update_unit_config(cJSON **obj) {
+	int ret = -1;
+	cJSON *unitcfgobj = *obj;
+
+	/* unit config is supposed to be an array of modules */
+	if (cJSON_IsArray(unitcfgobj)) {
+		const cJSON *module = NULL;
+		cJSON_ArrayForEach(module, unitcfgobj)
+		{
+			ret = -1;
+			cJSON *jname = cJSON_GetObjectItem(module, "name");
+			if (jname) {
+				char *currval = cJSON_GetStringValue(jname);
+				if (currval) {
+					char* muuid = read_uuid_for_module_name(currval);
+					if (muuid) {
+						if (modify_uuid(module, muuid) == 0) {
+							ret = 0;
+						}
+					}
+				}
+			}
+
+			/* ret should be 0 after every loop if not something is wrong with schema */
+			if(ret) {
+				break;
+			}
+
+		}
+
+	} else {
+		log_error("Schema:: Expected unit_config array but unknown JSON tag found.");
+	}
+	return ret;
+}
+
 /* Modify JSON */
-int modify_json(char* fileName, char* value)
+int modify_json(unsigned short idx)
 {
+	int ret = 0;
 	cJSON *root,*obj;
 	char *out;
-
+	char* value = NULL;
 	/* Parse the JSON file */
-	root = dofile(fileName);
+	root = dofile(unitschema[idx].fileName);
 	if (!root) {
 		return -1;
 	}
@@ -194,7 +245,7 @@ int modify_json(char* fileName, char* value)
 	/* Debug Info */
 	out = cJSON_Print(root);
 	if (out) {
-		log_trace("Before modification file %s is::\n %s\n",fileName, out);
+		log_trace("Before modification file %s is::\n %s\n", unitschema[idx].fileName, out);
 		free(out);
 	}
 
@@ -204,41 +255,29 @@ int modify_json(char* fileName, char* value)
 		obj = cJSON_GetObjectItem(root, jsontags[tag]);
 		if (obj) {
 
-			/* For Unit config which is array */
-			cJSON *arrobj = NULL;
-			if (!strcmp(jsontags[tag], "unit_config")) {
+			/* For Unit Config which is array */
+			if ( unitschema[idx].muuid && (!strcmp(jsontags[tag], "unit_config"))) {
 
-				/* unit config is supposed to be an array of modules */
-				if (cJSON_IsArray(obj)) {
-
-					int elm = cJSON_GetArraySize(obj);
-					for (int idx = 0; idx < elm; idx++) {
-
-						/* Update every entry of the UUID */
-						arrobj = cJSON_GetArrayItem(obj, idx);
-						if (modify_uuid(arrobj, value, MODULE_OFFSET)) {
-							log_error("Schema copying uuid failed for Unit/Module Info.");
-							return -1;
-						}
-
-					}
-
-				} else {
-					log_error("Schema:: Expected unit_config array but unknown JSON tag found.");
+				/* Update Unit Config */
+				ret  = update_unit_config(&obj);
+				if (ret) {
+					log_error("Schema:: Failed to update unit config for %s file.", unitschema[idx].fileName);
+					return ret;
 				}
 
 			} else {
 
-				/* Offset */
-				unsigned short int offset = 0;
-				if (!strcmp(jsontags[tag], "module_info")) {
-					offset = MODULE_OFFSET;
-				} else if (!strcmp(jsontags[tag], "unit_info")) {
-					offset = UNIT_OFFSET;
+				if (unitschema[idx].muuid && (!strcmp(jsontags[tag], "module_info"))) {
+					/* Module Info */
+					value = unitschema[idx].muuid;
+
+				} else if (unitschema[idx].uuid && (!strcmp(jsontags[tag], "unit_info"))) {
+					/* Unit Info */
+					value = unitschema[idx].uuid;
 				}
 
 				/* For Unit Info and Module info  */
-				if (modify_uuid(obj, value, offset)) {
+				if (modify_uuid(obj, value )) {
 					log_error("Schema copying uuid failed for Unit/Module Info.");
 					return -1;
 				}
@@ -249,14 +288,14 @@ int modify_json(char* fileName, char* value)
 
 	/* Debug Info */
 	out = cJSON_Print(root);
-	log_trace("After modification file %s is::\n %s\n",fileName, out);
+	log_trace("After modification file %s is::\n %s\n",unitschema[idx].fileName, out);
 
 	/* Update the JSON file */
-	if(write_file(fileName,out) > 0 ) {
-		log_info("File %s updated successfully.", fileName );
+	if(write_file(unitschema[idx].fileName,out) > 0 ) {
+		log_info("File %s updated successfully.", unitschema[idx].fileName );
 		free(out);
 	} else {
-		log_error("Write to file %s failed.", fileName );
+		log_error("Write to file %s failed.", unitschema[idx].fileName );
 	}
 
 	/* Clean the cJSON root  */
@@ -267,7 +306,9 @@ int modify_json(char* fileName, char* value)
 
 /* Command line args */
 static struct option long_options[] = {
-		{ "id", required_argument, 0, 'i' },
+		{ "name", required_argument, 0, 'n' },
+		{ "uuid", required_argument, 0, 'u' },
+		{ "muuid", required_argument, 0, 'm' },
 		{ "file", required_argument, 0, 'f' },
 		{ "logs", required_argument, 0, 'l' },
 		{ "help", no_argument, 0, 'h' },
@@ -279,19 +320,28 @@ static struct option long_options[] = {
 void usage() {
 	printf("Usage: schema [options] \n");
 	printf("Options:\n");
-	printf("--h, --help                             Help menu.\n");
 	printf(
-			"--l, --logs <TRACE> <DEBUG> <INFO>       Log level for the process.\n");
+			"--h, --help                                                          Help menu.\n");
 	printf(
-			"--i, --id <Numbers in Id>                 ID for file.\n");
+			"--l, --logs <TRACE>|<DEBUG>|<INFO>                                   Log level for the process.\n");
 	printf(
-			"--f, --file <Files>                  Schema files.\n");
-	printf("--v, --version                       Software Version.\n");
+			"--n, --name <ComV1>|<LTE>|<MASK>|<RF CTRL BOARD>,<RF BOARD>          Name of module.\n");
+	printf(
+			"--u, --uuid <string 24 character long>                               UUIID for file.\n");
+	printf(
+			"--m, --muuid <string 24 character long>                              Module UIID for file.\n");
+	printf(
+			"--f, --file <Files>                                                  Schema files.\n");
+	printf(
+			"--v, --version                                                       Software Version.\n");
 }
+
 
 /* JSON Schema UUID Update utility */
 int main(int argc, char** argv) {
 	char *uuid = {"\0"};
+	char *name[MAX_BOARDS] = {"\0"};
+	char *mid[MAX_BOARDS] = {"\0"};
 	char *file[MAX_BOARDS] = {"\0"};
 	char *debug = "TRACE";
 	char *ip = "";
@@ -303,14 +353,18 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
+
 	int fidx = 0;
+	int midx = 0;
+	int nidx = 0;
+	int uuidcount = 0;
 
 	/* Parsing command line args. */
 	while (true) {
 		int opt = 0;
 		int opdidx = 0;
 
-		opt = getopt_long(argc, argv, "h:v:i:f:l:", long_options, &opdidx);
+		opt = getopt_long(argc, argv, "h:v:u:f:l:m:n:", long_options, &opdidx);
 		if (opt == -1) {
 			break;
 		}
@@ -325,8 +379,14 @@ int main(int argc, char** argv) {
 			puts(VERSION);
 			break;
 
-		case 'i':
+		case 'n':
+			name[nidx] = optarg;
+			nidx++;
+			break;
+
+		case 'u':
 			uuid = optarg;
+			uuidcount++;
 			break;
 
 		case 'f':
@@ -339,21 +399,68 @@ int main(int argc, char** argv) {
 			set_log_level(debug);
 			break;
 
+		case 'm':
+			mid[midx] = optarg;
+			midx++;
+			break;
+
 		default:
 			usage();
 			exit(0);
 		}
 	}
 
+	/* Check for arguments */
+	if (uuidcount != 1) {
+
+		log_error("Schema:: Error:: Schema expects one uuid argument which is must and you provided %d.", uuidcount);
+		usage();
+		exit(0);
+
+	} else if ((fidx != nidx) || (fidx != midx) || (fidx < 1)) {
+
+		log_error("Schema:: Error:: Schema expects module uuid, name and file for each module "
+				"and you provided %d module name %d modules uuid and %d module files.", nidx, midx, fidx);
+		usage();
+		exit(0);
+
+	}
+
+	/* Verify UUID */
+	if (verify_uuid(uuid)) {
+		log_error("Schema:: Error:: Check the Unit UUID %s", uuid);
+		usage();
+		exit(0);
+	}
+
+	/* Update Unit Schema */
+	for(int idx = 0; idx < fidx;idx++) {
+		log_trace("Files[%d] = %s Module UUID %s\n", idx, file[idx], mid[idx]);
+
+		/* Verify module uuid and name */
+		if (verify_uuid(mid[idx]) || verify_boardname(name[idx]) ) {
+			usage();
+			exit(0);
+		}
+
+		unitschema[idx].name = name[idx];
+		if (idx==0) {
+			unitschema[idx].uuid = uuid;
+		} else {
+			unitschema[idx].uuid = NULL;
+		}
+		unitschema[idx].muuid = mid[idx];
+		unitschema[idx].fileName = file[idx];
+	}
+
 	/* Modify every file provided in input.*/
 	for(int idx = 0; idx < fidx;idx++) {
-		unsigned int len = strlen(uuid);
-		log_trace("Files[%d] = %s ID %s Length %d \n", idx, file[idx], uuid, len);
 
 		/* Update JSON */
-		int ret = modify_json(file[idx], uuid);
+		int ret = modify_json(idx);
 		if (ret) {
 			log_error("Schema:: Error:: Failed to update schema %s.", file[idx]);
+			exit(0);
 		} else {
 			log_info("Schema:: Updated schema %s.", file[idx]);
 		}

@@ -1,13 +1,12 @@
-FROM alpine:3.13.5
-
-RUN apk update && apk add --no-cache supervisor
-
-RUN mkdir -p /var/log/supervisor
-
+FROM alpine:3.14.0 
 ENTRYPOINT []
 WORKDIR /
 
-COPY build/bin/server /sbin/lwm2mServer
-COPY config /etc/configs
+# Prepare FS for ukamaDM
+COPY container/root /
+COPY container/start.sh /start.sh
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/configs/ssupervisord.conf"]
+# Copy device registry related bins
+COPY build/bin/client /sbin/lwm2mClient
+
+CMD [ "/start.sh" ]

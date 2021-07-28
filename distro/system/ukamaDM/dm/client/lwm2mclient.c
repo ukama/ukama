@@ -1429,6 +1429,8 @@ int main(int argc, char *argv[])
             fprintf(stdout, "Unknown...\r\n");
             break;
         }
+	fflush(stdout);
+
         if (result != 0)
         {
             fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
@@ -1538,27 +1540,35 @@ int main(int argc, char *argv[])
             /*
              * If the event happened on the SDTIN
              */
-            else if (FD_ISSET(STDIN_FILENO, &readfds))
-            {
-                numBytes = read(STDIN_FILENO, buffer, MAX_PACKET_SIZE - 1);
+            //else if (FD_ISSET(STDIN_FILENO, &readfds))
+            //{
+            //  numBytes = read(STDIN_FILENO, buffer, MAX_PACKET_SIZE - 1);
 
-                if (numBytes > 1)
-                {
-                    buffer[numBytes] = 0;
-                    /*
-                     * We call the corresponding callback of the typed command passing it the buffer for further arguments
-                     */
-                    handle_command(commands, (char*)buffer);
-                }
-                if (g_quit == 0)
-                {
-                    fprintf(stdout, "\r\n> ");
-                    fflush(stdout);
-                }
-                else
-                {
-                    fprintf(stdout, "\r\n");
-                }
+            //  if (numBytes > 1)
+            //  {
+            //      buffer[numBytes] = 0;
+            //      /*
+            //       * We call the corresponding callback of the typed command passing it the buffer for further arguments
+            //       */
+            //      handle_command(commands, (char*)buffer);
+            //  }
+            //  if (g_quit == 0)
+            //  {
+            //      fprintf(stdout, "\r\n> ");
+            //      fflush(stdout);
+            //  }
+            //  else
+            //  {
+            //      fprintf(stdout, "\r\n");
+            //  }
+            //}
+
+	    if (lwm2mH->state == STATE_BOOTSTRAPPING ) {
+		    sleep(30);
+	    }
+
+	    if (lwm2mH->state == STATE_REGISTERING ) {
+                    sleep(1);
             }
         }
     }
