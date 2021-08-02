@@ -105,14 +105,11 @@ jobs:
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-      - name: update gitops
-        run: |
-          wget https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64 -O yq && chmod +x $GITHUB_WORKSPACE/yq
-          git config --global user.email "service@ukama.com"
-          git config --global user.name "Service User"
-          git clone https://${{  secrets.GIT_ACCESS_TOKEN }}@github.com/ukama/infra-as-code.git  infra-as-code
-          cd infra-as-code/releases
-          $GITHUB_WORKSPACE/yq eval '(.environments.default.values[] | select(has("${{ env.working-directory }}ImageTag")) | .${{ env.working-directory }}ImageTag)="${{ steps.vars_step.outputs.sha_short }}"' helmfile.yaml --inplace
-          git add .
-          git commit -m"Release of tag for ${{ env.working-directory }} service"
-          git push
+      - name: update gitops          
+        uses: denispalnitsky/gitops-release@v7
+        with:
+          filename: "releases/ukamax-helmfile.yaml"
+          key: "${{ env.working-directory }}ImageTag"
+          value:  ${{ steps.vars_step.outputs.sha_short }}
+          github-token: ${{ secrets.GIT_ACCESS_TOKEN }}
+          github-org-and-repo:  "ukama/infra-as-code"
