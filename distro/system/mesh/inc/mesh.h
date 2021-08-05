@@ -9,8 +9,6 @@
 
 #include "log.h"
 #include "config.h"
-#include "ssl.h"
-#include "cpool.h"
 
 #define DEF_FILENAME "cert.crt"
 #define DEF_CA_FILE  ""
@@ -23,16 +21,13 @@
 #define DEF_CLOUD_SERVER_PORT "4444"
 #define DEF_CLOUD_SERVER_CERT "certs/test.crt"
 
-#define TRUE 1
+#define TRUE  1
 #define FALSE 0
 
 #define PROXY_NONE    0x01
 #define PROXY_FORWARD 0x02
 #define PROXY_REVERSE 0x04
 
-extern int connect_to_secure_server(Connection *conn, const char *serverName,
-				    const char *portNumber,
-				    const char *certFile);
-extern int process_config_file(char *fileName, Configs *config);
+#define PREFIX_WEBSOCKET "/websocket"
 
 #endif /* MESH_H */

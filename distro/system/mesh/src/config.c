@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
 /*
  * Config.c
  *
@@ -12,230 +21,96 @@
 #include "log.h"
 
 /*
- * set_default_base_config --
+ * print_config_data --
  *
  */
 
-static void set_default_base_config(BaseConfig *base) {
-  
-  base->admin = FALSE;
-  base->maxRemoteClients = DEF_MAX_REMOTE_CLIENTS;
-  base->maxLocalClients  = DEF_MAX_LOCAL_CLIENTS;
+void print_config(Config *config) {
+
+  log_debug("Mode:   %s", config->mode ? "SERVER" : "CLIENT");
+  log_debug("Secure: %s", config->secure ? "TLS/SSL enabled" : "Disabled");
+
+  if (config->mode == MODE_SERVER) {
+    log_debug("Remote accept port: %s", config->remoteAccept);
+  } else if (config->mode == MODE_CLIENT) {
+    log_debug("Remote connect port: %s", config->remoteConnect);
+  }
+
+  log_debug("Local accept port: %s", config->localAccept);
+
+  if (config->secure) {
+    log_debug("TLS/SSL key file: %s", config->keyFile);
+    log_debug("TLS/SSL cert file: %s", config->certFile);
+  }
 }
 
 /*
- * prase_base_config --
+ * prase_config_entries -- Server/client stuff.
  *
  */
 
-static int parse_base_config(BaseConfig *base, toml_table_t *configData) {
-  
-  int ret=FALSE;
-  toml_datum_t mode, admin, remoteClients, localClients, interface;
-  
-  set_default_base_config(base);
-  
-  /* Read the config data from the config.toml and load into Config. */
-  mode = toml_string_in(configData, MODE);
-  admin = toml_string_in(configData, ADMIN);
-  remoteClients = toml_string_in(configData, REMOTE_CLIENTS);
-  localClients = toml_string_in(configData, LOCAL_CLIENTS);
-  interface = toml_string_in(configData, INTERFACE);
+static void parse_config_entries(int mode, Config *config,
+				toml_table_t *configData) {
 
-  /* Mode is mandatory. For others default is used if not defined. */
-  if (!mode.ok) {
-    log_error("[%s] is mandatory but missing.", MODE);
-    return FALSE;
-  } else {
-    if (!strcmp(MODE_SERVER_STR, mode.u.s)) {
-      base->mode = MODE_SERVER;
-    } else if (!strcmp(MODE_CLIENT_STR, mode.u.s)) {
-      base->mode = MODE_CLIENT;
-    } else if (!strcmp(MODE_DUAL_STR, mode.u.s)) {
-      base->mode = MODE_DUAL;
-    } else {
-      log_error("[%s] invalid entry: %s", MODE, mode.u.s);
-      goto exit;
-    }
+  toml_datum_t remoteAccept, localAccept, remoteConnect, cert, key;
+
+  if (mode == MODE_SERVER) {
+    remoteAccept = toml_string_in(configData, REMOTE_ACCEPT);
+  } else if (mode == MODE_CLIENT) {
+    remoteConnect = toml_string_in(configData, REMOTE_CONNECT);
   }
 
-  /* Interface on which mesh.d will listen. */
-  if (!interface.ok) {
-    log_error("[%s] is mandatory but missing.", INTERFACE);
-  } else {
-    /* Validate the interface is right. */
-    if (is_valid_iface(interface.u.s)) {
-      base->interface = strdup(interface.u.s);
-    } else {
-      log_error("[%s] is defined (%s) but invalid", INTERFACE, interface.u.s);
-      goto exit;
-    }
-  }
+  localAccept = toml_string_in(configData, LOCAL_ACCEPT);
 
-  /* Admin. */
-  if (admin.ok) {
-    if (!strcmp(admin.u.s, "enable")) {
-      base->admin = TRUE;
-    } else if (!strcmp(admin.u.s, "disable")) {
-      base->admin = FALSE;
-    } else {
-      log_error("[%s], invalid entry for %s. Setting to default", BASE_CONFIG,
-		ADMIN);
-    }
-  }
-
-  /* remote and local clients. */
-  if (remoteClients.ok) {
-    int val = atoi(remoteClients.u.s);
-
-    if (val > MAX_REMOTE_CLIENTS || val < MIN_REMOTE_CLIENTS) {
-      log_error("[%s], invalid range for: %s. Setting to default", BASE_CONFIG,
-		REMOTE_CLIENTS);
-      base->maxRemoteClients = DEF_MAX_REMOTE_CLIENTS;
-    } else {
-      base->maxRemoteClients = val;
-    }
-  }
-
-  if (localClients.ok) {
-    int val = atoi(localClients.u.s);
-
-    if (val > MAX_LOCAL_CLIENTS || val < MIN_LOCAL_CLIENTS) {
-      log_error("[%s], invalid range for: %s. Setting to default", BASE_CONFIG,
-		LOCAL_CLIENTS);
-      base->maxLocalClients = DEF_MAX_LOCAL_CLIENTS;
-    } else {
-      base->maxLocalClients = val;
-    }
-  }
-
-  ret = TRUE;
-  
- exit:
-  return ret;
-}
-
-/*
- * prase_admin_config --
- *
- */
-
-static int parse_admin_config(AdminConfig *admin, toml_table_t *configData) {
-  
-  toml_datum_t adminEP, statsEP, port;
-  
-  /* Read the config data from the config.toml and load into Config. */
-  adminEP = toml_string_in(configData, ADMIN_ENDPOINT);
-  statsEP = toml_string_in(configData, STATS_ENDPOINT);
-  port = toml_string_in(configData, ADMIN_PORT);
-
-  if (!adminEP.ok) {
-    admin->adminEP = DEF_ADMIN_EP;
-  } else {
-    admin->adminEP = strdup(adminEP.u.s);
-  }
-
-  if (!statsEP.ok) {
-    admin->statsEP = DEF_STATS_EP;
-  } else {
-    admin->statsEP = strdup(statsEP.u.s);
-  }
-
-  if (!port.ok) {
-    admin->port = DEF_ADMIN_PORT;
-  } else { 
-    admin->port = atoi(port.u.s);
-  }
-  
-  return TRUE;
-}
-
-/*
- * prase_host_config -- Server/client stuff.
- *
- */
-
-static int parse_host_config(HostConfig *config, toml_table_t *configData,
-			     int hFlag) {
-
-  toml_datum_t localHost, localPort, remoteHost, remotePort, cert, key, proxy;
-
-  localHost = toml_string_in(configData, LOCAL_HOST);
-  localPort = toml_string_in(configData, LOCAL_PORT);
-  
-  remoteHost = toml_string_in(configData, REMOTE_HOST);
-  remotePort = toml_string_in(configData, REMOTE_PORT);
-  
   cert  = toml_string_in(configData, CERT);
   key   = toml_string_in(configData, KEY);
-  proxy = toml_string_in(configData, PROXY);
 
+  config->mode = mode;
 
-  if (hFlag == 1) { /* Only server have local port, for now. XXX */
-
-    config->type = 1;
-
-    if (!localHost.ok) {
-      log_debug("[%s] is missing, setting to default: localhost", LOCAL_HOST);
-      config->localHostname = LOCALHOST;
+  if (config->mode == MODE_SERVER) {
+    if (!remoteAccept.ok) {
+      log_debug("[%s] is missing, setting to default: %s", REMOTE_ACCEPT,
+		DEF_REMOTE_ACCEPT);
+      config->remoteAccept = strdup(DEF_REMOTE_ACCEPT);
     } else {
-      config->localHostname = strdup(localHost.u.s);
+      config->remoteAccept = strdup(remoteAccept.u.s);
+      free(remoteAccept.u.s);
     }
+  }
 
-    if (!localPort.ok) {
-      log_debug("[%s] is missing, setting to default: %s", LOCAL_PORT,
-		DEF_LOCAL_PORT);
-      config->localPort = strdup(DEF_LOCAL_PORT);
+  if (config->mode == MODE_CLIENT) {
+    if (!remoteConnect.ok) {
+      log_debug("[%s] is missing, setting to default: %s", REMOTE_CONNECT,
+		DEF_REMOTE_CONNECT);
+      config->remoteConnect = strdup(DEF_REMOTE_CONNECT);
     } else {
-      config->localPort = strdup(localPort.u.s);
+      config->remoteConnect = strdup(remoteAccept.u.s);
+      free(remoteAccept.u.s);
     }
-  } else {
-    config->type = 2;
   }
 
-  /* Common for both server and client. */
-  
-  /* Remote server/port. */
-  if (!remoteHost.ok) {
-    log_debug("[%s] is missing, setting to default: localhost", REMOTE_HOST);
-    config->remoteHostname = LOCALHOST;
+  if (!localAccept.ok) {
+    log_debug("[%s] is missing, setting to default: %s", LOCAL_ACCEPT,
+		DEF_LOCAL_ACCEPT);
+    config->localAccept = strdup(DEF_LOCAL_ACCEPT);
   } else {
-    config->remoteHostname = strdup(remoteHost.u.s);
+    config->localAccept = strdup(localAccept.u.s);
+    free(localAccept.u.s);
   }
   
-  if (!remotePort.ok) {
-    log_debug("[%s] is missing, setting to default: %s", REMOTE_PORT,
-	      DEF_REMOTE_PORT);
-    config->remotePort = DEF_REMOTE_PORT;
-  } else {
-    config->remotePort = strdup(remotePort.u.s);
-  }
-  
-  /* Cert, key and proxy. */
   if (cert.ok) {
     config->certFile = strdup(cert.u.s);
+    free(cert.u.s);
   } else {
-    config->certFile = DEF_SERVER_CERT;
+    config->certFile = strdup(DEF_SERVER_CERT);
   }
 
   if (key.ok) {
     config->keyFile = strdup(key.u.s);
+    free(key.u.s);
   } else {
-    config->keyFile = DEF_SERVER_KEY;
+    config->keyFile = strdup(DEF_SERVER_KEY);
   }
-  
-  if (proxy.ok) {
-    if (!strcmp(proxy.u.s, PROXY_NONE_STR)) {
-      config->proxyType = PROXY_NONE;
-    } else {
-      log_error("%s: %s is not supported!", PROXY, proxy.u.s);
-      return FALSE;
-    }
-  } else {
-    config->proxyType = PROXY_NONE; /* default is no proxy. */
-  }
-  
-  return TRUE;
 }
 
 /*
@@ -243,14 +118,18 @@ static int parse_host_config(HostConfig *config, toml_table_t *configData,
  *                       
  *
  */
-int process_config_file(char *fileName, Configs *config) {
+int process_config_file(int mode, int secure, char *fileName, Config *config) {
 
+  int ret=TRUE;
   FILE *fp;
-
-  toml_table_t *fileData;
-  toml_table_t *baseConfig, *adminConfig, *serverConfig, *clientConfig;
+  toml_table_t *fileData=NULL;
+  toml_table_t *serverConfig=NULL, *clientConfig=NULL;
   
   char errBuf[MAX_BUFFER];
+
+  /* Sanity check. */
+  if (fileName == NULL || config == NULL)
+    return FALSE;
   
   if ((fp = fopen(fileName, "r")) == NULL) {
     log_error("Error opening config file: %s: %s\n", fileName,
@@ -268,88 +147,78 @@ int process_config_file(char *fileName, Configs *config) {
     return FALSE;
   }
 
-  /* Parse the base-config. */
-  baseConfig = toml_table_in(fileData, BASE_CONFIG);
+  if (mode == MODE_SERVER) {
 
-  if (baseConfig == NULL) {
-    log_error("[%s] section parsing error in file: %s\n", BASE_CONFIG, fileName);
-    toml_free(fileData);
-    return FALSE;
-  }
-
-  config->baseConfig = (BaseConfig *)calloc(sizeof(BaseConfig), 1);
-  if (!config->baseConfig) {
-    log_error("Error allocating memory", sizeof(BaseConfig));
-    return FALSE;
-  }
-  
-  parse_base_config(config->baseConfig, baseConfig);
-
-  /* Parse the admin-config if admin=enable in [base-config] */
-  if (config->baseConfig->admin) { 
-  
-    adminConfig = toml_table_in(fileData, ADMIN_CONFIG);
-
-    if (adminConfig == NULL) {
-         log_error("[%s] section parsing error in file: %s\n", ADMIN_CONFIG,
-		   fileName);
-	 toml_free(fileData);
-	 return FALSE;
-    }
-    config->adminConfig = (AdminConfig *)calloc(sizeof(AdminConfig), 1);
-    if (!config->adminConfig) {
-      log_error("Error allocating memory", sizeof(AdminConfig));
-      return FALSE;
-    }
-    parse_admin_config(config->adminConfig, adminConfig);
-  } else {
-    config->adminConfig = NULL;
-  }
-
-  /* Parse the server-config and client-config. */
-  if (config->baseConfig->mode == MODE_SERVER ||
-      config->baseConfig->mode == MODE_DUAL) { 
-  
     serverConfig = toml_table_in(fileData, SERVER_CONFIG);
 
     if (serverConfig == NULL) {
       log_error("[%s] section parsing error in file: %s\n", SERVER_CONFIG,
 		fileName);
-      toml_free(fileData);
-      return FALSE;
+      ret = FALSE;
+      goto done;
     }
-    
-    config->serverConfig = (HostConfig *)calloc(sizeof(HostConfig), 1);
-    if (!config->serverConfig) {
-      log_error("Error allocating memory", sizeof(HostConfig));
-      return FALSE;
-    }
-    parse_host_config(config->serverConfig, serverConfig, 1);
-  } else {
-    config->serverConfig = NULL;
-  }
+    parse_config_entries(mode, config, serverConfig);
 
-  if (config->baseConfig->mode == MODE_CLIENT ||
-      config->baseConfig->mode == MODE_DUAL) { 
-    
+  } else if (mode == MODE_CLIENT) {
+
     clientConfig = toml_table_in(fileData, CLIENT_CONFIG);
 
     if (clientConfig == NULL) {
-      log_error("[%s] section parsing error in file: %s\n", CLIENT_CONFIG, fileName);
-      toml_free(fileData);
-      return FALSE;
+      log_error("[%s] section parsing error in file: %s\n", CLIENT_CONFIG,
+		fileName);
+      ret = FALSE;
+      goto done;
     }
-    
-    config->clientConfig = (HostConfig *)calloc(sizeof(HostConfig), 1);
-    if (!config->clientConfig) {
-      log_error("Error allocating memory", sizeof(HostConfig));
-      return FALSE;
+    parse_config_entries(mode, config, clientConfig);
+  }
+
+  /* validate config entries for key and cert files. */
+  if (secure) {
+    if (config->certFile == NULL && config->keyFile == NULL) {
+      ret = FALSE;
+      goto done;
     }
-    parse_host_config(config->clientConfig, clientConfig, 2);
-  } else {
-    config->clientConfig = NULL;
+
+    /* Make sure the cert and key are legit files. */
+    if ((fp=fopen(config->certFile, "r")) == NULL) {
+      log_error("Error with cert file: %s Error: %s", config->certFile,
+		strerror(errno));
+      ret = FALSE;
+      goto done;
+    }
+    fclose(fp);
+
+    if ((fp=fopen(config->keyFile, "r")) == NULL) {
+      log_error("Error with key file: %s Error: %s", config->keyFile,
+		strerror(errno));
+      ret = FALSE;
+      goto done;
+    } 
+    fclose(fp);
   }
   
+ done:
   toml_free(fileData);
-  return TRUE;
+  return ret;
+}
+
+/*
+ * clear_config --
+ */
+
+void clear_config(Config *config) {
+
+  if (!config) return;
+
+  if (config->mode == MODE_SERVER) {
+    free(config->remoteAccept);
+  }
+
+  if (config->mode == MODE_CLIENT) {
+    free(config->remoteConnect);
+  }
+
+  free(config->localAccept);
+  free(config->certFile);
+  free(config->keyFile);
 }

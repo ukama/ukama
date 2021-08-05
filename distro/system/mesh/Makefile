@@ -7,7 +7,7 @@ MBEDTLS_LOCATION=third_party/mbedtls/
 TOML_LOCATION=third_party/tomlc99
 MBEDTLS_INCLUDE=third_party/mbedtls/include
 COMMON_INC=../common/inc
-LIBS=-lpthread -lmbedtls -lmbedx509 -lmbedcrypto $(TOML_LOCATION)/libtoml.a
+LIBS=-lulfius -lpthread $(TOML_LOCATION)/libtoml.a
 
 CC=gcc
 CFLAGS+=-c -Wall -I./inc -I$(MBEDTLS_INCLUDE) -I$(COMMON_INC)  \
@@ -21,15 +21,12 @@ OBJFILES = $(CFILES:.c=.o)
 
 all: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(OBJFILES) libmbedtls toml
+$(TARGET_EXEC): $(OBJFILES) toml
 	$(CC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
-libmbedtls:
-	cd $(MBEDTLS_LOCATION) && $(MAKE) -C library
 
 toml:
 	cd $(TOML_LOCATION) && $(MAKE) DEBUG=1
