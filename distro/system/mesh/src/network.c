@@ -16,6 +16,7 @@
 
 #include "callback.h"
 #include "mesh.h"
+#include "websocket.h"
 
 /*
  * init_framework -- initializa ulfius framework.
@@ -89,11 +90,11 @@ int start_framework(Config *config, struct _u_instance *instance) {
 }
 
 /*
- * start_web_services -- start websocket on the server port.
+ * start_websocket_server -- start websocket server on the server port.
  *
  */
 
-int start_websocket(Config *cfg, struct _u_instance *serverInst) {
+int start_websocket_server(Config *cfg, struct _u_instance *serverInst) {
 
   /* Initialize the admin and client webservices framework. */
   if (init_framework(serverInst, atoi(cfg->remoteAccept)) != TRUE) {
@@ -113,4 +114,57 @@ int start_websocket(Config *cfg, struct _u_instance *serverInst) {
   log_debug("Websocket on remote port %s: started.", cfg->remoteAccept);
 
   return TRUE;
+}
+
+/*
+ * start_websocket_client -- Connect with remote server using websockets.
+ *
+ */
+
+int start_websocket_client(Config *config,
+			   struct _websocket_client_handler *handler) {
+
+  struct _u_request request;
+  struct _u_response response;
+
+  if (ulfius_init_request(&request) != U_OK) {
+    goto failure;
+  }
+
+  if (ulfius_init_response(&response) != U_OK) {
+    goto failure;
+  }
+
+  /* Setup websocket request. */
+  if (ulfius_set_websocket_request(&request, config->remoteConnect,
+				   NULL, NULL) == U_OK) {
+    /* Setup request parameters */
+    u_map_put(request.map_header, "User-Agent",
+	      MESH_CLIENT_AGENT "/" MESH_CLIENT_VERSION);
+    ulfius_add_websocket_client_deflate_extension(handler);
+    request.check_server_certificate = FALSE;
+
+    /* Open websocket connection to remote host. */
+    if (ulfius_open_websocket_client_connection(&request,
+	                &websocket_manager_cb, (void *)NULL,
+			&websocket_incoming_message_cb, (void *)NULL,
+			&websocket_onclose_cb, (void*)NULL,		
+		        handler, &response) == U_OK) {
+      /* Success. The websocket will now run as seperate thread as cb */
+      return TRUE;
+    } else {
+      log_error("Unable to open websocket connect to: %s",
+		config->remoteConnect);
+      goto failure;
+    }
+  } else {
+    log_error("Error initializing the websocket client request");
+    goto failure;
+  }
+
+ failure:
+  ulfius_clean_request(&request);
+  ulfius_clean_response(&response);
+
+  return FALSE;
 }

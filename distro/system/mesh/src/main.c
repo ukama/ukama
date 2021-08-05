@@ -23,7 +23,11 @@
 
 #define VERSION "0.0.1"
 
-extern int start_websocket(Config *cfg, struct _u_instance *serverInst);
+/* Defined in network.c */
+extern int start_websocket_server(Config *config,
+				  struct _u_instance *serverInst);
+extern int start_websocket_client(Config *config,
+				  struct _websocket_client_handler *handler);
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -67,6 +71,7 @@ int main (int argc, char *argv[]) {
   Config *config=NULL;
 
   struct _u_instance serverInst;
+  struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
 
   /* Prase command line args. */
   while (TRUE) {
@@ -152,17 +157,31 @@ int main (int argc, char *argv[]) {
 
   /* Step-2a: if server, setup all endpoints, cb and run websocket. Wait. */
   if (config->mode == MODE_SERVER) {
-    if (start_websocket(config, &serverInst) != TRUE) {
-      log_error("Webservice failed to setup for server. Exiting");
+    if (start_websocket_server(config, &serverInst) != TRUE) {
+      log_error("Websocket failed to setup for server. Exiting...");
       exit(1);
     }
   }
+
+  /* Step-2b: setup websocket client. */
+  if (config->mode == MODE_CLIENT) {
+    if (start_websocket_client(config, &websocket_client_handler) != TRUE) {
+      log_error("Websocket failed to setup for client. Exiting...");
+      exit(1);
+    }
+  }
+
+  /* Wait here for ever. XXX */
 
   log_debug("Mesh.d running ...");
 
   getchar(); /* For now. */
 
-  log_debug("UnMesh.d ...");
+  log_debug("UnMesh.d and Goodbye ... ");
+
+  if (config->mode == MODE_CLIENT) {
+    ulfius_websocket_client_connection_close(&websocket_client_handler);
+  }
 
   if (config->mode == MODE_SERVER) {
     ulfius_stop_framework(&serverInst);

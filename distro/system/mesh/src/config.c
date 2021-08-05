@@ -27,7 +27,12 @@
 
 void print_config(Config *config) {
 
-  log_debug("Mode:   %s", config->mode ? "SERVER" : "CLIENT");
+  if (config->mode == MODE_SERVER) {
+    log_debug("Mode: SERVER");
+  } else if (config->mode == MODE_CLIENT) {
+    log_debug("Mode: CLIENT");
+  }
+
   log_debug("Secure: %s", config->secure ? "TLS/SSL enabled" : "Disabled");
 
   if (config->mode == MODE_SERVER) {
@@ -49,7 +54,7 @@ void print_config(Config *config) {
  *
  */
 
-static void parse_config_entries(int mode, Config *config,
+static void parse_config_entries(int mode, int secure, Config *config,
 				toml_table_t *configData) {
 
   toml_datum_t remoteAccept, localAccept, remoteConnect, cert, key;
@@ -66,6 +71,7 @@ static void parse_config_entries(int mode, Config *config,
   key   = toml_string_in(configData, KEY);
 
   config->mode = mode;
+  config->secure = secure;
 
   if (config->mode == MODE_SERVER) {
     if (!remoteAccept.ok) {
@@ -82,10 +88,19 @@ static void parse_config_entries(int mode, Config *config,
     if (!remoteConnect.ok) {
       log_debug("[%s] is missing, setting to default: %s", REMOTE_CONNECT,
 		DEF_REMOTE_CONNECT);
-      config->remoteConnect = strdup(DEF_REMOTE_CONNECT);
+      if (config->secure) {
+	config->remoteConnect = strdup(DEF_REMOTE_SECURE_CONNECT);
+      } else {
+	config->remoteConnect = strdup(DEF_REMOTE_CONNECT);
+      }
     } else {
-      config->remoteConnect = strdup(remoteAccept.u.s);
-      free(remoteAccept.u.s);
+      config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
+      if (config->secure) {
+	sprintf(config->remoteConnect, "wss://%s/", remoteConnect.u.s);
+      } else {
+	sprintf(config->remoteConnect, "ws://%s/", remoteConnect.u.s);
+      }
+      free(remoteConnect.u.s);
     }
   }
 
@@ -157,7 +172,7 @@ int process_config_file(int mode, int secure, char *fileName, Config *config) {
       ret = FALSE;
       goto done;
     }
-    parse_config_entries(mode, config, serverConfig);
+    parse_config_entries(mode, secure, config, serverConfig);
 
   } else if (mode == MODE_CLIENT) {
 
@@ -169,7 +184,7 @@ int process_config_file(int mode, int secure, char *fileName, Config *config) {
       ret = FALSE;
       goto done;
     }
-    parse_config_entries(mode, config, clientConfig);
+    parse_config_entries(mode, secure, config, clientConfig);
   }
 
   /* validate config entries for key and cert files. */

@@ -7,7 +7,7 @@
 	key           = "/x/y/z/pem.key"
 
 [client-config]
-	remote-connect = "ws://127.0.0.1:4443/"
+	remote-connect = "localhost:4443/"
 	local-accept   = "4440"
 	cert           = "/a/b/x/cert.crt"
 	key            = "/a/b/z/pem.key"

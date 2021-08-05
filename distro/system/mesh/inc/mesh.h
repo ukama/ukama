@@ -1,5 +1,10 @@
-/*
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
  *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
  */
 
 #ifndef MESH_H
@@ -29,5 +34,8 @@
 #define PROXY_REVERSE 0x04
 
 #define PREFIX_WEBSOCKET "/websocket"
+
+#define MESH_CLIENT_AGENT "Mesh-client"
+#define MESH_CLIENT_VERSION "0.0.1"
 
 #endif /* MESH_H */

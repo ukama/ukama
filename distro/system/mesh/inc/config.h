@@ -17,8 +17,10 @@
 
 /* Some default */
 #define DEF_REMOTE_ACCEPT  "5534"
-#define DEF_REMOTE_CONNECT "5534"
 #define DEF_LOCAL_ACCEPT   "5533"
+/* default for client. */
+#define DEF_REMOTE_CONNECT "ws://localhost:5534/"
+#define DEF_REMOTE_SECURE_CONNECT "wss://localhost:5534/"
 
 #define MODE_SERVER_STR "server"
 #define MODE_CLIENT_STR "client"
