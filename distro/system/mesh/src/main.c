@@ -24,8 +24,8 @@
 #define VERSION "0.0.1"
 
 /* Defined in network.c */
-extern int start_websocket_server(Config *config,
-				  struct _u_instance *serverInst);
+extern int start_web_services(Config *config, UInst *clientInst);
+extern int start_websocket_server(Config *config, UInst *serverInst);
 extern int start_websocket_client(Config *config,
 				  struct _websocket_client_handler *handler);
 
@@ -71,6 +71,7 @@ int main (int argc, char *argv[]) {
   Config *config=NULL;
 
   struct _u_instance serverInst;
+  struct _u_instance clientInst;
   struct _websocket_client_handler websocket_client_handler = {NULL, NULL};
 
   /* Prase command line args. */
@@ -155,7 +156,13 @@ int main (int argc, char *argv[]) {
 
   print_config(config);
 
-  /* Step-2a: if server, setup all endpoints, cb and run websocket. Wait. */
+  /* Step-2a: start webservice for local client. */
+  if (start_web_services(config, &clientInst) != TRUE) {
+    log_error("Webservice failed to setup for clients. Exiting.");
+    exit(1);
+  }
+
+  /* Step-2b: if server, setup all endpoints, cb and run websocket. Wait. */
   if (config->mode == MODE_SERVER) {
     if (start_websocket_server(config, &serverInst) != TRUE) {
       log_error("Websocket failed to setup for server. Exiting...");
@@ -163,7 +170,7 @@ int main (int argc, char *argv[]) {
     }
   }
 
-  /* Step-2b: setup websocket client. */
+  /* Step-2c: setup websocket client. */
   if (config->mode == MODE_CLIENT) {
     if (start_websocket_client(config, &websocket_client_handler) != TRUE) {
       log_error("Websocket failed to setup for client. Exiting...");

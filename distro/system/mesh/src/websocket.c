@@ -7,27 +7,29 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <ulfius.h>
+
+#include "mesh.h"
+#include "log.h"
+
 /*
  * websocket related callback functions.
  */
 
+void websocket_manager(const URequest *request, WSManager *manager,
+		       void *data) {
 
-void websocket_manager_cb(const struct _u_request *request,
-			  struct _websocket_manager *manager,
-			  void *user_data) {
   return;
 }
 
-void websocket_incoming_message_cb(const struct _u_request *request,
-				   struct _websocket_manager *manager,
-				   const struct _websocket_message *message,
-				   void *user_data) {
+void websocket_incoming_message(const URequest *request,
+				WSManager *manager, WSMessage *message,
+				void *data) {
   return;
 }
 
-void  websocket_onclose_cb(const struct _u_request *request,
-			   struct _websocket_manager *manager,
-			   void *user_data) {
+void  websocket_onclose(const URequest *request, WSManager *manager,
+			void *data) {
 
   return;
 }

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "mesh.h"
 #include "config.h"
 #include "toml.h"
 #include "log.h"
@@ -96,9 +97,11 @@ static void parse_config_entries(int mode, int secure, Config *config,
     } else {
       config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
       if (config->secure) {
-	sprintf(config->remoteConnect, "wss://%s/", remoteConnect.u.s);
+	sprintf(config->remoteConnect, "wss://%s/%s", remoteConnect.u.s,
+		PREFIX_WEBSOCKET);
       } else {
-	sprintf(config->remoteConnect, "ws://%s/", remoteConnect.u.s);
+	sprintf(config->remoteConnect, "ws://%s/%s", remoteConnect.u.s,
+		PREFIX_WEBSOCKET);
       }
       free(remoteConnect.u.s);
     }

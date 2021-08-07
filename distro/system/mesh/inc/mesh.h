@@ -11,6 +11,7 @@
 #define MESH_H
 
 #include <getopt.h>
+#include <ulfius.h>
 
 #include "log.h"
 #include "config.h"
@@ -34,8 +35,15 @@
 #define PROXY_REVERSE 0x04
 
 #define PREFIX_WEBSOCKET "/websocket"
+#define PREFIX_WEBSERVICE "*"
 
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
+
+typedef struct _u_instance UInst;
+typedef struct _u_request  URequest;
+typedef struct _u_response UResponse;
+typedef struct _websocket_manager WSManager;
+typedef struct _websocket_message WSMessage;
 
 #endif /* MESH_H */
