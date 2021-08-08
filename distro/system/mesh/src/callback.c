@@ -13,6 +13,7 @@
 
 #include <ulfius.h>
 #include <string.h>
+#include <jansson.h>
 
 #include "callback.h"
 #include "mesh.h"
@@ -90,5 +91,34 @@ int callback_default_webservice(const URequest *request, UResponse *response,
 int callback_webservice(const URequest *request, UResponse *response,
 			void *data) {
 
+  json_t *jReq=NULL;
+  Config *config;
+
+  config = (Config *)data;
+  
+  /* For every incoming request, do following:
+   *
+   * 1. Sanity check.
+   * 2. Convert request into JSON.
+   * 3. Send request to Ukama proxy via websocket.
+   * 4. Process websocket response.
+   * 5. Wait for the response from server.
+   * 6. Process response.
+   * 7. Send response back to the client.
+   * 8. Done
+   */
+
+  if (is_valid_request(request)==FALSE) {
+    goto fail;
+  }
+
+  serialize_forward_request(request, &jReq, config);
+  if (jReq==NULL) {
+    log_error("Failed to convert request to JSON");
+    goto fail;
+  }
+
+ fail:
+  /* Send response back to the callee */
   return U_CALLBACK_CONTINUE;
 }

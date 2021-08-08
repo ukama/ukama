@@ -40,10 +40,44 @@
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
+#define MESH_TYPE_FWD_REQ "forward_request"
+
+/* For MAP */
+#define MESH_MAP_TYPE_URL  1
+#define MESH_MAP_TYPE_HDR  2
+#define MESH_MAP_TYPE_POST 3
+#define MESH_MAP_TYPE_COOKIE 4
+
+#define MESH_MAP_TYPE_URL_STR  "map_url"
+#define MESH_MAP_TYPE_HDR_STR  "map_header"
+#define MESH_MAP_TYPE_POST_STR "map_post"
+#define MESH_MAP_TYPE_COOKIE_STR "map_cookie"
+
 typedef struct _u_instance UInst;
 typedef struct _u_request  URequest;
 typedef struct _u_response UResponse;
 typedef struct _websocket_manager WSManager;
 typedef struct _websocket_message WSMessage;
+typedef struct _u_map UMap;
+
+typedef struct {
+
+  uuid_t uuid;
+} DeviceInfo;
+
+typedef struct {
+
+  uuid_t uuid;
+} ServiceInfo;
+
+typedef struct {
+
+  int reqType; /* Type: forward_request, command, stats, etc. */
+  int seqNo;   /* Sequence number of the request. */
+
+  DeviceInfo  *deviceInfo;  /* Info. about originating device. */
+  ServiceInfo *serviceInfo; /* Info. about origniating service. */
+  URequest    *requestInfo; /* Actual request. */
+} MRequest;
 
 #endif /* MESH_H */

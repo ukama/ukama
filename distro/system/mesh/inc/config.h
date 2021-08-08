@@ -2,8 +2,10 @@
  * config.h
  */
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef MESH_CONFIG_H
+#define MESH_CONFIG_H
+
+#include <uuid/uuid.h>
 
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"
@@ -43,17 +45,18 @@ typedef struct {
 
   int mode;             /* client or server. */
   int secure;           /* enable SSL/TLS for remote accept */
-  
+
   char *remoteAccept;   /* Server: Port on which to accept remote clients */
   char *localAccept;    /* Both: Port on which to accept local clients */
   char *remoteConnect;  /* Client: hostname:port to connect with remotely */
 
   char *certFile;       /* CA Cert file name. */
-  char *keyFile;        /* Key file name.*/ 
+  char *keyFile;        /* Key file name.*/
+  uuid_t uuid;          /* Device UUID. */
 } Config;
 
 int process_config_file(int mode, int secure, char *fileName, Config *config);
 void clear_config(Config *config);
 void print_config(Config *config);
 
-#endif /* CONFIG_H */
+#endif /* MESH_CONFIG_H */
