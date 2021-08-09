@@ -20,6 +20,7 @@
 
 #include "mesh.h"
 #include "config.h"
+#include "work.h"
 
 #define VERSION "0.0.1"
 
@@ -28,6 +29,10 @@ extern int start_web_services(Config *config, UInst *clientInst);
 extern int start_websocket_server(Config *config, UInst *serverInst);
 extern int start_websocket_client(Config *config,
 				  struct _websocket_client_handler *handler);
+
+/* Global variables. */
+WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
+WorkList *Receive=NULL;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -61,6 +66,14 @@ void set_log_level(char *slevel) {
   }
 
   log_set_level(ilevel);
+}
+
+WorkList **get_transmit(void) {
+  return &Transmit;
+}
+
+WorkList **get_receive(void) {
+  return &Receive;
 }
 
 int main (int argc, char *argv[]) {
@@ -155,6 +168,19 @@ int main (int argc, char *argv[]) {
   }
 
   print_config(config);
+
+  /* Setup transmit and receiving queues for the websocket */
+  Transmit = (WorkList *)malloc(sizeof(WorkList));
+  Receive  = (WorkList *)malloc(sizeof(WorkList));
+
+  if (Transmit == NULL && Receive == NULL) {
+    log_error("Memory allocation failure: %d", sizeof(WorkList));
+    exit(1);
+  }
+
+  /* Initializa the transmit and receive list for the websocket. */
+  init_work_list(&Transmit);
+  init_work_list(&Receive);
 
   /* Step-2a: start webservice for local client. */
   if (start_web_services(config, &clientInst) != TRUE) {

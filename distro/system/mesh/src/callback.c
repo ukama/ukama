@@ -18,6 +18,8 @@
 #include "callback.h"
 #include "mesh.h"
 #include "log.h"
+#include "work.h"
+#include "jserdes.h"
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -93,6 +95,7 @@ int callback_webservice(const URequest *request, UResponse *response,
 
   json_t *jReq=NULL;
   Config *config;
+  int ret;
 
   config = (Config *)data;
   
@@ -112,10 +115,17 @@ int callback_webservice(const URequest *request, UResponse *response,
     goto fail;
   }
 
-  serialize_forward_request(request, &jReq, config);
-  if (jReq==NULL) {
+  ret = serialize_forward_request(request, &jReq, config);
+  if (ret == FALSE && jReq == NULL) {
     log_error("Failed to convert request to JSON");
     goto fail;
+  }
+
+  /* Add work for the websocket for transmission. */
+  if (jReq != NULL) {
+
+    /* No pre/post transmission func. This will block. */
+    add_work_to_queue(get_transmit(), (Packet)jReq, NULL, 0, NULL, 0);
   }
 
  fail:
