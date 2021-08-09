@@ -85,7 +85,7 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
       json_object_set_new(entry, JSON_VALUE, json_string(map->values[i]));
       json_object_set_new(entry, JSON_LEN, json_integer((int)map->lengths[i]));
 
-      json_array_append(jArray, entry);
+      json_array_append_new(jArray, entry);
     }
   }
 }

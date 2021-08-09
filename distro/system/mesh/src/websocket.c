@@ -33,7 +33,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
   while (TRUE) {
 
-    pthread_mutex(&(list->mutex));
+    pthread_mutex_lock(&(list->mutex));
 
     if (list->exit) { /* Likely we are closing the socket. */
       break;
@@ -48,7 +48,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
     work = get_work_to_transmit(list);
 
     /* Unlock. */
-    pthread_unlock_mutex(&(list->mutex));
+    pthread_mutex_unlock(&(list->mutex));
 
     if (work == NULL) {
       continue;

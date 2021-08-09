@@ -31,6 +31,15 @@ extern void  websocket_onclose(const URequest *request, WSManager *manager,
 			       void *data);
 
 /*
+ *
+ */
+
+static int is_valid_request(URequest *request) {
+
+  return TRUE;
+}
+
+/*
  * Ulfius main callback function that simply calls the websocket manager
  * and closes
  */
