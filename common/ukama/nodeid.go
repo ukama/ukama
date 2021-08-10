@@ -21,6 +21,10 @@ const (
 
 type NodeID string
 
+func (n *NodeID) String() string{
+	return string(*n)
+}
+
 func getRandCode(t time.Time) string {
 	rand.Seed(time.Now().UnixNano())
 	min := 0x0000

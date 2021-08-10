@@ -1,12 +1,9 @@
 package rest
 
 import (
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
-	"gorm.io/gorm"
+	common "github.com/ukama/ukamaX/common/rest"
 	"net/http"
 	"ukamaX/lookup/internal/db"
 )
@@ -51,30 +48,30 @@ func (rt *Router) pingHandler(c *gin.Context) {
 }
 
 func (rt *Router) postDeviceHandler(c *gin.Context) {
-	id, isValid := rt.getUuidFromPath(c)
+	id, isValid := common.GetUuidFromPath(c, "uuid")
 	if !isValid {
 		return
 	}
 
 	var req DeviceMappingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		throwError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
+		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
 		return
 	}
 	if req.Org == "" {
-		throwError(c, http.StatusBadRequest, "Organisation field is empty", "", nil)
+		common.ThrowError(c, http.StatusBadRequest, "Organisation field is empty", "", nil)
 		return
 	}
 
 	org, err := rt.orgRepo.GetByName(req.Org)
 	if err != nil {
-		rt.sendErrorResponseFromGet(c, "organisation", err)
+		common.SendErrorResponseFromGet(c, "organisation", err)
 		return
 	}
 
 	err = rt.nodeRepo.AddOrUpdate(&db.Node{UUID: id, OrgID: org.ID})
 	if err != nil {
-		throwError(c, http.StatusInternalServerError, "Error adding the node mapping", err.Error(), err)
+		common.ThrowError(c, http.StatusInternalServerError, "Error adding the node mapping", err.Error(), err)
 		return
 	}
 
@@ -82,14 +79,14 @@ func (rt *Router) postDeviceHandler(c *gin.Context) {
 }
 
 func (rt *Router) getDeviceHandler(c *gin.Context) {
-	id, isValid := rt.getUuidFromPath(c)
+	id, isValid := common.GetUuidFromPath(c, "uuid")
 	if !isValid {
 		return
 	}
 
 	node, err := rt.nodeRepo.Get(id)
 	if err != nil {
-		rt.sendErrorResponseFromGet(c, "node", err)
+		common.SendErrorResponseFromGet(c, "node", err)
 		return
 	}
 
@@ -107,48 +104,19 @@ func (rt *Router) addOrgHandler(c *gin.Context) {
 	name := c.Param("name")
 	var req AddOrgRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		throwError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
+		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
 		return
 	}
 	ip := pgtype.Inet{}
 	err := ip.Set(req.Ip + "/32")
 	if err != nil {
-		throwError(c, http.StatusBadRequest, "Error parsing IP", err.Error(), err)
+		common.ThrowError(c, http.StatusBadRequest, "Error parsing IP", err.Error(), err)
 		return
 	}
 	err = rt.orgRepo.Upsert(&db.Org{Name: name, Certificate: req.Certificate, Ip: ip})
 	if err != nil {
-		throwError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
+		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "Organisation added or updated"})
-}
-
-func (rt *Router) getUuidFromPath(c *gin.Context) (id uuid.UUID, isValid bool) {
-	uuidStr := c.Param("uuid")
-	id, err := uuid.FromString(uuidStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorMessage{
-			Message: "Error parsing UUID",
-			Details: err.Error(),
-		})
-		return uuid.UUID{}, false
-	}
-	return id, true
-}
-
-func throwError(c *gin.Context, status int, message string, details string, err error) {
-	c.JSON(status, ErrorMessage{
-		Message: message,
-		Details: details,
-	})
-	logrus.Errorf("Message: %s. Error: %s", message, err)
-}
-
-func (rt *Router) sendErrorResponseFromGet(c *gin.Context, entityType string, err error) {
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		throwError(c, http.StatusNotFound, entityType+" not found", "", err)
-	} else {
-		throwError(c, http.StatusInternalServerError, "Error finding the "+entityType, "", err)
-	}
 }

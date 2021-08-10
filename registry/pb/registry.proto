@@ -1,0 +1,85 @@
+syntax = "proto3";
+package registry;
+option go_package = "pb/generated";
+
+service RegistryService {
+    rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
+    rpc GetOrg(GetOrgRequest) returns (Organization);
+    rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+}
+
+message AddOrgRequest {
+    string name = 1;
+    string owner = 2;
+}
+message AddOrgResponse{
+    Organization org = 1;
+}
+
+message AddNodeRequest{
+    Node node = 1;
+    string  orgName = 2;
+}
+
+message AddNodeResponse{
+    Node node = 1;
+}
+
+message GetOrgRequest{
+    string name = 1;
+}
+
+message DeleteNodeRequest{
+    string nodeId = 1;
+}
+message DeleteNodeResponse{
+}
+
+message GetNodeRequest{
+    string nodeId = 1;
+}
+
+message GetNodeResponse{
+    Node node = 1;
+    Organization org = 2;
+}
+
+message  UpdateNodeRequest{
+    string nodeId = 1;
+    NodeState state = 2;
+}
+
+message  UpdateNodeResponse{
+
+}
+
+message GetNodesRequest{
+    string orgName = 1;
+    string owner = 2;
+}
+
+message GetNodesResponse{
+    string orgName = 1;
+    repeated Node nodes = 2;
+}
+
+message Organization {
+    string name = 1;
+    uint32 id = 2;
+    string owner = 3;
+}
+
+enum NodeState {
+    UNDEFINED = 0;
+    PENDING = 1;
+    ONBOARDED = 2;
+}
+
+message Node {
+    string nodeId = 1;
+    NodeState state = 4;
+}

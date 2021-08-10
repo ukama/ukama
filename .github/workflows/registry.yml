@@ -105,7 +105,7 @@ jobs:
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-      - name: update gitops          
+      - name: update gitops
         uses: denispalnitsky/gitops-release@v7
         with:
           filename: "releases/ukamax-helmfile.yaml"

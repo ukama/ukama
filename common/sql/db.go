@@ -5,21 +5,22 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgconn"
+	_ "github.com/lib/pq"
 	wrp "github.com/pkg/errors"
+	"github.com/ukama/ukamaX/common/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"strings"
 	"time"
-	"github.com/ukama/ukamaX/common/config"
-	_ "github.com/lib/pq"
 )
 
 type db struct {
-	gorm         *gorm.DB
-	DebugMode    bool
-	dbConfig config.Database
+	gorm      *gorm.DB
+	DebugMode bool
+	dbConfig  config.Database
 }
 
 type Db interface {
@@ -30,12 +31,12 @@ type Db interface {
 
 func NewDb(dbConfig config.Database, debugMode bool) Db {
 	return &db{
-		dbConfig: dbConfig,
+		dbConfig:  dbConfig,
 		DebugMode: debugMode,
 	}
 }
 
-func (d *db) GetGormDb() *gorm.DB{
+func (d *db) GetGormDb() *gorm.DB {
 	return d.gorm
 }
 
@@ -65,6 +66,7 @@ func (d *db) Connect() error {
 	}
 
 	if d.DebugMode {
+		loggerConf.SlowThreshold = 0
 		loggerConf.LogLevel = logger.Info
 	}
 
@@ -135,4 +137,12 @@ func (d *db) createDb() error {
 		return err
 	}
 	return nil
+}
+
+func IsNotFoundError(err error) bool {
+	return err.Error() == "record not found"
+}
+
+func IsDuplicateKeyError (err error) bool{
+	return strings.Contains(err.Error(),"duplicate key value")
 }
