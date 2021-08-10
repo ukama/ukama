@@ -7,13 +7,15 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <jansson.h>
 #include <ulfius.h>
 
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
 
-extern WorkList **get_transmit(void);
+extern WorkList *Transmit;
+extern void handle_recevied_data(URequest *data, void *cfg);
 
 /*
  * websocket related callback functions.
@@ -24,7 +26,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 
   WorkList *list;
   WorkItem *work;
-  WorkList **transmit = get_transmit();
+  WorkList **transmit = &Transmit;
 
   if (*transmit == NULL)
     return;
@@ -81,9 +83,42 @@ void websocket_manager(const URequest *request, WSManager *manager,
   return;
 }
 
+/*
+ * websocket_incoming_message -- handle incoming message over websocket.
+ *
+ */
+
 void websocket_incoming_message(const URequest *request,
 				WSManager *manager, WSMessage *message,
 				void *data) {
+  URequest *rcvdData;
+  json_t *json;
+  char *str;
+  int ret;
+
+  /* Ignore the rest, for now. */
+  if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
+
+    log_debug("Packet received. Data: %s", message->data);
+
+    /* Convert to JSON and deserialize it. */
+    json = json_loads(message->data, JSON_DECODE_ANY, NULL);
+
+    if (json==NULL) {
+      log_error("Error loading recevied data into JSON format. Str: %s",
+		message->data);
+      goto done;
+    }
+
+    /* Convert JSON into request. */
+    ret = deserialize_forward_request(&rcvdData, json);
+    if (ret==FALSE)
+      goto done;
+
+    handle_recevied_data(rcvdData, data);
+  }
+
+ done:
   return;
 }
 

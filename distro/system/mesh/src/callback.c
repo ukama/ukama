@@ -21,6 +21,8 @@
 #include "work.h"
 #include "jserdes.h"
 
+extern WorkList *Transmit;
+
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
 			      void *data);
@@ -105,6 +107,7 @@ int callback_webservice(const URequest *request, UResponse *response,
   json_t *jReq=NULL;
   Config *config;
   int ret;
+  char *str;
 
   config = (Config *)data;
   
@@ -128,13 +131,17 @@ int callback_webservice(const URequest *request, UResponse *response,
   if (ret == FALSE && jReq == NULL) {
     log_error("Failed to convert request to JSON");
     goto fail;
+  } else {
+    str = json_dumps(jReq, 0);
+    log_debug("Forward request JSON: %s", str);
+    free(str);
   }
 
   /* Add work for the websocket for transmission. */
   if (jReq != NULL) {
 
     /* No pre/post transmission func. This will block. */
-    add_work_to_queue(get_transmit(), (Packet)jReq, NULL, 0, NULL, 0);
+    add_work_to_queue(&Transmit, (Packet)jReq, NULL, 0, NULL, 0);
   }
 
  fail:

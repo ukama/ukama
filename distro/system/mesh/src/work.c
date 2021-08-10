@@ -116,6 +116,7 @@ int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
   str = json_dumps((json_t *)data, 0);
   log_debug("Work added on the tansmit queue. Len: %d Data: %s", strlen(str),
 	    str);
+  free(str);
 
   return TRUE;
 }
@@ -128,9 +129,6 @@ int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
 WorkItem *get_work_to_transmit(WorkList *list){
 
   WorkItem *item=NULL;
-
-  /* Try to get lock. */
-  pthread_mutex_lock(&list->mutex);
 
   /* Is empty. */
   if (list->first == NULL) {
@@ -149,8 +147,5 @@ WorkItem *get_work_to_transmit(WorkList *list){
     item->next = NULL;
   }
 
-  /* Unlock. */
-  pthread_mutex_unlock(&list->mutex);
-  
   return item;
 }
