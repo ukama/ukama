@@ -72,8 +72,8 @@ typedef struct {
 
 typedef struct {
 
-  int reqType; /* Type: forward_request, command, stats, etc. */
-  int seqNo;   /* Sequence number of the request. */
+  char *reqType; /* Type: forward_request, command, stats, etc. */
+  int seqNo;     /* Sequence number of the request. */
 
   DeviceInfo  *deviceInfo;  /* Info. about originating device. */
   ServiceInfo *serviceInfo; /* Info. about origniating service. */

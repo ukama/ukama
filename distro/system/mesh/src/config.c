@@ -34,6 +34,7 @@ void print_config(Config *config) {
     log_debug("Mode: CLIENT");
   }
 
+  log_debug("Proxy: %s",  config->proxy  ? "enabled"         : "Disabled");
   log_debug("Secure: %s", config->secure ? "TLS/SSL enabled" : "Disabled");
 
   if (config->mode == MODE_SERVER) {
@@ -48,6 +49,50 @@ void print_config(Config *config) {
     log_debug("TLS/SSL key file: %s", config->keyFile);
     log_debug("TLS/SSL cert file: %s", config->certFile);
   }
+}
+
+/*
+ * parse_proxy_entries -- handle reverse-proxy stuff.
+ *
+ */
+static int parse_proxy_entries(Config *config, toml_table_t *proxyData) {
+
+  toml_datum_t enable, httpPath, ip, port;
+
+  enable = toml_string_in(proxyData, ENABLE);
+
+  if (enable.ok) {
+    if (strcasecmp(enable.u.s, "true")!=0) {
+      config->reverseProxy = NULL;
+      return TRUE;
+    }
+  } else {
+    config->reverseProxy = NULL; /* disable by default. */
+    return TRUE;
+  }
+
+  /* Will only come here if proxy is true. */
+  httpPath = toml_string_in(proxyData, HTTP_PATH);
+  ip       = toml_string_in(proxyData, CONNECT_IP);
+  port     = toml_string_in(proxyData, CONNECT_PORT);
+
+  if (!httpPath.ok && !ip.ok && !port.ok) {
+    log_error("[%s] is missing required argument.", REVERSE_PROXY);
+    return FALSE;
+  }
+
+  config->reverseProxy = (Proxy *)calloc(1, sizeof(Proxy));
+  if (config->reverseProxy == NULL) {
+    log_error("Error allocating memory of size: %s", sizeof(Proxy));
+    return FALSE;
+  }
+
+  config->reverseProxy->enable    = TRUE;
+  config->reverseProxy->httpPath = strdup(httpPath.u.s);
+  config->reverseProxy->ip       = strdup(ip.u.s);
+  config->reverseProxy->port     = strdup(port.u.s);
+
+  return TRUE;
 }
 
 /*
@@ -71,7 +116,7 @@ static void parse_config_entries(int mode, int secure, Config *config,
   cert  = toml_string_in(configData, CERT);
   key   = toml_string_in(configData, KEY);
 
-  config->mode = mode;
+  config->mode   = mode;
   config->secure = secure;
 
   if (config->mode == MODE_SERVER) {
@@ -136,12 +181,14 @@ static void parse_config_entries(int mode, int secure, Config *config,
  *                       
  *
  */
-int process_config_file(int mode, int secure, char *fileName, Config *config) {
+int process_config_file(int mode, int secure, int proxy, char *fileName,
+			Config *config) {
 
   int ret=TRUE;
   FILE *fp;
   toml_table_t *fileData=NULL;
   toml_table_t *serverConfig=NULL, *clientConfig=NULL;
+  toml_table_t *proxyConfig=NULL;
   
   char errBuf[MAX_BUFFER];
 
@@ -155,7 +202,7 @@ int process_config_file(int mode, int secure, char *fileName, Config *config) {
     return FALSE;
   }
 
-  /* Prase the TOML file entries. */
+  /* Parse the TOML file entries. */
   fileData = toml_parse_file(fp, errBuf, sizeof(errBuf));
   
   fclose(fp);
@@ -214,7 +261,25 @@ int process_config_file(int mode, int secure, char *fileName, Config *config) {
     } 
     fclose(fp);
   }
-  
+
+  /* If proxies are enable */
+  if (proxy) {
+
+    proxyConfig = toml_table_in(fileData, REVERSE_PROXY);
+    if (proxyConfig == NULL) {
+      log_error("[%s] section parsing error in file: %s\n", SERVER_CONFIG,
+		fileName);
+      ret = FALSE;
+      goto done;
+    }
+    ret = parse_proxy_entries(config, proxyConfig);
+    if (ret == FALSE) {
+      log_error("[%s] section parsing error in file: %s\n", REVERSE_PROXY,
+		fileName);
+      goto done;
+    }
+  }
+
  done:
   toml_free(fileData);
   return ret;
@@ -239,4 +304,11 @@ void clear_config(Config *config) {
   free(config->localAccept);
   free(config->certFile);
   free(config->keyFile);
+
+  if (config->proxy) {
+    free(config->reverseProxy->httpPath);
+    free(config->reverseProxy->ip);
+    free(config->reverseProxy->port);
+    free(config->reverseProxy);
+  }
 }

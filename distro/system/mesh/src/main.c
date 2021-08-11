@@ -45,8 +45,9 @@ void usage() {
   printf("Usage: mesh.d [options] \n");
   printf("Options:\n");
   printf("--h, --help                         Help menu.\n");
+  printf("--p, --proxy                        Enable reservse-proxy\n");
   printf("--s, --secure                       Enable SSL/TLS \n");
-  printf("--c, --config                       Config file.\n");
+  printf("--c, --config                       Config file name\n");
   printf("--m, --mode  <Server | Client>      Am I client or server?\n");
   printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process.\n");
   printf("--V, --version                      Version.\n");
@@ -78,7 +79,7 @@ WorkList **get_receive(void) {
 
 int main (int argc, char *argv[]) {
 
-  int mode=MODE_SERVER, secure=FALSE;
+  int mode=MODE_SERVER, secure=FALSE, proxy=FALSE;
   char *configFile=NULL;
   char *debug=DEF_LOG_LEVEL;
   Config *config=NULL;
@@ -94,6 +95,7 @@ int main (int argc, char *argv[]) {
     int opdidx = 0;
 
     static struct option long_options[] = {
+      { "proxy",     no_argument,       0, 'p'},
       { "mode",      required_argument, 0, 'm'},
       { "secure",    no_argument,       0, 's'},
       { "config",    required_argument, 0, 'c'},
@@ -103,7 +105,7 @@ int main (int argc, char *argv[]) {
       { 0,           0,                 0,  0}
     };
 
-    opt = getopt_long(argc, argv, "l:c:m::", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "l:c:m:sphV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -121,6 +123,10 @@ int main (int argc, char *argv[]) {
     case 'l':
       debug = optarg;
       set_log_level(debug);
+      break;
+
+    case 'p':
+      proxy=TRUE;
       break;
 
     case 's':
@@ -160,8 +166,13 @@ int main (int argc, char *argv[]) {
     exit(1);
   }
 
+  if (proxy)
+    config->proxy = TRUE;
+  else
+    config->proxy = FALSE;
+
   /* Step-1: read config file. */
-  if (process_config_file(mode, secure, configFile, config) != TRUE) {
+  if (process_config_file(mode, secure, proxy, configFile, config) != TRUE) {
     fprintf(stderr, "Error parsing config file: %s. Exiting ... \n",
 	    configFile);
     exit(1);

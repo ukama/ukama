@@ -15,7 +15,8 @@
 #include "work.h"
 
 extern WorkList *Transmit;
-extern void handle_recevied_data(URequest *data, void *cfg);
+extern void handle_recevied_data(MRequest *data, void *cfg);
+extern void clear_data(MRequest **data);
 
 /*
  * websocket related callback functions.
@@ -91,10 +92,17 @@ void websocket_manager(const URequest *request, WSManager *manager,
 void websocket_incoming_message(const URequest *request,
 				WSManager *manager, WSMessage *message,
 				void *data) {
-  URequest *rcvdData;
+  MRequest *rcvdData;
   json_t *json;
   char *str;
   int ret;
+  Config *config = (Config *)data;
+
+  /* If we recevied a packet and our proxy is disable, log error and reject*/
+  if (config->proxy == FALSE) {
+    log_error("Recevied packet while reverse-proxy is disabled. Ignoring");
+    goto done;
+  }
 
   /* Ignore the rest, for now. */
   if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
@@ -115,10 +123,14 @@ void websocket_incoming_message(const URequest *request,
     if (ret==FALSE)
       goto done;
 
-    handle_recevied_data(rcvdData, data);
+    handle_recevied_data(rcvdData, config);
+
+    /* Free up the memory from deser. */
+    clear_request(&rcvdData);
   }
 
  done:
+  json_decref(json);
   return;
 }
 

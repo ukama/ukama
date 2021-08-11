@@ -10,12 +10,18 @@
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"
 #define CLIENT_CONFIG "client-config"
-#define REVERSE       "reverse-proxy"
-#define REMOTE_ACCEPT "remote-accept"
-#define LOCAL_ACCEPT  "local-accept"
+#define REVERSE_PROXY "reverse-proxy"
+
+#define REMOTE_ACCEPT  "remote-accept"
+#define LOCAL_ACCEPT   "local-accept"
 #define REMOTE_CONNECT "remote-connect"
+#define CONNECT_IP     "connect-ip"
+#define CONNECT_PORT   "connect-port"
+#define HTTP_PATH      "http-path"
+
 #define CERT           "cert"
 #define KEY            "key"
+#define ENABLE         "enable"
 
 /* Some default */
 #define DEF_REMOTE_ACCEPT  "5534"
@@ -40,11 +46,22 @@
 #define TRUE 1
 #define FALSE 0
 
+/* Struct to define the reverse proxies  */
+typedef struct {
+
+  int  enable;
+
+  char *httpPath;
+  char *ip;
+  char *port;
+} Proxy;
+
 /* Struct to define the server and/or client host cfg. */
 typedef struct {
 
   int mode;             /* client or server. */
   int secure;           /* enable SSL/TLS for remote accept */
+  int proxy;            /* reverse-proxy enabled (true | false) */
 
   char *remoteAccept;   /* Server: Port on which to accept remote clients */
   char *localAccept;    /* Both: Port on which to accept local clients */
@@ -53,9 +70,12 @@ typedef struct {
   char *certFile;       /* CA Cert file name. */
   char *keyFile;        /* Key file name.*/
   uuid_t uuid;          /* Device UUID. */
+
+  Proxy *reverseProxy;         /* define any reverse proxy */
 } Config;
 
-int process_config_file(int mode, int secure, char *fileName, Config *config);
+int process_config_file(int mode, int secure, int proxy, char *fileName,
+			Config *config);
 void clear_config(Config *config);
 void print_config(Config *config);
 

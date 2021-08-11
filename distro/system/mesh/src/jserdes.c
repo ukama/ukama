@@ -314,13 +314,6 @@ static int deserialize_request_info(URequest **request, json_t *json) {
   if (*request == NULL)
     return FALSE;
 
-  obj = json_object_get(json, JSON_ID);
-
-  if (obj==NULL) {
-    free(*request);
-    return FALSE;
-  }
-
   /* Initialize inner struct elements. */
   ulfius_init_request(*request);
 
@@ -391,10 +384,9 @@ static int deserialize_request_info(URequest **request, json_t *json) {
  *
  */
 
-int deserialize_forward_request(MRequest **req, json_t *json) {
+int deserialize_forward_request(MRequest **request, json_t *json) {
 
   int ret=FALSE;
-  MRequest *request = *req;
   json_t *jFwd, *obj;
   char *jStr;
 
@@ -402,15 +394,13 @@ int deserialize_forward_request(MRequest **req, json_t *json) {
     return FALSE;
   }
 
-  jStr = json_dumps(json, 0);
-
   jFwd = json_object_get(json, JSON_MESH_FORWARD);
   if (jFwd == NULL) {
     goto fail;
   }
 
-  request = (MRequest *)calloc(1, sizeof(MRequest));
-  if (request == NULL) {
+  *request = (MRequest *)calloc(1, sizeof(MRequest));
+  if (*request == NULL) {
     return FALSE;
   }
 
@@ -418,28 +408,30 @@ int deserialize_forward_request(MRequest **req, json_t *json) {
   if (obj == NULL) {
     goto fail;
   } else {
-    request->reqType = json_integer_value(obj);
+    (*request)->reqType = strdup(json_string_value(obj));
   }
 
   obj = json_object_get(jFwd, JSON_SEQ);
   if (obj == NULL) {
     goto fail;
   } else {
-    request->seqNo = json_integer_value(obj);
+    (*request)->seqNo = json_integer_value(obj);
   }
 
   obj = json_object_get(jFwd, JSON_DEVICE_INFO);
-  ret = deserialize_device_info(&request->deviceInfo, obj);
+  ret = deserialize_device_info(&(*request)->deviceInfo, obj);
 
   obj = json_object_get(jFwd, JSON_SERVICE_INFO);
-  ret = deserialize_service_info(&request->serviceInfo, obj);
+  ret = deserialize_service_info(&(*request)->serviceInfo, obj);
 
   obj = json_object_get(jFwd, JSON_REQUEST_INFO);
-  ret = deserialize_request_info(&request->requestInfo, obj);
+  ret = deserialize_request_info(&(*request)->requestInfo, obj);
 
   return TRUE;
 
  fail:
+  jStr = json_dumps(json, 0);
   log_error("Error decoding JSON: %s", jStr);
+  free(jStr);
   return FALSE;
 }
