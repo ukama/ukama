@@ -2,16 +2,19 @@ package main
 
 import (
 	"fmt"
+	"net"
+
+	generated "ukamaX/registry/pb/generated"
+
+	"ukamaX/registry/internal"
+	"ukamaX/registry/internal/db"
+	"ukamaX/registry/pkg/server"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
-	"ukamaX/registry/internal"
-	"ukamaX/registry/internal/db"
-	"ukamaX/registry/pb/generated"
-	"ukamaX/registry/pkg/server"
 )
 
 var svcConf *internal.Config

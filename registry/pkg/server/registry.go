@@ -2,14 +2,16 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"github.com/pkg/errors"
+
+	"ukamaX/registry/internal/db"
+	pb "ukamaX/registry/pb/generated"
+
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
 	"github.com/ukama/ukamaX/common/ukama"
-	"ukamaX/registry/internal/db"
-	pb "ukamaX/registry/pb/generated"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RegistryServer struct {
@@ -27,12 +29,12 @@ const NOT_FOUND_ERROR = "not found"
 func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 	logrus.Infof("Adding org %v", request)
 	if len(request.Owner) == 0 {
-		return nil, fmt.Errorf("owner id cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
 	}
 
 	owner, err := uuid2.FromString(request.Owner)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid format of owner id")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error %s", err.Error())
 	}
 
 	org := &db.Org{
@@ -42,9 +44,9 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 	err = r.orgRepo.Add(org)
 	if err != nil {
 		if sql.IsDuplicateKeyError(err) {
-			return nil, fmt.Errorf("organization already exist")
+			return nil, status.Errorf(codes.InvalidArgument, "organization already exist")
 		}
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	return &pb.AddOrgResponse{
@@ -57,10 +59,11 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 	org, err := r.orgRepo.GetByName(request.Name)
 	if err != nil {
 		if sql.IsNotFoundError(err) {
-			return nil, errors.New(NOT_FOUND_ERROR)
+			return nil, status.Errorf(codes.NotFound, "Organization not found")
 		}
 
-		return nil, err
+		logrus.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	return &pb.Organization{Id: org.ID, Name: org.Name, Owner: org.Owner.String()}, nil
@@ -69,12 +72,17 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 	if len(req.OrgName) == 0 {
-		return nil, fmt.Errorf("org name cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "organizationname cannot be empty")
 	}
 
 	org, err := r.orgRepo.GetByName(req.OrgName)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting org")
+		if sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.NotFound, "Organization not found")
+		}
+
+		logrus.Error(err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	err = r.nodeRepo.Add(&db.Node{
@@ -85,10 +93,11 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 
 	if err != nil {
 		if sql.IsDuplicateKeyError(err) {
-			return nil, fmt.Errorf("node already exist")
+			return nil, status.Errorf(codes.InvalidArgument, "node already exist")
 		}
 
-		return nil, errors.Wrap(err, "error adding the node")
+		logrus.Error("Error adding the node. " + err.Error())
+		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
 
 	return &pb.AddNodeResponse{}, nil
@@ -98,12 +107,13 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 	logrus.Infof("Deleting the node  %v", req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	err = r.nodeRepo.Delete(nodeId)
 	if err != nil {
-		return nil, errors.Wrap(err, "error deleting the node")
+		logrus.Error("error deleting the node, ", err.Error())
+		return nil, status.Errorf(codes.Internal, "error deleting the node")
 	}
 
 	return &pb.DeleteNodeResponse{}, nil
@@ -114,15 +124,17 @@ func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	node, err := r.nodeRepo.Get(nodeId)
 	if err != nil {
 		if sql.IsNotFoundError(err) {
-			return nil, errors.New(NOT_FOUND_ERROR)
+			return nil, status.Errorf(codes.NotFound, "node not found")
 		}
-		return nil, errors.Wrap(err, "error getting the node")
+
+		logrus.Error("error getting the node" + err.Error())
+		return nil, status.Errorf(codes.Internal, "error getting the node")
 	}
 
 	return &pb.GetNodeResponse{
@@ -142,12 +154,13 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	err = r.nodeRepo.Update(nodeId, dbState)
 	if err != nil {
-		return nil, errors.Wrap(err, "error updating the node")
+		logrus.Error("error updating the node" + err.Error())
+		return nil, status.Errorf(codes.Internal, "error updating the node")
 	}
 
 	return &pb.UpdateNodeResponse{}, nil
@@ -158,12 +171,13 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 
 	owner, err := uuid2.FromString(req.Owner)
 	if err != nil {
-		return nil, errors.Wrap(err, "invalid format of owner id")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error: %s", err.Error())
 	}
 	pbNodes := []*pb.Node{}
 	nodes, err := r.nodeRepo.GetByOrg(req.OrgName, owner)
 	if err != nil {
-		return nil, err
+		logrus.Error(err.Error())
+		return nil, status.Errorf(codes.Internal, "error getting nodes")
 	}
 	for _, n := range nodes {
 		pbNodes = append(pbNodes, dbNodeToPbNode(&n))

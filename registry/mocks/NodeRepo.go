@@ -3,9 +3,8 @@
 package mocks
 
 import (
-	db "ukamaX/registry/internal/db"
-
 	mock "github.com/stretchr/testify/mock"
+	db "ukamaX/registry/internal/db"
 
 	ukama "github.com/ukama/ukamaX/common/ukama"
 

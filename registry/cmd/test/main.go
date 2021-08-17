@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"time"
+
+	pb "ukamaX/registry/pb/generated"
+
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/grpc"
-	"os"
-	"time"
-	pb "ukamaX/registry/pb/generated"
 )
 
 func main() {

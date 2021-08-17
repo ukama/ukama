@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/ukama/ukamaX/common/sql"
 	"ukamaX/registry/pkg/validation"
 )

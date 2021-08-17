@@ -9,7 +9,6 @@ lint:
 	golangci-lint run
 
 
-
 postgres:
 	mkdir ${HOME}/postgres-data/
 	# user - postgres
@@ -28,12 +27,8 @@ deps:
 gen:
 	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=false
 	mockery --all --recursive
+	mockery -dir ./pb  -all -recursive -output ./pb/generated/mocks
 
 clean:
 	rm pb/generated/*.go
 
-server: gen
-	go run cmd/server/main.go -port 55555
-
-client:
-	go run cmd/client/main.go -address 0.0.0.0:55555

@@ -23,16 +23,17 @@ type Database struct {
 }
 
 // LoadConfig loads configuration into `config` object
-// It looks for env vars
-// and config yml file with the same name as binary (ex registry.yml)
+// Pulls configuration from env vars and config file
+// Config should be a yaml file with `configFileName` and 'yaml' extension
+// for example: `.registry`
+// Available paths: $HOME, same as binary
 // ENV vars have precedence
-// configName - name of config file without extension
+// configName - name of config file without extension.
 // Config file should have yaml format and property Names should start with lowercase latter
 // Evn var should be uppercased
 func LoadConfig(configFileName string, config interface{}) {
 
 	e := enviper.New(viper.New())
-
 	e.SetConfigType("yaml")
 
 	// Find home directory.
@@ -41,18 +42,18 @@ func LoadConfig(configFileName string, config interface{}) {
 		panic(err)
 	}
 
-	// Search config in home directory with name ".dmr" (without extension).
 	e.AddConfigPath(home)
-	e.SetConfigName("." + configFileName)
+	e.AddConfigPath("")
+	e.SetConfigName(configFileName + ".yaml")
 
 	e.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	err = e.ReadInConfig()
 	if err == nil {
-		logrus.Println("Using config file:", viper.ConfigFileUsed())
+		logrus.Info("Using config file:", viper.ConfigFileUsed())
 	} else {
-		logrus.Debugf("Config file was not loaded. Reason: %v", err)
+		logrus.Infof("Config file was not loaded. Reason: %v\n", err)
 	}
 
 	err = e.Unmarshal(config)

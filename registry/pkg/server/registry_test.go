@@ -2,14 +2,16 @@ package server
 
 import (
 	"context"
+	"testing"
+
+	mocks "ukamaX/registry/mocks"
+	pb "ukamaX/registry/pb/generated"
+
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukamaX/common/ukama"
-	"testing"
 	"ukamaX/registry/internal/db"
-	mocks "ukamaX/registry/mocks"
-	pb "ukamaX/registry/pb/generated"
 )
 
 var nodeUuid = ukama.NewVirtualNodeId("HomeNode")

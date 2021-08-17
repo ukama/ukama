@@ -1,0 +1,10 @@
+version: v1
+name: buf.build/ukama/registry
+deps:
+  - buf.build/beta/googleapis
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
