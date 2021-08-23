@@ -58,9 +58,17 @@ void clear_request(MRequest **data) {
   free((*data)->reqType);
   free((*data)->deviceInfo);
   free((*data)->serviceInfo);
-  
-  ulfius_clean_request((*data)->requestInfo);
-  free((*data)->requestInfo);
+
+  if ((*data)->requestInfo->map_url)
+    free((*data)->requestInfo->map_url);
+  if ((*data)->requestInfo->map_header)
+    free((*data)->requestInfo->map_header);
+  if ((*data)->requestInfo->map_post_body)
+    free((*data)->requestInfo->map_post_body);
+  if ((*data)->requestInfo->map_cookie)
+    free((*data)->requestInfo->map_cookie);
+
+  ulfius_clean_request_full((*data)->requestInfo);
   free(*data);
 }
 
@@ -205,5 +213,6 @@ void handle_recevied_data(MRequest *data, Config *config) {
   }
 
  done:
+  if (response) free(response);
   return;
 }

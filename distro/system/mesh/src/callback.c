@@ -191,5 +191,8 @@ int callback_webservice(const URequest *request, UResponse *response,
     ulfius_set_string_body_response(response, statusCode, map->data);
   }
 
+  if (map->size)
+    free(map->data);
+
   return U_CALLBACK_CONTINUE;
 }

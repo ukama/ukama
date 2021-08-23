@@ -242,6 +242,9 @@ int main (int argc, char *argv[]) {
     ulfius_clean_instance(&serverInst);
   }
 
+  ulfius_stop_framework(&clientInst);
+  ulfius_clean_instance(&clientInst);
+
   clear_config(config);
   free(config);
 

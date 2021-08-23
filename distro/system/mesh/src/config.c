@@ -92,6 +92,12 @@ static int parse_proxy_entries(Config *config, toml_table_t *proxyData) {
   config->reverseProxy->ip       = strdup(ip.u.s);
   config->reverseProxy->port     = strdup(port.u.s);
 
+  free(httpPath.u.s);
+  free(ip.u.s);
+  free(port.u.s);
+  if (enable.ok)
+    free(enable.u.s);
+
   return TRUE;
 }
 

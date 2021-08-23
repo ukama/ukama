@@ -388,7 +388,7 @@ static int deserialize_request_info(URequest **request, json_t *json) {
     return FALSE;
 
   /* Initialize inner struct elements. */
-  ulfius_init_request(*request);
+  //ulfius_init_request(*request);
 
   obj = json_object_get(json, JSON_PROTOCOL);
   if (obj) {

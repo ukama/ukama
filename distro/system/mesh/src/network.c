@@ -159,16 +159,16 @@ int start_websocket_server(Config *cfg, UInst *serverInst) {
 int start_websocket_client(Config *config,
 			   struct _websocket_client_handler *handler) {
 
-  int ret;
+  int ret=FALSE;
   struct _u_request request;
   struct _u_response response;
 
   if (ulfius_init_request(&request) != U_OK) {
-    goto failure;
+    goto done;
   }
 
   if (ulfius_init_response(&response) != U_OK) {
-    goto failure;
+    goto done;
   }
 
   /* Setup websocket request. */
@@ -192,22 +192,25 @@ int start_websocket_client(Config *config,
 
     if ( ret == U_OK) {
       /* Success. The websocket will now run as seperate thread as cb */
-      return TRUE;
+      ret=TRUE;
+      goto done;
     } else {
       log_error("Unable to open websocket connect to: %s",
 		config->remoteConnect);
-      goto failure;
+      ret=FALSE;
+      goto done;
     }
   } else {
     log_error("Error initializing the websocket client request");
-    goto failure;
+    ret=FALSE;
+    goto done;
   }
 
- failure:
+ done:
   ulfius_clean_request(&request);
   ulfius_clean_response(&response);
 
-  return FALSE;
+  return ret;
 }
 
 /*
