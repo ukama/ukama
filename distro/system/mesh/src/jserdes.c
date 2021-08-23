@@ -41,6 +41,21 @@
 		 }
 */
 
+/* JSON for the response from the service provider, via mesh.d
+
+    fwd_request -> { type: "response",
+                     seq_no: "1234",
+                     service_info: {
+                          uuid: "service_uuid"
+                     },
+                     response_info: {
+			  raw: { length:"1234",
+			         data: "xdddgfdg"
+			       },
+		    }
+		  }
+*/
+
 /*
  * add_map_to_request --
  *
@@ -91,12 +106,68 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 }
 
 /*
+ * serialize_response --
+ *
+ */
+int serialize_response(json_t **json, int size, void *data, uuid_t uuid) {
+
+  json_t *jResp=NULL, *jRespInfo=NULL, *jRaw=NULL;
+  json_t *jService=NULL;
+  char idStr[36+1];
+  char *jStr;
+
+  /* basic sanity check */
+  if (size == 0 && data == NULL && uuid_is_null(uuid))
+    return FALSE;
+
+  *json = json_object();
+  if (*json == NULL) {
+    return FALSE;
+  }
+
+  json_object_set_new(*json, JSON_MESH_FORWARD, json_object());
+  jResp = json_object_get(*json, JSON_MESH_FORWARD);
+
+  if (jResp==NULL) {
+    json_decref(*json);
+    *json=NULL;
+    return FALSE;
+  }
+
+  json_object_set_new(jResp, JSON_TYPE, json_string(MESH_TYPE_FWD_RESP));
+  json_object_set_new(jResp, JSON_SEQ, json_integer(123)); /* xxx */
+
+  /* Service Info. */
+  uuid_unparse(uuid, &idStr[0]);
+  json_object_set_new(jResp, JSON_SERVICE_INFO, json_object());
+  jService = json_object_get(jResp, JSON_SERVICE_INFO);
+  json_object_set_new(jService, JSON_ID, json_string(&idStr[0]));
+
+  /* Add response info. */
+  json_object_set_new(jResp, JSON_RESPONSE_INFO, json_object());
+  jRespInfo = json_object_get(jResp, JSON_RESPONSE_INFO);
+
+  /* Add raw data */
+  json_object_set_new(jRespInfo, JSON_RAW_DATA, json_object());
+  jRaw = json_object_get(jRespInfo, JSON_RAW_DATA);
+
+  json_object_set_new(jRaw, JSON_LENGTH, json_integer(size));
+  json_object_set_new(jRaw, JSON_DATA, json_string((char *)data));
+
+  jStr = json_dumps(*json, 0);
+  log_debug("Serialized response: %s", jStr);
+  free(jStr);
+
+  return TRUE;
+}
+
+/*
  * serialize_forward_request --
  *
  */
 
 int serialize_forward_request(URequest *request, json_t **json,
-			      Config *config) {
+			      Config *config, uuid_t uuid) {
 
   int ret=FALSE;
   json_t *jReq=NULL, *jDevice=NULL, *jService=NULL;
@@ -127,14 +198,16 @@ int serialize_forward_request(URequest *request, json_t **json,
   json_object_set_new(jReq, JSON_DEVICE_INFO, json_object());
   jDevice = json_object_get(jReq, JSON_DEVICE_INFO);
 
-  uuid_unparse(config->uuid, idStr);
+  uuid_unparse(config->uuid, &idStr[0]);
   json_object_set_new(jDevice, JSON_ID, json_string(idStr));
 
   /* Add service info., service is the one whose request is being forward. */
+  uuid_unparse(uuid, &idStr[0]); /* Service UUID. */
+
   json_object_set_new(jReq, JSON_SERVICE_INFO, json_object());
   jService = json_object_get(jReq, JSON_SERVICE_INFO);
 
-  json_object_set_new(jService, JSON_ID, json_string("1234"));
+  json_object_set_new(jService, JSON_ID, json_string(&idStr[0]));
 
   /* Add request info. */
   json_object_set_new(jReq, JSON_REQUEST_INFO, json_object());

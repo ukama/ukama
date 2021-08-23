@@ -183,11 +183,11 @@ int start_websocket_client(Config *config,
     /* Open websocket connection to remote host. */
     ret = ulfius_open_websocket_client_connection(&request,
 						  &websocket_manager,
-						  (void *)NULL,
+						  (void *)config,
 						  &websocket_incoming_message,
-						  (void *)NULL,
+						  (void *)config,
 						  &websocket_onclose,
-						  (void*)NULL,
+						  (void*)config,
 						  handler, &response);
 
     if ( ret == U_OK) {

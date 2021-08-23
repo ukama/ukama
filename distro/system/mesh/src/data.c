@@ -15,11 +15,15 @@
 #include <string.h>
 
 #include "mesh.h"
+#include "work.h"
+#include "data.h"
 
 typedef struct _response {
   char *buffer;
   size_t size;
 } Response;
+
+extern WorkList *Transmit; /* global */
 
 /*
  * response_callback --
@@ -66,7 +70,7 @@ void clear_request(MRequest **data) {
  */
 
 static long send_data_to_server(URequest *data, char *ip, char *port,
-				int *retCode) {
+				int *retCode, char **retStr) {
   
   int i;
   long code=0;
@@ -123,7 +127,10 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
   } else {
     /* get status code. */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    //process_response_from_wimc(reqType, code, &response, id);
+    if (response.size) {
+      log_debug("Response recevied from server: %s", response.buffer);
+      *retStr = strdup(response.buffer);
+    }
   }
 
   if (response.buffer) 
@@ -134,7 +141,6 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
   curl_global_cleanup();
 
   return code;
-
 }
 
 /*
@@ -147,7 +153,9 @@ void handle_recevied_data(MRequest *data, Config *config) {
   int ret=FALSE, retCode=0;
   Proxy *proxy;
   URequest *request;
-  
+  char *response=NULL, *jStr=NULL;
+  json_t *jResp=NULL;
+
   if (data == NULL && config == NULL)
     return;
 
@@ -159,7 +167,7 @@ void handle_recevied_data(MRequest *data, Config *config) {
     return;
 
   request = data->requestInfo;
-  
+
   /* Find matching server for the indicated path. */
   if (strcmp(request->url_path, config->reverseProxy->httpPath)==0) {
 
@@ -167,7 +175,8 @@ void handle_recevied_data(MRequest *data, Config *config) {
     log_debug("Matching server found for path: %s Server ip: %s port: %s",
 	      proxy->httpPath, proxy->ip, proxy->port);
 
-    ret = send_data_to_server(request, proxy->ip, proxy->port, &retCode);
+    ret = send_data_to_server(request, proxy->ip, proxy->port, &retCode,
+			      &response);
     if (ret == 200) {
       log_debug("Command success. CURL return code: %d. Return code: %d",
 		ret, retCode);
@@ -175,15 +184,26 @@ void handle_recevied_data(MRequest *data, Config *config) {
       log_debug("Command failed. CURL return code: %d. Return code: %d",
 		ret, retCode);
     }
+
+    /* Convert the response into proper format and return. */
+    serialize_response(&jResp, strlen(response), response,
+		       data->serviceInfo->uuid);
+
+    if (jResp) {
+      jStr = json_dumps(jResp, 0);
+      log_debug("Sending response back: %s", jStr);
+      add_work_to_queue(&Transmit, (Packet)jResp, NULL, 0, NULL, 0);
+      free(jStr);
+    } else {
+      log_error("Invalid response type (expected JSON)");
+      goto done;
+    }
   } else {
     /* No match. Ignore. */
     log_error("No matching server found for path: %s", request->url_path);
     goto done;
   }
-  
+
  done:
   return;
 }
-
-
-  

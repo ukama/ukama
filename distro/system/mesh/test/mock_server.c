@@ -73,7 +73,14 @@ static void print_request(const struct _u_request *request) {
  */
 int callback_registry(req_t *request, resp_t *response, void * user_data) {
 
+  char *str;
+
   print_request(request);
+  str = strdup("{ \"test\":\"Server_Response_OK!\"}");
+
+  ulfius_set_string_body_response(response, 200, str);
+  free(str);
+
   return U_CALLBACK_CONTINUE;
 }
 

@@ -114,9 +114,15 @@ int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
   pthread_mutex_unlock(&((*list)->mutex));
 
   str = json_dumps((json_t *)data, 0);
-  log_debug("Work added on the tansmit queue. Len: %d Data: %s", strlen(str),
-	    str);
-  free(str);
+  if (str) {
+    log_debug("Work added on the tansmit queue. Len: %d Data: %s", strlen(str),
+	      str);
+    free(str);
+  } else {
+    /* non-JSON data. */
+    log_debug("Work added on the transmit queue. Len: %d Data: %s",
+	      strlen(data), data);
+  }
 
   return TRUE;
 }

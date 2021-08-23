@@ -41,6 +41,7 @@
 #define MESH_CLIENT_VERSION "0.0.1"
 
 #define MESH_TYPE_FWD_REQ "forward_request"
+#define MESH_TYPE_FWD_RESP "forward_response"
 
 /* For MAP */
 #define MESH_MAP_TYPE_URL  1
@@ -79,5 +80,13 @@ typedef struct {
   ServiceInfo *serviceInfo; /* Info. about origniating service. */
   URequest    *requestInfo; /* Actual request. */
 } MRequest;
+
+/* struct to define the response back from the service. */
+typedef struct {
+
+  ServiceInfo *serviceInfo;
+  int         size;
+  void        *data;
+} MResponse;
 
 #endif /* MESH_H */

@@ -13,10 +13,10 @@
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
+#include "jserdes.h"
+#include "data.h"
 
 extern WorkList *Transmit;
-extern void handle_recevied_data(MRequest *data, void *cfg);
-extern void clear_data(MRequest **data);
 
 /*
  * websocket related callback functions.
@@ -98,39 +98,49 @@ void websocket_incoming_message(const URequest *request,
   int ret;
   Config *config = (Config *)data;
 
-  /* If we recevied a packet and our proxy is disable, log error and reject*/
-  if (config->proxy == FALSE) {
-    log_error("Recevied packet while reverse-proxy is disabled. Ignoring");
-    goto done;
-  }
+  /* Server incoming packet handling. */
+  if (config->mode == MODE_SERVER) {
 
-  /* Ignore the rest, for now. */
-  if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-
-    log_debug("Packet received. Data: %s", message->data);
-
-    /* Convert to JSON and deserialize it. */
-    json = json_loads(message->data, JSON_DECODE_ANY, NULL);
-
-    if (json==NULL) {
-      log_error("Error loading recevied data into JSON format. Str: %s",
-		message->data);
+    /* If we recevied a packet and our proxy is disable log error and reject*/
+    if (config->proxy == FALSE) {
+      log_error("Recevied packet while reverse-proxy is disabled. Ignoring");
       goto done;
     }
 
-    /* Convert JSON into request. */
-    ret = deserialize_forward_request(&rcvdData, json);
-    if (ret==FALSE)
-      goto done;
+    /* Ignore the rest, for now. */
+    if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
+      log_debug("Packet received. Data: %s", message->data);
 
-    handle_recevied_data(rcvdData, config);
+      /* Convert to JSON and deserialize it. */
+      json = json_loads(message->data, JSON_DECODE_ANY, NULL);
 
-    /* Free up the memory from deser. */
-    clear_request(&rcvdData);
+      if (json==NULL) {
+	log_error("Error loading recevied data into JSON format. Str: %s",
+		  message->data);
+	goto done;
+      }
+
+      /* Convert JSON into request. */
+      ret = deserialize_forward_request(&rcvdData, json);
+      if (ret==FALSE)
+	goto done;
+
+      handle_recevied_data(rcvdData, config);
+
+      /* Free up the memory from deser. */
+      clear_request(&rcvdData);
+    }
+
+    goto done;
   }
 
+  /* Client incoming packet handling. */
+  if (config->mode == MODE_CLIENT) {
+
+  }
+  
  done:
-  json_decref(json);
+  if (json) json_decref(json);
   return;
 }
 

@@ -11,6 +11,7 @@
 #define MESH_JSERDES_J
 
 #include <jansson.h>
+#include <uuid/uuid.h>
 
 #define JSON_MESH_FORWARD    "mesh_forward"
 #define JSON_MESH_CMD        "mesh_cmd"
@@ -19,9 +20,10 @@
 #define JSON_TYPE_REQUEST    "type_request"
 #define JSON_TYPE_RESPONSE   "type_response"
 
-#define JSON_DEVICE_INFO  "device_info"
-#define JSON_SERVICE_INFO "service_info"
-#define JSON_REQUEST_INFO "request_info"
+#define JSON_DEVICE_INFO   "device_info"
+#define JSON_SERVICE_INFO  "service_info"
+#define JSON_REQUEST_INFO  "request_info"
+#define JSON_RESPONSE_INFO "response_info"
 
 #define JSON_ID       "uuid"
 #define JSON_PROTOCOL "protocol"
@@ -43,7 +45,7 @@
 
 /* Function headers. */
 int serialize_forward_request(URequest *request, json_t **json,
-			      Config *config);
+			      Config *config, uuid_t uuid);
 int deserialize_forward_request(MRequest **req, json_t *json);
 
 #endif /* MESH_JSERDES_H */

@@ -14,14 +14,22 @@
 #include <ulfius.h>
 #include <string.h>
 #include <jansson.h>
+#include <pthread.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 
 #include "callback.h"
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
 #include "jserdes.h"
+#include "map.h"
 
 extern WorkList *Transmit;
+extern MapTable *IDTable;
 
 /* define in websocket.c */
 extern void websocket_manager(const URequest *request, WSManager *manager,
@@ -108,6 +116,10 @@ int callback_webservice(const URequest *request, UResponse *response,
   Config *config;
   int ret;
   char *str;
+  char ip[INET_ADDRSTRLEN];
+  unsigned short port;
+  MapItem *map;
+  struct sockaddr_in *sin;
 
   config = (Config *)data;
   
@@ -127,7 +139,15 @@ int callback_webservice(const URequest *request, UResponse *response,
     goto fail;
   }
 
-  ret = serialize_forward_request(request, &jReq, config);
+  sin = (struct sockaddr_in *)request->client_address;
+  inet_ntop(AF_INET, &sin->sin_addr, &ip[0], INET_ADDRSTRLEN);
+  port = sin->sin_port;
+
+  map = add_map_to_table(&IDTable, &ip[0], port);
+  if (map == NULL)
+    goto fail;
+
+  ret = serialize_forward_request(request, &jReq, config, map->uuid);
   if (ret == FALSE && jReq == NULL) {
     log_error("Failed to convert request to JSON");
     goto fail;
@@ -144,6 +164,13 @@ int callback_webservice(const URequest *request, UResponse *response,
     add_work_to_queue(&Transmit, (Packet)jReq, NULL, 0, NULL, 0);
   }
 
+  /* Wait for the response back. The cond is set by the websocket thread */
+  pthread_mutex_lock(&(map->mutex));
+  log_debug("Waiting for response back from the server ...");
+  pthread_cond_wait(&(map->hasResp), &(map->mutex));
+
+  /* Send response back. */
+  
  fail:
   /* Send response back to the callee */
   return U_CALLBACK_CONTINUE;

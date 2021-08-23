@@ -21,6 +21,7 @@
 #include "mesh.h"
 #include "config.h"
 #include "work.h"
+#include "map.h"
 
 #define VERSION "0.0.1"
 
@@ -33,6 +34,7 @@ extern int start_websocket_client(Config *config,
 /* Global variables. */
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
+MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -192,6 +194,14 @@ int main (int argc, char *argv[]) {
   /* Initializa the transmit and receive list for the websocket. */
   init_work_list(&Transmit);
   init_work_list(&Receive);
+
+  /* Setup ip:port to UUID mapping table, if client. */
+  IDTable = (MapTable *)malloc(sizeof(MapTable));
+  if (IDTable == NULL) {
+    log_error("Memory allocation failure: %d", sizeof(MapTable));
+    exit(1);
+  }
+  init_map_table(&IDTable);
 
   /* Step-2a: start webservice for local client. */
   if (start_web_services(config, &clientInst) != TRUE) {
