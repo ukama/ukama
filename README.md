@@ -27,7 +27,14 @@ Distro as mentioned above is leight weight busybox based on musl-libc.
 
 ### Dependencies
 ```
-sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison python libelf-dev
+sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison python libelf-dev cmake curl libtool
+```
+
+### Rust
+```
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+cargo install cross
+rustup target add armv7-unknown-linux-gnueabihf
 ```
 
 ### Buildah
