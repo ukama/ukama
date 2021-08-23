@@ -508,3 +508,88 @@ int deserialize_forward_request(MRequest **request, json_t *json) {
   free(jStr);
   return FALSE;
 }
+
+/*
+ * deserialize_response --
+ *
+ */
+
+int deserialize_response(MResponse **response, json_t *json) {
+
+  json_t *jFwd=NULL, *obj=NULL, *jResp=NULL, *jRaw=NULL;
+  char *jStr;
+
+  /* Sanity check */
+  if (json == NULL) {
+    return FALSE;
+  }
+
+  jFwd = json_object_get(json, JSON_MESH_FORWARD);
+  if (jFwd == NULL) {
+    goto fail;
+  }
+
+  *response = (MResponse *)calloc(1, sizeof(MResponse));
+  if (*response == NULL) {
+    return FALSE;
+  }
+
+  obj = json_object_get(jFwd, JSON_TYPE);
+  if (obj == NULL) {
+    goto fail;
+  } else {
+    (*response)->reqType = strdup(json_string_value(obj));
+  }
+
+  /* validate response type. */
+  if (strcmp((*response)->reqType, MESH_TYPE_FWD_RESP)!=0) {
+    log_error("Invalid response type recevied: %s", (*response)->reqType);
+    goto fail;
+  }
+
+  obj = json_object_get(jFwd, JSON_SEQ);
+  if (obj == NULL) {
+    goto fail;
+  } else {
+    (*response)->seqNo = json_integer_value(obj);
+  }
+
+  obj = json_object_get(jFwd, JSON_SERVICE_INFO);
+  deserialize_service_info(&(*response)->serviceInfo, obj);
+
+  jResp = json_object_get(jFwd, JSON_RESPONSE_INFO);
+  if (jResp == NULL) {
+    goto fail;
+  }
+
+  /* Lastly, de-serialize raw binary data. */
+  jRaw = json_object_get(jResp, JSON_RAW_DATA);
+
+  if (jRaw) {
+    obj = json_object_get(jRaw, JSON_LENGTH);
+    if (obj) {
+      (*response)->size = json_integer_value(obj);
+    }
+
+    /* Get the actual data now */
+    obj = json_object_get(jRaw, JSON_DATA);
+
+    if (obj) {
+      (*response)->data = (void *)calloc(1, (*response)->size);
+      if ((*response)->data == NULL)
+	return FALSE;
+
+      memcpy((*response)->data, (void *)json_string_value(obj),
+	     (*response)->size);
+    }
+  }
+
+  return TRUE;
+
+ fail:
+  jStr = json_dumps(json, 0);
+  log_error("Error decoding JSON: %s", jStr);
+  free(jStr);
+
+  return FALSE;
+}

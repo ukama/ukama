@@ -27,6 +27,10 @@ typedef struct map_item_t {
   pthread_mutex_t   mutex;   /* Client thread waiting on response. 
 			      * This mutex is released by websocket */
   pthread_cond_t    hasResp; /* Conditional wait for response */
+
+  int               size;    /* size of data packet. */
+  void              *data;   /* response data recevied. */
+
   struct map_item_t *next;   /* Link to next item in the table */
 } MapItem;
 
@@ -42,9 +46,9 @@ typedef struct {
 } MapTable;
 
 /* Functions. */
-
 void init_map_table(MapTable **table);
 void destroy_map_item(MapItem *map);
 MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port);
+MapItem *lookup_item(MapTable *table, uuid_t uuid);
 
 #endif /* MESH_MAP_H */

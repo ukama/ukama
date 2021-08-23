@@ -9,14 +9,34 @@
 
 #include <jansson.h>
 #include <ulfius.h>
+#include <string.h>
 
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
 #include "jserdes.h"
 #include "data.h"
+#include "map.h"
 
 extern WorkList *Transmit;
+extern MapTable *IDTable;
+
+/*
+ * clear_response -- free up memory from MResponse.
+ *
+ */
+static void clear_response(MResponse **resp) {
+
+  if (*resp==NULL) return;
+
+  free((*resp)->reqType);
+  free((*resp)->serviceInfo);
+  if ((*resp)->data) {
+    free((*resp)->data);
+  }
+
+  free(*resp);
+}
 
 /*
  * websocket related callback functions.
@@ -92,11 +112,16 @@ void websocket_manager(const URequest *request, WSManager *manager,
 void websocket_incoming_message(const URequest *request,
 				WSManager *manager, WSMessage *message,
 				void *data) {
-  MRequest *rcvdData;
+  MRequest *rcvdData=NULL;
+  MResponse *rcvdResp=NULL;
+  MapItem *item=NULL;
   json_t *json;
   char *str;
+  char idStr[36+1];
   int ret;
   Config *config = (Config *)data;
+
+  log_debug("Packet recevied. Data: %s", message->data);
 
   /* Server incoming packet handling. */
   if (config->mode == MODE_SERVER) {
@@ -109,8 +134,6 @@ void websocket_incoming_message(const URequest *request,
 
     /* Ignore the rest, for now. */
     if (message->opcode == U_WEBSOCKET_OPCODE_TEXT) {
-      log_debug("Packet received. Data: %s", message->data);
-
       /* Convert to JSON and deserialize it. */
       json = json_loads(message->data, JSON_DECODE_ANY, NULL);
 
@@ -137,10 +160,51 @@ void websocket_incoming_message(const URequest *request,
   /* Client incoming packet handling. */
   if (config->mode == MODE_CLIENT) {
 
+    /* Steps are:
+     * 1. deserialize the response.
+     * 2. lookup ID table for matching client, if any.
+     * 3. Copy the data to the matching thread.
+     * 4. Trigger conditional variable to enable processing.
+     */
+
+    json = json_loads(message->data, JSON_DECODE_ANY, NULL);
+    if (json==NULL) {
+      log_error("Error loading recevied data into JSON format. Str: %s",
+		message->data);
+      goto done;
+    }
+
+    ret = deserialize_response(&rcvdResp, json);
+    if (ret==FALSE) {
+      if (rcvdResp != NULL) free(rcvdResp);
+      goto done;
+    }
+
+    item = lookup_item(IDTable, rcvdResp->serviceInfo->uuid);
+    if (item == NULL) { /* No macthing service found in table. Ignore it */
+      uuid_unparse(rcvdResp->serviceInfo->uuid, &idStr[0]);
+      log_debug("No matching entry found in the table for UUID: %s Ignoring",
+		&idStr[0]);
+      goto done;
+    }
+
+    /* Copy recevied data into item. */
+    pthread_mutex_lock(&item->mutex);
+
+    item->size = rcvdResp->size;
+    item->data = (void *)calloc(1, item->size);
+    if (item->data == NULL) goto done;
+
+    memcpy(item->data, rcvdResp->data, item->size);
+
+    /* set the conditional variable. */
+    pthread_cond_broadcast(&(item->hasResp));
+    pthread_mutex_unlock(&item->mutex);
   }
-  
+
  done:
   if (json) json_decref(json);
+  clear_response(&rcvdResp);
   return;
 }
 
@@ -149,3 +213,4 @@ void  websocket_onclose(const URequest *request, WSManager *manager,
 
   return;
 }
+

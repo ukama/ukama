@@ -114,11 +114,11 @@ int callback_webservice(const URequest *request, UResponse *response,
 
   json_t *jReq=NULL;
   Config *config;
-  int ret;
+  int ret, statusCode=200;
   char *str;
   char ip[INET_ADDRSTRLEN];
   unsigned short port;
-  MapItem *map;
+  MapItem *map=NULL;
   struct sockaddr_in *sin;
 
   config = (Config *)data;
@@ -136,7 +136,8 @@ int callback_webservice(const URequest *request, UResponse *response,
    */
 
   if (is_valid_request(request)==FALSE) {
-    goto fail;
+    statusCode=400;
+    goto done;
   }
 
   sin = (struct sockaddr_in *)request->client_address;
@@ -144,13 +145,16 @@ int callback_webservice(const URequest *request, UResponse *response,
   port = sin->sin_port;
 
   map = add_map_to_table(&IDTable, &ip[0], port);
-  if (map == NULL)
-    goto fail;
+  if (map == NULL) {
+    statusCode = 500;
+    goto done;
+  }
 
   ret = serialize_forward_request(request, &jReq, config, map->uuid);
   if (ret == FALSE && jReq == NULL) {
     log_error("Failed to convert request to JSON");
-    goto fail;
+    statusCode = 400;
+    goto done;
   } else {
     str = json_dumps(jReq, 0);
     log_debug("Forward request JSON: %s", str);
@@ -159,7 +163,6 @@ int callback_webservice(const URequest *request, UResponse *response,
 
   /* Add work for the websocket for transmission. */
   if (jReq != NULL) {
-
     /* No pre/post transmission func. This will block. */
     add_work_to_queue(&Transmit, (Packet)jReq, NULL, 0, NULL, 0);
   }
@@ -168,10 +171,25 @@ int callback_webservice(const URequest *request, UResponse *response,
   pthread_mutex_lock(&(map->mutex));
   log_debug("Waiting for response back from the server ...");
   pthread_cond_wait(&(map->hasResp), &(map->mutex));
+  pthread_mutex_unlock(&(map->mutex));
+
+  log_debug("Got response back from server. Len: %d Response: %s",
+	    map->size, (char *)map->data);
 
   /* Send response back. */
+  if (map->size == 0) {
+    statusCode = 402;
+    goto done;
+  }
   
- fail:
+ done:
   /* Send response back to the callee */
+  if (statusCode != 200) {
+    ulfius_set_string_body_response(response, statusCode,
+				    "Something went wrong! What you up to?");
+  } else {
+    ulfius_set_string_body_response(response, statusCode, map->data);
+  }
+
   return U_CALLBACK_CONTINUE;
 }

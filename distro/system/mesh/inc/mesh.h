@@ -84,9 +84,11 @@ typedef struct {
 /* struct to define the response back from the service. */
 typedef struct {
 
-  ServiceInfo *serviceInfo;
+  char        *reqType;
+  int         seqNo;
   int         size;
   void        *data;
+  ServiceInfo *serviceInfo;
 } MResponse;
 
 #endif /* MESH_H */

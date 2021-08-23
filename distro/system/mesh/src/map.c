@@ -147,3 +147,38 @@ MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port) {
 
   return map;
 }
+
+/*
+ * lookup_item -- find the matching item by uuid
+ *
+ */
+MapItem *lookup_item(MapTable *table, uuid_t uuid) {
+
+  MapItem *items;
+
+  if (table == NULL && uuid_is_null(uuid)) {
+    return NULL;
+  }
+
+  /* Is empty. */
+  if (table->first == NULL) {
+    return NULL;
+  }
+
+  for (items = table->first; items; items=items->next) {
+    if (uuid_compare(uuid, items->uuid)==0) {
+      return items;
+    }
+  }
+
+  return NULL;
+}
+
+/*
+ * remove_item -- remove the matching item from the table and free()
+ *
+ */
+void remove_item(MapTable **table, uuid_t uuid) {
+
+
+}
