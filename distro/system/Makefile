@@ -1,3 +1,6 @@
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
 # Build System apps [Will be replaced by containers]
 #ALLDIR := $(sort $(dir $(wildcard */.)))
 #FDIR = $(wildcard $(ALLDIR)/Make*)

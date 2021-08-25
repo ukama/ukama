@@ -1,0 +1,238 @@
+# Friulian messages for libidn.
+# Copyright (C) 2018 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Fabio Tomat <f.t.public@gmail.com>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.0.4\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2018-03-21 12:24+0100\n"
+"Last-Translator: Fabio Tomat <f.t.public@gmail.com>\n"
+"Language-Team: Friulian <f.t.public@gmail.com>\n"
+"Language: fur\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 2.0.6\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "sucès"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "memorie finide"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "impussibil determinâ il formât de codifiche de localizazion"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "impussibil convertî la stringhe a UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "erôr di codifiche de stringhe"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "la stringhe no pues jessi normalizade in NFC"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "la stringhe e conten dâts punycode no valits"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "i dâts codificâts in punycode a saran masse grancj"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "la conversion punycode e à stranfât (overflow)"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "non di domini plui lunc di 255 caratars"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "etichete di domini plui lungje di 63 caratars"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "la jentrade A-label no je valide"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "la jentrade A-laber e U-label no corispuindin"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "la stringhe no je in formât NFC Unicode"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "la stringhe e conten doi tratuts proibîts"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "la stringhe e tache/finìs cun tratuts proibîts"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "la stringhe e conten un caratar di cumbinazion iniziâl proibît"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "la stringhe e conten un caratar no permetût"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "la stringhe e conten un caratar context-j proibît"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "la stringhe e conten un caratar context-j cun regule nule"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "la stringhe e conten un caratar context-o proibît"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "la stringhe e conten un caratar context-o cun regule nule"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "la stringhe e conten un pont codiç no assegnât"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "la stringhe e à proprietâts bi-direzionâls proibidis"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr ""
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Erôr no cognossût"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Prove `%s --help' par vê plui informazions.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Ûs: %s [OPZION]... [STRINGHIS]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Conversion Non Domini Internazionalizât (IDNA2008) di STRINGHIS o standard-"
+"input.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Interface a rie di comant ae implementazion Libidn2 di IDNA2008.\n"
+"\n"
+"Dutis lis stringhis si spiete che a sedin codificadis inte cumbinazion di\n"
+"caratars de localizazion.\n"
+"Par elaborâ une stringhe che e tache cun `-', par esempli `-foo', dopre\n"
+"`--' par segnalâ la fine dai parametris, come in `idn2 --quiet -- -foo'.\n"
+"\n"
+"I argoments obligatoris a opzions lungjis a son obligatoris ancje pes "
+"opzions\n"
+"curtis.\n"
+
+#: src/idn2.c:80
+#, fuzzy
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help               Stampe il jutori e jes\n"
+"  -V, --version            Stampe la version e jes\n"
+
+#: src/idn2.c:84
+#, fuzzy
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode             Decodifiche (punycode) il non dal domini\n"
+"  -l, --lookup             Cîr il non dal domini (predefinît)\n"
+"  -r, --register           Regjistre etichete\n"
+
+#: src/idn2.c:89
+#, fuzzy
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t              Abilite elaborazion transizionâl TR46\n"
+"  -N, --tr46nt             Abilite elaborazion no transizionâl TR46\n"
+"      --no-tr46            Disabilite elaborazion TR46\n"
+
+#: src/idn2.c:94
+#, fuzzy
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --nostd3asciirules   Disabilite lis regulis ASCII STD3\n"
+"      --debug              Stampe lis informazions di debug\n"
+"      --quiet              Operazion cidine\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Cumbinazion caratars: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Scrîf ogni stringhe di jentrade suntune rie par so cont, terminade cuntun "
+"caratar di rie gnove.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "erôr jentrade"

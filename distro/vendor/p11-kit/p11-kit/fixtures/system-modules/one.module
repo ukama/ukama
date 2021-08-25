@@ -1,0 +1,5 @@
+
+module: mock-one.so
+setting: system1
+trust-policy: yes
+number: 18

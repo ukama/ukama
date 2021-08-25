@@ -1,6 +1,8 @@
 # UkamaOS
+[![build](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml/badge.svg?branch=vendor_updated)](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml)
+
 Cloud-native and micro-services OS for Nodes
-=======
+
 # UkamaDistro
 UkamaDistro is lightweight busybox based distro build using musl-libc and few minimal services to boot up Ukama devices and make them functional.
 Basic idea behind this distro is to have  what is needed.
@@ -25,12 +27,20 @@ Distro as mentioned above is leight weight busybox based on musl-libc.
 
 ## Prerequisites
 
-### Dependencies
 ```
-sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison python libelf-dev cmake curl libtool
+sudo apt-get update
+git submodule init
+git submodule update
+```
+
+### Dependencies
+
+```
+sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison python libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript
 ```
 
 ### Rust
+
 ```
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 cargo install cross
@@ -38,6 +48,7 @@ rustup target add armv7-unknown-linux-gnueabihf
 ```
 
 ### Buildah
+
 ```
 . /etc/os-release
 sudo sh -c "echo 'deb http://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/x${ID^}_${VERSION_ID}/ /' > /etc/apt/sources.list.d/devel:kubic:libcontainers:stable.list"
@@ -48,38 +59,53 @@ sudo apt-get -qq -y install buildah
 ```
 
 ## Coreboot toolchain:
-cd firmware/coreboot 
+
 ```
+cd firmware/coreboot 
 make crossgcc-i386 CPUS=$(nproc)
 ```
+
 ## Make
+
 ```
 make TARGETBOARD=<cnode|anode|homenode>  
 ```
+
 ## Initramfs
+
 ```
 make initramfs TARGETBOARD=<cnode|anode|homenode>
 ```
+
 ## Clean
+
 ```
 make clean TARGETBOARD=<cnode|anode|homenode>
 ```
 
 ## Clean buid and toolchains used aswell
+
 ```
 make distclean TARGETBOARD=<cnode|anode|homenode>
 ```
+
 ## Stand alone build
 Each component could be build  individaully by providing target name to make.
+
 ### Distro/RootFS
+
 ```
 make distro TARGETBOARD=<cnode|anode|homenode>
 ```
+
 ### Linux
+
 ```
 make os TARGETBOARD=<cnode|anode|homenode>
 ```
+
 ### Firmware
+
 ```
 make firmware TARGETBOARD=<cnode|anode|homenode>
 ```

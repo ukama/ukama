@@ -1,0 +1,16 @@
+The following packages should be installed before GNU libunistring is
+installed:
+
+* GNU libiconv
+  + Not needed on systems with
+      - glibc 2.2 or newer, or
+      - MacOS X 10.3 or newer, or
+      - NetBSD 3.0 or newer.
+    But highly recommended on all other systems.
+    Needed for character set conversion of strings from/to Unicode.
+  + Homepage:
+    https://www.gnu.org/software/libiconv/
+  + Download:
+    https://ftp.gnu.org/gnu/libiconv/
+  + If it is installed in a nonstandard directory, pass the option
+    --with-libiconv-prefix=DIR to 'configure'.

@@ -1,0 +1,30 @@
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+Name 			License Type			LicensePath				Links
+curl			MIT/X derivative license	./curl/COPYING				https://github.com/curl/curl
+gmp			GNU LGPL v3 and GNU GPL v2      ./gmp/COPYINGv3			 	https://gmplib.org/download/gmp/gmp-6.1.2.tar.xz
+gnutls  		LGPL				./gnutls/LICENSE			https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-3.6.16.tar.xz
+jansson			MIT license			./jansson/license			https://github.com/akheron/jansson 	
+libidn2			LGPL				./libidn2/COPYING			ftp://ftp.gnu.org/gnu/libidn/
+libmicrohhtpd		LGPL				./libmicrohttpd/COPYING			https://gnunet.org/git/libmicrohttpd.git
+libunistring		GPL				./libunistring/COPYING			https://ftp.gnu.org/gnu/libunistring/libunistring-0.9.10.tar.gz
+libuuid			BSD-3-clause			./libuuid/COPYING			https://sourceforge.net/projects/libuuid/files/latest/download
+mbedtls			Apache License 2.0		./mbedtls/LICENSE			https://github.com/ARMmbed/mbedtls
+nettle			GNU LGPL v3 and GNU GPL v2      ./gmp/COPYINGv3				https://ftp.gnu.org/gnu/nettle/
+openssl			Apache License 2.0              ./openssl/LICENSE.txt			https://github.com/openssl/openssl
+orcania			GNU LGPL v2.1			./orcania/LICENSE			https://github.com/babelouest/orcania
+p11-kit							./p11-kit/COPYING			https://github.com/p11-glue/p11-kit
+prometheus-client	Apache License 2.0		./prometheus-client			https://github.com/digitalocean/prometheus-client-c
+sqlite							./sqlite/LICENSE.md			https://www.sqlite.org/src/tarball/sqlite.tar.gz
+tomlc			MIT License			./tomlc/LICENSE				https://github.com/cktan/tomlc99
+ulfius			GNU LGPL v2.1                   ./ulfius/LICENSE			https://github.com/babelouest/ulfius
+yder			GNU LGPL v2.1                   ./yder/LICENSE 				https://github.com/babelouest/yder                
+zlib						        ./zlib/README				https://github.com/madler/zlib
+	

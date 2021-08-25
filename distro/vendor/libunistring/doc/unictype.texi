@@ -1,0 +1,1383 @@
+@node unictype.h
+@chapter Unicode character classification and properties @code{<unictype.h>}
+
+This include file declares functions that classify Unicode characters
+and that test whether Unicode characters have specific properties.
+
+The classification assigns a ``general category'' to every Unicode
+character.  This is similar to the classification provided by ISO C in
+@code{<wctype.h>}.
+
+Properties are the data that guides various text processing algorithms
+in the presence of specific Unicode characters.
+
+@menu
+* General category::
+* Canonical combining class::
+* Bidi class::
+* Decimal digit value::
+* Digit value::
+* Numeric value::
+* Mirrored character::
+* Arabic shaping::
+* Properties::
+* Scripts::
+* Blocks::
+* ISO C and Java syntax::
+* Classifications like in ISO C::
+@end menu
+
+@node General category
+@section General category
+
+@cindex general category
+@cindex Unicode character, general category
+@cindex Unicode character, classification
+Every Unicode character or code point has a @emph{general category} assigned
+to it.  This classification is important for most algorithms that work on
+Unicode text.
+
+The GNU libunistring library provides two kinds of API for working with
+general categories.  The object oriented API uses a variable to denote
+every predefined general category value or combinations thereof.  The
+low-level API uses a bit mask instead.  The advantage of the object oriented
+API is that if only a few predefined general category values are used,
+the data tables are relatively small.  When you combine general category
+values (using @code{uc_general_category_or}, @code{uc_general_category_and},
+or @code{uc_general_category_and_not}), or when you use the low level
+bit masks, a big table is used thats holds the complete general category
+information for all Unicode characters.
+
+@menu
+* Object oriented API::
+* Bit mask API::
+@end menu
+
+@node Object oriented API
+@subsection The object oriented API for general category
+
+@deftp Type uc_general_category_t
+This data type denotes a general category value.  It is an immediate type that
+can be copied by simple assignment, without involving memory allocation.  It is
+not an array type.
+@end deftp
+
+The following are the predefined general category value.  Additional general
+categories may be added in the future.
+
+The @code{UC_CATEGORY_*} constants reflect the systematic general category
+values assigned by the Unicode Consortium.  Whereas the other @code{UC_*}
+macros are aliases, for use when readable code is preferred.
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_L
+@deftypevrx Macro uc_general_category_t UC_LETTER
+This represents the general category ``Letter''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_LC
+@deftypevrx Macro uc_general_category_t UC_CASED_LETTER
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Lu
+@deftypevrx Macro uc_general_category_t UC_UPPERCASE_LETTER
+This represents the general category ``Letter, uppercase''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Ll
+@deftypevrx Macro uc_general_category_t UC_LOWERCASE_LETTER
+This represents the general category ``Letter, lowercase''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Lt
+@deftypevrx Macro uc_general_category_t UC_TITLECASE_LETTER
+This represents the general category ``Letter, titlecase''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Lm
+@deftypevrx Macro uc_general_category_t UC_MODIFIER_LETTER
+This represents the general category ``Letter, modifier''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Lo
+@deftypevrx Macro uc_general_category_t UC_OTHER_LETTER
+This represents the general category ``Letter, other''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_M
+@deftypevrx Macro uc_general_category_t UC_MARK
+This represents the general category ``Marker''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Mn
+@deftypevrx Macro uc_general_category_t UC_NON_SPACING_MARK
+This represents the general category ``Marker, nonspacing''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Mc
+@deftypevrx Macro uc_general_category_t UC_COMBINING_SPACING_MARK
+This represents the general category ``Marker, spacing combining''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Me
+@deftypevrx Macro uc_general_category_t UC_ENCLOSING_MARK
+This represents the general category ``Marker, enclosing''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_N
+@deftypevrx Macro uc_general_category_t UC_NUMBER
+This represents the general category ``Number''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Nd
+@deftypevrx Macro uc_general_category_t UC_DECIMAL_DIGIT_NUMBER
+This represents the general category ``Number, decimal digit''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Nl
+@deftypevrx Macro uc_general_category_t UC_LETTER_NUMBER
+This represents the general category ``Number, letter''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_No
+@deftypevrx Macro uc_general_category_t UC_OTHER_NUMBER
+This represents the general category ``Number, other''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_P
+@deftypevrx Macro uc_general_category_t UC_PUNCTUATION
+This represents the general category ``Punctuation''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Pc
+@deftypevrx Macro uc_general_category_t UC_CONNECTOR_PUNCTUATION
+This represents the general category ``Punctuation, connector''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Pd
+@deftypevrx Macro uc_general_category_t UC_DASH_PUNCTUATION
+This represents the general category ``Punctuation, dash''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Ps
+@deftypevrx Macro uc_general_category_t UC_OPEN_PUNCTUATION
+This represents the general category ``Punctuation, open'', a.k.a. ``start punctuation''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Pe
+@deftypevrx Macro uc_general_category_t UC_CLOSE_PUNCTUATION
+This represents the general category ``Punctuation, close'', a.k.a. ``end punctuation''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Pi
+@deftypevrx Macro uc_general_category_t UC_INITIAL_QUOTE_PUNCTUATION
+This represents the general category ``Punctuation, initial quote''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Pf
+@deftypevrx Macro uc_general_category_t UC_FINAL_QUOTE_PUNCTUATION
+This represents the general category ``Punctuation, final quote''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Po
+@deftypevrx Macro uc_general_category_t UC_OTHER_PUNCTUATION
+This represents the general category ``Punctuation, other''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_S
+@deftypevrx Macro uc_general_category_t UC_SYMBOL
+This represents the general category ``Symbol''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Sm
+@deftypevrx Macro uc_general_category_t UC_MATH_SYMBOL
+This represents the general category ``Symbol, math''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Sc
+@deftypevrx Macro uc_general_category_t UC_CURRENCY_SYMBOL
+This represents the general category ``Symbol, currency''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Sk
+@deftypevrx Macro uc_general_category_t UC_MODIFIER_SYMBOL
+This represents the general category ``Symbol, modifier''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_So
+@deftypevrx Macro uc_general_category_t UC_OTHER_SYMBOL
+This represents the general category ``Symbol, other''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Z
+@deftypevrx Macro uc_general_category_t UC_SEPARATOR
+This represents the general category ``Separator''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Zs
+@deftypevrx Macro uc_general_category_t UC_SPACE_SEPARATOR
+This represents the general category ``Separator, space''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Zl
+@deftypevrx Macro uc_general_category_t UC_LINE_SEPARATOR
+This represents the general category ``Separator, line''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Zp
+@deftypevrx Macro uc_general_category_t UC_PARAGRAPH_SEPARATOR
+This represents the general category ``Separator, paragraph''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_C
+@deftypevrx Macro uc_general_category_t UC_OTHER
+This represents the general category ``Other''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Cc
+@deftypevrx Macro uc_general_category_t UC_CONTROL
+This represents the general category ``Other, control''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Cf
+@deftypevrx Macro uc_general_category_t UC_FORMAT
+This represents the general category ``Other, format''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Cs
+@deftypevrx Macro uc_general_category_t UC_SURROGATE
+This represents the general category ``Other, surrogate''.
+All code points in this category are invalid characters.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Co
+@deftypevrx Macro uc_general_category_t UC_PRIVATE_USE
+This represents the general category ``Other, private use''.
+@end deftypevr
+
+@deftypevr Constant uc_general_category_t UC_CATEGORY_Cn
+@deftypevrx Macro uc_general_category_t UC_UNASSIGNED
+This represents the general category ``Other, not assigned''.
+Some code points in this category are invalid characters.
+@end deftypevr
+
+The following functions combine general categories, like in a boolean algebra,
+except that there is no @samp{not} operation.
+
+@deftypefun uc_general_category_t uc_general_category_or (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+Returns the union of two general categories.
+This corresponds to the unions of the two sets of characters.
+@end deftypefun
+
+@deftypefun uc_general_category_t uc_general_category_and (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+Returns the intersection of two general categories as bit masks.
+This @emph{does not} correspond to the intersection of the two sets of
+characters.
+@c Really??
+@end deftypefun
+
+@deftypefun uc_general_category_t uc_general_category_and_not (uc_general_category_t @var{category1}, uc_general_category_t @var{category2})
+Returns the intersection of a general category with the complement of a
+second general category, as bit masks.
+This @emph{does not} correspond to the intersection with complement, when
+viewing the categories as sets of characters.
+@c Really??
+@end deftypefun
+
+The following functions associate general categories with their name.
+
+@deftypefun {const char *} uc_general_category_name (uc_general_category_t @var{category})
+Returns the name of a general category, more precisely, the abbreviated name.
+Returns NULL if the general category corresponds to a bit mask that does not
+have a name.
+@end deftypefun
+
+@deftypefun {const char *} uc_general_category_long_name (uc_general_category_t @var{category})
+Returns the long name of a general category.
+Returns NULL if the general category corresponds to a bit mask that does not
+have a name.
+@end deftypefun
+
+@deftypefun uc_general_category_t uc_general_category_byname (const char *@var{category_name})
+Returns the general category given by name, e.g@. @code{"Lu"}, or by long
+name, e.g@. @code{"Uppercase Letter"}.
+This lookup ignores spaces, underscores, or hyphens as word separators and is
+case-insignificant.
+@end deftypefun
+
+The following functions view general categories as sets of Unicode characters.
+
+@deftypefun uc_general_category_t uc_general_category (ucs4_t @var{uc})
+Returns the general category of a Unicode character.
+
+This function uses a big table.
+@end deftypefun
+
+@deftypefun bool uc_is_general_category (ucs4_t @var{uc}, uc_general_category_t @var{category})
+Tests whether a Unicode character belongs to a given category.
+The @var{category} argument can be a predefined general category or the
+combination of several predefined general categories.
+@end deftypefun
+
+@node Bit mask API
+@subsection The bit mask API for general category
+
+The following are the predefined general category value as bit masks.
+Additional general categories may be added in the future.
+
+@deftypevr Macro uint32_t UC_CATEGORY_MASK_L
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_LC
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Lu
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Ll
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Lt
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Lm
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Lo
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_M
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Mn
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Mc
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Me
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_N
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Nd
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Nl
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_No
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_P
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Pc
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Pd
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Ps
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Pe
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Pi
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Pf
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Po
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_S
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Sm
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Sc
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Sk
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_So
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Z
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Zs
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Zl
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Zp
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_C
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Cc
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Cf
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Cs
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Co
+@deftypevrx Macro uint32_t UC_CATEGORY_MASK_Cn
+@end deftypevr
+
+The following function views general categories as sets of Unicode characters.
+
+@deftypefun bool uc_is_general_category_withtable (ucs4_t @var{uc}, uint32_t @var{bitmask})
+Tests whether a Unicode character belongs to a given category.
+The @var{bitmask} argument can be a predefined general category bitmask or the
+combination of several predefined general category bitmasks.
+
+This function uses a big table comprising all general categories.
+@end deftypefun
+
+@node Canonical combining class
+@section Canonical combining class
+
+@cindex canonical combining class
+@cindex Unicode character, canonical combining class
+Every Unicode character or code point has a @emph{canonical combining class}
+assigned to it.
+
+What is the meaning of the canonical combining class?  Essentially, it
+indicates the priority with which a combining character is attached to its
+base character.  The characters for which the canonical combining class is 0
+are the base characters, and the characters for which it is greater than 0 are
+the combining characters.  Combining characters are rendered
+near/attached/around their base character, and combining characters with small
+combining classes are attached "first" or "closer" to the base character.
+
+The canonical combining class of a character is a number in the range
+0..255.  The possible values are described in the Unicode Character Database
+@texnl{}@url{http://www.unicode.org/Public/UNIDATA/UCD.html}.  The list here is
+not definitive; more values can be added in future versions.
+
+@deftypevr Constant int UC_CCC_NR
+The canonical combining class value for ``Not Reordered'' characters.
+The value is 0.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_OV
+The canonical combining class value for ``Overlay'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_NK
+The canonical combining class value for ``Nukta'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_KV
+The canonical combining class value for ``Kana Voicing'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_VR
+The canonical combining class value for ``Virama'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_ATBL
+The canonical combining class value for ``Attached Below Left'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_ATB
+The canonical combining class value for ``Attached Below'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_ATA
+The canonical combining class value for ``Attached Above'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_ATAR
+The canonical combining class value for ``Attached Above Right'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_BL
+The canonical combining class value for ``Below Left'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_B
+The canonical combining class value for ``Below'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_BR
+The canonical combining class value for ``Below Right'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_L
+The canonical combining class value for ``Left'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_R
+The canonical combining class value for ``Right'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_AL
+The canonical combining class value for ``Above Left'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_A
+The canonical combining class value for ``Above'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_AR
+The canonical combining class value for ``Above Right'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_DB
+The canonical combining class value for ``Double Below'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_DA
+The canonical combining class value for ``Double Above'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_CCC_IS
+The canonical combining class value for ``Iota Subscript'' characters.
+@end deftypevr
+
+The following functions associate canonical combining classes with their name.
+
+@deftypefun {const char *} uc_combining_class_name (int @var{ccc})
+Returns the name of a canonical combining class, more precisely, the
+abbreviated name.
+Returns NULL if the canonical combining class is a numeric value without a
+name.
+@end deftypefun
+
+@deftypefun {const char *} uc_combining_class_long_name (int @var{ccc})
+Returns the long name of a canonical combining class.
+Returns NULL if the canonical combining class is a numeric value without a
+name.
+@end deftypefun
+
+@deftypefun int uc_combining_class_byname (const char *@var{ccc_name})
+Returns the canonical combining class given by name, e.g@. @code{"BL"}, or by
+long name, e.g@. @code{"Below Left"}.
+This lookup ignores spaces, underscores, or hyphens as word separators and is
+case-insignificant.
+@end deftypefun
+
+The following function looks up the canonical combining class of a character.
+
+@deftypefun int uc_combining_class (ucs4_t @var{uc})
+Returns the canonical combining class of a Unicode character.
+@end deftypefun
+
+@node Bidi class
+@section Bidi class
+
+@cindex bidi class
+@cindex bidirectional category
+@cindex Unicode character, bidi class
+@cindex Unicode character, bidirectional category
+Every Unicode character or code point has a @emph{bidi class} assigned to it.
+Before Unicode 4.0, this concept was known as @emph{bidirectional category}.
+
+The bidi class guides the bidirectional algorithm@texnl{}
+(@url{http://www.unicode.org/reports/tr9/}).  The possible values are
+the following.
+
+@deftypevr Constant int UC_BIDI_L
+The bidi class for `Left-to-Right`'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_LRE
+The bidi class for ``Left-to-Right Embedding'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_LRO
+The bidi class for ``Left-to-Right Override'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_R
+The bidi class for ``Right-to-Left'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_AL
+The bidi class for ``Right-to-Left Arabic'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_RLE
+The bidi class for ``Right-to-Left Embedding'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_RLO
+The bidi class for ``Right-to-Left Override'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_PDF
+The bidi class for ``Pop Directional Format'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_EN
+The bidi class for ``European Number'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_ES
+The bidi class for ``European Number Separator'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_ET
+The bidi class for ``European Number Terminator'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_AN
+The bidi class for ``Arabic Number'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_CS
+The bidi class for ``Common Number Separator'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_NSM
+The bidi class for ``Non-Spacing Mark'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_BN
+The bidi class for ``Boundary Neutral'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_B
+The bidi class for ``Paragraph Separator'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_S
+The bidi class for ``Segment Separator'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_WS
+The bidi class for ``Whitespace'' characters.
+@end deftypevr
+
+@deftypevr Constant int UC_BIDI_ON
+The bidi class for ``Other Neutral'' characters.
+@end deftypevr
+
+The following functions implement the association between a bidirectional
+category and its name.
+
+@deftypefun {const char *} uc_bidi_class_name (int @var{bidi_class})
+@deftypefunx {const char *} uc_bidi_category_name (int @var{category})
+Returns the name of a bidi class, more precisely, the abbreviated name.
+@end deftypefun
+
+@deftypefun {const char *} uc_bidi_class_long_name (int @var{bidi_class})
+Returns the long name of a bidi class.
+@end deftypefun
+
+@deftypefun int uc_bidi_class_byname (const char *@var{bidi_class_name})
+@deftypefunx int uc_bidi_category_byname (const char *@var{category_name})
+Returns the bidi class given by name, e.g@. @code{"LRE"}, or by long name,
+e.g@. @code{"Left-to-Right Embedding"}.
+This lookup ignores spaces, underscores, or hyphens as word separators and is
+case-insignificant.
+@end deftypefun
+
+The following functions view bidirectional categories as sets of Unicode
+characters.
+
+@deftypefun int uc_bidi_class (ucs4_t @var{uc})
+@deftypefunx int uc_bidi_category (ucs4_t @var{uc})
+Returns the bidi class of a Unicode character.
+@end deftypefun
+
+@deftypefun bool uc_is_bidi_class (ucs4_t @var{uc}, int @var{bidi_class})
+@deftypefunx bool uc_is_bidi_category (ucs4_t @var{uc}, int @var{category})
+Tests whether a Unicode character belongs to a given bidi class.
+@end deftypefun
+
+@node Decimal digit value
+@section Decimal digit value
+
+@cindex value, of Unicode character
+@cindex Unicode character, value
+Decimal digits (like the digits from @samp{0} to @samp{9}) exist in many
+scripts.  The following function converts a decimal digit character to its
+numerical value.
+
+@deftypefun int uc_decimal_value (ucs4_t @var{uc})
+Returns the decimal digit value of a Unicode character.
+The return value is an integer in the range 0..9, or -1 for characters that
+do not represent a decimal digit.
+@end deftypefun
+
+@node Digit value
+@section Digit value
+
+@cindex value, of Unicode character
+@cindex Unicode character, value
+Digit characters are like decimal digit characters, possibly in special forms,
+like as superscript, subscript, or circled.  The following function converts a
+digit character to its numerical value.
+
+@deftypefun int uc_digit_value (ucs4_t @var{uc})
+Returns the digit value of a Unicode character.
+The return value is an integer in the range 0..9, or -1 for characters that
+do not represent a digit.
+@end deftypefun
+
+@node Numeric value
+@section Numeric value
+
+@cindex value, of Unicode character
+@cindex Unicode character, value
+There are also characters that represent numbers without a digit system, like
+the Roman numerals, and fractional numbers, like 1/4 or 3/4.
+
+The following type represents the numeric value of a Unicode character.
+@deftp Type uc_fraction_t
+This is a structure type with the following fields:
+@smallexample
+int numerator;
+int denominator;
+@end smallexample
+An integer @var{n} is represented by @code{numerator = @var{n}},
+@code{denominator = 1}.
+@end deftp
+
+The following function converts a number character to its numerical value.
+
+@deftypefun uc_fraction_t uc_numeric_value (ucs4_t @var{uc})
+Returns the numeric value of a Unicode character.
+The return value is a fraction, or the pseudo-fraction @code{@{ 0, 0 @}} for
+characters that do not represent a number.
+@end deftypefun
+
+@node Mirrored character
+@section Mirrored character
+
+@cindex mirroring, of Unicode character
+@cindex Unicode character, mirroring
+Character mirroring is used to associate the closing parenthesis character
+to the opening parenthesis character, the closing brace character with the
+opening brace character, and so on.
+
+The following function looks up the mirrored character of a Unicode character.
+
+@deftypefun bool uc_mirror_char (ucs4_t @var{uc}, ucs4_t *@var{puc})
+Stores the mirrored character of a Unicode character @var{uc} in
+@code{*@var{puc}} and returns @code{true}, if it exists.  Otherwise it
+stores @var{uc} unmodified in @code{*@var{puc}} and returns @code{false}.
+@end deftypefun
+
+@node Arabic shaping
+@section Arabic shaping
+
+@cindex Arabic shaping
+@cindex joining of Arabic characters
+When Arabic characters are rendered, after bidi reordering has taken
+place, the shape of the glyphs are modified so that many adjacent glyphs
+are joined.  Two character properties describe how this ``Arabic shaping''
+takes place: the joining type and the joining group.
+
+@menu
+* Joining type::
+* Joining group::
+@end menu
+
+@node Joining type
+@subsection Joining type of Arabic characters
+
+@cindex joining type
+The joining type of a character describes on which of the left and right
+neighbour characters the character's shape depends, and which of the two
+neighbour characters are rendered depending on this character.
+
+The joining type has the following possible values:
+
+@deftypevr Constant int UC_JOINING_TYPE_U
+``Non joining'': Characters of this joining type prohibit joining.
+@end deftypevr
+
+@deftypevr Constant int UC_JOINING_TYPE_T
+``Transparent'': Characters of this joining type are skipped when
+considering joining.
+@end deftypevr
+
+@deftypevr Constant int UC_JOINING_TYPE_C
+``Join causing'': Characters of this joining type cause their neighbour
+characters to change their shapes but don't change their own shape.
+@end deftypevr
+
+@deftypevr Constant int UC_JOINING_TYPE_L
+``Left joining'': Characters of this joining type have two shapes,
+isolated and initial.  Such characters currently don't exist.
+@end deftypevr
+
+@deftypevr Constant int UC_JOINING_TYPE_R
+``Right joining'': Characters of this joining type have two shapes,
+isolated and final.
+@end deftypevr
+
+@deftypevr Constant int UC_JOINING_TYPE_D
+``Dual joining'': Characters of this joining type have four shapes,
+initial, medial, final, and isolated.
+@end deftypevr
+
+The following functions implement the association between a joining type
+and its name.
+
+@deftypefun {const char *} uc_joining_type_name (int @var{joining_type})
+Returns the name of a joining type.
+@end deftypefun
+
+@deftypefun {const char *} uc_joining_type_long_name (int @var{joining_type})
+Returns the long name of a joining type.
+@end deftypefun
+
+@deftypefun int uc_joining_type_byname (const char *@var{joining_type_name})
+Returns the joining type given by name, e.g@. @code{"D"}, or by long name,
+e.g@. @code{"Dual Joining}.
+This lookup ignores spaces, underscores, or hyphens as word separators and is
+case-insignificant.
+@end deftypefun
+
+The following function gives the joining type of every Unicode character.
+
+@deftypefun int uc_joining_type (ucs4_t @var{uc})
+Returns the joining type of a Unicode character.
+@end deftypefun
+
+@node Joining group
+@subsection Joining group of Arabic characters
+
+@cindex joining group
+The joining group of a character describes how the character's shape
+is modified in the four contexts of dual-joining characters or in the
+two contexts of right-joining characters.
+
+The joining group has the following possible values:
+
+@deftypevr Constant int UC_JOINING_GROUP_NONE
+@deftypevrx Constant int UC_JOINING_GROUP_AIN
+@deftypevrx Constant int UC_JOINING_GROUP_ALAPH
+@deftypevrx Constant int UC_JOINING_GROUP_ALEF
+@deftypevrx Constant int UC_JOINING_GROUP_BEH
+@deftypevrx Constant int UC_JOINING_GROUP_BETH
+@deftypevrx Constant int UC_JOINING_GROUP_BURUSHASKI_YEH_BARREE
+@deftypevrx Constant int UC_JOINING_GROUP_DAL
+@deftypevrx Constant int UC_JOINING_GROUP_DALATH_RISH
+@deftypevrx Constant int UC_JOINING_GROUP_E
+@deftypevrx Constant int UC_JOINING_GROUP_FARSI_YEH
+@deftypevrx Constant int UC_JOINING_GROUP_FE
+@deftypevrx Constant int UC_JOINING_GROUP_FEH
+@deftypevrx Constant int UC_JOINING_GROUP_FINAL_SEMKATH
+@deftypevrx Constant int UC_JOINING_GROUP_GAF
+@deftypevrx Constant int UC_JOINING_GROUP_GAMAL
+@deftypevrx Constant int UC_JOINING_GROUP_HAH
+@deftypevrx Constant int UC_JOINING_GROUP_HE
+@deftypevrx Constant int UC_JOINING_GROUP_HEH
+@deftypevrx Constant int UC_JOINING_GROUP_HEH_GOAL
+@deftypevrx Constant int UC_JOINING_GROUP_HETH
+@deftypevrx Constant int UC_JOINING_GROUP_KAF
+@deftypevrx Constant int UC_JOINING_GROUP_KAPH
+@deftypevrx Constant int UC_JOINING_GROUP_KHAPH
+@deftypevrx Constant int UC_JOINING_GROUP_KNOTTED_HEH
+@deftypevrx Constant int UC_JOINING_GROUP_LAM
+@deftypevrx Constant int UC_JOINING_GROUP_LAMADH
+@deftypevrx Constant int UC_JOINING_GROUP_MEEM
+@deftypevrx Constant int UC_JOINING_GROUP_MIM
+@deftypevrx Constant int UC_JOINING_GROUP_NOON
+@deftypevrx Constant int UC_JOINING_GROUP_NUN
+@deftypevrx Constant int UC_JOINING_GROUP_NYA
+@deftypevrx Constant int UC_JOINING_GROUP_PE
+@deftypevrx Constant int UC_JOINING_GROUP_QAF
+@deftypevrx Constant int UC_JOINING_GROUP_QAPH
+@deftypevrx Constant int UC_JOINING_GROUP_REH
+@deftypevrx Constant int UC_JOINING_GROUP_REVERSED_PE
+@deftypevrx Constant int UC_JOINING_GROUP_SAD
+@deftypevrx Constant int UC_JOINING_GROUP_SADHE
+@deftypevrx Constant int UC_JOINING_GROUP_SEEN
+@deftypevrx Constant int UC_JOINING_GROUP_SEMKATH
+@deftypevrx Constant int UC_JOINING_GROUP_SHIN
+@deftypevrx Constant int UC_JOINING_GROUP_SWASH_KAF
+@deftypevrx Constant int UC_JOINING_GROUP_SYRIAC_WAW
+@deftypevrx Constant int UC_JOINING_GROUP_TAH
+@deftypevrx Constant int UC_JOINING_GROUP_TAW
+@deftypevrx Constant int UC_JOINING_GROUP_TEH_MARBUTA
+@deftypevrx Constant int UC_JOINING_GROUP_TEH_MARBUTA_GOAL
+@deftypevrx Constant int UC_JOINING_GROUP_TETH
+@deftypevrx Constant int UC_JOINING_GROUP_WAW
+@deftypevrx Constant int UC_JOINING_GROUP_YEH
+@deftypevrx Constant int UC_JOINING_GROUP_YEH_BARREE
+@deftypevrx Constant int UC_JOINING_GROUP_YEH_WITH_TAIL
+@deftypevrx Constant int UC_JOINING_GROUP_YUDH
+@deftypevrx Constant int UC_JOINING_GROUP_YUDH_HE
+@deftypevrx Constant int UC_JOINING_GROUP_ZAIN
+@deftypevrx Constant int UC_JOINING_GROUP_ZHAIN
+@end deftypevr
+
+The following functions implement the association between a joining group
+and its name.
+
+@deftypefun {const char *} uc_joining_group_name (int @var{joining_group})
+Returns the name of a joining group.
+@end deftypefun
+
+@deftypefun int uc_joining_group_byname (const char *@var{joining_group_name})
+Returns the joining group given by name, e.g@. @code{"Teh_Marbuta"}.
+This lookup ignores spaces, underscores, or hyphens as word separators and is
+case-insignificant.
+@end deftypefun
+
+The following function gives the joining group of every Unicode character.
+
+@deftypefun int uc_joining_group (ucs4_t @var{uc})
+Returns the joining group of a Unicode character.
+@end deftypefun
+
+@node Properties
+@section Properties
+
+@cindex properties, of Unicode character
+@cindex Unicode character, properties
+This section defines boolean properties of Unicode characters.  This
+means, a character either has the given property or does not have it.
+In other words, the property can be viewed as a subset of the set of
+Unicode characters.
+
+The GNU libunistring library provides two kinds of API for working with
+properties.  The object oriented API uses a type @code{uc_property_t}
+to designate a property.  In the function-based API, which is a bit more
+low level, a property is merely a function.
+
+@menu
+* Properties as objects::
+* Properties as functions::
+@end menu
+
+@node Properties as objects
+@subsection Properties as objects -- the object oriented API
+
+The following type designates a property on Unicode characters.
+
+@deftp Type uc_property_t
+This data type denotes a boolean property on Unicode characters. It is an
+immediate type that can be copied by simple assignment, without involving
+memory allocation.  It is not an array type.
+@end deftp
+
+Many Unicode properties are predefined.
+
+The following are general properties.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_WHITE_SPACE
+@deftypevrx Constant uc_property_t UC_PROPERTY_ALPHABETIC
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_ALPHABETIC
+@deftypevrx Constant uc_property_t UC_PROPERTY_NOT_A_CHARACTER
+@deftypevrx Constant uc_property_t UC_PROPERTY_DEFAULT_IGNORABLE_CODE_POINT
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_DEFAULT_IGNORABLE_CODE_POINT
+@deftypevrx Constant uc_property_t UC_PROPERTY_DEPRECATED
+@deftypevrx Constant uc_property_t UC_PROPERTY_LOGICAL_ORDER_EXCEPTION
+@deftypevrx Constant uc_property_t UC_PROPERTY_VARIATION_SELECTOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_PRIVATE_USE
+@deftypevrx Constant uc_property_t UC_PROPERTY_UNASSIGNED_CODE_VALUE
+@end deftypevr
+
+The following properties are related to case folding.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_UPPERCASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_UPPERCASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_LOWERCASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_LOWERCASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_TITLECASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_CASED
+@deftypevrx Constant uc_property_t UC_PROPERTY_CASE_IGNORABLE
+@deftypevrx Constant uc_property_t UC_PROPERTY_CHANGES_WHEN_LOWERCASED
+@deftypevrx Constant uc_property_t UC_PROPERTY_CHANGES_WHEN_UPPERCASED
+@deftypevrx Constant uc_property_t UC_PROPERTY_CHANGES_WHEN_TITLECASED
+@deftypevrx Constant uc_property_t UC_PROPERTY_CHANGES_WHEN_CASEFOLDED
+@deftypevrx Constant uc_property_t UC_PROPERTY_CHANGES_WHEN_CASEMAPPED
+@deftypevrx Constant uc_property_t UC_PROPERTY_SOFT_DOTTED
+@end deftypevr
+
+The following properties are related to identifiers.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_ID_START
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_ID_START
+@deftypevrx Constant uc_property_t UC_PROPERTY_ID_CONTINUE
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_ID_CONTINUE
+@deftypevrx Constant uc_property_t UC_PROPERTY_XID_START
+@deftypevrx Constant uc_property_t UC_PROPERTY_XID_CONTINUE
+@deftypevrx Constant uc_property_t UC_PROPERTY_PATTERN_WHITE_SPACE
+@deftypevrx Constant uc_property_t UC_PROPERTY_PATTERN_SYNTAX
+@end deftypevr
+
+The following properties have an influence on shaping and rendering.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_JOIN_CONTROL
+@deftypevrx Constant uc_property_t UC_PROPERTY_GRAPHEME_BASE
+@deftypevrx Constant uc_property_t UC_PROPERTY_GRAPHEME_EXTEND
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_GRAPHEME_EXTEND
+@deftypevrx Constant uc_property_t UC_PROPERTY_GRAPHEME_LINK
+@end deftypevr
+
+The following properties relate to bidirectional reordering.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_BIDI_CONTROL
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_LEFT_TO_RIGHT
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_HEBREW_RIGHT_TO_LEFT
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_ARABIC_RIGHT_TO_LEFT
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_EUROPEAN_DIGIT
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_EUR_NUM_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_EUR_NUM_TERMINATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_ARABIC_DIGIT
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_COMMON_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_BLOCK_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_SEGMENT_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_WHITESPACE
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_NON_SPACING_MARK
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_BOUNDARY_NEUTRAL
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_PDF
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_EMBEDDING_OR_OVERRIDE
+@deftypevrx Constant uc_property_t UC_PROPERTY_BIDI_OTHER_NEUTRAL
+@end deftypevr
+
+The following properties deal with number representations.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_HEX_DIGIT
+@deftypevrx Constant uc_property_t UC_PROPERTY_ASCII_HEX_DIGIT
+@end deftypevr
+
+The following properties deal with CJK.
+
+@deftypevr Constant uc_property_t UC_PROPERTY_IDEOGRAPHIC
+@deftypevrx Constant uc_property_t UC_PROPERTY_UNIFIED_IDEOGRAPH
+@deftypevrx Constant uc_property_t UC_PROPERTY_RADICAL
+@deftypevrx Constant uc_property_t UC_PROPERTY_IDS_BINARY_OPERATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_IDS_TRINARY_OPERATOR
+@end deftypevr
+
+Other miscellaneous properties are:
+
+@deftypevr Constant uc_property_t UC_PROPERTY_ZERO_WIDTH
+@deftypevrx Constant uc_property_t UC_PROPERTY_SPACE
+@deftypevrx Constant uc_property_t UC_PROPERTY_NON_BREAK
+@deftypevrx Constant uc_property_t UC_PROPERTY_ISO_CONTROL
+@deftypevrx Constant uc_property_t UC_PROPERTY_FORMAT_CONTROL
+@deftypevrx Constant uc_property_t UC_PROPERTY_DASH
+@deftypevrx Constant uc_property_t UC_PROPERTY_HYPHEN
+@deftypevrx Constant uc_property_t UC_PROPERTY_PUNCTUATION
+@deftypevrx Constant uc_property_t UC_PROPERTY_LINE_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_PARAGRAPH_SEPARATOR
+@deftypevrx Constant uc_property_t UC_PROPERTY_QUOTATION_MARK
+@deftypevrx Constant uc_property_t UC_PROPERTY_SENTENCE_TERMINAL
+@deftypevrx Constant uc_property_t UC_PROPERTY_TERMINAL_PUNCTUATION
+@deftypevrx Constant uc_property_t UC_PROPERTY_CURRENCY_SYMBOL
+@deftypevrx Constant uc_property_t UC_PROPERTY_MATH
+@deftypevrx Constant uc_property_t UC_PROPERTY_OTHER_MATH
+@deftypevrx Constant uc_property_t UC_PROPERTY_PAIRED_PUNCTUATION
+@deftypevrx Constant uc_property_t UC_PROPERTY_LEFT_OF_PAIR
+@deftypevrx Constant uc_property_t UC_PROPERTY_COMBINING
+@deftypevrx Constant uc_property_t UC_PROPERTY_COMPOSITE
+@deftypevrx Constant uc_property_t UC_PROPERTY_DECIMAL_DIGIT
+@deftypevrx Constant uc_property_t UC_PROPERTY_NUMERIC
+@deftypevrx Constant uc_property_t UC_PROPERTY_DIACRITIC
+@deftypevrx Constant uc_property_t UC_PROPERTY_EXTENDER
+@deftypevrx Constant uc_property_t UC_PROPERTY_IGNORABLE_CONTROL
+@end deftypevr
+
+The following function looks up a property by its name.
+
+@deftypefun uc_property_t uc_property_byname (const char *@var{property_name})
+Returns the property given by name, e.g@. @code{"White space"}.  If a property
+with the given name exists, the result will satisfy the
+@code{uc_property_is_valid} predicate.  Otherwise the result will not satisfy
+this predicate and must not be passed to functions that expect an
+@code{uc_property_t} argument.
+
+This lookup ignores spaces, underscores, or hyphens as word separators, is
+case-insignificant, and supports the aliases listed in Unicode's
+@file{PropertyAliases.txt} file.
+
+This function references a big table of all predefined properties.  Its use
+can significantly increase the size of your application.
+@end deftypefun
+
+@deftypefun bool uc_property_is_valid (uc_property_t property)
+Returns @code{true} when the given property is valid, or @code{false}
+otherwise.
+@end deftypefun
+
+The following function views a property as a set of Unicode characters.
+
+@deftypefun bool uc_is_property (ucs4_t @var{uc}, uc_property_t @var{property})
+Tests whether the Unicode character @var{uc} has the given property.
+@end deftypefun
+
+@node Properties as functions
+@subsection Properties as functions -- the functional API
+
+The following are general properties.
+
+@deftypefun bool uc_is_property_white_space (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_alphabetic (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_alphabetic (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_not_a_character (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_default_ignorable_code_point (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_default_ignorable_code_point (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_deprecated (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_logical_order_exception (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_variation_selector (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_private_use (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_unassigned_code_value (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties are related to case folding.
+
+@deftypefun bool uc_is_property_uppercase (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_uppercase (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_lowercase (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_lowercase (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_titlecase (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_cased (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_case_ignorable (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_changes_when_lowercased (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_changes_when_uppercased (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_changes_when_titlecased (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_changes_when_casefolded (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_changes_when_casemapped (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_soft_dotted (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties are related to identifiers.
+
+@deftypefun bool uc_is_property_id_start (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_id_start (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_id_continue (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_id_continue (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_xid_start (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_xid_continue (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_pattern_white_space (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_pattern_syntax (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties have an influence on shaping and rendering.
+
+@deftypefun bool uc_is_property_join_control (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_grapheme_base (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_grapheme_extend (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_grapheme_extend (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_grapheme_link (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties relate to bidirectional reordering.
+
+@deftypefun bool uc_is_property_bidi_control (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_left_to_right (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_hebrew_right_to_left (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_arabic_right_to_left (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_european_digit (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_eur_num_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_eur_num_terminator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_arabic_digit (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_common_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_block_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_segment_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_whitespace (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_non_spacing_mark (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_boundary_neutral (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_pdf (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_embedding_or_override (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_bidi_other_neutral (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties deal with number representations.
+
+@deftypefun bool uc_is_property_hex_digit (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_ascii_hex_digit (ucs4_t @var{uc})
+@end deftypefun
+
+The following properties deal with CJK.
+
+@deftypefun bool uc_is_property_ideographic (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_unified_ideograph (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_radical (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_ids_binary_operator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_ids_trinary_operator (ucs4_t @var{uc})
+@end deftypefun
+
+Other miscellaneous properties are:
+
+@deftypefun bool uc_is_property_zero_width (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_space (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_non_break (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_iso_control (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_format_control (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_dash (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_hyphen (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_punctuation (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_line_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_paragraph_separator (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_quotation_mark (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_sentence_terminal (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_terminal_punctuation (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_currency_symbol (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_math (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_other_math (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_paired_punctuation (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_left_of_pair (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_combining (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_composite (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_decimal_digit (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_numeric (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_diacritic (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_extender (ucs4_t @var{uc})
+@deftypefunx bool uc_is_property_ignorable_control (ucs4_t @var{uc})
+@end deftypefun
+
+@node Scripts
+@section Scripts
+
+@cindex scripts
+The Unicode characters are subdivided into scripts.
+
+The following type is used to represent a script:
+
+@deftp Type uc_script_t
+This data type is a structure type that refers to statically allocated
+read-only data.  It contains the following fields:
+@smallexample
+const char *name;
+@end smallexample
+
+The @code{name} field contains the name of the script.
+@end deftp
+
+@cindex Unicode character, script
+The following functions look up a script.
+
+@deftypefun {const uc_script_t *} uc_script (ucs4_t @var{uc})
+Returns the script of a Unicode character.  Returns NULL if @var{uc} does not
+belong to any script.
+@end deftypefun
+
+@deftypefun {const uc_script_t *} uc_script_byname (const char *@var{script_name})
+Returns the script given by its name, e.g@. @code{"HAN"}.  Returns NULL if a
+script with the given name does not exist.
+@end deftypefun
+
+The following function views a script as a set of Unicode characters.
+
+@deftypefun bool uc_is_script (ucs4_t @var{uc}, const uc_script_t *@var{script})
+Tests whether a Unicode character belongs to a given script.
+@end deftypefun
+
+The following gives a global picture of all scripts.
+
+@deftypefun void uc_all_scripts (const uc_script_t **@var{scripts}, size_t *@var{count})
+Get the list of all scripts.  Stores a pointer to an array of all scripts in
+@code{*@var{scripts}} and the length of this array in @code{*@var{count}}.
+@end deftypefun
+
+@node Blocks
+@section Blocks
+
+@cindex block
+The Unicode characters are subdivided into blocks.  A block is an interval of
+Unicode code points.
+
+The following type is used to represent a block.
+
+@deftp Type uc_block_t
+This data type is a structure type that refers to statically allocated data.
+It contains the following fields:
+@smallexample
+ucs4_t start;
+ucs4_t end;
+const char *name;
+@end smallexample
+
+The @code{start} field is the first Unicode code point in the block.
+
+The @code{end} field is the last Unicode code point in the block.
+
+The @code{name} field is the name of the block.
+@end deftp
+
+@cindex Unicode character, block
+The following function looks up a block.
+
+@deftypefun {const uc_block_t *} uc_block (ucs4_t @var{uc})
+Returns the block a character belongs to.
+@end deftypefun
+
+The following function views a block as a set of Unicode characters.
+
+@deftypefun bool uc_is_block (ucs4_t @var{uc}, const uc_block_t *@var{block})
+Tests whether a Unicode character belongs to a given block.
+@end deftypefun
+
+The following gives a global picture of all block.
+
+@deftypefun void uc_all_blocks (const uc_block_t **@var{blocks}, size_t *@var{count})
+Get the list of all blocks.  Stores a pointer to an array of all blocks in
+@code{*@var{blocks}} and the length of this array in @code{*@var{count}}.
+@end deftypefun
+
+@node ISO C and Java syntax
+@section ISO C and Java syntax
+
+@cindex C, programming language
+@cindex Java, programming language
+@cindex identifiers
+The following properties are taken from language standards.  The supported
+language standards are ISO C 99 and Java.
+
+@deftypefun bool uc_is_c_whitespace (ucs4_t @var{uc})
+Tests whether a Unicode character is considered whitespace in ISO C 99.
+@end deftypefun
+
+@deftypefun bool uc_is_java_whitespace (ucs4_t @var{uc})
+Tests whether a Unicode character is considered whitespace in Java.
+@end deftypefun
+
+The following enumerated values are the possible return values of the functions
+@code{uc_c_ident_category} and @code{uc_java_ident_category}.
+
+@deftypevr Constant int UC_IDENTIFIER_START
+This return value means that the given character is valid as first or
+subsequent character in an identifier.
+@end deftypevr
+
+@deftypevr Constant int UC_IDENTIFIER_VALID
+This return value means that the given character is valid as subsequent
+character only.
+@end deftypevr
+
+@deftypevr Constant int UC_IDENTIFIER_INVALID
+This return value means that the given character is not valid in an identifier.
+@end deftypevr
+
+@deftypevr Constant int UC_IDENTIFIER_IGNORABLE
+This return value (only for Java) means that the given character is ignorable.
+@end deftypevr
+
+The following function determine whether a given character can be a constituent
+of an identifier in the given programming language.
+
+@cindex Unicode character, validity in C identifiers
+@deftypefun int uc_c_ident_category (ucs4_t @var{uc})
+Returns the categorization of a Unicode character with respect to the ISO C 99
+identifier syntax.
+@end deftypefun
+
+@cindex Unicode character, validity in Java identifiers
+@deftypefun int uc_java_ident_category (ucs4_t @var{uc})
+Returns the categorization of a Unicode character with respect to the Java
+identifier syntax.
+@end deftypefun
+
+@node Classifications like in ISO C
+@section Classifications like in ISO C
+
+@cindex C-like API
+@cindex Unicode character, classification like in C
+The following character classifications mimic those declared in the ISO C
+header files @code{<ctype.h>} and @code{<wctype.h>}.  These functions are
+deprecated, because this set of functions was designed with ASCII in mind and
+cannot reflect the more diverse reality of the Unicode character set.  But
+they can be a quick-and-dirty porting aid when migrating from @code{wchar_t}
+APIs to Unicode strings.
+
+@deftypefun bool uc_is_alnum (ucs4_t @var{uc})
+Tests for any character for which @code{uc_is_alpha} or @code{uc_is_digit} is
+true.
+@end deftypefun
+
+@deftypefun bool uc_is_alpha (ucs4_t @var{uc})
+Tests for any character for which @code{uc_is_upper} or @code{uc_is_lower} is
+true, or any character that is one of a locale-specific set of characters for
+which none of @code{uc_is_cntrl}, @code{uc_is_digit}, @code{uc_is_punct}, or
+@code{uc_is_space} is true.
+@end deftypefun
+
+@deftypefun bool uc_is_cntrl (ucs4_t @var{uc})
+Tests for any control character.
+@end deftypefun
+
+@deftypefun bool uc_is_digit (ucs4_t @var{uc})
+Tests for any character that corresponds to a decimal-digit character.
+@end deftypefun
+
+@deftypefun bool uc_is_graph (ucs4_t @var{uc})
+Tests for any character for which @code{uc_is_print} is true and
+@code{uc_is_space} is false.
+@end deftypefun
+
+@deftypefun bool uc_is_lower (ucs4_t @var{uc})
+Tests for any character that corresponds to a lowercase letter or is one
+of a locale-specific set of characters for which none of @code{uc_is_cntrl},
+@code{uc_is_digit}, @code{uc_is_punct}, or @code{uc_is_space} is true.
+@end deftypefun
+
+@deftypefun bool uc_is_print (ucs4_t @var{uc})
+Tests for any printing character.
+@end deftypefun
+
+@deftypefun bool uc_is_punct (ucs4_t @var{uc})
+Tests for any printing character that is one of a locale-specific set of
+characters for which neither @code{uc_is_space} nor @code{uc_is_alnum} is true.
+@end deftypefun
+
+@deftypefun bool uc_is_space (ucs4_t @var{uc})
+Test for any character that corresponds to a locale-specific set of characters
+for which none of @code{uc_is_alnum}, @code{uc_is_graph}, or @code{uc_is_punct}
+is true.
+@end deftypefun
+
+@deftypefun bool uc_is_upper (ucs4_t @var{uc})
+Tests for any character that corresponds to an uppercase letter or is one
+of a locale-specific set of characters for which none of @code{uc_is_cntrl},
+@code{uc_is_digit}, @code{uc_is_punct}, or @code{uc_is_space} is true.
+@end deftypefun
+
+@deftypefun bool uc_is_xdigit (ucs4_t @var{uc})
+Tests for any character that corresponds to a hexadecimal-digit character.
+@end deftypefun
+
+@deftypefun bool uc_is_blank (ucs4_t @var{uc})
+Tests for any character that corresponds to a standard blank character or
+a locale-specific set of characters for which @code{uc_is_alnum} is false.
+@end deftypefun

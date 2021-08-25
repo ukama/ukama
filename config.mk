@@ -1,3 +1,7 @@
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
+
 #
 # Global configuration file for all makefiles.
 #
@@ -13,6 +17,9 @@ NPROCS:=1
 ifeq ($(OS), Linux)
         NPROCS:=$(shell grep -c ^processor /proc/cpuinfo)
 endif
+
+# Build system
+BUILD := x86_64-unknown-linux-gnu
 
 #Supported architectures
 ARCHARM := arm
@@ -48,6 +55,9 @@ override ARCH = $(ARCHARM)
 XCROSS_COMPILER := arm-linux-musleabihf-
 XGCC := $(XCROSS_COMPILER)gcc
 XLD := $(XCROSS_COMPILER)ld
+XGXX := $(XCROSS_COMPILER)g++
+HOST := arm-linux-musleabihf
+OPENSSLTARGET := linux-generic32
 endif
 
 #GCC Compiler for Firmware cNode
@@ -57,6 +67,9 @@ override ARCH = $(ARCHX86)
 XCROSS_COMPILER := x86_64-linux-musl-
 XGCC := $(XCROSS_COMPILER)gcc
 XLD := $(XCROSS_COMPILER)ld
+XGXX := $(XCROSS_COMPILER)g++
+HOST := x86_64-linux-musl
+OPENSSLTARGET := linux-generic64
 endif
 
 

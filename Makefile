@@ -1,3 +1,6 @@
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
 #Makefile UkamaDistro 
 
 UKAMAOSMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))

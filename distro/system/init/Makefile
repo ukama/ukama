@@ -30,8 +30,9 @@ endif
 subdirs: $(SRCDIR)
 
 $(SRCDIR):
-	@echo Building $@ for $(ARCH) 
-	(cd $@ && $(ADDITIONALLINKERFLAG) cargo build --release --target=$(TARGETFLAG))
+	@echo Building $@ for $(ARCH)
+        	
+	$(shell cd $@ && $(ADDITIONALLINKERFLAG) cargo build --release --target=$(TARGETFLAG))
 
 clean:
 	@echo Cleaning $(SRCDIR).

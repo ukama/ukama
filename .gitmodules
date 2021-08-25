@@ -1,0 +1,27 @@
+[submodule "distro/vendor/orcania"]
+	path = distro/vendor/orcania
+	url = https://github.com/babelouest/orcania.git
+[submodule "distro/vendor/openssl"]
+	path = distro/vendor/openssl
+	url = https://github.com/openssl/openssl.git
+[submodule "distro/vendor/tomlc"]
+	path = distro/vendor/tomlc
+	url = https://github.com/cktan/tomlc99.git
+[submodule "distro/vendor/libmicrohttpd"]
+	path = distro/vendor/libmicrohttpd
+	url = https://gnunet.org/git/libmicrohttpd.git
+[submodule "distro/vendor/zlib"]
+	path = distro/vendor/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "distro/vendor/yder"]
+	path = distro/vendor/yder
+	url = https://github.com/babelouest/yder.git
+[submodule "distro/vendor/jansson"]
+	path = distro/vendor/jansson
+	url = https://github.com/akheron/jansson.git
+[submodule "distro/vendor/curl"]
+	path = distro/vendor/curl
+	url = https://github.com/curl/curl.git
+[submodule "distro/vendor/mbedtls"]
+	path = distro/vendor/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
