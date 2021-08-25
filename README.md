@@ -1,5 +1,5 @@
 # UkamaOS
-[![build](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml/badge.svg?branch=vendor_updated)](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml)
+[![build](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml/badge.svg)](https://github.com/ukama/ukamaOS/actions/workflows/ci.yaml)
 
 Cloud-native and micro-services OS for Nodes
 
