@@ -15,6 +15,7 @@
 #define REMOTE_ACCEPT  "remote-accept"
 #define LOCAL_ACCEPT   "local-accept"
 #define REMOTE_CONNECT "remote-connect"
+#define REMOTE_IP_FILE "remote-ip-file"
 #define CONNECT_IP     "connect-ip"
 #define CONNECT_PORT   "connect-port"
 #define HTTP_PATH      "http-path"
