@@ -15,11 +15,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "mesh.h"
 #include "config.h"
 #include "toml.h"
 #include "log.h"
+
+static int parse_proxy_entries(Config *config, toml_table_t *proxyData);
+static int parse_config_entries(int mode, int secure, Config *config,
+				toml_table_t *configData);
+static int read_line(char *buffer, int size, FILE *fp);
 
 /*
  * print_config_data --
@@ -49,6 +55,62 @@ void print_config(Config *config) {
     log_debug("TLS/SSL key file: %s", config->keyFile);
     log_debug("TLS/SSL cert file: %s", config->certFile);
   }
+}
+
+/*
+ * read_line -- read a line from file pointer.
+ *
+ */
+static int read_line(char *buffer, int size, FILE *fp) {
+
+  char *tmp;
+
+  memset(buffer, 0, size);
+
+  if (fgets(buffer, size, fp) == NULL) {
+      *buffer = '\0';
+      return FALSE;
+  } else {
+    /* remove newline */
+    if ((tmp = strrchr(buffer, '\n')) != NULL) {
+      *tmp = '\0';
+    }
+  }
+  return TRUE;
+}
+
+/*
+ * read_ip -- read IP (hostname) from the passed fileName
+ *
+ */
+
+static char *read_ip(char *fileName) {
+
+  FILE *fp=NULL;
+  char *buffer=NULL;
+
+  buffer = (char *)malloc(MAX_BUFFER);
+  if (!buffer) {
+    log_error("Error allocating memory of size: %s", MAX_BUFFER);
+    return NULL;
+  }
+
+  fp = fopen(fileName, "r");
+  if (fp == NULL) {
+    log_error("[%s] Error opening file. Error: %s", fileName, strerror(errno));
+    return NULL;
+  }
+
+  /* Read the file content. */
+  if (read_line(buffer, MAX_BUFFER, fp)<=0) {
+    log_error("[%s] Error reading file. Error: %s", fileName, strerror(errno));
+    fclose(fp);
+    free(buffer);
+    return NULL;
+  }
+
+  fclose(fp);
+  return buffer;
 }
 
 /*
@@ -102,18 +164,22 @@ static int parse_proxy_entries(Config *config, toml_table_t *proxyData) {
 }
 
 /*
- * prase_config_entries -- Server/client stuff.
+ * parse_config_entries -- Server/client stuff.
  *
  */
 
-static void parse_config_entries(int mode, int secure, Config *config,
+static int parse_config_entries(int mode, int secure, Config *config,
 				toml_table_t *configData) {
 
+  int ret=TRUE;
+  char *buffer=NULL;
   toml_datum_t remoteAccept, localAccept, remoteConnect, cert, key;
+  toml_datum_t remoteIPFile;
 
   if (mode == MODE_SERVER) {
     remoteAccept = toml_string_in(configData, REMOTE_ACCEPT);
   } else if (mode == MODE_CLIENT) {
+    remoteIPFile  = toml_string_in(configData, REMOTE_IP_FILE);
     remoteConnect = toml_string_in(configData, REMOTE_CONNECT);
   }
 
@@ -132,29 +198,33 @@ static void parse_config_entries(int mode, int secure, Config *config,
       config->remoteAccept = strdup(DEF_REMOTE_ACCEPT);
     } else {
       config->remoteAccept = strdup(remoteAccept.u.s);
-      free(remoteAccept.u.s);
     }
   }
 
   if (config->mode == MODE_CLIENT) {
-    if (!remoteConnect.ok) {
-      log_debug("[%s] is missing, setting to default: %s", REMOTE_CONNECT,
-		DEF_REMOTE_CONNECT);
-      if (config->secure) {
-	config->remoteConnect = strdup(DEF_REMOTE_SECURE_CONNECT);
-      } else {
-	config->remoteConnect = strdup(DEF_REMOTE_CONNECT);
-      }
+    if (!remoteIPFile.ok) {
+      log_debug("[%s] is missing. using default of 127.0.0.1", REMOTE_IP_FILE);
     } else {
-      config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
-      if (config->secure) {
-	sprintf(config->remoteConnect, "wss://%s/%s", remoteConnect.u.s,
-		PREFIX_WEBSOCKET);
-      } else {
-	sprintf(config->remoteConnect, "ws://%s/%s", remoteConnect.u.s,
-		PREFIX_WEBSOCKET);
+      /* Read the content of the IP file. */
+      buffer = read_ip(remoteIPFile.u.s);
+      if (buffer == NULL) {
+	goto done;
       }
-      free(remoteConnect.u.s);
+    }
+
+    if (!remoteConnect.ok || buffer == NULL) {
+      log_debug("[%s] is missing, is mandatory", REMOTE_CONNECT);
+      ret = FALSE;
+      goto done;
+    }
+
+    config->remoteConnect = (char *)calloc(1, MAX_BUFFER);
+    if (config->secure) {
+      sprintf(config->remoteConnect, "wss://%s:%s/%s", buffer,
+	      remoteConnect.u.s, PREFIX_WEBSOCKET);
+    } else {
+      sprintf(config->remoteConnect, "ws://%s:%s/%s", buffer,
+	      remoteConnect.u.s, PREFIX_WEBSOCKET);
     }
   }
 
@@ -164,22 +234,31 @@ static void parse_config_entries(int mode, int secure, Config *config,
     config->localAccept = strdup(DEF_LOCAL_ACCEPT);
   } else {
     config->localAccept = strdup(localAccept.u.s);
-    free(localAccept.u.s);
   }
   
   if (cert.ok) {
     config->certFile = strdup(cert.u.s);
-    free(cert.u.s);
   } else {
     config->certFile = strdup(DEF_SERVER_CERT);
   }
 
   if (key.ok) {
     config->keyFile = strdup(key.u.s);
-    free(key.u.s);
   } else {
     config->keyFile = strdup(DEF_SERVER_KEY);
   }
+
+ done:
+  /* clear up toml allocations. */
+  if (key.ok) free(key.u.s);
+  if (cert.ok) free(cert.u.s);
+  if (localAccept.ok) free(localAccept.u.s);
+  if (remoteConnect.ok) free(remoteConnect.u.s);
+  if (remoteIPFile.ok) free(remoteIPFile.u.s);
+  if (remoteAccept.ok) free(remoteAccept.u.s);
+  if (buffer) free(buffer);
+
+  return ret;
 }
 
 /*
@@ -228,8 +307,10 @@ int process_config_file(int mode, int secure, int proxy, char *fileName,
       ret = FALSE;
       goto done;
     }
-    parse_config_entries(mode, secure, config, serverConfig);
-
+    ret = parse_config_entries(mode, secure, config, serverConfig);
+    if (ret == FALSE) {
+      goto done;
+    }
   } else if (mode == MODE_CLIENT) {
 
     clientConfig = toml_table_in(fileData, CLIENT_CONFIG);
@@ -240,7 +321,10 @@ int process_config_file(int mode, int secure, int proxy, char *fileName,
       ret = FALSE;
       goto done;
     }
-    parse_config_entries(mode, secure, config, clientConfig);
+    ret = parse_config_entries(mode, secure, config, clientConfig);
+    if (ret == FALSE) {
+      goto done;
+    }
   }
 
   /* validate config entries for key and cert files. */
