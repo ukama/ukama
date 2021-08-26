@@ -79,6 +79,39 @@ static int read_line(char *buffer, int size, FILE *fp) {
   return TRUE;
 }
 
+/*
+ * read_ip -- read IP (hostname) from the passed fileName
+ *
+ */
+
+static char *read_ip(char *fileName) {
+
+  FILE *fp=NULL;
+  char *buffer=NULL;
+
+  buffer = (char *)malloc(MAX_BUFFER);
+  if (!buffer) {
+    log_error("Error allocating memory of size: %s", MAX_BUFFER);
+    return NULL;
+  }
+
+  fp = fopen(fileName, "r");
+  if (fp == NULL) {
+    log_error("[%s] Error opening file. Error: %s", fileName, strerror(errno));
+    return NULL;
+  }
+
+  /* Read the file content. */
+  if (read_line(buffer, MAX_BUFFER, fp)<=0) {
+    log_error("[%s] Error reading file. Error: %s", fileName, strerror(errno));
+    fclose(fp);
+    free(buffer);
+    return NULL;
+  }
+
+  fclose(fp);
+  return buffer;
+}
 
 /*
  * parse_proxy_entries -- handle reverse-proxy stuff.
@@ -139,7 +172,6 @@ static int parse_config_entries(int mode, int secure, Config *config,
 				toml_table_t *configData) {
 
   int ret=TRUE;
-  FILE *fp;
   char *buffer=NULL;
   toml_datum_t remoteAccept, localAccept, remoteConnect, cert, key;
   toml_datum_t remoteIPFile;
@@ -174,27 +206,8 @@ static int parse_config_entries(int mode, int secure, Config *config,
       log_debug("[%s] is missing. using default of 127.0.0.1", REMOTE_IP_FILE);
     } else {
       /* Read the content of the IP file. */
-      fp = fopen(remoteIPFile.u.s, "r");
-      if (fp == NULL) {
-	log_error("[%s] Error opening file. Error: %s", remoteIPFile.u.s,
-		  strerror(errno));
-	ret = FALSE;
-	goto done;
-      }
-
-      buffer = (char *)malloc(MAX_BUFFER);
-      if (!buffer) {
-	log_error("Error allocating memory of size: %s", MAX_BUFFER);
-	ret = FALSE;
-	goto done;
-      }
-      /* Read the file content. */
-      if (read_line(buffer, MAX_BUFFER, fp)<=0) {
-	log_error("[%s] Error reading file. Error: %s", remoteIPFile.u.s,
-		  strerror(errno));
-	ret = FALSE;
-	free(buffer);
-	buffer=NULL;
+      buffer = read_ip(remoteIPFile.u.s);
+      if (buffer == NULL) {
 	goto done;
       }
     }
@@ -213,7 +226,6 @@ static int parse_config_entries(int mode, int secure, Config *config,
       sprintf(config->remoteConnect, "ws://%s:%s/%s", buffer,
 	      remoteConnect.u.s, PREFIX_WEBSOCKET);
     }
-    free(buffer); /* allocated by getline() */
   }
 
   if (!localAccept.ok) {
@@ -244,6 +256,7 @@ static int parse_config_entries(int mode, int secure, Config *config,
   if (remoteConnect.ok) free(remoteConnect.u.s);
   if (remoteIPFile.ok) free(remoteIPFile.u.s);
   if (remoteAccept.ok) free(remoteAccept.u.s);
+  if (buffer) free(buffer);
 
   return ret;
 }
