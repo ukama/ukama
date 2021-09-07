@@ -1,20 +1,20 @@
 package config
 
 import (
-	"github.com/mitchellh/go-homedir"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/stretchr/testify/assert"
 )
 
 type TestConfig struct {
-	BaseConfig  `mapstructure:",squash"`
-	SomeUrl  string
-	DB *Database // this should be initialized
+	BaseConfig `mapstructure:",squash"`
+	SomeUrl    string
+	DB         *Database // this should be initialized
 }
-
 
 func TestLoadConfig(t *testing.T) {
 	const url = "test_url"
@@ -36,11 +36,11 @@ func TestLoadConfig(t *testing.T) {
 		os.Unsetenv("DEBUGMODE")
 	})
 
-	t.Run("EnvVars", func(t *testing.T) {
+	t.Run("File", func(t *testing.T) {
 		home, err := homedir.Dir()
 		assert.NoError(t, err)
 
-		file := path.Join(home, ".test-config.yaml")
+		file := path.Join(home, "test-config.yaml")
 		fileContent := `
 someUrl: test_url
 debugMode: "true"
