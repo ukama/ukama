@@ -1,14 +1,17 @@
-name: build-{{SERVICE_NAME}}
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-lwm2m-gateway
 on:  
   push:   
     paths:
-        - "{{SERVICE}}/**"
-        - ".github/workflows/{{WORKFLOW_PATH}}.yaml"
+        - "cloud/lwm2m-gateway/**"
+        - ".github/workflows/cloud-lwm2m-gateway.yaml"
 
 jobs:  
   build:
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: cloud/lwm2m-gateway
 
     name: build and test
     runs-on: ubuntu-latest    
@@ -42,7 +45,7 @@ jobs:
           google.golang.org/grpc/cmd/protoc-gen-go-grpc 
           github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
 
-    - name: Build {{SERVICE}}
+    - name: Build cloud/lwm2m-gateway
       run: make build
       working-directory: ${{ env.working-directory }}
 
@@ -74,16 +77,16 @@ jobs:
         context: ${{ env.working-directory }}
         push: true
         tags: |
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/{{SERVICE_NAME}}:${{ steps.vars_step.outputs.sha_short }}
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/{{SERVICE_NAME}}:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/{{SERVICE_NAME}}:latest
+          003664043471.dkr.ecr.us-east-1.amazonaws.com/lwm2m-gateway:${{ steps.vars_step.outputs.sha_short }}
+          003664043471.dkr.ecr.us-east-1.amazonaws.com/lwm2m-gateway:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}
+          003664043471.dkr.ecr.us-east-1.amazonaws.com/lwm2m-gateway:latest
 
        
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: {{SERVICE}}
+      working-directory: cloud/lwm2m-gateway
     steps:
       - uses: actions/checkout@v2
 
@@ -97,27 +100,27 @@ jobs:
             working-directory: ${{ env.working-directory }}
 
 
-  release:
-      name: release
-      needs: build
-      #if: github.ref == 'refs/heads/main'
-      runs-on: ubuntu-latest
-      env:
-        working-directory: {{SERVICE}}
-      steps:
-        # init vars required for tag generation
-        - uses: actions/checkout@v2
-        - name: Init vars
-          id: vars_step
-          run: |
-            echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-            echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+  # release:
+  #     name: release
+  #     needs: build
+  #     #if: github.ref == 'refs/heads/main'
+  #     runs-on: ubuntu-latest
+  #     env:
+  #       working-directory: cloud/lwm2m-gateway
+  #     steps:
+  #       # init vars required for tag generation
+  #       - uses: actions/checkout@v2
+  #       - name: Init vars
+  #         id: vars_step
+  #         run: |
+  #           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+  #           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-        - name: update gitops                
-          uses: denispalnitsky/gitops-release@v7
-          with:
-            filename: "releases/{{HELMFILE_PREFIX}}-helmfile.yaml"
-            key: "{{SANITIZED_NAME}}ImageTag"
-            value:  ${{ steps.vars_step.outputs.sha_short }}
-            github-token: ${{ secrets.GIT_ACCESS_TOKEN }}
-            github-org-and-repo: "ukama/infra-as-code"
+  #       - name: update gitops                
+  #         uses: denispalnitsky/gitops-release@v7
+  #         with:
+  #           filename: "releases/ukamax-helmfile.yaml"
+  #           key: "lwm2mgatewayImageTag"
+  #           value:  ${{ steps.vars_step.outputs.sha_short }}
+  #           github-token: ${{ secrets.GIT_ACCESS_TOKEN }}
+  #           github-org-and-repo: "ukama/infra-as-code"

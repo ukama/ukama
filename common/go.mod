@@ -17,4 +17,4 @@ require (
 	gorm.io/gorm v1.21.10
 )
 
-replace github.com/ukama/ukamaX/common => ../common
+replace github.com/ukama/ukamaX/common => ../../common

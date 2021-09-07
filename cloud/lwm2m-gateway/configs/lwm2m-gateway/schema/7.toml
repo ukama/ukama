@@ -1,0 +1,102 @@
+[LWM2M.Object]
+Name = "Connectivity Statistics"
+Description1 = "This LwM2M Objects enables client to collect statistical information and enables the LwM2M Server to retrieve these information, set the collection duration and reset the statistical parameters."
+ObjectID = 7
+ObjectURN = "urn:oma:lwm2m:oma:7"
+LWM2MVersion = 1
+ObjectVersion = "1"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Description2 = "Note: When reporting the Tx Data or Rx Data, the LwM2M Client reports the total KB transmitted/received over IP bearer(s), including all protocol header bytes up to and including the IP header. This does not include lower level retransmissions/optimizations (e.g. RAN, header compression) or SMS messages."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "SMS Tx Counter"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Indicate the total number of SMS successfully transmitted during the collection period."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "SMS Rx Counter"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Indicate the total number of SMS successfully received during the collection period."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Tx Data"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Indicate the total amount of data (IP / non-IP) transmitted during the collection period expressed in kilobytes."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Rx Data"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Indicate the total amount of data (IP / non-IP) received during the collection period expressed in kilobytes."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Max Message Size"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = "B"
+Description = "The maximum IP message size that is used during the collection period."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Average Message Size"
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = "B"
+Description = "The average IP message size that is used during the collection period."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Start"
+Operations = "E"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = ""
+RangeEnumeration = ""
+Units = ""
+Description = """
+Reset resources 0-5 to 0 and start to collect information, If resource 8 (Collection Period) value is 0, the client will keep collecting information until resource 7 (Stop) is executed, otherwise the client will stop collecting information after specified period ended.
+        Note:When reporting the Tx Data or Rx Data, the LwM2M Client reports the total KB transmitted/received over IP bearer(s), including all protocol header bytes up to and including the IP header. This does not include lower level retransmissions/optimizations (e.g. RAN, header compression) or SMS messages."""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Stop"
+Operations = "E"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = ""
+RangeEnumeration = ""
+Units = ""
+Description = "Stop collecting information, but do not reset resources 0-5."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Collection Period"
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = "s"
+Description = "The default collection period in seconds. The value 0 indicates that the collection period is not set."

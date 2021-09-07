@@ -22,6 +22,10 @@ type Database struct {
 	Port int
 }
 
+type Rebbitmq struct {
+	Uri string
+}
+
 // LoadConfig loads configuration into `config` object
 // Pulls configuration from env vars and config file
 // Config should be a yaml file with `configFileName` and 'yaml' extension
