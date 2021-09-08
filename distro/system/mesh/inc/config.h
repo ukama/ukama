@@ -19,10 +19,13 @@
 #define CONNECT_IP     "connect-ip"
 #define CONNECT_PORT   "connect-port"
 #define HTTP_PATH      "http-path"
+#define AMQP_HOST      "amqp-host"
+#define AMQP_PORT      "amqp-port"
+#define AMQP_EXCHANGE  "amqp-exchange"
 
-#define CERT           "cert"
-#define KEY            "key"
-#define ENABLE         "enable"
+#define CFG_CERT "cert"
+#define CFG_KEY  "key"
+#define ENABLE   "enable"
 
 /* Some default */
 #define DEF_REMOTE_ACCEPT  "5534"
@@ -67,6 +70,10 @@ typedef struct {
   char *remoteAccept;   /* Server: Port on which to accept remote clients */
   char *localAccept;    /* Both: Port on which to accept local clients */
   char *remoteConnect;  /* Client: hostname:port to connect with remotely */
+
+  char *amqpHost;       /* Host where AMQP exchange is running (IP) */
+  char *amqpPort;       /* Port where AMQP exchange is listening */
+  char *amqpExchange;   /* AMQP exchange name */
 
   char *certFile;       /* CA Cert file name. */
   char *keyFile;        /* Key file name.*/

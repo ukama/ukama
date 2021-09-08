@@ -22,6 +22,7 @@
 #include "config.h"
 #include "work.h"
 #include "map.h"
+#include "amqp.h"
 
 #define VERSION "0.0.1"
 
@@ -35,6 +36,7 @@ extern int start_websocket_client(Config *config,
 WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
 MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
+WAMQPConn *AMQPConn=NULL; /* Connection to AMQP exchange */
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -203,6 +205,19 @@ int main (int argc, char *argv[]) {
   }
   init_map_table(&IDTable);
 
+  if (config->mode == MODE_SERVER) {
+    /* Initiate connection with AMQP server */
+    AMQPConn = init_amqp_connection(config->amqpHost, config->amqpPort);
+    if (AMQPConn == NULL) {
+      log_error("Failed to connect with AMQP at %s:%s", config->amqpHost,
+		config->amqpPort);
+      exit(1);
+    } else {
+      log_debug("AMQP connection established. %s:%s", config->amqpHost,
+		config->amqpPort);
+    }
+  }
+
   /* Step-2a: start webservice for local client. */
   if (start_web_services(config, &clientInst) != TRUE) {
     log_error("Webservice failed to setup for clients. Exiting.");
@@ -244,6 +259,9 @@ int main (int argc, char *argv[]) {
 
   ulfius_stop_framework(&clientInst);
   ulfius_clean_instance(&clientInst);
+
+  /* Closes connection to AMQP broker and free up allocation */
+  close_amqp_connection(AMQPConn);
 
   clear_config(config);
   free(config);

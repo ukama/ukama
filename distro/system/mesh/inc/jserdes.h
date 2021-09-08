@@ -8,7 +8,7 @@
  */
 
 #ifndef MESH_JSERDES_H
-#define MESH_JSERDES_J
+#define MESH_JSERDES_H
 
 #include <jansson.h>
 #include <uuid/uuid.h>

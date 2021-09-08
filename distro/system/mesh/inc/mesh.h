@@ -13,6 +13,9 @@
 #include <getopt.h>
 #include <ulfius.h>
 
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/tcp_socket.h>
+
 #include "log.h"
 #include "config.h"
 

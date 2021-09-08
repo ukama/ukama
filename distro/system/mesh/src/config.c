@@ -17,6 +17,9 @@
 #include <errno.h>
 #include <stdio.h>
 
+#include <curl/curl.h>
+#include <curl/easy.h>
+
 #include "mesh.h"
 #include "config.h"
 #include "toml.h"
@@ -26,6 +29,8 @@ static int parse_proxy_entries(Config *config, toml_table_t *proxyData);
 static int parse_config_entries(int mode, int secure, Config *config,
 				toml_table_t *configData);
 static int read_line(char *buffer, int size, FILE *fp);
+static int parse_amqp_config(Config *config, toml_table_t *configData);
+static int is_valid_url(char *name, char *port);
 
 /*
  * print_config_data --
@@ -45,6 +50,8 @@ void print_config(Config *config) {
 
   if (config->mode == MODE_SERVER) {
     log_debug("Remote accept port: %s", config->remoteAccept);
+    log_debug("AMQP host: %s:%s", config->amqpHost, config->amqpPort);
+    log_debug("AMQP exchange: %s", config->amqpExchange);
   } else if (config->mode == MODE_CLIENT) {
     log_debug("Remote connect port: %s", config->remoteConnect);
   }
@@ -55,6 +62,7 @@ void print_config(Config *config) {
     log_debug("TLS/SSL key file: %s", config->keyFile);
     log_debug("TLS/SSL cert file: %s", config->certFile);
   }
+
 }
 
 /*
@@ -111,6 +119,99 @@ static char *read_ip(char *fileName) {
 
   fclose(fp);
   return buffer;
+}
+
+/*
+ * valid_url -- validate URL via CURL request.
+ */
+static int is_valid_url(char *name, char *port) {
+
+  char url[MAX_BUFFER]={0};
+  CURL *curl;
+  CURLcode response;
+
+  if (name==NULL && port==NULL) {
+    return FALSE;
+  }
+
+  sprintf(url, "%s:%s", name, port);
+
+  curl = curl_easy_init();
+
+  if (curl) {
+
+    curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+
+    response = curl_easy_perform(curl);
+
+    curl_easy_cleanup(curl);
+  }
+
+  if (response != CURLE_WEIRD_SERVER_REPLY) { /* AMQP reply in binary */
+    log_error("Error reaching AMQP at %s. Error: %s", url,
+	      curl_easy_strerror(response));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*
+ * parse_amqp_config --
+ *
+ */
+static int parse_amqp_config(Config *config, toml_table_t *configData) {
+
+  int ret=TRUE;
+  toml_datum_t amqpHost, amqpPort, amqpExchange;
+
+  if (config == NULL && configData == NULL) {
+    return FALSE;
+  }
+
+  amqpHost     = toml_string_in(configData, AMQP_HOST);
+  amqpPort     = toml_string_in(configData, AMQP_PORT);
+  amqpExchange = toml_string_in(configData, AMQP_EXCHANGE);
+
+  if (!amqpHost.ok) {
+    log_debug("[%s] is missing but is mandatory.", AMQP_HOST);
+    ret = FALSE;
+    goto done;
+  } else {
+    config->amqpHost = strdup(amqpHost.u.s);
+  }
+
+  if (!amqpPort.ok) {
+    log_debug("[%s] is missing but is mandatory.", AMQP_PORT);
+    ret = FALSE;
+    goto done;
+  } else {
+    config->amqpPort = strdup(amqpPort.u.s);
+  }
+
+  /* Check to see if the host:port is reachable. */
+  if (is_valid_url(config->amqpHost, config->amqpPort)==FALSE) {
+    log_error("Invalid host and/or port for AMQP. Host: %s Port %s",
+	      config->amqpHost, config->amqpPort);
+    ret = FALSE;
+    goto done;
+  }
+
+  if (!amqpExchange.ok) {
+    log_debug("[%s] is missing but is mandatory.", AMQP_EXCHANGE);
+    ret = FALSE;
+    goto done;
+  } else {
+    config->amqpExchange = strdup(amqpExchange.u.s);
+  }
+
+ done:
+  if (amqpHost.ok) free(amqpHost.u.s);
+  if (amqpPort.ok) free(amqpPort.u.s);
+  if (amqpExchange.ok) free(amqpExchange.u.s);
+
+  return ret;
 }
 
 /*
@@ -185,8 +286,8 @@ static int parse_config_entries(int mode, int secure, Config *config,
 
   localAccept = toml_string_in(configData, LOCAL_ACCEPT);
 
-  cert  = toml_string_in(configData, CERT);
-  key   = toml_string_in(configData, KEY);
+  cert  = toml_string_in(configData, CFG_CERT);
+  key   = toml_string_in(configData, CFG_KEY);
 
   config->mode   = mode;
   config->secure = secure;
@@ -198,6 +299,12 @@ static int parse_config_entries(int mode, int secure, Config *config,
       config->remoteAccept = strdup(DEF_REMOTE_ACCEPT);
     } else {
       config->remoteAccept = strdup(remoteAccept.u.s);
+    }
+
+    /* Setup AMQP parameters. */
+    if (parse_amqp_config(config, configData)==FALSE) {
+      ret = FALSE;
+      goto done;
     }
   }
 
@@ -253,9 +360,13 @@ static int parse_config_entries(int mode, int secure, Config *config,
   if (key.ok) free(key.u.s);
   if (cert.ok) free(cert.u.s);
   if (localAccept.ok) free(localAccept.u.s);
-  if (remoteConnect.ok) free(remoteConnect.u.s);
-  if (remoteIPFile.ok) free(remoteIPFile.u.s);
-  if (remoteAccept.ok) free(remoteAccept.u.s);
+  if (mode == MODE_CLIENT) {
+    if (remoteConnect.ok) free(remoteConnect.u.s);
+    if (remoteIPFile.ok) free(remoteIPFile.u.s);
+  }
+  if (mode == MODE_SERVER) {
+    if (remoteAccept.ok) free(remoteAccept.u.s);
+  }
   if (buffer) free(buffer);
 
   return ret;
@@ -385,6 +496,9 @@ void clear_config(Config *config) {
 
   if (config->mode == MODE_SERVER) {
     free(config->remoteAccept);
+    free(config->amqpHost);
+    free(config->amqpPort);
+    free(config->amqpExchange);
   }
 
   if (config->mode == MODE_CLIENT) {

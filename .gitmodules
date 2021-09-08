@@ -25,3 +25,6 @@
 [submodule "distro/vendor/mbedtls"]
 	path = distro/vendor/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "distro/vendor/amqp"]
+	path = distro/vendor/amqp
+	url = https://github.com/alanxz/rabbitmq-c
