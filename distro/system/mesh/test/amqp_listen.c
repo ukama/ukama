@@ -14,7 +14,10 @@
 #include <amqp_socket.h>
 #include <amqp.h>
 
+#include "link.pb-c.h"
+
 #define MAX_FRAME 131072
+#define MAX_MSG_SIZE 1024
 
 #define TRUE 1
 #define FALSE 0
@@ -93,6 +96,8 @@ int main(int argc, char **argv) {
   WAMQPConn *conn=NULL;
   WAMQPReply reply;
   amqp_bytes_t queue;
+  Link *msg;
+  uint8_t buff[MAX_MSG_SIZE];
 
   if (argc<5) {
     fprintf(stderr, "USAGE: %s host port exchange key\n", argv[0]);
@@ -156,8 +161,24 @@ int main(int argc, char **argv) {
 
     fprintf(stdout, "----\n");
 
-    fprintf(stdout, "Len: %s Msg: %s\n", envelope.message.body.len,
-	    envelope.message.body.bytes);
+    fprintf(stdout, "Len: %ld Msg: %s\n", envelope.message.body.len,
+	    (char *)envelope.message.body.bytes);
+
+    if (envelope.message.body.len) {
+      /* Try to unpack the msg using protobuf */
+      memset(buff, 0, MAX_MSG_SIZE);
+      msg = link__unpack(NULL, envelope.message.body.len, buff);
+
+      if (msg == NULL) {
+	fprintf(stderr, "Error unpacking incoming message\n");
+	return 1;
+      }
+
+      fprintf(stdout, "Key: %s Msg recevied: %s \n",
+	      (char *)envelope.routing_key.bytes, msg->uuid);
+    }
+
+    link__free_unpacked(msg, NULL);
     amqp_destroy_envelope(&envelope);
   }
 
