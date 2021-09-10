@@ -7,6 +7,9 @@
 
 #include <uuid/uuid.h>
 
+#include "mesh.h"
+#include "amqp.h"
+
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"
 #define CLIENT_CONFIG "client-config"
@@ -37,10 +40,6 @@
 #define MODE_SERVER_STR "server"
 #define MODE_CLIENT_STR "client"
 #define MODE_DUAL_STR   "dual"
-
-#define MODE_SERVER 1
-#define MODE_CLIENT 2
-#define MODE_DUAL   3
 
 #define MAX_BUFFER 256
 
@@ -77,9 +76,10 @@ typedef struct {
 
   char *certFile;       /* CA Cert file name. */
   char *keyFile;        /* Key file name.*/
-  uuid_t uuid;          /* Device UUID. */
 
-  Proxy *reverseProxy;         /* define any reverse proxy */
+  DeviceInfo *deviceInfo;   /* Device related info. */
+  Proxy      *reverseProxy; /* define any reverse proxy */
+  WAMQPConn  *conn;         /* Connection to AMQP broker */
 } Config;
 
 int process_config_file(int mode, int secure, int proxy, char *fileName,

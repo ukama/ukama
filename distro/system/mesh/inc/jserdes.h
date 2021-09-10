@@ -13,6 +13,8 @@
 #include <jansson.h>
 #include <uuid/uuid.h>
 
+#include "config.h"
+
 #define JSON_MESH_FORWARD    "mesh_forward"
 #define JSON_MESH_CMD        "mesh_cmd"
 

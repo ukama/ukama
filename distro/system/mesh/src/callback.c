@@ -27,6 +27,7 @@
 #include "work.h"
 #include "jserdes.h"
 #include "map.h"
+#include "amqp.h"
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;
@@ -50,13 +51,35 @@ static int is_valid_request(URequest *request) {
 }
 
 /*
- * Ulfius main callback function that simply calls the websocket manager
- * and closes
+ * Ulfius main callback function, send AMQP msg and calls the websocket
+ * manager and closes.
  */
 int callback_websocket (const URequest *request, UResponse *response,
 			void *data) {
-
   int ret;
+  char *idStr=NULL;
+  Config *config = (Config *)data;
+  uuid_t uuid;
+
+  idStr = u_map_get(request->map_header, "User-Agent");
+  if (idStr == NULL) {
+    log_error("Missing UUID as User-Agent");
+    return U_CALLBACK_ERROR;
+  }
+
+  if (uuid_parse(idStr, uuid)==-1) {
+    log_error("Error parsing the UUID into binary: %s", idStr);
+    return U_CALLBACK_ERROR;
+  }
+
+  /* Publish device (uuid) 'connect' event to AMQP exchange */
+  if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
+			 config->mode, uuid) == FALSE) {
+    log_error("Error publishing device connect msg on AMQP exchange");
+    return U_CALLBACK_ERROR;
+  } else {
+    log_debug("AMQP device connect msg successfull for UUID: %s", idStr);
+  }
 
   if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 					   &websocket_manager,
@@ -67,9 +90,9 @@ int callback_websocket (const URequest *request, UResponse *response,
 					   data)) == U_OK) {
     ulfius_add_websocket_deflate_extension(response);
     return U_CALLBACK_CONTINUE;
-  } else {
-    return U_CALLBACK_ERROR;
   }
+
+  return U_CALLBACK_CONTINUE;
 }
 
 /*

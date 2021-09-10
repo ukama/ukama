@@ -106,6 +106,44 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 }
 
 /*
+ * serialize_device_info --
+ *
+ */
+int serialize_device_info(json_t **json, DeviceInfo *device) {
+
+  json_t *jDevice=NULL;
+  char idStr[36+1];
+
+  if (device == NULL) {
+    return FALSE;
+  }
+
+  if (uuid_is_null(device->uuid)) {
+    return FALSE;
+  }
+
+  *json = json_object();
+  if (*json == NULL) {
+    return FALSE;
+  }
+
+  /* Add Device info. Currently only is the UUID. */
+  json_object_set_new(*json, JSON_DEVICE_INFO, json_object());
+  jDevice = json_object_get(*json, JSON_DEVICE_INFO);
+
+  if (jDevice == NULL) {
+    json_decref(*json);
+    *json=NULL;
+    return FALSE;
+  }
+
+  uuid_unparse(device->uuid, &idStr[0]);
+  json_object_set_new(jDevice, JSON_ID, json_string(idStr));
+
+  return TRUE;
+}
+
+/*
  * serialize_response --
  *
  */
@@ -198,7 +236,7 @@ int serialize_forward_request(URequest *request, json_t **json,
   json_object_set_new(jReq, JSON_DEVICE_INFO, json_object());
   jDevice = json_object_get(jReq, JSON_DEVICE_INFO);
 
-  uuid_unparse(config->uuid, &idStr[0]);
+  uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
   json_object_set_new(jDevice, JSON_ID, json_string(idStr));
 
   /* Add service info., service is the one whose request is being forward. */
@@ -255,7 +293,7 @@ int serialize_forward_request(URequest *request, json_t **json,
  * deserialize_device_info --
  *
  */
-static int deserialize_device_info(DeviceInfo **device, json_t *json) {
+int deserialize_device_info(DeviceInfo **device, json_t *json) {
 
   json_t *obj;
 

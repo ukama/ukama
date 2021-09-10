@@ -333,6 +333,16 @@ static int parse_config_entries(int mode, int secure, Config *config,
       sprintf(config->remoteConnect, "ws://%s:%s/%s", buffer,
 	      remoteConnect.u.s, PREFIX_WEBSOCKET);
     }
+
+    /* For now, assign a random UUID. Eventually this to be replaced with
+     * the data read from EDR.
+     */
+    config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
+    if (config->deviceInfo == NULL) {
+      log_error("Error allocating memory of size: %d", sizeof(DeviceInfo));
+      goto done;
+    }
+    uuid_generate(config->deviceInfo->uuid);
   }
 
   if (!localAccept.ok) {

@@ -215,6 +215,7 @@ int main (int argc, char *argv[]) {
     } else {
       log_debug("AMQP connection established. %s:%s", config->amqpHost,
 		config->amqpPort);
+      config->conn = AMQPConn;
     }
   }
 

@@ -11,6 +11,7 @@
 #define MESH_DATA_H
 
 #include "mesh.h"
+#include "config.h"
 
 void clear_request(MRequest **data);
 void handle_recevied_data(MRequest *data, Config *config);
