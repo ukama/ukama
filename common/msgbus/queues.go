@@ -1,33 +1,5 @@
 package msgbus
 
-import (
-	"os"
-)
-
-type RoutingKeyType string
-
-//Servcie Config
-type Config struct {
-}
-
-// MsgBus Config
-type MsgBusConfig struct {
-	Uri string
-}
-
-// Queue Config
-type MsgBusQConfig struct {
-	Exchange         string
-	Queue            string
-	ExchangeType     string
-	ReqRountingKeys  []RoutingKeyType
-	RespRountingKeys []RoutingKeyType
-}
-
-var MsgBusConf = MsgBusConfig{
-	Uri: getEnv("RABBIT_URI", "amqp://guest:guest@localhost:5672/"),
-}
-
 const (
 	RequestDeviceUpdateConfig                    RoutingKeyType = "REQUEST.DEVICE.UPDATE.CONFIG"
 	ResponseDeviceUpdateConfig                   RoutingKeyType = "RESPONSE.DEVICE.UPDATE.CONFIG"
@@ -67,7 +39,6 @@ var DeviceQ = MsgBusQConfig{
 	},
 }
 
-//TODO:: May be change rotingkeys to [MessageType].[OperationType].[OpernadType].[ResourceType]
 var GNotifyQ = MsgBusQConfig{
 	Exchange:         "DEVICE_EXCHANGE",
 	Queue:            "GNOTIFY_QUEUE",
@@ -76,15 +47,6 @@ var GNotifyQ = MsgBusQConfig{
 	RespRountingKeys: []RoutingKeyType{},
 }
 
-// var LwM2MQ = MsgBusQConfig{
-// 	Exchange:         "DEVICE_EXCHANGE",
-// 	Queue:            "LWM2M_QUEUE",
-// 	ExchangeType:     "topic",
-// 	ReqRountingKeys:  []string{"REQUEST.DEVICE.UPDATE.CONFIG", "REQUEST.DEVICE.READ.CONFIG"},
-// 	RespRountingKeys: []string{"RESPONSE.DEVICE.UPDATE.CONFIG", "RESPONSE.DEVICE.UPDATE.CONFIG"},
-// }
-
-//TODO:: May be change rotingkeys to [MessageType].[OperationType].[OpernadType].[ResourceType]
 var LwM2MQ = MsgBusQConfig{
 	Exchange:     "LWM2M_EXCHANGE",
 	Queue:        "LWM2M_QUEUE",
@@ -97,12 +59,4 @@ var LwM2MQ = MsgBusQConfig{
 		ResponseDeviceExecuteResource, ResponseDeviceSetobserveConfig,
 		ResponseDeviceCancelobserveConfig,
 	},
-}
-
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-
-	return fallback
 }

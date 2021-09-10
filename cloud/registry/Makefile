@@ -1,5 +1,9 @@
-build:
+.PHONY: integration.test 
+
+build: integration.build
 	env CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/registry cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/listener cmd/listener/main.go
+	
 
 test:
 	go test -v ./...
@@ -7,15 +11,6 @@ test:
 # Go lint
 lint:
 	golangci-lint run
-
-
-postgres:
-	mkdir ${HOME}/postgres-data/
-	# user - postgres
-	docker run -d --name dev-postgres -e POSTGRES_PASSWORD=Pass2020! \
-            -v ${HOME}/postgres-data/:/var/lib/postgresql/data \
-            -p 5432:5432 \
-            postgres
 
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
@@ -26,9 +21,23 @@ deps:
 
 gen:
 	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=false
-	mockery --all --recursive
+	protoc --go_out=. --go-grpc_out=./external pb/external/*.proto --go-grpc_opt=require_unimplemented_servers=false --go_opt=Mpb/external/*.proto=github.com/ukama/ukamaos/mesh
+	mockery --all --recursive --dir ./internal ./pkg
 	mockery -dir ./pb  -all -recursive -output ./pb/generated/mocks
 
 clean:
 	rm pb/generated/*.go
+
+
+# integration tests
+
+integration.test:
+	go test ./test/integration -tags integration  -v -count=1
+
+
+integration.build:
+	env CGO_ENABLED=0 go test ./test/integration -tags integration -v -c -o bin/integration
+
+
+
 

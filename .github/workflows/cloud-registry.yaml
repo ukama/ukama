@@ -50,14 +50,8 @@ jobs:
       working-directory: ${{ env.working-directory }}
 
     - name: Test
-      run: make test
+      run: go test -v ./... -coverprofile="coverage.out"
       working-directory: ${{ env.working-directory }}
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v1
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -67,19 +61,69 @@ jobs:
         aws-region: us-east-1
 
     - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1    
+      run: | 
+            aws ecr get-login-password --region us-east-1 | \
+            buildah login \
+              --username AWS \
+              --password-stdin \
+              003664043471.dkr.ecr.us-east-1.amazonaws.com
 
-    # push image 
-    - name: Build and push
-      uses: docker/build-push-action@v2      
-      with:        
-        context: ${{ env.working-directory }}
-        push: true
-        tags: |
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/registry:${{ steps.vars_step.outputs.sha_short }}
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/registry:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}
-          003664043471.dkr.ecr.us-east-1.amazonaws.com/registry:latest
+    - name: OCI build and push
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/registry
+      run: |                        
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                -t $REGISTRY\:latest .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:latest 
+
+    - name: OCI Push registry-listener 
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/registry-listener
+      run: |                        
+            buildah bud -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                -t $REGISTRY\:latest .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:latest 
+
+    - name: OCI Push Registry test 
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/registry
+      run: |                        
+            buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+                -t $REGISTRY\:latest-test .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+            buildah push $REGISTRY\:latest-test
+
+        
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@v1.6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir:  ${{ env.working-directory }}
+        args: >
+          -Dsonar.organization=ukama
+          -Dsonar.projectKey=ukama_ukamaX_registry
+          -Dsonar.projectName=${{ env.working-directory }}
+          -Dsonar.go.coverage.reportPaths=coverage.out
+          -Dsonar.test.exclusions=tests/**
+          -Dsonar.tests=tests/
+          -Dsonar.verbose=true
+          -Dsonar.sources=.
+          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**
+          -Dsonar.tests=.
+          -Dsonar.test.inclusions=**/*_test.go
 
        
   lint:
@@ -98,6 +142,8 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
             working-directory: ${{ env.working-directory }}
+  
+
 
 
   release:

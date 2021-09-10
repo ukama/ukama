@@ -36,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 		os.Unsetenv("DEBUGMODE")
 	})
 
-	t.Run("File", func(t *testing.T) {
+	t.Run("ConfigFile", func(t *testing.T) {
 		home, err := homedir.Dir()
 		assert.NoError(t, err)
 

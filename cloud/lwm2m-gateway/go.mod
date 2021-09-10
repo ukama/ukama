@@ -7,7 +7,7 @@ require (
 	github.com/magiconair/properties v1.8.4 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/pelletier/go-toml v1.8.1
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/afero v1.5.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -15,7 +15,10 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
 	github.com/theherk/viper v0.0.0-20171202031228-e0502e82247d
+	github.com/ukama/ukamaX/common v0.0.0-20210817124435-4c4d3a0d6c9d
 	google.golang.org/protobuf v1.23.0
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 
 )
+
+replace github.com/ukama/ukamaX/common => ../../common

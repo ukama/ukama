@@ -1,6 +1,6 @@
 syntax = "proto3";
-package registry;
-option go_package = "pb/generated";
+
+option go_package = "pb/gen";
 
 service RegistryService {
     rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);

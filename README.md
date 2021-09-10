@@ -8,3 +8,5 @@
 [![cloud-registry-ci](https://github.com/ukama/ukamaX/actions/workflows/cloud-registry.yaml/badge.svg)](https://github.com/ukama/ukamaX/actions/workflows/cloud-registry.yaml)
 
 [![common-lib-ci](https://github.com/ukama/ukamaX/actions/workflows/common-lib.yml/badge.svg)](https://github.com/ukama/ukamaX/actions/workflows/common-lib.yml)
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=ukama_ukamaX_registry&metric=alert_status&token=bd26cd9d19aff54ba4e00943f0cda41515a9defc)](https://sonarcloud.io/dashboard?id=ukama_ukamaX_registry)

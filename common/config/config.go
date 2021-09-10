@@ -32,7 +32,7 @@ type Rebbitmq struct {
 // for example: `.registry`
 // Available paths: $HOME, same as binary
 // ENV vars have precedence
-// configName - name of config file without extension.
+// configFileName - name of config file without extension.
 // Config file should have yaml format and property Names should start with lowercase latter
 // Evn var should be uppercased
 func LoadConfig(configFileName string, config interface{}) {

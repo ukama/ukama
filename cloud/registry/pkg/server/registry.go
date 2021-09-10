@@ -24,8 +24,6 @@ func NewRegistryServer(orgRepo db.OrgRepo, nodeRepo db.NodeRepo) *RegistryServer
 	return &RegistryServer{orgRepo: orgRepo, nodeRepo: nodeRepo}
 }
 
-const NOT_FOUND_ERROR = "not found"
-
 func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 	logrus.Infof("Adding org %v", request)
 	if len(request.Owner) == 0 {
@@ -44,7 +42,7 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 	err = r.orgRepo.Add(org)
 	if err != nil {
 		if sql.IsDuplicateKeyError(err) {
-			return nil, status.Errorf(codes.InvalidArgument, "organization already exist")
+			return nil, status.Errorf(codes.AlreadyExists, "organization already exist")
 		}
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -93,7 +91,7 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 
 	if err != nil {
 		if sql.IsDuplicateKeyError(err) {
-			return nil, status.Errorf(codes.InvalidArgument, "node already exist")
+			return nil, status.Errorf(codes.AlreadyExists, "node already exist")
 		}
 
 		logrus.Error("Error adding the node. " + err.Error())
@@ -159,6 +157,9 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 
 	err = r.nodeRepo.Update(nodeId, dbState)
 	if err != nil {
+		if sql.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.NotFound, "node not found")
+		}
 		logrus.Error("error updating the node" + err.Error())
 		return nil, status.Errorf(codes.Internal, "error updating the node")
 	}

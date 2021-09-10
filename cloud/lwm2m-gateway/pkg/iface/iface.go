@@ -3,9 +3,11 @@ package iface
 import (
 	"fmt"
 	"lwm2m-gateway/pkg/lwm2m"
-	"lwm2m-gateway/pkg/msgbus"
 	stat "lwm2m-gateway/specs/common/spec"
 	spec "lwm2m-gateway/specs/lwm2mIface/spec"
+	"os"
+
+	"github.com/ukama/ukamaX/common/msgbus"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -16,11 +18,28 @@ var ifMsgClient msgbus.IMsgBus
 var msgHandlerName string = "Lwm2mGateway"
 var evtHandlerPrefix string = "EventHandler_"
 
+// MsgBus Config
+type MsgBusConfig struct {
+	Uri string
+}
+
+var MsgBusConf = MsgBusConfig{
+	Uri: getEnv("RABBIT_URI", "amqp://guest:guest@localhost:5672/"),
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return fallback
+}
+
 // Initialize Iface for receiving request messages
 func Start() {
 	log.Infof("Iface:: Connecting LwM2M Gateway to MessageBus.\n")
 	ifMsgClient = &msgbus.MsgClient{}
-	ifMsgClient.ConnectToBroker(msgbus.MsgBusConf.Uri)
+	ifMsgClient.ConnectToBroker(MsgBusConf.Uri)
 	err := ifMsgClient.Subscribe(msgbus.LwM2MQ.Queue, msgbus.LwM2MQ.Exchange, msgbus.LwM2MQ.ExchangeType, msgbus.LwM2MQ.ReqRountingKeys, msgHandlerName, IfMsgHandlerCB)
 	//err := ifMsgClient.SubscribeToQueue(msgbus.LwM2MQ.Queue, msgHandlerName, IfMsgHandlerCB)
 	failOnError(err, "Could not start subscribe to "+msgbus.LwM2MQ.Exchange+msgbus.LwM2MQ.ExchangeType)
@@ -90,7 +109,7 @@ func unmarshalRequestMsg(d amqp.Delivery) (*spec.Lwm2MConfigReqMsg, error) {
 }
 
 //Handling incoming requests
-func IfMsgHandlerCB(d amqp.Delivery, ch chan bool) {
+func IfMsgHandlerCB(d amqp.Delivery, ch chan<- bool) {
 	var respCode stat.StatusCode
 	respMsg := &spec.Lwm2MConfigRespMsg{}
 	done := true
@@ -179,7 +198,7 @@ func IfMsgHandlerCB(d amqp.Delivery, ch chan bool) {
 		}
 
 		// Publish a message
-		err = ifMsgClient.PublishRPCResponse(data, d.CorrelationId, "", "", msgbus.RoutingKeyType(d.ReplyTo), "")
+		err = ifMsgClient.PublishRPCResponse(data, d.CorrelationId, msgbus.RoutingKeyType(d.ReplyTo))
 		if err != nil {
 			log.Errorf(err.Error())
 		}

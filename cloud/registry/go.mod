@@ -3,9 +3,11 @@ module github.com/ukama/ukamaX/cloud/registry
 go 1.16
 
 require (
+	github.com/go-yaml/yaml v2.1.0+incompatible // indirect
+	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/streadway/amqp v1.0.0 // indirect
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.5.1
 	github.com/ukama/ukamaX/common v0.0.0-00010101000000-000000000000
 	golang.org/x/net v0.0.0-20210716203947-853a461950ff // indirect

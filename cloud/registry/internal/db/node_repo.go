@@ -4,6 +4,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukamaX/common/sql"
 	"github.com/ukama/ukamaX/common/ukama"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -58,8 +59,10 @@ func (r *nodeRepo) Delete(id ukama.NodeID) error {
 }
 
 func (r *nodeRepo) Update(id ukama.NodeID, state NodeState) error {
-
 	result := r.Db.GetGormDb().Where("node_id=?", id.String()).Updates(Node{State: state})
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
 	if result.Error != nil {
 		return result.Error
 	}

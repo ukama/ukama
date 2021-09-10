@@ -12,6 +12,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
+	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10
