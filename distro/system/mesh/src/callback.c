@@ -72,10 +72,28 @@ int callback_websocket (const URequest *request, UResponse *response,
     return U_CALLBACK_ERROR;
   }
 
+  if (config->deviceInfo) {
+    if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
+      /* Only accept one device at a time until the socket is closed. */
+      log_error("Only accept one device at a time. Ignoring");
+      free(idStr);
+      return U_CALLBACK_ERROR;
+    }
+  } else {
+    config->deviceInfo = (DeviceInfo *)malloc(sizeof(DeviceInfo));
+    if (config->deviceInfo == NULL) {
+      log_error("Error allocating memory: %d", sizeof(DeviceInfo));
+      free(idStr);
+      return U_CALLBACK_ERROR;
+    }
+    uuid_copy(config->deviceInfo->uuid, uuid);
+  }
+
   /* Publish device (uuid) 'connect' event to AMQP exchange */
   if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CONNECT,
 			 config->mode, uuid) == FALSE) {
     log_error("Error publishing device connect msg on AMQP exchange");
+    free(idStr);
     return U_CALLBACK_ERROR;
   } else {
     log_debug("AMQP device connect msg successfull for UUID: %s", idStr);
@@ -89,9 +107,11 @@ int callback_websocket (const URequest *request, UResponse *response,
 					   &websocket_onclose,
 					   data)) == U_OK) {
     ulfius_add_websocket_deflate_extension(response);
+    free(idStr);
     return U_CALLBACK_CONTINUE;
   }
 
+  free(idStr);
   return U_CALLBACK_CONTINUE;
 }
 

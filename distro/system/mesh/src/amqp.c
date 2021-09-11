@@ -570,5 +570,6 @@ int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
   }
 
   free(buff);
+  free(key);
   return ret;
 }

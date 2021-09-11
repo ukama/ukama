@@ -17,7 +17,6 @@
 #include "link.pb-c.h"
 
 #define MAX_FRAME 131072
-#define MAX_MSG_SIZE 1024
 
 #define TRUE 1
 #define FALSE 0
@@ -97,7 +96,7 @@ int main(int argc, char **argv) {
   WAMQPReply reply;
   amqp_bytes_t queue;
   Link *msg;
-  uint8_t buff[MAX_MSG_SIZE];
+  amqp_queue_declare_ok_t *q=NULL;
 
   if (argc<5) {
     fprintf(stderr, "USAGE: %s host port exchange key\n", argv[0]);
@@ -114,6 +113,22 @@ int main(int argc, char **argv) {
   if (!conn) {
     fprintf(stderr, "Error connecting with AMQP at host: %s port %d\n", host,
 	    port);
+    return 1;
+  }
+
+  /* conn, channel, bytes, passive, durable, exclusive, auto_delete, args */
+  q = amqp_queue_declare(conn, 1, amqp_empty_bytes, 0, 0, 0, 1,
+			 amqp_empty_table);
+
+  reply = amqp_get_rpc_reply(conn);
+  if (reply.reply_type != AMQP_RESPONSE_NORMAL){
+    fprintf(stderr, "Error declaring queue.\n");
+    return 1;
+  }
+
+  queue = amqp_bytes_malloc_dup(q->queue);
+  if (queue.bytes == NULL) {
+    fprintf(stderr, "Memory allocation. Error copying queue name\n");
     return 1;
   }
 
@@ -136,7 +151,7 @@ int main(int argc, char **argv) {
 
   /* Loop forever to consume. */
   for (;;) {
-    
+
     amqp_rpc_reply_t resp;
     amqp_envelope_t  envelope;
 
@@ -148,7 +163,7 @@ int main(int argc, char **argv) {
       break;
     }
 
-    fprintf(stdout, "Delivery %u, exchange %.*s routingkey %.*s\n",
+    fprintf(stdout, "Delivery %u, exchange %.*s key: %.*s\n",
 	    (unsigned)envelope.delivery_tag, (int)envelope.exchange.len,
 	    (char *)envelope.exchange.bytes, (int)envelope.routing_key.len,
 	    (char *)envelope.routing_key.bytes);
@@ -161,20 +176,17 @@ int main(int argc, char **argv) {
 
     fprintf(stdout, "----\n");
 
-    fprintf(stdout, "Len: %ld Msg: %s\n", envelope.message.body.len,
-	    (char *)envelope.message.body.bytes);
-
     if (envelope.message.body.len) {
       /* Try to unpack the msg using protobuf */
-      memset(buff, 0, MAX_MSG_SIZE);
-      msg = link__unpack(NULL, envelope.message.body.len, buff);
+      msg = link__unpack(NULL, envelope.message.body.len,
+			 (uint8_t *)envelope.message.body.bytes);
 
       if (msg == NULL) {
 	fprintf(stderr, "Error unpacking incoming message\n");
 	return 1;
       }
 
-      fprintf(stdout, "Key: %s Msg recevied: %s \n",
+      fprintf(stdout, "Key: %s \nMsg: %s \n---- \n",
 	      (char *)envelope.routing_key.bytes, msg->uuid);
     }
 

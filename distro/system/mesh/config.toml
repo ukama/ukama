@@ -5,7 +5,7 @@
 	local-accept  = "4444"
 	amqp-host     = "localhost"
 	amqp-port     = "5672"
-	amqp-exchange = "amqp.direct"
+	amqp-exchange = "amq.direct"
 	cert          = "/a/b/c/cert.crt"
 	key           = "/x/y/z/pem.key"
 
