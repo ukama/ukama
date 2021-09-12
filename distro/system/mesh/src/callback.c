@@ -76,7 +76,6 @@ int callback_websocket (const URequest *request, UResponse *response,
     if (uuid_compare(config->deviceInfo->uuid, uuid) != 0) {
       /* Only accept one device at a time until the socket is closed. */
       log_error("Only accept one device at a time. Ignoring");
-      free(idStr);
       return U_CALLBACK_ERROR;
     }
   } else {
@@ -107,11 +106,9 @@ int callback_websocket (const URequest *request, UResponse *response,
 					   &websocket_onclose,
 					   data)) == U_OK) {
     ulfius_add_websocket_deflate_extension(response);
-    free(idStr);
     return U_CALLBACK_CONTINUE;
   }
 
-  free(idStr);
   return U_CALLBACK_CONTINUE;
 }
 
