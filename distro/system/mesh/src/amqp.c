@@ -419,7 +419,7 @@ static char *create_routing_key(MeshEvent event, int mode) {
   len = strlen(type) + strlen(source) + strlen(MSG_CONTAINER) +
     strlen(object) + strlen(state);
 
-  key = (char *)malloc(len+1);
+  key = (char *)malloc(len+4+1); /* 4 for '.' in the key and 1 for' \0' */
   if (key==NULL) {
     log_error("Error allocating memory of size: %d", len+1);
     FREE(source, type, object, state);
