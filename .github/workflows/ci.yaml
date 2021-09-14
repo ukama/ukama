@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: Checkout submodule
-      uses: textbook/git-checkout-submodule-action@master
-
+      with:
+        fetch-depth: '1'
+        submodules: 'true'
+  
     - name: Dependencies
       run:  apt-get update && apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript -y
 
