@@ -28,3 +28,6 @@
 [submodule "distro/vendor/amqp"]
 	path = distro/vendor/amqp
 	url = https://github.com/alanxz/rabbitmq-c
+[submodule "distro/vendor/Unity"]
+	path = distro/vendor/Unity
+	url = https://github.com/ThrowTheSwitch/Unity
