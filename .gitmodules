@@ -31,3 +31,6 @@
 [submodule "distro/vendor/Unity"]
 	path = distro/vendor/Unity
 	url = https://github.com/ThrowTheSwitch/Unity
+[submodule "distro/vendor/protobuf-c"]
+	path = distro/vendor/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c
