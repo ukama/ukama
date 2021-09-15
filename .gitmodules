@@ -9,7 +9,7 @@
 	url = https://github.com/cktan/tomlc99.git
 [submodule "distro/vendor/libmicrohttpd"]
 	path = distro/vendor/libmicrohttpd
-	url = https://gnunet.org/git/libmicrohttpd.git
+	url = git://git.gnunet.org/libmicrohttpd.git
 [submodule "distro/vendor/zlib"]
 	path = distro/vendor/zlib
 	url = https://github.com/madler/zlib.git
@@ -25,3 +25,9 @@
 [submodule "distro/vendor/mbedtls"]
 	path = distro/vendor/mbedtls
 	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "distro/vendor/amqp"]
+	path = distro/vendor/amqp
+	url = https://github.com/alanxz/rabbitmq-c
+[submodule "distro/vendor/Unity"]
+	path = distro/vendor/Unity
+	url = https://github.com/ThrowTheSwitch/Unity

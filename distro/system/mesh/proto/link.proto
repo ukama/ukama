@@ -7,13 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#ifndef MESH_DATA_H
-#define MESH_DATA_H
+syntax = "proto2";
 
-#include "mesh.h"
-#include "config.h"
-
-void clear_request(MRequest **data);
-void handle_recevied_data(MRequest *data, Config *config);
-
-#endif /* MESH_DATA_H */
+message Link {
+  required string uuid = 1; // UUID of the device.
+}

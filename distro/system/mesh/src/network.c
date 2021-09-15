@@ -13,10 +13,12 @@
 
 #include <ulfius.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "callback.h"
 #include "mesh.h"
 #include "websocket.h"
+#include "config.h"
 
 #define WEB_SOCKETS 1
 #define WEB_SERVICE 0
@@ -152,6 +154,37 @@ int start_websocket_server(Config *cfg, UInst *serverInst) {
 }
 
 /*
+ * add_device_info_to_request -- Add device related information to the
+ *                               request
+ *
+ */
+static int add_device_info_to_request(struct _u_request *request,
+				      Config *config) {
+  json_t *json=NULL;
+  char *jStr=NULL;
+
+  if (serialize_device_info(&json, config->deviceInfo) == FALSE) {
+    log_error("Failed to serialize device info for request");
+    return FALSE;
+  }
+
+  /* Add the json into request body. */
+  jStr = json_dumps(json, 0);
+  if (jStr == NULL) {
+    json_decref(json);
+    return FALSE;
+  }
+
+  request->binary_body_length = strlen(jStr);
+  request->binary_body = strdup(jStr);
+
+  free(jStr);
+  json_decref(json);
+
+  return TRUE;
+}
+
+/*
  * start_websocket_client -- Connect with remote server using websockets.
  *
  */
@@ -162,6 +195,7 @@ int start_websocket_client(Config *config,
   int ret=FALSE;
   struct _u_request request;
   struct _u_response response;
+  char idStr[36+1];
 
   if (ulfius_init_request(&request) != U_OK) {
     goto done;
@@ -171,12 +205,17 @@ int start_websocket_client(Config *config,
     goto done;
   }
 
+  /* Add device info (eg UUID) to the initial request. */
+  if (add_device_info_to_request(&request, config) == FALSE) {
+    goto done;
+  }
+
   /* Setup websocket request. */
   if (ulfius_set_websocket_request(&request, config->remoteConnect,
 				   "protocol", "permessage-deflate") == U_OK) {
+    uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
     /* Setup request parameters */
-    u_map_put(request.map_header, "User-Agent",
-	      MESH_CLIENT_AGENT "/" MESH_CLIENT_VERSION);
+    u_map_put(request.map_header, "User-Agent", &idStr[0]);
     ulfius_add_websocket_client_deflate_extension(handler);
     request.check_server_certificate = FALSE;
 

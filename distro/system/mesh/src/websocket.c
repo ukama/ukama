@@ -208,8 +208,32 @@ void websocket_incoming_message(const URequest *request,
   return;
 }
 
+/*
+ * websocket_onclose -- is called when the websocket is closed.
+ *
+ */
+
 void  websocket_onclose(const URequest *request, WSManager *manager,
 			void *data) {
+
+  char idStr[36+1];
+  Config *config = (Config *)data;
+
+  if (config == NULL)
+    return;
+
+  if (config->mode == MODE_SERVER) {
+    if (config->deviceInfo) {
+      uuid_unparse(config->deviceInfo->uuid, &idStr[0]);
+      if (publish_amqp_event(config->conn, config->amqpExchange, CONN_CLOSE,
+			     config->mode, config->deviceInfo->uuid) == FALSE) {
+	log_error("Error publish device close msg on AMQP exchange: %s",
+		  &idStr[0]);
+      } else {
+	log_debug("AMQP device close msg successfull for UUID: %s", &idStr[0]);
+      }
+    }
+  }
 
   return;
 }

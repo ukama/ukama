@@ -8,10 +8,12 @@
  */
 
 #ifndef MESH_JSERDES_H
-#define MESH_JSERDES_J
+#define MESH_JSERDES_H
 
 #include <jansson.h>
 #include <uuid/uuid.h>
+
+#include "config.h"
 
 #define JSON_MESH_FORWARD    "mesh_forward"
 #define JSON_MESH_CMD        "mesh_cmd"

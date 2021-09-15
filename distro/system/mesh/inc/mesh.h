@@ -12,9 +12,12 @@
 
 #include <getopt.h>
 #include <ulfius.h>
+#include <uuid/uuid.h>
+
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/tcp_socket.h>
 
 #include "log.h"
-#include "config.h"
 
 #define DEF_FILENAME "cert.crt"
 #define DEF_CA_FILE  ""
@@ -29,6 +32,10 @@
 
 #define TRUE  1
 #define FALSE 0
+
+#define MODE_SERVER 1
+#define MODE_CLIENT 2
+#define MODE_DUAL   3
 
 #define PROXY_NONE    0x01
 #define PROXY_FORWARD 0x02

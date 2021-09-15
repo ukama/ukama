@@ -59,16 +59,8 @@ void clear_request(MRequest **data) {
   free((*data)->deviceInfo);
   free((*data)->serviceInfo);
 
-  if ((*data)->requestInfo->map_url)
-    free((*data)->requestInfo->map_url);
-  if ((*data)->requestInfo->map_header)
-    free((*data)->requestInfo->map_header);
-  if ((*data)->requestInfo->map_post_body)
-    free((*data)->requestInfo->map_post_body);
-  if ((*data)->requestInfo->map_cookie)
-    free((*data)->requestInfo->map_cookie);
-
   ulfius_clean_request_full((*data)->requestInfo);
+
   free(*data);
 }
 
@@ -132,6 +124,7 @@ static long send_data_to_server(URequest *data, char *ip, char *port,
   if (res != CURLE_OK) {
     log_error("Error sending request to server at %s Error: %s",
 	      url, curl_easy_strerror(res));
+    *retStr = strdup("Target service is not available. Try again in sometime!");
   } else {
     /* get status code. */
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
