@@ -16,7 +16,7 @@ ifeq ($(OS), Linux)
 endif
 
 # Build system
-#BUILD := x86_64-unknown-linux-gnu
+BUILD = x86_64-unknown-linux-gnu
 
 #Supported architectures
 ARCH_ARM    = arm

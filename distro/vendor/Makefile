@@ -29,7 +29,7 @@ define post_build_cleanup
 endef
 
 define print_msg
-	echo Building $(1) ...........
+	@echo Building $(1) ...........
 endef
 
 #BUILD FLAGS
@@ -140,87 +140,87 @@ prometheus-client:
 
 tomlc:
 	$(call print_msg,"tomlc")
-	($(MAKE) -C $@ CC=$(XCC) &&
+	($(MAKE) -C $@ CC=$(XCC) && \
 	$(MAKE) -C $@ install prefix=$(DEPDIR))
 
 libuuid:
 	$(call print_msg,"libuuid")
-	mkdir -p $@/${BUILDDIR} && cd $@ && \
-	autoreconf -fi && cd ${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@ && \
+	autoreconf -fi && cd ${BUILD_DIR} && \
 	CC=${XCC} CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} \
 		--build=${BUILD} && \
 	make && make install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 openssl: zlib
 	$(call print_msg,"openssl")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 	       -latomic" ../Configure ${OPENSSLTARGET} --release \
 		--prefix=${DEPDIR} --openssldir=${DEPDIR} \
 		--with-zlib-lib=${DEPDIR}/lib \
 		--with-zlib-include=${DEPDIR}/include && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 curl: openssl
 	$(call print_msg,"curl")
-	mkdir -p $@/${BUILDDIR} && cd $@ && autoreconf -fi && \
-	cd ${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
+	cd ${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} \
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
 		--with-zlib=${DEPDIR} --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 nettle:
 	$(call print_msg,"nettle")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} \
 		--enable-mini-gmp &&
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 gmp:
 	$(call print_msg,"gmp")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} && \
         make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 libunistring:
 	$(call print_msg,"libunistring")
-	mkdir -p $@/${BUILDDIR} && cd $@ && autoreconf -fi && \
-	cd ${BUILDDIR} && CC="${XCC}" CFLAGS="-I${DEPDIR}/include" \
+	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
+	cd ${BUILD_DIR} && CC="${XCC}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--host=${HOST} &&
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 libidn2: libunistring
 	$(call print_msg,"libidn2")
-	mkdir -p $@/${BUILDDIR} && cd $@ && autoreconf -fi && \
+	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		./configure --prefix=${DEPDIR} --disable-doc --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 p11-kit:
 	$(call print_msg,"p11-kit")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
 		--without-libtasn1 -without-systemd && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 gnutls: p11-kit openssl nettle gmp libunistring
 	$(call print_msg,"gnutls")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--exec-prefix=${DEPDIR} GMP_LIBS=${DEPDIR}/lib \
@@ -230,16 +230,16 @@ gnutls: p11-kit openssl nettle gmp libunistring
 		--without-idn --disable-doc \
 		PKG_CONFIG_PATH=${DEPDIR}/lib/pkgconfig && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 sqlite:
 	$(call print_msg,"sqlite")
-	mkdir -p $@/${BUILDDIR} && cd $@/${BUILDDIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC} --static" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--host=${HOST} --disable-readline && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILDDIR})
+	$(call postbuild_cleanup,$@/${BUILD_DIR})
 
 protobuf-c:
 	$(call print_msg,"protobuf-c")
