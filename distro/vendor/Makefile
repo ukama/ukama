@@ -242,14 +242,14 @@ sqlite:
 	$(call postbuild_cleanup,$@/${BUILDDIR})
 
 protobuf-c:
-        $(call print_msg,"protobuf-c")
-        (cd $@ && ./autogen.sh && ./configure --prefix=$(DEPDIR) && \
+	$(call print_msg,"protobuf-c")
+	(cd $@ && ./autogen.sh && ./configure --prefix=$(DEPDIR) && \
         $(MAKE) -j${NPROCS} && \
         $(MAKE) -j${NPROCS} install)
 
 amqp:
-        $(call print_msg,"amqp")
-        (mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
+	$(call print_msg,"amqp")
+	(mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
         cmake -DCMAKE_INSTALL_PREFIX=$(DEPDIR) -DBUILD_SHARED_LIBS=ON \
                 -DBUILD_STATIC_LIBS=ON -DENABLE_SSL_SUPPORT=OFF .. && \
         cmake --build ../ --target install)
