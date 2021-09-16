@@ -82,6 +82,8 @@ LIST += libunistring
 LIST += p11-kit
 LIST += gnutls
 LIST += sqlite
+LIST += amqp
+LIST += protobuf-c
 
 .PHONY: $(LIST)
 
@@ -238,6 +240,19 @@ sqlite:
 		--host=${HOST} --disable-readline && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call postbuild_cleanup,$@/${BUILDDIR})
+
+protobuf-c:
+        $(call print_msg,"protobuf-c")
+        (cd $@ && ./autogen.sh && ./configure --prefix=$(DEPDIR) && \
+        $(MAKE) -j${NPROCS} && \
+        $(MAKE) -j${NPROCS} install)
+
+amqp:
+        $(call print_msg,"amqp")
+        (mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
+        cmake -DCMAKE_INSTALL_PREFIX=$(DEPDIR) -DBUILD_SHARED_LIBS=ON \
+                -DBUILD_STATIC_LIBS=ON -DENABLE_SSL_SUPPORT=OFF .. && \
+        cmake --build ../ --target install)
 
 clean:
 	echo "Cleaning Dependencies."
