@@ -11,11 +11,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <uuid/uuid.h>
-#include <amqp_socket.h>
-#include <amqp.h>
+
+#include "rabbitmq-c/amqp.h"
+//#include <librabbitmq/amqp_socket.h>
 
 #include "mesh.h"
-#include "amqp.h"
+#include "u_amqp.h"
 #include "link.pb-c.h"
 
 /* 
