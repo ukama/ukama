@@ -8,7 +8,7 @@
 #include <uuid/uuid.h>
 
 #include "mesh.h"
-#include "amqp.h"
+#include "u_amqp.h"
 
 /* used in the config file and for parsing. */
 #define SERVER_CONFIG "server-config"

@@ -27,7 +27,7 @@
 #include "work.h"
 #include "jserdes.h"
 #include "map.h"
-#include "amqp.h"
+#include "u_amqp.h"
 
 extern WorkList *Transmit;
 extern MapTable *IDTable;

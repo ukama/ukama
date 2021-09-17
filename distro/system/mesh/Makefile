@@ -2,33 +2,47 @@
 # All rights reserved.
 
 #
-# Simple Makefile for the Mesh.d
+# Makefile for the Mesh.d
 #
 
 include ../../../config.mk
 
-TARGET_EXEC=mesh.d
-PREFIX=/usr/local
-MBEDTLS_LOCATION=third_party/mbedtls/
-TOML_LOCATION=third_party/tomlc99
-MBEDTLS_INCLUDE=third_party/mbedtls/include
+TARGET_EXEC = mesh.d
 
-COMMON_INC=../common/inc
+VENDOR_DIR   = ../../vendor
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 
-VENDORDIR=../../vendor
-VENDOR_INCLUDE=$(VENDORDIR)/build/include
-VENDOR_LIB=$(VENDORDIR)/build/lib
+# Packages needed to compile target.
+VENDOR_PKG = tomlc curl amqp protobuf-c jansson ulfius
 
-ULFIUS_LIB= -lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lunistring -lz
-CURL_LIB= -lcurl -lssl -lcrypto
-
-LIBS=$(ULFIUS_LIB) $(CURL_LIB) -ljansson -luuid -lpthread -ltoml 
-CFLAGS+=-c -Wall -I./inc -I$(MBEDTLS_INCLUDE) -I$(COMMON_INC)  \
-	-I$(VENDOR_INCLUDE) -D_REENTRANT -g -O0 -DTEST_EMBED_CERT
+# Setting up various compile and link flags.
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I$(VENDOR_INC)/rabbitmq-c/
+CFLAGS+=-I./inc
+CFLAGS+=-D_REENTRANT
+CFLAGS+=-DTEST_EMBED_CERT
 
 LDFLAGS+=-L${VENDOR_LIB}
 
+# Libraries needed.
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+CURL_LIB=-lcurl -lssl -lcrypto
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-ljansson
+LIBS+=-luuid
+LIBS+=-lpthread
+LIBS+=-ltoml
+LIBS+=-lprotobuf-c
+LIBS+=-lrabbitmq
 
+# Soruce files.
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
@@ -39,9 +53,12 @@ XLD = $(XGCCPATH)$(XLD)
 
 mesh: $(TARGET_EXEC)
 
-$(TARGET_EXEC): $(OBJFILES)
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
+
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && make $@
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
