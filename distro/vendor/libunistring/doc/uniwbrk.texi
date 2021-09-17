@@ -1,0 +1,82 @@
+@node uniwbrk.h
+@chapter Word breaks in strings @code{<uniwbrk.h>}
+
+@cindex word breaks
+@cindex word boundaries
+@cindex breaks, word
+@cindex boundaries, between words
+This include file declares functions for determining where in a string
+``words'' start and end.  Here ``words'' are not necessarily the same as
+entities that can be looked up in dictionaries, but rather groups of
+consecutive characters that should not be split by text processing
+operations.
+
+@menu
+* Word breaks in a string::
+* Word break property::
+@end menu
+
+@node Word breaks in a string
+@section Word breaks in a string
+
+The following functions determine the word breaks in a string.
+
+@deftypefun void u8_wordbreaks (const uint8_t *@var{s}, size_t @var{n}, char *@var{p})
+@deftypefunx void u16_wordbreaks (const uint16_t *@var{s}, size_t @var{n}, char *@var{p})
+@deftypefunx void u32_wordbreaks (const uint32_t *@var{s}, size_t @var{n}, char *@var{p})
+@deftypefunx void ulc_wordbreaks (const char *@var{s}, size_t @var{n}, char *@var{p})
+Determines the word break points in @var{s}, an array of @var{n} units, and
+stores the result at @code{@var{p}[0..@var{n}-1]}.
+@table @asis
+@item @code{@var{p}[i] = 1}
+means that there is a word boundary between @code{@var{s}[i-1]} and
+@code{@var{s}[i]}.
+@item @code{@var{p}[i] = 0}
+means that @code{@var{s}[i-1]} and @code{@var{s}[i]} must not be separated.
+@end table
+@code{@var{p}[0]} is always set to 0.  If an application wants to consider a
+word break to be present at the beginning of the string (before
+@code{@var{s}[0]}) or at the end of the string (after
+@code{@var{s}[0..@var{n}-1]}), it has to treat these cases explicitly.
+@end deftypefun
+
+@node Word break property
+@section Word break property
+
+This is a more low-level API.  The word break property is a property defined
+in Unicode Standard Annex #29, section ``Word Boundaries'', see
+@url{http://www.unicode.org/reports/tr29/#Word_Boundaries}.@texnl{}  It is
+used for determining the word breaks in a string.
+
+The following are the possible values of the word break property.  More values
+may be added in the future.
+
+@deftypevr Constant int WBP_OTHER
+@deftypevrx Constant int WBP_CR
+@deftypevrx Constant int WBP_LF
+@deftypevrx Constant int WBP_NEWLINE
+@deftypevrx Constant int WBP_EXTEND
+@deftypevrx Constant int WBP_FORMAT
+@deftypevrx Constant int WBP_KATAKANA
+@deftypevrx Constant int WBP_ALETTER
+@deftypevrx Constant int WBP_MIDNUMLET
+@deftypevrx Constant int WBP_MIDLETTER
+@deftypevrx Constant int WBP_MIDNUM
+@deftypevrx Constant int WBP_NUMERIC
+@deftypevrx Constant int WBP_EXTENDNUMLET
+@deftypevrx Constant int WBP_RI
+@deftypevrx Constant int WBP_DQ
+@deftypevrx Constant int WBP_SQ
+@deftypevrx Constant int WBP_HL
+@deftypevrx Constant int WBP_ZWJ
+@deftypevrx Constant int WBP_EB
+@deftypevrx Constant int WBP_EM
+@deftypevrx Constant int WBP_GAZ
+@deftypevrx Constant int WBP_EBG
+@end deftypevr
+
+The following function looks up the word break property of a character.
+
+@deftypefun int uc_wordbreak_property (ucs4_t @var{uc})
+Returns the Word_Break property of a Unicode character.
+@end deftypefun

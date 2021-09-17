@@ -1,0 +1,84 @@
+All you need to know when hacking (modifying) GNU libunistring or when building
+it off a git checkout.
+
+
+Requirements
+============
+
+You will need reasonably recent versions of the build tools:
+
+  * A C compiler. Such as GNU GCC.
+    + Homepage:
+      http://gcc.gnu.org/
+
+  * GNU automake
+    + Homepage:
+      http://www.gnu.org/software/automake/
+
+  * GNU autoconf
+    + Homepage:
+      http://www.gnu.org/software/autoconf/
+
+  * GNU m4
+    + Homepage:
+      http://www.gnu.org/software/m4/
+
+  * GNU gperf
+    + Homepage:
+      http://www.gnu.org/software/gperf/
+
+  * GNU sed
+    + Homepage:
+      http://www.gnu.org/software/sed/
+
+  * Perl
+    + Homepage:
+      http://www.perl.org/
+
+  * Either an internet connection or a recent copy of GNU gnulib.
+    In order to work with the HEAD of libunistring development, you need the
+    HEAD of the gnulib development.
+    In order to work with the version of libunistring at a given date, you need
+    the version of gnulib of the same date.
+    In order to work with a released tarball of libunistring, you need the
+    particular version of gnulib which is indicated in the GNULIB_GIT_COMMIT
+    variable in version.sh.
+    + Homepage:
+      http://www.gnu.org/software/gnulib/
+
+And, of course, the packages listed in the DEPENDENCIES file.
+
+Then you can run the 'autogen.sh' script 
+
+
+Sources
+=======
+
+Most of the sources have their origin in gnulib.
+
+
+Building
+========
+
+See the INSTALL file for generic instructions.
+
+To speed up the build:
+  1) You can use the configure option --disable-namespacing.  The speed up is
+     by a factor of 1.5.  The resulting library is not namespace-clean and
+     therefore should not be installed (if you don't want to risk collisions
+     with other libraries) and should certainly not be distributed.
+  2) You can use the configure option --disable-static.  The speed up is by
+     a factor of 1.6.  The resulting library cannot be used for static
+     linking and therefore should certainly not be distributed.
+
+
+Running the testsuite in valgrind
+=================================
+
+To run the test suite with a memory access checker and leak detector such as
+valgrind,
+  1) configure with the options --disable-shared and CFLAGS="-g",
+  2) run "make",
+  3) edit tests/Makefile to uncomment the appropriate definition of the CHECKER
+     macro,
+  4) run "make check".
