@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -54,6 +54,17 @@ func (r *Registry) GetOrg(orgName string) (string, *GrpcClientError) {
 	defer cancel()
 
 	res, err := r.client.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
+
+	return marshallResponse(err, res)
+}
+
+// GetOrg returns list of nodes
+// org could be empty
+func (r *Registry) GetNodes(owner string, orgName string) (string, *GrpcClientError) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{Owner: owner, OrgName: orgName})
 
 	return marshallResponse(err, res)
 }

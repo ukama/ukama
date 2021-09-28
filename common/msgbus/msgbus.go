@@ -13,35 +13,35 @@ import (
 
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
 
-type RoutingKeyType string
+type RoutingKey string
 
 // Defines our interface for connecting and consuming messages.
 // Deprecated: use Publisher or Consumer instead
 type IMsgBus interface {
 	ConnectToBroker(connectionString string)
-	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string) error
-	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan RPCResponse)
-	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKeyType))
-	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKeyType) error
+	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error
+	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
+	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
+	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
 	PublishOnQueue(msg []byte, queueName string) error
-	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKeyType, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	Close()
 }
 
 type Publisher interface {
-	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string) error
-	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan RPCResponse)
-	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKeyType))
-	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKeyType) error
+	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error
+	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
+	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
+	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
 	PublishOnQueue(msg []byte, queueName string) error
 	Close()
 }
 
 type Consumer interface {
-	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKeyType, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
-	SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKeyType, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	Close()
 }
 
@@ -60,14 +60,14 @@ type MsgBusQConfig struct {
 	Exchange         string
 	Queue            string
 	ExchangeType     string
-	ReqRountingKeys  []RoutingKeyType
-	RespRountingKeys []RoutingKeyType
+	ReqRountingKeys  []RoutingKey
+	RespRountingKeys []RoutingKey
 }
 
 type RPCResponse struct {
 	Status     bool
 	Resp       *amqp.Delivery
-	RoutingKey RoutingKeyType
+	RoutingKey RoutingKey
 }
 
 //Random integer generation
@@ -139,7 +139,7 @@ func (m *MsgClient) ConnectToBroker(connectionString string) {
 }
 
 //Publish to queue through exchange
-func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string) error {
+func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error {
 	ch, err := m.createChannel()
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func (m *MsgClient) PublishOnQueue(body []byte, queueName string) error {
 }
 
 // Subscribe to exchange with option to listen to particular typr of message
-func (m *MsgClient) Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKeyType, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
+func (m *MsgClient) Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	ch, err := m.createChannel()
 	if err != nil {
 		return err
@@ -282,7 +282,7 @@ func (m *MsgClient) declareExchange(ch *amqp.Channel, exchangeName string, excha
 
 // SubscribeToServiceQueue creates a durable queue with a serviceName name and routes messages from an exchange
 // If queue does not exist then it will be created with the `serviceName`
-func (m *MsgClient) SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKeyType, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
+func (m *MsgClient) SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	ch, err := m.createChannel()
 	if err != nil {
 		return err
@@ -407,7 +407,7 @@ func (m *MsgClient) sendNack(msg amqp.Delivery) {
 }
 
 // Publish RPC request. After sending a request meesage on topic exchange wait on the amq.rabbitmq.reply-to for response.
-func (m *MsgClient) PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKeyType)) {
+func (m *MsgClient) PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey)) {
 	respCh, corrId, err := m.prepareQueueForPublishing(body, queueName, exchangeName, routingKey, exchangeType)
 	if err != nil {
 		return
@@ -426,7 +426,7 @@ func (m *MsgClient) PublishRPCRequest(body []byte, queueName string, exchangeNam
 	done <- true
 }
 
-func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string) (<-chan amqp.Delivery, string, error) {
+func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) (<-chan amqp.Delivery, string, error) {
 	m.log.Debugf("Publishing RPC messages Queue Name %s Exchange Name %s Routing Key %s Exchange Type %s ", queueName, exchangeName, routingKey, exchangeType)
 	ch, err := m.createChannel()
 	if err != nil {
@@ -463,7 +463,7 @@ func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exc
 }
 
 func (m *MsgClient) publishMessage(body []byte, ch *amqp.Channel, exchangeName string,
-	routingKey RoutingKeyType, queue *amqp.Queue, replyTo string) (string, error) {
+	routingKey RoutingKey, queue *amqp.Queue, replyTo string) (string, error) {
 	corrId := randomString(32)
 
 	err := ch.Publish( // Publishes a message onto the queue.
@@ -488,7 +488,7 @@ func (m *MsgClient) publishMessage(body []byte, ch *amqp.Channel, exchangeName s
 }
 
 // Publish RPC After sending a request meesage on topic exchange wait on the amq.rabbitmq.reply-to for response.
-func (m *MsgClient) PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKeyType, exchangeType string, done chan RPCResponse) {
+func (m *MsgClient) PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse) {
 	respCh, corrId, err := m.prepareQueueForPublishing(body, queueName, exchangeName, routingKey, exchangeType)
 	if err != nil {
 		return
@@ -527,7 +527,7 @@ func (m *MsgClient) declareQueue(ch *amqp.Channel, queueName string, durable boo
 	return &queue, nil
 }
 
-func (m *MsgClient) bindQueue(ch *amqp.Channel, queueName string, routingKey RoutingKeyType, exchangeName string) error {
+func (m *MsgClient) bindQueue(ch *amqp.Channel, queueName string, routingKey RoutingKey, exchangeName string) error {
 	err := ch.QueueBind(
 		queueName,          // name of the queue
 		string(routingKey), // bindingKey/routingkey
@@ -543,7 +543,7 @@ func (m *MsgClient) bindQueue(ch *amqp.Channel, queueName string, routingKey Rou
 }
 
 //Publish RPC response.
-func (m *MsgClient) PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKeyType) error {
+func (m *MsgClient) PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error {
 	ch, err := m.createChannel()
 	if err != nil {
 		return err

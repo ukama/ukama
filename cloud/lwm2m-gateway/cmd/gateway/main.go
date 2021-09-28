@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"lwm2m-gateway/cmd/version"
 	cfg "lwm2m-gateway/pkg/config"
 	"lwm2m-gateway/pkg/iface"
 	"lwm2m-gateway/pkg/lwm2m"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	ccmd "github.com/ukama/ukamaX/common/cmd"
 )
 
 // Usage
@@ -26,6 +28,7 @@ var serviceName = "LwM2MGateway"
 
 // main
 func main() {
+	ccmd.ProcessVersionArgument(serviceName, os.Args, version.Version)
 
 	// Log level
 	log.SetLevel(log.TraceLevel)

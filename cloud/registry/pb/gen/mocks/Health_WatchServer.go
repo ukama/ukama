@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	generated "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	health "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 	metadata "google.golang.org/grpc/metadata"
 
 	mock "github.com/stretchr/testify/mock"
@@ -47,11 +47,11 @@ func (_m *Health_WatchServer) RecvMsg(m interface{}) error {
 }
 
 // Send provides a mock function with given fields: _a0
-func (_m *Health_WatchServer) Send(_a0 *generated.HealthCheckResponse) error {
+func (_m *Health_WatchServer) Send(_a0 *health.HealthCheckResponse) error {
 	ret := _m.Called(_a0)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*generated.HealthCheckResponse) error); ok {
+	if rf, ok := ret.Get(0).(func(*health.HealthCheckResponse) error); ok {
 		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)

@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	generated "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	health "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 	metadata "google.golang.org/grpc/metadata"
 
 	mock "github.com/stretchr/testify/mock"
@@ -70,15 +70,15 @@ func (_m *Health_WatchClient) Header() (metadata.MD, error) {
 }
 
 // Recv provides a mock function with given fields:
-func (_m *Health_WatchClient) Recv() (*generated.HealthCheckResponse, error) {
+func (_m *Health_WatchClient) Recv() (*health.HealthCheckResponse, error) {
 	ret := _m.Called()
 
-	var r0 *generated.HealthCheckResponse
-	if rf, ok := ret.Get(0).(func() *generated.HealthCheckResponse); ok {
+	var r0 *health.HealthCheckResponse
+	if rf, ok := ret.Get(0).(func() *health.HealthCheckResponse); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*generated.HealthCheckResponse)
+			r0 = ret.Get(0).(*health.HealthCheckResponse)
 		}
 	}
 

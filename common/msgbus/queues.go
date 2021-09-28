@@ -1,37 +1,54 @@
 package msgbus
 
+// deprecated routing keys
 const (
-	RequestDeviceUpdateConfig                    RoutingKeyType = "REQUEST.DEVICE.UPDATE.CONFIG"
-	ResponseDeviceUpdateConfig                   RoutingKeyType = "RESPONSE.DEVICE.UPDATE.CONFIG"
-	NotificationGitServerCreate                  RoutingKeyType = "NOTIFICATION.GITSERVER.CREATE.*"
-	RequestDeviceCreate                          RoutingKeyType = "REQUEST.DEVICE.CREATE.*"
-	ResponseDeviceCreate                         RoutingKeyType = "RESPONSE.DEVICE.CREATE.*"
-	RequestDeviceDelete                          RoutingKeyType = "REQUEST.DEVICE.DELETE.*"
-	ResponseDeviceDelete                         RoutingKeyType = "RESPONSE.DEVICE.DELETE.*"
-	RequestDeviceReadConfig                      RoutingKeyType = "REQUEST.DEVICE.READ.CONFIG"
-	ResponseDeviceReadConfig                     RoutingKeyType = "RESPONSE.DEVICE.READ.CONFIG"
-	CommandControllerExecuteReloadMetric         RoutingKeyType = "CMD.CONTROLLER.EXEC.RELOAD_METRIC"
-	ResponseCommandControllerExecuteReloadMetric RoutingKeyType = "CMD.CONTROLLER.EXEC.RELOAD_METRIC"
-	RequestDeviceSetobserveConfig                RoutingKeyType = "REQUEST.DEVICE.OBSERVE.CONFIG"
-	ResponseDeviceSetobserveConfig               RoutingKeyType = "RESPONSE.DEVICE.OBSERVE.CONFIG"
-	RequestDeviceCancelobserveConfig             RoutingKeyType = "REQUEST.DEVICE.CANCEL.CONFIG"
-	ResponseDeviceCancelobserveConfig            RoutingKeyType = "RESPONSE.DEVICE.CANCEL.CONFIG"
-	CommandDeviceExecuteResource                 RoutingKeyType = "CMD.DEVICE.EXEC.RESOURCE"
-	ResponseDeviceExecuteResource                RoutingKeyType = "RESPONSE.DEVICE.EXEC.RESOURCE"
-	EventDeviceCreate                            RoutingKeyType = "EVENT.DEVICE.CREATE.*"
+	RequestDeviceUpdateConfig                    RoutingKey = "REQUEST.DEVICE.UPDATE.CONFIG"
+	ResponseDeviceUpdateConfig                   RoutingKey = "RESPONSE.DEVICE.UPDATE.CONFIG"
+	NotificationGitServerCreate                  RoutingKey = "NOTIFICATION.GITSERVER.CREATE.*"
+	RequestDeviceCreate                          RoutingKey = "REQUEST.DEVICE.CREATE.*"
+	ResponseDeviceCreate                         RoutingKey = "RESPONSE.DEVICE.CREATE.*"
+	RequestDeviceDelete                          RoutingKey = "REQUEST.DEVICE.DELETE.*"
+	ResponseDeviceDelete                         RoutingKey = "RESPONSE.DEVICE.DELETE.*"
+	RequestDeviceReadConfig                      RoutingKey = "REQUEST.DEVICE.READ.CONFIG"
+	ResponseDeviceReadConfig                     RoutingKey = "RESPONSE.DEVICE.READ.CONFIG"
+	CommandControllerExecuteReloadMetric         RoutingKey = "CMD.CONTROLLER.EXEC.RELOAD_METRIC"
+	ResponseCommandControllerExecuteReloadMetric RoutingKey = "CMD.CONTROLLER.EXEC.RELOAD_METRIC"
+	RequestDeviceSetobserveConfig                RoutingKey = "REQUEST.DEVICE.OBSERVE.CONFIG"
+	ResponseDeviceSetobserveConfig               RoutingKey = "RESPONSE.DEVICE.OBSERVE.CONFIG"
+	RequestDeviceCancelobserveConfig             RoutingKey = "REQUEST.DEVICE.CANCEL.CONFIG"
+	ResponseDeviceCancelobserveConfig            RoutingKey = "RESPONSE.DEVICE.CANCEL.CONFIG"
+	CommandDeviceExecuteResource                 RoutingKey = "CMD.DEVICE.EXEC.RESOURCE"
+	ResponseDeviceExecuteResource                RoutingKey = "RESPONSE.DEVICE.EXEC.RESOURCE"
+	EventDeviceCreate                            RoutingKey = "EVENT.DEVICE.CREATE.*"
+)
+
+/*
+ * AMQP Routing key:
+ * <type>.<source>.<container>.<object>.<state>
+ *
+ * type:       event, request, response
+ * source:     cloud, device
+ * container:  mesh
+ * object:     link, cert
+ * state:      connect, fail, active, lost, end, close, valid, invalid, update
+ *             expired
+ *
+ */
+const (
+	DeviceConnectedRoutingKey RoutingKey = "event.device.mesh.link.connect"
 )
 
 var DeviceQ = MsgBusQConfig{
-	Exchange:     "DEVICE_EXCHANGE",
+	Exchange:     "amq.direct",
 	Queue:        "DEVICE_HANDLE_QUEUE",
-	ExchangeType: "topic",
-	ReqRountingKeys: []RoutingKeyType{
+	ExchangeType: "direct",
+	ReqRountingKeys: []RoutingKey{
 		RequestDeviceCreate, RequestDeviceDelete,
 		RequestDeviceReadConfig, RequestDeviceUpdateConfig,
 		CommandControllerExecuteReloadMetric, CommandDeviceExecuteResource,
 		RequestDeviceSetobserveConfig, RequestDeviceCancelobserveConfig,
 	},
-	RespRountingKeys: []RoutingKeyType{
+	RespRountingKeys: []RoutingKey{
 		ResponseDeviceCreate, ResponseDeviceDelete,
 		ResponseDeviceUpdateConfig, ResponseDeviceReadConfig,
 		ResponseCommandControllerExecuteReloadMetric, ResponseDeviceExecuteResource,
@@ -43,18 +60,18 @@ var GNotifyQ = MsgBusQConfig{
 	Exchange:         "DEVICE_EXCHANGE",
 	Queue:            "GNOTIFY_QUEUE",
 	ExchangeType:     "topic",
-	ReqRountingKeys:  []RoutingKeyType{NotificationGitServerCreate},
-	RespRountingKeys: []RoutingKeyType{},
+	ReqRountingKeys:  []RoutingKey{NotificationGitServerCreate},
+	RespRountingKeys: []RoutingKey{},
 }
 
 var LwM2MQ = MsgBusQConfig{
 	Exchange:     "LWM2M_EXCHANGE",
 	Queue:        "LWM2M_QUEUE",
 	ExchangeType: "topic",
-	ReqRountingKeys: []RoutingKeyType{RequestDeviceReadConfig, RequestDeviceUpdateConfig,
+	ReqRountingKeys: []RoutingKey{RequestDeviceReadConfig, RequestDeviceUpdateConfig,
 		CommandDeviceExecuteResource, RequestDeviceSetobserveConfig,
 		RequestDeviceCancelobserveConfig},
-	RespRountingKeys: []RoutingKeyType{
+	RespRountingKeys: []RoutingKey{
 		ResponseDeviceUpdateConfig, ResponseDeviceReadConfig,
 		ResponseDeviceExecuteResource, ResponseDeviceSetobserveConfig,
 		ResponseDeviceCancelobserveConfig,

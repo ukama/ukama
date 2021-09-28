@@ -5,20 +5,20 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/queue"
-	"github.com/ukama/ukamaX/common/msgbus"
+	uuid2 "github.com/satori/go.uuid"
 	"github.com/ukama/ukamaX/common/ukama"
+	"time"
+
+	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
+	"github.com/ukama/ukamaX/common/msgbus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"time"
 
-	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -57,6 +57,7 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 	node := ukama.NewVirtualNodeId("HomeNode")
 
 	var r interface{}
+
 	r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: i.orgName, Owner: ownerId.String()})
 	i.handleResponse(err, r)
 
@@ -78,6 +79,11 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
 	i.handleResponse(err, nodeResp)
 	i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
+
+	nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{Owner: ownerId.String()})
+	i.handleResponse(err, nodesResp)
+	i.Assert().Equal(1, len(nodesResp.Orgs[0].Nodes))
+	i.Assert().Equal(node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
 }
 
 func getContext() context.Context {
@@ -88,20 +94,20 @@ func getContext() context.Context {
 func (i *IntegrationTestSuite) Test_Listener() {
 	// Arrange
 	org := "registry-listener-integration-test-org"
-	nodeId := "UK-SA2136-HNODE-A1-20DF"
-	ownerId := uuid2.NewV1().String()
+	nodeId := "UK-SA2136-HNODE-A1-30DF"
+	ownerId := "474bd2c3-77a0-49f2-a143-dd840dce2c91"
 
 	conn, c, err := i.CreateRegistryClient()
 	defer conn.Close()
 	if err != nil {
-		assert.NoError(i.T(), err, "did not connect: %v", err)
+		assert.NoErrorf(i.T(), err, "did not connect: %+v\n", err)
 		return
 	}
 
 	_, err = c.AddOrg(getContext(), &pb.AddOrgRequest{Name: org, Owner: ownerId})
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
-		logrus.Infof("org already exist, err %v\n", e)
+		logrus.Infof("org already exist, err %+v\n", err)
 	} else {
 		assert.NoError(i.T(), err)
 		return
@@ -112,7 +118,7 @@ func (i *IntegrationTestSuite) Test_Listener() {
 	}, OrgName: org})
 	e, ok = status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
-		logrus.Infof("node already exist, err %v\n", e)
+		logrus.Infof("node already exist, err %+v\n", err)
 	} else {
 		assert.NoError(i.T(), err)
 		return
@@ -152,7 +158,7 @@ func (i *IntegrationTestSuite) sendMessageToQueue(nodeId string) error {
 
 	message, err := proto.Marshal(&external.Link{Uuid: &nodeId})
 	i.Assert().NoError(err)
-	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, queue.DEVICE_CONNECTED_ROUTING_KEY, "topic")
+	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "direct")
 	i.Assert().NoError(err)
 	return err
 }

@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukamaX/common/config"
 )
 
@@ -9,6 +10,7 @@ type Config struct {
 	Kratos            Kratos `mapstructure:"kratos"`
 	Port              int
 	BypassAuthMode    bool
+	Cors              cors.Config
 	Services          GrpcEndpoints `mapstructure:"services"`
 }
 
@@ -22,6 +24,9 @@ type GrpcEndpoints struct {
 }
 
 func NewConfig() *Config {
+	defaultCors := cors.DefaultConfig()
+	defaultCors.AllowWildcard = true
+
 	return &Config{
 		Kratos: Kratos{
 			"http://kratos",
@@ -36,5 +41,6 @@ func NewConfig() *Config {
 			TimeoutSeconds: 5,
 			Registry:       "registry:9090",
 		},
+		Cors: defaultCors,
 	}
 }

@@ -1,9 +1,11 @@
-.PHONY: integration.test 
+include ../../config.mk
+
+.PHONY: integration.test test
 
 build: integration.build
-	env CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/registry cmd/server/main.go
-	env CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/listener cmd/listener/main.go
-	
+	@echo Building version: \"$(BIN_VER)\"
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukamaX/cloud/registry/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/registry cmd/server/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukamaX/cloud/registry/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/listener cmd/listener/main.go
 
 test:
 	go test -v ./...
@@ -20,10 +22,10 @@ deps:
 
 
 gen:
-	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=false
-	protoc --go_out=. --go-grpc_out=./external pb/external/*.proto --go-grpc_opt=require_unimplemented_servers=false --go_opt=Mpb/external/*.proto=github.com/ukama/ukamaos/mesh
+	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=true
+	protoc --go_out=. --go-grpc_out=./pb/external pb/external/*.proto --go-grpc_opt=require_unimplemented_servers=false --go_opt=Mpb/external/link.proto=github.com/ukama/ukamaos/mesh
 	mockery --all --recursive --dir ./internal ./pkg
-	mockery -dir ./pb  -all -recursive -output ./pb/generated/mocks
+	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
 
 clean:
 	rm pb/generated/*.go

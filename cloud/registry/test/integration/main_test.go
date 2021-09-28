@@ -3,14 +3,15 @@
 package integration
 
 import (
+	"github.com/ukama/ukamaX/common/config"
+	"testing"
+
 	"github.com/go-yaml/yaml"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/ukama/ukamaX/common/config"
-	"testing"
 )
 
-func TestExampleTestSuite(t *testing.T) {
+func TestTopLevelTestForSuite(t *testing.T) {
 	// Run all tests in suite
 	suite.Run(t, NewIntegrationTestSuite(loadConfig()))
 }
@@ -24,10 +25,10 @@ func loadConfig() *TestConfig {
 	if err != nil {
 		logrus.Fatal(err.Error())
 	}
+	config.LoadConfig("integration", testConf)
+
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: REGISTRYHOST")
 	logrus.Infoln(string(b))
-
-	config.LoadConfig("integration", testConf)
 
 	return testConf
 }

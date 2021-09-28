@@ -1,10 +1,12 @@
 package main
 
 import (
-	"ukamaX/cloud/api-gateway/pkg"
-	"ukamaX/cloud/api-gateway/pkg/rest"
+	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
+	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/rest"
+	"os"
 
-	log "github.com/sirupsen/logrus"
+	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 )
 
@@ -12,7 +14,7 @@ var svcConf = pkg.NewConfig()
 var ServiceName = "api-gateway"
 
 func main() {
-	log.Infof("Starting " + ServiceName)
+	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
 	initConfig()
 
 	var authMiddleware rest.AuthMiddleware
@@ -22,7 +24,7 @@ func main() {
 		authMiddleware = rest.NewDebugAuthMiddleware()
 	}
 
-	r := rest.NewRouter(svcConf.Port, svcConf.DebugMode, authMiddleware, rest.NewClientsSet(&svcConf.Services))
+	r := rest.NewRouter(svcConf.Port, svcConf.DebugMode, authMiddleware, svcConf.Cors, rest.NewClientsSet(&svcConf.Services))
 	r.Run()
 }
 

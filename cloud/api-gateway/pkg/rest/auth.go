@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"ukamaX/cloud/api-gateway/pkg"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
+
 	"github.com/sirupsen/logrus"
 	urest "github.com/ukama/ukamaX/common/rest"
 )
+
+const USER_ID_KEY = "UserId"
+const CookieName = "ukama_session"
 
 type KratosAuthMiddleware struct {
 	kratosConf  *pkg.Kratos
@@ -26,7 +31,7 @@ func NewKratosAuthMiddleware(kratosConf *pkg.Kratos, isDebugMode bool) *KratosAu
 
 func (r *KratosAuthMiddleware) IsAuthenticated() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := r.isTokenValid(c.Request)
+		userId, err := r.isTokenValid(c.Request)
 		if err != nil {
 			logrus.Warning("Error validating token. ", err.Error())
 			if r.isDebugMode {
@@ -35,34 +40,51 @@ func (r *KratosAuthMiddleware) IsAuthenticated() gin.HandlerFunc {
 				urest.ThrowError(c, http.StatusUnauthorized, "Unauthorized", "", nil)
 			}
 			c.Abort()
+			return
 		}
+		c.Set("UserId", userId)
 	}
 }
 
-func (r *KratosAuthMiddleware) isTokenValid(request *http.Request) error {
-	authHeader := request.Header.Get("authorization")
-	if len(authHeader) == 0 {
-		return fmt.Errorf("no header")
-	}
-
-	kratosUrl := r.kratosConf.Url
-
-	token := authHeader[6:]
-	token = strings.TrimSpace(token)
-
+func (r *KratosAuthMiddleware) isTokenValid(request *http.Request) (userId string, err error) {
+	kratosUrl := r.kratosConf.Url + "/sessions/whoami"
 	client := resty.New()
 
-	resp, err := client.R().
-		EnableTrace().SetHeader("X-Session-Token", token).
-		Get(kratosUrl + "/sessions/whoami")
+	var resp *resty.Response
+	cookie, err := request.Cookie(CookieName)
+	if err != nil {
+		logrus.Warning("Can't read cookie: ", err)
+	}
+	if err == nil {
+		resp, err = client.R().
+			EnableTrace().SetCookie(cookie).
+			Get(kratosUrl)
+	} else {
+		authHeader := request.Header.Get("authorization")
+
+		if len(authHeader) == 0 {
+			return "", fmt.Errorf("no header")
+		}
+
+		if len(authHeader) < 6 {
+			return "", fmt.Errorf("invalid authorization format")
+		}
+		token := authHeader[6:]
+		token = strings.TrimSpace(token)
+
+		resp, err = client.R().
+			EnableTrace().SetHeader("X-Session-Token", token).
+			Get(kratosUrl)
+	}
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return fmt.Errorf("error getting session %v", resp.String())
+		return "", fmt.Errorf("error getting session %v", resp.String())
 	}
 
-	return nil
+	userId = resp.Header().Get("X-Kratos-Authenticated-Identity-Id")
+	return userId, nil
 }

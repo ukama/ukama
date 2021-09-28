@@ -1,18 +1,25 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/queue"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukamaX/cloud/registry/pkg/queue"
+	ccmd "github.com/ukama/ukamaX/common/cmd"
 )
 
+const ServiceName = "registry-listener"
 const DEFAUTL_GRPC_TIMEOUT = 3
 const TIMEOUT_ENV_VAR_NAME = "GRPC_TIMEOUT_SECONDS"
 const POD_NAME_ENV_VAR = "POD_NAME"
 
 func main() {
+	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
+
 	logrus.Info("Configure access to 'registry' and rabbitmq by setting REGISTRY and QUEUE environment variables")
 	registry, ok := os.LookupEnv("REGISTRY")
 	if !ok {

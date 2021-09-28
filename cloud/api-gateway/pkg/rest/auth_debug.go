@@ -22,6 +22,7 @@ func (r *DebugAuthMiddleware) IsAuthenticated() gin.HandlerFunc {
 			logrus.Info("authorization header: ", authHeader)
 			logrus.Info("token header: ", authHeader)
 			logrus.Info("Bypassing authentication because we are in a debug mode")
+			c.Set(USER_ID_KEY, "11111111-1111-1111-1111-111111111111")
 			return
 		}
 		c.AbortWithStatus(http.StatusUnauthorized)

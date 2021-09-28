@@ -2,22 +2,21 @@ package queue
 
 import (
 	"context"
-	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
-	"google.golang.org/protobuf/proto"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
+	"google.golang.org/protobuf/proto"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/grpc"
 )
-
-const DEVICE_CONNECTED_ROUTING_KEY = "event.device.mesh.link.connect"
 
 type QueueListener struct {
 	msgBusConn     msgbus.Consumer
@@ -46,10 +45,10 @@ func NewQueueListener(registryGrpcHost string, connectionString string, grpcTime
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-	routingKeys := msgbus.RoutingKeyType("event.device.mesh.link.connect")
+	routingKeys := msgbus.RoutingKey(msgbus.DeviceConnectedRoutingKey)
 
 	err = q.msgBusConn.SubscribeToServiceQueue("registry-listener", msgbus.DeviceQ.Exchange,
-		[]msgbus.RoutingKeyType{routingKeys}, q.serviceId, q.incomingMessageHandler)
+		[]msgbus.RoutingKey{routingKeys}, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for a queue messages. Error: %+v", err)
 		return err

@@ -1,3 +1,5 @@
+include ../../config.mk
+
 # A very simple makefile. Just for initial testing and build.
 .PHONY: clean
 
@@ -14,6 +16,8 @@ LWM2MGATEWAY_SPEC:=specs/lwm2mIface/spec*
 #LwM2M Gateway to Server interface
 LWM2MSERVER_PROTO:=specs/lwm2mServer/proto/lwm2mserver.proto
 LWM2MSERVER_SPEC:=specs/lwm2mServer/spec*
+
+
 
 # Build all
 all: speclIface specServer gateway testService
@@ -32,7 +36,7 @@ specServer: commonproto
 
 # Gateway
 gateway: speclIface
-	env CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/lwm2mGateway cmd/gateway/main.go	
+	env CGO_ENABLED=0 go build -ldflags='-X lwm2m-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static'  -o bin/lwm2mGateway cmd/gateway/main.go	
 
 #test service
 testService:

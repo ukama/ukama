@@ -3,14 +3,19 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 
-	generated "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
+
+	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pbhealth "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 
 	"github.com/ukama/ukamaX/cloud/registry/internal"
 	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/server"
 
 	log "github.com/sirupsen/logrus"
+	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc"
@@ -19,8 +24,11 @@ import (
 
 var svcConf *internal.Config
 
+const ServiceName = "registry"
+
 func main() {
-	log.Infof("Starting the registry server")
+	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
+
 	initConfig()
 	registryDb := initDb()
 	runGrpcServer(registryDb)
@@ -50,7 +58,7 @@ func runGrpcServer(gormdb sql.Db) {
 	s := grpc.NewServer()
 	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb), db.NewNodeRepo(gormdb))
 	generated.RegisterRegistryServiceServer(s, regServer)
-	generated.RegisterHealthServer(s, server.NewHealthChecker())
+	pbhealth.RegisterHealthServer(s, server.NewHealthChecker())
 	reflection.Register(s)
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

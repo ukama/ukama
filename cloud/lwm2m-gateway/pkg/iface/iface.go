@@ -122,7 +122,7 @@ func IfMsgHandlerCB(d amqp.Delivery, ch chan<- bool) {
 	}
 
 	// Filter Read/Write configs.
-	switch msgbus.RoutingKeyType(d.RoutingKey) {
+	switch msgbus.RoutingKey(d.RoutingKey) {
 	case msgbus.RequestDeviceUpdateConfig:
 
 		respCode = lwm2m.WriteConfig(reqMsg)
@@ -198,7 +198,7 @@ func IfMsgHandlerCB(d amqp.Delivery, ch chan<- bool) {
 		}
 
 		// Publish a message
-		err = ifMsgClient.PublishRPCResponse(data, d.CorrelationId, msgbus.RoutingKeyType(d.ReplyTo))
+		err = ifMsgClient.PublishRPCResponse(data, d.CorrelationId, msgbus.RoutingKey(d.ReplyTo))
 		if err != nil {
 			log.Errorf(err.Error())
 		}

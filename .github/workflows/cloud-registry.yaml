@@ -46,6 +46,8 @@ jobs:
           github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
 
     - name: Build cloud/registry
+      env:
+        BUILD_NUMBER: ${{ github.run_number }}
       run: make build
       working-directory: ${{ env.working-directory }}
 

@@ -2,13 +2,14 @@ package server
 
 import (
 	"context"
-
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 
 	"github.com/sirupsen/logrus"
 )
 
-type HealthChecker struct{}
+type HealthChecker struct {
+	pb.UnimplementedHealthServer
+}
 
 func NewHealthChecker() *HealthChecker {
 	return &HealthChecker{}

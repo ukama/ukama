@@ -5,8 +5,9 @@ package mocks
 import (
 	context "context"
 
-	generated "github.com/ukama/ukamaX/cloud/registry/pb/generated"
 	grpc "google.golang.org/grpc"
+
+	health "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -17,7 +18,7 @@ type HealthClient struct {
 }
 
 // Check provides a mock function with given fields: ctx, in, opts
-func (_m *HealthClient) Check(ctx context.Context, in *generated.HealthCheckRequest, opts ...grpc.CallOption) (*generated.HealthCheckResponse, error) {
+func (_m *HealthClient) Check(ctx context.Context, in *health.HealthCheckRequest, opts ...grpc.CallOption) (*health.HealthCheckResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -27,17 +28,17 @@ func (_m *HealthClient) Check(ctx context.Context, in *generated.HealthCheckRequ
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *generated.HealthCheckResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *generated.HealthCheckRequest, ...grpc.CallOption) *generated.HealthCheckResponse); ok {
+	var r0 *health.HealthCheckResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *health.HealthCheckRequest, ...grpc.CallOption) *health.HealthCheckResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*generated.HealthCheckResponse)
+			r0 = ret.Get(0).(*health.HealthCheckResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *generated.HealthCheckRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *health.HealthCheckRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -47,7 +48,7 @@ func (_m *HealthClient) Check(ctx context.Context, in *generated.HealthCheckRequ
 }
 
 // Watch provides a mock function with given fields: ctx, in, opts
-func (_m *HealthClient) Watch(ctx context.Context, in *generated.HealthCheckRequest, opts ...grpc.CallOption) (generated.Health_WatchClient, error) {
+func (_m *HealthClient) Watch(ctx context.Context, in *health.HealthCheckRequest, opts ...grpc.CallOption) (health.Health_WatchClient, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -57,17 +58,17 @@ func (_m *HealthClient) Watch(ctx context.Context, in *generated.HealthCheckRequ
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 generated.Health_WatchClient
-	if rf, ok := ret.Get(0).(func(context.Context, *generated.HealthCheckRequest, ...grpc.CallOption) generated.Health_WatchClient); ok {
+	var r0 health.Health_WatchClient
+	if rf, ok := ret.Get(0).(func(context.Context, *health.HealthCheckRequest, ...grpc.CallOption) health.Health_WatchClient); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(generated.Health_WatchClient)
+			r0 = ret.Get(0).(health.Health_WatchClient)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *generated.HealthCheckRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *health.HealthCheckRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

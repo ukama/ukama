@@ -15,7 +15,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210719143636-1d5a45f8e492 // indirect
 	google.golang.org/grpc v1.39.0
 	google.golang.org/protobuf v1.27.1
-	gorm.io/gorm v1.21.10
+	gorm.io/gorm v1.21.15
 )
 
 replace github.com/ukama/ukamaX/common => ../../common

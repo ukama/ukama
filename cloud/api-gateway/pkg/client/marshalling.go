@@ -16,8 +16,11 @@ func marshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
 	if done {
 		return "", clientError
 	}
+	m := jsonpb.MarshalOptions{
+		EmitUnpopulated: true,
+	}
 
-	b, err := jsonpb.Marshal(res)
+	b, err := m.Marshal(res)
 	if err != nil {
 		return "", &GrpcClientError{
 			HttpCode: http.StatusInternalServerError,

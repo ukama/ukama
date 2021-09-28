@@ -90,6 +90,29 @@ func (_m *NodeRepo) GetByOrg(orgName string, ownerId uuid.UUID) ([]db.Node, erro
 	return r0, r1
 }
 
+// GetByUser provides a mock function with given fields: ownerId
+func (_m *NodeRepo) GetByUser(ownerId uuid.UUID) ([]db.Node, error) {
+	ret := _m.Called(ownerId)
+
+	var r0 []db.Node
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Node); ok {
+		r0 = rf(ownerId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Node)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(ownerId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: id, state
 func (_m *NodeRepo) Update(id ukama.NodeID, state db.NodeState) error {
 	ret := _m.Called(id, state)

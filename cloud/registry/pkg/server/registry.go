@@ -2,9 +2,8 @@ package server
 
 import (
 	"context"
-
 	"github.com/ukama/ukamaX/cloud/registry/internal/db"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/generated"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -174,20 +173,39 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error: %s", err.Error())
 	}
-	pbNodes := []*pb.Node{}
-	nodes, err := r.nodeRepo.GetByOrg(req.OrgName, owner)
+
+	var nodes []db.Node
+	if len(req.OrgName) != 0 {
+		nodes, err = r.nodeRepo.GetByOrg(req.OrgName, owner)
+	} else {
+		nodes, err = r.nodeRepo.GetByUser(owner)
+	}
+
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, status.Errorf(codes.Internal, "error getting nodes")
 	}
+	orgToNodes := map[string][]*pb.Node{}
 	for _, n := range nodes {
-		pbNodes = append(pbNodes, dbNodeToPbNode(&n))
+		if _, ok := orgToNodes[n.Org.Name]; !ok {
+			orgToNodes[n.Org.Name] = []*pb.Node{}
+		}
+
+		orgToNodes[n.Org.Name] = append(orgToNodes[n.Org.Name], dbNodeToPbNode(&n))
 	}
 
-	return &pb.GetNodesResponse{
-		Nodes:   pbNodes,
-		OrgName: req.GetOrgName(),
-	}, nil
+	resp := &pb.GetNodesResponse{
+		Orgs: []*pb.NodesList{},
+	}
+
+	for orgN := range orgToNodes {
+		resp.Orgs = append(resp.Orgs, &pb.NodesList{
+			Nodes:   orgToNodes[orgN],
+			OrgName: orgN,
+		})
+	}
+
+	return resp, nil
 }
 
 func pbNodeStateToDb(state pb.NodeState) db.NodeState {

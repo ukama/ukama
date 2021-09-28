@@ -57,14 +57,18 @@ message  UpdateNodeResponse{
 
 }
 
-message GetNodesRequest{
+message GetNodesRequest{    
     string orgName = 1;
     string owner = 2;
 }
 
-message GetNodesResponse{
-    string orgName = 1;
-    repeated Node nodes = 2;
+message GetNodesResponse{    
+    repeated NodesList orgs = 2;
+}
+
+message NodesList {
+	string orgName = 1;
+	repeated Node nodes = 2;
 }
 
 message Organization {

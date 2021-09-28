@@ -22,8 +22,13 @@ const (
 type NodeID string
 
 func (n *NodeID) String() string{
-	return string(*n)
+	return  string(*n)
 }
+
+func (n *NodeID) StringLowercase() string{
+	return  strings.ToLower(n.String())
+}
+
 
 func getRandCode(t time.Time) string {
 	rand.Seed(time.Now().UnixNano())

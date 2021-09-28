@@ -33,7 +33,7 @@ func (e NodeState) Value() (driver.Value, error) {
 
 type Node struct {
 	BaseModel
-	NodeID    string `gorm:"type:string;uniqueIndex;size:23"`
+	NodeID    string `gorm:"type:string;uniqueIndex:node_id_idx_case_insensetive,expression:lower(node_id);size:23"`
 	OrgID     uint32
 	Org       *Org
 	NetworkID *uint32
