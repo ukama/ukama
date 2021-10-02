@@ -1,42 +1,63 @@
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
 #
-# Makefile for the micro container engine.
+# Makefile for the lxce.d
 #
 
 include ../../../config.mk
 
-COMMON_INC=../common/inc
+TARGET_EXEC = lxce.d
 
-VENDOR_INCLUDE=../vendor/build/include
-VENDOR_LIB=../vendor/build/lib
+VENDOR_DIR   = ../../vendor
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 
-ULFIUS_LIB= -lulfius -lorcania -ljansson -lyder -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lunistring -lz
-CURL_LIB= -lcurl -lssl -lcrypto
+# Packages needed to compile target.
+VENDOR_PKG = tomlc ulfius
 
-CFLAGS+=-c -Wall -I$(VENDOR_INCLUDE) -I$(COMMON_INC) -I/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/ -D_REENTRANT -g -O0
-LIBS=$(ULFIUS_LIBS) $(CURL_LIB) -ltoml 
+# Setting up various compile and link flags.
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I./inc
+CFLAGS+=-D_REENTRANT
 
-LDFLAGS+=-L$(VENDOR_LIB) $(LIBS)
+LDFLAGS+=-L${VENDOR_LIB}
+
+# Libraries needed.
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+CURL_LIB=-lcurl -lssl -lcrypto
+
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-ltoml
+LIBS+=-lpthread
+LIBS+=-ljansson
+
+# Soruce files.
+CFILES   = $(wildcard ./src/*.c)
+OBJFILES = $(CFILES:.c=.o)
 
 XCC = $(XGCCPATH)$(XGCC)
 XLD = $(XGCCPATH)$(XLD)
 
-#all: microCE
-all: info
+.PHONY: $(TARGET_EXEC)
+
+lxce: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && make $@
+
+%.o: %.c
+	$(XCC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o microCE.d; cd ./third_party/ulfius/src && make clean && cd -; 
-	cd $(TOML_LOCATION) && make clean
-
-
-
-microCE.o: log.o
-	$(XCC) $(CFLAGS) src/microCE.c
-
-log.o:
-	$(XCC) $(CFLAGS) src/log.c
-
-microCE: microCE.o 
-	$(XCC) -o microCE.d microCE.o log.o $(LIBS)
-
-info:
-	@echo "Yet to build."
+	rm -f $(TARGET_EXEC) $(OBJFILES)
