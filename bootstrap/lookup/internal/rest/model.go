@@ -1,18 +1,10 @@
 package rest
 
-import (
-	uuid "github.com/satori/go.uuid"
-)
-
-type DeviceMappingRequest struct {
-	Org string `json:"org" binding:"required"`
-}
-
 type GetDeviceResponse struct {
-	Uuid        uuid.UUID `json:"uuid"`
-	OrgName     string    `json:"orgName"`
-	Certificate string    `json:"certificate" binding:"base64"`
-	Ip          string    `json:"ip" validate:"ip"`
+	NodeId      string `json:"nodeId"`
+	OrgName     string `json:"orgName"`
+	Certificate string `json:"certificate" binding:"base64"`
+	Ip          string `json:"ip" validate:"ip"`
 }
 
 type AddOrgRequest struct {

@@ -143,6 +143,6 @@ func IsNotFoundError(err error) bool {
 	return err.Error() == "record not found"
 }
 
-func IsDuplicateKeyError (err error) bool{
-	return strings.Contains(err.Error(),"duplicate key value")
+func IsDuplicateKeyError(err error) bool {
+	return strings.Contains(err.Error(), "duplicate key value")
 }

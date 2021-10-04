@@ -2,11 +2,11 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"github.com/ukama/ukamaX/common/ukama"
 	"testing"
 	int_db "ukamaX/bootstrap/lookup/internal/db"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -45,10 +45,9 @@ func Test_nodeRepo_Get(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		id, err := uuid.FromString(uuidStr)
-		assert.NoError(t, err)
+		id := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
-		rows := sqlmock.NewRows([]string{"uuid", "orgid"}).
+		rows := sqlmock.NewRows([]string{"node_id", "orgid"}).
 			AddRow(uuidStr, orgId)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).

@@ -9,6 +9,9 @@ import (
 	common "github.com/ukama/ukamaX/common/rest"
 )
 
+const NodeIdParamName = "nodeId"
+const orgNameParamName = "org"
+
 type Router struct {
 	gin *gin.Engine
 
@@ -37,9 +40,13 @@ func (rt *Router) init() {
 	rt.gin = gin.Default()
 
 	rt.gin.GET("/ping", rt.pingHandler)
-	rt.gin.GET("/devices/:uuid", rt.getDeviceHandler)
-	rt.gin.POST("/devices/:uuid", rt.postDeviceHandler)
-	rt.gin.POST("/orgs/:name", rt.addOrgHandler)
+
+	org := rt.gin.Group("/orgs/:org")
+	{
+		org.POST("", rt.addOrgHandler)
+		org.GET("devices/:"+NodeIdParamName, rt.getDeviceHandler)
+		org.POST("devices/:"+NodeIdParamName, rt.postDeviceHandler)
+	}
 }
 
 func (rt *Router) pingHandler(c *gin.Context) {
@@ -49,28 +56,19 @@ func (rt *Router) pingHandler(c *gin.Context) {
 }
 
 func (rt *Router) postDeviceHandler(c *gin.Context) {
-	id, isValid := common.GetUuidFromPath(c, "uuid")
+	orgName := c.Param(orgNameParamName)
+	id, isValid := common.GetNodeIdFromPath(c, NodeIdParamName)
 	if !isValid {
 		return
 	}
 
-	var req DeviceMappingRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
-		return
-	}
-	if req.Org == "" {
-		common.ThrowError(c, http.StatusBadRequest, "Organisation field is empty", "", nil)
-		return
-	}
-
-	org, err := rt.orgRepo.GetByName(req.Org)
+	org, err := rt.orgRepo.GetByName(orgName)
 	if err != nil {
 		common.SendErrorResponseFromGet(c, "organisation", err)
 		return
 	}
 
-	err = rt.nodeRepo.AddOrUpdate(&db.Node{UUID: id, OrgID: org.ID})
+	err = rt.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
 	if err != nil {
 		common.ThrowError(c, http.StatusInternalServerError, "Error adding the node mapping", err.Error(), err)
 		return
@@ -80,7 +78,7 @@ func (rt *Router) postDeviceHandler(c *gin.Context) {
 }
 
 func (rt *Router) getDeviceHandler(c *gin.Context) {
-	id, isValid := common.GetUuidFromPath(c, "uuid")
+	id, isValid := common.GetNodeIdFromPath(c, NodeIdParamName)
 	if !isValid {
 		return
 	}
@@ -92,7 +90,7 @@ func (rt *Router) getDeviceHandler(c *gin.Context) {
 	}
 
 	resp := GetDeviceResponse{
-		Uuid:        id,
+		NodeId:      id.StringLowercase(),
 		Certificate: node.Org.Certificate,
 		OrgName:     node.Org.Name,
 		Ip:          node.Org.Ip.IPNet.IP.String(),
@@ -102,7 +100,7 @@ func (rt *Router) getDeviceHandler(c *gin.Context) {
 }
 
 func (rt *Router) addOrgHandler(c *gin.Context) {
-	name := c.Param("name")
+	name := c.Param(orgNameParamName)
 	var req AddOrgRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)

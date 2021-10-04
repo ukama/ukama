@@ -10,16 +10,20 @@ import (
 	"strings"
 	"testing"
 	"ukamaX/bootstrap/lookup/internal/db"
-	"ukamaX/bootstrap/lookup/internal/db/mocks"
+	"ukamaX/bootstrap/lookup/mocks"
+
+	"github.com/ukama/ukamaX/common/ukama"
 
 	"github.com/jackc/pgtype"
-	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
 
-var testUuid = uuid.NewV1()
+var testNodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+const dummyOrgName = "some_org"
+
 var testIp = pgtype.Inet{
 	IPNet: &net.IPNet{
 		IP: []byte{1, 2, 3, 4},
@@ -49,15 +53,15 @@ func TestGetDeviceRouteDeviceExist(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 
 	dbNode := &db.Node{
-		Org:  db.Org{Name: "some_org", Certificate: "some_cert", Ip: testIp},
-		UUID: testUuid,
+		Org:    db.Org{Name: "some_org", Certificate: "some_cert", Ip: testIp},
+		NodeID: testNodeId.StringLowercase(),
 	}
-	nodeRepo.On("Get", testUuid).Return(dbNode, nil).Once()
+	nodeRepo.On("Get", testNodeId).Return(dbNode, nil).Once()
 
 	r := NewRouter(nodeRepo, orgRepo, true).gin
 
 	// act
-	req, _ := http.NewRequest("GET", "/devices/"+testUuid.String(), nil)
+	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
 	r.ServeHTTP(w, req)
 
 	// assert
@@ -79,12 +83,12 @@ func TestGetDeviceRouteDeviceDoesNotExist(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 
-	nodeRepo.On("Get", testUuid).Return(nil, gorm.ErrRecordNotFound).Once()
+	nodeRepo.On("Get", testNodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
 	r := NewRouter(nodeRepo, orgRepo, true).gin
 
 	// act
-	req, _ := http.NewRequest("GET", "/devices/"+testUuid.String(), nil)
+	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
 	r.ServeHTTP(w, req)
 
 	// assert
@@ -101,12 +105,12 @@ func TestGetDeviceRouteRepoError(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 
-	nodeRepo.On("Get", testUuid).Return(nil, fmt.Errorf("DB failed")).Once()
+	nodeRepo.On("Get", testNodeId).Return(nil, fmt.Errorf("DB failed")).Once()
 
 	r := NewRouter(nodeRepo, orgRepo, true).gin
 
 	// act
-	req, _ := http.NewRequest("GET", "/devices/"+testUuid.String(), nil)
+	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
 	r.ServeHTTP(w, req)
 
 	// assert
@@ -122,12 +126,12 @@ func TestGetDeviceRouteInvalidUuid(t *testing.T) {
 	r := NewRouter(nil, nil, true).gin
 
 	// act
-	req, _ := http.NewRequest("GET", "/devices/123asadg", nil)
+	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/123asadg", nil)
 	r.ServeHTTP(w, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Error parsing UUID")
+	assert.Contains(t, w.Body.String(), "Error parsing NodeID")
 }
 
 func TestPostDeviceRoute(t *testing.T) {
@@ -141,14 +145,14 @@ func TestPostDeviceRoute(t *testing.T) {
 
 	orgRepo.On("GetByName", orgName).Return(&db.Org{Name: orgName, Model: gorm.Model{ID: modelId}}, nil)
 	nodeRepo.On("AddOrUpdate", mock.MatchedBy(func(n *db.Node) bool {
-		return n.UUID == testUuid && n.OrgID == modelId
+		return n.NodeID == testNodeId.StringLowercase() && n.OrgID == modelId
 	})).Return(nil).Once()
 
 	r := NewRouter(nodeRepo, orgRepo, true).gin
 
 	// act
-	req, _ := http.NewRequest("POST", "/devices/"+testUuid.String(),
-		strings.NewReader(fmt.Sprintf(`{  "org":"%s" }`, orgName)))
+	req, _ := http.NewRequest("POST", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(),
+		nil)
 
 	r.ServeHTTP(w, req)
 
@@ -159,22 +163,6 @@ func TestPostDeviceRoute(t *testing.T) {
 	assert.NoError(t, err)
 
 	nodeRepo.AssertExpectations(t)
-}
-
-func TestPostDeviceRouteEmptyOrg(t *testing.T) {
-	// arrange
-	w := httptest.NewRecorder()
-	orgRepo := &mocks.OrgRepo{}
-	r := NewRouter(nil, orgRepo, true).gin
-
-	// act
-	req, _ := http.NewRequest("POST", "/devices/"+testUuid.String(),
-		strings.NewReader(`{  "org":"" }`))
-	r.ServeHTTP(w, req)
-
-	// assert
-	assert.Equal(t, 400, w.Code)
-	assert.Contains(t, w.Body.String(), "")
 }
 
 func TestPostOrgRoute(t *testing.T) {

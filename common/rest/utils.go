@@ -2,11 +2,13 @@ package rest
 
 import (
 	"errors"
+	"github.com/ukama/ukamaX/common/ukama"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 func ThrowError(c *gin.Context, status int, message string, details string, err error) {
@@ -34,6 +36,21 @@ func GetUuidFromPath(c *gin.Context, uuidKey string) (id uuid.UUID, isValid bool
 			Details: err.Error(),
 		})
 		return uuid.UUID{}, false
+	}
+	return id, true
+}
+
+// GetNodeIdFromPath extracts nodeId from url parameter with nodeIdKey name and returns the value as NodeId object
+// in case of parsing error or missing parameter it will use context to return error message and http.StatusBadRequest code
+func GetNodeIdFromPath(c *gin.Context, nodeIdKey string) (id ukama.NodeID, isValid bool) {
+	nodeId := c.Param(nodeIdKey)
+	id, err := ukama.ValidateNodeId(nodeId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorMessage{
+			Message: "Error parsing NodeID",
+			Details: err.Error(),
+		})
+		return "", false
 	}
 	return id, true
 }

@@ -1,5 +1,5 @@
 {  
-    "lookup_host": "http://lookup",
+    "lookup_host":  "http://lookup:8080",
     "lookup_group": [
         {
             "endpoint": "/orgs/{name}",
@@ -7,9 +7,14 @@
             "backend": "/orgs/{name}"
         },
         {
-            "endpoint": "/devices/{id}",
+            "endpoint": "/orgs/{name}/devices/{id}",
             "method": "POST",
-            "backend": "/devices/{id}"
+            "backend": "/orgs/{name}/devices/{id}"
+        },
+        {
+            "endpoint": "/orgs/{name}/devices/{id}",
+            "method": "GET",
+            "backend": "/orgs/{name}/devices/{id}"
         },
         {
             "endpoint": "/ping",

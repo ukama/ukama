@@ -1,13 +1,13 @@
 package ukama
 
 import (
+	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
-	"errors"
-	log "github.com/sirupsen/logrus"
-	"math/rand"
 )
 
 const (
@@ -19,16 +19,21 @@ const (
 	HWVERSION    = "A1"
 )
 
+const (
+	NODE_ID_TYPE_HOMENODE = "HOMENODE"
+	NODE_ID_TYPE_COMPNODE = "COMPNODE"
+	NODE_ID_TYPE_AMPNODE  = "AMPNODE"
+)
+
 type NodeID string
 
-func (n *NodeID) String() string{
-	return  string(*n)
+func (n *NodeID) String() string {
+	return string(*n)
 }
 
-func (n *NodeID) StringLowercase() string{
-	return  strings.ToLower(n.String())
+func (n *NodeID) StringLowercase() string {
+	return strings.ToLower(n.String())
 }
-
 
 func getRandCode(t time.Time) string {
 	rand.Seed(time.Now().UnixNano())
@@ -43,11 +48,11 @@ func getRandCode(t time.Time) string {
 func GetNodeCodeForUnits(ntype string) string {
 	var code string
 	switch ntype {
-	case "HomeNode", "homenode", "HOMENODE":
+	case NODE_ID_TYPE_HOMENODE, "HomeNode", "homenode":
 		code = "HNODE"
-	case "CompNode", "compnode", "COMPNODE":
+	case NODE_ID_TYPE_COMPNODE, "CompNode", "compnode":
 		code = "COMv1"
-	case "AmpNode", "ampnode", "AMPNODE":
+	case NODE_ID_TYPE_AMPNODE, "AmpNode", "ampnode":
 		code = "ANODE"
 	default:
 		code = "XXXXX"
