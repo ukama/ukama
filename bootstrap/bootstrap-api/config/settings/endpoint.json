@@ -1,0 +1,28 @@
+{  
+    "lookup_host": "http://lookup",
+    "lookup_group": [
+        {
+            "endpoint": "/orgs/{name}",
+            "method": "POST",
+            "backend": "/orgs/{name}"
+        },
+        {
+            "endpoint": "/devices/{id}",
+            "method": "POST",
+            "backend": "/devices/{id}"
+        },
+        {
+            "endpoint": "/ping",
+            "method": "GET",
+            "backend": "/ping",
+            "no_auth": "true"
+        },
+        {
+            "endpoint": "/ready",
+            "method": "GET",
+            "backend": "/ping",
+            "no_auth": "true"
+        }
+    ]
+   
+}
