@@ -1,0 +1,41 @@
+{
+    "version": "0.1",
+    "serial" : "abcd-ef-ghi-009910-xyz",
+    "target" : "serial",
+    
+    "boot": [
+	{
+	    "order"   : "1",
+	    "name"    : "mesh",
+	    "version" : "latest",
+	    "active"  : "yes",
+	    "restart" : "no"
+	},
+	{
+	    "name"    : "mesh-2",
+	    "version" : "latest",
+	    "active"  : "no",
+	    "restart" : "yes"
+	},
+	{
+	    "order"   : "2",
+	    "name"    : "hello-world",
+	    "version" : "latest",
+	    "active"  : "yes",
+	    "restart" : "no"
+	}
+    ],
+
+    "service" : [
+	{
+	    "name"    : "hello-world",
+	    "version" : "latest",
+	    "active"  : "yes",
+	    "restart" : "no"
+	}
+    ],
+
+    "shutdown" : [
+
+    ]
+}

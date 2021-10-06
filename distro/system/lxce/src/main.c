@@ -25,6 +25,7 @@
 #include "log.h"
 #include "toml.h"
 #include "config.h"
+#include "manifest.h"
 
 #define VERSION "0.0.1"
 
@@ -125,6 +126,7 @@ int main(int argc, char **argv) {
   char *manifestFile = DEF_MANIFEST_FILE;
   struct _u_instance instance;
   Config *config = NULL;
+  Manifest *manifest = NULL;
   
   /* Parsing command line args. */
   while (true) {
@@ -133,14 +135,14 @@ int main(int argc, char **argv) {
 
     static struct option long_options[] = {
       { "level",     required_argument, 0, 'l'},
-      { "config",    required_argument, 0, 's'},
+      { "config",    required_argument, 0, 'c'},
       { "manifest",  required_argument, 0, 'm'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},
       { 0,           0,                 0,  0}
     };
 
-    opt = getopt_long(argc, argv, "s:m:f:v:p:hV:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "c:m:f:v:p:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -179,18 +181,30 @@ int main(int argc, char **argv) {
   /* Before we open the socket for REST, process the config file and
    * start them containers.
    */
-  config = (Config *)malloc(sizeof(Config));
+  config = (Config *)calloc(1, sizeof(Config));
   if (!config) {
-    log_error("Memory allocation failure. Size: %d \n", sizeof(Config));
+    log_error("Memory allocation failure. Size: %d", sizeof(Config));
     exit(1);
   }
 
   /* Step-1: read configuration file. */
   if (process_config_file(configFile, config) != TRUE){
-    log_error("Error processing the startup file\n");
+    log_error("Error processing the startup file");
     exit(1);
   }
   print_config(config);
+
+  /* Step-2: process manifest.json file. */
+  manifest = (Manifest *)calloc(1, sizeof(Manifest));
+  if (!manifest) {
+    log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
+    exit(1);
+  }
+
+  if (process_manifest(manifestFile, manifest) != TRUE) {
+    log_error("Error process the manifest file: %s", manifestFile);
+    exit(1);
+  }
 
   /* Step-3: open REST interface. */
   if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
@@ -200,7 +214,6 @@ int main(int argc, char **argv) {
   }
 
   /* Endpoint declaration. */
-  
   ulfius_add_endpoint_by_val(&instance, "POST", config->localEP, NULL, 0,
 			     &callback_post_create_container, NULL);
   ulfius_set_default_endpoint(&instance, &callback_default, NULL);
@@ -221,7 +234,10 @@ int main(int argc, char **argv) {
   ulfius_clean_instance(&instance);
   
   clear_config(config);
+  clear_manifest(manifest);
+
   free(config);
+  free(manifest);
 
   return 1;
 }
