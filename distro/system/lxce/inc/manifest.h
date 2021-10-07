@@ -12,7 +12,7 @@
 
 #include <jansson.h>
 
-#include "config.h"
+#include "lxce_config.h"
 
 #define MANIFEST_MAX_SIZE 1000000 /* 1MB */
 

@@ -24,7 +24,7 @@
 
 #include "log.h"
 #include "toml.h"
-#include "config.h"
+#include "lxce_config.h"
 #include "manifest.h"
 
 #define VERSION "0.0.1"

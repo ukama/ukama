@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#include "config.h"
+#include "lxce_config.h"
 #include "toml.h"
 #include "log.h"
 

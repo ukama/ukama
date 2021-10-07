@@ -17,7 +17,7 @@
 
 #include "manifest.h"
 #include "log.h"
-#include "config.h"
+#include "lxce_config.h"
 
 /*
  * deserialize_container_cfg --
