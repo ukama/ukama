@@ -1,108 +1,86 @@
-#
 # Copyright (c) 2021-present, Ukama Inc.
 # All rights reserved.
-#
 
 #
-# Makefile for WIMC.d
+# Makefile for the wimc.d
 #
+
 include ../../../config.mk
 
-XCC=$(XGCCPATH)$(XGCC)
-XLD=$(XGCCPATH)$(XLD)
+TARGET_EXEC = wimc.d
+AGENT_EXEC  = agent
 
-COMMON_DIR=$(CURDIR)/../common
-COMMON_INC=$(COMMON_DIR)/inc
-BUILD_DIR:=build
+UKAMAOS_ROOT = ../../../
 
-SRC_EXTS:=c
-HDR_EXTS:=h
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 
-# source directories
-SRC_DIR=common src
-COMMON_SRC_DIR=common
-PROVIDER_SRC_DIR=provider common
-AGENTS_SRC_DIR=agents common
+# Packages needed to compile target.
+VENDOR_PKG = tomlc ulfius curl jansson
 
-VENDORDIR=../../vendor
-VENDOR_INCLUDE=$(VENDORDIR)/build/include
-VENDOR_LIB=$(VENDORDIR)/build/lib
+# Setting up various compile and link flags.
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I./inc
+CFLAGS+=-I./inc/common/
+CFLAGS+=-D_REENTRANT
 
-# inlcude directories
-INC_DIRS:= $(ULFIUS_INC) $(COMMON_INC) $(CURDIR)/inc $(CURDIR)/inc/common $(VENDOR_INCLUDE)
+LDFLAGS+=-L${VENDOR_LIB}
 
-SRCS:=$(foreach dir, $(SRC_DIR), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-OBJS:=$(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(SRCS))))
+# Libraries needed.
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
+ULFIUS_LIB+=-lhogweed -lp11-kit -lz
+CURL_LIB=-lcurl -lssl -lcrypto
 
+LIBS = $(ULFIUS_LIB) $(CURL_LIB)
+LIBS+=-ltoml
+LIBS+=-lpthread
+LIBS+=-ljansson
+LIBS+=-lrt
+LIBS+=-luuid
+LIBS+=-lsqlite3
 
-P_SRCS:=$(foreach dir, $(PROVIDER_SRC_DIR), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-P_OBJS:=$(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(P_SRCS))))
+# Soruce files.
+CFILES   = $(wildcard ./src/*.c)
+OBJFILES = $(CFILES:.c=.o)
 
-A_SRCS:=$(foreach dir, $(AGENTS_SRC_DIR), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-A_OBJS:=$(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(A_SRCS))))
+COMM_CFILES = $(wildcard ./common/*.c)
+COMM_OBJFILES = $(COMM_CFILES:.c=.o)
 
+AGENT_CFILES = $(wildcard ./agents/*.c)
+AGENT_OBJFILES = $(AGENT_CFILES:.c=.o)
 
-#INCLUDES := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
+XCC = $(XGCCPATH)$(XGCC)
+XLD = $(XGCCPATH)$(XLD)
 
-# Build  targets
-EXE=wimc.d
-PROVIDER=mock_provider
-AGENT=agent
+.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
 
-CFLAGS+=-g -Wall -D_REENTRANT
+wimc: $(TARGET_EXEC)
 
-ULFIUS_LIB= -lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lunistring -lz
-CURL_LIB= -lcurl -lssl -lcrypto
-LDFLAG=-L$(VENDOR_LIB)
-LIBS=-lc $(ULFIUS_LIB) $(CURL_LIB) -ljansson -lsqlite3 -luuid
-PROVIDER_LIBS=$(ULFIUS_LIB) -lsqlite3 -ljansson -luuid
-AGENTS_LIBS=$(ULFIUS_LIB) $(CURL_LIB) -ljansson -luuid -lpthread -lrt
+agent: $(AGENT_EXEC)
 
-INCFLAGS:=$(INC_DIRS:%=-I%)
-DEPFLAGS := -MMD -MP
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
 
-# Make sure Make do not delete included dependencies files
-.PRECIOUS: $(BUILDDIR)/%.d
+$(AGENT_EXEC): $(VENDOR_PKG) $(AGENT_OBJFILES) $(COMM_OBJFILES)
+	$(XCC) -o $(AGENT_EXEC) $(AGENT_OBJFILES) $(COMM_OBJFILES) \
+		$(LDFLAGS) $(LIBS)
+	echo "Done."
 
-# Function to compile using $(CC) : (files: .c)
-define compilecc
-	@mkdir -p $(dir $1)
-	@$(XCC) -c $2 -o $1 $(CFLAGS) $(INCFLAGS) -MT $1 -MF $(BUILD_DIR)/$3.Td $(DEPFLAGS)
-	@mv -f $(BUILD_DIR)/$3.Td $(BUILD_DIR)/$3.d && touch $1
-	@echo CC: $1
-endef
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && make $@
 
+%.o: %.c
+	$(XCC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/%.o:%.c $(BUILD_DIR)/%.d 
-	$(call compilecc,$@,$<,$*)
-
-$(BUILD_DIR)/%.d: ;
-
-.PHONY: all run clean
-
-
-all: $(EXE) 
-
-
-$(PROVIDER): $(P_OBJS)
-	$(XCC) -I$(COMMON_INC) -g -o $(BUILD_DIR)/$(PROVIDER) $(PROVIDER_SRCS) $(LDFLAG) $(PROVIDER_LIBS)
-	echo "Binary available at: $(BUILD_DIR)/$(PROVIDER)"
-
-$(AGENT): $(A_OBJS)
-	$(XCC) -g -o $(BUILD_DIR)/$(AGENT) $(A_OBJS) $(LDFLAG) $(AGENTS_LIBS)
-	echo "Binary available at: $(BUILD_DIR)/$(AGENT)"
-
-$(EXE): $(OBJS)  
-	$(XCC) -o $@ $(OBJS) $(LINKFLAG) $(CFLAGS) $(LDFLAG) $(LIBS)
-	echo CC: $@
-
-run: $(EXE)
-	$<
+all: wimc agent
 
 clean:
-	rm -rf $(BUILD_DIR);
-	cd $(ULFIUS) && make clean
-
-
-
-
+	rm -f $(TARGET_EXEC) $(AGENT_EXEC) $(OBJFILES) $(COMM_OBJFILES)
+	rm -f $(AGENT_OBJFILES)
