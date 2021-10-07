@@ -206,7 +206,10 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  /* Step-3: open REST interface. */
+  /* Step-3: get manifest.json containers path from wimc */
+  get_containers_local_path(manifest, config);
+
+  /* Step-4: open REST interface. */
   if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
       != U_OK) {
     log_error("Error initializing ulfius instance. Exit!\n");

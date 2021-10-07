@@ -12,6 +12,8 @@
 
 #include <jansson.h>
 
+#include "config.h"
+
 #define MANIFEST_MAX_SIZE 1000000 /* 1MB */
 
 #define JSON_VERSION  "version"
@@ -41,6 +43,8 @@ typedef struct _container {
   int  active;   /* 1: yes, start it. 0: skip it */
   int  restart;  /* 1: yes, always restart. 0: No */
 
+  char *path;    /* local path as per WIMC. */
+
   struct _container *next; /* Next in the list. */
 } Container;
 
@@ -57,6 +61,7 @@ typedef struct {
 
 /* Function headers. */
 int process_manifest(char *fileName, Manifest *manifest);
+void get_containers_local_path(Manifest *manifest, Config *config);
 void clear_manifest(Manifest *manifest);
 
 #endif /* LXCE_MANIFEST_H */

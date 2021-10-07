@@ -17,6 +17,7 @@
 
 #include "manifest.h"
 #include "log.h"
+#include "config.h"
 
 /*
  * deserialize_container_cfg --
@@ -61,6 +62,7 @@ static int deserialize_container_cfg(Container *con, json_t *json) {
     con->restart = FALSE;
   }
 
+  con->path = NULL; /* will be set after querying WIMC */
   con->next = NULL;
 
   return TRUE;
@@ -223,10 +225,44 @@ int process_manifest(char *fileName, Manifest *manifest) {
 }
 
 /*
- * clear_con_cfg --
+ * get_container_local_path --
  *
  */
 
+void get_containers_local_path(Manifest *manifest, Config *config) {
+
+  Container *ptr=NULL;
+  int i;
+
+  /* iterate over boot, service and shutdown container name:tag
+   * and get each one's path from wimc.d
+   */
+
+  for (i=0; i<3; i++) {
+
+    if (i==0 && manifest->boot) {
+	ptr = manifest->boot;
+    } else if (i==1 && manifest->service) {
+      ptr = manifest->service;
+    } else if (i==3 && manifest->shutdown) {
+	ptr = manifest->shutdown;
+    }
+
+    while (ptr) {
+      if (ptr->name && ptr->version) {
+	get_container_path_from_wimc(ptr->name, ptr->version,
+				     config->wimcHost, config->wimcPort,
+				     ptr->path);
+      }
+      ptr = ptr->next;
+    }
+  }
+}
+
+/*
+ * clear_con_cfg --
+ *
+ */
 static void clear_con_cfg(Container *container) {
 
   Container *ptr, *prev;
@@ -237,6 +273,7 @@ static void clear_con_cfg(Container *container) {
 
     free(ptr->name);
     free(ptr->version);
+    if (ptr->path) free(ptr->path);
 
     prev = ptr;
     ptr = ptr->next;

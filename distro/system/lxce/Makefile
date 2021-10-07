@@ -9,10 +9,14 @@ include ../../../config.mk
 
 TARGET_EXEC = lxce.d
 
-VENDOR_DIR   = ../../vendor
+UKAMAOS_ROOT = ../../../
+
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
 VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+
+WIMC_DIR     = $(UKAMAOS_ROOT)/distro/system/wimc/
 
 # Packages needed to compile target.
 VENDOR_PKG = tomlc ulfius
@@ -24,6 +28,7 @@ CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I./inc
+CFLAGS+=-I$(WIMC_DIR)/inc/
 CFLAGS+=-D_REENTRANT
 
 LDFLAGS+=-L${VENDOR_LIB}
