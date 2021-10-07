@@ -25,15 +25,15 @@
  */
 static int deserialize_container_cfg(Container *con, json_t *json) {
 
-  json_t *order, *name, *ver, *active, *restart;
+  json_t *order, *name, *tag, *active, *restart;
 
   order   = json_object_get(json, JSON_ORDER);
   name    = json_object_get(json, JSON_NAME);
-  ver     = json_object_get(json, JSON_VERSION);
+  tag     = json_object_get(json, JSON_TAG);
   active  = json_object_get(json, JSON_ACTIVE);
   restart = json_object_get(json, JSON_RESTART);
 
-  if (name==NULL || ver==NULL) {
+  if (name==NULL || tag==NULL) {
     log_error("Missing container cfg parameter in the Manifest file");
     return FALSE;
   }
@@ -47,8 +47,8 @@ static int deserialize_container_cfg(Container *con, json_t *json) {
     con->order = 0; /* Execute before anything with order */
   }
 
-  con->name    = strdup(json_string_value(name));
-  con->version = strdup(json_string_value(ver));
+  con->name = strdup(json_string_value(name));
+  con->tag  = strdup(json_string_value(tag));
 
   if (active) {
     con->active  = json_integer_value(active);
@@ -249,8 +249,8 @@ void get_containers_local_path(Manifest *manifest, Config *config) {
     }
 
     while (ptr) {
-      if (ptr->name && ptr->version) {
-	get_container_path_from_wimc(ptr->name, ptr->version,
+      if (ptr->name && ptr->tag) {
+	get_container_path_from_wimc(ptr->name, ptr->tag,
 				     config->wimcHost, config->wimcPort,
 				     ptr->path);
       }
@@ -272,7 +272,7 @@ static void clear_con_cfg(Container *container) {
   while (ptr) {
 
     free(ptr->name);
-    free(ptr->version);
+    free(ptr->tag);
     if (ptr->path) free(ptr->path);
 
     prev = ptr;

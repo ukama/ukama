@@ -143,7 +143,7 @@ int get_container_path_from_wimc(char *name, char *tag,
 
   curl_easy_setopt(curl, CURLOPT_URL, wimcEP);
 
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 

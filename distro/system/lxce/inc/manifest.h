@@ -26,6 +26,7 @@
 
 #define JSON_ORDER    "order"
 #define JSON_NAME     "name"
+#define JSON_TAG      "tag"
 #define JSON_ACTIVE   "active"
 #define JSON_RESTART  "restart"
 
@@ -39,7 +40,7 @@ typedef struct _container {
 
   int  order;    /* Start order */
   char *name;    /* Name of the container */
-  char *version; /* version of the container */
+  char *tag;     /* container tag */
   int  active;   /* 1: yes, start it. 0: skip it */
   int  restart;  /* 1: yes, always restart. 0: No */
 

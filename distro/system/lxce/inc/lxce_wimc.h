@@ -12,7 +12,7 @@
 
 #define LXCE_MAX_URL_LEN 1024
 
-#define WIMC_EP "content" /* REST ep to get container path */
+#define WIMC_EP "/content/containers/" /* REST ep to get container path */
 
 #define TRUE 1
 #define FALSE 0
