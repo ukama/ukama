@@ -1,0 +1,12 @@
+# dependencies
+/node_modules
+
+# production
+/build
+
+# misc
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+src/react-app-env.d.ts

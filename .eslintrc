@@ -1,0 +1,47 @@
+{
+    "env": {
+        "node": true,
+        "browser": true,
+        "es2021": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended",
+        "plugin:prettier/recommended",
+        "plugin:react/jsx-runtime"
+    ],
+    "rules": {
+        "no-console": "warn",
+        "no-eq-null": "error",
+        "import/no-cycle": "off",
+        "no-multi-assign": "off",
+        "no-unused-vars": "warn",
+        "react/prop-types": "off",
+        "no-useless-call": "error",
+        "no-duplicate-imports": "error",
+        "react/jsx-indent-props": [2, 4],
+        "no-irregular-whitespace": "error",
+        "react-hooks/rules-of-hooks": "error",
+        "import/prefer-default-export": "off",
+        "react/jsx-indent": [2, 4, { "checkAttributes": false }],
+        "react-hooks/exhaustive-deps": [
+            "off",
+            {
+                "additionalHooks": "(useRecoilCallback|useRecoilTransaction_UNSTABLE)"
+            }
+        ]
+    },
+    "settings": {
+        "import/parsers": {
+            "@typescript-eslint/parser": [".ts", ".tsx"]
+        },
+        "import/resolver": {
+            "typescript": {}
+        },
+        "react": {
+            "version": "latest"
+        }
+    },
+    "plugins": ["import", "react-hooks"]
+}
