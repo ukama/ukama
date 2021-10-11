@@ -29,7 +29,7 @@ jobs:
       
     - name: Granting private modules access
       run: |
-          git config --global url."https://none:${{ secrets.GIT_ACCESS_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
+          git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
 
     - name: Setup protoc      
       uses: arduino/setup-protoc@v1.1.2
@@ -94,7 +94,7 @@ jobs:
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@v1.6
       env:
-        GITHUB_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         projectBaseDir:  ${{ env.working-directory }}
@@ -121,7 +121,7 @@ jobs:
 
       - name: Granting private modules access
         run: |
-            git config --global url."https://none:${{ secrets.GIT_ACCESS_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
+            git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
 
       - name: lint
         uses: golangci/golangci-lint-action@v2
@@ -146,10 +146,12 @@ jobs:
             echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
         - name: update gitops                
-          uses: denispalnitsky/gitops-release@v7
+          uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/{{HELMFILE_PREFIX}}-helmfile.yaml"
             key: "{{SANITIZED_NAME}}ImageTag"
             value:  ${{ steps.vars_step.outputs.sha_short }}
-            github-token: ${{ secrets.GIT_ACCESS_TOKEN }}
+            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
+            github-user-mail: "ukama-bot@ukama.com"
+            github-username: "ukama-bot"

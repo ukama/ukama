@@ -83,10 +83,12 @@ jobs:
             echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
         - name: update gitops                
-          uses: denispalnitsky/gitops-release@v7
+          uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/bootstrap-helmfile.yaml"
             key: "bootstrapApiImageTag"
             value:  ${{ steps.vars_step.outputs.sha_short }}
-            github-token: ${{ secrets.GIT_ACCESS_TOKEN }}
+            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
+            github-user-mail: "ukama-bot@ukama.com"
+            github-username: "ukama-bot"
