@@ -3,10 +3,10 @@ import { LoginForm } from "../../components";
 import { CenterContainer } from "../../styles/login";
 const Login = () => {
     // eslint-disable-next-line no-unused-vars
-    const onSubmit = (values: FormikValues) => {};
+    const handleSubmit = (values: FormikValues) => {};
     return (
         <CenterContainer>
-            <LoginForm onSubmit={onSubmit} />
+            <LoginForm onSubmit={(val: any) => handleSubmit(val)} />
         </CenterContainer>
     );
 };

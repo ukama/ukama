@@ -1,17 +1,18 @@
 import * as Yup from "yup";
-import { Formik } from "formik";
 import { useState } from "react";
 import {
     Box,
     Button,
     Stack,
+    Divider,
     TextField,
     IconButton,
     Typography,
     InputAdornment,
-    Divider,
 } from "@mui/material";
+import { Formik } from "formik";
 import { LinkStyle } from "../../styles";
+import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const loginSchema = Yup.object({
@@ -27,7 +28,7 @@ const initialLoginValue = {
 };
 
 type LoginFormProps = {
-    onSubmit: Function;
+    onSubmit: any;
 };
 
 const LoginForm = ({ onSubmit }: LoginFormProps) => {
@@ -132,4 +133,4 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
     );
 };
 
-export default LoginForm;
+export default withAuthWrapperHOC(LoginForm);

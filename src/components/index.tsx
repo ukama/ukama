@@ -1,3 +1,3 @@
 import LoginForm from "./LoginForm";
-
-export { LoginForm };
+import withAuthWrapperHOC from "./withAuthWrapperHOC";
+export { withAuthWrapperHOC, LoginForm };
