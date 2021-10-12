@@ -3,15 +3,17 @@
   "version": "0.1.0",
   "name": "ukama-dashboard",
   "dependencies": {
+    "@emotion/react": "^11.4.1",
+    "@emotion/styled": "^11.3.0",
+    "@mui/icons-material": "^5.0.0",
+    "@mui/material": "^5.0.0",
+    "@mui/styles": "^5.0.0",
+    "formik": "^2.2.9",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "@mui/styles": "^5.0.0",
-    "react-scripts": "4.0.3",
-    "@mui/material": "^5.0.0",
-    "@emotion/react": "^11.4.1",
     "react-router-dom": "^5.2.1",
-    "@emotion/styled": "^11.3.0",
-    "@mui/icons-material": "^5.0.0"
+    "react-scripts": "4.0.3",
+    "yup": "^0.32.10"
   },
   "scripts": {
     "test": "react-scripts test",
@@ -39,21 +41,21 @@
     ]
   },
   "devDependencies": {
-    "husky": "^7.0.2",
-    "eslint": "^7.20.0",
-    "prettier": "^2.4.1",
-    "typescript": "^4.4.3",
-    "lint-staged": "^11.2.3",
     "@types/react-dom": "^17.0.9",
-    "eslint-plugin-react": "^7.26.1",
+    "@types/react-router-dom": "^5.3.1",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.20.0",
     "eslint-config-airbnb": "^18.2.1",
-    "eslint-plugin-import": "^2.24.2",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-jsx-a11y": "^6.4.1",
     "eslint-plugin-prettier": "^4.0.0",
-    "@types/react-router-dom": "^5.3.1",
-    "@typescript-eslint/parser": "^4.33.0",
+    "eslint-plugin-react": "^7.26.1",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "@typescript-eslint/eslint-plugin": "^4.33.0"
+    "husky": "^7.0.2",
+    "lint-staged": "^11.2.3",
+    "prettier": "^2.4.1",
+    "typescript": "^4.4.3"
   }
 }

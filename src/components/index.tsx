@@ -1,3 +1,3 @@
-// All components will be exported from here
+import LoginForm from "./LoginForm";
 
-export {};
+export { LoginForm };

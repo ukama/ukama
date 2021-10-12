@@ -1,4 +1,5 @@
-import { Box, styled } from "@mui/material";
+import { Box, styled, Link } from "@mui/material";
+import { colors } from "../theme";
 
 const CenterContainer = styled(Box)({
     width: "100%",
@@ -9,4 +10,16 @@ const CenterContainer = styled(Box)({
     justifyContent: "center",
 });
 
-export { CenterContainer };
+const LinkStyle = styled(Link)({
+    fontSize: "0.75rem",
+    width: "fit-content",
+    alignSelf: "flex-end",
+    color: colors.primary,
+    letterSpacing: "0.4px",
+    textDecoration: "none",
+    "&:hover": {
+        textDecoration: "underline",
+    },
+});
+
+export { CenterContainer, LinkStyle };
