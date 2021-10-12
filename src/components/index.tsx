@@ -1,3 +1,2 @@
-// All components will be exported from here
-
-export {};
+import withAuthWrapperHOC from "./withAuthWrapperHOC";
+export { withAuthWrapperHOC };
