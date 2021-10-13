@@ -6,7 +6,10 @@ const Login = () => {
     const handleSubmit = (values: FormikValues) => {};
     return (
         <CenterContainer>
-            <LoginForm onSubmit={(val: any) => handleSubmit(val)} />
+            <LoginForm
+                onGoogleLogin={() => {}}
+                onSubmit={(val: any) => handleSubmit(val)}
+            />
         </CenterContainer>
     );
 };

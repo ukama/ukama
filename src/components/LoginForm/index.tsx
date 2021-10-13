@@ -1,5 +1,3 @@
-import * as Yup from "yup";
-import { useState } from "react";
 import {
     Box,
     Button,
@@ -10,7 +8,9 @@ import {
     Typography,
     InputAdornment,
 } from "@mui/material";
+import * as Yup from "yup";
 import { Formik } from "formik";
+import { useState } from "react";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -28,10 +28,11 @@ const initialLoginValue = {
 };
 
 type LoginFormProps = {
-    onSubmit: any;
+    onSubmit: Function;
+    onGoogleLogin: Function;
 };
 
-const LoginForm = ({ onSubmit }: LoginFormProps) => {
+const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
     const classes = globalUseStyles();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
@@ -59,6 +60,7 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
                                 label="Email"
                                 value={values.email}
                                 onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
                                 }}
@@ -73,6 +75,7 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
                                 label="Password"
                                 value={values.password}
                                 onChange={handleChange}
+                                InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}
                                 error={
                                     touched.password && Boolean(errors.password)
@@ -117,6 +120,7 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
                                 size="large"
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
+                                onClick={() => onGoogleLogin()}
                             >
                                 LOG IN WITH GOOGLE
                             </Button>
