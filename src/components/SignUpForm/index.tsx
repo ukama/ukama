@@ -33,12 +33,12 @@ const initialSignUpValue = {
     lastName: "",
 };
 
-type LoginFormProps = {
+type SignUpFormProps = {
     onSubmit: Function;
-    onGoogleLogin: Function;
+    onGoogleSignUp: Function;
 };
 
-const SignUpForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
+const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     const classes = globalUseStyles();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
@@ -173,7 +173,7 @@ const SignUpForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 size="large"
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
-                                onClick={() => onGoogleLogin()}
+                                onClick={() => onGoogleSignUp()}
                             >
                                 SIGN UP WITH GOOGLE
                             </Button>

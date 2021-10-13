@@ -7,7 +7,7 @@ const SignUp = () => {
     return (
         <CenterContainer>
             <SignUpForm
-                onGoogleLogin={() => {}}
+                onGoogleSignUp={() => {}}
                 onSubmit={(val: any) => handleSubmit(val)}
             />
         </CenterContainer>
