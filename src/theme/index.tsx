@@ -3,12 +3,35 @@ import themePalette from "./themePalette";
 import { createTheme, PaletteOptions } from "@mui/material/styles";
 const theme = createTheme({
     typography: {
-        fontFamily: `Work Sans`,
-        allVariants: {
-            color: colors.primary,
+        fontFamily: "Rubik, sans-serif",
+        h3: {
+            display: "flex",
+            fontSize: "1.5rem",
+            fontWeight: "normal",
+            lineHeight: "133.4%",
+            alignItems: "center",
+            color: colors.black,
+        },
+        body2: {
+            display: "flex",
+            whiteSpace: "pre",
+            lineHeight: "166%",
+            fontSize: "0.75rem",
+            color: colors.black,
+            fontWeight: "normal",
+            alignItems: "center",
         },
     },
     palette: themePalette as PaletteOptions,
+    components: {
+        MuiFormHelperText: {
+            styleOverrides: {
+                contained: {
+                    marginLeft: "0px !important",
+                },
+            },
+        },
+    },
 });
 
 export { theme, colors };

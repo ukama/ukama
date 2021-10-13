@@ -42,8 +42,8 @@ export const routes: IRoute[] = [
         fallback: Loader,
     },
     {
-        path: "/signUp",
-        component: lazy(() => import("../pages/SignUp")),
+        path: "/login",
+        component: lazy(() => import("../pages/Login")),
         exact: false,
         private: false,
         fallback: Loader,

@@ -1,9 +1,9 @@
 import { theme } from "./theme";
 import Router from "./router/Router";
 import { routes } from "./router/config";
-import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "@emotion/react";
 import { CssBaseline } from "@mui/material";
+import { ThemeProvider } from "@emotion/react";
+import { BrowserRouter } from "react-router-dom";
 
 const App = () => {
     return (
