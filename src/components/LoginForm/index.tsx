@@ -11,8 +11,8 @@ import {
     InputAdornment,
 } from "@mui/material";
 import { Formik } from "formik";
-import { LinkStyle } from "../../styles";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const loginSchema = Yup.object({
@@ -32,6 +32,7 @@ type LoginFormProps = {
 };
 
 const LoginForm = ({ onSubmit }: LoginFormProps) => {
+    const classes = globalUseStyles();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
@@ -58,8 +59,11 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
                                 label="Email"
                                 value={values.email}
                                 onChange={handleChange}
-                                error={touched.email && Boolean(errors.email)}
+                                InputProps={{
+                                    classes: { input: classes.inputFieldStyle },
+                                }}
                                 helperText={touched.email && errors.email}
+                                error={touched.email && Boolean(errors.email)}
                             />
 
                             <TextField
@@ -75,6 +79,7 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
                                 }
                                 helperText={touched.password && errors.password}
                                 InputProps={{
+                                    classes: { input: classes.inputFieldStyle },
                                     endAdornment: (
                                         <InputAdornment position="end">
                                             <IconButton

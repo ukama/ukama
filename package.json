@@ -18,14 +18,14 @@
   "scripts": {
     "test": "react-scripts test",
     "generate": "graphql-codegen",
-    "lint": "eslint './src/**'",
+    "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
     "eject": "react-scripts eject",
     "build": "react-scripts build",
     "start": "husky install && react-scripts start",
     "lint:fix": "eslint . --ext ts --ext tsx --ext js --fix",
     "pretty": "prettier --write --config .prettierrc './src/**'",
     "check-types": "tsc --project tsconfig.json --pretty --noEmit",
-    "pre-commit-lint": "eslint --rule no-console:error --fix-dry-run './src/**'",
+    "pre-commit-lint": "eslint --rule no-console:error --fix-dry-run './src/**/*.{ts,tsx,js,jsx}'",
     "test-all": "yarn pretty && yarn check-types && yarn lint:fix && yarn lint && yarn pre-commit-lint && yarn build"
   },
   "browserslist": {

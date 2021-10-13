@@ -1,5 +1,13 @@
-import { Box, styled, Link } from "@mui/material";
 import { colors } from "../theme";
+import { makeStyles } from "@mui/styles";
+import { Box, styled, Link } from "@mui/material";
+
+const globalUseStyles = makeStyles(() => ({
+    inputFieldStyle: {
+        height: "24px",
+        padding: "12px 14px",
+    },
+}));
 
 const CenterContainer = styled(Box)({
     width: "100%",
@@ -22,4 +30,4 @@ const LinkStyle = styled(Link)({
     },
 });
 
-export { CenterContainer, LinkStyle };
+export { globalUseStyles, CenterContainer, LinkStyle };
