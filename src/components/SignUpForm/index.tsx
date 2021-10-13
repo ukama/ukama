@@ -182,8 +182,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 variant="body2"
                                 sx={{
                                     letterSpacing: "0.4px",
-
-                                    textAlign: "start",
                                 }}
                             >
                                 {`By signing up , I am agreeing to the Terms and Conditions and Privacy Policy. 
