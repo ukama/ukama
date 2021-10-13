@@ -11,10 +11,15 @@ import {
 } from "@mui/material";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import PasswordRequirement from "../PasswordRequirement";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+//eslint-disable-next-line
+const passwordformat = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+//eslint-disable-next-line
+const regExp = /[a-zA-Z]/g;
 
 const signUpSchema = Yup.object({
     email: Yup.string()
@@ -40,9 +45,38 @@ type SignUpFormProps = {
 
 const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     const classes = globalUseStyles();
+    const [currentPassword, setCurrentPassword] = useState<any>();
+    const [passwordHaslessCaracter, setPasswordHaslessCaracter] =
+        useState(false);
+    const [passwordHasSpecialCarater, setPasswordHasSpecialCarater] =
+        useState(false);
+    const [passwordHasLetters, setPasswordHasLetters] = useState(false);
+    const [showValidationRules, setShowValidationRules] = useState(false);
     const [togglePassword, setTogglePassword] = useState(false);
+    useEffect(() => {
+        if (currentPassword) {
+            if (currentPassword.length >= 8) {
+                setPasswordHaslessCaracter(true);
+            } else {
+                setPasswordHaslessCaracter(false);
+            }
+            if (passwordformat.test(currentPassword)) {
+                setPasswordHasSpecialCarater(true);
+            } else {
+                setPasswordHasSpecialCarater(false);
+            }
+            if (regExp.test(currentPassword)) {
+                setPasswordHasLetters(true);
+            } else {
+                setPasswordHasLetters(false);
+            }
+        }
+    }, []);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
+    };
+    const showPasswordRequirement = () => {
+        setShowValidationRules(true);
     };
 
     return (
@@ -131,7 +165,11 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 name="password"
                                 label="Password"
                                 value={values.password}
-                                onChange={handleChange}
+                                onChange={e => {
+                                    setCurrentPassword(e.target.value);
+                                    handleChange(e);
+                                }}
+                                onBlur={showPasswordRequirement}
                                 InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}
                                 error={
@@ -156,6 +194,15 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                     ),
                                 }}
                             />
+                            {showValidationRules ? (
+                                <PasswordRequirement
+                                    passwordLength={passwordHaslessCaracter}
+                                    containSpecialCharacter={
+                                        passwordHasSpecialCarater
+                                    }
+                                    containLetters={passwordHasLetters}
+                                />
+                            ) : null}
 
                             <Button
                                 size="large"

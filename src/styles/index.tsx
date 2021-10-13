@@ -5,7 +5,6 @@ import { Box, styled, Link } from "@mui/material";
 const globalUseStyles = makeStyles(() => ({
     inputFieldStyle: {
         height: "24px",
-        padding: "12px 14px",
     },
 }));
 
