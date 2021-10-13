@@ -13,6 +13,7 @@ const CenterContainer = styled(Box)({
     width: "100%",
     height: "100%",
     display: "flex",
+    padding: "18px",
     alignItems: "center",
     flexDirection: "column",
     justifyContent: "center",

@@ -24,7 +24,7 @@ const ComponentContainer = {
     height: "auto",
     overflow: "hidden",
     margin: {
-        xs: "24px 44px",
+        xs: "24px 28px",
         sm: "44px 64px",
         md: "54px 80px",
     },
