@@ -30,4 +30,18 @@ const LinkStyle = styled(Link)({
     },
 });
 
-export { globalUseStyles, CenterContainer, LinkStyle };
+const ContainerJustifySpaceBtw = styled(Box)(props => ({
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    [props.theme.breakpoints.down("sm")]: {
+        flexDirection: "column",
+    },
+}));
+
+export {
+    LinkStyle,
+    globalUseStyles,
+    CenterContainer,
+    ContainerJustifySpaceBtw,
+};
