@@ -7,8 +7,6 @@ type ForgotPasswordConfirmationMessageProps = {
 const ForgotPasswordConfirmationMessage = ({
     email,
 }: ForgotPasswordConfirmationMessageProps) => {
-    const classes = globalUseStyles();
-
     return (
         <Box width="100%">
             <Stack spacing={"18px"}></Stack>
