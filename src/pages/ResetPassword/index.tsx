@@ -1,21 +1,20 @@
 import { FormikValues } from "formik";
 import { useHistory } from "react-router";
 import { CenterContainer } from "../../styles";
-import { ForgotPasswordForm } from "../../components";
-const ForgotPassword = () => {
+import { ResetPasswordForm } from "../../components";
+const ResetPassword = () => {
     const history = useHistory();
     // eslint-disable-next-line no-unused-vars
     const handleSubmit = (values: FormikValues) => {};
-    const handleBack = () => history.goBack();
-
+    const handelCanceel = () => history.push("/login");
     return (
         <CenterContainer>
-            <ForgotPasswordForm
-                onBack={handleBack}
+            <ResetPasswordForm
+                onCancel={handelCanceel}
                 onSubmit={(val: any) => handleSubmit(val)}
             />
         </CenterContainer>
     );
 };
 
-export default ForgotPassword;
+export default ResetPassword;

@@ -56,6 +56,13 @@ export const routes: IRoute[] = [
         fallback: Loader,
     },
     {
+        path: "/reset-password",
+        component: lazy(() => import("../pages/ResetPassword")),
+        exact: false,
+        private: false,
+        fallback: Loader,
+    },
+    {
         path: "/*",
         component: lazy(() => import("../pages/ErrorPage")),
         exact: false,
