@@ -42,6 +42,7 @@ LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml
 LIBS+=-lpthread
 LIBS+=-ljansson
+LIBS+=-lcap
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)

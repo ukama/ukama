@@ -26,6 +26,7 @@
 #include "toml.h"
 #include "lxce_config.h"
 #include "manifest.h"
+#include "pod.h"
 
 #define VERSION "0.0.1"
 
@@ -127,6 +128,7 @@ int main(int argc, char **argv) {
   struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
+  Pod pods[3] = {0};
   
   /* Parsing command line args. */
   while (true) {
@@ -209,6 +211,9 @@ int main(int argc, char **argv) {
   /* Step-3: get manifest.json containers path from wimc */
   get_containers_local_path(manifest, config);
 
+  /* Step-4: setup PODs for boot */
+  create_ukama_pod(&pods[0], manifest, POD_TYPE_BOOT);
+  
   /* Step-4: open REST interface. */
   if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
       != U_OK) {
