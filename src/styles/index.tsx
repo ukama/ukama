@@ -1,12 +1,34 @@
-import { Box, styled } from "@mui/material";
+import { colors } from "../theme";
+import { makeStyles } from "@mui/styles";
+import { Box, styled, Link } from "@mui/material";
+
+const globalUseStyles = makeStyles(() => ({
+    inputFieldStyle: {
+        height: "24px",
+        padding: "12px 14px",
+    },
+}));
 
 const CenterContainer = styled(Box)({
     width: "100%",
     height: "100%",
     display: "flex",
+    padding: "18px",
     alignItems: "center",
     flexDirection: "column",
     justifyContent: "center",
 });
 
-export { CenterContainer };
+const LinkStyle = styled(Link)({
+    fontSize: "0.75rem",
+    width: "fit-content",
+    alignSelf: "flex-end",
+    color: colors.primary,
+    letterSpacing: "0.4px",
+    textDecoration: "none",
+    "&:hover": {
+        textDecoration: "underline",
+    },
+});
+
+export { globalUseStyles, CenterContainer, LinkStyle };

@@ -3,17 +3,16 @@ import { FunctionComponent } from "react";
 import { RootContainer, GradiantBar, ComponentContainer } from "./style";
 
 const withAuthWrapperHOC = (WrappedComponent: FunctionComponent<any>) => {
-    const HOC = () => {
+    return function HOC(props: any) {
         return (
             <RootContainer maxWidth="sm">
                 <GradiantBar />
                 <Box sx={ComponentContainer}>
-                    <WrappedComponent />
+                    <WrappedComponent {...props} />
                 </Box>
             </RootContainer>
         );
     };
-    return HOC;
 };
 
 export default withAuthWrapperHOC;
