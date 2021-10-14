@@ -1,3 +1,9 @@
+import { useState } from "react";
+import { Formik } from "formik";
+import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import Requirements from "../Requirements";
+import { LinkStyle, globalUseStyles } from "../../styles";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
     Box,
     Button,
@@ -10,17 +16,6 @@ import {
     Grid,
 } from "@mui/material";
 import * as Yup from "yup";
-import { Formik } from "formik";
-import { useEffect, useState } from "react";
-import withAuthWrapperHOC from "../withAuthWrapperHOC";
-import PasswordRequirement from "../PasswordRequirement";
-import { LinkStyle, globalUseStyles } from "../../styles";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-//eslint-disable-next-line
-const passwordformat = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
-//eslint-disable-next-line
-const regExp = /[a-zA-Z]/g;
-
 const signUpSchema = Yup.object({
     email: Yup.string()
         .email("Enter a valid email")
@@ -42,36 +37,14 @@ type SignUpFormProps = {
     onSubmit: Function;
     onGoogleSignUp: Function;
 };
-
 const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     const classes = globalUseStyles();
-    const [currentPassword, setCurrentPassword] = useState<any>();
-    const [passwordHaslessCaracter, setPasswordHaslessCaracter] =
+    const [long, longEnough] = useState(false);
+    const [containLetters, setContainLetters] = useState(false);
+    const [containSpecialCharacter, setContainSpecialCharacter] =
         useState(false);
-    const [passwordHasSpecialCarater, setPasswordHasSpecialCarater] =
-        useState(false);
-    const [passwordHasLetters, setPasswordHasLetters] = useState(false);
     const [showValidationRules, setShowValidationRules] = useState(false);
     const [togglePassword, setTogglePassword] = useState(false);
-    useEffect(() => {
-        if (currentPassword) {
-            if (currentPassword.length >= 8) {
-                setPasswordHaslessCaracter(true);
-            } else {
-                setPasswordHaslessCaracter(false);
-            }
-            if (passwordformat.test(currentPassword)) {
-                setPasswordHasSpecialCarater(true);
-            } else {
-                setPasswordHasSpecialCarater(false);
-            }
-            if (regExp.test(currentPassword)) {
-                setPasswordHasLetters(true);
-            } else {
-                setPasswordHasLetters(false);
-            }
-        }
-    }, []);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
     };
@@ -80,13 +53,25 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     };
 
     return (
-        <Box width="100%">
-            <Formik
-                validationSchema={signUpSchema}
-                initialValues={initialSignUpValue}
-                onSubmit={async values => onSubmit(values)}
-            >
-                {({ values, errors, touched, handleChange, handleSubmit }) => (
+        <Formik
+            initialValues={initialSignUpValue}
+            validationSchema={signUpSchema}
+            validate={values => {
+                values.password.length < 8
+                    ? longEnough(false)
+                    : longEnough(true);
+                //eslint-disable-next-line
+                /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(values.password)
+                    ? setContainSpecialCharacter(true)
+                    : setContainSpecialCharacter(false);
+                /[a-zA-Z]/g.test(values.password)
+                    ? setContainLetters(true)
+                    : setContainLetters(false);
+            }}
+            onSubmit={async values => onSubmit(values)}
+        >
+            {({ errors, touched, values, handleChange, handleSubmit }) => (
+                <>
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
@@ -165,9 +150,8 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 name="password"
                                 label="Password"
                                 value={values.password}
-                                onChange={e => {
-                                    setCurrentPassword(e.target.value);
-                                    handleChange(e);
+                                onChange={event => {
+                                    handleChange(event);
                                 }}
                                 onBlur={showPasswordRequirement}
                                 InputLabelProps={{ shrink: true }}
@@ -195,12 +179,12 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 }}
                             />
                             {showValidationRules ? (
-                                <PasswordRequirement
-                                    passwordLength={passwordHaslessCaracter}
+                                <Requirements
+                                    long={long}
+                                    containLetters={containLetters}
                                     containSpecialCharacter={
-                                        passwordHasSpecialCarater
+                                        containSpecialCharacter
                                     }
-                                    containLetters={passwordHasLetters}
                                 />
                             ) : null}
 
@@ -233,15 +217,15 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             >
                                 {`By signing up , I am agreeing to the Terms and Conditions and Privacy Policy. 
                                 Already have an account? `}
-                                <LinkStyle href="/signup">
-                                    Sign up insted.
+                                <LinkStyle href="/login">
+                                    Log in instead. .
                                 </LinkStyle>
                             </Typography>
                         </Stack>
                     </form>
-                )}
-            </Formik>
-        </Box>
+                </>
+            )}
+        </Formik>
     );
 };
 
