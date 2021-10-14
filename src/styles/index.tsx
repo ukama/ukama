@@ -30,7 +30,9 @@ const LinkStyle = styled(Link)({
         textDecoration: "underline",
     },
 });
-
+const MessageContainer = styled(Box)({
+    paddingBottom: "5%",
+});
 const ContainerJustifySpaceBtw = styled(Box)(props => ({
     display: "flex",
     flexDirection: "row",
@@ -45,4 +47,5 @@ export {
     globalUseStyles,
     CenterContainer,
     ContainerJustifySpaceBtw,
+    MessageContainer,
 };

@@ -35,6 +35,13 @@ export const routes: IRoute[] = [
 
     //Public Routes//
     {
+        path: "/forgotPasswordConfirmation",
+        component: lazy(() => import("../pages/ForgotPasswordCofirmation")),
+        exact: false,
+        private: true,
+        fallback: Loader,
+    },
+    {
         path: "/welcome",
         component: lazy(() => import("../pages/Welcome")),
         exact: false,
