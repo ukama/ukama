@@ -53,13 +53,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          projectBaseDir:  ${{ env.working-directory }}
           args: >
             -Dsonar.organization=ukama
-            -Dsonar.projectKey=ukama_ukamaX_api-gateway
-            -Dsonar.projectName=${{ env.working-directory }}
+            -Dsonar.projectKey=ukama_ukama-dashboard
+            -Dsonar.projectName=ukama-dashboard
             -Dsonar.go.coverage.reportPaths=coverage.out
-            -D
+            -Dsonar.test.exclusions=tests/**,test/**,test/**
+            -Dsonar.tests=tests/
+            -Dsonar.verbose=false
+            -Dsonar.sources=.
+            -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/*_test.go
+
   lint:
     name: lint
     runs-on: ubuntu-latest
