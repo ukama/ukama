@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Formik } from "formik";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
-import Requirements from "../Requirements";
+import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
@@ -39,35 +39,16 @@ type SignUpFormProps = {
 };
 const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     const classes = globalUseStyles();
-    const [long, longEnough] = useState(false);
-    const [containLetters, setContainLetters] = useState(false);
-    const [containSpecialCharacter, setContainSpecialCharacter] =
-        useState(false);
-    const [showValidationRules, setShowValidationRules] = useState(false);
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
-    };
-    const showPasswordRequirement = () => {
-        setShowValidationRules(true);
     };
 
     return (
         <Formik
             initialValues={initialSignUpValue}
             validationSchema={signUpSchema}
-            validate={values => {
-                values.password.length < 8
-                    ? longEnough(false)
-                    : longEnough(true);
-                //eslint-disable-next-line
-                /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/.test(values.password)
-                    ? setContainSpecialCharacter(true)
-                    : setContainSpecialCharacter(false);
-                /[a-zA-Z]/g.test(values.password)
-                    ? setContainLetters(true)
-                    : setContainLetters(false);
-            }}
+            validate={values => {}}
             onSubmit={async values => onSubmit(values)}
         >
             {({ errors, touched, values, handleChange, handleSubmit }) => (
@@ -153,7 +134,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 onChange={event => {
                                     handleChange(event);
                                 }}
-                                onBlur={showPasswordRequirement}
                                 InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}
                                 error={
@@ -178,15 +158,10 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                     ),
                                 }}
                             />
-                            {showValidationRules ? (
-                                <Requirements
-                                    long={long}
-                                    containLetters={containLetters}
-                                    containSpecialCharacter={
-                                        containSpecialCharacter
-                                    }
-                                />
-                            ) : null}
+
+                            <PasswordRequirementIndicator
+                                password={values.password}
+                            />
 
                             <Button
                                 size="large"
