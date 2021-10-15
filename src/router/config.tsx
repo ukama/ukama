@@ -25,7 +25,7 @@ export const routes: IRoute[] = [
         path: "/",
         exact: true,
         private: false,
-        redirect: "/welcome",
+        redirect: "/login",
         fallback: Loader,
     },
     //
@@ -37,13 +37,6 @@ export const routes: IRoute[] = [
     {
         path: "/forgotPasswordConfirmation",
         component: lazy(() => import("../pages/ForgotPasswordCofirmation")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/welcome",
-        component: lazy(() => import("../pages/Welcome")),
         exact: false,
         private: false,
         fallback: Loader,

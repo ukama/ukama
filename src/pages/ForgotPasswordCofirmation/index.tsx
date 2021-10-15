@@ -1,5 +1,5 @@
 import { ForgotPasswordConfirmationMessage } from "../../components";
-import { CenterContainer } from "../../styles/welcome";
+import { CenterContainer } from "../../styles";
 const ForgotPasswordConfirmation = () => {
     return (
         <CenterContainer>
