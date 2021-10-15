@@ -1,4 +1,12 @@
+import SignUpForm from "./SignUpForm";
 import LoginForm from "./LoginForm";
-import ForgotPasswordForm from "./ForgotPasswordForm";
+import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
-export { withAuthWrapperHOC, LoginForm, ForgotPasswordForm };
+import ForgotPasswordForm from "./ForgotPasswordForm";
+export {
+    withAuthWrapperHOC,
+    LoginForm,
+    SignUpForm,
+    PasswordRequirementIndicator,
+    ForgotPasswordForm,
+};
