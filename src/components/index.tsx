@@ -10,5 +10,5 @@ export {
     SignUpForm,
     PasswordRequirementIndicator,
     ForgotPasswordForm,
-    ForgotPasswordConfirmationMessage
+    ForgotPasswordConfirmationMessage,
 };
