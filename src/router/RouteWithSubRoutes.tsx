@@ -20,7 +20,7 @@ const RouteWithSubRoutes = (route: IRoute) => {
                                 />
                             )
                         ) : (
-                            <Redirect to="/welcome" />
+                            <Redirect to="/login" />
                         )
                     ) : authenticated ? (
                         <Redirect to="/dashboard" />
