@@ -25,7 +25,7 @@ export const routes: IRoute[] = [
         path: "/",
         exact: true,
         private: false,
-        redirect: "/welcome",
+        redirect: "/login",
         fallback: Loader,
     },
     //
@@ -35,8 +35,8 @@ export const routes: IRoute[] = [
 
     //Public Routes//
     {
-        path: "/welcome",
-        component: lazy(() => import("../pages/Welcome")),
+        path: "/forgotPasswordConfirmation",
+        component: lazy(() => import("../pages/ForgotPasswordCofirmation")),
         exact: false,
         private: false,
         fallback: Loader,
@@ -44,6 +44,13 @@ export const routes: IRoute[] = [
     {
         path: "/login",
         component: lazy(() => import("../pages/Login")),
+        exact: false,
+        private: false,
+        fallback: Loader,
+    },
+    {
+        path: "/signUp",
+        component: lazy(() => import("../pages/SignUp")),
         exact: false,
         private: false,
         fallback: Loader,

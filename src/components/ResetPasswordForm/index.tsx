@@ -1,8 +1,3 @@
-import * as Yup from "yup";
-import { Formik } from "formik";
-import withAuthWrapperHOC from "../withAuthWrapperHOC";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 import {
     Box,
     Stack,
@@ -12,7 +7,13 @@ import {
     InputAdornment,
     IconButton,
 } from "@mui/material";
+import * as Yup from "yup";
+import { Formik } from "formik";
 import { useState } from "react";
+import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
+import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
 
 const ResetPasswordSchema = Yup.object({
     newPassword: Yup.string().required("Password is required"),
@@ -80,6 +81,10 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                         </InputAdornment>
                                     ),
                                 }}
+                            />
+
+                            <PasswordRequirementIndicator
+                                password={values.newPassword}
                             />
 
                             <ContainerJustifySpaceBtw>

@@ -55,7 +55,7 @@ jobs:
         with:
           args: >
             -Dsonar.organization=ukama
-            -Dsonar.projectKey=ukama_ukama-dashboard
+            -Dsonar.projectKey=ukama_ukama_dashboard
             -Dsonar.projectName=ukama-dashboard
             -Dsonar.go.coverage.reportPaths=coverage.out
             -Dsonar.test.exclusions=tests/**,test/**,test/**
