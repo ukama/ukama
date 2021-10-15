@@ -12,11 +12,11 @@ import (
 
 // NodeID must be lowercase
 type NodeRepo interface {
-	Add(node *Node) error
+	Add(node *Node, nestedFunc ...func() error) error
 	Get(id ukama.NodeID) (*Node, error)
 	GetByOrg(orgName string, ownerId uuid.UUID) ([]Node, error)
-	Delete(id ukama.NodeID) error
-	Update(id ukama.NodeID, state NodeState) error
+	Delete(id ukama.NodeID, nestedFunc ...func() error) error
+	Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error
 	GetByUser(ownerId uuid.UUID) ([]Node, error)
 }
 
@@ -30,10 +30,13 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 	}
 }
 
-func (r *nodeRepo) Add(node *Node) error {
+func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
 	node.NodeID = strings.ToLower(node.NodeID)
-	d := r.Db.GetGormDb().Create(node)
-	return d.Error
+	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
+		return tx.Create(node)
+	}, nestedFunc...)
+
+	return err
 }
 
 func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
@@ -100,21 +103,24 @@ func (r *nodeRepo) mapNodesToOrgs(rows *sql2.Rows, db *gorm.DB) ([]Node, error) 
 	return nodes, nil
 }
 
-func (r *nodeRepo) Delete(id ukama.NodeID) error {
-	res := r.Db.GetGormDb().Delete(&Node{}, id.StringLowercase())
-	if res.Error != nil {
-		return res.Error
-	}
-	return nil
+func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
+	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
+		return tx.Delete(&Node{}, id.StringLowercase())
+	}, nestedFunc...)
+
+	return err
 }
 
-func (r *nodeRepo) Update(id ukama.NodeID, state NodeState) error {
-	result := r.Db.GetGormDb().Where("node_id=?", id.StringLowercase()).Updates(Node{State: state})
-	if result.RowsAffected == 0 {
+func (r *nodeRepo) Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error {
+	var rowsAffected int64
+	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
+		result := tx.Where("node_id=?", id.StringLowercase()).Updates(Node{State: state})
+		rowsAffected = result.RowsAffected
+		return result
+	}, nestedFunc...)
+
+	if rowsAffected == 0 {
 		return gorm.ErrRecordNotFound
 	}
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
+	return err
 }

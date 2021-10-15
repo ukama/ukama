@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/ukama/ukamaX/cloud/registry/pkg"
+	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
 	"net"
 	"os"
 
@@ -10,7 +12,6 @@ import (
 	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	pbhealth "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 
-	"github.com/ukama/ukamaX/cloud/registry/internal"
 	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/server"
 
@@ -22,7 +23,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-var svcConf *internal.Config
+var svcConf *pkg.Config
 
 const ServiceName = "registry"
 
@@ -36,7 +37,7 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = internal.NewConfig()
+	svcConf = pkg.NewConfig()
 	config.LoadConfig("", svcConf)
 }
 func initDb() sql.Db {
@@ -56,7 +57,10 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb), db.NewNodeRepo(gormdb))
+	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb),
+		db.NewNodeRepo(gormdb),
+		bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth)),
+		svcConf.DeviceGatewayHost)
 	generated.RegisterRegistryServiceServer(s, regServer)
 	pbhealth.RegisterHealthServer(s, server.NewHealthChecker())
 	reflection.Register(s)

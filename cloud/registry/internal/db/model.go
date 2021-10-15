@@ -43,8 +43,9 @@ type Node struct {
 
 type Org struct {
 	BaseModel
-	Name  string    `gorm:"uniqueIndex"`
-	Owner uuid.UUID `gorm:"type:uuid"`
+	Name        string    `gorm:"uniqueIndex"`
+	Owner       uuid.UUID `gorm:"type:uuid"`
+	Certificate string
 }
 
 type Network struct {

@@ -2,8 +2,11 @@ package server
 
 import (
 	"context"
+	"encoding/base64"
+
 	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
 
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -15,12 +18,18 @@ import (
 
 type RegistryServer struct {
 	pb.UnimplementedRegistryServiceServer
-	orgRepo  db.OrgRepo
-	nodeRepo db.NodeRepo
+	orgRepo         db.OrgRepo
+	nodeRepo        db.NodeRepo
+	bootstrapClient bootstrap.Client
+	deviceGatewayIp string
 }
 
-func NewRegistryServer(orgRepo db.OrgRepo, nodeRepo db.NodeRepo) *RegistryServer {
-	return &RegistryServer{orgRepo: orgRepo, nodeRepo: nodeRepo}
+func NewRegistryServer(orgRepo db.OrgRepo, nodeRepo db.NodeRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
+	return &RegistryServer{
+		orgRepo:         orgRepo,
+		nodeRepo:        nodeRepo,
+		bootstrapClient: bootstrapClient,
+		deviceGatewayIp: deviceGatewayIp}
 }
 
 func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
@@ -35,20 +44,29 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 	}
 
 	org := &db.Org{
-		Name:  request.Name,
-		Owner: owner,
+		Name:        request.Name,
+		Owner:       owner,
+		Certificate: generateCertificate(),
 	}
-	err = r.orgRepo.Add(org)
+	err = r.orgRepo.Add(org, func() error {
+		return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
+	})
 	if err != nil {
 		if sql.IsDuplicateKeyError(err) {
 			return nil, status.Errorf(codes.AlreadyExists, "organization already exist")
 		}
+		logrus.Errorf("Error adding the node. Error: %v", err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	return &pb.AddOrgResponse{
 		Org: &pb.Organization{Id: org.ID, Name: request.Name, Owner: org.Owner.String()},
 	}, nil
+}
+
+func generateCertificate() string {
+	logrus.Warning("Certificate generation is not yet implemented")
+	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
 }
 
 func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) (*pb.Organization, error) {
@@ -69,7 +87,7 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 	if len(req.OrgName) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "organizationname cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "organization name cannot be empty")
 	}
 
 	org, err := r.orgRepo.GetByName(req.OrgName)
@@ -81,11 +99,14 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		logrus.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-
-	err = r.nodeRepo.Add(&db.Node{
+	node := &db.Node{
 		NodeID: req.Node.NodeId,
 		OrgID:  org.ID,
 		State:  pbNodeStateToDb(req.Node.State),
+	}
+
+	err = r.nodeRepo.Add(node, func() error {
+		return r.bootstrapClient.AddDevice(org.Name, node.NodeID)
 	})
 
 	if err != nil {

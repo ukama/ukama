@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukamaX/cloud/registry/pkg/validation"
 
@@ -9,7 +10,7 @@ import (
 )
 
 type OrgRepo interface {
-	Add(org *Org) error
+	Add(org *Org, nestedFunc ...func() error) error
 	Get(id int) (*Org, error)
 	GetByName(name string) (*Org, error)
 }
@@ -24,14 +25,19 @@ func NewOrgRepo(db sql.Db) OrgRepo {
 	}
 }
 
-func (r *orgRepo) Add(org *Org) error {
+// Add adds an organisation. Add nestedFunc to execute an action inside transations
+// if one of the nestedFunc returns error then Add action is rolled back
+func (r *orgRepo) Add(org *Org, nestedFunc ...func() error) (err error) {
 	if !validation.IsValidDnsLabelName(org.Name) {
 		return fmt.Errorf("invalid name must be less then 253 " +
 			"characters and consist of lowercase characters with a hyphen")
 	}
 
-	d := r.Db.GetGormDb().Create(org)
-	return d.Error
+	err = r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
+		return tx.Create(org)
+	}, nestedFunc...)
+
+	return err
 }
 
 func (r *orgRepo) Get(id int) (*Org, error) {

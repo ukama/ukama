@@ -27,6 +27,7 @@ type Db interface {
 	GetGormDb() *gorm.DB
 	Init(model ...interface{}) error
 	Connect() error
+	ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error ) (err error)
 }
 
 func NewDb(dbConfig config.Database, debugMode bool) Db {
@@ -76,6 +77,7 @@ func (d *db) Connect() error {
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newLogger,
+		SkipDefaultTransaction: true,
 	})
 	d.gorm = db
 	return err
@@ -145,4 +147,30 @@ func IsNotFoundError(err error) bool {
 
 func IsDuplicateKeyError(err error) bool {
 	return strings.Contains(err.Error(), "duplicate key value")
+}
+
+// ExecuteInTransaction executes dbOperation in transaction with all nested functions
+// if any of nested function returns error then transaction is rolled back
+func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error ) (error){
+	return d.gorm.Transaction(func(tx *gorm.DB) error {
+		d := dbOperation (tx)
+
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if len(nestedFuncs) > 0 {
+			for _, n := range nestedFuncs {
+				if n != nil {
+					nestErr := n()
+					if nestErr != nil {
+						return nestErr
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+
 }

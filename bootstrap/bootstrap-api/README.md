@@ -21,14 +21,43 @@ To configure Aut0 follow the [Krakend Auth0 integration documentation](https://w
 
 # Using the API 
 
-Health check verifies that API gateway is up and running
+###  Health check verifies that API gateway is up and running
 ```
-http://localhost:8080/__health 
+GET http://localhost:8080/__health 
 {"status":"OK"} 
 ```
 
-Ready endpoint verifies that downstream services are up and running
+###  Ready endpoint verifies that downstream services are up and running
 ```
- http://localhost:8080/ready 
+GET http://localhost:8080/ready 
 ```
 
+### Add or update organization record 
+```
+POST http://localhost:8080/orgs/{name}
+{
+	"certificate":"Q2VydGlmaWNhdGUK",
+	"ip": "192.124.23.1"
+}
+```
+Response:
+```
+HTTP 200
+{
+  "status": "Organisation added or updated"
+}
+```
+
+
+
+### Add or update device record
+```
+POST /orgs/{name}/devices/{NodeId}
+```
+Response:
+```
+HTTP 200
+{
+  "status": "Mapping added or updated"
+}
+```

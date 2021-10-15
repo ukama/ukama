@@ -16,13 +16,20 @@ type NodeRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: node
-func (_m *NodeRepo) Add(node *db.Node) error {
-	ret := _m.Called(node)
+// Add provides a mock function with given fields: node, nestedFunc
+func (_m *NodeRepo) Add(node *db.Node, nestedFunc ...func() error) error {
+	_va := make([]interface{}, len(nestedFunc))
+	for _i := range nestedFunc {
+		_va[_i] = nestedFunc[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, node)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Node) error); ok {
-		r0 = rf(node)
+	if rf, ok := ret.Get(0).(func(*db.Node, ...func() error) error); ok {
+		r0 = rf(node, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -30,13 +37,20 @@ func (_m *NodeRepo) Add(node *db.Node) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: id
-func (_m *NodeRepo) Delete(id ukama.NodeID) error {
-	ret := _m.Called(id)
+// Delete provides a mock function with given fields: id, nestedFunc
+func (_m *NodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
+	_va := make([]interface{}, len(nestedFunc))
+	for _i := range nestedFunc {
+		_va[_i] = nestedFunc[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, id)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, ...func() error) error); ok {
+		r0 = rf(id, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -113,13 +127,20 @@ func (_m *NodeRepo) GetByUser(ownerId uuid.UUID) ([]db.Node, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: id, state
-func (_m *NodeRepo) Update(id ukama.NodeID, state db.NodeState) error {
-	ret := _m.Called(id, state)
+// Update provides a mock function with given fields: id, state, nestedFunc
+func (_m *NodeRepo) Update(id ukama.NodeID, state db.NodeState, nestedFunc ...func() error) error {
+	_va := make([]interface{}, len(nestedFunc))
+	for _i := range nestedFunc {
+		_va[_i] = nestedFunc[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, id, state)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, db.NodeState) error); ok {
-		r0 = rf(id, state)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, db.NodeState, ...func() error) error); ok {
+		r0 = rf(id, state, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}
