@@ -25,7 +25,11 @@ const PasswordRequirementIndicator = ({
 
     return (
         <section className="strength-meter">
-            <Grid item container>
+            <Grid
+                item
+                container
+                sx={{ display: password.length < 1 ? "none" : "flex" }}
+            >
                 {passwordRules.map((rules: PasswordRulesProps) => {
                     return (
                         <Grid xs={6} item key={rules.id}>

@@ -1,7 +1,7 @@
 import { FormikValues } from "formik";
 import { useHistory } from "react-router";
-import { ForgotPasswordForm } from "../../components";
 import { CenterContainer } from "../../styles";
+import { ForgotPasswordForm } from "../../components";
 const ForgotPassword = () => {
     const history = useHistory();
     // eslint-disable-next-line no-unused-vars

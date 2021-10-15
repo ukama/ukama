@@ -1,21 +1,22 @@
-import { useState } from "react";
-import { Formik } from "formik";
-import withAuthWrapperHOC from "../withAuthWrapperHOC";
-import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
-import { LinkStyle, globalUseStyles } from "../../styles";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
     Box,
-    Button,
+    Grid,
     Stack,
+    Button,
     Divider,
     TextField,
     IconButton,
     Typography,
     InputAdornment,
-    Grid,
 } from "@mui/material";
 import * as Yup from "yup";
+import { Formik } from "formik";
+import { useState } from "react";
+import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import { LinkStyle, globalUseStyles } from "../../styles";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
+
 const signUpSchema = Yup.object({
     email: Yup.string()
         .email("Enter a valid email")
@@ -46,9 +47,8 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
 
     return (
         <Formik
-            initialValues={initialSignUpValue}
             validationSchema={signUpSchema}
-            validate={values => {}}
+            initialValues={initialSignUpValue}
             onSubmit={async values => onSubmit(values)}
         >
             {({ errors, touched, values, handleChange, handleSubmit }) => (
@@ -193,7 +193,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 {`By signing up , I am agreeing to the Terms and Conditions and Privacy Policy. 
                                 Already have an account? `}
                                 <LinkStyle href="/login">
-                                    Log in instead. .
+                                    Log in instead.
                                 </LinkStyle>
                             </Typography>
                         </Stack>

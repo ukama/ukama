@@ -1,6 +1,6 @@
 import { FormikValues } from "formik";
 import { SignUpForm } from "../../components";
-import { CenterContainer } from "../../styles/login";
+import { CenterContainer } from "../../styles";
 const SignUp = () => {
     // eslint-disable-next-line no-unused-vars
     const handleSubmit = (values: FormikValues) => {};

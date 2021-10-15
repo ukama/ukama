@@ -1,14 +1,19 @@
-import SignUpForm from "./SignUpForm";
 import LoginForm from "./LoginForm";
-import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
-import withAuthWrapperHOC from "./withAuthWrapperHOC";
-import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
+import SignUpForm from "./SignUpForm";
+import { BasicDialog } from "./AppDialogs";
+import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import withAuthWrapperHOC from "./withAuthWrapperHOC";
+import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
+import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
+
 export {
-    withAuthWrapperHOC,
     LoginForm,
     SignUpForm,
-    PasswordRequirementIndicator,
+    BasicDialog,
+    ResetPasswordForm,
     ForgotPasswordForm,
+    withAuthWrapperHOC,
+    PasswordRequirementIndicator,
     ForgotPasswordConfirmationMessage,
 };
