@@ -30,16 +30,14 @@ const PasswordRequirementIndicator = ({
                     return (
                         <Grid xs={6} item key={rules.id}>
                             <Typography variant="body2">
-                                {rules.validator(password) ? (
-                                    <CheckCircleOutlineIcon
-                                        className={classes.progressIcon}
-                                        style={{ color: colors.green }}
-                                    />
-                                ) : (
-                                    <CheckCircleOutlineIcon
-                                        className={classes.progressIcon}
-                                    />
-                                )}
+                                <CheckCircleOutlineIcon
+                                    className={classes.progressIcon}
+                                    style={{
+                                        color: rules.validator(password)
+                                            ? colors.green
+                                            : colors.grey,
+                                    }}
+                                />
                                 {rules.label}
                             </Typography>
                         </Grid>
