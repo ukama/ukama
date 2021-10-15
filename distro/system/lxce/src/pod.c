@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/mount.h>
+#include <sys/syscall.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <signal.h>
@@ -314,6 +316,65 @@ static int prepare_child_map_files(pid_t pid, Pod *pod) {
 }
 
 /*
+ * setup_mounts --
+ *
+ */
+static int setup_mounts(Pod *pod) {
+
+  int ret=FALSE;
+  char tempMount[] = "/tmp/tmp.ukama.XXXXXX"; /* last 6 char needs to be X */
+  char oldRoot[]   = "/tmp/tmp.ukama.XXXXXX/oldroot.XXXXXX"; /* same */
+
+  if (mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL)) {
+    log_error("Failed to remount as MS_PRIVATE. Error: %s", strerror(errno));
+    return ret;
+  }
+
+  /* make temp and bind mount */
+  if (!mkdtemp(tempMount)) {
+    log_error("Failed to make temp dir: %s. Error: %s", tempMount,
+	      strerror(errno));
+    return FALSE;
+  }
+
+  if (mount(pod->mountDir, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
+    log_error("Failed to do bind mount. %s %s Error: %s", pod->mountDir,
+	      tempMount, strerror(errno));
+    return FALSE;
+  }
+
+  if (!mkdtemp(oldRoot)) {
+    log_error("Failed to create old Root directory. %s Error :%s", oldRoot,
+	      strerror(errno));
+    return FALSE;
+  }
+
+  /* pivot root */
+  if (syscall(SYS_pivot_root, pod->mountDir, oldRoot)) {
+    log_error("Failed to pivot_root from %s to %s", pod->mountDir, oldRoot);
+    return FALSE;
+  }
+
+  log_debug("Pivot root sucessfully done. from %s to %s", pod->mountDir,
+	    oldRoot);
+
+  /* clean up */
+
+  if (chdir("/")) {
+    log_error("Error changing director to / after pivot");
+    return FALSE;
+  }
+
+  if (umount2(oldRoot, MNT_DETACH) || rmdir(oldRoot)) {
+    log_error("Failed to umount/rm old root: %s. Error: %s", oldRoot,
+	      strerror(errno));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*
  * cInit_clone --
  *
  */
@@ -337,7 +398,8 @@ static int cInit_clone(void *arg) {
   /* Step-2: setup security profile (cap and seccomp) */
   setup_pod_security_profile(pod->type);
 
-  /* Step-3: setup mounts */
+  /* Step-3: setup mounts*/
+  setup_mounts(pod);
   
   /* Step-4: setup user namespace */
   setup_user_namespace(pod);

@@ -35,7 +35,8 @@ typedef struct _pod {
   
   uid_t uid;       /* uid the cInit will run as */
   gid_t gid;       /* gid the cInit will run as */
-  
+
+  char *mountDir;
 } Pod;
 
 int create_ukama_pods(Pod *pods, Manifest *manifest, char *type);
