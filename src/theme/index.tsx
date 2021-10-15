@@ -13,8 +13,7 @@ const theme = createTheme({
             color: colors.black,
         },
         body2: {
-            display: "flex",
-            whiteSpace: "pre",
+            display: "block",
             lineHeight: "166%",
             fontSize: "0.75rem",
             color: colors.black,
