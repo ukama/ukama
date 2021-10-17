@@ -2,40 +2,25 @@
     "version": "0.1",
     "serial" : "abcd-ef-ghi-009910-xyz",
     "target" : "serial",
-    
-    "boot": [
+
+    "ukama-cApp" : [
 	{
-	    "order"   : "1",
-	    "name"    : "mesh",
-	    "tag"     : "latest",
-	    "active"  : "yes",
-	    "restart" : "no"
+	    "name"      : "mesh",
+	    "tag"       : "latest",
+	    "restart"   : "no",
+	    "contained" : "boot"
 	},
 	{
-	    "name"    : "mesh-2",
-	    "tag"     : "latest",
-	    "active"  : "no",
-	    "restart" : "yes"
+	    "name"      : "hello-world",
+	    "tag"       : "v0.0.1",
+	    "restart"   : "no",
+	    "contained" : "boot"
 	},
 	{
-	    "order"   : "2",
-	    "name"    : "hello-world",
-	    "tag"     : "latest",
-	    "active"  : "yes",
-	    "restart" : "no"
+	    "name"      : "hello-world",
+	    "tag"       : "latest",
+	    "restart"   : "yes",
+	    "contained" : "service"
 	}
-    ],
-
-    "service" : [
-	{
-	    "name"    : "hello-world",
-	    "tag"     : "latest",
-	    "active"  : "yes",
-	    "restart" : "no"
-	}
-    ],
-
-    "shutdown" : [
-
     ]
 }
