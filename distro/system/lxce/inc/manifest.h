@@ -14,21 +14,19 @@
 
 #include "lxce_config.h"
 
-#define MANIFEST_MAX_SIZE 1000000 /* 1MB */
+#define MANIFEST_MAX_SIZE 1000000 /* 1MB max. file size */
 
 #define JSON_VERSION  "version"
 #define JSON_SERIAL   "serial"
 #define JSON_TARGET   "target"
 
-#define JSON_BOOT     "boot"
-#define JSON_SERVICE  "service"
-#define JSON_SHUTDOWN "shutdown"
+#define JSON_CAPP     "ukama-cApp"
 
-#define JSON_ORDER    "order"
-#define JSON_NAME     "name"
-#define JSON_TAG      "tag"
-#define JSON_ACTIVE   "active"
-#define JSON_RESTART  "restart"
+/* defines for Ukama Contained App cApp */
+#define JSON_NAME      "name"
+#define JSON_TAG       "tag"
+#define JSON_RESTART   "restart"
+#define JSON_CONTAINED "contained"
 
 #define MANIFEST_ALL    "all"
 #define MANIFEST_SERIAL "serial"
@@ -36,28 +34,23 @@
 #define TRUE  1
 #define FALSE 0
 
-typedef struct _container {
+typedef struct _arrayElem {
 
-  int  order;    /* Start order */
-  char *name;    /* Name of the container */
-  char *tag;     /* container tag */
-  int  active;   /* 1: yes, start it. 0: skip it */
-  int  restart;  /* 1: yes, always restart. 0: No */
+  char *name;      /* Name of the cApp */
+  char *tag;       /* cApp tag */
+  char *contained; /* where this app is contained (boot, service, shutdown) */
+  int  restart;    /* 1: yes, always restart. 0: No */
 
-  char *path;    /* local path as per WIMC. */
-
-  struct _container *next; /* Next in the list. */
-} Container;
+  struct _arrayElem *next; /* Next in the list */
+} ArrayElem;
 
 typedef struct {
 
   char *version; /* version of manifest file */
   char *serial;  /* Serial number this config applies (optional) */
-  char *target;  /* serial or anyone. */
+  char *target;  /* serial or anyone */
 
-  Container *boot;     /* Container cfg to start upon booting */
-  Container *service;  /* Container cfg post boot */
-  Container *shutdown; /* Contaienrs when unit is being shutdown */
+  ArrayElem *arrayElem;  /* cApps array elements */
 } Manifest;
 
 /* Function headers. */

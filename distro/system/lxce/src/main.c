@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
   }
 
   /* Step-3: get manifest.json containers path from wimc */
-  get_containers_local_path(manifest, config);
+  // get_containers_local_path(manifest, config);
 
   /* Step-4: setup PODs for boot */
   create_ukama_pod(&pods[0], manifest, POD_TYPE_BOOT);

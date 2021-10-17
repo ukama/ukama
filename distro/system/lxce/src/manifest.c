@@ -20,50 +20,34 @@
 #include "lxce_config.h"
 
 /*
- * deserialize_container_cfg --
+ * deserialize_cApp --
  *
  */
-static int deserialize_container_cfg(Container *con, json_t *json) {
+static int deserialize_cApp(ArrayElem *elem, json_t *json) {
 
-  json_t *order, *name, *tag, *active, *restart;
+  json_t *name, *tag, *restart, *contained;
 
-  order   = json_object_get(json, JSON_ORDER);
-  name    = json_object_get(json, JSON_NAME);
-  tag     = json_object_get(json, JSON_TAG);
-  active  = json_object_get(json, JSON_ACTIVE);
-  restart = json_object_get(json, JSON_RESTART);
+  name      = json_object_get(json, JSON_NAME);
+  tag       = json_object_get(json, JSON_TAG);
+  restart   = json_object_get(json, JSON_RESTART);
+  contained = json_object_get(json, JSON_CONTAINED);
 
-  if (name==NULL || tag==NULL) {
-    log_error("Missing container cfg parameter in the Manifest file");
+  if (name==NULL || tag==NULL || contained==NULL) {
+    log_error("Missing cAPP cfg parameter in the Manifest file");
     return FALSE;
   }
 
-  if (order) {
-    con->order   = json_integer_value(order);
-    if (con->order < 1) {
-      con->order = 1; /* Order starts with 1 */
-    }
-  } else {
-    con->order = 0; /* Execute before anything with order */
-  }
-
-  con->name = strdup(json_string_value(name));
-  con->tag  = strdup(json_string_value(tag));
-
-  if (active) {
-    con->active  = json_integer_value(active);
-  } else {
-    con->active = TRUE;
-  }
+  elem->name = strdup(json_string_value(name));
+  elem->tag  = strdup(json_string_value(tag));
+  elem->contained = strdup(json_string_value(contained));
 
   if (restart) {
-    con->restart = json_integer_value(restart);
+    elem->restart = json_integer_value(restart);
   } else {
-    con->restart = FALSE;
+    elem->restart = FALSE;
   }
 
-  con->path = NULL; /* will be set after querying WIMC */
-  con->next = NULL;
+  elem->next = NULL;
 
   return TRUE;
 }
@@ -74,11 +58,10 @@ static int deserialize_container_cfg(Container *con, json_t *json) {
  */
 static int deserialize_manifest_file(Manifest *manifest, json_t *json) {
 
-  int i=0, j=0, size=0;
+  int j=0, size=0;
   json_t *obj;
-  json_t *jArray, *elem;
-  Container **cPtr=NULL;
-  char *type;
+  json_t *jArray, *jElem;
+  ArrayElem **elem=NULL;
 
   if (manifest == NULL) return FALSE;
   if (json == NULL) return FALSE;
@@ -111,51 +94,35 @@ static int deserialize_manifest_file(Manifest *manifest, json_t *json) {
     manifest->serial = NULL;
   }
 
-  /* deserialize containers cfg */
-  do {
+  /* deserialize ukama contained Apps */
+  jArray = json_object_get(json, JSON_CAPP);
+  if (jArray != NULL) {
 
-    if (i==0) { /* boot containers */
-      jArray = json_object_get(json, JSON_BOOT);
-      cPtr = &manifest->boot;
-      type = JSON_BOOT;
-    } else if (i==1) { /* service containers */
-      jArray = json_object_get(json, JSON_SERVICE);
-      cPtr = &manifest->service;
-      type = JSON_SERVICE;
-    } else if (i==2) { /* shutdown containers */
-      jArray = json_object_get(json, JSON_SHUTDOWN);
-      cPtr = &manifest->shutdown;
-      type = JSON_SHUTDOWN;
-    }
+    size = json_array_size(jArray);
 
-    if (jArray != NULL) {
+    for (j=0; j<size; j++) {
 
-      size = json_array_size(jArray);
+      jElem = json_array_get(jArray, j);
+      if (jElem) {
 
-      for (j=0; j<size; j++) {
-	elem = json_array_get(jArray, j);
-	if (elem) {
-	  *cPtr = (Container *)calloc(1, sizeof(Container));
-	  if (*cPtr == NULL) {
-	    log_error("Memory allocation error. Size: %d", sizeof(Container));
+	*elem = (ArrayElem *)calloc(1, sizeof(ArrayElem));
+	  if (*elem == NULL) {
+	    log_error("Memory allocation error. Size: %d", sizeof(ArrayElem));
 	    return FALSE;
 	  }
 
-	  if (deserialize_container_cfg(*cPtr, elem)) {
-	    cPtr = &((*cPtr)->next);
+	  if (deserialize_cApp(*elem, jElem)) {
+	    elem = &((*elem)->next);
 	  } else {
-	    log_error("Error parsing Container cfg for %s", type);
+	    log_error("Error parsing %s", JSON_CAPP);
 	    return FALSE;
 	  }
 	}
       }
-    } else {
-      log_error("Error parsing Container cfg for %s", type);
-      return FALSE;
-    }
-
-    i++;
-  } while (i<3);
+  } else {
+    log_error("Error parsing %s", JSON_CAPP);
+    return FALSE;
+  }
 
   return TRUE;
 }
@@ -225,55 +192,20 @@ int process_manifest(char *fileName, Manifest *manifest) {
 }
 
 /*
- * get_container_local_path --
+ * clear_cApp_cfg --
  *
  */
+static void clear_cApp_cfg(ArrayElem *elem) {
 
-void get_containers_local_path(Manifest *manifest, Config *config) {
+  ArrayElem *ptr, *prev;
 
-  Container *ptr=NULL;
-  int i;
-
-  /* iterate over boot, service and shutdown container name:tag
-   * and get each one's path from wimc.d
-   */
-
-  for (i=0; i<3; i++) {
-
-    if (i==0 && manifest->boot) {
-	ptr = manifest->boot;
-    } else if (i==1 && manifest->service) {
-      ptr = manifest->service;
-    } else if (i==3 && manifest->shutdown) {
-	ptr = manifest->shutdown;
-    }
-
-    while (ptr) {
-      if (ptr->name && ptr->tag) {
-	get_container_path_from_wimc(ptr->name, ptr->tag,
-				     config->wimcHost, config->wimcPort,
-				     ptr->path);
-      }
-      ptr = ptr->next;
-    }
-  }
-}
-
-/*
- * clear_con_cfg --
- *
- */
-static void clear_con_cfg(Container *container) {
-
-  Container *ptr, *prev;
-
-  ptr = container;
+  ptr = elem;
 
   while (ptr) {
 
     free(ptr->name);
     free(ptr->tag);
-    if (ptr->path) free(ptr->path);
+    free(ptr->contained);
 
     prev = ptr;
     ptr = ptr->next;
@@ -296,9 +228,7 @@ void clear_manifest(Manifest *manifest) {
   free(manifest->serial);
   free(manifest->target);
 
-  clear_con_cfg(manifest->boot);
-  clear_con_cfg(manifest->service);
-  clear_con_cfg(manifest->shutdown);
+  clear_cApp_cfg(manifest->arrayElem);
 
   return;
 }
