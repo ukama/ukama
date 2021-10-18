@@ -14,7 +14,8 @@ import { useState } from "react";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 const loginSchema = Yup.object({
     email: Yup.string()
         .email("Enter a valid email")
@@ -34,6 +35,7 @@ type LoginFormProps = {
 
 const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
     const classes = globalUseStyles();
+    const { t } = useTranslation();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
@@ -50,14 +52,14 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                Log in to Ukama
+                                {t("LOGIN.FormTitle")}
                             </Typography>
 
                             <TextField
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label="Email"
+                                label={t("CONSTANT.EmailLabel")}
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -72,7 +74,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 fullWidth
                                 id="password"
                                 name="password"
-                                label="Password"
+                                label={t("CONSTANT.PasswordLabel")}
                                 value={values.password}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -101,7 +103,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             />
 
                             <LinkStyle href="/forgot-password">
-                                Forgot Password?
+                                {t("LOGIN.ForgotPasswordLabel")}
                             </LinkStyle>
 
                             <Button
@@ -111,7 +113,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 variant="contained"
                                 sx={{ fontWeight: 600 }}
                             >
-                                LOG IN
+                                {t("LOGIN.LoginButtonLabel")}
                             </Button>
 
                             <Divider />
@@ -122,16 +124,16 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 sx={{ fontWeight: 600 }}
                                 onClick={() => onGoogleLogin()}
                             >
-                                LOG IN WITH GOOGLE
+                                {t("LOGIN.loginWithGoogleLabel")}
                             </Button>
 
                             <Typography
                                 variant="body2"
                                 sx={{ letterSpacing: "0.4px" }}
                             >
-                                {`Don't have an account? `}
+                                {t("LOGIN.FooterNoteText")}
                                 <LinkStyle href="/signup">
-                                    Sign up insted.
+                                    {t("CONSTANT.SignUpLinkLabel")}
                                 </LinkStyle>
                             </Typography>
                         </Stack>
