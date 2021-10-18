@@ -26,16 +26,21 @@
 #include "toml.h"
 #include "lxce_config.h"
 #include "manifest.h"
-#include "pod.h"
+#include "contained.h"
 
 #define VERSION "0.0.1"
 
 #define TRUE 1
 #define FALSE 0
 
-#define DEF_LOG_LEVEL   "TRACE"
-#define DEF_CONFIG_FILE "config.toml"
+#define DEF_LOG_LEVEL     "TRACE"
+#define DEF_CONFIG_FILE   "config.toml"
 #define DEF_MANIFEST_FILE "manifest.json"
+
+/* Default files for various contained setup */
+#define DEF_BOOT_CONTAINED_FILE     "boot_contained.json"
+#define DEF_SERVICE_CONTAINED_FILE  "service_contained.json"
+#define DEF_SHUTDOWN_CONTAINED_FILE "shutdown_contained.json"
 
 /*
  * callback functions declaration
@@ -93,6 +98,7 @@ void usage() {
   printf("--h, --help                         Help menu.\n");
   printf("--c, --config                       Config file.\n");
   printf("--m, --manifest                     Manifest file.\n");
+  printf("--s, --setup                        Contained setup file.\n");
   printf("--l, --level <TRACE | DEBUG | INFO> Log level for the process.\n");
   printf("--V, --version                      Version.\n");
 }
@@ -121,14 +127,13 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret=0;
+  int ret=0, count=0;
   char *debug = DEF_LOG_LEVEL;
   char *configFile = DEF_CONFIG_FILE;
   char *manifestFile = DEF_MANIFEST_FILE;
   struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
-  Pod pods[3] = {0};
   
   /* Parsing command line args. */
   while (true) {
@@ -138,13 +143,14 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
       { "level",     required_argument, 0, 'l'},
       { "config",    required_argument, 0, 'c'},
+      { "setup",     required_argument, 0, 's'},
       { "manifest",  required_argument, 0, 'm'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},
       { 0,           0,                 0,  0}
     };
 
-    opt = getopt_long(argc, argv, "c:m:f:v:p:hV:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "l:c:s:m:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -162,10 +168,6 @@ int main(int argc, char **argv) {
 
     case 'c':
       configFile = optarg;
-      break;
-
-    case 'm':
-      manifestFile = optarg;
       break;
 
     case 'V':
@@ -211,9 +213,6 @@ int main(int argc, char **argv) {
   /* Step-3: get manifest.json containers path from wimc */
   // get_containers_local_path(manifest, config);
 
-  /* Step-4: setup PODs for boot */
-  create_ukama_pod(&pods[0], manifest, POD_TYPE_BOOT);
-  
   /* Step-4: open REST interface. */
   if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
       != U_OK) {

@@ -33,7 +33,7 @@
 #include <grp.h>
 #include <signal.h>
 
-#include "pod.h"
+#include "contained.h"
 #include "manifest.h"
 #include "log.h"
 
@@ -386,7 +386,7 @@ static int cInit_clone(void *arg) {
   if (pod->hostName) {
     hostName = pod->hostName;
   } else {
-    hostName = POD_DEFAULT_HOSTNAME;
+    hostName = CONTD_DEFAULT_HOSTNAME;
   }
 
   /* Step-1: setup hostname. */
@@ -489,4 +489,255 @@ int create_ukama_pod(Pod *pod, Manifest *manifest, char *type) {
   if (pod->sockets[1]) close(pod->sockets[1]);
   
   return TRUE;
+}
+
+/*
+ * set_integer_object_value --
+ *
+ */
+static int set_integer_object_value(json_t *json, int *param, char *objName,
+				    int mandatory, int defValue) {
+
+  json_t *obj;
+
+  obj = json_object_get(json, objName);
+  if (obj==NULL) {
+    if (mandatory) {
+      log_error("Missing Mandatory JSON field: %s Setting to default: %d",
+		objName, defValue);
+      if (defValue)  {
+	*param = defValue;
+      } else {
+	return FALSE;
+      }
+    } else {
+      log_debug("Missing JSON field: %s. Ignored.", objName);
+      *param = 0;
+    }
+  } else {
+    *param = json_integer_value(obj);
+  }
+
+  return TRUE;
+}
+
+/*
+ * set_str_object_value --
+ *
+ */
+static int set_str_object_value(json_t *json, char *param, char *objName,
+				int mandatory, char *defValue) {
+
+  json_t *obj;
+
+  obj = json_object_get(json, objName);
+  if (obj==NULL) {
+    if (mandatory) {
+      log_error("Missing Mandatory JSON field: %s Setting to default: %s",
+		objName, defValue);
+      if (defValue)  {
+	param = strdup(defValue);
+      } else {
+	return FALSE;
+      }
+    } else {
+      log_debug("Missing JSON field: %s. Ignored.", objName);
+      param = NULL;
+    }
+  } else {
+    param = strdup(json_string_value(obj));
+  }
+
+  return TRUE;
+}
+
+/*
+ * namespace_flag --
+ *
+ */
+static int namespaces_flag(char *ns) {
+
+  if (strcmp(ns, "pid")==0) {
+    return CLONE_NEWPID;
+  } else if (strcmp(ns, "uts")==0) {
+    return CLONE_NEWUTS;
+  } else if (strcmp(ns, "net")==0) {
+    return CLONE_NEWNET;
+  } else if (strcmp(ns, "mount")==0) {
+    return CLONE_NEWNS;
+  } else if (strcmp(ns, "user")==0) {
+    return CLONE_NEWUSER;
+  } else {
+    log_error("Unsupported namespace type detecetd: %s", ns);
+    return 0;
+  }
+
+  return 0;
+}
+
+/*
+ * str_to_cap --
+ *
+ */
+static int str_to_cap(char *str) {
+
+  if (strcmp(str, "CAP_BLOCK_SUSPEND")==0) {
+    return CAP_BLOCK_SUSPEND;
+  } else if (strcmp(str, "CAP_IPC_LOCK")==0) {
+    return CAP_IPC_LOCK;
+  } else if (strcmp(str, "CAP_MAC_ADMIN")==0) {
+    return CAP_MAC_ADMIN;
+  } else if (strcmp(str, "CAP_MAC_OVERRIDE")==0) {
+    return CAP_MAC_OVERRIDE;
+  }
+
+  log_error("Invalid capabilities: %s", str);
+  return 0;
+}
+
+/*
+ * deserialize_contdSpace_file -- convert the json into internal struct
+ *
+ */
+static int deserialize_contdSpace_file(ContdSpace *space, json_t *json) {
+
+  int j=0, size=0;
+  json_t *obj;
+  json_t *jArray, *jElem;
+
+  if (space == NULL) return FALSE;
+  if (json == NULL) return FALSE;
+
+  if (!set_str_object_value(json, space->version, JSON_VERSION, TRUE, NULL)) {
+    return FALSE;
+  }
+
+  if (!set_str_object_value(json, space->target, JSON_TARGET, TRUE, NULL)) {
+    return FALSE;
+  }
+
+  if (strcmp(space->target, LXCE_SERIAL)==0) {
+    if (!set_str_object_value(json, space->serial, JSON_SERIAL, TRUE, NULL)) {
+      return FALSE;
+    }
+  } else {
+    set_str_object_value(json, space->serial, JSON_SERIAL, FALSE, NULL);
+  }
+
+  if (!set_str_object_value(json, space->name, JSON_NAME, TRUE, NULL)) {
+    return FALSE;
+  }
+
+  set_str_object_value(json, space->hostName, JSON_HOSTNAME, FALSE,
+		       CONTD_DEFAULT_HOSTNAME);
+
+  set_integer_object_value(json, &space->uid, JSON_UID, FALSE, 0);
+  set_integer_object_value(json, &space->gid, JSON_GID, FALSE, 0);
+
+  /* Look for namespaces. */
+  space->nameSpaces = 0;
+  jArray = json_object_get(json, JSON_NAMESPACES);
+  if (jArray != NULL) {
+    size = json_array_size(jArray);
+
+    for (j=0; j<size; j++) {
+      jElem = json_array_get(jArray, j);
+      if (jElem) {
+	obj = json_object_get(jElem, JSON_TYPE);
+	if (obj)
+	  space->nameSpaces |= namespaces_flag(json_string_value(obj));
+      }
+    }
+  } else {
+    log_debug("No valid namespaces found.");
+  }
+
+  /* Look for capabilities */
+  jArray = json_object_get(json, JSON_CAPABILITIES);
+  if (jArray != NULL) {
+    size = json_array_size(jArray);
+    space->capCount = size;
+
+    if (size > CONTD_MAX_CAPS) {
+      log_error("%d many more Capabilities are defined than supported: 5d",
+		(size-CONTD_MAX_CAPS), CONTD_MAX_CAPS);
+      return FALSE;
+    }
+
+    for (j=0; j<size; j++) {
+      jElem = json_array_get(jArray, j);
+      if (jElem) {
+	obj = json_object_get(jElem, JSON_TYPE);
+	if (obj)
+	  space->cap[j] = str_to_cap(json_string_value(obj));
+      }
+    }
+  } else {
+    log_debug("No valid capabilities found.");
+  }
+
+  return TRUE;
+}
+
+/*
+ * process_contdSpace_config --
+ *
+ */
+int process_contdSpace_config(char *fileName, ContdSpace *contdSpace) {
+
+  int ret=FALSE;
+  FILE *fp=NULL;
+  char *buffer=NULL;
+  long size=0;
+  json_t *json;
+  json_error_t jerror;
+
+  /* Sanity check */
+  if (fileName==NULL) return FALSE;
+  if (contdSpace==NULL) return FALSE;
+
+  if ((fp = fopen(fileName, "rb")) == NULL) {
+    log_error("Error opening file: %s Error %s", fileName, strerror(errno));
+    return FALSE;
+  }
+
+  /* Read everything into buffer */
+  fseek(fp, 0, SEEK_END);
+  size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+
+  if (size > CONFIG_MAX_SIZE) {
+    log_error("Error opening file: %s Error: File size too big: %ld",
+	      fileName, size);
+    fclose(fp);
+    return FALSE;
+  }
+
+  buffer = (char *)malloc(size+1);
+  if (buffer==NULL) {
+    log_error("Error allocating memory of size: %ld", size+1);
+    fclose(fp);
+    return FALSE;
+  }
+
+  fread(buffer, 1, size, fp); /* Read everything into buffer */
+
+  /* Trying loading it as JSON */
+  json = json_loads(buffer, 0, &jerror);
+  if (json==NULL) {
+    log_error("Error loading contd config into JSON format. File: %s Size: %ld",
+	      fileName, size);
+    log_error("JSON error on line: %d: %s", jerror.line, jerror.text);
+    goto done;
+  }
+
+  /* Now convert JSON into internal struct */
+  ret = deserialize_contdSpace_file(contdSpace, json);
+
+ done:
+  if (buffer) free(buffer);
+  fclose(fp);
+
+  json_decref(json);
+  return ret;
 }
