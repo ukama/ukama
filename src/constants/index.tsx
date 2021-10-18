@@ -4,6 +4,7 @@ import {
     checkPasswordLength,
     checkPasswordHasLetters,
 } from "../utils";
+
 const passwordRules = [
     {
         id: 1,
