@@ -52,7 +52,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                {t("LOGIN.FormTitle")}
+                                {t("LOGIN.LoginFormTitle")}
                             </Typography>
 
                             <TextField
@@ -131,7 +131,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 variant="body2"
                                 sx={{ letterSpacing: "0.4px" }}
                             >
-                                {t("LOGIN.FooterNoteText")}
+                                {t("LOGIN.LoginFooterNoteText")}
                                 <LinkStyle href="/signup">
                                     {t("CONSTANT.SignUpLinkLabel")}
                                 </LinkStyle>

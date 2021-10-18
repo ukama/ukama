@@ -16,7 +16,8 @@ import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
-
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 const signUpSchema = Yup.object({
     email: Yup.string()
         .email("Enter a valid email")
@@ -40,6 +41,7 @@ type SignUpFormProps = {
 };
 const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
     const classes = globalUseStyles();
+    const { t } = useTranslation();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
@@ -56,7 +58,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                Sign up for Ukama
+                                {t("SIGNUP.SignUpFormTitle")}
                             </Typography>
                             <Box sx={{ flexGrow: 1 }}>
                                 <Grid container spacing={2}>
@@ -65,7 +67,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                             fullWidth
                                             id="firstName"
                                             name="firstName"
-                                            label="FirstName"
+                                            label={t("CONSTANT.FirstNameLabel")}
                                             value={values.firstName}
                                             onChange={handleChange}
                                             InputLabelProps={{ shrink: true }}
@@ -89,7 +91,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                             fullWidth
                                             id="lastName"
                                             name="lastName"
-                                            label="LastName"
+                                            label={t("CONSTANT.LastNameLabel")}
                                             value={values.lastName}
                                             onChange={handleChange}
                                             InputLabelProps={{ shrink: true }}
@@ -115,7 +117,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label="Email"
+                                label={t("CONSTANT.EmailLabel")}
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -129,7 +131,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 fullWidth
                                 id="password"
                                 name="password"
-                                label="Password"
+                                label={t("CONSTANT.PasswordLabel")}
                                 value={values.password}
                                 onChange={event => {
                                     handleChange(event);
@@ -170,7 +172,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 variant="contained"
                                 sx={{ fontWeight: 600 }}
                             >
-                                SIGN UP
+                                {t("SIGNUP.SignUpButtonLabel")}
                             </Button>
 
                             <Divider />
@@ -181,7 +183,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 sx={{ fontWeight: 600 }}
                                 onClick={() => onGoogleSignUp()}
                             >
-                                SIGN UP WITH GOOGLE
+                                {t("SIGNUP.SignUpWithGoogleLabel")}
                             </Button>
 
                             <Typography
@@ -190,10 +192,9 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                     letterSpacing: "0.4px",
                                 }}
                             >
-                                {`By signing up , I am agreeing to the Terms and Conditions and Privacy Policy. 
-                                Already have an account? `}
+                                {t("SIGNUP.SignUpFooterNoteText")}
                                 <LinkStyle href="/login">
-                                    Log in instead.
+                                    {t("CONSTANT.LoginLinkLabel")}
                                 </LinkStyle>
                             </Typography>
                         </Stack>
