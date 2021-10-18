@@ -2,6 +2,7 @@ import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { Box, Typography, Stack } from "@mui/material";
 import { LinkStyle, MessageContainer } from "../../styles";
 import { useTranslation } from "react-i18next";
+import { AddEmail } from "../../utils/I18nHelper";
 import "../../i18n/i18n";
 type ForgotPasswordConfirmationMessageProps = {
     email: string;
@@ -16,16 +17,17 @@ const ForgotPasswordConfirmationMessage = ({
             <Stack spacing={"18px"}></Stack>
             <MessageContainer>
                 <Typography variant="h5" color="initial">
-                    {t("RECOVER_PASSWORD.RecoverPasswordTitle")}
+                    {t("RECOVER_PASSWORD.FormTitle")}
                 </Typography>
             </MessageContainer>
 
             <MessageContainer>
                 <Typography variant="body1" sx={{ letterSpacing: "0.15 px" }}>
-                    {t("RECOVER_PASSWORD.RecoveryNote")}
-                    {email}
-
-                    <b>{t("RECOVER_PASSWORD.RecoveryImportantNote")}</b>
+                    {AddEmail(
+                        t("RECOVER_PASSWORD.FormNote"),
+                        "Brackley@ukama.com"
+                    )}
+                    <b>{t("RECOVER_PASSWORD.ImportantNote")}</b>
                 </Typography>
             </MessageContainer>
             <LinkStyle href="/login">

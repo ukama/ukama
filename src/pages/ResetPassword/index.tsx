@@ -25,8 +25,8 @@ const ResetPassword = () => {
             <BasicDialog
                 isOpen={successDialog}
                 handleClose={() => setSuccessDialog(false)}
-                title={t("DIALOG_MESSAGE.SuccessPasswordChangedTitle")}
-                content={t("DIALOG_MESSAGE.SuccessPasswordChangedNote")}
+                title={t("DIALOG_MESSAGE.SuccessTitle")}
+                content={t("DIALOG_MESSAGE.SuccessContent")}
             />
         </CenterContainer>
     );

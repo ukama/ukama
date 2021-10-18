@@ -58,7 +58,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                {t("SIGNUP.SignUpFormTitle")}
+                                {t("SIGNUP.FormTitle")}
                             </Typography>
                             <Box sx={{ flexGrow: 1 }}>
                                 <Grid container spacing={2}>
@@ -172,7 +172,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 variant="contained"
                                 sx={{ fontWeight: 600 }}
                             >
-                                {t("SIGNUP.SignUpButtonLabel")}
+                                {t("SIGNUP.ButtonLabel")}
                             </Button>
 
                             <Divider />
@@ -183,7 +183,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 sx={{ fontWeight: 600 }}
                                 onClick={() => onGoogleSignUp()}
                             >
-                                {t("SIGNUP.SignUpWithGoogleLabel")}
+                                {t("SIGNUP.ButtonWithGoogleLabel")}
                             </Button>
 
                             <Typography
@@ -192,9 +192,9 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                     letterSpacing: "0.4px",
                                 }}
                             >
-                                {t("SIGNUP.SignUpFooterNoteText")}
+                                {t("SIGNUP.FooterNoteText")}
                                 <LinkStyle href="/login">
-                                    {t("CONSTANT.LoginLinkLabel")}
+                                    {t("CONSTANT.LinkLabel")}
                                 </LinkStyle>
                             </Typography>
                         </Stack>
