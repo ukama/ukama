@@ -10,17 +10,16 @@
     
     "namespaces" : [
 	{ "type" : "pid" },
-	{ "type" : "network" },
+	{ "type" : "ipc" },
 	{ "type" : "uts" },
 	{ "type" : "mount" },
     	{ "type" : "user" }
     ],
 	
     "capabilities" : [
-	{ "type" : "CAP_BLOCK_SUSPEND"},
-	{ "type" : "CAP_IPC_LOCK"},
-	{ "type" : "CAP_MAC_ADMIN"},
-	{ "type" : "CAP_MAC_OVERRIDE"}
+	"CAP_SYSLOG",
+	"CAP_SYS_TIME",
+	"CAP_NET_ADMIN"
     ]
-
 }
+

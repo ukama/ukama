@@ -23,6 +23,8 @@
 #define WIMC_PORT    "wimc-port"
 #define MESH_PORT    "mesh-port"
 
+#define CSPACE_CONFIGS "cSpace-configs"
+
 /* Some defaults */
 #define DEF_LOCAL_ACCEPT "4448"
 #define DEF_WIMC_PORT    "4441"
@@ -44,6 +46,8 @@ typedef struct {
   char *wimcHost;    /* Host where WIMC.d is running (hostname) */
   char *wimcPort;    /* Port where WIMC.d is listening */
   char *meshPort;    /* Port where MESH.d is listening */
+
+  char **cSpaceConfigs; /* cSpace config files */
 } Config;
 
 int process_config_file(char *fileName, Config *config);

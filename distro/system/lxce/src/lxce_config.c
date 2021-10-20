@@ -27,8 +27,10 @@
 
 int parse_config(Config *config, toml_table_t *configData) {
 
-  int ret=FALSE;
+  int ret=FALSE, i, size;
   toml_datum_t localAccept, localEP, wimcHost, wimcPort, meshPort;
+  toml_datum_t cspace;
+  toml_array_t *csArray;
 
   /* sanity check */
   if (config == NULL) return FALSE;
@@ -83,6 +85,28 @@ int parse_config(Config *config, toml_table_t *configData) {
     config->meshPort = strdup(DEF_MESH_PORT);
   } else {
     config->meshPort = strdup(meshPort.u.s);
+  }
+
+  /* cSpace-configs */
+  csArray = toml_array_in(configData, CSPACE_CONFIGS);
+  if (!csArray) {
+    log_debug("No CSpace configuration files specified");
+    config->cSpaceConfigs = NULL;
+  } else {
+
+    size = toml_array_nelem(csArray);
+    config->cSpaceConfigs = (char **)calloc(size, sizeof(char *));
+    if (!config->cSpaceConfigs) {
+      log_error("Memory allocation failed for size: %d", size*sizeof(char *));
+      return FALSE;
+    }
+
+    for (i=0; ;i++) {
+      cspace = toml_string_at(csArray, i);
+      if (!cspace.ok) break;
+      config->cSpaceConfigs[i] = strdup(cspace.u.s);
+      free(cspace.u.s);
+    }
   }
 
   if (localAccept.ok) free(localAccept.u.s);
@@ -143,6 +167,8 @@ int process_config_file(char *fileName, Config *config) {
 
 void print_config(Config *config) {
 
+  int i;
+
   if (config == NULL) return;
 
   if (config->localAccept) {
@@ -164,6 +190,17 @@ void print_config(Config *config) {
   if (config->meshPort) {
     log_debug("meshPort: %s", config->meshPort);
   }
+
+  if (config->cSpaceConfigs) {
+    log_debug("Contained Spaces Config files: ");
+    for (i=0; ;i++) {
+      if (config->cSpaceConfigs[i]) {
+	log_debug("\t %d %s", i, config->cSpaceConfigs[i]);
+      } else {
+	break;
+      }
+    }
+  }
 }
 
 /*
@@ -172,6 +209,8 @@ void print_config(Config *config) {
  */
 void clear_config(Config *config) {
 
+  int i;
+
   if (!config) return;
 
   free(config->localAccept);
@@ -179,4 +218,12 @@ void clear_config(Config *config) {
   free(config->wimcHost);
   free(config->wimcPort);
   free(config->meshPort);
+
+  if (config->cSpaceConfigs) {
+    for (i=0; ;i++) {
+      if (config->cSpaceConfigs[i]) { free(config->cSpaceConfigs[i]); }
+      else break;
+    }
+    free(config->cSpaceConfigs);
+  }
 }
