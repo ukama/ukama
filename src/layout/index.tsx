@@ -1,3 +1,2 @@
-// This file will provide AppLayout
-
-export {};
+import Header from "./Header";
+export { Header };
