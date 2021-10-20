@@ -1,3 +1,11 @@
+---
+name: front-end ticket template
+about: ''
+title: ''
+labels: ''
+assignees: ''
+
+---
 **Problem statement**
 PROBEM_STATMENT_HERE
 https://www.figma.com/file/ufqgQqTfx5609Jeu0ZSW8a/Ukama-MVP?node-id=0%3A1
