@@ -31,7 +31,7 @@ export const TRANSLATIONS_EN = {
     RECOVER_PASSWORD: {
         ImportantNote: "Link will expire in 30 minutes.",
         FormTitle: " RECOVER PASSWORD",
-        FormNote: `If an account with the email ${`brackley@ukama.com`} exists, an email will be sent with further instructions.`,
+        FormNote: `If an account with the email /email exists, an email will be sent with further instructions.`,
     },
     FORGOT_PASSWORD: {
         FormTitle: "  Recover Password",
