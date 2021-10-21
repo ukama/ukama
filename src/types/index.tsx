@@ -1,3 +1,6 @@
-// This file will provide common TYPES for
-
-export {};
+export type MenuItemType = {
+    Icon: any;
+    id: string;
+    title: string;
+    route: string;
+};

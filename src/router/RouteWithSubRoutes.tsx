@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { Redirect, Route } from "react-router-dom";
 
 const RouteWithSubRoutes = (route: IRoute) => {
-    const authenticated: boolean = false;
+    const authenticated: boolean = true;
     return (
         <Suspense fallback={route.fallback}>
             <Route

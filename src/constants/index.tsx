@@ -1,4 +1,12 @@
-// This file will containt app constants
+import {
+    HomeIcon,
+    UsersIcon,
+    RouterIcon,
+    BillingIcon,
+    ModuleStoreIcon,
+} from "../assets/svg";
+
+const DRAWER_WIDTH = 240;
 import {
     checkPasswordSpecialCharacter,
     checkPasswordLength,
@@ -21,4 +29,16 @@ const passwordRules = [
         validator: checkPasswordHasLetters,
     },
 ];
-export { passwordRules };
+
+const SIDEBAR_MENU1 = [
+    { id: "1", title: "Home", Icon: HomeIcon, route: "/" },
+    { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
+    { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
+    { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
+];
+
+const SIDEBAR_MENU2 = [
+    { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "store" },
+];
+
+export { passwordRules, DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 };
