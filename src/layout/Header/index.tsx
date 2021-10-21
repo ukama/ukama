@@ -15,6 +15,7 @@ import {
     Settings,
     AccountCircle,
 } from "@mui/icons-material";
+const drawerWidth = 240;
 
 type HeaderProps = {
     pageName: string;
@@ -122,11 +123,16 @@ const Header = ({ pageName }: HeaderProps) => {
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar
-                position="static"
-                style={{ background: "#F5F6F8", color: "#37393E" }}
+                position="fixed"
+                sx={{
+                    width: `calc(100% - ${drawerWidth}px)`,
+                    ml: `${drawerWidth}px`,
+                }}
+                color="transparent"
                 elevation={0}
+                //style={{ background: "#F5F6F8", color: "#37393E" }}
             >
-                <Toolbar>
+                <Toolbar style={{ flexGrow: 1 }}>
                     <Typography variant="h6" noWrap component="div">
                         {pageName}
                     </Typography>
@@ -172,8 +178,9 @@ const Header = ({ pageName }: HeaderProps) => {
                         </IconButton>
                     </Box>
                 </Toolbar>
+                <Divider />
             </AppBar>
-            <Divider />
+
             {renderMobileMenu}
             {renderMenu}
         </Box>

@@ -1,9 +1,9 @@
-import { Header } from "../../layout/";
 const Dashboard = () => {
     return (
-        <>
-            <Header pageName="Home" />
-        </>
+        <div>
+            <h1>Landing Dashboard</h1>
+        </div>
     );
 };
+
 export default Dashboard;
