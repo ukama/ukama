@@ -3,6 +3,7 @@ import colors from "../../theme/colors";
 import { Grid, Typography } from "@mui/material";
 import { passwordRules } from "../../constants";
 import { makeStyles } from "@mui/styles";
+
 const useStyles = makeStyles(() => ({
     progressIcon: {
         verticalAlign: "middle",

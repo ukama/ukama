@@ -14,7 +14,8 @@ import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
-
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 const ResetPasswordSchema = Yup.object({
     newPassword: Yup.string().required("Password is required"),
 });
@@ -30,6 +31,7 @@ type ResetPasswordFormProps = {
 
 const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
     const classes = globalUseStyles();
+    const { t } = useTranslation();
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
@@ -45,14 +47,14 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                Recover Password
+                                {t("RESET_PASSWORD.FormTitle")}
                             </Typography>
 
                             <TextField
                                 fullWidth
                                 id="newPassword"
                                 name="newPassword"
-                                label="New Password"
+                                label={t("CONSTANT.NewPasswordLabel")}
                                 value={values.newPassword}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -94,7 +96,7 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                     sx={{ fontWeight: 600 }}
                                     onClick={() => onCancel()}
                                 >
-                                    CANCEL
+                                    {t("CONSTANT.CancelButtonLable")}
                                 </Button>
 
                                 <Button
@@ -104,7 +106,7 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                     variant="contained"
                                     sx={{ fontWeight: 600 }}
                                 >
-                                    CHANGE PASSWORD{` & `}LOGIN
+                                    {t("RESET_PASSWORD.ButtonLabel")}
                                 </Button>
                             </ContainerJustifySpaceBtw>
                         </Stack>

@@ -3,7 +3,8 @@ import { Formik } from "formik";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 import { Box, Stack, Button, TextField, Typography } from "@mui/material";
-
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 const forgotPasswordSchema = Yup.object({
     email: Yup.string()
         .email("Enter a valid email")
@@ -21,7 +22,7 @@ type ForgotPasswordFormProps = {
 
 const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
     const classes = globalUseStyles();
-
+    const { t } = useTranslation();
     return (
         <Box width="100%">
             <Formik
@@ -33,14 +34,14 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
-                                Recover Password
+                                {t("FORGOT_PASSWORD.FormTitle")}
                             </Typography>
 
                             <TextField
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label="Email"
+                                label={t("CONSTANT.EmailLabel")}
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -57,7 +58,7 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                     sx={{ fontWeight: 600 }}
                                     onClick={() => onBack()}
                                 >
-                                    BACK
+                                    {t("CONSTANT.BackButtonLable")}
                                 </Button>
 
                                 <Button
@@ -67,7 +68,7 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                     variant="contained"
                                     sx={{ fontWeight: 600 }}
                                 >
-                                    EMAIL RECOVERY LINK
+                                    {t("CONSTANT.ReturnToLoginLink")}
                                 </Button>
                             </ContainerJustifySpaceBtw>
                         </Stack>
