@@ -1,9 +1,9 @@
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import colors from "../../theme/colors";
 import { Grid, Typography } from "@mui/material";
 import { passwordRules } from "../../constants";
 import { makeStyles } from "@mui/styles";
-
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 const useStyles = makeStyles(() => ({
     progressIcon: {
         verticalAlign: "middle",
@@ -35,14 +35,24 @@ const PasswordRequirementIndicator = ({
                     return (
                         <Grid xs={6} item key={rules.id}>
                             <Typography variant="body2">
-                                <CheckCircleOutlineIcon
-                                    className={classes.progressIcon}
-                                    style={{
-                                        color: rules.validator(password)
-                                            ? colors.green
-                                            : colors.grey,
-                                    }}
-                                />
+                                {rules.validator(password) ? (
+                                    <CheckCircleIcon
+                                        fontSize="small"
+                                        className={classes.progressIcon}
+                                        style={{
+                                            color: colors.green,
+                                        }}
+                                    />
+                                ) : (
+                                    <CheckCircleOutlineIcon
+                                        fontSize="small"
+                                        className={classes.progressIcon}
+                                        style={{
+                                            color: colors.grey,
+                                        }}
+                                    />
+                                )}
+
                                 {rules.label}
                             </Typography>
                         </Grid>
