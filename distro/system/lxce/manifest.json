@@ -8,7 +8,7 @@
 	    "name"      : "mesh",
 	    "tag"       : "latest",
 	    "restart"   : "no",
-	    "contained" : "boot"
+	    "contained" : "shutdown"
 	},
 	{
 	    "name"      : "hello-world",

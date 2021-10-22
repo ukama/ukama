@@ -37,52 +37,27 @@
 #include "manifest.h"
 #include "log.h"
 
-static int basic[] = { CAP_BLOCK_SUSPEND, /* block system suspend. */
-		       CAP_IPC_LOCK,      /* Lock memory */
-		       CAP_MAC_ADMIN,     /* allow MAC config */
-		       CAP_MAC_OVERRIDE,  /* override MAC. */
-};
-
-static int serviceType[] = { CAP_NET_ADMIN,        /* Network related ops */
-			     CAP_NET_BIND_SERVICE, /* privilage ports */
-			     CAP_SETFCAP,          /* arbitray cap on file. */
-			     CAP_SETUID,           /* Manipulate process UIDs */
-			     CAP_SYS_ADMIN,        /* various cap. */
-			     CAP_SYS_BOOT,         /* use reboot */
-			     CAP_SYS_MODULE,       /* load kernel modules */
-			     CAP_SYS_NICE,         /* process nice() */
-			     CAP_SYS_RAWIO,      /* I/O ops and various thing */
-			     CAP_SYS_TIME,         /* system clock */
-			     CAP_SYSLOG,           /* privileged syslog */
-			     CAP_WAKE_ALARM,       /* CLOCK_BOOTTIME_ALARM */
-			     CAP_SYS_RESOURCE   /* resources related action */ 
-};
-
-static int shutdownType[] = { CAP_SYSLOG,    /* privileged syslog */
-			      CAP_SYS_TIME,  /* system clock */
-			      CAP_NET_ADMIN  /* Network related operations. */
-};
-
-static int adjust_capabilities(int *cap, int size);
-static int setup_capabilities(char *podType);
-static int setup_pod_security_profile(char *type);
-static int setup_user_namespace(Pod *pod);
-static int prepare_child_map_files(pid_t pid, Pod *pod);
-static int cInit_clone(void *arg);
+static int adjust_capabilities(char *name, int *cap, int size);
+static int setup_capabilities(CSpace *space);
+static int setup_cspace_security_profile(CSpace *space);
+static int setup_user_namespace(CSpace *space);
+static int prepare_child_map_files(pid_t pid, CSpace *space);
+static int cspace_init_clone(void *arg);
 
 /*
- * adjust_capabilities -- Adjust capabilties for process
+ * adjust_capabilities -- Adjust capabilties for the cspace
  *
  */
-static int adjust_capabilities(int *cap, int size) {
+static int adjust_capabilities(char *name, int *cap, int size) {
 
   int i, ret=FALSE;
   cap_t capState = NULL;
 
-  /* Drop the basic capiblities */
+  /* Drop the capiblities */
   for (i=0; i < size; i++) {
     if (prctl(PR_CAPBSET_DROP, cap[i], 0, 0, 0)) {
-      log_error("Error dropping capabilities. Error: %s", strerror(errno));
+      log_error("Space: %s Error dropping capabilities. Error: %s", name,
+		strerror(errno));
       return FALSE;
     }
   }
@@ -90,20 +65,21 @@ static int adjust_capabilities(int *cap, int size) {
   /* Setting inheritable caps */
   capState = cap_get_proc();
   if (capState == NULL) {
-    log_error("Failed to get cap state.");
+    log_error("Space: %s Failed to get cap state.", name);
     goto done;
   }
 
   /* Clear the CAP options */
   if (cap_set_flag(capState, CAP_INHERITABLE, size, cap, CAP_CLEAR)!=0) {
-    log_error("Failed to set the cap flags for cap state. Error: %s",
-	      strerror(errno));
+    log_error("Space: %s Failed to set the cap flags for cap state. Error: %s",
+	      name, strerror(errno));
     goto done;
   }
 
   /* Commit */
   if (cap_set_proc(capState)==-1) {
-    log_error("Failed to commit the cap flags. Error: %s", strerror(errno));
+    log_error("Space: %s Failed to commit the cap flags. Error: %s", name,
+	      strerror(errno));
     goto done;
   }
 
@@ -123,7 +99,7 @@ static int adjust_capabilities(int *cap, int size) {
  * Note: see capabilities(7) for details. 
  *
  */
-static int setup_capabilities(char *podType) {
+static int setup_capabilities(CSpace *space) {
 
   /* Ambient capabilties are preserved across an execve() of an un-priviliged
    * program. As per man page: 'The ambient capability set obeys the
@@ -156,53 +132,29 @@ static int setup_capabilities(char *podType) {
 
   int ret;
 
-  /* For onboot:   basic
-   *     service:  basic & service
-   *     shutdown: basic & shutdown
-   */
-
-  ret = adjust_capabilities(basic, sizeof(basic)/sizeof(*basic));
+  ret = adjust_capabilities(space->name, space->cap, space->capCount);
   if (ret == FALSE) {
-    log_error("Error adjusting basic capabilties");
+    log_error("Space: %s Error adjusting capabilties", space->name);
     return ret;
-  }
-
-  if (strcmp(podType, POD_TYPE_SERVICE) == 0) {
-    ret = adjust_capabilities(serviceType,
-			      sizeof(serviceType)/sizeof(*serviceType));
-    if (ret == FALSE) {
-      log_error("Error adjusting service capabilities");
-      /* Note: we don't need to undo the basic capabilities as upon error the
-       * child process (pod setup) terminates. Otherwise, we should clean up.
-       */
-      return FALSE;
-    }
-  } else if  (strcmp(podType, POD_TYPE_SHUTDOWN) == 0) {
-    ret = adjust_capabilities(shutdownType,
-			      sizeof(shutdownType)/sizeof(*shutdownType));
-    if (ret == FALSE) {
-      log_error("Error adjusting shutdown capabilities");
-      return FALSE;
-    }
   }
 
   return TRUE;
 }
 
 /*
- * setup_secure_pod -- setup security profile of the pod
+ * setup_cspace_security_profile -- setup security profile of the cspace
  *
  */
-static int setup_pod_security_profile(char *type) {
+static int setup_cspace_security_profile(CSpace *space) {
 
-  return setup_capabilities(type);
+  return setup_capabilities(space);
 }
 
 /*
  * setup_user_namespace -- setup the user/group on the child
  *
  */
-static int setup_user_namespace(Pod *pod) {
+static int setup_user_namespace(CSpace *space) {
 
   int ns=FALSE, resp=FALSE;
   int size, ret;
@@ -215,46 +167,47 @@ static int setup_user_namespace(Pod *pod) {
   /* Write on the socket connection with parent. Parent need to setup values
    * in the map files under /proc
    */
-  if (write(pod->sockets[0], &ns, sizeof(ns)) != sizeof(ns)) {
-    log_error("Error writing to parent socket. Size: %d Value: %d", sizeof(ns),
-	      ns);
+  if (write(space->sockets[0], &ns, sizeof(ns)) != sizeof(ns)) {
+    log_error("Space: %s Error writing to parent socket. Size: %d Value: %d",
+	      space->name, sizeof(ns), ns);
     return FALSE;
   }
 
   /* Read response back from the parent. */
-  size = read(pod->sockets[0], &resp, sizeof(resp));
+  size = read(space->sockets[0], &resp, sizeof(resp));
   if (size != sizeof(resp)) {
-    log_error("Error reading from parent socket. Expected size: %d Got: %d",
-	      sizeof(resp), size);
+    log_error("Space: %s Error reading from parent socket. size: %d Got: %d",
+	      space->name, sizeof(resp), size);
     return FALSE;
   }
 
   if (!resp) {
-    log_error("Parent failed to setup map file");
+    log_error("Space: %s Parent failed to setup map file", space->name);
     return FALSE;
   }
 
   /* Switch over the uid and gid */
-  log_debug("Switching to uid: %d and gid: %d", pod->uid, pod->gid);
+  log_debug("Space: %s Switching to uid: %d and gid: %d", space->name,
+	    space->uid, space->gid);
 
-  ret = setgroups(1, &pod->gid);
+  ret = setgroups(1, &space->gid);
   if (ret != 0) {
-    log_error("Error setting groups. gid: %d Error: %s", pod->gid,
-	      strerror(errno));
+    log_error("Space: %s error setting groups. gid: %d Error: %s", space->name,
+	      space->gid, strerror(errno));
     return FALSE;
   }
 
-  ret = setresgid(pod->gid, pod->gid, pod->gid);
+  ret = setresgid(space->gid, space->gid, space->gid);
   if (ret != 0) {
-    log_error("Error setting group id to: %d Error: %s", pod->gid,
-	      strerror(errno));
+    log_error("Space: %s Error setting group id to: %d Error: %s", space->name,
+	      space->gid, strerror(errno));
     return FALSE;
   }
 
-  ret = setresuid(pod->uid, pod->uid, pod->uid);
+  ret = setresuid(space->uid, space->uid, space->uid);
   if (ret != 0) {
-    log_error("Error setting user id to: %d Error: %s", pod->uid,
-	      strerror(errno));
+    log_error("Space: %s Error setting user id to: %d Error: %s", space->name,
+	      space->uid, strerror(errno));
     return FALSE;
   }
 
@@ -265,7 +218,7 @@ static int setup_user_namespace(Pod *pod) {
  * prepare_child_map_files -- setup map files (uid_map, gid_map and setgroups)
  *
  */
-static int prepare_child_map_files(pid_t pid, Pod *pod) {
+static int prepare_child_map_files(pid_t pid, CSpace *space) {
 
   int ns=0, size;
   int mapFd = 0;
@@ -273,9 +226,9 @@ static int prepare_child_map_files(pid_t pid, Pod *pod) {
   char mapPath[LXCE_MAX_PATH] = {0};
   char **file;
 
-  if (pod==NULL) return FALSE;
+  if (space==NULL) return FALSE;
 
-  size = read(pod->sockets[0], &ns, sizeof(ns));
+  size = read(space->sockets[0], &ns, sizeof(ns));
   if (size != sizeof(ns)) {
     log_error("Error reading from client socket. Expected size: %d Got: %d",
 	      sizeof(ns), size);
@@ -283,7 +236,7 @@ static int prepare_child_map_files(pid_t pid, Pod *pod) {
   }
 
   if (!ns) {
-    log_error("Child user namespace issue. unshare.");
+    log_error("Space: %s Child user namespace issue. unshare.", space->name);
     return FALSE;
   }
 
@@ -291,24 +244,24 @@ static int prepare_child_map_files(pid_t pid, Pod *pod) {
     sprintf(mapPath, "/proc/%d/%s", pid, *file);
 
     if ((mapFd = open(mapPath, O_WRONLY)) == -1) {
-      log_error("Error opening map file: %s Error: %s", mapPath,
-		strerror(errno));
+      log_error("Space: %s Error opening map file: %s Error: %s", space->name,
+		mapPath, strerror(errno));
       return FALSE;
     }
 
     if (dprintf(mapFd, "0 %d 1\n", USER_NS_OFFSET) == -1) {
-      log_error("Error writing to map file: %s Error: %s", mapPath,
-		strerror(errno));
+      log_error("Space: %s Error writing to map file: %s Error: %s",
+		space->name, mapPath, strerror(errno));
       close(mapFd);
       return FALSE;
     }
   }
 
   /* Inform child, it can proceed. */
-  size = write(pod->sockets[0], &(int){TRUE}, sizeof(int));
+  size = write(space->sockets[0], &(int){TRUE}, sizeof(int));
   if (size != sizeof(int)) {
-    log_error("Error writing to child socket. Expected size: %d Wrote: %d",
-	      sizeof(int), size);
+    log_error("Space: %s Error writing to child socket", space->name);
+    log_error("Expected size: %d Wrote: %d", sizeof(int), size);
     return FALSE;
   }
 
@@ -319,27 +272,28 @@ static int prepare_child_map_files(pid_t pid, Pod *pod) {
  * setup_mounts --
  *
  */
-static int setup_mounts(Pod *pod) {
+static int setup_mounts(CSpace *space) {
 
   int ret=FALSE;
   char tempMount[] = "/tmp/tmp.ukama.XXXXXX"; /* last 6 char needs to be X */
   char oldRoot[]   = "/tmp/tmp.ukama.XXXXXX/oldroot.XXXXXX"; /* same */
 
   if (mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL)) {
-    log_error("Failed to remount as MS_PRIVATE. Error: %s", strerror(errno));
+    log_error("Space: %s Failed to remount as MS_PRIVATE. Error: %s",
+	      space->name, strerror(errno));
     return ret;
   }
 
   /* make temp and bind mount */
   if (!mkdtemp(tempMount)) {
-    log_error("Failed to make temp dir: %s. Error: %s", tempMount,
-	      strerror(errno));
+    log_error("Space: %s Failed to make temp dir: %s. Error: %s", space->name,
+	      tempMount, strerror(errno));
     return FALSE;
   }
 
-  if (mount(pod->mountDir, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
-    log_error("Failed to do bind mount. %s %s Error: %s", pod->mountDir,
-	      tempMount, strerror(errno));
+  if (mount(space->mountDir, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
+    log_error("Space: %s Failed to do bind mount. %s %s Error: %s",
+	      space->name, space->mountDir, tempMount, strerror(errno));
     return FALSE;
   }
 
@@ -350,12 +304,12 @@ static int setup_mounts(Pod *pod) {
   }
 
   /* pivot root */
-  if (syscall(SYS_pivot_root, pod->mountDir, oldRoot)) {
-    log_error("Failed to pivot_root from %s to %s", pod->mountDir, oldRoot);
+  if (syscall(SYS_pivot_root, space->mountDir, oldRoot)) {
+    log_error("Failed to pivot_root from %s to %s", space->mountDir, oldRoot);
     return FALSE;
   }
 
-  log_debug("Pivot root sucessfully done. from %s to %s", pod->mountDir,
+  log_debug("Pivot root sucessfully done. from %s to %s", space->mountDir,
 	    oldRoot);
 
   /* clean up */
@@ -375,108 +329,94 @@ static int setup_mounts(Pod *pod) {
 }
 
 /*
- * cInit_clone --
+ * cspace_init_clone --
  *
  */
-static int cInit_clone(void *arg) {
+static int cspace_init_clone(void *arg) {
 
-  Pod *pod = (Pod *)arg;
-  char *hostName;
+  CSpace *space = (CSpace *)arg;
+  char *hostName=NULL;
 
-  if (pod->hostName) {
-    hostName = pod->hostName;
+  if (space->hostName) {
+    hostName = space->hostName;
   } else {
-    hostName = CONTD_DEFAULT_HOSTNAME;
+    hostName = CSPACE_DEFAULT_HOSTNAME;
   }
 
   /* Step-1: setup hostname. */
   if (sethostname(hostName, strlen(hostName))) {
-    log_error("Error setting host name: %s", hostName);
+    log_error("Sapce: %s Error setting host name: %s", space->name,
+	      hostName);
     return FALSE;
   }
 
   /* Step-2: setup security profile (cap and seccomp) */
-  setup_pod_security_profile(pod->type);
+  setup_cspace_security_profile(space);
 
   /* Step-3: setup mounts*/
-  setup_mounts(pod);
-  
+  setup_mounts(space);
+
   /* Step-4: setup user namespace */
-  setup_user_namespace(pod);
-  
+  setup_user_namespace(space);
+
   return TRUE;
 }
 
 /*
- * create_ukama_pod -- Create POD for the three type of containers:
- *                     boot, service and shutdown. Each POD has its own
- *                     namespace (PID, UID, NET, MOUNT) and cgroups.
- *                     A simple process PID-1 cInit.d is running within
- *                     each POD responsible to process request and act as
- *                     parent process of every container running within the
- *                     POD.
+ * create_cspace -- create contained spaces
  */
-int create_ukama_pod(Pod *pod, Manifest *manifest, char *type) {
+int create_cspace(CSpace *space) {
 
-  int cloneFlags=0;
   int childStatus;
   pid_t pid;
   char *stack=NULL;
   
-  /* logic is as follows, for each pod type in the manifest:
+  /* logic is as follows:
    *
    * 1. Create socketpair - this will be used to communicate between lxce and
-   *                        cInit.d
+   *                        cSpace
    * 2. Setup proper cgroups.
    * 3. Clone with proper flags for namespaces
    * 4. setup mount
    * 5. setup user namespace
    * 6. Limit capabilities
-   * 7. Restrict system calls
-   * 8. execv
+   * 7. execv into cSpace.init
    */
 
   /* Sanity check */
-  if (pod == NULL || manifest == NULL) return FALSE;
-
-  pod->type = strdup(type);
+  if (space == NULL) return FALSE;
   
   /* Create socket pairs.
    * Re: SOCK_SEQPACKET:
    * http://urchin.earth.li/~twic/Sequenced_Packets_Over_Ordinary_TCP.html
    */
-  if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, pod->sockets)) {
-    log_error("Error creating socket pair for pod type: %s", pod->type);
+  if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, space->sockets)) {
+    log_error("Space: %s Error creating socket pair", space->name);
     return FALSE;
   }
 
   /* child only access one. */
-  if (fcntl(pod->sockets[0], F_SETFD, FD_CLOEXEC)) {
-    fprintf(stderr, "Failed to close socket via fcntl for type: %s",
-	    pod->type);
-    if (pod->sockets[0]) close(pod->sockets[0]);
-    if (pod->sockets[1]) close(pod->sockets[1]);
+  if (fcntl(space->sockets[0], F_SETFD, FD_CLOEXEC)) {
+    fprintf(stderr, "Space: %s Failed to close socket via fcntl", space->name);
+    if (space->sockets[0]) close(space->sockets[0]);
+    if (space->sockets[1]) close(space->sockets[1]);
     
     return FALSE;
   }
 
   /* clone with proper flags for namespaces */
-  cloneFlags = SIGCHLD |
-    CLONE_NEWNS     |
-    CLONE_NEWPID    |
-    CLONE_NEWUTS;
-
-  pid = clone(cInit_clone, stack + STACK_SIZE, cloneFlags, pod);
+  pid = clone(cspace_init_clone, stack + STACK_SIZE,
+	      SIGCHLD | space->nameSpaces, space);
   if (pid == -1) {
-    log_error("Unable to clone cInit for type: %s", pod->type);
+    log_error("Space: %s Unable to clone cInit", space->name);
     return FALSE;
   }
 
-  close(pod->sockets[1]);
-  pod->sockets[1] = 0;
+  close(space->sockets[1]);
+  space->sockets[1] = 0;
 
   /* prepare child process gid/uid map files. */
-  if (prepare_child_map_files(pid, pod) == FALSE) {
+  if (prepare_child_map_files(pid, space) == FALSE) {
     log_error("Error preparing map files for child process. Terminating it");
     kill(pid, SIGKILL);
     return FALSE;
@@ -485,8 +425,8 @@ int create_ukama_pod(Pod *pod, Manifest *manifest, char *type) {
   /* Wait on child. XXX - fix me.*/
   waitpid(pid, &childStatus, 0);
 
-  if (pod->sockets[0]) close(pod->sockets[0]);
-  if (pod->sockets[1]) close(pod->sockets[1]);
+  if (space->sockets[0]) close(space->sockets[0]);
+  if (space->sockets[1]) close(space->sockets[1]);
   
   return TRUE;
 }
@@ -596,10 +536,10 @@ static int str_to_cap(char *str) {
 }
 
 /*
- * deserialize_contdSpace_file -- convert the json into internal struct
+ * deserialize_cspace_file -- convert the json into internal struct
  *
  */
-static int deserialize_contdSpace_file(ContdSpace *space, json_t *json) {
+static int deserialize_cspace_file(CSpace *space, json_t *json) {
 
   int j=0, size=0;
   json_t *obj;
@@ -629,7 +569,7 @@ static int deserialize_contdSpace_file(ContdSpace *space, json_t *json) {
   }
 
   set_str_object_value(json, space->hostName, JSON_HOSTNAME, FALSE,
-		       CONTD_DEFAULT_HOSTNAME);
+		       CSPACE_DEFAULT_HOSTNAME);
 
   set_integer_object_value(json, &space->uid, JSON_UID, FALSE, 0);
   set_integer_object_value(json, &space->gid, JSON_GID, FALSE, 0);
@@ -680,10 +620,10 @@ static int deserialize_contdSpace_file(ContdSpace *space, json_t *json) {
 }
 
 /*
- * process_contdSpace_config --
+ * process_cspace_config --
  *
  */
-int process_contdSpace_config(char *fileName, ContdSpace *contdSpace) {
+int process_cspace_config(char *fileName, CSpace *space) {
 
   int ret=FALSE;
   FILE *fp=NULL;
@@ -694,7 +634,7 @@ int process_contdSpace_config(char *fileName, ContdSpace *contdSpace) {
 
   /* Sanity check */
   if (fileName==NULL) return FALSE;
-  if (contdSpace==NULL) return FALSE;
+  if (space==NULL) return FALSE;
 
   if ((fp = fopen(fileName, "rb")) == NULL) {
     log_error("Error opening file: %s Error %s", fileName, strerror(errno));
@@ -732,7 +672,11 @@ int process_contdSpace_config(char *fileName, ContdSpace *contdSpace) {
   }
 
   /* Now convert JSON into internal struct */
-  ret = deserialize_contdSpace_file(contdSpace, json);
+  ret = deserialize_cspace_file(space, json);
+
+  if (space) {
+    space->configFile = strdup(fileName);
+  }
 
  done:
   if (buffer) free(buffer);

@@ -98,7 +98,6 @@ void usage() {
   printf("--h, --help                         Help menu.\n");
   printf("--c, --config                       Config file.\n");
   printf("--m, --manifest                     Manifest file.\n");
-  printf("--s, --setup                        Contained setup file.\n");
   printf("--l, --level <TRACE | DEBUG | INFO> Log level for the process.\n");
   printf("--V, --version                      Version.\n");
 }
@@ -127,13 +126,14 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret=0, count=0;
+  int ret=0, count=0, i;
   char *debug = DEF_LOG_LEVEL;
   char *configFile = DEF_CONFIG_FILE;
   char *manifestFile = DEF_MANIFEST_FILE;
   struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
+  CSpace *cSpaces=NULL, *cPtr=NULL;
   
   /* Parsing command line args. */
   while (true) {
@@ -143,14 +143,13 @@ int main(int argc, char **argv) {
     static struct option long_options[] = {
       { "level",     required_argument, 0, 'l'},
       { "config",    required_argument, 0, 'c'},
-      { "setup",     required_argument, 0, 's'},
       { "manifest",  required_argument, 0, 'm'},
       { "help",      no_argument,       0, 'h'},
       { "version",   no_argument,       0, 'V'},
       { 0,           0,                 0,  0}
     };
 
-    opt = getopt_long(argc, argv, "l:c:s:m:hV:", long_options, &opdidx);
+    opt = getopt_long(argc, argv, "l:c:m:hV:", long_options, &opdidx);
     if (opt == -1) {
       break;
     }
@@ -198,14 +197,57 @@ int main(int argc, char **argv) {
   }
   print_config(config);
 
-  /* Step-2: process manifest.json file. */
+  /* Step-2: read cspace config file(s) */
+  if (config->cSpaceConfigs) {
+    cSpaces = (CSpace *)calloc(1, sizeof(CSpace));
+    if (!cSpaces) {
+      log_error("Memory allocation failure. Size: %d", sizeof(CSpace));
+      exit(1);
+    }
+    cPtr = cSpaces;
+  }
+
+  for (i=0; ;i++) {
+
+    if (config->cSpaceConfigs[i]) {
+      if(!process_cspace_config(config->cSpaceConfigs[i], cPtr)) {
+	log_error("Error processing cSpace config file: %s",
+		  config->cSpaceConfigs[i]);
+	exit(1);
+      }
+    } else {
+      break;
+    }
+
+    if (config->cSpaceConfigs[i+1]) {
+      cPtr->next =  (CSpace *)calloc(1, sizeof(CSpace));
+    } else {
+      cPtr->next = NULL;
+    }
+    cPtr = cPtr->next;
+  }
+
+  /* Step-3: setup cSpaces */
+  cPtr = cSpaces;
+  if (cPtr) {
+    /* Iterate over each items and create their respective cSpaces. */
+    if (!create_cspace(cPtr)) {
+      log_error("Error creating cspace: %s using config file: %s. Exiting",
+		cPtr->name, cPtr->configFile);
+      exit(1);
+    } else {
+      log_debug("Successfully created cspace: %s", cPtr->name);
+    }
+  }
+
+  /* Step-4: process manifest.json file. */
   manifest = (Manifest *)calloc(1, sizeof(Manifest));
   if (!manifest) {
     log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
     exit(1);
   }
 
-  if (process_manifest(manifestFile, manifest) != TRUE) {
+  if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
     log_error("Error process the manifest file: %s", manifestFile);
     exit(1);
   }

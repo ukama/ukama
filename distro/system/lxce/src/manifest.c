@@ -18,14 +18,36 @@
 #include "manifest.h"
 #include "log.h"
 #include "lxce_config.h"
+#include "contained.h"
+
+/*
+ * is_valid_cspace --
+ *
+ */
+static int is_valid_cspace(char *name, CSpace *space) {
+
+  CSpace *ptr=space;
+
+  if (!ptr) return FALSE;
+
+  while (ptr) {
+    if (strcmp(ptr->name, name)==0) {
+      return TRUE;
+    }
+    ptr = ptr->next;
+  }
+
+  return FALSE;
+}
 
 /*
  * deserialize_cApp --
  *
  */
-static int deserialize_cApp(ArrayElem *elem, json_t *json) {
+static int deserialize_cApp(ArrayElem *elem, json_t *json, CSpace *spaces) {
 
   json_t *name, *tag, *restart, *contained;
+  char *tmp;
 
   name      = json_object_get(json, JSON_NAME);
   tag       = json_object_get(json, JSON_TAG);
@@ -37,8 +59,15 @@ static int deserialize_cApp(ArrayElem *elem, json_t *json) {
     return FALSE;
   }
 
-  elem->name = strdup(json_string_value(name));
-  elem->tag  = strdup(json_string_value(tag));
+  tmp = json_string_value(contained);
+
+  if (is_valid_cspace(tmp, spaces)==FALSE) {
+    log_error("Invalid cSpace \"%s\" in the config.", tmp);
+    return FALSE;
+  }
+
+  elem->name      = strdup(json_string_value(name));
+  elem->tag       = strdup(json_string_value(tag));
   elem->contained = strdup(json_string_value(contained));
 
   if (restart) {
@@ -53,10 +82,11 @@ static int deserialize_cApp(ArrayElem *elem, json_t *json) {
 }
 
 /*
- * deserialize_manifest_file -- convert the json into internal struct.
+ * deserialize_manifest_file -- convert the json into internal struct
  *
  */
-static int deserialize_manifest_file(Manifest *manifest, json_t *json) {
+static int deserialize_manifest_file(Manifest *manifest, CSpace *spaces,
+				     json_t *json) {
 
   int j=0, size=0;
   json_t *obj;
@@ -111,7 +141,7 @@ static int deserialize_manifest_file(Manifest *manifest, json_t *json) {
 	    return FALSE;
 	  }
 
-	  if (deserialize_cApp(*elem, jElem)) {
+	  if (deserialize_cApp(*elem, jElem, spaces)) {
 	    elem = &((*elem)->next);
 	  } else {
 	    log_error("Error parsing %s", JSON_CAPP);
@@ -131,7 +161,7 @@ static int deserialize_manifest_file(Manifest *manifest, json_t *json) {
  * process_manifest -- parse the manifest file.
  *
  */
-int process_manifest(char *fileName, Manifest *manifest) {
+int process_manifest(char *fileName, Manifest *manifest, void *arg) {
 
   int ret=FALSE;
   FILE *fp;
@@ -139,6 +169,7 @@ int process_manifest(char *fileName, Manifest *manifest) {
   long size=0;
   json_t *json;
   json_error_t jerror;
+  CSpace *spaces = (CSpace *)arg;
 
   /* Sanity check */
   if (fileName==NULL) return FALSE;
@@ -181,7 +212,7 @@ int process_manifest(char *fileName, Manifest *manifest) {
   }
 
   /* Now convert JSON into internal struct */
-  ret = deserialize_manifest_file(manifest, json);
+  ret = deserialize_manifest_file(manifest, spaces, json);
 
  done:
   if (buffer) free(buffer);

@@ -16,11 +16,7 @@
 
 #include "manifest.h"
 
-#define POD_TYPE_BOOT     "boot"
-#define POD_TYPE_SERVICE  "service"
-#define POD_TYPE_SHUTDOWN "shutdown"
-
-#define CONTD_DEFAULT_HOSTNAME "localhost"
+#define CSPACE_DEFAULT_HOSTNAME "localhost"
 
 /* For parsing the contained configuration file */
 
@@ -31,7 +27,7 @@
 #define JSON_NAMESPACES   "namespaces"
 #define JSON_CAPABILITIES "capabilitles"
 
-#define STACK_SIZE (1024*1024)
+#define STACK_SIZE      (1024*1024)
 #define CONFIG_MAX_SIZE 1000000
 
 #define LXCE_MAX_PATH  256
@@ -43,7 +39,7 @@
 
 /* Definition of Ukama's contained space as per config file */
 
-typedef struct _contdSpace {
+typedef struct _cSpace {
 
   char *version;      /* contained space version */
   
@@ -53,29 +49,22 @@ typedef struct _contdSpace {
   char *name;         /* name of the contained space */
   char *hostName;     /* host name associated with space */
 
+  char *mountDir;     /* Mount directory */
+
   uid_t uid;          /* default uid of space */
   gid_t gid;          /* default gid of space */
 
-  int nameSpaces;  /* linux namespaces enabled in this space */
+  int nameSpaces;     /* linux namespaces enabled in this space */
 
   int capCount;       /* number of linux capabilities */
   int cap[CONTD_MAX_CAPS]; /* list of capabilities enabled in this space */
 
-  struct _contdSpace *next; /* pointer to next contained space */
-} ContdSpace; 
-
-typedef struct _pod {
-
-  int  sockets[2]; /* socket pair between the cInit.d and lxce.d */
-  char *type;      /* POD_TYPE_XXX */
-  char *hostName;  /* hostname for the Pod */
+  int sockets[2];     /* socket pair */
+  char *configFile;   /* Config file - defined in the config.toml */
   
-  uid_t uid;       /* uid the cInit will run as */
-  gid_t gid;       /* gid the cInit will run as */
+  struct _cSpace *next; /* pointer to next contained space */
+} CSpace;
 
-  char *mountDir;
-} Pod;
-
-int create_ukama_pods(Pod *pods, Manifest *manifest, char *type);
+int create_cspace(CSpace *space);
 
 #endif /* LXCE_CONTAINED_H */

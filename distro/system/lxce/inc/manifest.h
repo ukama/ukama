@@ -54,7 +54,7 @@ typedef struct {
 } Manifest;
 
 /* Function headers. */
-int process_manifest(char *fileName, Manifest *manifest);
+int process_manifest(char *fileName, Manifest *manifest, void *space);
 void get_containers_local_path(Manifest *manifest, Config *config);
 void clear_manifest(Manifest *manifest);
 
