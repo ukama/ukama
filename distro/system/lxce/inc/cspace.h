@@ -8,11 +8,11 @@
  */
 
 /*
- * contained.h
+ * cspace.h
  */
 
-#ifndef LXCE_CONTAINED_H
-#define LXCE_CONTAINED_H
+#ifndef LXCE_CSPACE_H
+#define LXCE_CSPACE_H
 
 #include "manifest.h"
 
@@ -67,4 +67,4 @@ typedef struct _cSpace {
 
 int create_cspace(CSpace *space);
 
-#endif /* LXCE_CONTAINED_H */
+#endif /* LXCE_CSPACE_H */

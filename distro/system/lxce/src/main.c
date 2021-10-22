@@ -26,7 +26,7 @@
 #include "toml.h"
 #include "lxce_config.h"
 #include "manifest.h"
-#include "contained.h"
+#include "cspace.h"
 
 #define VERSION "0.0.1"
 

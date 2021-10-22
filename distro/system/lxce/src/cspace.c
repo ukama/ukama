@@ -33,7 +33,7 @@
 #include <grp.h>
 #include <signal.h>
 
-#include "contained.h"
+#include "cspace.h"
 #include "manifest.h"
 #include "log.h"
 

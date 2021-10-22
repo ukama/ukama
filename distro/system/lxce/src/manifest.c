@@ -18,7 +18,7 @@
 #include "manifest.h"
 #include "log.h"
 #include "lxce_config.h"
-#include "contained.h"
+#include "cspace.h"
 
 /*
  * is_valid_cspace --
