@@ -12,7 +12,7 @@ export const TRANSLATIONS_EN = {
         FirstNameLabel: "FIRST-NAME",
         LastNameLabel: "LAST-NAME",
         SignUpLinkLabel: "Sign up instead",
-        LinkLabel: "Login instead ",
+        LinkLabel: "Log in instead ",
         CancelButtonLable: "CANCEL",
         NewPasswordLabel: "New Password",
         ReturnToLoginLink: "RETURN TO LOGIN",
@@ -21,8 +21,8 @@ export const TRANSLATIONS_EN = {
     SIGNUP: {
         FormTitle: "Sign up for Ukama",
         ButtonLabel: "SIGN UP",
-        ButtonWithGoogleLabel: "SIGN UP IN WITH GOOGLE",
-        FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account? `,
+        ButtonWithGoogleLabel: "SIGN UP WITH GOOGLE",
+        FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account?  `,
     },
     RESET_PASSWORD: {
         FormTitle: "Recover Password",

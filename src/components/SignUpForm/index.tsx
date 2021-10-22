@@ -60,58 +60,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <Typography variant="h3">
                                 {t("SIGNUP.FormTitle")}
                             </Typography>
-                            <Box sx={{ flexGrow: 1 }}>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={6}>
-                                        <TextField
-                                            fullWidth
-                                            id="firstName"
-                                            name="firstName"
-                                            label={t("CONSTANT.FirstNameLabel")}
-                                            value={values.firstName}
-                                            onChange={handleChange}
-                                            InputLabelProps={{ shrink: true }}
-                                            InputProps={{
-                                                classes: {
-                                                    input: classes.inputFieldStyle,
-                                                },
-                                            }}
-                                            helperText={
-                                                touched.firstName &&
-                                                errors.firstName
-                                            }
-                                            error={
-                                                touched.firstName &&
-                                                Boolean(errors.firstName)
-                                            }
-                                        />
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <TextField
-                                            fullWidth
-                                            id="lastName"
-                                            name="lastName"
-                                            label={t("CONSTANT.LastNameLabel")}
-                                            value={values.lastName}
-                                            onChange={handleChange}
-                                            InputLabelProps={{ shrink: true }}
-                                            InputProps={{
-                                                classes: {
-                                                    input: classes.inputFieldStyle,
-                                                },
-                                            }}
-                                            helperText={
-                                                touched.lastName &&
-                                                errors.lastName
-                                            }
-                                            error={
-                                                touched.lastName &&
-                                                Boolean(errors.lastName)
-                                            }
-                                        />
-                                    </Grid>
-                                </Grid>
-                            </Box>
 
                             <TextField
                                 fullWidth
@@ -151,9 +99,9 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <Visibility />
-                                                ) : (
                                                     <VisibilityOff />
+                                                ) : (
+                                                    <Visibility />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
@@ -166,7 +114,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             />
 
                             <Button
-                                size="large"
+                                size="medium"
                                 type="submit"
                                 color="primary"
                                 variant="contained"
@@ -178,7 +126,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <Divider />
 
                             <Button
-                                size="large"
+                                size="medium"
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
                                 onClick={() => onGoogleSignUp()}

@@ -1,9 +1,10 @@
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import colors from "../../theme/colors";
 import { Grid, Typography } from "@mui/material";
 import { passwordRules } from "../../constants";
 import { makeStyles } from "@mui/styles";
-
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import CheckCircleSharpIcon from "@mui/icons-material/CheckCircleSharp";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 const useStyles = makeStyles(() => ({
     progressIcon: {
         verticalAlign: "middle",
@@ -35,7 +36,8 @@ const PasswordRequirementIndicator = ({
                     return (
                         <Grid xs={6} item key={rules.id}>
                             <Typography variant="body2">
-                                <CheckCircleOutlineIcon
+                                <CheckCircleIcon
+                                    fontSize="small"
                                     className={classes.progressIcon}
                                     style={{
                                         color: rules.validator(password)
