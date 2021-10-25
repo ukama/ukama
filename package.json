@@ -16,6 +16,7 @@
     "react-i18next": "^11.12.0",
     "react-router-dom": "^5.2.1",
     "react-scripts": "4.0.3",
+    "recoil": "^0.4.1",
     "yup": "^0.32.10"
   },
   "scripts": {
