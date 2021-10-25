@@ -4,15 +4,13 @@ export const TRANSLATIONS_EN = {
         ForgotPasswordLabel: "Forgot password?",
         ButtonLabel: "LOG IN",
         ButtonWithGoogle: "LOG IN WITH GOOGLE",
-        FooterNoteText: "Don’t have an account?",
+        FooterNoteText: "Don’t have an account? ",
     },
     CONSTANT: {
         EmailLabel: "EMAIL",
         PasswordLabel: "PASSWORD",
-        FirstNameLabel: "FIRST-NAME",
-        LastNameLabel: "LAST-NAME",
         SignUpLinkLabel: "Sign up instead",
-        LinkLabel: "Login instead ",
+        LinkLabel: "Log in instead ",
         CancelButtonLable: "CANCEL",
         NewPasswordLabel: "New Password",
         ReturnToLoginLink: "RETURN TO LOGIN",
@@ -21,8 +19,8 @@ export const TRANSLATIONS_EN = {
     SIGNUP: {
         FormTitle: "Sign up for Ukama",
         ButtonLabel: "SIGN UP",
-        ButtonWithGoogleLabel: "SIGN UP IN WITH GOOGLE",
-        FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account? `,
+        ButtonWithGoogleLabel: "SIGN UP WITH GOOGLE",
+        FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account?  `,
     },
     RESET_PASSWORD: {
         FormTitle: "Recover Password",
@@ -31,7 +29,7 @@ export const TRANSLATIONS_EN = {
     RECOVER_PASSWORD: {
         ImportantNote: "Link will expire in 30 minutes.",
         FormTitle: " RECOVER PASSWORD",
-        FormNote: `If an account with the email /email exists, an email will be sent with further instructions.`,
+        FormNote: `If an account with the email /EmailTag exists, an email will be sent with further instructions.`,
     },
     FORGOT_PASSWORD: {
         FormTitle: "  Recover Password",
