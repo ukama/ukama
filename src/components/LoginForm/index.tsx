@@ -8,7 +8,6 @@ import {
     Typography,
     InputAdornment,
 } from "@mui/material";
-import { FormDialog } from "../index";
 import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
@@ -41,15 +40,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
 
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
-    };
-    const [open, setOpen] = useState(false);
-
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
-
-    const handleClose = () => {
-        setOpen(false);
     };
 
     return (

@@ -1,14 +1,18 @@
 import * as React from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogTitle from "@mui/material/DialogTitle";
-import { globalUseStyles } from "../../styles";
-import Grid from "@mui/material/Grid";
 import { useTranslation } from "react-i18next";
+import CloseIcon from "@mui/icons-material/Close";
+
+import {
+    Box,
+    Button,
+    IconButton,
+    DialogTitle,
+    DialogContentText,
+    DialogContent,
+    DialogActions,
+    Dialog,
+    Grid,
+} from "@mui/material";
 import "../../i18n/i18n";
 type FormDialogProps = {
     dialogTitle?: string;
@@ -32,7 +36,16 @@ const FormDialog = ({
     return (
         <div>
             <Dialog open={open} onClose={onClose}>
-                <DialogTitle>{dialogTitle}</DialogTitle>
+                <DialogTitle>
+                    <Box display="flex" alignItems="center">
+                        <Box flexGrow={1}> {dialogTitle}</Box>
+                        <Box>
+                            <IconButton onClick={onClose}>
+                                <CloseIcon />
+                            </IconButton>
+                        </Box>
+                    </Box>
+                </DialogTitle>
                 <DialogContent>
                     <DialogContentText>{dialogContent}</DialogContentText>
                     {formField}
