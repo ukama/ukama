@@ -23,10 +23,7 @@ const ForgotPasswordConfirmationMessage = ({
 
             <MessageContainer>
                 <Typography variant="body1" sx={{ letterSpacing: "0.15 px" }}>
-                    {AddEmail(
-                        t("RECOVER_PASSWORD.FormNote"),
-                        "Brackley@ukama.com"
-                    )}
+                    {AddEmail(t("RECOVER_PASSWORD.FormNote"), email)}
                     <b>{t("RECOVER_PASSWORD.ImportantNote")}</b>
                 </Typography>
             </MessageContainer>

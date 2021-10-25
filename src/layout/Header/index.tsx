@@ -15,8 +15,7 @@ import {
     Settings,
     AccountCircle,
 } from "@mui/icons-material";
-const drawerWidth = 240;
-
+import { DRAWER_WIDTH } from "../../constants";
 type HeaderProps = {
     pageName: string;
 };
@@ -125,8 +124,8 @@ const Header = ({ pageName }: HeaderProps) => {
             <AppBar
                 position="fixed"
                 sx={{
-                    width: `calc(100% - ${drawerWidth}px)`,
-                    ml: `${drawerWidth}px`,
+                    width: `calc(100% - ${DRAWER_WIDTH}px)`,
+                    ml: `${DRAWER_WIDTH}px`,
                 }}
                 color="transparent"
                 elevation={0}

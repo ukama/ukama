@@ -10,33 +10,46 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 import { useHistory } from "react-router-dom";
+import { Dispatch, SetStateAction } from "react";
 
 type SidebarProps = {
+    path: string;
     isOpen: boolean;
     handleDrawerToggle: Function;
+    setPath: Dispatch<SetStateAction<string>>;
 };
 
-const Sidebar = ({ isOpen, handleDrawerToggle }: SidebarProps, props: any) => {
+const Sidebar = (
+    { isOpen, handleDrawerToggle, path, setPath }: SidebarProps,
+    props: any
+) => {
     const { window } = props;
     const history = useHistory();
-
     const drawer = (
         <div>
             <Toolbar>
                 <Logo width={"100%"} height={"40px"} />
             </Toolbar>
 
-            <List>
+            <List sx={{ padding: "8px 14px" }}>
                 {SIDEBAR_MENU1.map(
                     ({ id, title, Icon, route }: MenuItemType) => (
                         <ListItem
                             button
                             key={id}
                             href={route}
-                            onClick={() => history.push(route)}
+                            selected={route === path}
+                            onClick={() => {
+                                setPath(route);
+                                history.push(route);
+                            }}
+                            sx={{
+                                borderRadius: "4px",
+                                opacity: 1,
+                            }}
                         >
                             <ListItemIcon>
-                                <Icon />
+                                <Icon style={{ fill: "white" }} />
                             </ListItemIcon>
                             <ListItemText primary={title} />
                         </ListItem>
