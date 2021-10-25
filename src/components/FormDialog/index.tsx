@@ -55,10 +55,8 @@ const FormDialog = ({
                         <Grid container item xs={4} justifyContent="flex-start">
                             {showBackButton ? (
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     type="submit"
-                                    color="primary"
-                                    variant="contained"
                                     sx={{ fontWeight: 600 }}
                                 >
                                     {t("CONSTANT.BackButtonLable")}
@@ -68,18 +66,16 @@ const FormDialog = ({
 
                         <Grid container item xs={8} justifyContent="flex-end">
                             <Button
-                                size="large"
+                                size="medium"
                                 type="submit"
-                                color="primary"
-                                variant="contained"
                                 sx={{ fontWeight: 600 }}
                                 style={{ marginRight: "0.5em" }}
                             >
                                 {t("CONSTANT.CancelButtonLable")}
                             </Button>
                             <Button
-                                size="large"
-                                variant="outlined"
+                                size="medium"
+                                variant="contained"
                                 sx={{ fontWeight: 600 }}
                             >
                                 {submitButtonLabel}
