@@ -4,9 +4,11 @@ import { LinkStyle, MessageContainer } from "../../styles";
 import { useTranslation } from "react-i18next";
 import { AddEmail } from "../../utils/I18nHelper";
 import "../../i18n/i18n";
+
 type ForgotPasswordConfirmationMessageProps = {
     email: string;
 };
+
 const ForgotPasswordConfirmationMessage = ({
     email,
 }: ForgotPasswordConfirmationMessageProps) => {
