@@ -69,6 +69,7 @@ export const routes: IRoute[] = [
         private: false,
         fallback: Loader,
     },
+
     {
         path: "/*",
         component: lazy(() => import("../pages/ErrorPage")),

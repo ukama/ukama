@@ -8,6 +8,7 @@ import {
     Typography,
     InputAdornment,
 } from "@mui/material";
+import { FormDialog } from "../index";
 import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
@@ -37,8 +38,18 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
     const classes = globalUseStyles();
     const { t } = useTranslation();
     const [togglePassword, setTogglePassword] = useState(false);
+
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
+    };
+    const [open, setOpen] = useState(false);
+
+    const handleClickOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
     };
 
     return (
@@ -126,7 +137,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             >
                                 {t("LOGIN.ButtonWithGoogle")}
                             </Button>
-
                             <Typography
                                 variant="body2"
                                 sx={{ letterSpacing: "0.4px" }}

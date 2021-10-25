@@ -22,4 +22,5 @@ const passwordRules = [
         validator: checkPasswordHasLetters,
     },
 ];
+
 export { passwordRules };

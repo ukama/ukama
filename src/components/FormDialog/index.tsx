@@ -7,96 +7,72 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import { globalUseStyles } from "../../styles";
-type FieldsProps = {
-    id: string;
-    name: string;
-    label: string;
-    value: string;
-    onChange: any;
-    helperText: string;
-    error: boolean;
-};
+import Grid from "@mui/material/Grid";
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 type FormDialogProps = {
     dialogTitle?: string;
     dialogContent?: string;
-    formFields?: [];
-    cancelButton?: any;
-    backButton?: any;
-    submitButton?: any;
+    showBackButton?: boolean;
+    submitButtonLabel?: string;
+    open: boolean;
+    onClose: () => void;
+    formField: React.ReactElement;
 };
 const FormDialog = ({
     dialogTitle,
     dialogContent,
-    formFields,
-    cancelButton,
-    backButton,
-    submitButton,
+    formField,
+    showBackButton,
+    submitButtonLabel,
+    open,
+    onClose,
 }: FormDialogProps) => {
-    const [open, setOpen] = React.useState(false);
-    const classes = globalUseStyles();
-    const handleClose = () => {
-        setOpen(false);
-    };
-
+    const { t } = useTranslation();
     return (
         <div>
-            <Dialog open={open} onClose={handleClose}>
+            <Dialog open={open} onClose={onClose}>
                 <DialogTitle>{dialogTitle}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>{dialogContent}</DialogContentText>
-                    {formFields &&
-                        formFields.map((fields: FieldsProps) => {
-                            return (
-                                <>
-                                    <TextField
-                                        fullWidth
-                                        id={fields.id}
-                                        name={fields.name}
-                                        label={fields.label}
-                                        value={fields.value}
-                                        onChange={fields.onChange}
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{
-                                            classes: {
-                                                input: classes.inputFieldStyle,
-                                            },
-                                        }}
-                                        helperText={fields.helperText}
-                                        error={fields.error}
-                                    />
-                                </>
-                            );
-                        })}
+                    {formField}
                 </DialogContent>
                 <DialogActions>
-                    <Button
-                        size="large"
-                        type="submit"
-                        color="primary"
-                        variant="contained"
-                        sx={{ fontWeight: 600 }}
-                    >
-                        {cancelButton}
-                    </Button>
-                    <Button
-                        size="large"
-                        type="submit"
-                        color="primary"
-                        variant="contained"
-                        sx={{ fontWeight: 600 }}
-                    >
-                        {submitButton}
-                    </Button>
+                    <Grid container spacing={1} style={{ margin: "10px" }}>
+                        <Grid container item xs={4} justifyContent="flex-start">
+                            {showBackButton ? (
+                                <Button
+                                    size="large"
+                                    type="submit"
+                                    color="primary"
+                                    variant="contained"
+                                    sx={{ fontWeight: 600 }}
+                                >
+                                    {t("CONSTANT.BackButtonLable")}
+                                </Button>
+                            ) : null}
+                        </Grid>
 
-                    <Button
-                        size="large"
-                        type="submit"
-                        color="primary"
-                        variant="contained"
-                        sx={{ fontWeight: 600 }}
-                    >
-                        {backButton}
-                    </Button>
+                        <Grid container item xs={8} justifyContent="flex-end">
+                            <Button
+                                size="large"
+                                type="submit"
+                                color="primary"
+                                variant="contained"
+                                sx={{ fontWeight: 600 }}
+                                style={{ marginRight: "0.5em" }}
+                            >
+                                {t("CONSTANT.CancelButtonLable")}
+                            </Button>
+                            <Button
+                                size="large"
+                                variant="outlined"
+                                sx={{ fontWeight: 600 }}
+                            >
+                                {submitButtonLabel}
+                            </Button>
+                        </Grid>
+                    </Grid>
                 </DialogActions>
             </Dialog>
         </div>
