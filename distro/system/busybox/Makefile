@@ -21,7 +21,7 @@ endif
 XCROSSCC = "$(XGCCPATH)$(XCROSS_COMPILER)"
 
 #Config for Builds
-BBCONFIG = ukama_defconfig
+BBCONFIG = $(BB_CONFIG)
 
 #Overiding  Architecture
 ifeq ($(ARCH), $(ARCHX86))
