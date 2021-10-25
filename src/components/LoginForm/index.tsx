@@ -93,9 +93,9 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <Visibility />
-                                                ) : (
                                                     <VisibilityOff />
+                                                ) : (
+                                                    <Visibility />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
@@ -108,7 +108,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             </LinkStyle>
 
                             <Button
-                                size="large"
+                                size="medium"
                                 type="submit"
                                 color="primary"
                                 variant="contained"
@@ -120,7 +120,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             <Divider />
 
                             <Button
-                                size="large"
+                                size="medium"
                                 variant="outlined"
                                 sx={{ fontWeight: 600 }}
                                 onClick={() => onGoogleLogin()}

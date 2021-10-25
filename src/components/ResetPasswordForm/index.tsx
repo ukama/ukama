@@ -75,9 +75,9 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <Visibility />
-                                                ) : (
                                                     <VisibilityOff />
+                                                ) : (
+                                                    <Visibility />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
