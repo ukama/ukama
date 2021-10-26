@@ -8,6 +8,7 @@ const useStyles = makeStyles(() => ({
     progressIcon: {
         verticalAlign: "middle",
         display: "inline-flex",
+        marginRight: "5px",
     },
 }));
 type PasswordRequirementIndicatorProps = {
