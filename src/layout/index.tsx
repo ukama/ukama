@@ -5,7 +5,7 @@ import Header from "./Header";
 const Layout = (props: any) => {
     const { children } = props;
     const [isOpen, setIsOpen] = useState(false);
-    const [path, setPath] = useState("/dashboard");
+    const [path, setPath] = useState("Home");
 
     const handleDrawerToggle = () => setIsOpen(() => !isOpen);
     return (
@@ -17,7 +17,7 @@ const Layout = (props: any) => {
                 setPath={setPath}
                 handleDrawerToggle={handleDrawerToggle}
             />
-            <Header pageName="Home" />
+            <Header pageName={path} />
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
                 <Toolbar />
                 {children}

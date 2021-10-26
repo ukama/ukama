@@ -32,7 +32,7 @@ const passwordRules = [
 ];
 
 const SIDEBAR_MENU1 = [
-    { id: "1", title: "Home", Icon: HomeIcon, route: "/dashboard" },
+    { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },

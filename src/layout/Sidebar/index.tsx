@@ -57,26 +57,26 @@ const Sidebar = (
                     button
                     key={id}
                     href={route}
-                    selected={route === path}
+                    selected={title === path}
                     onClick={() => {
-                        setPath(route);
+                        setPath(title);
                         history.push(route);
                     }}
                     className={
-                        route === path ? classes.listItemDone : classes.listItem
+                        title === path ? classes.listItemDone : classes.listItem
                     }
                 >
                     <ListItemIcon>
                         <Icon
                             color={
-                                route === path ? colors.white : colors.vulcan
+                                title === path ? colors.white : colors.vulcan
                             }
                         />
                     </ListItemIcon>
                     <ListItemText
                         primary={title}
                         className={
-                            route === path
+                            title === path
                                 ? classes.listItemDoneText
                                 : classes.listItemText
                         }

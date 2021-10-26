@@ -25,7 +25,7 @@ const RouteWithSubRoutes = (route: IRoute) => {
                             <Redirect to="/login" />
                         )
                     ) : isLogin ? (
-                        <Redirect to="/dashboard" />
+                        <Redirect to="/home" />
                     ) : (
                         route.component && (
                             <route.component {...props} routes={route.routes} />
