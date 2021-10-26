@@ -75,9 +75,9 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <VisibilityOff />
-                                                ) : (
                                                     <Visibility />
+                                                ) : (
+                                                    <VisibilityOff />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
@@ -91,7 +91,7 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
 
                             <ContainerJustifySpaceBtw>
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     variant="text"
                                     sx={{ fontWeight: 600 }}
                                     onClick={() => onCancel()}
@@ -100,11 +100,13 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 </Button>
 
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     type="submit"
                                     color="primary"
                                     variant="contained"
-                                    sx={{ fontWeight: 600 }}
+                                    sx={{
+                                        fontWeight: 600,
+                                    }}
                                 >
                                     {t("RESET_PASSWORD.ButtonLabel")}
                                 </Button>

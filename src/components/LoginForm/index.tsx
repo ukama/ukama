@@ -8,14 +8,15 @@ import {
     Typography,
     InputAdornment,
 } from "@mui/material";
+import "../../i18n/i18n";
 import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { LinkStyle, globalUseStyles } from "../../styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { useTranslation } from "react-i18next";
-import "../../i18n/i18n";
+
 const loginSchema = Yup.object({
     email: Yup.string()
         .email("Please enter a valid email")
@@ -92,9 +93,9 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <VisibilityOff />
-                                                ) : (
                                                     <Visibility />
+                                                ) : (
+                                                    <VisibilityOff />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
@@ -102,7 +103,12 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 }}
                             />
 
-                            <LinkStyle href="/forgot-password">
+                            <LinkStyle
+                                href="/forgot-password"
+                                sx={{
+                                    marginTop: "8px !important",
+                                }}
+                            >
                                 {t("LOGIN.ForgotPasswordLabel")}
                             </LinkStyle>
 

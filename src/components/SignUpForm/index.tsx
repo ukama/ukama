@@ -92,9 +92,9 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                                 onClick={handleTogglePassword}
                                             >
                                                 {togglePassword ? (
-                                                    <VisibilityOff />
-                                                ) : (
                                                     <Visibility />
+                                                ) : (
+                                                    <VisibilityOff />
                                                 )}
                                             </IconButton>
                                         </InputAdornment>
