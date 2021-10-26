@@ -64,6 +64,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 id="email"
                                 name="email"
                                 label={t("CONSTANT.EmailLabel")}
+                                className={classes.inputFieldBorder}
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -78,6 +79,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 id="password"
                                 name="password"
                                 label={t("CONSTANT.PasswordLabel")}
+                                className={classes.inputFieldBorder}
                                 value={values.password}
                                 onChange={event => {
                                     handleChange(event);

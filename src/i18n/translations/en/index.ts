@@ -15,6 +15,7 @@ export const TRANSLATIONS_EN = {
         NewPasswordLabel: "New Password",
         ReturnToLoginLink: "RETURN TO LOGIN",
         BackButtonLable: "BACK",
+        RecoveryEmail: "EMAIL RECOVERY LINK",
     },
     SIGNUP: {
         FormTitle: "Sign up for Ukama",

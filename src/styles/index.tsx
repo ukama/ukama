@@ -7,6 +7,11 @@ const globalUseStyles = makeStyles(() => ({
         height: "24px",
         padding: "12px 14px",
     },
+    inputFieldBorder: {
+        "&:hover .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#009DF5",
+        },
+    },
 }));
 
 const CenterContainer = styled(Box)({

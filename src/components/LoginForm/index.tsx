@@ -63,6 +63,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
+                                className={classes.inputFieldBorder}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
                                 }}
@@ -77,6 +78,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 label={t("CONSTANT.PasswordLabel")}
                                 value={values.password}
                                 onChange={handleChange}
+                                className={classes.inputFieldBorder}
                                 InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}
                                 error={
