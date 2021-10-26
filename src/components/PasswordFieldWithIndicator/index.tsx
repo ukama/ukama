@@ -7,7 +7,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { passwordRules } from "../../constants";
+import { PasswordRules } from "../../constants";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useState } from "react";
@@ -45,6 +45,7 @@ const PasswordFieldWithIndicator = ({
     withIndicator,
 }: PasswordFieldWithIndicatorProps) => {
     const classes = useStyles();
+    const [focused, setFocused] = useState(false);
     const [togglePassword, setTogglePassword] = useState(false);
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
@@ -57,6 +58,7 @@ const PasswordFieldWithIndicator = ({
                 name="password"
                 label={label}
                 value={value}
+                onFocus={() => setFocused(true)}
                 onChange={event => {
                     handleChange(event);
                 }}
@@ -87,11 +89,11 @@ const PasswordFieldWithIndicator = ({
                     item
                     container
                     sx={{
-                        display: value.length < 1 ? "none" : "flex",
+                        display: focused ? "flex" : "none",
                         marginTop: "8px",
                     }}
                 >
-                    {passwordRules.map((rules: PasswordRulesProps) => {
+                    {PasswordRules.map((rules: PasswordRulesProps) => {
                         return (
                             <Grid xs={6} item key={rules.id}>
                                 <Typography variant="body2">

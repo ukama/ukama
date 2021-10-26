@@ -1,11 +1,11 @@
-// This file will containt app constants
 import {
-    checkPasswordSpecialCharacter,
     checkPasswordLength,
-    checkPasswordHasLetters,
+    checkPasswordSpecialCharacter,
+    checkPasswordHasLowercaseLetters,
+    checkPasswordHasUppercaseLetters,
 } from "../utils";
 
-const passwordRules = [
+const PasswordRules = [
     {
         id: 1,
         label: "Be a minimum of 8 characters",
@@ -18,8 +18,13 @@ const passwordRules = [
     },
     {
         id: 3,
-        label: "Upper & lowercase letters ",
-        validator: checkPasswordHasLetters,
+        label: "Must have Uppercase letter",
+        validator: checkPasswordHasUppercaseLetters,
+    },
+    {
+        id: 4,
+        label: "Must have Lowercase letter",
+        validator: checkPasswordHasLowercaseLetters,
     },
 ];
-export { passwordRules };
+export { PasswordRules };
