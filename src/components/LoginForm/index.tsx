@@ -18,7 +18,7 @@ import { useTranslation } from "react-i18next";
 import "../../i18n/i18n";
 const loginSchema = Yup.object({
     email: Yup.string()
-        .email("Enter a valid email")
+        .email("Please enter a valid email")
         .required("Email is required"),
     password: Yup.string().required("Password is required"),
 });
@@ -63,7 +63,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
-                                className={classes.inputFieldBorder}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
                                 }}
@@ -78,7 +77,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 label={t("CONSTANT.PasswordLabel")}
                                 value={values.password}
                                 onChange={handleChange}
-                                className={classes.inputFieldBorder}
                                 InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}
                                 error={
@@ -123,7 +121,10 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             <Button
                                 size="medium"
                                 variant="outlined"
-                                sx={{ fontWeight: 600 }}
+                                sx={{
+                                    fontWeight: 600,
+                                    marginTop: "0px !important",
+                                }}
                                 onClick={() => onGoogleLogin()}
                             >
                                 {t("LOGIN.ButtonWithGoogle")}

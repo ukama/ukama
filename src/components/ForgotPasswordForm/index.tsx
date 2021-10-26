@@ -40,7 +40,6 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                             <TextField
                                 fullWidth
                                 id="email"
-                                className={classes.inputFieldBorder}
                                 name="email"
                                 label={t("CONSTANT.EmailLabel")}
                                 value={values.email}

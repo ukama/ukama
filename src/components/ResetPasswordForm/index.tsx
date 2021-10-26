@@ -56,7 +56,6 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 name="newPassword"
                                 label={t("CONSTANT.NewPasswordLabel")}
                                 value={values.newPassword}
-                                className={classes.inputFieldBorder}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
                                 type={togglePassword ? "text" : "password"}

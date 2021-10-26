@@ -5,5 +5,6 @@ const colors = {
     grey: "#777777",
     green: "#03744B",
     lightGrey: "#70757e",
+    hoverColor: "#009DF5",
 };
 export default colors;

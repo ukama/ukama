@@ -18,19 +18,14 @@ import { useTranslation } from "react-i18next";
 import "../../i18n/i18n";
 const signUpSchema = Yup.object({
     email: Yup.string()
-        .email("Enter a valid email")
+        .email("Please enter a valid email")
         .required("Email is required"),
-    firstName: Yup.string().required("FirstName is required"),
-    lastName: Yup.string().required("LastName is required"),
-
     password: Yup.string().required("Password is required"),
 });
 
 const initialSignUpValue = {
     email: "",
     password: "",
-    firstName: "",
-    lastName: "",
 };
 
 type SignUpFormProps = {
@@ -64,7 +59,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 id="email"
                                 name="email"
                                 label={t("CONSTANT.EmailLabel")}
-                                className={classes.inputFieldBorder}
                                 value={values.email}
                                 onChange={handleChange}
                                 InputLabelProps={{ shrink: true }}
@@ -79,7 +73,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 id="password"
                                 name="password"
                                 label={t("CONSTANT.PasswordLabel")}
-                                className={classes.inputFieldBorder}
                                 value={values.password}
                                 onChange={event => {
                                     handleChange(event);
@@ -128,7 +121,10 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <Button
                                 size="medium"
                                 variant="outlined"
-                                sx={{ fontWeight: 600 }}
+                                sx={{
+                                    fontWeight: 600,
+                                    marginTop: "0px !important",
+                                }}
                                 onClick={() => onGoogleSignUp()}
                             >
                                 {t("SIGNUP.ButtonWithGoogleLabel")}

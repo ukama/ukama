@@ -23,6 +23,23 @@ const theme = createTheme({
     },
     palette: themePalette as PaletteOptions,
     components: {
+        MuiFormControl: {
+            styleOverrides: {
+                root: {
+                    "&:hover .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline":
+                        {
+                            borderColor: colors.hoverColor,
+                        },
+                },
+            },
+        },
+        MuiDivider: {
+            styleOverrides: {
+                root: {
+                    margin: "12px 0px !important",
+                },
+            },
+        },
         MuiFormHelperText: {
             styleOverrides: {
                 contained: {
