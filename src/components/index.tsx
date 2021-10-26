@@ -4,7 +4,7 @@ import { BasicDialog } from "./AppDialogs";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
-import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
+import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 
 export {
@@ -14,6 +14,6 @@ export {
     ResetPasswordForm,
     ForgotPasswordForm,
     withAuthWrapperHOC,
-    PasswordRequirementIndicator,
+    PasswordFieldWithIndicator,
     ForgotPasswordConfirmationMessage,
 };

@@ -4,18 +4,15 @@ import {
     Stack,
     Divider,
     TextField,
-    IconButton,
     Typography,
-    InputAdornment,
 } from "@mui/material";
 import "../../i18n/i18n";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { PasswordFieldWithIndicator } from "..";
 import withAuthWrapperHOC from "../withAuthWrapperHOC";
 import { LinkStyle, globalUseStyles } from "../../styles";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 const loginSchema = Yup.object({
     email: Yup.string()
@@ -37,10 +34,6 @@ type LoginFormProps = {
 const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
     const classes = globalUseStyles();
     const { t } = useTranslation();
-    const [togglePassword, setTogglePassword] = useState(false);
-    const handleTogglePassword = () => {
-        setTogglePassword(prev => !prev);
-    };
 
     return (
         <Box width="100%">
@@ -71,36 +64,14 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 error={touched.email && Boolean(errors.email)}
                             />
 
-                            <TextField
-                                fullWidth
-                                id="password"
-                                name="password"
-                                label={t("CONSTANT.PasswordLabel")}
+                            <PasswordFieldWithIndicator
+                                errors={errors}
+                                touched={touched}
+                                withIndicator={false}
                                 value={values.password}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                                type={togglePassword ? "text" : "password"}
-                                error={
-                                    touched.password && Boolean(errors.password)
-                                }
-                                helperText={touched.password && errors.password}
-                                InputProps={{
-                                    classes: { input: classes.inputFieldStyle },
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                edge="end"
-                                                onClick={handleTogglePassword}
-                                            >
-                                                {togglePassword ? (
-                                                    <Visibility />
-                                                ) : (
-                                                    <VisibilityOff />
-                                                )}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
+                                handleChange={handleChange}
+                                label={t("CONSTANT.PasswordLabel")}
+                                fieldStyle={classes.inputFieldStyle}
                             />
 
                             <LinkStyle
