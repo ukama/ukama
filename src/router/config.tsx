@@ -45,6 +45,27 @@ export const routes: IRoute[] = [
         private: true,
         fallback: Loader,
     },
+    {
+        path: "/user",
+        component: lazy(() => import("../pages/User")),
+        exact: false,
+        private: true,
+        fallback: Loader,
+    },
+    {
+        path: "/billing",
+        component: lazy(() => import("../pages/Billing")),
+        exact: false,
+        private: true,
+        fallback: Loader,
+    },
+    {
+        path: "/store",
+        component: lazy(() => import("../pages/Store")),
+        exact: false,
+        private: true,
+        fallback: Loader,
+    },
     //
 
     //Public Routes//

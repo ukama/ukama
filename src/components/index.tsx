@@ -1,6 +1,7 @@
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import { BasicDialog } from "./AppDialogs";
+import UpgradeNavFooter from "./UpgradeNavFooter";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
@@ -11,6 +12,7 @@ export {
     LoginForm,
     SignUpForm,
     BasicDialog,
+    UpgradeNavFooter,
     ResetPasswordForm,
     ForgotPasswordForm,
     withAuthWrapperHOC,

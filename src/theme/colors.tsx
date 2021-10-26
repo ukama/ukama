@@ -5,5 +5,7 @@ const colors = {
     grey: "#777777",
     green: "#03744B",
     lightGrey: "#70757e",
+    aliceBlue: "#eaf3fe",
+    vulcan: "#37393E",
 };
 export default colors;
