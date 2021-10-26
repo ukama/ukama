@@ -1,5 +1,5 @@
-const UppercaseRegex = /(?=.*[A-Z])/g;
-const LowercaseRegex = /(?=.*[a-z])/g;
+const UppercaseRegex = /[A-Z]/;
+const LowercaseRegex = /[a-z]/;
 //eslint-disable-next-line
 const specialCharactersRegex = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
 
