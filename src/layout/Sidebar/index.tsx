@@ -10,52 +10,105 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 import { useHistory } from "react-router-dom";
+import { Dispatch, SetStateAction } from "react";
+import { UpgradeNavFooter } from "../../components";
+import { colors } from "../../theme";
+import { makeStyles } from "@mui/styles";
+
+const useStyles = makeStyles(() => ({
+    listItem: {
+        opacity: 1,
+        borderRadius: "4px",
+        backgroundColor: colors.white,
+    },
+    listItemText: {
+        color: colors.black,
+    },
+    listItemDone: {
+        opacity: 1,
+        borderRadius: "4px",
+        color: `${colors.white} !important`,
+        backgroundColor: `${colors.primary} !important`,
+    },
+    listItemDoneText: {
+        color: colors.white,
+    },
+}));
 
 type SidebarProps = {
+    path: string;
     isOpen: boolean;
     handleDrawerToggle: Function;
+    setPath: Dispatch<SetStateAction<string>>;
 };
 
-const Sidebar = ({ isOpen, handleDrawerToggle }: SidebarProps, props: any) => {
+const Sidebar = (
+    { isOpen, handleDrawerToggle, path, setPath }: SidebarProps,
+    props: any
+) => {
     const { window } = props;
+    const classes = useStyles();
     const history = useHistory();
 
+    const MenuList = (list: any) => (
+        <List sx={{ padding: "8px 14px" }}>
+            {list.map(({ id, title, Icon, route }: MenuItemType) => (
+                <ListItem
+                    button
+                    key={id}
+                    href={route}
+                    selected={title === path}
+                    onClick={() => {
+                        setPath(title);
+                        history.push(route);
+                    }}
+                    className={
+                        title === path ? classes.listItemDone : classes.listItem
+                    }
+                >
+                    <ListItemIcon>
+                        <Icon
+                            color={
+                                title === path ? colors.white : colors.vulcan
+                            }
+                        />
+                    </ListItemIcon>
+                    <ListItemText
+                        primary={title}
+                        className={
+                            title === path
+                                ? classes.listItemDoneText
+                                : classes.listItemText
+                        }
+                    />
+                </ListItem>
+            ))}
+        </List>
+    );
+
     const drawer = (
-        <div>
-            <Toolbar>
+        <div
+            style={{
+                height: "100%",
+                overflowY: "auto",
+                position: "relative",
+            }}
+        >
+            <Toolbar sx={{ padding: "16px 0px" }}>
                 <Logo width={"100%"} height={"40px"} />
             </Toolbar>
-
-            <List>
-                {SIDEBAR_MENU1.map(
-                    ({ id, title, Icon, route }: MenuItemType) => (
-                        <ListItem
-                            button
-                            key={id}
-                            href={route}
-                            onClick={() => history.push(route)}
-                        >
-                            <ListItemIcon>
-                                <Icon />
-                            </ListItemIcon>
-                            <ListItemText primary={title} />
-                        </ListItem>
-                    )
-                )}
-            </List>
+            {MenuList(SIDEBAR_MENU1)}
             <Divider />
-            <List>
-                {SIDEBAR_MENU2.map(
-                    ({ id, title, Icon, route }: MenuItemType) => (
-                        <ListItem button key={id} href={route}>
-                            <ListItemIcon>
-                                <Icon />
-                            </ListItemIcon>
-                            <ListItemText primary={title} />
-                        </ListItem>
-                    )
-                )}
-            </List>
+            {MenuList(SIDEBAR_MENU2)}
+
+            <div
+                style={{
+                    position: "inherit",
+                    top: "calc(100vh - 64%)",
+                }}
+            >
+                <UpgradeNavFooter />
+            </div>
         </div>
     );
 
@@ -91,6 +144,7 @@ const Sidebar = ({ isOpen, handleDrawerToggle }: SidebarProps, props: any) => {
                 {drawer}
             </Drawer>
             <Drawer
+                open
                 variant="permanent"
                 sx={{
                     display: { xs: "none", sm: "block" },
@@ -99,7 +153,6 @@ const Sidebar = ({ isOpen, handleDrawerToggle }: SidebarProps, props: any) => {
                         width: DRAWER_WIDTH,
                     },
                 }}
-                open
             >
                 {drawer}
             </Drawer>

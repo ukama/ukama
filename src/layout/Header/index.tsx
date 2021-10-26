@@ -15,13 +15,17 @@ import {
     Settings,
     AccountCircle,
 } from "@mui/icons-material";
-const drawerWidth = 240;
-
+import { useSetRecoilState } from "recoil";
+import { isLoginAtom } from "../../recoil";
+import { DRAWER_WIDTH } from "../../constants";
+import LogoutIcon from "@mui/icons-material/Logout";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 type HeaderProps = {
     pageName: string;
 };
 
 const Header = ({ pageName }: HeaderProps) => {
+    const setIsLogin = useSetRecoilState(isLoginAtom);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
     const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
         React.useState<null | HTMLElement>(null);
@@ -46,6 +50,11 @@ const Header = ({ pageName }: HeaderProps) => {
         setMobileMoreAnchorEl(event.currentTarget);
     };
 
+    const handleLogout = () => {
+        handleMenuClose();
+        setIsLogin(false);
+    };
+
     const menuId = "primary-search-account-menu";
     const renderMenu = (
         <Menu
@@ -64,7 +73,8 @@ const Header = ({ pageName }: HeaderProps) => {
             onClose={handleMenuClose}
         >
             <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-            <MenuItem onClick={handleMenuClose}>My account</MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
         </Menu>
     );
 
@@ -86,36 +96,17 @@ const Header = ({ pageName }: HeaderProps) => {
             onClose={handleMobileMenuClose}
         >
             <MenuItem>
-                <IconButton
-                    size="large"
-                    aria-label="show 4 new mails"
-                    color="inherit"
-                >
-                    <Settings />
-                </IconButton>
-                <p>Settings</p>
-            </MenuItem>
-            <MenuItem>
-                <IconButton
-                    size="large"
-                    aria-label="show 17 new notifications"
-                    color="inherit"
-                >
-                    <Notifications />
-                </IconButton>
-                <p>Notifications</p>
-            </MenuItem>
-            <MenuItem onClick={handleProfileMenuOpen}>
-                <IconButton
-                    size="large"
-                    aria-label="account of current user"
-                    aria-controls="primary-search-account-menu"
-                    aria-haspopup="true"
-                    color="inherit"
-                >
-                    <AccountCircle />
+                <IconButton size="large" color="inherit">
+                    <PersonOutlineIcon />
                 </IconButton>
                 <p>Profile</p>
+            </MenuItem>
+
+            <MenuItem onClick={handleProfileMenuOpen}>
+                <IconButton size="large" color="inherit">
+                    <LogoutIcon />
+                </IconButton>
+                <p>Logout</p>
             </MenuItem>
         </Menu>
     );
@@ -125,14 +116,14 @@ const Header = ({ pageName }: HeaderProps) => {
             <AppBar
                 position="fixed"
                 sx={{
-                    width: `calc(100% - ${drawerWidth}px)`,
-                    ml: `${drawerWidth}px`,
+                    padding: "4px 30px",
+                    ml: `${DRAWER_WIDTH}px`,
+                    width: `calc(100% - ${DRAWER_WIDTH}px)`,
                 }}
                 color="transparent"
                 elevation={0}
-                //style={{ background: "#F5F6F8", color: "#37393E" }}
             >
-                <Toolbar style={{ flexGrow: 1 }}>
+                <Toolbar style={{ flexGrow: 1, padding: "0px" }}>
                     <Typography variant="h6" noWrap component="div">
                         {pageName}
                     </Typography>

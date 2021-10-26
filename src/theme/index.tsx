@@ -30,6 +30,15 @@ const theme = createTheme({
                 },
             },
         },
+        MuiListItem: {
+            styleOverrides: {
+                button: {
+                    "&:hover": {
+                        backgroundColor: colors.aliceBlue,
+                    },
+                },
+            },
+        },
     },
 });
 
