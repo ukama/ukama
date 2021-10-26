@@ -4,6 +4,10 @@ export type MenuItemType = {
     title: string;
     route: string;
 };
+export type HeaderMenuItemType = {
+    id: string;
+    Icon: any;
+};
 
 export type SVGType = {
     color: string;

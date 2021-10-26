@@ -4,6 +4,9 @@ import {
     RouterIcon,
     BillingIcon,
     ModuleStoreIcon,
+    SettingsIcon,
+    NotificationIcon,
+    AccountIcon,
 } from "../assets/svg";
 
 const DRAWER_WIDTH = 240;
@@ -37,9 +40,19 @@ const SIDEBAR_MENU1 = [
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
 ];
-
+const HEADER_MENU = [
+    { id: "1", Icon: SettingsIcon },
+    { id: "2", Icon: NotificationIcon },
+    { id: "3", Icon: AccountIcon },
+];
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
 
-export { passwordRules, DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 };
+export {
+    passwordRules,
+    HEADER_MENU,
+    DRAWER_WIDTH,
+    SIDEBAR_MENU1,
+    SIDEBAR_MENU2,
+};

@@ -9,17 +9,13 @@ import {
     Box,
 } from "@mui/material";
 import React from "react";
-import {
-    MoreVert,
-    Notifications,
-    Settings,
-    AccountCircle,
-} from "@mui/icons-material";
+import { MoreVert } from "@mui/icons-material";
 import { useSetRecoilState } from "recoil";
 import { isLoginAtom } from "../../recoil";
-import { DRAWER_WIDTH } from "../../constants";
+import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import { HeaderMenuItemType } from "../../types";
 type HeaderProps = {
     pageName: string;
 };
@@ -130,31 +126,17 @@ const Header = ({ pageName }: HeaderProps) => {
 
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                        <IconButton
-                            size="large"
-                            aria-label="show 4 new mails"
-                            color="inherit"
-                        >
-                            <Settings />
-                        </IconButton>
-                        <IconButton
-                            size="large"
-                            aria-label="show 17 new notifications"
-                            color="inherit"
-                        >
-                            <Notifications />
-                        </IconButton>
-                        <IconButton
-                            size="large"
-                            edge="end"
-                            aria-label="account of current user"
-                            aria-controls={menuId}
-                            aria-haspopup="true"
-                            onClick={handleProfileMenuOpen}
-                            color="inherit"
-                        >
-                            <AccountCircle />
-                        </IconButton>
+                        {HEADER_MENU.map(({ id, Icon }: HeaderMenuItemType) => (
+                            <IconButton
+                                key={id}
+                                size="large"
+                                aria-label="show 4 new mails"
+                                color="inherit"
+                            >
+                                <Icon />
+                            </IconButton>
+                        ))}
+                        );
                     </Box>
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <IconButton
