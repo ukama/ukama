@@ -8,6 +8,9 @@
 include ../../../config.mk
 
 TARGET_EXEC = lxce.d
+TARGET_NAME = lxce
+CAPP_BUILD  = ./$(TARGET_NAME)_capp/
+CAPP        = ./capp/
 
 UKAMAOS_ROOT = ../../../
 
@@ -15,6 +18,9 @@ VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
 VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+
+SCRIPTS = $(UKAMAOS_ROOT)/distro/scripts/
+ROOTFS  = ./_ukama_minimal_rootfs/
 
 WIMC_DIR     = $(UKAMAOS_ROOT)/distro/system/wimc/
 
@@ -65,5 +71,21 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
+capp: $(TARGET_EXEC)
+	rm -rf $(CAPP_BUILD); mkdir $(CAPP_BUILD)
+	cd $(SCRIPTS); ./mk_minimal_rootfs.sh; cd -
+	cp -rf $(SCRIPTS)/$(ROOTFS)/* $(CAPP_BUILD)
+
+	mkdir -p $(CAPP_BUILD)/conf $(CAPP_BUILD)/sbin $(CAPP_BUILD)/cert
+	cp $(CAPP)/config.json $(CAPP_BUILD)
+	cp $(CAPP)/conf/* $(CAPP_BUILD)/conf
+	cp $(TARGET_EXEC) $(CAPP_BUILD)/sbin
+	tar -czf $(TARGET_NAME)_capp.tar.gz $(CAPP_BUILD)
+	rm -rf $(CAPP_BUILD)
+
+	echo "$(TARGET_NAME) capp is available $(TARGET_NAME)_capp.tar.gz Done."
+
+
 clean:
-	rm -f $(TARGET_EXEC) $(OBJFILES)
+	rm -rf $(SCRIPTS)/$(ROOTFS)
+	rm -rf $(TARGET_EXEC) $(OBJFILES) $(CAPP_BUILD) *.tar.gz
