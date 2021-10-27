@@ -21,12 +21,12 @@ type FormDialogProps = {
     submitButtonLabel?: string;
     open: boolean;
     onClose: () => void;
-    formField: React.ReactElement;
+    children: React.ReactElement;
 };
 const FormDialog = ({
     dialogTitle,
     dialogContent,
-    formField,
+    children,
     showBackButton,
     submitButtonLabel,
     open,
@@ -48,7 +48,7 @@ const FormDialog = ({
                 </DialogTitle>
                 <DialogContent>
                     <DialogContentText>{dialogContent}</DialogContentText>
-                    {formField}
+                    {children}
                 </DialogContent>
                 <DialogActions>
                     <Grid container spacing={1} style={{ margin: "10px" }}>
