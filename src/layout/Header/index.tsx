@@ -1,21 +1,14 @@
 import {
     Divider,
-    Menu,
     AppBar,
-    MenuItem,
     Typography,
     IconButton,
     Toolbar,
     Box,
 } from "@mui/material";
-import React from "react";
-import { MoreVert } from "@mui/icons-material";
-import { useSetRecoilState } from "recoil";
-import { isLoginAtom } from "../../recoil";
-import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
-import LogoutIcon from "@mui/icons-material/Logout";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { HeaderMenuItemType } from "../../types";
+import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
+
 type HeaderProps = {
     pageName: string;
 };
@@ -30,8 +23,8 @@ const Header = ({ pageName }: HeaderProps) => {
                     ml: `${DRAWER_WIDTH}px`,
                     width: `calc(100% - ${DRAWER_WIDTH}px)`,
                 }}
-                color="transparent"
                 elevation={0}
+                color="transparent"
             >
                 <Toolbar style={{ flexGrow: 1, padding: "0px" }}>
                     <Typography variant="h6" noWrap component="div">

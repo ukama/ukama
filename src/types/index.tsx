@@ -4,9 +4,11 @@ export type MenuItemType = {
     title: string;
     route: string;
 };
+
 export type HeaderMenuItemType = {
     id: string;
     Icon: any;
+    title: string;
 };
 
 export type SVGType = {
