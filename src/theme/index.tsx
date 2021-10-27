@@ -39,6 +39,21 @@ const theme = createTheme({
                 },
             },
         },
+        MuiIconButton: {
+            styleOverrides: {
+                root: {
+                    width: "68px",
+                    height: "68px",
+                    padding: "0px",
+                    "&:hover": {
+                        backgroundColor: colors.white,
+                    },
+                    "&:hover svg path": {
+                        fill: colors.primary,
+                    },
+                },
+            },
+        },
     },
 });
 

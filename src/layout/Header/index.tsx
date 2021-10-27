@@ -9,13 +9,14 @@ import {
     Box,
 } from "@mui/material";
 import React from "react";
-import { MoreVert } from "@mui/icons-material";
 import { useSetRecoilState } from "recoil";
 import { isLoginAtom } from "../../recoil";
-import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
-import LogoutIcon from "@mui/icons-material/Logout";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import { MoreVert } from "@mui/icons-material";
 import { HeaderMenuItemType } from "../../types";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+
 type HeaderProps = {
     pageName: string;
 };
@@ -51,7 +52,26 @@ const Header = ({ pageName }: HeaderProps) => {
         setIsLogin(false);
     };
 
-    const menuId = "primary-search-account-menu";
+    const handleHeaderMenu = (
+        e: React.MouseEvent<HTMLElement>,
+        name: string
+    ) => {
+        switch (name) {
+            case "Setting":
+                //GOTO Settings page
+                handleMenuClose();
+                break;
+            case "Notification":
+                //GOTO Notification page
+                handleMenuClose();
+                break;
+            case "Account":
+                handleProfileMenuOpen(e);
+                break;
+        }
+    };
+
+    const menuId = "account-popup-menu";
     const renderMenu = (
         <Menu
             anchorEl={anchorEl}
@@ -116,8 +136,8 @@ const Header = ({ pageName }: HeaderProps) => {
                     ml: `${DRAWER_WIDTH}px`,
                     width: `calc(100% - ${DRAWER_WIDTH}px)`,
                 }}
-                color="transparent"
                 elevation={0}
+                color="transparent"
             >
                 <Toolbar style={{ flexGrow: 1, padding: "0px" }}>
                     <Typography variant="h6" noWrap component="div">
@@ -126,26 +146,25 @@ const Header = ({ pageName }: HeaderProps) => {
 
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                        {HEADER_MENU.map(({ id, Icon }: HeaderMenuItemType) => (
-                            <IconButton
-                                key={id}
-                                size="large"
-                                aria-label="show 4 new mails"
-                                color="inherit"
-                            >
-                                <Icon />
-                            </IconButton>
-                        ))}
-                        );
+                        {HEADER_MENU.map(
+                            ({ id, Icon, title }: HeaderMenuItemType) => (
+                                <IconButton
+                                    key={id}
+                                    size="large"
+                                    color="inherit"
+                                    onClick={e => handleHeaderMenu(e, title)}
+                                >
+                                    <Icon />
+                                </IconButton>
+                            )
+                        )}
                     </Box>
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <IconButton
                             size="large"
-                            aria-label="show more"
-                            aria-controls={mobileMenuId}
-                            aria-haspopup="true"
-                            onClick={handleMobileMenuOpen}
                             color="inherit"
+                            aria-controls={mobileMenuId}
+                            onClick={handleMobileMenuOpen}
                         >
                             <MoreVert />
                         </IconButton>

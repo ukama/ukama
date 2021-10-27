@@ -3,10 +3,10 @@ import {
     UsersIcon,
     RouterIcon,
     BillingIcon,
-    ModuleStoreIcon,
-    SettingsIcon,
-    NotificationIcon,
     AccountIcon,
+    SettingsIcon,
+    ModuleStoreIcon,
+    NotificationIcon,
 } from "../assets/svg";
 
 const DRAWER_WIDTH = 240;
@@ -40,11 +40,13 @@ const SIDEBAR_MENU1 = [
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
 ];
+
 const HEADER_MENU = [
-    { id: "1", Icon: SettingsIcon },
-    { id: "2", Icon: NotificationIcon },
-    { id: "3", Icon: AccountIcon },
+    { id: "1", Icon: SettingsIcon, title: "Setting" },
+    { id: "2", Icon: NotificationIcon, title: "Notification" },
+    { id: "3", Icon: AccountIcon, title: "Account" },
 ];
+
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
