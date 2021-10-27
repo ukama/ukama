@@ -2,13 +2,12 @@
 # All rights reserved.
 
 #
-# Makefile for the wimc.d
+# Makefile for the lxce.d
 #
 
 include ../../../config.mk
 
-TARGET_EXEC = wimc.d
-AGENT_EXEC  = agent
+TARGET_EXEC = lxce.d
 
 UKAMAOS_ROOT = ../../../
 
@@ -17,8 +16,10 @@ VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
 VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 
+WIMC_DIR     = $(UKAMAOS_ROOT)/distro/system/wimc/
+
 # Packages needed to compile target.
-VENDOR_PKG = tomlc ulfius curl jansson
+VENDOR_PKG = tomlc ulfius
 
 # Setting up various compile and link flags.
 CFLAGS=-c
@@ -27,7 +28,7 @@ CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I./inc
-CFLAGS+=-I./inc/common/
+CFLAGS+=-I$(WIMC_DIR)/inc/
 CFLAGS+=-D_REENTRANT
 
 LDFLAGS+=-L${VENDOR_LIB}
@@ -41,36 +42,21 @@ LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ltoml
 LIBS+=-lpthread
 LIBS+=-ljansson
-LIBS+=-lrt
-LIBS+=-luuid
-LIBS+=-lsqlite3
+LIBS+=-lcap
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-COMM_CFILES = $(wildcard ./common/*.c)
-COMM_OBJFILES = $(COMM_CFILES:.c=.o)
-
-AGENT_CFILES = $(wildcard ./agents/*.c)
-AGENT_OBJFILES = $(AGENT_CFILES:.c=.o)
-
 XCC = $(XGCCPATH)$(XGCC)
 XLD = $(XGCCPATH)$(XLD)
 
-.PHONY: $(TARGET_EXEC) $(AGENT_EXEC)
+.PHONY: $(TARGET_EXEC)
 
-wimc: $(TARGET_EXEC)
+lxce: $(TARGET_EXEC)
 
-agent: $(AGENT_EXEC)
-
-$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(COMM_OBJFILES) $(LDFLAGS) $(LIBS)
-	echo "Done."
-
-$(AGENT_EXEC): $(VENDOR_PKG) $(AGENT_OBJFILES) $(COMM_OBJFILES)
-	$(XCC) -o $(AGENT_EXEC) $(AGENT_OBJFILES) $(COMM_OBJFILES) \
-		$(LDFLAGS) $(LIBS)
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
 	echo "Done."
 
 $(VENDOR_PKG):
@@ -79,8 +65,5 @@ $(VENDOR_PKG):
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
 
-all: wimc agent
-
 clean:
-	rm -f $(TARGET_EXEC) $(AGENT_EXEC) $(OBJFILES) $(COMM_OBJFILES)
-	rm -f $(AGENT_OBJFILES)
+	rm -f $(TARGET_EXEC) $(OBJFILES)
