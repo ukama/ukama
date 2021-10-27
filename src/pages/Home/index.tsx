@@ -1,6 +1,11 @@
 import { styled } from "@mui/material/styles";
 import { Grid, Paper, Box } from "@mui/material";
-import { GraphContainer, AlertContainer } from "../../components";
+import {
+    GraphContainer,
+    AlertContainer,
+    NodeContainer,
+    ResidentContainer,
+} from "../../components";
 const Item = styled(Paper)(({ theme }) => ({
     ...theme.typography.body2,
     padding: theme.spacing(1),
@@ -16,13 +21,8 @@ const Home = () => {
                     <GraphContainer />
 
                     <AlertContainer />
-
-                    <Grid item xs={4}>
-                        <Item>xs=4</Item>
-                    </Grid>
-                    <Grid item xs={8}>
-                        <Item>xs=8</Item>
-                    </Grid>
+                    <NodeContainer />
+                    <ResidentContainer />
                 </Grid>
             </Box>
         </>

@@ -20,7 +20,7 @@ const Layout = (props: any) => {
             <Header pageName={path} />
             <Box
                 component="main"
-                sx={{ width: "100%", margin: "5% 2% 0px 4%" }}
+                sx={{ width: "100%", margin: "2% 2% 0px 2%" }}
             >
                 <Toolbar />
                 {children}

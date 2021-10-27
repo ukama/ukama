@@ -9,11 +9,15 @@ import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 import GraphContainer from "./GraphContainer";
 import AlertContainer from "./AlertContainer";
+import NodeContainer from "./NodeContainer";
+import ResidentContainer from "./ResidentContainer";
 export {
     LoginForm,
     GraphContainer,
+    ResidentContainer,
     SignUpForm,
     BasicDialog,
+    NodeContainer,
     AlertContainer,
     UpgradeNavFooter,
     ResetPasswordForm,
