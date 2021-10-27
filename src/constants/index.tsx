@@ -40,7 +40,8 @@ const SIDEBAR_MENU1 = [
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
 ];
-
+const STATS_OPTIONS = ["Connected users", "Device uptime", "Close"];
+const STATS_PERIOD = ["DAY", "WEEK", "MONTH"];
 const HEADER_MENU = [
     { id: "1", Icon: SettingsIcon, title: "Setting" },
     { id: "2", Icon: NotificationIcon, title: "Notification" },
@@ -57,4 +58,6 @@ export {
     DRAWER_WIDTH,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
+    STATS_OPTIONS,
+    STATS_PERIOD,
 };

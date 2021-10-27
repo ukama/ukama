@@ -8,13 +8,16 @@ import ModuleStoreIcon from "./ModuleStoreIcon";
 import SettingsIcon from "./SettingsIcon";
 import AccountIcon from "./AccountIcon";
 import NotificationIcon from "./NotificationIcon";
-
+import ActivityIcon from "./ActivityIcon";
+import AlertIcon from "./AlertIcon";
 export {
+    ActivityIcon,
     SettingsIcon,
     AccountIcon,
     NotificationIcon,
     Logo,
     HomeIcon,
+    AlertIcon,
     UsersIcon,
     RouterIcon,
     UpgradeIcon,

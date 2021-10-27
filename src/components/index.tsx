@@ -7,11 +7,14 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
-
+import GraphContainer from "./GraphContainer";
+import AlertContainer from "./AlertContainer";
 export {
     LoginForm,
+    GraphContainer,
     SignUpForm,
     BasicDialog,
+    AlertContainer,
     UpgradeNavFooter,
     ResetPasswordForm,
     ForgotPasswordForm,

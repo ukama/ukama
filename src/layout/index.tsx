@@ -9,7 +9,7 @@ const Layout = (props: any) => {
 
     const handleDrawerToggle = () => setIsOpen(() => !isOpen);
     return (
-        <Box sx={{ display: "flex" }}>
+        <Box sx={{ display: "flex" }} style={{ backgroundColor: "#F5F6F8" }}>
             <CssBaseline />
             <Sidebar
                 path={path}
@@ -18,7 +18,10 @@ const Layout = (props: any) => {
                 handleDrawerToggle={handleDrawerToggle}
             />
             <Header pageName={path} />
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+            <Box
+                component="main"
+                sx={{ width: "100%", margin: "5% 2% 0px 4%" }}
+            >
                 <Toolbar />
                 {children}
             </Box>
