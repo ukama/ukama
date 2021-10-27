@@ -30,7 +30,7 @@ const useStyles = makeStyles(() => ({
     imageWrapper: {
         zIndex: 10,
         alignSelf: "center",
-        marginBottom: "-44px",
+        marginBottom: "-40px",
     },
 }));
 

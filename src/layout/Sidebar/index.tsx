@@ -105,8 +105,8 @@ const Sidebar = (
 
             <div
                 style={{
-                    position: "inherit",
-                    top: "calc(100vh - 64%)",
+                    position: "absolute",
+                    bottom: "0px",
                 }}
             >
                 <UpgradeNavFooter />
