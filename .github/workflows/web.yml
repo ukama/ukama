@@ -15,17 +15,24 @@ jobs:
         run: |
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+      - name: Get yarn cache
+        id: yarn-cache
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Cache node_modules
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.yarn-cache.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: ${{ runner.os }}-yarn-
+
+
       - name: Build web
         run: make build
 
       - name: Test
         run: make test
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -35,17 +42,23 @@ jobs:
           aws-region: us-east-1
 
       - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      # push image
-      - name: Build and push
-        uses: docker/build-push-action@v2
-        with:
-          push: true
-          tags: |
-            003664043471.dkr.ecr.us-east-1.amazonaws.com/web:${{ steps.vars_step.outputs.sha_short }}
-            003664043471.dkr.ecr.us-east-1.amazonaws.com/web:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}
+        run: | 
+              aws ecr get-login-password --region us-east-1 | \
+              buildah login \
+                --username AWS \
+                --password-stdin \
+                003664043471.dkr.ecr.us-east-1.amazonaws.com
+                          
+      - name: OCI build and push        
+        env:
+          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/web
+        run: |                        
+              buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                  -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                  -t $REGISTRY\:latest .  && \
+              buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+              buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+              buildah push $REGISTRY\:latest 
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v1.6
@@ -55,16 +68,10 @@ jobs:
         with:
           args: >
             -Dsonar.organization=ukama
-            -Dsonar.projectKey=ukama_ukama_dashboard
-            -Dsonar.projectName=ukama-dashboard
-            -Dsonar.go.coverage.reportPaths=coverage.out
-            -Dsonar.test.exclusions=tests/**,test/**,test/**
-            -Dsonar.tests=tests/
-            -Dsonar.verbose=false
-            -Dsonar.sources=.
-            -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
-            -Dsonar.tests=.
-            -Dsonar.test.inclusions=**/*_test.go
+            -Dsonar.projectKey=ukama_ukama-dashboard
+            -Dsonar.projectName=ukama-dashboard                                                          
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=. 
 
   lint:
     name: lint
