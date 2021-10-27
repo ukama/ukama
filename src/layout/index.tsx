@@ -1,11 +1,17 @@
-import Sidebar from "./Sidebar";
-import { Box, CssBaseline, Toolbar } from "@mui/material";
-import { useState } from "react";
 import Header from "./Header";
+import Sidebar from "./Sidebar";
+import { useState } from "react";
+import { useHistory } from "react-router";
+import { getTitleFromPath } from "../utils";
+import { Box, CssBaseline, Toolbar } from "@mui/material";
+
 const Layout = (props: any) => {
     const { children } = props;
+    const history = useHistory();
+    const [path, setPath] = useState(
+        getTitleFromPath(history?.location?.pathname || "/")
+    );
     const [isOpen, setIsOpen] = useState(false);
-    const [path, setPath] = useState("Home");
 
     const handleDrawerToggle = () => setIsOpen(() => !isOpen);
     return (
