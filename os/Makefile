@@ -24,7 +24,7 @@ KIMAGE = zImage
 override CC = arm-linux-gnueabihf-
 override ARCH = arm
 KCONFIG = $(ANODE_KCONFIG)
-OSTARGET = $(KIMAGE) modules dtbs
+OS_ARTIFACTS = $(KIMAGE) modules dtbs
 endif
 
 ifeq ($(CNODEBOARD), $(TARGETBOARD))
@@ -32,17 +32,17 @@ KIMAGE = bzImage
 override CC = 
 override ARCH = x86_64
 KCONFIG = $(CNODE_KCONFIG)
-OSTARGET = $(KIMAGE) modules
+OS_ARTIFACTS = $(KIMAGE) modules
 endif
 
 #Targets based on boards
 .PHONY: subdirs $(SRCDIR) info
 
 #Kernel Image
-$(OSTARGET):
+$(OS_ARTIFACTS):
 	@echo Building $@
 	$(MAKE) -j$(NPROCS) -C $(SRCDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CC) $(KCONFIG)
-	$(MAKE) -j$(NPROCS) -C $(SRCDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CC) $(TARGET)
+	$(MAKE) -j$(NPROCS) -C $(SRCDIR) ARCH=$(ARCH) CROSS_COMPILE=$(CC) $(OS_ARTIFACTS)
 	#Copy Kernel Image
 	@echo Copying Kernel Image $(SRCDIR)/arch/${ARCH}/boot/$(KIMAGE)
 	(mkdir -p $(ROOTFSKPATH) && cp -v $(SRCDIR)/arch/${ARCH}/boot/$(KIMAGE) $(ROOTFSKPATH)/$(KIMAGE))
@@ -65,5 +65,5 @@ distclean :
                 $(MAKE) -j$(NPROCS) -C $$dir -f Makefile $@; \
         done
 
-info: ; 
+info:  
 	$(info [$@] Building $(TARGETBOARD) for $(ARCH) with $(CC) )

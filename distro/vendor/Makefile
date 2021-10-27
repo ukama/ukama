@@ -10,10 +10,10 @@ CURPATH = $(dir $(CURMAKE))
 
 export DEPDIR = $(CURPATH)/build
 
-#ifneq ($(TARGET), "linux")
-#	ifndef XGCC_PATH
-#		$(error XGCC_PATH is missing)
-#	endif
+#ifneq ($(TARGET), "linux"
+ifndef XGCCPATH
+$(error XGCCPATH is missing)
+endif
 #endif
 
 ifndef BUILD_CLEANUP
@@ -21,11 +21,7 @@ ifndef BUILD_CLEANUP
 endif
 
 define post_build_cleanup
-	ifeq ($(BUILD_CLEANUP), 0)
-		@echo Cleanup disabled
-	else
-		@echo Cleaning $(1) && rm -rf $(1))
-	endif
+	$(if $(filter ${BUILD_CLEANUP},1), @echo Cleanup disabled, echo Cleaning $(1) && rm -rf $(1))
 endef
 
 define print_msg
@@ -39,24 +35,24 @@ BUILD_DIR = build
 LIGHT_GREEN='\033[1;32m'
 NO_COLOR='\033[0m'
 
-export XCXX = $(XGCC_PATH)$(XGXX)
-export XCC  = $(XGCC_PATH)$(XGCC)
-export LD   = $(XGCC_PATH)$(XLD)
+export XCXX = $(XGCCPATH)$(XGXX)
+export XCC  = $(XGCCPATH)$(XGCC)
+export LD   = $(XGCCPATH)$(XLD)
 
 INC_FLAGS = -I.
 INC_FLAGS+= -I$(DEPDIR)/include
 
 ifeq ($(TARGET), "anode")
-	INC_FLAGS+= -I$(XGCC_PATH)../arm-linux-musleabihf/include
+	INC_FLAGS+= -I$(XGCCPATH)../arm-linux-musleabihf/include
 endif
 
 LIBS =
 
-LD_FLAGS = -L$(DEPDIR)/lib
+LDFLAGS = -L$(DEPDIR)/lib
 ifeq ($(TARGET), "anode")
-	LD_FLAGS += -L$(XGCC_PATH)../arm-linux-musleabihf/lib
+	LDFLAGS += -L$(XGCCPATH)../arm-linux-musleabihf/lib
 endif
-export LD_FLAGS
+export LDFLAGS
 
 ifeq ($(ARCH), $(ARCHX86))
 	export CFLAGS = $(INC_FLAGS) -fPIC
@@ -84,6 +80,7 @@ LIST += p11-kit
 LIST += gnutls
 LIST += sqlite
 LIST += amqp
+LIST += protobuf
 LIST += protobuf-c
 LIST += libunistring
 
@@ -132,7 +129,7 @@ else
 	@echo -e  ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-ulfius: orcania yder jansson gnutls curl libmicrohttpd
+ulfius: orcania yder jansson gnutls curl libmicrohttpd libunistring
 	$(call print_msg,"ulfius")
 ifeq (,$(wildcard ${DEPDIR}/lib/libulfius.a))
 	$(MAKE) -C $@ install CC=$(XCC) DESTDIR=$(DEPDIR)
@@ -144,7 +141,7 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(cd $@ && ./configure CC=$(XCC) --host=$(HOST) \
+	(cd $@ && autoreconf -i && ./configure CC=$(XCC) --host=$(HOST) \
 		--enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -168,8 +165,8 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libprom.*))
 		-DCMAKE_LD_FLAGS="${LD_FLAGS}" \
 		-DCMAKE_TOOLCHAIN_FILE=$(CURPATH)cmake_tool_chain_file.cmake && \
 	make install DESTDIR=$(DEPDIR)
-	$(call postbuild_cleanup,$@/prom/build)
-	$(call postbuild_cleanup,$@/promhttp/build)
+	$(call post_build_cleanup,$@/prom/build)
+	$(call post_build_cleanup,$@/promhttp/build)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -194,7 +191,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libuuid.*))
 		../configure --prefix=${DEPDIR} --host=${HOST} \
 		--build=${BUILD} && \
 	make && make install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -210,7 +207,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libssl.*))
 		--with-zlib-lib=${DEPDIR}/lib \
 		--with-zlib-include=${DEPDIR}/include && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -226,7 +223,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
 		--with-zlib=${DEPDIR} --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -240,7 +237,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.*))
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} \
 		--enable-mini-gmp && \
 	make -j${NPROCS} && make -j${NPROCS} install)
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -253,7 +250,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgmp.so))
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} && \
         make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -267,7 +264,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libunistring.*))
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -279,7 +276,7 @@ endif
 #	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 #		./configure --prefix=${DEPDIR} --disable-doc --host=${HOST} && \
 #	make -j${NPROCS} && make -j${NPROCS} install
-#	$(call postbuild_cleanup,$@/${BUILD_DIR})
+#	$(call post_build_cleanup,$@/${BUILD_DIR})
 
 #p11-kit:
 #	$(call print_msg,"p11-kit")
@@ -288,14 +285,17 @@ endif
 #		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
 #		--without-libtasn1 --without-systemd && \
 #	make -j${NPROCS} && make -j${NPROCS} install
-#	$(call postbuild_cleanup,$@/${BUILD_DIR})
+#	$(call post_build_cleanup,$@/${BUILD_DIR})
 
 p11-kit:
 	$(call print_msg,"p11-kit")
 ifeq (,$(wildcard ${DEPDIR}/lib/libcrypto.*))
-	(cd $@ && meson _build -Dsystemd=disabled && meson compile -C _build && \
-	meson install -C _build --destdir=${DEPDIR})
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
+	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
+		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
+		--without-libtasn1 --without-systemd && \
+	make -j${NPROCS} && make -j${NPROCS} install
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -315,7 +315,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--without-idn --disable-doc \
 		PKG_CONFIG_PATH=${DEPDIR}/lib/pkgconfig && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -323,20 +323,44 @@ endif
 
 sqlite:
 	$(call print_msg,"sqlite")
+ifeq (,$(wildcard ${DEPDIR}/lib/libsqlite3.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC} --static" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--host=${HOST} --disable-readline && \
 	make -j${NPROCS} && make -j${NPROCS} install
-	$(call postbuild_cleanup,$@/${BUILD_DIR})
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
 
-protobuf-c:
+protobuf:
+	$(call print_msg,"protobuf")
+ifeq (,$(wildcard ${DEPDIR}/lib/libprotobuf.*))
+	(mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && cd ${BUILD_DIR} && \
+	CC="${XCC} --static" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
+		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
+		--enable-cross-compile --with-protoc=protoc --host=${HOST} && \
+	$(MAKE) -j${NPROCS} && \
+	$(MAKE) -j${NPROCS} install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+protobuf-c: protobuf
 	$(call print_msg,"protobuf-c")
 ifeq (,$(wildcard ${DEPDIR}/lib/libprotobuf-c.*))
-
-	(cd $@ && ./autogen.sh && ./configure --prefix=$(DEPDIR) && \
-        $(MAKE) -j${NPROCS} && \
+	(mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && cd ${BUILD_DIR} && \
+	CC="${XCC} --static" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
+		CXXFLAGS="-I${DEPDIR}/include" \
+		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
+		--host=${HOST} --disable-protoc && \
+	$(MAKE) -j${NPROCS} && \
         $(MAKE) -j${NPROCS} install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -346,9 +370,13 @@ amqp:
 	$(call print_msg,"amqp")
 ifeq (,$(wildcard ${DEPDIR}/lib/librabbitmq.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
-	cmake -DCMAKE_INSTALL_PREFIX=$(DEPDIR) -DBUILD_SHARED_LIBS=ON \
-                -DBUILD_STATIC_LIBS=ON -DENABLE_SSL_SUPPORT=OFF .. && \
-        cmake --build ../ --target install)
+	cmake ../ -DCMAKE_C_COMPILER=${XCC} \
+		-DCMAKE_TOOLCHAIN_FILE=$(CURPATH)cmake_tool_chain_file.cmake \
+		-DCMAKE_INSTALL_PREFIX=$(DEPDIR) \
+		-DBUILD_STATIC_LIBS=ON \
+		-DENABLE_SSL_SUPPORT=OFF && \
+        cmake --build . --target install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}

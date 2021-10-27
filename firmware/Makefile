@@ -34,7 +34,7 @@ override CC = arm-linux-gnueabihf-
 endif
 
 ifeq ($(CNODEBOARD), $(TARGETBOARD))
-override ARCH = $(ARCHX86)
+override ARCH = $(ARCH_X86)
 SRCDIRS = $(CNODETARGET)
 endif
 
@@ -106,5 +106,5 @@ distclean:
 	rm -rf $(ROOTFSPATH)
 	rm -rf *.img
 
-info: ; 
+info:  
 	$(info [$@] Building $(TARGETBOARD) for $(ARCH) with $(CC) )

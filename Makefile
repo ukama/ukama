@@ -6,9 +6,9 @@
 UKAMAOSMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
 UKAMAOSDIR := $(dir $(UKAMAOSMAKE))
 
-ANODEBOARD = anode
-CNODEBOARD = cnode
-ENODEBOARD = enode
+ANODE = anode
+CNODE = cnode
+HNODE = hnode
 BUILDSUBDIRS = firmware os distro 
 
 #Final UKAMAOS path and name
@@ -45,7 +45,6 @@ clean:
 	rm -rf *.img
 
 #Distclean
-
 distclean:
 	@echo Starting distclean process.
 	for dir in $(BUILDSUBDIRS); do \

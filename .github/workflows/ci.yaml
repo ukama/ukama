@@ -16,9 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-
-    - name: Checkout submodule
-      uses: textbook/git-checkout-submodule-action@master
+    
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+    #- name: Checkout submodule
+    #  uses: textbook/git-checkout-submodule-action@master
+    
   
     - name: Dependencies
       run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript -y
@@ -32,4 +35,4 @@ jobs:
 
     - name: Build ukamaOS
       run: |
-        sudo make TARGETBOARD=${{ matrix.target.board }}
+        sudo make TARGET=${{ matrix.target.board }}

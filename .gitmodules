@@ -34,3 +34,6 @@
 [submodule "distro/vendor/protobuf-c"]
 	path = distro/vendor/protobuf-c
 	url = https://github.com/protobuf-c/protobuf-c
+[submodule "distro/vendor/protobuf"]
+	path = distro/vendor/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git

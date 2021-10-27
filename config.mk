@@ -25,13 +25,16 @@ ARCH_X86_64 = x86_64
 
 #if variables are not defined
 #amplifier Node
-override A_NODE = anode
-override C_NODE = cnode
+override ANODEBOARD = anode
+override CNODEBOARD = cnode
+override HNODEBOARD = hnode
 override LOCAL  = linux
 
 #TARGET
 ifndef TARGET
-	override TARGET = $(LOCAL)
+	override TARGETBOARD = $(LOCAL)
+else
+	override TARGETBOARD = $(TARGET)
 endif
 
 #Kernelheaders
@@ -39,7 +42,7 @@ KERNEL_HEADERS = $(CURPATH)/distro/helpers/kernelheaders/usr/include
 
 # Setup various compilier and linker options for various targets.
 
-ifeq ($(A_NODE), $(TARGET))
+ifeq ($(ANODEBOARD), $(TARGETBOARD))
 	override CC     = arm-linux-gnueabihf-gcc
 	override ARCH   = $(ARCH_ARM)
 	XCROSS_COMPILER = arm-linux-musleabihf-
@@ -50,7 +53,7 @@ ifeq ($(A_NODE), $(TARGET))
 	OPENSSLTARGET   = linux-generic32
 endif
 
-ifeq ($(C_NODE), $(TARGET))
+ifeq ($(CNODEBOARD), $(TARGETBOARD))
 	override CC     =
 	override ARCH   = $(ARCH_X86_64)
 	XCROSS_COMPILER = x86_64-linux-musl-
@@ -61,7 +64,7 @@ ifeq ($(C_NODE), $(TARGET))
 	OPENSSLTARGET   = linux-generic64
 endif
 
-ifeq ($(LOCAL), $(TARGET))
+ifeq ($(LOCAL), $(TARGETBOARD))
 	override CC     = gcc
 	override ARCH   = $(ARCH_X86_64)
 	XGCC            = gcc

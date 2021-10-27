@@ -68,25 +68,25 @@ make crossgcc-i386 CPUS=$(nproc)
 ## Make
 
 ```
-make TARGETBOARD=<cnode|anode|homenode>  
+make TARGET=<cnode|anode|homenode>  
 ```
 
 ## Initramfs
 
 ```
-make initramfs TARGETBOARD=<cnode|anode|homenode>
+make initramfs TARGET=<cnode|anode|homenode>
 ```
 
 ## Clean
 
 ```
-make clean TARGETBOARD=<cnode|anode|homenode>
+make clean TARGET=<cnode|anode|homenode>
 ```
 
 ## Clean buid and toolchains used aswell
 
 ```
-make distclean TARGETBOARD=<cnode|anode|homenode>
+make distclean TARGET=<cnode|anode|homenode>
 ```
 
 ## Stand alone build
@@ -95,17 +95,17 @@ Each component could be build  individaully by providing target name to make.
 ### Distro/RootFS
 
 ```
-make distro TARGETBOARD=<cnode|anode|homenode>
+make distro TARGET=<cnode|anode|homenode>
 ```
 
 ### Linux
 
 ```
-make os TARGETBOARD=<cnode|anode|homenode>
+make os TARGET=<cnode|anode|homenode>
 ```
 
 ### Firmware
 
 ```
-make firmware TARGETBOARD=<cnode|anode|homenode>
+make firmware TARGET=<cnode|anode|homenode>
 ```
