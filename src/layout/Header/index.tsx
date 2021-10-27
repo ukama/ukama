@@ -21,19 +21,6 @@ type HeaderProps = {
 };
 
 const Header = ({ pageName }: HeaderProps) => {
-    const setIsLogin = useSetRecoilState(isLoginAtom);
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-        React.useState<null | HTMLElement>(null);
-
-    const handleMobileMenuClose = () => {
-        setMobileMoreAnchorEl(null);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        handleMobileMenuClose();
-    };
     return (
         <Box sx={{ flexGrow: 1 }}>
             <AppBar
