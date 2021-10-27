@@ -45,6 +45,7 @@ const HEADER_MENU = [
     { id: "2", Icon: NotificationIcon },
     { id: "3", Icon: AccountIcon },
 ];
+
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
