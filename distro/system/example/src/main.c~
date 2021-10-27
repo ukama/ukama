@@ -1,0 +1,27 @@
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+/*
+ * example.d -- example system module using capp
+ *
+ */
+
+#include <stdio.h>
+
+#include "example.h"
+
+int main(int argc, char **argv) {
+
+  while (TRUE) {
+    printf(stdout, "Hello world from %s", UKAMA_STR);
+    sleep (10);
+  }
+  
+  return 1;
+}
