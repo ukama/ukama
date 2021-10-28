@@ -6,6 +6,14 @@ import { isLoginAtom } from "../recoil";
 
 const RouteWithSubRoutes = (route: IRoute) => {
     const isLogin = useRecoilValue(isLoginAtom);
+    const authRoute = (props: any) =>
+        isLogin ? (
+            route.component && (
+                <route.component {...props} routes={route.routes} />
+            )
+        ) : (
+            <Redirect to="/login" />
+        );
     return (
         <Suspense fallback={route.fallback}>
             <Route
@@ -14,16 +22,7 @@ const RouteWithSubRoutes = (route: IRoute) => {
                     route.redirect ? (
                         <Redirect to={route.redirect} />
                     ) : route.private ? (
-                        isLogin ? (
-                            route.component && (
-                                <route.component
-                                    {...props}
-                                    routes={route.routes}
-                                />
-                            )
-                        ) : (
-                            <Redirect to="/login" />
-                        )
+                        authRoute(props)
                     ) : isLogin ? (
                         <Redirect to="/home" />
                     ) : (
