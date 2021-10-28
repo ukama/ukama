@@ -11,6 +11,12 @@ export type HeaderMenuItemType = {
     title: string;
 };
 
+export type SelectItemType = {
+    id: number;
+    label: string;
+    value: string;
+};
+
 export type SVGType = {
     color: string;
 };
