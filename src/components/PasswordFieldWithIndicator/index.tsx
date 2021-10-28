@@ -32,6 +32,7 @@ type PasswordFieldWithIndicatorProps = {
 type PasswordRulesProps = {
     id: number;
     label: string;
+    idLabel: string;
     validator: Function;
 };
 
@@ -95,13 +96,8 @@ const PasswordFieldWithIndicator = ({
                 >
                     {PasswordRules.map((rules: PasswordRulesProps) => {
                         return (
-                            <Grid
-                                xs={6}
-                                item
-                                key={rules.id}
-                                id="passwordIndicator"
-                            >
-                                <Typography variant="body2">
+                            <Grid xs={6} item key={rules.id}>
+                                <Typography variant="body2" id={rules.idLabel}>
                                     {rules.validator(value) ? (
                                         <CheckCircleIcon
                                             fontSize="small"

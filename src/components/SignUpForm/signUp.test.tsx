@@ -49,4 +49,21 @@ describe("SignupForm", () => {
         expect(passwordInput.html()).toMatch("Pass12");
         expect(passwordRequirement).toBeTruthy();
     });
+    it("Check password length", async () => {
+        const tree = mount(<SignUpForm />);
+
+        const passwordInput = tree.find("input[name='password']");
+        const checkBoxIcon = component.find("#checkLength");
+        await act(async () => {
+            passwordInput.simulate("change", {
+                target: {
+                    name: "password",
+                    value: "12345678",
+                },
+            });
+        });
+        expect(
+            checkBoxIcon.find({ "data-testid": "CheckCircleIcon" })
+        ).toBeTruthy();
+    });
 });
