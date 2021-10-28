@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import CloseIcon from "@mui/icons-material/Close";
-
 import {
     Box,
     Button,
@@ -13,8 +12,13 @@ import {
     Dialog,
     Grid,
 } from "@mui/material";
-import "../../i18n/i18n";
+import "../../../i18n/i18n";
+
 type FormDialogProps = {
+    buttonProps?: {
+        size: "medium";
+        type: "submit";
+    };
     dialogTitle?: string;
     dialogContent?: string;
     showBackButton?: boolean;
@@ -25,6 +29,7 @@ type FormDialogProps = {
 };
 const FormDialog = ({
     dialogTitle,
+    buttonProps,
     dialogContent,
     children,
     showBackButton,
@@ -39,11 +44,10 @@ const FormDialog = ({
                 <DialogTitle>
                     <Box display="flex" alignItems="center">
                         <Box flexGrow={1}> {dialogTitle}</Box>
-                        <Box>
-                            <IconButton onClick={onClose}>
-                                <CloseIcon />
-                            </IconButton>
-                        </Box>
+
+                        <IconButton onClick={onClose}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
                 </DialogTitle>
                 <DialogContent>
@@ -53,21 +57,19 @@ const FormDialog = ({
                 <DialogActions>
                     <Grid container spacing={1} style={{ margin: "10px" }}>
                         <Grid container item xs={4} justifyContent="flex-start">
-                            {showBackButton ? (
+                            {showBackButton && (
                                 <Button
-                                    size="medium"
-                                    type="submit"
                                     sx={{ fontWeight: 600 }}
+                                    {...buttonProps}
                                 >
                                     {t("CONSTANT.BackButtonLable")}
                                 </Button>
-                            ) : null}
+                            )}
                         </Grid>
 
                         <Grid container item xs={8} justifyContent="flex-end">
                             <Button
-                                size="medium"
-                                type="submit"
+                                {...buttonProps}
                                 sx={{ fontWeight: 600 }}
                                 style={{ marginRight: "0.5em" }}
                             >
