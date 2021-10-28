@@ -1,4 +1,6 @@
+.PHONY: all test clean build
+
 build:
-	echo 'Skip. Only docker build required'
+	yarn install  --frozen-lockfile && yarn build 
 test:
-	echo 'Skipping tests since they are running on dockerbuild'
+	yarn test --ci  --coverage --watchAll=false

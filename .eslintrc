@@ -12,6 +12,8 @@
         "plugin:prettier/recommended",
         "plugin:react/jsx-runtime"
     ],
+   
+
     "rules": {
         "no-console": "warn",
         "no-eq-null": "error",
