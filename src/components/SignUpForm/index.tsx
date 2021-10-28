@@ -67,6 +67,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             />
 
                             <Button
+                                id="signUpButton"
                                 size="medium"
                                 type="submit"
                                 color="primary"
