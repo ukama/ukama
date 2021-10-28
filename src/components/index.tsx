@@ -1,6 +1,9 @@
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import { BasicDialog } from "./AppDialogs/BasicDialog";
+import StatusCard from "./StatusCard";
+import NetworkStatus from "./NetworkStatus";
+import UpgradeNavFooter from "./UpgradeNavFooter";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
@@ -11,7 +14,10 @@ import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessa
 export {
     LoginForm,
     SignUpForm,
+    StatusCard,
     BasicDialog,
+    NetworkStatus,
+    UpgradeNavFooter,
     ResetPasswordForm,
     ForgotPasswordForm,
     withAuthWrapperHOC,

@@ -1,9 +1,19 @@
 import { IRoute } from "./config";
 import { Suspense } from "react";
 import { Redirect, Route } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { isLoginAtom } from "../recoil";
 
 const RouteWithSubRoutes = (route: IRoute) => {
-    const authenticated: boolean = false;
+    const isLogin = useRecoilValue(isLoginAtom);
+    const authRoute = (props: any) =>
+        isLogin ? (
+            route.component && (
+                <route.component {...props} routes={route.routes} />
+            )
+        ) : (
+            <Redirect to="/login" />
+        );
     return (
         <Suspense fallback={route.fallback}>
             <Route
@@ -12,18 +22,9 @@ const RouteWithSubRoutes = (route: IRoute) => {
                     route.redirect ? (
                         <Redirect to={route.redirect} />
                     ) : route.private ? (
-                        authenticated ? (
-                            route.component && (
-                                <route.component
-                                    {...props}
-                                    routes={route.routes}
-                                />
-                            )
-                        ) : (
-                            <Redirect to="/login" />
-                        )
-                    ) : authenticated ? (
-                        <Redirect to="/dashboard" />
+                        authRoute(props)
+                    ) : isLogin ? (
+                        <Redirect to="/home" />
                     ) : (
                         route.component && (
                             <route.component {...props} routes={route.routes} />
