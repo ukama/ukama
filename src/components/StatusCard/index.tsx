@@ -40,12 +40,12 @@ const StatusCard = ({
                     <Grid item xs={7}>
                         <Typography variant="body1">{title}</Typography>
                     </Grid>
-                    <Grid item xs={5} display="flex" alignItems="flex-end">
+                    <Grid item xs={5} display="flex" justifyContent="flex-end">
                         <Select
                             value={option}
                             disableUnderline
                             variant="standard"
-                            sx={{ width: "128px", color: colors.empress }}
+                            sx={{ width: "64px", color: colors.empress }}
                             onChange={e => handleSelect(e.target.value)}
                         >
                             {options.map(
