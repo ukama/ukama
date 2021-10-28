@@ -1,3 +1,16 @@
-// This file will provide common TYPES for
+export type MenuItemType = {
+    Icon: any;
+    id: string;
+    title: string;
+    route: string;
+};
 
-export {};
+export type HeaderMenuItemType = {
+    id: string;
+    Icon: any;
+    title: string;
+};
+
+export type SVGType = {
+    color: string;
+};

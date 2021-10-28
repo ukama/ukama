@@ -5,7 +5,13 @@ import { useTranslation } from "react-i18next";
 import { AddEmail } from "../../utils/I18nHelper";
 import "../../i18n/i18n";
 
-const ForgotPasswordConfirmationMessage = () => {
+type ForgotPasswordConfirmationMessageProps = {
+    email: string;
+};
+
+const ForgotPasswordConfirmationMessage = ({
+    email,
+}: ForgotPasswordConfirmationMessageProps) => {
     const { t } = useTranslation();
 
     return (
@@ -19,10 +25,7 @@ const ForgotPasswordConfirmationMessage = () => {
 
             <MessageContainer>
                 <Typography variant="body1" sx={{ letterSpacing: "0.15 px" }}>
-                    {AddEmail(
-                        t("RECOVER_PASSWORD.FormNote"),
-                        "Brackley@ukama.com"
-                    )}
+                    {AddEmail(t("RECOVER_PASSWORD.FormNote"), email)}
                     <b>{t("RECOVER_PASSWORD.ImportantNote")}</b>
                 </Typography>
             </MessageContainer>
