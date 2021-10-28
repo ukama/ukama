@@ -30,9 +30,11 @@ const LinkStyle = styled(Link)({
         textDecoration: "underline",
     },
 });
+
 const MessageContainer = styled(Box)({
     paddingBottom: "5%",
 });
+
 const ContainerJustifySpaceBtw = styled(Box)(props => ({
     display: "flex",
     flexDirection: "row",
@@ -42,10 +44,19 @@ const ContainerJustifySpaceBtw = styled(Box)(props => ({
     },
 }));
 
+const RoundedCard = styled(Box)(() => ({
+    padding: "18px 28px",
+    borderRadius: "10px",
+    display: "inline-block",
+    background: colors.white,
+    boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
+}));
+
 export {
     LinkStyle,
+    RoundedCard,
     globalUseStyles,
     CenterContainer,
-    ContainerJustifySpaceBtw,
     MessageContainer,
+    ContainerJustifySpaceBtw,
 };

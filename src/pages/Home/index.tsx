@@ -1,8 +1,11 @@
+import { Box } from "@mui/material";
+import { StatusCard } from "../../components";
+
 const Home = () => {
     return (
-        <div>
-            <h1>Landing Home</h1>
-        </div>
+        <Box>
+            <StatusCard />
+        </Box>
     );
 };
 

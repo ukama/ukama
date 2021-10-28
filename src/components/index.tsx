@@ -1,5 +1,6 @@
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
+import StatusCard from "./StatusCard";
 import { BasicDialog } from "./AppDialogs";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import ResetPasswordForm from "./ResetPasswordForm";
@@ -11,6 +12,7 @@ import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessa
 export {
     LoginForm,
     SignUpForm,
+    StatusCard,
     BasicDialog,
     UpgradeNavFooter,
     ResetPasswordForm,

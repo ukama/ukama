@@ -7,5 +7,6 @@ const colors = {
     lightGrey: "#70757e",
     aliceBlue: "#eaf3fe",
     vulcan: "#37393E",
+    solitude: "#f5f6f8",
 };
 export default colors;
