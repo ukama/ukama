@@ -1,6 +1,6 @@
 import { colors } from "../theme";
 import { makeStyles } from "@mui/styles";
-import { Box, styled, Link } from "@mui/material";
+import { Box, styled, Link, Paper } from "@mui/material";
 
 const globalUseStyles = makeStyles(() => ({
     inputFieldStyle: {
@@ -44,12 +44,12 @@ const ContainerJustifySpaceBtw = styled(Box)(props => ({
     },
 }));
 
-const RoundedCard = styled(Box)(() => ({
+const RoundedCard = styled(Paper)(() => ({
+    width: "100%",
     padding: "18px 28px",
     borderRadius: "10px",
     display: "inline-block",
     background: colors.white,
-    boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
 }));
 
 export {
