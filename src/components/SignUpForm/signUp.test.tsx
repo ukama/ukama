@@ -15,7 +15,6 @@ describe("SignupForm", () => {
         const emailInput = component.find("input[name='email']");
         await act(async () => {
             emailInput.simulate("change", {
-                persist: () => {},
                 target: {
                     name: "email",
                     value: "email@gmail.com",
@@ -41,7 +40,6 @@ describe("SignupForm", () => {
         const passwordRequirement = component.find(".MuiSvgIcon-root");
         await act(async () => {
             passwordInput.simulate("change", {
-                persist: () => {},
                 target: {
                     name: "password",
                     value: "Pass12",
