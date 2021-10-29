@@ -16,6 +16,7 @@
     "react-i18next": "^11.12.0",
     "react-router-dom": "^5.2.1",
     "react-scripts": "4.0.3",
+    "recharts": "^2.1.6",
     "recoil": "^0.4.1",
     "recoil-persist": "^3.0.0",
     "yup": "^0.32.10"
@@ -46,6 +47,7 @@
     ]
   },
   "devDependencies": {
+    "@types/jest": "^27.0.2",
     "@types/react-dom": "^17.0.9",
     "@types/react-router-dom": "^5.3.1",
     "@typescript-eslint/eslint-plugin": "^4.33.0",

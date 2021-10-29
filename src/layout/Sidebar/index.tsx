@@ -1,19 +1,21 @@
-import Box from "@mui/material/Box";
-import List from "@mui/material/List";
+import {
+    Box,
+    List,
+    Drawer,
+    Divider,
+    Toolbar,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+} from "@mui/material";
+import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
-import Drawer from "@mui/material/Drawer";
+import { makeStyles } from "@mui/styles";
 import { MenuItemType } from "../../types";
-import Divider from "@mui/material/Divider";
-import Toolbar from "@mui/material/Toolbar";
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 import { useHistory } from "react-router-dom";
 import { Dispatch, SetStateAction } from "react";
 import { UpgradeNavFooter } from "../../components";
-import { colors } from "../../theme";
-import { makeStyles } from "@mui/styles";
+import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
     listItem: {
@@ -103,8 +105,8 @@ const Sidebar = (
 
             <div
                 style={{
-                    position: "inherit",
-                    top: "calc(100vh - 64%)",
+                    position: "absolute",
+                    bottom: "0px",
                 }}
             >
                 <UpgradeNavFooter />

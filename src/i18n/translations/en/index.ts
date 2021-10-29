@@ -39,4 +39,7 @@ export const TRANSLATIONS_EN = {
         SuccessTitle: "Password Changed Successfully",
         SuccessContent: `Your password has been changed successfully!`,
     },
+    ALERT: {
+        Title: "Alerts",
+    },
 };

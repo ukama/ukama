@@ -12,39 +12,31 @@ import React from "react";
 import { useSetRecoilState } from "recoil";
 import { isLoginAtom } from "../../recoil";
 import { MoreVert } from "@mui/icons-material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { HeaderMenuItemType } from "../../types";
-import LogoutIcon from "@mui/icons-material/Logout";
 import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 
 type HeaderProps = {
     pageName: string;
+    handleDrawerToggle: Function;
 };
 
-const Header = ({ pageName }: HeaderProps) => {
+const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
     const setIsLogin = useSetRecoilState(isLoginAtom);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-    const [mobileMoreAnchorEl, setMobileMoreAnchorEl] =
-        React.useState<null | HTMLElement>(null);
 
     const isMenuOpen = Boolean(anchorEl);
-    const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
     const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
-    const handleMobileMenuClose = () => {
-        setMobileMoreAnchorEl(null);
-    };
-
     const handleMenuClose = () => {
         setAnchorEl(null);
-        handleMobileMenuClose();
     };
 
     const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setMobileMoreAnchorEl(event.currentTarget);
+        setAnchorEl(event.currentTarget);
     };
 
     const handleLogout = () => {
@@ -94,56 +86,31 @@ const Header = ({ pageName }: HeaderProps) => {
         </Menu>
     );
 
-    const mobileMenuId = "primary-search-account-menu-mobile";
-    const renderMobileMenu = (
-        <Menu
-            anchorEl={mobileMoreAnchorEl}
-            anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-            }}
-            id={mobileMenuId}
-            keepMounted
-            transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-            }}
-            open={isMobileMenuOpen}
-            onClose={handleMobileMenuClose}
-        >
-            <MenuItem>
-                <IconButton size="large" color="inherit">
-                    <PersonOutlineIcon />
-                </IconButton>
-                <p>Profile</p>
-            </MenuItem>
-
-            <MenuItem onClick={handleProfileMenuOpen}>
-                <IconButton size="large" color="inherit">
-                    <LogoutIcon />
-                </IconButton>
-                <p>Logout</p>
-            </MenuItem>
-        </Menu>
-    );
-
     return (
-        <Box sx={{ flexGrow: 1 }}>
+        <Box>
             <AppBar
-                position="fixed"
-                sx={{
-                    padding: "4px 30px",
-                    ml: `${DRAWER_WIDTH}px`,
-                    width: `calc(100% - ${DRAWER_WIDTH}px)`,
-                }}
                 elevation={0}
+                position="fixed"
                 color="transparent"
+                sx={{
+                    padding: { xs: "4px 8px", md: "4px 30px" },
+                    ml: { sm: `${DRAWER_WIDTH}px` },
+                    width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+                }}
             >
                 <Toolbar style={{ flexGrow: 1, padding: "0px" }}>
+                    <IconButton
+                        color="inherit"
+                        aria-label="open drawer"
+                        edge="start"
+                        onClick={() => handleDrawerToggle()}
+                        sx={{ mr: 2, display: { sm: "none" } }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
                     <Typography variant="h6" noWrap component="div">
                         {pageName}
                     </Typography>
-
                     <Box sx={{ flexGrow: 1 }} />
                     <Box sx={{ display: { xs: "none", md: "flex" } }}>
                         {HEADER_MENU.map(
@@ -163,7 +130,7 @@ const Header = ({ pageName }: HeaderProps) => {
                         <IconButton
                             size="large"
                             color="inherit"
-                            aria-controls={mobileMenuId}
+                            aria-controls={menuId}
                             onClick={handleMobileMenuOpen}
                         >
                             <MoreVert />
@@ -172,8 +139,6 @@ const Header = ({ pageName }: HeaderProps) => {
                 </Toolbar>
                 <Divider />
             </AppBar>
-
-            {renderMobileMenu}
             {renderMenu}
         </Box>
     );

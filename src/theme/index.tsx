@@ -12,11 +12,20 @@ const theme = createTheme({
             alignItems: "center",
             color: colors.black,
         },
+        h6: {
+            fontWeight: 600,
+        },
+        body1: {
+            display: "block",
+            lineHeight: "157%",
+            fontSize: "0.875rem",
+            fontWeight: "normal",
+            alignItems: "center",
+        },
         body2: {
             display: "block",
             lineHeight: "166%",
             fontSize: "0.75rem",
-            color: colors.black,
             fontWeight: "normal",
             alignItems: "center",
         },
@@ -46,11 +55,19 @@ const theme = createTheme({
                     height: "68px",
                     padding: "0px",
                     "&:hover": {
-                        backgroundColor: colors.white,
+                        backgroundColor: colors.solitude,
                     },
                     "&:hover svg path": {
                         fill: colors.primary,
                     },
+                },
+            },
+        },
+        MuiSelect: {
+            styleOverrides: {
+                select: {
+                    fontSize: "0.875rem",
+                    backgroundColor: "transparent",
                 },
             },
         },

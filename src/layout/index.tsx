@@ -1,27 +1,29 @@
-import Sidebar from "./Sidebar";
-import { Box, CssBaseline, Toolbar } from "@mui/material";
-import { useState } from "react";
 import Header from "./Header";
+import Sidebar from "./Sidebar";
+import { useState } from "react";
+import { useHistory } from "react-router";
+import { getTitleFromPath } from "../utils";
+import { Box, CssBaseline, Toolbar } from "@mui/material";
+import { colors } from "../theme";
 const Layout = (props: any) => {
     const { children } = props;
+    const history = useHistory();
+    const [path, setPath] = useState(
+        getTitleFromPath(history?.location?.pathname || "/")
+    );
     const [isOpen, setIsOpen] = useState(false);
-    const [path, setPath] = useState("Home");
-
     const handleDrawerToggle = () => setIsOpen(() => !isOpen);
     return (
-        <Box sx={{ display: "flex" }} style={{ backgroundColor: "#F5F6F8" }}>
+        <Box sx={{ display: "flex", backgroundColor: colors.solitude }}>
             <CssBaseline />
+            <Header pageName={path} handleDrawerToggle={handleDrawerToggle} />
             <Sidebar
                 path={path}
                 isOpen={isOpen}
                 setPath={setPath}
                 handleDrawerToggle={handleDrawerToggle}
             />
-            <Header pageName={path} />
-            <Box
-                component="main"
-                sx={{ width: "100%", margin: "2% 2% 0px 2%" }}
-            >
+            <Box component="main" sx={{ flexGrow: 1, p: 3, height: "100vh" }}>
                 <Toolbar />
                 {children}
             </Box>

@@ -1,6 +1,6 @@
 import { colors } from "../theme";
 import { makeStyles } from "@mui/styles";
-import { Box, styled, Link } from "@mui/material";
+import { Box, styled, Link, Paper } from "@mui/material";
 
 const globalUseStyles = makeStyles(() => ({
     inputFieldStyle: {
@@ -33,9 +33,11 @@ const LinkStyle = styled(Link)({
         textDecoration: "underline",
     },
 });
+
 const MessageContainer = styled(Box)({
     paddingBottom: "5%",
 });
+
 const ContainerJustifySpaceBtw = styled(Box)(props => ({
     display: "flex",
     flexDirection: "row",
@@ -45,10 +47,19 @@ const ContainerJustifySpaceBtw = styled(Box)(props => ({
     },
 }));
 
+const RoundedCard = styled(Paper)(() => ({
+    width: "100%",
+    padding: "18px 28px",
+    borderRadius: "10px",
+    display: "inline-block",
+    background: colors.white,
+}));
+
 export {
     LinkStyle,
+    RoundedCard,
     globalUseStyles,
     CenterContainer,
-    ContainerJustifySpaceBtw,
     MessageContainer,
+    ContainerJustifySpaceBtw,
 };
