@@ -37,10 +37,10 @@ const StatusCard = ({
                     direction="row"
                     alignItems="center"
                 >
-                    <Grid item xs={7}>
+                    <Grid item xs={8}>
                         <Typography variant="body1">{title}</Typography>
                     </Grid>
-                    <Grid item xs={5} display="flex" justifyContent="flex-end">
+                    <Grid item xs={4} display="flex" justifyContent="flex-end">
                         <Select
                             value={option}
                             disableUnderline

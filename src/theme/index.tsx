@@ -15,6 +15,9 @@ const theme = createTheme({
         h6: {
             fontWeight: 600,
         },
+        subtitle1: {
+            fontWeight: 500,
+        },
         body1: {
             display: "block",
             lineHeight: "157%",
@@ -32,6 +35,17 @@ const theme = createTheme({
     },
     palette: themePalette as PaletteOptions,
     components: {
+        MuiButton: {
+            styleOverrides: {
+                contained: {
+                    fontWeight: 600,
+                    color: colors.white,
+                    letterSpacing: "0.4px",
+                    boxShadow:
+                        "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)",
+                },
+            },
+        },
         MuiFormHelperText: {
             styleOverrides: {
                 contained: {

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Box, Grid } from "@mui/material";
 import { NETWORKS } from "../../constants";
-import { StatusCard, NetworkStatus } from "../../components";
+import { RoundedCard } from "../../styles";
+import {
+    NodeCard,
+    StatusCard,
+    NetworkStatus,
+    ContainerHeader,
+} from "../../components";
 import { DashboardStatusCard } from "../../constants/stubData";
 
 const Home = () => {
@@ -45,30 +51,46 @@ const Home = () => {
                 handleStatusChange={(value: string) => setNetwork(value)}
             />
             <Grid container spacing={2}>
-                {DashboardStatusCard.map(
-                    ({
-                        id,
-                        Icon,
-                        title,
-                        options,
-                        subtitle1,
-                        subtitle2,
-                    }: any) => (
-                        <Grid key={id} item xs={12} md={6} lg={4}>
-                            <StatusCard
-                                Icon={Icon}
-                                title={title}
-                                options={options}
-                                subtitle1={subtitle1}
-                                subtitle2={subtitle2}
-                                option={getStatus(id)}
-                                handleSelect={(value: string) =>
-                                    handleSatusChange(id, value)
-                                }
-                            />
-                        </Grid>
-                    )
-                )}
+                <Grid xs={12} item container spacing={2}>
+                    {DashboardStatusCard.map(
+                        ({
+                            id,
+                            Icon,
+                            title,
+                            options,
+                            subtitle1,
+                            subtitle2,
+                        }: any) => (
+                            <Grid key={id} item xs={12} md={6} lg={4}>
+                                <StatusCard
+                                    Icon={Icon}
+                                    title={title}
+                                    options={options}
+                                    subtitle1={subtitle1}
+                                    subtitle2={subtitle2}
+                                    option={getStatus(id)}
+                                    handleSelect={(value: string) =>
+                                        handleSatusChange(id, value)
+                                    }
+                                />
+                            </Grid>
+                        )
+                    )}
+                </Grid>
+                <Grid xs={12} md={8} item>
+                    <RoundedCard>
+                        <ContainerHeader
+                            stats="1/8"
+                            title="My Nodes"
+                            buttonTitle="Add Node"
+                            handleButtonAction={() => {}}
+                        />
+                        <NodeCard isConfigure={true} />
+                    </RoundedCard>
+                </Grid>
+                <Grid xs={12} md={4} item>
+                    <RoundedCard sx={{ height: "100%" }}></RoundedCard>
+                </Grid>
             </Grid>
         </Box>
     );

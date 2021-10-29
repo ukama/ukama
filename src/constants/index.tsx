@@ -8,6 +8,8 @@ import {
     ModuleStoreIcon,
     NotificationIcon,
 } from "../assets/svg";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const DRAWER_WIDTH = 240;
 import {
@@ -15,6 +17,7 @@ import {
     checkPasswordLength,
     checkPasswordHasLetters,
 } from "../utils";
+import { MenuItemType } from "../types";
 
 const passwordRules = [
     {
@@ -77,6 +80,16 @@ const NETWORKS = [
     { id: 1, label: "Public Network", value: "public" },
     { id: 2, label: "Private Network", value: "private" },
 ];
+
+const BASIC_MENU_ACTIONS: MenuItemType[] = [
+    { id: 1, Icon: EditIcon, title: "Edit", route: "edit" },
+    {
+        id: 2,
+        Icon: DeleteIcon,
+        title: "Delete",
+        route: "delete",
+    },
+];
 export {
     NETWORKS,
     TIME_FILTER,
@@ -86,4 +99,5 @@ export {
     DRAWER_WIDTH,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
+    BASIC_MENU_ACTIONS,
 };

@@ -1,6 +1,6 @@
 export type MenuItemType = {
     Icon: any;
-    id: string;
+    id: number;
     title: string;
     route: string;
 };
@@ -18,5 +18,7 @@ export type SelectItemType = {
 };
 
 export type SVGType = {
-    color: string;
+    color?: string;
+    width?: string;
+    height?: string;
 };
