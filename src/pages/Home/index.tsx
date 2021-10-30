@@ -14,9 +14,11 @@ const Home = () => {
     const [userStatusFilter, setUserStatusFilter] = useState("total");
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
-    const [statOptionValue, setstatOptionValue] = React.useState("HEllooooo");
+    const [statOptionValue, setstatOptionValue] = React.useState(3);
 
-    const handleStatsChange = (event: SelectChangeEvent) => {
+    const handleStatsChange = (event: {
+        target: { value: React.SetStateAction<number> };
+    }) => {
         setstatOptionValue(event.target.value);
     };
     const handleSatusChange = (key: string, value: string) => {

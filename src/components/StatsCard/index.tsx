@@ -3,12 +3,6 @@ import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
 import { statsItemType, statsPeriodItemType } from "../../types";
 import { RechartsData } from "../../constants/rechartsData";
-type StatsCardProps = {
-    options: statsItemType[];
-    periodOptions: statsPeriodItemType[];
-    handleSelect: any;
-    selectOption: string;
-};
 import {
     ComposedChart,
     Line,
@@ -17,8 +11,16 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
+    ResponsiveContainer,
     Legend,
 } from "recharts";
+type StatsCardProps = {
+    options: statsItemType[];
+    periodOptions: statsPeriodItemType[];
+    handleSelect: any;
+    selectOption: number;
+};
+
 const StatsCard = ({
     handleSelect,
     options,
@@ -31,19 +33,21 @@ const StatsCard = ({
                 <Grid container spacing={1} justifyContent="space-between">
                     <Grid item xs={6} container>
                         <Select
+                            style={{
+                                minWidth: 120,
+                                color: "#000000",
+                            }}
                             value={selectOption}
                             variant="standard"
                             disableUnderline
                             sx={{ width: "64px", color: colors.empress }}
                             onChange={handleSelect}
                         >
-                            {options.map(
-                                ({ id, label, value }: statsItemType) => (
-                                    <MenuItem key={id} value={value}>
-                                        {label}
-                                    </MenuItem>
-                                )
-                            )}
+                            {options.map(({ id, label }: statsItemType) => (
+                                <MenuItem key={id} value={id}>
+                                    {label}
+                                </MenuItem>
+                            ))}
                         </Select>
                     </Grid>
                     <Grid item>
@@ -57,24 +61,28 @@ const StatsCard = ({
                     </Grid>
                 </Grid>
                 <Grid container spacing={1}>
-                    <ComposedChart
-                        width={630}
-                        height={200}
-                        data={RechartsData}
-                        margin={{
-                            top: 20,
-                            right: 20,
-                            bottom: 20,
-                        }}
-                    >
-                        <CartesianGrid stroke="#f5f5f5" />
-                        <XAxis dataKey="name" scale="band" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="uv" barSize={20} fill="#413ea0" />
-                        <Line type="monotone" dataKey="uv" stroke="#ff7300" />
-                    </ComposedChart>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <ComposedChart
+                            data={RechartsData}
+                            margin={{
+                                top: 20,
+                                right: 5,
+                                bottom: 20,
+                            }}
+                        >
+                            <CartesianGrid stroke="#f5f5f5" />
+                            <XAxis dataKey="name" scale="band" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="uv" barSize={20} fill="#413ea0" />
+                            <Line
+                                type="monotone"
+                                dataKey="uv"
+                                stroke="#ff7300"
+                            />
+                        </ComposedChart>
+                    </ResponsiveContainer>
                 </Grid>
             </RoundedCard>
         </>

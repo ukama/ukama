@@ -43,6 +43,7 @@ const SIDEBAR_MENU1 = [
 const STATS_OPTIONS = [
     { id: 1, label: "Connected", value: "Connected" },
     { id: 2, label: "Device uptime", value: "Device uptime" },
+    { id: 3, label: "Throughput", value: "Throughput" },
 ];
 const STATS_PERIOD = [
     { id: 1, label: "DAY" },

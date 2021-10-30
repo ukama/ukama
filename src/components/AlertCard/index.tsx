@@ -1,7 +1,22 @@
 import * as React from "react";
 import { RoundedCard } from "../../styles";
-import { Box, Typography, Grid, CardHeader, Card } from "@mui/material";
+import {
+    Box,
+    Typography,
+    CardActions,
+    IconButton,
+    Grid,
+    Button,
+    CardHeader,
+    Card,
+} from "@mui/material";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ShareIcon from "@mui/icons-material/Share";
 import { useTranslation } from "react-i18next";
+import { CloudOffIcon } from "../../assets/svg";
+import { colors } from "../../theme";
+
 import "../../i18n/i18n";
 type AlertCardProps = {
     Icon: React.ReactElement;
@@ -16,18 +31,23 @@ const AlertCard = ({ Icon, action, title, subheader }: AlertCardProps) => {
         <>
             <RoundedCard>
                 <Box mb={2}>
-                    <Grid item xs={12} container justifyContent="flex-start">
-                        <Typography variant="h6">{t("ALERT.Title")}</Typography>
-                    </Grid>
+                    <Typography variant="h6">{t("ALERT.Title")}</Typography>
                 </Box>
 
                 <Card elevation={2}>
-                    <CardHeader
-                        avatar={Icon}
-                        action={action}
-                        title={title}
-                        subheader={subheader}
-                    />
+                    <CardActions>
+                        <CloudOffIcon />
+                        <div style={{ padding: 7 }}>{title}</div>
+
+                        <Typography variant="caption" color={colors.empress}>
+                            08/16/21 1PM
+                        </Typography>
+                    </CardActions>
+                    <Box pl={5.5}>
+                        <Typography variant="subtitle2" color="initial">
+                            Short description of alert.
+                        </Typography>
+                    </Box>
                 </Card>
             </RoundedCard>
         </>
