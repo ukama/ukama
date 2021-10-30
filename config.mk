@@ -70,6 +70,8 @@ ifeq ($(LOCAL), $(TARGETBOARD))
 	XGCC            = gcc
 	XLD             = ld
 	XGXX            = g++
-	HOST            =
+	HOST            = $(shell gcc -dumpmachine)
 	OPENSSLTARGET   = linux-generic64
 endif
+
+export

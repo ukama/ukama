@@ -46,8 +46,8 @@ LIBS+=-lrabbitmq
 CFILES   = $(wildcard ./src/*.c)
 OBJFILES = $(CFILES:.c=.o)
 
-XCC = $(XGCCPATH)$(XGCC)
-XLD = $(XGCCPATH)$(XLD)
+XCC := $(XGCCPATH)$(XGCC)
+XLD := $(XGCCPATH)$(XLD)
 
 .PHONY: $(TARGET_EXEC)
 

@@ -11,9 +11,9 @@ CURPATH = $(dir $(CURMAKE))
 export DEPDIR = $(CURPATH)/build
 
 #ifneq ($(TARGET), "linux"
-ifndef XGCCPATH
-$(error XGCCPATH is missing)
-endif
+#ifndef XGCCPATH
+#$(error XGCCPATH is missing)
+#endif
 #endif
 
 ifndef BUILD_CLEANUP
@@ -83,6 +83,7 @@ LIST += amqp
 LIST += protobuf
 LIST += protobuf-c
 LIST += libunistring
+LIST += libcap
 
 .PHONY: $(LIST)
 
@@ -91,7 +92,7 @@ build: $(LIST)
 zlib:
 	$(call print_msg,"zlib")
 ifeq (,$(wildcard ${DEPDIR}/lib/libz.a))
-	(cd $@ && ./configure --static --prefix=$(DEPDIR) && \
+	(cd $@ && sudo ./configure --static --prefix=$(DEPDIR) && \
 	$(MAKE) -j${NPROCS} CC=$(XCC) CFLAGS="${CFLAGS} -fPIC" && \
 	$(MAKE) -j${NPROCS} install)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -377,6 +378,16 @@ ifeq (,$(wildcard ${DEPDIR}/lib/librabbitmq.*))
 		-DENABLE_SSL_SUPPORT=OFF && \
         cmake --build . --target install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+else
+	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
+endif
+
+libcap:
+	$(call print_msg,"libcap")
+ifeq (,$(wildcard ${DEPDIR}/lib64/libcap.*))
+	$(MAKE) -C $@ CC=$(XCC) clean
+	$(MAKE) -C $@ CC=$(XCC) BUILD_CC=gcc GOLANG=no install DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}

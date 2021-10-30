@@ -14,6 +14,7 @@
 #ifndef LXCE_CSPACE_H
 #define LXCE_CSPACE_H
 
+#include <sys/types.h>
 #include "manifest.h"
 
 #define CSPACE_DEFAULT_HOSTNAME "localhost"
