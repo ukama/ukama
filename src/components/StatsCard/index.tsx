@@ -1,7 +1,7 @@
 import { Grid, Select, MenuItem, ButtonGroup, Button } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
-import { statsItemType, statsPeriodItemType } from "../../types";
+import { StatsItemType, statsPeriodItemType } from "../../types";
 import { RechartsData } from "../../constants/rechartsData";
 import {
     ComposedChart,
@@ -15,7 +15,7 @@ import {
     Legend,
 } from "recharts";
 type StatsCardProps = {
-    options: statsItemType[];
+    options: StatsItemType[];
     periodOptions: statsPeriodItemType[];
     handleSelect: any;
     selectOption: number;
@@ -35,7 +35,7 @@ const StatsCard = ({
                         <Select
                             style={{
                                 minWidth: 120,
-                                color: "#000000",
+                                color: colors.black,
                             }}
                             value={selectOption}
                             variant="standard"
@@ -43,7 +43,7 @@ const StatsCard = ({
                             sx={{ width: "64px", color: colors.empress }}
                             onChange={handleSelect}
                         >
-                            {options.map(({ id, label }: statsItemType) => (
+                            {options.map(({ id, label }: StatsItemType) => (
                                 <MenuItem key={id} value={id}>
                                     {label}
                                 </MenuItem>

@@ -9,6 +9,7 @@ const colors = {
     lightGrey: "#70757e",
     aliceBlue: "#eaf3fe",
     vulcan: "#37393E",
+    balck: "#000000",
     solitude: "#f5f6f8",
     empress: "#757575",
 };

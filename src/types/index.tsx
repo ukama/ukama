@@ -1,13 +1,20 @@
 export type MenuItemType = {
     Icon: any;
-    id: string;
+    id: number;
     title: string;
     route: string;
 };
-export type statsItemType = {
+export type StatsItemType = {
     id: number;
     label: string;
     value: string;
+};
+export type AlertItemType = {
+    id: number;
+    Icon: any;
+    title: string;
+    date: string;
+    description: string;
 };
 export type statsPeriodItemType = {
     id: number;
@@ -26,5 +33,7 @@ export type SelectItemType = {
 };
 
 export type SVGType = {
-    color: string;
+    color?: string;
+    width?: string;
+    height?: string;
 };

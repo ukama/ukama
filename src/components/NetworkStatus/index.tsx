@@ -40,22 +40,22 @@ const NetworkStatus = ({
 }: NetworkStatusProps) => {
     return (
         <Grid width="100%" container mb="18px" p="0px 8px">
-            <Grid item xs={10}>
+            <Grid item xs={12} md={10}>
                 <Box display="flex" flexDirection="row" alignItems="center">
                     {getIconByStatus(statusType)}
                     <Typography variant={"h6"}>{status}</Typography>
                     {duration && (
                         <Typography
-                            variant={"h1"}
-                            color={colors.empress}
                             ml="8px"
+                            variant={"h6"}
+                            color={colors.empress}
                         >
                             {duration}
                         </Typography>
                     )}
                 </Box>
             </Grid>
-            <Grid item xs={2} display="flex" justifyContent="flex-end">
+            <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
                 <Select
                     value={option}
                     disableUnderline

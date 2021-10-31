@@ -7,7 +7,10 @@ import {
     SettingsIcon,
     ModuleStoreIcon,
     NotificationIcon,
+    CloudOffIcon,
 } from "../assets/svg";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const DRAWER_WIDTH = 240;
 import {
@@ -15,6 +18,7 @@ import {
     checkPasswordLength,
     checkPasswordHasLetters,
 } from "../utils";
+import { MenuItemType } from "../types";
 
 const passwordRules = [
     {
@@ -60,7 +64,29 @@ const HEADER_MENU = [
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
-
+const ALERT_INFORMATION = [
+    {
+        id: 1,
+        Icon: CloudOffIcon,
+        title: "Software error",
+        description: "Short description of alert.",
+        date: "08/16/21 1PM",
+    },
+    {
+        id: 2,
+        Icon: CloudOffIcon,
+        title: "Software error",
+        description: "Short description of alert.",
+        date: "08/16/21 1PM",
+    },
+    {
+        id: 3,
+        Icon: CloudOffIcon,
+        title: "Software error",
+        description: "Short description of alert.",
+        date: "08/16/21 1PM",
+    },
+];
 const MONTH_FILTER = [
     { id: 1, label: "January ", value: "january " },
     { id: 2, label: "February", value: "february" },
@@ -87,6 +113,16 @@ const NETWORKS = [
     { id: 1, label: "Public Network", value: "public" },
     { id: 2, label: "Private Network", value: "private" },
 ];
+
+const BASIC_MENU_ACTIONS: MenuItemType[] = [
+    { id: 1, Icon: EditIcon, title: "Edit", route: "edit" },
+    {
+        id: 2,
+        Icon: DeleteIcon,
+        title: "Delete",
+        route: "delete",
+    },
+];
 export {
     NETWORKS,
     TIME_FILTER,
@@ -98,4 +134,6 @@ export {
     SIDEBAR_MENU2,
     STATS_OPTIONS,
     STATS_PERIOD,
+    BASIC_MENU_ACTIONS,
+    ALERT_INFORMATION,
 };
