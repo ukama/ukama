@@ -7,9 +7,9 @@
 	wimc-port    = "4449"
 	mesh-port    = "4449"
 	cSpace-configs = [
-		      "boot_contained.json",
-		      "service_contained.json",
-		      "shutdown_contained.json"
+		      "capp/conf/boot_contained.json",
+		      "capp/conf/service_contained.json",
+		      "capp/conf/shutdown_contained.json"
 		      ]
 
 #nothing here.

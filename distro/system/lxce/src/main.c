@@ -161,6 +161,10 @@ int main(int argc, char **argv) {
       usage();
       exit(0);
       break;
+
+    case 'm':
+      manifestFile = optarg;
+      break;
       
     case 'l':
       debug = optarg;
@@ -212,7 +216,7 @@ int main(int argc, char **argv) {
     cPtr = cSpaces;
   }
 
-  for (i=0; ;i++) {
+  for (i=0; i<config->cSpaceCount; i++) {
 
     if (config->cSpaceConfigs[i]) {
       if(!process_cspace_config(config->cSpaceConfigs[i], cPtr)) {
@@ -220,11 +224,9 @@ int main(int argc, char **argv) {
 		  config->cSpaceConfigs[i]);
 	exit(1);
       }
-    } else {
-      break;
     }
 
-    if (config->cSpaceConfigs[i+1]) {
+    if (i+1 != config->cSpaceCount) {
       cPtr->next =  (CSpace *)calloc(1, sizeof(CSpace));
     } else {
       cPtr->next = NULL;
