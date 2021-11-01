@@ -496,7 +496,7 @@ static int namespaces_flag(char *ns) {
     return CLONE_NEWPID;
   } else if (strcmp(ns, "uts")==0) {
     return CLONE_NEWUTS;
-  } else if (strcmp(ns, "net")==0) {
+  } else if (strcmp(ns, "network")==0) {
     return CLONE_NEWNET;
   } else if (strcmp(ns, "mount")==0) {
     return CLONE_NEWNS;
