@@ -28,7 +28,7 @@ LYDER=-lyder
 endif
 
 CFLAGS+=-c -Wall -I$(ULFIUS_INCLUDE) $(ADDITIONALFLAGS) $(CPPFLAGS)
-LIBS=-lc -lulfius -lorcania $(LYDER) -lcurl -lssl -lcrypto -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lunistring -lz -ljansson -L$(ULFIUS_LOCATION) -L../../../build/lib
+LIBS=-lc -lulfius -lorcania $(LYDER) -lcurl -lssl -lcrypto -lmicrohttpd -lgnutls -lnettle -lhogweed -lp11-kit -lunistring -lz -ljansson -L$(ULFIUS_LOCATION) -L../../../build/lib -L../../../build/lib64
 
 
 REMOTE_URL=http://localhost:9275/websocket/echo

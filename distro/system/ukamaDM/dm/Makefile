@@ -5,8 +5,6 @@
 # Depends on the code in core and common
 #
 
-CC=/home/vishal/cdrive/work/git/ukama/ukamaOS/distro/tools/musl-cross-make/output/bin/x86_64-linux-musl-gcc
-#CC=/usr/bin/musl-gcc
 INCS=-I"./core" -I"./common" -I"./ukamaedr" -I"./servIface" -I"." -I"./config"
 CFLAGS=$(INCS) -g
 CDEFINES=-DLWM2M_BOOTSTRAP -DLWM2M_CLIENT_MODE -DLWM2M_LITTLE_ENDIAN \
@@ -23,6 +21,7 @@ PARSER_SRC=$(wildcard config/*.c)
 BINDIR=build/bin
 LINKFLAG = --static
 VERSION = v0.0.1
+LIBS=-lpthread
 
 .PHONY: all client container
 

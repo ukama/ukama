@@ -10,11 +10,15 @@ CURPATH = $(dir $(CURMAKE))
 
 export DEPDIR = $(CURPATH)/build
 
-#ifneq ($(TARGET), "linux"
-#ifndef XGCCPATH
-#$(error XGCCPATH is missing)
-#endif
-#endif
+ifndef XGCCPATH
+	$(error XGCCPATH is missing)
+endif
+
+ifeq ($(TARGETBOARD), $(LOCAL))
+PKG_CFG_PATH=${DEPDIR}/lib64/pkgconfig
+else
+PKG_CFG_PATH=${DEPDIR}/lib/pkgconfig
+endif
 
 ifndef BUILD_CLEANUP
 	BUILD_CLEANUP=0
@@ -31,7 +35,7 @@ endef
 #BUILD FLAGS
 BUILDFLAGS =
 
-BUILD_DIR = build
+BUILD_DIR = tmpbuild
 LIGHT_GREEN='\033[1;32m'
 NO_COLOR='\033[0m'
 
@@ -48,9 +52,9 @@ endif
 
 LIBS =
 
-LDFLAGS = -L$(DEPDIR)/lib
+LDFLAGS = -L$(DEPDIR)/lib -L$(DEPDIR)/lib64
 ifeq ($(TARGET), "anode")
-	LDFLAGS += -L$(XGCCPATH)../arm-linux-musleabihf/lib
+	LDFLAGS += -L$(XGCCPATH)/../arm-linux-musleabihf/lib
 endif
 export LDFLAGS
 
@@ -92,9 +96,10 @@ build: $(LIST)
 zlib:
 	$(call print_msg,"zlib")
 ifeq (,$(wildcard ${DEPDIR}/lib/libz.a))
-	(cd $@ && sudo ./configure --static --prefix=$(DEPDIR) && \
-	$(MAKE) -j${NPROCS} CC=$(XCC) CFLAGS="${CFLAGS} -fPIC" && \
-	$(MAKE) -j${NPROCS} install)
+	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && sudo ../configure --static --prefix=$(DEPDIR) && \
+		$(MAKE) -j${NPROCS} CC=$(XCC) CFLAGS="${CFLAGS} -fPIC" && \
+		$(MAKE) -j${NPROCS} install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -103,6 +108,7 @@ endif
 yder:
 	$(call print_msg,"yder")
 ifeq (,$(wildcard ${DEPDIR}/lib/libyder.a))
+	$(MAKE) -C $@/src CC=$(XCC) clean 
 	$(MAKE) -C $@/src static-install CC=$(XCC) Y_DISABLE_JOURNALD=1 \
 	       	DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -113,6 +119,7 @@ endif
 orcania:
 	$(call print_msg,"orcania")
 ifeq (,$(wildcard ${DEPDIR}/lib/liborcania.a))
+	$(MAKE) -C $@/src CC=$(XCC) clean
 	$(MAKE) -C $@/src static-install CC=$(XCC) DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
@@ -122,9 +129,11 @@ endif
 libmicrohttpd:
 	$(call print_msg,"libmicrohttpd")
 ifeq (,$(wildcard ${DEPDIR}/lib/libmicrohttpd.*))
-	(cd $@ && ./bootstrap && ./configure CC=$(XCC) --host=$(HOST) \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@ && ./bootstrap && cd $(BUILD_DIR) && \
+		../configure CC=$(XCC) --host=$(HOST) \
 		--disable-curl --disable-https --prefix=$(DEPDIR) && \
-	$(MAKE) -C ./src install)
+		$(MAKE) -C ./src install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e  ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -133,6 +142,7 @@ endif
 ulfius: orcania yder jansson gnutls curl libmicrohttpd libunistring
 	$(call print_msg,"ulfius")
 ifeq (,$(wildcard ${DEPDIR}/lib/libulfius.a))
+	$(MAKE) -C $@/src CC=$(XCC) clean
 	$(MAKE) -C $@ install CC=$(XCC) DESTDIR=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
@@ -142,9 +152,11 @@ endif
 jansson:
 	$(call print_msg,"jansson")
 ifeq (,$(wildcard ${DEPDIR}/lib/libjansson.*))
-	(cd $@ && autoreconf -i && ./configure CC=$(XCC) --host=$(HOST) \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@ && autoreconf -i && cd $(BUILD_DIR) && \
+		../configure CC=$(XCC) --host=$(HOST) \
 		--enable-static --prefix=$(DEPDIR) && \
 	$(MAKE) && $(MAKE) install)
+	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t'  ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -176,8 +188,9 @@ endif
 tomlc:
 	$(call print_msg,"tomlc")
 ifeq (,$(wildcard ${DEPDIR}/lib/libtoml.a))
-	($(MAKE) -C $@ CC=$(XCC) && \
-	$(MAKE) -C $@ install prefix=$(DEPDIR))
+	$(MAKE) -C $@ CC=$(XCC) clean
+	$(MAKE) -C $@ CC=$(XCC) 
+	$(MAKE) -C $@ install prefix=$(DEPDIR)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
@@ -219,8 +232,9 @@ curl: openssl
 ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
 	cd ./${BUILD_DIR} && \
-	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
-		-latomic" ../configure --prefix=${DEPDIR} \
+	CC="${XCC}" LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" \
+		../configure --prefix=${DEPDIR} --includedir="${DEPDIR}/include" \
+		LIBS="-latomic -lhogweed -lnettle" \
 		--disable-libcurl-option --with-openssl=${DEPDIR} \
 		--with-zlib=${DEPDIR} --host=${HOST} && \
 	make -j${NPROCS} && make -j${NPROCS} install
@@ -313,8 +327,8 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 		--disable-openssl-compatibility \
 		--with-included-unistring \
 		--disable-valgrind-tests --disable-guile --enable-local-libopts \
-		--without-idn --disable-doc \
-		PKG_CONFIG_PATH=${DEPDIR}/lib/pkgconfig && \
+		--without-idn --disable-doc --without-p11-kit \
+		PKG_CONFIG_PATH=${PKG_CFG_PATH} && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -326,9 +340,9 @@ sqlite:
 	$(call print_msg,"sqlite")
 ifeq (,$(wildcard ${DEPDIR}/lib/libsqlite3.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
-	CC="${XCC} --static" CFLAGS="-I${DEPDIR}/include" \
+	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
-		--host=${HOST} --disable-readline && \
+		--host=${HOST} --disable-readline --enable-static && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -340,7 +354,7 @@ protobuf:
 	$(call print_msg,"protobuf")
 ifeq (,$(wildcard ${DEPDIR}/lib/libprotobuf.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && cd ${BUILD_DIR} && \
-	CC="${XCC} --static" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
+	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--enable-cross-compile --with-protoc=protoc --host=${HOST} && \
 	$(MAKE) -j${NPROCS} && \
@@ -355,7 +369,7 @@ protobuf-c: protobuf
 	$(call print_msg,"protobuf-c")
 ifeq (,$(wildcard ${DEPDIR}/lib/libprotobuf-c.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@ && ./autogen.sh && cd ${BUILD_DIR} && \
-	CC="${XCC} --static" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
+	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
 		CXXFLAGS="-I${DEPDIR}/include" \
 		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
 		--host=${HOST} --disable-protoc && \
@@ -396,9 +410,6 @@ endif
 clean:
 	echo "Cleaning Dependencies."
 	rm -rf $(DEPDIR)
-	for dir in $(LIST); do	\
-		$(MAKE) -C $$dir -f Makefile $@; \
-	done
 
 info :
 	@echo "Build info for vendor:"

@@ -9,6 +9,7 @@ CURDIR := $(dir $(CURMAKE))
 COREBOOTSRC = coreboot
 ANODETARGET = at91bootstrap uboot
 CNODETARGET = $(COREBOOTSRC) 
+LOCALTARGET = $(COREBOOTSRC)
 AT91BOOTSTRAPBIN = at91bootstrap.bin
 UBOOTBIN = u-boot.bin
 COREBOOTBIN = coreboot.rom
@@ -36,6 +37,12 @@ endif
 ifeq ($(CNODEBOARD), $(TARGETBOARD))
 override ARCH = $(ARCH_X86)
 SRCDIRS = $(CNODETARGET)
+endif
+
+#Local 
+ifeq ($(LOCAL), $(TARGETBOARD))
+override ARCH = $(ARCH_X86)
+SRCDIRS = $(LOCALTARGET)
 endif
 
 define checkxcc

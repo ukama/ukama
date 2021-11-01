@@ -13,15 +13,14 @@ jobs:
             arch: armv7
           - board: cnode
             arch: x86_64
+          - board: linux
+            arch: x86_64   
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     
     - name: Checkout submodules
-      run: git submodule update --init --recursive
-    #- name: Checkout submodule
-    #  uses: textbook/git-checkout-submodule-action@master
-    
+      run: git submodule update --init --recursive    
   
     - name: Dependencies
       run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript -y

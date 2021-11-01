@@ -35,6 +35,15 @@ KCONFIG = $(CNODE_KCONFIG)
 OS_ARTIFACTS = $(KIMAGE) modules
 endif
 
+ifeq ($(LOCAL), $(TARGETBOARD))
+KIMAGE = bzImage
+override CC =
+override ARCH = x86_64
+KCONFIG = $(CNODE_KCONFIG)
+OS_ARTIFACTS = $(KIMAGE) modules
+endif
+
+
 #Targets based on boards
 .PHONY: subdirs $(SRCDIR) info
 

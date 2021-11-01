@@ -16,6 +16,7 @@ VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/
 VENDOR_INC   = $(VENDOR_BUILD)/include/
 VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target.
 VENDOR_PKG = tomlc ulfius curl jansson
@@ -31,7 +32,8 @@ CFLAGS+=-I./inc/common/
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
 
-LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-L${VENDOR_LIB} 
+LDFLAGS+=-L$(VENDOR_LIB64)
 
 # Libraries needed.
 ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle

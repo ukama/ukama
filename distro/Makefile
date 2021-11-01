@@ -1,13 +1,15 @@
 # Copyright (c) 2021-present, Ukama Inc.
 # All rights reserved.
+include ../config.mk
 
 # Build RootFS for the UkamaDistro
-DISTROMAKE := $(abspath $(lastword $(MAKEFILE_LIST)))
+DISTROMAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
 DISTRODIR := $(dir $(DISTROMAKE))
 
 #Targets for the makefile
-CROSSCCDIR := tools
 DISTROSUBDIRS := system addons utils
+CROSSCCDIR := tools
+
 
 #Final UKAMA ROOTFS path and name
 ifndef ROOTFSPATH
@@ -15,10 +17,18 @@ ROOTFSDIR := _ukamafs
 ROOTFSPATH := $(DISTRODIR)$(ROOTFSDIR)
 endif
 
-# XGCC PATH
+# Compiler path
+ifneq ($(TARGETBOARD),$(LOCAL))
+$(info	Building musl based gcc for $(TARGETBOARD))
 XGCCPATH := $(DISTRODIR)tools/musl-cross-make/output/bin/
+TOOLCHAIN := $(CROSSCCDIR)
+else
+XGCCPATH = $(shell which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}')/
+$(info Skipping CC tools for $(TARGETBOARD))
+endif	
 
-.PHONY: subdirs $(DISTROSUBDIRS) vendor $(CROSSCCDIR) clean
+
+.PHONY: subdirs $(DISTROSUBDIRS) vendor $(TOOLCHAIN) clean
 
 #Exporting Varibles
 export
@@ -37,7 +47,7 @@ rootfs: vendor
 	mkdir -p $(ROOTFSPATH)
 
 # vendor
-vendor: $(CROSSCCDIR)
+vendor: $(TOOLCHAIN)
 	$(MAKE) -C $@
 
 $(CROSSCCDIR):
