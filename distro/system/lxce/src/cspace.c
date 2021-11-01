@@ -460,7 +460,7 @@ static int set_integer_object_value(json_t *json, int *param, char *objName,
  * set_str_object_value --
  *
  */
-static int set_str_object_value(json_t *json, char *param, char *objName,
+static int set_str_object_value(json_t *json, char **param, char *objName,
 				int mandatory, char *defValue) {
 
   json_t *obj;
@@ -471,16 +471,16 @@ static int set_str_object_value(json_t *json, char *param, char *objName,
       log_error("Missing Mandatory JSON field: %s Setting to default: %s",
 		objName, defValue);
       if (defValue)  {
-	param = strdup(defValue);
+	*param = strdup(defValue);
       } else {
 	return FALSE;
       }
     } else {
       log_debug("Missing JSON field: %s. Ignored.", objName);
-      param = NULL;
+      *param = NULL;
     }
   } else {
-    param = strdup(json_string_value(obj));
+    *param = strdup(json_string_value(obj));
   }
 
   return TRUE;
@@ -543,31 +543,32 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
   if (space == NULL) return FALSE;
   if (json == NULL) return FALSE;
 
-  if (!set_str_object_value(json, space->version, JSON_VERSION, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->version), JSON_VERSION, TRUE,
+			    NULL)) {
     return FALSE;
   }
 
-  if (!set_str_object_value(json, space->target, JSON_TARGET, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->target), JSON_TARGET, TRUE, NULL)) {
     return FALSE;
   }
 
   if (space->target == LXCE_SERIAL) {
-    if (!set_str_object_value(json, space->serial, JSON_SERIAL, TRUE, NULL)) {
+    if (!set_str_object_value(json, &(space->serial), JSON_SERIAL, TRUE, NULL)) {
       return FALSE;
     }
   } else {
-    set_str_object_value(json, space->serial, JSON_SERIAL, FALSE, NULL);
+    set_str_object_value(json, &(space->serial), JSON_SERIAL, FALSE, NULL);
   }
 
-  if (!set_str_object_value(json, space->name, JSON_NAME, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->name), JSON_NAME, TRUE, NULL)) {
     return FALSE;
   }
 
-  set_str_object_value(json, space->hostName, JSON_HOSTNAME, FALSE,
+  set_str_object_value(json, &(space->hostName), JSON_HOSTNAME, FALSE,
 		       CSPACE_DEFAULT_HOSTNAME);
 
-  set_integer_object_value(json, &space->uid, JSON_UID, FALSE, 0);
-  set_integer_object_value(json, &space->gid, JSON_GID, FALSE, 0);
+  set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
+  set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
 
   /* Look for namespaces. */
   space->nameSpaces = 0;
@@ -654,7 +655,7 @@ int process_cspace_config(char *fileName, CSpace *space) {
     fclose(fp);
     return FALSE;
   }
-
+  memset(buffer, 0, size+1);
   fread(buffer, 1, size, fp); /* Read everything into buffer */
 
   /* Trying loading it as JSON */
@@ -670,7 +671,7 @@ int process_cspace_config(char *fileName, CSpace *space) {
   ret = deserialize_cspace_file(space, json);
 
   if (space) {
-    space->configFile = strdup(fileName);
+    (space)->configFile = strdup(fileName);
   }
 
  done:

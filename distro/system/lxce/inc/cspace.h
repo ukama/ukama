@@ -25,7 +25,7 @@
 #define JSON_TYPE         "type"
 #define JSON_HOSTNAME     "hostname"
 #define JSON_NAMESPACES   "namespaces"
-#define JSON_CAPABILITIES "capabilitles"
+#define JSON_CAPABILITIES "capabilities"
 
 #define STACK_SIZE      (1024*1024)
 #define CONFIG_MAX_SIZE 1000000
