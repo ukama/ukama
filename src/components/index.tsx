@@ -12,7 +12,7 @@ import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
-import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
+import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 
 export {
@@ -30,6 +30,6 @@ export {
     ForgotPasswordForm,
     withAuthWrapperHOC,
     DataTableWithOptions,
-    PasswordRequirementIndicator,
+    PasswordFieldWithIndicator,
     ForgotPasswordConfirmationMessage,
 };

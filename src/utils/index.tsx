@@ -1,3 +1,13 @@
+const UppercaseRegex = /[A-Z]/;
+const LowercaseRegex = /[a-z]/;
+//eslint-disable-next-line
+const specialCharactersRegex = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
+const alphabetRegex = /[a-zA-Z]/g;
+const checkPasswordHasLowercaseLetters = (password: string) =>
+    LowercaseRegex.test(password);
+
+const checkPasswordHasUppercaseLetters = (password: string) =>
+    UppercaseRegex.test(password);
 const getTitleFromPath = (path: string) => {
     switch (path) {
         case "/":
@@ -24,11 +34,9 @@ const checkPasswordSpecialCharacter = (password: string) =>
     specialCharactersRegex.test(password);
 
 const checkPasswordLength = (password: string) => password.length > 7;
-//eslint-disable-next-line
-const specialCharactersRegex = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/;
-//eslint-disable-next-line
-const alphabetRegex = /[a-zA-Z]/g;
 export {
+    checkPasswordHasLowercaseLetters,
+    checkPasswordHasUppercaseLetters,
     alphabetRegex,
     getTitleFromPath,
     checkPasswordLength,

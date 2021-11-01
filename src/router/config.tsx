@@ -1,3 +1,5 @@
+import { CenterContainer } from "../styles";
+import { CircularProgress } from "@mui/material";
 import { lazy, ReactNode, ComponentType, LazyExoticComponent } from "react";
 
 export interface IRoute {
@@ -17,7 +19,11 @@ export interface IRoute {
     private?: boolean;
 }
 
-const Loader = <div> Loading... </div>;
+const Loader = (
+    <CenterContainer>
+        <CircularProgress />
+    </CenterContainer>
+);
 
 const getRouteObject = (
     path: string,
