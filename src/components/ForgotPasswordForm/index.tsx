@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import "../../i18n/i18n";
 const forgotPasswordSchema = Yup.object({
     email: Yup.string()
-        .email("Enter a valid email")
-        .required("Email is required"),
+        .email("Please enter a valid email")
+        .required("Please enter a valid email"),
 });
 
 const forgotPasswordValue = {
@@ -53,7 +53,7 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                             />
                             <ContainerJustifySpaceBtw>
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     variant="text"
                                     sx={{ fontWeight: 600 }}
                                     onClick={() => onBack()}
@@ -62,13 +62,13 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                 </Button>
 
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     type="submit"
                                     color="primary"
                                     variant="contained"
                                     sx={{ fontWeight: 600 }}
                                 >
-                                    {t("CONSTANT.ReturnToLoginLink")}
+                                    {t("CONSTANT.RecoveryEmail")}
                                 </Button>
                             </ContainerJustifySpaceBtw>
                         </Stack>
