@@ -44,7 +44,11 @@ const OptionsPopover = ({
     const id = open ? cid : undefined;
     return (
         <>
-            <Box aria-describedby={id} onClick={handlePopoverOpen}>
+            <Box
+                aria-describedby={id}
+                onClick={handlePopoverOpen}
+                sx={{ cursor: "pointer" }}
+            >
                 <MenuDots />
             </Box>
             <Popover

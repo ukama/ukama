@@ -1,133 +1,89 @@
 import {
-    TableContainer,
     Table,
-    TableHead,
     TableRow,
-    TableCell,
     TableBody,
-    TablePagination,
+    TableCell,
+    TableHead,
+    TableContainer,
+    Link,
 } from "@mui/material";
-import React from "react";
-import { ColumnsWithOptions } from "../../types";
+import OptionsPopover from "../OptionsPopover";
+import { ColumnsWithOptions, MenuItemType } from "../../types";
 
-const columns: readonly ColumnsWithOptions[] = [
-    { id: "name", label: "Name", minWidth: 170 },
-    { id: "usage", label: "Usage", minWidth: 100 },
-    // {
-    //     id: "actions",
-    //     label: "...",
-    //     minWidth: 74,
-    //     align: "right",
-    // },
-];
-
-interface Data {
-    name: string;
-    usage: string;
+interface DataTableWithOptionsInterface {
+    columns: ColumnsWithOptions[];
+    dataset: Object[];
+    menuOptions: MenuItemType[];
+    onMenuItemClick: Function;
 }
 
-function createData(name: string, usage: string): Data {
-    return { name, usage };
-}
-
-const rows = [
-    createData("India", "IN"),
-    createData("China", "CN"),
-    createData("Italy", "IT"),
-    createData("United States", "US"),
-    createData("Canada", "CA"),
-    createData("Australia", "AU"),
-    createData("Germany", "DE"),
-    createData("Ireland", "IE"),
-    createData("Mexico", "MX"),
-    createData("Japan", "JP"),
-    createData("France", "FR"),
-    createData("United Kingdom", "GB"),
-    createData("Russia", "RU"),
-    createData("Nigeria", "NG"),
-    createData("Brazil", "BR"),
-];
-
-const DataTableWithOptions = () => {
-    const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(10);
-
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (
-        event: React.ChangeEvent<HTMLInputElement>
-    ) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
-
+const DataTableWithOptions = ({
+    columns,
+    dataset,
+    menuOptions,
+    onMenuItemClick,
+}: DataTableWithOptionsInterface) => {
     return (
         <>
-            <TableContainer sx={{ maxHeight: 440 }}>
-                <Table stickyHeader aria-label="sticky table">
+            <TableContainer sx={{ maxHeight: 200 }}>
+                <Table stickyHeader>
                     <TableHead>
                         <TableRow>
                             {columns.map(column => (
                                 <TableCell
                                     key={column.id}
                                     align={column.align}
-                                    style={{ minWidth: column.minWidth }}
+                                    style={{
+                                        minWidth: column.minWidth,
+                                        padding: "12px",
+                                        fontSize: "0.875rem",
+                                    }}
                                 >
-                                    {column.label}
+                                    <b>{column.label}</b>
                                 </TableCell>
                             ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows
-                            .slice(
-                                page * rowsPerPage,
-                                page * rowsPerPage + rowsPerPage
-                            )
-                            .map((row: Data) => {
-                                return (
-                                    <TableRow
-                                        hover
-                                        role="checkbox"
-                                        tabIndex={-1}
-                                        key={row.name}
+                        {dataset.map((row: any) => (
+                            <TableRow
+                                role="checkbox"
+                                tabIndex={-1}
+                                key={row.name}
+                            >
+                                {columns.map((column: ColumnsWithOptions) => (
+                                    <TableCell
+                                        key={column.id}
+                                        align={column.align}
+                                        sx={{
+                                            padding: "14px",
+                                            fontSize: "0.875rem",
+                                        }}
                                     >
-                                        {columns.map(
-                                            (column: ColumnsWithOptions) => {
-                                                const value = row[column.id];
-                                                return (
-                                                    <TableCell
-                                                        key={column.id}
-                                                        align={column.align}
-                                                    >
-                                                        {column.format &&
-                                                        typeof value ===
-                                                            "number"
-                                                            ? column.format(
-                                                                  value
-                                                              )
-                                                            : value}
-                                                    </TableCell>
-                                                );
-                                            }
+                                        {column.id === "actions" ? (
+                                            <OptionsPopover
+                                                cid={
+                                                    "data-table-action-popover"
+                                                }
+                                                options={menuOptions}
+                                                handleItemClick={
+                                                    onMenuItemClick
+                                                }
+                                            />
+                                        ) : column.id === "name" ? (
+                                            <Link href="#" underline="hover">
+                                                {row[column.id]}
+                                            </Link>
+                                        ) : (
+                                            row[column.id]
                                         )}
-                                    </TableRow>
-                                );
-                            })}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
                     </TableBody>
                 </Table>
             </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[10, 25, 100]}
-                component="div"
-                count={rows.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-            />
         </>
     );
 };

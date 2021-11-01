@@ -28,4 +28,32 @@ const DashboardStatusCard = [
     },
 ];
 
-export { DashboardStatusCard };
+const DashboardResidentsTable = [
+    {
+        name: "Tryphena Nelson",
+        usage: "1 GB",
+        actions: "",
+    },
+    {
+        name: "Tryphena Nelson",
+        usage: "1 GB",
+        actions: "",
+    },
+    {
+        name: "Tryphena Nelson",
+        usage: "1 GB",
+        actions: "",
+    },
+    {
+        name: "Tryphena Nelson",
+        usage: "1 GB",
+        actions: "",
+    },
+    {
+        name: "Tryphena Nelson",
+        usage: "1 GB",
+        actions: "",
+    },
+];
+
+export { DashboardStatusCard, DashboardResidentsTable };

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Box, Grid } from "@mui/material";
-import { NETWORKS } from "../../constants";
+import { Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import {
     NodeCard,
@@ -9,7 +8,15 @@ import {
     ContainerHeader,
     DataTableWithOptions,
 } from "../../components";
-import { DashboardStatusCard } from "../../constants/stubData";
+import {
+    DashboardResidentsTable,
+    DashboardStatusCard,
+} from "../../constants/stubData";
+import {
+    NETWORKS,
+    DEACTIVATE_EDIT_ACTION_MENU,
+    DataTableWithOptionColumns,
+} from "../../constants";
 
 const Home = () => {
     const [network, setNetwork] = useState("public");
@@ -42,7 +49,7 @@ const Home = () => {
     };
 
     return (
-        <Box>
+        <>
             <NetworkStatus
                 duration={""}
                 option={network}
@@ -97,11 +104,16 @@ const Home = () => {
                             buttonTitle="ACTIVATE"
                             handleButtonAction={() => {}}
                         />
-                        <DataTableWithOptions />
+                        <DataTableWithOptions
+                            columns={DataTableWithOptionColumns}
+                            dataset={DashboardResidentsTable}
+                            menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
+                            onMenuItemClick={() => {}}
+                        />
                     </RoundedCard>
                 </Grid>
             </Grid>
-        </Box>
+        </>
     );
 };
 

@@ -10,7 +10,7 @@ import {
 } from "../assets/svg";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-
+import { DataTableWithOptionColumns } from "./tableColumns";
 const DRAWER_WIDTH = 240;
 import {
     checkPasswordSpecialCharacter,
@@ -90,6 +90,17 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
         route: "delete",
     },
 ];
+
+const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
+    {
+        id: 1,
+        Icon: DeleteIcon,
+        title: "Deactivate",
+        route: "deactivate",
+    },
+    { id: 2, Icon: EditIcon, title: "Edit", route: "edit" },
+];
+
 export {
     NETWORKS,
     TIME_FILTER,
@@ -100,4 +111,6 @@ export {
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
     BASIC_MENU_ACTIONS,
+    DataTableWithOptionColumns,
+    DEACTIVATE_EDIT_ACTION_MENU,
 };

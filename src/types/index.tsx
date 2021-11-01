@@ -24,9 +24,8 @@ export type SVGType = {
 };
 
 export type ColumnsWithOptions = {
-    id: "name" | "usage";
+    id: "name" | "usage" | "actions";
     label: string;
     minWidth?: number;
     align?: "right";
-    format?: (value: number) => string;
 };
