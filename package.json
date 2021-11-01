@@ -21,6 +21,7 @@
     "react-router-dom": "^5.2.1",
     "react-scripts": "4.0.3",
     "recoil": "^0.4.1",
+    "recoil-persist": "^3.0.0",
     "yup": "^0.32.10"
   },
   "scripts": {

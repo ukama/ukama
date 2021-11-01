@@ -25,6 +25,20 @@ const Loader = (
     </CenterContainer>
 );
 
+const getRouteObject = (
+    path: string,
+    component: string,
+    isPrivate: boolean
+) => {
+    return {
+        path: path,
+        exact: false,
+        fallback: Loader,
+        private: isPrivate,
+        component: lazy(() => import(`../pages/${component}`)),
+    };
+};
+
 export const routes: IRoute[] = [
     //Default routes//
     {
@@ -34,53 +48,34 @@ export const routes: IRoute[] = [
         redirect: "/login",
         fallback: Loader,
     },
+    {
+        path: "/",
+        exact: true,
+        private: true,
+        redirect: "/home",
+        fallback: Loader,
+    },
+
     //
 
     //Privatte Routes//
+    getRouteObject("/home", "Home", true),
+    getRouteObject("/nodes", "Nodes", true),
+    getRouteObject("/user", "User", true),
+    getRouteObject("/billing", "Billing", true),
+    getRouteObject("/store", "Store", true),
     //
 
     //Public Routes//
-    {
-        path: "/forgotPasswordConfirmation",
-        component: lazy(() => import("../pages/ForgotPasswordCofirmation")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/login",
-        component: lazy(() => import("../pages/Login")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/signUp",
-        component: lazy(() => import("../pages/SignUp")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/forgot-password",
-        component: lazy(() => import("../pages/ForgotPassword")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/reset-password",
-        component: lazy(() => import("../pages/ResetPassword")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
-    {
-        path: "/*",
-        component: lazy(() => import("../pages/ErrorPage")),
-        exact: false,
-        private: false,
-        fallback: Loader,
-    },
+    getRouteObject(
+        "/forgotPasswordConfirmation",
+        "ForgotPasswordCofirmation",
+        false
+    ),
+    getRouteObject("/login", "Login", false),
+    getRouteObject("/signUp", "SignUp", false),
+    getRouteObject("/forgot-password", "ForgotPassword", false),
+    getRouteObject("/reset-password", "ResetPassword", false),
+    getRouteObject("/*", "ErrorPage", false),
     //
 ];

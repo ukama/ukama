@@ -3,7 +3,7 @@ import { CenterContainer } from "../../styles";
 const ForgotPasswordConfirmation = () => {
     return (
         <CenterContainer>
-            <ForgotPasswordConfirmationMessage email={`Brackley@ukama.com`} />
+            <ForgotPasswordConfirmationMessage email={`john@doe.com`} />
         </CenterContainer>
     );
 };
