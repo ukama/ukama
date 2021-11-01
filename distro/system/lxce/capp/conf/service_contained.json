@@ -1,35 +1,44 @@
 {
-    "version": "0.1",
-    "serial" : "abcd-ef-ghi-009910-xyz",
-    "target" : "serial",
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
 
-    "name"     : "service",
-    "hostname" : "ukama-service",
-    "uid"      : 0,
-    "gid"      : 0,
-    
-    "namespaces" : [
-	{ "type" : "pid" },
-	{ "type" : "ipc" },
-	{ "type" : "uts" },
-	{ "type" : "mount" },
-    	{ "type" : "user" }
-    ],
-	
-    "capabilities" : [
-	"CAP_NET_ADMIN",
-	"CAP_NET_BIND_SERVICE",
-	"CAP_SETFCAP",
-	"CAP_SETUID",
-	"CAP_SYS_ADMIN",
-	"CAP_SYS_BOOT",
-	"CAP_SYS_MODULE",
-	"CAP_SYS_NICE",
-	"CAP_SYS_RAWIO",
-	"CAP_SYS_TIME",
-	"CAP_SYSLOG",
-	"CAP_WAKE_ALARM",
-	"CAP_SYS_RESOURCE"
-    ]
+	"name": "service",
+	"hostname": "ukama-service",
+	"uid": "0",
+	"gid": "0",
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "ipc"
+		},
+		{
+			"type": "uts"
+		},
+		{
+			"type": "mount"
+		},
+		{
+			"type": "user"
+		}
+	],
+
+	"capabilities": [
+		"CAP_NET_ADMIN",
+		"CAP_NET_BIND_SERVICE",
+		"CAP_SETFCAP",
+		"CAP_SETUID",
+		"CAP_SYS_ADMIN",
+		"CAP_SYS_BOOT",
+		"CAP_SYS_MODULE",
+		"CAP_SYS_NICE",
+		"CAP_SYS_RAWIO",
+		"CAP_SYS_TIME",
+		"CAP_SYSLOG",
+		"CAP_WAKE_ALARM",
+		"CAP_SYS_RESOURCE"
+	]
 }
 

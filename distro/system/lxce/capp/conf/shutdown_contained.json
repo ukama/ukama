@@ -1,25 +1,34 @@
 {
-    "version": "0.1",
-    "serial" : "abcd-ef-ghi-009910-xyz",
-    "target" : "serial",
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
 
-    "name"     : "boot",
-    "hostname" : "ukama-boot",
-    "uid"      : 0,
-    "gid"      : 0,
-    
-    "namespaces" : [
-	{ "type" : "pid" },
-	{ "type" : "ipc" },
-	{ "type" : "uts" },
-	{ "type" : "mount" },
-    	{ "type" : "user" }
-    ],
-	
-    "capabilities" : [
-	"CAP_SYSLOG",
-	"CAP_SYS_TIME",
-	"CAP_NET_ADMIN"
-    ]
+	"name": "boot",
+	"hostname": "ukama-boot",
+	"uid": "0",
+	"gid": "0",
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "ipc"
+		},
+		{
+			"type": "uts"
+		},
+		{
+			"type": "mount"
+		},
+		{
+			"type": "user"
+		}
+	],
+
+	"capabilities": [
+		"CAP_SYSLOG",
+		"CAP_SYS_TIME",
+		"CAP_NET_ADMIN"
+	]
 }
 
