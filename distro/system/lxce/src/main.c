@@ -27,6 +27,7 @@
 #include "lxce_config.h"
 #include "manifest.h"
 #include "cspace.h"
+#include "csthreads.h"
 
 #define VERSION "0.0.1"
 
@@ -126,15 +127,16 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret=0, count=0, i;
+  int ret=0, i;
   char *debug = DEF_LOG_LEVEL;
   char *configFile = DEF_CONFIG_FILE;
   char *manifestFile = DEF_MANIFEST_FILE;
   struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
-  CSpace *cSpaces=NULL, *cPtr=NULL;
-  
+  CSpace *cSpaces, *cPtr;
+  CSpaceThread *csThread=NULL;
+
   /* Parsing command line args. */
   while (true) {
     int opt = 0;
@@ -180,6 +182,9 @@ int main(int argc, char **argv) {
   }
   
   log_debug("Starting lxce.d ... \n");
+
+  /* Initialize cspace threads list */
+  init_cspace_thread_list();
 
   /* Before we open the socket for REST, process the config file and
    * start them containers.
@@ -228,15 +233,26 @@ int main(int argc, char **argv) {
   }
 
   /* Step-3: setup cSpaces */
+  /* For each space, we create a thread which would clone and parent
+   * would wait for the space to exit. Space is currently active until the
+   * device restarts.
+   */
   cPtr = cSpaces;
-  if (cPtr) {
-    /* Iterate over each items and create their respective cSpaces. */
-    if (!create_cspace(cPtr)) {
-      log_error("Error creating cspace: %s using config file: %s. Exiting",
-		cPtr->name, cPtr->configFile);
-      exit(1);
+
+  /* Go over the cSpaces, start thread and create actual contained spaces. */
+  for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
+
+    csThread = init_cspace_thread(cPtr->name, cPtr);
+
+    if (add_to_cspace_thread_list(csThread)) {
+      if (pthread_create(&(csThread->tid), NULL, cspace_thread_start,
+			 csThread)) {
+	log_error("Error creating pthread for cSpaces. Name: %s", cPtr->name);
+	exit(1);
+      }
+      log_debug("Thread created for cspace: %s", cPtr->name);
     } else {
-      log_debug("Successfully created cspace: %s", cPtr->name);
+      log_error("Failed to create cspace thread for: %s", cPtr->name);
     }
   }
 

@@ -95,6 +95,7 @@ int parse_config(Config *config, toml_table_t *configData) {
   } else {
 
     size = toml_array_nelem(csArray);
+    config->cSpaceCount   = size;
     config->cSpaceConfigs = (char **)calloc(size, sizeof(char *));
     if (!config->cSpaceConfigs) {
       log_error("Memory allocation failed for size: %d", size*sizeof(char *));

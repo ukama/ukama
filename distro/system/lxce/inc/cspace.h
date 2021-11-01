@@ -38,7 +38,6 @@
 #define LXCE_SERIAL "serial"
 
 /* Definition of Ukama's contained space as per config file */
-
 typedef struct _cSpace {
 
   char *version;      /* contained space version */
@@ -65,6 +64,7 @@ typedef struct _cSpace {
   struct _cSpace *next; /* pointer to next contained space */
 } CSpace;
 
-int create_cspace(CSpace *space);
+int create_cspace(CSpace *space, pid_t *pid);
+int process_cspace_config(char *fileName, CSpace *space);
 
 #endif /* LXCE_CSPACE_H */

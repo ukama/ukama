@@ -49,6 +49,7 @@ LIBS+=-ltoml
 LIBS+=-lpthread
 LIBS+=-ljansson
 LIBS+=-lcap
+LIBS+=-luuid
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)

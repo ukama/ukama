@@ -365,10 +365,8 @@ static int cspace_init_clone(void *arg) {
 /*
  * create_cspace -- create contained spaces
  */
-int create_cspace(CSpace *space) {
+int create_cspace(CSpace *space, pid_t *pid) {
 
-  int childStatus;
-  pid_t pid;
   char *stack=NULL;
   
   /* logic is as follows:
@@ -405,9 +403,9 @@ int create_cspace(CSpace *space) {
   }
 
   /* clone with proper flags for namespaces */
-  pid = clone(cspace_init_clone, stack + STACK_SIZE,
+  *pid = clone(cspace_init_clone, stack + STACK_SIZE,
 	      SIGCHLD | space->nameSpaces, space);
-  if (pid == -1) {
+  if (*pid == -1) {
     log_error("Space: %s Unable to clone cInit", space->name);
     return FALSE;
   }
@@ -416,14 +414,11 @@ int create_cspace(CSpace *space) {
   space->sockets[1] = 0;
 
   /* prepare child process gid/uid map files. */
-  if (prepare_child_map_files(pid, space) == FALSE) {
+  if (prepare_child_map_files(*pid, space) == FALSE) {
     log_error("Error preparing map files for child process. Terminating it");
     kill(pid, SIGKILL);
     return FALSE;
   }
-
-  /* Wait on child. XXX - fix me.*/
-  waitpid(pid, &childStatus, 0);
 
   if (space->sockets[0]) close(space->sockets[0]);
   if (space->sockets[1]) close(space->sockets[1]);
@@ -556,7 +551,7 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
     return FALSE;
   }
 
-  if (strcmp(space->target, LXCE_SERIAL)==0) {
+  if (space->target == LXCE_SERIAL) {
     if (!set_str_object_value(json, space->serial, JSON_SERIAL, TRUE, NULL)) {
       return FALSE;
     }
