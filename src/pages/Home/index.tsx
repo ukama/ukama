@@ -7,6 +7,7 @@ import {
     StatusCard,
     NetworkStatus,
     ContainerHeader,
+    DataTableWithOptions,
 } from "../../components";
 import { DashboardStatusCard } from "../../constants/stubData";
 
@@ -89,7 +90,15 @@ const Home = () => {
                     </RoundedCard>
                 </Grid>
                 <Grid xs={12} md={4} item>
-                    <RoundedCard sx={{ height: "100%" }}></RoundedCard>
+                    <RoundedCard sx={{ height: "100%" }}>
+                        <ContainerHeader
+                            stats="6/16"
+                            title="Residents"
+                            buttonTitle="ACTIVATE"
+                            handleButtonAction={() => {}}
+                        />
+                        <DataTableWithOptions />
+                    </RoundedCard>
                 </Grid>
             </Grid>
         </Box>

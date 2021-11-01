@@ -22,3 +22,11 @@ export type SVGType = {
     width?: string;
     height?: string;
 };
+
+export type ColumnsWithOptions = {
+    id: "name" | "usage";
+    label: string;
+    minWidth?: number;
+    align?: "right";
+    format?: (value: number) => string;
+};
