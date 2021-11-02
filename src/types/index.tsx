@@ -37,3 +37,10 @@ export type SVGType = {
     width?: string;
     height?: string;
 };
+
+export type ColumnsWithOptions = {
+    id: "name" | "usage" | "actions";
+    label: string;
+    minWidth?: number;
+    align?: "right";
+};

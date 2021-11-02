@@ -1,4 +1,3 @@
-import Carousel from "./Carousel";
 import NodeCard from "./NodesCard";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
@@ -10,14 +9,15 @@ import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import FormDialog from "./AppDialogs/FormDialog";
-import PasswordRequirementIndicator from "./PasswordRequirementIndicator";
+import DataTableWithOptions from "./DataTableWithOptions";
+import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 import StatsCard from "./StatsCard";
 import AlertCard from "./AlertCard";
 export {
-    Carousel,
     NodeCard,
     LoginForm,
     SignUpForm,
@@ -30,9 +30,11 @@ export {
     ContainerHeader,
     UpgradeNavFooter,
     ResetPasswordForm,
+    MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
-    PasswordRequirementIndicator,
+    DataTableWithOptions,
+    PasswordFieldWithIndicator,
     ForgotPasswordConfirmationMessage,
     FormDialog,
 };

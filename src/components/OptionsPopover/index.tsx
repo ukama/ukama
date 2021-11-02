@@ -16,7 +16,7 @@ type ItemProps = {
     handleItemClick: Function;
 };
 
-const Item = ({ type, Icon, title, handleItemClick }: ItemProps) => (
+const OptionItem = ({ type, Icon, title, handleItemClick }: ItemProps) => (
     <MenuItem onClick={() => handleItemClick(type)}>
         <ListItemIcon>
             <Icon fontSize="small" />
@@ -27,13 +27,13 @@ const Item = ({ type, Icon, title, handleItemClick }: ItemProps) => (
 
 type OptionsPopoverProps = {
     cid: string;
-    options: MenuItemType[];
+    menuOptions: MenuItemType[];
     handleItemClick: Function;
 };
 
 const OptionsPopover = ({
     cid,
-    options,
+    menuOptions,
     handleItemClick,
 }: OptionsPopoverProps) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -44,7 +44,11 @@ const OptionsPopover = ({
     const id = open ? cid : undefined;
     return (
         <>
-            <Box aria-describedby={id} onClick={handlePopoverOpen}>
+            <Box
+                aria-describedby={id}
+                onClick={handlePopoverOpen}
+                sx={{ cursor: "pointer" }}
+            >
                 <MenuDots />
             </Box>
             <Popover
@@ -61,9 +65,9 @@ const OptionsPopover = ({
                     horizontal: "left",
                 }}
             >
-                {options.map(({ id, Icon, title, route }: any) => (
-                    <Item
-                        key={`${cid}-${id}`}
+                {menuOptions.map(({ id: optId, Icon, title, route }: any) => (
+                    <OptionItem
+                        key={`${cid}-${optId}`}
                         type={route}
                         Icon={Icon}
                         title={title}

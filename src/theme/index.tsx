@@ -17,6 +17,11 @@ const theme = createTheme({
         },
         subtitle1: {
             fontWeight: 500,
+            textAlign: "left",
+        },
+        subtitle2: {
+            fontWeight: 500,
+            textAlign: "left",
         },
         body1: {
             display: "block",
@@ -35,14 +40,20 @@ const theme = createTheme({
     },
     palette: themePalette as PaletteOptions,
     components: {
-        MuiButton: {
+        MuiFormControl: {
             styleOverrides: {
-                contained: {
-                    fontWeight: 600,
-                    color: colors.white,
-                    letterSpacing: "0.4px",
-                    boxShadow:
-                        "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)",
+                root: {
+                    "&:hover .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline":
+                        {
+                            borderColor: colors.hoverColor,
+                        },
+                },
+            },
+        },
+        MuiDivider: {
+            styleOverrides: {
+                root: {
+                    margin: "12px 0px !important",
                 },
             },
         },
@@ -74,6 +85,17 @@ const theme = createTheme({
                     "&:hover svg path": {
                         fill: colors.primary,
                     },
+                },
+            },
+        },
+        MuiButton: {
+            styleOverrides: {
+                contained: {
+                    fontWeight: 600,
+                    color: colors.white,
+                    letterSpacing: "0.4px",
+                    boxShadow:
+                        "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)",
                 },
             },
         },

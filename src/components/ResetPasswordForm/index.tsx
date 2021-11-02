@@ -1,27 +1,18 @@
-import {
-    Box,
-    Stack,
-    Button,
-    TextField,
-    Typography,
-    InputAdornment,
-    IconButton,
-} from "@mui/material";
+import "../../i18n/i18n";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useState } from "react";
-import withAuthWrapperHOC from "../withAuthWrapperHOC";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
-import PasswordRequirementIndicator from "../PasswordRequirementIndicator";
 import { useTranslation } from "react-i18next";
-import "../../i18n/i18n";
+import withAuthWrapperHOC from "../withAuthWrapperHOC";
+import { Box, Stack, Button, Typography } from "@mui/material";
+import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
+import PasswordRequirementIndicator from "../PasswordFieldWithIndicator";
+
 const ResetPasswordSchema = Yup.object({
-    newPassword: Yup.string().required("Password is required"),
+    password: Yup.string().required("Password is required"),
 });
 
 const ResetPasswordValue = {
-    newPassword: "",
+    password: "",
 };
 
 type ResetPasswordFormProps = {
@@ -32,10 +23,7 @@ type ResetPasswordFormProps = {
 const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
     const classes = globalUseStyles();
     const { t } = useTranslation();
-    const [togglePassword, setTogglePassword] = useState(false);
-    const handleTogglePassword = () => {
-        setTogglePassword(prev => !prev);
-    };
+
     return (
         <Box width="100%">
             <Formik
@@ -50,48 +38,19 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 {t("RESET_PASSWORD.FormTitle")}
                             </Typography>
 
-                            <TextField
-                                fullWidth
-                                id="newPassword"
-                                name="newPassword"
-                                label={t("CONSTANT.NewPasswordLabel")}
-                                value={values.newPassword}
-                                onChange={handleChange}
-                                InputLabelProps={{ shrink: true }}
-                                type={togglePassword ? "text" : "password"}
-                                error={
-                                    touched.newPassword &&
-                                    Boolean(errors.newPassword)
-                                }
-                                helperText={
-                                    touched.newPassword && errors.newPassword
-                                }
-                                InputProps={{
-                                    classes: { input: classes.inputFieldStyle },
-                                    endAdornment: (
-                                        <InputAdornment position="end">
-                                            <IconButton
-                                                edge="end"
-                                                onClick={handleTogglePassword}
-                                            >
-                                                {togglePassword ? (
-                                                    <VisibilityOff />
-                                                ) : (
-                                                    <Visibility />
-                                                )}
-                                            </IconButton>
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-
                             <PasswordRequirementIndicator
-                                password={values.newPassword}
+                                errors={errors}
+                                touched={touched}
+                                withIndicator={true}
+                                value={values.password}
+                                handleChange={handleChange}
+                                label={t("CONSTANT.NewPasswordLabel")}
+                                fieldStyle={classes.inputFieldStyle}
                             />
 
                             <ContainerJustifySpaceBtw>
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     variant="text"
                                     sx={{ fontWeight: 600 }}
                                     onClick={() => onCancel()}
@@ -100,11 +59,13 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 </Button>
 
                                 <Button
-                                    size="large"
+                                    size="medium"
                                     type="submit"
                                     color="primary"
                                     variant="contained"
-                                    sx={{ fontWeight: 600 }}
+                                    sx={{
+                                        fontWeight: 600,
+                                    }}
                                 >
                                     {t("RESET_PASSWORD.ButtonLabel")}
                                 </Button>

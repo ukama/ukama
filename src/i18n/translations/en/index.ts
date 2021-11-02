@@ -20,6 +20,7 @@ export const TRANSLATIONS_EN = {
     NODE: {
         NodeNameLabel: "NODE NAME",
         NodeSerialNumberLabel: "SERIAL NUMBER",
+        RecoveryEmail: "EMAIL RECOVERY LINK",
     },
     SIGNUP: {
         FormTitle: "Sign up for Ukama",

@@ -16,7 +16,7 @@ const ContainerHeader = ({
     handleButtonAction,
 }: ContainerHeaderProps) => {
     return (
-        <HorizontalContainerJustify sx={{ marginBottom: "24px" }}>
+        <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
             <HorizontalContainer>
                 <Typography variant="h6">{title}</Typography>
                 <Typography
@@ -31,7 +31,7 @@ const ContainerHeader = ({
             </HorizontalContainer>
             <Button
                 variant="contained"
-                sx={{ width: "124px" }}
+                sx={{ width: "144px" }}
                 onClick={() => handleButtonAction()}
             >
                 {buttonTitle}
