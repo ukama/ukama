@@ -11,6 +11,7 @@ import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
+import DataTableWithOptions from "./DataTableWithOptions";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 
@@ -28,6 +29,7 @@ export {
     MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
+    DataTableWithOptions,
     PasswordFieldWithIndicator,
     ForgotPasswordConfirmationMessage,
 };

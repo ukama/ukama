@@ -1,18 +1,24 @@
 import { useState } from "react";
-import { Box, Grid, useMediaQuery } from "@mui/material";
-import { NETWORKS } from "../../constants";
 import { RoundedCard } from "../../styles";
+import { Grid, useMediaQuery } from "@mui/material";
 import {
     NodeCard,
     StatusCard,
     NetworkStatus,
     ContainerHeader,
     MultiSlideCarousel,
+    DataTableWithOptions,
 } from "../../components";
 import {
     DashboardSliderData,
     DashboardStatusCard,
+    DashboardResidentsTable,
 } from "../../constants/stubData";
+import {
+    NETWORKS,
+    DEACTIVATE_EDIT_ACTION_MENU,
+    DataTableWithOptionColumns,
+} from "../../constants";
 
 let slides = [
     {
@@ -23,6 +29,38 @@ let slides = [
         isConfigure: true,
     },
 ];
+
+const getNodesContainerData = (items: any[], slidesToShow: number) =>
+    items.length > 3 ? (
+        <MultiSlideCarousel numberOfSlides={slidesToShow}>
+            {items.map(({ id, title, users, subTitle, isConfigure }) => (
+                <NodeCard
+                    key={id}
+                    title={title}
+                    users={users}
+                    subTitle={subTitle}
+                    isConfigure={isConfigure}
+                />
+            ))}
+        </MultiSlideCarousel>
+    ) : (
+        <Grid
+            item
+            xs={12}
+            container
+            spacing={6}
+            sx={{
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-start" },
+            }}
+        >
+            {items.map(i => (
+                <Grid key={i} item>
+                    <NodeCard isConfigure={true} />
+                </Grid>
+            ))}
+        </Grid>
+    );
 
 const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1500px)");
@@ -58,40 +96,11 @@ const Home = () => {
         }
     };
 
-    const getNodesContainerData = (items: any[]) =>
-        items.length > 3 ? (
-            <MultiSlideCarousel numberOfSlides={slidesToShow}>
-                {items.map(({ id, title, users, subTitle, isConfigure }) => (
-                    <NodeCard
-                        key={id}
-                        title={title}
-                        users={users}
-                        subTitle={subTitle}
-                        isConfigure={isConfigure}
-                    />
-                ))}
-            </MultiSlideCarousel>
-        ) : (
-            <Grid
-                item
-                xs={12}
-                container
-                spacing={6}
-                sx={{
-                    display: "flex",
-                    justifyContent: { xs: "center", md: "flex-start" },
-                }}
-            >
-                {items.map(i => (
-                    <Grid key={i} item>
-                        <NodeCard isConfigure={true} />
-                    </Grid>
-                ))}
-            </Grid>
-        );
+    const onResidentsTableMenuItem = () => {};
+    const onActivateButton = () => {};
 
     return (
-        <Box>
+        <>
             <NetworkStatus
                 duration={""}
                 option={network}
@@ -100,7 +109,7 @@ const Home = () => {
                 status={"Your network is being configured"}
                 handleStatusChange={(value: string) => setNetwork(value)}
             />
-            <Grid container spacing={2}>
+            <Grid container spacing={2} pb="18px">
                 <Grid xs={12} item container spacing={2}>
                     {DashboardStatusCard.map(
                         ({
@@ -138,15 +147,29 @@ const Home = () => {
                             }
                         />
                         {getNodesContainerData(
-                            isAddNode ? DashboardSliderData : slides
+                            isAddNode ? DashboardSliderData : slides,
+                            slidesToShow
                         )}
                     </RoundedCard>
                 </Grid>
                 <Grid xs={12} md={4} item>
-                    <RoundedCard sx={{ height: "100%" }}></RoundedCard>
+                    <RoundedCard sx={{ height: "100%" }}>
+                        <ContainerHeader
+                            stats="6/16"
+                            title="Residents"
+                            buttonTitle="ACTIVATE"
+                            handleButtonAction={onActivateButton}
+                        />
+                        <DataTableWithOptions
+                            columns={DataTableWithOptionColumns}
+                            dataset={DashboardResidentsTable}
+                            menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
+                            onMenuItemClick={onResidentsTableMenuItem}
+                        />
+                    </RoundedCard>
                 </Grid>
             </Grid>
-        </Box>
+        </>
     );
 };
 

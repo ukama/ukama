@@ -44,7 +44,11 @@ const OptionsPopover = ({
     const id = open ? cid : undefined;
     return (
         <>
-            <Box aria-describedby={id} onClick={handlePopoverOpen}>
+            <Box
+                aria-describedby={id}
+                onClick={handlePopoverOpen}
+                sx={{ cursor: "pointer" }}
+            >
                 <MenuDots />
             </Box>
             <Popover
@@ -61,7 +65,7 @@ const OptionsPopover = ({
                     horizontal: "left",
                 }}
             >
-                {menuOptions.map(({ optId, Icon, title, route }: any) => (
+                {menuOptions.map(({ id: optId, Icon, title, route }: any) => (
                     <OptionItem
                         key={`${cid}-${optId}`}
                         type={route}
