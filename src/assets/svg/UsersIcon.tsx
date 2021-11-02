@@ -1,8 +1,8 @@
 import { SVGType } from "../../types";
-const UsersIcon = ({ color }: SVGType, props: any) => (
+const UsersIcon = ({ color, width, height }: SVGType, props: any) => (
     <svg
-        width="28"
-        height="28"
+        width={width || "28"}
+        height={height || "28"}
         fill="none"
         viewBox="0 0 28 28"
         xmlns="http://www.w3.org/2000/svg"

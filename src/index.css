@@ -3,3 +3,19 @@ body {
     height: 100vh;
     background-color: #f5f6f8;
 }
+.BrainhubCarousel__arrows {
+    padding: 12px !important;
+    background-color: #ffffff !important;
+}
+
+.BrainhubCarousel__arrows span {
+    border-color: #000000 !important;
+}
+
+.BrainhubCarousel__arrows span:hover {
+    border-color: #2190f6 !important;
+}
+
+.BrainhubCarousel__trackContainer ul {
+    padding: 4px !important;
+}

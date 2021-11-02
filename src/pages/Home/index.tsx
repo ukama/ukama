@@ -1,10 +1,34 @@
 import { useState } from "react";
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, useMediaQuery } from "@mui/material";
 import { NETWORKS } from "../../constants";
-import { StatusCard, NetworkStatus } from "../../components";
-import { DashboardStatusCard } from "../../constants/stubData";
+import { RoundedCard } from "../../styles";
+import {
+    NodeCard,
+    StatusCard,
+    NetworkStatus,
+    ContainerHeader,
+    MultiSlideCarousel,
+} from "../../components";
+import {
+    DashboardSliderData,
+    DashboardStatusCard,
+} from "../../constants/stubData";
+
+let slides = [
+    {
+        id: 1,
+        title: "",
+        subTitle: "",
+        users: "",
+        isConfigure: true,
+    },
+];
 
 const Home = () => {
+    const isSliderLarge = useMediaQuery("(min-width:1500px)");
+    const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
+    const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
+    const [isAddNode, setIsAddNode] = useState(false);
     const [network, setNetwork] = useState("public");
     const [userStatusFilter, setUserStatusFilter] = useState("total");
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
@@ -34,6 +58,38 @@ const Home = () => {
         }
     };
 
+    const getNodesContainerData = (items: any[]) =>
+        items.length > 3 ? (
+            <MultiSlideCarousel numberOfSlides={slidesToShow}>
+                {items.map(({ id, title, users, subTitle, isConfigure }) => (
+                    <NodeCard
+                        key={id}
+                        title={title}
+                        users={users}
+                        subTitle={subTitle}
+                        isConfigure={isConfigure}
+                    />
+                ))}
+            </MultiSlideCarousel>
+        ) : (
+            <Grid
+                item
+                xs={12}
+                container
+                spacing={6}
+                sx={{
+                    display: "flex",
+                    justifyContent: { xs: "center", md: "flex-start" },
+                }}
+            >
+                {items.map(i => (
+                    <Grid key={i} item>
+                        <NodeCard isConfigure={true} />
+                    </Grid>
+                ))}
+            </Grid>
+        );
+
     return (
         <Box>
             <NetworkStatus
@@ -45,30 +101,50 @@ const Home = () => {
                 handleStatusChange={(value: string) => setNetwork(value)}
             />
             <Grid container spacing={2}>
-                {DashboardStatusCard.map(
-                    ({
-                        id,
-                        Icon,
-                        title,
-                        options,
-                        subtitle1,
-                        subtitle2,
-                    }: any) => (
-                        <Grid key={id} item xs={12} md={6} lg={4}>
-                            <StatusCard
-                                Icon={Icon}
-                                title={title}
-                                options={options}
-                                subtitle1={subtitle1}
-                                subtitle2={subtitle2}
-                                option={getStatus(id)}
-                                handleSelect={(value: string) =>
-                                    handleSatusChange(id, value)
-                                }
-                            />
-                        </Grid>
-                    )
-                )}
+                <Grid xs={12} item container spacing={2}>
+                    {DashboardStatusCard.map(
+                        ({
+                            id,
+                            Icon,
+                            title,
+                            options,
+                            subtitle1,
+                            subtitle2,
+                        }: any) => (
+                            <Grid key={id} item xs={12} md={6} lg={4}>
+                                <StatusCard
+                                    Icon={Icon}
+                                    title={title}
+                                    options={options}
+                                    subtitle1={subtitle1}
+                                    subtitle2={subtitle2}
+                                    option={getStatus(id)}
+                                    handleSelect={(value: string) =>
+                                        handleSatusChange(id, value)
+                                    }
+                                />
+                            </Grid>
+                        )
+                    )}
+                </Grid>
+                <Grid xs={12} md={8} item>
+                    <RoundedCard>
+                        <ContainerHeader
+                            stats="1/8"
+                            title="My Nodes"
+                            buttonTitle="Add Node"
+                            handleButtonAction={() =>
+                                setIsAddNode(prev => !prev)
+                            }
+                        />
+                        {getNodesContainerData(
+                            isAddNode ? DashboardSliderData : slides
+                        )}
+                    </RoundedCard>
+                </Grid>
+                <Grid xs={12} md={4} item>
+                    <RoundedCard sx={{ height: "100%" }}></RoundedCard>
+                </Grid>
             </Grid>
         </Box>
     );

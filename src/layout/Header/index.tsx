@@ -9,6 +9,7 @@ import {
     Box,
 } from "@mui/material";
 import React from "react";
+import { colors } from "../../theme";
 import { useSetRecoilState } from "recoil";
 import { isLoginAtom } from "../../recoil";
 import { MoreVert } from "@mui/icons-material";
@@ -91,10 +92,10 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
             <AppBar
                 elevation={0}
                 position="fixed"
-                color="transparent"
                 sx={{
-                    padding: { xs: "4px 8px", md: "4px 30px" },
                     ml: { sm: `${DRAWER_WIDTH}px` },
+                    backgroundColor: colors.solitude,
+                    padding: { xs: "4px 8px", md: "4px 30px" },
                     width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
                 }}
             >
@@ -106,9 +107,14 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                         onClick={() => handleDrawerToggle()}
                         sx={{ mr: 2, display: { sm: "none" } }}
                     >
-                        <MenuIcon />
+                        <MenuIcon color={"primary"} />
                     </IconButton>
-                    <Typography variant="h6" noWrap component="div">
+                    <Typography
+                        variant="h6"
+                        noWrap
+                        component="div"
+                        color="black"
+                    >
                         {pageName}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
@@ -133,7 +139,7 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                             aria-controls={menuId}
                             onClick={handleMobileMenuOpen}
                         >
-                            <MoreVert />
+                            <MoreVert color={"primary"} />
                         </IconButton>
                     </Box>
                 </Toolbar>

@@ -9,6 +9,31 @@ const globalUseStyles = makeStyles(() => ({
     },
 }));
 
+const HorizontalContainerJustify = styled(Box)({
+    width: "100%",
+    height: "auto",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+});
+
+const HorizontalContainer = styled(Box)({
+    width: "100%",
+    height: "auto",
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "row",
+});
+
+const VerticalContainer = styled(Box)({
+    width: "100%",
+    height: "auto",
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "column",
+});
+
 const CenterContainer = styled(Box)({
     width: "100%",
     height: "100%",
@@ -44,12 +69,15 @@ const ContainerJustifySpaceBtw = styled(Box)(props => ({
     },
 }));
 
-const RoundedCard = styled(Paper)(() => ({
+const RoundedCard = styled(Paper)(props => ({
     width: "100%",
     padding: "18px 28px",
     borderRadius: "10px",
     display: "inline-block",
     background: colors.white,
+    [props.theme.breakpoints.down("sm")]: {
+        padding: "18px",
+    },
 }));
 
 export {
@@ -58,5 +86,8 @@ export {
     globalUseStyles,
     CenterContainer,
     MessageContainer,
+    VerticalContainer,
+    HorizontalContainer,
     ContainerJustifySpaceBtw,
+    HorizontalContainerJustify,
 };

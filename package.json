@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "name": "ukama-dashboard",
   "dependencies": {
+    "@brainhubeu/react-carousel": "^2.0.4",
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
     "@mui/icons-material": "^5.0.0",
     "@mui/material": "^5.0.0",
     "@mui/styles": "^5.0.0",
+    "@types/brainhubeu__react-carousel": "^2.0.4",
     "@types/enzyme": "^3.10.10",
     "@types/enzyme-adapter-react-16": "^1.0.6",
     "@types/jest": "^27.0.2",
