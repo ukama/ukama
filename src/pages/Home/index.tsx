@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { RoundedCard, globalUseStyles } from "../../styles";
-import { Box, Grid, TextField, useMediaQuery } from "@mui/material";
-import * as Yup from "yup";
-import { Formik } from "formik";
+import { Box, Grid, useMediaQuery } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import "../../i18n/i18n";
 import {
@@ -14,16 +12,16 @@ import {
     AlertCard,
     MultiSlideCarousel,
     DataTableWithOptions,
-    FormDialog,
 } from "../../components";
 import {
     DashboardSliderData,
     DashboardStatusCard,
     DashboardResidentsTable,
+    ALERT_INFORMATION,
+    RechartsData,
 } from "../../constants/stubData";
 import {
     NETWORKS,
-    ALERT_INFORMATION,
     STATS_OPTIONS,
     STATS_PERIOD,
     DEACTIVATE_EDIT_ACTION_MENU,
@@ -40,38 +38,6 @@ let slides = [
     },
 ];
 
-const getNodesContainerData = (items: any[], slidesToShow: number) =>
-    items.length > 3 ? (
-        <MultiSlideCarousel numberOfSlides={slidesToShow}>
-            {items.map(({ id, title, users, subTitle, isConfigure }) => (
-                <NodeCard
-                    key={id}
-                    title={title}
-                    users={users}
-                    subTitle={subTitle}
-                    isConfigure={isConfigure}
-                />
-            ))}
-        </MultiSlideCarousel>
-    ) : (
-        <Grid
-            item
-            xs={12}
-            container
-            spacing={6}
-            sx={{
-                display: "flex",
-                justifyContent: { xs: "center", md: "flex-start" },
-            }}
-        >
-            {items.map(i => (
-                <Grid key={i} item>
-                    <NodeCard isConfigure={true} />
-                </Grid>
-            ))}
-        </Grid>
-    );
-
 const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1500px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
@@ -85,7 +51,6 @@ const Home = () => {
     const [open, setOpen] = useState(false);
     const { t } = useTranslation();
     const classes = globalUseStyles();
-
     const handleStatsChange = (event: {
         target: { value: React.SetStateAction<number> };
     }) => {
@@ -101,7 +66,8 @@ const Home = () => {
                 return setBillingStatusFilter(value);
         }
     };
-
+    const onResidentsTableMenuItem = () => {};
+    const onActivateButton = () => {};
     const getStatus = (key: string) => {
         switch (key) {
             case "statusUser":
@@ -114,30 +80,37 @@ const Home = () => {
                 return "";
         }
     };
-    const addNodeSchema = Yup.object({
-        nodeName: Yup.string().required("Node Name is required"),
-        nodeSerialNumber: Yup.string().required("Serial number is required"),
-    });
-
-    const initialAddNodeValue = {
-        nodeName: "",
-        nodeSerialNumber: "",
-    };
-
-    const handleSubmit = (values: any) => {
-        //console.log(JSON.stringify(values, null, 2));
-    };
-
-    const openAddNodeDialog = () => {
-        setOpen(true);
-    };
-
-    const closeAddNodeDialog = () => {
-        setOpen(false);
-    };
-
-    const onResidentsTableMenuItem = () => {};
-    const onActivateButton = () => {};
+    const getNodesContainerData = (items: any[], slidesToShow: number) =>
+        items.length > 3 ? (
+            <MultiSlideCarousel numberOfSlides={slidesToShow}>
+                {items.map(({ id, title, users, subTitle, isConfigure }) => (
+                    <NodeCard
+                        key={id}
+                        title={title}
+                        users={users}
+                        subTitle={subTitle}
+                        isConfigure={isConfigure}
+                    />
+                ))}
+            </MultiSlideCarousel>
+        ) : (
+            <Grid
+                item
+                xs={12}
+                container
+                spacing={6}
+                sx={{
+                    display: "flex",
+                    justifyContent: { xs: "center", md: "flex-start" },
+                }}
+            >
+                {items.map(i => (
+                    <Grid key={i} item>
+                        <NodeCard isConfigure={true} />
+                    </Grid>
+                ))}
+            </Grid>
+        );
 
     return (
         <>
@@ -150,160 +123,52 @@ const Home = () => {
                     status={"Your network is being configured"}
                     handleStatusChange={(value: string) => setNetwork(value)}
                 />
-                <Grid container spacing={2} pb="18px">
-                    <Grid xs={12} item container spacing={2}>
-                        {DashboardStatusCard.map(
-                            ({
-                                id,
-                                Icon,
-                                title,
-                                options,
-                                subtitle1,
-                                subtitle2,
-                            }: any) => (
-                                <Grid key={id} item xs={12} md={6} lg={4}>
-                                    <StatusCard
-                                        Icon={Icon}
-                                        title={title}
-                                        options={options}
-                                        subtitle1={subtitle1}
-                                        subtitle2={subtitle2}
-                                        option={getStatus(id)}
-                                        handleSelect={(value: string) =>
-                                            handleSatusChange(id, value)
-                                        }
-                                    />
-                                </Grid>
-                            )
-                        )}
-                    </Grid>
-                    <Box>
-                        <Grid container spacing={2}>
-                            <Grid xs={12} item sm={12} md={8}>
-                                <StatsCard
-                                    selectOption={statOptionValue}
-                                    options={STATS_OPTIONS}
-                                    periodOptions={STATS_PERIOD}
-                                    handleSelect={handleStatsChange}
+                <Grid container spacing={2}>
+                    {DashboardStatusCard.map(
+                        ({
+                            id,
+                            Icon,
+                            title,
+                            options,
+                            subtitle1,
+                            subtitle2,
+                        }: any) => (
+                            <Grid key={id} item xs={12} md={6} lg={4}>
+                                <StatusCard
+                                    Icon={Icon}
+                                    title={title}
+                                    options={options}
+                                    subtitle1={subtitle1}
+                                    subtitle2={subtitle2}
+                                    option={getStatus(id)}
+                                    handleSelect={(value: string) =>
+                                        handleSatusChange(id, value)
+                                    }
                                 />
                             </Grid>
-
-                            <Grid xs={12} item md={4} sm={12}>
-                                <AlertCard alertCardItems={ALERT_INFORMATION} />
-                            </Grid>
+                        )
+                    )}
+                </Grid>
+                <Box mt={2} mb={2}>
+                    <Grid container spacing={2}>
+                        <Grid xs={12} item sm={12} md={8}>
+                            <StatsCard
+                                selectOption={statOptionValue}
+                                options={STATS_OPTIONS}
+                                periodOptions={STATS_PERIOD}
+                                handleSelect={handleStatsChange}
+                            />
                         </Grid>
-                    </Box>
 
+                        <Grid xs={12} item md={4} sm={12}>
+                            <AlertCard alertCardItems={ALERT_INFORMATION} />
+                        </Grid>
+                    </Grid>
+                </Box>
+
+                <Grid container spacing={2}>
                     <Grid xs={12} md={8} item>
                         <RoundedCard>
-                            <Formik
-                                validationSchema={addNodeSchema}
-                                initialValues={initialAddNodeValue}
-                                onSubmit={async values => handleSubmit(values)}
-                            >
-                                {({
-                                    values,
-                                    errors,
-                                    touched,
-                                    handleChange,
-                                    handleSubmit,
-                                }) => (
-                                    <form onSubmit={handleSubmit}>
-                                        <FormDialog
-                                            onClose={closeAddNodeDialog}
-                                            open={open}
-                                            dialogContent={t(
-                                                "HOME.FormDialogContent"
-                                            )}
-                                            dialogTitle={t(
-                                                "HOME.FormDialogTitle"
-                                            )}
-                                            submitButtonLabel={t(
-                                                "CONSTANT.NextButtonLabel"
-                                            )}
-                                        >
-                                            <>
-                                                <Box pt={3}>
-                                                    <Grid
-                                                        container
-                                                        spacing={2}
-                                                        xs={12}
-                                                    >
-                                                        <Grid item xs={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                id="nodeName"
-                                                                name="nodeName"
-                                                                label={t(
-                                                                    "NODE.NodeNameLabel"
-                                                                )}
-                                                                value={
-                                                                    values.nodeName
-                                                                }
-                                                                onChange={
-                                                                    handleChange
-                                                                }
-                                                                InputLabelProps={{
-                                                                    shrink: true,
-                                                                }}
-                                                                InputProps={{
-                                                                    classes: {
-                                                                        input: classes.inputFieldStyle,
-                                                                    },
-                                                                }}
-                                                                helperText={
-                                                                    touched.nodeName &&
-                                                                    errors.nodeName
-                                                                }
-                                                                error={
-                                                                    touched.nodeName &&
-                                                                    Boolean(
-                                                                        errors.nodeName
-                                                                    )
-                                                                }
-                                                            />
-                                                        </Grid>
-                                                        <Grid item xs={6}>
-                                                            <TextField
-                                                                fullWidth
-                                                                id="nodeSerialNumber"
-                                                                name="nodeSerialNumber"
-                                                                label={t(
-                                                                    "NODE.NodeSerialNumberLabel"
-                                                                )}
-                                                                value={
-                                                                    values.nodeSerialNumber
-                                                                }
-                                                                onChange={
-                                                                    handleChange
-                                                                }
-                                                                InputLabelProps={{
-                                                                    shrink: true,
-                                                                }}
-                                                                InputProps={{
-                                                                    classes: {
-                                                                        input: classes.inputFieldStyle,
-                                                                    },
-                                                                }}
-                                                                helperText={
-                                                                    touched.nodeSerialNumber &&
-                                                                    errors.nodeSerialNumber
-                                                                }
-                                                                error={
-                                                                    touched.nodeSerialNumber &&
-                                                                    Boolean(
-                                                                        errors.nodeSerialNumber
-                                                                    )
-                                                                }
-                                                            />
-                                                        </Grid>
-                                                    </Grid>
-                                                </Box>
-                                            </>
-                                        </FormDialog>
-                                    </form>
-                                )}
-                            </Formik>
                             <ContainerHeader
                                 stats="1/8"
                                 title="My Nodes"

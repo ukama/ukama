@@ -75,6 +75,7 @@ const ContainerJustifySpaceBtw = styled(Box)(props => ({
 const RoundedCard = styled(Paper)(props => ({
     width: "100%",
     padding: "18px 28px",
+    height: "100%",
     borderRadius: "10px",
     display: "inline-block",
     background: colors.white,

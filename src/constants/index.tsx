@@ -7,7 +7,6 @@ import {
     SettingsIcon,
     ModuleStoreIcon,
     NotificationIcon,
-    CloudOffIcon,
 } from "../assets/svg";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -72,29 +71,6 @@ const HEADER_MENU = [
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
-const ALERT_INFORMATION = [
-    {
-        id: 1,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 2,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 3,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-];
 const MONTH_FILTER = [
     { id: 1, label: "January ", value: "january " },
     { id: 2, label: "February", value: "february" },
@@ -154,7 +130,6 @@ export {
     STATS_OPTIONS,
     STATS_PERIOD,
     BASIC_MENU_ACTIONS,
-    ALERT_INFORMATION,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 };

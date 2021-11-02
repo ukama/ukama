@@ -93,12 +93,10 @@ const PasswordFieldWithIndicator = ({
                         display: focused ? "flex" : "none",
                         marginTop: "8px",
                     }}
-                    xs={12}
-                    sm={6}
                 >
                     {PasswordRules.map((rules: PasswordRulesProps) => {
                         return (
-                            <Grid xs={6} item key={rules.id}>
+                            <Grid xs={12} sm={6} item key={rules.id}>
                                 <Typography variant="body2" id={rules.idLabel}>
                                     {rules.validator(value) ? (
                                         <CheckCircleIcon

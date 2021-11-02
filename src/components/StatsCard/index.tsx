@@ -2,7 +2,7 @@ import { Grid, Select, MenuItem, ButtonGroup, Button } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
 import { StatsItemType, statsPeriodItemType } from "../../types";
-import { RechartsData } from "../../constants/rechartsData";
+import { RechartsData } from "../../constants/stubData";
 import {
     ComposedChart,
     Line,
