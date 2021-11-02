@@ -76,8 +76,8 @@ const NodeCard = ({
                 </Grid>
                 <Grid item xs={2} m="4px 0px">
                     <OptionsPopover
-                        cid={"sadasda"}
-                        options={BASIC_MENU_ACTIONS}
+                        cid={"node-card-options"}
+                        menuOptions={BASIC_MENU_ACTIONS}
                         handleItemClick={(type: string) =>
                             handleOptionItemClick(type)
                         }
