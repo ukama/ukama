@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { RoundedCard, globalUseStyles } from "../../styles";
+import { RoundedCard } from "../../styles";
 import { Box, Grid, useMediaQuery } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import "../../i18n/i18n";
@@ -47,9 +47,6 @@ const Home = () => {
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
     const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [open, setOpen] = useState(false);
-    const { t } = useTranslation();
-    const classes = globalUseStyles();
     const handleStatsChange = (event: {
         target: { value: React.SetStateAction<number> };
     }) => {

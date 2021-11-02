@@ -6,8 +6,6 @@ import {
     Card,
     List,
     ListItem,
-    Paper,
-    Grid,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { colors } from "../../theme";
