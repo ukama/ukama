@@ -18,7 +18,6 @@ import {
     DashboardStatusCard,
     DashboardResidentsTable,
     ALERT_INFORMATION,
-    RechartsData,
 } from "../../constants/stubData";
 import {
     NETWORKS,
@@ -160,7 +159,7 @@ const Home = () => {
                             />
                         </Grid>
 
-                        <Grid xs={12} item md={4} sm={12}>
+                        <Grid xs={12} item md={4}>
                             <AlertCard alertCardItems={ALERT_INFORMATION} />
                         </Grid>
                     </Grid>

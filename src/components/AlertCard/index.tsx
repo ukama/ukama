@@ -6,6 +6,8 @@ import {
     Card,
     List,
     ListItem,
+    Paper,
+    Grid,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { colors } from "../../theme";
@@ -45,6 +47,7 @@ const AlertCard = ({ alertCardItems }: AlertCardProps) => {
                                     elevation={2}
                                     sx={{
                                         marginBottom: 1,
+                                        width: "100%",
                                     }}
                                 >
                                     <CardActions>
