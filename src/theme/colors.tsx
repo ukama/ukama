@@ -7,6 +7,7 @@ const colors = {
     yellow: "#FBC34D",
     red: "#cf121b",
     lightGrey: "#70757e",
+    hoverColor: "#009DF5",
     aliceBlue: "#eaf3fe",
     vulcan: "#37393E",
     solitude: "#f5f6f8",

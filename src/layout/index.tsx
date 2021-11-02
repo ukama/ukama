@@ -29,13 +29,7 @@ const Layout = (props: any) => {
                 setPath={setPath}
                 handleDrawerToggle={handleDrawerToggle}
             />
-            <Box
-                component="main"
-                sx={{
-                    p: 3,
-                    flexGrow: 1,
-                }}
-            >
+            <Box component="main" sx={{ p: 3, flexGrow: 1 }}>
                 <Toolbar />
                 {children}
             </Box>

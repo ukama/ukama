@@ -13,30 +13,38 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 const DRAWER_WIDTH = 240;
 import {
-    checkPasswordSpecialCharacter,
     checkPasswordLength,
-    checkPasswordHasLetters,
+    checkPasswordSpecialCharacter,
+    checkPasswordHasLowercaseLetters,
 } from "../utils";
 import { MenuItemType } from "../types";
 
-const passwordRules = [
+const PasswordRules = [
     {
         id: 1,
+        idLabel: "checkLength",
         label: "Be a minimum of 8 characters",
         validator: checkPasswordLength,
     },
     {
         id: 2,
+        idLabel: "checkSpecialCaracter",
         label: "At least one special character",
         validator: checkPasswordSpecialCharacter,
     },
     {
         id: 3,
-        label: "Upper & lowercase letters ",
-        validator: checkPasswordHasLetters,
+        idLabel: "checkUpperCase",
+        label: "Must have Uppercase letter",
+        validator: checkPasswordHasLowercaseLetters,
+    },
+    {
+        id: 4,
+        idLabel: "checkLowerCase",
+        label: "Must have Lowercase letter",
+        validator: checkPasswordHasLowercaseLetters,
     },
 ];
-
 const SIDEBAR_MENU1 = [
     { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
@@ -94,7 +102,7 @@ export {
     NETWORKS,
     TIME_FILTER,
     MONTH_FILTER,
-    passwordRules,
+    PasswordRules,
     HEADER_MENU,
     DRAWER_WIDTH,
     SIDEBAR_MENU1,
