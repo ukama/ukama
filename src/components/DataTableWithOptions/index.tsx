@@ -65,7 +65,7 @@ const DataTableWithOptions = ({
                                                 cid={
                                                     "data-table-action-popover"
                                                 }
-                                                options={menuOptions}
+                                                menuOptions={menuOptions}
                                                 handleItemClick={
                                                     onMenuItemClick
                                                 }

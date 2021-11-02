@@ -31,7 +31,7 @@ const ContainerHeader = ({
             </HorizontalContainer>
             <Button
                 variant="contained"
-                sx={{ width: "124px" }}
+                sx={{ width: "144px" }}
                 onClick={() => handleButtonAction()}
             >
                 {buttonTitle}

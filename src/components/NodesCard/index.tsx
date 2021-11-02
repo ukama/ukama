@@ -44,6 +44,7 @@ type NodeCardProps = {
     users?: string;
     subTitle?: string;
     isConfigure?: boolean;
+    handleOptionItemClick?: Function;
 };
 
 const NodeCard = ({
@@ -51,6 +52,7 @@ const NodeCard = ({
     subTitle,
     users,
     isConfigure = false,
+    handleOptionItemClick = () => {},
 }: NodeCardProps) => {
     const classes = useStyles();
 
@@ -63,7 +65,7 @@ const NodeCard = ({
 
     return (
         <Paper className={classes.container}>
-            <Grid container spacing={1.5}>
+            <Grid container spacing={0.8}>
                 <Grid item xs={10}>
                     <Grid>
                         <Typography variant="subtitle1">{title}</Typography>
@@ -74,9 +76,11 @@ const NodeCard = ({
                 </Grid>
                 <Grid item xs={2} m="4px 0px">
                     <OptionsPopover
-                        cid={"node-card-popover"}
-                        options={BASIC_MENU_ACTIONS}
-                        handleItemClick={() => {}}
+                        cid={"node-card-options"}
+                        menuOptions={BASIC_MENU_ACTIONS}
+                        handleItemClick={(type: string) =>
+                            handleOptionItemClick(type)
+                        }
                     />
                 </Grid>
                 <Grid item xs={12} sx={{ ...IconStyle }}>
