@@ -26,8 +26,8 @@ let slides = [
 
 const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1500px)");
-    const isSliderMedium = useMediaQuery("(min-width:1160px)");
-    const slidesToShow = isSliderLarge ? 3 : isSliderMedium ? 2 : 1;
+    const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
+    const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [isAddNode, setIsAddNode] = useState(false);
     const [network, setNetwork] = useState("public");
     const [userStatusFilter, setUserStatusFilter] = useState("total");

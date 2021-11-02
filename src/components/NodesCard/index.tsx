@@ -44,6 +44,7 @@ type NodeCardProps = {
     users?: string;
     subTitle?: string;
     isConfigure?: boolean;
+    handleOptionItemClick?: Function;
 };
 
 const NodeCard = ({
@@ -51,6 +52,7 @@ const NodeCard = ({
     subTitle,
     users,
     isConfigure = false,
+    handleOptionItemClick = () => {},
 }: NodeCardProps) => {
     const classes = useStyles();
 
@@ -76,7 +78,9 @@ const NodeCard = ({
                     <OptionsPopover
                         cid={"sadasda"}
                         options={BASIC_MENU_ACTIONS}
-                        handleItemClick={() => {}}
+                        handleItemClick={(type: string) =>
+                            handleOptionItemClick(type)
+                        }
                     />
                 </Grid>
                 <Grid item xs={12} sx={{ ...IconStyle }}>
