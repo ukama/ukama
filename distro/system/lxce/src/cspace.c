@@ -345,7 +345,7 @@ static int cspace_init_clone(void *arg) {
 
   /* Step-1: setup hostname. */
   if (sethostname(hostName, strlen(hostName))) {
-    log_error("Sapce: %s Error setting host name: %s", space->name,
+    log_error("Space: %s Error setting host name: %s", space->name,
 	      hostName);
     return FALSE;
   }
@@ -353,10 +353,7 @@ static int cspace_init_clone(void *arg) {
   /* Step-2: setup security profile (cap and seccomp) */
   setup_cspace_security_profile(space);
 
-  /* Step-3: setup mounts*/
-  setup_mounts(space);
-
-  /* Step-4: setup user namespace */
+  /* Step-3: setup user namespace */
   setup_user_namespace(space);
 
   return TRUE;
@@ -402,6 +399,11 @@ int create_cspace(CSpace *space, pid_t *pid) {
     return FALSE;
   }
 
+  if (!(stack = malloc(STACK_SIZE))) {
+    log_error("Error allocating stack of size: %d", STACK_SIZE);
+    return FALSE;
+  }
+
   /* clone with proper flags for namespaces */
   *pid = clone(cspace_init_clone, stack + STACK_SIZE,
 	      SIGCHLD | space->nameSpaces, space);
@@ -409,7 +411,7 @@ int create_cspace(CSpace *space, pid_t *pid) {
     log_error("Space: %s Unable to clone cInit", space->name);
     return FALSE;
   }
-
+  
   close(space->sockets[1]);
   space->sockets[1] = 0;
 

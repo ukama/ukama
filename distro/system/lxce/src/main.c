@@ -28,6 +28,7 @@
 #include "manifest.h"
 #include "cspace.h"
 #include "csthreads.h"
+#include "lxce_callback.h"
 
 #define VERSION "0.0.1"
 
@@ -42,6 +43,9 @@
 #define DEF_BOOT_CONTAINED_FILE     "boot_contained.json"
 #define DEF_SERVICE_CONTAINED_FILE  "service_contained.json"
 #define DEF_SHUTDOWN_CONTAINED_FILE "shutdown_contained.json"
+
+/* from lxce_network */
+extern int start_web_services(Config *config, UInst *clientInst);
 
 /*
  * callback functions declaration
@@ -127,15 +131,15 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret=0, i;
+  int i;
   char *debug = DEF_LOG_LEVEL;
   char *configFile = DEF_CONFIG_FILE;
   char *manifestFile = DEF_MANIFEST_FILE;
-  struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
   CSpace *cSpaces, *cPtr;
   CSpaceThread *csThread=NULL;
+  struct _u_instance clientInst;
 
   /* Parsing command line args. */
   while (true) {
@@ -264,41 +268,28 @@ int main(int argc, char **argv) {
     log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
     exit(1);
   }
-
   if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
     log_error("Error process the manifest file: %s", manifestFile);
     exit(1);
   }
 
-  /* Step-3: get manifest.json containers path from wimc */
+  /* Step-5: get manifest.json containers path from wimc */
   // get_containers_local_path(manifest, config);
 
-  /* Step-4: open REST interface. */
-  if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
-      != U_OK) {
-    log_error("Error initializing ulfius instance. Exit!\n");
-    exit(1);
+  /* Step-6: open REST interface. */
+  if (!start_web_services(config, &clientInst)) {
+    log_error("Webservice failed to setup for clients. Exiting.");
+    goto done;
   }
+  
+  log_debug("lxce.d running ....");
+  getchar(); /* For now. XXX */
 
-  /* Endpoint declaration. */
-  ulfius_add_endpoint_by_val(&instance, "POST", config->localEP, NULL, 0,
-			     &callback_post_create_container, NULL);
-  ulfius_set_default_endpoint(&instance, &callback_default, NULL);
-  
-  /* Open an http connection. World is never going to be same!*/
-  ret = ulfius_start_framework(&instance);
-  
-  if (ret == U_OK) {
-    log_debug("Listening on port %d\n", instance.port);
-    getchar(); /* For now. XXX */
-  } else {
-    log_error("Error starting framework\n");
-  }
-  
+ done:
   log_debug("End World!\n");
   
-  ulfius_stop_framework(&instance);
-  ulfius_clean_instance(&instance);
+  ulfius_stop_framework(&clientInst);
+  ulfius_clean_instance(&clientInst);
   
   clear_config(config);
   clear_manifest(manifest);
@@ -309,34 +300,3 @@ int main(int argc, char **argv) {
   return 1;
 }
 
-/*
- * callback_post_create_container -- callback function to create container. 
- *                                   For now, response by OK!
- * 
- */ 
-
-int callback_post_create_container(const struct _u_request *request,
-				   struct _u_response *response,
-				   void *user_data) {
-  
-  char *post_params = print_map(request->map_post_body);
-  char *response_body = msprintf("OK!\n%s", post_params);
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-  
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_default -- default callback for no-match
- *
- *
- */
-int callback_default(const struct _u_request *request,
-		     struct _u_response *response, void *user_data) {
-  
-  ulfius_set_string_body_response(response, 404, "You are clearly high!");
-  return U_CALLBACK_CONTINUE;
-}
