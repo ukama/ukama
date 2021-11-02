@@ -1,4 +1,3 @@
-import Carousel from "./Carousel";
 import NodeCard from "./NodesCard";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
@@ -10,12 +9,12 @@ import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 
 export {
-    Carousel,
     NodeCard,
     LoginForm,
     SignUpForm,
@@ -26,6 +25,7 @@ export {
     ContainerHeader,
     UpgradeNavFooter,
     ResetPasswordForm,
+    MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
     PasswordFieldWithIndicator,

@@ -63,7 +63,7 @@ const NodeCard = ({
 
     return (
         <Paper className={classes.container}>
-            <Grid container spacing={1.5}>
+            <Grid container spacing={0.8}>
                 <Grid item xs={10}>
                     <Grid>
                         <Typography variant="subtitle1">{title}</Typography>

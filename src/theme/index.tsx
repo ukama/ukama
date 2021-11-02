@@ -17,6 +17,11 @@ const theme = createTheme({
         },
         subtitle1: {
             fontWeight: 500,
+            textAlign: "left",
+        },
+        subtitle2: {
+            fontWeight: 500,
+            textAlign: "left",
         },
         body1: {
             display: "block",
