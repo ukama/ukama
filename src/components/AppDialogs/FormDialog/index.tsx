@@ -11,6 +11,7 @@ import {
     DialogActions,
     Dialog,
     Grid,
+    Typography,
 } from "@mui/material";
 import "../../../i18n/i18n";
 
@@ -24,8 +25,8 @@ type FormDialogProps = {
     showBackButton?: boolean;
     submitButtonLabel?: string;
     open: boolean;
-    onClose: () => void;
-    children: React.ReactElement;
+    onClose?: () => void;
+    children?: React.ReactElement;
 };
 const FormDialog = ({
     dialogTitle,
@@ -51,7 +52,11 @@ const FormDialog = ({
                     </Box>
                 </DialogTitle>
                 <DialogContent>
-                    <DialogContentText>{dialogContent}</DialogContentText>
+                    <DialogContentText>
+                        <Typography variant="subtitle2" color="initial">
+                            {dialogContent}
+                        </Typography>
+                    </DialogContentText>
                     {children}
                 </DialogContent>
                 <DialogActions>
@@ -79,6 +84,7 @@ const FormDialog = ({
                                 size="medium"
                                 variant="contained"
                                 sx={{ fontWeight: 600 }}
+                                type="submit"
                             >
                                 {submitButtonLabel}
                             </Button>

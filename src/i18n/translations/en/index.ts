@@ -15,6 +15,11 @@ export const TRANSLATIONS_EN = {
         NewPasswordLabel: "New Password",
         ReturnToLoginLink: "RETURN TO LOGIN",
         BackButtonLable: "BACK",
+        NextButtonLabel: "NEXT",
+    },
+    NODE: {
+        NodeNameLabel: "NODE NAME",
+        NodeSerialNumberLabel: "SERIAL NUMBER",
     },
     SIGNUP: {
         FormTitle: "Sign up for Ukama",
@@ -41,5 +46,10 @@ export const TRANSLATIONS_EN = {
     },
     ALERT: {
         Title: "Alerts",
+    },
+    HOME: {
+        FormDialogContent:
+            "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured.",
+        FormDialogTitle: "Add Node",
     },
 };

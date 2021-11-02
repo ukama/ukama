@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Box, Grid } from "@mui/material";
-import { RoundedCard } from "../../styles";
+import { Box, Grid, TextField } from "@mui/material";
+import { RoundedCard, globalUseStyles } from "../../styles";
+import * as Yup from "yup";
+import { Formik } from "formik";
 import {
     NodeCard,
     StatusCard,
@@ -8,7 +10,10 @@ import {
     ContainerHeader,
     StatsCard,
     AlertCard,
+    FormDialog,
 } from "../../components";
+import { useTranslation } from "react-i18next";
+import "../../i18n/i18n";
 import { DashboardStatusCard } from "../../constants/stubData";
 import {
     STATS_OPTIONS,
@@ -22,7 +27,9 @@ const Home = () => {
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
     const [statOptionValue, setstatOptionValue] = React.useState(3);
-
+    const [open, setOpen] = React.useState(false);
+    const { t } = useTranslation();
+    const classes = globalUseStyles();
     const handleStatsChange = (event: {
         target: { value: React.SetStateAction<number> };
     }) => {
@@ -50,6 +57,27 @@ const Home = () => {
             default:
                 return "";
         }
+    };
+    const addNodeSchema = Yup.object({
+        nodeName: Yup.string().required("Node Name is required"),
+        nodeSerialNumber: Yup.string().required("Serial number is required"),
+    });
+
+    const initialAddNodeValue = {
+        nodeName: "",
+        nodeSerialNumber: "",
+    };
+
+    const handleSubmit = (values: any) => {
+        //console.log(JSON.stringify(values, null, 2));
+    };
+
+    const openAddNodeDialog = () => {
+        setOpen(true);
+    };
+
+    const closeAddNodeDialog = () => {
+        setOpen(false);
     };
 
     return (
@@ -109,11 +137,121 @@ const Home = () => {
                 <Grid container spacing={2}>
                     <Grid xs={12} md={8} item>
                         <RoundedCard>
+                            <Formik
+                                validationSchema={addNodeSchema}
+                                initialValues={initialAddNodeValue}
+                                onSubmit={async values => handleSubmit(values)}
+                            >
+                                {({
+                                    values,
+                                    errors,
+                                    touched,
+                                    handleChange,
+                                    handleSubmit,
+                                }) => (
+                                    <form onSubmit={handleSubmit}>
+                                        <FormDialog
+                                            onClose={closeAddNodeDialog}
+                                            open={open}
+                                            dialogContent={t(
+                                                "HOME.FormDialogContent"
+                                            )}
+                                            dialogTitle={t(
+                                                "HOME.FormDialogTitle"
+                                            )}
+                                            submitButtonLabel={t(
+                                                "CONSTANT.NextButtonLabel"
+                                            )}
+                                        >
+                                            <>
+                                                <Box pt={3}>
+                                                    <Grid
+                                                        container
+                                                        spacing={2}
+                                                        xs={12}
+                                                    >
+                                                        <Grid item xs={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                id="nodeName"
+                                                                name="nodeName"
+                                                                label={t(
+                                                                    "NODE.NodeNameLabel"
+                                                                )}
+                                                                value={
+                                                                    values.nodeName
+                                                                }
+                                                                onChange={
+                                                                    handleChange
+                                                                }
+                                                                InputLabelProps={{
+                                                                    shrink: true,
+                                                                }}
+                                                                InputProps={{
+                                                                    classes: {
+                                                                        input: classes.inputFieldStyle,
+                                                                    },
+                                                                }}
+                                                                helperText={
+                                                                    touched.nodeName &&
+                                                                    errors.nodeName
+                                                                }
+                                                                error={
+                                                                    touched.nodeName &&
+                                                                    Boolean(
+                                                                        errors.nodeName
+                                                                    )
+                                                                }
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                id="nodeSerialNumber"
+                                                                name="nodeSerialNumber"
+                                                                label={t(
+                                                                    "NODE.NodeSerialNumberLabel"
+                                                                )}
+                                                                value={
+                                                                    values.nodeSerialNumber
+                                                                }
+                                                                onChange={
+                                                                    handleChange
+                                                                }
+                                                                InputLabelProps={{
+                                                                    shrink: true,
+                                                                }}
+                                                                InputProps={{
+                                                                    classes: {
+                                                                        input: classes.inputFieldStyle,
+                                                                    },
+                                                                }}
+                                                                helperText={
+                                                                    touched.nodeSerialNumber &&
+                                                                    errors.nodeSerialNumber
+                                                                }
+                                                                error={
+                                                                    touched.nodeSerialNumber &&
+                                                                    Boolean(
+                                                                        errors.nodeSerialNumber
+                                                                    )
+                                                                }
+                                                            />
+                                                        </Grid>
+                                                    </Grid>
+                                                </Box>
+                                            </>
+                                        </FormDialog>
+                                    </form>
+                                )}
+                            </Formik>
                             <ContainerHeader
                                 stats="1/8"
                                 title="My Nodes"
                                 buttonTitle="Add Node"
-                                handleButtonAction={() => {}}
+                                handleButtonAction={() => {
+                                    openAddNodeDialog();
+                                }}
                             />
                             <NodeCard isConfigure={true} />
                         </RoundedCard>
