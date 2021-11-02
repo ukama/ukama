@@ -37,6 +37,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
     const classes = globalUseStyles();
     const { t } = useTranslation();
     const [togglePassword, setTogglePassword] = useState(false);
+
     const handleTogglePassword = () => {
         setTogglePassword(prev => !prev);
     };
@@ -126,7 +127,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             >
                                 {t("LOGIN.ButtonWithGoogle")}
                             </Button>
-
                             <Typography
                                 variant="body2"
                                 sx={{ letterSpacing: "0.4px" }}

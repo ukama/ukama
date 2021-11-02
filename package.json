@@ -8,6 +8,7 @@
     "@mui/icons-material": "^5.0.0",
     "@mui/material": "^5.0.0",
     "@mui/styles": "^5.0.0",
+    "@types/mocha": "^9.0.0",
     "formik": "^2.2.9",
     "i18next": "^21.3.2",
     "i18next-browser-languagedetector": "^6.1.2",

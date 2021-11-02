@@ -10,12 +10,14 @@ const Login = () => {
         setIsLogin(true);
     };
     return (
-        <CenterContainer>
-            <LoginForm
-                onGoogleLogin={() => {}}
-                onSubmit={(val: any) => handleSubmit(val)}
-            />
-        </CenterContainer>
+        <>
+            <CenterContainer>
+                <LoginForm
+                    onGoogleLogin={() => {}}
+                    onSubmit={(val: any) => handleSubmit(val)}
+                />
+            </CenterContainer>
+        </>
     );
 };
 
