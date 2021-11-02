@@ -30,6 +30,38 @@ let slides = [
     },
 ];
 
+const getNodesContainerData = (items: any[], slidesToShow: number) =>
+    items.length > 3 ? (
+        <MultiSlideCarousel numberOfSlides={slidesToShow}>
+            {items.map(({ id, title, users, subTitle, isConfigure }) => (
+                <NodeCard
+                    key={id}
+                    title={title}
+                    users={users}
+                    subTitle={subTitle}
+                    isConfigure={isConfigure}
+                />
+            ))}
+        </MultiSlideCarousel>
+    ) : (
+        <Grid
+            item
+            xs={12}
+            container
+            spacing={6}
+            sx={{
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-start" },
+            }}
+        >
+            {items.map(i => (
+                <Grid key={i} item>
+                    <NodeCard isConfigure={true} />
+                </Grid>
+            ))}
+        </Grid>
+    );
+
 const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1500px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
@@ -64,37 +96,8 @@ const Home = () => {
         }
     };
 
-    const getNodesContainerData = (items: any[]) =>
-        items.length > 3 ? (
-            <MultiSlideCarousel numberOfSlides={slidesToShow}>
-                {items.map(({ id, title, users, subTitle, isConfigure }) => (
-                    <NodeCard
-                        key={id}
-                        title={title}
-                        users={users}
-                        subTitle={subTitle}
-                        isConfigure={isConfigure}
-                    />
-                ))}
-            </MultiSlideCarousel>
-        ) : (
-            <Grid
-                item
-                xs={12}
-                container
-                spacing={6}
-                sx={{
-                    display: "flex",
-                    justifyContent: { xs: "center", md: "flex-start" },
-                }}
-            >
-                {items.map(i => (
-                    <Grid key={i} item>
-                        <NodeCard isConfigure={true} />
-                    </Grid>
-                ))}
-            </Grid>
-        );
+    const onResidentsTableMenuItem = () => {};
+    const onActivateButton = () => {};
 
     return (
         <>
@@ -106,7 +109,7 @@ const Home = () => {
                 status={"Your network is being configured"}
                 handleStatusChange={(value: string) => setNetwork(value)}
             />
-            <Grid container spacing={2}>
+            <Grid container spacing={2} pb="18px">
                 <Grid xs={12} item container spacing={2}>
                     {DashboardStatusCard.map(
                         ({
@@ -144,7 +147,8 @@ const Home = () => {
                             }
                         />
                         {getNodesContainerData(
-                            isAddNode ? DashboardSliderData : slides
+                            isAddNode ? DashboardSliderData : slides,
+                            slidesToShow
                         )}
                     </RoundedCard>
                 </Grid>
@@ -154,13 +158,13 @@ const Home = () => {
                             stats="6/16"
                             title="Residents"
                             buttonTitle="ACTIVATE"
-                            handleButtonAction={() => {}}
+                            handleButtonAction={onActivateButton}
                         />
                         <DataTableWithOptions
                             columns={DataTableWithOptionColumns}
                             dataset={DashboardResidentsTable}
                             menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
-                            onMenuItemClick={() => {}}
+                            onMenuItemClick={onResidentsTableMenuItem}
                         />
                     </RoundedCard>
                 </Grid>

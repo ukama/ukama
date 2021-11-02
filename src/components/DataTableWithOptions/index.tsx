@@ -17,6 +17,39 @@ interface DataTableWithOptionsInterface {
     onMenuItemClick: Function;
 }
 
+type CellValueByTypeProps = {
+    type: string;
+    row: any;
+    menuOptions: MenuItemType[];
+    onMenuItemClick: Function;
+};
+
+const CellValueByType = ({
+    type,
+    row,
+    menuOptions,
+    onMenuItemClick,
+}: CellValueByTypeProps) => {
+    switch (type) {
+        case "name":
+            return (
+                <Link href="#" underline="hover">
+                    {row[type]}
+                </Link>
+            );
+        case "actions":
+            return (
+                <OptionsPopover
+                    cid={"data-table-action-popover"}
+                    menuOptions={menuOptions}
+                    handleItemClick={onMenuItemClick}
+                />
+            );
+        default:
+            return <>{row[type]}</>;
+    }
+};
+
 const DataTableWithOptions = ({
     columns,
     dataset,
@@ -51,34 +84,30 @@ const DataTableWithOptions = ({
                                 tabIndex={-1}
                                 key={row.name}
                             >
-                                {columns.map((column: ColumnsWithOptions) => (
-                                    <TableCell
-                                        key={column.id}
-                                        align={column.align}
-                                        sx={{
-                                            padding: "14px",
-                                            fontSize: "0.875rem",
-                                        }}
-                                    >
-                                        {column.id === "actions" ? (
-                                            <OptionsPopover
-                                                cid={
-                                                    "data-table-action-popover"
-                                                }
+                                {columns.map(
+                                    (
+                                        column: ColumnsWithOptions,
+                                        index: number
+                                    ) => (
+                                        <TableCell
+                                            key={`${row.name}-${index}`}
+                                            align={column.align}
+                                            sx={{
+                                                padding: "14px",
+                                                fontSize: "0.875rem",
+                                            }}
+                                        >
+                                            <CellValueByType
+                                                row={row}
+                                                type={column.id}
                                                 menuOptions={menuOptions}
-                                                handleItemClick={
+                                                onMenuItemClick={
                                                     onMenuItemClick
                                                 }
                                             />
-                                        ) : column.id === "name" ? (
-                                            <Link href="#" underline="hover">
-                                                {row[column.id]}
-                                            </Link>
-                                        ) : (
-                                            row[column.id]
-                                        )}
-                                    </TableCell>
-                                ))}
+                                        </TableCell>
+                                    )
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>

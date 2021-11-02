@@ -65,7 +65,7 @@ const OptionsPopover = ({
                     horizontal: "left",
                 }}
             >
-                {menuOptions.map(({ optId, Icon, title, route }: any) => (
+                {menuOptions.map(({ id: optId, Icon, title, route }: any) => (
                     <OptionItem
                         key={`${cid}-${optId}`}
                         type={route}
