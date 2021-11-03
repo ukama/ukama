@@ -1,8 +1,3 @@
-import React, { useState } from "react";
-import { RoundedCard } from "../../styles";
-import { Box, Grid, useMediaQuery } from "@mui/material";
-import { useTranslation } from "react-i18next";
-import "../../i18n/i18n";
 import {
     NodeCard,
     StatusCard,
@@ -26,6 +21,19 @@ import {
     DEACTIVATE_EDIT_ACTION_MENU,
     DataTableWithOptionColumns,
 } from "../../constants";
+import "../../i18n/i18n";
+import React, { useState } from "react";
+import { RoundedCard } from "../../styles";
+import { useTranslation } from "react-i18next";
+import {
+    Box,
+    Grid,
+    List,
+    ListItem,
+    Typography,
+    useMediaQuery,
+} from "@mui/material";
+import { AlertItemType } from "../../types";
 
 let slides = [
     {
@@ -38,6 +46,7 @@ let slides = [
 ];
 
 const Home = () => {
+    const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1500px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
@@ -157,7 +166,42 @@ const Home = () => {
                         </Grid>
 
                         <Grid xs={12} item md={4}>
-                            <AlertCard alertCardItems={ALERT_INFORMATION} />
+                            <RoundedCard>
+                                <Typography variant="h6" sx={{ mb: "14px" }}>
+                                    {t("ALERT.Title")}
+                                </Typography>
+                                <List
+                                    disablePadding
+                                    sx={{
+                                        position: "relative",
+                                        overflow: "auto",
+                                        maxHeight: 300,
+                                    }}
+                                >
+                                    {ALERT_INFORMATION.map(
+                                        ({
+                                            id,
+                                            date,
+                                            description,
+                                            title,
+                                            Icon,
+                                        }: AlertItemType) => (
+                                            <ListItem
+                                                key={id}
+                                                style={{ padding: 1 }}
+                                            >
+                                                <AlertCard
+                                                    id={id}
+                                                    date={date}
+                                                    Icon={Icon}
+                                                    title={title}
+                                                    description={description}
+                                                />
+                                            </ListItem>
+                                        )
+                                    )}
+                                </List>
+                            </RoundedCard>
                         </Grid>
                     </Grid>
                 </Box>
