@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Grid, useMediaQuery } from "@mui/material";
-import { useTranslation } from "react-i18next";
-import "../../i18n/i18n";
 import {
     NodeCard,
     StatusCard,
