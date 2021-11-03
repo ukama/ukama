@@ -172,9 +172,10 @@ const Home = () => {
                                 </Typography>
                                 <List
                                     sx={{
-                                        position: "relative",
-                                        overflow: "auto",
+                                        p: "0px",
                                         maxHeight: 300,
+                                        overflow: "auto",
+                                        position: "relative",
                                     }}
                                 >
                                     {ALERT_INFORMATION.map(
@@ -187,7 +188,10 @@ const Home = () => {
                                         }: AlertItemType) => (
                                             <ListItem
                                                 key={id}
-                                                style={{ padding: 1 }}
+                                                style={{
+                                                    padding: 1,
+                                                    marginBottom: "4px",
+                                                }}
                                             >
                                                 <AlertCard
                                                     id={id}

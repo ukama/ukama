@@ -1,8 +1,8 @@
-import { Grid, Select, MenuItem, ButtonGroup, Button } from "@mui/material";
-import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
-import { StatsItemType, statsPeriodItemType } from "../../types";
+import { RoundedCard } from "../../styles";
 import { RechartsData } from "../../constants/stubData";
+import { StatsItemType, statsPeriodItemType } from "../../types";
+import { Grid, Select, MenuItem, ButtonGroup, Button } from "@mui/material";
 import {
     ComposedChart,
     Bar,
@@ -11,7 +11,7 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend,
+    Line,
 } from "recharts";
 type StatsCardProps = {
     options: StatsItemType[];
@@ -29,8 +29,8 @@ const StatsCard = ({
     return (
         <>
             <RoundedCard>
-                <Grid container spacing={1} justifyContent="space-between">
-                    <Grid item xs={6} container>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6} container>
                         <Select
                             style={{
                                 minWidth: 120,
@@ -49,7 +49,13 @@ const StatsCard = ({
                             ))}
                         </Select>
                     </Grid>
-                    <Grid item>
+                    <Grid
+                        item
+                        xs={12}
+                        md={6}
+                        display="flex"
+                        justifyContent="flex-end"
+                    >
                         <ButtonGroup size="small" variant="outlined">
                             {periodOptions.map(
                                 ({ id, label }: statsPeriodItemType) => (
@@ -58,25 +64,22 @@ const StatsCard = ({
                             )}
                         </ButtonGroup>
                     </Grid>
-                </Grid>
-                <Grid container spacing={1}>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <ComposedChart
-                            data={RechartsData}
-                            margin={{
-                                top: 20,
-                                right: 5,
-                                bottom: 20,
-                            }}
-                        >
-                            <CartesianGrid stroke="#f5f5f5" />
-                            <XAxis dataKey="name" scale="band" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="uv" barSize={20} fill="#413ea0" />
-                        </ComposedChart>
-                    </ResponsiveContainer>
+                    <Grid item xs={12}>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <ComposedChart data={RechartsData}>
+                                <CartesianGrid stroke="#f5f5f5" />
+                                <XAxis dataKey="name" scale="band" />
+                                <YAxis />
+                                <Tooltip />
+                                <Bar dataKey="uv" barSize={20} fill="#413ea0" />
+                                <Line
+                                    type="monotone"
+                                    dataKey="uv"
+                                    stroke="#ff7300"
+                                />
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    </Grid>
                 </Grid>
             </RoundedCard>
         </>
