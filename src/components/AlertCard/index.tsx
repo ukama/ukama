@@ -1,6 +1,5 @@
 import { colors } from "../../theme";
-import { Box, Typography, CardActions, Card } from "@mui/material";
-
+import { Box, Typography, Card, Grid } from "@mui/material";
 type AlertCardProps = {
     Icon: any;
     id: number;
@@ -8,27 +7,44 @@ type AlertCardProps = {
     title: string;
     description: string;
 };
+
 const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
     return (
         <Card
-            elevation={2}
             sx={{
                 marginBottom: 1,
                 width: "100%",
+                padding: 1,
             }}
         >
-            <CardActions>
-                <Icon />
-                <div style={{ padding: 7 }}>{title}</div>
-                <Typography variant="caption" color={colors.empress}>
-                    {date}
-                </Typography>
-            </CardActions>
-            <Box pl={5.5}>
-                <Typography variant="subtitle2" color="initial">
-                    {description}
-                </Typography>
-            </Box>
+            <Grid container spacing={1} p={1}>
+                <Grid item xs>
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            flexWrap: "wrap",
+                        }}
+                    >
+                        <Icon />
+                        <Typography variant="body1" color="initial">
+                            {title}
+                        </Typography>
+                    </div>
+                </Grid>
+                <Grid item>
+                    <Typography variant="caption" color={colors.empress}>
+                        {date}
+                    </Typography>
+                </Grid>
+                <Grid item xs={12}>
+                    <Box pl={3.7}>
+                        <Typography variant="subtitle2" color="initial">
+                            {description}
+                        </Typography>
+                    </Box>
+                </Grid>
+            </Grid>
         </Card>
     );
 };

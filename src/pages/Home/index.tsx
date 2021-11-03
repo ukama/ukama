@@ -171,7 +171,6 @@ const Home = () => {
                                     {t("ALERT.Title")}
                                 </Typography>
                                 <List
-                                    disablePadding
                                     sx={{
                                         position: "relative",
                                         overflow: "auto",
