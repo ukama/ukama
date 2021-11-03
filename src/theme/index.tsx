@@ -91,7 +91,7 @@ const theme = createTheme({
         MuiButton: {
             styleOverrides: {
                 contained: {
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: colors.white,
                     letterSpacing: "0.4px",
                     boxShadow:

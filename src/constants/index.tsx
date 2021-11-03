@@ -15,7 +15,7 @@ const DRAWER_WIDTH = 240;
 import {
     checkPasswordLength,
     checkPasswordSpecialCharacter,
-    checkPasswordHasLowercaseLetters,
+    combineUppercaseNLowercaseValidator,
 } from "../utils";
 import { MenuItemType } from "../types";
 
@@ -23,7 +23,7 @@ const PasswordRules = [
     {
         id: 1,
         idLabel: "checkLength",
-        label: "Be a minimum of 8 characters",
+        label: "8 characters minimum",
         validator: checkPasswordLength,
     },
     {
@@ -34,17 +34,12 @@ const PasswordRules = [
     },
     {
         id: 3,
-        idLabel: "checkUpperCase",
-        label: "Must have Uppercase letter",
-        validator: checkPasswordHasLowercaseLetters,
-    },
-    {
-        id: 4,
-        idLabel: "checkLowerCase",
-        label: "Must have Lowercase letter",
-        validator: checkPasswordHasLowercaseLetters,
+        idLabel: "checkLowerCaseNUppercase",
+        label: "Upper & lowercase letters ",
+        validator: combineUppercaseNLowercaseValidator,
     },
 ];
+
 const SIDEBAR_MENU1 = [
     { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },

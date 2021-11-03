@@ -17,7 +17,7 @@ import { LinkStyle, globalUseStyles } from "../../styles";
 const loginSchema = Yup.object({
     email: Yup.string()
         .email("Please enter a valid email")
-        .required("Email is required"),
+        .required("Please enter a valid email"),
     password: Yup.string().required("Password is required"),
 });
 
@@ -42,7 +42,14 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                 initialValues={initialLoginValue}
                 onSubmit={async values => onSubmit(values)}
             >
-                {({ values, errors, touched, handleChange, handleSubmit }) => (
+                {({
+                    values,
+                    errors,
+                    touched,
+                    handleChange,
+                    handleSubmit,
+                    handleBlur,
+                }) => (
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
@@ -53,9 +60,10 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label={t("CONSTANT.EmailLabel")}
+                                onBlur={handleBlur}
                                 value={values.email}
                                 onChange={handleChange}
+                                label={t("CONSTANT.EmailLabel")}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
@@ -67,6 +75,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             <PasswordFieldWithIndicator
                                 errors={errors}
                                 touched={touched}
+                                onBlur={handleBlur}
                                 withIndicator={false}
                                 value={values.password}
                                 handleChange={handleChange}
@@ -88,7 +97,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 type="submit"
                                 color="primary"
                                 variant="contained"
-                                sx={{ fontWeight: 600 }}
                             >
                                 {t("LOGIN.ButtonLabel")}
                             </Button>
@@ -99,7 +107,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 size="medium"
                                 variant="outlined"
                                 sx={{
-                                    fontWeight: 600,
                                     marginTop: "0px !important",
                                 }}
                                 onClick={() => onGoogleLogin()}
