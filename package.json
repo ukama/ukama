@@ -9,7 +9,6 @@
     "@mui/icons-material": "^5.0.0",
     "@mui/material": "^5.0.0",
     "@mui/styles": "^5.0.0",
-    "@types/mocha": "^9.0.0",
     "@types/brainhubeu__react-carousel": "^2.0.4",
     "@types/enzyme": "^3.10.10",
     "@types/enzyme-adapter-react-16": "^1.0.6",

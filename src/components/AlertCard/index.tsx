@@ -28,8 +28,6 @@ const AlertCard = ({ alertCardItems }: AlertCardProps) => {
                         position: "relative",
                         overflow: "auto",
                         maxHeight: 300,
-                        width: "100%",
-                        maxWidth: 360,
                     }}
                 >
                     {alertCardItems.map(
