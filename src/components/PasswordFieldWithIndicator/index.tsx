@@ -5,13 +5,16 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import {
+    Visibility,
+    CheckCircle,
+    VisibilityOff,
+    CheckCircleOutline,
+} from "@mui/icons-material";
 import { useState } from "react";
 import colors from "../../theme/colors";
 import { makeStyles } from "@mui/styles";
 import { PasswordRules } from "../../constants";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { FormikErrors, FormikTouched } from "formik";
 
 const useStyles = makeStyles(() => ({
@@ -23,11 +26,11 @@ const useStyles = makeStyles(() => ({
 }));
 
 type PasswordFieldWithIndicatorProps = {
-    onBlur: any;
     value: string;
     label: string;
     fieldStyle: any;
-    handleChange: any;
+    onBlur: Function;
+    handleChange: Function;
     withIndicator: boolean;
     errors: FormikErrors<any>;
     touched: FormikTouched<any>;
@@ -64,8 +67,8 @@ const PasswordFieldWithIndicator = ({
                 name="password"
                 label={label}
                 value={value}
-                onBlur={onBlur}
-                onChange={handleChange}
+                onBlur={e => onBlur(e)}
+                onChange={e => handleChange(e)}
                 onFocus={() => setFocused(true)}
                 InputLabelProps={{ shrink: true }}
                 type={togglePassword ? "text" : "password"}
@@ -109,7 +112,7 @@ const PasswordFieldWithIndicator = ({
                                     letterSpacing="0.4px"
                                 >
                                     {rules.validator(value) ? (
-                                        <CheckCircleIcon
+                                        <CheckCircle
                                             fontSize="small"
                                             className={classes.progressIcon}
                                             style={{
@@ -117,7 +120,7 @@ const PasswordFieldWithIndicator = ({
                                             }}
                                         />
                                     ) : (
-                                        <CheckCircleOutlineIcon
+                                        <CheckCircleOutline
                                             fontSize="small"
                                             className={classes.progressIcon}
                                             style={{
