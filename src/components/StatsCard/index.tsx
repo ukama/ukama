@@ -5,7 +5,6 @@ import { StatsItemType, statsPeriodItemType } from "../../types";
 import { RechartsData } from "../../constants/stubData";
 import {
     ComposedChart,
-    Line,
     Bar,
     XAxis,
     YAxis,
@@ -76,11 +75,6 @@ const StatsCard = ({
                             <Tooltip />
                             <Legend />
                             <Bar dataKey="uv" barSize={20} fill="#413ea0" />
-                            <Line
-                                type="monotone"
-                                dataKey="uv"
-                                stroke="#ff7300"
-                            />
                         </ComposedChart>
                     </ResponsiveContainer>
                 </Grid>
