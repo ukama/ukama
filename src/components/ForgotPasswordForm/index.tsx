@@ -30,7 +30,14 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                 validationSchema={forgotPasswordSchema}
                 onSubmit={async values => onSubmit(values)}
             >
-                {({ values, errors, touched, handleChange, handleSubmit }) => (
+                {({
+                    values,
+                    errors,
+                    touched,
+                    handleChange,
+                    handleSubmit,
+                    handleBlur,
+                }) => (
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
@@ -41,9 +48,10 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label={t("CONSTANT.EmailLabel")}
+                                onBlur={handleBlur}
                                 value={values.email}
                                 onChange={handleChange}
+                                label={t("CONSTANT.EmailLabel")}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
@@ -55,7 +63,6 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                 <Button
                                     size="medium"
                                     variant="text"
-                                    sx={{ fontWeight: 600 }}
                                     onClick={() => onBack()}
                                 >
                                     {t("CONSTANT.BackButtonLable")}
@@ -66,7 +73,6 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                                     type="submit"
                                     color="primary"
                                     variant="contained"
-                                    sx={{ fontWeight: 600 }}
                                 >
                                     {t("CONSTANT.RecoveryEmail")}
                                 </Button>
