@@ -31,7 +31,14 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                 validationSchema={ResetPasswordSchema}
                 onSubmit={async values => onSubmit(values)}
             >
-                {({ values, errors, touched, handleChange, handleSubmit }) => (
+                {({
+                    values,
+                    errors,
+                    touched,
+                    handleBlur,
+                    handleChange,
+                    handleSubmit,
+                }) => (
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
                             <Typography variant="h3">
@@ -41,6 +48,7 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                             <PasswordRequirementIndicator
                                 errors={errors}
                                 touched={touched}
+                                onBlur={handleBlur}
                                 withIndicator={true}
                                 value={values.password}
                                 handleChange={handleChange}
@@ -52,7 +60,6 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 <Button
                                     size="medium"
                                     variant="text"
-                                    sx={{ fontWeight: 600 }}
                                     onClick={() => onCancel()}
                                 >
                                     {t("CONSTANT.CancelButtonLable")}
@@ -63,9 +70,6 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                     type="submit"
                                     color="primary"
                                     variant="contained"
-                                    sx={{
-                                        fontWeight: 600,
-                                    }}
                                 >
                                     {t("RESET_PASSWORD.ButtonLabel")}
                                 </Button>

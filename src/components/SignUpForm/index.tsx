@@ -10,7 +10,7 @@ import { Stack, Button, Divider, TextField, Typography } from "@mui/material";
 const signUpSchema = Yup.object({
     email: Yup.string()
         .email("Please enter a valid email")
-        .required("Email is required"),
+        .required("Please enter a valid email"),
     password: Yup.string().required("Password is required"),
 });
 
@@ -33,7 +33,14 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
             initialValues={initialSignUpValue}
             onSubmit={async values => onSubmit(values)}
         >
-            {({ errors, touched, values, handleChange, handleSubmit }) => (
+            {({
+                errors,
+                touched,
+                values,
+                handleChange,
+                handleSubmit,
+                handleBlur,
+            }) => (
                 <>
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
@@ -45,9 +52,10 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 fullWidth
                                 id="email"
                                 name="email"
-                                label={t("CONSTANT.EmailLabel")}
                                 value={values.email}
+                                onBlur={handleBlur}
                                 onChange={handleChange}
+                                label={t("CONSTANT.EmailLabel")}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
                                     classes: { input: classes.inputFieldStyle },
@@ -59,6 +67,7 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <PasswordFieldWithIndicator
                                 errors={errors}
                                 touched={touched}
+                                onBlur={handleBlur}
                                 withIndicator={true}
                                 value={values.password}
                                 handleChange={handleChange}
@@ -72,7 +81,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 type="submit"
                                 color="primary"
                                 variant="contained"
-                                sx={{ fontWeight: 600 }}
                             >
                                 {t("SIGNUP.ButtonLabel")}
                             </Button>
@@ -83,7 +91,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 size="medium"
                                 variant="outlined"
                                 sx={{
-                                    fontWeight: 600,
                                     marginTop: "0px !important",
                                 }}
                                 onClick={() => onGoogleSignUp()}

@@ -45,7 +45,7 @@ const StatusCard = ({
                             value={option}
                             disableUnderline
                             variant="standard"
-                            sx={{ width: "64px", color: colors.empress }}
+                            sx={{ width: "100%", color: colors.empress }}
                             onChange={e => handleSelect(e.target.value)}
                         >
                             {options.map(
