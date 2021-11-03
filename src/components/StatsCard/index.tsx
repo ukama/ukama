@@ -32,14 +32,14 @@ const StatsCard = ({
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={6} container>
                         <Select
-                            style={{
-                                minWidth: 120,
-                                color: colors.black,
-                            }}
                             value={selectOption}
                             variant="standard"
                             disableUnderline
-                            sx={{ width: "64px", color: colors.empress }}
+                            size="medium"
+                            sx={{
+                                minWidth: 120,
+                                color: colors.balck,
+                            }}
                             onChange={handleSelect}
                         >
                             {options.map(({ id, label }: StatsItemType) => (
