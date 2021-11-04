@@ -40,24 +40,18 @@ const StatsCard = ({
     return (
         <>
             <RoundedCard>
-                <Grid container spacing={1}>
-                    <Grid container spacing={2}>
+                <Grid container spacing={2}>
+                    <Grid item container spacing={2}>
                         <Grid item xs={12} sm={6}>
                             <Select
                                 value={selectOption}
                                 variant="standard"
                                 disableUnderline
                                 onChange={handleSelect}
-                                style={{
-                                    color: colors.empress,
-                                }}
                             >
                                 {options.map(({ id, label }: StatsItemType) => (
                                     <MenuItem key={id} value={id}>
-                                        <Typography
-                                            variant="h6"
-                                            color="initial"
-                                        >
+                                        <Typography variant="h6">
                                             {label}
                                         </Typography>
                                     </MenuItem>
@@ -88,7 +82,13 @@ const StatsCard = ({
                                                 color: colors.lightBlue,
                                             }}
                                         >
-                                            <Typography variant="h6">
+                                            <Typography
+                                                variant="body1"
+                                                sx={{
+                                                    p: "2px",
+                                                    fontWeight: 500,
+                                                }}
+                                            >
                                                 {label}
                                             </Typography>
                                         </ToggleButton>
@@ -97,7 +97,6 @@ const StatsCard = ({
                             </ToggleButtonGroup>
                         </Grid>
                     </Grid>
-
                     <Grid item xs={12}>
                         <ResponsiveContainer width="100%" height={300}>
                             <ComposedChart data={RechartsData}>

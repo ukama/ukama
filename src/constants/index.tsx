@@ -19,6 +19,8 @@ import {
 } from "../utils";
 import { MenuItemType } from "../types";
 
+const APP_VERSION = "v0.0.1";
+const COPY_RIGHTS = "Copyright © Ukama Inc. 2021.";
 const PasswordRules = [
     {
         id: 1,
@@ -115,6 +117,8 @@ const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
 
 export {
     NETWORKS,
+    COPY_RIGHTS,
+    APP_VERSION,
     TIME_FILTER,
     MONTH_FILTER,
     PasswordRules,
