@@ -18,16 +18,16 @@
 #include <uuid/uuid.h>
 
 /* requests */
-#define CAPP_PACKET_TYPE_CREATE 0x01
-#define CAPP_PACKET_TYPE_RUN    0x02
-#define CAPP_PACKET_TYPE_STATUS 0x03
-#define CAPP_PACKET_TYPE_TERM   0x04
+#define CAPP_TYPE_REQ_CREATE 0x01
+#define CAPP_TYPE_REQ_RUN    0x02
+#define CAPP_TYPE_REQ_STATUS 0x03
+#define CAPP_TYPE_REQ_TERM   0x04
 
 /* responses */
-#define CAPP_PACKET_TYPE_UUID   0x10
-#define CAPP_PACKET_TYPE_STATUS 0x11
+#define CAPP_TYPE_RESP_UUID   0x10
+#define CAPP_TYPE_RESP_STATUS 0x11
 
-#define CAPP_PACKET_TYPE_NONE   0xff
+#define CAPP_TYPE_NONE        0xff
 
 /* For capp state */
 #define CAPP_STATE_PENDING 0x01
@@ -50,10 +50,6 @@ typedef struct capp_packet_t {
 
   int    state;       /* Current state of the capp */
   int    exit_status; /* If capp terminate, its exit status */
-
-  pthread_mutex_t mutex;     /* mutex on the shmem. */
-  pthread_cond_t  hasPacket; /* cond whenever something is available */
-
 }CAppPacket;
 
 #endif /* CAPP_PACKET_H */

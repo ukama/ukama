@@ -22,6 +22,8 @@
 #include <sys/ipc.h>
 #include <sys/types.h>
 #include <sys/shm.h>
+#include <string.h>
+#include <errno.h>
 
 #include "cspace.h"
 #include "csthreads.h"
@@ -111,7 +113,9 @@ void free_cspace_thread_list(void) {
  */
 int add_to_cspace_thread_list(CSpaceThread *thread) {
 
-  ShMemInfo *infoPtr;
+  FILE *fp;
+  ShMemInfo *shmemInfo;
+  ThreadShMem *shMem;
 
   if (thread == NULL) return FALSE;
 
@@ -128,25 +132,47 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
       return FALSE;
     }
 
-    cPtr->info = (ShMemInfo *)malloc(sizeof(ShMemInfo));
-    if (cPtr->info==NULL) {
+    cPtr->shmemInfo = (ShMemInfo *)malloc(sizeof(ShMemInfo));
+    if (cPtr->shmemInfo==NULL) {
       log_error("Error allocating memory. size: %s", sizeof(ShMemInfo));
       return FALSE;
     }
-    infoPtr = cPtr->info;
+
+    shmemInfo = cPtr->shmemInfo;
 
     /* create temp file for shared memory */
-    infoPtr->memFile = tempnam(CSPACE_MEMFILE_PATH, CSPACE_MEMFILE_PREFIX);
+    shmemInfo->memFile = tempnam(CSPACE_MEMFILE_PATH, CSPACE_MEMFILE_PREFIX);
+    if (!(fp = fopen(shmemInfo->memFile, "a+"))) {
+      log_error("Error opening shared memory file: %s Error: %s",
+		shmemInfo->memFile, strerror(errno));
+      goto failure;
+    }
+    fclose(fp);
 
     /* shared memory between process and thread */
-    cPtr->shMem = (ThreadShMem *)create_shared_memory(infoPtr->shmId,
-							    infoPtr->memFile,
-							    sizeof(ThreadShMem));
-    if (cPtr->shMem == MAP_FAILED || cPtr->shMem == NULL) {
+    shMem =
+      (ThreadShMem *)create_shared_memory(&shmemInfo->shmId, shmemInfo->memFile,
+					  sizeof(ThreadShMem));
+    if (shMem == MAP_FAILED || shMem == NULL) {
       log_error("Error creating shared memory of size: %d. Error: %s",
 		sizeof(ThreadShMem), strerror(errno));
       goto failure;
     }
+
+    /* Initialize shared memory */
+    cPtr->shMem = shMem;
+
+    if (!init_capp_packet(shMem->tx) ||
+	!init_capp_packet(shMem->rx)) {
+      log_error("Error initializing capp packet for shared memory");
+      goto failure;
+    }
+
+    pthread_mutex_init(&(shMem->txMutex), NULL);
+    pthread_mutex_init(&(shMem->rxMutex), NULL);
+
+    pthread_cond_init(&(shMem->hasTX), NULL);
+    pthread_cond_init(&(shMem->hasRX), NULL);
 
     thread->shMem = cPtr->shMem;
 
@@ -159,8 +185,8 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
   return TRUE;
 
  failure:
-  free(cPtr->info->memFile);
-  free(cPtr->info);
+  free(cPtr->shmemInfo->memFile);
+  free(cPtr->shmemInfo);
 
   return FALSE;
 }

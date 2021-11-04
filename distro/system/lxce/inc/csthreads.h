@@ -43,10 +43,14 @@ typedef struct  {
 /* Shared memory between thread and parent process */
 typedef struct {
 
-  CAppPacket *tx;     /* Tx packet */
-  CAppPacket *rx;     /* Rx packet */
-  int        shmemTX; /* shared memory ID for TX */
-  int        shmemRX; /* shared memory ID for RX */
+  CAppPacket *tx;  /* Tx packet */
+  CAppPacket *rx;  /* Rx packet */
+
+  /* Mutex for TX and RX packets */
+  pthread_mutex_t txMutex;
+  pthread_mutex_t rxMutex;
+  pthread_cond_t  hasTX;
+  pthread_cond_t  hasRX;
 } ThreadShMem;
 
 /* Thread for a single contained space */
@@ -68,9 +72,10 @@ typedef struct cspace_thread_t {
 /* List of all contained space threads */
 typedef struct cspace_thread_list_t {
 
-  CSpaceThread *thread; /* Thread def for the cspace */
-  ThreadShMem  *shMem;  /* Shared memory between process and thread */
-  ShMemInfo    *info;   /* shared memory related variables */
+  CSpaceThread *thread;    /* Thread def for the cspace */
+  ThreadShMem  *shMem;     /* Shared memory between process and thread */
+  ShMemInfo    *shmemInfo; /* shared memory related variables */
+
   struct cspace_thread_list_t *next;
 } CSThreadsList;
 
