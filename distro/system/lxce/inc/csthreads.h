@@ -11,9 +11,13 @@
  * csthreads.h
  */
 
+#ifndef CSTHREAD_H
+#define CSTHREAD_H
+
 #include <uuid/uuid.h>
 
 #include "cspace.h"
+#include "capp_packet.h"
 
 /* thread/cspace states. */
 #define CSPACE_THREAD_STATE_CREATE   0x01
@@ -26,8 +30,27 @@
 #define CSPACE_THREAD_EXIT_TERM   0x02
 #define CSPACE_THREAD_EXIT_STOP   0x03
 
+#define CSPACE_MEMFILE_PATH   "./"
+#define CSPACE_MEMFILE_PREFIX "lxce_memfile"
+
+/* Shared memory related info. */
+typedef struct  {
+
+  char *memFile;
+  int  shmId;
+} ShMemInfo;
+
+/* Shared memory between thread and parent process */
+typedef struct {
+
+  CAppPacket *tx;     /* Tx packet */
+  CAppPacket *rx;     /* Rx packet */
+  int        shmemTX; /* shared memory ID for TX */
+  int        shmemRX; /* shared memory ID for RX */
+} ThreadShMem;
+
 /* Thread for a single contained space */
-typedef struct _cspace_thread {
+typedef struct cspace_thread_t {
 
   pthread_t tid;
   pid_t     pid;
@@ -38,16 +61,22 @@ typedef struct _cspace_thread {
   int       state;       /* state of the space. */
   int       exit_status; /* only if state is ABORT or DELETED, otherwise is 0*/
   CSpace    *space;      /* cspace associated with this thread. */
+
+  ThreadShMem *shMem;    /* shared between parent and thread. */
 } CSpaceThread;
 
 /* List of all contained space threads */
-typedef struct _cspace_thread_list {
+typedef struct cspace_thread_list_t {
 
-  CSpaceThread *thread;
-  struct _cspace_thread_list *next;
+  CSpaceThread *thread; /* Thread def for the cspace */
+  ThreadShMem  *shMem;  /* Shared memory between process and thread */
+  ShMemInfo    *info;   /* shared memory related variables */
+  struct cspace_thread_list_t *next;
 } CSThreadsList;
 
 CSpaceThread *init_cspace_thread(char *name, CSpace *space);
 int init_cspace_thread_list(void);
 int add_to_cspace_thread_list(CSpaceThread *thread);
 void* cspace_thread_start(void *args);
+
+#endif /* CSTHREAD_H */

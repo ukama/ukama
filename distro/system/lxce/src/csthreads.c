@@ -15,6 +15,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ipc.h>
+#include <sys/types.h>
+#include <sys/shm.h>
 
 #include "cspace.h"
 #include "csthreads.h"
@@ -104,6 +111,8 @@ void free_cspace_thread_list(void) {
  */
 int add_to_cspace_thread_list(CSpaceThread *thread) {
 
+  ShMemInfo *infoPtr;
+
   if (thread == NULL) return FALSE;
 
   if (threadsList == NULL) {
@@ -118,6 +127,29 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
       log_error("Error allocating memory of size: %d", sizeof(CSThreadsList));
       return FALSE;
     }
+
+    cPtr->info = (ShMemInfo *)malloc(sizeof(ShMemInfo));
+    if (cPtr->info==NULL) {
+      log_error("Error allocating memory. size: %s", sizeof(ShMemInfo));
+      return FALSE;
+    }
+    infoPtr = cPtr->info;
+
+    /* create temp file for shared memory */
+    infoPtr->memFile = tempnam(CSPACE_MEMFILE_PATH, CSPACE_MEMFILE_PREFIX);
+
+    /* shared memory between process and thread */
+    cPtr->shMem = (ThreadShMem *)create_shared_memory(infoPtr->shmId,
+							    infoPtr->memFile,
+							    sizeof(ThreadShMem));
+    if (cPtr->shMem == MAP_FAILED || cPtr->shMem == NULL) {
+      log_error("Error creating shared memory of size: %d. Error: %s",
+		sizeof(ThreadShMem), strerror(errno));
+      goto failure;
+    }
+
+    thread->shMem = cPtr->shMem;
+
     cPtr = cPtr->next;
   }
 
@@ -125,6 +157,12 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
   cPtr->next   = NULL;
 
   return TRUE;
+
+ failure:
+  free(cPtr->info->memFile);
+  free(cPtr->info);
+
+  return FALSE;
 }
 
 /*
@@ -135,14 +173,17 @@ void* cspace_thread_start(void *args) {
   CSpaceThread *thread  = (CSpaceThread *)args;
   int status;
   pid_t w;
+  char idStr[36+1];
 
   if (!create_cspace(thread->space, &thread->pid)) {
     log_error("Error creating cspace: %s using config file: %s. Exiting",
 	      thread->space->name, thread->space->configFile);
     exit(1);
-  } else {
-    log_debug("Successfully created cspace: %s", thread->space->name);
   }
+
+  uuid_unparse(thread->uuid, &idStr[0]);
+  log_debug("Successfully created cspace. Name: %s UUID: %s PID: %d",
+	    thread->space->name, idStr, thread->pid);
 
   /* set proper state for the cspace thread*/
   thread->state = CSPACE_THREAD_STATE_ACTIVE;
