@@ -40,60 +40,64 @@ const StatsCard = ({
     return (
         <>
             <RoundedCard>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={6} container>
-                        <Select
-                            value={selectOption}
-                            variant="standard"
-                            disableUnderline
-                            onChange={handleSelect}
-                            style={{
-                                minWidth: "30%",
-
-                                color: colors.empress,
-                            }}
-                        >
-                            {options.map(({ id, label }: StatsItemType) => (
-                                <MenuItem key={id} value={id}>
-                                    <Typography variant="h6" color="initial">
-                                        {label}
-                                    </Typography>
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </Grid>
-                    <Grid
-                        item
-                        xs={12}
-                        md={6}
-                        container
-                        justifyContent="flex-end"
-                    >
-                        <ToggleButtonGroup
-                            size="small"
-                            color="primary"
-                            value={selectedButton}
-                            exclusive
-                            onChange={handleSelectedButton}
-                        >
-                            {periodOptions.map(
-                                ({ id, label }: statsPeriodItemType) => (
-                                    <ToggleButton
-                                        key={id}
-                                        value={label}
-                                        style={{
-                                            border: `1px solid ${colors.lightBlue}`,
-                                            color: colors.lightBlue,
-                                        }}
-                                    >
-                                        <Typography variant="h6">
+                <Grid container spacing={1}>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                            <Select
+                                value={selectOption}
+                                variant="standard"
+                                disableUnderline
+                                onChange={handleSelect}
+                                style={{
+                                    color: colors.empress,
+                                }}
+                            >
+                                {options.map(({ id, label }: StatsItemType) => (
+                                    <MenuItem key={id} value={id}>
+                                        <Typography
+                                            variant="h6"
+                                            color="initial"
+                                        >
                                             {label}
                                         </Typography>
-                                    </ToggleButton>
-                                )
-                            )}
-                        </ToggleButtonGroup>
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </Grid>
+                        <Grid
+                            item
+                            xs={12}
+                            sm={6}
+                            container
+                            justifyContent="flex-end"
+                        >
+                            <ToggleButtonGroup
+                                size="small"
+                                color="primary"
+                                value={selectedButton}
+                                exclusive
+                                onChange={handleSelectedButton}
+                            >
+                                {periodOptions.map(
+                                    ({ id, label }: statsPeriodItemType) => (
+                                        <ToggleButton
+                                            key={id}
+                                            value={label}
+                                            style={{
+                                                border: `1px solid ${colors.lightBlue}`,
+                                                color: colors.lightBlue,
+                                            }}
+                                        >
+                                            <Typography variant="h6">
+                                                {label}
+                                            </Typography>
+                                        </ToggleButton>
+                                    )
+                                )}
+                            </ToggleButtonGroup>
+                        </Grid>
                     </Grid>
+
                     <Grid item xs={12}>
                         <ResponsiveContainer width="100%" height={300}>
                             <ComposedChart data={RechartsData}>
