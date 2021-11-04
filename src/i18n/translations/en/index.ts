@@ -15,6 +15,11 @@ export const TRANSLATIONS_EN = {
         NewPasswordLabel: "New Password",
         ReturnToLoginLink: "RETURN TO LOGIN",
         BackButtonLable: "BACK",
+        NextButtonLabel: "NEXT",
+    },
+    NODE: {
+        NodeNameLabel: "NODE NAME",
+        NodeSerialNumberLabel: "SERIAL NUMBER",
         RecoveryEmail: "EMAIL RECOVERY LINK",
     },
     SIGNUP: {
@@ -30,7 +35,7 @@ export const TRANSLATIONS_EN = {
     RECOVER_PASSWORD: {
         ImportantNote: "Link will expire in 30 minutes.",
         FormTitle: " RECOVER PASSWORD",
-        FormNote: `If an account with the email /EmailTag exists, an email will be sent with further instructions.`,
+        FormNote: `If an account with the email “/EmailTag” exists, an email will be sent with further instructions. `,
     },
     FORGOT_PASSWORD: {
         FormTitle: "  Recover Password",
@@ -39,5 +44,13 @@ export const TRANSLATIONS_EN = {
     DIALOG_MESSAGE: {
         SuccessTitle: "Password Changed Successfully",
         SuccessContent: `Your password has been changed successfully!`,
+    },
+    ALERT: {
+        Title: "Alerts",
+    },
+    HOME: {
+        FormDialogContent:
+            "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured.",
+        FormDialogTitle: "Add Node",
     },
 };

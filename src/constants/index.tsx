@@ -19,6 +19,8 @@ import {
 } from "../utils";
 import { MenuItemType } from "../types";
 
+const APP_VERSION = "v0.0.1";
+const COPY_RIGHTS = "Copyright © Ukama Inc. 2021.";
 const PasswordRules = [
     {
         id: 1,
@@ -46,6 +48,16 @@ const SIDEBAR_MENU1 = [
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
 ];
+const STATS_OPTIONS = [
+    { id: 1, label: "Connected", value: "Connected" },
+    { id: 2, label: "Device uptime", value: "Device uptime" },
+    { id: 3, label: "Throughput", value: "Throughput" },
+];
+const STATS_PERIOD = [
+    { id: 1, label: "DAY" },
+    { id: 2, label: "WEEK " },
+    { id: 3, label: "MONTH " },
+];
 
 const HEADER_MENU = [
     { id: "1", Icon: SettingsIcon, title: "Setting" },
@@ -56,7 +68,6 @@ const HEADER_MENU = [
 const SIDEBAR_MENU2 = [
     { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
 ];
-
 const MONTH_FILTER = [
     { id: 1, label: "January ", value: "january " },
     { id: 2, label: "February", value: "february" },
@@ -106,6 +117,8 @@ const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
 
 export {
     NETWORKS,
+    COPY_RIGHTS,
+    APP_VERSION,
     TIME_FILTER,
     MONTH_FILTER,
     PasswordRules,
@@ -113,6 +126,8 @@ export {
     DRAWER_WIDTH,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
+    STATS_OPTIONS,
+    STATS_PERIOD,
     BASIC_MENU_ACTIONS,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,

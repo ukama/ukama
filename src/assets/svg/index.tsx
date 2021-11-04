@@ -17,13 +17,19 @@ import SettingsIcon from "./SettingsIcon";
 import ThermometerIcon from "./ThermometerIcon";
 import ModuleStoreIcon from "./ModuleStoreIcon";
 import NotificationIcon from "./NotificationIcon";
-
+import ActivityIcon from "./ActivityIcon";
+import AlertIcon from "./AlertIcon";
+import CloudOffIcon from "./CloudOffIcon";
 export {
+    ActivityIcon,
+    NotificationIcon,
+    CloudOffIcon,
     Logo,
     NodeImg,
     CpuIcon,
     MenuDots,
     HomeIcon,
+    AlertIcon,
     UsersIcon,
     DataUsage,
     RouterIcon,
@@ -37,5 +43,4 @@ export {
     SettingsIcon,
     ThermometerIcon,
     ModuleStoreIcon,
-    NotificationIcon,
 };

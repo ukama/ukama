@@ -7,7 +7,15 @@ import {
     ListItem,
     ListItemIcon,
     ListItemText,
+    Typography,
 } from "@mui/material";
+import {
+    APP_VERSION,
+    COPY_RIGHTS,
+    DRAWER_WIDTH,
+    SIDEBAR_MENU1,
+    SIDEBAR_MENU2,
+} from "../../constants";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
 import { makeStyles } from "@mui/styles";
@@ -15,7 +23,6 @@ import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { Dispatch, SetStateAction } from "react";
 import { UpgradeNavFooter } from "../../components";
-import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
     listItem: {
@@ -106,10 +113,16 @@ const Sidebar = (
             <div
                 style={{
                     position: "absolute",
-                    bottom: "0px",
+                    bottom: "10px",
                 }}
             >
                 <UpgradeNavFooter />
+                <Typography
+                    variant={"body2"}
+                    sx={{ textAlign: "center", color: colors.empress }}
+                >
+                    {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
+                </Typography>
             </div>
         </div>
     );

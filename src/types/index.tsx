@@ -4,7 +4,22 @@ export type MenuItemType = {
     title: string;
     route: string;
 };
-
+export type StatsItemType = {
+    id: number;
+    label: string;
+    value: string;
+};
+export type AlertItemType = {
+    id: number;
+    Icon: any;
+    title: string;
+    date: string;
+    description: string;
+};
+export type statsPeriodItemType = {
+    id: number;
+    label: string;
+};
 export type HeaderMenuItemType = {
     id: string;
     Icon: any;

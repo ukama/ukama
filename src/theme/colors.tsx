@@ -10,7 +10,9 @@ const colors = {
     hoverColor: "#009DF5",
     aliceBlue: "#eaf3fe",
     vulcan: "#37393E",
+    balck: "#000000",
     solitude: "#f5f6f8",
     empress: "#757575",
+    lightBlue: "#2196f3",
 };
 export default colors;
