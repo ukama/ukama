@@ -1,4 +1,11 @@
-import { Grid, Select, MenuItem, ButtonGroup, Button } from "@mui/material";
+import {
+    Grid,
+    Select,
+    MenuItem,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
+} from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
 import { StatsItemType, statsPeriodItemType } from "../../types";
@@ -18,11 +25,15 @@ type StatsCardProps = {
     periodOptions: statsPeriodItemType[];
     handleSelect: any;
     selectOption: number;
+    handleSelectedButton: any;
+    selectedButton: string;
 };
 
 const StatsCard = ({
     handleSelect,
     options,
+    handleSelectedButton,
+    selectedButton,
     periodOptions,
     selectOption,
 }: StatsCardProps) => {
@@ -33,30 +44,49 @@ const StatsCard = ({
                     <Grid item xs={6} container>
                         <Select
                             style={{
-                                minWidth: 120,
-                                color: colors.black,
+                                minWidth: "50%",
+
+                                color: colors.empress,
                             }}
                             value={selectOption}
                             variant="standard"
                             disableUnderline
-                            sx={{ width: "64px", color: colors.empress }}
                             onChange={handleSelect}
                         >
                             {options.map(({ id, label }: StatsItemType) => (
                                 <MenuItem key={id} value={id}>
-                                    {label}
+                                    <Typography variant="h6" color="initial">
+                                        {label}
+                                    </Typography>
                                 </MenuItem>
                             ))}
                         </Select>
                     </Grid>
                     <Grid item>
-                        <ButtonGroup size="small" variant="outlined">
+                        <ToggleButtonGroup
+                            size="small"
+                            color="primary"
+                            value={selectedButton}
+                            exclusive
+                            onChange={handleSelectedButton}
+                        >
                             {periodOptions.map(
                                 ({ id, label }: statsPeriodItemType) => (
-                                    <Button key={id}>{label}</Button>
+                                    <ToggleButton
+                                        key={id}
+                                        value={label}
+                                        style={{
+                                            border: `1px solid ${colors.lightBlue}`,
+                                            color: colors.lightBlue,
+                                        }}
+                                    >
+                                        <Typography variant="h6">
+                                            {label}
+                                        </Typography>
+                                    </ToggleButton>
                                 )
                             )}
-                        </ButtonGroup>
+                        </ToggleButtonGroup>
                     </Grid>
                 </Grid>
                 <Grid container spacing={1}>

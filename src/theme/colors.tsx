@@ -13,5 +13,6 @@ const colors = {
     balck: "#000000",
     solitude: "#f5f6f8",
     empress: "#757575",
+    lightBlue: "#2196f3",
 };
 export default colors;
