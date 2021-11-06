@@ -30,8 +30,7 @@
 #define CSPACE_THREAD_EXIT_TERM   0x02
 #define CSPACE_THREAD_EXIT_STOP   0x03
 
-#define CSPACE_MEMFILE_PATH   "./"
-#define CSPACE_MEMFILE_PREFIX "lxce_memfile"
+#define CSPACE_MEMFILE "lxce_memfile"
 
 /* Shared memory related info. */
 typedef struct  {
@@ -43,8 +42,8 @@ typedef struct  {
 /* Shared memory between thread and parent process */
 typedef struct {
 
-  CAppPacket *tx;  /* Tx packet */
-  CAppPacket *rx;  /* Rx packet */
+  CAppPacket tx;  /* Tx packet */
+  CAppPacket rx;  /* Rx packet */
 
   /* Mutex for TX and RX packets */
   pthread_mutex_t txMutex;

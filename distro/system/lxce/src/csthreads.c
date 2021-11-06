@@ -32,6 +32,8 @@
 static CSThreadsList *threadsList=NULL;
 static CSThreadsList *cPtr=NULL;
 
+static void *shMem_global=NULL;
+
 /*
  * init_cspace_thread --
  *
@@ -113,9 +115,8 @@ void free_cspace_thread_list(void) {
  */
 int add_to_cspace_thread_list(CSpaceThread *thread) {
 
-  FILE *fp;
-  ShMemInfo *shmemInfo;
-  ThreadShMem *shMem;
+  FILE *fp=NULL;
+  ShMemInfo *shmemInfo=NULL;
 
   if (thread == NULL) return FALSE;
 
@@ -140,39 +141,34 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
 
     shmemInfo = cPtr->shmemInfo;
 
-    /* create temp file for shared memory */
-    shmemInfo->memFile = tempnam(CSPACE_MEMFILE_PATH, CSPACE_MEMFILE_PREFIX);
-    if (!(fp = fopen(shmemInfo->memFile, "a+"))) {
-      log_error("Error opening shared memory file: %s Error: %s",
-		shmemInfo->memFile, strerror(errno));
-      goto failure;
-    }
-    fclose(fp);
-
-    /* shared memory between process and thread */
-    shMem =
-      (ThreadShMem *)create_shared_memory(&shmemInfo->shmId, shmemInfo->memFile,
-					  sizeof(ThreadShMem));
-    if (shMem == MAP_FAILED || shMem == NULL) {
-      log_error("Error creating shared memory of size: %d. Error: %s",
-		sizeof(ThreadShMem), strerror(errno));
-      goto failure;
+    /* create the memfile. */
+    fp = fopen(CSPACE_MEMFILE, "w+");
+    if (fp==NULL) {
+      log_error("Error creating memory file: %s. Error: %s", CSPACE_MEMFILE,
+		  strerror(errno));
+      return FALSE;
+    } else {
+      fclose(fp);
     }
 
-    /* Initialize shared memory */
-    cPtr->shMem = shMem;
+    if (!create_shared_memory(&(shmemInfo->shmId), CSPACE_MEMFILE,
+			      sizeof(ThreadShMem), &(cPtr->shMem))) {
+      log_error("Error creating shared memory for thread. Name: %s",
+		thread->space->name);
+      goto failure;
+    }
 
-    if (!init_capp_packet(shMem->tx) ||
-	!init_capp_packet(shMem->rx)) {
+    if (!init_capp_packet(&(cPtr->shMem->tx)) ||
+	!init_capp_packet(&(cPtr->shMem->rx))) {
       log_error("Error initializing capp packet for shared memory");
       goto failure;
     }
 
-    pthread_mutex_init(&(shMem->txMutex), NULL);
-    pthread_mutex_init(&(shMem->rxMutex), NULL);
+    pthread_mutex_init(&(cPtr->shMem->txMutex), NULL);
+    pthread_mutex_init(&(cPtr->shMem->rxMutex), NULL);
 
-    pthread_cond_init(&(shMem->hasTX), NULL);
-    pthread_cond_init(&(shMem->hasRX), NULL);
+    pthread_cond_init(&(cPtr->shMem->hasTX), NULL);
+    pthread_cond_init(&(cPtr->shMem->hasRX), NULL);
 
     thread->shMem = cPtr->shMem;
 
@@ -250,5 +246,4 @@ void process_cspace_thread_exit(CSpaceThread *thread, int status) {
   thread->exit_status = status;
   thread->state       = CSPACE_THREAD_STATE_ABORT;
 
-  return;
 }

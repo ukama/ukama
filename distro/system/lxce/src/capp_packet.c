@@ -10,6 +10,7 @@
 /* Functions related to capp requests from parent process to the threads. */
 
 #include <stdlib.h>
+#include <uuid/uuid.h>
 
 #include "capp_packet.h"
 #include "log.h"
@@ -22,18 +23,15 @@
  */
 int init_capp_packet(CAppPacket *packet) {
 
-  packet = (CAppPacket *)malloc(sizeof(CAppPacket));
-
-  if (packet==NULL) {
-    log_error("Error allocating memory of size: %d", sizeof(CAppPacket));
-    return FALSE;
-  }
+  if (packet==NULL) return FALSE;
 
   packet->name = packet->tag = packet->path = NULL;
 
   packet->req_type  = CAPP_TYPE_NONE;
   packet->resp_type = CAPP_TYPE_NONE;
   packet->state     = CAPP_STATE_INVALID;
+
+  uuid_clear(packet->uuid);
 
   return TRUE;
 }

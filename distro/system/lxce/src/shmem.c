@@ -19,6 +19,7 @@
 #include <sys/shm.h>
 
 #include "log.h"
+#include "csthreads.h"
 
 #define SECRET_ID 46504650 /* Id for ftok() */
 
@@ -26,7 +27,8 @@
  * create_shared_memory --
  *
  */
-void *create_shared_memory(int *shmId, char *memFile, size_t size) {
+int create_shared_memory(int *shmId, char *memFile, size_t size,
+			 ThreadShMem **shmem) {
 
   key_t key;
 
@@ -37,17 +39,24 @@ void *create_shared_memory(int *shmId, char *memFile, size_t size) {
   if (key == -1) {
     log_error("Error generating key token for shared memory. Error: %s",
 	      strerror(errno));
-    return NULL;
+    return FALSE;
   }
 
-  *shmId = shmget(key, size, 0644|IPC_CREAT);
-  if (*shmId == -1) {
+  *shmId = shmget(key, size, 0644 | IPC_CREAT);
+  if (shmId == -1) {
     log_error("Error creating shared memory of size %d. Error: %s",
 	      (int)size, strerror(errno));
-    return NULL;
+    return FALSE;
   }
 
-  return shmat(*shmId, NULL, 0);
+  *shmem = shmat(*shmId, NULL, 0);
+  if (*shmem == MAP_FAILED || *shmem == NULL) {
+    log_error("Error creating shared memory of size: %d. Error: %s", size,
+	      strerror(errno));
+    return FALSE;
+  }
+
+  return TRUE;
 }
 
 /*

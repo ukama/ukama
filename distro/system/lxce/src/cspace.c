@@ -356,6 +356,10 @@ static int cspace_init_clone(void *arg) {
   /* Step-3: setup user namespace */
   setup_user_namespace(space);
 
+  /* Step-4: cSpace stays in this state forever
+   * Accept capp CRUD calls from the parent process.
+   */
+
   return TRUE;
 }
 
