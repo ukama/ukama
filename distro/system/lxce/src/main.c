@@ -27,6 +27,9 @@
 #include "lxce_config.h"
 #include "manifest.h"
 #include "cspace.h"
+#include "csthreads.h"
+#include "lxce_callback.h"
+#include "capp.h"
 
 #define VERSION "0.0.1"
 
@@ -41,6 +44,9 @@
 #define DEF_BOOT_CONTAINED_FILE     "boot_contained.json"
 #define DEF_SERVICE_CONTAINED_FILE  "service_contained.json"
 #define DEF_SHUTDOWN_CONTAINED_FILE "shutdown_contained.json"
+
+/* from lxce_network */
+extern int start_web_services(Config *config, UInst *clientInst);
 
 /*
  * callback functions declaration
@@ -126,15 +132,18 @@ void set_log_level(char *slevel) {
 
 int main(int argc, char **argv) {
   
-  int ret=0, count=0, i;
+  int i;
   char *debug = DEF_LOG_LEVEL;
   char *configFile = DEF_CONFIG_FILE;
   char *manifestFile = DEF_MANIFEST_FILE;
-  struct _u_instance instance;
   Config *config = NULL;
   Manifest *manifest = NULL;
-  CSpace *cSpaces=NULL, *cPtr=NULL;
-  
+  CSpace *cSpaces, *cPtr;
+  CSpaceThread *csThread=NULL;
+  struct _u_instance clientInst;
+
+  CApps *apps=NULL;
+
   /* Parsing command line args. */
   while (true) {
     int opt = 0;
@@ -159,6 +168,10 @@ int main(int argc, char **argv) {
       usage();
       exit(0);
       break;
+
+    case 'm':
+      manifestFile = optarg;
+      break;
       
     case 'l':
       debug = optarg;
@@ -180,6 +193,9 @@ int main(int argc, char **argv) {
   }
   
   log_debug("Starting lxce.d ... \n");
+
+  /* Initialize cspace threads list */
+  init_cspace_thread_list();
 
   /* Before we open the socket for REST, process the config file and
    * start them containers.
@@ -207,7 +223,7 @@ int main(int argc, char **argv) {
     cPtr = cSpaces;
   }
 
-  for (i=0; ;i++) {
+  for (i=0; i<config->cSpaceCount; i++) {
 
     if (config->cSpaceConfigs[i]) {
       if(!process_cspace_config(config->cSpaceConfigs[i], cPtr)) {
@@ -215,11 +231,9 @@ int main(int argc, char **argv) {
 		  config->cSpaceConfigs[i]);
 	exit(1);
       }
-    } else {
-      break;
     }
 
-    if (config->cSpaceConfigs[i+1]) {
+    if (i+1 != config->cSpaceCount) {
       cPtr->next =  (CSpace *)calloc(1, sizeof(CSpace));
     } else {
       cPtr->next = NULL;
@@ -228,15 +242,26 @@ int main(int argc, char **argv) {
   }
 
   /* Step-3: setup cSpaces */
+  /* For each space, we create a thread which would clone and parent
+   * would wait for the space to exit. Space is currently active until the
+   * device restarts.
+   */
   cPtr = cSpaces;
-  if (cPtr) {
-    /* Iterate over each items and create their respective cSpaces. */
-    if (!create_cspace(cPtr)) {
-      log_error("Error creating cspace: %s using config file: %s. Exiting",
-		cPtr->name, cPtr->configFile);
-      exit(1);
+
+  /* Go over the cSpaces, start thread and create actual contained spaces. */
+  for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
+
+    csThread = init_cspace_thread(cPtr->name, cPtr);
+
+    if (add_to_cspace_thread_list(csThread)) {
+      if (pthread_create(&(csThread->tid), NULL, cspace_thread_start,
+			 csThread)) {
+	log_error("Error creating pthread for cSpaces. Name: %s", cPtr->name);
+	exit(1);
+      }
+      log_debug("Thread created for cspace: %s", cPtr->name);
     } else {
-      log_debug("Successfully created cspace: %s", cPtr->name);
+      log_error("Failed to create cspace thread for: %s", cPtr->name);
     }
   }
 
@@ -252,73 +277,39 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  /* Step-3: get manifest.json containers path from wimc */
-  // get_containers_local_path(manifest, config);
-
-  /* Step-4: open REST interface. */
-  if (ulfius_init_instance(&instance, config->localAccept, NULL, NULL)
-      != U_OK) {
-    log_error("Error initializing ulfius instance. Exit!\n");
+  /* Step-5: Move all valid cApps into pending list/state. */
+  if (!capps_init(&apps, config, manifest)) {
+    log_error("Error initializing the cApps. Exiting.");
     exit(1);
   }
 
-  /* Endpoint declaration. */
-  ulfius_add_endpoint_by_val(&instance, "POST", config->localEP, NULL, 0,
-			     &callback_post_create_container, NULL);
-  ulfius_set_default_endpoint(&instance, &callback_default, NULL);
-  
-  /* Open an http connection. World is never going to be same!*/
-  ret = ulfius_start_framework(&instance);
-  
-  if (ret == U_OK) {
-    log_debug("Listening on port %d\n", instance.port);
-    getchar(); /* For now. XXX */
-  } else {
-    log_error("Error starting framework\n");
+  /* Step-6: open REST interface. */
+  if (!start_web_services(config, &clientInst)) {
+    log_error("Webservice failed to setup for clients. Exiting.");
+    goto done;
   }
   
+  log_debug("lxce.d running ....");
+  getchar(); /* For now. XXX */
+
+ done:
   log_debug("End World!\n");
   
-  ulfius_stop_framework(&instance);
-  ulfius_clean_instance(&instance);
+  ulfius_stop_framework(&clientInst);
+  ulfius_clean_instance(&clientInst);
   
   clear_config(config);
   clear_manifest(manifest);
 
+  /* clear the capps from all queues. */
+  for (i=START_LIST+1; i!=END_LIST; i++) {
+    clear_capps(apps, i);
+  }
+
+  free(apps);
   free(config);
   free(manifest);
 
   return 1;
 }
 
-/*
- * callback_post_create_container -- callback function to create container. 
- *                                   For now, response by OK!
- * 
- */ 
-
-int callback_post_create_container(const struct _u_request *request,
-				   struct _u_response *response,
-				   void *user_data) {
-  
-  char *post_params = print_map(request->map_post_body);
-  char *response_body = msprintf("OK!\n%s", post_params);
-  
-  ulfius_set_string_body_response(response, 200, response_body);
-  o_free(response_body);
-  o_free(post_params);
-  
-  return U_CALLBACK_CONTINUE;
-}
-
-/*
- * callback_default -- default callback for no-match
- *
- *
- */
-int callback_default(const struct _u_request *request,
-		     struct _u_response *response, void *user_data) {
-  
-  ulfius_set_string_body_response(response, 404, "You are clearly high!");
-  return U_CALLBACK_CONTINUE;
-}

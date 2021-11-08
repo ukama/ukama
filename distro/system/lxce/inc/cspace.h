@@ -26,7 +26,7 @@
 #define JSON_TYPE         "type"
 #define JSON_HOSTNAME     "hostname"
 #define JSON_NAMESPACES   "namespaces"
-#define JSON_CAPABILITIES "capabilitles"
+#define JSON_CAPABILITIES "capabilities"
 
 #define STACK_SIZE      (1024*1024)
 #define CONFIG_MAX_SIZE 1000000
@@ -39,7 +39,6 @@
 #define LXCE_SERIAL "serial"
 
 /* Definition of Ukama's contained space as per config file */
-
 typedef struct _cSpace {
 
   char *version;      /* contained space version */
@@ -66,6 +65,7 @@ typedef struct _cSpace {
   struct _cSpace *next; /* pointer to next contained space */
 } CSpace;
 
-int create_cspace(CSpace *space);
+int create_cspace(CSpace *space, pid_t *pid);
+int process_cspace_config(char *fileName, CSpace *space);
 
 #endif /* LXCE_CSPACE_H */

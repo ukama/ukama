@@ -47,6 +47,7 @@ typedef struct {
   char *wimcPort;    /* Port where WIMC.d is listening */
   char *meshPort;    /* Port where MESH.d is listening */
 
+  int  cSpaceCount;     /* number of cSpace */
   char **cSpaceConfigs; /* cSpace config files */
 } Config;
 

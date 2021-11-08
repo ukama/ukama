@@ -1,26 +1,41 @@
 {
-    "version": "0.1",
-    "serial" : "abcd-ef-ghi-009910-xyz",
-    "target" : "serial",
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
 
-    "name"     : "boot",
-    "hostname" : "ukama-boot",
-    "uid"      : 0,
-    "gid"      : 0,
-    
-    "namespaces" : [
-	{ "type" : "pid" },
-	{ "type" : "network" },
-	{ "type" : "uts" },
-	{ "type" : "mount" },
-    	{ "type" : "user" }
-    ],
-	
-    "capabilities" : [
-	{ "type" : "CAP_BLOCK_SUSPEND"},
-	{ "type" : "CAP_IPC_LOCK"},
-	{ "type" : "CAP_MAC_ADMIN"},
-	{ "type" : "CAP_MAC_OVERRIDE"}
-    ]
+	"name": "boot",
+	"hostname": "ukama-boot",
+	"uid": "0",
+	"gid": "0",
 
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "network"
+		},
+		{
+			"type": "uts"
+		},
+		{
+			"type": "mount"
+		},
+		{
+			"type": "user"
+		}
+	],
+
+	"capabilities": [{
+			"type": "CAP_BLOCK_SUSPEND"
+		},
+		{
+			"type": "CAP_IPC_LOCK"
+		},
+		{
+			"type": "CAP_MAC_ADMIN"
+		},
+		{
+			"type": "CAP_MAC_OVERRIDE"
+		}
+	]
 }

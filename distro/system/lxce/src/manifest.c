@@ -62,7 +62,7 @@ static int deserialize_cApp(ArrayElem *elem, json_t *json, CSpace *spaces) {
   tmp = json_string_value(contained);
 
   if (is_valid_cspace(tmp, spaces)==FALSE) {
-    log_error("Invalid cSpace \"%s\" in the config.", tmp);
+    log_error("Invalid cSpace \"%s\" in the config. Ignoring", tmp);
     return FALSE;
   }
 
@@ -91,7 +91,7 @@ static int deserialize_manifest_file(Manifest *manifest, CSpace *spaces,
   int j=0, size=0;
   json_t *obj;
   json_t *jArray, *jElem;
-  ArrayElem **elem=NULL;
+  ArrayElem *elem=NULL;
 
   if (manifest == NULL) return FALSE;
   if (json == NULL) return FALSE;
@@ -130,25 +130,32 @@ static int deserialize_manifest_file(Manifest *manifest, CSpace *spaces,
 
     size = json_array_size(jArray);
 
+    manifest->arrayElem = (ArrayElem *)calloc(size, sizeof(ArrayElem));
+    if (manifest->arrayElem==NULL) {
+      log_error("Memory allocation error. Size: %d", size*sizeof(ArrayElem));
+      return FALSE;
+    }
+
+    elem = manifest->arrayElem;
+
     for (j=0; j<size; j++) {
 
       jElem = json_array_get(jArray, j);
       if (jElem) {
 
-	*elem = (ArrayElem *)calloc(1, sizeof(ArrayElem));
-	  if (*elem == NULL) {
+	if (elem==NULL) {
+	  elem = (ArrayElem *)calloc(1, sizeof(ArrayElem));
+	  if (elem == NULL) {
 	    log_error("Memory allocation error. Size: %d", sizeof(ArrayElem));
 	    return FALSE;
 	  }
+	}
 
-	  if (deserialize_cApp(*elem, jElem, spaces)) {
-	    elem = &((*elem)->next);
-	  } else {
-	    log_error("Error parsing %s", JSON_CAPP);
-	    return FALSE;
-	  }
+	if (deserialize_cApp(elem, jElem, spaces)) {
+	  elem = elem->next;
 	}
       }
+    } /* for loop */
   } else {
     log_error("Error parsing %s", JSON_CAPP);
     return FALSE;
@@ -199,7 +206,7 @@ int process_manifest(char *fileName, Manifest *manifest, void *arg) {
     fclose(fp);
     return FALSE;
   }
-
+  memset(buffer, 0, size+1);
   fread(buffer, 1, size, fp); /* Read everything into buffer */
 
   /* Trying loading it as JSON */

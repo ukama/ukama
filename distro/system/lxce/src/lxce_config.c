@@ -95,6 +95,7 @@ int parse_config(Config *config, toml_table_t *configData) {
   } else {
 
     size = toml_array_nelem(csArray);
+    config->cSpaceCount   = size;
     config->cSpaceConfigs = (char **)calloc(size, sizeof(char *));
     if (!config->cSpaceConfigs) {
       log_error("Memory allocation failed for size: %d", size*sizeof(char *));
@@ -193,12 +194,8 @@ void print_config(Config *config) {
 
   if (config->cSpaceConfigs) {
     log_debug("Contained Spaces Config files: ");
-    for (i=0; ;i++) {
-      if (config->cSpaceConfigs[i]) {
+    for (i=0; i<config->cSpaceCount; i++) {
 	log_debug("\t %d %s", i, config->cSpaceConfigs[i]);
-      } else {
-	break;
-      }
     }
   }
 }
@@ -220,7 +217,7 @@ void clear_config(Config *config) {
   free(config->meshPort);
 
   if (config->cSpaceConfigs) {
-    for (i=0; ;i++) {
+    for (i=0; i<config->cSpaceCount; i++) {
       if (config->cSpaceConfigs[i]) { free(config->cSpaceConfigs[i]); }
       else break;
     }

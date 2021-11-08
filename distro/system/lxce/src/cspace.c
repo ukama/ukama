@@ -345,7 +345,7 @@ static int cspace_init_clone(void *arg) {
 
   /* Step-1: setup hostname. */
   if (sethostname(hostName, strlen(hostName))) {
-    log_error("Sapce: %s Error setting host name: %s", space->name,
+    log_error("Space: %s Error setting host name: %s", space->name,
 	      hostName);
     return FALSE;
   }
@@ -353,11 +353,12 @@ static int cspace_init_clone(void *arg) {
   /* Step-2: setup security profile (cap and seccomp) */
   setup_cspace_security_profile(space);
 
-  /* Step-3: setup mounts*/
-  setup_mounts(space);
-
-  /* Step-4: setup user namespace */
+  /* Step-3: setup user namespace */
   setup_user_namespace(space);
+
+  /* Step-4: cSpace stays in this state forever
+   * Accept capp CRUD calls from the parent process.
+   */
 
   return TRUE;
 }
@@ -365,10 +366,8 @@ static int cspace_init_clone(void *arg) {
 /*
  * create_cspace -- create contained spaces
  */
-int create_cspace(CSpace *space) {
+int create_cspace(CSpace *space, pid_t *pid) {
 
-  int childStatus;
-  pid_t pid;
   char *stack=NULL;
   
   /* logic is as follows:
@@ -404,26 +403,28 @@ int create_cspace(CSpace *space) {
     return FALSE;
   }
 
-  /* clone with proper flags for namespaces */
-  pid = clone(cspace_init_clone, stack + STACK_SIZE,
-	      SIGCHLD | space->nameSpaces, space);
-  if (pid == -1) {
-    log_error("Space: %s Unable to clone cInit", space->name);
+  if (!(stack = malloc(STACK_SIZE))) {
+    log_error("Error allocating stack of size: %d", STACK_SIZE);
     return FALSE;
   }
 
+  /* clone with proper flags for namespaces */
+  *pid = clone(cspace_init_clone, stack + STACK_SIZE,
+	      SIGCHLD | space->nameSpaces, space);
+  if (*pid == -1) {
+    log_error("Space: %s Unable to clone cInit", space->name);
+    return FALSE;
+  }
+  
   close(space->sockets[1]);
   space->sockets[1] = 0;
 
   /* prepare child process gid/uid map files. */
-  if (prepare_child_map_files(pid, space) == FALSE) {
+  if (prepare_child_map_files(*pid, space) == FALSE) {
     log_error("Error preparing map files for child process. Terminating it");
     kill(pid, SIGKILL);
     return FALSE;
   }
-
-  /* Wait on child. XXX - fix me.*/
-  waitpid(pid, &childStatus, 0);
 
   if (space->sockets[0]) close(space->sockets[0]);
   if (space->sockets[1]) close(space->sockets[1]);
@@ -465,7 +466,7 @@ static int set_integer_object_value(json_t *json, int *param, char *objName,
  * set_str_object_value --
  *
  */
-static int set_str_object_value(json_t *json, char *param, char *objName,
+static int set_str_object_value(json_t *json, char **param, char *objName,
 				int mandatory, char *defValue) {
 
   json_t *obj;
@@ -476,16 +477,16 @@ static int set_str_object_value(json_t *json, char *param, char *objName,
       log_error("Missing Mandatory JSON field: %s Setting to default: %s",
 		objName, defValue);
       if (defValue)  {
-	param = strdup(defValue);
+	*param = strdup(defValue);
       } else {
 	return FALSE;
       }
     } else {
       log_debug("Missing JSON field: %s. Ignored.", objName);
-      param = NULL;
+      *param = NULL;
     }
   } else {
-    param = strdup(json_string_value(obj));
+    *param = strdup(json_string_value(obj));
   }
 
   return TRUE;
@@ -501,7 +502,7 @@ static int namespaces_flag(char *ns) {
     return CLONE_NEWPID;
   } else if (strcmp(ns, "uts")==0) {
     return CLONE_NEWUTS;
-  } else if (strcmp(ns, "net")==0) {
+  } else if (strcmp(ns, "network")==0) {
     return CLONE_NEWNET;
   } else if (strcmp(ns, "mount")==0) {
     return CLONE_NEWNS;
@@ -548,31 +549,32 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
   if (space == NULL) return FALSE;
   if (json == NULL) return FALSE;
 
-  if (!set_str_object_value(json, space->version, JSON_VERSION, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->version), JSON_VERSION, TRUE,
+			    NULL)) {
     return FALSE;
   }
 
-  if (!set_str_object_value(json, space->target, JSON_TARGET, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->target), JSON_TARGET, TRUE, NULL)) {
     return FALSE;
   }
 
-  if (strcmp(space->target, LXCE_SERIAL)==0) {
-    if (!set_str_object_value(json, space->serial, JSON_SERIAL, TRUE, NULL)) {
+  if (space->target == LXCE_SERIAL) {
+    if (!set_str_object_value(json, &(space->serial), JSON_SERIAL, TRUE, NULL)) {
       return FALSE;
     }
   } else {
-    set_str_object_value(json, space->serial, JSON_SERIAL, FALSE, NULL);
+    set_str_object_value(json, &(space->serial), JSON_SERIAL, FALSE, NULL);
   }
 
-  if (!set_str_object_value(json, space->name, JSON_NAME, TRUE, NULL)) {
+  if (!set_str_object_value(json, &(space->name), JSON_NAME, TRUE, NULL)) {
     return FALSE;
   }
 
-  set_str_object_value(json, space->hostName, JSON_HOSTNAME, FALSE,
+  set_str_object_value(json, &(space->hostName), JSON_HOSTNAME, FALSE,
 		       CSPACE_DEFAULT_HOSTNAME);
 
-  set_integer_object_value(json, &space->uid, JSON_UID, FALSE, 0);
-  set_integer_object_value(json, &space->gid, JSON_GID, FALSE, 0);
+  set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
+  set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
 
   /* Look for namespaces. */
   space->nameSpaces = 0;
@@ -659,7 +661,7 @@ int process_cspace_config(char *fileName, CSpace *space) {
     fclose(fp);
     return FALSE;
   }
-
+  memset(buffer, 0, size+1);
   fread(buffer, 1, size, fp); /* Read everything into buffer */
 
   /* Trying loading it as JSON */
@@ -675,7 +677,7 @@ int process_cspace_config(char *fileName, CSpace *space) {
   ret = deserialize_cspace_file(space, json);
 
   if (space) {
-    space->configFile = strdup(fileName);
+    (space)->configFile = strdup(fileName);
   }
 
  done:
