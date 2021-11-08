@@ -61,14 +61,13 @@ const NetworkStatus = ({
                     disableUnderline
                     variant="standard"
                     sx={{
-                        width: "128px",
                         color: colors.black,
                     }}
                     onChange={e => handleStatusChange(e.target.value)}
                 >
                     {options.map(({ id, label, value }: SelectItemType) => (
                         <MenuItem key={id} value={value}>
-                            {label}
+                            <Typography variant="body1">{label}</Typography>
                         </MenuItem>
                     ))}
                 </Select>

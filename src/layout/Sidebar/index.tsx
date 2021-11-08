@@ -28,6 +28,7 @@ const useStyles = makeStyles(() => ({
     listItem: {
         opacity: 1,
         borderRadius: "4px",
+        fontFamily: "Work Sans",
         backgroundColor: colors.white,
     },
     listItemText: {
@@ -118,8 +119,12 @@ const Sidebar = (
             >
                 <UpgradeNavFooter />
                 <Typography
-                    variant={"body2"}
-                    sx={{ textAlign: "center", color: colors.empress }}
+                    variant={"caption"}
+                    sx={{
+                        display: "block",
+                        textAlign: "center",
+                        color: colors.empress,
+                    }}
                 >
                     {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
                 </Typography>

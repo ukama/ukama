@@ -3,39 +3,24 @@ import themePalette from "./themePalette";
 import { createTheme, PaletteOptions } from "@mui/material/styles";
 const theme = createTheme({
     typography: {
-        fontFamily: "Rubik, sans-serif",
-        h3: {
-            display: "flex",
-            fontSize: "1.5rem",
-            fontWeight: "normal",
-            lineHeight: "133.4%",
-            alignItems: "center",
-            color: colors.black,
-        },
-        h6: {
-            fontWeight: 600,
-        },
-        subtitle1: {
-            fontWeight: 500,
-            textAlign: "left",
-        },
-        subtitle2: {
-            fontWeight: 500,
-            textAlign: "left",
-        },
+        h1: { fontFamily: "Rubik" },
+        h2: { fontFamily: "Rubik" },
+        h3: { fontFamily: "Rubik" },
+        h4: { fontFamily: "Rubik" },
+        h5: { fontFamily: "Rubik" },
+        h6: { fontFamily: "Rubik" },
+        subtitle1: { fontFamily: "Work Sans" },
+        subtitle2: { fontFamily: "Work Sans" },
         body1: {
-            display: "block",
-            lineHeight: "157%",
-            fontSize: "0.875rem",
-            fontWeight: "normal",
-            alignItems: "center",
+            fontFamily: "Work Sans",
+            letterSpacing: "-0.02em",
         },
         body2: {
-            display: "block",
-            lineHeight: "166%",
-            fontSize: "0.75rem",
-            fontWeight: "normal",
-            alignItems: "center",
+            fontFamily: "Work Sans",
+            letterSpacing: "-0.02em",
+        },
+        caption: {
+            fontFamily: "Work Sans",
         },
     },
     palette: themePalette as PaletteOptions,
@@ -53,7 +38,7 @@ const theme = createTheme({
         MuiDivider: {
             styleOverrides: {
                 root: {
-                    margin: "12px 0px !important",
+                    margin: "12px 0px",
                 },
             },
         },

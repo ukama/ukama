@@ -110,8 +110,8 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                         <MenuIcon color={"primary"} />
                     </IconButton>
                     <Typography
-                        variant="h6"
                         noWrap
+                        variant="h6"
                         component="div"
                         color="black"
                     >

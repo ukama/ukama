@@ -20,7 +20,7 @@ import {
 import { MenuItemType } from "../types";
 
 const APP_VERSION = "v0.0.1";
-const COPY_RIGHTS = "Copyright © Ukama Inc. 2021.";
+const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
 const PasswordRules = [
     {
         id: 1,

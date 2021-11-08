@@ -22,12 +22,9 @@ const ForgotPasswordConfirmationMessage = ({
                 </Typography>
 
                 <MessageContainer>
-                    <Typography
-                        variant="body1"
-                        sx={{ letterSpacing: "0.15 px", fontSize: "1rem" }}
-                    >
+                    <Typography variant="body1">
                         {AddEmail(t("RECOVER_PASSWORD.FormNote"), email)}
-                        <span style={{ fontWeight: 700 }}>
+                        <span style={{ fontWeight: 800 }}>
                             {t("RECOVER_PASSWORD.ImportantNote")}
                         </span>
                     </Typography>

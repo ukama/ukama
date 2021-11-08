@@ -4,7 +4,7 @@ body {
     background-color: #f5f6f8;
 }
 .BrainhubCarousel__arrows {
-    padding: 12px !important;
+    padding: 8px !important;
     background-color: #ffffff !important;
 }
 
@@ -18,4 +18,19 @@ body {
 
 .BrainhubCarousel__trackContainer ul {
     padding: 4px !important;
+}
+
+*::-webkit-scrollbar {
+    height: 8px;
+    width: 4px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    border-radius: 25px;
+    border: 2px solid transparent;
+    background-color: #adadad;
 }

@@ -52,7 +52,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                 }) => (
                     <form onSubmit={handleSubmit}>
                         <Stack spacing={"18px"}>
-                            <Typography variant="h3">
+                            <Typography variant="h5">
                                 {t("LOGIN.FormTitle")}
                             </Typography>
 
@@ -114,7 +114,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                                 {t("LOGIN.ButtonWithGoogle")}
                             </Button>
                             <Typography
-                                variant="body2"
+                                variant="caption"
                                 sx={{ letterSpacing: "0.4px" }}
                             >
                                 {t("LOGIN.FooterNoteText")}

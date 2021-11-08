@@ -26,6 +26,7 @@ const useStyles = makeStyles(() => ({
 
 const IconStyle = {
     display: "flex",
+    marginBottom: "8px",
     alignItems: "center",
     justifyContent: "center",
 };
@@ -67,11 +68,16 @@ const NodeCard = ({
         <Paper className={classes.container}>
             <Grid container spacing={0.8}>
                 <Grid item xs={10}>
-                    <Grid>
-                        <Typography variant="subtitle1">{title}</Typography>
+                    <Grid textAlign="initial">
+                        <Typography
+                            variant="subtitle1"
+                            sx={{ fontWeight: 500 }}
+                        >
+                            {title}
+                        </Typography>
                     </Grid>
-                    <Grid>
-                        <Typography variant="subtitle2">{subTitle}</Typography>
+                    <Grid textAlign="initial">
+                        <Typography variant="caption">{subTitle}</Typography>
                     </Grid>
                 </Grid>
                 <Grid item xs={2} m="4px 0px">
@@ -87,16 +93,22 @@ const NodeCard = ({
                     <NodeImg />
                 </Grid>
                 <Grid item xs={12}>
-                    <Divider />
+                    <Divider sx={{ m: "8px -18px 4px -18px" }} />
                 </Grid>
-                <Grid item xs={12} container spacing={1}>
-                    <Grid xs={6} item container>
+                <Grid
+                    item
+                    xs={12}
+                    container
+                    spacing={1}
+                    sx={{ alignItems: "center" }}
+                >
+                    <Grid item xs={6} container pt="0px !important">
                         <UsersIcon
                             width="16px"
                             height="16px"
                             color={colors.black}
                         />
-                        <Typography variant="body2" pl="8px">
+                        <Typography variant="caption" pl="8px">
                             {users}
                         </Typography>
                     </Grid>

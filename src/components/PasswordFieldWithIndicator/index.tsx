@@ -106,7 +106,7 @@ const PasswordFieldWithIndicator = ({
                         return (
                             <Grid xs={12} sm={6} item key={rules.id}>
                                 <Typography
-                                    variant="body2"
+                                    variant="caption"
                                     id={rules.idLabel}
                                     fontFamily="Work Sans"
                                     letterSpacing="0.4px"
