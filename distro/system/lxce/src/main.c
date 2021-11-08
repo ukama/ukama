@@ -29,6 +29,7 @@
 #include "cspace.h"
 #include "csthreads.h"
 #include "lxce_callback.h"
+#include "capp.h"
 
 #define VERSION "0.0.1"
 
@@ -140,6 +141,8 @@ int main(int argc, char **argv) {
   CSpace *cSpaces, *cPtr;
   CSpaceThread *csThread=NULL;
   struct _u_instance clientInst;
+
+  CApps *apps=NULL;
 
   /* Parsing command line args. */
   while (true) {
@@ -268,13 +271,17 @@ int main(int argc, char **argv) {
     log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
     exit(1);
   }
+
   if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
     log_error("Error process the manifest file: %s", manifestFile);
     exit(1);
   }
 
-  /* Step-5: get manifest.json containers path from wimc */
-  // get_containers_local_path(manifest, config);
+  /* Step-5: Move all valid cApps into pending list/state. */
+  if (!capps_init(&apps, config, manifest)) {
+    log_error("Error initializing the cApps. Exiting.");
+    exit(1);
+  }
 
   /* Step-6: open REST interface. */
   if (!start_web_services(config, &clientInst)) {
@@ -294,6 +301,12 @@ int main(int argc, char **argv) {
   clear_config(config);
   clear_manifest(manifest);
 
+  /* clear the capps from all queues. */
+  for (i=START_LIST+1; i!=END_LIST; i++) {
+    clear_capps(apps, i);
+  }
+
+  free(apps);
   free(config);
   free(manifest);
 
