@@ -11,6 +11,9 @@
  * wimc.h
  */
 
+#ifndef LXCE_WIMC_H
+#define LXCE_WIMC_H
+
 #include <jansson.h>
 #include <ulfius.h>
 
@@ -38,3 +41,5 @@ struct Response {
 };
 
 int get_capp_path(Config *config, char *name, char *tag, char *path);
+
+#endif /* LXCE_WIMC_H */
