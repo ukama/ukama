@@ -275,5 +275,4 @@ void clear_capps(CApps *capps, int flag) {
     free(ptr);
     ptr = tmp;
   }
-  if (head) free(head);
 }
