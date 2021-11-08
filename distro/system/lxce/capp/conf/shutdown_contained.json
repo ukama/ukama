@@ -3,16 +3,13 @@
 	"serial": "abcd-ef-ghi-009910-xyz",
 	"target": "serial",
 
-	"name": "boot",
-	"hostname": "ukama-boot",
+	"name": "shutdown",
+	"hostname": "ukama-shutdown",
 	"uid": "0",
 	"gid": "0",
 
 	"namespaces": [{
 			"type": "pid"
-		},
-		{
-			"type": "ipc"
 		},
 		{
 			"type": "uts"

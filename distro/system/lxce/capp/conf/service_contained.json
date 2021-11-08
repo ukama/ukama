@@ -12,9 +12,6 @@
 			"type": "pid"
 		},
 		{
-			"type": "ipc"
-		},
-		{
 			"type": "uts"
 		},
 		{
