@@ -27,7 +27,7 @@ const StatusCard = ({
             <Grid item display="flex" alignItems="center">
                 <Icon />
             </Grid>
-            <Grid xs={12} item sm container spacing={1} direction="column">
+            <Grid xs={12} item sm container direction="column">
                 <Grid
                     sm
                     item
@@ -38,7 +38,7 @@ const StatusCard = ({
                     alignItems="center"
                 >
                     <Grid item xs={8}>
-                        <Typography variant="body1">{title}</Typography>
+                        <Typography variant="subtitle2">{title}</Typography>
                     </Grid>
                     <Grid item xs={4} display="flex" justifyContent="flex-end">
                         <Select
@@ -51,7 +51,9 @@ const StatusCard = ({
                             {options.map(
                                 ({ id, label, value }: SelectItemType) => (
                                     <MenuItem key={id} value={value}>
-                                        {label}
+                                        <Typography variant="subtitle2">
+                                            {label}
+                                        </Typography>
                                     </MenuItem>
                                 )
                             )}
@@ -60,7 +62,7 @@ const StatusCard = ({
                 </Grid>
                 <Grid item sm container>
                     <Grid item xs={12} container>
-                        <Typography variant="h3" paddingRight="6px">
+                        <Typography variant="h5" paddingRight="6px">
                             {subtitle1}
                         </Typography>
                         <Typography

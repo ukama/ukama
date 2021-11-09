@@ -10,7 +10,7 @@ interface IProps {
 const ErrorPage: React.FC<IProps> = () => {
     return (
         <CenterContainer>
-            <Typography variant="h3" color="error">
+            <Typography variant="h5" color="error">
                 <b>404:</b> Page Not found!
             </Typography>
         </CenterContainer>

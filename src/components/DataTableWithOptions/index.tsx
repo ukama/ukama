@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import OptionsPopover from "../OptionsPopover";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
+import { MenuDots } from "../../assets/svg";
 
 interface DataTableWithOptionsInterface {
     columns: ColumnsWithOptions[];
@@ -68,22 +69,22 @@ const DataTableWithOptions = ({
                                     align={column.align}
                                     style={{
                                         minWidth: column.minWidth,
-                                        padding: "12px",
+                                        padding: "12px 12px 12px 0px",
                                         fontSize: "0.875rem",
                                     }}
                                 >
-                                    <b>{column.label}</b>
+                                    {column.id === "actions" ? (
+                                        <MenuDots />
+                                    ) : (
+                                        <b>{column.label}</b>
+                                    )}
                                 </TableCell>
                             ))}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {dataset.map((row: any) => (
-                            <TableRow
-                                role="checkbox"
-                                tabIndex={-1}
-                                key={row.name}
-                            >
+                            <TableRow role="row" tabIndex={-1} key={row.name}>
                                 {columns.map(
                                     (
                                         column: ColumnsWithOptions,
@@ -93,7 +94,7 @@ const DataTableWithOptions = ({
                                             key={`${row.name}-${index}`}
                                             align={column.align}
                                             sx={{
-                                                padding: "14px",
+                                                padding: "12px 12px 12px 0px",
                                                 fontSize: "0.875rem",
                                             }}
                                         >

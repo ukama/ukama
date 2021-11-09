@@ -12,15 +12,15 @@ export const TRANSLATIONS_EN = {
         SignUpLinkLabel: "Sign up instead",
         LinkLabel: "Log in instead ",
         CancelButtonLable: "CANCEL",
-        NewPasswordLabel: "New Password",
+        NewPasswordLabel: "NEW PASSWORD",
         ReturnToLoginLink: "RETURN TO LOGIN",
         BackButtonLable: "BACK",
         NextButtonLabel: "NEXT",
+        RecoveryEmail: "EMAIL RECOVERY LINK",
     },
     NODE: {
         NodeNameLabel: "NODE NAME",
         NodeSerialNumberLabel: "SERIAL NUMBER",
-        RecoveryEmail: "EMAIL RECOVERY LINK",
     },
     SIGNUP: {
         FormTitle: "Sign up for Ukama",
@@ -29,7 +29,7 @@ export const TRANSLATIONS_EN = {
         FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account?  `,
     },
     RESET_PASSWORD: {
-        FormTitle: "Recover Password",
+        FormTitle: "Change Password",
         ButtonLabel: `CHANGE PASSWORD & LOGIN`,
     },
     RECOVER_PASSWORD: {

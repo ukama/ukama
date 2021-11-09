@@ -13,6 +13,7 @@ const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
         <Card
             sx={{
                 marginBottom: 1,
+                marginRight: "8px",
                 width: "100%",
                 padding: 1,
             }}
@@ -39,7 +40,7 @@ const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
                 </Grid>
                 <Grid item xs={12}>
                     <Box pl={3.7}>
-                        <Typography variant="subtitle2" color="initial">
+                        <Typography variant="body2" color="initial">
                             {description}
                         </Typography>
                     </Box>

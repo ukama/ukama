@@ -21,7 +21,7 @@ const ContainerHeader = ({
                 <Typography variant="h6">{title}</Typography>
                 <Typography
                     p="0px 8px"
-                    variant="body1"
+                    variant="subtitle2"
                     fontWeight={600}
                     letterSpacing="6px"
                     color={colors.empress}

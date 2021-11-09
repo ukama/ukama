@@ -39,7 +39,7 @@ const NetworkStatus = ({
     handleStatusChange,
 }: NetworkStatusProps) => {
     return (
-        <Grid width="100%" container mb="18px" p="18px 8px">
+        <Grid width="100%" container mb="8px" p="18px 8px">
             <Grid item xs={12} md={10}>
                 <Box display="flex" flexDirection="row" alignItems="center">
                     {getIconByStatus(statusType)}
@@ -61,14 +61,13 @@ const NetworkStatus = ({
                     disableUnderline
                     variant="standard"
                     sx={{
-                        width: "128px",
                         color: colors.black,
                     }}
                     onChange={e => handleStatusChange(e.target.value)}
                 >
                     {options.map(({ id, label, value }: SelectItemType) => (
                         <MenuItem key={id} value={value}>
-                            {label}
+                            <Typography variant="body1">{label}</Typography>
                         </MenuItem>
                     ))}
                 </Select>

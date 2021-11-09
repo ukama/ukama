@@ -12,10 +12,10 @@ import React from "react";
 import { colors } from "../../theme";
 import { useSetRecoilState } from "recoil";
 import { isLoginAtom } from "../../recoil";
+import { HEADER_MENU } from "../../constants";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { HeaderMenuItemType } from "../../types";
-import { DRAWER_WIDTH, HEADER_MENU } from "../../constants";
 
 type HeaderProps = {
     pageName: string;
@@ -91,15 +91,13 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
         <Box>
             <AppBar
                 elevation={0}
-                position="fixed"
+                position="relative"
                 sx={{
-                    ml: { sm: `${DRAWER_WIDTH}px` },
                     backgroundColor: colors.solitude,
-                    padding: { xs: "4px 8px", md: "4px 30px" },
-                    width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` },
+                    width: { sm: "100%" },
                 }}
             >
-                <Toolbar style={{ flexGrow: 1, padding: "0px" }}>
+                <Toolbar style={{ padding: "0px" }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
@@ -110,8 +108,8 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                         <MenuIcon color={"primary"} />
                     </IconButton>
                     <Typography
-                        variant="h6"
                         noWrap
+                        variant="h5"
                         component="div"
                         color="black"
                     >
@@ -143,7 +141,7 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                         </IconButton>
                     </Box>
                 </Toolbar>
-                <Divider />
+                <Divider sx={{ m: "0px" }} />
             </AppBar>
             {renderMenu}
         </Box>

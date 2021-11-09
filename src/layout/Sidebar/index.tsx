@@ -28,6 +28,7 @@ const useStyles = makeStyles(() => ({
     listItem: {
         opacity: 1,
         borderRadius: "4px",
+        fontFamily: "Work Sans",
         backgroundColor: colors.white,
     },
     listItemText: {
@@ -66,30 +67,35 @@ const Sidebar = (
                     button
                     key={id}
                     href={route}
-                    selected={title === path}
                     onClick={() => {
                         setPath(title);
                         history.push(route);
                     }}
+                    selected={title === path}
                     className={
                         title === path ? classes.listItemDone : classes.listItem
                     }
                 >
-                    <ListItemIcon>
+                    <ListItemIcon sx={{ minWidth: "44px" }}>
                         <Icon
                             color={
                                 title === path ? colors.white : colors.vulcan
                             }
                         />
                     </ListItemIcon>
-                    <ListItemText
-                        primary={title}
-                        className={
-                            title === path
-                                ? classes.listItemDoneText
-                                : classes.listItemText
-                        }
-                    />
+                    <ListItemText>
+                        <Typography
+                            variant="body1"
+                            fontWeight={title === path ? "bold" : "normal"}
+                            className={
+                                title === path
+                                    ? classes.listItemDoneText
+                                    : classes.listItemText
+                            }
+                        >
+                            {title}
+                        </Typography>
+                    </ListItemText>
                 </ListItem>
             ))}
         </List>
@@ -107,7 +113,7 @@ const Sidebar = (
                 <Logo width={"100%"} height={"40px"} />
             </Toolbar>
             {MenuList(SIDEBAR_MENU1)}
-            <Divider />
+            <Divider sx={{ m: "16px 14px 0px 14px" }} />
             {MenuList(SIDEBAR_MENU2)}
 
             <div
@@ -118,8 +124,12 @@ const Sidebar = (
             >
                 <UpgradeNavFooter />
                 <Typography
-                    variant={"body2"}
-                    sx={{ textAlign: "center", color: colors.empress }}
+                    variant={"caption"}
+                    sx={{
+                        display: "block",
+                        textAlign: "center",
+                        color: colors.empress,
+                    }}
                 >
                     {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
                 </Typography>
@@ -154,6 +164,7 @@ const Sidebar = (
                         boxSizing: "border-box",
                         width: DRAWER_WIDTH,
                     },
+                    borderRight: "0px",
                 }}
             >
                 {drawer}
