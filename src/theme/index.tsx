@@ -3,12 +3,7 @@ import themePalette from "./themePalette";
 import { createTheme, PaletteOptions } from "@mui/material/styles";
 const theme = createTheme({
     typography: {
-        h1: { fontFamily: "Rubik" },
-        h2: { fontFamily: "Rubik" },
-        h3: { fontFamily: "Rubik" },
-        h4: { fontFamily: "Rubik" },
-        h5: { fontFamily: "Rubik" },
-        h6: { fontFamily: "Rubik" },
+        fontFamily: "Rubik",
         subtitle1: { fontFamily: "Work Sans" },
         subtitle2: { fontFamily: "Work Sans" },
         body1: {
