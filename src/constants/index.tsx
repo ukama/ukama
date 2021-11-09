@@ -11,7 +11,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DataTableWithOptionColumns } from "./tableColumns";
-const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH = 211;
 import {
     checkPasswordLength,
     checkPasswordSpecialCharacter,
@@ -66,7 +66,7 @@ const HEADER_MENU = [
 ];
 
 const SIDEBAR_MENU2 = [
-    { id: "5", title: "Module Store", Icon: ModuleStoreIcon, route: "/store" },
+    { id: "5", title: "Integrations", Icon: ModuleStoreIcon, route: "/store" },
 ];
 const MONTH_FILTER = [
     { id: 1, label: "January ", value: "january " },

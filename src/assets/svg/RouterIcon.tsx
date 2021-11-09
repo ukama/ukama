@@ -1,8 +1,8 @@
 import { SVGType } from "../../types";
 const RouterIcon = ({ color }: SVGType, props: any) => (
     <svg
-        width="28"
-        height="28"
+        width="21"
+        height="21"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="3.5 3.5 21 21"

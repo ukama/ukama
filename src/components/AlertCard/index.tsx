@@ -13,6 +13,7 @@ const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
         <Card
             sx={{
                 marginBottom: 1,
+                marginRight: "8px",
                 width: "100%",
                 padding: 1,
             }}

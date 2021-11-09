@@ -87,6 +87,13 @@ const theme = createTheme({
                 },
             },
         },
+        MuiDrawer: {
+            styleOverrides: {
+                paper: {
+                    borderRight: "none",
+                },
+            },
+        },
     },
 });
 
