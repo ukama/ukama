@@ -24,6 +24,8 @@
 #include <sys/shm.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
 #include "cspace.h"
 #include "csthreads.h"
@@ -188,11 +190,51 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
 }
 
 /*
+ * cspace_exit_check --
+ *
+ */
+static void cspace_exit_check(CSpaceThread *thread) {
+
+  int status, ret=FALSE;
+  pid_t w;
+
+  /* check if the cspace exited */
+  w = waitpid(thread->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
+
+  if (w == -1) {
+    log_error("waitpid failed for space: %s", thread->space->name);
+    exit(EXIT_FAILURE);
+  }
+
+  if (WIFEXITED(status)) {
+    log_debug("Space exited. Space name: %s status: %d\n",
+	      thread->space->name, WEXITSTATUS(status));
+    process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_NORMAL);
+    ret = TRUE;
+  } else if (WIFSIGNALED(status)) {
+    printf("Space killed. Space name: %s signal: %d\n",
+	   thread->space->name, WTERMSIG(status));
+    process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_TERM);
+    ret = TRUE;
+  } else if (WIFSTOPPED(status)) {
+    printf("space stopped. Space name: %s signal %d\n",
+	   thread->space->name, WSTOPSIG(status));
+    process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_STOP);
+    ret = TRUE;
+  }
+
+  return ret;
+}
+
+/*
  * cspace_thread_start -- Thread routine to create cspaces
  */
 void* cspace_thread_start(void *args) {
 
   CSpaceThread *thread  = (CSpaceThread *)args;
+  ThreadShMem *shMem = NULL;
+  struct timespec ts;
+  struct timeval  tv;
   int status;
   pid_t w;
   char idStr[36+1];
@@ -210,29 +252,23 @@ void* cspace_thread_start(void *args) {
   /* set proper state for the cspace thread*/
   thread->state = CSPACE_THREAD_STATE_ACTIVE;
 
-  /* Wait for the child to exit, aka space abort. */
-  do {
-    w = waitpid(thread->pid, &status, WUNTRACED | WCONTINUED);
+  shMem = thread->shMem;
 
-    if (w == -1) {
-      log_error("waitpid failed for space: %s", thread->space->name);
-      exit(EXIT_FAILURE);
-    }
+  /* thread main loop */
+  while(TRUE) {
 
-    if (WIFEXITED(status)) {
-      log_debug("Space exited. Space name: %s status: %d\n",
-		thread->space->name, WEXITSTATUS(status));
-      process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_NORMAL);
-    } else if (WIFSIGNALED(status)) {
-      printf("Space killed. Space name: %s signal: %d\n",
-	     thread->space->name, WTERMSIG(status));
-      process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_TERM);
-    } else if (WIFSTOPPED(status)) {
-      printf("space stopped. Space name: %s signal %d\n",
-	     thread->space->name, WSTOPSIG(status));
-      process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_STOP);
-    }
-  } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+    /* Check cspace exit status, if any. */
+    cspace_exit_check(thread);
+
+    gettimeofday(&tv, NULL);
+    ts.tv_sec   = time(NULL) + CSPACE_COND_WAIT / 1000;
+    ts.tv_nsec  = tv.tv_usec * 1000 + 1000 * 1000 * (CSPACE_COND_WAIT % 1000);
+    ts.tv_sec  += ts.tv_nsec / (1000 * 1000 * 1000);
+    ts.tv_nsec %= (1000 * 1000 * 1000);
+
+    /* Timed wait on the capp packet from parent process. */
+    pthread_cond_timedwait(&(shMem->hasRX), &(shMem->rxMutex), &ts);
+  }
 
   return;
 }

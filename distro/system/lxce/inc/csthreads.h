@@ -30,6 +30,8 @@
 #define CSPACE_THREAD_EXIT_TERM   0x02
 #define CSPACE_THREAD_EXIT_STOP   0x03
 
+#define CSPACE_COND_WAIT 1 /* Cond wait time in sec. */
+
 #define CSPACE_MEMFILE "lxce_memfile"
 
 /* Shared memory related info. */
