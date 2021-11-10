@@ -64,7 +64,7 @@ jobs:
               with:
                   args: >
                       -Dsonar.organization=ukama
-                      -Dsonar.projectKey=ukama_ukama-bff
+                      -Dsonar.projectKey=ukama_frontend_bff
                       -Dsonar.projectName=ukama-bff                                                          
                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                       -Dsonar.sources=.
