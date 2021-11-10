@@ -3,9 +3,16 @@ body {
     height: 100vh;
     background-color: #f5f6f8;
 }
-.BrainhubCarousel__arrows {
-    padding: 8px !important;
-    background-color: #ffffff !important;
+
+.BrainhubCarousel__customArrows {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.BrainhubCarousel__arrow--disable {
+    opacity: 0.4;
+    cursor: default;
 }
 
 .BrainhubCarousel__arrows span {
@@ -17,7 +24,7 @@ body {
 }
 
 .BrainhubCarousel__trackContainer ul {
-    padding: 4px !important;
+    padding: 2px !important;
 }
 
 *::-webkit-scrollbar {

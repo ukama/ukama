@@ -110,7 +110,7 @@ const Sidebar = (
             }}
         >
             <Toolbar sx={{ padding: "16px 0px" }}>
-                <Logo width={"100%"} height={"40px"} />
+                <Logo width={"100%"} height={"44px"} />
             </Toolbar>
             {MenuList(SIDEBAR_MENU1)}
             <Divider sx={{ m: "16px 14px 0px 14px" }} />

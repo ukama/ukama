@@ -18,15 +18,16 @@ const ContainerHeader = ({
     return (
         <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
             <HorizontalContainer>
-                <Typography variant="h6">{title}</Typography>
+                <Typography variant="h6" marginRight="2px">
+                    {title}
+                </Typography>
                 <Typography
                     p="0px 8px"
                     variant="subtitle2"
-                    fontWeight={600}
-                    letterSpacing="6px"
+                    letterSpacing="4px"
                     color={colors.empress}
                 >
-                    ● {stats}
+                    • {stats}
                 </Typography>
             </HorizontalContainer>
             <Button

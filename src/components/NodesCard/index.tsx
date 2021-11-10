@@ -93,7 +93,7 @@ const NodeCard = ({
                     <NodeImg />
                 </Grid>
                 <Grid item xs={12}>
-                    <Divider sx={{ m: "8px -18px 4px -18px" }} />
+                    <Divider sx={{ m: "4px -18px 4px -18px" }} />
                 </Grid>
                 <Grid
                     item
