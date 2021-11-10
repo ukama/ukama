@@ -6,10 +6,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "export NODE_ENV=development && nodemon",
-    "build": "rimraf ./build && tsc",
     "lint": "eslint . --ext .ts",
-    "start": "export NODE_ENV=production && yarn build && nodemon",
-    "test": "jest"
+    "start": "ts-node src/index.ts",
+    "test": "jest",
+    "build":"tsc -b"
   },
   "husky": {
     "hooks": {
