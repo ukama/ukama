@@ -1,11 +1,5 @@
 import "reflect-metadata";
 
-export const TEST_QUERY = `
-query test {
-    testQuery
-  }
-`;
-
 export const GET_CONNECTED_USERS_QUERY = `
     query getUsers($data:TIME_FILTER!) {
         getConnectedUsers(filter:$data) {
