@@ -20,7 +20,7 @@ const env = cleanEnv(process.env, {
     }),
     BASE_URL: str({
         desc: `base url for REST Api calls`,
-        default: "localhost:5000",
+        default: "http://localhost:3000",
     }),
 });
 
