@@ -9,7 +9,7 @@
     "lint": "eslint . --ext .ts",
     "start": "ts-node src/index.ts",
     "test": "jest src/modules/**",
-    "build":"tsc -b"
+    "build": "tsc -b"
   },
   "husky": {
     "hooks": {
@@ -37,6 +37,7 @@
   "dependencies": {
     "@types/express": "^4.17.13",
     "@types/uuid": "^8.3.1",
+    "@types/nock": "^11.1.0",
     "apollo-server-express": "^2.25.2",
     "axios": "^0.24.0",
     "class-validator": "^0.13.1",
@@ -46,10 +47,12 @@
     "express-graphql": "^0.12.0",
     "express-winston": "^4.1.0",
     "graphql": "^15.5.0",
+    "nock": "^13.2.0",
     "reflect-metadata": "^0.1.13",
     "ts-node-dev": "^1.1.8",
     "type-graphql": "^1.1.1",
     "typedi": "^0.10.0",
-    "winston": "^3.3.3"
+    "winston": "^3.3.3",
+    "casual": "^1.6.2"
   }
 }

@@ -8,7 +8,13 @@ const configureApolloServer = async (): Promise<ApolloServer> => {
     const server = new ApolloServer({
         schema,
         introspection: true,
-        context: ({ req }: { req: express.Request }) => ({ req }),
+        context: ({
+            req,
+            res,
+        }: {
+            req: express.Request;
+            res: express.Response;
+        }) => ({ req, res }),
         playground: true,
     });
     return server;
