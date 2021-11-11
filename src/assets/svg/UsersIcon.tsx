@@ -1,12 +1,15 @@
 import { SVGType } from "../../types";
-const UsersIcon = ({ color, width, height }: SVGType, props: any) => (
+const UsersIcon = ({
+    color = "black",
+    width = "24",
+    height = "24",
+}: SVGType) => (
     <svg
-        width={width || "24"}
-        height={height || "24"}
+        width={width}
+        height={height}
         fill="none"
         viewBox="0 0 28 28"
         xmlns="http://www.w3.org/2000/svg"
-        {...props}
     >
         <path
             fillRule="evenodd"

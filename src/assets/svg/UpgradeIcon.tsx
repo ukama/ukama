@@ -1,7 +1,9 @@
-const UpgradeIcon = () => (
+import { SVGType } from "../../types";
+
+const UpgradeIcon = ({ width = "136", height = "91" }: SVGType) => (
     <svg
-        width="136"
-        height="91"
+        width={width}
+        height={height}
         viewBox="0 0 136 91"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

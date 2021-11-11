@@ -72,6 +72,7 @@ const PasswordFieldWithIndicator = ({
                 onFocus={() => setFocused(true)}
                 InputLabelProps={{ shrink: true }}
                 type={togglePassword ? "text" : "password"}
+                sx={{ mt: "12px", mb: withIndicator ? "24px" : "0px" }}
                 error={touched.password && Boolean(errors.password)}
                 helperText={touched.password && errors.password}
                 InputProps={{
@@ -96,10 +97,9 @@ const PasswordFieldWithIndicator = ({
                 <Grid
                     item
                     container
-                    spacing={"6px"}
                     sx={{
                         display: focused ? "flex" : "none",
-                        marginTop: "12px",
+                        mb: "24px",
                     }}
                 >
                     {PasswordRules.map((rules: PasswordRulesProps) => {

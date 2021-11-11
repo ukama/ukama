@@ -43,8 +43,8 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
             }) => (
                 <>
                     <form onSubmit={handleSubmit}>
-                        <Stack spacing={"18px"}>
-                            <Typography variant="h5">
+                        <Stack spacing={"12px"}>
+                            <Typography variant="h5" sx={{ mb: "12px" }}>
                                 {t("SIGNUP.FormTitle")}
                             </Typography>
 
@@ -90,9 +90,6 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <Button
                                 size="medium"
                                 variant="outlined"
-                                sx={{
-                                    marginTop: "0px !important",
-                                }}
                                 onClick={() => onGoogleSignUp()}
                             >
                                 {t("SIGNUP.ButtonWithGoogleLabel")}

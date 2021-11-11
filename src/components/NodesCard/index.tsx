@@ -17,7 +17,7 @@ const useStyles = makeStyles(() => ({
         height: "206px",
         display: "flex",
         alignItems: "center",
-        padding: "15px 18px",
+        padding: "15px 18px 8px 18px",
         borderRadius: "10px",
         justifyContent: "center",
         background: colors.white,
@@ -26,7 +26,6 @@ const useStyles = makeStyles(() => ({
 
 const IconStyle = {
     display: "flex",
-    marginBottom: "8px",
     alignItems: "center",
     justifyContent: "center",
 };
@@ -71,7 +70,11 @@ const NodeCard = ({
                     <Grid textAlign="initial">
                         <Typography
                             variant="subtitle1"
-                            sx={{ fontWeight: 500 }}
+                            sx={{
+                                fontWeight: 500,
+                                letterSpacing: "-0.02em",
+                                lineHeight: "19px",
+                            }}
                         >
                             {title}
                         </Typography>
@@ -93,7 +96,7 @@ const NodeCard = ({
                     <NodeImg />
                 </Grid>
                 <Grid item xs={12}>
-                    <Divider sx={{ m: "4px -18px 4px -18px" }} />
+                    <Divider sx={{ m: "18px -18px 4px -18px" }} />
                 </Grid>
                 <Grid
                     item
@@ -102,7 +105,14 @@ const NodeCard = ({
                     spacing={1}
                     sx={{ alignItems: "center" }}
                 >
-                    <Grid item xs={6} container pt="0px !important">
+                    <Grid
+                        item
+                        xs={6}
+                        container
+                        display="flex"
+                        alignSelf="end"
+                        pt="0px !important"
+                    >
                         <UsersIcon
                             width="16px"
                             height="16px"

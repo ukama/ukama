@@ -69,7 +69,7 @@ const DataTableWithOptions = ({
                                     align={column.align}
                                     style={{
                                         minWidth: column.minWidth,
-                                        padding: "11px 12px 11px 0px",
+                                        padding: "6px 12px 12px 0px",
                                         fontSize: "0.875rem",
                                     }}
                                 >

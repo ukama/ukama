@@ -51,8 +51,8 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                     handleBlur,
                 }) => (
                     <form onSubmit={handleSubmit}>
-                        <Stack spacing={"18px"}>
-                            <Typography variant="h5">
+                        <Stack spacing={"12px"}>
+                            <Typography variant="h5" sx={{ mb: "12px" }}>
                                 {t("LOGIN.FormTitle")}
                             </Typography>
 
@@ -85,9 +85,7 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
 
                             <LinkStyle
                                 href="/forgot-password"
-                                sx={{
-                                    marginTop: "8px !important",
-                                }}
+                                sx={{ m: "4px 0px 10px 0px !important" }}
                             >
                                 {t("LOGIN.ForgotPasswordLabel")}
                             </LinkStyle>
@@ -106,9 +104,6 @@ const LoginForm = ({ onSubmit, onGoogleLogin }: LoginFormProps) => {
                             <Button
                                 size="medium"
                                 variant="outlined"
-                                sx={{
-                                    marginTop: "0px !important",
-                                }}
                                 onClick={() => onGoogleLogin()}
                             >
                                 {t("LOGIN.ButtonWithGoogle")}
