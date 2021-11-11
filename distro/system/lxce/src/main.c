@@ -283,6 +283,9 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  /* Step-6: start capps via cspace threads */
+  capps_start(apps);
+
   /* Step-6: open REST interface. */
   if (!start_web_services(config, &clientInst)) {
     log_error("Webservice failed to setup for clients. Exiting.");

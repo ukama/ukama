@@ -42,10 +42,11 @@ enum { START_LIST=0,
 
 typedef struct capp_params_t {
 
-  char   *name; /* capp name */
-  char   *tag;  /* capp tag */
-  char   *path; /* path to rootfs */
-  uuid_t uuid;  /* UUID per its cspace */
+  char   *name;  /* capp name */
+  char   *tag;   /* capp tag */
+  char   *path;  /* path to rootfs */
+  char   *space; /*cspace name */
+  uuid_t uuid;   /* UUID per its cspace */
 } CAppParams;
 
 typedef struct capp_state_ {

@@ -160,17 +160,8 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
       goto failure;
     }
 
-    if (!init_capp_packet(&(cPtr->shMem->tx)) ||
-	!init_capp_packet(&(cPtr->shMem->rx))) {
-      log_error("Error initializing capp packet for shared memory");
-      goto failure;
-    }
-
     pthread_mutex_init(&(cPtr->shMem->txMutex), NULL);
-    pthread_mutex_init(&(cPtr->shMem->rxMutex), NULL);
-
     pthread_cond_init(&(cPtr->shMem->hasTX), NULL);
-    pthread_cond_init(&(cPtr->shMem->hasRX), NULL);
 
     thread->shMem = cPtr->shMem;
 
@@ -235,7 +226,7 @@ void* cspace_thread_start(void *args) {
   ThreadShMem *shMem = NULL;
   struct timespec ts;
   struct timeval  tv;
-  int status;
+  int status, ret;
   pid_t w;
   char idStr[36+1];
 
@@ -254,6 +245,10 @@ void* cspace_thread_start(void *args) {
 
   shMem = thread->shMem;
 
+  /* Lock on the RX mutex. */
+  pthread_mutex_init(&(thread->shMem->rxMutex), NULL);
+  pthread_cond_init(&(thread->shMem->hasRX), NULL);
+
   /* thread main loop */
   while(TRUE) {
 
@@ -267,7 +262,24 @@ void* cspace_thread_start(void *args) {
     ts.tv_nsec %= (1000 * 1000 * 1000);
 
     /* Timed wait on the capp packet from parent process. */
-    pthread_cond_timedwait(&(shMem->hasRX), &(shMem->rxMutex), &ts);
+    ret = pthread_cond_timedwait(&(shMem->hasTX), &(shMem->txMutex), &ts);
+    if (ret == ETIMEDOUT) {
+      continue;
+    }
+
+    if (ret == -1) {
+      log_error("thread conditional/mutex wait error: %s. Exiting.",
+		thread->space->name);
+      exit(1);
+    }
+
+#if 0
+    /* Valid packet is waiting for us */
+    if (ret == 0) {
+      handle_capp_rx_packet(shMem->rxList);
+      pthread_mutex_unlock(&(shMem->rxMutex));
+    }
+#endif
   }
 
   return;
@@ -282,4 +294,26 @@ void process_cspace_thread_exit(CSpaceThread *thread, int status) {
   thread->exit_status = status;
   thread->state       = CSPACE_THREAD_STATE_ABORT;
 
+}
+
+/*
+ * find_matching_thread_shmem -- for a given cspace name find the matching
+ *                               shared memory.
+ *
+ */
+ThreadShMem *find_matching_thread_shmem(char *name) {
+
+  CSThreadsList *ptr=NULL;
+
+  if (!name == NULL) return NULL;
+
+  if (threadsList == NULL) return NULL;
+
+  for (ptr=threadsList; ptr; ptr=ptr->next) {
+    if (strcmp(ptr->thread->name, name)==0) {
+      return ptr->shMem;
+    }
+  }
+
+  return NULL;
 }

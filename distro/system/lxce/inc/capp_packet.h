@@ -52,4 +52,11 @@ typedef struct capp_packet_t {
   int    exit_status; /* If capp terminate, its exit status */
 }CAppPacket;
 
+typedef struct packet_list_ {
+
+  CAppPacket *packet;
+
+  struct packet_list *next;
+}PacketList;
+
 #endif /* CAPP_PACKET_H */

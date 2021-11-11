@@ -21,12 +21,14 @@
 #include "capp.h"
 #include "log.h"
 #include "manifest.h"
+#include "csthreads.h"
 
 /*
  * capp_init_params --
  *
  */
-static int capp_init_params(CApp *capp, char *name, char *tag, char *path) {
+static int capp_init_params(CApp *capp, char *name, char *tag, char *path,
+			    char *space) {
 
   capp->params = (CAppParams *)malloc(sizeof(CAppParams));
   if (capp->params == NULL) {
@@ -34,9 +36,10 @@ static int capp_init_params(CApp *capp, char *name, char *tag, char *path) {
     return FALSE;
   }
 
-  capp->params->name = strdup(name);
-  capp->params->tag  = strdup(tag);
-  capp->params->path = strdup(path);
+  capp->params->name  = strdup(name);
+  capp->params->tag   = strdup(tag);
+  capp->params->path  = strdup(path);
+  capp->params->space = strdup(space);
 
   uuid_clear(capp->params->uuid);
 
@@ -108,12 +111,12 @@ void clear_capp(CApp *capp) {
  * capp_init -- initialize cApp. If path is NULL will fetch from wimc
  *
  */
-CApp *capp_init(Config *config, char *name, char *tag, char *path,
+CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
 		int restart) {
 
   CApp *capp=NULL;
 
-  if (!config || !name || !tag)
+  if (!config || !name || !tag || !space)
     return FALSE;
 
 #if 0
@@ -139,7 +142,7 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path,
     goto failure;
   }
 
-  capp_init_params(capp, name, tag, path);
+  capp_init_params(capp, name, tag, path, space);
   capp_init_state(capp);
   capp_init_policy(capp, restart);
 
@@ -183,7 +186,8 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
       continue;
     }
 
-    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->restart);
+    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->restart,
+		    ptr->contained);
     if (app==NULL) {
       log_error("Error initializing the cApp. Name: %s Tag: %s Ignoring.",
 		ptr->name, ptr->tag);
@@ -197,6 +201,62 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
   }
 
   return TRUE;
+}
+
+/*
+ * capp_start --
+ *
+ */
+void capps_start(CApps *capps, CSpaceThread *threads) {
+
+  CAppList *ptr;
+  CApp *capp;
+  CSpace *cspace;
+  char *name, *tag, *path;
+  ThreadShMem *shMem;
+
+  /*
+   * For each app in the pend list:
+   *   1. find the thread handling the capp space.
+   *   2. create capp_packet
+   *   3. Send packet to space
+   *   4. Get response (e.g., UUID or error)
+   *   5. Move it to create
+   *   Repeat
+   */
+
+  if (!capps) return FALSE;
+
+  for(ptr=capps->pend; ptr; ptr=ptr->next) {
+
+    capp = ptr->capp;
+
+    if (capp==NULL) continue;
+
+    name = capp->params->name;
+    tag  = capp->params->tag;
+    path = capp->params->path;
+
+    shMem = find_matching_thread_shmem(capp->params->space);
+
+    if (shMem == NULL) {
+      log_error("No matching cspace for the capp. Name: %s tag: %s space: %s",
+		capp->params->name, capp->params->tag, capp->params->space);
+      continue;
+    }
+
+    /* create the tx packet and trigger conditional variable for the
+     * target shared memory
+     */
+    create_capp_tx_packet(capp, &shMem->txList, CAPP_TYPE_REQ_CREATE);
+  }
+
+  /* broadcast item is available in the queue. */
+  pthread_cond_broadcast(&(shMem->hasRX));
+
+  /* unlock */
+  pthread_mutex_unlock(&(shMem->rxMutex));
+
 }
 
 /*

@@ -35,7 +35,7 @@
 #define CSPACE_MEMFILE "lxce_memfile"
 
 /* Shared memory related info. */
-typedef struct  {
+typedef struct {
 
   char *memFile;
   int  shmId;
@@ -44,8 +44,8 @@ typedef struct  {
 /* Shared memory between thread and parent process */
 typedef struct {
 
-  CAppPacket tx;  /* Tx packet */
-  CAppPacket rx;  /* Rx packet */
+  PacketList *txList; /* List of TX packets */
+  PacketList *rxList; /* List of RX packets */
 
   /* Mutex for TX and RX packets */
   pthread_mutex_t txMutex;
