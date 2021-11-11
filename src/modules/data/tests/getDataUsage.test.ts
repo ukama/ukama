@@ -29,11 +29,7 @@ describe("Get Data Usage", () => {
 
         expect(response).toMatchObject({
             data: {
-                getDataUsage: {
-                    id: expect.any(String),
-                    dataConsumed: expect.any(String),
-                    dataPackage: expect.any(String),
-                },
+                getDataUsage: nockResponse.data,
             },
         });
     });
