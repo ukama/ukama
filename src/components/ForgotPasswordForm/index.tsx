@@ -39,7 +39,7 @@ const ForgotPasswordForm = ({ onSubmit, onBack }: ForgotPasswordFormProps) => {
                     handleBlur,
                 }) => (
                     <form onSubmit={handleSubmit}>
-                        <Stack spacing={"18px"}>
+                        <Stack spacing={"24px"}>
                             <Typography variant="h5">
                                 {t("FORGOT_PASSWORD.FormTitle")}
                             </Typography>

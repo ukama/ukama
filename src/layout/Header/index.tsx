@@ -97,7 +97,7 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                     width: { sm: "100%" },
                 }}
             >
-                <Toolbar style={{ padding: "0px" }}>
+                <Toolbar sx={{ padding: "33px 0px 12px 0px !important" }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
@@ -121,8 +121,9 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                             ({ id, Icon, title }: HeaderMenuItemType) => (
                                 <IconButton
                                     key={id}
-                                    size="large"
+                                    size="medium"
                                     color="inherit"
+                                    sx={{ padding: "0px 18px" }}
                                     onClick={e => handleHeaderMenu(e, title)}
                                 >
                                     <Icon />

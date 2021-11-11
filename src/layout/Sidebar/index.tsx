@@ -27,6 +27,9 @@ import { UpgradeNavFooter } from "../../components";
 const useStyles = makeStyles(() => ({
     listItem: {
         opacity: 1,
+        height: "40px",
+        marginTop: "6px",
+        padding: "8px 12px",
         borderRadius: "4px",
         fontFamily: "Work Sans",
         backgroundColor: colors.white,
@@ -36,6 +39,9 @@ const useStyles = makeStyles(() => ({
     },
     listItemDone: {
         opacity: 1,
+        height: "40px",
+        marginTop: "8px",
+        padding: "8px 12px",
         borderRadius: "4px",
         color: `${colors.white} !important`,
         backgroundColor: `${colors.primary} !important`,
@@ -61,7 +67,7 @@ const Sidebar = (
     const history = useHistory();
 
     const MenuList = (list: any) => (
-        <List sx={{ padding: "8px 14px" }}>
+        <List sx={{ padding: "8px 20px" }}>
             {list.map(({ id, title, Icon, route }: MenuItemType) => (
                 <ListItem
                     button
@@ -109,8 +115,8 @@ const Sidebar = (
                 position: "relative",
             }}
         >
-            <Toolbar sx={{ padding: "16px 0px" }}>
-                <Logo width={"100%"} height={"40px"} />
+            <Toolbar sx={{ padding: "33px 0px 12px 0px" }}>
+                <Logo width={"100%"} height={"36px"} />
             </Toolbar>
             {MenuList(SIDEBAR_MENU1)}
             <Divider sx={{ m: "16px 14px 0px 14px" }} />

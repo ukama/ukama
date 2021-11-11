@@ -28,7 +28,7 @@ const Layout = (props: any) => {
                 setPath={setPath}
                 handleDrawerToggle={handleDrawerToggle}
             />
-            <Box component="main" sx={{ pl: 3, pr: 3 }}>
+            <Box component="main" sx={{ pl: 4, pr: 4, width: "100%" }}>
                 <Header
                     pageName={path}
                     handleDrawerToggle={handleDrawerToggle}

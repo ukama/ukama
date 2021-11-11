@@ -40,7 +40,7 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                     handleSubmit,
                 }) => (
                     <form onSubmit={handleSubmit}>
-                        <Stack spacing={"18px"}>
+                        <Stack spacing="12px">
                             <Typography variant="h5">
                                 {t("RESET_PASSWORD.FormTitle")}
                             </Typography>
@@ -56,7 +56,9 @@ const ResetPasswordForm = ({ onSubmit, onCancel }: ResetPasswordFormProps) => {
                                 fieldStyle={classes.inputFieldStyle}
                             />
 
-                            <ContainerJustifySpaceBtw>
+                            <ContainerJustifySpaceBtw
+                                sx={{ mt: "0px !important" }}
+                            >
                                 <Button
                                     size="medium"
                                     variant="text"

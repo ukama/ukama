@@ -7,11 +7,13 @@ import {
     DialogContent,
     DialogTitle,
     IconButton,
+    DialogActions,
+    Button,
 } from "@mui/material";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
-        padding: "0px",
+        padding: "0px 0px 18px 0px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -35,19 +37,29 @@ const BasicDialog = ({
     const classes = useStyles();
     return (
         <Dialog open={isOpen} onClose={handleClose}>
-            <Box sx={{ padding: "16px 24px 44px 24px" }}>
+            <Box
+                sx={{
+                    width: { xs: "100%", md: "500px" },
+                    padding: "16px 8px 8px 24px",
+                }}
+            >
                 <DialogTitle className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">{title}</Typography>
                     <IconButton
                         onClick={handleClose}
-                        sx={{ m: "0px 0px 0px 24px" }}
+                        sx={{ ml: "24px", p: "8px" }}
                     >
                         <CloseIcon />
                     </IconButton>
                 </DialogTitle>
-                <DialogContent sx={{ padding: "0px" }}>
+                <DialogContent sx={{ p: "18px 0px" }}>
                     <Typography variant="body1">{content}</Typography>
                 </DialogContent>
+                <DialogActions>
+                    <Button autoFocus onClick={handleClose}>
+                        Close
+                    </Button>
+                </DialogActions>
             </Box>
         </Dialog>
     );
