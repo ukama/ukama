@@ -5,13 +5,20 @@ const logger = setupLogger("Api Methods");
 
 class ApiMethods {
     getData = async (path: string, params?: any, headers?: any) => {
-        const res = await axios.get(path, {
-            params,
-            headers: {
-                ...headers,
-                Accept: "*/*",
-            },
-        });
+        let res;
+
+        try {
+            res = await axios.get(path, {
+                params,
+                headers: {
+                    ...headers,
+                    Accept: "*/*",
+                },
+            });
+        } catch (error: any) {
+            res = null;
+            logger.error(error);
+        }
         return res;
     };
     putData = async (path: string, params?: any, headers?: any, body?: any) => {
