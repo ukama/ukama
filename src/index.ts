@@ -15,6 +15,10 @@ const initializeApp = async () => {
     const server = await configureApolloServer();
     server.applyMiddleware({ app });
 
+    app.get("/ping", (req, res) => {
+        res.send("pong");
+    });
+
     mockServer(app);
     app.listen(PORT, () => logger.info(`Server listening on port: ${PORT}`));
 };
