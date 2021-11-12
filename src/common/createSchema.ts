@@ -4,7 +4,7 @@ import { Container } from "typedi";
 
 export const createSchema = (): Promise<GraphQLSchema> =>
     buildSchema({
-        resolvers: [__dirname + "/../modules/**/*.resolver.ts"],
+        resolvers: [__dirname + "/../modules/**/*.resolver.*"],
         validate: true,
         container: Container,
     });

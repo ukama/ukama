@@ -4,13 +4,17 @@ import { IDataService } from "./interface";
 import { HTTP404Error, Messages } from "../../errors";
 import { TIME_FILTER } from "../../constants";
 import DataMapper from "./mapper";
-import { getMethod } from "../io";
 import { SERVER } from "../../constants/endpoints";
+import { getDataUsageMethod } from "./io";
 
 @Service()
 export class DataService implements IDataService {
     getDataUsage = async (filter: TIME_FILTER): Promise<DataUsageDto> => {
-        const res = await getMethod(SERVER.GET_DATA_USAGE, `${filter}`, null);
+        const res = await getDataUsageMethod(
+            SERVER.GET_DATA_USAGE,
+            `${filter}`,
+            null
+        );
         if (!res) throw new HTTP404Error(Messages.DATA_NOT_FOUND);
 
         const data = DataMapper.dataUsageDtoToDto(res.data.data);

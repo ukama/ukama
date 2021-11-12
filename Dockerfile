@@ -18,6 +18,6 @@ COPY .env ./build
 
 # WORKDIR ./build
 
-EXPOSE 3000
+EXPOSE 8081
 
 CMD [ "nginx", "yarn", "start" ]

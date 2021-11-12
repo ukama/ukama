@@ -14,13 +14,13 @@ const env = cleanEnv(process.env, {
         default: "development",
     }),
     PORT: num({
-        default: 5000,
+        default: 8081,
         desc: "Port of the express server",
         example: "5000",
     }),
     BASE_URL: str({
         desc: `base url for REST Api calls`,
-        default: "http://localhost:3000",
+        default: "http://localhost:8081",
     }),
 });
 

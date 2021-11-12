@@ -1,7 +1,6 @@
 import "reflect-metadata";
-import { gCall } from "../../../test/utils";
+import { gCall, nockCall } from "../../../test/utils";
 import { GET_DATA_USAGE_QUERY } from "../../../test/graphql";
-import nock from "nock";
 import { TIME_FILTER } from "../../../constants";
 
 const nockResponse = {
@@ -15,9 +14,7 @@ const nockResponse = {
 
 describe("Get Data Usage", () => {
     beforeEach(() => {
-        nock("http://127.0.0.1:3000")
-            .get("/data/data_usage?0=MONTH")
-            .reply(200, nockResponse);
+        nockCall("/data/data_usage?0=MONTH", nockResponse);
     });
     it("Get Data Usage", async () => {
         const response = await gCall({
