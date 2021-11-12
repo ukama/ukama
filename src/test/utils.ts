@@ -2,9 +2,6 @@ import { ExecutionResult, graphql, GraphQLSchema } from "graphql";
 import { Maybe } from "graphql/jsutils/Maybe";
 import { createSchema } from "../common/createSchema";
 import nock from "nock";
-import env from "../config/env";
-
-export const BASE_URL = env.BASE_URL;
 
 interface Options {
     source: string;
@@ -30,5 +27,5 @@ export const gCall = async ({
 };
 
 export const nockCall = (path: string, response: Object): void => {
-    nock(BASE_URL).get(path).reply(200, response);
+    nock("http://localhost:8081").get(path).reply(200, response);
 };
