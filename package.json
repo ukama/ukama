@@ -8,7 +8,7 @@
     "dev": "export NODE_ENV=development && nodemon",
     "lint": "eslint . --ext .ts",
     "start": "ts-node src/index.ts",
-    "test": "jest src/modules/**",
+    "test": "jest",
     "build": "tsc -b"
   },
   "husky": {
