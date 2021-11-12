@@ -23,6 +23,11 @@
 #include "manifest.h"
 #include "csthreads.h"
 
+/* From shmem.c */
+extern int add_to_shmem_list(ThreadShMem *mem);
+extern ThreadShMem *remove_from_shmem_list();
+void reset_shmem_list();
+
 /*
  * capp_init_params --
  *
@@ -212,8 +217,8 @@ void capps_start(CApps *capps, CSpaceThread *threads) {
   CAppList *ptr;
   CApp *capp;
   CSpace *cspace;
-  char *name, *tag, *path;
   ThreadShMem *shMem;
+  ThreadShMem **listShMem=NULL;
 
   /*
    * For each app in the pend list:
@@ -233,12 +238,7 @@ void capps_start(CApps *capps, CSpaceThread *threads) {
 
     if (capp==NULL) continue;
 
-    name = capp->params->name;
-    tag  = capp->params->tag;
-    path = capp->params->path;
-
     shMem = find_matching_thread_shmem(capp->params->space);
-
     if (shMem == NULL) {
       log_error("No matching cspace for the capp. Name: %s tag: %s space: %s",
 		capp->params->name, capp->params->tag, capp->params->space);
@@ -249,14 +249,17 @@ void capps_start(CApps *capps, CSpaceThread *threads) {
      * target shared memory
      */
     create_capp_tx_packet(capp, &shMem->txList, CAPP_TYPE_REQ_CREATE);
+    add_to_shmem_list(shMem);
   }
 
-  /* broadcast item is available in the queue. */
-  pthread_cond_broadcast(&(shMem->hasRX));
+  while((shMem=remove_from_shmem_list())!=NULL) {
+    /* broadcast item is available in the queue. */
+    pthread_cond_broadcast(&(shMem->hasTX));
+    /* unlock */
+    pthread_mutex_unlock(&(shMem->txMutex));
+  }
 
-  /* unlock */
-  pthread_mutex_unlock(&(shMem->rxMutex));
-
+  reset_shmem_list();
 }
 
 /*
