@@ -5,7 +5,7 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "dev": "export NODE_ENV=development && nodemon",
+    "dev": " nodemon",
     "lint": "eslint . --ext .ts",
     "start": "ts-node src/index.ts",
     "test": "jest",

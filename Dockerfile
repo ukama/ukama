@@ -7,7 +7,6 @@ COPY package*.json ./
 RUN yarn install
 
 COPY . .
-COPY .env ./build
 
 COPY  build /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf

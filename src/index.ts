@@ -2,10 +2,10 @@ import "reflect-metadata";
 import setupLogger from "./config/logger";
 import configureExpress from "./config/express";
 import configureApolloServer from "./config/apolloServer";
-import env from "./config/env";
 import { mockServer } from "./mockServer";
+import { PORT } from "./constants";
+
 const logger = setupLogger("app");
-const { PORT } = env || 3000;
 
 const initializeApp = async () => {
     const app = configureExpress({
