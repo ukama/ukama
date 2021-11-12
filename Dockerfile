@@ -6,17 +6,12 @@ WORKDIR /usr/node/app
 COPY package*.json ./
 RUN yarn install
 
+COPY . .
+COPY .env ./build
+
 COPY  build /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx/nginx.conf /etc/nginx/conf.d
-
-COPY . .
-
-# RUN Yarn build
-
-COPY .env ./build
-
-# WORKDIR ./build
 
 EXPOSE 8081
 
