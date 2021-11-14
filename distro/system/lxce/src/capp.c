@@ -260,6 +260,12 @@ void capps_start(CApps *capps, CSpaceThread *threads) {
   }
 
   reset_shmem_list();
+
+  /* Wait for the response. */
+
+
+  /* clean up */
+  
 }
 
 /*

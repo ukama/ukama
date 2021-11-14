@@ -27,6 +27,16 @@
 #define CAPP_STATE_TERM    0x04
 #define CAPP_STATE_INVALID 0xff
 
+/* commands */
+#define CAPP_CMD_CREATE "create"
+#define CAPP_CMD_RUN    "run"
+#define CAPP_CMD_STATUS "status"
+
+/* action state */
+#define CAPP_CMD_STATE_WAIT  1
+#define CAPP_CMD_STATE_DONE  2
+#define CAPP_CMD_STATE_ERROR 3
+
 /* List type */
 enum { START_LIST=0,
        PEND_LIST,

@@ -159,6 +159,8 @@ void reset_shmem_list() {
 
   ShMemList *ptr, *temp;
 
+  if (!shMemList) return;
+  
   ptr = shMemList;
 
   while (ptr->next) {

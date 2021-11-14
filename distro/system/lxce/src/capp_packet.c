@@ -47,9 +47,9 @@ int init_capp_packet(CAppPacket *packet) {
 
   packet->name = packet->tag = packet->path = NULL;
 
-  packet->req_type  = CAPP_TYPE_NONE;
-  packet->resp_type = CAPP_TYPE_NONE;
-  packet->state     = CAPP_STATE_INVALID;
+  packet->reqType  = CAPP_TYPE_NONE;
+  packet->respType = CAPP_TYPE_NONE;
+  packet->state    = CAPP_STATE_INVALID;
 
   uuid_clear(packet->uuid);
 
@@ -84,7 +84,7 @@ int create_capp_tx_packet(int reqType, CApp *capp, PacketList **list) {
     return FALSE;
   }
 
-  packet->req_type = reqType;
+  packet->reqType = reqType;
 
   packet->name = strdup(capp->params->name);
   packet->tag  = strdup(capp->params->tag);

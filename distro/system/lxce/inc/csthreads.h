@@ -34,6 +34,25 @@
 
 #define CSPACE_MEMFILE "lxce_memfile"
 
+#define CSPACE_MAX_BUFFER 1024
+
+#define CSPACE_READ_ERROR   1
+#define CSPACE_READ_TIMEOUT 2
+
+
+/* Logging request/response from thread to cspace */
+typedef struct action_list_t {
+
+  int seqno;    /* sequence id for request/response mapping */
+  int state;    /* state of this action. */
+
+  char *cmd;    /* CAPP_CMD_* */
+  char *params; /* Parameters for the command */
+  char *resp;   /* Response if done otherwise is NULL */
+
+  struct action_list_t *next; /* Next one */
+} ActionList;
+
 /* Shared memory related info. */
 typedef struct {
 
@@ -67,7 +86,8 @@ typedef struct cspace_thread_t {
   int       exit_status; /* only if state is ABORT or DELETED, otherwise is 0*/
   CSpace    *space;      /* cspace associated with this thread. */
 
-  ThreadShMem *shMem;    /* shared between parent and thread. */
+  ActionList  *actionList; /* On-going action associated with this thread */
+  ThreadShMem *shMem;      /* shared between parent and thread */
 } CSpaceThread;
 
 /* List of all contained space threads */

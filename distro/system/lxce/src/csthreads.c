@@ -26,15 +26,23 @@
 #include <errno.h>
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <sys/socket.h>
+#include <limits.h>
 
 #include "cspace.h"
 #include "csthreads.h"
 #include "log.h"
+#include "capp.h"
 
 static CSThreadsList *threadsList=NULL;
 static CSThreadsList *cPtr=NULL;
-
 static void *shMem_global=NULL;
+static int seqno=1;
+
+static void process_parent_request(CSpaceThread *thread, PacketList *txList);
+static int log_request(CSpaceThread *thread, int seqno, char *cmd,
+		       char *params);
+static void log_response(CSpaceThread *thread, int seq, char *resp);
 
 /*
  * init_cspace_thread --
@@ -273,13 +281,14 @@ void* cspace_thread_start(void *args) {
       exit(1);
     }
 
-#if 0
-    /* Valid packet is waiting for us */
+    /* Valid capp packet is waiting for us. Process it */
     if (ret == 0) {
-      handle_capp_rx_packet(shMem->rxList);
+      process_parent_request(thread, shMem->txList);
       pthread_mutex_unlock(&(shMem->rxMutex));
     }
-#endif
+
+    /* Check if there is anything on the socket to process. */
+    process_response_packet(thread);
   }
 
   return;
@@ -316,4 +325,238 @@ ThreadShMem *find_matching_thread_shmem(char *name) {
   }
 
   return NULL;
+}
+
+/*
+ * process_parent_request --
+ *
+ */
+static void process_parent_request(CSpaceThread *thread, PacketList *txList) {
+
+  PacketList *list;
+  CAppPacket *packet;
+  char *cmd=NULL, *params=NULL;
+  int size;
+
+  if (list == NULL) return;
+
+  /* Steps are:
+   * For each capp request:
+   *   check the request type.
+   *   convert the request into proper command
+   *   send it over socket
+   *   wait for response.
+   *   process response.
+   */
+
+  for (list=txList; list; list=list->next) {
+
+    packet = list->packet;
+    if (!packet) continue;
+
+    switch(packet->reqType) {
+    case CAPP_TYPE_REQ_CREATE:
+
+      if (!packet->name || !packet->tag || !packet->path) continue;
+
+      cmd    = CAPP_CMD_CREATE;
+      size   = 3 + strlen(packet->name) + strlen(packet->tag) +
+	strlen(packet->path);
+      params = (char *)malloc(size);
+      sprintf(params, "%s:%s:%s", packet->name, packet->tag, packet->path);
+      break;
+
+    case CAPP_TYPE_REQ_RUN:
+      cmd    = CAPP_CMD_RUN;
+      params = (char *)malloc(36+1);
+      uuid_unparse(packet->uuid, params);
+      break;
+
+    case CAPP_TYPE_REQ_STATUS:
+      cmd    = CAPP_CMD_STATUS;
+      params = (char *)malloc(36+1);
+      uuid_unparse(packet->uuid, params);
+      break;
+
+    default:
+      cmd    = NULL;
+      params = NULL;
+      log_error("Invalid request type recevied: %d", packet->reqType);
+      break;
+    }
+
+    if (cmd && params) {
+      send_request_packet(thread, cmd, params);
+      free(cmd);
+      free(params);
+    }
+  }
+}
+
+/*
+ * send_request_packet --
+ *
+ */
+int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
+
+  char *data;
+  int size;
+
+  if (cmd == NULL || params == NULL) return;
+
+  if (thread->sockets[0] <= 0) {
+    log_error("Socket pair is closed between thread and cspace. Name: %s",
+	      thread->name);
+    return FALSE;
+  }
+
+  size = strlen(cmd) + strlen(params);
+
+  data = (char *)malloc(size + 2);
+  if (data== NULL) {
+    log_error("Memory allocation error. Size: %d", size);
+    return FALSE;
+  }
+
+  sprintf(data, "%s %d %s", cmd, seqno, params);
+
+  if (send(thread->sockets[0], data, strlen(data), 0) <0) {
+    log_error("Sending request packet to cspace via thread.");
+    free(data);
+    return FALSE;
+  }
+
+  log_debug("Request send. Req: %s", data);
+
+  /* log request for the thread. This will help with matching the resp */
+  log_request(thread, seqno, cmd, params);
+
+  if (seqno == INT_MAX-1) {
+    seqno = 0; /* reset */
+  }
+  seqno++;
+
+  free(data);
+  return TRUE;
+}
+
+/*
+ * process_response_packet --
+ *
+ */
+int process_response_packet(CSpaceThread *thread) {
+
+  struct timeval tv;
+  int count;
+  char buffer[CSPACE_MAX_BUFFER] = {0};
+  char seq[CSPACE_MAX_BUFFER]    = {0};
+  char resp[CSPACE_MAX_BUFFER]   = {0};
+
+  /* time-out socket */
+  tv.tv_sec  = 5; /* XXX - check on this. */
+  tv.tv_usec = 0;
+  setsockopt(thread->sockets[1], SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,
+	     sizeof tv);
+
+  count = recv(thread->sockets[1], buffer, CSPACE_MAX_BUFFER, 0);
+
+  if (count <=0  && errno != EAGAIN) {
+    log_error("Error reading packet from cspace socket. Name: %s",
+	      thread->name);
+    return CSPACE_READ_ERROR;
+  }
+
+  if (count == 0 && errno == EAGAIN) {
+    return CSPACE_READ_TIMEOUT;
+  }
+
+  /* we have some packet. Let's see what we got
+   * packet format is [seq_id some_text]
+   */
+  sscanf(buffer, "%s %s", seq, resp);
+
+  log_response(thread, atoi(seq), resp);
+
+  return TRUE;
+}
+
+/*
+ * init_action --
+ *
+ */
+static void init_action(ActionList *ptr, int seqno, char *cmd, char *params) {
+
+  ptr->seqno  = seqno;
+  ptr->state  = CAPP_CMD_STATE_WAIT;
+  ptr->cmd    = strdup(cmd);
+  ptr->params = strdup(params);
+  ptr->resp   = NULL;
+  ptr->next   = NULL;
+}
+
+/*
+ * log_request --
+ *
+ */
+static int log_request(CSpaceThread *thread, int seqno, char *cmd,
+			char *params) {
+
+  ActionList *ptr;
+
+  if (!thread || !cmd || !params) return;
+
+  /* base case */
+  if (thread->actionList==NULL) {
+    thread->actionList = (ActionList *)malloc(sizeof(ActionList));
+    if (!thread->actionList) {
+      log_error("Memory allocation error. Size: %d", sizeof(ActionList));
+      return FALSE;
+    }
+
+    init_action(thread->actionList, seqno, cmd, params);
+    return TRUE;
+  }
+
+  for (ptr = thread->actionList; ptr; ptr=ptr->next) {
+    if (ptr->seqno == seqno) { /* already in the queue. */
+      return FALSE;
+    }
+  }
+
+  ptr = (ActionList *)malloc(sizeof(ActionList));
+  if (!ptr) {
+    log_error("Memory allocation error. Size: %d", sizeof(ActionList));
+    return FALSE;
+  }
+
+  init_action(ptr, seqno, cmd, params);
+
+  return TRUE;
+}
+
+/*
+ * log_response --
+ *
+ */
+static void log_response(CSpaceThread *thread, int seq, char *resp) {
+
+  ActionList *ptr;
+
+  /* Find the matching action from the list, update its state
+   * and update the response
+   */
+
+  if (thread == NULL || resp == NULL) return;
+
+  for (ptr = thread->actionList; ptr; ptr=ptr->next) {
+    if (ptr->seqno == seqno) {
+      ptr->state = CAPP_CMD_STATE_DONE;
+      ptr->resp  = strdup(resp);
+      return;
+    }
+  }
+
+  log_error("No mathing seqno found in the action list. Ignoring. %s",
+	    thread->name);
+  return;
 }
