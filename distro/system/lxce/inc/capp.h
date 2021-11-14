@@ -17,7 +17,6 @@
 #include <uuid/uuid.h>
 
 #include "lxce_config.h"
-#include "cspace.h"
 #include "manifest.h"
 
 /* For capp state */
@@ -36,6 +35,10 @@
 #define CAPP_CMD_STATE_WAIT  1
 #define CAPP_CMD_STATE_DONE  2
 #define CAPP_CMD_STATE_ERROR 3
+
+#define CAPP_MAX_BUFFER   1024
+#define CAPP_READ_ERROR   1
+#define CAPP_READ_TIMEOUT 2
 
 /* List type */
 enum { START_LIST=0,
@@ -75,7 +78,7 @@ typedef struct capp_t_ {
   CAppParams *params;
   CAppState  *state;  /* capp state */
   CAppPolicy *policy; /* capp assocated policy */
-  CSpace     *space;     /* space the capp belongs to */
+  void       *space;  /* space the capp belongs to */
 } CApp;
 
 
@@ -98,6 +101,7 @@ typedef struct capp_t {
 int capps_init(CApps **capps, Config *config, Manifest *manifest);
 void clear_capp(CApp *capp);
 void clear_capps(CApps *capps, int flag);
+void add_to_apps(CApps *capps, CApp *capp, int to, int from);
 
 #endif /* LXCE_CAPP_H */
 

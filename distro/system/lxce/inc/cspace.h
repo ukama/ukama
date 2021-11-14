@@ -16,6 +16,7 @@
 
 #include <sys/types.h>
 #include "manifest.h"
+#include "capp.h"
 
 #define CSPACE_DEFAULT_HOSTNAME "localhost"
 
@@ -36,10 +37,16 @@
 
 #define CONTD_MAX_CAPS 20
 
+#define CSPACE_MAX_BUFFER   1024
+
+#define CSPACE_READ_ERROR   1
+#define CSPACE_READ_TIMEOUT 2
+#define CSPACE_MEMORY_ERROR 3
+
 #define LXCE_SERIAL "serial"
 
 /* Definition of Ukama's contained space as per config file */
-typedef struct _cSpace {
+typedef struct cSpace_t {
 
   char *version;      /* contained space version */
   
@@ -62,7 +69,9 @@ typedef struct _cSpace {
   int sockets[2];     /* socket pair */
   char *configFile;   /* Config file - defined in the config.toml */
   
-  struct _cSpace *next; /* pointer to next contained space */
+  CApps *apps;        /* Apps associated with this space. */
+
+  struct cSpace_t *next; /* pointer to next contained space */
 } CSpace;
 
 int create_cspace(CSpace *space, pid_t *pid);

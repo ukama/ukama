@@ -413,7 +413,7 @@ int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
   size = strlen(cmd) + strlen(params);
 
   data = (char *)malloc(size + 2);
-  if (data== NULL) {
+  if (data == NULL) {
     log_error("Memory allocation error. Size: %d", size);
     return FALSE;
   }

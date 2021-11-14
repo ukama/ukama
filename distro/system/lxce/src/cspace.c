@@ -32,10 +32,12 @@
 #include <fcntl.h>
 #include <grp.h>
 #include <signal.h>
+#include <uuid/uuid.h>
 
 #include "cspace.h"
 #include "manifest.h"
 #include "log.h"
+#include "capp.h"
 
 static int adjust_capabilities(char *name, int *cap, int size);
 static int setup_capabilities(CSpace *space);
@@ -43,6 +45,11 @@ static int setup_cspace_security_profile(CSpace *space);
 static int setup_user_namespace(CSpace *space);
 static int prepare_child_map_files(pid_t pid, CSpace *space);
 static int cspace_init_clone(void *arg);
+static int handle_create_request(CSpace *space, int seqno, char *params);
+static int send_response_packet(CSpace *space, int seqno, char *resp);
+static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid);
+static int cspace_capps_init(CApps **capps);
+
 
 /*
  * adjust_capabilities -- Adjust capabilties for the cspace
@@ -359,7 +366,7 @@ static int cspace_init_clone(void *arg) {
   /* Step-4: cSpace stays in this state forever
    * Accept capp CRUD calls from the parent process.
    */
-
+  
   return TRUE;
 }
 
@@ -686,4 +693,209 @@ int process_cspace_config(char *fileName, CSpace *space) {
 
   json_decref(json);
   return ret;
+}
+
+/*
+ * handle_crud_requests --
+ *
+ */
+static int handle_crud_requests(CSpace *space) {
+
+  struct timeval tv;
+  int count, seqno;
+  char buffer[CSPACE_MAX_BUFFER] = {0};
+  char *cmd=NULL, *params=NULL;
+
+  /* time-out socket */
+  tv.tv_sec  = 5; /* XXX - check on this. */
+  tv.tv_usec = 0;
+  setsockopt(space->sockets[0], SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,
+	     sizeof tv);
+
+  while (TRUE) {
+
+    count = recv(space->sockets[0], buffer, CSPACE_MAX_BUFFER, 0);
+
+    if (count <=0  && errno != EAGAIN) {
+      log_error("Error reading packet from cspace socket. Name: %s",
+		space->name);
+      return CSPACE_READ_ERROR;
+    }
+
+    if (count == 0 && errno == EAGAIN) {
+      continue;
+    }
+
+    cmd    = (char *)malloc(count+1);
+    params = (char *)malloc(count+1);
+
+    if (!cmd || !params) {
+      log_error("Memory allocation error. Size: %d", 2*count);
+      return CSPACE_MEMORY_ERROR;
+    }
+
+    /* we have some packet. Let's see what we got
+     * packet format is [cmd seq_id some_text]
+     */
+    sscanf(buffer, "%s %d %s", cmd, &seqno, params);
+
+    if (strcmp(cmd, CAPP_CMD_CREATE)==0) {
+      handle_create_request(space, seqno, params);
+    } else {
+      log_error("Invalid command recevied: %s", cmd);
+    }
+
+    free(cmd);
+    free(params);
+
+  } /* forever loop */
+}
+
+/*
+ * handle_create_request --
+ *
+ */
+static int handle_create_request(CSpace *space, int seqno, char *params) {
+
+  uuid_t uuid;
+  char idStr[36+1];
+  CApp *capp=NULL;
+  char *name, *tag, *path, *resp;
+
+  if (!space || !seqno) return FALSE;
+
+  /* Generate ID */
+  uuid_generate(uuid);
+  uuid_unparse(uuid, &idStr[0]);
+
+  name = strtok(params, ":");
+  tag  = strtok(NULL, ":");
+  path = strtok(NULL, ":");
+
+  if (!space->apps) {
+    if (!cspace_capps_init(&(space->apps))) {
+      resp = "ERROR";
+      goto reply;
+    }
+  }
+
+  capp = cspace_capp_init(name, tag, path, uuid);
+  if (capp == NULL) {
+    resp = "ERROR";
+    goto reply;
+  }
+
+  add_to_apps(space->apps, capp, PEND_LIST, NULL);
+
+  resp = &idStr[0];
+
+ reply:
+  if (!send_response_packet(space, seqno, resp)) {
+    log_error("Error sending response packet. %s", space->name);
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*
+ * send_response_packet --
+ *
+ */
+static int send_response_packet(CSpace *space, int seqno, char *resp) {
+
+  char *data=NULL;
+  int size;
+
+  if (!space || !resp) return FALSE;
+
+  if (space->sockets[1] <= 0) {
+    log_error("Socket pair is closed between thread and cspace. Name: %s",
+	      space->name);
+    return FALSE;
+  }
+
+  size = (3*sizeof(int)+2) + (strlen(resp)+1);
+
+  data = (char *)malloc(size);
+  if (data == NULL) {
+    log_error("Memory allocation error. Size: %d", size);
+    return FALSE;
+  }
+
+  sprintf(data, "%d %s", seqno, resp);
+
+  if (send(space->sockets[1], data, strlen(data), 0) <0) {
+    log_error("Sending response packet to thread over socket failed. %s",
+	      space->name);
+    free(data);
+    return FALSE;
+  }
+
+  log_debug("Response sent. Resp: %s", data);
+
+  free(data);
+  return TRUE;
+}
+
+/*
+ * cspace_capps_init --
+ *
+ */
+static int cspace_capps_init(CApps **capps) {
+
+  if (*capps != NULL) return TRUE;
+
+  *capps = (CApps *)calloc(1, sizeof(CApps));
+  if (*capps == NULL) {
+    log_error("Memory allocation error of size: %d", sizeof(CApps));
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*
+ * cspace_capp_init --
+ *
+ */
+static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid) {
+
+  CApp *capp=NULL;
+
+  if (!name || !tag || !path) return NULL;
+
+  /* We have valid name, tag and path. */
+  capp = (CApp *)calloc(1, sizeof(CApp));
+  if (!capp) {
+    log_error("Memory allocation error of size: %d", sizeof(CApp));
+    return NULL;
+  }
+
+  capp->params = (CAppParams *)malloc(sizeof(CAppParams));
+  capp->state = (CAppState *)malloc(sizeof(CAppState));
+
+  if (capp->params == NULL || capp->state == NULL) {
+    log_error("Memory allocation error of sizes: %d %d", sizeof(CAppParams),
+	      sizeof(CAppState));
+    goto failure;
+  }
+
+  capp->params->name  = strdup(name);
+  capp->params->tag   = strdup(tag);
+  capp->params->path  = strdup(path);
+  capp->params->space = NULL;
+  uuid_copy(capp->params->uuid, uuid);
+
+  capp->state->state       = CAPP_STATE_PENDING;
+  capp->state->exit_status = CAPP_STATE_INVALID;
+
+  capp->policy = NULL;
+  capp->space  = NULL;
+
+  return capp;
+
+ failure:
+  clear_capp(capp);
+  return NULL;
 }
