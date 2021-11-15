@@ -14,6 +14,7 @@ const colors = {
     solitude: "#f5f6f8",
     empress: "#757575",
     lightBlue: "#2196f3",
+    darkGrey: "#5E5E5E",
     gainsboro: "#E0E0E0",
 };
 export default colors;

@@ -29,7 +29,14 @@ const ForgotPasswordConfirmationMessage = ({
                         </span>
                     </Typography>
                 </MessageContainer>
-                <LinkStyle href="/login" sx={{ alignSelf: "flex-start" }}>
+                <LinkStyle
+                    href="/login"
+                    sx={{
+                        fontWeight: 500,
+                        fontSize: "0.875rem",
+                        alignSelf: "flex-start",
+                    }}
+                >
                     {t("CONSTANT.ReturnToLoginLink")}
                 </LinkStyle>
             </Stack>

@@ -7,6 +7,10 @@ const globalUseStyles = makeStyles(() => ({
         height: "24px",
         padding: "12px 14px",
     },
+    disableInputFieldStyle: {
+        padding: "4px 0px",
+        "-webkit-text-fill-color": `${colors.black} !important`,
+    },
     GridContainer: {
         padding: "1em",
     },

@@ -1,46 +1,48 @@
 import Logo from "./Logo";
-import NodeImg from "./NodeImg";
 import CpuIcon from "./CpuIcon";
-import MenuDots from "./MenuDots";
+import NodeImg from "./NodeImg";
 import HomeIcon from "./HomeIcon";
-import UsersIcon from "./UsersIcon";
+import MenuDots from "./MenuDots";
+import AlertIcon from "./AlertIcon";
 import DataUsage from "./DataUsage";
+import UsersIcon from "./UsersIcon";
 import RouterIcon from "./RouterIcon";
-import HistoryIcon from "./HistoryIcon";
-import UsersWithBG from "./UsersWithBG";
-import DataBilling from "./DataBilling";
-import UpgradeIcon from "./UpgradeIcon";
-import BillingIcon from "./BillingIcon";
+import SimCardIcon from "./SimCardIcon";
 import AccountIcon from "./AccountIcon";
 import BatteryIcon from "./BatteryIcon";
-import SettingsIcon from "./SettingsIcon";
-import ThermometerIcon from "./ThermometerIcon";
-import ModuleStoreIcon from "./ModuleStoreIcon";
-import NotificationIcon from "./NotificationIcon";
+import BillingIcon from "./BillingIcon";
+import DataBilling from "./DataBilling";
+import HistoryIcon from "./HistoryIcon";
+import UpgradeIcon from "./UpgradeIcon";
+import UsersWithBG from "./UsersWithBG";
 import ActivityIcon from "./ActivityIcon";
-import AlertIcon from "./AlertIcon";
 import CloudOffIcon from "./CloudOffIcon";
+import SettingsIcon from "./SettingsIcon";
+import ModuleStoreIcon from "./ModuleStoreIcon";
+import ThermometerIcon from "./ThermometerIcon";
+import NotificationIcon from "./NotificationIcon";
 export {
-    ActivityIcon,
-    NotificationIcon,
-    CloudOffIcon,
     Logo,
-    NodeImg,
     CpuIcon,
-    MenuDots,
+    NodeImg,
+    SimCardIcon,
     HomeIcon,
+    MenuDots,
     AlertIcon,
-    UsersIcon,
     DataUsage,
+    UsersIcon,
     RouterIcon,
-    HistoryIcon,
-    UpgradeIcon,
-    DataBilling,
-    BillingIcon,
-    UsersWithBG,
     AccountIcon,
     BatteryIcon,
+    BillingIcon,
+    DataBilling,
+    HistoryIcon,
+    UpgradeIcon,
+    UsersWithBG,
+    ActivityIcon,
+    CloudOffIcon,
     SettingsIcon,
-    ThermometerIcon,
     ModuleStoreIcon,
+    ThermometerIcon,
+    NotificationIcon,
 };

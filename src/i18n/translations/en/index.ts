@@ -34,7 +34,7 @@ export const TRANSLATIONS_EN = {
     },
     RECOVER_PASSWORD: {
         ImportantNote: "Link will expire in 30 minutes.",
-        FormTitle: " RECOVER PASSWORD",
+        FormTitle: "Recover Password",
         FormNote: `If an account with the email “/EmailTag” exists, an email will be sent with further instructions. `,
     },
     FORGOT_PASSWORD: {

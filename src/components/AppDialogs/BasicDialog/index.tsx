@@ -2,13 +2,12 @@ import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import {
     Box,
-    Typography,
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    IconButton,
-    DialogActions,
     Button,
+    Dialog,
+    IconButton,
+    Typography,
+    DialogActions,
+    DialogContent,
 } from "@mui/material";
 
 const useStyles = makeStyles(() => ({
@@ -43,7 +42,7 @@ const BasicDialog = ({
                     padding: "16px 8px 8px 24px",
                 }}
             >
-                <DialogTitle className={classes.basicDialogHeaderStyle}>
+                <Box className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">{title}</Typography>
                     <IconButton
                         onClick={handleClose}
@@ -51,7 +50,7 @@ const BasicDialog = ({
                     >
                         <CloseIcon />
                     </IconButton>
-                </DialogTitle>
+                </Box>
                 <DialogContent sx={{ p: "18px 0px" }}>
                     <Typography variant="body1">{content}</Typography>
                 </DialogContent>
@@ -65,4 +64,4 @@ const BasicDialog = ({
     );
 };
 
-export { BasicDialog };
+export default BasicDialog;

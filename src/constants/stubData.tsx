@@ -179,10 +179,38 @@ const DashboardSliderData = [
     },
 ];
 
+const SimCardData = [
+    {
+        id: 1,
+        title: "ESIM # 1",
+        serial: "# 32019-08-12-2023-999990",
+        isActive: true,
+    },
+    {
+        id: 2,
+        title: "ESIM # 2",
+        serial: "# 32019-08-12-2023-0225016",
+        isActive: false,
+    },
+    {
+        id: 3,
+        title: "ESIM # 3",
+        serial: "# 32019-08-12-2023-8888800",
+        isActive: false,
+    },
+    {
+        id: 4,
+        title: "ESIM # 4",
+        serial: "# 32019-08-12-2023-6666660",
+        isActive: false,
+    },
+];
+
 export {
-    DashboardStatusCard,
+    SimCardData,
     RechartsData,
     ALERT_INFORMATION,
+    DashboardStatusCard,
     DashboardSliderData,
     DashboardResidentsTable,
 };

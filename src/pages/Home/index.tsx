@@ -7,24 +7,24 @@ import {
     AlertCard,
     MultiSlideCarousel,
     DataTableWithOptions,
+    UserActivationDialog,
     LoadingWrapper,
 } from "../../components";
 import {
+    ALERT_INFORMATION,
     DashboardSliderData,
     DashboardStatusCard,
     DashboardResidentsTable,
-    ALERT_INFORMATION,
 } from "../../constants/stubData";
 import {
     NETWORKS,
-    STATS_OPTIONS,
     STATS_PERIOD,
+    STATS_OPTIONS,
+    UserActivation,
     DEACTIVATE_EDIT_ACTION_MENU,
     DataTableWithOptionColumns,
 } from "../../constants";
 import "../../i18n/i18n";
-import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
     Box,
     Grid,
@@ -33,10 +33,12 @@ import {
     Typography,
     useMediaQuery,
 } from "@mui/material";
-import { AlertItemType } from "../../types";
-import { RoundedCard } from "../../styles";
-import { isSkeltonLoading } from "../../recoil";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
+import { RoundedCard } from "../../styles";
+import { AlertItemType } from "../../types";
+import { useTranslation } from "react-i18next";
+import { isSkeltonLoading } from "../../recoil";
 
 let slides = [
     {
@@ -60,6 +62,7 @@ const Home = () => {
     const [statOptionValue, setstatOptionValue] = React.useState(3);
     const [userStatusFilter, setUserStatusFilter] = useState("total");
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
+    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
 
     const handleSelectedButtonChange = (
@@ -84,7 +87,6 @@ const Home = () => {
         }
     };
     const onResidentsTableMenuItem = () => {};
-    const onActivateButton = () => {};
     const getStatus = (key: string) => {
         switch (key) {
             case "statusUser":
@@ -97,6 +99,10 @@ const Home = () => {
                 return "";
         }
     };
+
+    const onActivateButton = () => setIsUserActivateOpen(() => true);
+    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
+
     const getNodesContainerData = (items: any[], slidesToShow: number) =>
         items.length > 3 ? (
             <MultiSlideCarousel numberOfSlides={slidesToShow}>
@@ -277,6 +283,14 @@ const Home = () => {
                         </LoadingWrapper>
                     </Grid>
                 </Grid>
+                {isUserActivateOpen && (
+                    <UserActivationDialog
+                        isOpen={isUserActivateOpen}
+                        dialogTitle={UserActivation.title}
+                        subTitle={UserActivation.subTitle}
+                        handleClose={handleUserActivateClose}
+                    />
+                )}
             </Box>
         </>
     );

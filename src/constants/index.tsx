@@ -11,7 +11,6 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DataTableWithOptionColumns } from "./tableColumns";
-const DRAWER_WIDTH = 211;
 import {
     checkPasswordLength,
     checkPasswordSpecialCharacter,
@@ -19,6 +18,7 @@ import {
 } from "../utils";
 import { MenuItemType } from "../types";
 
+const DRAWER_WIDTH = 211;
 const APP_VERSION = "v0.0.1";
 const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
 const PasswordRules = [
@@ -115,6 +115,12 @@ const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
     { id: 2, Icon: EditIcon, title: "Edit", route: "edit" },
 ];
 
+const UserActivation = {
+    title: "Activate User",
+    subTitle:
+        "Choose all the eSIM(s) you want to assign to a user at this time. Once you pair an eSIM with a user ....................... policy details ................................",
+};
+
 export {
     NETWORKS,
     COPY_RIGHTS,
@@ -128,6 +134,7 @@ export {
     SIDEBAR_MENU2,
     STATS_OPTIONS,
     STATS_PERIOD,
+    UserActivation,
     BASIC_MENU_ACTIONS,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,

@@ -44,3 +44,11 @@ export type ColumnsWithOptions = {
     minWidth?: number;
     align?: "right";
 };
+
+export type SimActivateFormType = {
+    email: string;
+    phone: string;
+    number: string;
+    lastName: string;
+    firstName: string;
+};
