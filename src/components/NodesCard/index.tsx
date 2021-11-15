@@ -1,5 +1,3 @@
-import { colors } from "../../theme";
-import { makeStyles } from "@mui/styles";
 import {
     CpuIcon,
     NodeImg,
@@ -8,9 +6,12 @@ import {
     BatteryIcon,
     ThermometerIcon,
 } from "../../assets/svg";
+import { colors } from "../../theme";
+import { makeStyles } from "@mui/styles";
 import OptionsPopover from "../OptionsPopover";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import { Paper, Typography, Stack, Grid, Divider } from "@mui/material";
+import { SkeletonRoundedCard } from "../../styles";
 const useStyles = makeStyles(() => ({
     container: {
         width: "214px",
@@ -42,6 +43,7 @@ const ConfigureNode = () => {
 type NodeCardProps = {
     title?: string;
     users?: string;
+    loading?: boolean;
     subTitle?: string;
     isConfigure?: boolean;
     handleOptionItemClick?: Function;
@@ -49,8 +51,9 @@ type NodeCardProps = {
 
 const NodeCard = ({
     title,
-    subTitle,
     users,
+    subTitle,
+    loading,
     isConfigure = false,
     handleOptionItemClick = () => {},
 }: NodeCardProps) => {
@@ -64,76 +67,88 @@ const NodeCard = ({
         );
 
     return (
-        <Paper className={classes.container}>
-            <Grid container spacing={0.8}>
-                <Grid item xs={10}>
-                    <Grid textAlign="initial">
-                        <Typography
-                            variant="subtitle1"
-                            sx={{
-                                fontWeight: 500,
-                                letterSpacing: "-0.02em",
-                                lineHeight: "19px",
-                            }}
+        <>
+            {loading ? (
+                <SkeletonRoundedCard
+                    variant="rectangular"
+                    width={204}
+                    height={206}
+                />
+            ) : (
+                <Paper className={classes.container}>
+                    <Grid container spacing={0.8}>
+                        <Grid item xs={10}>
+                            <Grid textAlign="initial">
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                        fontWeight: 500,
+                                        letterSpacing: "-0.02em",
+                                        lineHeight: "19px",
+                                    }}
+                                >
+                                    {title}
+                                </Typography>
+                            </Grid>
+                            <Grid textAlign="initial">
+                                <Typography variant="caption">
+                                    {subTitle}
+                                </Typography>
+                            </Grid>
+                        </Grid>
+                        <Grid item xs={2} m="4px 0px">
+                            <OptionsPopover
+                                cid={"node-card-options"}
+                                menuOptions={BASIC_MENU_ACTIONS}
+                                handleItemClick={(type: string) =>
+                                    handleOptionItemClick(type)
+                                }
+                            />
+                        </Grid>
+                        <Grid item xs={12} sx={{ ...IconStyle }}>
+                            <NodeImg />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Divider sx={{ m: "18px -18px 4px -18px" }} />
+                        </Grid>
+                        <Grid
+                            item
+                            xs={12}
+                            container
+                            spacing={1}
+                            sx={{ alignItems: "center" }}
                         >
-                            {title}
-                        </Typography>
+                            <Grid
+                                item
+                                xs={6}
+                                container
+                                display="flex"
+                                alignSelf="end"
+                                pt="0px !important"
+                            >
+                                <UsersIcon
+                                    width="16px"
+                                    height="16px"
+                                    color={colors.black}
+                                />
+                                <Typography variant="caption" pl="8px">
+                                    {users}
+                                </Typography>
+                            </Grid>
+                            <Grid xs={2} item sx={{ ...IconStyle }}>
+                                <ThermometerIcon />
+                            </Grid>
+                            <Grid xs={2} item sx={{ ...IconStyle }}>
+                                <BatteryIcon />
+                            </Grid>
+                            <Grid xs={2} item sx={{ ...IconStyle }}>
+                                <CpuIcon />
+                            </Grid>
+                        </Grid>
                     </Grid>
-                    <Grid textAlign="initial">
-                        <Typography variant="caption">{subTitle}</Typography>
-                    </Grid>
-                </Grid>
-                <Grid item xs={2} m="4px 0px">
-                    <OptionsPopover
-                        cid={"node-card-options"}
-                        menuOptions={BASIC_MENU_ACTIONS}
-                        handleItemClick={(type: string) =>
-                            handleOptionItemClick(type)
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} sx={{ ...IconStyle }}>
-                    <NodeImg />
-                </Grid>
-                <Grid item xs={12}>
-                    <Divider sx={{ m: "18px -18px 4px -18px" }} />
-                </Grid>
-                <Grid
-                    item
-                    xs={12}
-                    container
-                    spacing={1}
-                    sx={{ alignItems: "center" }}
-                >
-                    <Grid
-                        item
-                        xs={6}
-                        container
-                        display="flex"
-                        alignSelf="end"
-                        pt="0px !important"
-                    >
-                        <UsersIcon
-                            width="16px"
-                            height="16px"
-                            color={colors.black}
-                        />
-                        <Typography variant="caption" pl="8px">
-                            {users}
-                        </Typography>
-                    </Grid>
-                    <Grid xs={2} item sx={{ ...IconStyle }}>
-                        <ThermometerIcon />
-                    </Grid>
-                    <Grid xs={2} item sx={{ ...IconStyle }}>
-                        <BatteryIcon />
-                    </Grid>
-                    <Grid xs={2} item sx={{ ...IconStyle }}>
-                        <CpuIcon />
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Paper>
+                </Paper>
+            )}
+        </>
     );
 };
 

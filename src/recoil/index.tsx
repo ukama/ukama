@@ -1,4 +1,4 @@
-import { isLoginAtom } from "./atom";
-import { withIsLogin } from "./withGlobalSelectors";
+import { isLoginAtom, isSkeltonLoading } from "./atom";
+import { withIsLogin, withIsSkeltonLoading } from "./withGlobalSelectors";
 
-export { withIsLogin, isLoginAtom };
+export { withIsLogin, isLoginAtom, isSkeltonLoading, withIsSkeltonLoading };

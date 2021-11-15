@@ -8,4 +8,10 @@ const isLoginAtom = atom({
     effects_UNSTABLE: [persistAtom],
 });
 
-export { isLoginAtom };
+const isSkeltonLoading = atom({
+    key: "isSkeltonLoading",
+    default: false,
+    effects_UNSTABLE: [persistAtom],
+});
+
+export { isLoginAtom, isSkeltonLoading };

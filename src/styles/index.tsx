@@ -1,6 +1,6 @@
 import { colors } from "../theme";
 import { makeStyles } from "@mui/styles";
-import { Box, styled, Link, Paper } from "@mui/material";
+import { Box, styled, Link, Paper, Skeleton } from "@mui/material";
 
 const globalUseStyles = makeStyles(() => ({
     inputFieldStyle: {
@@ -85,6 +85,13 @@ const RoundedCard = styled(Paper)(props => ({
     },
 }));
 
+const SkeletonRoundedCard = styled(Skeleton)(() => ({
+    width: "100%",
+    height: "100%",
+    borderRadius: "10px",
+    display: "inline-block",
+}));
+
 export {
     LinkStyle,
     RoundedCard,
@@ -92,6 +99,7 @@ export {
     CenterContainer,
     MessageContainer,
     VerticalContainer,
+    SkeletonRoundedCard,
     HorizontalContainer,
     ContainerJustifySpaceBtw,
     HorizontalContainerJustify,

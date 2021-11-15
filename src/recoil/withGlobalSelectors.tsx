@@ -1,9 +1,14 @@
 import { selector } from "recoil";
-import { isLoginAtom } from "./atom";
+import { isLoginAtom, isSkeltonLoading } from "./atom";
 
 const withIsLogin = selector({
     key: "withIsLogin",
     get: ({ get }) => get(isLoginAtom),
 });
 
-export { withIsLogin };
+const withIsSkeltonLoading = selector({
+    key: "withIsSkeltonLoading",
+    get: ({ get }) => get(isSkeltonLoading),
+});
+
+export { withIsLogin, withIsSkeltonLoading };

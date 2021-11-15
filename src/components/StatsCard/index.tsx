@@ -6,9 +6,9 @@ import {
     ToggleButtonGroup,
     Typography,
 } from "@mui/material";
-import { RoundedCard } from "../../styles";
 import { colors } from "../../theme";
 import { RechartsData } from "../../constants/stubData";
+import { RoundedCard, SkeletonRoundedCard } from "../../styles";
 import { StatsItemType, statsPeriodItemType } from "../../types";
 import {
     ComposedChart,
@@ -21,100 +21,115 @@ import {
     Line,
 } from "recharts";
 type StatsCardProps = {
-    options: StatsItemType[];
-    periodOptions: statsPeriodItemType[];
+    loading: boolean;
     handleSelect: any;
     selectOption: number;
-    handleSelectedButton: any;
     selectedButton: string;
+    options: StatsItemType[];
+    handleSelectedButton: any;
+    periodOptions: statsPeriodItemType[];
 };
 
 const StatsCard = ({
-    handleSelect,
     options,
-    handleSelectedButton,
-    selectedButton,
-    periodOptions,
+    loading,
     selectOption,
+    handleSelect,
+    periodOptions,
+    selectedButton,
+    handleSelectedButton,
 }: StatsCardProps) => {
     return (
         <>
-            <RoundedCard>
-                <Grid container spacing={2}>
-                    <Grid item container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                            <Select
-                                value={selectOption}
-                                variant="standard"
-                                disableUnderline
-                                onChange={handleSelect}
+            {loading ? (
+                <SkeletonRoundedCard variant="rectangular" height={337} />
+            ) : (
+                <RoundedCard>
+                    <Grid container spacing={2}>
+                        <Grid item container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <Select
+                                    value={selectOption}
+                                    variant="standard"
+                                    disableUnderline
+                                    onChange={handleSelect}
+                                >
+                                    {options.map(
+                                        ({ id, label }: StatsItemType) => (
+                                            <MenuItem key={id} value={id}>
+                                                <Typography variant="h6">
+                                                    {label}
+                                                </Typography>
+                                            </MenuItem>
+                                        )
+                                    )}
+                                </Select>
+                            </Grid>
+                            <Grid
+                                item
+                                xs={12}
+                                sm={6}
+                                container
+                                justifyContent="flex-end"
                             >
-                                {options.map(({ id, label }: StatsItemType) => (
-                                    <MenuItem key={id} value={id}>
-                                        <Typography variant="h6">
-                                            {label}
-                                        </Typography>
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </Grid>
-                        <Grid
-                            item
-                            xs={12}
-                            sm={6}
-                            container
-                            justifyContent="flex-end"
-                        >
-                            <ToggleButtonGroup
-                                size="small"
-                                color="primary"
-                                value={selectedButton}
-                                exclusive
-                                onChange={handleSelectedButton}
-                            >
-                                {periodOptions.map(
-                                    ({ id, label }: statsPeriodItemType) => (
-                                        <ToggleButton
-                                            key={id}
-                                            value={label}
-                                            style={{
-                                                border: `1px solid ${colors.lightBlue}`,
-                                                color: colors.lightBlue,
-                                            }}
-                                        >
-                                            <Typography
-                                                variant="body1"
-                                                sx={{
-                                                    p: "2px",
-                                                    fontWeight: 500,
+                                <ToggleButtonGroup
+                                    size="small"
+                                    color="primary"
+                                    value={selectedButton}
+                                    exclusive
+                                    onChange={handleSelectedButton}
+                                >
+                                    {periodOptions.map(
+                                        ({
+                                            id,
+                                            label,
+                                        }: statsPeriodItemType) => (
+                                            <ToggleButton
+                                                key={id}
+                                                value={label}
+                                                style={{
+                                                    border: `1px solid ${colors.lightBlue}`,
+                                                    color: colors.lightBlue,
                                                 }}
                                             >
-                                                {label}
-                                            </Typography>
-                                        </ToggleButton>
-                                    )
-                                )}
-                            </ToggleButtonGroup>
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        p: "2px",
+                                                        fontWeight: 500,
+                                                    }}
+                                                >
+                                                    {label}
+                                                </Typography>
+                                            </ToggleButton>
+                                        )
+                                    )}
+                                </ToggleButtonGroup>
+                            </Grid>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <ResponsiveContainer width="100%" height={300}>
+                                <ComposedChart data={RechartsData}>
+                                    <CartesianGrid stroke="#f5f5f5" />
+                                    <XAxis dataKey="name" scale="band" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Bar
+                                        dataKey="uv"
+                                        barSize={20}
+                                        fill="#413ea0"
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="uv"
+                                        stroke="#ff7300"
+                                    />
+                                </ComposedChart>
+                            </ResponsiveContainer>
                         </Grid>
                     </Grid>
-                    <Grid item xs={12}>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <ComposedChart data={RechartsData}>
-                                <CartesianGrid stroke="#f5f5f5" />
-                                <XAxis dataKey="name" scale="band" />
-                                <YAxis />
-                                <Tooltip />
-                                <Bar dataKey="uv" barSize={20} fill="#413ea0" />
-                                <Line
-                                    type="monotone"
-                                    dataKey="uv"
-                                    stroke="#ff7300"
-                                />
-                            </ComposedChart>
-                        </ResponsiveContainer>
-                    </Grid>
-                </Grid>
-            </RoundedCard>
+                </RoundedCard>
+            )}
         </>
     );
 };

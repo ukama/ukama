@@ -10,12 +10,14 @@ import {
 import OptionsPopover from "../OptionsPopover";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
 import { MenuDots } from "../../assets/svg";
+import { SkeletonRoundedCard } from "../../styles";
 
 interface DataTableWithOptionsInterface {
-    columns: ColumnsWithOptions[];
+    loading?: boolean;
     dataset: Object[];
-    menuOptions: MenuItemType[];
     onMenuItemClick: Function;
+    menuOptions: MenuItemType[];
+    columns: ColumnsWithOptions[];
 }
 
 type CellValueByTypeProps = {
@@ -54,66 +56,76 @@ const CellValueByType = ({
 const DataTableWithOptions = ({
     columns,
     dataset,
+    loading,
     menuOptions,
     onMenuItemClick,
 }: DataTableWithOptionsInterface) => {
     return (
         <>
-            <TableContainer sx={{ maxHeight: 200 }}>
-                <Table stickyHeader>
-                    <TableHead>
-                        <TableRow>
-                            {columns.map(column => (
-                                <TableCell
-                                    key={column.id}
-                                    align={column.align}
-                                    style={{
-                                        minWidth: column.minWidth,
-                                        padding: "6px 12px 12px 0px",
-                                        fontSize: "0.875rem",
-                                    }}
-                                >
-                                    {column.id === "actions" ? (
-                                        <MenuDots />
-                                    ) : (
-                                        <b>{column.label}</b>
-                                    )}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {dataset.map((row: any) => (
-                            <TableRow role="row" tabIndex={-1} key={row.name}>
-                                {columns.map(
-                                    (
-                                        column: ColumnsWithOptions,
-                                        index: number
-                                    ) => (
-                                        <TableCell
-                                            key={`${row.name}-${index}`}
-                                            align={column.align}
-                                            sx={{
-                                                padding: "13px 12px 13px 0px",
-                                                fontSize: "0.875rem",
-                                            }}
-                                        >
-                                            <CellValueByType
-                                                row={row}
-                                                type={column.id}
-                                                menuOptions={menuOptions}
-                                                onMenuItemClick={
-                                                    onMenuItemClick
-                                                }
-                                            />
-                                        </TableCell>
-                                    )
-                                )}
+            {loading ? (
+                <SkeletonRoundedCard variant="rectangular" height={206} />
+            ) : (
+                <TableContainer sx={{ maxHeight: 200 }}>
+                    <Table stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                {columns.map(column => (
+                                    <TableCell
+                                        key={column.id}
+                                        align={column.align}
+                                        style={{
+                                            minWidth: column.minWidth,
+                                            padding: "6px 12px 12px 0px",
+                                            fontSize: "0.875rem",
+                                        }}
+                                    >
+                                        {column.id === "actions" ? (
+                                            <MenuDots />
+                                        ) : (
+                                            <b>{column.label}</b>
+                                        )}
+                                    </TableCell>
+                                ))}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {dataset.map((row: any) => (
+                                <TableRow
+                                    role="row"
+                                    tabIndex={-1}
+                                    key={row.name}
+                                >
+                                    {columns.map(
+                                        (
+                                            column: ColumnsWithOptions,
+                                            index: number
+                                        ) => (
+                                            <TableCell
+                                                key={`${row.name}-${index}`}
+                                                align={column.align}
+                                                sx={{
+                                                    padding:
+                                                        "13px 12px 13px 0px",
+                                                    fontSize: "0.875rem",
+                                                }}
+                                            >
+                                                <CellValueByType
+                                                    row={row}
+                                                    type={column.id}
+                                                    menuOptions={menuOptions}
+                                                    onMenuItemClick={
+                                                        onMenuItemClick
+                                                    }
+                                                />
+                                            </TableCell>
+                                        )
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            )}
         </>
     );
 };

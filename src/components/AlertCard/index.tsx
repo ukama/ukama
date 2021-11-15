@@ -1,52 +1,69 @@
 import { colors } from "../../theme";
+import { SkeletonRoundedCard } from "../../styles";
 import { Box, Typography, Card, Grid } from "@mui/material";
 type AlertCardProps = {
     Icon: any;
     id: number;
     date: string;
     title: string;
+    loading?: boolean;
     description: string;
 };
 
-const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
+const AlertCard = ({
+    date,
+    description,
+    title,
+    Icon,
+    loading,
+}: AlertCardProps) => {
     return (
-        <Card
-            sx={{
-                marginBottom: 1,
-                marginRight: "8px",
-                width: "100%",
-                padding: 1,
-            }}
-        >
-            <Grid container spacing={1} p={1}>
-                <Grid item xs>
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            flexWrap: "wrap",
-                        }}
-                    >
-                        <Icon />
-                        <Typography variant="body1" color="initial">
-                            {title}
-                        </Typography>
-                    </div>
-                </Grid>
-                <Grid item>
-                    <Typography variant="caption" color={colors.empress}>
-                        {date}
-                    </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                    <Box pl={3.7}>
-                        <Typography variant="body2" color="initial">
-                            {description}
-                        </Typography>
-                    </Box>
-                </Grid>
-            </Grid>
-        </Card>
+        <>
+            {loading ? (
+                <SkeletonRoundedCard variant="rectangular" height={64} />
+            ) : (
+                <Card
+                    sx={{
+                        marginBottom: 1,
+                        marginRight: "8px",
+                        width: "100%",
+                        padding: 1,
+                    }}
+                >
+                    <Grid container spacing={1} p={1}>
+                        <Grid item xs>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    flexWrap: "wrap",
+                                }}
+                            >
+                                <Icon />
+                                <Typography variant="body1" color="initial">
+                                    {title}
+                                </Typography>
+                            </div>
+                        </Grid>
+                        <Grid item>
+                            <Typography
+                                variant="caption"
+                                color={colors.empress}
+                            >
+                                {date}
+                            </Typography>
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Box pl={3.7}>
+                                <Typography variant="body2" color="initial">
+                                    {description}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    </Grid>
+                </Card>
+            )}
+        </>
     );
 };
 export default AlertCard;

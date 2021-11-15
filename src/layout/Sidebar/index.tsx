@@ -23,6 +23,7 @@ import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { Dispatch, SetStateAction } from "react";
 import { UpgradeNavFooter } from "../../components";
+import { SkeletonRoundedCard } from "../../styles";
 
 const useStyles = makeStyles(() => ({
     listItem: {
@@ -54,12 +55,13 @@ const useStyles = makeStyles(() => ({
 type SidebarProps = {
     path: string;
     isOpen: boolean;
+    isLoading: boolean;
     handleDrawerToggle: Function;
     setPath: Dispatch<SetStateAction<string>>;
 };
 
 const Sidebar = (
-    { isOpen, handleDrawerToggle, path, setPath }: SidebarProps,
+    { isOpen, isLoading, handleDrawerToggle, path, setPath }: SidebarProps,
     props: any
 ) => {
     const { window } = props;
@@ -175,19 +177,28 @@ const Sidebar = (
             >
                 {drawer}
             </Drawer>
-            <Drawer
-                open
-                variant="permanent"
-                sx={{
-                    display: { xs: "none", sm: "block" },
-                    "& .MuiDrawer-paper": {
-                        boxSizing: "border-box",
-                        width: DRAWER_WIDTH,
-                    },
-                }}
-            >
-                {drawer}
-            </Drawer>
+            {isLoading ? (
+                <SkeletonRoundedCard
+                    variant="rectangular"
+                    sx={{ borderRadius: 0 }}
+                />
+            ) : (
+                <>
+                    <Drawer
+                        open
+                        variant="permanent"
+                        sx={{
+                            display: { xs: "none", sm: "block" },
+                            "& .MuiDrawer-paper": {
+                                boxSizing: "border-box",
+                                width: DRAWER_WIDTH,
+                            },
+                        }}
+                    >
+                        {drawer}
+                    </Drawer>
+                </>
+            )}
         </Box>
     );
 };

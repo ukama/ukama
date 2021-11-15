@@ -7,6 +7,7 @@ import {
     AlertCard,
     MultiSlideCarousel,
     DataTableWithOptions,
+    LoadingWrapper,
 } from "../../components";
 import {
     DashboardSliderData,
@@ -23,7 +24,6 @@ import {
 } from "../../constants";
 import "../../i18n/i18n";
 import React, { useState } from "react";
-import { RoundedCard } from "../../styles";
 import { useTranslation } from "react-i18next";
 import {
     Box,
@@ -34,6 +34,9 @@ import {
     useMediaQuery,
 } from "@mui/material";
 import { AlertItemType } from "../../types";
+import { RoundedCard } from "../../styles";
+import { isSkeltonLoading } from "../../recoil";
+import { useRecoilValue } from "recoil";
 
 let slides = [
     {
@@ -50,13 +53,15 @@ const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
-    const [isAddNode, setIsAddNode] = useState(false);
     const [network, setNetwork] = useState("public");
+    const [isAddNode, setIsAddNode] = useState(false);
+    const [selectedBtn, setSelectedBtn] = useState("DAY");
+    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const [statOptionValue, setstatOptionValue] = React.useState(3);
     const [userStatusFilter, setUserStatusFilter] = useState("total");
     const [dataStatusFilter, setDataStatusFilter] = useState("total");
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
-    const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [selectedBtn, setSelectedBtn] = useState("DAY");
+
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
         newSelected: string
@@ -100,6 +105,7 @@ const Home = () => {
                         key={id}
                         title={title}
                         users={users}
+                        loading={false}
                         subTitle={subTitle}
                         isConfigure={isConfigure}
                     />
@@ -131,6 +137,7 @@ const Home = () => {
                     duration={""}
                     option={network}
                     options={NETWORKS}
+                    loading={isSkeltonLoad}
                     statusType={"IN_PROGRESS"}
                     status={"Your network is being configured"}
                     handleStatusChange={(value: string) => setNetwork(value)}
@@ -153,6 +160,7 @@ const Home = () => {
                                     subtitle1={subtitle1}
                                     subtitle2={subtitle2}
                                     option={getStatus(id)}
+                                    loading={isSkeltonLoad}
                                     handleSelect={(value: string) =>
                                         handleSatusChange(id, value)
                                     }
@@ -165,93 +173,108 @@ const Home = () => {
                     <Grid container spacing={2}>
                         <Grid xs={12} item sm={12} md={8}>
                             <StatsCard
-                                selectOption={statOptionValue}
+                                loading={isSkeltonLoad}
                                 options={STATS_OPTIONS}
+                                selectedButton={selectedBtn}
                                 periodOptions={STATS_PERIOD}
+                                selectOption={statOptionValue}
                                 handleSelect={handleStatsChange}
                                 handleSelectedButton={
                                     handleSelectedButtonChange
                                 }
-                                selectedButton={selectedBtn}
                             />
                         </Grid>
 
                         <Grid xs={12} item md={4}>
-                            <RoundedCard>
-                                <Typography variant="h6" sx={{ mb: "14px" }}>
-                                    {t("ALERT.Title")}
-                                </Typography>
-                                <List
-                                    sx={{
-                                        p: "0px",
-                                        maxHeight: 300,
-                                        overflow: "auto",
-                                        position: "relative",
-                                    }}
-                                >
-                                    {ALERT_INFORMATION.map(
-                                        ({
-                                            id,
-                                            date,
-                                            description,
-                                            title,
-                                            Icon,
-                                        }: AlertItemType) => (
-                                            <ListItem
-                                                key={id}
-                                                style={{
-                                                    padding: 1,
-                                                    marginBottom: "4px",
-                                                }}
-                                            >
-                                                <AlertCard
-                                                    id={id}
-                                                    date={date}
-                                                    Icon={Icon}
-                                                    title={title}
-                                                    description={description}
-                                                />
-                                            </ListItem>
-                                        )
-                                    )}
-                                </List>
-                            </RoundedCard>
+                            <LoadingWrapper
+                                height={337}
+                                isLoading={isSkeltonLoad}
+                            >
+                                <RoundedCard>
+                                    <Typography
+                                        variant="h6"
+                                        sx={{ mb: "14px" }}
+                                    >
+                                        {t("ALERT.Title")}
+                                    </Typography>
+                                    <List
+                                        sx={{
+                                            p: "0px",
+                                            maxHeight: 300,
+                                            overflow: "auto",
+                                            position: "relative",
+                                        }}
+                                    >
+                                        {ALERT_INFORMATION.map(
+                                            ({
+                                                id,
+                                                date,
+                                                description,
+                                                title,
+                                                Icon,
+                                            }: AlertItemType) => (
+                                                <ListItem
+                                                    key={id}
+                                                    style={{
+                                                        padding: 1,
+                                                        marginBottom: "4px",
+                                                    }}
+                                                >
+                                                    <AlertCard
+                                                        id={id}
+                                                        date={date}
+                                                        Icon={Icon}
+                                                        title={title}
+                                                        description={
+                                                            description
+                                                        }
+                                                    />
+                                                </ListItem>
+                                            )
+                                        )}
+                                    </List>
+                                </RoundedCard>
+                            </LoadingWrapper>
                         </Grid>
                     </Grid>
                 </Box>
 
                 <Grid container spacing={2}>
                     <Grid xs={12} md={8} item>
-                        <RoundedCard>
-                            <ContainerHeader
-                                stats="1/8"
-                                title="My Nodes"
-                                buttonTitle="Add Node"
-                                handleButtonAction={() =>
-                                    setIsAddNode(prev => !prev)
-                                }
-                            />
-                            {getNodesContainerData(
-                                isAddNode ? DashboardSliderData : slides,
-                                slidesToShow
-                            )}
-                        </RoundedCard>
+                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
+                            <RoundedCard>
+                                <ContainerHeader
+                                    stats="1/8"
+                                    title="My Nodes"
+                                    buttonTitle="Add Node"
+                                    handleButtonAction={() =>
+                                        setIsAddNode(prev => !prev)
+                                    }
+                                />
+                                {getNodesContainerData(
+                                    isAddNode ? DashboardSliderData : slides,
+                                    slidesToShow
+                                )}
+                            </RoundedCard>
+                        </LoadingWrapper>
                     </Grid>
                     <Grid xs={12} md={4} item>
-                        <RoundedCard sx={{ height: "100%" }}>
-                            <ContainerHeader
-                                stats="6/16"
-                                title="Residents"
-                                buttonTitle="ACTIVATE"
-                                handleButtonAction={onActivateButton}
-                            />
-                            <DataTableWithOptions
-                                columns={DataTableWithOptionColumns}
-                                dataset={DashboardResidentsTable}
-                                menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
-                                onMenuItemClick={onResidentsTableMenuItem}
-                            />
-                        </RoundedCard>
+                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
+                            <RoundedCard sx={{ height: "100%" }}>
+                                <ContainerHeader
+                                    stats="6/16"
+                                    title="Residents"
+                                    buttonTitle="ACTIVATE"
+                                    handleButtonAction={onActivateButton}
+                                />
+                                <DataTableWithOptions
+                                    columns={DataTableWithOptionColumns}
+                                    dataset={DashboardResidentsTable}
+                                    menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
+                                    onMenuItemClick={onResidentsTableMenuItem}
+                                />
+                            </RoundedCard>
+                        </LoadingWrapper>
                     </Grid>
                 </Grid>
             </Box>

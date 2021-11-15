@@ -16,13 +16,15 @@ import { HEADER_MENU } from "../../constants";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { HeaderMenuItemType } from "../../types";
+import { SkeletonRoundedCard } from "../../styles";
 
 type HeaderProps = {
     pageName: string;
+    isLoading: boolean;
     handleDrawerToggle: Function;
 };
 
-const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
+const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
     const setIsLogin = useSetRecoilState(isLoginAtom);
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
@@ -107,30 +109,48 @@ const Header = ({ pageName, handleDrawerToggle }: HeaderProps) => {
                     >
                         <MenuIcon color={"primary"} />
                     </IconButton>
-                    <Typography
-                        noWrap
-                        variant="h5"
-                        component="div"
-                        color="black"
-                    >
-                        {pageName}
-                    </Typography>
+                    {isLoading ? (
+                        <SkeletonRoundedCard
+                            variant="rectangular"
+                            height={30}
+                            width={82}
+                        />
+                    ) : (
+                        <Typography
+                            noWrap
+                            variant="h5"
+                            component="div"
+                            color="black"
+                        >
+                            {pageName}
+                        </Typography>
+                    )}
                     <Box sx={{ flexGrow: 1 }} />
-                    <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                        {HEADER_MENU.map(
-                            ({ id, Icon, title }: HeaderMenuItemType) => (
-                                <IconButton
-                                    key={id}
-                                    size="medium"
-                                    color="inherit"
-                                    sx={{ padding: "0px 18px" }}
-                                    onClick={e => handleHeaderMenu(e, title)}
-                                >
-                                    <Icon />
-                                </IconButton>
-                            )
-                        )}
-                    </Box>
+                    {isLoading ? (
+                        <SkeletonRoundedCard
+                            variant="rectangular"
+                            height={30}
+                            width={120}
+                        />
+                    ) : (
+                        <Box sx={{ display: { xs: "none", md: "flex" } }}>
+                            {HEADER_MENU.map(
+                                ({ id, Icon, title }: HeaderMenuItemType) => (
+                                    <IconButton
+                                        key={id}
+                                        size="medium"
+                                        color="inherit"
+                                        sx={{ padding: "0px 18px" }}
+                                        onClick={e =>
+                                            handleHeaderMenu(e, title)
+                                        }
+                                    >
+                                        <Icon />
+                                    </IconButton>
+                                )
+                            )}
+                        </Box>
+                    )}
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <IconButton
                             size="large"

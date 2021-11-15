@@ -1,6 +1,7 @@
 import { colors } from "../../theme";
 import { SelectItemType } from "../../types";
 import { Box, Typography, Grid, Select, MenuItem } from "@mui/material";
+import { SkeletonRoundedCard } from "../../styles";
 
 const DOT = (color: string) => (
     <span style={{ color: `${color}`, fontSize: "24px", marginRight: 14 }}>
@@ -22,10 +23,11 @@ const getIconByStatus = (status: string) => {
 };
 
 type NetworkStatusProps = {
-    statusType: string;
     status: string;
     option: string;
+    loading?: boolean;
     duration?: string;
+    statusType: string;
     options: SelectItemType[];
     handleStatusChange: Function;
 };
@@ -34,43 +36,56 @@ const NetworkStatus = ({
     status,
     option,
     options,
+    loading,
     duration,
     statusType,
     handleStatusChange,
 }: NetworkStatusProps) => {
     return (
-        <Grid width="100%" container p="18px 8px">
+        <Grid width="100%" container p="18px 2px">
             <Grid item xs={12} md={10}>
-                <Box display="flex" flexDirection="row" alignItems="center">
-                    {getIconByStatus(statusType)}
-                    <Typography variant={"h6"}>{status}</Typography>
-                    {duration && (
-                        <Typography
-                            ml="8px"
-                            variant={"h6"}
-                            color={colors.empress}
-                        >
-                            {duration}
-                        </Typography>
-                    )}
-                </Box>
+                {loading ? (
+                    <SkeletonRoundedCard
+                        variant="rectangular"
+                        width={280}
+                        height={30}
+                    />
+                ) : (
+                    <Box display="flex" flexDirection="row" alignItems="center">
+                        {getIconByStatus(statusType)}
+                        <Typography variant={"h6"}>{status}</Typography>
+                        {duration && (
+                            <Typography
+                                ml="8px"
+                                variant={"h6"}
+                                color={colors.empress}
+                            >
+                                {duration}
+                            </Typography>
+                        )}
+                    </Box>
+                )}
             </Grid>
             <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
-                <Select
-                    value={option}
-                    disableUnderline
-                    variant="standard"
-                    sx={{
-                        color: colors.black,
-                    }}
-                    onChange={e => handleStatusChange(e.target.value)}
-                >
-                    {options.map(({ id, label, value }: SelectItemType) => (
-                        <MenuItem key={id} value={value}>
-                            <Typography variant="body1">{label}</Typography>
-                        </MenuItem>
-                    ))}
-                </Select>
+                {loading ? (
+                    <SkeletonRoundedCard variant="rectangular" height={30} />
+                ) : (
+                    <Select
+                        value={option}
+                        disableUnderline
+                        variant="standard"
+                        sx={{
+                            color: colors.black,
+                        }}
+                        onChange={e => handleStatusChange(e.target.value)}
+                    >
+                        {options.map(({ id, label, value }: SelectItemType) => (
+                            <MenuItem key={id} value={value}>
+                                <Typography variant="body1">{label}</Typography>
+                            </MenuItem>
+                        ))}
+                    </Select>
+                )}
             </Grid>
         </Grid>
     );
