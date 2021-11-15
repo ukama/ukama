@@ -17,6 +17,7 @@
 #include <uuid/uuid.h>
 
 #include "lxce_config.h"
+#include "capp_config.h"
 #include "manifest.h"
 
 /* For capp state */
@@ -79,8 +80,8 @@ typedef struct capp_t_ {
   CAppState  *state;  /* capp state */
   CAppPolicy *policy; /* capp assocated policy */
   void       *space;  /* space the capp belongs to */
+  CAppConfig *config; /* config.json */
 } CApp;
-
 
 typedef struct capp_list_ {
 

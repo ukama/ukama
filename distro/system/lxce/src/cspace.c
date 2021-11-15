@@ -38,6 +38,7 @@
 #include "manifest.h"
 #include "log.h"
 #include "capp.h"
+#include "utils.h"
 
 static int adjust_capabilities(char *name, int *cap, int size);
 static int setup_capabilities(CSpace *space);
@@ -440,90 +441,6 @@ int create_cspace(CSpace *space, pid_t *pid) {
 }
 
 /*
- * set_integer_object_value --
- *
- */
-static int set_integer_object_value(json_t *json, int *param, char *objName,
-				    int mandatory, int defValue) {
-
-  json_t *obj;
-
-  obj = json_object_get(json, objName);
-  if (obj==NULL) {
-    if (mandatory) {
-      log_error("Missing Mandatory JSON field: %s Setting to default: %d",
-		objName, defValue);
-      if (defValue)  {
-	*param = defValue;
-      } else {
-	return FALSE;
-      }
-    } else {
-      log_debug("Missing JSON field: %s. Ignored.", objName);
-      *param = 0;
-    }
-  } else {
-    *param = json_integer_value(obj);
-  }
-
-  return TRUE;
-}
-
-/*
- * set_str_object_value --
- *
- */
-static int set_str_object_value(json_t *json, char **param, char *objName,
-				int mandatory, char *defValue) {
-
-  json_t *obj;
-
-  obj = json_object_get(json, objName);
-  if (obj==NULL) {
-    if (mandatory) {
-      log_error("Missing Mandatory JSON field: %s Setting to default: %s",
-		objName, defValue);
-      if (defValue)  {
-	*param = strdup(defValue);
-      } else {
-	return FALSE;
-      }
-    } else {
-      log_debug("Missing JSON field: %s. Ignored.", objName);
-      *param = NULL;
-    }
-  } else {
-    *param = strdup(json_string_value(obj));
-  }
-
-  return TRUE;
-}
-
-/*
- * namespace_flag --
- *
- */
-static int namespaces_flag(char *ns) {
-
-  if (strcmp(ns, "pid")==0) {
-    return CLONE_NEWPID;
-  } else if (strcmp(ns, "uts")==0) {
-    return CLONE_NEWUTS;
-  } else if (strcmp(ns, "network")==0) {
-    return CLONE_NEWNET;
-  } else if (strcmp(ns, "mount")==0) {
-    return CLONE_NEWNS;
-  } else if (strcmp(ns, "user")==0) {
-    return CLONE_NEWUSER;
-  } else {
-    log_error("Unsupported namespace type detecetd: %s", ns);
-    return 0;
-  }
-
-  return 0;
-}
-
-/*
  * str_to_cap --
  *
  */
@@ -741,6 +658,7 @@ static int handle_crud_requests(CSpace *space) {
 
     if (strcmp(cmd, CAPP_CMD_CREATE)==0) {
       handle_create_request(space, seqno, params);
+      // create_and_run_capp(space);
     } else {
       log_error("Invalid command recevied: %s", cmd);
     }
