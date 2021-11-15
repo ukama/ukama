@@ -1,6 +1,6 @@
 import { ExecutionResult, graphql, GraphQLSchema } from "graphql";
 import { Maybe } from "graphql/jsutils/Maybe";
-import { createSchema } from "../common/createSchema";
+import { createSchema } from "./createSchema";
 import nock from "nock";
 import { BASE_URL } from "../constants";
 
@@ -27,6 +27,12 @@ export const gCall = async ({
     });
 };
 
-export const nockCall = (path: string, response: Object): void => {
-    nock(BASE_URL).get(path).reply(200, response);
+export const beforeEachCall = (
+    path: string,
+    response: Object,
+    responseHttpCode: number
+): void => {
+    beforeEach(() => {
+        nock(BASE_URL).get(path).reply(responseHttpCode, response);
+    });
 };

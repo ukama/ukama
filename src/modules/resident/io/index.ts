@@ -1,14 +1,14 @@
 import { AxiosResponse } from "axios";
 import ApiMethods from "../../../api";
-import { TIME_FILTER } from "../../../constants";
+import { PaginationDto } from "../../../common/types";
 import { SERVER } from "../../../constants/endpoints";
 
-export const getUsersMethod = async (
-    filter: TIME_FILTER
+export const getResidentsMethod = async (
+    params: PaginationDto
 ): Promise<AxiosResponse<any, any> | null> => {
     const res = await ApiMethods.getData({
-        path: SERVER.GET_CONNECTED_USERS,
-        params: `${filter}`,
+        path: SERVER.GET_RESIDENTS,
+        params: params,
     });
     return res;
 };

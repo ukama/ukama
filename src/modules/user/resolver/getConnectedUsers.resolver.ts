@@ -6,7 +6,7 @@ import { TIME_FILTER } from "../../../constants";
 
 @Service()
 @Resolver()
-export class GetUsersResolver {
+export class GetConnectedUsersResolver {
     constructor(private readonly userService: UserService) {}
 
     @Query(() => ConnectedUserDto)

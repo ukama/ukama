@@ -19,3 +19,23 @@ export const GET_DATA_USAGE_QUERY = `
         }
     }
 `;
+
+export const GET_Alerts_QUERY = `
+    query getAlerts($input:PaginationDto!) {
+        getAlerts(data:$input) {
+            alerts{
+                id
+                type,
+                title,
+                description,
+                alertDate
+            }
+            meta{
+                page
+                count
+                pages
+                size
+            }
+        }
+    }
+`;
