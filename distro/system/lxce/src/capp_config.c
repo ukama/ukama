@@ -150,16 +150,13 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
       return FALSE;
     }
 
-    /* TODO: convert to array and use char** */
-    if (!set_str_object_value(jProc, &(config->process->args), JSON_ARGS,
-			      TRUE, NULL)) {
-      return FALSE;
-    }
+    /* Get arguments */
+    get_json_arrary_elems(jProc, &(config->process->argc),
+			  config->process->argv, JSON_ARGS);
 
-    if (!set_str_object_value(jProc, &(config->process->env), JSON_ENV,
-			      TRUE, NULL)) {
-      return FALSE;
-    }
+    /* Get env variables */
+    get_json_arrary_elems(jProc, &(config->process->envc),
+			  config->process->env, JSON_ENV);
   } else {
     log_error("No valid process info found.");
   }

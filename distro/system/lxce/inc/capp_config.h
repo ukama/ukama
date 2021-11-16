@@ -36,8 +36,9 @@ typedef struct capp_process_t {
 
   char *exec;  /* Executable name */
   int  argc;   /* Number of arguments to executable */
-  char *args; /* Arguments to the executable */
-  char *env;  /* Environment variables setup for executable */
+  char **argv; /* Arguments to the executable */
+  int  envc;   /* Number of enviroment variables */
+  char **env;  /* Environment variables setup for executable */
 } CAppProc;
 
 /* Store capp config.json values */
