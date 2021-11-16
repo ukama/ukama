@@ -9,6 +9,7 @@ export const TRANSLATIONS_EN = {
     CONSTANT: {
         EmailLabel: "EMAIL",
         PasswordLabel: "PASSWORD",
+        NameLabel: "NAME",
         SignUpLinkLabel: "Sign up instead",
         LinkLabel: "Log in instead ",
         CancelButtonLable: "CANCEL",

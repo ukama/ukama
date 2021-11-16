@@ -88,15 +88,15 @@ const StatsCard = ({
                                                 key={id}
                                                 value={label}
                                                 style={{
-                                                    border: `1px solid ${colors.lightBlue}`,
+                                                    border: `2.2px solid ${colors.lightBlue}`,
                                                     color: colors.lightBlue,
                                                 }}
                                             >
                                                 <Typography
-                                                    variant="body1"
+                                                    variant="body2"
                                                     sx={{
                                                         p: "2px",
-                                                        fontWeight: 500,
+                                                        fontWeight: 900,
                                                     }}
                                                 >
                                                     {label}

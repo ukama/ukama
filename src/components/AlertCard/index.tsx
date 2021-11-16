@@ -1,6 +1,7 @@
 import { colors } from "../../theme";
 import { SkeletonRoundedCard } from "../../styles";
-import { Box, Typography, Card, Grid } from "@mui/material";
+import { Typography, Card, CardHeader } from "@mui/material";
+import Avatar from "@mui/material/Avatar";
 type AlertCardProps = {
     Icon: any;
     id: number;
@@ -24,43 +25,51 @@ const AlertCard = ({
             ) : (
                 <Card
                     sx={{
-                        marginBottom: 1,
-                        marginRight: "8px",
                         width: "100%",
-                        padding: 1,
+                        marginBottom: "3px",
                     }}
+                    elevation={1}
                 >
-                    <Grid container spacing={1} p={1}>
-                        <Grid item xs>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    flexWrap: "wrap",
+                    <CardHeader
+                        sx={{ p: "10px 20px 10px 0px !important" }}
+                        avatar={
+                            <Avatar
+                                sx={{
+                                    bgcolor: "white",
+                                    position: "relative",
+                                    bottom: "12px",
                                 }}
                             >
                                 <Icon />
-                                <Typography variant="body1" color="initial">
-                                    {title}
-                                </Typography>
-                            </div>
-                        </Grid>
-                        <Grid item>
+                            </Avatar>
+                        }
+                        action={
                             <Typography
                                 variant="caption"
                                 color={colors.empress}
                             >
                                 {date}
                             </Typography>
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Box pl={3.7}>
-                                <Typography variant="body2" color="initial">
-                                    {description}
-                                </Typography>
-                            </Box>
-                        </Grid>
-                    </Grid>
+                        }
+                        title={
+                            <Typography
+                                variant="body1"
+                                color="initial"
+                                style={{ position: "relative", right: "17px" }}
+                            >
+                                {title}
+                            </Typography>
+                        }
+                        subheader={
+                            <Typography
+                                variant="body2"
+                                color="initial"
+                                style={{ position: "relative", right: "17px" }}
+                            >
+                                {description}
+                            </Typography>
+                        }
+                    />
                 </Card>
             )}
         </>
