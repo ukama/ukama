@@ -4,6 +4,7 @@ import {
     ListItemText,
     MenuItem,
     Popover,
+    IconButton,
 } from "@mui/material";
 import { useState } from "react";
 import { MenuDots } from "../../assets/svg";
@@ -44,25 +45,29 @@ const OptionsPopover = ({
     const id = open ? cid : undefined;
     return (
         <>
-            <Box
-                aria-describedby={id}
+            <IconButton
                 onClick={handlePopoverOpen}
-                sx={{ cursor: "pointer" }}
+                aria-describedby={id}
+                sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    bottom: "15px",
+                }}
             >
                 <MenuDots />
-            </Box>
+            </IconButton>
             <Popover
                 id={id}
                 open={open}
                 anchorEl={anchorEl}
                 onClose={handlePopoverClose}
                 anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "left",
+                    vertical: "center",
+                    horizontal: "right",
                 }}
                 transformOrigin={{
                     vertical: "top",
-                    horizontal: "left",
+                    horizontal: "right",
                 }}
             >
                 {menuOptions.map(({ id: optId, Icon, title, route }: any) => (

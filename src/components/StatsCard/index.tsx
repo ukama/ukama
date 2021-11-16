@@ -21,17 +21,6 @@ import {
     ResponsiveContainer,
     Line,
 } from "recharts";
-const buttons = [
-    <Button key="one" fullWidth>
-        One
-    </Button>,
-    <Button key="two" fullWidth>
-        Two
-    </Button>,
-    <Button key="three" fullWidth>
-        Three
-    </Button>,
-];
 type StatsCardProps = {
     loading: boolean;
     handleSelect: any;
