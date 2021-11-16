@@ -11,11 +11,13 @@ const signUpSchema = Yup.object({
     email: Yup.string()
         .email("Please enter a valid email")
         .required("Please enter a valid email"),
+    name: Yup.string().required("Name is required"),
     password: Yup.string().required("Password is required"),
 });
 
 const initialSignUpValue = {
     email: "",
+    name: "",
     password: "",
 };
 
@@ -47,7 +49,21 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                             <Typography variant="h5" sx={{ mb: "12px" }}>
                                 {t("SIGNUP.FormTitle")}
                             </Typography>
-
+                            <TextField
+                                fullWidth
+                                id="name"
+                                name="name"
+                                value={values.name}
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                label={t("CONSTANT.NameLabel")}
+                                InputLabelProps={{ shrink: true }}
+                                InputProps={{
+                                    classes: { input: classes.inputFieldStyle },
+                                }}
+                                helperText={touched.name && errors.name}
+                                error={touched.name && Boolean(errors.name)}
+                            />
                             <TextField
                                 fullWidth
                                 id="email"

@@ -199,7 +199,7 @@ const Home = () => {
                                 <RoundedCard>
                                     <Typography
                                         variant="h6"
-                                        sx={{ mb: "14px" }}
+                                        sx={{ mb: "14px", fontWeight: 500 }}
                                     >
                                         {t("ALERT.Title")}
                                     </Typography>
