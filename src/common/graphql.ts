@@ -20,7 +20,17 @@ export const GET_DATA_USAGE_QUERY = `
     }
 `;
 
-export const GET_Alerts_QUERY = `
+export const GET_DATA_BILL_QUERY = `
+    query getDataBill($data:DATA_BILL_FILTER!) {
+        getDataBill(filter: $data) {
+            id
+            dataBill
+            billDue
+        }
+    }
+`;
+
+export const GET_ALERTS_QUERY = `
     query getAlerts($input:PaginationDto!) {
         getAlerts(data:$input) {
             alerts{
@@ -36,6 +46,43 @@ export const GET_Alerts_QUERY = `
                 pages
                 size
             }
+        }
+    }
+`;
+
+export const GET_NODES_QUERY = `
+    query getNodes($input:PaginationDto!) {
+        getNodes(data:$input) {
+            nodes{
+                id
+              title
+              description
+              totalUser
+              }
+              meta{
+                page
+                count
+                pages
+                size
+              }
+        }
+    }
+`;
+
+export const GET_RESIDENTS_QUERY = `
+    query getResidents($input:PaginationDto!) {
+        getResidents(data:$input) {
+            residents{
+                id
+              name
+              usage
+              }
+              meta{
+                page
+                count
+                pages
+                size
+              }
         }
     }
 `;

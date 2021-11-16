@@ -49,3 +49,13 @@ export enum ALERT_TYPE {
 registerEnumType(ALERT_TYPE, {
     name: "ALERT_TYPE",
 });
+
+export enum API_METHOD_TYPE {
+    GET = "get",
+    POST = "post",
+    PUT = "put",
+    DELETE = "delete",
+}
+registerEnumType(API_METHOD_TYPE, {
+    name: "API_METHOD_TYPE",
+});

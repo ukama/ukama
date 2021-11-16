@@ -4,12 +4,12 @@ import { IDataService } from "./interface";
 import { HTTP404Error, Messages } from "../../errors";
 import { DATA_BILL_FILTER, TIME_FILTER } from "../../constants";
 import DataMapper from "./mapper";
-import { getDataUsageMethod, getDataBillMethod } from "./io";
+import DataIOMethods from "./io";
 
 @Service()
 export class DataService implements IDataService {
     getDataUsage = async (filter: TIME_FILTER): Promise<DataUsageDto> => {
-        const res = await getDataUsageMethod(filter);
+        const res = await DataIOMethods.getDataUsageMethod(filter);
         if (!res) throw new HTTP404Error(Messages.DATA_NOT_FOUND);
 
         const data = DataMapper.dataUsageDtoToDto(res.data.data);
@@ -19,7 +19,7 @@ export class DataService implements IDataService {
         return data;
     };
     getDataBill = async (filter: DATA_BILL_FILTER): Promise<DataBillDto> => {
-        const res = await getDataBillMethod(filter);
+        const res = await DataIOMethods.getDataBillMethod(filter);
         if (!res) throw new HTTP404Error(Messages.DATA_NOT_FOUND);
         const bill = DataMapper.dataBillDtoToDto(res.data.data);
 

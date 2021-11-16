@@ -5,12 +5,12 @@ import { HTTP404Error, Messages } from "../../errors";
 import { PaginationDto } from "../../common/types";
 import AlertMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
-import { getAlertsMethod } from "./io";
+import AlertsIOMethods from "./io";
 
 @Service()
 export class AlertService implements IAlertService {
     getAlerts = async (req: PaginationDto): Promise<AlertsResponse> => {
-        const res = await getAlertsMethod(req);
+        const res = await AlertsIOMethods.getAlertsMethod(req);
         if (!res) throw new HTTP404Error(Messages.ALERTS_NOT_FOUND);
         const meta = getPaginatedOutput(
             req.pageNo,
