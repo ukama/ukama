@@ -1,5 +1,12 @@
 import { Request, Response } from "express";
-import { CONNECTED_USER_TYPE, TIME_FILTER } from "../constants";
+import {
+    CONNECTED_USER_TYPE,
+    DATA_BILL_FILTER,
+    TIME_FILTER,
+} from "../constants";
+import { AlertDto } from "../modules/alert/types";
+import { NodeDto } from "../modules/node/types";
+import { ResidentDto } from "../modules/resident/types";
 import { UserDto } from "../modules/user/types";
 import casual from "./mockData/casual-extensions";
 
@@ -58,5 +65,96 @@ export const getDataUsage = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data,
+    });
+};
+
+export const getDataBill = (req: Request, res: Response): void => {
+    let data;
+    const filter = req.query[0]?.toString();
+    if (
+        filter !== DATA_BILL_FILTER.CURRENT ||
+        DATA_BILL_FILTER.JANUARY ||
+        DATA_BILL_FILTER.FEBRURAY ||
+        DATA_BILL_FILTER.MARCH ||
+        DATA_BILL_FILTER.APRIL ||
+        DATA_BILL_FILTER.MAY ||
+        DATA_BILL_FILTER.JUNE ||
+        DATA_BILL_FILTER.JULY ||
+        DATA_BILL_FILTER.AUGUST ||
+        DATA_BILL_FILTER.SEPTEMBER ||
+        DATA_BILL_FILTER.OCTOBER ||
+        DATA_BILL_FILTER.NOVERMBER ||
+        DATA_BILL_FILTER.DECEMBER
+    )
+        data = {};
+
+    data = casual._dataBill();
+
+    res.send({
+        status: "success",
+        data,
+    });
+};
+
+export const getAlerts = (req: Request, res: Response): void => {
+    const data = casual.randomArray<AlertDto>(1, 10, casual._alert);
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let alerts = [];
+    if (!pageNo) alerts = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) alerts.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: alerts,
+        length: data.length,
+    });
+};
+
+export const getNodes = (req: Request, res: Response): void => {
+    const data = casual.randomArray<NodeDto>(1, 10, casual._node);
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let nodes = [];
+    if (!pageNo) nodes = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) nodes.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: nodes,
+        length: data.length,
+    });
+};
+
+export const getResidents = (req: Request, res: Response): void => {
+    const data = casual.randomArray<ResidentDto>(1, 10, casual._resident);
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let residents = [];
+    if (!pageNo) residents = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) residents.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: residents,
+        length: data.length,
     });
 };

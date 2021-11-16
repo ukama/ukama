@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { gCall, nockCall } from "../../../test/utils";
-import { GET_CONNECTED_USERS_QUERY } from "../../../test/graphql";
+import { gCall, beforeEachCall } from "../../../common/utils";
+import { GET_CONNECTED_USERS_QUERY } from "../../../common/graphql";
 import { TIME_FILTER } from "../../../constants";
 
 const nockResponse = {
@@ -13,9 +13,7 @@ const nockResponse = {
 };
 
 describe("Get Connected Users", () => {
-    beforeEach(() => {
-        nockCall("/user/get_conneted_users?0=WEEK", nockResponse);
-    });
+    beforeEachCall("/user/get_conneted_users?0=WEEK", nockResponse, 200);
     it("get connected users", async () => {
         const response = await gCall({
             source: GET_CONNECTED_USERS_QUERY,

@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { gCall, nockCall } from "../../../test/utils";
-import { GET_DATA_USAGE_QUERY } from "../../../test/graphql";
+import { gCall, beforeEachCall } from "../../../common/utils";
+import { GET_DATA_USAGE_QUERY } from "../../../common/graphql";
 import { TIME_FILTER } from "../../../constants";
 
 const nockResponse = {
@@ -13,9 +13,7 @@ const nockResponse = {
 };
 
 describe("Get Data Usage", () => {
-    beforeEach(() => {
-        nockCall("/data/data_usage?0=MONTH", nockResponse);
-    });
+    beforeEachCall("/data/data_usage?0=MONTH", nockResponse, 200);
     it("Get Data Usage", async () => {
         const response = await gCall({
             source: GET_DATA_USAGE_QUERY,

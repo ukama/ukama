@@ -11,3 +11,15 @@ export class DataUsageDto {
     @Field()
     dataPackage: string;
 }
+
+@ObjectType()
+export class DataBillDto {
+    @Field()
+    id: string;
+
+    @Field()
+    dataBill: string;
+
+    @Field()
+    billDue: string;
+}

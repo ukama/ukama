@@ -7,4 +7,6 @@ export default {
     INVALID_DATA_BILL_FILTER: "Invalid data bill filter",
     INVALID_DATA_USAGE_FILTER: "Invalid data usage filter",
     INVALID_CONNECTED_USER_FILTER: "Invalid connected users filter",
+    NODES_NOT_FOUND: "Nodes not found",
+    RESIDENTS_NOT_FOUND: "Nodes not found",
 };
