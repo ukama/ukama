@@ -5,7 +5,6 @@ import {
     ToggleButton,
     ToggleButtonGroup,
     Typography,
-    Button,
 } from "@mui/material";
 import { colors } from "../../theme";
 import { RechartsData } from "../../constants/stubData";

@@ -1,5 +1,4 @@
 import {
-    Box,
     ListItemIcon,
     ListItemText,
     MenuItem,
@@ -62,7 +61,7 @@ const OptionsPopover = ({
                 anchorEl={anchorEl}
                 onClose={handlePopoverClose}
                 anchorOrigin={{
-                    vertical: "center",
+                    vertical: "bottom",
                     horizontal: "right",
                 }}
                 transformOrigin={{

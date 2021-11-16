@@ -26,6 +26,7 @@ const AlertCard = ({
                 <Card
                     sx={{
                         width: "100%",
+                        marginBottom: "3px",
                     }}
                     elevation={1}
                 >
