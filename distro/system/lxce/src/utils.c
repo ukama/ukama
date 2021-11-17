@@ -101,3 +101,28 @@ int namespaces_flag(char *ns) {
 
   return 0;
 }
+
+/*
+ * get_json_array_elems --
+ *
+ */
+void get_json_arrary_elems(json_t *json, int *argc, char **argv, char *objName) {
+
+  json_t *jArray, *jElem;
+  int i;
+
+  jArray = json_object_get(json, objName);
+
+  if (jArray != NULL) {
+    *argc = json_array_size(jArray);
+    argv = (char **)calloc(*argc, sizeof(char *));
+    if (argv==NULL) return;
+
+    for (i=0; i<(*argc); i++) {
+      jElem = json_array_get(jArray, i);
+      if (jElem) {
+	argv[i] = strdup(json_string_value(jElem));
+      }
+    }
+  }
+}

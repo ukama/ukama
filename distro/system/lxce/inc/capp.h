@@ -18,6 +18,7 @@
 
 #include "lxce_config.h"
 #include "capp_config.h"
+#include "capp_runtime.h"
 #include "manifest.h"
 
 /* For capp state */
@@ -52,7 +53,8 @@ enum { START_LIST=0,
 };
 
 /* Default path, only for testing. */
-#define DEF_PATH "./"
+#define DEF_PATH   "./"
+#define DEF_CONFIG "config.json"
 
 typedef struct capp_params_t {
 
@@ -81,6 +83,8 @@ typedef struct capp_t_ {
   CAppPolicy *policy; /* capp assocated policy */
   void       *space;  /* space the capp belongs to */
   CAppConfig *config; /* config.json */
+
+  CAppRuntime *runtime; /* runtime stuff */
 } CApp;
 
 typedef struct capp_list_ {
