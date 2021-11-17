@@ -8,15 +8,19 @@ assignees: ''
 ---
 
 **Problem statement**
-layer of Ukama dashboard.
- 
+Design a Responsive SignUp page by following figma
+https://www.figma.com/file/ufqgQqTfx5609Jeu0ZSW8a/Ukama-MVP?node-id=0%3A1
+
 **Proposed work**
-UI designs of auth screens are already done, use those designs with Kratos integration.
+Design Forms by using **Formik, Yup & MaterialUI**
 
-- [x] Setup ukama-auth repo with basic structure and UI designs from ukama-dashboard
-
+- [ ] Add SignUp page route
+- [ ]  Implement SignUp Form component. This component should be dumb, and satisfy figma design.
+- [ ] Form should handle fields validation
+- [ ] Design SignUp page, By using SignUp form component and Auth wrapper HOC.
 
 Success criteria
-- [ ] Error handling should be efficient
-- [ ] Flow should satisfy figma
+- [ ] Should satisfy figma designs
+- [ ] Should satisfy mobile responsiveness
+- [ ] Should satisfy required functionality
 - [ ] Should be approved by Michelle.
