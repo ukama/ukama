@@ -284,7 +284,7 @@ int main(int argc, char **argv) {
   }
 
   /* Step-6: start capps via cspace threads */
-  capps_start(apps, (void *)csThread);
+  capps_start(apps);
 
   /* Step-6: open REST interface. */
   if (!start_web_services(config, &clientInst)) {

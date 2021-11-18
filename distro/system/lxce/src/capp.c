@@ -22,6 +22,13 @@
 #include "log.h"
 #include "manifest.h"
 #include "csthreads.h"
+#include "capp_packet.h"
+
+static int add_to_list(CAppList **list, CApp *app);
+static int capp_init_params(CApp *capp, char *name, char *tag, char *path,
+			    char *space);
+static int capp_init_state(CApp *capp);
+static int capp_init_policy(CApp *capp, int flag);
 
 /* From shmem.c */
 extern int add_to_shmem_list(ThreadShMem *mem);
@@ -172,7 +179,6 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest,
 	       void *space) {
 
   CApp *app=NULL;
-  CAppList *pend=NULL;
   ArrayElem *ptr=NULL;
   CSpace *sPtr=NULL;
 
@@ -210,7 +216,7 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest,
     }
 
     /* Add the capp to pend list */
-    add_to_apps(*capps, app, PEND_LIST, NULL);
+    add_to_apps(*capps, app, PEND_LIST, 0);
   }
 
   return TRUE;
@@ -220,14 +226,13 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest,
  * capp_start --
  *
  */
-void capps_start(CApps *capps, void *th) {
+void capps_start(CApps *capps) {
 
   CAppList *ptr;
   CApp *capp;
   CSpace *cspace;
   ThreadShMem *shMem;
   ThreadShMem **listShMem=NULL;
-  CSpaceThread *threads = (CSpaceThread *)th;
   /*
    * For each app in the pend list:
    *   1. find the thread handling the capp space.
@@ -238,7 +243,7 @@ void capps_start(CApps *capps, void *th) {
    *   Repeat
    */
 
-  if (!capps) return FALSE;
+  if (!capps) return;
 
   for(ptr=capps->pend; ptr; ptr=ptr->next) {
 
@@ -282,7 +287,7 @@ void capps_start(CApps *capps, void *th) {
  */
 void add_to_apps(CApps *capps, CApp *capp, int to, int from) {
 
-  if (to == PEND_LIST && from == NULL) { /* New addition. */
+  if (to == PEND_LIST && from == 0) { /* New addition. */
     add_to_list(&(capps->pend), capp);
   } 
 }
@@ -291,7 +296,7 @@ void add_to_apps(CApps *capps, CApp *capp, int to, int from) {
  * add_to_list --
  *
  */
-int add_to_list(CAppList **list, CApp *app) {
+static int add_to_list(CAppList **list, CApp *app) {
 
   CAppList *ptr;
 

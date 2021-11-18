@@ -59,4 +59,7 @@ typedef struct packet_list_ {
   struct packet_list *next;
 }PacketList;
 
+int create_capp_tx_packet(CApp *capp, PacketList **list, int reqType);
+
+
 #endif /* CAPP_PACKET_H */

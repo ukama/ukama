@@ -103,7 +103,8 @@ typedef struct capp_t {
   CAppList *error;   /* capp has an error */
 } CApps;
 
-int capps_init(CApps **capps, Config *config, Manifest *manifest);
+int capps_init(CApps **capps, Config *config, Manifest *manifest, void *space);
+void capps_start(CApps *capps);
 void clear_capp(CApp *capp);
 void clear_capps(CApps *capps, int flag);
 void add_to_apps(CApps *capps, CApp *capp, int to, int from);
