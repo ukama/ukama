@@ -38,6 +38,7 @@
 #include "manifest.h"
 #include "log.h"
 #include "capp.h"
+#include "capp_runtime.h"
 #include "utils.h"
 
 static int adjust_capabilities(char *name, int *cap, int size);
@@ -50,6 +51,7 @@ static int handle_create_request(CSpace *space, int seqno, char *params);
 static int send_response_packet(CSpace *space, int seqno, char *resp);
 static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid);
 static int cspace_capps_init(CApps **capps);
+static int handle_crud_requests(CSpace *space);
 
 
 /*
@@ -367,7 +369,8 @@ static int cspace_init_clone(void *arg) {
   /* Step-4: cSpace stays in this state forever
    * Accept capp CRUD calls from the parent process.
    */
-  
+  handle_crud_requests(space);
+
   return TRUE;
 }
 
@@ -658,7 +661,7 @@ static int handle_crud_requests(CSpace *space) {
 
     if (strcmp(cmd, CAPP_CMD_CREATE)==0) {
       handle_create_request(space, seqno, params);
-      // create_and_run_capp(space);
+      create_and_run_capps(space->apps);
     } else {
       log_error("Invalid command recevied: %s", cmd);
     }

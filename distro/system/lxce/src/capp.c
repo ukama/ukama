@@ -124,7 +124,7 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
   if (!config || !name || !tag || !space)
     return FALSE;
 
-#if 0
+#if 1
   if (path == NULL) {
     path = strdup(DEF_PATH);
   }
@@ -168,11 +168,13 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
  *               capps. Initially everything will be in 'pend'
  *
  */
-int capps_init(CApps **capps, Config *config, Manifest *manifest) {
+int capps_init(CApps **capps, Config *config, Manifest *manifest,
+	       void *space) {
 
   CApp *app=NULL;
   CAppList *pend=NULL;
   ArrayElem *ptr=NULL;
+  CSpace *sPtr=NULL;
 
   if (manifest == NULL || *capps) return FALSE;
 
@@ -191,8 +193,8 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
       continue;
     }
 
-    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->restart,
-		    ptr->contained);
+    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->contained,
+		    ptr->restart);
     if (app==NULL) {
       log_error("Error initializing the cApp. Name: %s Tag: %s Ignoring.",
 		ptr->name, ptr->tag);
@@ -200,6 +202,12 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
     }
 
     /* Find space pointer */
+    for (sPtr=(CSpace *)space; sPtr; sPtr=sPtr->next) {
+      if (strcmp(sPtr->name, ptr->contained)==0) {
+	app->space = sPtr;
+	break;
+      }
+    }
 
     /* Add the capp to pend list */
     add_to_apps(*capps, app, PEND_LIST, NULL);
@@ -212,14 +220,14 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
  * capp_start --
  *
  */
-void capps_start(CApps *capps, CSpaceThread *threads) {
+void capps_start(CApps *capps, void *th) {
 
   CAppList *ptr;
   CApp *capp;
   CSpace *cspace;
   ThreadShMem *shMem;
   ThreadShMem **listShMem=NULL;
-
+  CSpaceThread *threads = (CSpaceThread *)th;
   /*
    * For each app in the pend list:
    *   1. find the thread handling the capp space.

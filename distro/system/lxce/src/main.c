@@ -278,13 +278,13 @@ int main(int argc, char **argv) {
   }
 
   /* Step-5: Move all valid cApps into pending list/state. */
-  if (!capps_init(&apps, config, manifest)) {
+  if (!capps_init(&apps, config, manifest, cSpaces)) {
     log_error("Error initializing the cApps. Exiting.");
     exit(1);
   }
 
   /* Step-6: start capps via cspace threads */
-  capps_start(apps);
+  capps_start(apps, (void *)csThread);
 
   /* Step-6: open REST interface. */
   if (!start_web_services(config, &clientInst)) {

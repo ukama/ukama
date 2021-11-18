@@ -44,6 +44,10 @@ static int log_request(CSpaceThread *thread, int seqno, char *cmd,
 		       char *params);
 static void log_response(CSpaceThread *thread, int seq, char *resp);
 
+/* From shmem.c */
+extern int create_shared_memory(int *shmId, char *memFile, size_t size,
+				ThreadShMem **shmem);
+
 /*
  * init_cspace_thread --
  *
@@ -172,8 +176,6 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
     pthread_cond_init(&(cPtr->shMem->hasTX), NULL);
 
     thread->shMem = cPtr->shMem;
-
-    cPtr = cPtr->next;
   }
 
   cPtr->thread = thread;
@@ -194,7 +196,7 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
  */
 static void cspace_exit_check(CSpaceThread *thread) {
 
-  int status, ret=FALSE;
+  int status;
   pid_t w;
 
   /* check if the cspace exited */
@@ -209,20 +211,15 @@ static void cspace_exit_check(CSpaceThread *thread) {
     log_debug("Space exited. Space name: %s status: %d\n",
 	      thread->space->name, WEXITSTATUS(status));
     process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_NORMAL);
-    ret = TRUE;
   } else if (WIFSIGNALED(status)) {
     printf("Space killed. Space name: %s signal: %d\n",
 	   thread->space->name, WTERMSIG(status));
     process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_TERM);
-    ret = TRUE;
   } else if (WIFSTOPPED(status)) {
     printf("space stopped. Space name: %s signal %d\n",
 	   thread->space->name, WSTOPSIG(status));
     process_cspace_thread_exit(thread, CSPACE_THREAD_EXIT_STOP);
-    ret = TRUE;
   }
-
-  return ret;
 }
 
 /*
@@ -314,7 +311,7 @@ ThreadShMem *find_matching_thread_shmem(char *name) {
 
   CSThreadsList *ptr=NULL;
 
-  if (!name == NULL) return NULL;
+  if (name == NULL) return NULL;
 
   if (threadsList == NULL) return NULL;
 
@@ -333,12 +330,12 @@ ThreadShMem *find_matching_thread_shmem(char *name) {
  */
 static void process_parent_request(CSpaceThread *thread, PacketList *txList) {
 
-  PacketList *list;
-  CAppPacket *packet;
+  PacketList *list=NULL;
+  CAppPacket *packet=NULL;
   char *cmd=NULL, *params=NULL;
   int size;
 
-  if (list == NULL) return;
+  if (txList == NULL) return;
 
   /* Steps are:
    * For each capp request:

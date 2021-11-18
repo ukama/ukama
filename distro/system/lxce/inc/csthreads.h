@@ -104,5 +104,6 @@ CSpaceThread *init_cspace_thread(char *name, CSpace *space);
 int init_cspace_thread_list(void);
 int add_to_cspace_thread_list(CSpaceThread *thread);
 void* cspace_thread_start(void *args);
+ThreadShMem *find_matching_thread_shmem(char *name);
 
 #endif /* CSTHREAD_H */
