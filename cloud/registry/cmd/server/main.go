@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"os"
+
 	"github.com/ukama/ukamaX/cloud/registry/pkg"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
-	"net"
-	"os"
 
 	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
 
 	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	pbhealth "github.com/ukama/ukamaX/cloud/registry/pb/gen/health"
 
 	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/server"
@@ -18,9 +16,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
+	ugrpc "github.com/ukama/ukamaX/common/grpc"
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 var svcConf *pkg.Config
@@ -51,20 +49,14 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	log.Infof("Starting gRpc on port " + fmt.Sprintf(":%d", svcConf.Grpc.Port))
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", svcConf.Grpc.Port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
 	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb),
 		db.NewNodeRepo(gormdb),
 		bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth)),
 		svcConf.DeviceGatewayHost)
-	generated.RegisterRegistryServiceServer(s, regServer)
-	pbhealth.RegisterHealthServer(s, server.NewHealthChecker())
-	reflection.Register(s)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
+
+	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {
+		generated.RegisterRegistryServiceServer(s, regServer)
+	})
+
+	grpcServer.StartServer()
 }

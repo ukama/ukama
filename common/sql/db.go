@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
 	wrp "github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,7 +28,7 @@ type Db interface {
 	GetGormDb() *gorm.DB
 	Init(model ...interface{}) error
 	Connect() error
-	ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error ) (err error)
+	ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) (err error)
 }
 
 func NewDb(dbConfig config.Database, debugMode bool) Db {
@@ -46,11 +47,13 @@ func (d *db) initDbConn() error {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "3D000" {
+			logrus.Info("Database does not exist")
 			err = d.createDb()
 			if err != nil {
 				return wrp.Wrap(err, "error creating database")
 			}
-			return d.initDbConn()
+			logrus.Info("Connecting to newly created database")
+			return d.Connect()
 		}
 		return wrp.Wrap(err, "error setting default database")
 	}
@@ -76,7 +79,7 @@ func (d *db) Connect() error {
 		loggerConf,
 	)
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: newLogger,
+		Logger:                 newLogger,
 		SkipDefaultTransaction: true,
 	})
 	d.gorm = db
@@ -89,12 +92,13 @@ func (d *db) formatDbInfo(dbName string) string {
 		sslMode = "enable"
 	}
 
-	dsn := fmt.Sprintf("host=%s user=postgres password=%s database=%s port=%d sslmode=%s",
-		d.dbConfig.Host, d.dbConfig.Password, dbName, d.dbConfig.Port, sslMode)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s database=%s port=%d sslmode=%s",
+		d.dbConfig.Host, d.dbConfig.Username, d.dbConfig.Password, dbName, d.dbConfig.Port, sslMode)
 	return dsn
 }
 
 func (d *db) migrateDb(dst ...interface{}) error {
+	logrus.Info("Migrating DB")
 	err := d.GetGormDb().AutoMigrate(dst...)
 	if err != nil {
 		return err
@@ -130,6 +134,7 @@ func (d *db) Init(model ...interface{}) error {
 
 func (d *db) createDb() error {
 	dbInfo := d.formatDbInfo("postgres")
+	logrus.Info("Creating database ", d.dbConfig.DbName)
 	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		return err
@@ -151,9 +156,9 @@ func IsDuplicateKeyError(err error) bool {
 
 // ExecuteInTransaction executes dbOperation in transaction with all nested functions
 // if any of nested function returns error then transaction is rolled back
-func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error ) (error){
+func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
 	return d.gorm.Transaction(func(tx *gorm.DB) error {
-		d := dbOperation (tx)
+		d := dbOperation(tx)
 
 		if d.Error != nil {
 			return d.Error

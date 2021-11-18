@@ -10,6 +10,11 @@ import (
 	"net/http"
 )
 
+type GrpcClientError struct {
+	HttpCode int
+	Message  string
+}
+
 func marshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
 
 	clientError, done := marshalError(err)
@@ -31,7 +36,7 @@ func marshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
 	return string(b), nil
 }
 
-func marshalError(err error) (*GrpcClientError, bool) {
+func marshalError(err error) (grpcError *GrpcClientError, isItAnError bool) {
 	if err != nil {
 		var customStatus *grpcGate.HTTPStatusError
 		if errors.As(err, &customStatus) {

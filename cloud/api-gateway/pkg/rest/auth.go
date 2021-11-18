@@ -56,8 +56,7 @@ func (r *KratosAuthMiddleware) isTokenValid(request *http.Request) (userId strin
 		logrus.Warning("Can't read cookie: ", err)
 	}
 	if err == nil {
-		resp, err = client.R().
-			EnableTrace().SetCookie(cookie).
+		resp, err = client.R().SetCookie(cookie).
 			Get(kratosUrl)
 	} else {
 		authHeader := request.Header.Get("authorization")
@@ -72,8 +71,7 @@ func (r *KratosAuthMiddleware) isTokenValid(request *http.Request) (userId strin
 		token := authHeader[6:]
 		token = strings.TrimSpace(token)
 
-		resp, err = client.R().
-			EnableTrace().SetHeader("X-Session-Token", token).
+		resp, err = client.R().SetHeader("X-Session-Token", token).
 			Get(kratosUrl)
 	}
 

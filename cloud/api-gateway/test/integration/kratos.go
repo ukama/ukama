@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	ory "github.com/ory/kratos-client-go"
+	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
-	"os"
 	"strings"
 )
 
@@ -38,23 +38,13 @@ func NewSDKForSelfHosted(endpoint string) *ory.APIClient {
 	return ory.NewAPIClient(conf)
 }
 
-func ExitOnError(err error) {
-	if err == nil {
-		return
-	}
-	out, _ := json.MarshalIndent(err, "", "  ")
-	fmt.Printf("%s\n\nAn error occurred: %+v\n", out, err)
-	os.Exit(1)
-}
-
-func SDKExitOnError(err error, res *http.Response) {
+func LogKratosSdkError(err error, res *http.Response) {
 	if err == nil {
 		return
 	}
 	body, _ := json.MarshalIndent(json.RawMessage(MustReadAll(res.Body)), "", "  ")
 	out, _ := json.MarshalIndent(err, "", "  ")
-	fmt.Printf("%s\n\nAn error occurred: %+v\nbody: %s\n", out, err, body)
-	os.Exit(1)
+	logrus.Printf("%s\n\nAn error occurred: %+v\nbody: %s\n", out, err, body)
 }
 
 func RandomCredentials() (email, password string) {
@@ -64,7 +54,7 @@ func RandomCredentials() (email, password string) {
 }
 
 // CreateIdentityWithSession creates an identity and an Ory Session Token for it.
-func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.Session, string) {
+func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.Session, string, error) {
 	ctx := context.Background()
 
 	if email == "" && password == "" {
@@ -72,11 +62,13 @@ func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.S
 	}
 
 	// Initialize a registration flow
-	flow, _, err := c.V0alpha1Api.InitializeSelfServiceRegistrationFlowWithoutBrowser(ctx).Execute()
-	ExitOnError(err)
+	flow, _, err := c.V0alpha2Api.InitializeSelfServiceRegistrationFlowWithoutBrowser(ctx).Execute()
+	if err != nil {
+		return nil, "", err
+	}
 
 	// Submit the registration flow
-	result, res, err := c.V0alpha1Api.SubmitSelfServiceRegistrationFlow(ctx).Flow(flow.Id).SubmitSelfServiceRegistrationFlowBody(
+	result, res, err := c.V0alpha2Api.SubmitSelfServiceRegistrationFlow(ctx).Flow(flow.Id).SubmitSelfServiceRegistrationFlowBody(
 		ory.SubmitSelfServiceRegistrationFlowWithPasswordMethodBodyAsSubmitSelfServiceRegistrationFlowBody(&ory.SubmitSelfServiceRegistrationFlowWithPasswordMethodBody{
 			Method:   "password",
 			Password: password,
@@ -84,11 +76,15 @@ func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.S
 		}),
 	).Execute()
 
-	SDKExitOnError(err, res)
+	LogKratosSdkError(err, res)
+
+	if err != nil {
+		return nil, "", err
+	}
 
 	if result.Session == nil {
 		log.Fatalf("The server is expected to create sessions for new registrations.")
 	}
 
-	return result.Session, *result.SessionToken
+	return result.Session, *result.SessionToken, nil
 }

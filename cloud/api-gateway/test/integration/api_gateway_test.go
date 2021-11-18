@@ -45,7 +45,12 @@ func loadConfig() *TestConfig {
 }
 
 func (i *IntegrationTestSuite) Test_RegistryApi() {
-	login := i.Login()
+	login, err := i.Login()
+	if err != nil {
+		i.NoError(err, "Failed to login to Kratos")
+		return
+	}
+
 	client := resty.New()
 
 	PrintJSONPretty(login)
@@ -54,11 +59,11 @@ func (i *IntegrationTestSuite) Test_RegistryApi() {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			Get(i.getApiUrl() + "/orgs/org-1")
+			Get(i.getApiUrl() + "/orgs/" + "someRandomOrgThatShouldNotExist")
 
 		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
-		i.Assert().NotEmpty(resp.String())
+		i.Assert().Equal(http.StatusNotFound, resp.StatusCode())
+		i.Assert().Contains(resp.String(), "Organization not found")
 	})
 
 	i.Run("GetNodesUnauthorized", func() {
@@ -86,35 +91,41 @@ func (i *IntegrationTestSuite) getApiUrl() string {
 }
 
 func (i *IntegrationTestSuite) getKratosUrl() string {
-	return "https://" + i.config.BaseDomain + "/.ory/kratos/public"
+	return "https://auth." + i.config.BaseDomain + "/.api"
 }
 
-func (i *IntegrationTestSuite) Login() *ory.SuccessfulSelfServiceLoginWithoutBrowser {
+func (i *IntegrationTestSuite) Login() (*ory.SuccessfulSelfServiceLoginWithoutBrowser, error) {
 	var client = NewSDKForSelfHosted(i.getKratosUrl())
 
 	ctx := context.Background()
 
 	// Create a temporary user
 	email, password := RandomCredentials()
-	_, _ = CreateIdentityWithSession(client, email, password)
+	_, _, err := CreateIdentityWithSession(client, email, password)
 
 	// Initialize the flow
-	flow, res, err := client.V0alpha1Api.InitializeSelfServiceLoginFlowWithoutBrowser(ctx).Execute()
-	SDKExitOnError(err, res)
+	flow, res, err := client.V0alpha2Api.InitializeSelfServiceLoginFlowWithoutBrowser(ctx).Execute()
+	LogKratosSdkError(err, res)
+	if err != nil {
+		return nil, err
+	}
 
 	// If you want, print the flow here:
 	//
 	PrintJSONPretty(flow)
 
 	// Submit the form
-	result, res, err := client.V0alpha1Api.SubmitSelfServiceLoginFlow(ctx).Flow(flow.Id).SubmitSelfServiceLoginFlowBody(
+	result, res, err := client.V0alpha2Api.SubmitSelfServiceLoginFlow(ctx).Flow(flow.Id).SubmitSelfServiceLoginFlowBody(
 		ory.SubmitSelfServiceLoginFlowWithPasswordMethodBodyAsSubmitSelfServiceLoginFlowBody(&ory.SubmitSelfServiceLoginFlowWithPasswordMethodBody{
 			Method:             "password",
 			Password:           password,
 			PasswordIdentifier: email,
 		}),
 	).Execute()
-	SDKExitOnError(err, res)
+	LogKratosSdkError(err, res)
+	if err != nil {
+		return nil, err
+	}
 
-	return result
+	return result, nil
 }

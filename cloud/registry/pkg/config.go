@@ -7,14 +7,10 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	DB                config.Database
-	Grpc              Grpc
+	Grpc              config.Grpc
 	BootstrapAuth     Auth
 	BootstrapUrl      string
 	DeviceGatewayHost string // should be an IP
-}
-
-type Grpc struct {
-	Port int
 }
 
 type Auth struct {
@@ -35,7 +31,7 @@ func NewConfig() *Config {
 			Port:       5432,
 			SslEnabled: false,
 		},
-		Grpc: Grpc{
+		Grpc: config.Grpc{
 			Port: 9090,
 		},
 		BootstrapAuth: Auth{

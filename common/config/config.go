@@ -14,16 +14,20 @@ type BaseConfig struct {
 }
 
 type Database struct {
-	Host     string
-	Password string
-	DbName   string
-	Username string
+	Host       string
+	Password   string
+	DbName     string
+	Username   string
 	SslEnabled bool
-	Port int
+	Port       int
 }
 
-type Rebbitmq struct {
+type Queue struct {
 	Uri string
+}
+
+type Grpc struct {
+	Port int
 }
 
 // LoadConfig loads configuration into `config` object

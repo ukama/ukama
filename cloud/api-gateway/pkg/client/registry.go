@@ -9,11 +9,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-type GrpcClientError struct {
-	HttpCode int
-	Message  string
-}
-
 type Registry struct {
 	conn    *grpc.ClientConn
 	client  pb.RegistryServiceClient

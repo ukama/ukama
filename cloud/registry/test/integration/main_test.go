@@ -3,10 +3,10 @@
 package integration
 
 import (
-	"github.com/ukama/ukamaX/common/config"
 	"testing"
 
-	"github.com/go-yaml/yaml"
+	"github.com/ukama/ukamaX/common/config"
+
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
@@ -21,14 +21,12 @@ func loadConfig() *TestConfig {
 		RegistryHost: "localhost:9090",
 		Rabbitmq:     "amqp://guest:guest@localhost:5672",
 	}
-	b, err := yaml.Marshal(testConf)
-	if err != nil {
-		logrus.Fatal(err.Error())
-	}
+
 	config.LoadConfig("integration", testConf)
 
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: REGISTRYHOST")
-	logrus.Infoln(string(b))
+	//b, err := yaml.Marshal(testConf)
+	logrus.Infof("Config: %+v\n", testConf)
 
 	return testConf
 }

@@ -22,24 +22,14 @@ const (
 	EventDeviceCreate                            RoutingKey = "EVENT.DEVICE.CREATE.*"
 )
 
-/*
- * AMQP Routing key:
- * <type>.<source>.<container>.<object>.<state>
- *
- * type:       event, request, response
- * source:     cloud, device
- * container:  mesh
- * object:     link, cert
- * state:      connect, fail, active, lost, end, close, valid, invalid, update
- *             expired
- *
- */
 const (
 	DeviceConnectedRoutingKey RoutingKey = "event.device.mesh.link.connect"
+
+	DefaultExchange = "amq.topic"
 )
 
 var DeviceQ = MsgBusQConfig{
-	Exchange:     "amq.direct",
+	Exchange:     DefaultExchange,
 	Queue:        "DEVICE_HANDLE_QUEUE",
 	ExchangeType: "direct",
 	ReqRountingKeys: []RoutingKey{

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package foo.v1;
+
+
+service FooService {
+    rpc GetFoo(GetFooRequest) returns (GetFooResponse);
+}
+
+message GetFooRequest {
+    string name = 1;    
+}
+
+message GetFooResponse{
+    Foo foo = 1;
+}
+
+message Foo {
+    string name = 1;
+}

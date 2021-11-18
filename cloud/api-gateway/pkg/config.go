@@ -21,6 +21,7 @@ type Kratos struct {
 type GrpcEndpoints struct {
 	TimeoutSeconds int `mapstructure:"timeoutSeconds"`
 	Registry       string
+	Hss            string
 }
 
 func NewConfig() *Config {
@@ -40,6 +41,7 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			TimeoutSeconds: 5,
 			Registry:       "registry:9090",
+			Hss:            "hss:9090",
 		},
 		Cors: defaultCors,
 	}

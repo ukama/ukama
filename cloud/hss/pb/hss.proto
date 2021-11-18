@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package hss.v1;
+
+
+service ImsiService {
+    rpc Get(GetImsiRequest) returns (GetImsiResponse);
+    rpc Add(AddImsiRequest) returns (AddImsiResponse);
+    rpc Update(UpdateImsiRequest) returns (UpdateImsiResponse);
+    rpc Delete(DeleteImsiRequest) returns (DeleteImsiResponse);
+}
+
+service UserService {
+    // adds new user with IMSI
+    rpc Add (AddUserRequest) returns (AddUserResponse);
+    // deletes user and IMSI that is assigend to him
+    rpc Delete (DeleteUserRequest) returns (DeleteUserResponse);
+    // lists all users for organization
+    rpc List(ListUsersRequest) returns (ListUsersResponse);
+}
+
+message ImsiRecord {
+    string imsi = 1;
+    AuthVector authVector = 2;
+    bytes key = 3;
+    bytes op = 4;
+    bytes amf = 5;
+    string defaultApnName = 6;
+}
+message AuthVector{
+    bytes token = 1;
+    bytes response = 2;
+    bytes cipherKey = 3;
+    bytes integrityKey = 4;
+}
+
+message GetImsiRequest {
+    string org = 1;
+    string imsi = 2;
+}
+
+
+message GetImsiResponse{
+    ImsiRecord imsi = 1;
+}
+
+message AddImsiRequest {
+    string org = 1;
+    ImsiRecord imsi = 2;
+}
+
+message AddImsiResponse {
+
+}
+
+message UpdateImsiRequest{
+    string imsi_to_update =1;
+    ImsiRecord imsi = 2; // imsi field cannot be updated
+}
+
+message UpdateImsiResponse{
+
+}
+
+message DeleteImsiRequest{
+    string org = 1;
+    string imsi = 2;
+}
+
+message DeleteImsiResponse {
+
+}
+
+message AddUserRequest{
+    string org = 1;
+    User user = 2;
+}
+
+message AddUserResponse{
+    User user = 2;
+}
+
+message DeleteUserRequest{
+    string org = 1;
+    string userUuid = 2;
+}
+
+message DeleteUserResponse {
+
+}
+
+message User {
+    string imsi = 1;
+    string firstName = 2;
+    string lastName = 3;
+    string email = 4;
+    string phone = 5;
+    string uuid = 6;
+}
+
+message ListUsersRequest {
+    string org =1;
+}
+
+message ListUsersResponse{
+    string org =1;
+    repeated  User users = 2;
+}

@@ -72,6 +72,7 @@ func (HealthCheckResponse_ServingStatus) EnumDescriptor() ([]byte, []int) {
 	return file_pb_health_proto_rawDescGZIP(), []int{1, 0}
 }
 
+// refer to https://github.com/grpc/grpc/blob/master/doc/health-checking.md
 type HealthCheckRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

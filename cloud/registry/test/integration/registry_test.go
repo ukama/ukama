@@ -58,32 +58,40 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 
 	var r interface{}
 
-	r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: i.orgName, Owner: ownerId.String()})
-	i.handleResponse(err, r)
-
-	r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: i.orgName})
-	i.handleResponse(err, r)
-
-	r, err = c.AddNode(ctx, &pb.AddNodeRequest{
-		Node: &pb.Node{
-			NodeId: node.String(),
-			State:  pb.NodeState_UNDEFINED,
-		},
-		OrgName: i.orgName,
+	i.Run("AddNode", func() {
+		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: i.orgName, Owner: ownerId.String()})
+		i.handleResponse(err, r)
 	})
-	i.handleResponse(err, r)
 
-	r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
-	i.handleResponse(err, r)
+	i.Run("GetNode", func() {
+		r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: i.orgName})
+		i.handleResponse(err, r)
+	})
 
-	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
-	i.handleResponse(err, nodeResp)
-	i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
+	i.Run("UpdateNode", func() {
+		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
+			Node: &pb.Node{
+				NodeId: node.String(),
+				State:  pb.NodeState_UNDEFINED,
+			},
+			OrgName: i.orgName,
+		})
+		i.handleResponse(err, r)
 
-	nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{Owner: ownerId.String()})
-	i.handleResponse(err, nodesResp)
-	i.Assert().Equal(1, len(nodesResp.Orgs[0].Nodes))
-	i.Assert().Equal(node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
+		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
+		i.handleResponse(err, r)
+
+		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
+		i.handleResponse(err, nodeResp)
+		i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
+	})
+
+	i.Run("GetNodes", func() {
+		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{Owner: ownerId.String()})
+		i.handleResponse(err, nodesResp)
+		i.Assert().Equal(1, len(nodesResp.Orgs[0].Nodes))
+		i.Assert().Equal(node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
+	})
 }
 
 func getContext() context.Context {
@@ -158,7 +166,7 @@ func (i *IntegrationTestSuite) sendMessageToQueue(nodeId string) error {
 
 	message, err := proto.Marshal(&external.Link{Uuid: &nodeId})
 	i.Assert().NoError(err)
-	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "direct")
+	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
 	i.Assert().NoError(err)
 	return err
 }

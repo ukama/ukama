@@ -1,7 +1,9 @@
 package msgbus
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"log"
 	"math/rand"
 	"strings"
@@ -12,8 +14,6 @@ import (
 )
 
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
-
-type RoutingKey string
 
 // Defines our interface for connecting and consuming messages.
 // Deprecated: use Publisher or Consumer instead
@@ -35,6 +35,8 @@ type Publisher interface {
 	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
 	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
 	PublishOnQueue(msg []byte, queueName string) error
+	PublishOnExchange(exchange string, routingKey string, body interface{}) error
+	IsClosed() bool
 	Close()
 }
 
@@ -42,13 +44,15 @@ type Consumer interface {
 	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	IsClosed() bool
 	Close()
 }
 
 // Real implementation, encapsulates a pointer to an amqp.Connection
 type MsgClient struct {
-	conn *amqp.Connection
-	log  *logrus.Entry
+	conn    *amqp.Connection
+	log     *logrus.Entry
+	channel *amqp.Channel
 }
 
 //Servcie Config
@@ -89,7 +93,8 @@ func NewConsumerClient(connectionString string) (Consumer, error) {
 	return createClient(connectionString)
 }
 
-// creates a message publisher and initializes connection
+// NewPublisherClient creates a publisher and opens connection and channel
+// Use one publisher per thread as it's common practice to use one channel per thread
 func NewPublisherClient(connectionString string) (Publisher, error) {
 	return createClient(connectionString)
 }
@@ -99,10 +104,19 @@ func createClient(connectionString string) (*MsgClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &MsgClient{
-		conn: conn,
-		log:  logrus.WithField("prefix", ""),
-	}, nil
+
+	channel, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	client := &MsgClient{
+		conn:    conn,
+		channel: channel,
+		log:     logrus.WithField("prefix", ""),
+	}
+
+	return client, nil
 }
 
 func RemovePassFromConnection(connectioStr string) string {
@@ -122,7 +136,7 @@ func connectClient(connectionString string) (*amqp.Connection, error) {
 //Connect to Broker(RabbitMq server)
 func (m *MsgClient) ConnectToBroker(connectionString string) {
 	if connectionString == "" {
-		m.log.Errorln("Cannot initialize connection to broker, connectionString not set.")
+		panic("Cannot initialize connection to broker, connectionString not set.")
 	}
 
 	conn := false
@@ -140,29 +154,24 @@ func (m *MsgClient) ConnectToBroker(connectionString string) {
 
 //Publish to queue through exchange
 func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error {
-	ch, err := m.createChannel()
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
 
-	err = m.declareExchange(ch, exchangeName, exchangeType)
+	err := m.declareExchange(m.channel, exchangeName, exchangeType)
 	if err != nil {
 		return err
 	}
 
-	queue, err := m.declareQueue(ch, queueName, false)
+	queue, err := m.declareQueue(m.channel, queueName, false)
 	if err != nil {
 		return err
 	}
 
-	err = m.bindQueue(ch, queue.Name, routingKey, exchangeName)
+	err = m.bindQueue(m.channel, queue.Name, routingKey, exchangeName)
 	if err != nil {
 		return err
 	}
 
 	// Publishes a message onto the queue.
-	err = ch.Publish(
+	err = m.channel.Publish(
 		exchangeName,       // exchange
 		string(routingKey), // routing key
 		false,              // mandatory
@@ -181,19 +190,13 @@ func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, 
 
 // Publish to Queue.
 func (m *MsgClient) PublishOnQueue(body []byte, queueName string) error {
-	ch, err := m.createChannel()
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
-
-	queue, err := m.declareQueue(ch, queueName, false)
+	queue, err := m.declareQueue(m.channel, queueName, false)
 	if err != nil {
 		return err
 	}
 
 	// Publishes a message onto the queue.
-	err = ch.Publish(
+	err = m.channel.Publish(
 		"",         // exchange
 		queue.Name, // routing key
 		false,      // mandatory
@@ -208,6 +211,32 @@ func (m *MsgClient) PublishOnQueue(body []byte, queueName string) error {
 		m.log.Debugf("Message was sent on Queue %s ", queue.Name)
 	}
 	return err
+}
+
+// PublishOnExchange publishes event to an exchange
+// body - an object that is marshalled to json
+func (m *MsgClient) PublishOnExchange(exchange string, routingKey string, body interface{}) error {
+	bodyJson, err := json.Marshal(body)
+	if err != nil {
+		return errors.Wrap(err, "error marshalling the body")
+	}
+
+	// Publishes a message onto the queue.
+	err = m.channel.Publish(
+		exchange,   // exchange
+		routingKey, // routing key
+		false,      // mandatory
+		false,      // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        bodyJson, // Our JSON body as []byte
+		})
+	if err != nil {
+		return errors.Wrap(err, "failed to publish message to queue")
+	}
+
+	m.log.Debugf("Message was sent to exchange %s ", exchange)
+	return nil
 }
 
 // Subscribe to exchange with option to listen to particular typr of message
@@ -353,9 +382,13 @@ func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, hand
 
 // Close connection
 func (m *MsgClient) Close() {
-	if m.conn != nil {
+	if m.conn != nil && !m.conn.IsClosed() {
 		m.conn.Close()
 	}
+}
+
+func (m *MsgClient) IsClosed() bool {
+	return m.conn.IsClosed()
 }
 
 // Read messages from Queue.

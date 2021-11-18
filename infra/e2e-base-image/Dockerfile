@@ -19,7 +19,7 @@ RUN  curl https://github.com/gotestyourself/gotestsum/releases/download/v1.7.0/g
         mv ./gotestsum /usr/bin/gotestsum
 
 ENV ON_PREMISE=true
-ENV TESTHUB_DOMAIN=api.testhub.dev.ukama.com
+ENV TESTHUB_DOMAIN=testhub-api.dev.ukama.com
 
 RUN echo "gotestsum --raw-command --junitfile report.xml --  test2json /usr/bin/integration -test.v" > run.sh
 RUN echo "export TESTS_RESULT=\$?" >> run.sh
