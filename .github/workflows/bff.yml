@@ -56,18 +56,18 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
-            - name: SonarCloud Scan
-              uses: sonarsource/sonarcloud-github-action@v1.6
-              env:
-                  GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              with:
-                  args: >
-                      -Dsonar.organization=ukama
-                      -Dsonar.projectKey=ukama_frontend_bff
-                      -Dsonar.projectName=ukama-bff                                                          
-                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-                      -Dsonar.sources=.
+#             - name: SonarCloud Scan
+#               uses: sonarsource/sonarcloud-github-action@v1.6
+#               env:
+#                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+#                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#               with:
+#                   args: >
+#                       -Dsonar.organization=ukama
+#                       -Dsonar.projectKey=ukama_frontend_bff
+#                       -Dsonar.projectName=ukama-bff                                                          
+#                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+#                       -Dsonar.sources=.
     lint:
         name: lint
         runs-on: ubuntu-latest
