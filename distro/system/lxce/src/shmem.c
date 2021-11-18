@@ -65,6 +65,8 @@ int create_shared_memory(int *shmId, char *memFile, size_t size,
     return FALSE;
   }
 
+  memset(*shmem, 0, size);
+
   return TRUE;
 }
 

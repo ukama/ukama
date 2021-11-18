@@ -104,6 +104,7 @@ void clear_capp(CApp *capp) {
   if (capp->params) {
     free(capp->params->name);
     free(capp->params->tag);
+    free(capp->params->space);
     if (capp->params->path) free(capp->params->path);
 
     free(capp->params);

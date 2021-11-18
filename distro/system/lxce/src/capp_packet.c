@@ -69,18 +69,21 @@ int create_capp_tx_packet(CApp *capp, PacketList **list, int reqType) {
   if (capp==NULL || list==NULL) return FALSE;
 
   if (*list == NULL) { /* First entry */
-    if (!init_capp_packet_list(list))
+    if (!init_capp_packet_list(list)) {
       return FALSE;
-  }
+    }
+    ptr = *list;
+  } else {
 
-  while (ptr->next) {
-    ptr=ptr->next;
-  }
+    while (ptr->next) {
+      ptr=ptr->next;
+    }
 
-  ptr = (PacketList *)malloc(sizeof(PacketList));
-  if (!ptr) {
-    log_error("Memory allocation error. size: %d", sizeof(PacketList));
-    return FALSE;
+    ptr = (PacketList *)malloc(sizeof(PacketList));
+    if (!ptr) {
+      log_error("Memory allocation error. size: %d", sizeof(PacketList));
+      return FALSE;
+    }
   }
 
   packet = (CAppPacket *)malloc(sizeof(CAppPacket));
