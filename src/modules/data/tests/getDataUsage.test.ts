@@ -20,6 +20,13 @@ describe("Get Data Usage", () => {
             variableValues: {
                 data: TIME_FILTER.MONTH,
             },
+            contextValue: {
+                req: {
+                    headers: {
+                        authorization: "test",
+                    },
+                },
+            },
         });
 
         expect(response).toMatchObject({

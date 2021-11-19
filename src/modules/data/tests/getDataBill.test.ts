@@ -20,6 +20,13 @@ describe("Get Data Bill", () => {
             variableValues: {
                 data: DATA_BILL_FILTER.CURRENT,
             },
+            contextValue: {
+                req: {
+                    headers: {
+                        authorization: "test",
+                    },
+                },
+            },
         });
 
         expect(response).toMatchObject({

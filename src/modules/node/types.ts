@@ -21,3 +21,15 @@ export class NodesResponse extends PaginationResponse {
     @Field(() => [NodeDto])
     nodes: NodeDto[];
 }
+
+@ObjectType()
+export class NodeResponse {
+    @Field()
+    status: string;
+
+    @Field(() => [NodeDto])
+    data: NodeDto[];
+
+    @Field()
+    length: number;
+}

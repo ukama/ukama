@@ -2,12 +2,14 @@ import { Request, Response } from "express";
 import {
     CONNECTED_USER_TYPE,
     DATA_BILL_FILTER,
+    GET_USER_TYPE,
     TIME_FILTER,
 } from "../constants";
 import { AlertDto } from "../modules/alert/types";
+import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { ResidentDto } from "../modules/resident/types";
-import { UserDto } from "../modules/user/types";
+import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual-extensions";
 
 export const getUser = (req: Request, res: Response): void => {
@@ -139,7 +141,7 @@ export const getNodes = (req: Request, res: Response): void => {
 };
 
 export const getResidents = (req: Request, res: Response): void => {
-    const data = casual.randomArray<ResidentDto>(1, 10, casual._resident);
+    const data = casual.randomArray<ResidentDto>(3, 30, casual._resident);
 
     const pageNo = Number(req.query.pageNo);
     const pageSize = Number(req.query.pageSize);
@@ -155,6 +157,60 @@ export const getResidents = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: residents,
+        length: data.length,
+    });
+};
+
+export const getEsims = (req: Request, res: Response): void => {
+    const data = casual.randomArray<EsimDto>(3, 10, casual._esim);
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+
+export const activateUser = (req: Request, res: Response): void => {
+    const { body } = req;
+    const data = {
+        success: false,
+    };
+
+    if (body.firstName && body.lastName && body.eSimNumber) data.success = true;
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+
+export const getUsers = (req: Request, res: Response): void => {
+    let data;
+    const filter = req.query.type?.toString();
+
+    if (
+        filter !== GET_USER_TYPE.ALL ||
+        GET_USER_TYPE.GUEST ||
+        GET_USER_TYPE.HOME ||
+        GET_USER_TYPE.RESIDENT ||
+        GET_USER_TYPE.VISITOR
+    )
+        data = {};
+    data = casual.randomArray<GetUserDto>(3, 30, casual._getUser);
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let users = [];
+    if (!pageNo) users = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) users.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: users,
         length: data.length,
     });
 };

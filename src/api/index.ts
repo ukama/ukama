@@ -16,8 +16,8 @@ class ApiMethods {
             data: body,
             headers: headers,
             params: params,
-        }).catch(() => {
-            return null;
+        }).catch(err => {
+            throw err;
         });
     };
 }

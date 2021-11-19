@@ -1,11 +1,17 @@
 import * as defaultCasual from "casual";
-import { ALERT_TYPE, CONNECTED_USER_TYPE } from "../../constants";
+import {
+    ALERT_TYPE,
+    CONNECTED_USER_TYPE,
+    DATA_PLAN_TYPE,
+    GET_USER_STATUS_TYPE,
+} from "../../constants";
 import { AlertDto } from "../../modules/alert/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
+import { EsimDto } from "../../modules/esim/types";
 import { NodeDto } from "../../modules/node/types";
 import { ResidentDto } from "../../modules/resident/types";
 
-import { UserDto } from "../../modules/user/types";
+import { GetUserDto, UserDto } from "../../modules/user/types";
 
 function randomArray<T>(
     minLength: number,
@@ -68,6 +74,33 @@ const resident = (): ResidentDto => {
         usage: `${defaultCasual.integer(1, 999)}GB`,
     };
 };
+const getUser = (): GetUserDto => {
+    const node = {
+        Default: "Default",
+        Intermediate: "Intermediate",
+    };
+    return {
+        status: defaultCasual.random_value(GET_USER_STATUS_TYPE),
+        name: defaultCasual._name(),
+        node: `${defaultCasual.random_value(node)} Data Plan`,
+        dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
+        dataUsage: "Table cell",
+        dlActivity: "Table cell",
+        ulActivity: "Table cell",
+    };
+};
+const esim = (): EsimDto => {
+    const boolean = {
+        true: true,
+        false: false,
+    };
+    return {
+        esim: `# ${defaultCasual.integer(11111, 99999)}-${defaultCasual.date(
+            "DD-MM-YYYY"
+        )}-${defaultCasual.integer(1111111, 9999999)}`,
+        active: defaultCasual.random_value(boolean),
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -82,6 +115,8 @@ interface Generators extends Casual.Generators {
     _alert: () => AlertDto;
     _node: () => NodeDto;
     _resident: () => ResidentDto;
+    _esim: () => EsimDto;
+    _getUser: () => GetUserDto;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -96,6 +131,8 @@ interface functions extends Casual.functions {
     alert: () => AlertDto;
     node: () => NodeDto;
     resident: () => ResidentDto;
+    getUser: () => GetUserDto;
+    esim: () => EsimDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -105,6 +142,8 @@ defaultCasual.define("dataBill", dataBill);
 defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
 defaultCasual.define("resident", resident);
+defaultCasual.define("esim", esim);
+defaultCasual.define("getUser", getUser);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 

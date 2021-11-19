@@ -23,3 +23,20 @@ export class DataBillDto {
     @Field()
     billDue: string;
 }
+@ObjectType()
+export class DataUsageResponse {
+    @Field()
+    data: DataUsageDto;
+
+    @Field()
+    status: string;
+}
+
+@ObjectType()
+export class DataBillResponse {
+    @Field()
+    data: DataBillDto;
+
+    @Field()
+    status: string;
+}

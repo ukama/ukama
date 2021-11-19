@@ -37,6 +37,13 @@ describe("Get Residents", () => {
             variableValues: {
                 input: meta,
             },
+            contextValue: {
+                req: {
+                    headers: {
+                        authorization: "test",
+                    },
+                },
+            },
         });
 
         expect(response).toMatchObject({

@@ -1,13 +1,19 @@
 import { IUserMapper } from "./interface";
-import { ConnectedUserDto } from "./types";
+import {
+    ConnectedUserDto,
+    ConnectedUserResponse,
+    GetUserDto,
+    GetUserResponseDto,
+} from "./types";
 
 class UserMapper implements IUserMapper {
-    connectedUsersDtoToDto = (res: ConnectedUserDto): ConnectedUserDto => {
-        return {
-            totalUser: Number(res.totalUser),
-            residentUsers: Number(res.residentUsers),
-            guestUsers: Number(res.guestUsers),
-        };
+    connectedUsersDtoToDto = (res: ConnectedUserResponse): ConnectedUserDto => {
+        const connectedUsers = res.data;
+        return connectedUsers;
+    };
+    dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
+        const users = res.data;
+        return users;
     };
 }
 export default <IUserMapper>new UserMapper();

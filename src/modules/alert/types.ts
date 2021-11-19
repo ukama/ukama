@@ -25,3 +25,15 @@ export class AlertsResponse extends PaginationResponse {
     @Field(() => [AlertDto])
     alerts: AlertDto[];
 }
+
+@ObjectType()
+export class AlertResponse {
+    @Field()
+    status: string;
+
+    @Field(() => [AlertDto])
+    data: AlertDto[];
+
+    @Field()
+    length: number;
+}

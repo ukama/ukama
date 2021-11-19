@@ -59,3 +59,31 @@ export enum API_METHOD_TYPE {
 registerEnumType(API_METHOD_TYPE, {
     name: "API_METHOD_TYPE",
 });
+
+export enum GET_USER_STATUS_TYPE {
+    ACTIVE = "ACTIVE",
+    INACTIVE = "INACTIVE",
+}
+registerEnumType(GET_USER_STATUS_TYPE, {
+    name: "GET_USER_STATUS_TYPE",
+});
+
+export enum DATA_PLAN_TYPE {
+    NA = "NA",
+    PAID = "PAID",
+    UNPAID = "UNPAID",
+}
+registerEnumType(DATA_PLAN_TYPE, {
+    name: "DATA_PLAN_TYPE",
+});
+
+export enum GET_USER_TYPE {
+    ALL = "ALL",
+    RESIDENT = "RESIDENT",
+    VISITOR = "VISITOR",
+    HOME = "HOME",
+    GUEST = "GUEST",
+}
+registerEnumType(GET_USER_TYPE, {
+    name: "GET_USER_TYPE",
+});

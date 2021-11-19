@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { API_METHOD_TYPE } from "../constants";
+import { Request } from "express";
 
 @InputType()
 export class PaginationDto {
@@ -48,4 +49,21 @@ export class ApiMethodDataDto {
 
     @Field(() => String || Object || null, { nullable: true })
     body?: any;
+}
+
+export interface Context {
+    req: Request;
+    session: string | string[];
+}
+
+@ObjectType()
+export class ErrorType {
+    @Field()
+    message: string;
+
+    @Field()
+    code: number;
+
+    @Field({ nullable: true })
+    description?: string;
 }

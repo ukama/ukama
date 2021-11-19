@@ -18,3 +18,15 @@ export class ResidentsResponse extends PaginationResponse {
     @Field(() => [ResidentDto])
     residents: ResidentDto[];
 }
+
+@ObjectType()
+export class ResidentResponse {
+    @Field()
+    status: string;
+
+    @Field(() => [ResidentDto])
+    data: ResidentDto[];
+
+    @Field()
+    length: number;
+}

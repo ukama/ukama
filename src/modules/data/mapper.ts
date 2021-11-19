@@ -1,20 +1,19 @@
 import { IDataMapper } from "./interface";
-import { DataBillDto, DataUsageDto } from "./types";
+import {
+    DataBillDto,
+    DataBillResponse,
+    DataUsageDto,
+    DataUsageResponse,
+} from "./types";
 
 class DataMapper implements IDataMapper {
-    dataUsageDtoToDto = (res: DataUsageDto): DataUsageDto => {
-        return {
-            id: res.id,
-            dataConsumed: res.dataConsumed,
-            dataPackage: res.dataPackage,
-        };
+    dataUsageDtoToDto = (res: DataUsageResponse): DataUsageDto => {
+        const dataUsage = res.data;
+        return dataUsage;
     };
-    dataBillDtoToDto = (res: DataBillDto): DataBillDto => {
-        return {
-            id: res.id,
-            dataBill: res.dataBill,
-            billDue: res.billDue,
-        };
+    dataBillDtoToDto = (res: DataBillResponse): DataBillDto => {
+        const dataBill = res.data;
+        return dataBill;
     };
 }
 export default <IDataMapper>new DataMapper();

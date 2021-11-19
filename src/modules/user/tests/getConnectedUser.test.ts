@@ -20,6 +20,13 @@ describe("Get Connected Users", () => {
             variableValues: {
                 data: TIME_FILTER.WEEK,
             },
+            contextValue: {
+                req: {
+                    headers: {
+                        authorization: "test",
+                    },
+                },
+            },
         });
         expect(response).toMatchObject({
             data: {

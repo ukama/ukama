@@ -9,4 +9,7 @@ export const SERVER = {
     GET_ALERTS: `alert/get_alerts`,
     GET_NODES: `node/get_nodes`,
     GET_RESIDENTS: `resident/get_residents`,
+    GET_ESIMS: `esims/get_esims`,
+    POST_ACTIVE_USER: `user/active_user`,
+    GET_USERS: `user/get_users`,
 };

@@ -1,18 +1,18 @@
 import { IAlertMapper } from "./interface";
-import { AlertDto } from "./types";
+import { AlertDto, AlertResponse } from "./types";
 
 class AlertMapper implements IAlertMapper {
-    dtoToDto = (data: AlertDto[]): AlertDto[] => {
+    dtoToDto = (res: AlertResponse): AlertDto[] => {
         const alerts: AlertDto[] = [];
 
-        for (let i = 0; i < data.length; i++) {
-            if (data[i]) {
+        for (let i = 0; i < res.data.length; i++) {
+            if (res.data[i]) {
                 const alert = {
-                    id: data[i].id,
-                    type: data[i].type,
-                    title: data[i].title,
-                    description: data[i].description,
-                    alertDate: new Date(data[i].alertDate),
+                    id: res.data[i].id,
+                    type: res.data[i].type,
+                    title: res.data[i].title,
+                    description: res.data[i].description,
+                    alertDate: new Date(res.data[i].alertDate),
                 };
                 alerts.push(alert);
             }

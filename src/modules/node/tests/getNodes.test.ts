@@ -37,6 +37,13 @@ describe("Get Nodes", () => {
             variableValues: {
                 input: meta,
             },
+            contextValue: {
+                req: {
+                    headers: {
+                        authorization: "test",
+                    },
+                },
+            },
         });
 
         expect(response).toMatchObject({

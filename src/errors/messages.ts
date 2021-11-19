@@ -9,4 +9,5 @@ export default {
     INVALID_CONNECTED_USER_FILTER: "Invalid connected users filter",
     NODES_NOT_FOUND: "Nodes not found",
     RESIDENTS_NOT_FOUND: "Nodes not found",
+    ERR_REQUIRED_HEADER_NOT_FOUND: "Required header not found",
 };

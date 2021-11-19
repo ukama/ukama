@@ -1,10 +1,10 @@
 import { PaginationDto } from "../../common/types";
-import { ResidentDto, ResidentsResponse } from "./types";
+import { ResidentDto, ResidentResponse, ResidentsResponse } from "./types";
 
 export interface IResidentService {
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
 }
 
 export interface IResidentMapper {
-    dtoToDto(data: ResidentDto[]): ResidentDto[];
+    dtoToDto(res: ResidentResponse): ResidentDto[];
 }

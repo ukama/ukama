@@ -6,6 +6,9 @@ import {
     getAlerts,
     getNodes,
     getResidents,
+    getEsims,
+    activateUser,
+    getUsers,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -15,4 +18,7 @@ export const mockServer = (app: Express): void => {
     app.get("/alert/get_alerts", getAlerts);
     app.get("/node/get_nodes", getNodes);
     app.get("/resident/get_residents", getResidents);
+    app.get("/esims/get_esims", getEsims);
+    app.post("/user/active_user", activateUser);
+    app.get("/user/get_users", getUsers);
 };

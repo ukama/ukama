@@ -1,5 +1,10 @@
 import { DATA_BILL_FILTER, TIME_FILTER } from "../../constants";
-import { DataBillDto, DataUsageDto } from "./types";
+import {
+    DataBillDto,
+    DataBillResponse,
+    DataUsageDto,
+    DataUsageResponse,
+} from "./types";
 
 export interface IDataService {
     getDataUsage(filter: TIME_FILTER): Promise<DataUsageDto>;
@@ -7,6 +12,6 @@ export interface IDataService {
 }
 
 export interface IDataMapper {
-    dataUsageDtoToDto(res: DataUsageDto): DataUsageDto;
-    dataBillDtoToDto(res: DataBillDto): DataBillDto;
+    dataUsageDtoToDto(res: DataUsageResponse): DataUsageDto;
+    dataBillDtoToDto(res: DataBillResponse): DataBillDto;
 }
