@@ -32,7 +32,14 @@ const Layout = (props: any) => {
                 isLoading={isSkeltonLoad}
                 handleDrawerToggle={handleDrawerToggle}
             />
-            <Box component="main" sx={{ pl: 4, pr: 4, width: "100%" }}>
+            <Box
+                component="main"
+                sx={{
+                    pl: { xs: 2, md: 4 },
+                    pr: { xs: 2, md: 4 },
+                    width: "100%",
+                }}
+            >
                 <Header
                     pageName={path}
                     isLoading={isSkeltonLoad}

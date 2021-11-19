@@ -27,7 +27,7 @@ const ContainerHeader = ({
                     letterSpacing="4px"
                     color={colors.empress}
                 >
-                    • {stats}
+                    &#40;{stats}&#41;
                 </Typography>
             </HorizontalContainer>
             <Button

@@ -121,7 +121,7 @@ const Sidebar = (
                 <Logo width={"100%"} height={"36px"} />
             </Toolbar>
             {MenuList(SIDEBAR_MENU1)}
-            <Divider sx={{ m: "16px 14px 0px 14px" }} />
+            <Divider sx={{ m: "8px 0px 0px 20px !important" }} />
             {MenuList(SIDEBAR_MENU2)}
 
             <div

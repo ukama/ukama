@@ -50,7 +50,7 @@ const OptionsPopover = ({
                 sx={{
                     cursor: "pointer",
                     position: "relative",
-                    bottom: "15px",
+                    bottom: "13px",
                 }}
             >
                 <MenuDots />

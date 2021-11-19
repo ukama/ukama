@@ -48,14 +48,14 @@ const StatusCard = ({
                             direction="row"
                             alignItems="center"
                         >
-                            <Grid item xs={8}>
+                            <Grid item xs={5}>
                                 <Typography variant="subtitle2">
                                     {title}
                                 </Typography>
                             </Grid>
                             <Grid
                                 item
-                                xs={4}
+                                xs={7}
                                 display="flex"
                                 justifyContent="flex-end"
                             >
@@ -64,9 +64,11 @@ const StatusCard = ({
                                     disableUnderline
                                     variant="standard"
                                     sx={{
-                                        width: "100%",
+                                        width: "108px",
+                                        textAlign: "end",
                                         color: colors.empress,
                                     }}
+                                    MenuProps={{ sx: { maxHeight: "194px" } }}
                                     onChange={e => handleSelect(e.target.value)}
                                 >
                                     {options.map(
@@ -76,7 +78,7 @@ const StatusCard = ({
                                             value,
                                         }: SelectItemType) => (
                                             <MenuItem key={id} value={value}>
-                                                <Typography variant="subtitle2">
+                                                <Typography variant="body1">
                                                     {label}
                                                 </Typography>
                                             </MenuItem>
@@ -86,7 +88,7 @@ const StatusCard = ({
                             </Grid>
                         </Grid>
                         <Grid item sm container>
-                            <Grid item xs={12} container>
+                            <Grid item xs={12} container alignItems="flex-end">
                                 <Typography variant="h5" paddingRight="6px">
                                     {subtitle1}
                                 </Typography>

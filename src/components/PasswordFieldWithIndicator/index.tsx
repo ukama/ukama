@@ -60,7 +60,7 @@ const PasswordFieldWithIndicator = ({
         setTogglePassword(prev => !prev);
     };
     return (
-        <section className="strength-meter">
+        <section>
             <TextField
                 fullWidth
                 id="password"
@@ -72,7 +72,7 @@ const PasswordFieldWithIndicator = ({
                 onFocus={() => setFocused(true)}
                 InputLabelProps={{ shrink: true }}
                 type={togglePassword ? "text" : "password"}
-                sx={{ mt: "12px", mb: withIndicator ? "24px" : "0px" }}
+                sx={{ mt: "12px", mb: withIndicator ? "12px" : "0px" }}
                 error={touched.password && Boolean(errors.password)}
                 helperText={touched.password && errors.password}
                 InputProps={{
@@ -99,7 +99,7 @@ const PasswordFieldWithIndicator = ({
                     container
                     sx={{
                         display: focused ? "flex" : "none",
-                        mb: "24px",
+                        mb: "12px",
                     }}
                 >
                     {PasswordRules.map((rules: PasswordRulesProps) => {

@@ -2,9 +2,9 @@ import {
     Grid,
     Select,
     MenuItem,
+    Typography,
     ToggleButton,
     ToggleButtonGroup,
-    Typography,
 } from "@mui/material";
 import { colors } from "../../theme";
 import { RechartsData } from "../../constants/stubData";
@@ -45,10 +45,13 @@ const StatsCard = ({
                 <SkeletonRoundedCard variant="rectangular" height={337} />
             ) : (
                 <RoundedCard>
-                    <Grid container spacing={2}>
-                        <Grid item container spacing={2}>
+                    <Grid container spacing={1}>
+                        <Grid item container xs={12}>
                             <Grid item xs={12} sm={6}>
                                 <Select
+                                    sx={{
+                                        width: "auto",
+                                    }}
                                     value={selectOption}
                                     variant="standard"
                                     disableUnderline
@@ -69,14 +72,14 @@ const StatsCard = ({
                                 item
                                 xs={12}
                                 sm={6}
-                                container
-                                justifyContent="flex-end"
+                                display="flex"
+                                justifyContent={"flex-end"}
                             >
                                 <ToggleButtonGroup
                                     size="small"
                                     color="primary"
-                                    value={selectedButton}
                                     exclusive
+                                    value={selectedButton}
                                     onChange={handleSelectedButton}
                                 >
                                     {periodOptions.map(
@@ -85,18 +88,20 @@ const StatsCard = ({
                                             label,
                                         }: statsPeriodItemType) => (
                                             <ToggleButton
+                                                fullWidth
                                                 key={id}
                                                 value={label}
                                                 style={{
-                                                    border: `2.2px solid ${colors.lightBlue}`,
+                                                    height: "32px",
                                                     color: colors.lightBlue,
+                                                    border: `1px solid ${colors.lightBlue}`,
                                                 }}
                                             >
                                                 <Typography
                                                     variant="body2"
                                                     sx={{
-                                                        p: "2px",
-                                                        fontWeight: 900,
+                                                        p: "0px 2px",
+                                                        fontWeight: 600,
                                                     }}
                                                 >
                                                     {label}

@@ -45,10 +45,10 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
             }) => (
                 <>
                     <form onSubmit={handleSubmit}>
+                        <Typography variant="h5" sx={{ mb: "24px" }}>
+                            {t("SIGNUP.FormTitle")}
+                        </Typography>
                         <Stack spacing={"12px"}>
-                            <Typography variant="h5" sx={{ mb: "12px" }}>
-                                {t("SIGNUP.FormTitle")}
-                            </Typography>
                             <TextField
                                 fullWidth
                                 id="name"
@@ -56,14 +56,18 @@ const SignUpForm = ({ onSubmit, onGoogleSignUp }: SignUpFormProps) => {
                                 value={values.name}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
+                                sx={{ mb: "12px  !important" }}
                                 label={t("CONSTANT.NameLabel")}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
-                                    classes: { input: classes.inputFieldStyle },
+                                    classes: {
+                                        input: classes.inputFieldStyle,
+                                    },
                                 }}
                                 helperText={touched.name && errors.name}
                                 error={touched.name && Boolean(errors.name)}
                             />
+
                             <TextField
                                 fullWidth
                                 id="email"

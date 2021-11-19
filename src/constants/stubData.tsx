@@ -104,11 +104,11 @@ const DashboardStatusCard = [
     },
     {
         id: "statusUsage",
-        subtitle1: "0 GBs",
+        subtitle1: "0",
         Icon: DataUsage,
         options: TIME_FILTER,
         title: "Data usage",
-        subtitle2: "/ unlimited",
+        subtitle2: "GBs / unlimited",
     },
     {
         id: "statusBill",

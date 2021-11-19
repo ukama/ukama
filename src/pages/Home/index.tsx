@@ -177,7 +177,7 @@ const Home = () => {
                 </Grid>
                 <Box mt={2} mb={2}>
                     <Grid container spacing={2}>
-                        <Grid xs={12} item sm={12} md={8}>
+                        <Grid xs={12} item lg={8}>
                             <StatsCard
                                 loading={isSkeltonLoad}
                                 options={STATS_OPTIONS}
@@ -191,7 +191,7 @@ const Home = () => {
                             />
                         </Grid>
 
-                        <Grid xs={12} item md={4}>
+                        <Grid xs={12} item lg={4}>
                             <LoadingWrapper
                                 height={337}
                                 isLoading={isSkeltonLoad}
@@ -199,14 +199,14 @@ const Home = () => {
                                 <RoundedCard>
                                     <Typography
                                         variant="h6"
-                                        sx={{ mb: "14px", fontWeight: 500 }}
+                                        sx={{ mb: "14px" }}
                                     >
                                         {t("ALERT.Title")}
                                     </Typography>
                                     <List
                                         sx={{
-                                            p: "0px",
-                                            maxHeight: 300,
+                                            pr: "4px",
+                                            maxHeight: 305,
                                             overflow: "auto",
                                             position: "relative",
                                         }}
@@ -246,7 +246,7 @@ const Home = () => {
                 </Box>
 
                 <Grid container spacing={2}>
-                    <Grid xs={12} md={8} item>
+                    <Grid xs={12} lg={8} item>
                         <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
                             <RoundedCard>
                                 <ContainerHeader
@@ -264,7 +264,7 @@ const Home = () => {
                             </RoundedCard>
                         </LoadingWrapper>
                     </Grid>
-                    <Grid xs={12} md={4} item>
+                    <Grid xs={12} lg={4} item>
                         <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
                             <RoundedCard sx={{ height: "100%" }}>
                                 <ContainerHeader
