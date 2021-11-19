@@ -1,4 +1,5 @@
 import { BillingTabs, BILLING_TYPE } from "../../constants";
+import { CREDIT_CARD } from "../../constants/stubData";
 import TabLayoutHeader from "../../components/TabLayout";
 import MenuItem from "@mui/material/MenuItem";
 import {
@@ -14,14 +15,14 @@ import { useState } from "react";
 import { RoundedCard } from "../../styles";
 import { AmountBalanceImg } from "../../assets/svg";
 import colors from "../../theme/colors";
-import { BillingType } from "../../types";
+import { BillingType, PaymentMethodType } from "../../types";
 const Billing = () => {
     const [tab, setTab] = useState("1");
     const handleTabChange = (value: string) => setTab(value);
     const [billingTime, setBillingTime] = useState("AUTO");
-    const [paymentMethod, setPaymentMethod] = useState("493-3483984-343984");
+    const [paymentMethod, setPaymentMethod] = useState(1);
     const handlePaymentMethod = (event: any) =>
-        setBillingTime(event.target.value);
+        setPaymentMethod(event.target.value);
     const handleBillingTime = (event: any) =>
         setBillingTime(event.target.value);
 
@@ -33,8 +34,8 @@ const Billing = () => {
                 onTabChange={handleTabChange}
             />
             {tab === "1" ? (
-                <Grid container spacing={1}>
-                    <Grid item xs={4}>
+                <Grid container spacing={3} sx={{ pt: 2 }}>
+                    <Grid item xs={5}>
                         <RoundedCard>
                             <Card sx={{ display: "flex" }} elevation={0}>
                                 <Box
@@ -83,7 +84,7 @@ const Billing = () => {
                             </Box>
                         </RoundedCard>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={7}>
                         <RoundedCard>
                             <Grid container spacing={1}>
                                 <Grid item container xs={6}>
@@ -143,14 +144,16 @@ const Billing = () => {
                                         onChange={handlePaymentMethod}
                                         sx={{ width: "100%" }}
                                     >
-                                        {BILLING_TYPE.map(
-                                            ({ value, label }: BillingType) => (
-                                                <MenuItem
-                                                    key={value}
-                                                    value={value}
-                                                >
+                                        {CREDIT_CARD.map(
+                                            ({
+                                                id,
+                                                card_experintionDetails,
+                                            }: PaymentMethodType) => (
+                                                <MenuItem key={id} value={id}>
                                                     <Typography variant="body1">
-                                                        {label}
+                                                        {
+                                                            card_experintionDetails
+                                                        }
                                                     </Typography>
                                                 </MenuItem>
                                             )

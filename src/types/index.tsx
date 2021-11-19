@@ -36,6 +36,10 @@ export type BillingType = {
     value: string;
     label: string;
 };
+export type PaymentMethodType = {
+    id?: number;
+    card_experintionDetails: string;
+};
 export type SVGType = {
     color?: string;
     width?: string;

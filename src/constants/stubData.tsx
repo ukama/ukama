@@ -49,6 +49,13 @@ const RechartsData = [
         cnt: 380,
     },
 ];
+const CREDIT_CARD = [
+    {
+        id: 1,
+
+        card_experintionDetails: "Card is ending in 20 days",
+    },
+];
 const ALERT_INFORMATION = [
     {
         id: 1,
@@ -212,5 +219,6 @@ export {
     ALERT_INFORMATION,
     DashboardStatusCard,
     DashboardSliderData,
+    CREDIT_CARD,
     DashboardResidentsTable,
 };
