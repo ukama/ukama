@@ -31,7 +31,11 @@ export type SelectItemType = {
     label: string;
     value: string;
 };
-
+export type BillingType = {
+    id?: number;
+    value: string;
+    label: string;
+};
 export type SVGType = {
     color?: string;
     width?: string;

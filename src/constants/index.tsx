@@ -41,6 +41,10 @@ const PasswordRules = [
         validator: combineUppercaseNLowercaseValidator,
     },
 ];
+const BILLING_TYPE = [
+    { id: 1, value: "AUTO", label: "Auto charged " },
+    { id: 2, value: "MANUALLY", label: "Pay manually" },
+];
 
 const SIDEBAR_MENU1 = [
     { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
@@ -142,6 +146,7 @@ export {
     STATS_PERIOD,
     UserActivation,
     BASIC_MENU_ACTIONS,
+    BILLING_TYPE,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 };

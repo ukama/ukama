@@ -21,10 +21,12 @@ import SettingsIcon from "./SettingsIcon";
 import ModuleStoreIcon from "./ModuleStoreIcon";
 import ThermometerIcon from "./ThermometerIcon";
 import NotificationIcon from "./NotificationIcon";
+import AmountBalanceImg from "./AmountBalanceImg";
 export {
     Logo,
     CpuIcon,
     NodeImg,
+    AmountBalanceImg,
     SimCardIcon,
     HomeIcon,
     MenuDots,
