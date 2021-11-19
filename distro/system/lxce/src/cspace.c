@@ -172,6 +172,9 @@ static int setup_user_namespace(CSpace *space) {
   /* unshare the user namespace. */
   if (!unshare(CLONE_NEWUSER)) {
     ns = TRUE;
+  } else {
+    log_error("Space: [%s] Unable to unshare the user namespace. %s",
+	      space->name, strerror(errno));
   }
 
   /* Write on the socket connection with parent. Parent need to setup values
@@ -230,7 +233,7 @@ static int setup_user_namespace(CSpace *space) {
  */
 static int prepare_child_map_files(pid_t pid, CSpace *space) {
 
-  int ns=0, size;
+  int ns=0, size, i;
   int mapFd = 0;
   char *mapFiles[] = {"uid_map", "gid_map"};
   char mapPath[LXCE_MAX_PATH] = {0};
@@ -250,8 +253,8 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
     return FALSE;
   }
 
-  for (file=&mapFiles[0]; *file; file++) {
-    sprintf(mapPath, "/proc/%d/%s", pid, *file);
+  for (i=0; i<2; i++) {
+    sprintf(mapPath, "/proc/%d/%s", pid, mapFiles[i]);
 
     if ((mapFd = open(mapPath, O_WRONLY)) == -1) {
       log_error("Space: %s Error opening map file: %s Error: %s", space->name,
@@ -265,6 +268,8 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
       close(mapFd);
       return FALSE;
     }
+
+    close(mapFd);
   }
 
   /* Inform child, it can proceed. */
@@ -421,16 +426,18 @@ int create_cspace(CSpace *space, pid_t *pid) {
     return FALSE;
   }
 
-  /* Close child socket */
-  close(space->sockets[CHILD_SOCKET]);
-
-  /* prepare child process gid/uid map files. */
-  if (prepare_child_map_files(*pid, space) == FALSE) {
-    log_error("Error preparing map files for child process. Terminating it");
-    kill(pid, SIGKILL); /* Kill child process */
-    close(space->sockets[PARENT_SOCKET]);
+  if (*pid > 0) {
+    /* Close child socket */
     close(space->sockets[CHILD_SOCKET]);
-    return FALSE;
+
+    /* prepare child process gid/uid map files. */
+    if (prepare_child_map_files(*pid, space) == FALSE) {
+      log_error("Error preparing map files for child process. Terminating it");
+      kill(pid, SIGKILL); /* Kill child process */
+      close(space->sockets[PARENT_SOCKET]);
+      close(space->sockets[CHILD_SOCKET]);
+      return FALSE;
+    }
   }
 
   return TRUE;
@@ -626,6 +633,8 @@ static int handle_crud_requests(CSpace *space) {
 	     (const char*)&tv, sizeof tv);
 
   while (TRUE) {
+
+    memset(buffer, 0, CSPACE_MAX_BUFFER);
 
     count = recv(space->sockets[CHILD_SOCKET], buffer, CSPACE_MAX_BUFFER, 0);
 

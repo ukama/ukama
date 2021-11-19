@@ -203,6 +203,9 @@ static void cspace_exit_check(CSpaceThread *thread) {
   /* check if the cspace exited */
   w = waitpid(thread->pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
 
+  if (w == 0) /* No status change. */
+    return;
+
   if (w == -1) {
     log_error("waitpid failed for space: %s", thread->space->name);
     exit(EXIT_FAILURE);
