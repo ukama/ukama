@@ -121,17 +121,23 @@ const UserActivation = {
         "Choose all the eSIM(s) you want to assign to a user at this time. Once you pair an eSIM with a user ....................... policy details ................................",
 };
 
+const BillingTabs = [
+    { id: 1, label: "CURRENT BILL", value: "1" },
+    { id: 2, label: "BILLING HISTORY", value: "2" },
+];
+
 export {
     NETWORKS,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,
     MONTH_FILTER,
-    PasswordRules,
+    BillingTabs,
     HEADER_MENU,
     DRAWER_WIDTH,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
+    PasswordRules,
     STATS_OPTIONS,
     STATS_PERIOD,
     UserActivation,

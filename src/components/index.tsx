@@ -2,6 +2,7 @@ import NodeCard from "./NodesCard";
 import StatsCard from "./StatsCard";
 import AlertCard from "./AlertCard";
 import LoginForm from "./LoginForm";
+import TabLayout from "./TabLayout";
 import SignUpForm from "./SignUpForm";
 import StatusCard from "./StatusCard";
 import SimCardDesign from "./SimCardDesign";
@@ -20,6 +21,7 @@ import { BasicDialog, UserActivationDialog, FormDialog } from "./AppDialogs";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 export {
     NodeCard,
+    TabLayout,
     LoginForm,
     AlertCard,
     StatsCard,
