@@ -16,5 +16,6 @@
 **/.idea/*
 **/.vscode/*
 **/bin/*
-
+node_modules
 .env
+
