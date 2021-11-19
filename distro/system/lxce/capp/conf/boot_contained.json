@@ -19,9 +19,6 @@
 		},
 		{
 			"type": "mount"
-		},
-		{
-			"type": "user"
 		}
 	],
 
