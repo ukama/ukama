@@ -33,6 +33,7 @@
 #include "csthreads.h"
 #include "log.h"
 #include "capp.h"
+#include "utils.h"
 
 static CSThreadsList *threadsList=NULL;
 static CSThreadsList *cPtr=NULL;
@@ -401,7 +402,7 @@ int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
 
   if (cmd == NULL || params == NULL) return;
 
-  if (thread->sockets[0] <= 0) {
+  if (thread->sockets[PARENT_SOCKET] <= 0) {
     log_error("Socket pair is closed between thread and cspace. Name: %s",
 	      thread->name);
     return FALSE;
@@ -417,7 +418,7 @@ int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
 
   sprintf(data, "%s %d %s", cmd, seqno, params);
 
-  if (send(thread->sockets[0], data, strlen(data), 0) <0) {
+  if (send(thread->sockets[PARENT_SOCKET], data, strlen(data), 0) <0) {
     log_error("Sending request packet to cspace via thread.");
     free(data);
     return FALSE;
@@ -452,10 +453,10 @@ int process_response_packet(CSpaceThread *thread) {
   /* time-out socket */
   tv.tv_sec  = 5; /* XXX - check on this. */
   tv.tv_usec = 0;
-  setsockopt(thread->sockets[1], SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,
-	     sizeof tv);
+  setsockopt(thread->sockets[PARENT_SOCKET], SOL_SOCKET, SO_RCVTIMEO,
+	     (const char*)&tv, sizeof tv);
 
-  count = recv(thread->sockets[1], buffer, CSPACE_MAX_BUFFER, 0);
+  count = recv(thread->sockets[PARENT_SOCKET], buffer, CSPACE_MAX_BUFFER, 0);
 
   if (count <=0  && errno != EAGAIN) {
     log_error("Error reading packet from cspace socket. Name: %s",

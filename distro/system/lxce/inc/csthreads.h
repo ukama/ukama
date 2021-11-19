@@ -39,7 +39,6 @@
 #define CSPACE_READ_ERROR   1
 #define CSPACE_READ_TIMEOUT 2
 
-
 /* Logging request/response from thread to cspace */
 typedef struct action_list_t {
 

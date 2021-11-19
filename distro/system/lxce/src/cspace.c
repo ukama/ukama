@@ -177,14 +177,14 @@ static int setup_user_namespace(CSpace *space) {
   /* Write on the socket connection with parent. Parent need to setup values
    * in the map files under /proc
    */
-  if (write(space->sockets[0], &ns, sizeof(ns)) != sizeof(ns)) {
+  if (write(space->sockets[CHILD_SOCKET], &ns, sizeof(ns)) != sizeof(ns)) {
     log_error("Space: %s Error writing to parent socket. Size: %d Value: %d",
 	      space->name, sizeof(ns), ns);
     return FALSE;
   }
 
   /* Read response back from the parent. */
-  size = read(space->sockets[0], &resp, sizeof(resp));
+  size = read(space->sockets[CHILD_SOCKET], &resp, sizeof(resp));
   if (size != sizeof(resp)) {
     log_error("Space: %s Error reading from parent socket. size: %d Got: %d",
 	      space->name, sizeof(resp), size);
@@ -238,7 +238,7 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
 
   if (space==NULL) return FALSE;
 
-  size = read(space->sockets[0], &ns, sizeof(ns));
+  size = read(space->sockets[PARENT_SOCKET], &ns, sizeof(ns));
   if (size != sizeof(ns)) {
     log_error("Error reading from client socket. Expected size: %d Got: %d",
 	      sizeof(ns), size);
@@ -268,7 +268,7 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
   }
 
   /* Inform child, it can proceed. */
-  size = write(space->sockets[0], &(int){TRUE}, sizeof(int));
+  size = write(space->sockets[PARENT_SOCKET], &(int){TRUE}, sizeof(int));
   if (size != sizeof(int)) {
     log_error("Space: %s Error writing to child socket", space->name);
     log_error("Expected size: %d Wrote: %d", sizeof(int), size);
@@ -347,6 +347,9 @@ static int cspace_init_clone(void *arg) {
   CSpace *space = (CSpace *)arg;
   char *hostName=NULL;
 
+  /* Close parent socket */
+  close(space->sockets[PARENT_SOCKET]);
+
   if (space->hostName) {
     hostName = space->hostName;
   } else {
@@ -405,15 +408,6 @@ int create_cspace(CSpace *space, pid_t *pid) {
     return FALSE;
   }
 
-  /* child only access one. */
-  if (fcntl(space->sockets[0], F_SETFD, FD_CLOEXEC)) {
-    fprintf(stderr, "Space: %s Failed to close socket via fcntl", space->name);
-    if (space->sockets[0]) close(space->sockets[0]);
-    if (space->sockets[1]) close(space->sockets[1]);
-    
-    return FALSE;
-  }
-
   if (!(stack = malloc(STACK_SIZE))) {
     log_error("Error allocating stack of size: %d", STACK_SIZE);
     return FALSE;
@@ -426,20 +420,19 @@ int create_cspace(CSpace *space, pid_t *pid) {
     log_error("Space: %s Unable to clone cInit", space->name);
     return FALSE;
   }
-  
-  close(space->sockets[1]);
-  space->sockets[1] = 0;
+
+  /* Close child socket */
+  close(space->sockets[CHILD_SOCKET]);
 
   /* prepare child process gid/uid map files. */
   if (prepare_child_map_files(*pid, space) == FALSE) {
     log_error("Error preparing map files for child process. Terminating it");
-    kill(pid, SIGKILL);
+    kill(pid, SIGKILL); /* Kill child process */
+    close(space->sockets[PARENT_SOCKET]);
+    close(space->sockets[CHILD_SOCKET]);
     return FALSE;
   }
 
-  if (space->sockets[0]) close(space->sockets[0]);
-  if (space->sockets[1]) close(space->sockets[1]);
-  
   return TRUE;
 }
 
@@ -629,12 +622,12 @@ static int handle_crud_requests(CSpace *space) {
   /* time-out socket */
   tv.tv_sec  = 5; /* XXX - check on this. */
   tv.tv_usec = 0;
-  setsockopt(space->sockets[0], SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv,
-	     sizeof tv);
+  setsockopt(space->sockets[CHILD_SOCKET], SOL_SOCKET, SO_RCVTIMEO,
+	     (const char*)&tv, sizeof tv);
 
   while (TRUE) {
 
-    count = recv(space->sockets[0], buffer, CSPACE_MAX_BUFFER, 0);
+    count = recv(space->sockets[CHILD_SOCKET], buffer, CSPACE_MAX_BUFFER, 0);
 
     if (count <=0  && errno != EAGAIN) {
       log_error("Error reading packet from cspace socket. Name: %s",
@@ -730,7 +723,7 @@ static int send_response_packet(CSpace *space, int seqno, char *resp) {
 
   if (!space || !resp) return FALSE;
 
-  if (space->sockets[1] <= 0) {
+  if (space->sockets[CHILD_SOCKET] <= 0) {
     log_error("Socket pair is closed between thread and cspace. Name: %s",
 	      space->name);
     return FALSE;
@@ -746,7 +739,7 @@ static int send_response_packet(CSpace *space, int seqno, char *resp) {
 
   sprintf(data, "%d %s", seqno, resp);
 
-  if (send(space->sockets[1], data, strlen(data), 0) <0) {
+  if (send(space->sockets[CHILD_SOCKET], data, strlen(data), 0) <0) {
     log_error("Sending response packet to thread over socket failed. %s",
 	      space->name);
     free(data);

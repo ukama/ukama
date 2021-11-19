@@ -14,6 +14,9 @@
 #ifndef LXCE_UTILS_H
 #define LXCE_UTILS_H
 
+#define PARENT_SOCKET 0
+#define CHILD_SOCKET  1
+
 int set_integer_object_value(json_t *json, int *param, char *objName,
 			     int mandatory, int defValue);
 int set_str_object_value(json_t *json, char **param, char *objName,
