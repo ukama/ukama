@@ -38,8 +38,8 @@
 
 typedef struct capp_packet_t {
 
-  int    req_type;   /* create, run, status, stop, term */
-  int    resp_type;  /* uuid, state */
+  int    reqType;   /* create, run, status, stop, term */
+  int    respType;  /* uuid, state */
 
   /* Trio for capp creation. */
   char   *name;      /* Name of the capp */
@@ -49,7 +49,17 @@ typedef struct capp_packet_t {
   uuid_t uuid;        /* UUID associated with the capp */
 
   int    state;       /* Current state of the capp */
-  int    exit_status; /* If capp terminate, its exit status */
+  int    exitStatus; /* If capp terminate, its exit status */
 }CAppPacket;
+
+typedef struct packet_list_ {
+
+  CAppPacket *packet;
+
+  struct packet_list *next;
+}PacketList;
+
+int create_capp_tx_packet(CApp *capp, PacketList **list, int reqType);
+
 
 #endif /* CAPP_PACKET_H */

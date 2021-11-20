@@ -264,6 +264,10 @@ int main(int argc, char **argv) {
       log_error("Failed to create cspace thread for: %s", cPtr->name);
     }
   }
+  sleep(5); /* temporary fix. TODO. Allowing enough time for thread
+	     * to be created to avoid missing any mutex issues. Ideally
+	     * this to be done via flag
+	     */
 
   /* Step-4: process manifest.json file. */
   manifest = (Manifest *)calloc(1, sizeof(Manifest));
@@ -278,10 +282,13 @@ int main(int argc, char **argv) {
   }
 
   /* Step-5: Move all valid cApps into pending list/state. */
-  if (!capps_init(&apps, config, manifest)) {
+  if (!capps_init(&apps, config, manifest, cSpaces)) {
     log_error("Error initializing the cApps. Exiting.");
     exit(1);
   }
+
+  /* Step-6: start capps via cspace threads */
+  capps_start(apps);
 
   /* Step-6: open REST interface. */
   if (!start_web_services(config, &clientInst)) {

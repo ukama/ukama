@@ -17,7 +17,8 @@
 #include <uuid/uuid.h>
 
 #include "lxce_config.h"
-#include "cspace.h"
+#include "capp_config.h"
+#include "capp_runtime.h"
 #include "manifest.h"
 
 /* For capp state */
@@ -26,6 +27,20 @@
 #define CAPP_STATE_RUN     0x03
 #define CAPP_STATE_TERM    0x04
 #define CAPP_STATE_INVALID 0xff
+
+/* commands */
+#define CAPP_CMD_CREATE "create"
+#define CAPP_CMD_RUN    "run"
+#define CAPP_CMD_STATUS "status"
+
+/* action state */
+#define CAPP_CMD_STATE_WAIT  1
+#define CAPP_CMD_STATE_DONE  2
+#define CAPP_CMD_STATE_ERROR 3
+
+#define CAPP_MAX_BUFFER   1024
+#define CAPP_READ_ERROR   1
+#define CAPP_READ_TIMEOUT 2
 
 /* List type */
 enum { START_LIST=0,
@@ -38,14 +53,16 @@ enum { START_LIST=0,
 };
 
 /* Default path, only for testing. */
-#define DEF_PATH "./"
+#define DEF_PATH   "./"
+#define DEF_CONFIG "config.json"
 
 typedef struct capp_params_t {
 
-  char   *name; /* capp name */
-  char   *tag;  /* capp tag */
-  char   *path; /* path to rootfs */
-  uuid_t uuid;  /* UUID per its cspace */
+  char   *name;  /* capp name */
+  char   *tag;   /* capp tag */
+  char   *path;  /* path to rootfs */
+  char   *space; /*cspace name */
+  uuid_t uuid;   /* UUID per its cspace */
 } CAppParams;
 
 typedef struct capp_state_ {
@@ -64,9 +81,11 @@ typedef struct capp_t_ {
   CAppParams *params;
   CAppState  *state;  /* capp state */
   CAppPolicy *policy; /* capp assocated policy */
-  CSpace     *space;     /* space the capp belongs to */
-} CApp;
+  void       *space;  /* space the capp belongs to */
+  CAppConfig *config; /* config.json */
 
+  CAppRuntime *runtime; /* runtime stuff */
+} CApp;
 
 typedef struct capp_list_ {
 
@@ -84,9 +103,11 @@ typedef struct capp_t {
   CAppList *error;   /* capp has an error */
 } CApps;
 
-int capps_init(CApps **capps, Config *config, Manifest *manifest);
+int capps_init(CApps **capps, Config *config, Manifest *manifest, void *space);
+void capps_start(CApps *capps);
 void clear_capp(CApp *capp);
 void clear_capps(CApps *capps, int flag);
+void add_to_apps(CApps *capps, CApp *capp, int to, int from);
 
 #endif /* LXCE_CAPP_H */
 

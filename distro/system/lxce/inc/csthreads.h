@@ -30,10 +30,30 @@
 #define CSPACE_THREAD_EXIT_TERM   0x02
 #define CSPACE_THREAD_EXIT_STOP   0x03
 
+#define CSPACE_COND_WAIT 1 /* Cond wait time in sec. */
+
 #define CSPACE_MEMFILE "lxce_memfile"
 
+#define CSPACE_MAX_BUFFER 1024
+
+#define CSPACE_READ_ERROR   1
+#define CSPACE_READ_TIMEOUT 2
+
+/* Logging request/response from thread to cspace */
+typedef struct action_list_t {
+
+  int seqno;    /* sequence id for request/response mapping */
+  int state;    /* state of this action. */
+
+  char *cmd;    /* CAPP_CMD_* */
+  char *params; /* Parameters for the command */
+  char *resp;   /* Response if done otherwise is NULL */
+
+  struct action_list_t *next; /* Next one */
+} ActionList;
+
 /* Shared memory related info. */
-typedef struct  {
+typedef struct {
 
   char *memFile;
   int  shmId;
@@ -42,8 +62,8 @@ typedef struct  {
 /* Shared memory between thread and parent process */
 typedef struct {
 
-  CAppPacket tx;  /* Tx packet */
-  CAppPacket rx;  /* Rx packet */
+  PacketList *txList; /* List of TX packets */
+  PacketList *rxList; /* List of RX packets */
 
   /* Mutex for TX and RX packets */
   pthread_mutex_t txMutex;
@@ -65,7 +85,8 @@ typedef struct cspace_thread_t {
   int       exit_status; /* only if state is ABORT or DELETED, otherwise is 0*/
   CSpace    *space;      /* cspace associated with this thread. */
 
-  ThreadShMem *shMem;    /* shared between parent and thread. */
+  ActionList  *actionList; /* On-going action associated with this thread */
+  ThreadShMem *shMem;      /* shared between parent and thread */
 } CSpaceThread;
 
 /* List of all contained space threads */
@@ -82,5 +103,6 @@ CSpaceThread *init_cspace_thread(char *name, CSpace *space);
 int init_cspace_thread_list(void);
 int add_to_cspace_thread_list(CSpaceThread *thread);
 void* cspace_thread_start(void *args);
+ThreadShMem *find_matching_thread_shmem(char *name);
 
 #endif /* CSTHREAD_H */

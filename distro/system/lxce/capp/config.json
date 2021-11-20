@@ -2,31 +2,37 @@
     "version": "0.1",
     "serial" : "abcd-ef-ghi-009910-xyz",
     "target" : "serial",
-    
+
     "process": {
 
-	"exec" : "binary_name",
+	"exec" : "lxce.d",
 
 	"args": [
-	    "-m"
-	    "config_file"
+	    "-m",
+	    "config_file",
 	    "-g"
 	],
 
 	"env": [
             "PATH=/usr/local/sbin:/usr/local/bin",
 	    "SOME_VAR=SOME_VALUE"
-        ],
-    }
+        ]
+    },
 
-    "hostname" : "ukama-host"
+    "hostname" : "ukama-host",
 
-    "namespace" : [
-
-	{ "type" : "pid",
-	  "type" : "ipc",
-	  "type" : "mount",
-	  "type" : "user",
+    "namespaces": [
+	{
+	    "type": "pid"
+	},
+	{
+	    "type": "ipc"
+	},
+	{
+	    "type": "mount"
+	},
+	{
+	    "type": "user"
 	}
     ]
 }

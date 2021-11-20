@@ -21,12 +21,26 @@
 #include "capp.h"
 #include "log.h"
 #include "manifest.h"
+#include "csthreads.h"
+#include "capp_packet.h"
+
+static int add_to_list(CAppList **list, CApp *app);
+static int capp_init_params(CApp *capp, char *name, char *tag, char *path,
+			    char *space);
+static int capp_init_state(CApp *capp);
+static int capp_init_policy(CApp *capp, int flag);
+
+/* From shmem.c */
+extern int add_to_shmem_list(ThreadShMem *mem);
+extern ThreadShMem *remove_from_shmem_list();
+void reset_shmem_list();
 
 /*
  * capp_init_params --
  *
  */
-static int capp_init_params(CApp *capp, char *name, char *tag, char *path) {
+static int capp_init_params(CApp *capp, char *name, char *tag, char *path,
+			    char *space) {
 
   capp->params = (CAppParams *)malloc(sizeof(CAppParams));
   if (capp->params == NULL) {
@@ -34,9 +48,10 @@ static int capp_init_params(CApp *capp, char *name, char *tag, char *path) {
     return FALSE;
   }
 
-  capp->params->name = strdup(name);
-  capp->params->tag  = strdup(tag);
-  capp->params->path = strdup(path);
+  capp->params->name  = strdup(name);
+  capp->params->tag   = strdup(tag);
+  capp->params->path  = strdup(path);
+  capp->params->space = strdup(space);
 
   uuid_clear(capp->params->uuid);
 
@@ -89,6 +104,7 @@ void clear_capp(CApp *capp) {
   if (capp->params) {
     free(capp->params->name);
     free(capp->params->tag);
+    free(capp->params->space);
     if (capp->params->path) free(capp->params->path);
 
     free(capp->params);
@@ -108,15 +124,15 @@ void clear_capp(CApp *capp) {
  * capp_init -- initialize cApp. If path is NULL will fetch from wimc
  *
  */
-CApp *capp_init(Config *config, char *name, char *tag, char *path,
+CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
 		int restart) {
 
   CApp *capp=NULL;
 
-  if (!config || !name || !tag)
+  if (!config || !name || !tag || !space)
     return FALSE;
 
-#if 0
+#if 1
   if (path == NULL) {
     path = strdup(DEF_PATH);
   }
@@ -139,7 +155,7 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path,
     goto failure;
   }
 
-  capp_init_params(capp, name, tag, path);
+  capp_init_params(capp, name, tag, path, space);
   capp_init_state(capp);
   capp_init_policy(capp, restart);
 
@@ -160,11 +176,12 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path,
  *               capps. Initially everything will be in 'pend'
  *
  */
-int capps_init(CApps **capps, Config *config, Manifest *manifest) {
+int capps_init(CApps **capps, Config *config, Manifest *manifest,
+	       void *space) {
 
   CApp *app=NULL;
-  CAppList *pend=NULL;
   ArrayElem *ptr=NULL;
+  CSpace *sPtr=NULL;
 
   if (manifest == NULL || *capps) return FALSE;
 
@@ -183,7 +200,8 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
       continue;
     }
 
-    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->restart);
+    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->contained,
+		    ptr->restart);
     if (app==NULL) {
       log_error("Error initializing the cApp. Name: %s Tag: %s Ignoring.",
 		ptr->name, ptr->tag);
@@ -191,12 +209,76 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
     }
 
     /* Find space pointer */
+    for (sPtr=(CSpace *)space; sPtr; sPtr=sPtr->next) {
+      if (strcmp(sPtr->name, ptr->contained)==0) {
+	app->space = sPtr;
+	break;
+      }
+    }
 
     /* Add the capp to pend list */
-    add_to_apps(*capps, app, PEND_LIST, NULL);
+    add_to_apps(*capps, app, PEND_LIST, 0);
   }
 
   return TRUE;
+}
+
+/*
+ * capp_start --
+ *
+ */
+void capps_start(CApps *capps) {
+
+  CAppList *ptr;
+  CApp *capp;
+  CSpace *cspace;
+  ThreadShMem *shMem;
+  ThreadShMem **listShMem=NULL;
+  /*
+   * For each app in the pend list:
+   *   1. find the thread handling the capp space.
+   *   2. create capp_packet
+   *   3. Send packet to space
+   *   4. Get response (e.g., UUID or error)
+   *   5. Move it to create
+   *   Repeat
+   */
+
+  if (!capps) return;
+
+  for(ptr=capps->pend; ptr; ptr=ptr->next) {
+
+    capp = ptr->capp;
+
+    if (capp==NULL) continue;
+
+    shMem = find_matching_thread_shmem(capp->params->space);
+    if (shMem == NULL) {
+      log_error("No matching cspace for the capp. Name: %s tag: %s space: %s",
+		capp->params->name, capp->params->tag, capp->params->space);
+      continue;
+    }
+
+    /* create the tx packet and trigger conditional variable for the
+     * target shared memory
+     */
+    create_capp_tx_packet(capp, &shMem->txList, CAPP_TYPE_REQ_CREATE);
+    add_to_shmem_list(shMem);
+  }
+
+  while((shMem=remove_from_shmem_list())!=NULL) {
+    pthread_cond_broadcast(&(shMem->hasTX));
+    /* unlock */
+    pthread_mutex_unlock(&(shMem->txMutex));
+  }
+
+  reset_shmem_list();
+
+  /* Wait for the response. */
+
+
+  /* clean up */
+  
 }
 
 /*
@@ -205,7 +287,7 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest) {
  */
 void add_to_apps(CApps *capps, CApp *capp, int to, int from) {
 
-  if (to == PEND_LIST && from == NULL) { /* New addition. */
+  if (to == PEND_LIST && from == 0) { /* New addition. */
     add_to_list(&(capps->pend), capp);
   } 
 }
@@ -214,7 +296,7 @@ void add_to_apps(CApps *capps, CApp *capp, int to, int from) {
  * add_to_list --
  *
  */
-int add_to_list(CAppList **list, CApp *app) {
+static int add_to_list(CAppList **list, CApp *app) {
 
   CAppList *ptr;
 
