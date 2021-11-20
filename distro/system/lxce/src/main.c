@@ -264,6 +264,10 @@ int main(int argc, char **argv) {
       log_error("Failed to create cspace thread for: %s", cPtr->name);
     }
   }
+  sleep(5); /* temporary fix. TODO. Allowing enough time for thread
+	     * to be created to avoid missing any mutex issues. Ideally
+	     * this to be done via flag
+	     */
 
   /* Step-4: process manifest.json file. */
   manifest = (Manifest *)calloc(1, sizeof(Manifest));

@@ -57,7 +57,7 @@ CSpaceThread *init_cspace_thread(char *name, CSpace *space) {
 
   CSpaceThread *thread;
 
-  thread = (CSpaceThread *) malloc(sizeof(CSpaceThread));
+  thread = (CSpaceThread *)calloc(1, sizeof(CSpaceThread));
   if (thread == NULL) {
     return NULL;
   }
@@ -67,6 +67,9 @@ CSpaceThread *init_cspace_thread(char *name, CSpace *space) {
   thread->name  = strdup(name);
   thread->state = CSPACE_THREAD_STATE_CREATE;
   thread->space = space;
+
+  thread->actionList = NULL;
+  thread->shMem      = NULL;
 
   return thread;
 }
@@ -175,6 +178,7 @@ int add_to_cspace_thread_list(CSpaceThread *thread) {
 
     pthread_mutex_init(&(cPtr->shMem->txMutex), NULL);
     pthread_cond_init(&(cPtr->shMem->hasTX), NULL);
+    pthread_mutex_lock(&(cPtr->shMem->txMutex));
 
     thread->shMem = cPtr->shMem;
   }
@@ -271,7 +275,8 @@ void* cspace_thread_start(void *args) {
     ts.tv_nsec %= (1000 * 1000 * 1000);
 
     /* Timed wait on the capp packet from parent process. */
-    ret = pthread_cond_timedwait(&(shMem->hasTX), &(shMem->txMutex), &ts);
+    //    ret = pthread_cond_timedwait(&(shMem->hasTX), &(shMem->txMutex), &ts);
+    ret = pthread_cond_wait(&(shMem->hasTX), &(shMem->txMutex));
     if (ret == ETIMEDOUT) {
       continue;
     }
@@ -386,9 +391,11 @@ static void process_parent_request(CSpaceThread *thread, PacketList *txList) {
       break;
     }
 
+    log_debug("Request recevied from parent process. Cmd: %s Params: %s",
+	      cmd, params);
+
     if (cmd && params) {
       send_request_packet(thread, cmd, params);
-      free(cmd);
       free(params);
     }
   }
@@ -403,17 +410,20 @@ int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
   char *data;
   int size;
 
-  if (cmd == NULL || params == NULL) return;
+  if (thread == NULL || cmd == NULL || params == NULL) return FALSE;
 
-  if (thread->sockets[PARENT_SOCKET] <= 0) {
+  if (thread->space == NULL) return FALSE;
+
+  if (thread->space->sockets[PARENT_SOCKET] <= 0) {
     log_error("Socket pair is closed between thread and cspace. Name: %s",
 	      thread->name);
     return FALSE;
   }
 
-  size = strlen(cmd) + strlen(params);
+  size = strlen(cmd) + strlen(params) +
+    (3*sizeof(int)+2); /* for integer */
 
-  data = (char *)malloc(size + 2);
+  data = (char *)malloc(size + 3); /* 2 space + 1 null */
   if (data == NULL) {
     log_error("Memory allocation error. Size: %d", size);
     return FALSE;
@@ -421,13 +431,14 @@ int send_request_packet(CSpaceThread *thread, char *cmd, char *params) {
 
   sprintf(data, "%s %d %s", cmd, seqno, params);
 
-  if (send(thread->sockets[PARENT_SOCKET], data, strlen(data), 0) <0) {
-    log_error("Sending request packet to cspace via thread.");
+  log_debug("Sending data to thread: %s", data);
+
+  if (write(thread->space->sockets[PARENT_SOCKET], data, strlen(data)) <0) {
+    log_error("Error sending request packet to cspace via thread. Error: %s",
+	      strerror(errno));
     free(data);
     return FALSE;
   }
-
-  log_debug("Request send. Req: %s", data);
 
   /* log request for the thread. This will help with matching the resp */
   log_request(thread, seqno, cmd, params);
@@ -456,10 +467,11 @@ int process_response_packet(CSpaceThread *thread) {
   /* time-out socket */
   tv.tv_sec  = 5; /* XXX - check on this. */
   tv.tv_usec = 0;
-  setsockopt(thread->sockets[PARENT_SOCKET], SOL_SOCKET, SO_RCVTIMEO,
+  setsockopt(thread->space->sockets[PARENT_SOCKET], SOL_SOCKET, SO_RCVTIMEO,
 	     (const char*)&tv, sizeof tv);
 
-  count = recv(thread->sockets[PARENT_SOCKET], buffer, CSPACE_MAX_BUFFER, 0);
+  count = recv(thread->space->sockets[PARENT_SOCKET], buffer,
+	       CSPACE_MAX_BUFFER, 0);
 
   if (count <=0  && errno != EAGAIN) {
     log_error("Error reading packet from cspace socket. Name: %s",
@@ -508,7 +520,7 @@ static int log_request(CSpaceThread *thread, int seqno, char *cmd,
 
   /* base case */
   if (thread->actionList==NULL) {
-    thread->actionList = (ActionList *)malloc(sizeof(ActionList));
+    thread->actionList = (ActionList *)calloc(1, sizeof(ActionList));
     if (!thread->actionList) {
       log_error("Memory allocation error. Size: %d", sizeof(ActionList));
       return FALSE;
@@ -550,14 +562,14 @@ static void log_response(CSpaceThread *thread, int seq, char *resp) {
   if (thread == NULL || resp == NULL) return;
 
   for (ptr = thread->actionList; ptr; ptr=ptr->next) {
-    if (ptr->seqno == seqno) {
+    if (ptr->seqno == seq) {
       ptr->state = CAPP_CMD_STATE_DONE;
       ptr->resp  = strdup(resp);
       return;
     }
   }
 
-  log_error("No mathing seqno found in the action list. Ignoring. %s",
-	    thread->name);
+  log_error("No mathing seq %d found in the action list. Ignoring. %s",
+	    seq, thread->name);
   return;
 }

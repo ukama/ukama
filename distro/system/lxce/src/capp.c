@@ -267,7 +267,6 @@ void capps_start(CApps *capps) {
   }
 
   while((shMem=remove_from_shmem_list())!=NULL) {
-    /* broadcast item is available in the queue. */
     pthread_cond_broadcast(&(shMem->hasTX));
     /* unlock */
     pthread_mutex_unlock(&(shMem->txMutex));

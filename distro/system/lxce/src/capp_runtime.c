@@ -81,7 +81,7 @@ int create_and_run_capps(void *args) {
     }
 
     fileName = (char *)calloc(1, strlen(capp->params->path) +
-			      strlen(DEF_CONFIG) + 1);
+			      strlen(DEF_CONFIG) + 2); /* +1 for null and '/'*/
     sprintf(fileName, "%s/%s", capp->params->path, DEF_CONFIG);
 
     if (!process_capp_config_file(capp->config, fileName)) {

@@ -636,7 +636,7 @@ static int handle_crud_requests(CSpace *space) {
 
     memset(buffer, 0, CSPACE_MAX_BUFFER);
 
-    count = recv(space->sockets[CHILD_SOCKET], buffer, CSPACE_MAX_BUFFER, 0);
+    count = read(space->sockets[CHILD_SOCKET], buffer, CSPACE_MAX_BUFFER);
 
     if (count <=0  && errno != EAGAIN) {
       log_error("Error reading packet from cspace socket. Name: %s",
@@ -644,7 +644,7 @@ static int handle_crud_requests(CSpace *space) {
       return CSPACE_READ_ERROR;
     }
 
-    if (count == 0 && errno == EAGAIN) {
+    if (count <= 0 && errno == EAGAIN) {
       continue;
     }
 
@@ -655,11 +655,15 @@ static int handle_crud_requests(CSpace *space) {
       log_error("Memory allocation error. Size: %d", 2*count);
       return CSPACE_MEMORY_ERROR;
     }
+    memset(cmd, 0, count+1);
+    memset(params, 0, count+1);
 
     /* we have some packet. Let's see what we got
      * packet format is [cmd seq_id some_text]
      */
     sscanf(buffer, "%s %d %s", cmd, &seqno, params);
+
+    log_debug("%d %s %d %s", count, cmd, seqno, params);
 
     if (strcmp(cmd, CAPP_CMD_CREATE)==0) {
       handle_create_request(space, seqno, params);
