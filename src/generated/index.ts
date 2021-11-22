@@ -365,6 +365,96 @@ export type GetConnectedUsersQuery = {
     };
 };
 
+export type GetDataBillQueryVariables = Exact<{
+    filter: Data_Bill_Filter;
+}>;
+
+export type GetDataBillQuery = {
+    __typename?: "Query";
+    getDataBill: {
+        __typename?: "DataBillDto";
+        id: string;
+        dataBill: string;
+        billDue: string;
+    };
+};
+
+export type GetAlertsQueryVariables = Exact<{
+    data: PaginationDto;
+}>;
+
+export type GetAlertsQuery = {
+    __typename?: "Query";
+    getAlerts: {
+        __typename?: "AlertsResponse";
+        meta: {
+            __typename?: "Meta";
+            count: number;
+            page: number;
+            size: number;
+            pages: number;
+        };
+        alerts: Array<{
+            __typename?: "AlertDto";
+            id?: string | null | undefined;
+            type: Alert_Type;
+            title?: string | null | undefined;
+            description?: string | null | undefined;
+            alertDate?: any | null | undefined;
+        }>;
+    };
+};
+
+export type GetNodesQueryVariables = Exact<{
+    data: PaginationDto;
+}>;
+
+export type GetNodesQuery = {
+    __typename?: "Query";
+    getNodes: {
+        __typename?: "NodesResponse";
+        meta: {
+            __typename?: "Meta";
+            count: number;
+            page: number;
+            size: number;
+            pages: number;
+        };
+        nodes: Array<{
+            __typename?: "NodeDto";
+            id: string;
+            title: string;
+            description: string;
+            totalUser: number;
+        }>;
+    };
+};
+
+export type GetResidentsQueryVariables = Exact<{
+    data: PaginationDto;
+}>;
+
+export type GetResidentsQuery = {
+    __typename?: "Query";
+    getNodes: {
+        __typename?: "NodesResponse";
+        meta: {
+            __typename?: "Meta";
+            count: number;
+            page: number;
+            size: number;
+            pages: number;
+        };
+        nodes: Array<{
+            __typename?: "NodeDto";
+            id: string;
+            title: string;
+            description: string;
+            totalUser: number;
+        }>;
+    };
+};
+
 export const GetDataUsageDocument = gql`
     query getDataUsage($filter: TIME_FILTER!) {
         getDataUsage(filter: $filter) {
@@ -484,4 +574,263 @@ export type GetConnectedUsersLazyQueryHookResult = ReturnType<
 export type GetConnectedUsersQueryResult = Apollo.QueryResult<
     GetConnectedUsersQuery,
     GetConnectedUsersQueryVariables
+>;
+export const GetDataBillDocument = gql`
+    query getDataBill($filter: DATA_BILL_FILTER!) {
+        getDataBill(filter: $filter) {
+            id
+            dataBill
+            billDue
+        }
+    }
+`;
+
+/**
+ * __useGetDataBillQuery__
+ *
+ * To run a query within a React component, call `useGetDataBillQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDataBillQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDataBillQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetDataBillQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetDataBillQuery,
+        GetDataBillQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetDataBillQuery, GetDataBillQueryVariables>(
+        GetDataBillDocument,
+        options
+    );
+}
+export function useGetDataBillLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetDataBillQuery,
+        GetDataBillQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetDataBillQuery, GetDataBillQueryVariables>(
+        GetDataBillDocument,
+        options
+    );
+}
+export type GetDataBillQueryHookResult = ReturnType<typeof useGetDataBillQuery>;
+export type GetDataBillLazyQueryHookResult = ReturnType<
+    typeof useGetDataBillLazyQuery
+>;
+export type GetDataBillQueryResult = Apollo.QueryResult<
+    GetDataBillQuery,
+    GetDataBillQueryVariables
+>;
+export const GetAlertsDocument = gql`
+    query getAlerts($data: PaginationDto!) {
+        getAlerts(data: $data) {
+            meta {
+                count
+                page
+                size
+                pages
+            }
+            alerts {
+                id
+                type
+                title
+                description
+                alertDate
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetAlertsQuery__
+ *
+ * To run a query within a React component, call `useGetAlertsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAlertsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAlertsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetAlertsQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetAlertsQuery,
+        GetAlertsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetAlertsQuery, GetAlertsQueryVariables>(
+        GetAlertsDocument,
+        options
+    );
+}
+export function useGetAlertsLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetAlertsQuery,
+        GetAlertsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetAlertsQuery, GetAlertsQueryVariables>(
+        GetAlertsDocument,
+        options
+    );
+}
+export type GetAlertsQueryHookResult = ReturnType<typeof useGetAlertsQuery>;
+export type GetAlertsLazyQueryHookResult = ReturnType<
+    typeof useGetAlertsLazyQuery
+>;
+export type GetAlertsQueryResult = Apollo.QueryResult<
+    GetAlertsQuery,
+    GetAlertsQueryVariables
+>;
+export const GetNodesDocument = gql`
+    query getNodes($data: PaginationDto!) {
+        getNodes(data: $data) {
+            meta {
+                count
+                page
+                size
+                pages
+            }
+            nodes {
+                id
+                title
+                description
+                totalUser
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetNodesQuery__
+ *
+ * To run a query within a React component, call `useGetNodesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodesQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetNodesQuery(
+    baseOptions: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(
+        GetNodesDocument,
+        options
+    );
+}
+export function useGetNodesLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodesQuery,
+        GetNodesQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodesQuery, GetNodesQueryVariables>(
+        GetNodesDocument,
+        options
+    );
+}
+export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
+export type GetNodesLazyQueryHookResult = ReturnType<
+    typeof useGetNodesLazyQuery
+>;
+export type GetNodesQueryResult = Apollo.QueryResult<
+    GetNodesQuery,
+    GetNodesQueryVariables
+>;
+export const GetResidentsDocument = gql`
+    query getResidents($data: PaginationDto!) {
+        getNodes(data: $data) {
+            meta {
+                count
+                page
+                size
+                pages
+            }
+            nodes {
+                id
+                title
+                description
+                totalUser
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetResidentsQuery__
+ *
+ * To run a query within a React component, call `useGetResidentsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetResidentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetResidentsQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetResidentsQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetResidentsQuery,
+        GetResidentsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetResidentsQuery, GetResidentsQueryVariables>(
+        GetResidentsDocument,
+        options
+    );
+}
+export function useGetResidentsLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetResidentsQuery,
+        GetResidentsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetResidentsQuery, GetResidentsQueryVariables>(
+        GetResidentsDocument,
+        options
+    );
+}
+export type GetResidentsQueryHookResult = ReturnType<
+    typeof useGetResidentsQuery
+>;
+export type GetResidentsLazyQueryHookResult = ReturnType<
+    typeof useGetResidentsLazyQuery
+>;
+export type GetResidentsQueryResult = Apollo.QueryResult<
+    GetResidentsQuery,
+    GetResidentsQueryVariables
 >;

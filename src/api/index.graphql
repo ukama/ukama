@@ -13,3 +13,63 @@ query getConnectedUsers($filter: TIME_FILTER!) {
         guestUsers
     }
 }
+
+query getDataBill($filter: DATA_BILL_FILTER!) {
+    getDataBill(filter: $filter) {
+        id
+        dataBill
+        billDue
+    }
+}
+
+query getAlerts($data: PaginationDto!) {
+    getAlerts(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        alerts {
+            id
+            type
+            title
+            description
+            alertDate
+        }
+    }
+}
+
+query getNodes($data: PaginationDto!) {
+    getNodes(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        nodes {
+            id
+            title
+            description
+            totalUser
+        }
+    }
+}
+
+query getResidents($data: PaginationDto!) {
+    getNodes(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        nodes {
+            id
+            title
+            description
+            totalUser
+        }
+    }
+}
