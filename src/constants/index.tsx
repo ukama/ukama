@@ -179,8 +179,13 @@ const BillingTabs = [
     { id: 2, label: "BILLING HISTORY", value: "2" },
 ];
 
+const UsersTabs = [
+    { id: 1, label: "OVERVIEW", value: "1" },
+    { id: 2, label: "CURRENTLY CONNECTED", value: "2" },
+];
 export {
     NETWORKS,
+    UsersTabs,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,

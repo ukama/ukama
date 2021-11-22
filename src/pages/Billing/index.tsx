@@ -178,7 +178,7 @@ const Billing = () => {
                                                 variant="text"
                                                 startIcon={<AddIcon />}
                                             >
-                                                {t("BILLING.FormTitle")}
+                                                Add payment
                                             </Button>
                                         </MenuItem>
                                     </TextField>
