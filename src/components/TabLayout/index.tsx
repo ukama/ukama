@@ -1,17 +1,27 @@
-import { Box, Tabs, Tab } from "@mui/material";
+import { Box, Tabs, Tab, Button } from "@mui/material";
 import { SelectItemType } from "../../types";
 type TabLayoutProps = {
     tab: string;
-    tabs: SelectItemType[];
     onTabChange: Function;
+    tabs: SelectItemType[];
+    handleAction?: Function;
+    withActionButton?: boolean;
 };
 
-const TabLayoutHeader = ({ tab, tabs, onTabChange }: TabLayoutProps) => {
+const TabLayoutHeader = ({
+    tab,
+    tabs,
+    onTabChange,
+    handleAction = () => {},
+    withActionButton = false,
+}: TabLayoutProps) => {
     return (
         <Box
             sx={{
                 width: "100%",
+                display: "flex",
                 borderBottom: 2,
+                justifyContent: "space-between",
                 borderColor: "rgba(196, 196, 196, 0.1)",
             }}
         >
@@ -34,6 +44,18 @@ const TabLayoutHeader = ({ tab, tabs, onTabChange }: TabLayoutProps) => {
                     />
                 ))}
             </Tabs>
+
+            {withActionButton && (
+                <Button
+                    size="medium"
+                    color="primary"
+                    variant="contained"
+                    sx={{ height: "42px" }}
+                    onClick={() => handleAction()}
+                >
+                    ACTIVATE USER
+                </Button>
+            )}
         </Box>
     );
 };
