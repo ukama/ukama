@@ -1,23 +1,24 @@
 import {
     NodeCard,
-    StatusCard,
-    NetworkStatus,
-    ContainerHeader,
     StatsCard,
     AlertCard,
+    StatusCard,
+    NetworkStatus,
+    LoadingWrapper,
+    ContainerHeader,
     MultiSlideCarousel,
     DataTableWithOptions,
     UserActivationDialog,
-    LoadingWrapper,
 } from "../../components";
 import {
     ALERT_INFORMATION,
     DashboardSliderData,
-    DashboardStatusCard,
     DashboardResidentsTable,
 } from "../../constants/stubData";
 import {
     NETWORKS,
+    TIME_FILTER,
+    MONTH_FILTER,
     STATS_PERIOD,
     STATS_OPTIONS,
     UserActivation,
@@ -33,12 +34,20 @@ import {
     Typography,
     useMediaQuery,
 } from "@mui/material";
+import {
+    Time_Filter,
+    Data_Bill_Filter,
+    useGetDataBillQuery,
+    useGetDataUsageQuery,
+    useGetConnectedUsersQuery,
+} from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { AlertItemType } from "../../types";
 import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
+import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 let slides = [
     {
@@ -60,10 +69,33 @@ const Home = () => {
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [userStatusFilter, setUserStatusFilter] = useState("total");
-    const [dataStatusFilter, setDataStatusFilter] = useState("total");
+    const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
+    const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Total);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
-    const [billingStatusFilter, setBillingStatusFilter] = useState("july");
+    const [billingStatusFilter, setBillingStatusFilter] = useState(
+        Data_Bill_Filter.July
+    );
+
+    const { data: connectedUserRes, loading: connectedUserloading } =
+        useGetConnectedUsersQuery({
+            variables: {
+                filter: userStatusFilter,
+            },
+        });
+
+    const { data: dataUsageRes, loading: dataUsageloading } =
+        useGetDataUsageQuery({
+            variables: {
+                filter: dataStatusFilter,
+            },
+        });
+
+    const { data: dataBillingRes, loading: dataBillingloading } =
+        useGetDataBillQuery({
+            variables: {
+                filter: billingStatusFilter,
+            },
+        });
 
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -71,21 +103,24 @@ const Home = () => {
     ) => {
         setSelectedBtn(newSelected);
     };
+
     const handleStatsChange = (event: {
         target: { value: React.SetStateAction<number> };
     }) => {
         setstatOptionValue(event.target.value);
     };
+
     const handleSatusChange = (key: string, value: string) => {
         switch (key) {
             case "statusUser":
-                return setUserStatusFilter(value);
+                return setUserStatusFilter(value as Time_Filter);
             case "statusUsage":
-                return setDataStatusFilter(value);
+                return setDataStatusFilter(value as Time_Filter);
             case "statusBill":
-                return setBillingStatusFilter(value);
+                return setBillingStatusFilter(value as Data_Bill_Filter);
         }
     };
+
     const onResidentsTableMenuItem = () => {};
     const getStatus = (key: string) => {
         switch (key) {
@@ -149,31 +184,48 @@ const Home = () => {
                     handleStatusChange={(value: string) => setNetwork(value)}
                 />
                 <Grid container spacing={2}>
-                    {DashboardStatusCard.map(
-                        ({
-                            id,
-                            Icon,
-                            title,
-                            options,
-                            subtitle1,
-                            subtitle2,
-                        }: any) => (
-                            <Grid key={id} item xs={12} md={6} lg={4}>
-                                <StatusCard
-                                    Icon={Icon}
-                                    title={title}
-                                    options={options}
-                                    subtitle1={subtitle1}
-                                    subtitle2={subtitle2}
-                                    option={getStatus(id)}
-                                    loading={isSkeltonLoad}
-                                    handleSelect={(value: string) =>
-                                        handleSatusChange(id, value)
-                                    }
-                                />
-                            </Grid>
-                        )
-                    )}
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            Icon={UsersWithBG}
+                            title={"Connected Users"}
+                            options={TIME_FILTER}
+                            subtitle1={`${connectedUserRes?.getConnectedUsers?.totalUser}`}
+                            subtitle2={`| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`}
+                            option={getStatus("statusUser")}
+                            loading={connectedUserloading}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUser", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data usage"}
+                            subtitle1={`${dataUsageRes?.getDataUsage.dataConsumed}`}
+                            subtitle2={` / ${dataUsageRes?.getDataUsage.dataPackage}`}
+                            Icon={DataUsage}
+                            options={TIME_FILTER}
+                            option={getStatus("statusUsage")}
+                            loading={dataUsageloading}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUsage", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Bill"}
+                            subtitle1={`${dataBillingRes?.getDataBill.dataBill}`}
+                            subtitle2={` / due in ${dataBillingRes?.getDataBill.billDue}`}
+                            Icon={DataBilling}
+                            options={MONTH_FILTER}
+                            loading={dataBillingloading}
+                            option={getStatus("statusBill")}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusBill", value)
+                            }
+                        />
+                    </Grid>
                 </Grid>
                 <Box mt={2} mb={2}>
                     <Grid container spacing={2}>

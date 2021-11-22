@@ -1,10 +1,4 @@
-import { MONTH_FILTER, TIME_FILTER } from ".";
-import {
-    DataBilling,
-    DataUsage,
-    UsersWithBG,
-    CloudOffIcon,
-} from "../assets/svg";
+import { CloudOffIcon } from "../assets/svg";
 const RechartsData = [
     {
         name: "10 AM",
@@ -91,32 +85,6 @@ const ALERT_INFORMATION = [
         title: "Software error",
         description: "Short description of alert.",
         date: "08/16/21 1PM",
-    },
-];
-const DashboardStatusCard = [
-    {
-        id: "statusUser",
-        subtitle1: "13",
-        Icon: UsersWithBG,
-        options: TIME_FILTER,
-        title: "Connected Users",
-        subtitle2: "| 10 residents; 3 guests",
-    },
-    {
-        id: "statusUsage",
-        subtitle1: "0",
-        Icon: DataUsage,
-        options: TIME_FILTER,
-        title: "Data usage",
-        subtitle2: "GBs / unlimited",
-    },
-    {
-        id: "statusBill",
-        subtitle1: "$ 20",
-        Icon: DataBilling,
-        options: MONTH_FILTER,
-        title: "Data Bill",
-        subtitle2: "/ due in 8 days",
     },
 ];
 
@@ -210,7 +178,6 @@ export {
     SimCardData,
     RechartsData,
     ALERT_INFORMATION,
-    DashboardStatusCard,
     DashboardSliderData,
     DashboardResidentsTable,
 };

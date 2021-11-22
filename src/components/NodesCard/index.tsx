@@ -9,9 +9,9 @@ import {
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
 import OptionsPopover from "../OptionsPopover";
+import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import { Paper, Typography, Stack, Grid, Divider } from "@mui/material";
-import { SkeletonRoundedCard } from "../../styles";
 const useStyles = makeStyles(() => ({
     container: {
         width: "214px",

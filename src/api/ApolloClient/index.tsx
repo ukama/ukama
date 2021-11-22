@@ -4,7 +4,7 @@ const client = new ApolloClient({
     uri: process.env.REACT_APP_API,
     cache: new InMemoryCache(),
     headers: {
-        authorization: "",
+        authorization: "test",
     },
 });
 
