@@ -212,9 +212,39 @@ const SimCardData = [
         isActive: false,
     },
 ];
-
+const CurrentBilling = [
+    {
+        id: 1,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 2,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 3,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 4,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+];
 export {
     SimCardData,
+    CurrentBilling,
     RechartsData,
     ALERT_INFORMATION,
     DashboardStatusCard,
