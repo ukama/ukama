@@ -143,3 +143,20 @@ export const POST_ADD_NODE_MUTATION = `
         }
     }
 `;
+
+export const GET_CURRENT_BILL = `
+    query getCurrentBill {
+        getCurrentBill {
+            bill {
+             id
+             name
+             dataUsed
+              rate
+             subtotal
+            }
+          total
+          dueDate
+          billMonth
+        }
+    }
+`;
