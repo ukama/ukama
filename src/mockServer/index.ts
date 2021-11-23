@@ -10,6 +10,7 @@ import {
     getUsers,
     addNode,
     getCurrentBill,
+    getBillHistory,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -23,4 +24,5 @@ export const mockServer = (app: Express): void => {
     app.get("/user/get_users", getUsers);
     app.post("/node/add_node", addNode);
     app.get("/bill/get_current_bill", getCurrentBill);
+    app.get("/bill/get_bill_history", getBillHistory);
 };

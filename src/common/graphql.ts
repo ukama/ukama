@@ -160,3 +160,15 @@ export const GET_CURRENT_BILL = `
         }
     }
 `;
+
+export const GET_BILL_HISTORY = `
+    query getBillHistory {
+        getBillHistory {
+            id
+            description
+            date
+            totalUsage
+            subtotal
+        }
+    }
+`;

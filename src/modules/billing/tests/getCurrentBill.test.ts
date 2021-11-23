@@ -29,16 +29,15 @@ const nockResponse = {
     ],
 };
 
-describe("Get Alerts", () => {
+describe("Get CurrentBill", () => {
     beforeEachGetCall("/bill/get_current_bill", nockResponse, 200);
-    it("get alerts", async () => {
+    it("get current bill", async () => {
         const response = await gCall({
             source: GET_CURRENT_BILL,
             contextValue: {
                 req: {
                     headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
+                        authorisation: "test",
                     },
                 },
             },

@@ -1,6 +1,11 @@
 import * as defaultCasual from "casual";
 import { IBillMapper } from "./interface";
-import { CurrentBillResponse, BillResponse } from "./types";
+import {
+    CurrentBillResponse,
+    BillResponse,
+    BillHistoryDto,
+    BillHistoryResponse,
+} from "./types";
 
 class BillMapper implements IBillMapper {
     dtoToDto = (res: CurrentBillResponse): BillResponse => {
@@ -16,6 +21,9 @@ class BillMapper implements IBillMapper {
             dueDate: defaultCasual.date("10-10-2021"),
             billMonth: defaultCasual.date("11-10-2021"),
         };
+    };
+    billHistoryDtoToDto = (res: BillHistoryResponse): BillHistoryDto[] => {
+        return res.data;
     };
 }
 export default <IBillMapper>new BillMapper();
