@@ -54,6 +54,7 @@ export class ApiMethodDataDto {
 export interface Context {
     req: Request;
     session: string | string[];
+    token: string | string[];
 }
 
 @ObjectType()
