@@ -5,6 +5,7 @@ import LoginForm from "./LoginForm";
 import TabLayout from "./TabLayout";
 import SignUpForm from "./SignUpForm";
 import StatusCard from "./StatusCard";
+import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import LoadingWrapper from "./LoadingWrapper";
@@ -29,6 +30,7 @@ export {
     FormDialog,
     StatusCard,
     BasicDialog,
+    NodeContainer,
     SimCardDesign,
     NetworkStatus,
     OptionsPopover,

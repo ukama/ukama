@@ -49,27 +49,34 @@ query getNodes($data: PaginationDto!) {
             pages
         }
         nodes {
-            id
-            title
-            description
-            totalUser
+            nodes {
+                id
+                title
+                description
+                totalUser
+            }
+            activeNodes
+            totalNodes
         }
     }
 }
 
 query getResidents($data: PaginationDto!) {
-    getNodes(data: $data) {
+    getResidents(data: $data) {
         meta {
             count
             page
             size
             pages
         }
-        nodes {
-            id
-            title
-            description
-            totalUser
+        residents {
+            residents {
+                id
+                name
+                dataUsage
+            }
+            activeResidents
+            totalResidents
         }
     }
 }

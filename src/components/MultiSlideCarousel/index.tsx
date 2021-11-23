@@ -1,6 +1,6 @@
 import Carousel, {
-    slidesToShowPlugin,
     arrowsPlugin,
+    slidesToShowPlugin,
 } from "@brainhubeu/react-carousel";
 import { Box } from "@mui/material";
 import { styled } from "@mui/system";
@@ -16,7 +16,7 @@ const Container = styled(Box)({
 });
 
 const MultiSlideCarousel = (props: any) => {
-    const { children, numberOfSlides = 3 } = props;
+    const { children, numberOfSlides = 3, disableArrows = false } = props;
 
     return (
         <Container>
@@ -29,7 +29,9 @@ const MultiSlideCarousel = (props: any) => {
                         },
                     },
                     {
-                        resolve: arrowsPlugin,
+                        resolve: disableArrows
+                            ? slidesToShowPlugin
+                            : arrowsPlugin,
                         options: {
                             numberOfSlides: numberOfSlides,
                             arrowLeft: <ChevronLeft />,

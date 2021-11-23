@@ -23,6 +23,12 @@ const useStyles = makeStyles(() => ({
         justifyContent: "center",
         background: colors.white,
     },
+    textStyle: {
+        height: "20px",
+        overflow: "hidden",
+        display: "-webkit-box",
+        textOverflow: "ellipsis",
+    },
 }));
 
 const IconStyle = {
@@ -86,6 +92,7 @@ const NodeCard = ({
                                         letterSpacing: "-0.02em",
                                         lineHeight: "19px",
                                     }}
+                                    className={classes.textStyle}
                                 >
                                     {title}
                                 </Typography>

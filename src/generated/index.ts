@@ -55,6 +55,22 @@ export type ActiveUserResponseDto = {
     status: Scalars["String"];
 };
 
+export type AddNodeDto = {
+    name: Scalars["String"];
+    serialNo: Scalars["String"];
+};
+
+export type AddNodeResponse = {
+    __typename?: "AddNodeResponse";
+    success: Scalars["Boolean"];
+};
+
+export type AddNodeResponseDto = {
+    __typename?: "AddNodeResponseDto";
+    data: AddNodeResponse;
+    status: Scalars["String"];
+};
+
 export type AlertDto = {
     __typename?: "AlertDto";
     alertDate?: Maybe<Scalars["DateTime"]>;
@@ -128,8 +144,8 @@ export enum Data_Plan_Type {
 
 export type DataBillDto = {
     __typename?: "DataBillDto";
-    billDue: Scalars["String"];
-    dataBill: Scalars["String"];
+    billDue: Scalars["Float"];
+    dataBill: Scalars["Float"];
     id: Scalars["String"];
 };
 
@@ -141,7 +157,7 @@ export type DataBillResponse = {
 
 export type DataUsageDto = {
     __typename?: "DataUsageDto";
-    dataConsumed: Scalars["String"];
+    dataConsumed: Scalars["Float"];
     dataPackage: Scalars["String"];
     id: Scalars["String"];
 };
@@ -187,8 +203,9 @@ export enum Get_User_Type {
 export type GetUserDto = {
     __typename?: "GetUserDto";
     dataPlan: Data_Plan_Type;
-    dataUsage: Scalars["String"];
+    dataUsage: Scalars["Float"];
     dlActivity: Scalars["String"];
+    id: Scalars["String"];
     name: Scalars["String"];
     node: Scalars["String"];
     status: Get_User_Status_Type;
@@ -225,16 +242,22 @@ export type Meta = {
 export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
+    addNode: AddNodeResponse;
 };
 
 export type MutationActivateUserArgs = {
     data: ActivateUserDto;
 };
 
+export type MutationAddNodeArgs = {
+    data: AddNodeDto;
+};
+
 export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
     id: Scalars["String"];
+    status: Get_User_Status_Type;
     title: Scalars["String"];
     totalUser: Scalars["Float"];
 };
@@ -246,10 +269,17 @@ export type NodeResponse = {
     status: Scalars["String"];
 };
 
+export type NodeResponseDto = {
+    __typename?: "NodeResponseDto";
+    activeNodes: Scalars["Float"];
+    nodes: Array<NodeDto>;
+    totalNodes: Scalars["Float"];
+};
+
 export type NodesResponse = {
     __typename?: "NodesResponse";
     meta: Meta;
-    nodes: Array<NodeDto>;
+    nodes: NodeResponseDto;
 };
 
 export type PaginationDto = {
@@ -304,22 +334,22 @@ export type QueryGetUsersArgs = {
 
 export type ResidentDto = {
     __typename?: "ResidentDto";
+    dataUsage: Scalars["Float"];
     id: Scalars["String"];
     name: Scalars["String"];
-    usage: Scalars["String"];
 };
 
 export type ResidentResponse = {
     __typename?: "ResidentResponse";
-    data: Array<ResidentDto>;
-    length: Scalars["Float"];
-    status: Scalars["String"];
+    activeResidents: Scalars["Float"];
+    residents: Array<ResidentDto>;
+    totalResidents: Scalars["Float"];
 };
 
 export type ResidentsResponse = {
     __typename?: "ResidentsResponse";
     meta: Meta;
-    residents: Array<ResidentDto>;
+    residents: ResidentResponse;
 };
 
 export enum Time_Filter {
@@ -346,7 +376,7 @@ export type GetDataUsageQuery = {
     getDataUsage: {
         __typename?: "DataUsageDto";
         id: string;
-        dataConsumed: string;
+        dataConsumed: number;
         dataPackage: string;
     };
 };
@@ -374,8 +404,8 @@ export type GetDataBillQuery = {
     getDataBill: {
         __typename?: "DataBillDto";
         id: string;
-        dataBill: string;
-        billDue: string;
+        dataBill: number;
+        billDue: number;
     };
 };
 
@@ -420,13 +450,18 @@ export type GetNodesQuery = {
             size: number;
             pages: number;
         };
-        nodes: Array<{
-            __typename?: "NodeDto";
-            id: string;
-            title: string;
-            description: string;
-            totalUser: number;
-        }>;
+        nodes: {
+            __typename?: "NodeResponseDto";
+            activeNodes: number;
+            totalNodes: number;
+            nodes: Array<{
+                __typename?: "NodeDto";
+                id: string;
+                title: string;
+                description: string;
+                totalUser: number;
+            }>;
+        };
     };
 };
 
@@ -436,8 +471,8 @@ export type GetResidentsQueryVariables = Exact<{
 
 export type GetResidentsQuery = {
     __typename?: "Query";
-    getNodes: {
-        __typename?: "NodesResponse";
+    getResidents: {
+        __typename?: "ResidentsResponse";
         meta: {
             __typename?: "Meta";
             count: number;
@@ -445,13 +480,17 @@ export type GetResidentsQuery = {
             size: number;
             pages: number;
         };
-        nodes: Array<{
-            __typename?: "NodeDto";
-            id: string;
-            title: string;
-            description: string;
-            totalUser: number;
-        }>;
+        residents: {
+            __typename?: "ResidentResponse";
+            activeResidents: number;
+            totalResidents: number;
+            residents: Array<{
+                __typename?: "ResidentDto";
+                id: string;
+                name: string;
+                dataUsage: number;
+            }>;
+        };
     };
 };
 
@@ -711,10 +750,14 @@ export const GetNodesDocument = gql`
                 pages
             }
             nodes {
-                id
-                title
-                description
-                totalUser
+                nodes {
+                    id
+                    title
+                    description
+                    totalUser
+                }
+                activeNodes
+                totalNodes
             }
         }
     }
@@ -767,18 +810,21 @@ export type GetNodesQueryResult = Apollo.QueryResult<
 >;
 export const GetResidentsDocument = gql`
     query getResidents($data: PaginationDto!) {
-        getNodes(data: $data) {
+        getResidents(data: $data) {
             meta {
                 count
                 page
                 size
                 pages
             }
-            nodes {
-                id
-                title
-                description
-                totalUser
+            residents {
+                residents {
+                    id
+                    name
+                    dataUsage
+                }
+                activeResidents
+                totalResidents
             }
         }
     }

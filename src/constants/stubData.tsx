@@ -116,37 +116,6 @@ const DashboardResidentsTable = [
     },
 ];
 
-const DashboardSliderData = [
-    {
-        id: 1,
-        title: "Tryphena’s Node 1",
-        subTitle: "Home node",
-        users: "3",
-        isConfigure: false,
-    },
-    {
-        id: 2,
-        title: "Tryphena’s Node 2",
-        subTitle: "Home node",
-        users: "4",
-        isConfigure: false,
-    },
-    {
-        id: 3,
-        title: "Tryphena’s Node 3",
-        subTitle: "Home node",
-        users: "5",
-        isConfigure: false,
-    },
-    {
-        id: 4,
-        title: "Tryphena’s Node 4",
-        subTitle: "Home node",
-        users: "6",
-        isConfigure: false,
-    },
-];
-
 const SimCardData = [
     {
         id: 1,
@@ -178,6 +147,5 @@ export {
     SimCardData,
     RechartsData,
     ALERT_INFORMATION,
-    DashboardSliderData,
     DashboardResidentsTable,
 };

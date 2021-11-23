@@ -1,18 +1,16 @@
 import {
-    NodeCard,
     StatsCard,
     AlertCard,
     StatusCard,
     NetworkStatus,
+    NodeContainer,
     LoadingWrapper,
     ContainerHeader,
-    MultiSlideCarousel,
     DataTableWithOptions,
     UserActivationDialog,
 } from "../../components";
 import {
     ALERT_INFORMATION,
-    DashboardSliderData,
     DashboardResidentsTable,
 } from "../../constants/stubData";
 import {
@@ -40,6 +38,7 @@ import {
     useGetDataBillQuery,
     useGetDataUsageQuery,
     useGetConnectedUsersQuery,
+    useGetNodesQuery,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -49,23 +48,12 @@ import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
-let slides = [
-    {
-        id: 1,
-        title: "",
-        subTitle: "",
-        users: "",
-        isConfigure: true,
-    },
-];
-
 const Home = () => {
     const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [network, setNetwork] = useState("public");
-    const [isAddNode, setIsAddNode] = useState(false);
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = React.useState(3);
@@ -96,6 +84,15 @@ const Home = () => {
                 filter: billingStatusFilter,
             },
         });
+
+    const { data: nodeRes, loading: nodeLoading } = useGetNodesQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
+            },
+        },
+    });
 
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -137,39 +134,6 @@ const Home = () => {
 
     const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
-
-    const getNodesContainerData = (items: any[], slidesToShow: number) =>
-        items.length > 3 ? (
-            <MultiSlideCarousel numberOfSlides={slidesToShow}>
-                {items.map(({ id, title, users, subTitle, isConfigure }) => (
-                    <NodeCard
-                        key={id}
-                        title={title}
-                        users={users}
-                        loading={false}
-                        subTitle={subTitle}
-                        isConfigure={isConfigure}
-                    />
-                ))}
-            </MultiSlideCarousel>
-        ) : (
-            <Grid
-                item
-                xs={12}
-                container
-                spacing={6}
-                sx={{
-                    display: "flex",
-                    justifyContent: { xs: "center", md: "flex-start" },
-                }}
-            >
-                {items.map(i => (
-                    <Grid key={i} item>
-                        <NodeCard isConfigure={true} />
-                    </Grid>
-                ))}
-            </Grid>
-        );
 
     return (
         <>
@@ -299,20 +263,19 @@ const Home = () => {
 
                 <Grid container spacing={2}>
                     <Grid xs={12} lg={8} item>
-                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
+                        <LoadingWrapper height={312} isLoading={nodeLoading}>
                             <RoundedCard>
                                 <ContainerHeader
-                                    stats="1/8"
                                     title="My Nodes"
                                     buttonTitle="Add Node"
-                                    handleButtonAction={() =>
-                                        setIsAddNode(prev => !prev)
-                                    }
+                                    handleButtonAction={() => {}}
+                                    stats={`${nodeRes?.getNodes?.nodes.activeNodes}/${nodeRes?.getNodes?.nodes.totalNodes}`}
                                 />
-                                {getNodesContainerData(
-                                    isAddNode ? DashboardSliderData : slides,
-                                    slidesToShow
-                                )}
+                                <NodeContainer
+                                    slidesToShow={slidesToShow}
+                                    items={nodeRes?.getNodes?.nodes.nodes}
+                                    count={nodeRes?.getNodes.meta.size}
+                                />
                             </RoundedCard>
                         </LoadingWrapper>
                     </Grid>
