@@ -4,7 +4,7 @@ import { PaginationDto, PaginationResponse } from "../../common/types";
 import {
     CONNECTED_USER_TYPE,
     DATA_PLAN_TYPE,
-    GET_USER_STATUS_TYPE,
+    GET_STATUS_TYPE,
     GET_USER_TYPE,
 } from "../../constants";
 
@@ -83,8 +83,11 @@ export class ActiveUserResponseDto {
 
 @ObjectType()
 export class GetUserDto {
-    @Field(() => GET_USER_STATUS_TYPE)
-    status: GET_USER_STATUS_TYPE;
+    @Field()
+    id: string;
+
+    @Field(() => GET_STATUS_TYPE)
+    status: GET_STATUS_TYPE;
 
     @Field()
     name: string;
@@ -96,7 +99,7 @@ export class GetUserDto {
     dataPlan: DATA_PLAN_TYPE;
 
     @Field()
-    dataUsage: string;
+    dataUsage: number;
 
     @Field()
     dlActivity: string;
@@ -127,4 +130,34 @@ export class GetUserPaginationDto extends PaginationDto {
 export class GetUserResponse extends PaginationResponse {
     @Field(() => [GetUserDto])
     users: GetUserDto[];
+}
+
+@ObjectType()
+export class ResidentDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    dataUsage: number;
+}
+
+@ObjectType()
+export class ResidentResponse {
+    @Field(() => [ResidentDto])
+    residents: ResidentDto[];
+
+    @Field()
+    activeResidents: number;
+
+    @Field()
+    totalResidents: number;
+}
+
+@ObjectType()
+export class ResidentsResponse extends PaginationResponse {
+    @Field(() => ResidentResponse)
+    residents: ResidentResponse;
 }

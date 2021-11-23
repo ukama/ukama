@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { gCall, beforeEachCall } from "../../../common/utils";
+import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_NODES_QUERY } from "../../../common/graphql";
 import { PaginationDto } from "../../../common/types";
 
@@ -7,21 +7,28 @@ const nockResponse = {
     status: "success",
     data: [
         {
-            id: "7d9ae8e7-4372-4fdc-8645-40447a96ccaa",
-            title: "A est",
-            description:
-                "Nostrum qui hic aut rerum aperiam maiores laborum ut. Architecto dolorem quaerat ut. Qui omnis est.",
-            totalUser: 33,
+            id: "e3bceb73-2fea-436b-a1b5-b74094d5c98d",
+            title: "Voluptas rerum animi",
+            description: "Home node",
+            status: "INACTIVE",
+            totalUser: 46,
         },
         {
-            id: "2654c9ef-0b58-4ad1-aeae-d7f9eb2788e2",
-            title: "Non quo",
-            description:
-                "Laborum omnis aut quia neque est. Dicta non nemo aspernatur deserunt vero quia omnis veniam. Veniam ipsum excepturi sint debitis qui non dolorem consequuntur.",
-            totalUser: 92,
+            id: "caf63f96-ae16-411f-9ae4-8a4a201f53d2",
+            title: "Et dolores est",
+            description: "Work node",
+            status: "INACTIVE",
+            totalUser: 30,
+        },
+        {
+            id: "19724dc1-f2f0-4d18-bd6a-6dfd29fd8ebf",
+            title: "Adipisci aut magnam",
+            description: "Work node",
+            status: "ACTIVE",
+            totalUser: 12,
         },
     ],
-    length: 2,
+    length: 6,
 };
 
 const meta: PaginationDto = {
@@ -30,7 +37,7 @@ const meta: PaginationDto = {
 };
 
 describe("Get Nodes", () => {
-    beforeEachCall("/node/get_nodes?pageNo=1&pageSize=3", nockResponse, 200);
+    beforeEachGetCall("/node/get_nodes?pageNo=1&pageSize=3", nockResponse, 200);
     it("get nodes", async () => {
         const response = await gCall({
             source: GET_NODES_QUERY,
@@ -49,11 +56,15 @@ describe("Get Nodes", () => {
         expect(response).toMatchObject({
             data: {
                 getNodes: {
-                    nodes: nockResponse.data,
+                    nodes: {
+                        nodes: nockResponse.data,
+                        activeNodes: 1,
+                        totalNodes: 6,
+                    },
                     meta: {
                         page: 1,
-                        count: 2,
-                        pages: 1,
+                        count: 6,
+                        pages: 2,
                         size: 3,
                     },
                 },

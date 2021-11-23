@@ -54,10 +54,15 @@ export const GET_NODES_QUERY = `
     query getNodes($input:PaginationDto!) {
         getNodes(data:$input) {
             nodes{
-                id
-              title
-              description
-              totalUser
+                nodes{
+                    id
+                    title
+                    description
+                    status
+                    totalUser
+              }
+                activeNodes
+                totalNodes 
               }
               meta{
                 page
@@ -73,9 +78,13 @@ export const GET_RESIDENTS_QUERY = `
     query getResidents($input:PaginationDto!) {
         getResidents(data:$input) {
             residents{
-                id
-              name
-              usage
+                residents{
+                    id
+                    name
+                    dataUsage
+                }
+                activeResidents
+                totalResidents   
               }
               meta{
                 page
@@ -83,6 +92,54 @@ export const GET_RESIDENTS_QUERY = `
                 pages
                 size
               }
+        }
+    }
+`;
+
+export const GET_USER_QUERY = `
+    query getUsers($input:GetUserPaginationDto!) {
+        getUsers(data:$input) {
+            users{
+                id
+                status
+                name
+                node
+                dataPlan
+                dataUsage
+                dlActivity
+                ulActivity
+              }
+            meta{
+                page
+                count
+                pages
+                size
+              }
+        }
+    }
+`;
+
+export const POST_ACTIVATE_USER_MUTATION = `
+    mutation activateUser($input:ActivateUserDto!) {
+        activateUser(data:$input) {
+            success
+        }
+    }
+`;
+
+export const GET_ESIM_QUERY = `
+    query getEsims {
+        getEsims{
+            esim
+            active
+        }
+    }
+`;
+
+export const POST_ADD_NODE_MUTATION = `
+    mutation addNode($input:AddNodeDto!) {
+        addNode(data:$input) {
+            success
         }
     }
 `;

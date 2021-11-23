@@ -8,6 +8,7 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
+    ResidentsResponse,
 } from "./types";
 import { IUserService } from "./interface";
 import { HTTP404Error, Messages } from "../../errors";
@@ -16,6 +17,7 @@ import { API_METHOD_TYPE, TIME_FILTER } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
+import { PaginationDto } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
@@ -56,6 +58,21 @@ export class UserService implements IUserService {
 
         return {
             users,
+            meta,
+        };
+    };
+    getResidents = async (req: PaginationDto): Promise<ResidentsResponse> => {
+        const res = await catchAsyncIOMethod<GetUserResponseDto>({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_USERS,
+            params: req,
+        });
+        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
+        const residents = UserMapper.residentDtoToDto(res);
+        if (!residents) throw new HTTP404Error(Messages.RESIDENTS_NOT_FOUND);
+
+        return {
+            residents,
             meta,
         };
     };

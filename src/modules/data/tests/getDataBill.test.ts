@@ -1,19 +1,19 @@
 import "reflect-metadata";
-import { gCall, beforeEachCall } from "../../../common/utils";
+import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_DATA_BILL_QUERY } from "../../../common/graphql";
 import { DATA_BILL_FILTER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
     data: {
-        id: "f0dc1856-e0c0-439b-b1ba-6bee696fb247",
-        dataBill: "25$",
-        billDue: "25 days",
+        id: "27f90c88-7c1c-41c4-8186-1741a8f87420",
+        dataBill: 50,
+        billDue: 10,
     },
 };
 
 describe("Get Data Bill", () => {
-    beforeEachCall("/data/data_bill?0=CURRENT", nockResponse, 200);
+    beforeEachGetCall("/data/data_bill?0=CURRENT", nockResponse, 200);
     it("Get Data Bill", async () => {
         const response = await gCall({
             source: GET_DATA_BILL_QUERY,

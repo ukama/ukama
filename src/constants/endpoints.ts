@@ -12,4 +12,5 @@ export const SERVER = {
     GET_ESIMS: `esims/get_esims`,
     POST_ACTIVE_USER: `user/active_user`,
     GET_USERS: `user/get_users`,
+    POST_ADD_NODE: `node/add_node`,
 };

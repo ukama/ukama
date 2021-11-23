@@ -3,13 +3,13 @@ import {
     ALERT_TYPE,
     CONNECTED_USER_TYPE,
     DATA_PLAN_TYPE,
-    GET_USER_STATUS_TYPE,
+    GET_STATUS_TYPE,
+    NODE_TYPE,
 } from "../../constants";
 import { AlertDto } from "../../modules/alert/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NodeDto } from "../../modules/node/types";
-import { ResidentDto } from "../../modules/resident/types";
 
 import { GetUserDto, UserDto } from "../../modules/user/types";
 
@@ -36,7 +36,7 @@ const user = (): UserDto => {
 const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
-        dataConsumed: `${defaultCasual.integer(1, 999)}GBs`,
+        dataConsumed: defaultCasual.integer(1, 999),
         dataPackage: "Unlimited",
     };
 };
@@ -44,8 +44,8 @@ const dataUsage = (): DataUsageDto => {
 const dataBill = (): DataBillDto => {
     return {
         id: defaultCasual._uuid(),
-        dataBill: `${defaultCasual.integer(1, 999)}$`,
-        billDue: `${defaultCasual.integer(1, 29)} days`,
+        dataBill: defaultCasual.integer(1, 999),
+        billDue: defaultCasual.integer(1, 29),
     };
 };
 
@@ -54,7 +54,7 @@ const alert = (): AlertDto => {
         id: defaultCasual._uuid(),
         type: defaultCasual.random_value(ALERT_TYPE),
         title: defaultCasual._title(),
-        description: defaultCasual._description(),
+        description: defaultCasual._short_description(),
         alertDate: new Date(),
     };
 };
@@ -63,28 +63,24 @@ const node = (): NodeDto => {
     return {
         id: defaultCasual._uuid(),
         title: defaultCasual._title(),
-        description: defaultCasual._description(),
+        description: `${defaultCasual.random_value(NODE_TYPE)} node`,
+        status: defaultCasual.random_value(GET_STATUS_TYPE),
         totalUser: defaultCasual.integer(1, 99),
     };
 };
-const resident = (): ResidentDto => {
-    return {
-        id: defaultCasual._uuid(),
-        name: defaultCasual._name(),
-        usage: `${defaultCasual.integer(1, 999)}GB`,
-    };
-};
+
 const getUser = (): GetUserDto => {
     const node = {
         Default: "Default",
         Intermediate: "Intermediate",
     };
     return {
-        status: defaultCasual.random_value(GET_USER_STATUS_TYPE),
+        id: defaultCasual._uuid(),
+        status: defaultCasual.random_value(GET_STATUS_TYPE),
         name: defaultCasual._name(),
         node: `${defaultCasual.random_value(node)} Data Plan`,
         dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
-        dataUsage: "Table cell",
+        dataUsage: defaultCasual.integer(1, 199),
         dlActivity: "Table cell",
         ulActivity: "Table cell",
     };
@@ -114,7 +110,6 @@ interface Generators extends Casual.Generators {
     _dataBill: () => DataBillDto;
     _alert: () => AlertDto;
     _node: () => NodeDto;
-    _resident: () => ResidentDto;
     _esim: () => EsimDto;
     _getUser: () => GetUserDto;
     functions(): functions;
@@ -130,7 +125,6 @@ interface functions extends Casual.functions {
     dataBill: () => DataBillDto;
     alert: () => AlertDto;
     node: () => NodeDto;
-    resident: () => ResidentDto;
     getUser: () => GetUserDto;
     esim: () => EsimDto;
 }
@@ -141,7 +135,6 @@ defaultCasual.define("dataUsage", dataUsage);
 defaultCasual.define("dataBill", dataBill);
 defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
-defaultCasual.define("resident", resident);
 defaultCasual.define("esim", esim);
 defaultCasual.define("getUser", getUser);
 

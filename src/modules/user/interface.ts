@@ -8,6 +8,7 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
+    ResidentResponse,
 } from "./types";
 
 export interface IUserService {
@@ -19,4 +20,5 @@ export interface IUserService {
 export interface IUserMapper {
     connectedUsersDtoToDto(res: ConnectedUserResponse): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
+    residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
 }
