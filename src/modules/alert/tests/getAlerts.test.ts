@@ -38,8 +38,7 @@ describe("Get Alerts", () => {
             contextValue: {
                 req: {
                     headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
+                        authorisation: "test",
                     },
                 },
             },

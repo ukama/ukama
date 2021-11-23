@@ -19,8 +19,7 @@ describe("Post Activate Users", () => {
             contextValue: {
                 req: {
                     headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
+                        authorisation: "test",
                     },
                 },
             },
