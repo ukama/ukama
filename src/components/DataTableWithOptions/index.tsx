@@ -104,6 +104,8 @@ const DataTableWithOptions = ({
                                                 key={`${row.name}-${index}`}
                                                 align={column.align}
                                                 sx={{
+                                                    position: "relative",
+                                                    left: "9px",
                                                     padding:
                                                         "13px 12px 13px 0px",
                                                     fontSize: "0.875rem",

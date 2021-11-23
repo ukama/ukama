@@ -48,14 +48,14 @@ const StatusCard = ({
                             direction="row"
                             alignItems="center"
                         >
-                            <Grid item xs={5}>
+                            <Grid item xs={7}>
                                 <Typography variant="subtitle2">
                                     {title}
                                 </Typography>
                             </Grid>
                             <Grid
                                 item
-                                xs={7}
+                                xs={5}
                                 display="flex"
                                 justifyContent="flex-end"
                             >
@@ -89,7 +89,11 @@ const StatusCard = ({
                         </Grid>
                         <Grid item sm container>
                             <Grid item xs={12} container alignItems="flex-end">
-                                <Typography variant="h5" paddingRight="6px">
+                                <Typography
+                                    variant="h5"
+                                    paddingRight="6px"
+                                    sx={{ position: "relative", top: "2px" }}
+                                >
                                     {subtitle1}
                                 </Typography>
                                 <Typography
