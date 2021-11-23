@@ -1,0 +1,15 @@
+query getDataUsage($filter: TIME_FILTER!) {
+    getDataUsage(filter: $filter) {
+        id
+        dataConsumed
+        dataPackage
+    }
+}
+
+query getConnectedUsers($filter: TIME_FILTER!) {
+    getConnectedUsers(filter: $filter) {
+        totalUser
+        residentUsers
+        guestUsers
+    }
+}
