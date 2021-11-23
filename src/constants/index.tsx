@@ -86,8 +86,9 @@ const MONTH_FILTER = [
 const TIME_FILTER = [
     { id: 1, label: "Today", value: "today" },
     { id: 2, label: "This week", value: "week" },
-    { id: 3, label: "This month", value: "month" },
+    { id: 3, label: "Month", value: "month" },
     { id: 4, label: "Total", value: "total" },
+    { id: 5, label: "Current", value: "current" },
 ];
 
 const NETWORKS = [

@@ -60,8 +60,8 @@ const Home = () => {
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [userStatusFilter, setUserStatusFilter] = useState("total");
-    const [dataStatusFilter, setDataStatusFilter] = useState("total");
+    const [userStatusFilter, setUserStatusFilter] = useState("current");
+    const [dataStatusFilter, setDataStatusFilter] = useState("month");
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
 
