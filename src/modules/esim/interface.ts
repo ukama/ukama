@@ -1,9 +1,9 @@
 import { EsimDto, EsimResponse } from "./types";
 
-export interface IESIMService {
+export interface IEsimService {
     getEsims(): Promise<EsimDto[]>;
 }
 
-export interface IESIMMapper {
+export interface IEsimMapper {
     dtoToDto(data: EsimResponse): EsimDto[];
 }

@@ -1,13 +1,13 @@
 import { Service } from "typedi";
 import { EsimResponse, EsimDto } from "./types";
-import { IESIMService } from "./interface";
+import { IEsimService } from "./interface";
 import EsimMapper from "./mapper";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 
 @Service()
-export class ESIMService implements IESIMService {
+export class EsimService implements IEsimService {
     public getEsims = async (): Promise<EsimDto[]> => {
         const res = await catchAsyncIOMethod<EsimResponse>({
             type: API_METHOD_TYPE.GET,

@@ -95,3 +95,19 @@ export enum NODE_TYPE {
 registerEnumType(NODE_TYPE, {
     name: "NODE_TYPE",
 });
+
+export enum NETWORK_STATUS {
+    ONLINE = "ONLINE",
+    BEING_CONFIGURED = "BEING_CONFIGURED",
+}
+registerEnumType(NETWORK_STATUS, {
+    name: "NETWORK_STATUS",
+});
+
+export enum NETWORK_TYPE {
+    PUBLIC = "PUBLIC",
+    PRIVATE = "PRIVATE",
+}
+registerEnumType(NETWORK_TYPE, {
+    name: "NETWORK_TYPE",
+});

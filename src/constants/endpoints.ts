@@ -13,4 +13,5 @@ export const SERVER = {
     POST_ACTIVE_USER: `user/active_user`,
     GET_USERS: `user/get_users`,
     POST_ADD_NODE: `node/add_node`,
+    GET_NETWORK: `network/get_network`,
 };

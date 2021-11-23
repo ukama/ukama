@@ -143,3 +143,12 @@ export const POST_ADD_NODE_MUTATION = `
         }
     }
 `;
+export const GET_NETWORK_QUERY = `
+    query getNetwork($data:NETWORK_TYPE!) {
+        getNetwork(filter: $data) {
+            id
+            status
+            description
+        }
+    }
+`;
