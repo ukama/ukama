@@ -20,8 +20,8 @@ const StatusCard = ({
     option,
     options,
     loading,
-    subtitle1,
-    subtitle2,
+    subtitle1 = "0",
+    subtitle2 = "",
     handleSelect,
 }: StatusCardProps) => (
     <>

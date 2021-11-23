@@ -153,8 +153,15 @@ const Home = () => {
                             Icon={UsersWithBG}
                             title={"Connected Users"}
                             options={TIME_FILTER}
-                            subtitle1={`${connectedUserRes?.getConnectedUsers?.totalUser}`}
-                            subtitle2={`| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`}
+                            subtitle1={`${
+                                connectedUserRes?.getConnectedUsers
+                                    ?.totalUser || 0
+                            }`}
+                            subtitle2={
+                                connectedUserRes?.getConnectedUsers?.totalUser
+                                    ? `| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`
+                                    : ""
+                            }
                             option={getStatus("statusUser")}
                             loading={connectedUserloading}
                             handleSelect={(value: string) =>
@@ -165,8 +172,13 @@ const Home = () => {
                     <Grid item xs={12} md={6} lg={4}>
                         <StatusCard
                             title={"Data usage"}
-                            subtitle1={`${dataUsageRes?.getDataUsage.dataConsumed}`}
-                            subtitle2={` / ${dataUsageRes?.getDataUsage.dataPackage}`}
+                            subtitle1={`${
+                                dataUsageRes?.getDataUsage?.dataConsumed || 0
+                            }`}
+                            subtitle2={` GBs / ${
+                                dataUsageRes?.getDataUsage?.dataPackage ||
+                                "unlimited"
+                            }`}
                             Icon={DataUsage}
                             options={TIME_FILTER}
                             option={getStatus("statusUsage")}
@@ -179,8 +191,14 @@ const Home = () => {
                     <Grid item xs={12} md={6} lg={4}>
                         <StatusCard
                             title={"Data Bill"}
-                            subtitle1={`${dataBillingRes?.getDataBill.dataBill}`}
-                            subtitle2={` / due in ${dataBillingRes?.getDataBill.billDue}`}
+                            subtitle1={`$ ${
+                                dataBillingRes?.getDataBill?.dataBill || 0
+                            }`}
+                            subtitle2={
+                                dataBillingRes?.getDataBill?.dataBill
+                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue}`
+                                    : " due"
+                            }
                             Icon={DataBilling}
                             options={MONTH_FILTER}
                             loading={dataBillingloading}
@@ -269,7 +287,13 @@ const Home = () => {
                                     title="My Nodes"
                                     buttonTitle="Add Node"
                                     handleButtonAction={() => {}}
-                                    stats={`${nodeRes?.getNodes?.nodes.activeNodes}/${nodeRes?.getNodes?.nodes.totalNodes}`}
+                                    stats={`${
+                                        nodeRes?.getNodes?.nodes?.activeNodes ||
+                                        "-"
+                                    }/${
+                                        nodeRes?.getNodes?.nodes?.totalNodes ||
+                                        "-"
+                                    }`}
                                 />
                                 <NodeContainer
                                     slidesToShow={slidesToShow}
