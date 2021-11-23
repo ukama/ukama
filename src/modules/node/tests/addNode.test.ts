@@ -8,9 +8,9 @@ const reqBody = {
     serialNo: "# 123",
 };
 
-describe("Post Activate Users", () => {
+describe("POST Add Node", () => {
     beforeEachPostCall("/node/add_node", reqBody, nockResponse, 200);
-    it("post activate users", async () => {
+    it("post add node", async () => {
         const response = await gCall({
             source: POST_ADD_NODE_MUTATION,
             variableValues: {

@@ -4,11 +4,13 @@ import {
     CONNECTED_USER_TYPE,
     DATA_PLAN_TYPE,
     GET_STATUS_TYPE,
+    NETWORK_STATUS,
     NODE_TYPE,
 } from "../../constants";
 import { AlertDto } from "../../modules/alert/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
+import { NetworkDto } from "../../modules/network/types";
 import { NodeDto } from "../../modules/node/types";
 
 import { GetUserDto, UserDto } from "../../modules/user/types";
@@ -97,6 +99,20 @@ const esim = (): EsimDto => {
         active: defaultCasual.random_value(boolean),
     };
 };
+const network = (): NetworkDto => {
+    const status = defaultCasual.random_value(NETWORK_STATUS);
+
+    if (status === NETWORK_STATUS.BEING_CONFIGURED)
+        return {
+            id: defaultCasual._uuid(),
+            status,
+        };
+    return {
+        id: defaultCasual._uuid(),
+        status,
+        description: "21 days 5 hours 1 minute",
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -112,6 +128,7 @@ interface Generators extends Casual.Generators {
     _node: () => NodeDto;
     _esim: () => EsimDto;
     _getUser: () => GetUserDto;
+    _network: () => NetworkDto;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -127,6 +144,7 @@ interface functions extends Casual.functions {
     node: () => NodeDto;
     getUser: () => GetUserDto;
     esim: () => EsimDto;
+    network: () => NetworkDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -137,6 +155,7 @@ defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
 defaultCasual.define("esim", esim);
 defaultCasual.define("getUser", getUser);
+defaultCasual.define("network", network);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 
