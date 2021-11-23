@@ -60,11 +60,11 @@ registerEnumType(API_METHOD_TYPE, {
     name: "API_METHOD_TYPE",
 });
 
-export enum GET_USER_STATUS_TYPE {
+export enum GET_STATUS_TYPE {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
 }
-registerEnumType(GET_USER_STATUS_TYPE, {
+registerEnumType(GET_STATUS_TYPE, {
     name: "GET_USER_STATUS_TYPE",
 });
 
@@ -86,4 +86,12 @@ export enum GET_USER_TYPE {
 }
 registerEnumType(GET_USER_TYPE, {
     name: "GET_USER_TYPE",
+});
+
+export enum NODE_TYPE {
+    HOME = "Home",
+    WORK = "Work",
+}
+registerEnumType(NODE_TYPE, {
+    name: "NODE_TYPE",
 });

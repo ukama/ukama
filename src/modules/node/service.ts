@@ -1,5 +1,11 @@
 import { Service } from "typedi";
-import { NodeResponse, NodesResponse } from "./types";
+import {
+    AddNodeDto,
+    AddNodeResponse,
+    AddNodeResponseDto,
+    NodeResponse,
+    NodesResponse,
+} from "./types";
 import { INodeService } from "./interface";
 import { HTTP404Error, Messages } from "../../errors";
 import { PaginationDto } from "../../common/types";
@@ -25,5 +31,13 @@ export class NodeService implements INodeService {
             nodes,
             meta,
         };
+    };
+    addNode = async (req: AddNodeDto): Promise<AddNodeResponse> => {
+        const res = await catchAsyncIOMethod<AddNodeResponseDto>({
+            type: API_METHOD_TYPE.POST,
+            path: SERVER.POST_ADD_NODE,
+            body: req,
+        });
+        return res.data;
     };
 }

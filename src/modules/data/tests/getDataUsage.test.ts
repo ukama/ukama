@@ -1,19 +1,19 @@
 import "reflect-metadata";
-import { gCall, beforeEachCall } from "../../../common/utils";
+import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_DATA_USAGE_QUERY } from "../../../common/graphql";
 import { TIME_FILTER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
     data: {
-        id: "f6e025fc-b490-462c-acdd-689c4a9d2cb8",
-        dataConsumed: "126GBs",
+        id: "7c51cdc5-fc3b-4837-bc7d-94bb16e11d8d",
+        dataConsumed: 941,
         dataPackage: "Unlimited",
     },
 };
 
 describe("Get Data Usage", () => {
-    beforeEachCall("/data/data_usage?0=MONTH", nockResponse, 200);
+    beforeEachGetCall("/data/data_usage?0=MONTH", nockResponse, 200);
     it("Get Data Usage", async () => {
         const response = await gCall({
             source: GET_DATA_USAGE_QUERY,

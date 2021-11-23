@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { gCall, beforeEachCall } from "../../../common/utils";
+import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_ALERTS_QUERY } from "../../../common/graphql";
 import { PaginationDto } from "../../../common/types";
 
@@ -24,7 +24,11 @@ const meta: PaginationDto = {
 };
 
 describe("Get Alerts", () => {
-    beforeEachCall("/alert/get_alerts?pageNo=2&pageSize=3", nockResponse, 200);
+    beforeEachGetCall(
+        "/alert/get_alerts?pageNo=2&pageSize=3",
+        nockResponse,
+        200
+    );
     it("get alerts", async () => {
         const response = await gCall({
             source: GET_ALERTS_QUERY,
@@ -57,7 +61,7 @@ describe("Get Alerts", () => {
 });
 
 describe("Get Alerts (Fail)", () => {
-    beforeEachCall("/alert/get?pageNo=2&pageSize=3", nockResponse, 404);
+    beforeEachGetCall("/alert/get?pageNo=2&pageSize=3", nockResponse, 404);
     it("get alerts(fail)", async () => {
         const response = await gCall({
             source: GET_ALERTS_QUERY,

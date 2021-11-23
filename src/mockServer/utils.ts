@@ -8,7 +8,6 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
-import { ResidentDto } from "../modules/resident/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual-extensions";
 
@@ -140,27 +139,6 @@ export const getNodes = (req: Request, res: Response): void => {
     });
 };
 
-export const getResidents = (req: Request, res: Response): void => {
-    const data = casual.randomArray<ResidentDto>(3, 30, casual._resident);
-
-    const pageNo = Number(req.query.pageNo);
-    const pageSize = Number(req.query.pageSize);
-
-    let residents = [];
-    if (!pageNo) residents = data;
-    else {
-        const index = (pageNo - 1) * pageSize;
-        for (let i = index; i < index + pageSize; i++) {
-            if (data[i]) residents.push(data[i]);
-        }
-    }
-    res.send({
-        status: "success",
-        data: residents,
-        length: data.length,
-    });
-};
-
 export const getEsims = (req: Request, res: Response): void => {
     const data = casual.randomArray<EsimDto>(3, 10, casual._esim);
     res.send({
@@ -212,5 +190,18 @@ export const getUsers = (req: Request, res: Response): void => {
         status: "success",
         data: users,
         length: data.length,
+    });
+};
+
+export const addNode = (req: Request, res: Response): void => {
+    const { body } = req;
+    const data = {
+        success: false,
+    };
+    if (body.name && body.serialNo) data.success = true;
+
+    res.send({
+        status: "success",
+        data: data,
     });
 };

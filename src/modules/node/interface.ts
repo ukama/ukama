@@ -1,10 +1,17 @@
 import { PaginationDto } from "../../common/types";
-import { NodeDto, NodeResponse, NodesResponse } from "./types";
+import {
+    NodeResponseDto,
+    NodeResponse,
+    NodesResponse,
+    AddNodeResponse,
+    AddNodeDto,
+} from "./types";
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
+    addNode(req: AddNodeDto): Promise<AddNodeResponse>;
 }
 
 export interface INodeMapper {
-    dtoToDto(res: NodeResponse): NodeDto[];
+    dtoToDto(res: NodeResponse): NodeResponseDto;
 }

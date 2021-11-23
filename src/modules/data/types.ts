@@ -6,7 +6,7 @@ export class DataUsageDto {
     id: string;
 
     @Field()
-    dataConsumed: string;
+    dataConsumed: number;
 
     @Field()
     dataPackage: string;
@@ -18,10 +18,10 @@ export class DataBillDto {
     id: string;
 
     @Field()
-    dataBill: string;
+    dataBill: number;
 
     @Field()
-    billDue: string;
+    billDue: number;
 }
 @ObjectType()
 export class DataUsageResponse {
