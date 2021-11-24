@@ -47,7 +47,8 @@ describe("Get Nodes", () => {
             contextValue: {
                 req: {
                     headers: {
-                        authorisation: "test",
+                        csrf_token: "test",
+                        kratos_session: "test",
                     },
                 },
             },

@@ -103,7 +103,8 @@ describe("Get Residents", () => {
             contextValue: {
                 req: {
                     headers: {
-                        authorisation: "test",
+                        csrf_token: "test",
+                        kratos_session: "test",
                     },
                 },
             },

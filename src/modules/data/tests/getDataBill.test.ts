@@ -23,7 +23,8 @@ describe("Get Data Bill", () => {
             contextValue: {
                 req: {
                     headers: {
-                        authorisation: "test",
+                        csrf_token: "test",
+                        kratos_session: "test",
                     },
                 },
             },
