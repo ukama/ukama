@@ -10,11 +10,16 @@ import { HTTP401Error, Messages } from "../errors";
 @Service()
 export class Authentication implements MiddlewareInterface<Context> {
     async use({ context }: ResolverData<Context>, next: NextFn): Promise<void> {
-        if (!(context.req.headers.token && context.req.headers.session))
+        if (
+            !(
+                context.req.headers["csrf-token"] &&
+                context.req.headers["kratos-session"]
+            )
+        )
             throw new HTTP401Error(Messages.ERR_REQUIRED_HEADER_NOT_FOUND);
 
-        context.session = context.req.headers.session;
-        context.token = context.req.headers.token;
+        context.session = context.req.headers["kratos-session"];
+        context.token = context.req.headers["csrf-token"];
         return next();
     }
 }
