@@ -25,6 +25,7 @@
 #define JSON_UID          "uid"
 #define JSON_GID          "gid"
 #define JSON_TYPE         "type"
+#define JSON_ROOTFS       "rootfs"
 #define JSON_HOSTNAME     "hostname"
 #define JSON_NAMESPACES   "namespaces"
 #define JSON_CAPABILITIES "capabilities"
@@ -56,7 +57,7 @@ typedef struct cSpace_t {
   char *name;         /* name of the contained space */
   char *hostName;     /* host name associated with space */
 
-  char *mountDir;     /* Mount directory */
+  char *rootfs;       /* path to rootfs */
 
   uid_t uid;          /* default uid of space */
   gid_t gid;          /* default gid of space */

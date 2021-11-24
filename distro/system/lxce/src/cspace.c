@@ -33,6 +33,7 @@
 #include <grp.h>
 #include <signal.h>
 #include <uuid/uuid.h>
+#include <dirent.h>
 
 #include "cspace.h"
 #include "manifest.h"
@@ -284,6 +285,38 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
 }
 
 /*
+ * pivot_root -- wrapper for sys call
+ *
+ */
+int pivot_root(const char *new, const char *old) {
+  return syscall(SYS_pivot_root, new, old);
+}
+
+/*
+ * log_rootfs --
+ *
+ */
+static void log_rootfs() {
+
+  struct dirent *hFile;
+  DIR *dirFile;
+
+  dirFile = opendir( "." );
+
+  if (dirFile) {
+    while ((hFile = readdir(dirFile)) != NULL ) {
+      /* Ignore hidden files. */
+      if (!strcmp(hFile->d_name, "."))  continue;
+      if (!strcmp(hFile->d_name, "..")) continue;
+      if ((hFile->d_name[0] == '.')) continue;
+
+      log_debug("%s", hFile->d_name);
+    }
+  closedir( dirFile );
+  }
+}
+
+/*
  * setup_mounts --
  *
  */
@@ -292,6 +325,7 @@ static int setup_mounts(CSpace *space) {
   int ret=FALSE;
   char tempMount[] = "/tmp/tmp.ukama.XXXXXX"; /* last 6 char needs to be X */
   char oldRoot[]   = "/tmp/tmp.ukama.XXXXXX/oldroot.XXXXXX"; /* same */
+  char *oldRootDir=NULL;
 
   if (mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL)) {
     log_error("Space: %s Failed to remount as MS_PRIVATE. Error: %s",
@@ -306,12 +340,13 @@ static int setup_mounts(CSpace *space) {
     return FALSE;
   }
 
-  if (mount(space->mountDir, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
+  if (mount(space->rootfs, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
     log_error("Space: %s Failed to do bind mount. %s %s Error: %s",
-	      space->name, space->mountDir, tempMount, strerror(errno));
+	      space->name, space->rootfs, tempMount, strerror(errno));
     return FALSE;
   }
 
+  memcpy(oldRoot, tempMount, sizeof(tempMount) - 1);
   if (!mkdtemp(oldRoot)) {
     log_error("Failed to create old Root directory. %s Error :%s", oldRoot,
 	      strerror(errno));
@@ -319,26 +354,37 @@ static int setup_mounts(CSpace *space) {
   }
 
   /* pivot root */
-  if (syscall(SYS_pivot_root, space->mountDir, oldRoot)) {
-    log_error("Failed to pivot_root from %s to %s", space->mountDir, oldRoot);
+  if (pivot_root(tempMount, oldRoot)) {
+    log_error("Failed to pivot_root from %s to %s. Error: %s", oldRoot,
+	      space->rootfs, strerror(errno));
     return FALSE;
   }
 
-  log_debug("Pivot root sucessfully done. from %s to %s", space->mountDir,
-	    oldRoot);
+  log_debug("Pivot root sucessfully done to %s", space->rootfs);
 
   /* clean up */
+  oldRootDir = basename(oldRoot);
+  char rmv[sizeof(oldRoot) + 1] = { "/" };
+  strcpy(&rmv[1], oldRootDir);
 
   if (chdir("/")) {
     log_error("Error changing director to / after pivot");
     return FALSE;
   }
 
-  if (umount2(oldRoot, MNT_DETACH) || rmdir(oldRoot)) {
+  if (umount2(rmv, MNT_DETACH)) {
     log_error("Failed to umount/rm old root: %s. Error: %s", oldRoot,
 	      strerror(errno));
     return FALSE;
   }
+
+  if (rmdir(rmv)) {
+    log_error("Failed to remove old root directory: %s", rmv);
+    return FALSE;
+  }
+
+  /* For debugging, print the tree of / */
+  log_rootfs();
 
   return TRUE;
 }
@@ -369,12 +415,19 @@ static int cspace_init_clone(void *arg) {
   }
 
   /* Step-2: setup security profile (cap and seccomp) */
-  setup_cspace_security_profile(space);
+  //setup_cspace_security_profile(space);
 
-  /* Step-3: setup user namespace */
+  /* Step-3: Setup mounts */
+  if (!setup_mounts(space)) {
+    log_error("Space: %s Error setting up rootfs mount: %s", space->name,
+	      space->rootfs);
+    return FALSE;
+  }
+
+  /* Step-4: setup user namespace */
   setup_user_namespace(space);
 
-  /* Step-4: cSpace stays in this state forever
+  /* Step-5: cSpace stays in this state forever
    * Accept capp CRUD calls from the parent process.
    */
   handle_crud_requests(space);
@@ -422,7 +475,8 @@ int create_cspace(CSpace *space, pid_t *pid) {
   *pid = clone(cspace_init_clone, stack + STACK_SIZE,
 	      SIGCHLD | space->nameSpaces, space);
   if (*pid == -1) {
-    log_error("Space: %s Unable to clone cInit", space->name);
+    log_error("Space: %s Unable to clone cInit. Error :%s", space->name,
+	      strerror(errno));
     return FALSE;
   }
 
@@ -502,6 +556,10 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
 
   set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
   set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
+
+  if (!set_str_object_value(json, &(space->rootfs), JSON_ROOTFS, TRUE, NULL)) {
+    return FALSE;
+  }
 
   /* Look for namespaces. */
   space->nameSpaces = 0;
