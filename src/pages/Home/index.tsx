@@ -9,10 +9,7 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
 } from "../../components";
-import {
-    ALERT_INFORMATION,
-    DashboardResidentsTable,
-} from "../../constants/stubData";
+import { DashboardResidentsTable } from "../../constants/stubData";
 import {
     NETWORKS,
     TIME_FILTER,
@@ -24,14 +21,7 @@ import {
     DataTableWithOptionColumns,
 } from "../../constants";
 import "../../i18n/i18n";
-import {
-    Box,
-    Grid,
-    List,
-    ListItem,
-    Typography,
-    useMediaQuery,
-} from "@mui/material";
+import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import {
     Time_Filter,
     Network_Type,
@@ -41,11 +31,11 @@ import {
     useGetConnectedUsersQuery,
     useGetNodesQuery,
     useGetNetworkQuery,
+    useGetAlertsQuery,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
-import { AlertItemType } from "../../types";
 import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -74,6 +64,14 @@ const Home = () => {
                 filter: userStatusFilter,
             },
         });
+    const { data: alertsInfoRes, loading: alertsloading } = useGetAlertsQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
+            },
+        },
+    });
 
     const { data: dataUsageRes, loading: dataUsageloading } =
         useGetDataUsageQuery({
@@ -236,7 +234,6 @@ const Home = () => {
                                 }
                             />
                         </Grid>
-
                         <Grid xs={12} item lg={4}>
                             <LoadingWrapper
                                 height={337}
@@ -249,42 +246,13 @@ const Home = () => {
                                     >
                                         {t("ALERT.Title")}
                                     </Typography>
-                                    <List
-                                        sx={{
-                                            pr: "4px",
-                                            maxHeight: 305,
-                                            overflow: "auto",
-                                            position: "relative",
-                                        }}
-                                    >
-                                        {ALERT_INFORMATION.map(
-                                            ({
-                                                id,
-                                                date,
-                                                description,
-                                                title,
-                                                Icon,
-                                            }: AlertItemType) => (
-                                                <ListItem
-                                                    key={id}
-                                                    style={{
-                                                        padding: 1,
-                                                        marginBottom: "4px",
-                                                    }}
-                                                >
-                                                    <AlertCard
-                                                        id={id}
-                                                        date={date}
-                                                        Icon={Icon}
-                                                        title={title}
-                                                        description={
-                                                            description
-                                                        }
-                                                    />
-                                                </ListItem>
-                                            )
-                                        )}
-                                    </List>
+
+                                    <AlertCard
+                                        loading={alertsloading}
+                                        alertOptions={
+                                            alertsInfoRes?.getAlerts?.alerts
+                                        }
+                                    />
                                 </RoundedCard>
                             </LoadingWrapper>
                         </Grid>

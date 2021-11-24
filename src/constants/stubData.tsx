@@ -1,4 +1,3 @@
-import { CloudOffIcon } from "../assets/svg";
 const RechartsData = [
     {
         name: "10 AM",
@@ -43,51 +42,6 @@ const RechartsData = [
         cnt: 380,
     },
 ];
-const ALERT_INFORMATION = [
-    {
-        id: 1,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 2,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 3,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 4,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 5,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-    {
-        id: 6,
-        Icon: CloudOffIcon,
-        title: "Software error",
-        description: "Short description of alert.",
-        date: "08/16/21 1PM",
-    },
-];
-
 const DashboardResidentsTable = [
     {
         name: "Tryphena Nelson 1",
@@ -143,9 +97,4 @@ const SimCardData = [
     },
 ];
 
-export {
-    SimCardData,
-    RechartsData,
-    ALERT_INFORMATION,
-    DashboardResidentsTable,
-};
+export { SimCardData, RechartsData, DashboardResidentsTable };

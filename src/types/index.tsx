@@ -11,10 +11,10 @@ export type StatsItemType = {
 };
 export type AlertItemType = {
     id: number;
-    Icon: any;
     title: string;
-    date: string;
+    alertDate: string;
     description: string;
+    type?: string;
 };
 export type statsPeriodItemType = {
     id: number;
