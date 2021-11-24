@@ -7,8 +7,8 @@ import moment from "moment";
 type AlertCardProps = {
     alertOptions: any;
     loading?: boolean;
+    iSalertsData?: boolean;
 };
-
 const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
     return (
         <>
@@ -103,7 +103,7 @@ const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
                                                         {moment(
                                                             alertDate
                                                         ).format(
-                                                            "DD/MM/YYYY h A"
+                                                            "DD/MM/YY h A"
                                                         )}
                                                     </Typography>
                                                 </Grid>

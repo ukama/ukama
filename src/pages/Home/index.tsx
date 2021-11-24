@@ -32,6 +32,7 @@ import {
     useGetNodesQuery,
     useGetNetworkQuery,
     useGetAlertsQuery,
+    useGetResidentsQuery,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -72,7 +73,16 @@ const Home = () => {
             },
         },
     });
-
+    // eslint-disable-next-line
+    const { data: residentsRes, loading: residentsloading } =
+        useGetResidentsQuery({
+            variables: {
+                data: {
+                    pageNo: 1,
+                    pageSize: 50,
+                },
+            },
+        });
     const { data: dataUsageRes, loading: dataUsageloading } =
         useGetDataUsageQuery({
             variables: {
@@ -246,11 +256,17 @@ const Home = () => {
                                     >
                                         {t("ALERT.Title")}
                                     </Typography>
-
                                     <AlertCard
                                         loading={alertsloading}
                                         alertOptions={
                                             alertsInfoRes?.getAlerts?.alerts
+                                        }
+                                        iSalertsData={
+                                            alertsInfoRes &&
+                                            alertsInfoRes?.getAlerts?.alerts
+                                                .length > 0
+                                                ? true
+                                                : false
                                         }
                                     />
                                 </RoundedCard>
