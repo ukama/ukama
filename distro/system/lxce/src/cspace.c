@@ -33,6 +33,7 @@
 #include <grp.h>
 #include <signal.h>
 #include <uuid/uuid.h>
+#include <dirent.h>
 
 #include "cspace.h"
 #include "manifest.h"
@@ -283,10 +284,37 @@ static int prepare_child_map_files(pid_t pid, CSpace *space) {
   return TRUE;
 }
 
+/*
+ * pivot_root -- wrapper for sys call
+ *
+ */
 int pivot_root(const char *new, const char *old) {
   return syscall(SYS_pivot_root, new, old);
 }
 
+/*
+ * log_rootfs --
+ *
+ */
+static void log_rootfs() {
+
+  struct dirent *hFile;
+  DIR *dirFile;
+
+  dirFile = opendir( "." );
+
+  if (dirFile) {
+    while ((hFile = readdir(dirFile)) != NULL ) {
+      /* Ignore hidden files. */
+      if (!strcmp(hFile->d_name, "."))  continue;
+      if (!strcmp(hFile->d_name, "..")) continue;
+      if ((hFile->d_name[0] == '.')) continue;
+
+      log_debug("%s", hFile->d_name);
+    }
+  closedir( dirFile );
+  }
+}
 
 /*
  * setup_mounts --
@@ -297,6 +325,7 @@ static int setup_mounts(CSpace *space) {
   int ret=FALSE;
   char tempMount[] = "/tmp/tmp.ukama.XXXXXX"; /* last 6 char needs to be X */
   char oldRoot[]   = "/tmp/tmp.ukama.XXXXXX/oldroot.XXXXXX"; /* same */
+  char *oldRootDir=NULL;
 
   if (mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL)) {
     log_error("Space: %s Failed to remount as MS_PRIVATE. Error: %s",
@@ -325,7 +354,7 @@ static int setup_mounts(CSpace *space) {
   }
 
   /* pivot root */
-  if (pivot_root(space->rootfs, oldRoot)) {
+  if (pivot_root(tempMount, oldRoot)) {
     log_error("Failed to pivot_root from %s to %s. Error: %s", oldRoot,
 	      space->rootfs, strerror(errno));
     return FALSE;
@@ -334,17 +363,28 @@ static int setup_mounts(CSpace *space) {
   log_debug("Pivot root sucessfully done to %s", space->rootfs);
 
   /* clean up */
+  oldRootDir = basename(oldRoot);
+  char rmv[sizeof(oldRoot) + 1] = { "/" };
+  strcpy(&rmv[1], oldRootDir);
 
   if (chdir("/")) {
     log_error("Error changing director to / after pivot");
     return FALSE;
   }
 
-  if (umount2(oldRoot, MNT_DETACH) || rmdir(oldRoot)) {
+  if (umount2(rmv, MNT_DETACH)) {
     log_error("Failed to umount/rm old root: %s. Error: %s", oldRoot,
 	      strerror(errno));
     return FALSE;
   }
+
+  if (rmdir(rmv)) {
+    log_error("Failed to remove old root directory: %s", rmv);
+    return FALSE;
+  }
+
+  /* For debugging, print the tree of / */
+  log_rootfs();
 
   return TRUE;
 }
