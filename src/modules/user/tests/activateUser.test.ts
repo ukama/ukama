@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachPostCall } from "../../../common/utils";
 import { POST_ACTIVATE_USER_MUTATION } from "../../../common/graphql";
+import { HEADER } from "../../../constants";
 
 const nockResponse = { status: "success", data: { success: true } };
 const reqBody = {
@@ -18,11 +19,7 @@ describe("Post Activate Users", () => {
                 input: reqBody,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
         expect(response).toMatchObject({

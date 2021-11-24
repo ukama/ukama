@@ -1,10 +1,10 @@
-import { IESIMMapper } from "./interface";
+import { IEsimMapper } from "./interface";
 import { EsimDto, EsimResponse } from "./types";
 
-class ESIMMapper implements IESIMMapper {
+class EsimMapper implements IEsimMapper {
     dtoToDto = (res: EsimResponse): EsimDto[] => {
         const esims = res.data;
         return esims;
     };
 }
-export default <IESIMMapper>new ESIMMapper();
+export default <IEsimMapper>new EsimMapper();

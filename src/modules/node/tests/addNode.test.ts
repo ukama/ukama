@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachPostCall } from "../../../common/utils";
 import { POST_ADD_NODE_MUTATION } from "../../../common/graphql";
+import { HEADER } from "../../../constants";
 
 const nockResponse = { status: "success", data: { success: true } };
 const reqBody = {
@@ -8,20 +9,16 @@ const reqBody = {
     serialNo: "# 123",
 };
 
-describe("Post Activate Users", () => {
+describe("POST Add Node", () => {
     beforeEachPostCall("/node/add_node", reqBody, nockResponse, 200);
-    it("post activate users", async () => {
+    it("post add node", async () => {
         const response = await gCall({
             source: POST_ADD_NODE_MUTATION,
             variableValues: {
                 input: reqBody,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
         expect(response).toMatchObject({

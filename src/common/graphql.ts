@@ -168,7 +168,16 @@ export const GET_BILL_HISTORY = `
             description
             date
             totalUsage
-            subtotal
+            subtotal}
+        }
+    `;
+
+export const GET_NETWORK_QUERY = `
+    query getNetwork($data:NETWORK_TYPE!) {
+        getNetwork(filter: $data) {
+            id
+            status
+            description
         }
     }
 `;

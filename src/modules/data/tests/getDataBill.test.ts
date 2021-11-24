@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_DATA_BILL_QUERY } from "../../../common/graphql";
-import { DATA_BILL_FILTER } from "../../../constants";
+import { DATA_BILL_FILTER, HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -21,11 +21,7 @@ describe("Get Data Bill", () => {
                 data: DATA_BILL_FILTER.CURRENT,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
 

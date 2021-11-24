@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_RESIDENTS_QUERY } from "../../../common/graphql";
 import { PaginationDto } from "../../../common/types";
+import { HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -101,11 +102,7 @@ describe("Get Residents", () => {
                 input: meta,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
         expect(response).toMatchObject({

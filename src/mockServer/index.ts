@@ -11,6 +11,7 @@ import {
     addNode,
     getCurrentBill,
     getBillHistory,
+    getNetwork,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -25,4 +26,5 @@ export const mockServer = (app: Express): void => {
     app.post("/node/add_node", addNode);
     app.get("/bill/get_current_bill", getCurrentBill);
     app.get("/bill/get_bill_history", getBillHistory);
+    app.get("/network/get_network", getNetwork);
 };

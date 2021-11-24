@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_DATA_USAGE_QUERY } from "../../../common/graphql";
-import { TIME_FILTER } from "../../../constants";
+import { HEADER, TIME_FILTER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -21,11 +21,7 @@ describe("Get Data Usage", () => {
                 data: TIME_FILTER.MONTH,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
 

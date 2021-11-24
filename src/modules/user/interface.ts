@@ -1,3 +1,4 @@
+import { PaginationDto } from "../../common/types";
 import { TIME_FILTER } from "../../constants";
 import {
     ActivateUserDto,
@@ -9,12 +10,14 @@ import {
     GetUserResponse,
     GetUserResponseDto,
     ResidentResponse,
+    ResidentsResponse,
 } from "./types";
 
 export interface IUserService {
     getConnectedUsers(filter: TIME_FILTER): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
+    getResidents(req: PaginationDto): Promise<ResidentsResponse>;
 }
 
 export interface IUserMapper {

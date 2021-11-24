@@ -3,6 +3,7 @@ import {
     CONNECTED_USER_TYPE,
     DATA_BILL_FILTER,
     GET_USER_TYPE,
+    NETWORK_TYPE,
     TIME_FILTER,
 } from "../constants";
 import { AlertDto } from "../modules/alert/types";
@@ -219,5 +220,18 @@ export const getBillHistory = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: data,
+    });
+};
+
+export const getNetwork = (req: Request, res: Response): void => {
+    let data;
+    const filter = req.query[0]?.toString();
+    if (filter !== NETWORK_TYPE.PUBLIC || NETWORK_TYPE.PRIVATE) data = {};
+
+    data = casual._network();
+
+    res.send({
+        status: "success",
+        data,
     });
 };
