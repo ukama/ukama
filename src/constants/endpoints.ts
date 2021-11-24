@@ -14,6 +14,7 @@ export const SERVER = {
     GET_USERS: `user/get_users`,
     POST_ADD_NODE: `node/add_node`,
     GET_CURRENT_BILL: `bill/get_current_bill`,
+    GET_BILL_HISTORY: `bill/get_bill_history`,
     GET_NETWORK: `network/get_network`,
     POST_UPDATE_USER: `user/update_user`,
 };

@@ -41,3 +41,30 @@ export class BillResponse {
     @Field()
     dueDate: string;
 }
+
+@ObjectType()
+export class BillHistoryDto {
+    @Field()
+    id: string;
+
+    @Field()
+    date: string;
+
+    @Field()
+    description: string;
+
+    @Field()
+    totalUsage: number;
+
+    @Field()
+    subtotal: number;
+}
+
+@ObjectType()
+export class BillHistoryResponse {
+    @Field()
+    status: string;
+
+    @Field(() => [BillHistoryDto])
+    data: BillHistoryDto[];
+}

@@ -7,7 +7,7 @@ import {
     TIME_FILTER,
 } from "../constants";
 import { AlertDto } from "../modules/alert/types";
-import { CurrentBillDto } from "../modules/billing/types";
+import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
@@ -230,6 +230,14 @@ export const addNode = (req: Request, res: Response): void => {
 
 export const getCurrentBill = (req: Request, res: Response): void => {
     const data = casual.randomArray<CurrentBillDto>(1, 5, casual._currentBill);
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+
+export const getBillHistory = (req: Request, res: Response): void => {
+    const data = casual.randomArray<BillHistoryDto>(1, 5, casual._billHistory);
     res.send({
         status: "success",
         data: data,

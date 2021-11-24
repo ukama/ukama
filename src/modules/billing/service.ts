@@ -1,5 +1,5 @@
 import { Service } from "typedi";
-import { BillResponse } from "./types";
+import { BillHistoryDto, BillResponse } from "./types";
 import { IBillService } from "./interface";
 import BillMapper from "./mapper";
 import { catchAsyncIOMethod } from "../../common";
@@ -16,6 +16,16 @@ export class BillService implements IBillService {
         });
         if (checkError(res)) throw new Error(res.message);
         const bill = BillMapper.dtoToDto(res);
+        return bill;
+    };
+
+    public getBillHistory = async (): Promise<BillHistoryDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_BILL_HISTORY,
+        });
+        if (checkError(res)) throw new Error(res.message);
+        const bill = BillMapper.billHistoryDtoToDto(res);
         return bill;
     };
 }

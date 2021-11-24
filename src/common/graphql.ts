@@ -160,6 +160,18 @@ export const GET_CURRENT_BILL = `
         }
     }
 `;
+
+export const GET_BILL_HISTORY = `
+    query getBillHistory {
+        getBillHistory {
+            id
+            description
+            date
+            totalUsage
+            subtotal}
+        }
+    `;
+
 export const GET_NETWORK_QUERY = `
     query getNetwork($data:NETWORK_TYPE!) {
         getNetwork(filter: $data) {
