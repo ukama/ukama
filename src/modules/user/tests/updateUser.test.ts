@@ -1,19 +1,18 @@
 import "reflect-metadata";
 import { gCall, beforeEachPostCall } from "../../../common/utils";
-import { POST_ADD_NODE_MUTATION } from "../../../common/graphql";
+import { POST_UPDATE_USER_MUTATION } from "../../../common/graphql";
 import { HEADER } from "../../../constants";
 
 const nockResponse = { status: "success", data: { success: true } };
 const reqBody = {
-    name: " Abc Node",
-    serialNo: "# 123",
+    firstName: "ali",
 };
 
-describe("POST Add Node", () => {
-    beforeEachPostCall("/node/add_node", reqBody, nockResponse, 200);
-    it("post add node", async () => {
+describe("Post Update Users", () => {
+    beforeEachPostCall("/user/update_user", reqBody, nockResponse, 200);
+    it("post update users", async () => {
         const response = await gCall({
-            source: POST_ADD_NODE_MUTATION,
+            source: POST_UPDATE_USER_MUTATION,
             variableValues: {
                 input: reqBody,
             },
@@ -23,9 +22,7 @@ describe("POST Add Node", () => {
         });
         expect(response).toMatchObject({
             data: {
-                addNode: {
-                    success: true,
-                },
+                updateUser: nockResponse.data,
             },
         });
     });

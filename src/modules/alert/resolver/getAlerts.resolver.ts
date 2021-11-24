@@ -7,7 +7,7 @@ import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetDataBillResolver {
+export class GetAlertsResolver {
     constructor(private readonly alertService: AlertService) {}
 
     @Query(() => AlertsResponse)

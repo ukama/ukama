@@ -16,7 +16,7 @@ export {
 };
 
 export const axiosErrorHandler = (error: any): ErrorType => {
-    let res;
+    let res: ErrorType;
     if (error.response) {
         // The request was made and the server responded with a status code
         res = {
@@ -37,4 +37,9 @@ export const axiosErrorHandler = (error: any): ErrorType => {
         };
     }
     return res;
+};
+
+export const checkError = (error: any): boolean => {
+    if (error.code && error.message) return true;
+    return false;
 };

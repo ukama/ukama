@@ -160,3 +160,20 @@ export const GET_CURRENT_BILL = `
         }
     }
 `;
+export const GET_NETWORK_QUERY = `
+    query getNetwork($data:NETWORK_TYPE!) {
+        getNetwork(filter: $data) {
+            id
+            status
+            description
+        }
+    }
+`;
+
+export const POST_UPDATE_USER_MUTATION = `
+    mutation updateUser($input:UpdateUserDto!) {
+        updateUser(data:$input) {
+            success
+        }
+    }
+`;

@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_ESIM_QUERY } from "../../../common/graphql";
+import { HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -18,12 +19,7 @@ describe("Get Users", () => {
         const response = await gCall({
             source: GET_ESIM_QUERY,
             contextValue: {
-                req: {
-                    headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
         expect(response).toMatchObject({

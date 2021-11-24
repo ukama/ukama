@@ -1,13 +1,7 @@
 import { Service } from "typedi";
-import {
-    AddNodeDto,
-    AddNodeResponse,
-    AddNodeResponseDto,
-    NodeResponse,
-    NodesResponse,
-} from "./types";
+import { AddNodeDto, AddNodeResponse, NodesResponse } from "./types";
 import { INodeService } from "./interface";
-import { HTTP404Error, Messages } from "../../errors";
+import { checkError, HTTP404Error, Messages } from "../../errors";
 import { PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
@@ -18,11 +12,14 @@ import { SERVER } from "../../constants/endpoints";
 @Service()
 export class NodeService implements INodeService {
     getNodes = async (req: PaginationDto): Promise<NodesResponse> => {
-        const res = await catchAsyncIOMethod<NodeResponse>({
+        const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODES,
             params: req,
         });
+
+        if (checkError(res)) throw new Error(res.message);
+
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const nodes = NodeMapper.dtoToDto(res);
 
@@ -32,12 +29,14 @@ export class NodeService implements INodeService {
             meta,
         };
     };
+
     addNode = async (req: AddNodeDto): Promise<AddNodeResponse> => {
-        const res = await catchAsyncIOMethod<AddNodeResponseDto>({
+        const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_ADD_NODE,
             body: req,
         });
+        if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
 }

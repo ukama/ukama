@@ -3,6 +3,12 @@ import { registerEnumType } from "type-graphql";
 export const NODE_ENV = "development";
 export const PORT = "8080";
 export const BASE_URL = `http://localhost:${PORT}`;
+export const HEADER = {
+    headers: {
+        "csrf-token": "test",
+        "kratos-session": "test",
+    },
+};
 
 export enum CONNECTED_USER_TYPE {
     RESIDENTS = "RESIDENTS",
@@ -94,4 +100,20 @@ export enum NODE_TYPE {
 }
 registerEnumType(NODE_TYPE, {
     name: "NODE_TYPE",
+});
+
+export enum NETWORK_STATUS {
+    ONLINE = "ONLINE",
+    BEING_CONFIGURED = "BEING_CONFIGURED",
+}
+registerEnumType(NETWORK_STATUS, {
+    name: "NETWORK_STATUS",
+});
+
+export enum NETWORK_TYPE {
+    PUBLIC = "PUBLIC",
+    PRIVATE = "PRIVATE",
+}
+registerEnumType(NETWORK_TYPE, {
+    name: "NETWORK_TYPE",
 });
