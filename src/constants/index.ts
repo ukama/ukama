@@ -5,8 +5,8 @@ export const PORT = "8080";
 export const BASE_URL = `http://localhost:${PORT}`;
 export const HEADER = {
     headers: {
-        token: "test",
-        session: "test",
+        "csrf-token": "test",
+        "kratos-session": "test",
     },
 };
 
