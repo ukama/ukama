@@ -6,6 +6,7 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     ResidentsResponse,
+    UpdateUserDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -40,6 +41,17 @@ export class UserService implements IUserService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_ACTIVE_USER,
+            body: req,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.data;
+    };
+
+    updateUser = async (req: UpdateUserDto): Promise<ActivateUserResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: SERVER.POST_UPDATE_USER,
             body: req,
         });
         if (checkError(res)) throw new Error(res.message);

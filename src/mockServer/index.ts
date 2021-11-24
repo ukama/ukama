@@ -10,6 +10,7 @@ import {
     getUsers,
     addNode,
     getNetwork,
+    updateUser,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -23,4 +24,5 @@ export const mockServer = (app: Express): void => {
     app.get("/user/get_users", getUsers);
     app.post("/node/add_node", addNode);
     app.get("/network/get_network", getNetwork);
+    app.post("/user/update_user", updateUser);
 };
