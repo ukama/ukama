@@ -162,6 +162,27 @@ export const activateUser = (req: Request, res: Response): void => {
     });
 };
 
+export const updateUser = (req: Request, res: Response): void => {
+    const { body } = req;
+    const data = {
+        success: false,
+    };
+
+    if (
+        body.firstName ||
+        body.lastName ||
+        body.eSimNumber ||
+        body.email ||
+        body.phone
+    )
+        data.success = true;
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+
 export const getUsers = (req: Request, res: Response): void => {
     let data;
     const filter = req.query.type?.toString();
