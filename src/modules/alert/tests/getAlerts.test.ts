@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_ALERTS_QUERY } from "../../../common/graphql";
 import { PaginationDto } from "../../../common/types";
+import { HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -36,12 +37,7 @@ describe("Get Alerts", () => {
                 input: meta,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
 

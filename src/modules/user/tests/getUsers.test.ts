@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_USER_QUERY } from "../../../common/graphql";
-import { GET_USER_TYPE } from "../../../constants";
+import { GET_USER_TYPE, HEADER } from "../../../constants";
 import { GetUserPaginationDto } from "../types";
 
 const nockResponse = {
@@ -80,12 +80,7 @@ describe("Get Users", () => {
                 input: meta,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
         expect(response).toMatchObject({

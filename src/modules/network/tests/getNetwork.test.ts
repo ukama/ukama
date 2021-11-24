@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_NETWORK_QUERY } from "../../../common/graphql";
-import { NETWORK_STATUS, NETWORK_TYPE } from "../../../constants";
+import { HEADER, NETWORK_STATUS, NETWORK_TYPE } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -21,12 +21,7 @@ describe("Get Network", () => {
                 data: NETWORK_TYPE.PUBLIC,
             },
             contextValue: {
-                req: {
-                    headers: {
-                        csrf_token: "test",
-                        kratos_session: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
 

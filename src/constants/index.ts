@@ -3,6 +3,12 @@ import { registerEnumType } from "type-graphql";
 export const NODE_ENV = "development";
 export const PORT = "8080";
 export const BASE_URL = `http://localhost:${PORT}`;
+export const HEADER = {
+    headers: {
+        token: "test",
+        session: "test",
+    },
+};
 
 export enum CONNECTED_USER_TYPE {
     RESIDENTS = "RESIDENTS",
