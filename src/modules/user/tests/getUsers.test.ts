@@ -82,7 +82,8 @@ describe("Get Users", () => {
             contextValue: {
                 req: {
                     headers: {
-                        authorisation: "test",
+                        csrf_token: "test",
+                        kratos_session: "test",
                     },
                 },
             },
