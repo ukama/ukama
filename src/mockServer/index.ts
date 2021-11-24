@@ -9,6 +9,7 @@ import {
     activateUser,
     getUsers,
     addNode,
+    getCurrentBill,
     getNetwork,
     updateUser,
 } from "./utils";
@@ -23,6 +24,7 @@ export const mockServer = (app: Express): void => {
     app.post("/user/active_user", activateUser);
     app.get("/user/get_users", getUsers);
     app.post("/node/add_node", addNode);
+    app.get("/bill/get_current_bill", getCurrentBill);
     app.get("/network/get_network", getNetwork);
     app.post("/user/update_user", updateUser);
 };

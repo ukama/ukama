@@ -8,6 +8,7 @@ import {
     NODE_TYPE,
 } from "../../constants";
 import { AlertDto } from "../../modules/alert/types";
+import { CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
@@ -114,6 +115,19 @@ const network = (): NetworkDto => {
     };
 };
 
+const currentBill = (): CurrentBillDto => {
+    const data = defaultCasual.integer(1, 10);
+    const rate = defaultCasual.integer(3, 6);
+    const subtotal = data * rate;
+    return {
+        id: defaultCasual._uuid(),
+        name: defaultCasual._name(),
+        dataUsed: data,
+        rate: rate,
+        subtotal: subtotal,
+    };
+};
+
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
@@ -128,6 +142,7 @@ interface Generators extends Casual.Generators {
     _node: () => NodeDto;
     _esim: () => EsimDto;
     _getUser: () => GetUserDto;
+    _currentBill: () => CurrentBillDto;
     _network: () => NetworkDto;
     functions(): functions;
 }
@@ -144,6 +159,7 @@ interface functions extends Casual.functions {
     node: () => NodeDto;
     getUser: () => GetUserDto;
     esim: () => EsimDto;
+    currentBill: () => CurrentBillDto;
     network: () => NetworkDto;
 }
 
@@ -155,6 +171,7 @@ defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
 defaultCasual.define("esim", esim);
 defaultCasual.define("getUser", getUser);
+defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("network", network);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;

@@ -143,6 +143,23 @@ export const POST_ADD_NODE_MUTATION = `
         }
     }
 `;
+
+export const GET_CURRENT_BILL = `
+    query getCurrentBill {
+        getCurrentBill {
+            bill {
+             id
+             name
+             dataUsed
+              rate
+             subtotal
+            }
+          total
+          dueDate
+          billMonth
+        }
+    }
+`;
 export const GET_NETWORK_QUERY = `
     query getNetwork($data:NETWORK_TYPE!) {
         getNetwork(filter: $data) {
