@@ -2,9 +2,9 @@ import { axiosErrorHandler } from "../errors";
 import { ApiMethodDataDto } from "./types";
 import ApiMethods from "../api";
 
-export const catchAsyncIOMethod = async <Output>(
+export const catchAsyncIOMethod = async (
     req: ApiMethodDataDto
-): Promise<Output> => {
+): Promise<any> => {
     try {
         const res = await ApiMethods.fetch({
             type: req.type,
@@ -16,7 +16,6 @@ export const catchAsyncIOMethod = async <Output>(
 
         return res.data;
     } catch (error) {
-        const err = axiosErrorHandler(error);
-        throw new Error(err.message);
+        return axiosErrorHandler(error);
     }
 };
