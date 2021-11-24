@@ -66,6 +66,28 @@ export class ActivateUserDto {
     phone?: string;
 }
 
+@InputType()
+export class UpdateUserDto {
+    @Field({ nullable: true })
+    eSimNumber: string;
+
+    @Field({ nullable: true })
+    @Length(3, 255)
+    firstName: string;
+
+    @Field({ nullable: true })
+    @Length(3, 255)
+    lastName: string;
+
+    @Field({ nullable: true })
+    @IsEmail()
+    email?: string;
+
+    @Field({ nullable: true })
+    @IsPhoneNumber()
+    phone?: string;
+}
+
 @ObjectType()
 export class ActivateUserResponse {
     @Field()

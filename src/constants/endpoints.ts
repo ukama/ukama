@@ -16,4 +16,5 @@ export const SERVER = {
     GET_CURRENT_BILL: `bill/get_current_bill`,
     GET_BILL_HISTORY: `bill/get_bill_history`,
     GET_NETWORK: `network/get_network`,
+    POST_UPDATE_USER: `user/update_user`,
 };

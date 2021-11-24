@@ -181,3 +181,11 @@ export const GET_NETWORK_QUERY = `
         }
     }
 `;
+
+export const POST_UPDATE_USER_MUTATION = `
+    mutation updateUser($input:UpdateUserDto!) {
+        updateUser(data:$input) {
+            success
+        }
+    }
+`;
