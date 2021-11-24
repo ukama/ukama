@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_BILL_HISTORY } from "../../../common/graphql";
+import { HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -42,14 +43,9 @@ describe("Get Bill History", () => {
         const response = await gCall({
             source: GET_BILL_HISTORY,
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
-
         expect(response).toMatchObject({
             data: {
                 getBillHistory: nockResponse.data,

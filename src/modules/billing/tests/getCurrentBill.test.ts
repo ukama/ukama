@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { gCall, beforeEachGetCall } from "../../../common/utils";
 import { GET_CURRENT_BILL } from "../../../common/graphql";
+import { HEADER } from "../../../constants";
 
 const nockResponse = {
     status: "success",
@@ -35,11 +36,7 @@ describe("Get CurrentBill", () => {
         const response = await gCall({
             source: GET_CURRENT_BILL,
             contextValue: {
-                req: {
-                    headers: {
-                        authorisation: "test",
-                    },
-                },
+                req: HEADER,
             },
         });
 
