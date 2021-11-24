@@ -34,11 +34,13 @@ import {
 } from "@mui/material";
 import {
     Time_Filter,
+    Network_Type,
     Data_Bill_Filter,
     useGetDataBillQuery,
     useGetDataUsageQuery,
     useGetConnectedUsersQuery,
     useGetNodesQuery,
+    useGetNetworkQuery,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -53,13 +55,15 @@ const Home = () => {
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
-    const [network, setNetwork] = useState("public");
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const [statOptionValue, setstatOptionValue] = React.useState(3);
+    const [statOptionValue, setstatOptionValue] = useState(3);
+    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Total);
-    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
+    const [networkType, setNetworkType] = useState<Network_Type>(
+        Network_Type.Public
+    );
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -93,6 +97,13 @@ const Home = () => {
             },
         },
     });
+
+    const { data: networkStatusRes, loading: networkStatusLoading } =
+        useGetNetworkQuery({
+            variables: {
+                filter: networkType,
+            },
+        });
 
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -139,13 +150,14 @@ const Home = () => {
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
                 <NetworkStatus
-                    duration={""}
-                    option={network}
                     options={NETWORKS}
-                    loading={isSkeltonLoad}
-                    statusType={"IN_PROGRESS"}
-                    status={"Your network is being configured"}
-                    handleStatusChange={(value: string) => setNetwork(value)}
+                    option={networkType}
+                    loading={networkStatusLoading}
+                    statusType={networkStatusRes?.getNetwork?.status || ""}
+                    duration={networkStatusRes?.getNetwork?.description || ""}
+                    handleStatusChange={(value: Network_Type) =>
+                        setNetworkType(value)
+                    }
                 />
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={6} lg={4}>

@@ -253,6 +253,29 @@ export type MutationAddNodeArgs = {
     data: AddNodeDto;
 };
 
+export enum Network_Status {
+    BeingConfigured = "BEING_CONFIGURED",
+    Online = "ONLINE",
+}
+
+export enum Network_Type {
+    Private = "PRIVATE",
+    Public = "PUBLIC",
+}
+
+export type NetworkDto = {
+    __typename?: "NetworkDto";
+    description?: Maybe<Scalars["String"]>;
+    id: Scalars["String"];
+    status: Network_Status;
+};
+
+export type NetworkResponse = {
+    __typename?: "NetworkResponse";
+    data: NetworkDto;
+    status: Scalars["String"];
+};
+
 export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
@@ -299,6 +322,7 @@ export type Query = {
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
     getEsims: Array<EsimDto>;
+    getNetwork: NetworkDto;
     getNodes: NodesResponse;
     getResidents: ResidentsResponse;
     getUsers: GetUserResponse;
@@ -318,6 +342,10 @@ export type QueryGetDataBillArgs = {
 
 export type QueryGetDataUsageArgs = {
     filter: Time_Filter;
+};
+
+export type QueryGetNetworkArgs = {
+    filter: Network_Type;
 };
 
 export type QueryGetNodesArgs = {
@@ -491,6 +519,20 @@ export type GetResidentsQuery = {
                 dataUsage: number;
             }>;
         };
+    };
+};
+
+export type GetNetworkQueryVariables = Exact<{
+    filter: Network_Type;
+}>;
+
+export type GetNetworkQuery = {
+    __typename?: "Query";
+    getNetwork: {
+        __typename?: "NetworkDto";
+        id: string;
+        status: Network_Status;
+        description?: string | null | undefined;
     };
 };
 
@@ -879,4 +921,62 @@ export type GetResidentsLazyQueryHookResult = ReturnType<
 export type GetResidentsQueryResult = Apollo.QueryResult<
     GetResidentsQuery,
     GetResidentsQueryVariables
+>;
+export const GetNetworkDocument = gql`
+    query getNetwork($filter: NETWORK_TYPE!) {
+        getNetwork(filter: $filter) {
+            id
+            status
+            description
+        }
+    }
+`;
+
+/**
+ * __useGetNetworkQuery__
+ *
+ * To run a query within a React component, call `useGetNetworkQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNetworkQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetNetworkQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetNetworkQuery,
+        GetNetworkQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNetworkQuery, GetNetworkQueryVariables>(
+        GetNetworkDocument,
+        options
+    );
+}
+export function useGetNetworkLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNetworkQuery,
+        GetNetworkQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(
+        GetNetworkDocument,
+        options
+    );
+}
+export type GetNetworkQueryHookResult = ReturnType<typeof useGetNetworkQuery>;
+export type GetNetworkLazyQueryHookResult = ReturnType<
+    typeof useGetNetworkLazyQuery
+>;
+export type GetNetworkQueryResult = Apollo.QueryResult<
+    GetNetworkQuery,
+    GetNetworkQueryVariables
 >;

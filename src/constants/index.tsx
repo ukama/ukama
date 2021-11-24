@@ -17,6 +17,7 @@ import {
     combineUppercaseNLowercaseValidator,
 } from "../utils";
 import { MenuItemType } from "../types";
+import { Network_Type } from "../generated";
 
 const DRAWER_WIDTH = 211;
 const APP_VERSION = "v0.0.1";
@@ -91,8 +92,8 @@ const TIME_FILTER = [
 ];
 
 const NETWORKS = [
-    { id: 1, label: "Public Network", value: "public" },
-    { id: 2, label: "Private Network", value: "private" },
+    { id: 1, label: "Public Network", value: Network_Type.Public },
+    { id: 2, label: "Private Network", value: Network_Type.Private },
 ];
 
 const BASIC_MENU_ACTIONS: MenuItemType[] = [

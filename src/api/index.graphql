@@ -80,3 +80,11 @@ query getResidents($data: PaginationDto!) {
         }
     }
 }
+
+query getNetwork($filter: NETWORK_TYPE!) {
+    getNetwork(filter: $filter) {
+        id
+        status
+        description
+    }
+}
