@@ -1,179 +1,98 @@
+import { format } from "date-fns";
 import { colors } from "../../theme";
-import { SkeletonRoundedCard } from "../../styles";
-import { Typography, Card, Grid, List, ListItem, Stack } from "@mui/material";
-import { AlertItemType } from "../../types";
 import { CloudOffIcon } from "../../assets/svg";
+import { AlertDto, Alert_Type } from "../../generated";
+import { Typography, Card, Grid, List, ListItem, Stack } from "@mui/material";
 
-import moment from "moment";
 type AlertCardProps = {
-    alertOptions: any;
-    loading?: boolean;
-    iSalertsData?: boolean;
+    alertOptions: AlertDto[] | undefined;
 };
-const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
+
+const getColorByType = (type: Alert_Type) =>
+    type === Alert_Type.Error
+        ? colors.red
+        : type === Alert_Type.Warning
+        ? colors.yellow
+        : colors.green;
+
+const AlertCard = ({ alertOptions = [] }: AlertCardProps) => {
     return (
         <>
-            {loading ? (
-                <SkeletonRoundedCard variant="rectangular" height={64} />
-            ) : (
-                <List
-                    sx={{
-                        pr: "4px",
-                        maxHeight: 305,
-                        overflow: "auto",
-                        position: "relative",
-                    }}
-                >
-                    {alertOptions.map(
-                        ({
-                            id,
-                            alertDate,
-                            description,
-                            title,
-                        }: AlertItemType) => (
-                            <ListItem
-                                key={id}
-                                style={{
-                                    padding: 1,
-                                    marginBottom: "4px",
+            <List
+                sx={{
+                    pr: "4px",
+                    maxHeight: 305,
+                    overflow: "auto",
+                    position: "relative",
+                }}
+            >
+                {alertOptions.map(
+                    ({ id, alertDate, description, title, type }: AlertDto) => (
+                        <ListItem
+                            key={id}
+                            style={{
+                                padding: 1,
+                                marginBottom: "4px",
+                            }}
+                        >
+                            <Card
+                                sx={{
+                                    width: "100%",
+                                    marginBottom: "3px",
+                                    padding: "0px 10px 10px 10px",
                                 }}
+                                elevation={1}
                             >
-                                <Card
-                                    sx={{
-                                        width: "100%",
-                                        marginBottom: "3px",
-                                        padding: "0px 10px 10px 10px",
-                                    }}
-                                    elevation={1}
-                                >
-                                    <Grid container spacing={1}>
-                                        <Grid item xs={8} container>
-                                            <Stack direction="row">
-                                                <CloudOffIcon />
-                                                <Typography
-                                                    variant="body1"
-                                                    color="initial"
-                                                >
-                                                    {title}
-                                                </Typography>
-                                            </Stack>
-                                        </Grid>
-
-                                        <Grid
-                                            item
-                                            container
-                                            justifyContent="flex-end"
-                                            xs={4}
-                                        >
+                                <Grid container spacing={1}>
+                                    <Grid item xs={8} container>
+                                        <Stack direction="row">
+                                            <CloudOffIcon
+                                                color={getColorByType(type)}
+                                            />
                                             <Typography
-                                                variant="caption"
-                                                color={colors.empress}
+                                                variant="body1"
+                                                color="initial"
                                             >
-                                                {moment(alertDate).format(
-                                                    "DD/MM/YY h A"
-                                                )}
+                                                {title}
                                             </Typography>
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Typography
-                                                variant="body2"
-                                                color={colors.empress}
-                                                sx={{
-                                                    position: "relative",
-                                                    bottom: "5px",
-                                                    left: "25px",
-                                                }}
-                                            >
-                                                {description}
-                                            </Typography>
-                                        </Grid>
+                                        </Stack>
                                     </Grid>
-                                    {/* <Grid
-                                        spacing={2}
+
+                                    <Grid
+                                        item
                                         container
-                                        direction="row"
-                                        justifyContent="center"
+                                        justifyContent="flex-end"
+                                        xs={4}
                                     >
-                                        <Grid
-                                            item
-                                            display="flex"
-                                            alignItems="center"
+                                        <Typography
+                                            variant="caption"
+                                            color={colors.empress}
+                                        >
+                                            {format(
+                                                new Date(alertDate),
+                                                "yyyy-MM-dd"
+                                            )}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography
+                                            variant="body2"
+                                            color={colors.empress}
                                             sx={{
                                                 position: "relative",
-                                                left: "5px",
+                                                bottom: "5px",
+                                                left: "25px",
                                             }}
                                         >
-                                           
-                                        </Grid>
-                                        <Grid
-                                            xs={12}
-                                            item
-                                            sm
-                                            container
-                                            direction="column"
-                                            sx={{
-                                                position: "relative",
-                                                top: "8px",
-                                            }}
-                                        >
-                                            <Grid
-                                                sm
-                                                item
-                                                container
-                                                spacing={2}
-                                                display="flex"
-                                                direction="row"
-                                                alignItems="center"
-                                            >
-                                                <Grid item xs={8} md sm lg>
-                                                    <Typography
-                                                        variant="body1"
-                                                        color="initial"
-                                                    >
-                                                        {title}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid
-                                                    item
-                                                    xs={4}
-                                                    display="flex"
-                                                    justifyContent="flex-end"
-                                                >
-                                                    <Typography
-                                                        variant="caption"
-                                                        color={colors.empress}
-                                                    >
-                                                        {moment(
-                                                            alertDate
-                                                        ).format(
-                                                            "DD/MM/YY h A"
-                                                        )}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-                                            <Grid item sm container>
-                                                <Grid item xs={12} container>
-                                                    <Typography
-                                                        variant="body2"
-                                                        color={colors.empress}
-                                                        sx={{
-                                                            display: "flex",
-                                                            alignItems:
-                                                                "center",
-                                                        }}
-                                                    >
-                                                        {description}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-                                        </Grid>
-                                    </Grid> */}
-                                </Card>
-                            </ListItem>
-                        )
-                    )}
-                </List>
-            )}
+                                            {description}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Card>
+                        </ListItem>
+                    )
+                )}
+            </List>
         </>
     );
 };

@@ -245,8 +245,8 @@ const Home = () => {
                         </Grid>
                         <Grid xs={12} item lg={4}>
                             <LoadingWrapper
-                                height={337}
-                                isLoading={isSkeltonLoad}
+                                height={387}
+                                isLoading={alertsloading}
                             >
                                 <RoundedCard>
                                     <Typography
@@ -256,16 +256,8 @@ const Home = () => {
                                         {t("ALERT.Title")}
                                     </Typography>
                                     <AlertCard
-                                        loading={alertsloading}
                                         alertOptions={
                                             alertsInfoRes?.getAlerts?.alerts
-                                        }
-                                        iSalertsData={
-                                            alertsInfoRes &&
-                                            alertsInfoRes?.getAlerts?.alerts
-                                                .length > 0
-                                                ? true
-                                                : false
                                         }
                                     />
                                 </RoundedCard>
@@ -299,19 +291,24 @@ const Home = () => {
                         </LoadingWrapper>
                     </Grid>
                     <Grid xs={12} lg={4} item>
-                        <RoundedCard sx={{ height: "100%" }}>
-                            <ContainerHeader
-                                stats="6/16"
-                                title="Residents"
-                                buttonTitle="ACTIVATE"
-                                handleButtonAction={onActivateButton}
-                            />
-                            <LoadingWrapper
-                                height={337}
-                                isLoading={isSkeltonLoad}
-                            >
+                        <LoadingWrapper
+                            height={337}
+                            isLoading={residentsloading}
+                        >
+                            <RoundedCard sx={{ height: "100%" }}>
+                                <ContainerHeader
+                                    title="Residents"
+                                    buttonTitle="ACTIVATE"
+                                    handleButtonAction={onActivateButton}
+                                    stats={`${
+                                        residentsRes?.getResidents?.residents
+                                            ?.activeResidents || "-"
+                                    }/${
+                                        residentsRes?.getResidents?.residents
+                                            ?.totalResidents || "-"
+                                    }`}
+                                />
                                 <DataTableWithOptions
-                                    loading={residentsloading}
                                     columns={DataTableWithOptionColumns}
                                     dataset={
                                         residentsRes?.getResidents.residents
@@ -320,8 +317,8 @@ const Home = () => {
                                     menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                     onMenuItemClick={onResidentsTableMenuItem}
                                 />
-                            </LoadingWrapper>
-                        </RoundedCard>
+                            </RoundedCard>
+                        </LoadingWrapper>
                     </Grid>
                 </Grid>
                 {isUserActivateOpen && (

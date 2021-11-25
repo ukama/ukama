@@ -17,7 +17,7 @@ const LoadingWrapper = (props: any) => {
             />
         );
 
-    return <div>{children}</div>;
+    return <div style={{ height: "100%" }}>{children}</div>;
 };
 
 export default LoadingWrapper;

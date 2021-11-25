@@ -9,13 +9,6 @@ export type StatsItemType = {
     label: string;
     value: string;
 };
-export type AlertItemType = {
-    id: number;
-    title: string;
-    alertDate: string;
-    description: string;
-    type?: string;
-};
 export type statsPeriodItemType = {
     id: number;
     label: string;
