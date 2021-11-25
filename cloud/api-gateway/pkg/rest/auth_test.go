@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"github.com/ukama/ukamaX/cloud/api-gateway/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +21,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 	}
 
 	r := &KratosAuthMiddleware{
-		kratosConf, true,
+		kratosConf, true, &mocks.AuthorizationService{},
 	}
 
 	t.Run("validToken", func(t *testing.T) {
@@ -37,8 +38,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 		defer testServer.Close()
 		kratosConf.Url = testServer.URL
 		// Act
-		f := r.IsAuthenticated()
-		f(testContext)
+		r.IsAuthenticated(testContext)
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.Equal(t, userId, testContext.GetString("UserId"))
 	})
@@ -62,8 +62,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 		defer testServer.Close()
 		kratosConf.Url = testServer.URL
 		// Act
-		f := r.IsAuthenticated()
-		f(testContext)
+		r.IsAuthenticated(testContext)
 		assert.Equal(t, http.StatusOK, recorder.Code)
 		assert.Equal(t, userId, testContext.GetString("UserId"))
 	})
@@ -72,8 +71,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 		recorder, testContext := newRecorderWithContex()
 		testContext.Request.Header.Set("Authorization", "test")
 
-		f := r.IsAuthenticated()
-		f(testContext)
+		r.IsAuthenticated(testContext)
 		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 	})
 
@@ -89,8 +87,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 		defer testServer.Close()
 		kratosConf.Url = testServer.URL
 		// Act
-		f := r.IsAuthenticated()
-		f(testContext)
+		r.IsAuthenticated(testContext)
 		// Assert
 		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 	})
@@ -98,8 +95,7 @@ func TestKratosAuthMiddleware_IsAuthenticated(t *testing.T) {
 	t.Run("NoAuthorizationHeader", func(t *testing.T) {
 		recorder, testContext := newRecorderWithContex()
 
-		f := r.IsAuthenticated()
-		f(testContext)
+		r.IsAuthenticated(testContext)
 		assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 	})
 

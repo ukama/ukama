@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -6,13 +7,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
-	"github.com/go-yaml/yaml"
+	ory "github.com/ory/kratos-client-go"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/ukama/ukamaX/common/config"
 	"net/http"
-
-	ory "github.com/ory/kratos-client-go"
+	"time"
 )
 
 type TestConfig struct {
@@ -32,20 +32,18 @@ func loadConfig() *TestConfig {
 	testConf := &TestConfig{
 		BaseDomain: "dev.ukama.com",
 	}
-	b, err := yaml.Marshal(testConf)
-	if err != nil {
-		logrus.Fatal(err.Error())
-	}
+
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
-	logrus.Infoln(string(b))
 
 	config.LoadConfig("integration", testConf)
+	logrus.Infof("Config: %+v", testConf)
 
 	return testConf
 }
 
 func (i *IntegrationTestSuite) Test_RegistryApi() {
 	login, err := i.Login()
+	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
 	if err != nil {
 		i.NoError(err, "Failed to login to Kratos")
 		return
@@ -56,6 +54,17 @@ func (i *IntegrationTestSuite) Test_RegistryApi() {
 	PrintJSONPretty(login)
 
 	i.Run("GetOrg", func() {
+		resp, err := client.R().
+			EnableTrace().
+			SetHeader("authorization", "bearer "+login.GetSessionToken()).
+			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId())
+
+		i.Assert().NoError(err)
+		i.Assert().Equal(http.StatusOK, resp.StatusCode())
+		//i.Assert().Contains(resp.String(), "Organization not found")
+	})
+
+	i.Run("GetOrgNotFound", func() {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
@@ -70,7 +79,7 @@ func (i *IntegrationTestSuite) Test_RegistryApi() {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+"random session").
-			Get(i.getApiUrl() + "/nodes")
+			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
 		i.Assert().NoError(err)
 		i.Assert().Equal(http.StatusUnauthorized, resp.StatusCode())
 	})
@@ -79,7 +88,7 @@ func (i *IntegrationTestSuite) Test_RegistryApi() {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			Get(i.getApiUrl() + "/nodes")
+			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
 		i.Assert().NoError(err)
 		i.Assert().Equal(http.StatusOK, resp.StatusCode())
 		fmt.Println("Response: ", resp.String())

@@ -13,7 +13,7 @@ import (
 )
 
 const ServiceName = "registry-listener"
-const DEFAUTL_GRPC_TIMEOUT = 3
+const DEFAUTL_GRPC_TIMEOUT = 5
 const TIMEOUT_ENV_VAR_NAME = "GRPC_TIMEOUT_SECONDS"
 const POD_NAME_ENV_VAR = "POD_NAME"
 

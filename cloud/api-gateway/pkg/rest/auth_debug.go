@@ -9,22 +9,24 @@ import (
 type DebugAuthMiddleware struct {
 }
 
-func NewDebugAuthMiddleware() *DebugAuthMiddleware {
-	return &DebugAuthMiddleware{}
+func (r *DebugAuthMiddleware) IsAuthenticated(c *gin.Context) {
+	authHeader := c.Request.Header.Get("authorization")
+	token := c.Request.Header.Get("token")
+
+	if len(token) > 0 || len(authHeader) > 0 {
+		logrus.Info("authorization header: ", authHeader)
+		logrus.Info("token header: ", authHeader)
+		logrus.Info("Bypassing authentication because we are in a debug mode")
+		c.Set(USER_ID_KEY, "11111111-1111-1111-1111-111111111111")
+		return
+	}
+	c.AbortWithStatus(http.StatusUnauthorized)
 }
 
-func (r *DebugAuthMiddleware) IsAuthenticated() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.Request.Header.Get("authorization")
-		token := c.Request.Header.Get("token")
+func (r *DebugAuthMiddleware) IsAuthorized(c *gin.Context) {
+	logrus.Infoln("Authorization passed")
+}
 
-		if len(token) > 0 || len(authHeader) > 0 {
-			logrus.Info("authorization header: ", authHeader)
-			logrus.Info("token header: ", authHeader)
-			logrus.Info("Bypassing authentication because we are in a debug mode")
-			c.Set(USER_ID_KEY, "11111111-1111-1111-1111-111111111111")
-			return
-		}
-		c.AbortWithStatus(http.StatusUnauthorized)
-	}
+func NewDebugAuthMiddleware() *DebugAuthMiddleware {
+	return &DebugAuthMiddleware{}
 }

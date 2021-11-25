@@ -31,13 +31,17 @@ func (b *bootstrapClient) AddOrUpdateOrg(orgName string, cert string, deviceGate
 	body := map[string]string{"certificate": cert, "ip": deviceGatewayHost}
 	errorResp := &rest.ErrorMessage{}
 
+	logrus.Infoln("Retrieving token auth token from Auth0")
 	token, err := b.auth.GetToken()
 	if err != nil {
 		return errors.Wrap(err, "error retrieving token")
 	}
+
+	logrus.Infoln("Sending request to Bootstap")
 	resp, err := client.R().SetBody(body).SetError(errorResp).SetAuthToken(token).Post(b.bootstrapHost + "/orgs/" + orgName)
 
 	if err != nil {
+		logrus.Errorf("Error sending request to bootstrap. Error %v", err)
 		return errors.Wrap(err, "error sending request")
 	}
 

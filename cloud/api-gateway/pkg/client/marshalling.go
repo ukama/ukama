@@ -15,7 +15,7 @@ type GrpcClientError struct {
 	Message  string
 }
 
-func marshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
+func MarshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
 
 	clientError, done := marshalError(err)
 	if done {

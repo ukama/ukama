@@ -55,7 +55,7 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 		if sql.IsDuplicateKeyError(err) {
 			return nil, status.Errorf(codes.AlreadyExists, "organization already exist")
 		}
-		logrus.Errorf("Error adding the org. Error: %v", err)
+		logrus.Errorf("Error adding the org. Error: %+v", err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 

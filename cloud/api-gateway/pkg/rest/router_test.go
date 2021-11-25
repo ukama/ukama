@@ -105,14 +105,16 @@ func TestGetOrg(t *testing.T) {
 
 func TestGetNodes(t *testing.T) {
 	// arrange
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/nodes", nil)
+	req, _ := http.NewRequest("GET", "/orgs/test-org/nodes", nil)
 	req.Header.Set("token", "bearer 123")
 	nodeId := ukama.NewVirtualNodeId("homenode")
 
 	t.Run("HappyPath", func(t *testing.T) {
+		w := httptest.NewRecorder()
 		m := &pbmocks.RegistryServiceClient{}
-		m.On("GetNodes", mock.Anything, mock.Anything).Return(&pb.GetNodesResponse{
+		m.On("GetNodes", mock.Anything, mock.MatchedBy(func(r *pb.GetNodesRequest) bool {
+			return r.OrgName == "test-org"
+		})).Return(&pb.GetNodesResponse{
 			Orgs: []*pb.NodesList{
 				{
 					Nodes: []*pb.Node{
@@ -136,6 +138,7 @@ func TestGetNodes(t *testing.T) {
 	})
 
 	t.Run("NoNodesReturned", func(t *testing.T) {
+		w := httptest.NewRecorder()
 		m := &pbmocks.RegistryServiceClient{}
 		m.On("GetNodes", mock.Anything, mock.Anything).Return(&pb.GetNodesResponse{
 			Orgs: []*pb.NodesList{},
@@ -152,27 +155,7 @@ func TestGetNodes(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 		body := w.Body.String()
-		assert.Contains(t, body, "orgs")
-	})
-
-	t.Run("NoNodesReturned", func(t *testing.T) {
-		m := &pbmocks.RegistryServiceClient{}
-		m.On("GetNodes", mock.Anything, mock.Anything).Return(&pb.GetNodesResponse{
-			Orgs: []*pb.NodesList{},
-		}, nil)
-
-		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
-			Registry: client.NewRegistryFromClient(m),
-		}).gin
-
-		// act
-		r.ServeHTTP(w, req)
-
-		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
-		m.AssertExpectations(t)
-		body := w.Body.String()
-		assert.Contains(t, body, "orgs")
+		assert.Contains(t, body, "nodes")
 	})
 
 }

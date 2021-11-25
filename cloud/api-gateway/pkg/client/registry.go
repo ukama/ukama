@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -44,22 +46,52 @@ func (r *Registry) Close() {
 	r.conn.Close()
 }
 
-func (r *Registry) GetOrg(orgName string) (string, *GrpcClientError) {
+func (r *Registry) GetOrg(orgName string) (*pb.Organization, *GrpcClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
 	res, err := r.client.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
+	if grpcErr, ok := marshalError(err); ok {
+		return nil, grpcErr
+	}
 
-	return marshallResponse(err, res)
+	return res, nil
 }
 
 // GetOrg returns list of nodes
-// org could be empty
-func (r *Registry) GetNodes(owner string, orgName string) (string, *GrpcClientError) {
+func (r *Registry) GetNodes(owner string, orgName string) (*pb.NodesList, *GrpcClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
-	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{Owner: owner, OrgName: orgName})
+	if len(orgName) == 0 {
+		return nil, &GrpcClientError{HttpCode: http.StatusBadRequest, Message: "Organization name is required"}
+	}
 
-	return marshallResponse(err, res)
+	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{Owner: owner, OrgName: orgName})
+	if grpcErr, ok := marshalError(err); ok {
+		return nil, grpcErr
+	}
+
+	// only one org should be allowed
+	if len(res.GetOrgs()) == 1 {
+		return res.GetOrgs()[0], nil
+	} else if len(res.GetOrgs()) > 1 {
+		return nil, &GrpcClientError{HttpCode: http.StatusInternalServerError, Message: "Unexpected number of orgs in response"}
+	}
+
+	return &pb.NodesList{Nodes: []*pb.Node{}}, nil
+}
+
+func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
+	orgResp, err := r.GetOrg(org)
+	if err != nil {
+		if err.HttpCode != http.StatusNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf(err.Message)
+	}
+	if orgResp.Owner == userId {
+		return true, nil
+	}
+	return false, nil
 }

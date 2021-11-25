@@ -2,6 +2,8 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,6 +27,11 @@ type QueueListener struct {
 	serviceId      string
 }
 
+type UserRegisteredBody struct {
+	Id    string `json:"id"`
+	Email string `json:"email"`
+}
+
 func NewQueueListener(registryGrpcHost string, connectionString string, grpcTimeout int, serviceId string) (*QueueListener, error) {
 	client, err := msgbus.NewConsumerClient(connectionString)
 	if err != nil {
@@ -45,10 +52,9 @@ func NewQueueListener(registryGrpcHost string, connectionString string, grpcTime
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-	routingKeys := msgbus.RoutingKey(msgbus.DeviceConnectedRoutingKey)
 
 	err = q.msgBusConn.SubscribeToServiceQueue("registry-listener", msgbus.DeviceQ.Exchange,
-		[]msgbus.RoutingKey{routingKeys}, q.serviceId, q.incomingMessageHandler)
+		[]msgbus.RoutingKey{msgbus.DeviceConnectedRoutingKey, msgbus.UserRegisteredRoutingKey}, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for a queue messages. Error: %+v", err)
 		return err
@@ -65,11 +71,45 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(q.grpcTimeout))
 	defer cancel()
 
+	switch delivery.RoutingKey {
+
+	case string(msgbus.DeviceConnectedRoutingKey):
+		q.processDeviceConnectedMsg(ctx, delivery)
+
+	case string(msgbus.UserRegisteredRoutingKey):
+		q.processUserRegisteredMsg(ctx, delivery)
+
+	default:
+		log.Warning("No handler for routing key ", delivery.RoutingKey)
+	}
+
+	done <- true
+}
+
+func (q *QueueListener) processUserRegisteredMsg(ctx context.Context, delivery amqp.Delivery) {
+	user := &UserRegisteredBody{}
+	err := json.Unmarshal(delivery.Body, user)
+	if err != nil {
+		log.Errorf("Error unmarshaling message. Error %v", err)
+		return
+	}
+	_, err = q.registryClient.AddOrg(ctx, &pb.AddOrgRequest{
+		Name:  user.Id,
+		Owner: user.Id,
+	}, grpc_retry.WithMax(3))
+
+	if err != nil {
+		log.Errorf("Failed to add organization '%s'. Error: %v", user.Id, err)
+	} else {
+		log.Infof("Organization %s added successefully", user.Id)
+	}
+}
+
+func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery amqp.Delivery) {
 	link := &external.Link{}
 	err := proto.Unmarshal(delivery.Body, link)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
-		done <- true
 		return
 	}
 
@@ -77,19 +117,18 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	nodeId, err := ukama.ValidateNodeId(link.GetUuid())
 	if err != nil {
 		log.Errorf("Invalid Node ID format. Error %v", err)
-		done <- true
 		return
 	}
 
 	_, err = q.registryClient.UpdateNode(ctx,
 		&pb.UpdateNodeRequest{
 			NodeId: nodeId.String(),
-			State:  pb.NodeState_ONBOARDED})
+			State:  pb.NodeState_ONBOARDED},
+		grpc_retry.WithMax(3))
 
 	if err != nil {
 		log.Errorf("Failed to update node %s status. Error: %v", nodeId.String(), err)
 	} else {
 		log.Infof("Node %s updated successefully", nodeId.String())
 	}
-	done <- true
 }

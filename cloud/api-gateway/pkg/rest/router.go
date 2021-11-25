@@ -15,6 +15,8 @@ import (
 	urest "github.com/ukama/ukamaX/common/rest"
 )
 
+const ORG_URL_PARAMETER = "org"
+
 type Router struct {
 	gin            *gin.Engine
 	port           int
@@ -28,15 +30,16 @@ type Clients struct {
 	Hss      *client.Hss
 }
 
+type AuthMiddleware interface {
+	IsAuthenticated(c *gin.Context)
+	IsAuthorized(c *gin.Context)
+}
+
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Registry = client.NewRegistry(endpoints.Registry, endpoints.TimeoutSeconds)
 	c.Hss = client.NewHss(endpoints.Hss, endpoints.TimeoutSeconds)
 	return c
-}
-
-type AuthMiddleware interface {
-	IsAuthenticated() gin.HandlerFunc
 }
 
 func NewRouter(port int,
@@ -72,17 +75,20 @@ func (r *Router) init(port int) {
 
 	authorized := r.gin.Group("/")
 
-	authorized.Use(r.authMiddleware.IsAuthenticated())
+	authorized.Use(r.authMiddleware.IsAuthenticated).Use(r.authMiddleware.IsAuthorized)
 	{
+		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
+
 		// registry
-		authorized.GET("/orgs/:org", r.orgHandler)
-		authorized.GET("/nodes", r.nodesHandler)
+		authorized.GET(org, r.orgHandler)
+		authorized.GET(org+"/nodes", r.nodesHandler)
 
 		// hss
 		// returns list of users
-		authorized.GET("/orgs/:org/users", r.getUsersHandler)
-		authorized.POST("/orgs/:org/users", r.postUsersHandler)
-		authorized.DELETE("/orgs/:org/users/:user", r.deleteUserHandler)
+
+		authorized.GET(org+"/users", r.getUsersHandler)
+		authorized.POST(org+"/users", r.postUsersHandler)
+		authorized.DELETE(org+"/users/:user", r.deleteUserHandler)
 	}
 
 	r.gin.GET("/ping", r.pingHandler)
@@ -100,23 +106,31 @@ func (r *Router) orgHandler(c *gin.Context) {
 		urest.ThrowError(c, err.HttpCode, err.Message, "", nil)
 		return
 	}
-	c.String(http.StatusOK, resp)
+	c.JSON(http.StatusOK, resp)
 }
 
 func (r *Router) nodesHandler(c *gin.Context) {
 	userId := c.GetString(USER_ID_KEY)
+	orgName := r.getOrgNameFromRoute(c)
 	if len(userId) == 0 {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	resp, err := r.clients.Registry.GetNodes(userId, "")
-
+	resp, err := r.clients.Registry.GetNodes(userId, orgName)
 	if err != nil {
 		urest.ThrowError(c, err.HttpCode, "Registry request failed. Error:"+err.Message, "", nil)
 		return
 	}
-	c.String(http.StatusOK, resp)
+
+	mResp, err := client.MarshallResponse(nil, resp)
+	if err != nil {
+		urest.ThrowError(c, err.HttpCode, "Failed marshaling response. Error:"+err.Message, "", nil)
+		return
+	}
+	c.Header("Content-Type", "application/json")
+
+	c.String(http.StatusOK, mResp)
 }
 
 func (rt *Router) pingHandler(c *gin.Context) {

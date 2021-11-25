@@ -18,31 +18,54 @@ const USER_ID_KEY = "UserId"
 const CookieName = "ukama_session"
 
 type KratosAuthMiddleware struct {
-	kratosConf  *pkg.Kratos
-	isDebugMode bool
+	kratosConf           *pkg.Kratos
+	isDebugMode          bool
+	authorizationService AuthorizationService
 }
 
-func NewKratosAuthMiddleware(kratosConf *pkg.Kratos, isDebugMode bool) *KratosAuthMiddleware {
+type AuthorizationService interface {
+	// checks if user with userId is authorized to access org
+	IsAuthorized(userId string, org string) (bool, error)
+}
+
+func NewKratosAuthMiddleware(kratosConf *pkg.Kratos, authorizationSvc AuthorizationService, isDebugMode bool) *KratosAuthMiddleware {
 	return &KratosAuthMiddleware{
-		kratosConf:  kratosConf,
-		isDebugMode: isDebugMode,
+		kratosConf:           kratosConf,
+		isDebugMode:          isDebugMode,
+		authorizationService: authorizationSvc,
 	}
 }
 
-func (r *KratosAuthMiddleware) IsAuthenticated() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userId, err := r.isTokenValid(c.Request)
+func (r *KratosAuthMiddleware) IsAuthenticated(c *gin.Context) {
+	userId, err := r.isTokenValid(c.Request)
+	if err != nil {
+		r.processErr(c, err)
+		return
+	}
+	c.Set(USER_ID_KEY, userId)
+}
+
+func (r *KratosAuthMiddleware) processErr(c *gin.Context, err error) {
+	logrus.Warning("Error validating token. ", err.Error())
+	if r.isDebugMode {
+		urest.ThrowError(c, http.StatusUnauthorized, err.Error(), "", nil)
+	} else {
+		urest.ThrowError(c, http.StatusUnauthorized, "Unauthorized", "", nil)
+	}
+	c.Abort()
+}
+
+func (r *KratosAuthMiddleware) IsAuthorized(c *gin.Context) {
+	userId := c.GetString(USER_ID_KEY)
+	org := c.Param(ORG_URL_PARAMETER)
+	res, err := r.authorizationService.IsAuthorized(userId, org)
+	if err != nil || !res {
 		if err != nil {
-			logrus.Warning("Error validating token. ", err.Error())
-			if r.isDebugMode {
-				urest.ThrowError(c, http.StatusUnauthorized, err.Error(), "", nil)
-			} else {
-				urest.ThrowError(c, http.StatusUnauthorized, "Unauthorized", "", nil)
-			}
-			c.Abort()
-			return
+			logrus.Warning("error checking auhorization")
 		}
-		c.Set("UserId", userId)
+		logrus.Infof("Access denied for user %s to organization %s", userId, org)
+		urest.ThrowError(c, http.StatusNotFound, "Organization not found", "", nil)
+		c.Abort()
 	}
 }
 
@@ -53,7 +76,7 @@ func (r *KratosAuthMiddleware) isTokenValid(request *http.Request) (userId strin
 	var resp *resty.Response
 	cookie, err := request.Cookie(CookieName)
 	if err != nil {
-		logrus.Warning("Can't read cookie: ", err)
+		logrus.Infoln("Cannot read cookie: ", err, " falling back to session token")
 	}
 	if err == nil {
 		resp, err = client.R().SetCookie(cookie).

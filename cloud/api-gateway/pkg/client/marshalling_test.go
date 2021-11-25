@@ -17,7 +17,7 @@ func Test_marshallStruct(t *testing.T) {
 		},
 		Node: &pb.Node{},
 	}
-	resp, err := marshallResponse(nil, &msg)
+	resp, err := MarshallResponse(nil, &msg)
 
 	assert.Nil(t, err)
 	assert.True(t, json.Valid([]byte(resp)))
@@ -32,7 +32,7 @@ func Test_marshallStruct(t *testing.T) {
 
 func Test_marshallError(t *testing.T) {
 	msg := "invalid request"
-	resp, err := marshallResponse(fmt.Errorf(msg), nil)
+	resp, err := MarshallResponse(fmt.Errorf(msg), nil)
 
 	assert.Empty(t, resp)
 	assert.Equal(t, msg, err.Message)
@@ -44,7 +44,7 @@ func Test_marshallGrpcHttpError(t *testing.T) {
 		HTTPStatus: http.StatusNotFound,
 		Err:        fmt.Errorf("not found error"),
 	}
-	resp, err := marshallResponse(grpcErr, nil)
+	resp, err := MarshallResponse(grpcErr, nil)
 
 	assert.Empty(t, resp)
 	assert.Equal(t, grpcErr.Error(), err.Message)
@@ -61,7 +61,7 @@ func Test_marshallNodeStruct(t *testing.T) {
 			NodeId: "node-id-1",
 		},
 	}
-	resp, err := marshallResponse(nil, &msg)
+	resp, err := MarshallResponse(nil, &msg)
 
 	assert.Nil(t, err)
 

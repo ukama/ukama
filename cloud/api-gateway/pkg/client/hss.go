@@ -72,5 +72,5 @@ func (r *Hss) Delete(orgName string, userId string) (string, *GrpcClientError) {
 	defer cancel()
 
 	res, err := r.client.Delete(ctx, &pb.DeleteUserRequest{UserUuid: userId, Org: orgName})
-	return marshallResponse(err, res)
+	return MarshallResponse(err, res)
 }
