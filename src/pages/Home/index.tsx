@@ -52,7 +52,7 @@ let slides = [
 
 const Home = () => {
     const { t } = useTranslation();
-    const isSliderLarge = useMediaQuery("(min-width:1430px)");
+    const isSliderLarge = useMediaQuery("(min-width:1410px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [network, setNetwork] = useState("public");

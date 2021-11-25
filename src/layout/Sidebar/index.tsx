@@ -152,7 +152,7 @@ const Sidebar = (
         <Box
             component="nav"
             sx={{
-                width: { sm: DRAWER_WIDTH },
+                width: DRAWER_WIDTH,
                 flexShrink: { sm: 0 },
                 boxShadow: "6px 0px 18px rgba(0, 0, 0, 0.06)",
             }}

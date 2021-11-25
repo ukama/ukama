@@ -18,7 +18,7 @@ import {
 } from "../utils";
 import { MenuItemType } from "../types";
 
-const DRAWER_WIDTH = 211;
+const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
 const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
 const PasswordRules = [

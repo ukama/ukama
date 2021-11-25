@@ -29,12 +29,14 @@ type OptionsPopoverProps = {
     cid: string;
     menuOptions: MenuItemType[];
     handleItemClick: Function;
+    style?: any;
 };
 
 const OptionsPopover = ({
     cid,
     menuOptions,
     handleItemClick,
+    style,
 }: OptionsPopoverProps) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const handlePopoverClose = () => setAnchorEl(null);
@@ -47,11 +49,7 @@ const OptionsPopover = ({
             <IconButton
                 onClick={handlePopoverOpen}
                 aria-describedby={id}
-                sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    bottom: "13px",
-                }}
+                style={style}
             >
                 <MenuDots />
             </IconButton>
