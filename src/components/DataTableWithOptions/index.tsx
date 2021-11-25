@@ -14,7 +14,7 @@ import { SkeletonRoundedCard } from "../../styles";
 
 interface DataTableWithOptionsInterface {
     loading?: boolean;
-    dataset: Object[];
+    dataset: any;
     onMenuItemClick: Function;
     menuOptions: MenuItemType[];
     columns: ColumnsWithOptions[];
@@ -49,7 +49,7 @@ const CellValueByType = ({
                 />
             );
         default:
-            return <>{row[type]}</>;
+            return <>{`${row[type]} GB`}</>;
     }
 };
 

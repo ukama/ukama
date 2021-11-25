@@ -39,7 +39,7 @@ export type SVGType = {
 };
 
 export type ColumnsWithOptions = {
-    id: "name" | "usage" | "actions";
+    id: "name" | "actions" | "dataUsage";
     label: string;
     minWidth?: number;
     align?: "right";

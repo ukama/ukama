@@ -1,8 +1,9 @@
 import { colors } from "../../theme";
 import { SkeletonRoundedCard } from "../../styles";
-import { Typography, Card, Grid, List, ListItem } from "@mui/material";
+import { Typography, Card, Grid, List, ListItem, Stack } from "@mui/material";
 import { AlertItemType } from "../../types";
 import { CloudOffIcon } from "../../assets/svg";
+
 import moment from "moment";
 type AlertCardProps = {
     alertOptions: any;
@@ -45,7 +46,49 @@ const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
                                     }}
                                     elevation={1}
                                 >
-                                    <Grid
+                                    <Grid container spacing={1}>
+                                        <Grid item xs={8} container>
+                                            <Stack direction="row">
+                                                <CloudOffIcon />
+                                                <Typography
+                                                    variant="body1"
+                                                    color="initial"
+                                                >
+                                                    {title}
+                                                </Typography>
+                                            </Stack>
+                                        </Grid>
+
+                                        <Grid
+                                            item
+                                            container
+                                            justifyContent="flex-end"
+                                            xs={4}
+                                        >
+                                            <Typography
+                                                variant="caption"
+                                                color={colors.empress}
+                                            >
+                                                {moment(alertDate).format(
+                                                    "DD/MM/YY h A"
+                                                )}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Typography
+                                                variant="body2"
+                                                color={colors.empress}
+                                                sx={{
+                                                    position: "relative",
+                                                    bottom: "5px",
+                                                    left: "25px",
+                                                }}
+                                            >
+                                                {description}
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                    {/* <Grid
                                         spacing={2}
                                         container
                                         direction="row"
@@ -60,7 +103,7 @@ const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
                                                 left: "5px",
                                             }}
                                         >
-                                            <CloudOffIcon />
+                                           
                                         </Grid>
                                         <Grid
                                             xs={12}
@@ -124,7 +167,7 @@ const AlertCard = ({ alertOptions, loading }: AlertCardProps) => {
                                                 </Grid>
                                             </Grid>
                                         </Grid>
-                                    </Grid>
+                                    </Grid> */}
                                 </Card>
                             </ListItem>
                         )

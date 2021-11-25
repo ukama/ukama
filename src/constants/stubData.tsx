@@ -42,33 +42,6 @@ const RechartsData = [
         cnt: 380,
     },
 ];
-const DashboardResidentsTable = [
-    {
-        name: "Tryphena Nelson 1",
-        usage: "1 GB",
-        actions: "",
-    },
-    {
-        name: "Tryphena Nelson 2",
-        usage: "1 GB",
-        actions: "",
-    },
-    {
-        name: "Tryphena Nelson 3",
-        usage: "1 GB",
-        actions: "",
-    },
-    {
-        name: "Tryphena Nelson 4",
-        usage: "1 GB",
-        actions: "",
-    },
-    {
-        name: "Tryphena Nelson 5",
-        usage: "1 GB",
-        actions: "",
-    },
-];
 
 const SimCardData = [
     {
@@ -97,4 +70,4 @@ const SimCardData = [
     },
 ];
 
-export { SimCardData, RechartsData, DashboardResidentsTable };
+export { SimCardData, RechartsData };

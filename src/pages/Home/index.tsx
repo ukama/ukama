@@ -9,7 +9,6 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
 } from "../../components";
-import { DashboardResidentsTable } from "../../constants/stubData";
 import {
     NETWORKS,
     TIME_FILTER,
@@ -73,7 +72,7 @@ const Home = () => {
             },
         },
     });
-    // eslint-disable-next-line
+
     const { data: residentsRes, loading: residentsloading } =
         useGetResidentsQuery({
             variables: {
@@ -300,22 +299,29 @@ const Home = () => {
                         </LoadingWrapper>
                     </Grid>
                     <Grid xs={12} lg={4} item>
-                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
-                            <RoundedCard sx={{ height: "100%" }}>
-                                <ContainerHeader
-                                    stats="6/16"
-                                    title="Residents"
-                                    buttonTitle="ACTIVATE"
-                                    handleButtonAction={onActivateButton}
-                                />
+                        <RoundedCard sx={{ height: "100%" }}>
+                            <ContainerHeader
+                                stats="6/16"
+                                title="Residents"
+                                buttonTitle="ACTIVATE"
+                                handleButtonAction={onActivateButton}
+                            />
+                            <LoadingWrapper
+                                height={337}
+                                isLoading={isSkeltonLoad}
+                            >
                                 <DataTableWithOptions
+                                    loading={residentsloading}
                                     columns={DataTableWithOptionColumns}
-                                    dataset={DashboardResidentsTable}
+                                    dataset={
+                                        residentsRes?.getResidents.residents
+                                            .residents
+                                    }
                                     menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                     onMenuItemClick={onResidentsTableMenuItem}
                                 />
-                            </RoundedCard>
-                        </LoadingWrapper>
+                            </LoadingWrapper>
+                        </RoundedCard>
                     </Grid>
                 </Grid>
                 {isUserActivateOpen && (
