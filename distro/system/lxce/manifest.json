@@ -3,23 +3,23 @@
 	"serial": "abcd-ef-ghi-009910-xyz",
 	"target": "serial",
 
-	"ukama-cApp": [{
-			"name": "mesh",
-			"tag": "latest",
-			"restart": "no",
-			"contained": "shutdown"
-		},
+	"ukama-cApp": [
 		{
 			"name": "hello-world",
-			"tag": "v0.0.1",
+			"tag": "0.0.1",
 			"restart": "no",
 			"contained": "boot"
+		}
+	],
+
+	"namespaces": [{
+			"type": "pid"
 		},
 		{
-			"name": "hello-world",
-			"tag": "latest",
-			"restart": "yes",
-			"contained": "service"
+			"type": "user"
+		},
+		{
+			"type": "mount"
 		}
 	]
 }
