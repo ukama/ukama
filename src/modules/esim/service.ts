@@ -17,8 +17,6 @@ export class EsimService implements IEsimService {
 
         if (checkError(res)) throw new Error(res.message);
 
-        const esims = EsimMapper.dtoToDto(res);
-
-        return esims;
+        return EsimMapper.dtoToDto(res);
     };
 }

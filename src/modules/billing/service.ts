@@ -15,8 +15,7 @@ export class BillService implements IBillService {
             path: SERVER.GET_CURRENT_BILL,
         });
         if (checkError(res)) throw new Error(res.message);
-        const bill = BillMapper.dtoToDto(res);
-        return bill;
+        return BillMapper.dtoToDto(res);
     };
 
     public getBillHistory = async (): Promise<BillHistoryDto[]> => {
@@ -25,7 +24,6 @@ export class BillService implements IBillService {
             path: SERVER.GET_BILL_HISTORY,
         });
         if (checkError(res)) throw new Error(res.message);
-        const bill = BillMapper.billHistoryDtoToDto(res);
-        return bill;
+        return BillMapper.billHistoryDtoToDto(res);
     };
 }

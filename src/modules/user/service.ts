@@ -77,7 +77,6 @@ export class UserService implements IUserService {
             params: req,
         });
         if (checkError(res)) throw new Error(res.message);
-
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const users = UserMapper.dtoToDto(res);
         if (!users) throw new HTTP404Error(Messages.USERS_NOT_FOUND);

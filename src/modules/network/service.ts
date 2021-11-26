@@ -17,7 +17,6 @@ export class NetworkService implements INetworkService {
         });
         if (checkError(res)) throw new Error(res.message);
 
-        const network = NetworkMapper.dtoToDto(res);
-        return network;
+        return NetworkMapper.dtoToDto(res);
     };
 }

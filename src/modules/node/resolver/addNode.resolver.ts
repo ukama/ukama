@@ -15,6 +15,6 @@ export class AddNodeResolver {
         @Arg("data")
         req: AddNodeDto
     ): Promise<AddNodeResponse | null> {
-        return await this.nodeService.addNode(req);
+        return this.nodeService.addNode(req);
     }
 }

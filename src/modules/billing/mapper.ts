@@ -11,8 +11,8 @@ class BillMapper implements IBillMapper {
     dtoToDto = (res: CurrentBillResponse): BillResponse => {
         const bill = res.data;
         let total = 0;
-        for (let i = 0; i < bill.length; i++) {
-            const subTotal = bill[i].subtotal;
+        for (const sub of bill) {
+            const subTotal = sub.subtotal;
             total = total + subTotal;
         }
         return {

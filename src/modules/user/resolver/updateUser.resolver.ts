@@ -15,6 +15,6 @@ export class UpdateUserResolver {
         @Arg("data")
         req: UpdateUserDto
     ): Promise<UserResponse | null> {
-        return await this.userService.updateUser(req);
+        return this.userService.updateUser(req);
     }
 }
