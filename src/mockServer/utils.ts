@@ -262,6 +262,20 @@ export const updateNode = (req: Request, res: Response): void => {
         data: data,
     });
 };
+export const deleteNode = (req: Request, res: Response): void => {
+    const { body } = req;
+
+    let data;
+
+    if (!body.id) data = {};
+
+    data = casual._deleteNode(body.id.toString());
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
 
 export const getCurrentBill = (req: Request, res: Response): void => {
     const data = casual.randomArray<CurrentBillDto>(1, 5, casual._currentBill);

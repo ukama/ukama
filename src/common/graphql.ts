@@ -212,3 +212,12 @@ export const POST_UPDATE_NODE_MUTATION = `
         }
     }
 `;
+
+export const DELETE_NODE_MUTATION = `
+    mutation deleteNode($input:String!) {
+        deleteNode(id:$input){
+            id
+            success
+          }
+    }
+`;

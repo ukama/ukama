@@ -19,4 +19,5 @@ export const SERVER = {
     POST_UPDATE_USER: `user/update_user`,
     POST_DELETE_USER: `user/delete_user`,
     POST_UPDATE_NODE: `node/update_node`,
+    POST_DELETE_NODE: `node/delete_node`,
 };

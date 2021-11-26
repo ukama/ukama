@@ -97,3 +97,11 @@ export class UpdateNodeResponse {
     @Field()
     serialNo: string;
 }
+@ObjectType()
+export class DeleteNodeResponse {
+    @Field()
+    id: string;
+
+    @Field()
+    success: boolean;
+}
