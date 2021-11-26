@@ -14,7 +14,12 @@ import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
 
-import { GetUserDto, UserDto } from "../../modules/user/types";
+import {
+    DeleteUserResponse,
+    GetUserDto,
+    UserDto,
+    UserResponse,
+} from "../../modules/user/types";
 
 function randomArray<T>(
     minLength: number,
@@ -150,6 +155,34 @@ const billHistory = (): BillHistoryDto => {
         subtotal: subtotal,
     };
 };
+const updateUser = (
+    id: string,
+    firstName: string,
+    lastName: string,
+    eSimNumber: string,
+    email: string,
+    phone: string
+): UserResponse => {
+    return {
+        id: id,
+        name: `${firstName ?? defaultCasual._first_name()} ${
+            lastName ?? defaultCasual._last_name()
+        }`,
+        sim:
+            eSimNumber ??
+            `# ${defaultCasual.integer(11111, 99999)}-${defaultCasual.date(
+                "DD-MM-2023"
+            )}-${defaultCasual.integer(1111111, 9999999)}`,
+        email: email ?? defaultCasual._email(),
+        phone: phone ?? defaultCasual._phone(),
+    };
+};
+const deleteUser = (id: string): DeleteUserResponse => {
+    return {
+        id: id,
+        success: true,
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -173,6 +206,15 @@ interface Generators extends Casual.Generators {
         name: string,
         serialNo: string
     ) => UpdateNodeResponse;
+    _updateUser: (
+        id: string,
+        firstName: string,
+        lastName: string,
+        eSimNumber: string,
+        email: string,
+        phone: string
+    ) => UserResponse;
+    _deleteUser: (id: string) => DeleteUserResponse;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -196,6 +238,15 @@ interface functions extends Casual.functions {
         name: string,
         serialNo: string
     ) => UpdateNodeResponse;
+    updateUser: (
+        id: string,
+        firstName: string,
+        lastName: string,
+        eSimNumber: string,
+        email: string,
+        phone: string
+    ) => UserResponse;
+    deleteUser: (id: string) => DeleteUserResponse;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -210,6 +261,8 @@ defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
+defaultCasual.define("updateUser", updateUser);
+defaultCasual.define("deleteUser", deleteUser);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 
