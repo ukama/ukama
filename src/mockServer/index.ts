@@ -14,6 +14,7 @@ import {
     getNetwork,
     updateUser,
     deleteUser,
+    updateNode,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -32,4 +33,5 @@ export const mockServer = (app: Express): void => {
     app.get("/network/get_network", getNetwork);
     app.post("/user/update_user", updateUser);
     app.delete("/user/delete_user", deleteUser);
+    app.post("/node/update_node", updateNode);
 };

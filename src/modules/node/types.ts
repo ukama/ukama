@@ -65,6 +65,18 @@ export class AddNodeDto {
     serialNo: string;
 }
 
+@InputType()
+export class UpdateNodeDto {
+    @Field()
+    id: string;
+
+    @Field({ nullable: true })
+    name: string;
+
+    @Field({ nullable: true })
+    serialNo: string;
+}
+
 @ObjectType()
 export class AddNodeResponseDto {
     @Field()
@@ -72,4 +84,16 @@ export class AddNodeResponseDto {
 
     @Field()
     data: AddNodeResponse;
+}
+
+@ObjectType()
+export class UpdateNodeResponse {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    serialNo: string;
 }

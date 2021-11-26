@@ -202,3 +202,13 @@ export const DELETE_USER_MUTATION = `
           }
     }
 `;
+
+export const POST_UPDATE_NODE_MUTATION = `
+    mutation updateNode($input:UpdateNodeDto!) {
+        updateNode(data:$input) {
+            id
+            name
+            serialNo
+        }
+    }
+`;
