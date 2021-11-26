@@ -5,17 +5,22 @@ import {
     ActivateUserResponse,
     ConnectedUserDto,
     ConnectedUserResponse,
+    DeleteUserResponse,
     GetUserDto,
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
     ResidentResponse,
     ResidentsResponse,
+    UpdateUserDto,
+    UserResponse,
 } from "./types";
 
 export interface IUserService {
     getConnectedUsers(filter: TIME_FILTER): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
+    updateUser(req: UpdateUserDto): Promise<UserResponse>;
+    deleteUser(id: string): Promise<DeleteUserResponse>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
 }

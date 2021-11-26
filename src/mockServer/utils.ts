@@ -165,18 +165,42 @@ export const activateUser = (req: Request, res: Response): void => {
 
 export const updateUser = (req: Request, res: Response): void => {
     const { body } = req;
-    const data = {
-        success: false,
-    };
+    let data;
 
     if (
-        body.firstName ||
-        body.lastName ||
-        body.eSimNumber ||
-        body.email ||
-        body.phone
+        !(
+            body.id &&
+            (body.firstName ||
+                body.lastName ||
+                body.eSimNumber ||
+                body.email ||
+                body.phone)
+        )
     )
-        data.success = true;
+        data = {};
+
+    data = casual._updateUser(
+        body.id,
+        body.firstName,
+        body.lastName,
+        body.eSimNumber,
+        body.email,
+        body.phone
+    );
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+export const deleteUser = (req: Request, res: Response): void => {
+    const { body } = req;
+
+    let data;
+
+    if (!body.id) data = {};
+
+    data = casual._deleteUser(body.id.toString());
 
     res.send({
         status: "success",

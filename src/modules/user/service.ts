@@ -3,10 +3,12 @@ import {
     ActivateUserDto,
     ActivateUserResponse,
     ConnectedUserDto,
+    DeleteUserResponse,
     GetUserPaginationDto,
     GetUserResponse,
     ResidentsResponse,
     UpdateUserDto,
+    UserResponse,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -48,7 +50,7 @@ export class UserService implements IUserService {
         return res.data;
     };
 
-    updateUser = async (req: UpdateUserDto): Promise<ActivateUserResponse> => {
+    updateUser = async (req: UpdateUserDto): Promise<UserResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_UPDATE_USER,
@@ -56,6 +58,15 @@ export class UserService implements IUserService {
         });
         if (checkError(res)) throw new Error(res.message);
 
+        return res.data;
+    };
+    deleteUser = async (id: string): Promise<DeleteUserResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: SERVER.POST_DELETE_USER,
+            body: { id },
+        });
+        if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
 

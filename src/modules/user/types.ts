@@ -68,6 +68,9 @@ export class ActivateUserDto {
 
 @InputType()
 export class UpdateUserDto {
+    @Field()
+    id: string;
+
     @Field({ nullable: true })
     eSimNumber: string;
 
@@ -86,6 +89,23 @@ export class UpdateUserDto {
     @Field({ nullable: true })
     @IsPhoneNumber()
     phone?: string;
+}
+@ObjectType()
+export class UserResponse {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    sim: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    phone: string;
 }
 
 @ObjectType()
@@ -182,4 +202,12 @@ export class ResidentResponse {
 export class ResidentsResponse extends PaginationResponse {
     @Field(() => ResidentResponse)
     residents: ResidentResponse;
+}
+@ObjectType()
+export class DeleteUserResponse {
+    @Field()
+    id: string;
+
+    @Field()
+    success: boolean;
 }
