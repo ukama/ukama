@@ -12,7 +12,7 @@ import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
-import { NodeDto } from "../../modules/node/types";
+import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
 
 import { GetUserDto, UserDto } from "../../modules/user/types";
 
@@ -69,6 +69,17 @@ const node = (): NodeDto => {
         description: `${defaultCasual.random_value(NODE_TYPE)} node`,
         status: defaultCasual.random_value(GET_STATUS_TYPE),
         totalUser: defaultCasual.integer(1, 99),
+    };
+};
+const updateNode = (
+    id: string,
+    name: string,
+    serialNo: string
+): UpdateNodeResponse => {
+    return {
+        id: id,
+        name: name ?? defaultCasual._name(),
+        serialNo: serialNo ?? `#${defaultCasual.integer(1111111, 9999999)}`,
     };
 };
 
@@ -157,6 +168,11 @@ interface Generators extends Casual.Generators {
     _currentBill: () => CurrentBillDto;
     _billHistory: () => BillHistoryDto;
     _network: () => NetworkDto;
+    _updateNode: (
+        id: string,
+        name: string,
+        serialNo: string
+    ) => UpdateNodeResponse;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -175,6 +191,11 @@ interface functions extends Casual.functions {
     currentBill: () => CurrentBillDto;
     billHistory: () => BillHistoryDto;
     network: () => NetworkDto;
+    updateNode: (
+        id: string,
+        name: string,
+        serialNo: string
+    ) => UpdateNodeResponse;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -188,6 +209,7 @@ defaultCasual.define("getUser", getUser);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
+defaultCasual.define("updateNode", updateNode);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 

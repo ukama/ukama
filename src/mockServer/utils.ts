@@ -263,12 +263,7 @@ export const updateNode = (req: Request, res: Response): void => {
     const { body } = req;
     let data;
     if (!(body.id && (body.name || body.serialNo))) data = {};
-    data = {
-        id: body.id,
-        name: body.name ?? defaultCasual._name(),
-        serialNo:
-            body.serialNo ?? `#${defaultCasual.integer(1111111, 9999999)}`,
-    };
+    data = casual._updateNode(body.id, body.name, body.serialNo);
 
     res.send({
         status: "success",

@@ -15,6 +15,6 @@ export class UpdateNodeResolver {
         @Arg("data")
         req: UpdateNodeDto
     ): Promise<UpdateNodeResponse | null> {
-        return await this.nodeService.updateNode(req);
+        return this.nodeService.updateNode(req);
     }
 }
