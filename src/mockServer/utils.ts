@@ -12,7 +12,6 @@ import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual-extensions";
-import * as defaultCasual from "casual";
 
 export const getUser = (req: Request, res: Response): void => {
     let users: UserDto[];
@@ -170,28 +169,24 @@ export const updateUser = (req: Request, res: Response): void => {
 
     if (
         !(
-            body.firstName ||
-            body.lastName ||
-            body.eSimNumber ||
-            body.email ||
-            body.phone
+            body.id &&
+            (body.firstName ||
+                body.lastName ||
+                body.eSimNumber ||
+                body.email ||
+                body.phone)
         )
     )
         data = {};
 
-    data = {
-        id: body.id,
-        name: `${body.firstName ?? defaultCasual._first_name()} ${
-            body.lastName ?? defaultCasual._last_name()
-        }`,
-        sim:
-            body.eSimNumber ??
-            `# ${defaultCasual.integer(11111, 99999)}-${defaultCasual.date(
-                "DD-MM-2023"
-            )}-${defaultCasual.integer(1111111, 9999999)}`,
-        email: body.email ?? defaultCasual._email(),
-        phone: body.phone ?? defaultCasual._phone(),
-    };
+    data = casual._updateUser(
+        body.id,
+        body.firstName,
+        body.lastName,
+        body.eSimNumber,
+        body.email,
+        body.phone
+    );
 
     res.send({
         status: "success",
@@ -205,10 +200,7 @@ export const deleteUser = (req: Request, res: Response): void => {
 
     if (!body.id) data = {};
 
-    data = {
-        id: body.id?.toString(),
-        success: true,
-    };
+    data = casual._deleteUser(body.id.toString());
 
     res.send({
         status: "success",
