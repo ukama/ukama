@@ -33,7 +33,6 @@ const App = () => {
 
     return (
         <ApolloProvider client={client}>
-            {window.alert(process.env.REACT_APP_KRATOS_URL)}
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <BrowserRouter>
