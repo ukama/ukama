@@ -4,12 +4,14 @@ type NodeContainerProps = {
     items: any;
     slidesToShow: number;
     count: number | undefined;
+    handleItemAction: Function;
 };
 
 const NodeContainer = ({
     count = 0,
     items = [],
     slidesToShow,
+    handleItemAction,
 }: NodeContainerProps) => {
     return (
         <>
@@ -25,6 +27,9 @@ const NodeContainer = ({
                             users={totalUser}
                             loading={false}
                             subTitle={description}
+                            handleOptionItemClick={(type: string) =>
+                                handleItemAction(id, type)
+                            }
                         />
                     ))}
                 </MultiSlideCarousel>

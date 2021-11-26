@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
     StatsCard,
     AlertCard,
@@ -136,7 +137,6 @@ const Home = () => {
         }
     };
 
-    const onResidentsTableMenuItem = () => {};
     const getStatus = (key: string) => {
         switch (key) {
             case "statusUser":
@@ -152,6 +152,8 @@ const Home = () => {
 
     const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
+    const onResidentsTableMenuItem = (id: string, type: string) => {};
+    const handleNodeActions = (id: string, type: string) => {};
 
     return (
         <>
@@ -276,7 +278,7 @@ const Home = () => {
                                     handleButtonAction={() => {}}
                                     stats={`${
                                         nodeRes?.getNodes?.nodes?.activeNodes ||
-                                        "-"
+                                        "0"
                                     }/${
                                         nodeRes?.getNodes?.nodes?.totalNodes ||
                                         "-"
@@ -286,6 +288,7 @@ const Home = () => {
                                     slidesToShow={slidesToShow}
                                     items={nodeRes?.getNodes?.nodes.nodes}
                                     count={nodeRes?.getNodes.meta.size}
+                                    handleItemAction={handleNodeActions}
                                 />
                             </RoundedCard>
                         </LoadingWrapper>
@@ -302,7 +305,7 @@ const Home = () => {
                                     handleButtonAction={onActivateButton}
                                     stats={`${
                                         residentsRes?.getResidents?.residents
-                                            ?.activeResidents || "-"
+                                            ?.activeResidents || "0"
                                     }/${
                                         residentsRes?.getResidents?.residents
                                             ?.totalResidents || "-"

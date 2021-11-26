@@ -102,8 +102,13 @@ const DataTableWithOptions = ({
                                                 row={row}
                                                 type={column.id}
                                                 menuOptions={menuOptions}
-                                                onMenuItemClick={
-                                                    onMenuItemClick
+                                                onMenuItemClick={(
+                                                    type: string
+                                                ) =>
+                                                    onMenuItemClick(
+                                                        row.id,
+                                                        type
+                                                    )
                                                 }
                                             />
                                         </TableCell>
