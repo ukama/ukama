@@ -144,7 +144,8 @@ static int capp_init_clone(void *arg) {
   ret = exec_capp(capp);
 
   /* An error has occured. Inform the parent process over socket and exit. */
-  if (write(capp->runtime->sockets[0], &ret, sizeof(ret)) != sizeof(ret)) {
+  if (write(capp->runtime->sockets[CHILD_SOCKET], &ret,
+	    sizeof(ret)) != sizeof(ret)) {
     log_error("Capp: %s Error writing to parent socket. Value: %d Size: %d",
 	      capp->params->name, ret, sizeof(ret));
   }
