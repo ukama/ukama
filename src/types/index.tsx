@@ -52,3 +52,9 @@ export type SimActivateFormType = {
     lastName: string;
     firstName: string;
 };
+
+export type ResponseProps = {
+    loading: boolean;
+    error: any | null;
+    response: { isValid: boolean } | void | null;
+};

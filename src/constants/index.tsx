@@ -131,22 +131,30 @@ const UsersTabs = [
     { id: 1, label: "OVERVIEW", value: "1" },
     { id: 2, label: "CURRENTLY CONNECTED", value: "2" },
 ];
+
+const DEFAULT_RESPONSE = {
+    error: null,
+    loading: false,
+    response: null,
+};
+
 export {
     NETWORKS,
     UsersTabs,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,
-    MONTH_FILTER,
     BillingTabs,
     HEADER_MENU,
     DRAWER_WIDTH,
+    STATS_PERIOD,
+    MONTH_FILTER,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
     PasswordRules,
     STATS_OPTIONS,
-    STATS_PERIOD,
     UserActivation,
+    DEFAULT_RESPONSE,
     BASIC_MENU_ACTIONS,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,

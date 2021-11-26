@@ -41,13 +41,13 @@ const getRouteObject = (
 
 export const routes: IRoute[] = [
     //Default routes//
-    {
-        path: "/",
-        exact: true,
-        private: false,
-        redirect: "/login",
-        fallback: Loader,
-    },
+    // {
+    //     path: "/",
+    //     exact: true,
+    //     private: false,
+    //     redirect: "/login",
+    //     fallback: Loader,
+    // },
     {
         path: "/",
         exact: true,
@@ -67,15 +67,5 @@ export const routes: IRoute[] = [
     //
 
     //Public Routes//
-    getRouteObject(
-        "/forgotPasswordConfirmation",
-        "ForgotPasswordCofirmation",
-        false
-    ),
-    getRouteObject("/login", "Login", false),
-    getRouteObject("/signUp", "SignUp", false),
-    getRouteObject("/forgot-password", "ForgotPassword", false),
-    getRouteObject("/reset-password", "ResetPassword", false),
-    getRouteObject("/*", "ErrorPage", false),
     //
 ];
