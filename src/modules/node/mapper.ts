@@ -7,7 +7,7 @@ class NodeMapper implements INodeMapper {
         const nodes = res.data;
         let activeNodes = 0;
         const totalNodes = res.length;
-        res.data.map(node => {
+        res.data.forEach(node => {
             if (node.status === GET_STATUS_TYPE.ACTIVE) {
                 activeNodes++;
             }

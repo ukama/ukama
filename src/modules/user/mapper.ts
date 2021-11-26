@@ -22,7 +22,7 @@ class UserMapper implements IUserMapper {
         const residents: ResidentDto[] = [];
         let activeResidents = 0;
         const totalResidents = res.length;
-        res.data.map(user => {
+        res.data.forEach(user => {
             if (user.status === GET_STATUS_TYPE.ACTIVE) {
                 activeResidents++;
             }

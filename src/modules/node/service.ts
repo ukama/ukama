@@ -2,7 +2,6 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
-    DeleteNodeResponse,
     NodesResponse,
     UpdateNodeDto,
     UpdateNodeResponse,
@@ -15,6 +14,7 @@ import { getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
+import { DeleteResponse } from "../user/types";
 
 @Service()
 export class NodeService implements INodeService {
@@ -55,7 +55,7 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    deleteNode = async (id: string): Promise<DeleteNodeResponse> => {
+    deleteNode = async (id: string): Promise<DeleteResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_DELETE_NODE,

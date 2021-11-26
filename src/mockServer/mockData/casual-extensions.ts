@@ -12,14 +12,10 @@ import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
-import {
-    DeleteNodeResponse,
-    NodeDto,
-    UpdateNodeResponse,
-} from "../../modules/node/types";
+import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
 
 import {
-    DeleteUserResponse,
+    DeleteResponse,
     GetUserDto,
     UserDto,
     UserResponse,
@@ -181,13 +177,7 @@ const updateUser = (
         phone: phone ?? defaultCasual._phone(),
     };
 };
-const deleteUser = (id: string): DeleteUserResponse => {
-    return {
-        id: id,
-        success: true,
-    };
-};
-const deleteNode = (id: string): DeleteNodeResponse => {
+const deleteRes = (id: string): DeleteResponse => {
     return {
         id: id,
         success: true,
@@ -224,8 +214,7 @@ interface Generators extends Casual.Generators {
         email: string,
         phone: string
     ) => UserResponse;
-    _deleteUser: (id: string) => DeleteUserResponse;
-    _deleteNode: (id: string) => DeleteNodeResponse;
+    _deleteRes: (id: string) => DeleteResponse;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -257,8 +246,7 @@ interface functions extends Casual.functions {
         email: string,
         phone: string
     ) => UserResponse;
-    deleteUser: (id: string) => DeleteUserResponse;
-    deleteNode: (id: string) => DeleteNodeResponse;
+    deleteRes: (id: string) => DeleteResponse;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -274,9 +262,7 @@ defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
-defaultCasual.define("deleteUser", deleteUser);
-defaultCasual.define("deleteNode", deleteNode);
-
+defaultCasual.define("deleteRes", deleteRes);
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 
 export default casual;

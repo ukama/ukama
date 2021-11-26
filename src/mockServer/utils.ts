@@ -200,7 +200,7 @@ export const deleteUser = (req: Request, res: Response): void => {
 
     if (!body.id) data = {};
 
-    data = casual._deleteUser(body.id.toString());
+    data = casual._deleteRes(body.id.toString());
 
     res.send({
         status: "success",
@@ -269,7 +269,7 @@ export const deleteNode = (req: Request, res: Response): void => {
 
     if (!body.id) data = {};
 
-    data = casual._deleteNode(body.id.toString());
+    data = casual._deleteRes(body.id.toString());
 
     res.send({
         status: "success",

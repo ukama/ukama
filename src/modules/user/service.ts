@@ -3,7 +3,7 @@ import {
     ActivateUserDto,
     ActivateUserResponse,
     ConnectedUserDto,
-    DeleteUserResponse,
+    DeleteResponse,
     GetUserPaginationDto,
     GetUserResponse,
     ResidentsResponse,
@@ -60,7 +60,7 @@ export class UserService implements IUserService {
 
         return res.data;
     };
-    deleteUser = async (id: string): Promise<DeleteUserResponse> => {
+    deleteUser = async (id: string): Promise<DeleteResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_DELETE_USER,
