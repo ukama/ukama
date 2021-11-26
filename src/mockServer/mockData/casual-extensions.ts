@@ -12,7 +12,11 @@ import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
-import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
+import {
+    DeleteNodeResponse,
+    NodeDto,
+    UpdateNodeResponse,
+} from "../../modules/node/types";
 
 import {
     DeleteUserResponse,
@@ -183,6 +187,12 @@ const deleteUser = (id: string): DeleteUserResponse => {
         success: true,
     };
 };
+const deleteNode = (id: string): DeleteNodeResponse => {
+    return {
+        id: id,
+        success: true,
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -215,6 +225,7 @@ interface Generators extends Casual.Generators {
         phone: string
     ) => UserResponse;
     _deleteUser: (id: string) => DeleteUserResponse;
+    _deleteNode: (id: string) => DeleteNodeResponse;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -247,6 +258,7 @@ interface functions extends Casual.functions {
         phone: string
     ) => UserResponse;
     deleteUser: (id: string) => DeleteUserResponse;
+    deleteNode: (id: string) => DeleteNodeResponse;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -263,6 +275,7 @@ defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteUser", deleteUser);
+defaultCasual.define("deleteNode", deleteNode);
 
 const casual = defaultCasual as Generators & functions & Casual.Casual;
 

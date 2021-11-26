@@ -15,6 +15,7 @@ import {
     updateUser,
     deleteUser,
     updateNode,
+    deleteNode,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -34,4 +35,5 @@ export const mockServer = (app: Express): void => {
     app.post("/user/update_user", updateUser);
     app.post("/node/update_node", updateNode);
     app.post("/user/delete_user", deleteUser);
+    app.post("/node/delete_node", deleteNode);
 };

@@ -2,6 +2,7 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
+    DeleteNodeResponse,
     NodesResponse,
     UpdateNodeDto,
     UpdateNodeResponse,
@@ -52,6 +53,16 @@ export class NodeService implements INodeService {
             body: req,
         });
         if (checkError(res)) throw new Error(res.message);
+        return res.data;
+    };
+    deleteNode = async (id: string): Promise<DeleteNodeResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: SERVER.POST_DELETE_NODE,
+            body: { id },
+        });
+        if (checkError(res)) throw new Error(res.message);
+
         return res.data;
     };
 }
