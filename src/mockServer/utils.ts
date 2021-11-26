@@ -251,6 +251,17 @@ export const addNode = (req: Request, res: Response): void => {
         data: data,
     });
 };
+export const updateNode = (req: Request, res: Response): void => {
+    const { body } = req;
+    let data;
+    if (!(body.id && (body.name || body.serialNo))) data = {};
+    data = casual._updateNode(body.id, body.name, body.serialNo);
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
 
 export const getCurrentBill = (req: Request, res: Response): void => {
     const data = casual.randomArray<CurrentBillDto>(1, 5, casual._currentBill);
