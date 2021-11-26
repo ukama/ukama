@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <jansson.h>
 #include <string.h>
+#include <sys/capability.h>
 
 #include "log.h"
 #include "utils.h"
@@ -106,7 +107,8 @@ int namespaces_flag(char *ns) {
  * get_json_array_elems --
  *
  */
-void get_json_arrary_elems(json_t *json, int *argc, char **argv, char *objName) {
+void get_json_arrary_elems(json_t *json, int *argc, char **argv,
+			   char *objName) {
 
   json_t *jArray, *jElem;
   int i;
@@ -125,4 +127,24 @@ void get_json_arrary_elems(json_t *json, int *argc, char **argv, char *objName) 
       }
     }
   }
+}
+
+/*
+ * str_to_cap --
+ *
+ */
+int str_to_cap(const char *str) {
+
+  if (strcmp(str, "CAP_BLOCK_SUSPEND")==0) {
+    return CAP_BLOCK_SUSPEND;
+  } else if (strcmp(str, "CAP_IPC_LOCK")==0) {
+    return CAP_IPC_LOCK;
+  } else if (strcmp(str, "CAP_MAC_ADMIN")==0) {
+    return CAP_MAC_ADMIN;
+  } else if (strcmp(str, "CAP_MAC_OVERRIDE")==0) {
+    return CAP_MAC_OVERRIDE;
+  }
+
+  log_error("Invalid capabilities: %s", str);
+  return 0;
 }

@@ -297,7 +297,7 @@ void* cspace_thread_start(void *args) {
     process_response_packet(thread);
   }
 
-  return;
+  return (void *)0;
 }
 
 /*
