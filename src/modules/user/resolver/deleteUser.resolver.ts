@@ -15,6 +15,6 @@ export class DeleteUserResolver {
         @Arg("id")
         id: string
     ): Promise<DeleteUserResponse | null> {
-        return await this.userService.deleteUser(id);
+        return this.userService.deleteUser(id);
     }
 }
