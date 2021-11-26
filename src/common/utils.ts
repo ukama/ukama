@@ -50,13 +50,3 @@ export const beforeEachPostCall = (
         nock(BASE_URL).post(path, body).reply(responseHttpCode, response);
     });
 };
-
-export const beforeEachDeleteCall = (
-    path: string,
-    response: Object,
-    responseHttpCode: number
-): void => {
-    beforeEach(() => {
-        nock(BASE_URL).delete(path).reply(responseHttpCode, response);
-    });
-};
