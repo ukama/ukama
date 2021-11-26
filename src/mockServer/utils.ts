@@ -12,6 +12,7 @@ import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual-extensions";
+import * as defaultCasual from "casual";
 
 export const getUser = (req: Request, res: Response): void => {
     let users: UserDto[];
@@ -165,18 +166,49 @@ export const activateUser = (req: Request, res: Response): void => {
 
 export const updateUser = (req: Request, res: Response): void => {
     const { body } = req;
-    const data = {
-        success: false,
-    };
+    let data;
 
     if (
-        body.firstName ||
-        body.lastName ||
-        body.eSimNumber ||
-        body.email ||
-        body.phone
+        !(
+            body.firstName ||
+            body.lastName ||
+            body.eSimNumber ||
+            body.email ||
+            body.phone
+        )
     )
-        data.success = true;
+        data = {};
+
+    data = {
+        id: body.id,
+        name: `${body.firstName ?? defaultCasual._first_name()} ${
+            body.lastName ?? defaultCasual._last_name()
+        }`,
+        sim:
+            body.eSimNumber ??
+            `# ${defaultCasual.integer(11111, 99999)}-${defaultCasual.date(
+                "DD-MM-2023"
+            )}-${defaultCasual.integer(1111111, 9999999)}`,
+        email: body.email ?? defaultCasual._email(),
+        phone: body.phone ?? defaultCasual._phone(),
+    };
+
+    res.send({
+        status: "success",
+        data: data,
+    });
+};
+export const deleteUser = (req: Request, res: Response): void => {
+    const { query } = req;
+
+    let data;
+
+    if (!query.id) data = {};
+
+    data = {
+        id: query.id?.toString(),
+        success: true,
+    };
 
     res.send({
         status: "success",

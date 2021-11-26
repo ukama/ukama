@@ -1,20 +1,20 @@
 import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UpdateUserDto, UserResponse } from "../types";
+import { DeleteUserResponse } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class UpdateUserResolver {
+export class DeleteUserResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Mutation(() => UserResponse)
+    @Mutation(() => DeleteUserResponse)
     @UseMiddleware(Authentication)
-    async updateUser(
-        @Arg("data")
-        req: UpdateUserDto
-    ): Promise<UserResponse | null> {
-        return await this.userService.updateUser(req);
+    async deleteUser(
+        @Arg("id")
+        id: string
+    ): Promise<DeleteUserResponse | null> {
+        return await this.userService.deleteUser(id);
     }
 }
