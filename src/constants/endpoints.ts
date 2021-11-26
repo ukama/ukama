@@ -17,5 +17,5 @@ export const SERVER = {
     GET_BILL_HISTORY: `bill/get_bill_history`,
     GET_NETWORK: `network/get_network`,
     POST_UPDATE_USER: `user/update_user`,
-    DELETE_USER: `user/delete_user`,
+    POST_DELETE_USER: `user/delete_user`,
 };

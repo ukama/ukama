@@ -199,14 +199,14 @@ export const updateUser = (req: Request, res: Response): void => {
     });
 };
 export const deleteUser = (req: Request, res: Response): void => {
-    const { query } = req;
+    const { body } = req;
 
     let data;
 
-    if (!query.id) data = {};
+    if (!body.id) data = {};
 
     data = {
-        id: query.id?.toString(),
+        id: body.id?.toString(),
         success: true,
     };
 
