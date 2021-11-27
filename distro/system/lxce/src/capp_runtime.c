@@ -36,6 +36,7 @@
 #include "cspace.h"
 #include "log.h"
 #include "capp.h"
+#include "utils.h"
 #include "capp_config.h"
 #include "capp_runtime.h"
 
