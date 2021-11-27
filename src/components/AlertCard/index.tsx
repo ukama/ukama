@@ -68,10 +68,7 @@ const AlertCard = ({ alertOptions = [] }: AlertCardProps) => {
                                             variant="caption"
                                             color={colors.empress}
                                         >
-                                            {format(
-                                                new Date(alertDate),
-                                                "yyyy-MM-dd"
-                                            )}
+                                            {format(alertDate, "M/d/YY h A")}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12}>

@@ -122,3 +122,9 @@ mutation addNode($data: AddNodeDto!) {
         __typename
     }
 }
+mutation deleteNode($id: String!) {
+    deleteNode(id: $id) {
+        id
+        success
+    }
+}

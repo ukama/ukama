@@ -690,6 +690,15 @@ export type AddNodeMutation = {
     addNode: { __typename: "AddNodeResponse"; success: boolean };
 };
 
+export type DeleteNodeMutationVariables = Exact<{
+    id: Scalars["String"];
+}>;
+
+export type DeleteNodeMutation = {
+    __typename?: "Mutation";
+    deleteNode: { __typename?: "DeleteResponse"; id: string; success: boolean };
+};
+
 export const GetDataUsageDocument = gql`
     query getDataUsage($filter: TIME_FILTER!) {
         getDataUsage(filter: $filter) {
@@ -1389,4 +1398,55 @@ export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
 export type AddNodeMutationOptions = Apollo.BaseMutationOptions<
     AddNodeMutation,
     AddNodeMutationVariables
+>;
+export const DeleteNodeDocument = gql`
+    mutation deleteNode($id: String!) {
+        deleteNode(id: $id) {
+            id
+            success
+        }
+    }
+`;
+export type DeleteNodeMutationFn = Apollo.MutationFunction<
+    DeleteNodeMutation,
+    DeleteNodeMutationVariables
+>;
+
+/**
+ * __useDeleteNodeMutation__
+ *
+ * To run a mutation, you first call `useDeleteNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteNodeMutation, { data, loading, error }] = useDeleteNodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteNodeMutation(
+    baseOptions?: Apollo.MutationHookOptions<
+        DeleteNodeMutation,
+        DeleteNodeMutationVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useMutation<DeleteNodeMutation, DeleteNodeMutationVariables>(
+        DeleteNodeDocument,
+        options
+    );
+}
+export type DeleteNodeMutationHookResult = ReturnType<
+    typeof useDeleteNodeMutation
+>;
+export type DeleteNodeMutationResult =
+    Apollo.MutationResult<DeleteNodeMutation>;
+export type DeleteNodeMutationOptions = Apollo.BaseMutationOptions<
+    DeleteNodeMutation,
+    DeleteNodeMutationVariables
 >;

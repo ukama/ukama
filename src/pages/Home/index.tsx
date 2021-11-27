@@ -33,8 +33,9 @@ import {
     useGetNetworkQuery,
     useGetAlertsQuery,
     useGetResidentsQuery,
+    useDeleteNodeMutation,
 } from "../../generated";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { useTranslation } from "react-i18next";
@@ -44,8 +45,10 @@ import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 const Home = () => {
     const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
+    const [deleteNodeStatus, setDeleteNodeStatus] = useState<any>();
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
+    const [open, setOpen] = React.useState(false);
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = useState(3);
@@ -58,7 +61,7 @@ const Home = () => {
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
-
+    const [deleteNode, { data: deleNodeRes }] = useDeleteNodeMutation();
     const { data: connectedUserRes, loading: connectedUserloading } =
         useGetConnectedUsersQuery({
             variables: {
@@ -97,7 +100,11 @@ const Home = () => {
             },
         });
 
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesQuery({
+    const {
+        data: nodeRes,
+        loading: nodeLoading,
+        refetch: refetchNodes,
+    } = useGetNodesQuery({
         variables: {
             data: {
                 pageNo: 1,
@@ -153,7 +160,16 @@ const Home = () => {
     const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const onResidentsTableMenuItem = (id: string, type: string) => {};
-    const handleNodeActions = (id: string, type: string) => {};
+    const handleNodeActions = (id: string, type: string) => {
+        if (type === "delete") {
+            deleteNode({
+                variables: { id },
+            });
+            setDeleteNodeStatus(deleNodeRes && deleNodeRes.deleteNode.success);
+            setOpen(true);
+            refetchNodes();
+        }
+    };
 
     return (
         <>
