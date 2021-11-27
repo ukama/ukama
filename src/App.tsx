@@ -1,4 +1,5 @@
 import Layout from "./layout";
+import config from "./config";
 import { theme } from "./theme";
 import { useEffect } from "react";
 import Router from "./router/Router";
@@ -10,13 +11,12 @@ import { ThemeProvider } from "@emotion/react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { CircularProgress, CssBaseline } from "@mui/material";
-import config from "./config";
 
 const App = () => {
     const { loading, response } = useWhoami();
 
     useEffect(() => {
-        if (response && config.ENVIROMENT === "PROD") {
+        if (response && config.ENVIROMENT === "production") {
             if (!response?.isValid) {
                 window.close();
                 window.location.replace(`${config.REACT_APP_AUTH_URL}`);
