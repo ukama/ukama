@@ -52,7 +52,7 @@ typedef struct cSpace_t {
   char *version;      /* contained space version */
   
   char *serial;       /* serial of device, if applicable */
-  int  target;        /* Target of this contained space (serial or general) */
+  char  *target;      /* Target of this contained space (serial or general) */
   
   char *name;         /* name of the contained space */
   char *hostName;     /* host name associated with space */

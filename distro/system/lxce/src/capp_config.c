@@ -117,6 +117,7 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
   int j=0, size=0;
   json_t *obj, *jProc;
   json_t *jArray, *jElem;
+  char *str=NULL;
 
   if (config == NULL || json == NULL) return FALSE;
 
@@ -171,8 +172,18 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
       jElem = json_array_get(jArray, j);
       if (jElem) {
 	obj = json_object_get(jElem, JSON_TYPE);
-	if (obj)
-	  config->nameSpaces |= namespaces_flag(json_string_value(obj));
+	if (obj) {
+	  str = json_string_value(obj);
+	  /* For capp, currently only allow mount, user and pid. */
+	  if (!strcmp(str, "mount") ||
+	      !strcmp(str, "user")  ||
+	      !strcmp(str, "pid")) {
+	    log_error("Invalid namespace for capp specified: %s", str);
+	    return FALSE;
+	  } else {
+	    config->nameSpaces |= namespaces_flag(json_string_value(obj));
+	  }
+	}
       }
     }
   } else {

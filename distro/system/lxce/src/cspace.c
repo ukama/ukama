@@ -35,6 +35,7 @@
 #include <uuid/uuid.h>
 #include <dirent.h>
 
+#include "space.h"
 #include "cspace.h"
 #include "manifest.h"
 #include "log.h"
@@ -46,14 +47,12 @@ static int adjust_capabilities(char *name, int *cap, int size);
 static int setup_capabilities(CSpace *space);
 static int setup_cspace_security_profile(CSpace *space);
 static int setup_user_namespace(CSpace *space);
-static int prepare_child_map_files(pid_t pid, CSpace *space);
 static int cspace_init_clone(void *arg);
 static int handle_create_request(CSpace *space, int seqno, char *params);
 static int send_response_packet(CSpace *space, int seqno, char *resp);
 static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid);
 static int cspace_capps_init(CApps **capps);
 static int handle_crud_requests(CSpace *space);
-
 
 /*
  * adjust_capabilities -- Adjust capabilties for the cspace
@@ -229,167 +228,6 @@ static int setup_user_namespace(CSpace *space) {
 }
 
 /*
- * prepare_child_map_files -- setup map files (uid_map, gid_map and setgroups)
- *
- */
-static int prepare_child_map_files(pid_t pid, CSpace *space) {
-
-  int ns=0, size, i;
-  int mapFd = 0;
-  char *mapFiles[] = {"uid_map", "gid_map"};
-  char mapPath[LXCE_MAX_PATH] = {0};
-  char **file;
-
-  if (space==NULL) return FALSE;
-
-  size = read(space->sockets[PARENT_SOCKET], &ns, sizeof(ns));
-  if (size != sizeof(ns)) {
-    log_error("Error reading from client socket. Expected size: %d Got: %d",
-	      sizeof(ns), size);
-    return FALSE;
-  }
-
-  if (!ns) {
-    log_error("Space: %s Child user namespace issue. unshare.", space->name);
-    return FALSE;
-  }
-
-  for (i=0; i<2; i++) {
-    sprintf(mapPath, "/proc/%d/%s", pid, mapFiles[i]);
-
-    if ((mapFd = open(mapPath, O_WRONLY)) == -1) {
-      log_error("Space: %s Error opening map file: %s Error: %s", space->name,
-		mapPath, strerror(errno));
-      return FALSE;
-    }
-
-    if (dprintf(mapFd, "0 %d 1\n", USER_NS_OFFSET) == -1) {
-      log_error("Space: %s Error writing to map file: %s Error: %s",
-		space->name, mapPath, strerror(errno));
-      close(mapFd);
-      return FALSE;
-    }
-
-    close(mapFd);
-  }
-
-  /* Inform child, it can proceed. */
-  size = write(space->sockets[PARENT_SOCKET], &(int){TRUE}, sizeof(int));
-  if (size != sizeof(int)) {
-    log_error("Space: %s Error writing to child socket", space->name);
-    log_error("Expected size: %d Wrote: %d", sizeof(int), size);
-    return FALSE;
-  }
-
-  return TRUE;
-}
-
-/*
- * pivot_root -- wrapper for sys call
- *
- */
-int pivot_root(const char *new, const char *old) {
-  return syscall(SYS_pivot_root, new, old);
-}
-
-/*
- * log_rootfs --
- *
- */
-static void log_rootfs() {
-
-  struct dirent *hFile;
-  DIR *dirFile;
-
-  dirFile = opendir( "." );
-
-  if (dirFile) {
-    while ((hFile = readdir(dirFile)) != NULL ) {
-      /* Ignore hidden files. */
-      if (!strcmp(hFile->d_name, "."))  continue;
-      if (!strcmp(hFile->d_name, "..")) continue;
-      if ((hFile->d_name[0] == '.')) continue;
-
-      log_debug("%s", hFile->d_name);
-    }
-  closedir( dirFile );
-  }
-}
-
-/*
- * setup_mounts --
- *
- */
-static int setup_mounts(CSpace *space) {
-
-  int ret=FALSE;
-  char tempMount[] = "/tmp/tmp.ukama.XXXXXX"; /* last 6 char needs to be X */
-  char oldRoot[]   = "/tmp/tmp.ukama.XXXXXX/oldroot.XXXXXX"; /* same */
-  char *oldRootDir=NULL;
-
-  if (mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, NULL)) {
-    log_error("Space: %s Failed to remount as MS_PRIVATE. Error: %s",
-	      space->name, strerror(errno));
-    return ret;
-  }
-
-  /* make temp and bind mount */
-  if (!mkdtemp(tempMount)) {
-    log_error("Space: %s Failed to make temp dir: %s. Error: %s", space->name,
-	      tempMount, strerror(errno));
-    return FALSE;
-  }
-
-  if (mount(space->rootfs, tempMount, NULL, MS_BIND | MS_PRIVATE, NULL)) {
-    log_error("Space: %s Failed to do bind mount. %s %s Error: %s",
-	      space->name, space->rootfs, tempMount, strerror(errno));
-    return FALSE;
-  }
-
-  memcpy(oldRoot, tempMount, sizeof(tempMount) - 1);
-  if (!mkdtemp(oldRoot)) {
-    log_error("Failed to create old Root directory. %s Error :%s", oldRoot,
-	      strerror(errno));
-    return FALSE;
-  }
-
-  /* pivot root */
-  if (pivot_root(tempMount, oldRoot)) {
-    log_error("Failed to pivot_root from %s to %s. Error: %s", oldRoot,
-	      space->rootfs, strerror(errno));
-    return FALSE;
-  }
-
-  log_debug("Pivot root sucessfully done to %s", space->rootfs);
-
-  /* clean up */
-  oldRootDir = basename(oldRoot);
-  char rmv[sizeof(oldRoot) + 1] = { "/" };
-  strcpy(&rmv[1], oldRootDir);
-
-  if (chdir("/")) {
-    log_error("Error changing director to / after pivot");
-    return FALSE;
-  }
-
-  if (umount2(rmv, MNT_DETACH)) {
-    log_error("Failed to umount/rm old root: %s. Error: %s", oldRoot,
-	      strerror(errno));
-    return FALSE;
-  }
-
-  if (rmdir(rmv)) {
-    log_error("Failed to remove old root directory: %s", rmv);
-    return FALSE;
-  }
-
-  /* For debugging, print the tree of / */
-  log_rootfs();
-
-  return TRUE;
-}
-
-/*
  * cspace_init_clone --
  *
  */
@@ -418,7 +256,7 @@ static int cspace_init_clone(void *arg) {
   //setup_cspace_security_profile(space);
 
   /* Step-3: Setup mounts */
-  if (!setup_mounts(space)) {
+  if (!setup_mounts(AREA_TYPE_CSPACE, space->rootfs, space->name)) {
     log_error("Space: %s Error setting up rootfs mount: %s", space->name,
 	      space->rootfs);
     return FALSE;
@@ -436,85 +274,17 @@ static int cspace_init_clone(void *arg) {
 }
 
 /*
- * create_cspace -- create contained spaces
+ * create_cspace --
+ *
  */
 int create_cspace(CSpace *space, pid_t *pid) {
 
-  char *stack=NULL;
-  
-  /* logic is as follows:
-   *
-   * 1. Create socketpair - this will be used to communicate between lxce and
-   *                        cSpace
-   * 2. Setup proper cgroups.
-   * 3. Clone with proper flags for namespaces
-   * 4. setup mount
-   * 5. setup user namespace
-   * 6. Limit capabilities
-   * 7. execv into cSpace.init
-   */
-
-  /* Sanity check */
   if (space == NULL) return FALSE;
-  
-  /* Create socket pairs.
-   * Re: SOCK_SEQPACKET:
-   * http://urchin.earth.li/~twic/Sequenced_Packets_Over_Ordinary_TCP.html
-   */
-  if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, space->sockets)) {
-    log_error("Space: %s Error creating socket pair", space->name);
-    return FALSE;
-  }
 
-  if (!(stack = malloc(STACK_SIZE))) {
-    log_error("Error allocating stack of size: %d", STACK_SIZE);
-    return FALSE;
-  }
-
-  /* clone with proper flags for namespaces */
-  *pid = clone(cspace_init_clone, stack + STACK_SIZE,
-	      SIGCHLD | space->nameSpaces, space);
-  if (*pid == -1) {
-    log_error("Space: %s Unable to clone cInit. Error :%s", space->name,
-	      strerror(errno));
-    return FALSE;
-  }
-
-  if (*pid > 0) {
-    /* Close child socket */
-    close(space->sockets[CHILD_SOCKET]);
-
-    /* prepare child process gid/uid map files. */
-    if (prepare_child_map_files(*pid, space) == FALSE) {
-      log_error("Error preparing map files for child process. Terminating it");
-      kill(pid, SIGKILL); /* Kill child process */
-      close(space->sockets[PARENT_SOCKET]);
-      close(space->sockets[CHILD_SOCKET]);
-      return FALSE;
-    }
-  }
-
-  return TRUE;
-}
-
-/*
- * str_to_cap --
- *
- */
-static int str_to_cap(char *str) {
-
-  if (strcmp(str, "CAP_BLOCK_SUSPEND")==0) {
-    return CAP_BLOCK_SUSPEND;
-  } else if (strcmp(str, "CAP_IPC_LOCK")==0) {
-    return CAP_IPC_LOCK;
-  } else if (strcmp(str, "CAP_MAC_ADMIN")==0) {
-    return CAP_MAC_ADMIN;
-  } else if (strcmp(str, "CAP_MAC_OVERRIDE")==0) {
-    return CAP_MAC_OVERRIDE;
-  }
-
-  log_error("Invalid capabilities: %s", str);
-  return 0;
+  return create_space(AREA_TYPE_CSPACE,
+		      space->sockets, space->nameSpaces,
+		      space->name, pid,
+		      cspace_init_clone, (void *)space);
 }
 
 /*
@@ -539,7 +309,7 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
     return FALSE;
   }
 
-  if (space->target == LXCE_SERIAL) {
+  if (strcmp(space->target, LXCE_SERIAL)==0) {
     if (!set_str_object_value(json, &(space->serial), JSON_SERIAL, TRUE, NULL)) {
       return FALSE;
     }
@@ -770,7 +540,7 @@ static int handle_create_request(CSpace *space, int seqno, char *params) {
     goto reply;
   }
 
-  add_to_apps(space->apps, capp, PEND_LIST, NULL);
+  add_to_apps(space->apps, capp, PEND_LIST, 0);
 
   resp = &idStr[0];
 

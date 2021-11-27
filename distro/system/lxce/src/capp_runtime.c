@@ -32,9 +32,11 @@
 #include <errno.h>
 #include <jansson.h>
 
+#include "space.h"
 #include "cspace.h"
 #include "log.h"
 #include "capp.h"
+#include "utils.h"
 #include "capp_config.h"
 #include "capp_runtime.h"
 
@@ -143,7 +145,8 @@ static int capp_init_clone(void *arg) {
   ret = exec_capp(capp);
 
   /* An error has occured. Inform the parent process over socket and exit. */
-  if (write(capp->runtime->sockets[0], &ret, sizeof(ret)) != sizeof(ret)) {
+  if (write(capp->runtime->sockets[CHILD_SOCKET], &ret,
+	    sizeof(ret)) != sizeof(ret)) {
     log_error("Capp: %s Error writing to parent socket. Value: %d Size: %d",
 	      capp->params->name, ret, sizeof(ret));
   }
@@ -157,44 +160,10 @@ static int capp_init_clone(void *arg) {
  */
 static int create_capp(CApp *capp) {
 
-  char *stack=NULL;
-  CAppRuntime *runtime;
-
-  /* Sanity check */
   if (capp == NULL) return FALSE;
 
-  runtime = capp->runtime;
-
-  if (socketpair(AF_LOCAL, SOCK_SEQPACKET, 0, runtime->sockets)) {
-    log_error("Capp: %s Error creating socket pair", capp->params->name);
-    return FALSE;
-  }
-
-  /* child only access one. */
-  if (fcntl(runtime->sockets[0], F_SETFD, FD_CLOEXEC)) {
-    fprintf(stderr, "CApp: %s Failed to close socket via fcntl",
-	    capp->params->name);
-    if (runtime->sockets[0]) close(runtime->sockets[0]);
-    if (runtime->sockets[1]) close(runtime->sockets[1]);
-
-    return FALSE;
-  }
-
-  if (!(stack = malloc(STACK_SIZE))) {
-    log_error("Error allocating stack of size: %d", STACK_SIZE);
-    return FALSE;
-  }
-
-  /* clone with proper flags for namespaces */
-  runtime->pid = clone(capp_init_clone, stack + STACK_SIZE,
-		       SIGCHLD | capp->config->nameSpaces, capp);
-  if (runtime->pid == -1) {
-    log_error("capp: %s Unable to clone", capp->params->name);
-    return FALSE;
-  }
-
-  close(runtime->sockets[1]);
-  runtime->sockets[1] = 0;
-
-  return TRUE;
+  return create_space(AREA_TYPE_CAPP,
+		      capp->runtime->sockets, capp->config->nameSpaces,
+		      capp->params->name, &capp->runtime->pid,
+		      capp_init_clone, (void *)capp);
 }
