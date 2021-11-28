@@ -34,8 +34,12 @@ import {
     useGetAlertsQuery,
     useGetResidentsQuery,
     useDeleteNodeMutation,
+    AddNodeDto,
+    useAddNodeMutation,
+    useUpdateNodeMutation,
+    UpdateNodeDto,
 } from "../../generated";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { useTranslation } from "react-i18next";
@@ -45,10 +49,8 @@ import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 const Home = () => {
     const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
-    const [deleteNodeStatus, setDeleteNodeStatus] = useState<any>();
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
-    const [open, setOpen] = React.useState(false);
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = useState(3);
@@ -61,7 +63,10 @@ const Home = () => {
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
+    // eslint-disable-next-line no-unused-vars
     const [deleteNode, { data: deleNodeRes }] = useDeleteNodeMutation();
+    const [addNode, { data: addNodeRes }] = useAddNodeMutation();
+    const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
     const { data: connectedUserRes, loading: connectedUserloading } =
         useGetConnectedUsersQuery({
             variables: {
@@ -165,12 +170,23 @@ const Home = () => {
             deleteNode({
                 variables: { id },
             });
-            setDeleteNodeStatus(deleNodeRes && deleNodeRes.deleteNode.success);
-            setOpen(true);
             refetchNodes();
         }
     };
-
+    const handleAddNode = (data: AddNodeDto) => {
+        addNode({
+            variables: {
+                data,
+            },
+        });
+    };
+    const handleEditNode = (data: UpdateNodeDto) => {
+        editNode({
+            variables: {
+                data,
+            },
+        });
+    };
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
