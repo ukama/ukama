@@ -5,7 +5,6 @@ import LoginForm from "./LoginForm";
 import TabLayout from "./TabLayout";
 import SignUpForm from "./SignUpForm";
 import StatusCard from "./StatusCard";
-import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import LoadingWrapper from "./LoadingWrapper";
@@ -18,31 +17,36 @@ import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
-import { BasicDialog, UserActivationDialog, FormDialog } from "./AppDialogs";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
 import BillingDataTable from "./BillingDataTable";
+import NodeContainer from "./NodeContainer";
+import {
+    BasicDialog,
+    ActivationDialog,
+    UserActivationDialog,
+} from "./AppDialogs";
 export {
     NodeCard,
     TabLayout,
-    BillingDataTable,
     LoginForm,
     AlertCard,
     StatsCard,
     SignUpForm,
-    FormDialog,
     StatusCard,
     BasicDialog,
-    NodeContainer,
     SimCardDesign,
     NetworkStatus,
     OptionsPopover,
+    NodeContainer,
     LoadingWrapper,
     ContainerHeader,
     UpgradeNavFooter,
+    ActivationDialog,
     ResetPasswordForm,
     MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
+    BillingDataTable,
     DataTableWithOptions,
     UserActivationDialog,
     PasswordFieldWithIndicator,

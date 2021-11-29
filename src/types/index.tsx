@@ -69,3 +69,8 @@ export type SimActivateFormType = {
     lastName: string;
     firstName: string;
 };
+export type UserActivateFormType = {
+    nodeName: string;
+    serialNumber: string;
+    securityCode: string;
+};

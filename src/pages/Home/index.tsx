@@ -4,11 +4,14 @@ import {
     AlertCard,
     StatusCard,
     NetworkStatus,
-    NodeContainer,
     LoadingWrapper,
     ContainerHeader,
     DataTableWithOptions,
     UserActivationDialog,
+    NodeCard,
+    NodeContainer,
+    MultiSlideCarousel,
+    ActivationDialog,
 } from "../../components";
 import {
     NETWORKS,
@@ -34,10 +37,7 @@ import {
     useGetAlertsQuery,
     useGetResidentsQuery,
     useDeleteNodeMutation,
-    AddNodeDto,
-    useAddNodeMutation,
-    useUpdateNodeMutation,
-    UpdateNodeDto,
+    useDeleteUserMutation,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -48,7 +48,6 @@ import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
     const { t } = useTranslation();
-    const [openEditNode, setOpenEditNode] = useState(false);
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
@@ -58,6 +57,7 @@ const Home = () => {
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Total);
+    const [isAddNode, setIsAddNode] = useState(false);
     const [networkType, setNetworkType] = useState<Network_Type>(
         Network_Type.Public
     );
@@ -67,8 +67,12 @@ const Home = () => {
     // eslint-disable-next-line no-unused-vars
     const [deleteNode, { data: deleNodeRes, loading: DeleLoading }] =
         useDeleteNodeMutation();
-    const [addNode, { data: addNodeRes }] = useAddNodeMutation();
-    const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
+    //const [addNode, { data: addNodeRes }] = useAddNodeMutation();
+    //const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
+
+    const [deleteUser, { loading: deleteUserLoading }] =
+        useDeleteUserMutation();
+    const handleAddNodeClose = () => setIsAddNode(() => false);
     const { data: connectedUserRes, loading: connectedUserloading } =
         useGetConnectedUsersQuery({
             variables: {
@@ -84,15 +88,18 @@ const Home = () => {
         },
     });
 
-    const { data: residentsRes, loading: residentsloading } =
-        useGetResidentsQuery({
-            variables: {
-                data: {
-                    pageNo: 1,
-                    pageSize: 50,
-                },
+    const {
+        data: residentsRes,
+        loading: residentsloading,
+        refetch: refetchUser,
+    } = useGetResidentsQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
             },
-        });
+        },
+    });
     const { data: dataUsageRes, loading: dataUsageloading } =
         useGetDataUsageQuery({
             variables: {
@@ -167,7 +174,18 @@ const Home = () => {
 
     const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
-    const onResidentsTableMenuItem = (id: string, type: string) => {};
+    const onResidentsTableMenuItem = (id: string, type: string) => {
+        if (type === "deactivate") {
+            deleteUserLoading;
+            deleteUser({
+                variables: {
+                    id,
+                },
+            });
+
+            refetchUser();
+        }
+    };
     const handleNodeActions = (id: string, type: string) => {
         if (type === "delete") {
             deleteNode({
@@ -176,18 +194,15 @@ const Home = () => {
             refetchNodes();
         }
     };
-    // const handleButtonAction = (value: any) => {
-    //     setOpenEditNode(true);
-    //     console.log(value);
-    //     // addNode({
-    //     //     variables: {
-    //     //         data,
-    //     //     },
-    //     // });
-    // };
-    const handleAddNode = () => {
-        setOpenEditNode(true);
+    const handleAddNode = (value: any) => {
+        setIsAddNode(true);
+        // addNode({
+        //     variables: {
+        //         data,
+        //     },
+        // });
     };
+
     // const handleEditNode = (data: UpdateNodeDto) => {
     //     editNode({
     //         variables: {
@@ -195,6 +210,7 @@ const Home = () => {
     //         },
     //     });
     // };
+
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
@@ -324,12 +340,6 @@ const Home = () => {
                                         "-"
                                     }`}
                                 />
-                                <UserActivationDialog
-                                    isOpen={openEditNode}
-                                    subTitle="HEllo"
-                                    dialogTitle="Bonjour"
-                                    handleClose={handleCloseDialog}
-                                />
                                 <NodeContainer
                                     slidesToShow={slidesToShow}
                                     items={nodeRes?.getNodes?.nodes.nodes}
@@ -376,6 +386,19 @@ const Home = () => {
                         dialogTitle={UserActivation.title}
                         subTitle={UserActivation.subTitle}
                         handleClose={handleUserActivateClose}
+                    />
+                )}
+                {isAddNode && (
+                    <ActivationDialog
+                        isOpen={isAddNode}
+                        dialogTitle={"Add Node"}
+                        subTitle2={
+                            "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
+                        }
+                        handleClose={handleAddNodeClose}
+                        subTitle={
+                            "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
+                        }
                     />
                 )}
             </Box>
