@@ -24,6 +24,8 @@ type HeaderProps = {
 };
 
 const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
+    const showDivider =
+        pageName !== "Billing" && pageName !== "User" ? true : false;
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
     const isMenuOpen = Boolean(anchorEl);
@@ -161,7 +163,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
                         </IconButton>
                     </Box>
                 </Toolbar>
-                <Divider sx={{ m: "0px" }} />
+                {showDivider && <Divider sx={{ m: "0px" }} />}
             </AppBar>
             {renderMenu}
         </Box>

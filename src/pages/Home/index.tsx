@@ -9,6 +9,7 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
     LoadingWrapper,
+    ActivationDialog,
 } from "../../components";
 import {
     ALERT_INFORMATION,
@@ -40,16 +41,6 @@ import { AlertItemType } from "../../types";
 import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
 
-let slides = [
-    {
-        id: 1,
-        title: "",
-        subTitle: "",
-        users: "",
-        isConfigure: true,
-    },
-];
-
 const Home = () => {
     const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1410px)");
@@ -60,8 +51,8 @@ const Home = () => {
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [userStatusFilter, setUserStatusFilter] = useState("current");
     const [dataStatusFilter, setDataStatusFilter] = useState("month");
+    const [userStatusFilter, setUserStatusFilter] = useState("current");
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [billingStatusFilter, setBillingStatusFilter] = useState("july");
 
@@ -100,8 +91,11 @@ const Home = () => {
         }
     };
 
+    const handleAddNodeClose = () => setIsAddNode(() => false);
     const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
+    // eslint-disable-next-line no-unused-vars
+    const handleActivationSubmit = (values: any) => {};
 
     const getNodesContainerData = (items: any[], slidesToShow: number) =>
         items.length > 3 ? (
@@ -254,11 +248,11 @@ const Home = () => {
                                     title="My Nodes"
                                     buttonTitle="Add Node"
                                     handleButtonAction={() =>
-                                        setIsAddNode(prev => !prev)
+                                        setIsAddNode(true)
                                     }
                                 />
                                 {getNodesContainerData(
-                                    isAddNode ? DashboardSliderData : slides,
+                                    DashboardSliderData,
                                     slidesToShow
                                 )}
                             </RoundedCard>
@@ -289,6 +283,20 @@ const Home = () => {
                         dialogTitle={UserActivation.title}
                         subTitle={UserActivation.subTitle}
                         handleClose={handleUserActivateClose}
+                    />
+                )}
+                {isAddNode && (
+                    <ActivationDialog
+                        isOpen={isAddNode}
+                        dialogTitle={"Add Node"}
+                        subTitle2={
+                            "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
+                        }
+                        handleClose={handleAddNodeClose}
+                        handleActivationSubmit={handleActivationSubmit}
+                        subTitle={
+                            "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
+                        }
                     />
                 )}
             </Box>

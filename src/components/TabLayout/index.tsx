@@ -2,18 +2,18 @@ import { Box, Tabs, Tab, Button } from "@mui/material";
 import { SelectItemType } from "../../types";
 type TabLayoutProps = {
     tab: string;
-    onTabChange: Function;
     tabs: SelectItemType[];
-    handleAction?: Function;
+    onTabChange: Function;
     withActionButton?: boolean;
+    handleAction?: Function;
 };
 
 const TabLayoutHeader = ({
     tab,
     tabs,
     onTabChange,
-    handleAction = () => {},
     withActionButton = false,
+    handleAction = () => {},
 }: TabLayoutProps) => {
     return (
         <Box
@@ -21,6 +21,7 @@ const TabLayoutHeader = ({
                 width: "100%",
                 display: "flex",
                 borderBottom: 2,
+                m: "8px 0px 18px",
                 justifyContent: "space-between",
                 borderColor: "rgba(196, 196, 196, 0.1)",
             }}
@@ -44,7 +45,6 @@ const TabLayoutHeader = ({
                     />
                 ))}
             </Tabs>
-
             {withActionButton && (
                 <Button
                     size="medium"

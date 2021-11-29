@@ -5,20 +5,28 @@ import LoginForm from "./LoginForm";
 import TabLayout from "./TabLayout";
 import SignUpForm from "./SignUpForm";
 import StatusCard from "./StatusCard";
+import TableHeader from "./TableHeader";
+import CurrentBill from "./CurrentBill";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
+import SimpleDataTable from "./SimpleDataTable";
 import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
+import BillingDataTable from "./BillingDataTable";
 import ResetPasswordForm from "./ResetPasswordForm";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
-import { BasicDialog, UserActivationDialog, FormDialog } from "./AppDialogs";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
+import {
+    BasicDialog,
+    ActivationDialog,
+    UserActivationDialog,
+} from "./AppDialogs";
 export {
     NodeCard,
     TabLayout,
@@ -26,15 +34,19 @@ export {
     AlertCard,
     StatsCard,
     SignUpForm,
-    FormDialog,
     StatusCard,
+    CurrentBill,
+    TableHeader,
     BasicDialog,
     SimCardDesign,
     NetworkStatus,
     OptionsPopover,
     LoadingWrapper,
+    SimpleDataTable,
     ContainerHeader,
     UpgradeNavFooter,
+    ActivationDialog,
+    BillingDataTable,
     ResetPasswordForm,
     MultiSlideCarousel,
     ForgotPasswordForm,

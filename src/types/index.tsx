@@ -31,7 +31,31 @@ export type SelectItemType = {
     label: string;
     value: string;
 };
-
+export type BillingType = {
+    id?: number;
+    value: string;
+    label: string;
+};
+export type ExportOptionsType = {
+    id?: number;
+    value: string;
+    label: string;
+};
+export type BillingTableHeaderOptionsType = {
+    id?: number;
+    label: string;
+};
+export type currentBillType = {
+    id: number;
+    name: string;
+    rate: string;
+    subTotal: number;
+    dataUsage: string;
+};
+export type PaymentMethodType = {
+    id?: number;
+    card_experintionDetails: string;
+};
 export type SVGType = {
     color?: string;
     width?: string;
@@ -39,7 +63,7 @@ export type SVGType = {
 };
 
 export type ColumnsWithOptions = {
-    id: "name" | "usage" | "actions";
+    id: any;
     label: string;
     minWidth?: number;
     align?: "right";
@@ -51,6 +75,12 @@ export type SimActivateFormType = {
     number: string;
     lastName: string;
     firstName: string;
+};
+
+export type UserActivateFormType = {
+    nodeName: string;
+    serialNumber: string;
+    securityCode: string;
 };
 
 export type ResponseProps = {

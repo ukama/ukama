@@ -11,4 +11,23 @@ const DataTableWithOptionColumns: ColumnsWithOptions[] = [
     },
 ];
 
-export { DataTableWithOptionColumns };
+const CurrentBillColumns: ColumnsWithOptions[] = [
+    {
+        id: "name",
+        label: "Name",
+    },
+    {
+        id: "dataUsage",
+        label: "Data Used",
+    },
+    {
+        id: "rate",
+        label: "Rate",
+    },
+    {
+        id: "subTotal",
+        label: "SubTotal",
+    },
+];
+
+export { DataTableWithOptionColumns, CurrentBillColumns };

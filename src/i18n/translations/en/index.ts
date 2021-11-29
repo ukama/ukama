@@ -54,4 +54,11 @@ export const TRANSLATIONS_EN = {
             "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured.",
         FormDialogTitle: "Add Node",
     },
+    BILLING: {
+        PaymentMethodLabel: "Add payment method",
+        AmountDue: "Amount Due",
+        PaymentInformation: "Payment information",
+        MakeAPayment: "MAKE A PAYMENT",
+        AutoChargeSwitchButtonLabel: "Auto charge",
+    },
 };
