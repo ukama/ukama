@@ -42,7 +42,16 @@ const PasswordRules = [
         validator: combineUppercaseNLowercaseValidator,
     },
 ];
+const BILLING_TYPE = [
+    { id: 1, value: "AUTO", label: "Auto charged " },
+    { id: 2, value: "MANUALLY", label: "Pay manually" },
+];
 
+const TABLE_EXPORT_OPTIONS = [
+    { id: 1, label: "EXPORT", value: "EXPORT" },
+    { id: 2, label: "WORD", value: "WORD" },
+    { id: 3, label: "PDF", value: "PDF" },
+];
 const SIDEBAR_MENU1 = [
     { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
@@ -106,6 +115,50 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
     },
 ];
 
+const BILLING_TABLE_HEADER_OPTIONS = [
+    {
+        id: 1,
+
+        label: "Name",
+    },
+    {
+        id: 2,
+
+        label: "Data Used",
+    },
+    {
+        id: 3,
+
+        label: "Rate",
+    },
+    {
+        id: 4,
+
+        label: "SubTotal",
+    },
+];
+const BILLING_HOSTORY_TABLE_HEADER_OPTIONS = [
+    {
+        id: 1231,
+
+        label: "Date",
+    },
+    {
+        id: 28392,
+
+        label: "Description",
+    },
+    {
+        id: 32323,
+
+        label: "Total usage",
+    },
+    {
+        id: 2343453,
+
+        label: "SubTotal",
+    },
+];
 const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
     {
         id: 1,
@@ -127,8 +180,13 @@ const BillingTabs = [
     { id: 2, label: "BILLING HISTORY", value: "2" },
 ];
 
+const UsersTabs = [
+    { id: 1, label: "OVERVIEW", value: "1" },
+    { id: 2, label: "CURRENTLY CONNECTED", value: "2" },
+];
 export {
     NETWORKS,
+    UsersTabs,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,
@@ -143,6 +201,10 @@ export {
     STATS_PERIOD,
     UserActivation,
     BASIC_MENU_ACTIONS,
+    BILLING_TYPE,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
+    BILLING_HOSTORY_TABLE_HEADER_OPTIONS,
+    TABLE_EXPORT_OPTIONS,
+    BILLING_TABLE_HEADER_OPTIONS,
 };

@@ -48,6 +48,7 @@ import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
     const { t } = useTranslation();
+    const [openEditNode, setOpenEditNode] = useState(false);
     const isSliderLarge = useMediaQuery("(min-width:1430px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
@@ -64,7 +65,8 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     // eslint-disable-next-line no-unused-vars
-    const [deleteNode, { data: deleNodeRes }] = useDeleteNodeMutation();
+    const [deleteNode, { data: deleNodeRes, loading: DeleLoading }] =
+        useDeleteNodeMutation();
     const [addNode, { data: addNodeRes }] = useAddNodeMutation();
     const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
     const { data: connectedUserRes, loading: connectedUserloading } =
@@ -137,6 +139,7 @@ const Home = () => {
     }) => {
         setstatOptionValue(event.target.value);
     };
+    const handleCloseDialog = () => {};
 
     const handleSatusChange = (key: string, value: string) => {
         switch (key) {
@@ -173,20 +176,25 @@ const Home = () => {
             refetchNodes();
         }
     };
-    const handleAddNode = (data: AddNodeDto) => {
-        addNode({
-            variables: {
-                data,
-            },
-        });
+    // const handleButtonAction = (value: any) => {
+    //     setOpenEditNode(true);
+    //     console.log(value);
+    //     // addNode({
+    //     //     variables: {
+    //     //         data,
+    //     //     },
+    //     // });
+    // };
+    const handleAddNode = () => {
+        setOpenEditNode(true);
     };
-    const handleEditNode = (data: UpdateNodeDto) => {
-        editNode({
-            variables: {
-                data,
-            },
-        });
-    };
+    // const handleEditNode = (data: UpdateNodeDto) => {
+    //     editNode({
+    //         variables: {
+    //             data,
+    //         },
+    //     });
+    // };
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
@@ -307,7 +315,7 @@ const Home = () => {
                                 <ContainerHeader
                                     title="My Nodes"
                                     buttonTitle="Add Node"
-                                    handleButtonAction={() => {}}
+                                    handleButtonAction={handleAddNode}
                                     stats={`${
                                         nodeRes?.getNodes?.nodes?.activeNodes ||
                                         "0"
@@ -315,6 +323,12 @@ const Home = () => {
                                         nodeRes?.getNodes?.nodes?.totalNodes ||
                                         "-"
                                     }`}
+                                />
+                                <UserActivationDialog
+                                    isOpen={openEditNode}
+                                    subTitle="HEllo"
+                                    dialogTitle="Bonjour"
+                                    handleClose={handleCloseDialog}
                                 />
                                 <NodeContainer
                                     slidesToShow={slidesToShow}

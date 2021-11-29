@@ -42,6 +42,13 @@ const RechartsData = [
         cnt: 380,
     },
 ];
+const CREDIT_CARD = [
+    {
+        id: 1,
+
+        card_experintionDetails: "Card is ending in 20 days",
+    },
+];
 
 const SimCardData = [
     {
@@ -69,5 +76,34 @@ const SimCardData = [
         isActive: false,
     },
 ];
-
-export { SimCardData, RechartsData };
+const CurrentBilling = [
+    {
+        id: 1,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 2,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 3,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 4,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+];
+export { SimCardData, CurrentBilling, RechartsData, CREDIT_CARD };

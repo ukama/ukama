@@ -24,7 +24,31 @@ export type SelectItemType = {
     label: string;
     value: string;
 };
-
+export type BillingType = {
+    id?: number;
+    value: string;
+    label: string;
+};
+export type ExportOptionsType = {
+    id?: number;
+    value: string;
+    label: string;
+};
+export type BillingTableHeaderOptionsType = {
+    id?: number;
+    label: string;
+};
+export type currentBillType = {
+    id: number;
+    name: string;
+    rate: string;
+    subTotal: number;
+    dataUsage: string;
+};
+export type PaymentMethodType = {
+    id?: number;
+    card_experintionDetails: string;
+};
 export type SVGType = {
     color?: string;
     width?: string;
