@@ -34,6 +34,7 @@
 #include "log.h"
 #include "capp.h"
 #include "utils.h"
+#include "ipnet.h"
 
 static CSThreadsList *threadsList=NULL;
 static CSThreadsList *cPtr=NULL;
@@ -246,6 +247,14 @@ void* cspace_thread_start(void *args) {
   if (!create_cspace(thread->space, &thread->pid)) {
     log_error("Error creating cspace: %s using config file: %s. Exiting",
 	      thread->space->name, thread->space->configFile);
+    exit(1);
+  }
+
+  /* setup networking using veth and bridge */
+  if (ipnet_setup(IPNET_DEV_TYPE_CSPACE, DEF_BRIDGE, DEF_IFACE,
+		  thread->space->name, thread->pid) != TRUE) {
+    log_error("Error setting up networking for cspace. %s %s %ld",
+	      DEF_BRIDGE, thread->space->name, (long)thread->pid);
     exit(1);
   }
 

@@ -30,6 +30,7 @@
 #include "csthreads.h"
 #include "lxce_callback.h"
 #include "capp.h"
+#include "ipnet.h"
 
 #define VERSION "0.0.1"
 
@@ -239,6 +240,14 @@ int main(int argc, char **argv) {
       cPtr->next = NULL;
     }
     cPtr = cPtr->next;
+  }
+
+  /* setup bridge/NAT */
+  if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, DEF_IFACE, NULL, 0)
+      != TRUE) {
+    log_error("Error setting up bridge %s on interface %s", DEF_BRIDGE,
+	      DEF_IFACE);
+    exit(1);
   }
 
   /* Step-3: setup cSpaces */
