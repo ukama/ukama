@@ -19,7 +19,6 @@ const TabLayoutHeader = ({
         <Box
             sx={{
                 width: "100%",
-                display: "flex",
                 borderBottom: 2,
                 m: "8px 0px 18px",
                 justifyContent: "space-between",

@@ -13,3 +13,118 @@ query getConnectedUsers($filter: TIME_FILTER!) {
         guestUsers
     }
 }
+
+query getDataBill($filter: DATA_BILL_FILTER!) {
+    getDataBill(filter: $filter) {
+        id
+        dataBill
+        billDue
+    }
+}
+
+query getAlerts($data: PaginationDto!) {
+    getAlerts(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        alerts {
+            id
+            type
+            title
+            description
+            alertDate
+        }
+    }
+}
+
+query getNodes($data: PaginationDto!) {
+    getNodes(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        nodes {
+            nodes {
+                id
+                title
+                description
+                totalUser
+            }
+            activeNodes
+            totalNodes
+        }
+    }
+}
+
+query getResidents($data: PaginationDto!) {
+    getResidents(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        residents {
+            residents {
+                id
+                name
+                dataUsage
+            }
+            activeResidents
+            totalResidents
+        }
+    }
+}
+
+query getNetwork($filter: NETWORK_TYPE!) {
+    getNetwork(filter: $filter) {
+        id
+        status
+        description
+    }
+}
+mutation deleteUser($id: String!) {
+    deleteUser(id: $id) {
+        id
+        success
+    }
+}
+mutation updateUser($data: UpdateUserDto!) {
+    updateUser(data: $data) {
+        id
+        name
+        sim
+        email
+        phone
+    }
+}
+mutation activateUser($data: ActivateUserDto!) {
+    activateUser(data: $data) {
+        success
+    }
+}
+mutation updateNode($data: UpdateNodeDto!) {
+    updateNode(data: $data) {
+        id
+        name
+        serialNo
+        __typename
+    }
+}
+mutation addNode($data: AddNodeDto!) {
+    addNode(data: $data) {
+        success
+        __typename
+    }
+}
+mutation deleteNode($id: String!) {
+    deleteNode(id: $id) {
+        id
+        success
+    }
+}

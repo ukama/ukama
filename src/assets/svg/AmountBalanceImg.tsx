@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const AmountBalanceImg = ({ width = "191", height = "128" }: SVGType) => {
+const AmountBalanceImg = ({ width = "192", height = "140" }: SVGType) => {
     return (
         <svg
             width={width}

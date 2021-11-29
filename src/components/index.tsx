@@ -22,6 +22,7 @@ import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
+import NodeContainer from "./NodeContainer";
 import {
     BasicDialog,
     ActivationDialog,
@@ -41,16 +42,17 @@ export {
     SimCardDesign,
     NetworkStatus,
     OptionsPopover,
+    NodeContainer,
     LoadingWrapper,
     SimpleDataTable,
     ContainerHeader,
     UpgradeNavFooter,
     ActivationDialog,
-    BillingDataTable,
     ResetPasswordForm,
     MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
+    BillingDataTable,
     DataTableWithOptions,
     UserActivationDialog,
     PasswordFieldWithIndicator,

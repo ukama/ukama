@@ -1,92 +1,93 @@
 import { colors } from "../../theme";
-import { Typography, Card, Grid } from "@mui/material";
+import { CloudOffIcon } from "../../assets/svg";
+import { AlertDto, Alert_Type } from "../../generated";
+import { Typography, Card, Grid, List, ListItem, Stack } from "@mui/material";
+import { format } from "date-fns";
 type AlertCardProps = {
-    Icon: any;
-    id: number;
-    date: string;
-    title: string;
-    description: string;
+    alertOptions: AlertDto[] | undefined;
 };
 
-const AlertCard = ({ date, description, title, Icon }: AlertCardProps) => {
+const getColorByType = (type: Alert_Type) =>
+    type === Alert_Type.Error
+        ? colors.red
+        : type === Alert_Type.Warning
+        ? colors.yellow
+        : colors.green;
+const AlertCard = ({ alertOptions = [] }: AlertCardProps) => {
     return (
-        <Card
-            sx={{
-                width: "100%",
-                marginBottom: "3px",
-                padding: "0px 10px 10px 10px",
-            }}
-            elevation={1}
-        >
-            <Grid spacing={2} container direction="row" justifyContent="center">
-                <Grid
-                    item
-                    display="flex"
-                    alignItems="center"
-                    sx={{
-                        position: "relative",
-
-                        left: "5px",
-                    }}
-                >
-                    <Icon />
-                </Grid>
-                <Grid
-                    xs={12}
-                    item
-                    sm
-                    container
-                    direction="column"
-                    sx={{
-                        position: "relative",
-                        top: "8px",
-                    }}
-                >
-                    <Grid
-                        sm
-                        item
-                        container
-                        spacing={2}
-                        display="flex"
-                        direction="row"
-                        alignItems="center"
-                    >
-                        <Grid item xs={8} md sm lg>
-                            <Typography variant="body1" color="initial">
-                                {title}
-                            </Typography>
-                        </Grid>
-                        <Grid
-                            item
-                            xs={4}
-                            display="flex"
-                            justifyContent="flex-end"
+        <>
+            <List
+                sx={{
+                    pr: "4px",
+                    maxHeight: 305,
+                    overflow: "auto",
+                    position: "relative",
+                }}
+            >
+                {alertOptions.map(
+                    ({ id, alertDate, description, title, type }: AlertDto) => (
+                        <ListItem
+                            key={id}
+                            style={{
+                                padding: 1,
+                                marginBottom: "4px",
+                            }}
                         >
-                            <Typography
-                                variant="caption"
-                                color={colors.empress}
-                            >
-                                {date}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                    <Grid item sm container>
-                        <Grid item xs={12} container>
-                            <Typography
-                                variant="body2"
-                                color={colors.empress}
+                            <Card
                                 sx={{
-                                    display: "flex",
-                                    alignItems: "center",
+                                    width: "100%",
+                                    marginBottom: "3px",
+                                    padding: "0px 10px 10px 10px",
                                 }}
+                                elevation={1}
                             >
-                                {description}
-                            </Typography>
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Card>
+                                <Grid container spacing={1}>
+                                    <Grid item xs={8} container>
+                                        <Stack direction="row">
+                                            <CloudOffIcon
+                                                color={getColorByType(type)}
+                                            />
+                                            <Typography
+                                                variant="body1"
+                                                color="initial"
+                                            >
+                                                {title}
+                                            </Typography>
+                                        </Stack>
+                                    </Grid>
+
+                                    <Grid
+                                        item
+                                        container
+                                        justifyContent="flex-end"
+                                        xs={4}
+                                    >
+                                        <Typography
+                                            variant="caption"
+                                            color={colors.empress}
+                                        ></Typography>
+                                        {format(alertDate, "M/d/YY h a")}
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography
+                                            variant="body2"
+                                            color={colors.empress}
+                                            sx={{
+                                                position: "relative",
+                                                bottom: "5px",
+                                                left: "25px",
+                                            }}
+                                        >
+                                            {description}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Card>
+                        </ListItem>
+                    )
+                )}
+            </List>
+        </>
     );
 };
 export default AlertCard;

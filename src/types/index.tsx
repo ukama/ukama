@@ -9,13 +9,6 @@ export type StatsItemType = {
     label: string;
     value: string;
 };
-export type AlertItemType = {
-    id: number;
-    Icon: any;
-    title: string;
-    date: string;
-    description: string;
-};
 export type statsPeriodItemType = {
     id: number;
     label: string;
@@ -76,7 +69,6 @@ export type SimActivateFormType = {
     lastName: string;
     firstName: string;
 };
-
 export type UserActivateFormType = {
     nodeName: string;
     serialNumber: string;

@@ -17,6 +17,7 @@ import {
     combineUppercaseNLowercaseValidator,
 } from "../utils";
 import { MenuItemType } from "../types";
+import { Network_Type } from "../generated";
 
 const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
@@ -78,18 +79,18 @@ const SIDEBAR_MENU2 = [
     { id: "5", title: "Integrations", Icon: ModuleStoreIcon, route: "/store" },
 ];
 const MONTH_FILTER = [
-    { id: 1, label: "January ", value: "january " },
-    { id: 2, label: "February", value: "february" },
-    { id: 3, label: "March", value: "march " },
-    { id: 4, label: "April", value: "april" },
-    { id: 5, label: "May", value: "may" },
-    { id: 6, label: "June", value: "june" },
-    { id: 7, label: "July", value: "july" },
-    { id: 8, label: "August", value: "august" },
-    { id: 9, label: "September", value: "september" },
-    { id: 10, label: "October", value: "october" },
-    { id: 11, label: "November", value: "november" },
-    { id: 12, label: "December", value: "december" },
+    { id: 1, label: "January ", value: "JANUARY " },
+    { id: 2, label: "February", value: "FEBRUARY" },
+    { id: 3, label: "March", value: "MARCH " },
+    { id: 4, label: "April", value: "APRIL" },
+    { id: 5, label: "May", value: "MAY" },
+    { id: 6, label: "June", value: "JUNE" },
+    { id: 7, label: "July", value: "JULY" },
+    { id: 8, label: "August", value: "AUGUST" },
+    { id: 9, label: "September", value: "SEPTEMBER" },
+    { id: 10, label: "October", value: "OCTOBER" },
+    { id: 11, label: "November", value: "NOVEMBER" },
+    { id: 12, label: "December", value: "DECEMBER" },
 ];
 
 const TIME_FILTER = [
@@ -101,8 +102,8 @@ const TIME_FILTER = [
 ];
 
 const NETWORKS = [
-    { id: 1, label: "Public Network", value: "public" },
-    { id: 2, label: "Private Network", value: "private" },
+    { id: 1, label: "Public Network", value: Network_Type.Public },
+    { id: 2, label: "Private Network", value: Network_Type.Private },
 ];
 
 const BASIC_MENU_ACTIONS: MenuItemType[] = [

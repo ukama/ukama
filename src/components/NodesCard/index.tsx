@@ -9,9 +9,9 @@ import {
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
 import OptionsPopover from "../OptionsPopover";
+import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import { Paper, Typography, Stack, Grid, Divider } from "@mui/material";
-import { SkeletonRoundedCard } from "../../styles";
 const useStyles = makeStyles(() => ({
     container: {
         width: "214px",
@@ -22,6 +22,12 @@ const useStyles = makeStyles(() => ({
         borderRadius: "10px",
         justifyContent: "center",
         background: colors.white,
+    },
+    textStyle: {
+        height: "20px",
+        overflow: "hidden",
+        display: "-webkit-box",
+        textOverflow: "ellipsis",
     },
 }));
 
@@ -86,6 +92,7 @@ const NodeCard = ({
                                         letterSpacing: "-0.02em",
                                         lineHeight: "19px",
                                     }}
+                                    className={classes.textStyle}
                                 >
                                     {title}
                                 </Typography>

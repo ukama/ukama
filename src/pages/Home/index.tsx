@@ -1,24 +1,22 @@
+/* eslint-disable no-unused-vars */
 import {
-    NodeCard,
-    StatusCard,
-    NetworkStatus,
-    ContainerHeader,
     StatsCard,
     AlertCard,
-    MultiSlideCarousel,
+    StatusCard,
+    NetworkStatus,
+    LoadingWrapper,
+    ContainerHeader,
     DataTableWithOptions,
     UserActivationDialog,
-    LoadingWrapper,
+    NodeCard,
+    NodeContainer,
+    MultiSlideCarousel,
     ActivationDialog,
 } from "../../components";
 import {
-    ALERT_INFORMATION,
-    DashboardSliderData,
-    DashboardStatusCard,
-    DashboardResidentsTable,
-} from "../../constants/stubData";
-import {
     NETWORKS,
+    TIME_FILTER,
+    MONTH_FILTER,
     STATS_PERIOD,
     STATS_OPTIONS,
     UserActivation,
@@ -26,35 +24,115 @@ import {
     DataTableWithOptionColumns,
 } from "../../constants";
 import "../../i18n/i18n";
+import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import {
-    Box,
-    Grid,
-    List,
-    ListItem,
-    Typography,
-    useMediaQuery,
-} from "@mui/material";
+    Time_Filter,
+    Network_Type,
+    Data_Bill_Filter,
+    useGetDataBillQuery,
+    useGetDataUsageQuery,
+    useGetConnectedUsersQuery,
+    useGetNodesQuery,
+    useGetNetworkQuery,
+    useGetAlertsQuery,
+    useGetResidentsQuery,
+    useDeleteNodeMutation,
+    useDeleteUserMutation,
+} from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
-import { AlertItemType } from "../../types";
 import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
+import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
     const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1410px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
-    const [network, setNetwork] = useState("public");
-    const [isAddNode, setIsAddNode] = useState(false);
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const [statOptionValue, setstatOptionValue] = React.useState(3);
-    const [dataStatusFilter, setDataStatusFilter] = useState("month");
-    const [userStatusFilter, setUserStatusFilter] = useState("current");
+    const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
-    const [billingStatusFilter, setBillingStatusFilter] = useState("july");
+    const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
+    const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Total);
+    const [isAddNode, setIsAddNode] = useState(false);
+    const [networkType, setNetworkType] = useState<Network_Type>(
+        Network_Type.Public
+    );
+    const [billingStatusFilter, setBillingStatusFilter] = useState(
+        Data_Bill_Filter.July
+    );
+    // eslint-disable-next-line no-unused-vars
+    const [deleteNode, { data: deleNodeRes, loading: DeleLoading }] =
+        useDeleteNodeMutation();
+    //const [addNode, { data: addNodeRes }] = useAddNodeMutation();
+    //const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
+
+    const [deleteUser, { loading: deleteUserLoading }] =
+        useDeleteUserMutation();
+    const handleAddNodeClose = () => setIsAddNode(() => false);
+    const { data: connectedUserRes, loading: connectedUserloading } =
+        useGetConnectedUsersQuery({
+            variables: {
+                filter: userStatusFilter,
+            },
+        });
+    const { data: alertsInfoRes, loading: alertsloading } = useGetAlertsQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
+            },
+        },
+    });
+
+    const {
+        data: residentsRes,
+        loading: residentsloading,
+        refetch: refetchUser,
+    } = useGetResidentsQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
+            },
+        },
+    });
+    const { data: dataUsageRes, loading: dataUsageloading } =
+        useGetDataUsageQuery({
+            variables: {
+                filter: dataStatusFilter,
+            },
+        });
+
+    const { data: dataBillingRes, loading: dataBillingloading } =
+        useGetDataBillQuery({
+            variables: {
+                filter: billingStatusFilter,
+            },
+        });
+
+    const {
+        data: nodeRes,
+        loading: nodeLoading,
+        refetch: refetchNodes,
+    } = useGetNodesQuery({
+        variables: {
+            data: {
+                pageNo: 1,
+                pageSize: 50,
+            },
+        },
+    });
+
+    const { data: networkStatusRes, loading: networkStatusLoading } =
+        useGetNetworkQuery({
+            variables: {
+                filter: networkType,
+            },
+        });
 
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -62,22 +140,25 @@ const Home = () => {
     ) => {
         setSelectedBtn(newSelected);
     };
+
     const handleStatsChange = (event: {
         target: { value: React.SetStateAction<number> };
     }) => {
         setstatOptionValue(event.target.value);
     };
+    const handleCloseDialog = () => {};
+
     const handleSatusChange = (key: string, value: string) => {
         switch (key) {
             case "statusUser":
-                return setUserStatusFilter(value);
+                return setUserStatusFilter(value as Time_Filter);
             case "statusUsage":
-                return setDataStatusFilter(value);
+                return setDataStatusFilter(value as Time_Filter);
             case "statusBill":
-                return setBillingStatusFilter(value);
+                return setBillingStatusFilter(value as Data_Bill_Filter);
         }
     };
-    const onResidentsTableMenuItem = () => {};
+
     const getStatus = (key: string) => {
         switch (key) {
             case "statusUser":
@@ -91,83 +172,119 @@ const Home = () => {
         }
     };
 
-    const handleAddNodeClose = () => setIsAddNode(() => false);
-    const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
-    // eslint-disable-next-line no-unused-vars
-    const handleActivationSubmit = (values: any) => {};
+    const onResidentsTableMenuItem = (id: string, type: string) => {
+        if (type === "deactivate") {
+            deleteUser({
+                variables: {
+                    id,
+                },
+            });
 
-    const getNodesContainerData = (items: any[], slidesToShow: number) =>
-        items.length > 3 ? (
-            <MultiSlideCarousel numberOfSlides={slidesToShow}>
-                {items.map(({ id, title, users, subTitle, isConfigure }) => (
-                    <NodeCard
-                        key={id}
-                        title={title}
-                        users={users}
-                        loading={false}
-                        subTitle={subTitle}
-                        isConfigure={isConfigure}
-                    />
-                ))}
-            </MultiSlideCarousel>
-        ) : (
-            <Grid
-                item
-                xs={12}
-                container
-                spacing={6}
-                sx={{
-                    display: "flex",
-                    justifyContent: { xs: "center", md: "flex-start" },
-                }}
-            >
-                {items.map(i => (
-                    <Grid key={i} item>
-                        <NodeCard isConfigure={true} />
-                    </Grid>
-                ))}
-            </Grid>
-        );
+            refetchUser();
+        }
+    };
+    const handleNodeActions = (id: string, type: string) => {
+        if (type === "delete") {
+            deleteNode({
+                variables: { id },
+            });
+            refetchNodes();
+        }
+    };
+    const handleAddNode = (value: any) => {
+        setIsAddNode(true);
+        // addNode({
+        //     variables: {
+        //         data,
+        //     },
+        // });
+    };
 
+    // const handleEditNode = (data: UpdateNodeDto) => {
+    //     editNode({
+    //         variables: {
+    //             data,
+    //         },
+    //     });
+    // };
+    const handleActivationSubmit = () => {};
+    const onActivateButton = () => {};
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
                 <NetworkStatus
-                    duration={""}
-                    option={network}
                     options={NETWORKS}
-                    loading={isSkeltonLoad}
-                    statusType={"IN_PROGRESS"}
-                    status={"Your network is being configured"}
-                    handleStatusChange={(value: string) => setNetwork(value)}
+                    option={networkType}
+                    loading={networkStatusLoading}
+                    statusType={networkStatusRes?.getNetwork?.status || ""}
+                    duration={networkStatusRes?.getNetwork?.description || ""}
+                    handleStatusChange={(value: Network_Type) =>
+                        setNetworkType(value)
+                    }
                 />
+
                 <Grid container spacing={2}>
-                    {DashboardStatusCard.map(
-                        ({
-                            id,
-                            Icon,
-                            title,
-                            options,
-                            subtitle1,
-                            subtitle2,
-                        }: any) => (
-                            <Grid key={id} item xs={12} md={6} lg={4}>
-                                <StatusCard
-                                    Icon={Icon}
-                                    title={title}
-                                    options={options}
-                                    subtitle1={subtitle1}
-                                    subtitle2={subtitle2}
-                                    option={getStatus(id)}
-                                    loading={isSkeltonLoad}
-                                    handleSelect={(value: string) =>
-                                        handleSatusChange(id, value)
-                                    }
-                                />
-                            </Grid>
-                        )
-                    )}
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            Icon={UsersWithBG}
+                            title={"Connected Users"}
+                            options={TIME_FILTER}
+                            subtitle1={`${
+                                connectedUserRes?.getConnectedUsers
+                                    ?.totalUser || 0
+                            }`}
+                            subtitle2={
+                                connectedUserRes?.getConnectedUsers?.totalUser
+                                    ? `| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`
+                                    : ""
+                            }
+                            option={getStatus("statusUser")}
+                            loading={connectedUserloading}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUser", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data usage"}
+                            subtitle1={`${
+                                dataUsageRes?.getDataUsage?.dataConsumed || 0
+                            }`}
+                            subtitle2={` GBs / ${
+                                dataUsageRes?.getDataUsage?.dataPackage ||
+                                "unlimited"
+                            }`}
+                            Icon={DataUsage}
+                            options={TIME_FILTER}
+                            option={getStatus("statusUsage")}
+                            loading={dataUsageloading}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUsage", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Bill"}
+                            subtitle1={`$ ${
+                                dataBillingRes?.getDataBill?.dataBill || 0
+                            }`}
+                            subtitle2={
+                                dataBillingRes?.getDataBill?.dataBill
+                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue}`
+                                    : " due"
+                            }
+                            Icon={DataBilling}
+                            options={MONTH_FILTER}
+                            loading={dataBillingloading}
+                            option={getStatus("statusBill")}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusBill", value)
+                            }
+                        />
+                    </Grid>
                 </Grid>
                 <Box mt={2} mb={2}>
                     <Grid container spacing={2}>
@@ -184,11 +301,10 @@ const Home = () => {
                                 }
                             />
                         </Grid>
-
                         <Grid xs={12} item lg={4}>
                             <LoadingWrapper
-                                height={337}
-                                isLoading={isSkeltonLoad}
+                                height={387}
+                                isLoading={alertsloading}
                             >
                                 <RoundedCard>
                                     <Typography
@@ -197,42 +313,11 @@ const Home = () => {
                                     >
                                         {t("ALERT.Title")}
                                     </Typography>
-                                    <List
-                                        sx={{
-                                            pr: "4px",
-                                            maxHeight: 305,
-                                            overflow: "auto",
-                                            position: "relative",
-                                        }}
-                                    >
-                                        {ALERT_INFORMATION.map(
-                                            ({
-                                                id,
-                                                date,
-                                                description,
-                                                title,
-                                                Icon,
-                                            }: AlertItemType) => (
-                                                <ListItem
-                                                    key={id}
-                                                    style={{
-                                                        padding: 1,
-                                                        marginBottom: "4px",
-                                                    }}
-                                                >
-                                                    <AlertCard
-                                                        id={id}
-                                                        date={date}
-                                                        Icon={Icon}
-                                                        title={title}
-                                                        description={
-                                                            description
-                                                        }
-                                                    />
-                                                </ListItem>
-                                            )
-                                        )}
-                                    </List>
+                                    <AlertCard
+                                        alertOptions={
+                                            alertsInfoRes?.getAlerts?.alerts
+                                        }
+                                    />
                                 </RoundedCard>
                             </LoadingWrapper>
                         </Grid>
@@ -241,35 +326,53 @@ const Home = () => {
 
                 <Grid container spacing={2}>
                     <Grid xs={12} lg={8} item>
-                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
+                        <LoadingWrapper height={312} isLoading={nodeLoading}>
                             <RoundedCard>
                                 <ContainerHeader
-                                    stats="1/8"
                                     title="My Nodes"
                                     buttonTitle="Add Node"
-                                    handleButtonAction={() =>
-                                        setIsAddNode(true)
-                                    }
+                                    handleButtonAction={handleAddNode}
+                                    stats={`${
+                                        nodeRes?.getNodes?.nodes?.activeNodes ||
+                                        "0"
+                                    }/${
+                                        nodeRes?.getNodes?.nodes?.totalNodes ||
+                                        "-"
+                                    }`}
                                 />
-                                {getNodesContainerData(
-                                    DashboardSliderData,
-                                    slidesToShow
-                                )}
+                                <NodeContainer
+                                    slidesToShow={slidesToShow}
+                                    items={nodeRes?.getNodes?.nodes.nodes}
+                                    count={nodeRes?.getNodes.meta.size}
+                                    handleItemAction={handleNodeActions}
+                                />
                             </RoundedCard>
                         </LoadingWrapper>
                     </Grid>
                     <Grid xs={12} lg={4} item>
-                        <LoadingWrapper height={312} isLoading={isSkeltonLoad}>
+                        <LoadingWrapper
+                            height={337}
+                            isLoading={residentsloading}
+                        >
                             <RoundedCard sx={{ height: "100%" }}>
                                 <ContainerHeader
-                                    stats="6/16"
                                     title="Residents"
                                     buttonTitle="ACTIVATE"
                                     handleButtonAction={onActivateButton}
+                                    stats={`${
+                                        residentsRes?.getResidents?.residents
+                                            ?.activeResidents || "0"
+                                    }/${
+                                        residentsRes?.getResidents?.residents
+                                            ?.totalResidents || "-"
+                                    }`}
                                 />
                                 <DataTableWithOptions
                                     columns={DataTableWithOptionColumns}
-                                    dataset={DashboardResidentsTable}
+                                    dataset={
+                                        residentsRes?.getResidents.residents
+                                            .residents
+                                    }
                                     menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                     onMenuItemClick={onResidentsTableMenuItem}
                                 />
