@@ -35,8 +35,8 @@ const Layout = (props: any) => {
             <Box
                 component="main"
                 sx={{
-                    pl: { xs: 2, md: 4 },
-                    pr: { xs: 2, md: 4 },
+                    pl: { xs: 2, md: 3 },
+                    pr: { xs: 2, md: 3 },
                     width: "100%",
                 }}
             >

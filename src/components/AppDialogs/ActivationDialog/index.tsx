@@ -125,6 +125,7 @@ type ActivationDialogProps = {
     handleClose: any;
     subTitle2: string;
     dialogTitle: string;
+    handleActivationSubmit: Function;
 };
 
 const ActivationDialog = ({
@@ -133,13 +134,18 @@ const ActivationDialog = ({
     subTitle2,
     dialogTitle,
     handleClose,
+    handleActivationSubmit,
 }: ActivationDialogProps) => {
     const classes = useStyles();
     const [flowScreen, setFlowScreen] = useState(1);
     const [userActivateForm, setUserActivateForm] =
         useState<UserActivateFormType>(initialActivationFormValue);
 
-    const handleNext = () => setFlowScreen(2);
+    const handleNext = () => {
+        if (flowScreen === 1) setFlowScreen(2);
+        if (flowScreen === 2) handleActivationSubmit(userActivateForm);
+    };
+
     const handleBack = () => setFlowScreen(1);
     const handleChange = (e: any) => {
         setUserActivateForm({

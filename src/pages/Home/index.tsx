@@ -48,7 +48,7 @@ import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
     const { t } = useTranslation();
-    const isSliderLarge = useMediaQuery("(min-width:1430px)");
+    const isSliderLarge = useMediaQuery("(min-width:1410px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [selectedBtn, setSelectedBtn] = useState("DAY");
@@ -172,11 +172,9 @@ const Home = () => {
         }
     };
 
-    const onActivateButton = () => setIsUserActivateOpen(() => true);
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
-            deleteUserLoading;
             deleteUser({
                 variables: {
                     id,
@@ -210,7 +208,8 @@ const Home = () => {
     //         },
     //     });
     // };
-
+    const handleActivationSubmit = () => {};
+    const onActivateButton = () => {};
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
@@ -224,6 +223,7 @@ const Home = () => {
                         setNetworkType(value)
                     }
                 />
+
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={6} lg={4}>
                         <StatusCard
@@ -396,6 +396,7 @@ const Home = () => {
                             "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
                         }
                         handleClose={handleAddNodeClose}
+                        handleActivationSubmit={handleActivationSubmit}
                         subTitle={
                             "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
                         }

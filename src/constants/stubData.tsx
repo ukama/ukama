@@ -49,7 +49,29 @@ const CREDIT_CARD = [
         card_experintionDetails: "Card is ending in 20 days",
     },
 ];
-
+const CurrentBillingData = [
+    {
+        id: 1,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 2,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+    {
+        id: 3,
+        name: "Tryphena Nelson ",
+        dataUsage: " 20 GB  ",
+        rate: "$5 / 20GB",
+        subTotal: 10,
+    },
+];
 const SimCardData = [
     {
         id: 1,
@@ -106,4 +128,10 @@ const CurrentBilling = [
         subTotal: 10,
     },
 ];
-export { SimCardData, CurrentBilling, RechartsData, CREDIT_CARD };
+export {
+    SimCardData,
+    CurrentBillingData,
+    CurrentBilling,
+    RechartsData,
+    CREDIT_CARD,
+};

@@ -56,7 +56,7 @@ export type SVGType = {
 };
 
 export type ColumnsWithOptions = {
-    id: "name" | "actions" | "dataUsage";
+    id: any;
     label: string;
     minWidth?: number;
     align?: "right";
@@ -73,4 +73,10 @@ export type UserActivateFormType = {
     nodeName: string;
     serialNumber: string;
     securityCode: string;
+};
+
+export type ResponseProps = {
+    loading: boolean;
+    error: any | null;
+    response: { isValid: boolean } | void | null;
 };

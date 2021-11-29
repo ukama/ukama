@@ -9,9 +9,8 @@ import {
     Box,
 } from "@mui/material";
 import React from "react";
+import config from "../../config";
 import { colors } from "../../theme";
-import { useSetRecoilState } from "recoil";
-import { isLoginAtom } from "../../recoil";
 import { HEADER_MENU } from "../../constants";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -25,7 +24,8 @@ type HeaderProps = {
 };
 
 const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
-    const setIsLogin = useSetRecoilState(isLoginAtom);
+    const showDivider =
+        pageName !== "Billing" && pageName !== "User" ? true : false;
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
     const isMenuOpen = Boolean(anchorEl);
@@ -44,7 +44,8 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
 
     const handleLogout = () => {
         handleMenuClose();
-        setIsLogin(false);
+        window.close();
+        window.location.replace(`${config.REACT_APP_AUTH_URL}/logout`);
     };
 
     const handleHeaderMenu = (
@@ -162,7 +163,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
                         </IconButton>
                     </Box>
                 </Toolbar>
-                <Divider sx={{ m: "0px" }} />
+                {showDivider && <Divider sx={{ m: "0px" }} />}
             </AppBar>
             {renderMenu}
         </Box>

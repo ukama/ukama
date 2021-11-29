@@ -19,7 +19,7 @@ import {
 import { MenuItemType } from "../types";
 import { Network_Type } from "../generated";
 
-const DRAWER_WIDTH = 211;
+const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
 const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
 const PasswordRules = [
@@ -94,10 +94,11 @@ const MONTH_FILTER = [
 ];
 
 const TIME_FILTER = [
-    { id: 1, label: "Today", value: "TODAY" },
-    { id: 2, label: "This week", value: "WEEK" },
-    { id: 3, label: "This month", value: "MONTH" },
-    { id: 4, label: "Total", value: "TOTAL" },
+    { id: 1, label: "Today", value: "today" },
+    { id: 2, label: "This week", value: "week" },
+    { id: 3, label: "Month", value: "month" },
+    { id: 4, label: "Total", value: "total" },
+    { id: 5, label: "Current", value: "current" },
 ];
 
 const NETWORKS = [
@@ -177,29 +178,37 @@ const UserActivation = {
 
 const BillingTabs = [
     { id: 1, label: "CURRENT BILL", value: "1" },
-    { id: 2, label: "BILLING HISTORY", value: "2" },
+    { id: 2, label: "HISTORY", value: "2" },
 ];
 
 const UsersTabs = [
     { id: 1, label: "OVERVIEW", value: "1" },
     { id: 2, label: "CURRENTLY CONNECTED", value: "2" },
 ];
+
+const DEFAULT_RESPONSE = {
+    error: null,
+    loading: false,
+    response: null,
+};
+
 export {
     NETWORKS,
     UsersTabs,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,
-    MONTH_FILTER,
     BillingTabs,
     HEADER_MENU,
     DRAWER_WIDTH,
+    STATS_PERIOD,
+    MONTH_FILTER,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
     PasswordRules,
     STATS_OPTIONS,
-    STATS_PERIOD,
     UserActivation,
+    DEFAULT_RESPONSE,
     BASIC_MENU_ACTIONS,
     BILLING_TYPE,
     DataTableWithOptionColumns,

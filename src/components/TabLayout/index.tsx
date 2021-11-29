@@ -20,6 +20,8 @@ const TabLayoutHeader = ({
             sx={{
                 width: "100%",
                 borderBottom: 2,
+                m: "8px 0px 18px",
+                justifyContent: "space-between",
                 borderColor: "rgba(196, 196, 196, 0.1)",
             }}
         >

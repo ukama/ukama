@@ -1,9 +1,8 @@
-import { format } from "date-fns";
 import { colors } from "../../theme";
 import { CloudOffIcon } from "../../assets/svg";
 import { AlertDto, Alert_Type } from "../../generated";
 import { Typography, Card, Grid, List, ListItem, Stack } from "@mui/material";
-
+import { format } from "date-fns";
 type AlertCardProps = {
     alertOptions: AlertDto[] | undefined;
 };
@@ -14,7 +13,6 @@ const getColorByType = (type: Alert_Type) =>
         : type === Alert_Type.Warning
         ? colors.yellow
         : colors.green;
-
 const AlertCard = ({ alertOptions = [] }: AlertCardProps) => {
     return (
         <>
@@ -67,9 +65,8 @@ const AlertCard = ({ alertOptions = [] }: AlertCardProps) => {
                                         <Typography
                                             variant="caption"
                                             color={colors.empress}
-                                        >
-                                            {format(alertDate, "M/d/YY h A")}
-                                        </Typography>
+                                        ></Typography>
+                                        {format(alertDate, "M/d/YY h a")}
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Typography
