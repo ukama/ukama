@@ -39,7 +39,7 @@ msg_usage() {
 valid_args() {
 
     # --add bridge iface bridge_name
-    if [ "${DEV}" -eq "cspace" ]; then
+    if [ "${DEV}" = "cspace" ]; then
 	# Test valid PID
 	ps -p ${PID} > /dev/null
 	if [ "$?" -eq "1" ]
@@ -49,7 +49,7 @@ valid_args() {
     fi
 
     # --add cspace pid space_name bridge_name
-    if [ "${DEV}" -eq "bridge" ]; then
+    if [ "${DEV}" = "bridge" ]; then
 	# Test valid interface
 	ip -o a show | cut -d ' ' -f 2,7 | \
 	    awk '{print $1}' | grep ${IFACE} > /dev/null
@@ -79,7 +79,7 @@ add_cspace() {
     SP=$2
     BR=$3
 
-    NS=net_${SP}
+    NS=${SP}
 
     # Setup paired veth for each cspace on the host
     ip link   add dev veth1_${SP} type veth peer name veth2_${SP}
@@ -87,7 +87,15 @@ add_cspace() {
     # Bring up the host iface
     ip link   set dev veth1_${SP} up
     ip tuntap add tap_${SP} mode tap
-    ip link   set dev tapm_${SP} up
+    ip link   set dev tap_${SP} up
+
+    # Attach iface to the bridge
+    ip link set tap_${SP}   master ${BR}
+    ip link set veth1_${SP} master ${BR}
+
+    # Give address to the bridge
+    ip addr add 10.0.0.1/24 dev ${BR}
+    ip link set dev ${BR} up
 
     # setup named network namespace and attach to cspace PID
     ip netns add ${NS}
@@ -100,9 +108,9 @@ add_cspace() {
     ip netns exec ${NS} ip link set dev lo up
 
     # Setup the veth2 on the cspace
-    ip netns ${NS} addr add 10.0.0.2/24 dev veth2_${SP}
-    ip netns ${NS} link set dev veth2_${SP} up
-    ip netns ${NS} route add default via 10.0.0.1
+    ip netns exec ${NS} ip addr add 10.0.0.2/24 dev veth2_${SP}
+    ip netns exec ${NS} ip link set dev veth2_${SP} up
+    ip netns exec ${NS} ip route add default via 10.0.0.1
 
 }
 
@@ -118,11 +126,11 @@ if [ "$#" -gt 0 ]; then
     case $1 in
 	-a|--add)
 	    DEV=$2
-
-	    if [ "${DEV}" -eq "bridge" ]; then
+	    CMD="add"
+	    if [ "${DEV}" = "bridge" ]; then
 		IFACE=$3
 		BRIDGE=$4
-	    elif [ "${DEV}" -eq "cspace" ]; then
+	    elif [ "${DEV}" = "cspace" ]; then
 		PID=$3
 		SPACE=$4
 		BRIDGE=$5
@@ -139,10 +147,10 @@ fi
 # Test PID and IFACE are valid
 valid_args
 
-if [ "$CMD" -eq "add" ]; then
-    if [ "${DEV}" -eq "bridge" ]; then
+if [ "$CMD" = "add" ]; then
+    if [ "${DEV}" = "bridge" ]; then
 	add_bridge $IFACE $BRIDGE
-    elif [ "${DEV}" -eq "cspace" ]; then
+    elif [ "${DEV}" = "cspace" ]; then
 	add_cspace $PID $SPACE $BRIDGE
     else
 	exit 100
