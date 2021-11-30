@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { gCall, beforeEachPostCall } from "../../../common/utils";
-import { DELETE_USER_MUTATION } from "../../../common/graphql";
+import { DEACTIVATE_USER_MUTATION } from "../../../common/graphql";
 import { HEADER } from "../../../constants";
 
 const nockResponse = {
@@ -11,11 +11,11 @@ const reqBody = {
     id: "1342567fgcvh",
 };
 
-describe("Delete User", () => {
-    beforeEachPostCall("/user/delete_user", reqBody, nockResponse, 200);
-    it("delete users", async () => {
+describe("Deactivate User", () => {
+    beforeEachPostCall("/user/deactivate_user", reqBody, nockResponse, 200);
+    it("deactivate users", async () => {
         const response = await gCall({
-            source: DELETE_USER_MUTATION,
+            source: DEACTIVATE_USER_MUTATION,
             variableValues: {
                 input: reqBody.id,
             },
@@ -25,7 +25,7 @@ describe("Delete User", () => {
         });
         expect(response).toMatchObject({
             data: {
-                deleteUser: nockResponse.data,
+                deactivateUser: nockResponse.data,
             },
         });
     });

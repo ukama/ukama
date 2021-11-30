@@ -10,6 +10,7 @@ const nockResponse = {
 const reqBody = {
     id: "1423546576cgfhvgjhb",
     name: "abc",
+    securityCode: "1234",
 };
 
 describe("POST Update Node", () => {

@@ -193,7 +193,7 @@ export const updateUser = (req: Request, res: Response): void => {
         data: data,
     });
 };
-export const deleteUser = (req: Request, res: Response): void => {
+export const deactivateUser = (req: Request, res: Response): void => {
     const { body } = req;
 
     let data;
@@ -245,7 +245,7 @@ export const addNode = (req: Request, res: Response): void => {
     const data = {
         success: false,
     };
-    if (body.name && body.serialNo) data.success = true;
+    if (body.name && body.serialNo && body.securityCode) data.success = true;
     res.send({
         status: "success",
         data: data,
@@ -254,7 +254,8 @@ export const addNode = (req: Request, res: Response): void => {
 export const updateNode = (req: Request, res: Response): void => {
     const { body } = req;
     let data;
-    if (!(body.id && (body.name || body.serialNo))) data = {};
+    if (!(body.id && (body.name || body.serialNo || body.securityCode)))
+        data = {};
     data = casual._updateNode(body.id, body.name, body.serialNo);
 
     res.send({

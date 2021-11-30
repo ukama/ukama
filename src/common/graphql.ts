@@ -194,9 +194,9 @@ export const POST_UPDATE_USER_MUTATION = `
     }
 `;
 
-export const DELETE_USER_MUTATION = `
-    mutation deleteUser($input:String!) {
-        deleteUser(id:$input){
+export const DEACTIVATE_USER_MUTATION = `
+    mutation deactivateUser($input:String!) {
+        deactivateUser(id:$input){
             id
             success
           }

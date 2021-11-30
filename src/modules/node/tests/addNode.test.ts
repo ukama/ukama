@@ -7,6 +7,7 @@ const nockResponse = { status: "success", data: { success: true } };
 const reqBody = {
     name: " Abc Node",
     serialNo: "# 123",
+    securityCode: "1234",
 };
 
 describe("POST Add Node", () => {

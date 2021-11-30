@@ -1,6 +1,6 @@
 import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { DeleteResponse } from "../types";
+import { DeactivateResponse } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 
@@ -9,12 +9,12 @@ import { Authentication } from "../../../common/Authentication";
 export class DeleteUserResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Mutation(() => DeleteResponse)
+    @Mutation(() => DeactivateResponse)
     @UseMiddleware(Authentication)
-    async deleteUser(
+    async deactivateUser(
         @Arg("id")
         id: string
-    ): Promise<DeleteResponse | null> {
-        return this.userService.deleteUser(id);
+    ): Promise<DeactivateResponse | null> {
+        return this.userService.deactivateUser(id);
     }
 }

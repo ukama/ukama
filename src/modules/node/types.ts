@@ -63,6 +63,9 @@ export class AddNodeDto {
 
     @Field()
     serialNo: string;
+
+    @Field()
+    securityCode: string;
 }
 
 @InputType()
@@ -75,6 +78,9 @@ export class UpdateNodeDto {
 
     @Field({ nullable: true })
     serialNo: string;
+
+    @Field({ nullable: true })
+    securityCode: string;
 }
 
 @ObjectType()
