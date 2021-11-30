@@ -3,15 +3,13 @@ import {
     StatsCard,
     AlertCard,
     StatusCard,
+    NodeContainer,
     NetworkStatus,
     LoadingWrapper,
     ContainerHeader,
+    ActivationDialog,
     DataTableWithOptions,
     UserActivationDialog,
-    NodeCard,
-    NodeContainer,
-    MultiSlideCarousel,
-    ActivationDialog,
 } from "../../components";
 import {
     NETWORKS,
@@ -20,30 +18,29 @@ import {
     STATS_PERIOD,
     STATS_OPTIONS,
     UserActivation,
-    DEACTIVATE_EDIT_ACTION_MENU,
     DataTableWithOptionColumns,
+    DEACTIVATE_EDIT_ACTION_MENU,
 } from "../../constants";
 import "../../i18n/i18n";
-import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import {
     Time_Filter,
     Network_Type,
     Data_Bill_Filter,
+    useGetNodesQuery,
+    useGetAlertsQuery,
+    useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
-    useGetConnectedUsersQuery,
-    useGetNodesQuery,
-    useGetNetworkQuery,
-    useGetAlertsQuery,
     useGetResidentsQuery,
-    useDeleteNodeMutation,
     useDeleteUserMutation,
+    useGetConnectedUsersQuery,
 } from "../../generated";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
+import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
@@ -64,11 +61,6 @@ const Home = () => {
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
-    // eslint-disable-next-line no-unused-vars
-    const [deleteNode, { data: deleNodeRes, loading: DeleLoading }] =
-        useDeleteNodeMutation();
-    //const [addNode, { data: addNodeRes }] = useAddNodeMutation();
-    //const [editNode, { data: editNodeRes }] = useUpdateNodeMutation();
 
     const [deleteUser, { loading: deleteUserLoading }] =
         useDeleteUserMutation();
@@ -114,11 +106,7 @@ const Home = () => {
             },
         });
 
-    const {
-        data: nodeRes,
-        loading: nodeLoading,
-        refetch: refetchNodes,
-    } = useGetNodesQuery({
+    const { data: nodeRes, loading: nodeLoading } = useGetNodesQuery({
         variables: {
             data: {
                 pageNo: 1,
@@ -146,7 +134,6 @@ const Home = () => {
     }) => {
         setstatOptionValue(event.target.value);
     };
-    const handleCloseDialog = () => {};
 
     const handleSatusChange = (key: string, value: string) => {
         switch (key) {
@@ -184,30 +171,12 @@ const Home = () => {
             refetchUser();
         }
     };
-    const handleNodeActions = (id: string, type: string) => {
-        if (type === "delete") {
-            deleteNode({
-                variables: { id },
-            });
-            refetchNodes();
-        }
-    };
+    const handleNodeActions = (id: string, type: string) => {};
+
     const handleAddNode = (value: any) => {
         setIsAddNode(true);
-        // addNode({
-        //     variables: {
-        //         data,
-        //     },
-        // });
     };
 
-    // const handleEditNode = (data: UpdateNodeDto) => {
-    //     editNode({
-    //         variables: {
-    //             data,
-    //         },
-    //     });
-    // };
     const handleActivationSubmit = () => {};
     const onActivateButton = () => {};
     return (
