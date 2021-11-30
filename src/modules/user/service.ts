@@ -9,6 +9,7 @@ import {
     ResidentsResponse,
     UpdateUserDto,
     UserResponse,
+    GetUserDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -65,6 +66,15 @@ export class UserService implements IUserService {
             type: API_METHOD_TYPE.POST,
             path: SERVER.POST_DEACTIVATE_USER,
             body: { id },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return res.data;
+    };
+    getUser = async (id: string): Promise<GetUserDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_USER,
+            params: { id },
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
