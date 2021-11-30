@@ -21,12 +21,12 @@
 #include "log.h"
 #include "ipnet.h"
 
-static int ipnet_run(char *exec, char *args);
+static int ipnet_run(char *exec, char *args, int testFlag);
 
 /*
  * ipnet_run --
  */
-static int ipnet_run(char *exec, char *args) {
+static int ipnet_run(char *exec, char *args, int testFlag) {
 
   int ret=FALSE;
   sigset_t blockMask, origMask;
@@ -70,6 +70,11 @@ static int ipnet_run(char *exec, char *args) {
     break;
   }
 
+  if (testFlag) {
+    ret = status;
+    goto done;
+  }
+
   if (WIFEXITED(status)) { /* proper termination by calling exit */
     exitStatus = WEXITSTATUS(status);
     switch(exitStatus) {
@@ -92,6 +97,8 @@ static int ipnet_run(char *exec, char *args) {
       break;
     }
   }
+
+ done:
   /* reset SIGCHLD */
   sigprocmask(SIG_SETMASK, &origMask, NULL);
   free(cmd);
@@ -142,11 +149,52 @@ int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid) {
   }
 
   sprintf(args, "--add %s %s %s %s", dev, arg1, arg2, arg3);
-  
-  ret = ipnet_run(exec, args);
+
+  ret = ipnet_run(exec, args, FALSE);
 
   free(exec);
   free(args);
+
+  return ret;
+}
+
+/*
+ * ipnet_test -- For a given cspace, check if the networking is setup correctly
+ *               It should be able to ping test IP of 172.217.6.78
+ *
+ */
+
+int ipnet_test(char *spName) {
+
+  char args[1024] = {0};
+  int status, exitStatus, ret=FALSE;
+
+  if (spName == NULL) return FALSE;
+
+  sprintf(args, "netns exec %s %s %s", spName, PING_BIN, TEST_IP);
+
+  status = ipnet_run(IP_BIN, args, TRUE);
+
+  if (WIFEXITED(status)) { /* proper termination by calling exit */
+    exitStatus = WEXITSTATUS(status);
+    switch(exitStatus) {
+    case 2:
+      log_error("Unable to reach test IP: %s Args: %s", TEST_IP, args);
+      break;
+    case 1:
+      log_error("Recevied no reply from test IP: %s Args: %s", TEST_IP, args);
+      break;
+    case 0:
+      log_debug("Network setup is correct. Test IP %s is reachable",
+		TEST_IP);
+      ret = TRUE;
+      break;
+    default:
+      log_error("Test return invalid exit code: %d Cmd: %s Args: %s",
+		exitStatus, args);
+      break;
+    }
+  }
 
   return ret;
 }

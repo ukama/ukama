@@ -14,6 +14,9 @@
 #define DEF_IFACE  "eth0"
 #define NET_EXEC   "setup_space_network.sh"
 #define PATH       "/sbin"
+#define IP_BIN     "ip"
+#define PING_BIN   "/bin/ping"
+#define TEST_IP    "172.217.8.78"
 
 #define TRUE  1
 #define FALSE 0
@@ -25,5 +28,6 @@
 #define IPNET_DEV_CSPACE "cspace"
 
 int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid);
+int ipnet_test(char *spName);
 
 #endif /* LXCE_IPNET_H */

@@ -258,6 +258,13 @@ void* cspace_thread_start(void *args) {
     exit(1);
   }
 
+  /* Test cspace network setup */
+  if (!ipnet_test(thread->space->name)) {
+    log_error("Failed test for cspace network setup: %s", thread->space->name);
+  } else {
+    log_debug("Passed test for cspace network setup: %s", thread->space->name);
+  }
+
   uuid_unparse(thread->uuid, &idStr[0]);
   log_debug("Successfully created cspace. Name: %s UUID: %s PID: %d",
 	    thread->space->name, idStr, thread->pid);
