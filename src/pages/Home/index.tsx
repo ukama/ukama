@@ -178,7 +178,8 @@ const Home = () => {
     };
 
     const handleActivationSubmit = () => {};
-    const onActivateButton = () => {};
+    const onActivateButton = () => setIsUserActivateOpen(() => true);
+
     return (
         <>
             <Box sx={{ flexGrow: 1, pb: "18px" }}>
