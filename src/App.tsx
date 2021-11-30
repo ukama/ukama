@@ -1,10 +1,9 @@
 import Layout from "./layout";
-import config from "./config";
 import { theme } from "./theme";
 import { useEffect } from "react";
 import Router from "./router/Router";
-import { routes } from "./router/config";
 import client from "./api/ApolloClient";
+import { routes } from "./router/config";
 import { CenterContainer } from "./styles";
 import useWhoami from "./helpers/useWhoami";
 import { ThemeProvider } from "@emotion/react";
@@ -16,10 +15,10 @@ const App = () => {
     const { loading, response } = useWhoami();
 
     useEffect(() => {
-        if (response && config.ENVIROMENT === "production") {
+        if (response && process.env.NODE_ENV === "production") {
             if (!response?.isValid) {
                 window.close();
-                window.location.replace(`${config.REACT_APP_AUTH_URL}`);
+                window.location.replace(`${process.env.REACT_APP_AUTH_URL}`);
             }
         }
     }, [response]);

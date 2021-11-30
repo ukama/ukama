@@ -53,7 +53,7 @@ const Home = () => {
     const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
-    const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Total);
+    const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
     const [networkType, setNetworkType] = useState<Network_Type>(
         Network_Type.Public
@@ -321,7 +321,7 @@ const Home = () => {
                     <Grid xs={12} lg={4} item>
                         <LoadingWrapper
                             height={337}
-                            isLoading={residentsloading}
+                            isLoading={residentsloading || deleteUserLoading}
                         >
                             <RoundedCard sx={{ height: "100%" }}>
                                 <ContainerHeader

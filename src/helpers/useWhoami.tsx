@@ -1,4 +1,3 @@
-import config from "../config";
 import { ResponseProps } from "../types";
 import { DEFAULT_RESPONSE } from "../constants";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,23 +14,30 @@ const useWhoami = () => {
 
     const runQuery = useCallback(async () => {
         setResponses(() => ({ ...responses, loading: true }));
-        fetch(`${config.REACT_APP_KRATOS_BASE_URL}/sessions/whoami`, {
-            credentials: "include",
-        })
+        return fetch(
+            `${process.env.REACT_APP_KRATOS_BASE_URL}/sessions/whoami`,
+            {
+                credentials: "include",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+            }
+        )
             .then(response => response.json())
             .then(res => {
-                if (res?.error?.code === 401) {
+                if (res?.identity?.id) {
                     setResponses((prev: ResponseProps) => ({
                         ...prev,
-                        response: { isValid: false },
-                        error: "Unauthorized",
+                        response: { isValid: true },
+                        error: "",
                         loading: false,
                     }));
                 } else {
                     setResponses((prev: ResponseProps) => ({
                         ...prev,
-                        response: { isValid: true },
-                        error: "",
+                        response: { isValid: false },
+                        error: "Unauthorized",
                         loading: false,
                     }));
                 }
@@ -44,7 +50,6 @@ const useWhoami = () => {
                     loading: false,
                 }))
             );
-        return;
     }, []);
 
     useEffect(() => {

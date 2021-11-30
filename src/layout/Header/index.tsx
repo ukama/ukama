@@ -9,7 +9,6 @@ import {
     Box,
 } from "@mui/material";
 import React from "react";
-import config from "../../config";
 import { colors } from "../../theme";
 import { HEADER_MENU } from "../../constants";
 import { MoreVert } from "@mui/icons-material";
@@ -45,7 +44,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
     const handleLogout = () => {
         handleMenuClose();
         window.close();
-        window.location.replace(`${config.REACT_APP_AUTH_URL}logout`);
+        window.location.replace(`${process.env.REACT_APP_AUTH_URL}logout`);
     };
 
     const handleHeaderMenu = (
