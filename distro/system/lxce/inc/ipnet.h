@@ -16,7 +16,7 @@
 #define PATH       "/sbin"
 #define IP_BIN     "ip"
 #define PING_BIN   "/bin/ping"
-#define TEST_IP    "172.217.8.78"
+#define TEST_IP    "8.8.8.8"
 
 #define TRUE  1
 #define FALSE 0
