@@ -54,7 +54,7 @@ extern int create_shared_memory(int *shmId, char *memFile, size_t size,
  * init_cspace_thread --
  *
  */
-CSpaceThread *init_cspace_thread(char *name, CSpace *space) {
+CSpaceThread *init_cspace_thread(char *name, char *iface, CSpace *space) {
 
   CSpaceThread *thread;
 
@@ -66,6 +66,7 @@ CSpaceThread *init_cspace_thread(char *name, CSpace *space) {
   uuid_generate(thread->uuid);
 
   thread->name  = strdup(name);
+  thread->iface = strdup(iface);
   thread->state = CSPACE_THREAD_STATE_CREATE;
   thread->space = space;
 
@@ -104,6 +105,7 @@ int init_cspace_thread_list(void) {
 void free_cspace_thread(CSpaceThread *thread) {
 
   free(thread->name);
+  free(thread->iface);
   free(thread);
 }
 
@@ -251,7 +253,7 @@ void* cspace_thread_start(void *args) {
   }
 
   /* setup networking using veth and bridge */
-  if (ipnet_setup(IPNET_DEV_TYPE_CSPACE, DEF_BRIDGE, DEF_IFACE,
+  if (ipnet_setup(IPNET_DEV_TYPE_CSPACE, DEF_BRIDGE, thread->iface,
 		  thread->space->name, thread->pid) != TRUE) {
     log_error("Error setting up networking for cspace. %s %s %ld",
 	      DEF_BRIDGE, thread->space->name, (long)thread->pid);

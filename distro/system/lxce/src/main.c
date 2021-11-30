@@ -243,10 +243,10 @@ int main(int argc, char **argv) {
   }
 
   /* setup bridge/NAT */
-  if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, DEF_IFACE, NULL, 0)
-      != TRUE) {
+  if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, config->bridgeIface,
+		  NULL, 0) != TRUE) {
     log_error("Error setting up bridge %s on interface %s", DEF_BRIDGE,
-	      DEF_IFACE);
+	      config->bridgeIface);
     exit(1);
   }
 
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
   /* Go over the cSpaces, start thread and create actual contained spaces. */
   for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
 
-    csThread = init_cspace_thread(cPtr->name, cPtr);
+    csThread = init_cspace_thread(cPtr->name, config->bridgeIface, cPtr);
 
     if (add_to_cspace_thread_list(csThread)) {
       if (pthread_create(&(csThread->tid), NULL, cspace_thread_start,
