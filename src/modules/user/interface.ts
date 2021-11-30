@@ -21,6 +21,7 @@ export interface IUserService {
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(req: UpdateUserDto): Promise<UserResponse>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
+    getUser(id: string): Promise<GetUserDto>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
 }

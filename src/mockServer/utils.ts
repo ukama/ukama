@@ -62,8 +62,7 @@ export const getDataUsage = (req: Request, res: Response): void => {
         TIME_FILTER.TOTAL
     )
         data = {};
-
-    data = casual._dataUsage();
+    else data = casual._dataUsage();
 
     res.send({
         status: "success",
@@ -90,8 +89,7 @@ export const getDataBill = (req: Request, res: Response): void => {
         DATA_BILL_FILTER.DECEMBER
     )
         data = {};
-
-    data = casual._dataBill();
+    else data = casual._dataBill();
 
     res.send({
         status: "success",
@@ -178,15 +176,15 @@ export const updateUser = (req: Request, res: Response): void => {
         )
     )
         data = {};
-
-    data = casual._updateUser(
-        body.id,
-        body.firstName,
-        body.lastName,
-        body.eSimNumber,
-        body.email,
-        body.phone
-    );
+    else
+        data = casual._updateUser(
+            body.id,
+            body.firstName,
+            body.lastName,
+            body.eSimNumber,
+            body.email,
+            body.phone
+        );
 
     res.send({
         status: "success",
@@ -199,8 +197,7 @@ export const deactivateUser = (req: Request, res: Response): void => {
     let data;
 
     if (!body.id) data = {};
-
-    data = casual._deleteRes(body.id.toString());
+    else data = casual._deleteRes(body.id.toString());
 
     res.send({
         status: "success",
@@ -209,7 +206,6 @@ export const deactivateUser = (req: Request, res: Response): void => {
 };
 
 export const getUsers = (req: Request, res: Response): void => {
-    let data;
     const filter = req.query.type?.toString();
 
     if (
@@ -219,8 +215,12 @@ export const getUsers = (req: Request, res: Response): void => {
         GET_USER_TYPE.RESIDENT ||
         GET_USER_TYPE.VISITOR
     )
-        data = {};
-    data = casual.randomArray<GetUserDto>(3, 30, casual._getUser);
+        res.send({
+            status: "failed",
+            data: [],
+            length: 0,
+        });
+    const data = casual.randomArray<GetUserDto>(3, 30, casual._getUser);
 
     const pageNo = Number(req.query.pageNo);
     const pageSize = Number(req.query.pageSize);
@@ -256,7 +256,7 @@ export const updateNode = (req: Request, res: Response): void => {
     let data;
     if (!(body.id && (body.name || body.serialNo || body.securityCode)))
         data = {};
-    data = casual._updateNode(body.id, body.name, body.serialNo);
+    else data = casual._updateNode(body.id, body.name, body.serialNo);
 
     res.send({
         status: "success",
@@ -269,8 +269,7 @@ export const deleteNode = (req: Request, res: Response): void => {
     let data;
 
     if (!body.id) data = {};
-
-    data = casual._deleteRes(body.id.toString());
+    else data = casual._deleteRes(body.id.toString());
 
     res.send({
         status: "success",
@@ -298,8 +297,23 @@ export const getNetwork = (req: Request, res: Response): void => {
     let data;
     const filter = req.query[0]?.toString();
     if (filter !== NETWORK_TYPE.PUBLIC || NETWORK_TYPE.PRIVATE) data = {};
+    else data = casual._network();
 
-    data = casual._network();
+    res.send({
+        status: "success",
+        data,
+    });
+};
+
+export const getUserByID = (req: Request, res: Response): void => {
+    let data;
+    const id = req.query.id?.toString();
+
+    if (!id) data = {};
+    else {
+        data = casual._getUser();
+        data.id = id;
+    }
 
     res.send({
         status: "success",

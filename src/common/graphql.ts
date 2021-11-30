@@ -221,3 +221,18 @@ export const DELETE_NODE_MUTATION = `
           }
     }
 `;
+
+export const GET_USER_BY_ID_QUERY = `
+    query getUser($input:String!) {
+        getUser(id:$input) {
+                id
+                status
+                name
+                node
+                dataPlan
+                dataUsage
+                dlActivity
+                ulActivity
+        }
+    }
+`;
