@@ -52,21 +52,21 @@ const CREDIT_CARD = [
 const CurrentBillingData = [
     {
         id: 1,
-        name: "Tryphena Nelson ",
+        name: "Tryphena Nelson 1",
         dataUsage: " 20 GB  ",
         rate: "$5 / 20GB",
         subTotal: 10,
     },
     {
         id: 2,
-        name: "Tryphena Nelson ",
+        name: "Tryphena Nelson 2",
         dataUsage: " 20 GB  ",
         rate: "$5 / 20GB",
         subTotal: 10,
     },
     {
         id: 3,
-        name: "Tryphena Nelson ",
+        name: "Tryphena Nelson 3",
         dataUsage: " 20 GB  ",
         rate: "$5 / 20GB",
         subTotal: 10,

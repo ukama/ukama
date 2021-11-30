@@ -14,8 +14,9 @@ import { CurrentBillColumns } from "../../constants/tableColumns";
 
 const Billing = () => {
     const [tab, setTab] = useState("1");
-    const handleTabChange = (value: string) => setTab(value);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const handleMakePayment = () => {};
+    const handleTabChange = (value: string) => setTab(value);
 
     return (
         <Box>
@@ -84,8 +85,12 @@ const Billing = () => {
                         handleButtonAction={() => {}}
                     />
                     <SimpleDataTable
+                        rowSelection={true}
+                        selectedRows={selectedRows}
                         columns={CurrentBillColumns}
                         dataset={CurrentBillingData}
+                        setSelectedRows={setSelectedRows}
+                        totalRows={CurrentBillingData.length}
                     />
                 </RoundedCard>
             )}
