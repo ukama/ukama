@@ -56,13 +56,13 @@ export const getDataUsage = (req: Request, res: Response): void => {
     let data;
     const filter = req.query[0]?.toString();
     if (
-        filter !== TIME_FILTER.TODAY ||
+        filter === TIME_FILTER.TODAY ||
         TIME_FILTER.WEEK ||
         TIME_FILTER.MONTH ||
         TIME_FILTER.TOTAL
     )
-        data = {};
-    else data = casual._dataUsage();
+        data = casual._dataUsage();
+    else data = {};
 
     res.send({
         status: "success",
@@ -74,7 +74,7 @@ export const getDataBill = (req: Request, res: Response): void => {
     let data;
     const filter = req.query[0]?.toString();
     if (
-        filter !== DATA_BILL_FILTER.CURRENT ||
+        filter === DATA_BILL_FILTER.CURRENT ||
         DATA_BILL_FILTER.JANUARY ||
         DATA_BILL_FILTER.FEBRURAY ||
         DATA_BILL_FILTER.MARCH ||
@@ -88,8 +88,8 @@ export const getDataBill = (req: Request, res: Response): void => {
         DATA_BILL_FILTER.NOVERMBER ||
         DATA_BILL_FILTER.DECEMBER
     )
-        data = {};
-    else data = casual._dataBill();
+        data = casual._dataBill();
+    else data = {};
 
     res.send({
         status: "success",
@@ -166,17 +166,13 @@ export const updateUser = (req: Request, res: Response): void => {
     let data;
 
     if (
-        !(
-            body.id &&
-            (body.firstName ||
-                body.lastName ||
-                body.eSimNumber ||
-                body.email ||
-                body.phone)
-        )
+        body.id &&
+        (body.firstName ||
+            body.lastName ||
+            body.eSimNumber ||
+            body.email ||
+            body.phone)
     )
-        data = {};
-    else
         data = casual._updateUser(
             body.id,
             body.firstName,
@@ -185,6 +181,7 @@ export const updateUser = (req: Request, res: Response): void => {
             body.email,
             body.phone
         );
+    else data = {};
 
     res.send({
         status: "success",
@@ -209,34 +206,36 @@ export const getUsers = (req: Request, res: Response): void => {
     const filter = req.query.type?.toString();
 
     if (
-        filter !== GET_USER_TYPE.ALL ||
+        filter === GET_USER_TYPE.ALL ||
         GET_USER_TYPE.GUEST ||
         GET_USER_TYPE.HOME ||
         GET_USER_TYPE.RESIDENT ||
         GET_USER_TYPE.VISITOR
-    )
-        res.send({
-            status: "failed",
-            data: [],
-            length: 0,
-        });
-    const data = casual.randomArray<GetUserDto>(3, 30, casual._getUser);
+    ) {
+        const data = casual.randomArray<GetUserDto>(3, 30, casual._getUser);
 
-    const pageNo = Number(req.query.pageNo);
-    const pageSize = Number(req.query.pageSize);
+        const pageNo = Number(req.query.pageNo);
+        const pageSize = Number(req.query.pageSize);
 
-    let users = [];
-    if (!pageNo) users = data;
-    else {
-        const index = (pageNo - 1) * pageSize;
-        for (let i = index; i < index + pageSize; i++) {
-            if (data[i]) users.push(data[i]);
+        let users = [];
+        if (!pageNo) users = data;
+        else {
+            const index = (pageNo - 1) * pageSize;
+            for (let i = index; i < index + pageSize; i++) {
+                if (data[i]) users.push(data[i]);
+            }
         }
+        res.send({
+            status: "success",
+            data: users,
+            length: data.length,
+        });
     }
+
     res.send({
-        status: "success",
-        data: users,
-        length: data.length,
+        status: "failed",
+        data: [],
+        length: 0,
     });
 };
 
@@ -254,9 +253,9 @@ export const addNode = (req: Request, res: Response): void => {
 export const updateNode = (req: Request, res: Response): void => {
     const { body } = req;
     let data;
-    if (!(body.id && (body.name || body.serialNo || body.securityCode)))
-        data = {};
-    else data = casual._updateNode(body.id, body.name, body.serialNo);
+    if (body.id && (body.name || body.serialNo || body.securityCode))
+        data = casual._updateNode(body.id, body.name, body.serialNo);
+    else data = {};
 
     res.send({
         status: "success",
@@ -296,8 +295,9 @@ export const getBillHistory = (req: Request, res: Response): void => {
 export const getNetwork = (req: Request, res: Response): void => {
     let data;
     const filter = req.query[0]?.toString();
-    if (filter !== NETWORK_TYPE.PUBLIC || NETWORK_TYPE.PRIVATE) data = {};
-    else data = casual._network();
+    if (filter === NETWORK_TYPE.PUBLIC || NETWORK_TYPE.PRIVATE)
+        data = casual._network();
+    else data = {};
 
     res.send({
         status: "success",
