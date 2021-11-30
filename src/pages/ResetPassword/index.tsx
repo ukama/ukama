@@ -23,6 +23,7 @@ const ResetPassword = () => {
                 onSubmit={(val: any) => handleSubmit(val)}
             />
             <BasicDialog
+                btnLabel={"Close"}
                 isOpen={successDialog}
                 handleClose={() => setSuccessDialog(false)}
                 title={t("DIALOG_MESSAGE.SuccessTitle")}

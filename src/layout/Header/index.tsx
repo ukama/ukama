@@ -44,7 +44,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
     const handleLogout = () => {
         handleMenuClose();
         window.close();
-        window.location.replace(`${process.env.REACT_APP_AUTH_URL}logout`);
+        window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };
 
     const handleHeaderMenu = (

@@ -24,18 +24,26 @@ type BasicDialogProps = {
     title: string;
     isOpen: boolean;
     content: string;
+    btnLabel: string;
     handleClose: any;
+    isClosable?: boolean;
 };
 
 const BasicDialog = ({
     title,
     isOpen,
     content,
+    btnLabel,
     handleClose,
+    isClosable = true,
 }: BasicDialogProps) => {
     const classes = useStyles();
     return (
-        <Dialog open={isOpen} onClose={handleClose}>
+        <Dialog
+            open={isOpen}
+            // onClose={handleClose}
+            onBackdropClick={() => isClosable && handleClose()}
+        >
             <Box
                 sx={{
                     width: { xs: "100%", md: "500px" },
@@ -44,20 +52,20 @@ const BasicDialog = ({
             >
                 <Box className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">{title}</Typography>
-                    <IconButton
-                        onClick={handleClose}
-                        sx={{ ml: "24px", p: "8px" }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
+                    {isClosable && (
+                        <IconButton
+                            onClick={handleClose}
+                            sx={{ ml: "24px", p: "8px" }}
+                        >
+                            <CloseIcon />
+                        </IconButton>
+                    )}
                 </Box>
                 <DialogContent sx={{ p: "18px 0px" }}>
                     <Typography variant="body1">{content}</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button autoFocus onClick={handleClose}>
-                        Close
-                    </Button>
+                    <Button onClick={handleClose}>{btnLabel}</Button>
                 </DialogActions>
             </Box>
         </Dialog>
