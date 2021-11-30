@@ -1,5 +1,5 @@
 import { PaginationDto } from "../../common/types";
-import { DeleteResponse } from "../user/types";
+import { DeactivateResponse } from "../user/types";
 import {
     NodeResponseDto,
     NodeResponse,
@@ -14,7 +14,7 @@ export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
     addNode(req: AddNodeDto): Promise<AddNodeResponse>;
     updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
-    deleteNode(id: string): Promise<DeleteResponse>;
+    deleteNode(id: string): Promise<DeactivateResponse>;
 }
 
 export interface INodeMapper {

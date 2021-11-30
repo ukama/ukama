@@ -5,7 +5,7 @@ import {
     ActivateUserResponse,
     ConnectedUserDto,
     ConnectedUserResponse,
-    DeleteResponse,
+    DeactivateResponse,
     GetUserDto,
     GetUserPaginationDto,
     GetUserResponse,
@@ -20,7 +20,7 @@ export interface IUserService {
     getConnectedUsers(filter: TIME_FILTER): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(req: UpdateUserDto): Promise<UserResponse>;
-    deleteUser(id: string): Promise<DeleteResponse>;
+    deactivateUser(id: string): Promise<DeactivateResponse>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
 }

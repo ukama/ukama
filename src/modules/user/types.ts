@@ -204,7 +204,7 @@ export class ResidentsResponse extends PaginationResponse {
     residents: ResidentResponse;
 }
 @ObjectType()
-export class DeleteResponse {
+export class DeactivateResponse {
     @Field()
     id: string;
 

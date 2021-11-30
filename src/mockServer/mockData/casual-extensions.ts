@@ -15,7 +15,7 @@ import { NetworkDto } from "../../modules/network/types";
 import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
 
 import {
-    DeleteResponse,
+    DeactivateResponse,
     GetUserDto,
     UserDto,
     UserResponse,
@@ -177,7 +177,7 @@ const updateUser = (
         phone: phone ?? defaultCasual._phone(),
     };
 };
-const deleteRes = (id: string): DeleteResponse => {
+const deleteRes = (id: string): DeactivateResponse => {
     return {
         id: id,
         success: true,
@@ -214,7 +214,7 @@ interface Generators extends Casual.Generators {
         email: string,
         phone: string
     ) => UserResponse;
-    _deleteRes: (id: string) => DeleteResponse;
+    _deleteRes: (id: string) => DeactivateResponse;
     functions(): functions;
 }
 interface functions extends Casual.functions {
@@ -246,7 +246,7 @@ interface functions extends Casual.functions {
         email: string,
         phone: string
     ) => UserResponse;
-    deleteRes: (id: string) => DeleteResponse;
+    deleteRes: (id: string) => DeactivateResponse;
 }
 
 defaultCasual.define("randomArray", randomArray);
