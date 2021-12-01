@@ -243,7 +243,7 @@ const Home = () => {
                             }`}
                             subtitle2={
                                 dataBillingRes?.getDataBill?.dataBill
-                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue}`
+                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
                                     : " due"
                             }
                             Icon={DataBilling}
