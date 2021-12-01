@@ -80,6 +80,7 @@ typedef struct cspace_thread_t {
   
   uuid_t    uuid;        /* UUID assigned to the space. */
   char      *name;       /* Name of the space -- from config file */
+  char      *iface;      /* Interface the space attaches via bridge */
   int       sockets[2];  /* socket pair between parent and cspace */
   int       state;       /* state of the space. */
   int       exit_status; /* only if state is ABORT or DELETED, otherwise is 0*/
@@ -99,7 +100,7 @@ typedef struct cspace_thread_list_t {
   struct cspace_thread_list_t *next;
 } CSThreadsList;
 
-CSpaceThread *init_cspace_thread(char *name, CSpace *space);
+CSpaceThread *init_cspace_thread(char *name, char *iface, CSpace *space);
 int init_cspace_thread_list(void);
 int add_to_cspace_thread_list(CSpaceThread *thread);
 void* cspace_thread_start(void *args);

@@ -30,6 +30,7 @@
 #include "csthreads.h"
 #include "lxce_callback.h"
 #include "capp.h"
+#include "ipnet.h"
 
 #define VERSION "0.0.1"
 
@@ -241,6 +242,14 @@ int main(int argc, char **argv) {
     cPtr = cPtr->next;
   }
 
+  /* setup bridge/NAT */
+  if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, config->bridgeIface,
+		  NULL, 0) != TRUE) {
+    log_error("Error setting up bridge %s on interface %s", DEF_BRIDGE,
+	      config->bridgeIface);
+    exit(1);
+  }
+
   /* Step-3: setup cSpaces */
   /* For each space, we create a thread which would clone and parent
    * would wait for the space to exit. Space is currently active until the
@@ -251,7 +260,7 @@ int main(int argc, char **argv) {
   /* Go over the cSpaces, start thread and create actual contained spaces. */
   for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
 
-    csThread = init_cspace_thread(cPtr->name, cPtr);
+    csThread = init_cspace_thread(cPtr->name, config->bridgeIface, cPtr);
 
     if (add_to_cspace_thread_list(csThread)) {
       if (pthread_create(&(csThread->tid), NULL, cspace_thread_start,

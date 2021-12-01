@@ -6,6 +6,7 @@
 	wimc-host    = "localhost"
 	wimc-port    = "4448"
 	mesh-port    = "4449"
+	bridge-iface = "wlp3s0"
 	cSpace-configs = [
 		      "capp/conf/boot_contained.json",
 		      "capp/conf/service_contained.json",
