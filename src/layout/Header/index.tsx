@@ -15,6 +15,8 @@ import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { HeaderMenuItemType } from "../../types";
 import { SkeletonRoundedCard } from "../../styles";
+import { useSetRecoilState } from "recoil";
+import { isSkeltonLoading } from "../../recoil";
 
 type HeaderProps = {
     pageName: string;
@@ -23,6 +25,7 @@ type HeaderProps = {
 };
 
 const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
+    const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const showDivider =
         pageName !== "Billing" && pageName !== "User" ? true : false;
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -42,6 +45,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
     };
 
     const handleLogout = () => {
+        setSkeltonLoading(true);
         handleMenuClose();
         window.close();
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
