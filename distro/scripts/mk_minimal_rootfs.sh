@@ -6,6 +6,7 @@
 
 # Base parameters
 UKAMA_OS=../../
+SYS_ROOT=${UKAMA_ROOT}/distro/
 BB_ROOT=${UKAMA_OS}/distro/system/busybox
 BB_CONFIG=ukama_minimal_defconfig
 
@@ -26,6 +27,9 @@ HOSTNAME="localhost"
 LIGHT_RED='\e[31m'
 NO_COLOR='\e[0m'
 
+# default target is local machine (gcc)
+DEF_TARGET="local"
+
 log_info() {
     echo "Info: $1"
 }
@@ -35,15 +39,16 @@ log_error() {
 }
 
 usage() {
-    echo 'Usage: mk_capp_rootfs.sh -p <path_for_rootfs>'
+    echo 'Usage: mk_minimal_rootfs.sh -p <path_for_rootfs>'
     exit
 }
 
 msg_usage() {
     echo "Usage:"
-    echo "      mk_capp_rootfs.sh [options]"
+    echo "      mk_minimal_rootfs.sh [options]"
     echo ""
     echo "Options:"
+    echo "     -t target # Target is local(default), cnode, anode, etc."
     echo "     -p string # Path for minimal rootfs, e.g. ./_ukama_capp_rootfs/"
     echo "     -h        # Display this help message."
     exit
@@ -54,20 +59,28 @@ msg_usage() {
 #
 build_busybox() {
     CWD=`pwd`
-    cd ${BB_ROOT}
+    cd ${BB_ROOT}/
 
     # set the config file for BB build
     BB_CONFIG=ukama_minimal_defconfig
     BB_ROOTFS=_ukamafs
     #Execute make and copy conent of _ukamafs to rootfs
 
-    make
+    # setup proper compiler option.
+    if [ "${TARGET}" != "local" ]
+    then
+	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin/
+    else
+	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+    fi
+
+    make XGCCPATH=${XGCC_PATH}/
     cd ${CWD}
     cp -rf ${BB_ROOT}/${BB_ROOTFS}/* $ROOTFS
 
     # Go back and clean up
     cd ${BB_ROOT}
-    make clean
+    make clean XGCCPATH=${XGCC_PATH}/
     cd ${CWD}
 
     log_info "Busybox successfully build."
@@ -235,6 +248,19 @@ while [ "$#" -gt 0 ]; do
             msg_usage
             shift
             ;;
+	-t|--target)
+	    if [ -z "$2" ]
+	    then
+		log_info "Missing target parameter for -t"
+		log_info "Setting to default: ${DEF_TARGET}"
+		TARGET=${DEF_TARGET}
+	    else
+		TARGET=$2
+		log_info "Target is: ${TARGET}"
+		shift
+	    fi
+	    shift
+	    ;;
         *)
             log_error "Invalid args: ${1}."
             msg_usage
