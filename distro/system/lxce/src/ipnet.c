@@ -55,7 +55,7 @@ static int ipnet_run(char *exec, char *args, int testFlag) {
 
   case 0: /* Child process */
     sigprocmask(SIG_SETMASK, &origMask, NULL);
-    execl("/bin/sh", "sh", "-c", exec, args, (char *) NULL);
+    execl("/bin/sh", "sh", "-c", cmd, (char *) NULL);
     _exit(127);
 
   default: /* Parent */
@@ -171,7 +171,7 @@ int ipnet_test(char *spName) {
 
   if (spName == NULL) return FALSE;
 
-  sprintf(args, "netns exec %s %s %s", spName, PING_BIN, TEST_IP);
+  sprintf(args, "netns exec %s %s -v4 -c10 %s", spName, PING_BIN, TEST_IP);
 
   status = ipnet_run(IP_BIN, args, TRUE);
 
