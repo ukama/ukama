@@ -46,12 +46,12 @@ const App = () => {
                     </Layout>
                     <BasicDialog
                         isClosable={false}
-                        btnLabel={"Try Login"}
+                        btnLabel={"Log In"}
                         isOpen={showValidationError}
                         handleClose={handleGoToLogin}
                         title={"Session validation failed"}
                         content={
-                            "Your session is not valid or expires. Please re-login."
+                            "Your session is not valid or has expired. Please re-login."
                         }
                     />
                 </BrowserRouter>
