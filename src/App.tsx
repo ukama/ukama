@@ -11,20 +11,25 @@ import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { CircularProgress, CssBaseline } from "@mui/material";
 import { BasicDialog } from "./components";
+import { useSetRecoilState } from "recoil";
+import { isSkeltonLoading } from "./recoil";
 
 const App = () => {
     const { loading, response } = useWhoami();
+    const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const [showValidationError, setShowValidationError] =
         useState<boolean>(false);
 
     useEffect(() => {
         if (response && !response?.isValid) {
+            setSkeltonLoading(true);
             setShowValidationError(true);
         }
     }, [response]);
 
     const handleGoToLogin = () => {
         setShowValidationError(false);
+        setSkeltonLoading(false);
         window.close();
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}`);
     };

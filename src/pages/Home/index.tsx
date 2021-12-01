@@ -186,7 +186,7 @@ const Home = () => {
                 <NetworkStatus
                     options={NETWORKS}
                     option={networkType}
-                    loading={networkStatusLoading}
+                    loading={networkStatusLoading || isSkeltonLoad}
                     statusType={networkStatusRes?.getNetwork?.status || ""}
                     duration={networkStatusRes?.getNetwork?.description || ""}
                     handleStatusChange={(value: Network_Type) =>
@@ -210,7 +210,7 @@ const Home = () => {
                                     : ""
                             }
                             option={getStatus("statusUser")}
-                            loading={connectedUserloading}
+                            loading={connectedUserloading || isSkeltonLoad}
                             handleSelect={(value: string) =>
                                 handleSatusChange("statusUser", value)
                             }
@@ -229,7 +229,7 @@ const Home = () => {
                             Icon={DataUsage}
                             options={TIME_FILTER}
                             option={getStatus("statusUsage")}
-                            loading={dataUsageloading}
+                            loading={dataUsageloading || isSkeltonLoad}
                             handleSelect={(value: string) =>
                                 handleSatusChange("statusUsage", value)
                             }
@@ -248,7 +248,7 @@ const Home = () => {
                             }
                             Icon={DataBilling}
                             options={MONTH_FILTER}
-                            loading={dataBillingloading}
+                            loading={dataBillingloading || isSkeltonLoad}
                             option={getStatus("statusBill")}
                             handleSelect={(value: string) =>
                                 handleSatusChange("statusBill", value)
@@ -274,7 +274,7 @@ const Home = () => {
                         <Grid xs={12} item lg={4}>
                             <LoadingWrapper
                                 height={387}
-                                isLoading={alertsloading}
+                                isLoading={alertsloading || isSkeltonLoad}
                             >
                                 <RoundedCard>
                                     <Typography
@@ -296,7 +296,10 @@ const Home = () => {
 
                 <Grid container spacing={2}>
                     <Grid xs={12} lg={8} item>
-                        <LoadingWrapper height={312} isLoading={nodeLoading}>
+                        <LoadingWrapper
+                            height={312}
+                            isLoading={nodeLoading || isSkeltonLoad}
+                        >
                             <RoundedCard>
                                 <ContainerHeader
                                     title="My Nodes"
@@ -322,7 +325,11 @@ const Home = () => {
                     <Grid xs={12} lg={4} item>
                         <LoadingWrapper
                             height={337}
-                            isLoading={residentsloading || deleteUserLoading}
+                            isLoading={
+                                residentsloading ||
+                                deleteUserLoading ||
+                                isSkeltonLoad
+                            }
                         >
                             <RoundedCard sx={{ height: "100%" }}>
                                 <ContainerHeader
