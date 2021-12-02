@@ -21,11 +21,13 @@ const App = () => {
         useState<boolean>(false);
 
     useEffect(() => {
-        if (response && !response?.isValid) {
-            setSkeltonLoading(true);
-            setShowValidationError(true);
-        } else {
-            setSkeltonLoading(false);
+        if (response) {
+            if (!response?.isValid) {
+                setSkeltonLoading(true);
+                setShowValidationError(true);
+            } else if (response?.isValid) {
+                setSkeltonLoading(false);
+            }
         }
     }, [response]);
 
