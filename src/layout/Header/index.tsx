@@ -45,9 +45,8 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
     };
 
     const handleLogout = () => {
-        setSkeltonLoading(true);
         handleMenuClose();
-        window.close();
+        setSkeltonLoading(true);
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };
 

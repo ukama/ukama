@@ -24,14 +24,13 @@ const App = () => {
         if (response && !response?.isValid) {
             setSkeltonLoading(true);
             setShowValidationError(true);
+        } else {
+            setSkeltonLoading(false);
         }
     }, [response]);
 
     const handleGoToLogin = () => {
-        setShowValidationError(false);
-        setSkeltonLoading(false);
-        window.close();
-        window.location.replace(`${process.env.REACT_APP_AUTH_URL}`);
+        window.location.replace(process.env.REACT_APP_AUTH_URL || "");
     };
 
     if (loading)
