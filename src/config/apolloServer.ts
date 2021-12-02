@@ -1,9 +1,11 @@
-import { ApolloServer } from "apollo-server-express";
+import { ApolloServer, PubSub } from "apollo-server-express";
 import express from "express";
 import { createSchema } from "../common/createSchema";
 
 const configureApolloServer = async (): Promise<ApolloServer> => {
     const schema = await createSchema();
+
+    const pubsub = new PubSub();
 
     const server = new ApolloServer({
         schema,
@@ -14,7 +16,8 @@ const configureApolloServer = async (): Promise<ApolloServer> => {
         }: {
             req: express.Request;
             res: express.Response;
-        }) => ({ req, res }),
+        }) => ({ req, res, pubsub }),
+
         playground: true,
     });
     return server;
