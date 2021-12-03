@@ -1,4 +1,11 @@
-import { Resolver, Query, Arg, UseMiddleware } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    Arg,
+    UseMiddleware,
+    PubSub,
+    PubSubEngine,
+} from "type-graphql";
 import { Service } from "typedi";
 import { ConnectedUserDto } from "../types";
 import { UserService } from "../service";
@@ -13,8 +20,11 @@ export class GetConnectedUsersResolver {
     @Query(() => ConnectedUserDto)
     @UseMiddleware(Authentication)
     async getConnectedUsers(
-        @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER
+        @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<ConnectedUserDto> {
-        return this.userService.getConnectedUsers(filter);
+        const user = this.userService.getConnectedUsers(filter);
+        pubsub.publish("connectedUser", user);
+        return user;
     }
 }

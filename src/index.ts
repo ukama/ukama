@@ -4,6 +4,8 @@ import configureExpress from "./config/express";
 import configureApolloServer from "./config/apolloServer";
 import { mockServer } from "./mockServer";
 import { PORT } from "./constants";
+import { createServer } from "http";
+import { job } from "./jobs/subscriptionJob";
 
 const logger = setupLogger("app");
 
@@ -12,15 +14,21 @@ const initializeApp = async () => {
         logger,
     });
 
-    const server = await configureApolloServer();
+    const { server, schema } = await configureApolloServer();
     server.applyMiddleware({ app });
+
+    const httpServer = createServer(app);
+    server.installSubscriptionHandlers(httpServer);
 
     app.get("/ping", (req, res) => {
         res.send("pong");
     });
 
     mockServer(app);
-    app.listen(PORT, () => logger.info(`Server listening on port: ${PORT}`));
+    httpServer.listen(PORT, () => {
+        logger.info(`Server listening on port: ${PORT}`);
+        job(schema);
+    });
 };
 
 initializeApp().catch(error => logger.error(error));

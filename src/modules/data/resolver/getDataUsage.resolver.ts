@@ -1,4 +1,11 @@
-import { Resolver, Arg, Query, UseMiddleware } from "type-graphql";
+import {
+    Resolver,
+    Arg,
+    Query,
+    UseMiddleware,
+    PubSub,
+    PubSubEngine,
+} from "type-graphql";
 import { Service } from "typedi";
 import { DataUsageDto } from "../types";
 import { DataService } from "../service";
@@ -13,8 +20,11 @@ export class DataUsageResolver {
     @Query(() => DataUsageDto)
     @UseMiddleware(Authentication)
     async getDataUsage(
-        @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER
+        @Arg("filter", () => TIME_FILTER) filter: TIME_FILTER,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<DataUsageDto | null> {
-        return await this.dataService.getDataUsage(filter);
+        const data = await this.dataService.getDataUsage(filter);
+        pubsub.publish("dataUsage", data);
+        return data;
     }
 }

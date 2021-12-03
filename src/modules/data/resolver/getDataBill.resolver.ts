@@ -1,4 +1,11 @@
-import { Resolver, Query, Arg, UseMiddleware } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    Arg,
+    UseMiddleware,
+    PubSubEngine,
+    PubSub,
+} from "type-graphql";
 import { Service } from "typedi";
 import { DataBillDto } from "../types";
 import { DataService } from "../service";
@@ -13,8 +20,11 @@ export class GetDataBillResolver {
     @Query(() => DataBillDto)
     @UseMiddleware(Authentication)
     async getDataBill(
-        @Arg("filter", () => DATA_BILL_FILTER) filter: DATA_BILL_FILTER
+        @Arg("filter", () => DATA_BILL_FILTER) filter: DATA_BILL_FILTER,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<DataBillDto> {
-        return this.dataService.getDataBill(filter);
+        const bill = this.dataService.getDataBill(filter);
+        pubsub.publish("dataBill", bill);
+        return bill;
     }
 }

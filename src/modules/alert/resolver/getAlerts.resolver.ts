@@ -1,4 +1,11 @@
-import { Resolver, Query, Arg, UseMiddleware } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    Arg,
+    UseMiddleware,
+    PubSubEngine,
+    PubSub,
+} from "type-graphql";
 import { Service } from "typedi";
 import { AlertsResponse } from "../types";
 import { AlertService } from "../service";
@@ -12,7 +19,12 @@ export class GetAlertsResolver {
 
     @Query(() => AlertsResponse)
     @UseMiddleware(Authentication)
-    async getAlerts(@Arg("data") data: PaginationDto): Promise<AlertsResponse> {
-        return this.alertService.getAlerts(data);
+    async getAlerts(
+        @Arg("data") data: PaginationDto,
+        @PubSub() pubsub: PubSubEngine
+    ): Promise<AlertsResponse> {
+        const alerts = this.alertService.getAlerts(data);
+        pubsub.publish("getAlerts", alerts);
+        return alerts;
     }
 }
