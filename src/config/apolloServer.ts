@@ -1,11 +1,15 @@
 import { ApolloServer, PubSub } from "apollo-server-express";
 import express from "express";
+import { GraphQLSchema } from "graphql";
 import { createSchema } from "../common/createSchema";
 
-const configureApolloServer = async (): Promise<ApolloServer> => {
-    const schema = await createSchema();
-
+const configureApolloServer = async (): Promise<{
+    server: ApolloServer;
+    schema: GraphQLSchema;
+}> => {
     const pubsub = new PubSub();
+
+    const schema = await createSchema();
 
     const server = new ApolloServer({
         schema,
@@ -20,7 +24,7 @@ const configureApolloServer = async (): Promise<ApolloServer> => {
 
         playground: true,
     });
-    return server;
+    return { server, schema };
 };
 
 export default configureApolloServer;

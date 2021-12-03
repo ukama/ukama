@@ -6,9 +6,9 @@ import { DataBillDto } from "../../data/types";
 @Resolver()
 export class DataBillSubscriptionResolver {
     @Subscription(() => DataBillDto, {
-        topics: "DATABILL",
+        topics: "dataBill",
     })
-    async DATABILL(@Root() bill: DataBillDto): Promise<DataBillDto> {
+    async dataBill(@Root() bill: DataBillDto): Promise<DataBillDto> {
         return bill;
     }
 }

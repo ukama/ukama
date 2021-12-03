@@ -24,7 +24,7 @@ export class GetAlertsResolver {
         @PubSub() pubsub: PubSubEngine
     ): Promise<AlertsResponse> {
         const alerts = this.alertService.getAlerts(data);
-        await pubsub.publish("GETALERTS", alerts);
+        pubsub.publish("getAlerts", alerts);
         return alerts;
     }
 }

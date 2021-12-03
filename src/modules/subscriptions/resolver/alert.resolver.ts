@@ -1,14 +1,14 @@
 import { Resolver, Root, Subscription } from "type-graphql";
 import { Service } from "typedi";
-import { AlertsResponse } from "../../alert/types";
+import { AlertsResponse, AlertDto } from "../../alert/types";
 
 @Service()
 @Resolver()
 export class GetAlertsSubscriptionResolver {
-    @Subscription(() => AlertsResponse, {
-        topics: "GETALERTS",
+    @Subscription(() => AlertDto, {
+        topics: "getAlerts",
     })
-    async GETALERTS(@Root() alerts: AlertsResponse): Promise<AlertsResponse> {
-        return alerts;
+    async getAlerts(@Root() alerts: AlertsResponse): Promise<AlertDto> {
+        return alerts.alerts[0];
     }
 }

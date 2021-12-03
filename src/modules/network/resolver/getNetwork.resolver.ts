@@ -1,4 +1,11 @@
-import { Resolver, Query, Arg, UseMiddleware } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    Arg,
+    UseMiddleware,
+    PubSubEngine,
+    PubSub,
+} from "type-graphql";
 import { Service } from "typedi";
 import { NetworkDto } from "../types";
 import { NetworkService } from "../service";
@@ -13,8 +20,11 @@ export class GetNetworkResolver {
     @Query(() => NetworkDto)
     @UseMiddleware(Authentication)
     async getNetwork(
-        @Arg("filter", () => NETWORK_TYPE) filter: NETWORK_TYPE
+        @Arg("filter", () => NETWORK_TYPE) filter: NETWORK_TYPE,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<NetworkDto> {
-        return this.networkService.getNetwork(filter);
+        const network = this.networkService.getNetwork(filter);
+        pubsub.publish("getNetwork", network);
+        return network;
     }
 }
