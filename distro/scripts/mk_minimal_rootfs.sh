@@ -29,6 +29,7 @@ NO_COLOR='\e[0m'
 
 # default target is local machine (gcc)
 DEF_TARGET="local"
+TARGET=${DEF_TARGET}
 
 log_info() {
     echo "Info: $1"
