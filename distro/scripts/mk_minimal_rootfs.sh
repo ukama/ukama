@@ -5,14 +5,14 @@
 # Script to generate minimal rootfs for Ukama Contained spaces and apps.
 
 # Base parameters
-UKAMA_OS=../../
+UKAMA_OS=`realpath ../../.`
 SYS_ROOT=${UKAMA_ROOT}/distro/
 BB_ROOT=${UKAMA_OS}/distro/system/busybox
 BB_CONFIG=ukama_minimal_defconfig
 
 # command line arguments
 MIN_ARGS=2
-DEF_ROOTFS=./_ukama_minimal_rootfs/
+DEF_ROOTFS=_ukama_minimal_rootfs/
 
 # For os-release
 OS_NAME="ukamaOS"
@@ -30,6 +30,9 @@ NO_COLOR='\e[0m'
 # default target is local machine (gcc)
 DEF_TARGET="local"
 TARGET=${DEF_TARGET}
+
+# default rootfs location is ${DEF_ROOTFS}
+ROOTFS=${DEF_ROOTFS}
 
 log_info() {
     echo "Info: $1"
@@ -50,7 +53,7 @@ msg_usage() {
     echo ""
     echo "Options:"
     echo "     -t target # Target is local(default), cnode, anode, etc."
-    echo "     -p string # Path for minimal rootfs, e.g. ./_ukama_capp_rootfs/"
+    echo "     -p string # Path for minimal rootfs, e.g. _ukama_capp_rootfs"
     echo "     -h        # Display this help message."
     exit
 }
@@ -60,22 +63,31 @@ msg_usage() {
 #
 build_busybox() {
     CWD=`pwd`
-    cd ${BB_ROOT}/
+    cd ${BB_ROOT}
 
     # set the config file for BB build
     BB_CONFIG=ukama_minimal_defconfig
-    BB_ROOTFS=_ukamafs
     #Execute make and copy conent of _ukamafs to rootfs
+
+    mkdir -p ${BB_ROOT}/${BB_ROOTFS}
 
     # setup proper compiler option.
     if [ "${TARGET}" != "local" ]
     then
-	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin/
+	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
     else
 	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
 
-    make XGCCPATH=${XGCC_PATH}/
+    make XGCCPATH=${XGCC_PATH}/ BBCONFIG=${BB_CONFIG} \
+	 ROOTFSPATH=${BB_ROOT}/${BB_ROOTFS}
+
+    if [ $? -ne 0 ]
+    then
+       log_error "Busybox compliation failed."
+       exit 1
+    fi
+
     cd ${CWD}
     cp -rf ${BB_ROOT}/${BB_ROOTFS}/* $ROOTFS
 
@@ -284,6 +296,7 @@ then
 fi
 
 mkdir -p ${ROOTFS}
+BB_ROOTFS=${ROOTFS}
 
 log_info "Building busy box with Ukama minimal configuration"
 build_busybox
