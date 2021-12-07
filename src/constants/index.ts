@@ -3,6 +3,8 @@ import { registerEnumType } from "type-graphql";
 export const NODE_ENV = "development";
 export const PORT = "8080";
 export const BASE_URL = `http://localhost:${PORT}`;
+export const AUTH_URL = `https://auth.dev.ukama.com/.api`;
+export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {
         "csrf-token": "test",
@@ -116,4 +118,13 @@ export enum NETWORK_TYPE {
 }
 registerEnumType(NETWORK_TYPE, {
     name: "NETWORK_TYPE",
+});
+
+export enum ORG_NODE_STATE {
+    ONBOARDED = "ONBOARDED",
+    PENDING = "PENDING",
+    UNDEFINED = "UNDEFINED",
+}
+registerEnumType(ORG_NODE_STATE, {
+    name: "ORG_NODE_STATE",
 });

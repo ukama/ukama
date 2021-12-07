@@ -3,11 +3,11 @@ import { INodeMapper } from "./interface";
 import { NodeResponseDto, NodeResponse } from "./types";
 
 class NodeMapper implements INodeMapper {
-    dtoToDto = (res: NodeResponse): NodeResponseDto => {
-        const nodes = res.data;
+    dtoToDto = (req: NodeResponse): NodeResponseDto => {
+        const nodes = req.data;
         let activeNodes = 0;
-        const totalNodes = res.length;
-        res.data.forEach(node => {
+        const totalNodes = req.length;
+        req.data.forEach(node => {
             if (node.status === GET_STATUS_TYPE.ACTIVE) {
                 activeNodes++;
             }

@@ -1,5 +1,4 @@
 import axios from "axios";
-import { URL } from "../constants/endpoints";
 import { ApiMethodDataDto } from "../common/types";
 
 class ApiMethods {
@@ -12,7 +11,7 @@ class ApiMethods {
         const { headers, path, params, type, body } = req;
         return await axios({
             method: type,
-            url: `${URL}/${path}`,
+            url: path,
             data: body,
             headers: headers,
             params: params,
