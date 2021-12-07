@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 import { PaginationResponse } from "../../common/types";
-import { GET_STATUS_TYPE } from "../../constants";
+import { GET_STATUS_TYPE, ORG_NODE_STATE } from "../../constants";
 
 @ObjectType()
 export class NodeDto {
@@ -102,4 +102,22 @@ export class UpdateNodeResponse {
 
     @Field()
     serialNo: string;
+}
+
+@ObjectType()
+export class OrgNodeDto {
+    @Field()
+    nodeId: string;
+
+    @Field(() => ORG_NODE_STATE)
+    state: ORG_NODE_STATE;
+}
+
+@ObjectType()
+export class OrgNodeResponse {
+    @Field()
+    orgName: string;
+
+    @Field(() => [OrgNodeDto])
+    nodes: OrgNodeDto[];
 }
