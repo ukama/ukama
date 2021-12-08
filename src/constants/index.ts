@@ -7,8 +7,8 @@ export const AUTH_URL = `https://auth.dev.ukama.com/.api`;
 export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {
-        csrf_token: "test",
-        ukama_session: "test",
+        csrf-token: "test",
+        ukama-session: "test",
     },
 };
 
