@@ -5,7 +5,7 @@ const client = new ApolloClient({
     cache: new InMemoryCache(),
     headers: {
         "csrf-token": "test",
-        "kratos-session": "test",
+        "ukama-session": "test",
     },
 });
 
