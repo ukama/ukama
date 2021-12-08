@@ -13,35 +13,10 @@ import { Network_Type } from "../generated";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { DataTableWithOptionColumns } from "./tableColumns";
-import {
-    checkPasswordLength,
-    checkPasswordSpecialCharacter,
-    combineUppercaseNLowercaseValidator,
-} from "../utils";
 
 const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
 const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
-const PasswordRules = [
-    {
-        id: 1,
-        idLabel: "checkLength",
-        label: "8 characters minimum",
-        validator: checkPasswordLength,
-    },
-    {
-        id: 2,
-        idLabel: "checkSpecialCaracter",
-        label: "At least one special character",
-        validator: checkPasswordSpecialCharacter,
-    },
-    {
-        id: 3,
-        idLabel: "checkLowerCaseNUppercase",
-        label: "Upper & lowercase letters ",
-        validator: combineUppercaseNLowercaseValidator,
-    },
-];
 const SETTING_MENU = [
     { id: 1, title: "Account Settings" },
     { id: 2, title: "Network Settings" },
@@ -1491,7 +1466,6 @@ export {
     MONTH_FILTER,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
-    PasswordRules,
     STATS_OPTIONS,
     STATS_PERIOD,
     UserActivation,

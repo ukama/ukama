@@ -1,46 +1,7 @@
 export const TRANSLATIONS_EN = {
-    LOGIN: {
-        FormTitle: "Log in to Ukama",
-        ForgotPasswordLabel: "Forgot password?",
-        ButtonLabel: "LOG IN",
-        ButtonWithGoogle: "LOG IN WITH GOOGLE",
-        FooterNoteText: "Don’t have an account? ",
-    },
-    CONSTANT: {
-        EmailLabel: "EMAIL",
-        PasswordLabel: "PASSWORD",
-        NameLabel: "NAME",
-        SignUpLinkLabel: "Sign up instead",
-        LinkLabel: "Log in instead ",
-        CancelButtonLable: "CANCEL",
-        NewPasswordLabel: "NEW PASSWORD",
-        ReturnToLoginLink: "RETURN TO LOGIN",
-        BackButtonLable: "BACK",
-        NextButtonLabel: "NEXT",
-        RecoveryEmail: "EMAIL RECOVERY LINK",
-    },
     NODE: {
         NodeNameLabel: "NODE NAME",
         NodeSerialNumberLabel: "SERIAL NUMBER",
-    },
-    SIGNUP: {
-        FormTitle: "Sign up for Ukama",
-        ButtonLabel: "SIGN UP",
-        ButtonWithGoogleLabel: "SIGN UP WITH GOOGLE",
-        FooterNoteText: `By signing up, I am agreeing to the Terms and Conditions and Privacy Policy. Already have an account?  `,
-    },
-    RESET_PASSWORD: {
-        FormTitle: "Change Password",
-        ButtonLabel: `CHANGE PASSWORD & LOGIN`,
-    },
-    RECOVER_PASSWORD: {
-        ImportantNote: "Link will expire in 30 minutes.",
-        FormTitle: "Recover Password",
-        FormNote: `If an account with the email “/EmailTag” exists, an email will be sent with further instructions. `,
-    },
-    FORGOT_PASSWORD: {
-        FormTitle: "  Recover Password",
-        LinkLabel: "  EMAIL RECOVERY LINK",
     },
     DIALOG_MESSAGE: {
         SuccessTitle: "Password Changed Successfully",
