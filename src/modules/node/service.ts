@@ -16,9 +16,6 @@ import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
-import { LoginDto } from "../auth/types";
-import { AuthService } from "../auth/service";
-import { UserService } from "../user/service";
 
 @Service()
 export class NodeService implements INodeService {
@@ -69,22 +66,14 @@ export class NodeService implements INodeService {
 
         return res.data;
     };
-    getNodesByOrg = async (req: LoginDto): Promise<OrgNodeResponse> => {
-        const actionUrl = await new AuthService().getActionUrl();
-        if (!actionUrl) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
-        const token = await new AuthService().login(req, actionUrl);
-        if (!token) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
-        const org = await new UserService().whoAmI(token);
-        if (!org) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-        if (!org.identity.id) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-        const orgId = org.identity.id;
-
+    getNodesByOrg = async (
+        orgId: string,
+        session: string | string[]
+    ): Promise<OrgNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.GET_NODES_BY_ORG}/${orgId}/nodes`,
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: `Bearer ${session}` },
         });
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
