@@ -71,9 +71,6 @@ const FormContainer = ({ values, handleChange }: FormContainerProps) => {
                         InputLabelProps={{ shrink: true }}
                         InputProps={{
                             disableUnderline: true,
-                            classes: {
-                                input: classes.disableInputFieldStyle,
-                            },
                         }}
                     />
                 </Grid>

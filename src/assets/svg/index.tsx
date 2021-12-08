@@ -22,8 +22,10 @@ import ModuleStoreIcon from "./ModuleStoreIcon";
 import ThermometerIcon from "./ThermometerIcon";
 import NotificationIcon from "./NotificationIcon";
 import AmountBalanceImg from "./AmountBalanceImg";
+import SettingsArrowIcon from "./SettingsArrowIcon";
 export {
     Logo,
+    SettingsArrowIcon,
     CpuIcon,
     NodeImg,
     AmountBalanceImg,

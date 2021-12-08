@@ -5,7 +5,9 @@ import { ForgotPasswordForm } from "../../components";
 const ForgotPassword = () => {
     const history = useHistory();
     // eslint-disable-next-line no-unused-vars
-    const handleSubmit = (values: FormikValues) => {};
+    const handleSubmit = (values: FormikValues) => {
+        /** */
+    };
     const handleBack = () => history.goBack();
 
     return (

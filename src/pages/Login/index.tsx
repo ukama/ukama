@@ -3,12 +3,16 @@ import { LoginForm } from "../../components";
 import { CenterContainer } from "../../styles";
 const Login = () => {
     // eslint-disable-next-line no-unused-vars
-    const handleSubmit = (values: FormikValues) => {};
+    const handleSubmit = (values: FormikValues) => {
+        /** */
+    };
     return (
         <>
             <CenterContainer>
                 <LoginForm
-                    onGoogleLogin={() => {}}
+                    onGoogleLogin={() => {
+                        /** */
+                    }}
                     onSubmit={(val: any) => handleSubmit(val)}
                 />
             </CenterContainer>

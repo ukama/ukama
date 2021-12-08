@@ -61,7 +61,9 @@ const NodeCard = ({
     subTitle,
     loading,
     isConfigure = false,
-    handleOptionItemClick = () => {},
+    handleOptionItemClick = () => {
+        /* Default empty function */
+    },
 }: NodeCardProps) => {
     const classes = useStyles();
 

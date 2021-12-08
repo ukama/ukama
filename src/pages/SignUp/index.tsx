@@ -3,11 +3,15 @@ import { SignUpForm } from "../../components";
 import { CenterContainer } from "../../styles";
 const SignUp = () => {
     // eslint-disable-next-line no-unused-vars
-    const handleSubmit = (values: FormikValues) => {};
+    const handleSubmit = (values: FormikValues) => {
+        /** */
+    };
     return (
         <CenterContainer>
             <SignUpForm
-                onGoogleSignUp={() => {}}
+                onGoogleSignUp={() => {
+                    /** */
+                }}
                 onSubmit={(val: any) => handleSubmit(val)}
             />
         </CenterContainer>

@@ -3,7 +3,7 @@
         "node": true,
         "browser": true,
         "es2021": true,
-        "jest":true
+        "jest": true
     },
     "parser": "@typescript-eslint/parser",
     "extends": [
@@ -12,7 +12,6 @@
         "plugin:prettier/recommended",
         "plugin:react/jsx-runtime"
     ],
-   
 
     "rules": {
         "no-console": "warn",
@@ -22,6 +21,7 @@
         "no-unused-vars": "warn",
         "react/prop-types": "off",
         "no-useless-call": "error",
+        "no-empty-function": "error",
         "no-duplicate-imports": "error",
         "react/jsx-indent-props": [2, 4],
         "no-irregular-whitespace": "error",

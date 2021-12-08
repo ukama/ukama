@@ -62,6 +62,7 @@ export const routes: IRoute[] = [
     getRouteObject("/home", "Home", true),
     getRouteObject("/nodes", "Nodes", true),
     getRouteObject("/user", "User", true),
+    getRouteObject("/settings", "Settings", true),
     getRouteObject("/billing", "Billing", true),
     getRouteObject("/store", "Store", true),
     //

@@ -12,13 +12,16 @@ const TabLayoutHeader = ({
     tab,
     tabs,
     onTabChange,
+    handleAction = () => {
+        /* Default empty function */
+    },
     withActionButton = false,
-    handleAction = () => {},
 }: TabLayoutProps) => {
     return (
         <Box
             sx={{
                 width: "100%",
+                display: "flex",
                 borderBottom: 2,
                 m: "8px 0px 18px",
                 justifyContent: "space-between",
@@ -27,6 +30,7 @@ const TabLayoutHeader = ({
         >
             <Tabs
                 value={tab}
+                sx={{ width: "fit-content" }}
                 onChange={(_, b) => onTabChange(b)}
                 aria-label="wrapped label tabs example"
             >

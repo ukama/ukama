@@ -4,6 +4,10 @@ export type MenuItemType = {
     title: string;
     route: string;
 };
+export type UserSettingsMenuType = {
+    id: number;
+    label: string;
+};
 export type StatsItemType = {
     id: number;
     label: string;
@@ -54,7 +58,10 @@ export type SVGType = {
     width?: string;
     height?: string;
 };
-
+export type SettingsMenuTypes = {
+    id: number;
+    title: string;
+};
 export type ColumnsWithOptions = {
     id: any;
     label: string;

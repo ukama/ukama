@@ -1,0 +1,107 @@
+import {
+    Grid,
+    Button,
+    Divider,
+    MenuItem,
+    TextField,
+    Typography,
+} from "@mui/material";
+import { useState } from "react";
+import colors from "../../theme/colors";
+import { ExportOptionsType } from "../../types";
+import { SettingsArrowIcon } from "../../assets/svg";
+import { LANGUAGE_OPTIONS, TimeZones } from "../../constants";
+
+const LineDivider = () => (
+    <Grid item xs={12}>
+        <Divider sx={{ width: "90%" }} />
+    </Grid>
+);
+
+const UserSettings = () => {
+    const [language, setLanguage] = useState("EN");
+    const [timezone, setTimezone] = useState("Pacific Standard Time");
+    const handleLanguageChange = (event: any) => {
+        setLanguage(event.target.value);
+    };
+    const handleTimezoneChange = (event: any) => {
+        setTimezone(event.target.value);
+    };
+    return (
+        <Grid container spacing={2}>
+            <Grid item container>
+                <Grid item xs={4}>
+                    <Typography variant="h6">My Account Details</Typography>
+                </Grid>
+                <Grid item xs={8}>
+                    <Button
+                        size="large"
+                        variant="outlined"
+                        endIcon={<SettingsArrowIcon />}
+                    >
+                        UKAMA ACCOUNT SETTINGS
+                    </Button>
+                </Grid>
+            </Grid>
+            <LineDivider />
+            <Grid item container>
+                <Grid item xs={4}>
+                    <Typography variant="h6">Language & Region</Typography>
+                </Grid>
+                <Grid item container xs={8} spacing={2}>
+                    <Grid item xs={8}>
+                        <TextField
+                            select
+                            InputLabelProps={{
+                                style: {
+                                    color: colors.lightGrey,
+                                },
+                            }}
+                            id="language"
+                            label="LANGUAGE"
+                            value={language}
+                            sx={{ width: "100%" }}
+                            onChange={handleLanguageChange}
+                        >
+                            {LANGUAGE_OPTIONS.map(
+                                ({ value, label }: ExportOptionsType) => (
+                                    <MenuItem key={value} value={value}>
+                                        <Typography variant="body1">
+                                            {label}
+                                        </Typography>
+                                    </MenuItem>
+                                )
+                            )}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={8}>
+                        <TextField
+                            InputLabelProps={{
+                                style: {
+                                    color: colors.lightGrey,
+                                },
+                            }}
+                            select
+                            id="timezone"
+                            label="TIME ZONE"
+                            value={timezone}
+                            onChange={handleTimezoneChange}
+                            sx={{ width: "100%" }}
+                        >
+                            {TimeZones.map(({ value, text }: any) => (
+                                <MenuItem key={value} value={value}>
+                                    <Typography variant="body1">
+                                        {text}
+                                    </Typography>
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                    </Grid>
+                </Grid>
+            </Grid>
+            <LineDivider />
+        </Grid>
+    );
+};
+
+export default UserSettings;

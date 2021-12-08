@@ -7,11 +7,16 @@ import SignUpForm from "./SignUpForm";
 import StatusCard from "./StatusCard";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
+import NodeSettings from "./NodeSettings";
+import UserSettings from "./UserSettings";
+import AlertSettings from "./AlertSettings";
+import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
 import SimpleDataTable from "./SimpleDataTable";
+import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
@@ -20,9 +25,9 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
+import FormControlCheckboxes from "./FormControlCheckboxes";
 import PasswordFieldWithIndicator from "./PasswordFieldWithIndicator";
 import ForgotPasswordConfirmationMessage from "./ForgotPasswordConfirmationMessage";
-import NodeContainer from "./NodeContainer";
 import {
     BasicDialog,
     ActivationDialog,
@@ -39,22 +44,27 @@ export {
     CurrentBill,
     TableHeader,
     BasicDialog,
+    NodeSettings,
+    UserSettings,
+    AlertSettings,
     SimCardDesign,
     NetworkStatus,
-    OptionsPopover,
     NodeContainer,
+    OptionsPopover,
     LoadingWrapper,
+    NetworkSettings,
     SimpleDataTable,
     ContainerHeader,
     UpgradeNavFooter,
     ActivationDialog,
+    BillingDataTable,
     ResetPasswordForm,
     MultiSlideCarousel,
     ForgotPasswordForm,
     withAuthWrapperHOC,
-    BillingDataTable,
     DataTableWithOptions,
     UserActivationDialog,
+    FormControlCheckboxes,
     PasswordFieldWithIndicator,
     ForgotPasswordConfirmationMessage,
 };

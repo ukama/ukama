@@ -15,8 +15,13 @@ import { CurrentBillColumns } from "../../constants/tableColumns";
 const Billing = () => {
     const [tab, setTab] = useState("1");
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
-    const handleMakePayment = () => {};
+    const handleMakePayment = () => {
+        /* TODO: Handle make payment action */
+    };
     const handleTabChange = (value: string) => setTab(value);
+    const handleExport = () => {
+        /* TODO: Handle export action */
+    };
 
     return (
         <Box>
@@ -49,7 +54,7 @@ const Billing = () => {
                             <TableHeader
                                 title={"Billing breakdown"}
                                 buttonTitle={"Export"}
-                                handleButtonAction={() => {}}
+                                handleButtonAction={handleExport}
                             />
                             <SimpleDataTable
                                 columns={CurrentBillColumns}
@@ -82,7 +87,7 @@ const Billing = () => {
                     <TableHeader
                         title={"Billing history"}
                         buttonTitle={"Export"}
-                        handleButtonAction={() => {}}
+                        handleButtonAction={handleExport}
                     />
                     <SimpleDataTable
                         rowSelection={true}

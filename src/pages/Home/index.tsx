@@ -171,13 +171,17 @@ const Home = () => {
             refetchUser();
         }
     };
-    const handleNodeActions = (id: string, type: string) => {};
+    const handleNodeActions = (id: string, type: string) => {
+        /* TODO: Handle Node Action */
+    };
 
     const handleAddNode = (value: any) => {
         setIsAddNode(true);
     };
 
-    const handleActivationSubmit = () => {};
+    const handleActivationSubmit = () => {
+        /* Handle submit activation action */
+    };
     const onActivateButton = () => setIsUserActivateOpen(() => true);
 
     return (

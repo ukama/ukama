@@ -4,15 +4,15 @@ import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
 import { CenterContainer } from "./styles";
+import { BasicDialog } from "./components";
+import { useSetRecoilState } from "recoil";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
+import { isSkeltonLoading } from "./recoil";
 import { ThemeProvider } from "@emotion/react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { CircularProgress, CssBaseline } from "@mui/material";
-import { BasicDialog } from "./components";
-import { useSetRecoilState } from "recoil";
-import { isSkeltonLoading } from "./recoil";
 
 const App = () => {
     const { loading, response } = useWhoami();

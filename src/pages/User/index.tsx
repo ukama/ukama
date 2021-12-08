@@ -8,7 +8,9 @@ const User = () => {
 
     const handleTabChange = (value: string) => setTab(value);
 
-    const handleActivateUser = () => {};
+    const handleActivateUser = () => {
+        /* TODO: Handle activate user action */
+    };
 
     return (
         <Box sx={{ mt: "24px" }}>

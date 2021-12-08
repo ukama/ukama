@@ -10,13 +10,14 @@ import {
 } from "@mui/material";
 import React from "react";
 import { colors } from "../../theme";
+import { useSetRecoilState } from "recoil";
 import { HEADER_MENU } from "../../constants";
+import { useHistory } from "react-router-dom";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
+import { isSkeltonLoading } from "../../recoil";
 import { HeaderMenuItemType } from "../../types";
 import { SkeletonRoundedCard } from "../../styles";
-import { useSetRecoilState } from "recoil";
-import { isSkeltonLoading } from "../../recoil";
 
 type HeaderProps = {
     pageName: string;
@@ -25,6 +26,7 @@ type HeaderProps = {
 };
 
 const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
+    const history = useHistory();
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const showDivider =
         pageName !== "Billing" && pageName !== "User" ? true : false;
@@ -58,6 +60,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
             case "Setting":
                 //GOTO Settings page
                 handleMenuClose();
+                history.push("/settings");
                 break;
             case "Notification":
                 //GOTO Notification page
