@@ -63,7 +63,7 @@ const DataTableWithOptions = ({
                 <Table stickyHeader>
                     <TableHead>
                         <TableRow>
-                            {columns.map(column => (
+                            {columns?.map(column => (
                                 <TableCell
                                     key={column.id}
                                     align={column.align}
@@ -83,7 +83,7 @@ const DataTableWithOptions = ({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {dataset.map((row: any) => (
+                        {dataset?.map((row: any) => (
                             <TableRow role="row" tabIndex={-1} key={row.name}>
                                 {columns.map(
                                     (

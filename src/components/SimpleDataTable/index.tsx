@@ -61,7 +61,7 @@ const SimpleDataTable = ({
                                 />
                             </TableCell>
                         )}
-                        {columns.map(column => (
+                        {columns?.map(column => (
                             <TableCell
                                 key={column.id}
                                 align={column.align}
@@ -77,7 +77,7 @@ const SimpleDataTable = ({
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {dataset.map((row: any) => (
+                    {dataset?.map((row: any) => (
                         <TableRow
                             key={row.id}
                             sx={{
@@ -100,7 +100,7 @@ const SimpleDataTable = ({
                                     />
                                 </TableCell>
                             )}
-                            {columns.map(
+                            {columns?.map(
                                 (column: ColumnsWithOptions, index: number) => (
                                     <TableCell
                                         key={`${row.name}-${index}`}
