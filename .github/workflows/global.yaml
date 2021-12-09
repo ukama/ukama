@@ -1,9 +1,6 @@
-name: global
-
+name: pr-verification
 on:  
   pull_request:
-   
-
 jobs:  
   verify:
     runs-on: ubuntu-latest
