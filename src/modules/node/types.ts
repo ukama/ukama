@@ -111,6 +111,15 @@ export class OrgNodeDto {
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
+
+    @Field()
+    title: string;
+
+    @Field()
+    description: string;
+
+    @Field()
+    totalUser: number;
 }
 
 @ObjectType()
@@ -120,4 +129,19 @@ export class OrgNodeResponse {
 
     @Field(() => [OrgNodeDto])
     nodes: OrgNodeDto[];
+}
+
+@ObjectType()
+export class OrgNodeResponseDto {
+    @Field()
+    orgName: string;
+
+    @Field(() => [OrgNodeDto])
+    nodes: OrgNodeDto[];
+
+    @Field()
+    activeNodes: number;
+
+    @Field()
+    totalNodes: number;
 }
