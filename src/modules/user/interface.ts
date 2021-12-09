@@ -10,7 +10,6 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
-    OrganisationDto,
     ResidentResponse,
     ResidentsResponse,
     UpdateUserDto,
@@ -25,7 +24,6 @@ export interface IUserService {
     getUser(id: string): Promise<GetUserDto>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
-    whoAmI(token: string): Promise<OrganisationDto | null>;
 }
 
 export interface IUserMapper {
