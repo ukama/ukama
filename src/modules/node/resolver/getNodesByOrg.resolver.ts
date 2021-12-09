@@ -1,6 +1,6 @@
 import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
 import { Service } from "typedi";
-import { OrgNodeResponse } from "../types";
+import { OrgNodeResponseDto } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
@@ -10,12 +10,12 @@ import { Context } from "../../../common/types";
 export class GetNodesByOrgResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => OrgNodeResponse)
+    @Query(() => OrgNodeResponseDto)
     @UseMiddleware(Authentication)
     async getNodesByOrg(
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
-    ): Promise<OrgNodeResponse> {
+    ): Promise<OrgNodeResponseDto> {
         return this.nodeService.getNodesByOrg(orgId, ctx.session);
     }
 }

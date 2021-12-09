@@ -3,7 +3,7 @@ import {
     AddNodeDto,
     AddNodeResponse,
     NodesResponse,
-    OrgNodeResponse,
+    OrgNodeResponseDto,
     UpdateNodeDto,
     UpdateNodeResponse,
 } from "./types";
@@ -69,15 +69,16 @@ export class NodeService implements INodeService {
     getNodesByOrg = async (
         orgId: string,
         session: string | string[]
-    ): Promise<OrgNodeResponse> => {
+    ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.GET_NODES_BY_ORG}/${orgId}/nodes`,
             headers: { Authorization: `Bearer ${session}` },
         });
+
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
 
-        return res;
+        return NodeMapper.dtoToNodesDto(res);
     };
 }

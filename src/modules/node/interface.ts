@@ -9,11 +9,12 @@ import {
     UpdateNodeDto,
     UpdateNodeResponse,
     OrgNodeResponse,
+    OrgNodeResponseDto,
 } from "./types";
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
-    getNodesByOrg(orgId: string, session: string): Promise<OrgNodeResponse>;
+    getNodesByOrg(orgId: string, session: string): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto): Promise<AddNodeResponse>;
     updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
     deleteNode(id: string): Promise<DeactivateResponse>;
@@ -21,4 +22,5 @@ export interface INodeService {
 
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
+    dtoToNodesDto(req: OrgNodeResponse): OrgNodeResponseDto;
 }
