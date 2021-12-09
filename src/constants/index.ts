@@ -3,7 +3,6 @@ import { registerEnumType } from "type-graphql";
 export const NODE_ENV = "development";
 export const PORT = "8080";
 export const BASE_URL = `http://localhost:${PORT}`;
-export const AUTH_URL = `https://auth.dev.ukama.com/.api`;
 export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {

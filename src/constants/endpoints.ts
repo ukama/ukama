@@ -1,4 +1,4 @@
-import { BASE_URL, AUTH_URL, DEV_URL } from "../constants/index";
+import { BASE_URL, DEV_URL } from "../constants/index";
 
 export const SERVER = {
     GET_CONNECTED_USERS: `${BASE_URL}/user/get_conneted_users`,
@@ -19,7 +19,5 @@ export const SERVER = {
     POST_UPDATE_NODE: `${BASE_URL}/node/update_node`,
     POST_DELETE_NODE: `${BASE_URL}/node/delete_node`,
     GET_USER: `${BASE_URL}/user/get_user`,
-    GET_FLOW_ID: `${AUTH_URL}/self-service/login/api`,
-    GET_ORG_ID: `${AUTH_URL}/sessions/whoami`,
     GET_NODES_BY_ORG: `${DEV_URL}/orgs`,
 };
