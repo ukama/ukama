@@ -15,6 +15,7 @@ class ApiMethods {
             data: body,
             headers: headers,
             params: params,
+            timeout: 10000,
         }).catch(err => {
             throw err;
         });

@@ -24,13 +24,15 @@ export const axiosErrorHandler = (error: any): ErrorType => {
             message: error.response.statusText,
         };
     } else if (error.request) {
-        // The request was made but no response was received
+        // The request was not made
+
         res = {
-            code: error.request.status,
-            message: error.request.statusText,
+            code: 400,
+            message: Messages.ERR_SERVER_REQUEST_FAILED,
         };
     } else {
         // Something happened in setting up the request that triggered an Error
+
         res = {
             code: 400,
             message: error.message,
