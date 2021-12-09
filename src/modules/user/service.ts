@@ -10,7 +10,6 @@ import {
     UpdateUserDto,
     UserResponse,
     GetUserDto,
-    OrganisationDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -114,14 +113,5 @@ export class UserService implements IUserService {
             residents,
             meta,
         };
-    };
-    whoAmI = async (token: string): Promise<OrganisationDto | null> => {
-        const org = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_ORG_ID,
-            headers: { "X-Session-Token": token },
-        });
-        if (checkError(org)) return null;
-        return org;
     };
 }
