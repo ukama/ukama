@@ -1,7 +1,22 @@
 import { colors } from "../../theme";
+import { makeStyles } from "@mui/styles";
+import { RoundedCard } from "../../styles";
 import { SelectItemType } from "../../types";
-import { RoundedCard, SkeletonRoundedCard } from "../../styles";
+import LoadingWrapper from "../LoadingWrapper";
 import { Grid, MenuItem, Select, Typography } from "@mui/material";
+
+const useStyles = makeStyles(() => ({
+    selectStyle: {
+        width: "108px",
+        textAlign: "end",
+        color: colors.empress,
+        "& p": {
+            fontWeight: 500,
+            fontSize: "14px",
+            lineHeight: "157%",
+        },
+    },
+}));
 
 type StatusCardProps = {
     Icon: any;
@@ -23,11 +38,10 @@ const StatusCard = ({
     subtitle1 = "0",
     subtitle2 = "",
     handleSelect,
-}: StatusCardProps) => (
-    <>
-        {loading ? (
-            <SkeletonRoundedCard variant="rectangular" height={104} />
-        ) : (
+}: StatusCardProps) => {
+    const classes = useStyles();
+    return (
+        <LoadingWrapper height={100} isLoading={loading}>
             <RoundedCard>
                 <Grid
                     spacing={2}
@@ -63,12 +77,12 @@ const StatusCard = ({
                                     value={option}
                                     disableUnderline
                                     variant="standard"
-                                    sx={{
-                                        width: "108px",
-                                        textAlign: "end",
-                                        color: colors.empress,
+                                    className={classes.selectStyle}
+                                    MenuProps={{
+                                        sx: {
+                                            maxHeight: "194px",
+                                        },
                                     }}
-                                    MenuProps={{ sx: { maxHeight: "194px" } }}
                                     onChange={e => handleSelect(e.target.value)}
                                 >
                                     {options.map(
@@ -92,7 +106,10 @@ const StatusCard = ({
                                 <Typography
                                     variant="h5"
                                     paddingRight="6px"
-                                    sx={{ position: "relative", top: "2px" }}
+                                    sx={{
+                                        position: "relative",
+                                        top: "2px",
+                                    }}
                                 >
                                     {subtitle1}
                                 </Typography>
@@ -111,8 +128,7 @@ const StatusCard = ({
                     </Grid>
                 </Grid>
             </RoundedCard>
-        )}
-    </>
-);
-
+        </LoadingWrapper>
+    );
+};
 export default StatusCard;

@@ -22,12 +22,12 @@ const NodeSettings = () => {
 
     return (
         <Grid container spacing={2}>
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={4}>
                     <Typography variant="h6">Roaming Options</Typography>
                 </Grid>
-                <Grid item container xs={8}>
-                    <Grid item xs={8}>
+                <Grid item container xs={12} md={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <Typography
                             variant="body1"
                             sx={{
@@ -40,7 +40,7 @@ const NodeSettings = () => {
                             disabled.
                         </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <FormControlLabel
                             control={
                                 <Switch
@@ -52,7 +52,7 @@ const NodeSettings = () => {
                             sx={{ typography: "body1" }}
                         />
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <TextField
                             select
                             id="nodes"

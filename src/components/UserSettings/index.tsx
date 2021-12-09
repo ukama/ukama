@@ -29,11 +29,11 @@ const UserSettings = () => {
     };
     return (
         <Grid container spacing={2}>
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container xs={12}>
+                <Grid item xs={12} sm={4}>
                     <Typography variant="h6">My Account Details</Typography>
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12} sm={8}>
                     <Button
                         size="large"
                         variant="outlined"
@@ -44,12 +44,12 @@ const UserSettings = () => {
                 </Grid>
             </Grid>
             <LineDivider />
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container xs={12} spacing={3}>
+                <Grid item xs={12} md={4}>
                     <Typography variant="h6">Language & Region</Typography>
                 </Grid>
-                <Grid item container xs={8} spacing={2}>
-                    <Grid item xs={8}>
+                <Grid item md={8} xs={12} spacing={3} container>
+                    <Grid item xs={12} sm={12} md={8}>
                         <TextField
                             select
                             InputLabelProps={{
@@ -74,7 +74,7 @@ const UserSettings = () => {
                             )}
                         </TextField>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={12} md={8}>
                         <TextField
                             InputLabelProps={{
                                 style: {

@@ -21,7 +21,6 @@ import { Logo } from "../../assets/svg";
 import { makeStyles } from "@mui/styles";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
-import { Dispatch, SetStateAction } from "react";
 import { UpgradeNavFooter } from "../../components";
 import { SkeletonRoundedCard } from "../../styles";
 
@@ -53,15 +52,21 @@ const useStyles = makeStyles(() => ({
 }));
 
 type SidebarProps = {
-    path: string;
+    page: string;
     isOpen: boolean;
     isLoading: boolean;
+    handlePageChange: Function;
     handleDrawerToggle: Function;
-    setPath: Dispatch<SetStateAction<string>>;
 };
 
 const Sidebar = (
-    { isOpen, isLoading, handleDrawerToggle, path, setPath }: SidebarProps,
+    {
+        page,
+        isOpen,
+        isLoading,
+        handlePageChange,
+        handleDrawerToggle,
+    }: SidebarProps,
     props: any
 ) => {
     const { window } = props;
@@ -76,27 +81,27 @@ const Sidebar = (
                     key={id}
                     href={route}
                     onClick={() => {
-                        setPath(title);
+                        handlePageChange(title);
                         history.push(route);
                     }}
-                    selected={title === path}
+                    selected={title === page}
                     className={
-                        title === path ? classes.listItemDone : classes.listItem
+                        title === page ? classes.listItemDone : classes.listItem
                     }
                 >
                     <ListItemIcon sx={{ minWidth: "44px" }}>
                         <Icon
                             color={
-                                title === path ? colors.white : colors.vulcan
+                                title === page ? colors.white : colors.vulcan
                             }
                         />
                     </ListItemIcon>
                     <ListItemText>
                         <Typography
                             variant="body1"
-                            fontWeight={title === path ? "bold" : "normal"}
+                            fontWeight={title === page ? "bold" : "normal"}
                             className={
-                                title === path
+                                title === page
                                     ? classes.listItemDoneText
                                     : classes.listItemText
                             }
@@ -121,7 +126,17 @@ const Sidebar = (
                 <Logo width={"100%"} height={"36px"} />
             </Toolbar>
             {MenuList(SIDEBAR_MENU1)}
-            <Divider sx={{ m: "8px 0px 0px 20px !important" }} />
+            <div
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    justifyContent: "center",
+                }}
+            >
+                <Divider
+                    sx={{ width: 160, mt: "8px", mb: "20px !important" }}
+                />
+            </div>
             {MenuList(SIDEBAR_MENU2)}
 
             <div
@@ -152,7 +167,7 @@ const Sidebar = (
         <Box
             component="nav"
             sx={{
-                width: DRAWER_WIDTH,
+                width: { xs: 0, sm: DRAWER_WIDTH },
                 flexShrink: { sm: 0 },
                 boxShadow: "6px 0px 18px rgba(0, 0, 0, 0.06)",
             }}
@@ -183,21 +198,19 @@ const Sidebar = (
                     sx={{ borderRadius: 0 }}
                 />
             ) : (
-                <>
-                    <Drawer
-                        open
-                        variant="permanent"
-                        sx={{
-                            display: { xs: "none", sm: "block" },
-                            "& .MuiDrawer-paper": {
-                                boxSizing: "border-box",
-                                width: DRAWER_WIDTH,
-                            },
-                        }}
-                    >
-                        {drawer}
-                    </Drawer>
-                </>
+                <Drawer
+                    open
+                    variant="permanent"
+                    sx={{
+                        display: { xs: "none", sm: "block" },
+                        "& .MuiDrawer-paper": {
+                            boxSizing: "border-box",
+                            width: DRAWER_WIDTH,
+                        },
+                    }}
+                >
+                    {drawer}
+                </Drawer>
             )}
         </Box>
     );

@@ -22,10 +22,16 @@ import { SkeletonRoundedCard } from "../../styles";
 type HeaderProps = {
     pageName: string;
     isLoading: boolean;
+    handlePageChange: Function;
     handleDrawerToggle: Function;
 };
 
-const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
+const Header = ({
+    pageName,
+    handlePageChange,
+    handleDrawerToggle,
+    isLoading,
+}: HeaderProps) => {
     const history = useHistory();
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const showDivider =
@@ -60,6 +66,7 @@ const Header = ({ pageName, handleDrawerToggle, isLoading }: HeaderProps) => {
             case "Setting":
                 //GOTO Settings page
                 handleMenuClose();
+                handlePageChange("Settings");
                 history.push("/settings");
                 break;
             case "Notification":

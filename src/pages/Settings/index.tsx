@@ -87,7 +87,7 @@ const Settings = () => {
         <>
             <Box mt={2}>
                 <Grid container spacing={2}>
-                    <Grid item xs={2}>
+                    <Grid item xs={12} md={3}>
                         <RoundedCard
                             sx={{
                                 p: "12px 20px",
@@ -116,7 +116,7 @@ const Settings = () => {
                             </MenuList>
                         </RoundedCard>
                     </Grid>
-                    <Grid item xs={10}>
+                    <Grid item xs={12} md={9} sx={{ mb: "18px" }}>
                         <RoundedCard>
                             <TabPanel index={1} value={menuId}>
                                 <UserSettings />

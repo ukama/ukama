@@ -1,7 +1,7 @@
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { useState } from "react";
 import { colors } from "../theme";
+import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { useHistory } from "react-router";
 import { getTitleFromPath } from "../utils";
@@ -11,11 +11,17 @@ const Layout = (props: any) => {
     const { children } = props;
     const history = useHistory();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const [path, setPath] = useState(
+    const [page, setPage] = useState(
         getTitleFromPath(history?.location?.pathname || "/")
     );
     const [isOpen, setIsOpen] = useState(false);
+
+    const handlePageChange = (page: string) => {
+        setPage(page);
+    };
+
     const handleDrawerToggle = () => setIsOpen(() => !isOpen);
+
     return (
         <Box
             sx={{
@@ -26,10 +32,10 @@ const Layout = (props: any) => {
         >
             <CssBaseline />
             <Sidebar
-                path={path}
+                page={page}
                 isOpen={isOpen}
-                setPath={setPath}
                 isLoading={isSkeltonLoad}
+                handlePageChange={handlePageChange}
                 handleDrawerToggle={handleDrawerToggle}
             />
             <Box
@@ -41,8 +47,9 @@ const Layout = (props: any) => {
                 }}
             >
                 <Header
-                    pageName={path}
+                    pageName={page}
                     isLoading={isSkeltonLoad}
+                    handlePageChange={handlePageChange}
                     handleDrawerToggle={handleDrawerToggle}
                 />
                 {children}

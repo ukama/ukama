@@ -7,19 +7,34 @@ import {
     ToggleButtonGroup,
 } from "@mui/material";
 import { colors } from "../../theme";
+import { makeStyles } from "@mui/styles";
 import { RechartsData } from "../../constants/stubData";
 import { RoundedCard, SkeletonRoundedCard } from "../../styles";
 import { StatsItemType, statsPeriodItemType } from "../../types";
 import {
-    ComposedChart,
     Bar,
+    Line,
     XAxis,
     YAxis,
-    CartesianGrid,
     Tooltip,
+    ComposedChart,
+    CartesianGrid,
     ResponsiveContainer,
-    Line,
 } from "recharts";
+
+const useStyles = makeStyles(() => ({
+    selectStyle: {
+        width: "144px",
+        "& p": {
+            fontSize: "20px",
+            fontWeight: "500",
+            lineHeight: "160%",
+            fontFamily: "Rubik",
+            letterSpacing: "0.15px",
+        },
+    },
+}));
+
 type StatsCardProps = {
     loading: boolean;
     handleSelect: any;
@@ -39,6 +54,7 @@ const StatsCard = ({
     selectedButton,
     handleSelectedButton,
 }: StatsCardProps) => {
+    const classes = useStyles();
     return (
         <>
             {loading ? (
@@ -52,15 +68,16 @@ const StatsCard = ({
                                     sx={{
                                         width: "auto",
                                     }}
-                                    value={selectOption}
-                                    variant="standard"
                                     disableUnderline
+                                    variant="standard"
+                                    value={selectOption}
                                     onChange={handleSelect}
+                                    className={classes.selectStyle}
                                 >
                                     {options.map(
                                         ({ id, label }: StatsItemType) => (
                                             <MenuItem key={id} value={id}>
-                                                <Typography variant="h6">
+                                                <Typography variant="body1">
                                                     {label}
                                                 </Typography>
                                             </MenuItem>

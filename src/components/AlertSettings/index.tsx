@@ -20,13 +20,13 @@ const AlertSettings = () => {
 
     return (
         <Grid container spacing={2}>
-            <Grid item container>
-                <Grid item xs={3}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={3}>
                     <Typography variant="h6">Common Events</Typography>
                 </Grid>
-                <Grid item container xs={9} spacing={1}>
+                <Grid item xs={12} md={8}>
                     {[1, 2].map(i => (
-                        <Grid key={`${i}-`} item>
+                        <Grid key={`${i}-`} item xs={12} sm={10} md={9}>
                             <FormControlCheckboxes
                                 values={alertList}
                                 handleChange={handleAlertChange}
@@ -53,13 +53,13 @@ const AlertSettings = () => {
                 </Grid>
             </Grid>
             <LineDivider />
-            <Grid item container>
-                <Grid item xs={3}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={3}>
                     <Typography variant="h6">Cloud Events</Typography>
                 </Grid>
-                <Grid item container xs={9} spacing={1}>
+                <Grid item container xs={12} md={9}>
                     {[3, 4].map(i => (
-                        <Grid key={`${i}-`} item>
+                        <Grid key={`${i}-`} item xs={12} sm={10} md={8}>
                             <FormControlCheckboxes
                                 values={alertList}
                                 handleChange={handleAlertChange}

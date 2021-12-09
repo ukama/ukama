@@ -1,13 +1,12 @@
 import {
     Table,
+    Link,
     TableRow,
     TableBody,
     TableCell,
     TableHead,
     TableContainer,
-    Link,
 } from "@mui/material";
-import { MenuDots } from "../../assets/svg";
 import OptionsPopover from "../OptionsPopover";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
 
@@ -73,11 +72,7 @@ const DataTableWithOptions = ({
                                         fontSize: "0.875rem",
                                     }}
                                 >
-                                    {column.id === "actions" ? (
-                                        <MenuDots />
-                                    ) : (
-                                        <b>{column.label}</b>
-                                    )}
+                                    <b>{column.label}</b>
                                 </TableCell>
                             ))}
                         </TableRow>

@@ -27,12 +27,12 @@ const NetworkSettings = () => {
     };
     return (
         <Grid container spacing={2}>
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={4}>
                     <Typography variant="h6">Network Name</Typography>
                 </Grid>
-                <Grid item xs={8}>
-                    <Grid item xs={8}>
+                <Grid item xs={12} md={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <Typography
                             variant="body1"
                             sx={{
@@ -44,7 +44,7 @@ const NetworkSettings = () => {
                             this again at any point.
                         </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <TextField
                             fullWidth
                             id="name"
@@ -62,12 +62,12 @@ const NetworkSettings = () => {
                 </Grid>
             </Grid>
             <LineDivider />
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={4}>
                     <Typography variant="h6">Network Visibility(?)</Typography>
                 </Grid>
-                <Grid item container xs={8}>
-                    <Grid item xs={8}>
+                <Grid item container xs={12} md={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <Typography
                             variant="body1"
                             sx={{
@@ -79,7 +79,7 @@ const NetworkSettings = () => {
                             it’ll change after hardware is actually shipped.
                         </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <RadioGroup
                             aria-label="networkType"
                             defaultValue="private"
@@ -100,12 +100,12 @@ const NetworkSettings = () => {
                 </Grid>
             </Grid>
             <LineDivider />
-            <Grid item container>
-                <Grid item xs={4}>
+            <Grid item container spacing={2}>
+                <Grid item xs={12} md={4}>
                     <Typography variant="h6">Roaming Options</Typography>
                 </Grid>
-                <Grid item container xs={8}>
-                    <Grid item xs={8}>
+                <Grid item container xs={12} md={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <Typography
                             variant="body1"
                             sx={{
@@ -118,7 +118,7 @@ const NetworkSettings = () => {
                             disabled.
                         </Typography>
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <FormControlLabel
                             control={
                                 <Switch
@@ -130,7 +130,7 @@ const NetworkSettings = () => {
                             sx={{ typography: "body1" }}
                         />
                     </Grid>
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={10} md={8}>
                         <TextField
                             select
                             id="eSims"

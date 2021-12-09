@@ -2,7 +2,7 @@ const Logo = (props: any) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
-        viewBox="17.5 31.59 144 34.88"
+        viewBox="17.5 31.59 130 34.88"
         {...props}
     >
         <path
