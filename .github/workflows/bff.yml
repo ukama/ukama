@@ -61,9 +61,9 @@ jobs:
               env:
                   REGISTRY: http://003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
               run: |
-                  buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                  buildah bud -f bff_integration\Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
-                      -t $REGISTRY\:latest-test .  && \
+                      -t $REGISTRY\:latest-test bff_integration\.
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
                   buildah push $REGISTRY\:latest-test
