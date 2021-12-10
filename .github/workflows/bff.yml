@@ -59,7 +59,7 @@ jobs:
             - name: OCI Push bff-api test
               working-directory: "${{ env.working-directory }}/bff_integration"
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bff
+                  REGISTRY: http://003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
               run: |
                   buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
