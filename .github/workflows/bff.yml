@@ -57,7 +57,7 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
             - name: OCI Push bff-api test
-              working-directory: ${{ env.working-directory }}
+              working-directory: ${{ env.working-directory }}\bff_integration
               env:
                   REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bff
               run: |
