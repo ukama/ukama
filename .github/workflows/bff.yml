@@ -56,18 +56,29 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
-#             - name: SonarCloud Scan
-#               uses: sonarsource/sonarcloud-github-action@v1.6
-#               env:
-#                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-#                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#               with:
-#                   args: >
-#                       -Dsonar.organization=ukama
-#                       -Dsonar.projectKey=ukama_frontend_bff
-#                       -Dsonar.projectName=ukama-bff                                                          
-#                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-#                       -Dsonar.sources=.
+            - name: OCI Push bff-api test
+              working-directory: "${{ env.working-directory }}/bff_integration"
+              env:
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bff
+              run: |
+                  buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                      -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+                      -t $REGISTRY\:latest-test .  && \
+                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+                  buildah push $REGISTRY\:latest-test
+    #             - name: SonarCloud Scan
+    #               uses: sonarsource/sonarcloud-github-action@v1.6
+    #               env:
+    #                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+    #                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    #               with:
+    #                   args: >
+    #                       -Dsonar.organization=ukama
+    #                       -Dsonar.projectKey=ukama_frontend_bff
+    #                       -Dsonar.projectName=ukama-bff
+    #                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+    #                       -Dsonar.sources=.
     lint:
         name: lint
         runs-on: ubuntu-latest
