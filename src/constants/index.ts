@@ -6,7 +6,8 @@ export const BASE_URL = `http://localhost:${PORT}`;
 export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {
-        cookie: "ukama_session=MTYzOTM4MTgwNHxEdi1CQkFFQ180SUFBUkFCRUFBQVJfLUNBQUVHYzNSeWFXNW5EQThBRFhObGMzTnBiMjVmZEc5clpXNEdjM1J5YVc1bkRDSUFJSFpJWkhOWWFIRTBiRE51ZUUxSlNIVmFVRkYxVjA1T2JYbFFXVFpVYkUxenzvvP08sJTXG0bYYBeH4V9BRXfsDC_NJz4pzUavjLh5Tw==; csrf_token_0a4b9640203f0baf1ae8f999c46e57938950e3e29d87300080eb0fd3b129b396=7HK+rqcMH1L+t62RQWZMlYB+EndnEgOCeZUG1R22WhM=",
+        "csrf-token": "test",
+        "ukama-session": "test",
     },
 };
 

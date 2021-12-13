@@ -53,7 +53,8 @@ export class ApiMethodDataDto {
 
 export interface Context {
     req: Request;
-    cookie: string | string[];
+    session: string | string[];
+    token: string | string[];
 }
 
 @ObjectType()
