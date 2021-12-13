@@ -16,6 +16,6 @@ export class GetNodesByOrgResolver {
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
     ): Promise<OrgNodeResponseDto> {
-        return this.nodeService.getNodesByOrg(orgId, ctx.session);
+        return this.nodeService.getNodesByOrg(orgId, ctx.cookie);
     }
 }

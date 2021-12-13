@@ -6,8 +6,7 @@ export const BASE_URL = `http://localhost:${PORT}`;
 export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {
-        "csrf-token": "test",
-        "ukama-session": "test",
+        cookie: "ukama_session=test; csrf_token=test",
     },
 };
 
