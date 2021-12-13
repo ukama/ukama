@@ -14,10 +14,7 @@ import {
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
-    getNodesByOrg(
-        orgId: string,
-        cookie: string | string[]
-    ): Promise<OrgNodeResponseDto>;
+    getNodesByOrg(orgId: string, session: string): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto): Promise<AddNodeResponse>;
     updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
     deleteNode(id: string): Promise<DeactivateResponse>;
