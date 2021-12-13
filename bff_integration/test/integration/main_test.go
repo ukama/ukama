@@ -24,7 +24,7 @@ func loadConfig() *TestConfig {
 	if err != nil {
 		logrus.Fatal(err.Error())
 	}
-	CommonLoadConfig("integrsation", testConf)
+	CommonLoadConfig("integration", testConf)
 
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infoln(string(b))
