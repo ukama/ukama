@@ -17,10 +17,13 @@ deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
 			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
 			github.com/vektra/mockery/v2/.../
+	go install github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@latest
 
 
 gen:
-	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=true		
+	protoc -I ./pb -I ./pb/google/api -I ../../common/pb  --go_out=. --go-grpc_out=. --govalidators_out=. \
+ 			--go-grpc_opt=require_unimplemented_servers=true \
+ 			hss.proto
 	mockery --all --recursive --dir ./pkg
 	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
 

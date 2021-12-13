@@ -2,15 +2,17 @@ package grpc
 
 import (
 	"fmt"
+	"net"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/config"
 	pbhealth "github.com/ukama/ukamaX/common/pb/gen/health"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-	"net"
 )
 
 // Basic GrpcServer with the set of middlewares
@@ -47,12 +49,14 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	sInterc := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(logrusEntry),
 		grpc_prometheus.StreamServerInterceptor,
+		grpc_validator.StreamServerInterceptor(),
 	}
 	sInterc = append(sInterc, g.ExtraStreamInterceptors...)
 
 	uInterc := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(logrusEntry),
 		grpc_prometheus.UnaryServerInterceptor,
+		grpc_validator.UnaryServerInterceptor(),
 	}
 	uInterc = append(uInterc, g.ExtraUnaryInterceptors...)
 

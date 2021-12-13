@@ -3,13 +3,13 @@
 package integration
 
 import (
+	"net/http"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/ukama"
-	"gopkg.in/yaml.v3"
-	"net/http"
 )
 
 type TestConfig struct {
@@ -29,14 +29,10 @@ func loadConfig() *TestConfig {
 	testConf := &TestConfig{
 		LookupHost: "http://lookup",
 	}
-	b, err := yaml.Marshal(testConf)
-	if err != nil {
-		logrus.Fatal(err.Error())
-	}
-	logrus.Info("Expected config ", "integration.yaml", " or env vars")
-	logrus.Infoln(string(b))
 
+	logrus.Info("Expected config ", "integration.yaml", " or env vars")
 	config.LoadConfig("integration", testConf)
+	logrus.Infof("%+v", testConf)
 
 	return testConf
 }

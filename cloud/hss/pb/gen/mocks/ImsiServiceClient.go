@@ -46,6 +46,36 @@ func (_m *ImsiServiceClient) Add(ctx context.Context, in *gen.AddImsiRequest, op
 	return r0, r1
 }
 
+// AddGuti provides a mock function with given fields: ctx, in, opts
+func (_m *ImsiServiceClient) AddGuti(ctx context.Context, in *gen.AddGutiRequest, opts ...grpc.CallOption) (*gen.AddGutiResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddGutiResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddGutiRequest, ...grpc.CallOption) *gen.AddGutiResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddGutiResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddGutiRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: ctx, in, opts
 func (_m *ImsiServiceClient) Delete(ctx context.Context, in *gen.DeleteImsiRequest, opts ...grpc.CallOption) (*gen.DeleteImsiResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -128,6 +158,36 @@ func (_m *ImsiServiceClient) Update(ctx context.Context, in *gen.UpdateImsiReque
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateImsiRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateTai provides a mock function with given fields: ctx, in, opts
+func (_m *ImsiServiceClient) UpdateTai(ctx context.Context, in *gen.UpdateTaiRequest, opts ...grpc.CallOption) (*gen.UpdateTaiResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.UpdateTaiResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateTaiRequest, ...grpc.CallOption) *gen.UpdateTaiResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateTaiResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateTaiRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

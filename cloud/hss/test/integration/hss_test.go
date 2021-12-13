@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -5,6 +6,8 @@ package integration
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -45,14 +48,62 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 	// Contact the server and print out its response.
 	testImsi := fmt.Sprintf("00000%010d", time.Now().Unix())
 	testOrg := fmt.Sprintf("integration-test-org-imsi-service-%s", time.Now().Format("20060102150405"))
-	addResp, err := c.Add(ctx, &pb.AddImsiRequest{Org: testOrg, Imsi: &pb.ImsiRecord{Imsi: testImsi, DefaultApnName: "apn-name"}})
-	i.handleResponse(err, addResp)
+	i.Run("AddImis", func() {
+		addResp, err := c.Add(ctx, &pb.AddImsiRequest{Org: testOrg, Imsi: &pb.ImsiRecord{Imsi: testImsi, Apn: &pb.Apn{Name: "test-apn-name"}}})
+		i.handleResponse(err, addResp)
+	})
 
-	getResp, err := c.Get(ctx, &pb.GetImsiRequest{Imsi: testImsi})
-	i.handleResponse(err, getResp)
+	i.Run("GetImis", func() {
+		getResp, err := c.Get(ctx, &pb.GetImsiRequest{Imsi: testImsi})
+		i.handleResponse(err, getResp)
+	})
 
-	delResp, err := c.Delete(ctx, &pb.DeleteImsiRequest{Imsi: testImsi, Org: testOrg})
-	i.handleResponse(err, delResp)
+	i.Run("AddGuti", func() {
+		delResp, err := c.AddGuti(ctx, &pb.AddGutiRequest{Guti: &pb.Guti{
+			PlmnId: "000001",
+			Mmegi:  1,
+			Mmec:   1,
+			Mtmsi:  uint32(time.Now().Unix()),
+		}, Imsi: testImsi,
+			UpdatedAt: uint32(time.Now().Unix())})
+		i.handleResponse(err, delResp)
+	})
+
+	i.Run("UpdateGutiAddedEarlier", func() {
+		delResp, err := c.AddGuti(ctx, &pb.AddGutiRequest{Guti: &pb.Guti{
+			PlmnId: "000001",
+			Mmegi:  1,
+			Mmec:   1,
+			Mtmsi:  uint32(time.Now().Unix()) + 1,
+		}, Imsi: testImsi,
+			UpdatedAt: uint32(time.Now().Unix())})
+		i.handleResponse(err, delResp)
+	})
+
+	i.Run("AddTai", func() {
+		resp, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
+			UpdatedAt: uint32(time.Now().Unix())})
+		i.handleResponse(err, resp)
+	})
+
+	i.Run("UpdateTaiAddedEarlier", func() {
+		resp, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
+			UpdatedAt: uint32(time.Now().Unix())})
+		i.handleResponse(err, resp)
+	})
+
+	i.Run("DeleteImis", func() {
+		delResp, err := c.Delete(ctx, &pb.DeleteImsiRequest{Imsi: testImsi, Org: testOrg})
+		i.handleResponse(err, delResp)
+	})
+
+	i.Run("UpdateTaiValidationFailure", func() {
+		_, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
+			UpdatedAt: uint32(time.Now().Unix())})
+		s, ok := status.FromError(err)
+		i.True(ok, "should be a grpc error")
+		i.Equal(codes.NotFound, s.Code(), "should fail with invalid argument")
+	})
 }
 
 func (i *IntegrationTestSuite) Test_UserService() {

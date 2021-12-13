@@ -172,5 +172,5 @@ jobs:
             value:  ${{ steps.vars_step.outputs.sha_short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
-            github-user-mail: "ukama-bot@ukama.com"
+            github-user-mail: "bot@ukama.com"
             github-username: "ukama-bot"

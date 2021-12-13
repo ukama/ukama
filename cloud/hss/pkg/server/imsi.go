@@ -6,17 +6,20 @@ import (
 	"github.com/ukama/ukamaX/cloud/hss/pkg"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/common/grpc"
+	"time"
 )
 
 type ImsiService struct {
 	pb.UnimplementedImsiServiceServer
 	imsiRepo db.ImsiRepo
 	queue    pkg.HssQueue
+	gutiRepo db.GutiRepo
 }
 
-func NewImsiService(hssRepo db.ImsiRepo, queue pkg.HssQueue) *ImsiService {
+func NewImsiService(hssRepo db.ImsiRepo, gutiRepo db.GutiRepo, queue pkg.HssQueue) *ImsiService {
 	return &ImsiService{imsiRepo: hssRepo,
-		queue: queue}
+		queue:    queue,
+		gutiRepo: gutiRepo}
 }
 
 func (s *ImsiService) Get(c context.Context, r *pb.GetImsiRequest) (*pb.GetImsiResponse, error) {
@@ -25,17 +28,19 @@ func (s *ImsiService) Get(c context.Context, r *pb.GetImsiRequest) (*pb.GetImsiR
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 	resp := &pb.GetImsiResponse{Imsi: &pb.ImsiRecord{
-		Imsi:           sub.Imsi,
-		Key:            sub.Key,
-		Amf:            sub.Amf,
-		Op:             sub.Op,
-		DefaultApnName: sub.DefaultApnName,
-		AuthVector: &pb.AuthVector{
-			Response:     sub.AuthVector.Response,
-			CipherKey:    sub.AuthVector.CipherKey,
-			Token:        sub.AuthVector.Token,
-			IntegrityKey: sub.AuthVector.IntegrityKey,
+		Imsi: sub.Imsi,
+		Key:  sub.Key,
+		Amf:  sub.Amf,
+		Op:   sub.Op,
+		Apn: &pb.Apn{
+			Name: sub.DefaultApnName,
 		},
+		AlgoType:    sub.AlgoType,
+		CsgId:       sub.CsgId,
+		CsgIdPrsent: sub.CsgIdPrsent,
+		Sqn:         sub.Sqn,
+		UeDlAmbrBps: sub.UeDlAmbrBps,
+		UeUlAmbrBps: sub.UeDlAmbrBps,
 	}}
 
 	return resp, nil
@@ -73,26 +78,45 @@ func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (*pb.
 	return &pb.DeleteImsiResponse{}, nil
 }
 
+func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.AddGutiResponse, error) {
+	err := s.gutiRepo.Update(&db.Guti{
+		Imsi:            req.Imsi,
+		Plmn_id:         req.Guti.PlmnId,
+		Mmegi:           req.Guti.Mmegi,
+		Mmec:            req.Guti.Mmec,
+		MTmsi:           req.Guti.Mtmsi,
+		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "guti")
+	}
+	return &pb.AddGutiResponse{}, nil
+}
+
+func (s *ImsiService) UpdateTai(c context.Context, req *pb.UpdateTaiRequest) (*pb.UpdateTaiResponse, error) {
+	err := s.imsiRepo.UpdateTai(req.Imsi, db.Tai{
+		PlmId:           req.PlmnId,
+		Tac:             req.Tac,
+		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
+	})
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "tai")
+	}
+	return &pb.UpdateTaiResponse{}, nil
+}
+
 func grpcImsiToDb(sub *pb.ImsiRecord, orgName string) *db.Imsi {
 
 	dbSub := &db.Imsi{
 		Imsi:           sub.Imsi,
-		DefaultApnName: sub.DefaultApnName,
+		DefaultApnName: sub.Apn.Name,
 		Key:            sub.Key,
 		Amf:            sub.Amf,
 		Op:             sub.Op,
 		Org: &db.Org{
 			Name: orgName,
 		},
-	}
-
-	if sub.AuthVector != nil {
-		dbSub.AuthVector = &db.AuthVector{
-			CipherKey:    sub.AuthVector.CipherKey,
-			Token:        sub.AuthVector.Token,
-			IntegrityKey: sub.AuthVector.IntegrityKey,
-			Response:     sub.AuthVector.Response,
-		}
 	}
 
 	return dbSub

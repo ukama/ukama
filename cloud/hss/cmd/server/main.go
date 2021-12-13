@@ -39,7 +39,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Imsi{}, &db.User{})
+	err := d.Init(&db.Org{}, &db.Imsi{}, &db.User{}, &db.Guti{}, &db.Tai{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -47,7 +47,7 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), pkg.NewHssQueue(serviceConfig.Queue))
+	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), pkg.NewHssQueue(serviceConfig.Queue))
 	userService := server.NewUserService(db.NewUserRepo(gormdb), db.NewImsiRepo(gormdb))
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {

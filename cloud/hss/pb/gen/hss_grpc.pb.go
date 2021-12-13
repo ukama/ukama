@@ -22,6 +22,8 @@ type ImsiServiceClient interface {
 	Add(ctx context.Context, in *AddImsiRequest, opts ...grpc.CallOption) (*AddImsiResponse, error)
 	Update(ctx context.Context, in *UpdateImsiRequest, opts ...grpc.CallOption) (*UpdateImsiResponse, error)
 	Delete(ctx context.Context, in *DeleteImsiRequest, opts ...grpc.CallOption) (*DeleteImsiResponse, error)
+	AddGuti(ctx context.Context, in *AddGutiRequest, opts ...grpc.CallOption) (*AddGutiResponse, error)
+	UpdateTai(ctx context.Context, in *UpdateTaiRequest, opts ...grpc.CallOption) (*UpdateTaiResponse, error)
 }
 
 type imsiServiceClient struct {
@@ -68,6 +70,24 @@ func (c *imsiServiceClient) Delete(ctx context.Context, in *DeleteImsiRequest, o
 	return out, nil
 }
 
+func (c *imsiServiceClient) AddGuti(ctx context.Context, in *AddGutiRequest, opts ...grpc.CallOption) (*AddGutiResponse, error) {
+	out := new(AddGutiResponse)
+	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/AddGuti", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imsiServiceClient) UpdateTai(ctx context.Context, in *UpdateTaiRequest, opts ...grpc.CallOption) (*UpdateTaiResponse, error) {
+	out := new(UpdateTaiResponse)
+	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/UpdateTai", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ImsiServiceServer is the server API for ImsiService service.
 // All implementations must embed UnimplementedImsiServiceServer
 // for forward compatibility
@@ -76,6 +96,8 @@ type ImsiServiceServer interface {
 	Add(context.Context, *AddImsiRequest) (*AddImsiResponse, error)
 	Update(context.Context, *UpdateImsiRequest) (*UpdateImsiResponse, error)
 	Delete(context.Context, *DeleteImsiRequest) (*DeleteImsiResponse, error)
+	AddGuti(context.Context, *AddGutiRequest) (*AddGutiResponse, error)
+	UpdateTai(context.Context, *UpdateTaiRequest) (*UpdateTaiResponse, error)
 	mustEmbedUnimplementedImsiServiceServer()
 }
 
@@ -94,6 +116,12 @@ func (UnimplementedImsiServiceServer) Update(context.Context, *UpdateImsiRequest
 }
 func (UnimplementedImsiServiceServer) Delete(context.Context, *DeleteImsiRequest) (*DeleteImsiResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedImsiServiceServer) AddGuti(context.Context, *AddGutiRequest) (*AddGutiResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddGuti not implemented")
+}
+func (UnimplementedImsiServiceServer) UpdateTai(context.Context, *UpdateTaiRequest) (*UpdateTaiResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateTai not implemented")
 }
 func (UnimplementedImsiServiceServer) mustEmbedUnimplementedImsiServiceServer() {}
 
@@ -180,6 +208,42 @@ func _ImsiService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ImsiService_AddGuti_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddGutiRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImsiServiceServer).AddGuti(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hss.v1.ImsiService/AddGuti",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImsiServiceServer).AddGuti(ctx, req.(*AddGutiRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImsiService_UpdateTai_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateTaiRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImsiServiceServer).UpdateTai(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/hss.v1.ImsiService/UpdateTai",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImsiServiceServer).UpdateTai(ctx, req.(*UpdateTaiRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ImsiService_ServiceDesc is the grpc.ServiceDesc for ImsiService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -203,9 +267,17 @@ var ImsiService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Delete",
 			Handler:    _ImsiService_Delete_Handler,
 		},
+		{
+			MethodName: "AddGuti",
+			Handler:    _ImsiService_AddGuti_Handler,
+		},
+		{
+			MethodName: "UpdateTai",
+			Handler:    _ImsiService_UpdateTai_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pb/hss.proto",
+	Metadata: "hss.proto",
 }
 
 // UserServiceClient is the client API for UserService service.
@@ -369,5 +441,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pb/hss.proto",
+	Metadata: "hss.proto",
 }

@@ -31,7 +31,7 @@ func (u *userRepo) Add(user *User) (*User, error) {
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	user := User{}
-	result := u.Db.GetGormDb().Preload(clause.Associations).Where(&User{UUID: uuid}).First(&user)
+	result := u.Db.GetGormDb().Preload(clause.Associations).Where(&User{Uuid: uuid}).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -40,7 +40,7 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 }
 
 func (u *userRepo) Delete(uuid uuid.UUID) error {
-	result := u.Db.GetGormDb().Where(&User{UUID: uuid}).Delete(&User{})
+	result := u.Db.GetGormDb().Where(&User{Uuid: uuid}).Delete(&User{})
 	if result.Error != nil {
 		return result.Error
 	}

@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/gin-gonic/gin v1.7.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/iamolegga/enviper v1.2.1
 	github.com/jackc/pgconn v1.8.1
@@ -15,8 +15,12 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
-	github.com/stretchr/testify v1.5.1
-	google.golang.org/grpc v1.39.0
+	github.com/stretchr/testify v1.7.0
+	golang.org/x/net v0.0.0-20211205041911-012df41ee64c // indirect
+	golang.org/x/sys v0.0.0-20211204120058-94396e421777 // indirect
+	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/genproto v0.0.0-20211203200212-54befc351ae9 // indirect
+	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10

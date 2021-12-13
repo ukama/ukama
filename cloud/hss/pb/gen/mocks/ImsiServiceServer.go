@@ -37,6 +37,29 @@ func (_m *ImsiServiceServer) Add(_a0 context.Context, _a1 *gen.AddImsiRequest) (
 	return r0, r1
 }
 
+// AddGuti provides a mock function with given fields: _a0, _a1
+func (_m *ImsiServiceServer) AddGuti(_a0 context.Context, _a1 *gen.AddGutiRequest) (*gen.AddGutiResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddGutiResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddGutiRequest) *gen.AddGutiResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddGutiResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddGutiRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Delete provides a mock function with given fields: _a0, _a1
 func (_m *ImsiServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteImsiRequest) (*gen.DeleteImsiResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -98,6 +121,29 @@ func (_m *ImsiServiceServer) Update(_a0 context.Context, _a1 *gen.UpdateImsiRequ
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateImsiRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateTai provides a mock function with given fields: _a0, _a1
+func (_m *ImsiServiceServer) UpdateTai(_a0 context.Context, _a1 *gen.UpdateTaiRequest) (*gen.UpdateTaiResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateTaiResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateTaiRequest) *gen.UpdateTaiResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateTaiResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateTaiRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

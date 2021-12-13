@@ -34,7 +34,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddUserRequest) (*pb.AddU
 		FirstName: req.User.FirstName,
 		LastName:  req.User.LastName,
 		Phone:     req.User.Phone,
-		UUID:      uuid.NewV4(),
+		Uuid:      uuid.NewV4(),
 	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -42,7 +42,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddUserRequest) (*pb.AddU
 
 	err = u.imsiRepo.Add(req.Org, &db.Imsi{
 		Imsi:     req.User.Imsi,
-		UserUuid: user.UUID,
+		UserUuid: user.Uuid,
 	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -95,7 +95,7 @@ func dbusersToPbUsers(users []db.User) []*pb.User {
 
 func dbUsersToPbUsers(user *db.User, imsi string) *pb.User {
 	return &pb.User{
-		Uuid:      user.UUID.String(),
+		Uuid:      user.Uuid.String(),
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
 		Phone:     user.Phone,

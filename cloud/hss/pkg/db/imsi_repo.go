@@ -3,9 +3,12 @@
 package db
 
 import (
+	"fmt"
+	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -18,36 +21,37 @@ type ImsiRepo interface {
 	Update(imsi string, subscriber *Imsi) error
 	Delete(imsi string) error
 	DeleteByUserId(user uuid.UUID) error
+	UpdateTai(imis string, tai Tai) error
 }
 
 type imsiRepo struct {
-	Db sql.Db
+	db sql.Db
 }
 
 func NewImsiRepo(db sql.Db) *imsiRepo {
 	return &imsiRepo{
-		Db: db,
+		db: db,
 	}
 }
 
 func (r *imsiRepo) Add(orgName string, imsi *Imsi) error {
-	org, err := makeUserOrgExist(r.Db.GetGormDb(), orgName)
+	org, err := makeUserOrgExist(r.db.GetGormDb(), orgName)
 	if err != nil {
 		return err
 	}
 	imsi.Org = org
-	d := r.Db.GetGormDb().Create(imsi)
+	d := r.db.GetGormDb().Create(imsi)
 	return d.Error
 }
 
 func (r *imsiRepo) Update(imsiToUpdate string, imsi *Imsi) error {
-	d := r.Db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(imsi)
+	d := r.db.GetGormDb().Where("imsi=?", imsiToUpdate).Updates(imsi)
 	return d.Error
 }
 
 func (r *imsiRepo) Get(id int) (*Imsi, error) {
 	var hss Imsi
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&hss, id)
+	result := r.db.GetGormDb().Preload(clause.Associations).First(&hss, id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -57,7 +61,7 @@ func (r *imsiRepo) Get(id int) (*Imsi, error) {
 
 func (r *imsiRepo) GetByImsi(imsi string) (*Imsi, error) {
 	var hss Imsi
-	result := r.Db.GetGormDb().Preload(clause.Associations).Where("imsi=?", imsi).First(&hss)
+	result := r.db.GetGormDb().Preload(clause.Associations).Where("imsi=?", imsi).First(&hss)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -67,7 +71,7 @@ func (r *imsiRepo) GetByImsi(imsi string) (*Imsi, error) {
 
 func (r *imsiRepo) GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error) {
 	var imsis []*Imsi
-	result := r.Db.GetGormDb().Where("user_uuid=?", userUuid).Find(&imsis)
+	result := r.db.GetGormDb().Where("user_uuid=?", userUuid).Find(&imsis)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -76,7 +80,7 @@ func (r *imsiRepo) GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error) {
 }
 
 func (r *imsiRepo) Delete(imsi string) error {
-	result := r.Db.GetGormDb().Where(&Imsi{Imsi: imsi}).Delete(&Imsi{})
+	result := r.db.GetGormDb().Where(&Imsi{Imsi: imsi}).Delete(&Imsi{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -85,10 +89,39 @@ func (r *imsiRepo) Delete(imsi string) error {
 }
 
 func (r *imsiRepo) DeleteByUserId(user uuid.UUID) error {
-	result := r.Db.GetGormDb().Where(&Imsi{UserUuid: user}).Delete(&Imsi{})
+	result := r.db.GetGormDb().Where(&Imsi{UserUuid: user}).Delete(&Imsi{})
 	if result.Error != nil {
 		return result.Error
 	}
 	logrus.Infof("Deleted %d imsis", result.RowsAffected)
 	return nil
+}
+
+// ReplaceTai removes all TAI record for IMSI and adds new ones
+func (r *imsiRepo) UpdateTai(imsi string, tai Tai) error {
+	var imsiM Imsi
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&Imsi{}).Where("imsi=?", imsi).First(&imsiM)
+		if result.Error != nil {
+			return errors.Wrap(result.Error, "error getting imsi")
+		}
+
+		var count int64
+		tx.Where("imsi = ? and device_updated_at >= ?", imsi, tai.DeviceUpdatedAt).Count(&count)
+		if count > 0 {
+			return fmt.Errorf("more recent tai for imsi exist")
+		}
+
+		tx.Where("imsi_id=?", imsiM.ID).Delete(&Tai{})
+		if result.Error != nil {
+			return errors.Wrap(result.Error, "error deleting tai")
+		}
+
+		tai.ImsiID = imsiM.ID
+		result = tx.Create(&tai)
+		if result.Error != nil {
+			return errors.Wrap(result.Error, "error adding tai")
+		}
+		return nil
+	})
 }

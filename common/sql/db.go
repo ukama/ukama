@@ -147,7 +147,7 @@ func (d *db) createDb() error {
 }
 
 func IsNotFoundError(err error) bool {
-	return err.Error() == "record not found"
+	return  errors.Is(err, gorm.ErrRecordNotFound)
 }
 
 func IsDuplicateKeyError(err error) bool {

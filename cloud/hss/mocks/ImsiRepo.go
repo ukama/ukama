@@ -138,3 +138,17 @@ func (_m *ImsiRepo) Update(imsi string, subscriber *db.Imsi) error {
 
 	return r0
 }
+
+// UpdateTai provides a mock function with given fields: imis, tai
+func (_m *ImsiRepo) UpdateTai(imis string, tai db.Tai) error {
+	ret := _m.Called(imis, tai)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, db.Tai) error); ok {
+		r0 = rf(imis, tai)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}

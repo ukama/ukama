@@ -28,7 +28,7 @@ func Test_AddUser(t *testing.T) {
 	}
 
 	userUuid := uuid.NewV4()
-	userRepo.On("Add", mock.Anything).Return(&db.User{UUID: userUuid,
+	userRepo.On("Add", mock.Anything).Return(&db.User{Uuid: userUuid,
 		Email: userRequest.Email, Phone: userRequest.Phone,
 		LastName: userRequest.LastName, FirstName: userRequest.FirstName}, nil)
 
