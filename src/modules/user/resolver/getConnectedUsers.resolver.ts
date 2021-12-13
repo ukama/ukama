@@ -24,7 +24,7 @@ export class GetConnectedUsersResolver {
         @PubSub() pubsub: PubSubEngine
     ): Promise<ConnectedUserDto> {
         const user = this.userService.getConnectedUsers(filter);
-        pubsub.publish("connectedUser", user);
+        pubsub.publish("getConnectedUsers", user);
         return user;
     }
 }

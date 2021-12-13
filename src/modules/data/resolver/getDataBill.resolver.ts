@@ -24,7 +24,7 @@ export class GetDataBillResolver {
         @PubSub() pubsub: PubSubEngine
     ): Promise<DataBillDto> {
         const bill = this.dataService.getDataBill(filter);
-        pubsub.publish("dataBill", bill);
+        pubsub.publish("getDataBill", bill);
         return bill;
     }
 }
