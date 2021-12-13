@@ -27,6 +27,9 @@ const UserSettings = () => {
     const handleTimezoneChange = (event: any) => {
         setTimezone(event.target.value);
     };
+    const handleAccountSettings = () => {
+        window.location.replace(`${process.env.REACT_APP_AUTH_URL}/setting`);
+    };
     return (
         <Grid container spacing={2}>
             <Grid item container xs={12}>
@@ -38,6 +41,7 @@ const UserSettings = () => {
                         size="large"
                         variant="outlined"
                         endIcon={<SettingsArrowIcon />}
+                        onClick={handleAccountSettings}
                     >
                         UKAMA ACCOUNT SETTINGS
                     </Button>
