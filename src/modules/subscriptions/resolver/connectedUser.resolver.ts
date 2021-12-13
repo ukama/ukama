@@ -6,9 +6,9 @@ import { ConnectedUserDto } from "../../user/types";
 @Resolver()
 export class ConnectedUsersSubscriptionResolver {
     @Subscription(() => ConnectedUserDto, {
-        topics: "connectedUser",
+        topics: "getConnectedUsers",
     })
-    async connectedUser(
+    async getConnectedUsers(
         @Root() user: ConnectedUserDto
     ): Promise<ConnectedUserDto> {
         return user;

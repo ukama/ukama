@@ -6,9 +6,9 @@ import { DataUsageDto } from "../../data/types";
 @Resolver()
 export class DataUsageSubscriptionResolver {
     @Subscription(() => DataUsageDto, {
-        topics: "dataUsage",
+        topics: "getDataUsage",
     })
-    async dataUsage(@Root() data: DataUsageDto): Promise<DataUsageDto> {
+    async getDataUsage(@Root() data: DataUsageDto): Promise<DataUsageDto> {
         return data;
     }
 }

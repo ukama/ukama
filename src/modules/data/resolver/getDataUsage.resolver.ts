@@ -24,7 +24,7 @@ export class DataUsageResolver {
         @PubSub() pubsub: PubSubEngine
     ): Promise<DataUsageDto | null> {
         const data = await this.dataService.getDataUsage(filter);
-        pubsub.publish("dataUsage", data);
+        pubsub.publish("getDataUsage", data);
         return data;
     }
 }
