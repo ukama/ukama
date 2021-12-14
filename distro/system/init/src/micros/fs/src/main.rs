@@ -236,7 +236,6 @@ fn main() {
     //Give time to sync
     unistd::sync();
 
-    //busybox init /sbin/init
     let exec_prg = "/sbin/init";
     debug!("Init:: Starting {}", exec_prg);
     

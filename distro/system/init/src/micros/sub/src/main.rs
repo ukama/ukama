@@ -843,10 +843,5 @@ fn main() {
     do_hostname();
     do_resolvconf();
 
-    //Start the executables from /etc/init.d path
-    run_init("/etc/init.d");
-
-    if userspace {
-        do_reap();
-    }
+    process::exit(0);
 }
