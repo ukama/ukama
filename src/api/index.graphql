@@ -6,6 +6,14 @@ query getDataUsage($filter: TIME_FILTER!) {
     }
 }
 
+subscription getLatestDataUsage {
+    getDataUsage {
+        id
+        dataConsumed
+        dataPackage
+    }
+}
+
 query getConnectedUsers($filter: TIME_FILTER!) {
     getConnectedUsers(filter: $filter) {
         totalUser
@@ -14,8 +22,24 @@ query getConnectedUsers($filter: TIME_FILTER!) {
     }
 }
 
+subscription getLatestConnectedUsers {
+    getConnectedUsers {
+        totalUser
+        residentUsers
+        guestUsers
+    }
+}
+
 query getDataBill($filter: DATA_BILL_FILTER!) {
     getDataBill(filter: $filter) {
+        id
+        dataBill
+        billDue
+    }
+}
+
+subscription getLatestDataBill {
+    getDataBill {
         id
         dataBill
         billDue
@@ -37,6 +61,16 @@ query getAlerts($data: PaginationDto!) {
             description
             alertDate
         }
+    }
+}
+
+subscription getLatestAlerts {
+    getAlerts {
+        id
+        type
+        title
+        description
+        alertDate
     }
 }
 
@@ -88,8 +122,17 @@ query getNetwork($filter: NETWORK_TYPE!) {
         description
     }
 }
-mutation deleteUser($id: String!) {
-    deleteUser(id: $id) {
+
+subscription getLatestNetwork {
+    getNetwork {
+        id
+        status
+        description
+    }
+}
+
+mutation deactivateUser($id: String!) {
+    deactivateUser(id: $id) {
         id
         success
     }

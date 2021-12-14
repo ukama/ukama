@@ -57,6 +57,7 @@ export type ActiveUserResponseDto = {
 
 export type AddNodeDto = {
     name: Scalars["String"];
+    securityCode: Scalars["String"];
     serialNo: Scalars["String"];
 };
 
@@ -206,8 +207,8 @@ export type DataUsageResponse = {
     status: Scalars["String"];
 };
 
-export type DeleteResponse = {
-    __typename?: "DeleteResponse";
+export type DeactivateResponse = {
+    __typename?: "DeactivateResponse";
     id: Scalars["String"];
     success: Scalars["Boolean"];
 };
@@ -287,8 +288,8 @@ export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
     addNode: AddNodeResponse;
-    deleteNode: DeleteResponse;
-    deleteUser: DeleteResponse;
+    deactivateUser: DeactivateResponse;
+    deleteNode: DeactivateResponse;
     updateNode: UpdateNodeResponse;
     updateUser: UserResponse;
 };
@@ -301,11 +302,11 @@ export type MutationAddNodeArgs = {
     data: AddNodeDto;
 };
 
-export type MutationDeleteNodeArgs = {
+export type MutationDeactivateUserArgs = {
     id: Scalars["String"];
 };
 
-export type MutationDeleteUserArgs = {
+export type MutationDeleteNodeArgs = {
     id: Scalars["String"];
 };
 
@@ -369,6 +370,35 @@ export type NodesResponse = {
     nodes: NodeResponseDto;
 };
 
+export enum Org_Node_State {
+    Onboarded = "ONBOARDED",
+    Pending = "PENDING",
+    Undefined = "UNDEFINED",
+}
+
+export type OrgNodeDto = {
+    __typename?: "OrgNodeDto";
+    description: Scalars["String"];
+    nodeId: Scalars["String"];
+    state: Org_Node_State;
+    title: Scalars["String"];
+    totalUser: Scalars["Float"];
+};
+
+export type OrgNodeResponse = {
+    __typename?: "OrgNodeResponse";
+    nodes: Array<OrgNodeDto>;
+    orgName: Scalars["String"];
+};
+
+export type OrgNodeResponseDto = {
+    __typename?: "OrgNodeResponseDto";
+    activeNodes: Scalars["Float"];
+    nodes: Array<OrgNodeDto>;
+    orgName: Scalars["String"];
+    totalNodes: Scalars["Float"];
+};
+
 export type PaginationDto = {
     pageNo: Scalars["Float"];
     pageSize: Scalars["Float"];
@@ -390,7 +420,9 @@ export type Query = {
     getEsims: Array<EsimDto>;
     getNetwork: NetworkDto;
     getNodes: NodesResponse;
+    getNodesByOrg: OrgNodeResponseDto;
     getResidents: ResidentsResponse;
+    getUser: GetUserDto;
     getUsers: GetUserResponse;
 };
 
@@ -418,8 +450,16 @@ export type QueryGetNodesArgs = {
     data: PaginationDto;
 };
 
+export type QueryGetNodesByOrgArgs = {
+    orgId: Scalars["String"];
+};
+
 export type QueryGetResidentsArgs = {
     data: PaginationDto;
+};
+
+export type QueryGetUserArgs = {
+    id: Scalars["String"];
 };
 
 export type QueryGetUsersArgs = {
@@ -446,6 +486,15 @@ export type ResidentsResponse = {
     residents: ResidentResponse;
 };
 
+export type Subscription = {
+    __typename?: "Subscription";
+    getAlerts: AlertDto;
+    getConnectedUsers: ConnectedUserDto;
+    getDataBill: DataBillDto;
+    getDataUsage: DataUsageDto;
+    getNetwork: NetworkDto;
+};
+
 export enum Time_Filter {
     Month = "MONTH",
     Today = "TODAY",
@@ -456,6 +505,7 @@ export enum Time_Filter {
 export type UpdateNodeDto = {
     id: Scalars["String"];
     name?: InputMaybe<Scalars["String"]>;
+    securityCode?: InputMaybe<Scalars["String"]>;
     serialNo?: InputMaybe<Scalars["String"]>;
 };
 
@@ -506,6 +556,20 @@ export type GetDataUsageQuery = {
     };
 };
 
+export type GetLatestDataUsageSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetLatestDataUsageSubscription = {
+    __typename?: "Subscription";
+    getDataUsage: {
+        __typename?: "DataUsageDto";
+        id: string;
+        dataConsumed: number;
+        dataPackage: string;
+    };
+};
+
 export type GetConnectedUsersQueryVariables = Exact<{
     filter: Time_Filter;
 }>;
@@ -520,12 +584,40 @@ export type GetConnectedUsersQuery = {
     };
 };
 
+export type GetLatestConnectedUsersSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetLatestConnectedUsersSubscription = {
+    __typename?: "Subscription";
+    getConnectedUsers: {
+        __typename?: "ConnectedUserDto";
+        totalUser: number;
+        residentUsers: number;
+        guestUsers: number;
+    };
+};
+
 export type GetDataBillQueryVariables = Exact<{
     filter: Data_Bill_Filter;
 }>;
 
 export type GetDataBillQuery = {
     __typename?: "Query";
+    getDataBill: {
+        __typename?: "DataBillDto";
+        id: string;
+        dataBill: number;
+        billDue: number;
+    };
+};
+
+export type GetLatestDataBillSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetLatestDataBillSubscription = {
+    __typename?: "Subscription";
     getDataBill: {
         __typename?: "DataBillDto";
         id: string;
@@ -557,6 +649,22 @@ export type GetAlertsQuery = {
             description?: string | null | undefined;
             alertDate?: any | null | undefined;
         }>;
+    };
+};
+
+export type GetLatestAlertsSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetLatestAlertsSubscription = {
+    __typename?: "Subscription";
+    getAlerts: {
+        __typename?: "AlertDto";
+        id?: string | null | undefined;
+        type: Alert_Type;
+        title?: string | null | undefined;
+        description?: string | null | undefined;
+        alertDate?: any | null | undefined;
     };
 };
 
@@ -633,13 +741,31 @@ export type GetNetworkQuery = {
     };
 };
 
-export type DeleteUserMutationVariables = Exact<{
+export type GetLatestNetworkSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetLatestNetworkSubscription = {
+    __typename?: "Subscription";
+    getNetwork: {
+        __typename?: "NetworkDto";
+        id: string;
+        status: Network_Status;
+        description?: string | null | undefined;
+    };
+};
+
+export type DeactivateUserMutationVariables = Exact<{
     id: Scalars["String"];
 }>;
 
-export type DeleteUserMutation = {
+export type DeactivateUserMutation = {
     __typename?: "Mutation";
-    deleteUser: { __typename?: "DeleteResponse"; id: string; success: boolean };
+    deactivateUser: {
+        __typename?: "DeactivateResponse";
+        id: string;
+        success: boolean;
+    };
 };
 
 export type UpdateUserMutationVariables = Exact<{
@@ -696,7 +822,11 @@ export type DeleteNodeMutationVariables = Exact<{
 
 export type DeleteNodeMutation = {
     __typename?: "Mutation";
-    deleteNode: { __typename?: "DeleteResponse"; id: string; success: boolean };
+    deleteNode: {
+        __typename?: "DeactivateResponse";
+        id: string;
+        success: boolean;
+    };
 };
 
 export const GetDataUsageDocument = gql`
@@ -759,6 +889,48 @@ export type GetDataUsageQueryResult = Apollo.QueryResult<
     GetDataUsageQuery,
     GetDataUsageQueryVariables
 >;
+export const GetLatestDataUsageDocument = gql`
+    subscription getLatestDataUsage {
+        getDataUsage {
+            id
+            dataConsumed
+            dataPackage
+        }
+    }
+`;
+
+/**
+ * __useGetLatestDataUsageSubscription__
+ *
+ * To run a query within a React component, call `useGetLatestDataUsageSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestDataUsageSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestDataUsageSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLatestDataUsageSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetLatestDataUsageSubscription,
+        GetLatestDataUsageSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetLatestDataUsageSubscription,
+        GetLatestDataUsageSubscriptionVariables
+    >(GetLatestDataUsageDocument, options);
+}
+export type GetLatestDataUsageSubscriptionHookResult = ReturnType<
+    typeof useGetLatestDataUsageSubscription
+>;
+export type GetLatestDataUsageSubscriptionResult =
+    Apollo.SubscriptionResult<GetLatestDataUsageSubscription>;
 export const GetConnectedUsersDocument = gql`
     query getConnectedUsers($filter: TIME_FILTER!) {
         getConnectedUsers(filter: $filter) {
@@ -819,6 +991,48 @@ export type GetConnectedUsersQueryResult = Apollo.QueryResult<
     GetConnectedUsersQuery,
     GetConnectedUsersQueryVariables
 >;
+export const GetLatestConnectedUsersDocument = gql`
+    subscription getLatestConnectedUsers {
+        getConnectedUsers {
+            totalUser
+            residentUsers
+            guestUsers
+        }
+    }
+`;
+
+/**
+ * __useGetLatestConnectedUsersSubscription__
+ *
+ * To run a query within a React component, call `useGetLatestConnectedUsersSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestConnectedUsersSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestConnectedUsersSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLatestConnectedUsersSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetLatestConnectedUsersSubscription,
+        GetLatestConnectedUsersSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetLatestConnectedUsersSubscription,
+        GetLatestConnectedUsersSubscriptionVariables
+    >(GetLatestConnectedUsersDocument, options);
+}
+export type GetLatestConnectedUsersSubscriptionHookResult = ReturnType<
+    typeof useGetLatestConnectedUsersSubscription
+>;
+export type GetLatestConnectedUsersSubscriptionResult =
+    Apollo.SubscriptionResult<GetLatestConnectedUsersSubscription>;
 export const GetDataBillDocument = gql`
     query getDataBill($filter: DATA_BILL_FILTER!) {
         getDataBill(filter: $filter) {
@@ -877,6 +1091,48 @@ export type GetDataBillQueryResult = Apollo.QueryResult<
     GetDataBillQuery,
     GetDataBillQueryVariables
 >;
+export const GetLatestDataBillDocument = gql`
+    subscription getLatestDataBill {
+        getDataBill {
+            id
+            dataBill
+            billDue
+        }
+    }
+`;
+
+/**
+ * __useGetLatestDataBillSubscription__
+ *
+ * To run a query within a React component, call `useGetLatestDataBillSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestDataBillSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestDataBillSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLatestDataBillSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetLatestDataBillSubscription,
+        GetLatestDataBillSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetLatestDataBillSubscription,
+        GetLatestDataBillSubscriptionVariables
+    >(GetLatestDataBillDocument, options);
+}
+export type GetLatestDataBillSubscriptionHookResult = ReturnType<
+    typeof useGetLatestDataBillSubscription
+>;
+export type GetLatestDataBillSubscriptionResult =
+    Apollo.SubscriptionResult<GetLatestDataBillSubscription>;
 export const GetAlertsDocument = gql`
     query getAlerts($data: PaginationDto!) {
         getAlerts(data: $data) {
@@ -945,6 +1201,50 @@ export type GetAlertsQueryResult = Apollo.QueryResult<
     GetAlertsQuery,
     GetAlertsQueryVariables
 >;
+export const GetLatestAlertsDocument = gql`
+    subscription getLatestAlerts {
+        getAlerts {
+            id
+            type
+            title
+            description
+            alertDate
+        }
+    }
+`;
+
+/**
+ * __useGetLatestAlertsSubscription__
+ *
+ * To run a query within a React component, call `useGetLatestAlertsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestAlertsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestAlertsSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLatestAlertsSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetLatestAlertsSubscription,
+        GetLatestAlertsSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetLatestAlertsSubscription,
+        GetLatestAlertsSubscriptionVariables
+    >(GetLatestAlertsDocument, options);
+}
+export type GetLatestAlertsSubscriptionHookResult = ReturnType<
+    typeof useGetLatestAlertsSubscription
+>;
+export type GetLatestAlertsSubscriptionResult =
+    Apollo.SubscriptionResult<GetLatestAlertsSubscription>;
 export const GetNodesDocument = gql`
     query getNodes($data: PaginationDto!) {
         getNodes(data: $data) {
@@ -1143,56 +1443,98 @@ export type GetNetworkQueryResult = Apollo.QueryResult<
     GetNetworkQuery,
     GetNetworkQueryVariables
 >;
-export const DeleteUserDocument = gql`
-    mutation deleteUser($id: String!) {
-        deleteUser(id: $id) {
+export const GetLatestNetworkDocument = gql`
+    subscription getLatestNetwork {
+        getNetwork {
+            id
+            status
+            description
+        }
+    }
+`;
+
+/**
+ * __useGetLatestNetworkSubscription__
+ *
+ * To run a query within a React component, call `useGetLatestNetworkSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestNetworkSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestNetworkSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetLatestNetworkSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetLatestNetworkSubscription,
+        GetLatestNetworkSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetLatestNetworkSubscription,
+        GetLatestNetworkSubscriptionVariables
+    >(GetLatestNetworkDocument, options);
+}
+export type GetLatestNetworkSubscriptionHookResult = ReturnType<
+    typeof useGetLatestNetworkSubscription
+>;
+export type GetLatestNetworkSubscriptionResult =
+    Apollo.SubscriptionResult<GetLatestNetworkSubscription>;
+export const DeactivateUserDocument = gql`
+    mutation deactivateUser($id: String!) {
+        deactivateUser(id: $id) {
             id
             success
         }
     }
 `;
-export type DeleteUserMutationFn = Apollo.MutationFunction<
-    DeleteUserMutation,
-    DeleteUserMutationVariables
+export type DeactivateUserMutationFn = Apollo.MutationFunction<
+    DeactivateUserMutation,
+    DeactivateUserMutationVariables
 >;
 
 /**
- * __useDeleteUserMutation__
+ * __useDeactivateUserMutation__
  *
- * To run a mutation, you first call `useDeleteUserMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteUserMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useDeactivateUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeactivateUserMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [deleteUserMutation, { data, loading, error }] = useDeleteUserMutation({
+ * const [deactivateUserMutation, { data, loading, error }] = useDeactivateUserMutation({
  *   variables: {
  *      id: // value for 'id'
  *   },
  * });
  */
-export function useDeleteUserMutation(
+export function useDeactivateUserMutation(
     baseOptions?: Apollo.MutationHookOptions<
-        DeleteUserMutation,
-        DeleteUserMutationVariables
+        DeactivateUserMutation,
+        DeactivateUserMutationVariables
     >
 ) {
     const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useMutation<DeleteUserMutation, DeleteUserMutationVariables>(
-        DeleteUserDocument,
-        options
-    );
+    return Apollo.useMutation<
+        DeactivateUserMutation,
+        DeactivateUserMutationVariables
+    >(DeactivateUserDocument, options);
 }
-export type DeleteUserMutationHookResult = ReturnType<
-    typeof useDeleteUserMutation
+export type DeactivateUserMutationHookResult = ReturnType<
+    typeof useDeactivateUserMutation
 >;
-export type DeleteUserMutationResult =
-    Apollo.MutationResult<DeleteUserMutation>;
-export type DeleteUserMutationOptions = Apollo.BaseMutationOptions<
-    DeleteUserMutation,
-    DeleteUserMutationVariables
+export type DeactivateUserMutationResult =
+    Apollo.MutationResult<DeactivateUserMutation>;
+export type DeactivateUserMutationOptions = Apollo.BaseMutationOptions<
+    DeactivateUserMutation,
+    DeactivateUserMutationVariables
 >;
 export const UpdateUserDocument = gql`
     mutation updateUser($data: UpdateUserDto!) {

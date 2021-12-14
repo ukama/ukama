@@ -28,10 +28,11 @@
     "recharts": "^2.1.6",
     "recoil": "^0.4.1",
     "recoil-persist": "^3.0.0",
+    "subscriptions-transport-ws": "^0.11.0",
     "yup": "^0.32.10"
   },
   "scripts": {
-    "test": "react-scripts test",
+    "test": "react-scripts test --watchAll=false",
     "generate": "graphql-codegen",
     "eject": "react-scripts eject",
     "build": "react-scripts build",

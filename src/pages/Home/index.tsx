@@ -32,16 +32,27 @@ import {
     useGetDataBillQuery,
     useGetDataUsageQuery,
     useGetResidentsQuery,
-    useDeleteUserMutation,
+    useDeactivateUserMutation,
     useGetConnectedUsersQuery,
+    GetLatestConnectedUsersSubscription,
+    GetLatestConnectedUsersDocument,
+    GetLatestDataUsageSubscription,
+    GetLatestDataUsageDocument,
+    GetLatestDataBillSubscription,
+    GetLatestDataBillDocument,
+    GetLatestNetworkSubscription,
+    GetLatestNetworkDocument,
+    GetLatestAlertsSubscription,
+    GetLatestAlertsDocument,
 } from "../../generated";
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { RoundedCard } from "../../styles";
-import { useTranslation } from "react-i18next";
 import { isSkeltonLoading } from "../../recoil";
+import { RoundedCard } from "../../styles";
+import React, { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
 import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+import { useTranslation } from "react-i18next";
+import { cloneDeep } from "lodash";
 
 const Home = () => {
     const { t } = useTranslation();
@@ -62,16 +73,44 @@ const Home = () => {
         Data_Bill_Filter.July
     );
 
-    const [deleteUser, { loading: deleteUserLoading }] =
-        useDeleteUserMutation();
+    const [deactivateUser, { loading: deactivateUserLoading }] =
+        useDeactivateUserMutation();
     const handleAddNodeClose = () => setIsAddNode(() => false);
-    const { data: connectedUserRes, loading: connectedUserloading } =
-        useGetConnectedUsersQuery({
-            variables: {
-                filter: userStatusFilter,
-            },
-        });
-    const { data: alertsInfoRes, loading: alertsloading } = useGetAlertsQuery({
+    const {
+        data: connectedUserRes,
+        loading: connectedUserloading,
+        subscribeToMore: subscribeToLatestConnectedUsers,
+    } = useGetConnectedUsersQuery({
+        variables: {
+            filter: userStatusFilter,
+        },
+    });
+    useEffect(() => {
+        if (connectedUserRes) {
+            subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>(
+                {
+                    document: GetLatestConnectedUsersDocument,
+                    updateQuery: (prev, { subscriptionData }) => {
+                        let data = { ...prev };
+                        const latestConnectedUser =
+                            subscriptionData.data.getConnectedUsers;
+                        if (
+                            latestConnectedUser.__typename ===
+                            "ConnectedUserDto"
+                        )
+                            data.getConnectedUsers = latestConnectedUser;
+                        return data;
+                    },
+                }
+            );
+        }
+    }, [connectedUserRes]);
+
+    const {
+        data: alertsInfoRes,
+        loading: alertsloading,
+        subscribeToMore: subscribeToLatestAlerts,
+    } = useGetAlertsQuery({
         variables: {
             data: {
                 pageNo: 1,
@@ -79,6 +118,23 @@ const Home = () => {
             },
         },
     });
+    useEffect(() => {
+        if (alertsInfoRes) {
+            subscribeToLatestAlerts<GetLatestAlertsSubscription>({
+                document: GetLatestAlertsDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = cloneDeep(prev);
+                    const latestAlert = subscriptionData.data.getAlerts;
+                    if (latestAlert.__typename === "AlertDto")
+                        data.getAlerts.alerts = [
+                            latestAlert,
+                            ...data.getAlerts.alerts,
+                        ];
+                    return data;
+                },
+            });
+        }
+    }, [alertsInfoRes]);
 
     const {
         data: residentsRes,
@@ -92,19 +148,54 @@ const Home = () => {
             },
         },
     });
-    const { data: dataUsageRes, loading: dataUsageloading } =
-        useGetDataUsageQuery({
-            variables: {
-                filter: dataStatusFilter,
-            },
-        });
 
-    const { data: dataBillingRes, loading: dataBillingloading } =
-        useGetDataBillQuery({
-            variables: {
-                filter: billingStatusFilter,
-            },
-        });
+    const {
+        data: dataUsageRes,
+        loading: dataUsageloading,
+        subscribeToMore: subscribeToLatestDataUsage,
+    } = useGetDataUsageQuery({
+        variables: {
+            filter: dataStatusFilter,
+        },
+    });
+    useEffect(() => {
+        if (dataUsageRes) {
+            subscribeToLatestDataUsage<GetLatestDataUsageSubscription>({
+                document: GetLatestDataUsageDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = { ...prev };
+                    const latestDataUsage = subscriptionData.data.getDataUsage;
+                    if (latestDataUsage.__typename === "DataUsageDto")
+                        data.getDataUsage = latestDataUsage;
+                    return data;
+                },
+            });
+        }
+    }, [dataUsageRes]);
+
+    const {
+        data: dataBillingRes,
+        loading: dataBillingloading,
+        subscribeToMore: subscribeToLatestDataBill,
+    } = useGetDataBillQuery({
+        variables: {
+            filter: billingStatusFilter,
+        },
+    });
+    useEffect(() => {
+        if (dataBillingRes) {
+            subscribeToLatestDataBill<GetLatestDataBillSubscription>({
+                document: GetLatestDataBillDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = { ...prev };
+                    const latestDataBill = subscriptionData.data.getDataBill;
+                    if (latestDataBill.__typename === "DataBillDto")
+                        data.getDataBill = latestDataBill;
+                    return data;
+                },
+            });
+        }
+    }, [dataBillingRes]);
 
     const { data: nodeRes, loading: nodeLoading } = useGetNodesQuery({
         variables: {
@@ -115,12 +206,30 @@ const Home = () => {
         },
     });
 
-    const { data: networkStatusRes, loading: networkStatusLoading } =
-        useGetNetworkQuery({
-            variables: {
-                filter: networkType,
-            },
-        });
+    const {
+        data: networkStatusRes,
+        loading: networkStatusLoading,
+        subscribeToMore: subscribeToLatestNetworkStatus,
+    } = useGetNetworkQuery({
+        variables: {
+            filter: networkType,
+        },
+    });
+    useEffect(() => {
+        if (networkStatusRes) {
+            subscribeToLatestNetworkStatus<GetLatestNetworkSubscription>({
+                document: GetLatestNetworkDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = { ...prev };
+                    const latestNewtworkStatus =
+                        subscriptionData.data.getNetwork;
+                    if (latestNewtworkStatus.__typename === "NetworkDto")
+                        data.getNetwork = latestNewtworkStatus;
+                    return data;
+                },
+            });
+        }
+    }, [networkStatusRes]);
 
     const handleSelectedButtonChange = (
         event: React.MouseEvent<HTMLElement>,
@@ -162,7 +271,7 @@ const Home = () => {
     const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
-            deleteUser({
+            deactivateUser({
                 variables: {
                     id,
                 },
@@ -331,7 +440,7 @@ const Home = () => {
                             height={337}
                             isLoading={
                                 residentsloading ||
-                                deleteUserLoading ||
+                                deactivateUserLoading ||
                                 isSkeltonLoad
                             }
                         >
