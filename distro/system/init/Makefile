@@ -1,54 +1,85 @@
-#Makefile for microInit
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
+#
+# Makefile for init
+#
 
 include ../../../config.mk
 
-CURMAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
-CURPATH := $(dir $(CURMAKE))
+TARGET_EXEC = init
+TARGET_NAME = init
+CAPP_BUILD  = ./$(TARGET_NAME)_capp/
+CAPP        = ./capp/
 
-#Source directory
-SRCDIR = microInit/init microInit/rcinit microInit/sysinit
+UKAMAOS_ROOT = ../../../
 
-#Output
-ifndef ROOTFSPATH
-override ROOTFSPATH = $(CURPATH)_ukamafs
-endif
+VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
+VENDOR_BUILD = $(VENDOR_DIR)/build/
+VENDOR_INC   = $(VENDOR_BUILD)/include/
+VENDOR_USR_INC = $(VENDOR_BUILD)/usr/include
+SYS_INC = $(XGCCPATH)/../$(HOST)/include
+VENDOR_LIB   = $(VENDOR_BUILD)/lib/
+VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
-.PHONY: subdirs $(SRCDIR) clean info msg
+SCRIPTS = $(UKAMAOS_ROOT)/distro/scripts/
+ROOTFS  = ./_ukama_minimal_rootfs/
 
-#BUILD FLAGS
-BUILDFLAGS := --disable-nls --disable-werror
+# Packages needed to compile target.
+VENDOR_PKG =
 
-#Arch
-ifeq ($(ARCH), $(ARCHARM))
-TARGETFLAG := armv7-unknown-linux-musleabihf
-ADDITIONALLINKERFLAG := CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gnueabihf-ld
-else
-TARGETFLAG := x86_64-unknown-linux-musl
-ADDITIONALLINKERFLAG :=
-endif
+# Setting up various compile and link flags.
+CFLAGS=-c
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-O0
+CFLAGS+=-I$(VENDOR_INC)
+CFLAGS+=-I$(VENDOR_USR_INC)
+CFLAGS+=-I$(SYS_INC)
+CFLAGS+=-I./inc
+CFLAGS+=-I$(WIMC_DIR)/inc/
+CFLAGS+=-D_REENTRANT
 
-subdirs: $(SRCDIR)
+LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-L${VENDOR_LIB64}
 
-$(SRCDIR):
-	@echo Building $@ for $(ARCH)
-        	
-	$(shell cd $@ && $(ADDITIONALLINKERFLAG) cargo build --release --target=$(TARGETFLAG))
+LIBS=
+
+# Soruce files.
+CFILES   = $(wildcard ./src/*.c)
+OBJFILES = $(CFILES:.c=.o)
+
+XCC := $(XGCCPATH)$(XGCC)
+XLD := $(XGCCPATH)$(XLD)
+
+.PHONY: $(TARGET_EXEC)
+
+lxce: $(TARGET_EXEC)
+
+$(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
+	$(XCC) -o $(TARGET_EXEC) $(OBJFILES) $(LDFLAGS) $(LIBS)
+	echo "Done."
+
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && make $@
+
+%.o: %.c
+	$(XCC) $(CFLAGS) -c $< -o $@
+
+capp: $(TARGET_EXEC)
+	rm -rf $(CAPP_BUILD); mkdir $(CAPP_BUILD)
+	cd $(SCRIPTS); ./mk_minimal_rootfs.sh; cd -
+	cp -rf $(SCRIPTS)/$(ROOTFS)/* $(CAPP_BUILD)
+
+	mkdir -p $(CAPP_BUILD)/conf $(CAPP_BUILD)/sbin $(CAPP_BUILD)/cert
+	cp $(CAPP)/config.json $(CAPP_BUILD)
+	cp $(CAPP)/conf/* $(CAPP_BUILD)/conf
+	cp $(TARGET_EXEC) $(CAPP_BUILD)/sbin
+	tar -czf $(TARGET_NAME)_capp.tar.gz $(CAPP_BUILD)
+	rm -rf $(CAPP_BUILD)
+
+	echo "$(TARGET_NAME) capp is available $(TARGET_NAME)_capp.tar.gz Done."
 
 clean:
-	@echo Cleaning $(SRCDIR).
-	for dir in $(SRCDIR); do \
-		(cd $$dir && cargo clean) \
-        done
-
-distclean:
-	@echo DistClean $(SRCDIR).
-	for dir in $(SRCDIR); do \
-                (cd $$dir && cargo clean) \
-        done
-
-info:
-	@echo Building init for Ukama
-
-msg:
-	@echo Build not required for $(ARCH)
-
+	rm -rf $(SCRIPTS)/$(ROOTFS)
+	rm -rf $(TARGET_EXEC) $(OBJFILES) $(CAPP_BUILD) *.tar.gz
