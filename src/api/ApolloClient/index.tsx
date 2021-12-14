@@ -28,10 +28,10 @@ const splitLink = split(
 const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
-    credentials: "include",
-    headers: {
-        "Content-Type": "application/json",
-    },
+    // credentials: "include",
+    // headers: {
+    //     "Content-Type": "application/json",
+    // },
 });
 
 export default client;
