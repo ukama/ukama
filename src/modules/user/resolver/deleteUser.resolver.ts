@@ -17,6 +17,6 @@ export class AddUserResolver {
         @Arg("userId") userId: string,
         @Ctx() ctx: Context
     ): Promise<ActivateUserResponse | null> {
-        return await this.userService.deleteUser(orgId, userId, ctx);
+        return this.userService.deleteUser(orgId, userId, ctx);
     }
 }
