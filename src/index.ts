@@ -14,9 +14,12 @@ const initializeApp = async () => {
         logger,
     });
 
-    // const corsOption = { origin: ["http://localhost:3000"], credentials: true };
+    const corsOption = {
+        origin: ["https://*.dev.ukama.com"],
+        credentials: true,
+    };
     const { server, schema } = await configureApolloServer();
-    server.applyMiddleware({ app });
+    server.applyMiddleware({ app, cors: corsOption });
 
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
