@@ -34,8 +34,7 @@ const Header = ({
 }: HeaderProps) => {
     const history = useHistory();
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-    const showDivider =
-        pageName !== "Billing" && pageName !== "User" ? true : false;
+    const showDivider = pageName !== "Billing" ? true : false;
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
     const isMenuOpen = Boolean(anchorEl);

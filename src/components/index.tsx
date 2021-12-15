@@ -22,6 +22,7 @@ import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
+import UserCard from "./UserCard";
 import {
     BasicDialog,
     ActivationDialog,
@@ -32,6 +33,7 @@ export {
     TabLayout,
     AlertCard,
     StatsCard,
+    UserCard,
     StatusCard,
     CurrentBill,
     TableHeader,
