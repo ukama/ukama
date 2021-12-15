@@ -34,6 +34,11 @@ export interface IUserService {
         req: AddUserDto,
         ctx: Context
     ): Promise<AddUserResponse>;
+    deleteUser(
+        orgId: string,
+        userId: string,
+        ctx: Context
+    ): Promise<ActivateUserResponse>;
 }
 
 export interface IUserMapper {
