@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
 import { UsersTabs } from "../../constants";
-import TabLayoutHeader from "../../components/TabLayout";
+import { ContainerHeader } from "../../components";
+import { RoundedCard } from "../../styles";
 
 const User = () => {
     const [tab, setTab] = useState("1");
@@ -11,18 +12,16 @@ const User = () => {
     const handleActivateUser = () => {
         /* TODO: Handle activate user action */
     };
-
     return (
-        <Box sx={{ mt: "24px" }}>
-            <TabLayoutHeader
-                tab={tab}
-                tabs={UsersTabs}
-                withActionButton={true}
-                onTabChange={handleTabChange}
-                handleAction={handleActivateUser}
+        <RoundedCard>
+            <ContainerHeader
+                title="My Users"
+                stats={"78/2"}
+                handleButtonAction={handleActivateUser}
+                buttonTitle="INSTALL SIMS"
+                withSearchBox
             />
-            {tab === "1" ? <h4>Overview</h4> : <h4>Currently connected</h4>}
-        </Box>
+        </RoundedCard>
     );
 };
 
