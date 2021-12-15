@@ -220,3 +220,39 @@ export class OrgUserResponseDto {
     @Field(() => [GetUserDto])
     users: GetUserDto[];
 }
+
+@InputType()
+export class AddUserDto {
+    @Field()
+    imsi: string;
+
+    @Field()
+    @Length(3, 255)
+    firstName: string;
+
+    @Field()
+    @Length(3, 255)
+    lastName: string;
+
+    @Field()
+    @IsEmail()
+    email: string;
+}
+
+@ObjectType()
+export class AddUserResponse {
+    @Field()
+    imsi: string;
+
+    @Field()
+    firstName: string;
+
+    @Field()
+    lastName: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    uuid: string;
+}
