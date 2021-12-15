@@ -5,9 +5,11 @@ import {
     ConnectedUserResponse,
     GetUserDto,
     GetUserResponseDto,
+    OrgUserResponseDto,
     ResidentDto,
     ResidentResponse,
 } from "./types";
+import casual from "../../mockServer/mockData/casual-extensions";
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (res: ConnectedUserResponse): ConnectedUserDto => {
@@ -37,6 +39,13 @@ class UserMapper implements IUserMapper {
             residents,
             activeResidents,
             totalResidents,
+        };
+    };
+    dtoToUsersDto = (org: string): OrgUserResponseDto => {
+        const users = casual.randomArray<GetUserDto>(2, 6, casual._getUser);
+        return {
+            orgName: org,
+            users,
         };
     };
 }

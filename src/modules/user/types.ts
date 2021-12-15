@@ -211,3 +211,12 @@ export class DeactivateResponse {
     @Field()
     success: boolean;
 }
+
+@ObjectType()
+export class OrgUserResponseDto {
+    @Field()
+    orgName: string;
+
+    @Field(() => [GetUserDto])
+    users: GetUserDto[];
+}

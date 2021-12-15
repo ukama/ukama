@@ -73,7 +73,7 @@ export class NodeService implements INodeService {
         const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.GET_NODES_BY_ORG}/${orgId}/nodes`,
+            path: `${SERVER.ORG}/${orgId}/nodes`,
             headers: header,
         });
 
