@@ -4,6 +4,7 @@ import { ApolloClient, InMemoryCache, split, HttpLink } from "@apollo/client";
 
 const httpLink = new HttpLink({
     uri: process.env.REACT_APP_API,
+    // credentials: "include",
 });
 
 const wsLink = new WebSocketLink({
@@ -28,7 +29,7 @@ const splitLink = split(
 const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
-    credentials: "same-origin",
+    credentials: "include",
 });
 
 export default client;
