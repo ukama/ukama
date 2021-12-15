@@ -131,7 +131,7 @@ export class UserService implements IUserService {
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
 
-        return UserMapper.dtoToUsersDto(res.org);
+        return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
         orgId: string,

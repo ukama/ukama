@@ -12,6 +12,7 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
+    OrgUserResponse,
     OrgUserResponseDto,
     ResidentResponse,
     ResidentsResponse,
@@ -39,5 +40,5 @@ export interface IUserMapper {
     connectedUsersDtoToDto(res: ConnectedUserResponse): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
-    dtoToUsersDto(org: string): OrgUserResponseDto;
+    dtoToUsersDto(req: OrgUserResponse): OrgUserResponseDto;
 }

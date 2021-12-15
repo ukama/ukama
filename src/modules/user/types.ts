@@ -135,6 +135,9 @@ export class GetUserDto {
     name: string;
 
     @Field()
+    email: string;
+
+    @Field()
     node: string;
 
     @Field(() => DATA_PLAN_TYPE)
@@ -255,4 +258,27 @@ export class AddUserResponse {
 
     @Field()
     uuid: string;
+}
+@ObjectType()
+export class OrgUserDto {
+    @Field()
+    firstName: string;
+
+    @Field()
+    lastName: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    uuid: string;
+}
+
+@ObjectType()
+export class OrgUserResponse {
+    @Field()
+    org: string;
+
+    @Field(() => [OrgUserDto])
+    users: OrgUserDto[];
 }

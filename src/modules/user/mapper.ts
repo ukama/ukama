@@ -1,15 +1,16 @@
-import { GET_STATUS_TYPE } from "../../constants";
+import { DATA_PLAN_TYPE, GET_STATUS_TYPE } from "../../constants";
 import { IUserMapper } from "./interface";
 import {
     ConnectedUserDto,
     ConnectedUserResponse,
     GetUserDto,
     GetUserResponseDto,
+    OrgUserResponse,
     OrgUserResponseDto,
     ResidentDto,
     ResidentResponse,
 } from "./types";
-import casual from "../../mockServer/mockData/casual-extensions";
+import * as defaultCasual from "casual";
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (res: ConnectedUserResponse): ConnectedUserDto => {
@@ -41,10 +42,31 @@ class UserMapper implements IUserMapper {
             totalResidents,
         };
     };
-    dtoToUsersDto = (org: string): OrgUserResponseDto => {
-        const users = casual.randomArray<GetUserDto>(2, 6, casual._getUser);
+    dtoToUsersDto = (req: OrgUserResponse): OrgUserResponseDto => {
+        const orgName = req.org;
+        const res = req.users;
+        const users: GetUserDto[] = [];
+
+        res.forEach(user => {
+            const node = {
+                Default: "Default",
+                Intermediate: "Intermediate",
+            };
+            const userObj = {
+                id: user.uuid,
+                name: `${user.firstName} ${user.lastName}`,
+                email: user.email,
+                status: defaultCasual.random_value(GET_STATUS_TYPE),
+                node: `${defaultCasual.random_value(node)} Data Plan`,
+                dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
+                dataUsage: defaultCasual.integer(1, 199),
+                dlActivity: "Table cell",
+                ulActivity: "Table cell",
+            };
+            users.push(userObj);
+        });
         return {
-            orgName: org,
+            orgName,
             users,
         };
     };

@@ -97,6 +97,7 @@ const getUser = (): GetUserDto => {
         id: defaultCasual._uuid(),
         status: defaultCasual.random_value(GET_STATUS_TYPE),
         name: defaultCasual._name(),
+        email: defaultCasual._email(),
         node: `${defaultCasual.random_value(node)} Data Plan`,
         dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
         dataUsage: defaultCasual.integer(1, 199),
