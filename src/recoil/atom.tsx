@@ -8,4 +8,10 @@ const isSkeltonLoading = atom({
     effects_UNSTABLE: [persistAtom],
 });
 
-export { isSkeltonLoading };
+const pageName = atom({
+    key: "pageName",
+    default: "Home",
+    effects_UNSTABLE: [persistAtom],
+});
+
+export { isSkeltonLoading, pageName };

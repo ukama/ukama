@@ -1,19 +1,23 @@
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { colors } from "../theme";
-import { useState } from "react";
-import { useRecoilValue } from "recoil";
 import { useHistory } from "react-router";
+import { useEffect, useState } from "react";
 import { getTitleFromPath } from "../utils";
-import { isSkeltonLoading } from "../recoil";
 import { Box, CssBaseline } from "@mui/material";
+import { isSkeltonLoading, pageName } from "../recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
+
 const Layout = (props: any) => {
     const { children } = props;
     const history = useHistory();
+    const [page, setPage] = useRecoilState(pageName);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const [page, setPage] = useState(
-        getTitleFromPath(history?.location?.pathname || "/")
-    );
+
+    useEffect(() => {
+        getTitleFromPath(history?.location?.pathname || "/");
+    }, []);
+
     const [isOpen, setIsOpen] = useState(false);
 
     const handlePageChange = (page: string) => {
@@ -31,13 +35,15 @@ const Layout = (props: any) => {
             }}
         >
             <CssBaseline />
-            <Sidebar
-                page={page}
-                isOpen={isOpen}
-                isLoading={isSkeltonLoad}
-                handlePageChange={handlePageChange}
-                handleDrawerToggle={handleDrawerToggle}
-            />
+            {page !== "Settings" && (
+                <Sidebar
+                    page={page}
+                    isOpen={isOpen}
+                    isLoading={isSkeltonLoad}
+                    handlePageChange={handlePageChange}
+                    handleDrawerToggle={handleDrawerToggle}
+                />
+            )}
             <Box
                 component="main"
                 sx={{

@@ -25,11 +25,8 @@ import AmountBalanceImg from "./AmountBalanceImg";
 import SettingsArrowIcon from "./SettingsArrowIcon";
 export {
     Logo,
-    SettingsArrowIcon,
     CpuIcon,
     NodeImg,
-    AmountBalanceImg,
-    SimCardIcon,
     HomeIcon,
     MenuDots,
     AlertIcon,
@@ -43,10 +40,13 @@ export {
     HistoryIcon,
     UpgradeIcon,
     UsersWithBG,
+    SimCardIcon,
     ActivityIcon,
     CloudOffIcon,
     SettingsIcon,
     ModuleStoreIcon,
     ThermometerIcon,
     NotificationIcon,
+    AmountBalanceImg,
+    SettingsArrowIcon,
 };
