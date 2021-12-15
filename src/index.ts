@@ -44,7 +44,6 @@ const initializeApp = async () => {
             res.redirect("https://auth.dev.ukama.com/auth/login");
             res.end();
         }
-        return;
     });
 
     app.get("/ping", (req, res) => {
