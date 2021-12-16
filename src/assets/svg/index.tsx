@@ -24,14 +24,12 @@ import NotificationIcon from "./NotificationIcon";
 import AmountBalanceImg from "./AmountBalanceImg";
 import SettingsArrowIcon from "./SettingsArrowIcon";
 import InfoIcon from "./InfoIcon";
+import PagePlaceholderSvg from "./PagePlaceholderSvg";
 export {
     Logo,
-    InfoIcon,
-    SettingsArrowIcon,
     CpuIcon,
     NodeImg,
-    AmountBalanceImg,
-    SimCardIcon,
+    InfoIcon,
     HomeIcon,
     MenuDots,
     AlertIcon,
@@ -45,10 +43,14 @@ export {
     HistoryIcon,
     UpgradeIcon,
     UsersWithBG,
+    SimCardIcon,
     ActivityIcon,
     CloudOffIcon,
     SettingsIcon,
     ModuleStoreIcon,
     ThermometerIcon,
     NotificationIcon,
+    AmountBalanceImg,
+    SettingsArrowIcon,
+    PagePlaceholderSvg,
 };

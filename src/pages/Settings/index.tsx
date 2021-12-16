@@ -3,9 +3,13 @@ import {
     NodeSettings,
     AlertSettings,
     NetworkSettings,
+    LoadingWrapper,
 } from "../../components";
 import { colors } from "../../theme";
 import React, { useState } from "react";
+import { isSkeltonLoading, pageName } from "../../recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useHistory } from "react-router-dom";
 import { SETTING_MENU } from "../../constants";
 import { SettingsMenuTypes } from "../../types";
 import { HorizontalContainer, RoundedCard } from "../../styles";
@@ -71,7 +75,11 @@ const ActionButtons = ({
 );
 
 const Settings = () => {
+    const history = useHistory();
     const [menuId, setMenuId] = useState(1);
+    const setPage = useSetRecoilState(pageName);
+    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+
     const handleItemClick = (id: number) => setMenuId(id);
     const handleLogout = () => {
         /* TODO: Handle Logout */
@@ -80,14 +88,15 @@ const Settings = () => {
         /* TODO: Handle Save Action */
     };
     const handleCancel = () => {
-        /* TODO: Handle Cancel Action */
+        setPage("Home");
+        history.push("/home");
     };
 
     return (
-        <>
-            <Box mt={2}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={3}>
+        <Box mt={2}>
+            <Grid container spacing={2}>
+                <Grid item xs={12} md={3}>
+                    <LoadingWrapper height={237} isLoading={isSkeltonLoad}>
                         <RoundedCard
                             sx={{
                                 p: "12px 20px",
@@ -115,8 +124,10 @@ const Settings = () => {
                                 />
                             </MenuList>
                         </RoundedCard>
-                    </Grid>
-                    <Grid item xs={12} md={9} sx={{ mb: "18px" }}>
+                    </LoadingWrapper>
+                </Grid>
+                <Grid item xs={12} md={9} sx={{ mb: "18px" }}>
+                    <LoadingWrapper height={364} isLoading={isSkeltonLoad}>
                         <RoundedCard>
                             <TabPanel index={1} value={menuId}>
                                 <UserSettings />
@@ -147,10 +158,10 @@ const Settings = () => {
                                 />
                             </TabPanel>
                         </RoundedCard>
-                    </Grid>
+                    </LoadingWrapper>
                 </Grid>
-            </Box>
-        </>
+            </Grid>
+        </Box>
     );
 };
 

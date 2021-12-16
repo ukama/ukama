@@ -133,9 +133,7 @@ const Sidebar = (
                     justifyContent: "center",
                 }}
             >
-                <Divider
-                    sx={{ width: 160, mt: "8px", mb: "20px !important" }}
-                />
+                <Divider sx={{ width: 160, mt: "8px", mb: "0px !important" }} />
             </div>
             {MenuList(SIDEBAR_MENU2)}
 

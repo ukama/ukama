@@ -15,6 +15,12 @@ const useStyles = makeStyles(() => ({
             fontSize: "14px",
             lineHeight: "157%",
         },
+        "& .MuiSelect-iconStandard": {
+            paddingBottom: "4px",
+        },
+        "& .MuiSelect-iconOpen": {
+            paddingBottom: "0px",
+        },
     },
 }));
 
