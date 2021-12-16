@@ -1,4 +1,4 @@
-package integration
+package kratos
 
 // those methods are copy-paste from kratos example repo https://github.com/ory/kratos/tree/master/examples/go/pkg
 
@@ -6,15 +6,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
-	ory "github.com/ory/kratos-client-go"
-	"github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"strings"
+
+	"github.com/google/uuid"
+	ory "github.com/ory/kratos-client-go"
+	"github.com/sirupsen/logrus"
 )
 
 func PrintJSONPretty(v interface{}) {

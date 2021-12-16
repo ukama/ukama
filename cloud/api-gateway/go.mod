@@ -14,7 +14,7 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-resty/resty/v2 v2.6.0
-	github.com/google/uuid v1.1.2
+	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/ory/kratos-client-go v0.8.0-alpha.2
 	github.com/sirupsen/logrus v1.8.1

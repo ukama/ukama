@@ -2,9 +2,11 @@ package db_test
 
 import (
 	extsql "database/sql"
-	"github.com/ukama/ukamaX/common/ukama"
+	"log"
 	"testing"
 	int_db "ukamaX/bootstrap/lookup/internal/db"
+
+	"github.com/ukama/ukamaX/common/ukama"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +31,11 @@ func (u UkamaDbMock) GetGormDb() *gorm.DB {
 }
 
 func (u UkamaDbMock) InitDB() error {
+	return nil
+}
+
+func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
+	log.Fatal("implement me")
 	return nil
 }
 
