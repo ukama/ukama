@@ -843,5 +843,5 @@ fn main() {
     do_hostname();
     do_resolvconf();
 
-    process::exit(0);
+    std::process::exit(0);
 }
