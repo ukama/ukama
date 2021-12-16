@@ -58,7 +58,7 @@ const ContainerHeader = ({
                         <StyledInputBase placeholder="Search…" />
                         <IconButton
                             color="primary"
-                            aria-label="upload picture"
+                            aria-label="simSearch"
                             component="span"
                         >
                             <SearchIcon sx={{ color: colors.darkGray }} />
