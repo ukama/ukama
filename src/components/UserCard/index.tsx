@@ -10,11 +10,10 @@ import colors from "../../theme/colors";
 import { UserDetailsDialog } from "../../components";
 import { useState } from "react";
 type UserCardProps = {
-    handleViewMore?: Function;
     userDetails?: any;
 };
 
-const UserCard = ({ handleViewMore, userDetails }: UserCardProps) => {
+const UserCard = ({ userDetails }: UserCardProps) => {
     const [showSimDialog, setShowSimDialog] = useState(false);
     const showMore = () => {
         setShowSimDialog(true);

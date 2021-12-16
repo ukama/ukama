@@ -1,13 +1,6 @@
 import { colors } from "../theme";
 import { makeStyles } from "@mui/styles";
-import {
-    Box,
-    LinearProgress,
-    styled,
-    Link,
-    Paper,
-    Skeleton,
-} from "@mui/material";
+import { Box, styled, Link, Paper, Skeleton } from "@mui/material";
 
 const globalUseStyles = makeStyles(() => ({
     inputFieldStyle: {

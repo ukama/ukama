@@ -2,7 +2,7 @@ import { ContainerHeader, UserCard } from "../../components";
 import { RoundedCard } from "../../styles";
 import { UserData } from "../../constants/stubData";
 const User = () => {
-    const handleActivateUser = () => {
+    const handleSimInstallation = () => {
         /* TODO: Handle activate user action */
     };
     return (
@@ -10,7 +10,7 @@ const User = () => {
             <ContainerHeader
                 title="My Users"
                 stats={"78/2"}
-                handleButtonAction={handleActivateUser}
+                handleButtonAction={handleSimInstallation}
                 buttonTitle="INSTALL SIMS"
                 withSearchBox
             />

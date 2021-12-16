@@ -4,11 +4,6 @@ import { styled } from "@mui/material/styles";
 import { colors } from "../../theme";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
-import { ChangeEventHandler, useState } from "react";
-import { UserSearchFormType } from "../../types";
-const initialSearchFormValue = {
-    text: "",
-};
 
 type ContainerHeaderProps = {
     title?: string;
@@ -16,8 +11,6 @@ type ContainerHeaderProps = {
     buttonTitle?: string;
     handleButtonAction: Function;
     withSearchBox?: boolean;
-    values?: any;
-    handleChange?: ChangeEventHandler<HTMLInputElement>;
 };
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
@@ -37,11 +30,7 @@ const ContainerHeader = ({
     withSearchBox,
     buttonTitle,
     handleButtonAction,
-    handleChange,
-    values,
 }: ContainerHeaderProps) => {
-    const [userActivateForm, setUserActivateForm] =
-        useState<UserSearchFormType>(initialSearchFormValue);
     return (
         <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
             <HorizontalContainer>
