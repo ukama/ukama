@@ -14,6 +14,7 @@ import NetworkStatus from "./NetworkStatus";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
 import SimpleDataTable from "./SimpleDataTable";
+import PagePlaceholder from "./PagePlaceholder";
 import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
@@ -46,6 +47,7 @@ export {
     LoadingWrapper,
     NetworkSettings,
     SimpleDataTable,
+    PagePlaceholder,
     ContainerHeader,
     UpgradeNavFooter,
     ActivationDialog,

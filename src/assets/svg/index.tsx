@@ -23,6 +23,7 @@ import ThermometerIcon from "./ThermometerIcon";
 import NotificationIcon from "./NotificationIcon";
 import AmountBalanceImg from "./AmountBalanceImg";
 import SettingsArrowIcon from "./SettingsArrowIcon";
+import PagePlaceholderSvg from "./PagePlaceholderSvg";
 export {
     Logo,
     CpuIcon,
@@ -49,4 +50,5 @@ export {
     NotificationIcon,
     AmountBalanceImg,
     SettingsArrowIcon,
+    PagePlaceholderSvg,
 };
