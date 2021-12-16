@@ -1,24 +1,21 @@
 import { ContainerHeader, UserCard } from "../../components";
 import { RoundedCard } from "../../styles";
-import { Box } from "@mui/material";
+import { UserData } from "../../constants/stubData";
 const User = () => {
     const handleActivateUser = () => {
         /* TODO: Handle activate user action */
     };
     return (
-        <Box sx={{ flexGrow: 1, pb: "18px", mt: 2 }}>
-            <RoundedCard>
-                <ContainerHeader
-                    title="My Users"
-                    stats={"78/2"}
-                    handleButtonAction={handleActivateUser}
-                    buttonTitle="INSTALL SIMS"
-                    withSearchBox
-                />
-
-                <UserCard />
-            </RoundedCard>
-        </Box>
+        <RoundedCard sx={{ mt: 3 }}>
+            <ContainerHeader
+                title="My Users"
+                stats={"78/2"}
+                handleButtonAction={handleActivateUser}
+                buttonTitle="INSTALL SIMS"
+                withSearchBox
+            />
+            <UserCard userDetails={UserData} />
+        </RoundedCard>
     );
 };
 

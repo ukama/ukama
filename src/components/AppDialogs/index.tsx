@@ -1,5 +1,10 @@
 import BasicDialog from "./BasicDialog";
 import ActivationDialog from "./ActivationDialog";
 import UserActivationDialog from "./UserActivationDialog";
-
-export { BasicDialog, ActivationDialog, UserActivationDialog };
+import UserDetailsDialog from "./UserDetailsDialog";
+export {
+    BasicDialog,
+    UserDetailsDialog,
+    ActivationDialog,
+    UserActivationDialog,
+};

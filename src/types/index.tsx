@@ -68,7 +68,9 @@ export type ColumnsWithOptions = {
     minWidth?: number;
     align?: "right";
 };
-
+export type UserSearchFormType = {
+    text: string;
+};
 export type SimActivateFormType = {
     email: string;
     phone: string;

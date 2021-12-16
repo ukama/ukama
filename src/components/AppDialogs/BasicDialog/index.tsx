@@ -41,7 +41,6 @@ const BasicDialog = ({
     return (
         <Dialog
             open={isOpen}
-            // onClose={handleClose}
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box

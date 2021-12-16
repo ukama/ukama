@@ -27,6 +27,7 @@ import {
     BasicDialog,
     ActivationDialog,
     UserActivationDialog,
+    UserDetailsDialog,
 } from "./AppDialogs";
 export {
     NodeCard,
@@ -39,6 +40,7 @@ export {
     TableHeader,
     BasicDialog,
     NodeSettings,
+    UserDetailsDialog,
     UserSettings,
     AlertSettings,
     SimCardDesign,

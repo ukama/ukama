@@ -23,8 +23,10 @@ import ThermometerIcon from "./ThermometerIcon";
 import NotificationIcon from "./NotificationIcon";
 import AmountBalanceImg from "./AmountBalanceImg";
 import SettingsArrowIcon from "./SettingsArrowIcon";
+import InfoIcon from "./InfoIcon";
 export {
     Logo,
+    InfoIcon,
     SettingsArrowIcon,
     CpuIcon,
     NodeImg,

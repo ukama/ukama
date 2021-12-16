@@ -1,86 +1,128 @@
 import {
-    Box,
     Button,
     Grid,
     LinearProgress,
     Stack,
+    Paper,
     Typography,
 } from "@mui/material";
-import { RoundedCard } from "../../styles";
 import colors from "../../theme/colors";
-const UserCard = () => {
+import { UserDetailsDialog } from "../../components";
+import { useState } from "react";
+type UserCardProps = {
+    handleViewMore?: Function;
+    userDetails?: any;
+};
+
+const UserCard = ({ handleViewMore, userDetails }: UserCardProps) => {
+    const [showSimDialog, setShowSimDialog] = useState(false);
+    const showMore = () => {
+        setShowSimDialog(true);
+    };
+    const handleSimDialog = () => {
+        setShowSimDialog(false);
+    };
+
     return (
         <>
-            <Box>
-                <Grid container spacing={2}>
-                    <Grid item>
-                        <RoundedCard sx={{ boxShadow: 2 }}>
-                            <Stack spacing={1} direction="column">
-                                <Typography variant="body2">
-                                    19123192313128381239128381239
-                                </Typography>
-                                <Typography variant="h5">John Doe</Typography>
-                            </Stack>
-                            <Grid
-                                container
-                                spacing={3}
-                                style={{ alignItems: "center" }}
-                            >
-                                <Grid item>
-                                    <Stack direction="row" spacing={1}>
+            <Grid
+                container
+                spacing={3}
+                justifyContent="center"
+                alignItems="center"
+            >
+                {userDetails.map(
+                    ({ id, name, imsi, dataPack, remaingData }: any) => (
+                        <Grid item xs={12} md={3} key={id}>
+                            <Paper elevation={2} sx={{ boxShadow: 2, p: 2 }}>
+                                <Grid
+                                    container
+                                    item
+                                    spacing={1}
+                                    direction="column"
+                                >
+                                    <Grid item>
+                                        <Typography variant="body2">
+                                            {imsi}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item>
                                         <Typography variant="h5">
-                                            1.5
+                                            {name}
                                         </Typography>
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                position: "relative",
-                                                top: "8px",
-                                            }}
-                                        >
-                                            GB
-                                        </Typography>
-                                    </Stack>
+                                    </Grid>
                                 </Grid>
-                                <Grid item>
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            position: "relative",
-                                            top: "2px",
-                                        }}
+                                <Grid item container spacing={2} sx={{ mt: 1 }}>
+                                    <Grid
+                                        item
+                                        xs={3}
+                                        container
+                                        justifyContent="flex-start"
                                     >
-                                        0.5 GB free data left
-                                    </Typography>
+                                        <Stack direction="row" spacing={1 / 2}>
+                                            <Typography
+                                                variant="h5"
+                                                sx={{
+                                                    position: "relative",
+                                                    bottom: "9px",
+                                                }}
+                                            >
+                                                {dataPack}
+                                            </Typography>
+                                            <Typography variant="body2">
+                                                GB
+                                            </Typography>
+                                        </Stack>
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        container
+                                        justifyContent="flex-end"
+                                        xs={9}
+                                    >
+                                        <Typography variant="body2">
+                                            {remaingData} GB free data left
+                                        </Typography>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                            <Grid container spacing={1}>
-                                <Grid item xs={12}>
-                                    <Box sx={{ width: "100%" }}>
+                                <Grid container spacing={2} direction="column">
+                                    <Grid item>
                                         <LinearProgress
                                             variant="determinate"
-                                            value={50}
+                                            value={dataPack - remaingData}
                                             sx={{
                                                 height: "8px",
                                                 backgroundColor:
                                                     colors.darkGray,
                                             }}
                                         />
-                                    </Box>
+                                    </Grid>
+                                    <Grid item>
+                                        <Button
+                                            variant="text"
+                                            sx={{ color: colors.darkGrey }}
+                                            onClick={showMore}
+                                        >
+                                            VIEW MORE
+                                        </Button>
+                                    </Grid>
+                                    <UserDetailsDialog
+                                        userName="John Doe"
+                                        data="- 1.5 GB data used, 0.5 free GB left"
+                                        isOpen={showSimDialog}
+                                        userDetailsTitle="User Details"
+                                        btnLabel="Submit"
+                                        handleClose={handleSimDialog}
+                                        simDetailsTitle="SIM Details"
+                                        saveBtnLabel="save"
+                                        closeBtnLabel="close"
+                                    />
                                 </Grid>
-                                <Grid item xs={12}>
-                                    <Button
-                                        variant="text"
-                                        sx={{ color: colors.darkGrey }}
-                                    >
-                                        VIEW MORE
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </RoundedCard>
-                    </Grid>
-                </Grid>
-            </Box>
+                            </Paper>
+                        </Grid>
+                    )
+                )}
+            </Grid>
         </>
     );
 };

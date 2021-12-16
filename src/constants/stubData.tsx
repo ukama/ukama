@@ -98,6 +98,36 @@ const SimCardData = [
         isActive: false,
     },
 ];
+const UserData = [
+    {
+        id: 1,
+        name: "ESIM # 1",
+        imsi: "32019-08-12-2023-999990",
+        dataPack: 82,
+        remaingData: 2,
+    },
+    {
+        id: 1,
+        name: "ESIM # 1",
+        imsi: "32019-08-12-2023-999990",
+        dataPack: 18,
+        remaingData: 2,
+    },
+    {
+        id: 1,
+        name: "ESIM # 1",
+        imsi: "32019-08-12-2023-999990",
+        dataPack: 10,
+        remaingData: 2,
+    },
+    {
+        id: 1,
+        name: "ESIM # 1",
+        imsi: "32019-08-12-2023-999990",
+        dataPack: 23,
+        remaingData: 2,
+    },
+];
 const CurrentBilling = [
     {
         id: 1,
@@ -133,5 +163,6 @@ export {
     CurrentBillingData,
     CurrentBilling,
     RechartsData,
+    UserData,
     CREDIT_CARD,
 };

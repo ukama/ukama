@@ -1,53 +1,47 @@
-import { Typography, Button } from "@mui/material";
+import { Typography, Button, IconButton, Paper, Stack } from "@mui/material";
 import { HorizontalContainerJustify, HorizontalContainer } from "../../styles";
 import { styled } from "@mui/material/styles";
 import { colors } from "../../theme";
-// import SearchIcon from "@mui/icons-material/Search";
+import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
+import { ChangeEventHandler, useState } from "react";
+import { UserSearchFormType } from "../../types";
+const initialSearchFormValue = {
+    text: "",
+};
+
 type ContainerHeaderProps = {
     title?: string;
     stats?: string;
     buttonTitle?: string;
     handleButtonAction: Function;
     withSearchBox?: boolean;
+    values?: any;
+    handleChange?: ChangeEventHandler<HTMLInputElement>;
 };
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
     color: "inherit",
     "& .MuiInputBase-input": {
-        padding: theme.spacing(1, 1, 1, 0),
-        border: "1px solid #E0E0E0",
-        borderRadius: "4px",
         paddingLeft: `calc(1em + ${theme.spacing(1)})`,
-        transition: theme.transitions.create("width"),
         width: "100%",
         [theme.breakpoints.up("md")]: {
             width: "20ch",
         },
     },
 }));
-const Search = styled("div")(({ theme }) => ({
-    position: "relative",
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor: "white",
-    "&:hover": {
-        backgroundColor: "white",
-    },
-    marginRight: theme.spacing(2),
-    marginLeft: 0,
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-        marginLeft: theme.spacing(3),
-        width: "auto",
-    },
-}));
+
 const ContainerHeader = ({
     title,
     stats,
     withSearchBox,
     buttonTitle,
     handleButtonAction,
+    handleChange,
+    values,
 }: ContainerHeaderProps) => {
+    const [userActivateForm, setUserActivateForm] =
+        useState<UserSearchFormType>(initialSearchFormValue);
     return (
         <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
             <HorizontalContainer>
@@ -64,17 +58,29 @@ const ContainerHeader = ({
                 </Typography>
             </HorizontalContainer>
             {withSearchBox && (
-                <Search>
-                    <StyledInputBase
-                        placeholder="Search…"
-                        inputProps={{ "aria-label": "search" }}
-                    />
-                </Search>
+                <Paper
+                    sx={{
+                        mr: 1,
+                        border: `1px solid ${colors.darkGray}`,
+                    }}
+                    elevation={0}
+                >
+                    <Stack direction="row">
+                        <StyledInputBase placeholder="Search…" />
+                        <IconButton
+                            color="primary"
+                            aria-label="upload picture"
+                            component="span"
+                        >
+                            <SearchIcon sx={{ color: colors.darkGray }} />
+                        </IconButton>
+                    </Stack>
+                </Paper>
             )}
 
             <Button
                 variant="contained"
-                sx={{ width: "25%" }}
+                sx={{ width: "25%", py: "8px" }}
                 onClick={() => handleButtonAction()}
             >
                 {buttonTitle}
