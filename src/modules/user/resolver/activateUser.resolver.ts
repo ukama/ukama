@@ -15,6 +15,6 @@ export class ActivateUserResolver {
         @Arg("data")
         req: ActivateUserDto
     ): Promise<ActivateUserResponse | null> {
-        return await this.userService.activateUser(req);
+        return this.userService.activateUser(req);
     }
 }

@@ -14,7 +14,6 @@ export class Authentication implements MiddlewareInterface<Context> {
             context.cookie = context.req.headers.cookie;
             context.token = context.req.headers.authorization;
         } else throw new HTTP401Error(Messages.ERR_REQUIRED_HEADER_NOT_FOUND);
-
         return next();
     }
 }

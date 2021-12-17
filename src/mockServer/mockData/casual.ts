@@ -2,7 +2,6 @@ import * as defaultCasual from "casual";
 import {
     ALERT_TYPE,
     CONNECTED_USER_TYPE,
-    DATA_PLAN_TYPE,
     GET_STATUS_TYPE,
     NETWORK_STATUS,
     NODE_TYPE,
@@ -44,15 +43,15 @@ const user = (): UserDto => {
 const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
-        dataConsumed: defaultCasual.integer(1, 999),
-        dataPackage: "Unlimited",
+        dataConsumed: defaultCasual.integer(1, 39),
+        dataPackage: `${defaultCasual.integer(5, 60)} GB free left.`,
     };
 };
 
 const dataBill = (): DataBillDto => {
     return {
         id: defaultCasual._uuid(),
-        dataBill: defaultCasual.integer(1, 999),
+        dataBill: defaultCasual.integer(1, 39),
         billDue: defaultCasual.integer(1, 29),
     };
 };
@@ -89,20 +88,26 @@ const updateNode = (
 };
 
 const getUser = (): GetUserDto => {
-    const node = {
-        Default: "Default",
-        Intermediate: "Intermediate",
-    };
     return {
         id: defaultCasual._uuid(),
         status: defaultCasual.random_value(GET_STATUS_TYPE),
         name: defaultCasual._name(),
+        eSimNumber: `# ${defaultCasual.integer(
+            11111,
+            99999
+        )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
+            1111111,
+            9999999
+        )}`,
+        iccid: `${defaultCasual.integer(11111, 99999)}${defaultCasual.integer(
+            11010,
+            99999
+        )}${defaultCasual.integer(11010, 99999)}`,
         email: defaultCasual._email(),
-        node: `${defaultCasual.random_value(node)} Data Plan`,
-        dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
-        dataUsage: defaultCasual.integer(1, 199),
-        dlActivity: "Table cell",
-        ulActivity: "Table cell",
+        phone: defaultCasual._phone(),
+        roaming: defaultCasual.random_value([true, false]),
+        dataPlan: defaultCasual.integer(3, 8),
+        dataUsage: defaultCasual.integer(1, 5),
     };
 };
 const esim = (): EsimDto => {
@@ -216,9 +221,9 @@ interface Generators extends Casual.Generators {
         phone: string
     ) => UserResponse;
     _deleteRes: (id: string) => DeactivateResponse;
-    functions(): functions;
+    functions(): Functions;
 }
-interface functions extends Casual.functions {
+interface Functions extends Casual.functions {
     randomArray: <T>(
         minLength: number,
         maxLength: number,
@@ -264,6 +269,6 @@ defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteRes", deleteRes);
-const casual = defaultCasual as Generators & functions & Casual.Casual;
+const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;
