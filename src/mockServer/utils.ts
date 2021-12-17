@@ -188,19 +188,6 @@ export const updateUser = (req: Request, res: Response): void => {
         data: data,
     });
 };
-export const deactivateUser = (req: Request, res: Response): void => {
-    const { body } = req;
-
-    let data;
-
-    if (!body.id) data = {};
-    else data = casual._deleteRes(body.id.toString());
-
-    res.send({
-        status: "success",
-        data: data,
-    });
-};
 
 export const getUsers = (req: Request, res: Response): void => {
     const filter = req.query.type?.toString();
@@ -262,7 +249,7 @@ export const updateNode = (req: Request, res: Response): void => {
         data: data,
     });
 };
-export const deleteNode = (req: Request, res: Response): void => {
+export const deleteRes = (req: Request, res: Response): void => {
     const { body } = req;
 
     let data;
