@@ -3,8 +3,7 @@ import { EsimDto, EsimResponse } from "./types";
 
 class EsimMapper implements IEsimMapper {
     dtoToDto = (res: EsimResponse): EsimDto[] => {
-        const esims = res.data;
-        return esims;
+        return res.data;
     };
 }
 export default <IEsimMapper>new EsimMapper();

@@ -80,8 +80,15 @@ export const GET_RESIDENTS_QUERY = `
             residents{
                 residents{
                     id
-                    name
-                    dataUsage
+   		 	        name
+                    status
+				    eSimNumber
+                    iccid
+                    email
+                    phone
+                    dataPlan
+ 		   	        dataUsage
+                    roaming
                 }
                 activeResidents
                 totalResidents   
@@ -101,13 +108,15 @@ export const GET_USER_QUERY = `
         getUsers(data:$input) {
             users{
                 id
-                status
                 name
-                node
+                status
+				eSimNumber
+                iccid
+                email
+                phone
                 dataPlan
                 dataUsage
-                dlActivity
-                ulActivity
+                roaming
               }
             meta{
                 page
@@ -225,14 +234,16 @@ export const DELETE_NODE_MUTATION = `
 export const GET_USER_BY_ID_QUERY = `
     query getUser($input:String!) {
         getUser(id:$input) {
-                id
-                status
-                name
-                node
-                dataPlan
-                dataUsage
-                dlActivity
-                ulActivity
+            id
+            name
+            status
+            eSimNumber
+            iccid
+            email
+            phone
+            dataPlan
+            dataUsage
+            roaming
         }
     }
 `;

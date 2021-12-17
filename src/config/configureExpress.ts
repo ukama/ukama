@@ -1,4 +1,3 @@
-import cors from "cors";
 import express, { Express } from "express";
 import winston from "winston";
 import expressWinston from "express-winston";
@@ -10,7 +9,6 @@ const configureExpress = ({ logger }: Props): Express => {
     const app = express();
     app.use(express.json()); // support json encoded bodies
     app.use(express.urlencoded({ extended: true })); // support encoded bodies
-    app.use(cors());
     app.use(expressWinston.logger({ winstonInstance: logger }));
     return app;
 };
