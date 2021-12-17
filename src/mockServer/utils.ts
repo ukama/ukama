@@ -11,7 +11,7 @@ import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
-import casual from "./mockData/casual-extensions";
+import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
     let users: UserDto[];
@@ -188,19 +188,6 @@ export const updateUser = (req: Request, res: Response): void => {
         data: data,
     });
 };
-export const deactivateUser = (req: Request, res: Response): void => {
-    const { body } = req;
-
-    let data;
-
-    if (!body.id) data = {};
-    else data = casual._deleteRes(body.id.toString());
-
-    res.send({
-        status: "success",
-        data: data,
-    });
-};
 
 export const getUsers = (req: Request, res: Response): void => {
     const filter = req.query.type?.toString();
@@ -262,7 +249,7 @@ export const updateNode = (req: Request, res: Response): void => {
         data: data,
     });
 };
-export const deleteNode = (req: Request, res: Response): void => {
+export const deleteRes = (req: Request, res: Response): void => {
     const { body } = req;
 
     let data;

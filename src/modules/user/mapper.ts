@@ -11,12 +11,10 @@ import {
 
 class UserMapper implements IUserMapper {
     connectedUsersDtoToDto = (res: ConnectedUserResponse): ConnectedUserDto => {
-        const connectedUsers = res.data;
-        return connectedUsers;
+        return res.data;
     };
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
-        const users = res.data;
-        return users;
+        return res.data;
     };
     residentDtoToDto = (res: GetUserResponseDto): ResidentResponse => {
         const residents: ResidentDto[] = [];
