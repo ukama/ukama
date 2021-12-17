@@ -214,3 +214,35 @@ export class DeactivateResponse {
     @Field()
     success: boolean;
 }
+
+@ObjectType()
+export class OrgUserResponseDto {
+    @Field()
+    orgName: string;
+
+    @Field(() => [GetUserDto])
+    users: GetUserDto[];
+}
+@ObjectType()
+export class OrgUserDto {
+    @Field()
+    firstName: string;
+
+    @Field()
+    lastName: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    uuid: string;
+}
+
+@ObjectType()
+export class OrgUserResponse {
+    @Field()
+    org: string;
+
+    @Field(() => [OrgUserDto])
+    users: OrgUserDto[];
+}

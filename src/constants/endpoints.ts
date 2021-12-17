@@ -19,5 +19,5 @@ export const SERVER = {
     POST_UPDATE_NODE: `${BASE_URL}/node/update_node`,
     POST_DELETE_NODE: `${BASE_URL}/node/delete_node`,
     GET_USER: `${BASE_URL}/user/get_user`,
-    GET_NODES_BY_ORG: `${DEV_URL}/orgs`,
+    ORG: `${DEV_URL}/orgs`,
 };
