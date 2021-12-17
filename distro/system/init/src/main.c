@@ -158,10 +158,9 @@ static pid_t run_task(char *taskExe, int wait) {
   case 0: /* Child process */
     sigfillset(&set);
     sigprocmask(SIG_UNBLOCK, &set, NULL);
-    if (strcmp(taskExe, "sub.init")==0) {
-      cmd[0] = (char *)"/sbin/sub.init";
-      cmd[1] = (char *)"-c";
-      cmd[2] = NULL;
+    if (strcmp(taskExe, "sysInit")==0) {
+      cmd[0] = (char *)"/sbin/sysInit";
+      cmd[1] = NULL;
     } else if (strcmp(taskExe, "lxce")==0) {
       cmd[0] = (char *)"/sbin/lxce.d";
       cmd[1] = (char *)"-c";
@@ -274,10 +273,10 @@ int main(int argc, char **argv) {
   log_message(STDOUT_FILENO, "init started: %s", UKAMA_BANNER);
 
   /* sub.init setup mount, clock, loopback, limits, hostname and resolv.conf */
-  run_task("/sbin/sub.init", TRUE);
+  run_task("sysInit", TRUE);
 
   /* run lxce.d - the minimal contained apps engine */
-  lxcePid = run_task("/sbin/lxce", FALSE);
+  lxcePid = run_task("lxce", FALSE);
 
   /* reached my nirvana state, forever */
   while (TRUE) {

@@ -814,7 +814,7 @@ fn main() {
     ])
     .unwrap();
 
-    trace!("Starting rc.init...!");
+    trace!("Starting sysInit ...!");
     let args: Vec<String> = env::args().collect();
     debug!("Argument is {}", args[0]);
     let arg = Path::new(&args[0]).file_name().unwrap();
