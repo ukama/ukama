@@ -148,4 +148,20 @@ export class UserService implements IUserService {
 
         return res.user;
     };
+    deleteUser = async (
+        orgId: string,
+        userId: string,
+        ctx: Context
+    ): Promise<ActivateUserResponse> => {
+        const header = getHeaders(ctx);
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.DELETE,
+            path: `${SERVER.ORG}/${orgId}/users/${userId}`,
+            headers: header,
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return {
+            success: true,
+        };
+    };
 }
