@@ -90,7 +90,7 @@ const updateNode = (
 };
 
 const getUser = (): GetUserDto => {
-    const node = {
+    const nodePlan = {
         Default: "Default",
         Intermediate: "Intermediate",
     };
@@ -98,7 +98,7 @@ const getUser = (): GetUserDto => {
         id: defaultCasual._uuid(),
         status: defaultCasual.random_value(GET_STATUS_TYPE),
         name: defaultCasual._name(),
-        node: `${defaultCasual.random_value(node)} Data Plan`,
+        node: `${defaultCasual.random_value(nodePlan)} Data Plan`,
         dataPlan: defaultCasual.random_value(DATA_PLAN_TYPE),
         dataUsage: defaultCasual.integer(1, 199),
         dlActivity: "Table cell",
@@ -216,9 +216,9 @@ interface Generators extends Casual.Generators {
         phone: string
     ) => UserResponse;
     _deleteRes: (id: string) => DeactivateResponse;
-    functions(): functions;
+    functions(): Functions;
 }
-interface functions extends Casual.functions {
+interface Functions extends Casual.functions {
     randomArray: <T>(
         minLength: number,
         maxLength: number,
@@ -264,6 +264,6 @@ defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteRes", deleteRes);
-const casual = defaultCasual as Generators & functions & Casual.Casual;
+const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

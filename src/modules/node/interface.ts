@@ -1,4 +1,4 @@
-import { PaginationDto } from "../../common/types";
+import { Context, PaginationDto } from "../../common/types";
 import { DeactivateResponse } from "../user/types";
 import {
     NodeResponseDto,
@@ -14,7 +14,7 @@ import {
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
-    getNodesByOrg(orgId: string, cookie: string): Promise<OrgNodeResponseDto>;
+    getNodesByOrg(orgId: string, ctx: Context): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto): Promise<AddNodeResponse>;
     updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
     deleteNode(id: string): Promise<DeactivateResponse>;

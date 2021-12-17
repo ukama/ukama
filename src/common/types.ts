@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { API_METHOD_TYPE } from "../constants";
 import { Request } from "express";
+import { IsOptional } from "class-validator";
 
 @InputType()
 export class PaginationDto {
@@ -53,7 +54,8 @@ export class ApiMethodDataDto {
 
 export interface Context {
     req: Request;
-    cookie: string | string[];
+    cookie: string | string[] | undefined;
+    token: string | string[] | undefined;
 }
 
 @ObjectType()
@@ -66,4 +68,15 @@ export class ErrorType {
 
     @Field({ nullable: true })
     description?: string;
+}
+
+@ObjectType()
+export class HeaderType {
+    @Field()
+    @IsOptional()
+    Cookie?: string;
+
+    @Field()
+    @IsOptional()
+    Authorization?: string;
 }
