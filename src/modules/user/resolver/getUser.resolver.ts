@@ -6,7 +6,7 @@ import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class DeleteUserResolver {
+export class GetUserResolver {
     constructor(private readonly userService: UserService) {}
 
     @Query(() => GetUserDto)

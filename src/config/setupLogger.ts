@@ -53,7 +53,7 @@ const options = {
 // logger.info('some log')
 
 const setupLogger = (sourceLabel: string): Logger => {
-    const logger = createLogger({
+    return createLogger({
         transports: [
             new transports.File(options.combinedFile),
             new transports.File(options.erorrFile),
@@ -91,8 +91,6 @@ const setupLogger = (sourceLabel: string): Logger => {
             }),
         ],
     });
-
-    return logger;
 };
 
 export default setupLogger;

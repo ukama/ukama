@@ -10,15 +10,16 @@ import {
     UpdateUserDto,
     UserResponse,
     GetUserDto,
+    OrgUserResponseDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
 import UserMapper from "./mapper";
 import { API_METHOD_TYPE, TIME_FILTER } from "../../constants";
-import { catchAsyncIOMethod } from "../../common";
+import { catchAsyncIOMethod, getHeaders } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
-import { PaginationDto } from "../../common/types";
+import { Context, PaginationDto } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
@@ -104,7 +105,6 @@ export class UserService implements IUserService {
             params: req,
         });
         if (checkError(res)) throw new Error(res.message);
-
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const residents = UserMapper.residentDtoToDto(res);
         if (!residents) throw new HTTP404Error(Messages.RESIDENTS_NOT_FOUND);
@@ -113,5 +113,21 @@ export class UserService implements IUserService {
             residents,
             meta,
         };
+    };
+    getUsersByOrg = async (
+        orgId: string,
+        ctx: Context
+    ): Promise<OrgUserResponseDto> => {
+        const header = getHeaders(ctx);
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.ORG}/${orgId}/users`,
+            headers: header,
+        });
+
+        if (checkError(res)) throw new Error(res.message);
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+
+        return UserMapper.dtoToUsersDto(res);
     };
 }

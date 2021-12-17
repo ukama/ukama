@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import setupLogger from "./config/logger";
-import configureExpress from "./config/express";
-import configureApolloServer from "./config/apolloServer";
+import setupLogger from "./config/setupLogger";
+import configureExpress from "./config/configureExpress";
+import configureApolloServer from "./config/configureApolloServer";
 import { mockServer } from "./mockServer";
 import { PORT } from "./constants";
 import { createServer } from "http";

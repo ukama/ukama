@@ -1,5 +1,5 @@
 import { axiosErrorHandler } from "../errors";
-import { ApiMethodDataDto } from "./types";
+import { ApiMethodDataDto, Context, HeaderType } from "./types";
 import ApiMethods from "../api";
 
 export const catchAsyncIOMethod = async (
@@ -18,4 +18,19 @@ export const catchAsyncIOMethod = async (
     } catch (error) {
         return axiosErrorHandler(error);
     }
+};
+
+export const getHeaders = (ctx: Context): HeaderType => {
+    let header = {};
+    if (ctx.token) {
+        header = {
+            Authorization: ctx.token,
+        };
+    } else if (ctx.cookie) {
+        header = {
+            Cookie: ctx.cookie,
+        };
+    }
+
+    return header;
 };

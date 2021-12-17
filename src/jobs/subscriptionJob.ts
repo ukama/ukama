@@ -16,7 +16,7 @@ import {
 } from "../constants";
 import { graphql, GraphQLSchema } from "graphql";
 import { PaginationDto } from "../common/types";
-import setupLogger from "../config/logger";
+import setupLogger from "../config/setupLogger";
 
 const logger = setupLogger("Job");
 

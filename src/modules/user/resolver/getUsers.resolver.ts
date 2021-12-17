@@ -6,7 +6,7 @@ import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetDataBillResolver {
+export class GetUsersResolver {
     constructor(private readonly userService: UserService) {}
 
     @Query(() => GetUserResponse)
