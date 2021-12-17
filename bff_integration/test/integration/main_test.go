@@ -18,7 +18,7 @@ func TestTopLevelTestForSuite(t *testing.T) {
 
 func loadConfig() *TestConfig {
 	testConf := &TestConfig{
-		BFFHost: "https://bff.dev.ukama.com/graphql",
+		BaseDomain: "dev.ukama.com",
 	}
 	b, err := yaml.Marshal(testConf)
 	if err != nil {
