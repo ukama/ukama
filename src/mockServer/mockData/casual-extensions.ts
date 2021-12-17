@@ -3,6 +3,7 @@ import {
     ALERT_TYPE,
     CONNECTED_USER_TYPE,
     DATA_PLAN_TYPE,
+    ORG_NODE_STATE,
     GET_STATUS_TYPE,
     NETWORK_STATUS,
     NODE_TYPE,
@@ -72,7 +73,7 @@ const node = (): NodeDto => {
         id: defaultCasual._uuid(),
         title: defaultCasual._title(),
         description: `${defaultCasual.random_value(NODE_TYPE)} node`,
-        status: defaultCasual.random_value(GET_STATUS_TYPE),
+        status: defaultCasual.random_value(ORG_NODE_STATE),
         totalUser: defaultCasual.integer(1, 99),
     };
 };

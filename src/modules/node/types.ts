@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 import { PaginationResponse } from "../../common/types";
-import { GET_STATUS_TYPE, ORG_NODE_STATE } from "../../constants";
+import { ORG_NODE_STATE } from "../../constants";
 
 @ObjectType()
 export class NodeDto {
@@ -13,8 +13,8 @@ export class NodeDto {
     @Field()
     description: string;
 
-    @Field(() => GET_STATUS_TYPE)
-    status: GET_STATUS_TYPE;
+    @Field(() => ORG_NODE_STATE)
+    status: ORG_NODE_STATE;
 
     @Field()
     totalUser: number;
@@ -111,15 +111,6 @@ export class OrgNodeDto {
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
-
-    @Field()
-    title: string;
-
-    @Field()
-    description: string;
-
-    @Field()
-    totalUser: number;
 }
 
 @ObjectType()
@@ -136,8 +127,8 @@ export class OrgNodeResponseDto {
     @Field()
     orgName: string;
 
-    @Field(() => [OrgNodeDto])
-    nodes: OrgNodeDto[];
+    @Field(() => [NodeDto])
+    nodes: NodeDto[];
 
     @Field()
     activeNodes: number;
