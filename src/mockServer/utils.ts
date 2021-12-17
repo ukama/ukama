@@ -11,7 +11,7 @@ import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
-import casual from "./mockData/casual-extensions";
+import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
     let users: UserDto[];
