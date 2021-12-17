@@ -19,10 +19,16 @@ export const axiosErrorHandler = (error: any): ErrorType => {
     let res: ErrorType;
     if (error.response) {
         // The request was made and the server responded with a status code
-        res = {
-            code: error.response.status,
-            message: error.response.statusText,
-        };
+        if (error.response.data) {
+            res = {
+                code: error.response.status,
+                message: error.response.data.details,
+            };
+        } else
+            res = {
+                code: error.response.status,
+                message: error.response.statusText,
+            };
     } else if (error.request) {
         // The request was not made
 

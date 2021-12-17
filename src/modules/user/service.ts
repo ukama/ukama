@@ -11,6 +11,8 @@ import {
     UserResponse,
     GetUserDto,
     OrgUserResponseDto,
+    AddUserDto,
+    AddUserResponse,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -129,5 +131,21 @@ export class UserService implements IUserService {
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
 
         return UserMapper.dtoToUsersDto(res);
+    };
+    addUser = async (
+        orgId: string,
+        req: AddUserDto,
+        ctx: Context
+    ): Promise<AddUserResponse> => {
+        const header = getHeaders(ctx);
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.POST,
+            path: `${SERVER.ORG}/${orgId}/users`,
+            body: req,
+            headers: header,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.user;
     };
 }
