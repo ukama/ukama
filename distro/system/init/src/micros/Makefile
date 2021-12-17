@@ -9,7 +9,7 @@ CURMAKE := $(abspath $(firstword $(MAKEFILE_LIST)))
 CURPATH := $(dir $(CURMAKE))
 
 #Source directory
-SRCDIR = fs sub sys
+SRCDIR = preInit sysInit
 
 #Output
 ifndef ROOTFSPATH

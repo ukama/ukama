@@ -1,5 +1,5 @@
 [package]
-name = "fs"
+name = "preInit"
 version = "0.1.0"
 authors = ["vishal <vthakur7f@hotmail.com>"]
 edition = "2018"
