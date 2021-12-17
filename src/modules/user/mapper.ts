@@ -63,7 +63,6 @@ class UserMapper implements IUserMapper {
                 dataPlan: defaultCasual.integer(5, 60),
                 dataUsage: defaultCasual.integer(1, 39),
                 roaming: defaultCasual.random_value([true, false]),
-                ulActivity: "Table cell",
             };
             users.push(userObj);
         });
