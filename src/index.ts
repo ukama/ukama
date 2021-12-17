@@ -21,7 +21,7 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: ["https://*.dev.ukama.com"],
+        origin: ["https://*.dev.ukama.com", "http://localhost:3000"],
         credentials: true,
     };
     app.use(cors(corsOptions));
