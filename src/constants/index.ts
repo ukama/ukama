@@ -74,15 +74,6 @@ registerEnumType(GET_STATUS_TYPE, {
     name: "GET_USER_STATUS_TYPE",
 });
 
-export enum DATA_PLAN_TYPE {
-    NA = "NA",
-    PAID = "PAID",
-    UNPAID = "UNPAID",
-}
-registerEnumType(DATA_PLAN_TYPE, {
-    name: "DATA_PLAN_TYPE",
-});
-
 export enum GET_USER_TYPE {
     ALL = "ALL",
     RESIDENT = "RESIDENT",

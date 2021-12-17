@@ -9,7 +9,7 @@ class ApiMethods {
     }
     fetch = async (req: ApiMethodDataDto) => {
         const { headers, path, params, type, body } = req;
-        return await axios({
+        return axios({
             method: type,
             url: path,
             data: body,

@@ -3,7 +3,6 @@ import { Field, InputType, ObjectType } from "type-graphql";
 import { PaginationDto, PaginationResponse } from "../../common/types";
 import {
     CONNECTED_USER_TYPE,
-    DATA_PLAN_TYPE,
     GET_STATUS_TYPE,
     GET_USER_TYPE,
 } from "../../constants";
@@ -50,12 +49,11 @@ export class ActivateUserDto {
     eSimNumber: string;
 
     @Field()
-    @Length(3, 255)
-    firstName: string;
+    iccid: string;
 
     @Field()
     @Length(3, 255)
-    lastName: string;
+    name: string;
 
     @Field({ nullable: true })
     @IsEmail()
@@ -64,6 +62,15 @@ export class ActivateUserDto {
     @Field({ nullable: true })
     @IsPhoneNumber()
     phone?: string;
+
+    @Field()
+    roaming: boolean;
+
+    @Field()
+    dataUsage: number;
+
+    @Field()
+    dataPlan: number;
 }
 
 @InputType()
@@ -135,22 +142,27 @@ export class GetUserDto {
     name: string;
 
     @Field()
-    email: string;
+    eSimNumber: string;
 
     @Field()
-    node: string;
+    iccid: string;
 
-    @Field(() => DATA_PLAN_TYPE)
-    dataPlan: DATA_PLAN_TYPE;
+    @Field({ nullable: true })
+    @IsEmail()
+    email?: string;
+
+    @Field({ nullable: true })
+    @IsPhoneNumber()
+    phone?: string;
+
+    @Field()
+    roaming: boolean;
+
+    @Field()
+    dataPlan: number;
 
     @Field()
     dataUsage: number;
-
-    @Field()
-    dlActivity: string;
-
-    @Field()
-    ulActivity: string;
 }
 
 @ObjectType()
@@ -178,21 +190,9 @@ export class GetUserResponse extends PaginationResponse {
 }
 
 @ObjectType()
-export class ResidentDto {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field()
-    dataUsage: number;
-}
-
-@ObjectType()
 export class ResidentResponse {
-    @Field(() => [ResidentDto])
-    residents: ResidentDto[];
+    @Field(() => [GetUserDto])
+    residents: GetUserDto[];
 
     @Field()
     activeResidents: number;

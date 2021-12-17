@@ -5,17 +5,15 @@ class AlertMapper implements IAlertMapper {
     dtoToDto = (res: AlertResponse): AlertDto[] => {
         const alerts: AlertDto[] = [];
 
-        for (let i = 0; i < res.data.length; i++) {
-            if (res.data[i]) {
-                const alert = {
-                    id: res.data[i].id,
-                    type: res.data[i].type,
-                    title: res.data[i].title,
-                    description: res.data[i].description,
-                    alertDate: new Date(res.data[i].alertDate),
-                };
-                alerts.push(alert);
-            }
+        for (const alert of res.data) {
+            const alertObj = {
+                id: alert.id,
+                type: alert.type,
+                title: alert.title,
+                description: alert.description,
+                alertDate: new Date(alert.alertDate),
+            };
+            alerts.push(alertObj);
         }
 
         return alerts;

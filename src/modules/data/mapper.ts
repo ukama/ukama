@@ -8,12 +8,10 @@ import {
 
 class DataMapper implements IDataMapper {
     dataUsageDtoToDto = (res: DataUsageResponse): DataUsageDto => {
-        const dataUsage = res.data;
-        return dataUsage;
+        return res.data;
     };
     dataBillDtoToDto = (res: DataBillResponse): DataBillDto => {
-        const dataBill = res.data;
-        return dataBill;
+        return res.data;
     };
 }
 export default <IDataMapper>new DataMapper();

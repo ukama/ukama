@@ -13,9 +13,8 @@ import {
     getBillHistory,
     getNetwork,
     updateUser,
-    deactivateUser,
     updateNode,
-    deleteNode,
+    deleteRes,
     getUserByID,
 } from "./utils";
 
@@ -35,7 +34,7 @@ export const mockServer = (app: Express): void => {
     app.get("/network/get_network", getNetwork);
     app.post("/user/update_user", updateUser);
     app.post("/node/update_node", updateNode);
-    app.post("/user/deactivate_user", deactivateUser);
-    app.post("/node/delete_node", deleteNode);
+    app.post("/user/deactivate_user", deleteRes);
+    app.post("/node/delete_node", deleteRes);
     app.get("/user/get_user", getUserByID);
 };

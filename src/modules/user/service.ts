@@ -105,7 +105,6 @@ export class UserService implements IUserService {
             params: req,
         });
         if (checkError(res)) throw new Error(res.message);
-
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const residents = UserMapper.residentDtoToDto(res);
         if (!residents) throw new HTTP404Error(Messages.RESIDENTS_NOT_FOUND);
