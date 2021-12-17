@@ -22,13 +22,13 @@ export const catchAsyncIOMethod = async (
 
 export const getHeaders = (ctx: Context): HeaderType => {
     let header = {};
-    if (ctx.cookie) {
-        header = {
-            Cookie: ctx.cookie,
-        };
-    } else if (ctx.token) {
+    if (ctx.token) {
         header = {
             Authorization: ctx.token,
+        };
+    } else if (ctx.cookie) {
+        header = {
+            Cookie: ctx.cookie,
         };
     }
 
