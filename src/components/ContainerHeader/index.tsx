@@ -5,15 +5,19 @@ import { colors } from "../../theme";
 type ContainerHeaderProps = {
     title: string;
     stats: string;
-    buttonTitle: string;
-    handleButtonAction: Function;
+    showButton: boolean;
+    buttonTitle?: string;
+    handleButtonAction?: Function;
 };
 
 const ContainerHeader = ({
     title,
     stats,
-    buttonTitle,
-    handleButtonAction,
+    buttonTitle = "",
+    showButton = false,
+    handleButtonAction = () => {
+        /* Default function */
+    },
 }: ContainerHeaderProps) => {
     return (
         <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
@@ -30,13 +34,15 @@ const ContainerHeader = ({
                     &#40;{stats}&#41;
                 </Typography>
             </HorizontalContainer>
-            <Button
-                variant="contained"
-                sx={{ width: "144px" }}
-                onClick={() => handleButtonAction()}
-            >
-                {buttonTitle}
-            </Button>
+            {showButton && (
+                <Button
+                    variant="contained"
+                    sx={{ width: "144px" }}
+                    onClick={() => handleButtonAction()}
+                >
+                    {buttonTitle}
+                </Button>
+            )}
         </HorizontalContainerJustify>
     );
 };

@@ -96,6 +96,12 @@ const SkeletonRoundedCard = styled(Skeleton)(() => ({
     display: "inline-block",
 }));
 
+const FullscreenContainer = styled(Box)(() => ({
+    width: "100%",
+    height: "100%",
+    backgroundColor: colors.solitude,
+}));
+
 export {
     LinkStyle,
     RoundedCard,
@@ -105,6 +111,7 @@ export {
     VerticalContainer,
     SkeletonRoundedCard,
     HorizontalContainer,
+    FullscreenContainer,
     ContainerJustifySpaceBtw,
     HorizontalContainerJustify,
 };

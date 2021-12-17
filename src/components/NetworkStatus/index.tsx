@@ -1,7 +1,7 @@
 import { colors } from "../../theme";
 import { LoadingWrapper } from "..";
-import { SelectItemType } from "../../types";
-import { Box, Typography, Grid, Select, MenuItem } from "@mui/material";
+import { HorizontalContainer } from "../../styles";
+import { Box, Typography, Grid, Button } from "@mui/material";
 
 const DOT = (color: string) => (
     <span style={{ color: `${color}`, fontSize: "24px", marginRight: 14 }}>
@@ -21,21 +21,19 @@ const getIconByStatus = (status: string) => {
 };
 
 type NetworkStatusProps = {
-    option: string;
     loading?: boolean;
     duration?: string;
     statusType: string;
-    options: SelectItemType[];
-    handleStatusChange: Function;
+    handleAddNode: Function;
+    handleActivateUser: Function;
 };
 
 const NetworkStatus = ({
-    option,
-    options,
     loading,
     duration,
     statusType,
-    handleStatusChange,
+    handleAddNode,
+    handleActivateUser,
 }: NetworkStatusProps) => {
     const getStatusByType = (status: string) => {
         if (status === "BEING_CONFIGURED")
@@ -46,8 +44,8 @@ const NetworkStatus = ({
     };
 
     return (
-        <Grid width="100%" container p="18px 2px">
-            <Grid item xs={12} md={10}>
+        <Grid width="100%" container pt="18px">
+            <Grid item xs={12} md={8}>
                 <LoadingWrapper height={30} width={280} isLoading={loading}>
                     <Box display="flex" flexDirection="row" alignItems="center">
                         {getIconByStatus(statusType)}
@@ -66,23 +64,24 @@ const NetworkStatus = ({
                     </Box>
                 </LoadingWrapper>
             </Grid>
-            <Grid item xs={12} md={2} display="flex" justifyContent="flex-end">
+            <Grid item xs={12} md={4} display="flex" justifyContent="flex-end">
                 <LoadingWrapper height={30} isLoading={loading}>
-                    <Select
-                        value={option}
-                        disableUnderline
-                        variant="standard"
-                        sx={{
-                            color: colors.black,
-                        }}
-                        onChange={e => handleStatusChange(e.target.value)}
-                    >
-                        {options.map(({ id, label, value }: SelectItemType) => (
-                            <MenuItem key={id} value={value}>
-                                <Typography variant="body1">{label}</Typography>
-                            </MenuItem>
-                        ))}
-                    </Select>
+                    <HorizontalContainer>
+                        <Button
+                            variant="contained"
+                            sx={{ width: "144px", mr: "18px" }}
+                            onClick={() => handleAddNode()}
+                        >
+                            ADD NODE
+                        </Button>
+                        <Button
+                            variant="contained"
+                            sx={{ width: "164px" }}
+                            onClick={() => handleActivateUser()}
+                        >
+                            ACTIVATER USER
+                        </Button>
+                    </HorizontalContainer>
                 </LoadingWrapper>
             </Grid>
         </Grid>

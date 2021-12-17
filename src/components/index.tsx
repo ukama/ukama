@@ -1,6 +1,6 @@
+import Alerts from "./Alerts";
 import NodeCard from "./NodesCard";
 import StatsCard from "./StatsCard";
-import AlertCard from "./AlertCard";
 import TabLayout from "./TabLayout";
 import StatusCard from "./StatusCard";
 import TableHeader from "./TableHeader";
@@ -29,9 +29,9 @@ import {
     UserActivationDialog,
 } from "./AppDialogs";
 export {
+    Alerts,
     NodeCard,
     TabLayout,
-    AlertCard,
     StatsCard,
     StatusCard,
     CurrentBill,

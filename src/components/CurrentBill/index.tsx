@@ -19,7 +19,7 @@ const CurrentBill = ({
 }: CurrentBillProps) => {
     return (
         <RoundedCard>
-            <Grid xs={12} container>
+            <Grid container>
                 <Grid item container>
                     <Grid xs={12} sm={7} item>
                         <Typography variant="h6">{title}</Typography>

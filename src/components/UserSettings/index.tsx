@@ -14,7 +14,7 @@ import { LANGUAGE_OPTIONS, TimeZones } from "../../constants";
 
 const LineDivider = () => (
     <Grid item xs={12}>
-        <Divider sx={{ width: "90%" }} />
+        <Divider />
     </Grid>
 );
 
@@ -103,7 +103,6 @@ const UserSettings = () => {
                     </Grid>
                 </Grid>
             </Grid>
-            <LineDivider />
         </Grid>
     );
 };

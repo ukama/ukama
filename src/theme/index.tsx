@@ -84,7 +84,9 @@ const theme = createTheme({
             styleOverrides: {
                 select: {
                     fontSize: "0.875rem",
-                    // backgroundColor: "transparent",
+                    ":focus": {
+                        backgroundColor: "transparent",
+                    },
                 },
             },
         },
