@@ -10,6 +10,8 @@ import {
     renderPlaygroundPage,
     RenderPageOptions as PlaygroundRenderPageOptions,
 } from "@apollographql/graphql-playground-html";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const logger = setupLogger("app");
 
@@ -18,12 +20,15 @@ const initializeApp = async () => {
         logger,
     });
 
-    const corsOption = {
+    const corsOptions = {
         origin: ["https://*.dev.ukama.com"],
         credentials: true,
     };
+    app.use(cors(corsOptions));
+    app.use(cookieParser());
+
     const { server, schema } = await configureApolloServer();
-    server.applyMiddleware({ app, cors: corsOption });
+    server.applyMiddleware({ app, cors: false });
 
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
