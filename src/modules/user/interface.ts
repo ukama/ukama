@@ -3,6 +3,8 @@ import { TIME_FILTER } from "../../constants";
 import {
     ActivateUserDto,
     ActivateUserResponse,
+    AddUserDto,
+    AddUserResponse,
     ConnectedUserDto,
     ConnectedUserResponse,
     DeactivateResponse,
@@ -27,6 +29,16 @@ export interface IUserService {
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
     getUsersByOrg(orgId: string, ctx: Context): Promise<OrgUserResponseDto>;
+    addUser(
+        orgId: string,
+        req: AddUserDto,
+        ctx: Context
+    ): Promise<AddUserResponse>;
+    deleteUser(
+        orgId: string,
+        userId: string,
+        ctx: Context
+    ): Promise<ActivateUserResponse>;
 }
 
 export interface IUserMapper {
