@@ -5,9 +5,12 @@ import { HEADER } from "../../../constants";
 
 const nockResponse = { status: "success", data: { success: true } };
 const reqBody = {
-    firstName: "ali",
-    lastName: "raza",
+    name: "Ali Raza",
     eSimNumber: "# 40547-04-02-1997-5650200",
+    iccid: "# 40547-04-02-1997-5650200",
+    roaming: false,
+    dataUsage: 1,
+    dataPlan: 3,
 };
 
 describe("Post Activate Users", () => {
