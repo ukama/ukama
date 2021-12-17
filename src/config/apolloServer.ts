@@ -22,7 +22,7 @@ const configureApolloServer = async (): Promise<{
             res: express.Response;
         }) => ({ req, res, pubsub }),
 
-        playground: true,
+        playground: false,
     });
     return { server, schema };
 };
