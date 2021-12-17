@@ -17,6 +17,6 @@ export class AddUserResolver {
         @Arg("data") data: AddUserDto,
         @Ctx() ctx: Context
     ): Promise<AddUserResponse | null> {
-        return await this.userService.addUser(orgId, data, ctx);
+        return this.userService.addUser(orgId, data, ctx);
     }
 }
