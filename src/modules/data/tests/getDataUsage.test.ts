@@ -7,8 +7,8 @@ const nockResponse = {
     status: "success",
     data: {
         id: "7c51cdc5-fc3b-4837-bc7d-94bb16e11d8d",
-        dataConsumed: 941,
-        dataPackage: "Unlimited",
+        dataConsumed: 8,
+        dataPackage: "20 GB free left.",
     },
 };
 

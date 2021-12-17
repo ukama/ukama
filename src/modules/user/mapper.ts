@@ -5,7 +5,6 @@ import {
     ConnectedUserResponse,
     GetUserDto,
     GetUserResponseDto,
-    ResidentDto,
     ResidentResponse,
 } from "./types";
 
@@ -17,19 +16,15 @@ class UserMapper implements IUserMapper {
         return res.data;
     };
     residentDtoToDto = (res: GetUserResponseDto): ResidentResponse => {
-        const residents: ResidentDto[] = [];
+        const residents: GetUserDto[] = [];
         let activeResidents = 0;
         const totalResidents = res.length;
         res.data.forEach(user => {
             if (user.status === GET_STATUS_TYPE.ACTIVE) {
                 activeResidents++;
             }
-            const resident: ResidentDto = {
-                id: user.id,
-                name: user.name,
-                dataUsage: user.dataUsage,
-            };
-            residents.push(resident);
+
+            residents.push(user);
         });
         return {
             residents,
