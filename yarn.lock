@@ -1394,6 +1394,11 @@ apollo-utilities@^1.0.1, apollo-utilities@^1.3.0:
     ts-invariant "^0.4.0"
     tslib "^1.10.0"
 
+apollographql@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/apollographql/-/apollographql-0.0.1.tgz#a037ea507fd284352f4ad512d22edb2c6120c82f"
+  integrity sha512-3bqhHxcmcsEp5fOKAKRScj27ouat0yh4LRadOd9j5NdpQ9pkZPqqO4NmZedjzmHdPl3xkCUjjlyXbuexPb3lAw==
+
 arg@^4.1.0:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/arg/-/arg-4.1.3.tgz#269fc7ad5b8e42cb63c896d5666017261c144089"
