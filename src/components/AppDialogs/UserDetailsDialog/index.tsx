@@ -60,6 +60,7 @@ const UserDetailsDialog = ({
         <Dialog
             open={isOpen}
             onBackdropClick={() => isClosable && handleClose()}
+            hideBackdrop
         >
             <Box
                 sx={{

@@ -8,13 +8,12 @@ import {
 } from "@mui/material";
 import colors from "../../theme/colors";
 import { UserDetailsDialog } from "../../components";
-import { useState } from "react";
 import { RoundedCard } from "../../styles";
+import { useState } from "react";
 type UserCardProps = {
     userDetails?: any;
     children?: any;
 };
-
 const UserCard = ({ userDetails, children }: UserCardProps) => {
     const [showSimDialog, setShowSimDialog] = useState(false);
     const showMore = () => {
