@@ -171,7 +171,9 @@ static pid_t run_task(char *taskExe, int wait) {
     }
 
     log_message(STDOUT_FILENO, "Running %s ...", taskExe);
-    execv(cmd[0], cmd); 
+    execv(cmd[0], cmd);
+    log_message(STDOUT_FILENO, "Unable to execv to task: %s Error: %s Exiting.",
+		taskExe, strerror(errno));
     _exit(127); /* something went wrong. */
     break; /* never executed. End of child process */
 
@@ -188,13 +190,17 @@ static pid_t run_task(char *taskExe, int wait) {
     exitStatus = WEXITSTATUS(status);
     switch(exitStatus) {
     case 127:
-      log_message(STDOUT_FILENO, "Task execution failed: %s", taskExe);
+      log_message(STDOUT_FILENO, "Task execution failed: %s Error: %s",
+		  taskExe, strerror(errno));
       break;
     case 0:
       log_message(STDOUT_FILENO, "Task execution success: %s", taskExe);
       break;
+    case 1:
+      log_message(STDOUT_FILENO, "Task exited with code 1: %s", taskExe);
+      break;
     default:
-      log_message(STDOUT_FILENO, "Task return invalid code: %d. Continue: %d",
+      log_message(STDOUT_FILENO, "Task return invalid code: %s. Continue: %d",
 		  taskExe, wait);
       break;
     }
@@ -299,6 +305,9 @@ int main(int argc, char **argv) {
 	    break;
 	  case 0:
 	    log_message(STDOUT_FILENO, "Task execution success: %s", taskExe);
+	    break;
+	  case 1:
+	    log_message(STDOUT_FILENO, "Task exited with code 1: %s", taskExe);
 	    break;
 	  default:
 	    log_message(STDOUT_FILENO, "Task return invalid code: %d Cont: %d",
