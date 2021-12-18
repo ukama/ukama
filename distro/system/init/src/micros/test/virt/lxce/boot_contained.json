@@ -1,0 +1,39 @@
+{
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
+
+	"name": "boot",
+	"hostname": "ukama-boot",
+	"rootfs"  : "/home/kashif/work/ukama/ukamaOS/distro/system/lxce/rootfs",
+	"uid": "0",
+	"gid": "0",
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "network"
+		},
+		{
+			"type": "uts"
+		},
+		{
+			"type": "mount"
+		}
+	],
+
+	"capabilities": [{
+			"type": "CAP_BLOCK_SUSPEND"
+		},
+		{
+			"type": "CAP_IPC_LOCK"
+		},
+		{
+			"type": "CAP_MAC_ADMIN"
+		},
+		{
+			"type": "CAP_MAC_OVERRIDE"
+		}
+	]
+}

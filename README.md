@@ -45,6 +45,7 @@ sudo apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 cargo install cross
 rustup target add armv7-unknown-linux-gnueabihf
+rustup target add x86_64-unknown-linux-musl
 ```
 
 ### Buildah

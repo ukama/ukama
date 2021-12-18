@@ -814,7 +814,7 @@ fn main() {
     ])
     .unwrap();
 
-    trace!("Starting rc.init...!");
+    trace!("Starting sysInit ...!");
     let args: Vec<String> = env::args().collect();
     debug!("Argument is {}", args[0]);
     let arg = Path::new(&args[0]).file_name().unwrap();
@@ -843,10 +843,5 @@ fn main() {
     do_hostname();
     do_resolvconf();
 
-    //Start the executables from /etc/init.d path
-    run_init("/etc/init.d");
-
-    if userspace {
-        do_reap();
-    }
+    std::process::exit(0);
 }
