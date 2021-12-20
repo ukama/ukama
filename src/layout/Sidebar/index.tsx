@@ -9,20 +9,14 @@ import {
     ListItemText,
     Typography,
 } from "@mui/material";
-import {
-    APP_VERSION,
-    COPY_RIGHTS,
-    DRAWER_WIDTH,
-    SIDEBAR_MENU1,
-    SIDEBAR_MENU2,
-} from "../../constants";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
 import { makeStyles } from "@mui/styles";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
-import { UpgradeNavFooter } from "../../components";
 import { SkeletonRoundedCard } from "../../styles";
+import { UpgradeNavFooter } from "../../components";
+import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
     listItem: {
@@ -144,16 +138,6 @@ const Sidebar = (
                 }}
             >
                 <UpgradeNavFooter />
-                <Typography
-                    variant={"caption"}
-                    sx={{
-                        display: "block",
-                        textAlign: "center",
-                        color: colors.empress,
-                    }}
-                >
-                    {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
-                </Typography>
             </div>
         </div>
     );

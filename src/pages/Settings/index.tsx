@@ -10,14 +10,22 @@ import {
     VerticalContainer,
     HorizontalContainer,
 } from "../../styles";
+import {
+    Box,
+    Grid,
+    Button,
+    Divider,
+    MenuList,
+    MenuItem,
+    Typography,
+} from "@mui/material";
 import { colors } from "../../theme";
 import { useHistory } from "react-router-dom";
-import { SETTING_MENU } from "../../constants";
 import { SettingsMenuTypes } from "../../types";
 import React, { useEffect, useState } from "react";
 import { isSkeltonLoading, pageName } from "../../recoil";
 import { useRecoilState, useSetRecoilState } from "recoil";
-import { Box, Grid, Button, Divider, MenuList, MenuItem } from "@mui/material";
+import { APP_VERSION, COPY_RIGHTS, SETTING_MENU } from "../../constants";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -116,74 +124,91 @@ const Settings = () => {
     };
 
     return (
-        <Box m="40px 85px" height="80%">
-            <Grid container spacing={2} height="100%">
-                <Grid item xs={12} md={3}>
-                    <LoadingWrapper height={237} isLoading={skeltonLoading}>
-                        <RoundedCard
-                            sx={{
-                                p: "12px 20px",
-                                height: "fit-content",
-                            }}
-                        >
-                            <MenuList>
-                                {SETTING_MENU.map(
-                                    ({ id, title }: SettingsMenuTypes) => (
-                                        <SettingMenuItem
-                                            key={id}
-                                            label={title}
-                                            isSelected={id === menuId}
-                                            handleItemClick={() =>
-                                                handleItemClick(id)
-                                            }
-                                        />
-                                    )
-                                )}
-                                <Divider />
-                                <SettingMenuItem
-                                    label={"Log out"}
-                                    isSelected={false}
-                                    handleItemClick={handleLogout}
-                                />
-                            </MenuList>
-                        </RoundedCard>
-                    </LoadingWrapper>
+        <Box p="40px 85px" height="100%">
+            <Box height="98%">
+                <Grid container spacing={2} height="80%">
+                    <Grid item xs={12} md={3}>
+                        <LoadingWrapper height={237} isLoading={skeltonLoading}>
+                            <RoundedCard
+                                sx={{
+                                    p: "12px 20px",
+                                    height: "fit-content",
+                                }}
+                            >
+                                <MenuList>
+                                    {SETTING_MENU.map(
+                                        ({ id, title }: SettingsMenuTypes) => (
+                                            <SettingMenuItem
+                                                key={id}
+                                                label={title}
+                                                isSelected={id === menuId}
+                                                handleItemClick={() =>
+                                                    handleItemClick(id)
+                                                }
+                                            />
+                                        )
+                                    )}
+                                    <Divider />
+                                    <SettingMenuItem
+                                        label={"Log out"}
+                                        isSelected={false}
+                                        handleItemClick={handleLogout}
+                                    />
+                                </MenuList>
+                            </RoundedCard>
+                        </LoadingWrapper>
+                    </Grid>
+                    <Grid
+                        item
+                        xs={12}
+                        md={9}
+                        sx={{ mb: "18px", height: "90%" }}
+                    >
+                        <LoadingWrapper height={364} isLoading={skeltonLoading}>
+                            <RoundedCard sx={{ p: "40px 44px 24px" }}>
+                                <TabPanel index={1} value={menuId}>
+                                    <UserSettings />
+                                    <ActionButtons
+                                        handleSaveAction={handleSave}
+                                        handleCancelAction={handleCancel}
+                                    />
+                                </TabPanel>
+                                <TabPanel value={menuId} index={2}>
+                                    <NetworkSettings />
+                                    <ActionButtons
+                                        handleSaveAction={handleSave}
+                                        handleCancelAction={handleCancel}
+                                    />
+                                </TabPanel>
+                                <TabPanel value={menuId} index={3}>
+                                    <AlertSettings />
+                                    <ActionButtons
+                                        handleSaveAction={handleSave}
+                                        handleCancelAction={handleCancel}
+                                    />
+                                </TabPanel>
+                                <TabPanel value={menuId} index={4}>
+                                    <NodeSettings />
+                                    <ActionButtons
+                                        handleSaveAction={handleSave}
+                                        handleCancelAction={handleCancel}
+                                    />
+                                </TabPanel>
+                            </RoundedCard>
+                        </LoadingWrapper>
+                    </Grid>
                 </Grid>
-                <Grid item xs={12} md={9} sx={{ mb: "18px", height: "90%" }}>
-                    <LoadingWrapper height={364} isLoading={skeltonLoading}>
-                        <RoundedCard sx={{ p: "40px 44px 24px" }}>
-                            <TabPanel index={1} value={menuId}>
-                                <UserSettings />
-                                <ActionButtons
-                                    handleSaveAction={handleSave}
-                                    handleCancelAction={handleCancel}
-                                />
-                            </TabPanel>
-                            <TabPanel value={menuId} index={2}>
-                                <NetworkSettings />
-                                <ActionButtons
-                                    handleSaveAction={handleSave}
-                                    handleCancelAction={handleCancel}
-                                />
-                            </TabPanel>
-                            <TabPanel value={menuId} index={3}>
-                                <AlertSettings />
-                                <ActionButtons
-                                    handleSaveAction={handleSave}
-                                    handleCancelAction={handleCancel}
-                                />
-                            </TabPanel>
-                            <TabPanel value={menuId} index={4}>
-                                <NodeSettings />
-                                <ActionButtons
-                                    handleSaveAction={handleSave}
-                                    handleCancelAction={handleCancel}
-                                />
-                            </TabPanel>
-                        </RoundedCard>
-                    </LoadingWrapper>
-                </Grid>
-            </Grid>
+            </Box>
+            <Typography
+                variant={"caption"}
+                sx={{
+                    display: "block",
+                    textAlign: "center",
+                    color: colors.empress,
+                }}
+            >
+                {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
+            </Typography>
         </Box>
     );
 };
