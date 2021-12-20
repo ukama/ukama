@@ -18,10 +18,10 @@ import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
 import UserMapper from "./mapper";
 import { API_METHOD_TYPE, TIME_FILTER } from "../../constants";
-import { catchAsyncIOMethod, getHeaders } from "../../common";
+import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
-import { Context, PaginationDto } from "../../common/types";
+import { HeaderType, PaginationDto } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
@@ -118,9 +118,8 @@ export class UserService implements IUserService {
     };
     getUsersByOrg = async (
         orgId: string,
-        ctx: Context
+        header: HeaderType
     ): Promise<OrgUserResponseDto> => {
-        const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/users`,
@@ -135,9 +134,8 @@ export class UserService implements IUserService {
     addUser = async (
         orgId: string,
         req: AddUserDto,
-        ctx: Context
+        header: HeaderType
     ): Promise<AddUserResponse> => {
-        const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${orgId}/users`,
@@ -151,9 +149,8 @@ export class UserService implements IUserService {
     deleteUser = async (
         orgId: string,
         userId: string,
-        ctx: Context
+        header: HeaderType
     ): Promise<ActivateUserResponse> => {
-        const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
             path: `${SERVER.ORG}/${orgId}/users/${userId}`,

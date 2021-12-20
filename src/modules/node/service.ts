@@ -9,10 +9,10 @@ import {
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
-import { Context, PaginationDto } from "../../common/types";
+import { HeaderType, PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
-import { catchAsyncIOMethod, getHeaders } from "../../common";
+import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
@@ -68,9 +68,8 @@ export class NodeService implements INodeService {
     };
     getNodesByOrg = async (
         orgId: string,
-        ctx: Context
+        header: HeaderType
     ): Promise<OrgNodeResponseDto> => {
-        const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/nodes`,
