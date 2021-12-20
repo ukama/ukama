@@ -7,22 +7,17 @@ import {
     Typography,
 } from "@mui/material";
 import colors from "../../theme/colors";
-import { UserDetailsDialog } from "../../components";
 import { RoundedCard } from "../../styles";
-import { useState } from "react";
 type UserCardProps = {
     userDetails?: any;
     children?: any;
+    handleMoreUserdetails?: any;
 };
-const UserCard = ({ userDetails, children }: UserCardProps) => {
-    const [showSimDialog, setShowSimDialog] = useState(false);
-    const showMore = () => {
-        setShowSimDialog(true);
-    };
-    const handleSimDialog = () => {
-        setShowSimDialog(false);
-    };
-
+const UserCard = ({
+    userDetails,
+    handleMoreUserdetails,
+    children,
+}: UserCardProps) => {
     return (
         <>
             <RoundedCard sx={{ height: "100%" }}>
@@ -47,7 +42,10 @@ const UserCard = ({ userDetails, children }: UserCardProps) => {
                                         direction="column"
                                     >
                                         <Grid item>
-                                            <Typography variant="body2">
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ color: colors.empress }}
+                                            >
                                                 {imsi}
                                             </Typography>
                                         </Grid>
@@ -122,22 +120,13 @@ const UserCard = ({ userDetails, children }: UserCardProps) => {
                                             <Button
                                                 variant="text"
                                                 sx={{ color: colors.darkGrey }}
-                                                onClick={showMore}
+                                                onClick={() =>
+                                                    handleMoreUserdetails(id)
+                                                }
                                             >
                                                 VIEW MORE
                                             </Button>
                                         </Grid>
-                                        <UserDetailsDialog
-                                            userName="John Doe"
-                                            data="- 1.5 GB data used, 0.5 free GB left"
-                                            isOpen={showSimDialog}
-                                            userDetailsTitle="User Details"
-                                            btnLabel="Submit"
-                                            handleClose={handleSimDialog}
-                                            simDetailsTitle="SIM Details"
-                                            saveBtnLabel="save"
-                                            closeBtnLabel="close"
-                                        />
                                     </Grid>
                                 </Paper>
                             </Grid>
