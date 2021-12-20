@@ -12,8 +12,7 @@ const GetNodesByOrg string = `{
 		getNodesByOrg(orgId: "%s"){
 			orgName
     		nodes {
-      			nodeId
-      			state
+      			id
       			description
       			title
     			totalUser
@@ -41,8 +40,7 @@ type GetNodesByOrgResponse struct {
 }
 
 type Nodes struct {
-	NodedId     string `json:"nodeId"`
-	State       string `json:"state"`
+	Id          string `json:"id"`
 	Description string `json:"description"`
 	Title       string `json:"title"`
 	TotalUser   int    `json:"totalUser"`

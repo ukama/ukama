@@ -60,6 +60,7 @@ jobs:
               working-directory: "bff_integration"
               env:
                   REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
               run: |
                   buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
