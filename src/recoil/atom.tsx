@@ -14,4 +14,10 @@ const pageName = atom({
     effects_UNSTABLE: [persistAtom],
 });
 
-export { isSkeltonLoading, pageName };
+const organizationId = atom<string | undefined>({
+    key: "organizationId",
+    default: undefined,
+    effects_UNSTABLE: [persistAtom],
+});
+
+export { isSkeltonLoading, pageName, organizationId };

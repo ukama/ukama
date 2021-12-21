@@ -1,4 +1,15 @@
-import { isSkeltonLoading, pageName } from "./atom";
-import { withIsSkeltonLoading, withPageName } from "./withGlobalSelectors";
+import { isSkeltonLoading, pageName, organizationId } from "./atom";
+import {
+    withIsSkeltonLoading,
+    withPageName,
+    withOrganizationId,
+} from "./withGlobalSelectors";
 
-export { isSkeltonLoading, withIsSkeltonLoading, pageName, withPageName };
+export {
+    isSkeltonLoading,
+    withIsSkeltonLoading,
+    pageName,
+    withPageName,
+    organizationId,
+    withOrganizationId,
+};

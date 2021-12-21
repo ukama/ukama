@@ -37,11 +37,14 @@ export enum Api_Method_Type {
 }
 
 export type ActivateUserDto = {
+    dataPlan: Scalars["Float"];
+    dataUsage: Scalars["Float"];
     eSimNumber: Scalars["String"];
     email?: InputMaybe<Scalars["String"]>;
-    firstName: Scalars["String"];
-    lastName: Scalars["String"];
+    iccid: Scalars["String"];
+    name: Scalars["String"];
     phone?: InputMaybe<Scalars["String"]>;
+    roaming: Scalars["Boolean"];
 };
 
 export type ActivateUserResponse = {
@@ -70,6 +73,22 @@ export type AddNodeResponseDto = {
     __typename?: "AddNodeResponseDto";
     data: AddNodeResponse;
     status: Scalars["String"];
+};
+
+export type AddUserDto = {
+    email: Scalars["String"];
+    firstName: Scalars["String"];
+    imsi: Scalars["String"];
+    lastName: Scalars["String"];
+};
+
+export type AddUserResponse = {
+    __typename?: "AddUserResponse";
+    email: Scalars["String"];
+    firstName: Scalars["String"];
+    imsi: Scalars["String"];
+    lastName: Scalars["String"];
+    uuid: Scalars["String"];
 };
 
 export type AlertDto = {
@@ -175,12 +194,6 @@ export enum Data_Bill_Filter {
     September = "SEPTEMBER",
 }
 
-export enum Data_Plan_Type {
-    Na = "NA",
-    Paid = "PAID",
-    Unpaid = "UNPAID",
-}
-
 export type DataBillDto = {
     __typename?: "DataBillDto";
     billDue: Scalars["Float"];
@@ -247,14 +260,16 @@ export enum Get_User_Type {
 
 export type GetUserDto = {
     __typename?: "GetUserDto";
-    dataPlan: Data_Plan_Type;
+    dataPlan: Scalars["Float"];
     dataUsage: Scalars["Float"];
-    dlActivity: Scalars["String"];
+    eSimNumber: Scalars["String"];
+    email?: Maybe<Scalars["String"]>;
+    iccid: Scalars["String"];
     id: Scalars["String"];
     name: Scalars["String"];
-    node: Scalars["String"];
+    phone?: Maybe<Scalars["String"]>;
+    roaming: Scalars["Boolean"];
     status: Get_User_Status_Type;
-    ulActivity: Scalars["String"];
 };
 
 export type GetUserPaginationDto = {
@@ -276,6 +291,12 @@ export type GetUserResponseDto = {
     status: Scalars["String"];
 };
 
+export type HeaderType = {
+    __typename?: "HeaderType";
+    Authorization: Scalars["String"];
+    Cookie: Scalars["String"];
+};
+
 export type Meta = {
     __typename?: "Meta";
     count: Scalars["Float"];
@@ -288,8 +309,10 @@ export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
     addNode: AddNodeResponse;
+    addUser: AddUserResponse;
     deactivateUser: DeactivateResponse;
     deleteNode: DeactivateResponse;
+    deleteUser: ActivateUserResponse;
     updateNode: UpdateNodeResponse;
     updateUser: UserResponse;
 };
@@ -302,12 +325,22 @@ export type MutationAddNodeArgs = {
     data: AddNodeDto;
 };
 
+export type MutationAddUserArgs = {
+    data: AddUserDto;
+    orgId: Scalars["String"];
+};
+
 export type MutationDeactivateUserArgs = {
     id: Scalars["String"];
 };
 
 export type MutationDeleteNodeArgs = {
     id: Scalars["String"];
+};
+
+export type MutationDeleteUserArgs = {
+    orgId: Scalars["String"];
+    userId: Scalars["String"];
 };
 
 export type MutationUpdateNodeArgs = {
@@ -345,7 +378,7 @@ export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
     id: Scalars["String"];
-    status: Get_User_Status_Type;
+    status: Org_Node_State;
     title: Scalars["String"];
     totalUser: Scalars["Float"];
 };
@@ -378,11 +411,8 @@ export enum Org_Node_State {
 
 export type OrgNodeDto = {
     __typename?: "OrgNodeDto";
-    description: Scalars["String"];
     nodeId: Scalars["String"];
     state: Org_Node_State;
-    title: Scalars["String"];
-    totalUser: Scalars["Float"];
 };
 
 export type OrgNodeResponse = {
@@ -394,9 +424,29 @@ export type OrgNodeResponse = {
 export type OrgNodeResponseDto = {
     __typename?: "OrgNodeResponseDto";
     activeNodes: Scalars["Float"];
-    nodes: Array<OrgNodeDto>;
+    nodes: Array<NodeDto>;
     orgName: Scalars["String"];
     totalNodes: Scalars["Float"];
+};
+
+export type OrgUserDto = {
+    __typename?: "OrgUserDto";
+    email: Scalars["String"];
+    firstName: Scalars["String"];
+    lastName: Scalars["String"];
+    uuid: Scalars["String"];
+};
+
+export type OrgUserResponse = {
+    __typename?: "OrgUserResponse";
+    org: Scalars["String"];
+    users: Array<OrgUserDto>;
+};
+
+export type OrgUserResponseDto = {
+    __typename?: "OrgUserResponseDto";
+    orgName: Scalars["String"];
+    users: Array<GetUserDto>;
 };
 
 export type PaginationDto = {
@@ -424,6 +474,7 @@ export type Query = {
     getResidents: ResidentsResponse;
     getUser: GetUserDto;
     getUsers: GetUserResponse;
+    myUsers: OrgUserResponseDto;
 };
 
 export type QueryGetAlertsArgs = {
@@ -466,17 +517,14 @@ export type QueryGetUsersArgs = {
     data: GetUserPaginationDto;
 };
 
-export type ResidentDto = {
-    __typename?: "ResidentDto";
-    dataUsage: Scalars["Float"];
-    id: Scalars["String"];
-    name: Scalars["String"];
+export type QueryMyUsersArgs = {
+    orgId: Scalars["String"];
 };
 
 export type ResidentResponse = {
     __typename?: "ResidentResponse";
     activeResidents: Scalars["Float"];
-    residents: Array<ResidentDto>;
+    residents: Array<GetUserDto>;
     totalResidents: Scalars["Float"];
 };
 
@@ -668,33 +716,25 @@ export type GetLatestAlertsSubscription = {
     };
 };
 
-export type GetNodesQueryVariables = Exact<{
-    data: PaginationDto;
+export type GetNodesByOrgQueryVariables = Exact<{
+    orgId: Scalars["String"];
 }>;
 
-export type GetNodesQuery = {
+export type GetNodesByOrgQuery = {
     __typename?: "Query";
-    getNodes: {
-        __typename?: "NodesResponse";
-        meta: {
-            __typename?: "Meta";
-            count: number;
-            page: number;
-            size: number;
-            pages: number;
-        };
-        nodes: {
-            __typename?: "NodeResponseDto";
-            activeNodes: number;
-            totalNodes: number;
-            nodes: Array<{
-                __typename?: "NodeDto";
-                id: string;
-                title: string;
-                description: string;
-                totalUser: number;
-            }>;
-        };
+    getNodesByOrg: {
+        __typename?: "OrgNodeResponseDto";
+        orgName: string;
+        activeNodes: number;
+        totalNodes: number;
+        nodes: Array<{
+            __typename?: "NodeDto";
+            id: string;
+            status: Org_Node_State;
+            title: string;
+            description: string;
+            totalUser: number;
+        }>;
     };
 };
 
@@ -718,7 +758,7 @@ export type GetResidentsQuery = {
             activeResidents: number;
             totalResidents: number;
             residents: Array<{
-                __typename?: "ResidentDto";
+                __typename?: "GetUserDto";
                 id: string;
                 name: string;
                 dataUsage: number;
@@ -1245,73 +1285,72 @@ export type GetLatestAlertsSubscriptionHookResult = ReturnType<
 >;
 export type GetLatestAlertsSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestAlertsSubscription>;
-export const GetNodesDocument = gql`
-    query getNodes($data: PaginationDto!) {
-        getNodes(data: $data) {
-            meta {
-                count
-                page
-                size
-                pages
-            }
+export const GetNodesByOrgDocument = gql`
+    query getNodesByOrg($orgId: String!) {
+        getNodesByOrg(orgId: $orgId) {
+            orgName
             nodes {
-                nodes {
-                    id
-                    title
-                    description
-                    totalUser
-                }
-                activeNodes
-                totalNodes
+                id
+                status
+                title
+                description
+                totalUser
             }
+            activeNodes
+            totalNodes
         }
     }
 `;
 
 /**
- * __useGetNodesQuery__
+ * __useGetNodesByOrgQuery__
  *
- * To run a query within a React component, call `useGetNodesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetNodesByOrgQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodesByOrgQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetNodesQuery({
+ * const { data, loading, error } = useGetNodesByOrgQuery({
  *   variables: {
- *      data: // value for 'data'
+ *      orgId: // value for 'orgId'
  *   },
  * });
  */
-export function useGetNodesQuery(
-    baseOptions: Apollo.QueryHookOptions<GetNodesQuery, GetNodesQueryVariables>
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useQuery<GetNodesQuery, GetNodesQueryVariables>(
-        GetNodesDocument,
-        options
-    );
-}
-export function useGetNodesLazyQuery(
-    baseOptions?: Apollo.LazyQueryHookOptions<
-        GetNodesQuery,
-        GetNodesQueryVariables
+export function useGetNodesByOrgQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetNodesByOrgQuery,
+        GetNodesByOrgQueryVariables
     >
 ) {
     const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useLazyQuery<GetNodesQuery, GetNodesQueryVariables>(
-        GetNodesDocument,
+    return Apollo.useQuery<GetNodesByOrgQuery, GetNodesByOrgQueryVariables>(
+        GetNodesByOrgDocument,
         options
     );
 }
-export type GetNodesQueryHookResult = ReturnType<typeof useGetNodesQuery>;
-export type GetNodesLazyQueryHookResult = ReturnType<
-    typeof useGetNodesLazyQuery
+export function useGetNodesByOrgLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodesByOrgQuery,
+        GetNodesByOrgQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodesByOrgQuery, GetNodesByOrgQueryVariables>(
+        GetNodesByOrgDocument,
+        options
+    );
+}
+export type GetNodesByOrgQueryHookResult = ReturnType<
+    typeof useGetNodesByOrgQuery
 >;
-export type GetNodesQueryResult = Apollo.QueryResult<
-    GetNodesQuery,
-    GetNodesQueryVariables
+export type GetNodesByOrgLazyQueryHookResult = ReturnType<
+    typeof useGetNodesByOrgLazyQuery
+>;
+export type GetNodesByOrgQueryResult = Apollo.QueryResult<
+    GetNodesByOrgQuery,
+    GetNodesByOrgQueryVariables
 >;
 export const GetResidentsDocument = gql`
     query getResidents($data: PaginationDto!) {

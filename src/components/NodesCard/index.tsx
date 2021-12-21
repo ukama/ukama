@@ -48,7 +48,7 @@ const ConfigureNode = () => {
 
 type NodeCardProps = {
     title?: string;
-    users?: string;
+    users?: number;
     loading?: boolean;
     subTitle?: string;
     isConfigure?: boolean;

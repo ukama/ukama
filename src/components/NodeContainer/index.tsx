@@ -1,7 +1,8 @@
 import { MultiSlideCarousel, NodeCard } from "..";
+import { GetNodesByOrgQuery } from "../../generated";
 
 type NodeContainerProps = {
-    items: any;
+    items?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"];
     slidesToShow: number;
     count: number | undefined;
     handleItemAction: Function;
@@ -18,9 +19,9 @@ const NodeContainer = ({
             {count > 1 ? (
                 <MultiSlideCarousel
                     numberOfSlides={slidesToShow}
-                    disableArrows={count < 3 ? true : false}
+                    disableArrows={count < 3}
                 >
-                    {items.map(({ id, title, totalUser, description }: any) => (
+                    {items.map(({ id, title, totalUser, description }) => (
                         <NodeCard
                             key={id}
                             title={title}
