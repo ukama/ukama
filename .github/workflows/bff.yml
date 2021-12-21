@@ -66,7 +66,8 @@ jobs:
               run: |
                   git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama" 
 
-              run: env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
+              run: |
+                  env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
 
             - name: OCI Push bff-api test
               working-directory: "bff_integration"
