@@ -23,8 +23,8 @@ import { colors } from "../../theme";
 import { useHistory } from "react-router-dom";
 import { SettingsMenuTypes } from "../../types";
 import React, { useEffect, useState } from "react";
-import { isSkeltonLoading, pageName } from "../../recoil";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { isSkeltonLoading, organizationId, pageName } from "../../recoil";
+import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import { APP_VERSION, COPY_RIGHTS, SETTING_MENU } from "../../constants";
 
 interface TabPanelProps {
@@ -102,6 +102,8 @@ const Settings = () => {
     const history = useHistory();
     const [menuId, setMenuId] = useState(1);
     const setPage = useSetRecoilState(pageName);
+    const resetPageName = useResetRecoilState(pageName);
+    const resetData = useResetRecoilState(organizationId);
     const [skeltonLoading, setSkeltonLoading] =
         useRecoilState(isSkeltonLoading);
 
@@ -112,6 +114,8 @@ const Settings = () => {
     const handleItemClick = (id: number) => setMenuId(id);
 
     const handleLogout = () => {
+        resetData();
+        resetPageName();
         setSkeltonLoading(true);
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };

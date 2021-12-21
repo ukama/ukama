@@ -2,6 +2,12 @@ import { atom } from "recoil";
 import { recoilPersist } from "recoil-persist";
 const { persistAtom } = recoilPersist();
 
+const isFirstVisit = atom({
+    key: "isFirstVisit",
+    default: true,
+    effects_UNSTABLE: [persistAtom],
+});
+
 const isSkeltonLoading = atom({
     key: "isSkeltonLoading",
     default: false,
@@ -20,4 +26,4 @@ const organizationId = atom<string | undefined>({
     effects_UNSTABLE: [persistAtom],
 });
 
-export { isSkeltonLoading, pageName, organizationId };
+export { isSkeltonLoading, pageName, organizationId, isFirstVisit };

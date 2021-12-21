@@ -29,7 +29,7 @@ const useStyles = makeStyles(() => ({
         backgroundColor: colors.white,
     },
     listItemText: {
-        color: colors.black,
+        color: colors.vulcan,
     },
     listItemDone: {
         opacity: 1,
@@ -37,11 +37,11 @@ const useStyles = makeStyles(() => ({
         marginTop: "8px",
         padding: "8px 12px",
         borderRadius: "4px",
-        color: `${colors.white} !important`,
-        backgroundColor: `${colors.primary} !important`,
+        color: `${colors.vulcan} !important`,
+        backgroundColor: `${colors.solitude} !important`,
     },
     listItemDoneText: {
-        color: colors.white,
+        color: colors.vulcan,
     },
 }));
 
@@ -84,11 +84,7 @@ const Sidebar = (
                     }
                 >
                     <ListItemIcon sx={{ minWidth: "44px" }}>
-                        <Icon
-                            color={
-                                title === page ? colors.white : colors.vulcan
-                            }
-                        />
+                        <Icon color={colors.vulcan} />
                     </ListItemIcon>
                     <ListItemText>
                         <Typography

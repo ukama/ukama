@@ -4,17 +4,18 @@ import client from "./api/ApolloClient";
 import { routes } from "./router/config";
 import { CenterContainer } from "./styles";
 import { BasicDialog } from "./components";
-import { useSetRecoilState } from "recoil";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
-import { isSkeltonLoading } from "./recoil";
 import { ThemeProvider } from "@emotion/react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
+import { isFirstVisit, isSkeltonLoading } from "./recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 import { CircularProgress, CssBaseline } from "@mui/material";
 
 const App = () => {
     const { loading, response } = useWhoami();
+    const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const [showValidationError, setShowValidationError] =
         useState<boolean>(false);
@@ -22,8 +23,13 @@ const App = () => {
     useEffect(() => {
         if (response) {
             if (!response?.isValid) {
-                setSkeltonLoading(true);
-                setShowValidationError(true);
+                if (_isFirstVisit) {
+                    _setIsFirstVisit(false);
+                    handleGoToLogin();
+                } else {
+                    setSkeltonLoading(true);
+                    setShowValidationError(true);
+                }
             } else if (response?.isValid) {
                 setSkeltonLoading(false);
             }

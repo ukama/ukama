@@ -290,7 +290,7 @@ const Home = () => {
                         subtitle1={`${
                             dataUsageRes?.getDataUsage?.dataConsumed || 0
                         }`}
-                        subtitle2={` GB / ${
+                        subtitle2={`/ ${
                             dataUsageRes?.getDataUsage?.dataPackage || "-"
                         }`}
                         Icon={DataUsage}
