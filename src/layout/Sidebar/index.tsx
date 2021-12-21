@@ -14,8 +14,7 @@ import { Logo } from "../../assets/svg";
 import { makeStyles } from "@mui/styles";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
-import { SkeletonRoundedCard } from "../../styles";
-import { UpgradeNavFooter } from "../../components";
+import { LoadingWrapper, UpgradeNavFooter } from "../../components";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
@@ -151,31 +150,26 @@ const Sidebar = (
             }}
             aria-label="mailbox folders"
         >
-            <Drawer
-                open={isOpen}
-                variant="temporary"
-                container={container}
-                onClose={() => handleDrawerToggle()}
-                ModalProps={{
-                    keepMounted: true,
-                }}
-                sx={{
-                    display: { xs: "block", sm: "none" },
-                    "& .MuiDrawer-paper": {
-                        boxSizing: "border-box",
-                        width: DRAWER_WIDTH,
-                    },
-                    borderRight: "0px",
-                }}
-            >
-                {drawer}
-            </Drawer>
-            {isLoading ? (
-                <SkeletonRoundedCard
-                    variant="rectangular"
-                    sx={{ borderRadius: 0 }}
-                />
-            ) : (
+            <LoadingWrapper isLoading={isLoading}>
+                <Drawer
+                    open={isOpen}
+                    variant="temporary"
+                    container={container}
+                    onClose={() => handleDrawerToggle()}
+                    ModalProps={{
+                        keepMounted: true,
+                    }}
+                    sx={{
+                        display: { xs: "block", sm: "none" },
+                        "& .MuiDrawer-paper": {
+                            boxSizing: "border-box",
+                            width: DRAWER_WIDTH,
+                        },
+                        borderRight: "0px",
+                    }}
+                >
+                    {drawer}
+                </Drawer>
                 <Drawer
                     open
                     variant="permanent"
@@ -189,7 +183,7 @@ const Sidebar = (
                 >
                     {drawer}
                 </Drawer>
-            )}
+            </LoadingWrapper>
         </Box>
     );
 };

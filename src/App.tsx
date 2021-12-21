@@ -21,6 +21,10 @@ const App = () => {
         useState<boolean>(false);
 
     useEffect(() => {
+        setSkeltonLoading(true);
+    }, []);
+
+    useEffect(() => {
         if (response) {
             if (!response?.isValid) {
                 if (_isFirstVisit) {

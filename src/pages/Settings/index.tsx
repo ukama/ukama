@@ -124,7 +124,7 @@ const Settings = () => {
         /* TODO: Handle Save Action */
     };
     const handleCancel = () => {
-        history.push("/home");
+        history.push("/");
     };
 
     return (
@@ -203,16 +203,18 @@ const Settings = () => {
                     </Grid>
                 </Grid>
             </Box>
-            <Typography
-                variant={"caption"}
-                sx={{
-                    display: "block",
-                    textAlign: "center",
-                    color: colors.empress,
-                }}
-            >
-                {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
-            </Typography>
+            {!skeltonLoading && (
+                <Typography
+                    variant={"caption"}
+                    sx={{
+                        display: "block",
+                        textAlign: "center",
+                        color: colors.empress,
+                    }}
+                >
+                    {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
+                </Typography>
+            )}
         </Box>
     );
 };
