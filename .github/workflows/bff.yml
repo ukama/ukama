@@ -57,22 +57,22 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
 
-            - name: OCI Push bff-api test
-              working-directory: "bff_integration"
-              env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
-                  UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-                  
             - name: Set up Go
-                uses: actions/setup-go@v2
-                with: 
-                  go-version: 1.16
+              uses: actions/setup-go@v2
+              with:
+                go-version: 1.16
       
             - name: Granting private modules access
               run: |
                   git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama" 
 
               run: env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
+
+            - name: OCI Push bff-api test
+              working-directory: "bff_integration"
+              env:
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
               
               run: |
                   buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
