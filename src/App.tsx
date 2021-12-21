@@ -24,13 +24,15 @@ const App = () => {
         if (response) {
             if (!response?.isValid) {
                 if (_isFirstVisit) {
-                    _setIsFirstVisit(false);
                     handleGoToLogin();
                 } else {
                     setSkeltonLoading(true);
                     setShowValidationError(true);
                 }
             } else if (response?.isValid) {
+                if (_isFirstVisit) {
+                    _setIsFirstVisit(false);
+                }
                 setSkeltonLoading(false);
             }
         }
