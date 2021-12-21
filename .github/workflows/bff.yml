@@ -60,13 +60,11 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v2
               with:
-                go-version: 1.16
-      
+                  go-version: 1.16
+
             - name: Granting private modules access
               run: |
-                  git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama" 
-
-              run: |
+                  git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama" && \
                   env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
 
             - name: OCI Push bff-api test
@@ -74,7 +72,7 @@ jobs:
               env:
                   REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
                   UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-              
+
               run: |
                   buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
