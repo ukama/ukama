@@ -76,9 +76,6 @@ export class NodeService implements INodeService {
             headers: header,
         });
 
-        if (checkError(res)) throw new Error(res.message);
-        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
         return NodeMapper.dtoToNodesDto(res);
     };
 }
