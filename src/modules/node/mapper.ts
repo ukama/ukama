@@ -21,8 +21,11 @@ class NodeMapper implements INodeMapper {
         });
         return { nodes, activeNodes, totalNodes };
     };
-    dtoToNodesDto = (req: OrgNodeResponse): OrgNodeResponseDto => {
-        const orgName = req.orgName;
+    dtoToNodesDto = (
+        orgId: string,
+        req: OrgNodeResponse
+    ): OrgNodeResponseDto => {
+        const orgName = req.orgName ? req.orgName : orgId;
         let nodesObj;
         let activeNodes = 0;
         const nodes: NodeDto[] = [];
