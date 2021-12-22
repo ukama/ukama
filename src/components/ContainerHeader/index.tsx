@@ -42,7 +42,7 @@ const ContainerHeader = ({
         /* Default function */
     },
 }: ContainerHeaderProps) => {
-    const [currentSearchValue, setCurrentSearchValue] = useState<any>("");
+    const [currentSearchValue, setCurrentSearchValue] = useState<string>("");
 
     useEffect(() => {
         handleSearchChange(currentSearchValue);
