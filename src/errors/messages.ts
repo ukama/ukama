@@ -10,5 +10,5 @@ export default {
     NODES_NOT_FOUND: "Nodes not found",
     RESIDENTS_NOT_FOUND: "Nodes not found",
     ERR_REQUIRED_HEADER_NOT_FOUND: "Required headers not found",
-    ERR_SERVER_REQUEST_FAILED: "Request failed!",
+    ERR_SERVER_REQUEST_FAILED: "Request failed",
 };
