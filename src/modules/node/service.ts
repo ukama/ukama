@@ -76,6 +76,6 @@ export class NodeService implements INodeService {
             headers: header,
         });
 
-        return NodeMapper.dtoToNodesDto(res);
+        return NodeMapper.dtoToNodesDto(orgId, res);
     };
 }

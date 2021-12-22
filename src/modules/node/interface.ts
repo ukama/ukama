@@ -25,5 +25,5 @@ export interface INodeService {
 
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
-    dtoToNodesDto(req: OrgNodeResponse): OrgNodeResponseDto;
+    dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
 }
