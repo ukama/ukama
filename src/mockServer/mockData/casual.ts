@@ -45,7 +45,7 @@ const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
         dataConsumed: defaultCasual.integer(1, 39),
-        dataPackage: `${defaultCasual.integer(5, 60)} GB free left.`,
+        dataPackage: `${defaultCasual.integer(5, 60)} GB free left`,
     };
 };
 
