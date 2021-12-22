@@ -4,8 +4,6 @@ export const GET_CONNECTED_USERS_QUERY = `
     query getUsers($data:TIME_FILTER!) {
         getConnectedUsers(filter:$data) {
             totalUser
-            residentUsers
-            guestUsers
         }
     }
 `;
