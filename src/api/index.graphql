@@ -17,16 +17,12 @@ subscription getLatestDataUsage {
 query getConnectedUsers($filter: TIME_FILTER!) {
     getConnectedUsers(filter: $filter) {
         totalUser
-        residentUsers
-        guestUsers
     }
 }
 
 subscription getLatestConnectedUsers {
     getConnectedUsers {
         totalUser
-        residentUsers
-        guestUsers
     }
 }
 

@@ -152,8 +152,6 @@ export enum Connected_User_Type {
 
 export type ConnectedUserDto = {
     __typename?: "ConnectedUserDto";
-    guestUsers: Scalars["Float"];
-    residentUsers: Scalars["Float"];
     totalUser: Scalars["Float"];
 };
 
@@ -624,12 +622,7 @@ export type GetConnectedUsersQueryVariables = Exact<{
 
 export type GetConnectedUsersQuery = {
     __typename?: "Query";
-    getConnectedUsers: {
-        __typename?: "ConnectedUserDto";
-        totalUser: number;
-        residentUsers: number;
-        guestUsers: number;
-    };
+    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: number };
 };
 
 export type GetLatestConnectedUsersSubscriptionVariables = Exact<{
@@ -638,12 +631,7 @@ export type GetLatestConnectedUsersSubscriptionVariables = Exact<{
 
 export type GetLatestConnectedUsersSubscription = {
     __typename?: "Subscription";
-    getConnectedUsers: {
-        __typename?: "ConnectedUserDto";
-        totalUser: number;
-        residentUsers: number;
-        guestUsers: number;
-    };
+    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: number };
 };
 
 export type GetDataBillQueryVariables = Exact<{
@@ -975,8 +963,6 @@ export const GetConnectedUsersDocument = gql`
     query getConnectedUsers($filter: TIME_FILTER!) {
         getConnectedUsers(filter: $filter) {
             totalUser
-            residentUsers
-            guestUsers
         }
     }
 `;
@@ -1035,8 +1021,6 @@ export const GetLatestConnectedUsersDocument = gql`
     subscription getLatestConnectedUsers {
         getConnectedUsers {
             totalUser
-            residentUsers
-            guestUsers
         }
     }
 `;

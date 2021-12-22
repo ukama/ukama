@@ -272,11 +272,7 @@ const Home = () => {
                         subtitle1={`${
                             connectedUserRes?.getConnectedUsers?.totalUser || 0
                         }`}
-                        subtitle2={
-                            connectedUserRes?.getConnectedUsers?.totalUser
-                                ? `| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`
-                                : "-"
-                        }
+                        subtitle2={""}
                         option={getStatus("statusUser")}
                         loading={connectedUserloading || isSkeltonLoad}
                         handleSelect={(value: string) =>
