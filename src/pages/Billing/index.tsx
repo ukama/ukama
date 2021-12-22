@@ -32,7 +32,7 @@ const Billing = () => {
             />
 
             {tab === "1" && (
-                <Grid xs={12} container item spacing={2}>
+                <Grid container item spacing={2}>
                     <Grid xs={12} md={5} item>
                         <CurrentBill
                             amount={"$20.00"}

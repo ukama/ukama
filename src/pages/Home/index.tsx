@@ -1,7 +1,5 @@
-/* eslint-disable no-unused-vars */
 import {
     StatsCard,
-    AlertCard,
     StatusCard,
     NodeContainer,
     NetworkStatus,
@@ -12,7 +10,6 @@ import {
     UserActivationDialog,
 } from "../../components";
 import {
-    NETWORKS,
     TIME_FILTER,
     MONTH_FILTER,
     STATS_PERIOD,
@@ -24,10 +21,8 @@ import {
 import "../../i18n/i18n";
 import {
     Time_Filter,
-    Network_Type,
     Data_Bill_Filter,
     useGetNodesQuery,
-    useGetAlertsQuery,
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
@@ -42,20 +37,16 @@ import {
     GetLatestDataBillDocument,
     GetLatestNetworkSubscription,
     GetLatestNetworkDocument,
-    GetLatestAlertsSubscription,
-    GetLatestAlertsDocument,
+    Network_Type,
 } from "../../generated";
-import { isSkeltonLoading } from "../../recoil";
-import { RoundedCard } from "../../styles";
-import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { Box, Grid, Typography, useMediaQuery } from "@mui/material";
+import { RoundedCard } from "../../styles";
+import { isSkeltonLoading } from "../../recoil";
+import React, { useEffect, useState } from "react";
+import { Box, Grid, useMediaQuery } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
-import { useTranslation } from "react-i18next";
-import { cloneDeep } from "lodash";
 
 const Home = () => {
-    const { t } = useTranslation();
     const isSliderLarge = useMediaQuery("(min-width:1410px)");
     const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
@@ -66,9 +57,6 @@ const Home = () => {
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
-    const [networkType, setNetworkType] = useState<Network_Type>(
-        Network_Type.Public
-    );
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -105,36 +93,6 @@ const Home = () => {
             );
         }
     }, [connectedUserRes]);
-
-    const {
-        data: alertsInfoRes,
-        loading: alertsloading,
-        subscribeToMore: subscribeToLatestAlerts,
-    } = useGetAlertsQuery({
-        variables: {
-            data: {
-                pageNo: 1,
-                pageSize: 50,
-            },
-        },
-    });
-    useEffect(() => {
-        if (alertsInfoRes) {
-            subscribeToLatestAlerts<GetLatestAlertsSubscription>({
-                document: GetLatestAlertsDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = cloneDeep(prev);
-                    const latestAlert = subscriptionData.data.getAlerts;
-                    if (latestAlert.__typename === "AlertDto")
-                        data.getAlerts.alerts = [
-                            latestAlert,
-                            ...data.getAlerts.alerts,
-                        ];
-                    return data;
-                },
-            });
-        }
-    }, [alertsInfoRes]);
 
     const {
         data: residentsRes,
@@ -212,7 +170,7 @@ const Home = () => {
         subscribeToMore: subscribeToLatestNetworkStatus,
     } = useGetNetworkQuery({
         variables: {
-            filter: networkType,
+            filter: Network_Type.Public,
         },
     });
     useEffect(() => {
@@ -280,10 +238,13 @@ const Home = () => {
             refetchUser();
         }
     };
+
+    // eslint-disable-next-line no-unused-vars
     const handleNodeActions = (id: string, type: string) => {
         /* TODO: Handle Node Action */
     };
 
+    // eslint-disable-next-line no-unused-vars
     const handleAddNode = (value: any) => {
         setIsAddNode(true);
     };
@@ -291,209 +252,173 @@ const Home = () => {
     const handleActivationSubmit = () => {
         /* Handle submit activation action */
     };
-    const onActivateButton = () => setIsUserActivateOpen(() => true);
+    const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     return (
-        <>
-            <Box sx={{ flexGrow: 1, pb: "18px" }}>
-                <NetworkStatus
-                    options={NETWORKS}
-                    option={networkType}
-                    loading={networkStatusLoading || isSkeltonLoad}
-                    statusType={networkStatusRes?.getNetwork?.status || ""}
-                    duration={networkStatusRes?.getNetwork?.description || ""}
-                    handleStatusChange={(value: Network_Type) =>
-                        setNetworkType(value)
+        <Box sx={{ flexGrow: 1, pb: "18px" }}>
+            <Grid container spacing={3}>
+                <Grid xs={12} item>
+                    <NetworkStatus
+                        handleAddNode={handleAddNode}
+                        handleActivateUser={onActivateUser}
+                        loading={networkStatusLoading || isSkeltonLoad}
+                        statusType={networkStatusRes?.getNetwork?.status || ""}
+                        duration={
+                            networkStatusRes?.getNetwork?.description || ""
+                        }
+                    />
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <StatusCard
+                        Icon={UsersWithBG}
+                        title={"Connected Users"}
+                        options={TIME_FILTER}
+                        subtitle1={`${
+                            connectedUserRes?.getConnectedUsers?.totalUser || 0
+                        }`}
+                        subtitle2={
+                            connectedUserRes?.getConnectedUsers?.totalUser
+                                ? `| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`
+                                : "-"
+                        }
+                        option={getStatus("statusUser")}
+                        loading={connectedUserloading || isSkeltonLoad}
+                        handleSelect={(value: string) =>
+                            handleSatusChange("statusUser", value)
+                        }
+                    />
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <StatusCard
+                        title={"Data Usage"}
+                        subtitle1={`${
+                            dataUsageRes?.getDataUsage?.dataConsumed || 0
+                        }`}
+                        subtitle2={` GB / ${
+                            dataUsageRes?.getDataUsage?.dataPackage || "-"
+                        }`}
+                        Icon={DataUsage}
+                        options={TIME_FILTER}
+                        option={getStatus("statusUsage")}
+                        loading={dataUsageloading || isSkeltonLoad}
+                        handleSelect={(value: string) =>
+                            handleSatusChange("statusUsage", value)
+                        }
+                    />
+                </Grid>
+                <Grid item xs={12} md={6} lg={4}>
+                    <StatusCard
+                        title={"Data Bill"}
+                        subtitle1={`$ ${
+                            dataBillingRes?.getDataBill?.dataBill || 0
+                        }`}
+                        subtitle2={
+                            dataBillingRes?.getDataBill?.dataBill
+                                ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
+                                : " due"
+                        }
+                        Icon={DataBilling}
+                        options={MONTH_FILTER}
+                        loading={dataBillingloading || isSkeltonLoad}
+                        option={getStatus("statusBill")}
+                        handleSelect={(value: string) =>
+                            handleSatusChange("statusBill", value)
+                        }
+                    />
+                </Grid>
+                <Grid xs={12} item>
+                    <StatsCard
+                        loading={isSkeltonLoad}
+                        options={STATS_OPTIONS}
+                        selectedButton={selectedBtn}
+                        periodOptions={STATS_PERIOD}
+                        selectOption={statOptionValue}
+                        handleSelect={handleStatsChange}
+                        handleSelectedButton={handleSelectedButtonChange}
+                    />
+                </Grid>
+                <Grid xs={12} lg={8} item>
+                    <LoadingWrapper
+                        height={312}
+                        isLoading={nodeLoading || isSkeltonLoad}
+                    >
+                        <RoundedCard>
+                            <ContainerHeader
+                                title="My Nodes"
+                                showButton={false}
+                                stats={`${
+                                    nodeRes?.getNodes?.nodes?.activeNodes || "0"
+                                }/${
+                                    nodeRes?.getNodes?.nodes?.totalNodes || "-"
+                                }`}
+                            />
+                            <NodeContainer
+                                slidesToShow={slidesToShow}
+                                items={nodeRes?.getNodes?.nodes.nodes}
+                                count={nodeRes?.getNodes.meta.size}
+                                handleItemAction={handleNodeActions}
+                            />
+                        </RoundedCard>
+                    </LoadingWrapper>
+                </Grid>
+                <Grid xs={12} lg={4} item>
+                    <LoadingWrapper
+                        height={337}
+                        isLoading={
+                            residentsloading ||
+                            deactivateUserLoading ||
+                            isSkeltonLoad
+                        }
+                    >
+                        <RoundedCard sx={{ height: "100%" }}>
+                            <ContainerHeader
+                                title="Residents"
+                                showButton={false}
+                                stats={`${
+                                    residentsRes?.getResidents?.residents
+                                        ?.activeResidents || "0"
+                                }/${
+                                    residentsRes?.getResidents?.residents
+                                        ?.totalResidents || "-"
+                                }`}
+                            />
+                            <DataTableWithOptions
+                                columns={DataTableWithOptionColumns}
+                                dataset={
+                                    residentsRes?.getResidents.residents
+                                        .residents
+                                }
+                                menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
+                                onMenuItemClick={onResidentsTableMenuItem}
+                            />
+                        </RoundedCard>
+                    </LoadingWrapper>
+                </Grid>
+            </Grid>
+
+            {isUserActivateOpen && (
+                <UserActivationDialog
+                    isOpen={isUserActivateOpen}
+                    dialogTitle={UserActivation.title}
+                    subTitle={UserActivation.subTitle}
+                    handleClose={handleUserActivateClose}
+                />
+            )}
+            {isAddNode && (
+                <ActivationDialog
+                    isOpen={isAddNode}
+                    dialogTitle={"Add Node"}
+                    subTitle2={
+                        "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
+                    }
+                    handleClose={handleAddNodeClose}
+                    handleActivationSubmit={handleActivationSubmit}
+                    subTitle={
+                        "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
                     }
                 />
-
-                <Grid container spacing={2}>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <StatusCard
-                            Icon={UsersWithBG}
-                            title={"Connected Users"}
-                            options={TIME_FILTER}
-                            subtitle1={`${
-                                connectedUserRes?.getConnectedUsers
-                                    ?.totalUser || 0
-                            }`}
-                            subtitle2={
-                                connectedUserRes?.getConnectedUsers?.totalUser
-                                    ? `| ${connectedUserRes?.getConnectedUsers?.residentUsers} residents; ${connectedUserRes?.getConnectedUsers?.guestUsers} guests`
-                                    : ""
-                            }
-                            option={getStatus("statusUser")}
-                            loading={connectedUserloading || isSkeltonLoad}
-                            handleSelect={(value: string) =>
-                                handleSatusChange("statusUser", value)
-                            }
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <StatusCard
-                            title={"Data usage"}
-                            subtitle1={`${
-                                dataUsageRes?.getDataUsage?.dataConsumed || 0
-                            }`}
-                            subtitle2={` GBs / ${
-                                dataUsageRes?.getDataUsage?.dataPackage ||
-                                "unlimited"
-                            }`}
-                            Icon={DataUsage}
-                            options={TIME_FILTER}
-                            option={getStatus("statusUsage")}
-                            loading={dataUsageloading || isSkeltonLoad}
-                            handleSelect={(value: string) =>
-                                handleSatusChange("statusUsage", value)
-                            }
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={4}>
-                        <StatusCard
-                            title={"Data Bill"}
-                            subtitle1={`$ ${
-                                dataBillingRes?.getDataBill?.dataBill || 0
-                            }`}
-                            subtitle2={
-                                dataBillingRes?.getDataBill?.dataBill
-                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
-                                    : " due"
-                            }
-                            Icon={DataBilling}
-                            options={MONTH_FILTER}
-                            loading={dataBillingloading || isSkeltonLoad}
-                            option={getStatus("statusBill")}
-                            handleSelect={(value: string) =>
-                                handleSatusChange("statusBill", value)
-                            }
-                        />
-                    </Grid>
-                </Grid>
-                <Box mt={2} mb={2}>
-                    <Grid container spacing={2}>
-                        <Grid xs={12} item lg={8}>
-                            <StatsCard
-                                loading={isSkeltonLoad}
-                                options={STATS_OPTIONS}
-                                selectedButton={selectedBtn}
-                                periodOptions={STATS_PERIOD}
-                                selectOption={statOptionValue}
-                                handleSelect={handleStatsChange}
-                                handleSelectedButton={
-                                    handleSelectedButtonChange
-                                }
-                            />
-                        </Grid>
-                        <Grid xs={12} item lg={4}>
-                            <LoadingWrapper
-                                height={387}
-                                isLoading={alertsloading || isSkeltonLoad}
-                            >
-                                <RoundedCard>
-                                    <Typography
-                                        variant="h6"
-                                        sx={{ mb: "14px" }}
-                                    >
-                                        {t("ALERT.Title")}
-                                    </Typography>
-                                    <AlertCard
-                                        alertOptions={
-                                            alertsInfoRes?.getAlerts?.alerts
-                                        }
-                                    />
-                                </RoundedCard>
-                            </LoadingWrapper>
-                        </Grid>
-                    </Grid>
-                </Box>
-
-                <Grid container spacing={2}>
-                    <Grid xs={12} lg={8} item>
-                        <LoadingWrapper
-                            height={312}
-                            isLoading={nodeLoading || isSkeltonLoad}
-                        >
-                            <RoundedCard>
-                                <ContainerHeader
-                                    title="My Nodes"
-                                    buttonTitle="Add Node"
-                                    handleButtonAction={handleAddNode}
-                                    stats={`${
-                                        nodeRes?.getNodes?.nodes?.activeNodes ||
-                                        "0"
-                                    }/${
-                                        nodeRes?.getNodes?.nodes?.totalNodes ||
-                                        "-"
-                                    }`}
-                                />
-                                <NodeContainer
-                                    slidesToShow={slidesToShow}
-                                    items={nodeRes?.getNodes?.nodes.nodes}
-                                    count={nodeRes?.getNodes.meta.size}
-                                    handleItemAction={handleNodeActions}
-                                />
-                            </RoundedCard>
-                        </LoadingWrapper>
-                    </Grid>
-                    <Grid xs={12} lg={4} item>
-                        <LoadingWrapper
-                            height={337}
-                            isLoading={
-                                residentsloading ||
-                                deactivateUserLoading ||
-                                isSkeltonLoad
-                            }
-                        >
-                            <RoundedCard sx={{ height: "100%" }}>
-                                <ContainerHeader
-                                    title="Residents"
-                                    buttonTitle="ACTIVATE"
-                                    handleButtonAction={onActivateButton}
-                                    stats={`${
-                                        residentsRes?.getResidents?.residents
-                                            ?.activeResidents || "0"
-                                    }/${
-                                        residentsRes?.getResidents?.residents
-                                            ?.totalResidents || "-"
-                                    }`}
-                                />
-                                <DataTableWithOptions
-                                    columns={DataTableWithOptionColumns}
-                                    dataset={
-                                        residentsRes?.getResidents.residents
-                                            .residents
-                                    }
-                                    menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
-                                    onMenuItemClick={onResidentsTableMenuItem}
-                                />
-                            </RoundedCard>
-                        </LoadingWrapper>
-                    </Grid>
-                </Grid>
-                {isUserActivateOpen && (
-                    <UserActivationDialog
-                        isOpen={isUserActivateOpen}
-                        dialogTitle={UserActivation.title}
-                        subTitle={UserActivation.subTitle}
-                        handleClose={handleUserActivateClose}
-                    />
-                )}
-                {isAddNode && (
-                    <ActivationDialog
-                        isOpen={isAddNode}
-                        dialogTitle={"Add Node"}
-                        subTitle2={
-                            "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
-                        }
-                        handleClose={handleAddNodeClose}
-                        handleActivationSubmit={handleActivationSubmit}
-                        subTitle={
-                            "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
-                        }
-                    />
-                )}
-            </Box>
-        </>
+            )}
+        </Box>
     );
 };
 export default Home;

@@ -17,6 +17,8 @@ export interface IRoute {
     redirect?: string;
     // If router is private, this is going to be true
     private?: boolean;
+
+    isFullScreen?: boolean;
 }
 
 const Loader = (
@@ -26,28 +28,23 @@ const Loader = (
 );
 
 const getRouteObject = (
-    path: string,
-    component: string,
-    isPrivate: boolean
+    path = "/",
+    component = "Home",
+    isPrivate = true,
+    isFullScreen = false
 ) => {
     return {
         path: path,
-        exact: false,
+        exact: true,
         fallback: Loader,
         private: isPrivate,
+        isFullScreen: isFullScreen,
         component: lazy(() => import(`../pages/${component}`)),
     };
 };
 
 export const routes: IRoute[] = [
     //Default routes//
-    // {
-    //     path: "/",
-    //     exact: true,
-    //     private: false,
-    //     redirect: "/login",
-    //     fallback: Loader,
-    // },
     {
         path: "/",
         exact: true,
@@ -55,14 +52,13 @@ export const routes: IRoute[] = [
         redirect: "/home",
         fallback: Loader,
     },
-
     //
 
     //Privatte Routes//
     getRouteObject("/home", "Home", true),
     getRouteObject("/nodes", "Nodes", true),
     getRouteObject("/user", "User", true),
-    getRouteObject("/settings", "Settings", true),
+    getRouteObject("/settings", "Settings", true, true),
     getRouteObject("/billing", "Billing", true),
     getRouteObject("/store", "Store", true),
     //

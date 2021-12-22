@@ -15,10 +15,10 @@ type ContainerHeaderProps = {
     title?: string;
     stats?: string;
     buttonTitle?: string;
-    handleButtonAction: Function;
-    withSearchBox?: boolean;
-    values?: any;
+    handleButtonAction?: Function;
+    showSearchBox?: boolean;
     handleSearchChange?: Function;
+    showButton?: boolean;
 };
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
@@ -32,11 +32,14 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 const ContainerHeader = ({
     title,
     stats,
-    withSearchBox,
+    showButton = false,
+    showSearchBox = false,
     buttonTitle,
-    handleButtonAction,
     handleSearchChange = () => {
         /* Default empty function */
+    },
+    handleButtonAction = () => {
+        /* Default function */
     },
 }: ContainerHeaderProps) => {
     const [currentSearchValue, setCurrentSearchValue] = useState<any>("");
@@ -66,7 +69,7 @@ const ContainerHeader = ({
 
             <Grid item xs={12} md={6} container>
                 <Grid container spacing={1} sx={{ alignItems: "center" }}>
-                    {withSearchBox && (
+                    {showSearchBox && (
                         <Grid item xs={6}>
                             <Paper
                                 sx={{
@@ -109,16 +112,18 @@ const ContainerHeader = ({
                     <Grid
                         item
                         container
-                        xs={withSearchBox ? 6 : 12}
+                        xs={showSearchBox ? 6 : 12}
                         justifyContent="flex-end"
                     >
-                        <Button
-                            variant="contained"
-                            sx={{ width: withSearchBox ? "100%" : null }}
-                            onClick={() => handleButtonAction()}
-                        >
-                            {buttonTitle}
-                        </Button>
+                        {showButton && (
+                            <Button
+                                variant="contained"
+                                sx={{ width: showSearchBox ? "100%" : null }}
+                                onClick={() => handleButtonAction()}
+                            >
+                                {buttonTitle}
+                            </Button>
+                        )}
                     </Grid>
                 </Grid>
             </Grid>

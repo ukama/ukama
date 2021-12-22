@@ -1,23 +1,28 @@
 import {
-    Divider,
+    Box,
     Menu,
     AppBar,
-    MenuItem,
-    Typography,
-    IconButton,
+    Divider,
+    Popover,
     Toolbar,
-    Box,
+    MenuItem,
+    IconButton,
+    Typography,
 } from "@mui/material";
-import React from "react";
 import { colors } from "../../theme";
-import { useSetRecoilState } from "recoil";
-import { HEADER_MENU } from "../../constants";
+import { RoundedCard } from "../../styles";
 import { useHistory } from "react-router-dom";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
-import { isSkeltonLoading } from "../../recoil";
-import { HeaderMenuItemType } from "../../types";
-import { SkeletonRoundedCard } from "../../styles";
+import { cloneDeep } from "@apollo/client/utilities";
+import { Alerts, LoadingWrapper } from "../../components";
+import React, { useEffect, useRef, useState } from "react";
+import { NotificationIcon, SettingsIcon } from "../../assets/svg";
+import {
+    GetLatestAlertsDocument,
+    GetLatestAlertsSubscription,
+    useGetAlertsQuery,
+} from "../../generated";
 
 type HeaderProps = {
     pageName: string;
@@ -33,61 +38,73 @@ const Header = ({
     isLoading,
 }: HeaderProps) => {
     const history = useHistory();
-    const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-    const showDivider = pageName !== "Billing" ? true : false;
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-
+    const showDivider =
+        pageName !== "Billing" && pageName !== "User" ? true : false;
+    const ref = useRef(null);
+    const menuId = "account-popup-menu";
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(anchorEl);
-
-    const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
-
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
-
     const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
-    const handleLogout = () => {
+    const [notificationAnchorEl, setNotificationAnchorEl] =
+        useState<HTMLButtonElement | null>(null);
+    const handleNotificationClick = () => {
+        setNotificationAnchorEl(ref.current);
+    };
+    const handleNotificationClose = () => {
+        setNotificationAnchorEl(null);
+    };
+    const open = Boolean(notificationAnchorEl);
+    const notificationAnchorElId = open ? "simple-popover" : undefined;
+
+    const handleSettingsClick = () => {
         handleMenuClose();
-        setSkeltonLoading(true);
-        window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
+        handlePageChange("Settings");
+        history.push("/settings");
     };
 
-    const handleHeaderMenu = (
-        e: React.MouseEvent<HTMLElement>,
-        name: string
-    ) => {
-        switch (name) {
-            case "Setting":
-                //GOTO Settings page
-                handleMenuClose();
-                handlePageChange("Settings");
-                history.push("/settings");
-                break;
-            case "Notification":
-                //GOTO Notification page
-                handleMenuClose();
-                break;
-            case "Account":
-                handleProfileMenuOpen(e);
-                break;
+    const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
+        useGetAlertsQuery({
+            variables: {
+                data: {
+                    pageNo: 1,
+                    pageSize: 50,
+                },
+            },
+        });
+
+    useEffect(() => {
+        if (alertsInfoRes) {
+            subscribeToLatestAlerts<GetLatestAlertsSubscription>({
+                document: GetLatestAlertsDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = cloneDeep(prev);
+                    const latestAlert = subscriptionData.data.getAlerts;
+                    if (latestAlert.__typename === "AlertDto")
+                        data.getAlerts.alerts = [
+                            latestAlert,
+                            ...data.getAlerts.alerts,
+                        ];
+                    return data;
+                },
+            });
         }
-    };
+    }, [alertsInfoRes]);
 
-    const menuId = "account-popup-menu";
     const renderMenu = (
         <Menu
+            id={menuId}
+            keepMounted
             anchorEl={anchorEl}
             anchorOrigin={{
                 vertical: "top",
                 horizontal: "right",
             }}
-            id={menuId}
-            keepMounted
             transformOrigin={{
                 vertical: "top",
                 horizontal: "right",
@@ -95,20 +112,40 @@ const Header = ({
             open={isMenuOpen}
             onClose={handleMenuClose}
         >
-            <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
+            <MenuItem onClick={handleSettingsClick}>Settings</MenuItem>
             <Divider />
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem onClick={handleMenuClose}>Notifications</MenuItem>
         </Menu>
     );
 
     return (
         <Box>
+            <Popover
+                open={open}
+                id={notificationAnchorElId}
+                anchorEl={notificationAnchorEl}
+                onClose={handleNotificationClose}
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "center",
+                }}
+            >
+                <RoundedCard>
+                    <Typography variant="h6" sx={{ mb: "14px" }}>
+                        Alerts
+                    </Typography>
+                    <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
+                </RoundedCard>
+            </Popover>
             <AppBar
                 elevation={0}
                 position="relative"
                 sx={{
                     backgroundColor: colors.solitude,
-                    width: { sm: "100%" },
                 }}
             >
                 <Toolbar sx={{ padding: "33px 0px 12px 0px !important" }}>
@@ -121,13 +158,12 @@ const Header = ({
                     >
                         <MenuIcon color={"primary"} />
                     </IconButton>
-                    {isLoading ? (
-                        <SkeletonRoundedCard
-                            variant="rectangular"
-                            height={30}
-                            width={82}
-                        />
-                    ) : (
+
+                    <LoadingWrapper
+                        height={30}
+                        width={82}
+                        isLoading={isLoading}
+                    >
                         <Typography
                             noWrap
                             variant="h5"
@@ -136,33 +172,35 @@ const Header = ({
                         >
                             {pageName}
                         </Typography>
-                    )}
+                    </LoadingWrapper>
+
                     <Box sx={{ flexGrow: 1 }} />
-                    {isLoading ? (
-                        <SkeletonRoundedCard
-                            variant="rectangular"
-                            height={30}
-                            width={120}
-                        />
-                    ) : (
+
+                    <LoadingWrapper
+                        height={30}
+                        width={120}
+                        isLoading={isLoading}
+                    >
                         <Box sx={{ display: { xs: "none", md: "flex" } }}>
-                            {HEADER_MENU.map(
-                                ({ id, Icon, title }: HeaderMenuItemType) => (
-                                    <IconButton
-                                        key={id}
-                                        size="medium"
-                                        color="inherit"
-                                        sx={{ padding: "0px 18px" }}
-                                        onClick={e =>
-                                            handleHeaderMenu(e, title)
-                                        }
-                                    >
-                                        <Icon />
-                                    </IconButton>
-                                )
-                            )}
+                            <IconButton
+                                size="medium"
+                                color="inherit"
+                                sx={{ padding: "0px 18px" }}
+                                onClick={handleSettingsClick}
+                            >
+                                <SettingsIcon />
+                            </IconButton>
+                            <IconButton
+                                size="medium"
+                                color="inherit"
+                                sx={{ padding: "0px 18px" }}
+                                onClick={handleNotificationClick}
+                            >
+                                <NotificationIcon />
+                            </IconButton>
                         </Box>
-                    )}
+                    </LoadingWrapper>
+
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>
                         <IconButton
                             size="large"
@@ -174,7 +212,7 @@ const Header = ({
                         </IconButton>
                     </Box>
                 </Toolbar>
-                {showDivider && <Divider sx={{ m: "0px" }} />}
+                {showDivider && <Divider ref={ref} sx={{ m: "0px" }} />}
             </AppBar>
             {renderMenu}
         </Box>

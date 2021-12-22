@@ -16,7 +16,7 @@ import { DataTableWithOptionColumns } from "./tableColumns";
 
 const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
-const COPY_RIGHTS = "Copyright © Ukama Inc. 2021";
+const COPY_RIGHTS = "Copyright © Ukama Inc.";
 const SETTING_MENU = [
     { id: 1, title: "Account Settings" },
     { id: 2, title: "Network Settings" },

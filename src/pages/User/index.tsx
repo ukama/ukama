@@ -38,7 +38,8 @@ const User = () => {
                     handleButtonAction={handleSimInstallation}
                     buttonTitle="INSTALL SIMS"
                     handleSearchChange={getSearchValue}
-                    withSearchBox
+                    showSearchBox={true}
+                    showButton={true}
                 />
                 <UserDetailsDialog
                     id={userId}

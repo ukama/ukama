@@ -1,8 +1,29 @@
+import Layout from "../layout";
 import { IRoute } from "./config";
 import { Suspense } from "react";
+import { FullscreenContainer } from "../styles";
 import { Redirect, Route } from "react-router-dom";
 
 const RouteWithSubRoutes = (route: IRoute) => {
+    const fullScreenRoute = (props: any) =>
+        route.private &&
+        route.component && (
+            <FullscreenContainer>
+                <route.component {...props} routes={route.routes} />
+            </FullscreenContainer>
+        );
+
+    const routesWithLayout = (props: any) =>
+        route.private &&
+        route.component && (
+            <Layout>
+                <route.component {...props} routes={route.routes} />
+            </Layout>
+        );
+
+    const getRouteByType = (props: any) =>
+        route.isFullScreen ? fullScreenRoute(props) : routesWithLayout(props);
+
     return (
         <Suspense fallback={route.fallback}>
             <Route
@@ -11,10 +32,7 @@ const RouteWithSubRoutes = (route: IRoute) => {
                     route.redirect ? (
                         <Redirect to={route.redirect} />
                     ) : (
-                        route.private &&
-                        route.component && (
-                            <route.component {...props} routes={route.routes} />
-                        )
+                        getRouteByType(props)
                     )
                 }
             />

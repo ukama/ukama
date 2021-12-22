@@ -1,3 +1,6 @@
+import { Alert_Type } from "../generated";
+import { colors } from "../theme";
+
 const getTitleFromPath = (path: string) => {
     switch (path) {
         case "/":
@@ -19,4 +22,15 @@ const getTitleFromPath = (path: string) => {
     }
 };
 
-export { getTitleFromPath };
+const getColorByType = (type: Alert_Type) => {
+    switch (type) {
+        case Alert_Type.Error:
+            return colors.red;
+        case Alert_Type.Warning:
+            return colors.yellow;
+        default:
+            return colors.green;
+    }
+};
+
+export { getTitleFromPath, getColorByType };

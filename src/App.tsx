@@ -1,4 +1,3 @@
-import Layout from "./layout";
 import { theme } from "./theme";
 import Router from "./router/Router";
 import client from "./api/ApolloClient";
@@ -47,20 +46,18 @@ const App = () => {
             <ThemeProvider theme={theme}>
                 <CssBaseline />
                 <BrowserRouter>
-                    <Layout>
-                        <Router routes={routes} />
-                    </Layout>
-                    <BasicDialog
-                        isClosable={false}
-                        btnLabel={"Log In"}
-                        isOpen={showValidationError}
-                        handleClose={handleGoToLogin}
-                        title={"Session validation failed"}
-                        content={
-                            "Your session is not valid or has expired. Please re-login."
-                        }
-                    />
+                    <Router routes={routes} />
                 </BrowserRouter>
+                <BasicDialog
+                    isClosable={false}
+                    btnLabel={"Log In"}
+                    isOpen={showValidationError}
+                    handleClose={handleGoToLogin}
+                    title={"Session validation failed"}
+                    content={
+                        "Your session is not valid or has expired. Please re-login."
+                    }
+                />
             </ThemeProvider>
         </ApolloProvider>
     );
