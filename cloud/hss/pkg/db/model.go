@@ -42,8 +42,11 @@ type Tai struct {
 }
 
 type User struct {
-	gorm.Model
-	Uuid      uuid.UUID `gorm:"uniqueIndex;not null;type:uuid"`
+	ID        uint `gorm:"primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index;uniqueIndex:uuid_unique"`
+	Uuid      uuid.UUID      `gorm:"uniqueIndex:uuid_unique;not null;type:uuid"`
 	FirstName string
 	LastName  string
 	Email     string

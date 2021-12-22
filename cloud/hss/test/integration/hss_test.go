@@ -152,6 +152,13 @@ func (i *IntegrationTestSuite) Test_UserService() {
 	i.Run("Delete", func() {
 		getResp, err := c.Delete(ctx, &pb.DeleteUserRequest{UserUuid: addResp.User.Uuid, Org: testOrg})
 		i.handleResponse(err, getResp)
+
+		// make sure that user is deleted
+		listResp, err := c.List(ctx, &pb.ListUsersRequest{
+			Org: testOrg,
+		})
+		i.handleResponse(err, addResp)
+		i.Equal(0, len(listResp.Users))
 	})
 }
 

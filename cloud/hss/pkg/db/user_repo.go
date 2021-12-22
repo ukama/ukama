@@ -53,7 +53,7 @@ func (u *userRepo) GetByOrg(orgName string) ([]User, error) {
 	result := u.Db.GetGormDb().Raw("select u.* from users u "+
 		"inner join imsis i on i.user_uuid = u.uuid "+
 		"inner join orgs o on o.id = i.org_id "+
-		"where o.name=? and o.deleted_at is null", orgName).Scan(&users)
+		"where o.name=? and u.deleted_at is null", orgName).Scan(&users)
 
 	if result.Error != nil {
 		return nil, result.Error
