@@ -31,10 +31,7 @@ const UserCard = ({
                     {userDetails.map(
                         ({ id, name, imsi, dataPack, remaingData }: any) => (
                             <Grid item xs={12} md={6} lg={3} key={id}>
-                                <Paper
-                                    elevation={2}
-                                    sx={{ boxShadow: 2, p: 2 }}
-                                >
+                                <Paper elevation={2} sx={{ p: 2 }}>
                                     <Grid
                                         container
                                         item
