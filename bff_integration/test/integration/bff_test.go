@@ -45,6 +45,7 @@ func (i *IntegrationTestSuite) TestGetConnectedUsers() {
 	var res GetConnectedUsersResponse
 	err := i.graphqlClient.Run(context.Background(), graphqlRequest, &res)
 
+	fmt.Println("TestGetConnectedUsers Response: ", res.ConnectedUser.TotalUsers)
 	i.Assert().NoError(err)
 	i.Assert().GreaterOrEqual(res.ConnectedUser.TotalUsers, 0)
 }
@@ -59,5 +60,6 @@ func (i *IntegrationTestSuite) TestGetNodesByOrg() {
 	var res GetNodesByOrgResponse
 	err := i.graphqlClient.Run(context.Background(), graphqlRequest, &res)
 
+	fmt.Println("TestGetNodesByOrg Response: ", res.GetNodesByOrg.OrgName, res.GetNodesByOrg.TotalNodes)
 	i.Assert().NoError(err)
 }
