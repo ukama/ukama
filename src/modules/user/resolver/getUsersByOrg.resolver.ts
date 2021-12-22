@@ -4,6 +4,7 @@ import { OrgUserResponseDto } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
+import { getHeaders } from "../../../common";
 
 @Service()
 @Resolver()
@@ -16,6 +17,6 @@ export class GetUsersByOrgResolver {
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
     ): Promise<OrgUserResponseDto> {
-        return this.userService.getUsersByOrg(orgId, ctx);
+        return this.userService.getUsersByOrg(orgId, getHeaders(ctx));
     }
 }
