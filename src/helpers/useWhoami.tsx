@@ -1,9 +1,12 @@
 import { ResponseProps } from "../types";
 import { DEFAULT_RESPONSE } from "../constants";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSetRecoilState } from "recoil";
+import { organizationId } from "../recoil";
 
 const useWhoami = () => {
     const isCurrent = useRef(true);
+    const setOrganizationId = useSetRecoilState(organizationId);
     const [responses, setResponses] = useState<ResponseProps>(DEFAULT_RESPONSE);
 
     useEffect(() => {
@@ -27,6 +30,7 @@ const useWhoami = () => {
             .then(response => response.json())
             .then(res => {
                 if (res?.identity?.id) {
+                    setOrganizationId(res.identity.id);
                     setResponses((prev: ResponseProps) => ({
                         ...prev,
                         response: { isValid: true },

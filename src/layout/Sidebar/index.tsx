@@ -14,8 +14,7 @@ import { Logo } from "../../assets/svg";
 import { makeStyles } from "@mui/styles";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
-import { SkeletonRoundedCard } from "../../styles";
-import { UpgradeNavFooter } from "../../components";
+import { LoadingWrapper, UpgradeNavFooter } from "../../components";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
@@ -29,7 +28,7 @@ const useStyles = makeStyles(() => ({
         backgroundColor: colors.white,
     },
     listItemText: {
-        color: colors.black,
+        color: colors.vulcan,
     },
     listItemDone: {
         opacity: 1,
@@ -37,11 +36,11 @@ const useStyles = makeStyles(() => ({
         marginTop: "8px",
         padding: "8px 12px",
         borderRadius: "4px",
-        color: `${colors.white} !important`,
-        backgroundColor: `${colors.primary} !important`,
+        color: `${colors.vulcan} !important`,
+        backgroundColor: `${colors.solitude} !important`,
     },
     listItemDoneText: {
-        color: colors.white,
+        color: colors.vulcan,
     },
 }));
 
@@ -84,11 +83,7 @@ const Sidebar = (
                     }
                 >
                     <ListItemIcon sx={{ minWidth: "44px" }}>
-                        <Icon
-                            color={
-                                title === page ? colors.white : colors.vulcan
-                            }
-                        />
+                        <Icon color={colors.vulcan} />
                     </ListItemIcon>
                     <ListItemText>
                         <Typography
@@ -155,31 +150,26 @@ const Sidebar = (
             }}
             aria-label="mailbox folders"
         >
-            <Drawer
-                open={isOpen}
-                variant="temporary"
-                container={container}
-                onClose={() => handleDrawerToggle()}
-                ModalProps={{
-                    keepMounted: true,
-                }}
-                sx={{
-                    display: { xs: "block", sm: "none" },
-                    "& .MuiDrawer-paper": {
-                        boxSizing: "border-box",
-                        width: DRAWER_WIDTH,
-                    },
-                    borderRight: "0px",
-                }}
-            >
-                {drawer}
-            </Drawer>
-            {isLoading ? (
-                <SkeletonRoundedCard
-                    variant="rectangular"
-                    sx={{ borderRadius: 0 }}
-                />
-            ) : (
+            <LoadingWrapper isLoading={isLoading}>
+                <Drawer
+                    open={isOpen}
+                    variant="temporary"
+                    container={container}
+                    onClose={() => handleDrawerToggle()}
+                    ModalProps={{
+                        keepMounted: true,
+                    }}
+                    sx={{
+                        display: { xs: "block", sm: "none" },
+                        "& .MuiDrawer-paper": {
+                            boxSizing: "border-box",
+                            width: DRAWER_WIDTH,
+                        },
+                        borderRight: "0px",
+                    }}
+                >
+                    {drawer}
+                </Drawer>
                 <Drawer
                     open
                     variant="permanent"
@@ -193,7 +183,7 @@ const Sidebar = (
                 >
                     {drawer}
                 </Drawer>
-            )}
+            </LoadingWrapper>
         </Box>
     );
 };

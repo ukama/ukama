@@ -74,24 +74,18 @@ subscription getLatestAlerts {
     }
 }
 
-query getNodes($data: PaginationDto!) {
-    getNodes(data: $data) {
-        meta {
-            count
-            page
-            size
-            pages
-        }
+query getNodesByOrg($orgId: String!) {
+    getNodesByOrg(orgId: $orgId) {
+        orgName
         nodes {
-            nodes {
-                id
-                title
-                description
-                totalUser
-            }
-            activeNodes
-            totalNodes
+            id
+            status
+            title
+            description
+            totalUser
         }
+        activeNodes
+        totalNodes
     }
 }
 

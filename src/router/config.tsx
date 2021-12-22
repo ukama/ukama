@@ -49,13 +49,13 @@ export const routes: IRoute[] = [
         path: "/",
         exact: true,
         private: true,
-        redirect: "/home",
+        component: lazy(() => import(`../pages/Home`)),
         fallback: Loader,
     },
     //
 
     //Privatte Routes//
-    getRouteObject("/home", "Home", true),
+    getRouteObject("/", "Home", true),
     getRouteObject("/nodes", "Nodes", true),
     getRouteObject("/user", "User", true),
     getRouteObject("/settings", "Settings", true, true),

@@ -3,10 +3,7 @@ import {
     UsersIcon,
     RouterIcon,
     BillingIcon,
-    AccountIcon,
-    SettingsIcon,
     ModuleStoreIcon,
-    NotificationIcon,
 } from "../assets/svg";
 import { MenuItemType } from "../types";
 import { Network_Type } from "../generated";
@@ -34,7 +31,7 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const SIDEBAR_MENU1 = [
-    { id: "1", title: "Home", Icon: HomeIcon, route: "/home" },
+    { id: "1", title: "Home", Icon: HomeIcon, route: "/" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
     { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
@@ -48,12 +45,6 @@ const STATS_PERIOD = [
     { id: 1, label: "DAY" },
     { id: 2, label: "WEEK " },
     { id: 3, label: "MONTH " },
-];
-
-const HEADER_MENU = [
-    { id: "1", Icon: SettingsIcon, title: "Setting" },
-    { id: "2", Icon: NotificationIcon, title: "Notification" },
-    { id: "3", Icon: AccountIcon, title: "Account" },
 ];
 
 const SIDEBAR_MENU2 = [
@@ -1460,7 +1451,6 @@ export {
     APP_VERSION,
     TIME_FILTER,
     BillingTabs,
-    HEADER_MENU,
     SETTING_MENU,
     DRAWER_WIDTH,
     MONTH_FILTER,

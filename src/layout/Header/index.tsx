@@ -9,6 +9,11 @@ import {
     IconButton,
     Typography,
 } from "@mui/material";
+import {
+    useGetAlertsQuery,
+    GetLatestAlertsDocument,
+    GetLatestAlertsSubscription,
+} from "../../generated";
 import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
 import { useHistory } from "react-router-dom";
@@ -17,12 +22,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
 import { Alerts, LoadingWrapper } from "../../components";
 import React, { useEffect, useRef, useState } from "react";
-import { NotificationIcon, SettingsIcon } from "../../assets/svg";
-import {
-    GetLatestAlertsDocument,
-    GetLatestAlertsSubscription,
-    useGetAlertsQuery,
-} from "../../generated";
+import { AccountIcon, NotificationIcon, SettingsIcon } from "../../assets/svg";
 
 type HeaderProps = {
     pageName: string;
@@ -197,6 +197,13 @@ const Header = ({
                                 onClick={handleNotificationClick}
                             >
                                 <NotificationIcon />
+                            </IconButton>
+                            <IconButton
+                                size="medium"
+                                color="inherit"
+                                sx={{ padding: "0px 18px" }}
+                            >
+                                <AccountIcon />
                             </IconButton>
                         </Box>
                     </LoadingWrapper>

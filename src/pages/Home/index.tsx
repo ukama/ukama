@@ -22,7 +22,7 @@ import "../../i18n/i18n";
 import {
     Time_Filter,
     Data_Bill_Filter,
-    useGetNodesQuery,
+    useGetNodesByOrgQuery,
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
@@ -41,7 +41,7 @@ import {
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
-import { isSkeltonLoading } from "../../recoil";
+import { isSkeltonLoading, organizationId } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, useMediaQuery } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -52,6 +52,7 @@ const Home = () => {
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const orgId = useRecoilValue(organizationId);
     const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -155,13 +156,8 @@ const Home = () => {
         }
     }, [dataBillingRes]);
 
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesQuery({
-        variables: {
-            data: {
-                pageNo: 1,
-                pageSize: 50,
-            },
-        },
+    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
+        variables: { orgId: orgId || "" },
     });
 
     const {
@@ -294,7 +290,7 @@ const Home = () => {
                         subtitle1={`${
                             dataUsageRes?.getDataUsage?.dataConsumed || 0
                         }`}
-                        subtitle2={` GB / ${
+                        subtitle2={`/ ${
                             dataUsageRes?.getDataUsage?.dataPackage || "-"
                         }`}
                         Icon={DataUsage}
@@ -347,15 +343,13 @@ const Home = () => {
                                 title="My Nodes"
                                 showButton={false}
                                 stats={`${
-                                    nodeRes?.getNodes?.nodes?.activeNodes || "0"
-                                }/${
-                                    nodeRes?.getNodes?.nodes?.totalNodes || "-"
-                                }`}
+                                    nodeRes?.getNodesByOrg.activeNodes || "0"
+                                }/${nodeRes?.getNodesByOrg.totalNodes || "-"}`}
                             />
                             <NodeContainer
                                 slidesToShow={slidesToShow}
-                                items={nodeRes?.getNodes?.nodes.nodes}
-                                count={nodeRes?.getNodes.meta.size}
+                                items={nodeRes?.getNodesByOrg.nodes}
+                                count={nodeRes?.getNodesByOrg.nodes.length}
                                 handleItemAction={handleNodeActions}
                             />
                         </RoundedCard>

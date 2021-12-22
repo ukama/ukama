@@ -114,11 +114,20 @@ const StatusCard = ({
                                     paddingRight="6px"
                                     sx={{
                                         position: "relative",
-                                        top: "2px",
+                                        top: "4px",
                                     }}
                                 >
                                     {subtitle1}
                                 </Typography>
+                                {title === "Data Usage" && (
+                                    <Typography
+                                        variant="body1"
+                                        paddingRight="4px"
+                                    >
+                                        GB
+                                    </Typography>
+                                )}
+
                                 <Typography
                                     variant="body1"
                                     color={colors.empress}

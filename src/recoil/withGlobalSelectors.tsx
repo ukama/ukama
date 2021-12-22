@@ -1,5 +1,10 @@
 import { selector } from "recoil";
-import { isSkeltonLoading, pageName } from "./atom";
+import {
+    isSkeltonLoading,
+    pageName,
+    organizationId,
+    isFirstVisit,
+} from "./atom";
 
 const withIsSkeltonLoading = selector({
     key: "withIsSkeltonLoading",
@@ -11,4 +16,19 @@ const withPageName = selector({
     get: ({ get }) => get(pageName),
 });
 
-export { withIsSkeltonLoading, withPageName };
+const withOrganizationId = selector({
+    key: "withOrganizationId",
+    get: ({ get }) => get(organizationId),
+});
+
+const withIsFirstVisit = selector({
+    key: "withIsFirstVisit",
+    get: ({ get }) => get(isFirstVisit),
+});
+
+export {
+    withIsSkeltonLoading,
+    withPageName,
+    withOrganizationId,
+    withIsFirstVisit,
+};
