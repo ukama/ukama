@@ -4,6 +4,7 @@ import { AddUserDto, AddUserResponse } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
+import { getHeaders } from "../../../common";
 
 @Service()
 @Resolver()
@@ -17,6 +18,6 @@ export class AddUserResolver {
         @Arg("data") data: AddUserDto,
         @Ctx() ctx: Context
     ): Promise<AddUserResponse | null> {
-        return this.userService.addUser(orgId, data, ctx);
+        return this.userService.addUser(orgId, data, getHeaders(ctx));
     }
 }
