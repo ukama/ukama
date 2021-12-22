@@ -18,5 +18,6 @@ const colors = {
     darkGrey: "#5E5E5E",
     gainsboro: "#E0E0E0",
     lightRed: "#f8bfbf",
+    darkGray: "#C4C4C4",
 };
 export default colors;

@@ -23,21 +23,25 @@ import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
+import UserCard from "./UserCard";
 import {
     BasicDialog,
     ActivationDialog,
     UserActivationDialog,
+    UserDetailsDialog,
 } from "./AppDialogs";
 export {
     Alerts,
     NodeCard,
     TabLayout,
     StatsCard,
+    UserCard,
     StatusCard,
     CurrentBill,
     TableHeader,
     BasicDialog,
     NodeSettings,
+    UserDetailsDialog,
     UserSettings,
     AlertSettings,
     SimCardDesign,

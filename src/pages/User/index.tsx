@@ -1,33 +1,61 @@
-import { useState } from "react";
+import { ContainerHeader, UserCard, UserDetailsDialog } from "../../components";
+import { UserData } from "../../constants/stubData";
 import { Box } from "@mui/material";
-import { UsersTabs } from "../../constants";
-import TabLayoutHeader from "../../components/TabLayout";
-import { LoadingWrapper } from "../../components";
-import { isSkeltonLoading } from "../../recoil";
-import { useRecoilValue } from "recoil";
+import { useState } from "react";
 
 const User = () => {
-    const [tab, setTab] = useState("1");
-    const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
-    const handleTabChange = (value: string) => setTab(value);
-
-    const handleActivateUser = () => {
-        /* TODO: Handle activate user action */
+    const [showSimDialog, setShowSimDialog] = useState(false);
+    const [userId, setUserId] = useState();
+    const handleSimDialog = () => {
+        setShowSimDialog(false);
     };
 
+    const handleSimInstallation = () => {
+        //console.log(value);
+    };
+
+    /* eslint-disable no-unused-vars */
+    const getSearchValue = (searchValue: any) => {
+        //console.log(searchValue);
+    };
+    const getUseDetails = (simDetailsId: any) => {
+        setShowSimDialog(true);
+        setUserId(simDetailsId);
+    };
+    /* eslint-disable no-unused-vars */
+    const getSimData = (simData: any) => {
+        //console.log(simData);
+    };
     return (
-        <LoadingWrapper isLoading={_isSkeltonLoading} height={"90%"}>
-            <Box sx={{ mt: "24px" }}>
-                <TabLayoutHeader
-                    tab={tab}
-                    tabs={UsersTabs}
-                    withActionButton={true}
-                    onTabChange={handleTabChange}
-                    handleAction={handleActivateUser}
+        <Box sx={{ flexGrow: 1, mt: 3 }}>
+            <UserCard
+                userDetails={UserData}
+                handleMoreUserdetails={getUseDetails}
+            >
+                <ContainerHeader
+                    title="My Users"
+                    stats={"78/2"}
+                    handleButtonAction={handleSimInstallation}
+                    buttonTitle="INSTALL SIMS"
+                    handleSearchChange={getSearchValue}
+                    showSearchBox={true}
+                    showButton={true}
                 />
-                {tab === "1" ? <h4>Overview</h4> : <h4>Currently connected</h4>}
-            </Box>
-        </LoadingWrapper>
+                <UserDetailsDialog
+                    id={userId}
+                    userName="John Doe"
+                    data="- 1.5 GB data used, 0.5 free GB left"
+                    isOpen={showSimDialog}
+                    userDetailsTitle="User Details"
+                    btnLabel="Submit"
+                    handleClose={handleSimDialog}
+                    simDetailsTitle="SIM Details"
+                    saveBtnLabel="save"
+                    closeBtnLabel="close"
+                    handleSaveSimUser={getSimData}
+                />
+            </UserCard>
+        </Box>
     );
 };
 
