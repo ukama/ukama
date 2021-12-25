@@ -9,7 +9,7 @@
 	url = https://github.com/cktan/tomlc99.git
 [submodule "distro/vendor/libmicrohttpd"]
 	path = distro/vendor/libmicrohttpd
-	url = git://git.gnunet.org/libmicrohttpd.git
+	url = https://github.com/markhor/libmicrohttpd.git
 [submodule "distro/vendor/zlib"]
 	path = distro/vendor/zlib
 	url = https://github.com/madler/zlib.git
