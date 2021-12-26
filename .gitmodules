@@ -37,3 +37,6 @@
 [submodule "distro/vendor/protobuf"]
 	path = distro/vendor/protobuf
 	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "distro/vendor/dhcpcd"]
+	path = distro/vendor/dhcpcd
+	url = https://github.com/NetworkConfiguration/dhcpcd.git
