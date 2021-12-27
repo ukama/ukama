@@ -23,7 +23,7 @@
   "portsAttributes": {
 		"8080": {
 			"label": "Hello Remote World",
-			"onAutoForward": "notify"
+			"onAutoForward": "openBrowser"
 		}
 	},
   // Uncomment the next line to run commands after the container is created - for example installing curl.
