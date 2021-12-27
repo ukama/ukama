@@ -2,6 +2,9 @@
 
 ## Architecture Diagram
 
+<img width="571" alt="Screenshot 2021-12-23 at 5 17 34 PM" src="https://user-images.githubusercontent.com/61826215/147475970-054a9f33-dd46-4d47-b96c-5f9a097b252f.png">
+
+
 
 ## How to try
 
