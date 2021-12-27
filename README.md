@@ -1,5 +1,8 @@
 # Ukama-BFF 
 
+## Architecture Diagram
+
+
 ## How to try
 
 Clone: `https://github.com/ukama/ukama-bff.git`
@@ -9,7 +12,7 @@ After cloning run below command:
     yarn 
 
 
-### Project Folder Structure
+## Project Folder Structure
 
     .
     ├── .github                 # Includes the Workflows YML file
@@ -33,7 +36,7 @@ After cloning run below command:
     ├── tsconfig.json           # typescript configrations and Rules.
     └── package.json            # Include app metadata, dependencies and scripts.
 
-### Scripts
+## Scripts
 
     yarn lint
 
@@ -51,10 +54,10 @@ This script will build the project.
 
 This script will run unit tests.
 
-Note: Build project before test.
+### Note: Build project before test.
 
     yarn start
 
 This script will start the project in production.
 
-Note: Build project before start.
+### Note: Build project before test.
