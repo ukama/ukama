@@ -57,10 +57,7 @@ This script will build the project.
 
 This script will run unit tests.
 
-### Note: Build project before test.
 
     yarn start
 
 This script will start the project in production.
-
-### Note: Build project before test.
