@@ -38,8 +38,7 @@ const Header = ({
     isLoading,
 }: HeaderProps) => {
     const history = useHistory();
-    const showDivider =
-        pageName !== "Billing" && pageName !== "User" ? true : false;
+    const showDivider = pageName !== "Billing" ? true : false;
     const ref = useRef(null);
     const menuId = "account-popup-menu";
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
