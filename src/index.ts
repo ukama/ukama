@@ -34,13 +34,21 @@ const initializeApp = async () => {
     server.installSubscriptionHandlers(httpServer);
 
     app.get("/playground", (req, res) => {
-        const playgroundRenderPageOptions: PlaygroundRenderPageOptions = {
-            endpoint: "/graphql",
-        };
+        if (hasSession(req.headers.cookie || "")) {
+            const playgroundRenderPageOptions: PlaygroundRenderPageOptions = {
+                endpoint: "/graphql",
+            };
 
-        const playground = renderPlaygroundPage(playgroundRenderPageOptions);
-        res.write(playground);
-        res.end();
+            const playground = renderPlaygroundPage(
+                playgroundRenderPageOptions
+            );
+            res.write(playground);
+            res.end();
+        } else {
+            res.cookie("redirect", "https://bff.dev.ukama.com/playground");
+            res.redirect("https://auth.dev.ukama.com/auth/login");
+            res.end();
+        }
     });
 
     app.get("/ping", (req, res) => {
