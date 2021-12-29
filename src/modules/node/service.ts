@@ -2,6 +2,7 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
+    GraphDto,
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
@@ -117,6 +118,24 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODE_NETWORK,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.data;
+    };
+    getNodeThroughput = async (): Promise<GraphDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_GRAPH,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.data;
+    };
+    getNodeUserAttached = async (): Promise<GraphDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_GRAPH,
         });
         if (checkError(res)) throw new Error(res.message);
 

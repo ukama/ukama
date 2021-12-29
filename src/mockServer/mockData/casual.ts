@@ -13,6 +13,7 @@ import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
+    GraphDto,
     NodeDetailDto,
     NodeDto,
     NodeMetaDataDto,
@@ -244,6 +245,20 @@ const nodeNetwork = (): NetworkDto => {
         description: "21 days 5 hours 1 minute",
     };
 };
+const nodeGraph = (): GraphDto => {
+    const time = {
+        AM: "AM",
+        PM: "PM",
+    };
+    return {
+        uv: defaultCasual.integer(50, 500),
+        pv: defaultCasual.integer(50, 500),
+        amt: defaultCasual.integer(150, 1500),
+        time: `${defaultCasual.integer(1, 12)} ${defaultCasual.random_value(
+            time
+        )}`,
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -281,6 +296,7 @@ interface Generators extends Casual.Generators {
     _nodePhysicalHealth: () => NodePhysicalHealthDto;
     _nodeRF: () => NodeRFDto;
     _nodeNetwork: () => NetworkDto;
+    _nodeGraph: () => GraphDto;
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -318,6 +334,7 @@ interface Functions extends Casual.functions {
     nodePhysicalHealth: () => NodePhysicalHealthDto;
     nodeRF: () => NodeRFDto;
     nodeNetwork: () => NetworkDto;
+    nodeGraph: () => GraphDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -339,6 +356,7 @@ defaultCasual.define("nodeMetaData", nodeMetaData);
 defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
 defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
+defaultCasual.define("nodeGraph", nodeGraph);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

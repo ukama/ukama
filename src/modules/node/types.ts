@@ -202,3 +202,18 @@ export class NodeRFDto {
     @Field()
     rssi: number;
 }
+
+@ObjectType()
+export class GraphDto {
+    @Field()
+    uv: number;
+
+    @Field()
+    pv: number;
+
+    @Field()
+    amt: number;
+
+    @Field()
+    time: string;
+}

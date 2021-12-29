@@ -25,4 +25,5 @@ export const SERVER = {
     GET_NODE_PHYSICAL_HEALTH: `${BASE_URL}/node/physical_health`,
     GET_NODE_RF_KPI: `${BASE_URL}/node/rf_kpis`,
     GET_NODE_NETWORK: `${BASE_URL}/node/get_network`,
+    GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
 };
