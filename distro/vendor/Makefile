@@ -89,6 +89,7 @@ LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
 LIST += dhcpcd
+LIST += sysctl
 
 .PHONY: $(LIST)
 
@@ -417,6 +418,15 @@ dhcpcd:
 	$(MAKE) DESTDIR=${DEPDIR} install && \
 	cd ./src && $(MAKE) clean && cd ..)
 	$(call post_build_cleanup,$@/src/build)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+sysctl:
+	$(call print_msg,"sysctl")
+	(cd $@ && \
+	$(MAKE) clean && $(MAKE) && \
+	cp ./sysctl ${DEPDIR}/sbin && \
+	cp 00-linuxkit.conf ${DEPDIR}/etc && \
+	$(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 clean:
