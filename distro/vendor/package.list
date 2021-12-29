@@ -27,4 +27,5 @@ tomlc			MIT License			./tomlc/LICENSE				https://github.com/cktan/tomlc99
 ulfius			GNU LGPL v2.1                   ./ulfius/LICENSE			https://github.com/babelouest/ulfius
 yder			GNU LGPL v2.1                   ./yder/LICENSE 				https://github.com/babelouest/yder                
 zlib						        ./zlib/README				https://github.com/madler/zlib
-	
+dhcpcd							./dhcpcd/LICENSE			https://github.com/NetworkConfiguration/dhcpcd.git
+sysctl			Apache License 2.0		./sysctl/LICENSE			https://github.com/linuxkit/linuxkit.git

@@ -88,6 +88,8 @@ LIST += protobuf
 LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
+LIST += dhcpcd
+LIST += sysctl
 
 .PHONY: $(LIST)
 
@@ -406,6 +408,26 @@ ifeq (,$(wildcard ${DEPDIR}/lib64/libcap.*))
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
+
+dhcpcd:
+	$(call print_msg,"dhcpcd")
+	(cd $@ && \
+	./configure --small --disable-inet6 --disable-embedded \
+		--libexecdir-/lib/dhcpcd dbdir=/var/lib/dhcpcd && \
+	$(MAKE) && \
+	$(MAKE) DESTDIR=${DEPDIR} install && \
+	cd ./src && $(MAKE) clean && cd ..)
+	$(call post_build_cleanup,$@/src/build)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+sysctl:
+	$(call print_msg,"sysctl")
+	(cd $@ && \
+	$(MAKE) clean && $(MAKE) && \
+	cp ./sysctl ${DEPDIR}/sbin && \
+	cp 00-linuxkit.conf ${DEPDIR}/etc && \
+	$(MAKE) clean)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 clean:
 	echo "Cleaning Dependencies."
