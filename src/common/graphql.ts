@@ -291,3 +291,13 @@ export const GET_NODE_RF_KPI_QUERY = `
           }
           }
 `;
+
+export const GET_NODE_NETWORK = `
+    query getNodeNetwork {
+        getNodeNetwork { 
+            id
+            status
+            description
+          }
+          }
+`;

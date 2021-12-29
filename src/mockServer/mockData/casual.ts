@@ -237,6 +237,13 @@ const nodeRF = (): NodeRFDto => {
         rssi: defaultCasual.integer(1, 19),
     };
 };
+const nodeNetwork = (): NetworkDto => {
+    return {
+        id: defaultCasual._uuid(),
+        status: NETWORK_STATUS.ONLINE,
+        description: "21 days 5 hours 1 minute",
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -273,6 +280,7 @@ interface Generators extends Casual.Generators {
     _nodeMetaData: () => NodeMetaDataDto;
     _nodePhysicalHealth: () => NodePhysicalHealthDto;
     _nodeRF: () => NodeRFDto;
+    _nodeNetwork: () => NetworkDto;
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -309,6 +317,7 @@ interface Functions extends Casual.functions {
     nodeMetaData: () => NodeMetaDataDto;
     nodePhysicalHealth: () => NodePhysicalHealthDto;
     nodeRF: () => NodeRFDto;
+    nodeNetwork: () => NetworkDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -329,6 +338,7 @@ defaultCasual.define("nodeDetail", nodeDetail);
 defaultCasual.define("nodeMetaData", nodeMetaData);
 defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
 defaultCasual.define("nodeRF", nodeRF);
+defaultCasual.define("nodeNetwork", nodeNetwork);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

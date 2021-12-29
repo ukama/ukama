@@ -20,6 +20,7 @@ import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
+import { NetworkDto } from "../network/types";
 
 @Service()
 export class NodeService implements INodeService {
@@ -109,6 +110,15 @@ export class NodeService implements INodeService {
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODE_RF_KPI,
         });
+
+        return res.data;
+    };
+    getNetwork = async (): Promise<NetworkDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_NETWORK,
+        });
+        if (checkError(res)) throw new Error(res.message);
 
         return res.data;
     };

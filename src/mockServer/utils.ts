@@ -326,3 +326,10 @@ export const nodeRF = (req: Request, res: Response): void => {
         data: casual._nodeRF(),
     });
 };
+
+export const getNodeNetwork = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeNetwork(),
+    });
+};
