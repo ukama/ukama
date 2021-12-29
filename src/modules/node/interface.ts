@@ -25,8 +25,7 @@ export interface INodeService {
     nodeMetaData(): Promise<NodeMetaDataDto>;
     nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
     nodeRF(): Promise<NodeRFDto>;
-    getNodeThroughput(): Promise<[GraphDto]>;
-    getNodeUserAttached(): Promise<[GraphDto]>;
+    getNodeGraph(): Promise<[GraphDto]>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType

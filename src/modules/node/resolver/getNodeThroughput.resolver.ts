@@ -12,6 +12,6 @@ export class GetNodeThroughputResolver {
     @Query(() => [GraphDto])
     @UseMiddleware(Authentication)
     async getNodeThroughput(): Promise<[GraphDto]> {
-        return this.nodeService.getNodeThroughput();
+        return this.nodeService.getNodeGraph();
     }
 }

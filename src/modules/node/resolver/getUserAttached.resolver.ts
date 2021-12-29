@@ -12,6 +12,6 @@ export class GetUserAttachedResolver {
     @Query(() => [GraphDto])
     @UseMiddleware(Authentication)
     async getNodeUserAttached(): Promise<[GraphDto]> {
-        return this.nodeService.getNodeUserAttached();
+        return this.nodeService.getNodeGraph();
     }
 }
