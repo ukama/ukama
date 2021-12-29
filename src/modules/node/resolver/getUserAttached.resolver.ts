@@ -9,9 +9,9 @@ import { Authentication } from "../../../common/Authentication";
 export class GetUserAttachedResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => GraphDto)
+    @Query(() => [GraphDto])
     @UseMiddleware(Authentication)
-    async getNodeUserAttached(): Promise<GraphDto> {
+    async getNodeUserAttached(): Promise<[GraphDto]> {
         return this.nodeService.getNodeUserAttached();
     }
 }

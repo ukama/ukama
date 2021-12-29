@@ -123,7 +123,7 @@ export class NodeService implements INodeService {
 
         return res.data;
     };
-    getNodeThroughput = async (): Promise<GraphDto> => {
+    getNodeThroughput = async (): Promise<[GraphDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODE_GRAPH,
@@ -132,7 +132,7 @@ export class NodeService implements INodeService {
 
         return res.data;
     };
-    getNodeUserAttached = async (): Promise<GraphDto> => {
+    getNodeUserAttached = async (): Promise<[GraphDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODE_GRAPH,

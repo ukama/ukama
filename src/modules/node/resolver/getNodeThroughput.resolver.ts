@@ -9,9 +9,9 @@ import { Authentication } from "../../../common/Authentication";
 export class GetNodeThroughputResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => GraphDto)
+    @Query(() => [GraphDto])
     @UseMiddleware(Authentication)
-    async getNodeThroughput(): Promise<GraphDto> {
+    async getNodeThroughput(): Promise<[GraphDto]> {
         return this.nodeService.getNodeThroughput();
     }
 }
