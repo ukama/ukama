@@ -298,3 +298,31 @@ export const getUserByID = (req: Request, res: Response): void => {
         data,
     });
 };
+
+export const getNodeDetails = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeDetail(),
+    });
+};
+
+export const nodeMetaData = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeMetaData(),
+    });
+};
+
+export const nodePhysicalHealth = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodePhysicalHealth(),
+    });
+};
+
+export const nodeRF = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeRF(),
+    });
+};

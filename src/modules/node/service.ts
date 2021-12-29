@@ -2,6 +2,10 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
+    NodeDetailDto,
+    NodeMetaDataDto,
+    NodePhysicalHealthDto,
+    NodeRFDto,
     NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
@@ -77,5 +81,35 @@ export class NodeService implements INodeService {
         });
 
         return NodeMapper.dtoToNodesDto(orgId, res);
+    };
+    getNodeDetials = async (): Promise<NodeDetailDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_DETAIL,
+        });
+        return res.data;
+    };
+
+    nodeMetaData = async (): Promise<NodeMetaDataDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_META_DATA,
+        });
+        return res.data;
+    };
+    nodePhysicalHealth = async (): Promise<NodePhysicalHealthDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_PHYSICAL_HEALTH,
+        });
+        return res.data;
+    };
+    nodeRF = async (): Promise<NodeRFDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_RF_KPI,
+        });
+
+        return res.data;
     };
 }

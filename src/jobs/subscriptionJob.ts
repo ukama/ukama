@@ -6,6 +6,9 @@ import {
     GET_DATA_BILL_QUERY,
     GET_DATA_USAGE_QUERY,
     GET_NETWORK_QUERY,
+    GET_NODE_META_DATA_QUERY,
+    GET_NODE_PHYSICAL_HEALTH_QUERY,
+    GET_NODE_RF_KPI_QUERY,
 } from "../common/graphql";
 
 import {
@@ -72,6 +75,27 @@ export const job = (schema: GraphQLSchema): void => {
             variableValues: {
                 input: meta,
             },
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_NODE_RF_KPI_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_NODE_PHYSICAL_HEALTH_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_NODE_META_DATA_QUERY,
             contextValue: {
                 req: HEADER,
             },

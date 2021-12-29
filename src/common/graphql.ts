@@ -245,3 +245,49 @@ export const GET_USER_BY_ID_QUERY = `
         }
     }
 `;
+
+export const GET_NODE_DETAILS_QUERY = `
+    query getNodeDetails {
+        getNodeDetails { 
+            id
+            modelType
+            serial
+            macAddress
+            osVersion
+            manufacturing
+            ukamaOS
+            hardware
+            description
+          }
+    }
+`;
+
+export const GET_NODE_PHYSICAL_HEALTH_QUERY = `
+    query getNodePhysicalHealth {
+        getNodePhysicalHealth { 
+            temperature
+            memory
+            cpu
+            io
+          }
+    }
+`;
+
+export const GET_NODE_META_DATA_QUERY = `
+    query getNodeMetaData {
+        getNodeMetaData { 
+            throughput
+            usersAttached
+          }
+    }
+`;
+
+export const GET_NODE_RF_KPI_QUERY = `
+    query getNodeRFKPI {
+        getNodeRFKPI { 
+            qam
+            rfOutput
+            rssi
+          }
+          }
+`;

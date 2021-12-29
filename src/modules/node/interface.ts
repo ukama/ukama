@@ -10,10 +10,18 @@ import {
     UpdateNodeResponse,
     OrgNodeResponse,
     OrgNodeResponseDto,
+    NodeDetailDto,
+    NodeMetaDataDto,
+    NodePhysicalHealthDto,
+    NodeRFDto,
 } from "./types";
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
+    getNodeDetials(): Promise<NodeDetailDto>;
+    nodeMetaData(): Promise<NodeMetaDataDto>;
+    nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
+    nodeRF(): Promise<NodeRFDto>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType
