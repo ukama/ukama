@@ -114,7 +114,7 @@ const StatusCard = ({
                                     paddingRight="6px"
                                     sx={{
                                         position: "relative",
-                                        top: "4px",
+                                        bottom: "2px",
                                     }}
                                 >
                                     {subtitle1}
@@ -123,6 +123,10 @@ const StatusCard = ({
                                     <Typography
                                         variant="body1"
                                         paddingRight="4px"
+                                        sx={{
+                                            position: "relative",
+                                            bottom: "5px",
+                                        }}
                                     >
                                         GB
                                     </Typography>
@@ -134,6 +138,8 @@ const StatusCard = ({
                                     sx={{
                                         display: "flex",
                                         alignItems: "center",
+                                        position: "relative",
+                                        bottom: "6px",
                                     }}
                                 >
                                     {subtitle2}
