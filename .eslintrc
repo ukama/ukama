@@ -18,7 +18,6 @@
         "no-eq-null": "error",
         "import/no-cycle": "off",
         "no-multi-assign": "off",
-        "no-unused-vars": "warn",
         "react/prop-types": "off",
         "no-useless-call": "error",
         "no-empty-function": "error",
@@ -28,6 +27,7 @@
         "react-hooks/rules-of-hooks": "error",
         "import/prefer-default-export": "off",
         "react/jsx-indent": [2, 4, { "checkAttributes": false }],
+        "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
         "react-hooks/exhaustive-deps": [
             "off",
             {
