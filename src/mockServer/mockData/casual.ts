@@ -12,7 +12,15 @@ import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
-import { NodeDto, UpdateNodeResponse } from "../../modules/node/types";
+import {
+    GraphDto,
+    NodeDetailDto,
+    NodeDto,
+    NodeMetaDataDto,
+    NodePhysicalHealthDto,
+    NodeRFDto,
+    UpdateNodeResponse,
+} from "../../modules/node/types";
 
 import {
     DeactivateResponse,
@@ -190,6 +198,67 @@ const deleteRes = (id: string): DeactivateResponse => {
         success: true,
     };
 };
+const nodeDetail = (): NodeDetailDto => {
+    return {
+        id: defaultCasual._uuid(),
+        modelType: `${defaultCasual.random_value(NODE_TYPE)} Node`,
+        serial: defaultCasual.integer(1111111111111111111, 9999999999999999999),
+        macAddress: defaultCasual.integer(
+            1111111111111111111,
+            9999999999999999999
+        ),
+        osVersion: defaultCasual.integer(1, 9),
+        manufacturing: defaultCasual.integer(
+            1111111111111111,
+            9999999999999999
+        ),
+        ukamaOS: defaultCasual.integer(1, 9),
+        hardware: defaultCasual.integer(1, 9),
+        description: `${defaultCasual.random_value(NODE_TYPE)} node is a xyz`,
+    };
+};
+const nodeMetaData = (): NodeMetaDataDto => {
+    return {
+        throughput: defaultCasual.integer(1, 19),
+        usersAttached: defaultCasual.integer(1, 9),
+    };
+};
+const nodePhysicalHealth = (): NodePhysicalHealthDto => {
+    return {
+        temperature: defaultCasual.integer(1, 19),
+        memory: defaultCasual.integer(1, 19),
+        cpu: defaultCasual.integer(1, 19),
+        io: defaultCasual.integer(1, 19),
+    };
+};
+const nodeRF = (): NodeRFDto => {
+    return {
+        qam: defaultCasual.integer(1, 19),
+        rfOutput: defaultCasual.integer(1, 19),
+        rssi: defaultCasual.integer(1, 19),
+    };
+};
+const nodeNetwork = (): NetworkDto => {
+    return {
+        id: defaultCasual._uuid(),
+        status: NETWORK_STATUS.ONLINE,
+        description: "21 days 5 hours 1 minute",
+    };
+};
+const nodeGraph = (): GraphDto => {
+    const time = {
+        AM: "AM",
+        PM: "PM",
+    };
+    return {
+        uv: defaultCasual.integer(50, 500),
+        pv: defaultCasual.integer(50, 500),
+        amt: defaultCasual.integer(150, 1500),
+        time: `${defaultCasual.integer(1, 12)} ${defaultCasual.random_value(
+            time
+        )}`,
+    };
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -222,6 +291,12 @@ interface Generators extends Casual.Generators {
         phone: string
     ) => UserResponse;
     _deleteRes: (id: string) => DeactivateResponse;
+    _nodeDetail: () => NodeDetailDto;
+    _nodeMetaData: () => NodeMetaDataDto;
+    _nodePhysicalHealth: () => NodePhysicalHealthDto;
+    _nodeRF: () => NodeRFDto;
+    _nodeNetwork: () => NetworkDto;
+    _nodeGraph: () => GraphDto;
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -254,6 +329,12 @@ interface Functions extends Casual.functions {
         phone: string
     ) => UserResponse;
     deleteRes: (id: string) => DeactivateResponse;
+    nodeDetail: () => NodeDetailDto;
+    nodeMetaData: () => NodeMetaDataDto;
+    nodePhysicalHealth: () => NodePhysicalHealthDto;
+    nodeRF: () => NodeRFDto;
+    nodeNetwork: () => NetworkDto;
+    nodeGraph: () => GraphDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -270,6 +351,12 @@ defaultCasual.define("network", network);
 defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteRes", deleteRes);
+defaultCasual.define("nodeDetail", nodeDetail);
+defaultCasual.define("nodeMetaData", nodeMetaData);
+defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
+defaultCasual.define("nodeRF", nodeRF);
+defaultCasual.define("nodeNetwork", nodeNetwork);
+defaultCasual.define("nodeGraph", nodeGraph);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

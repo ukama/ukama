@@ -1,4 +1,5 @@
 import { HeaderType, PaginationDto } from "../../common/types";
+import { NetworkDto } from "../network/types";
 import { DeactivateResponse } from "../user/types";
 import {
     NodeResponseDto,
@@ -10,10 +11,21 @@ import {
     UpdateNodeResponse,
     OrgNodeResponse,
     OrgNodeResponseDto,
+    NodeDetailDto,
+    NodeMetaDataDto,
+    NodePhysicalHealthDto,
+    NodeRFDto,
+    GraphDto,
 } from "./types";
 
 export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
+    getNetwork(): Promise<NetworkDto>;
+    getNodeDetials(): Promise<NodeDetailDto>;
+    nodeMetaData(): Promise<NodeMetaDataDto>;
+    nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
+    nodeRF(): Promise<NodeRFDto>;
+    getNodeGraph(): Promise<[GraphDto]>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType

@@ -8,7 +8,7 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import { NodeDto } from "../modules/node/types";
+import { GraphDto, NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual";
 
@@ -296,5 +296,47 @@ export const getUserByID = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data,
+    });
+};
+
+export const getNodeDetails = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeDetail(),
+    });
+};
+
+export const nodeMetaData = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeMetaData(),
+    });
+};
+
+export const nodePhysicalHealth = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodePhysicalHealth(),
+    });
+};
+
+export const nodeRF = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeRF(),
+    });
+};
+
+export const getNodeNetwork = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeNetwork(),
+    });
+};
+
+export const getNodeGraph = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual.randomArray<GraphDto>(15, 15, casual._nodeGraph),
     });
 };

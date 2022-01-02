@@ -136,3 +136,84 @@ export class OrgNodeResponseDto {
     @Field()
     totalNodes: number;
 }
+
+@ObjectType()
+export class NodeDetailDto {
+    @Field()
+    id: string;
+
+    @Field()
+    modelType: string;
+
+    @Field()
+    serial: number;
+
+    @Field()
+    macAddress: number;
+
+    @Field()
+    osVersion: number;
+
+    @Field()
+    manufacturing: number;
+
+    @Field()
+    ukamaOS: number;
+
+    @Field()
+    hardware: number;
+
+    @Field()
+    description: string;
+}
+
+@ObjectType()
+export class NodeMetaDataDto {
+    @Field()
+    throughput: number;
+
+    @Field()
+    usersAttached: number;
+}
+
+@ObjectType()
+export class NodePhysicalHealthDto {
+    @Field()
+    temperature: number;
+
+    @Field()
+    memory: number;
+
+    @Field()
+    cpu: number;
+
+    @Field()
+    io: number;
+}
+
+@ObjectType()
+export class NodeRFDto {
+    @Field()
+    qam: number;
+
+    @Field()
+    rfOutput: number;
+
+    @Field()
+    rssi: number;
+}
+
+@ObjectType()
+export class GraphDto {
+    @Field()
+    uv: number;
+
+    @Field()
+    pv: number;
+
+    @Field()
+    amt: number;
+
+    @Field()
+    time: string;
+}

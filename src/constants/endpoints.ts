@@ -20,4 +20,10 @@ export const SERVER = {
     POST_DELETE_NODE: `${BASE_URL}/node/delete_node`,
     GET_USER: `${BASE_URL}/user/get_user`,
     ORG: `${DEV_URL}/orgs`,
+    GET_NODE_DETAIL: `${BASE_URL}/node/node_details`,
+    GET_NODE_META_DATA: `${BASE_URL}/node/meta_data`,
+    GET_NODE_PHYSICAL_HEALTH: `${BASE_URL}/node/physical_health`,
+    GET_NODE_RF_KPI: `${BASE_URL}/node/rf_kpis`,
+    GET_NODE_NETWORK: `${BASE_URL}/node/get_network`,
+    GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
 };
