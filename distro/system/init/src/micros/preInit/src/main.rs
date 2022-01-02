@@ -236,7 +236,7 @@ fn main() {
     //Give time to sync
     unistd::sync();
 
-    let exec_prg = "/sbin/init";
+    let exec_prg = "/boot/init";
     debug!("Init:: Starting {}", exec_prg);
     
     // Exec the specified program.  If all goes well, this will never

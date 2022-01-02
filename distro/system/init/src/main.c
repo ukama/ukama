@@ -159,7 +159,7 @@ static pid_t run_task(char *taskExe, int wait) {
     sigfillset(&set);
     sigprocmask(SIG_UNBLOCK, &set, NULL);
     if (strcmp(taskExe, "sysInit")==0) {
-      cmd[0] = (char *)"/sbin/sysInit";
+      cmd[0] = (char *)"/boot/sysInit";
       cmd[1] = NULL;
     } else if (strcmp(taskExe, "lxce")==0) {
       cmd[0] = (char *)"/sbin/lxce.d";
