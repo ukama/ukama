@@ -13,6 +13,7 @@ const colors = {
     vulcan: "#37393E",
     balck: "#000000",
     solitude: "#f5f6f8",
+    darkBlue: "#37393E",
     empress: "#757575",
     lightBlue: "#2196f3",
     darkGrey: "#5E5E5E",
