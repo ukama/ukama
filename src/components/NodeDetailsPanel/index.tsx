@@ -33,6 +33,8 @@ const NodeDetailsPanel = ({
     return (
         <Box
             width="100%"
+            overflow="hidden"
+            borderRadius="5px"
             role="detailpanel"
             hidden={value !== index}
             id={`detailpanel-${index}`}

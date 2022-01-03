@@ -98,6 +98,7 @@ const NodeStatus = ({
                     }}
                     spacing={2}
                     width="100%"
+                    justifyContent="flex-end"
                 >
                     <StyledBtn
                         variant="contained"
