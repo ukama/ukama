@@ -158,6 +158,25 @@ const CurrentBilling = [
         subTotal: 10,
     },
 ];
+
+const NodesData = [
+    {
+        name: "Node X",
+        statusType: "ONLINE",
+        duration: "21 days 5 hours 1 minute",
+    },
+    {
+        name: "Node Y",
+        statusType: "BEING_CONFIGURED",
+        duration: "21 days 5 hours 1 minute",
+    },
+    {
+        name: "Node Z",
+        statusType: "",
+        duration: "21 days 5 hours 1 minute",
+    },
+];
+
 export {
     SimCardData,
     CurrentBillingData,
@@ -165,4 +184,5 @@ export {
     RechartsData,
     UserData,
     CREDIT_CARD,
+    NodesData,
 };
