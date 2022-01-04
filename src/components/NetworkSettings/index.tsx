@@ -14,7 +14,7 @@ import { ROAMING_SELECT } from "../../constants";
 
 const LineDivider = () => (
     <Grid item xs={12}>
-        <Divider sx={{ width: "90%" }} />
+        <Divider sx={{ width: "100%" }} />
     </Grid>
 );
 

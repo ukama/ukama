@@ -8,6 +8,7 @@ import {
     MenuItem,
     IconButton,
     Typography,
+    Badge,
 } from "@mui/material";
 import {
     useGetAlertsQuery,
@@ -48,6 +49,15 @@ const Header = ({
     };
     const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
+    };
+    const notificationsLabel = (alertLength: any) => {
+        if (alertLength === 0) {
+            return "no notifications";
+        }
+        if (alertLength > 999) {
+            return "more than 999 notifications";
+        }
+        return `${alertLength} notifications`;
     };
 
     const [notificationAnchorEl, setNotificationAnchorEl] =
@@ -195,7 +205,29 @@ const Header = ({
                                 sx={{ padding: "0px 18px" }}
                                 onClick={handleNotificationClick}
                             >
-                                <NotificationIcon />
+                                <IconButton
+                                    aria-label={notificationsLabel(
+                                        alertsInfoRes?.getAlerts?.alerts.length
+                                    )}
+                                >
+                                    <Badge
+                                        badgeContent={
+                                            alertsInfoRes?.getAlerts?.alerts
+                                                .length
+                                        }
+                                        sx={{
+                                            "& .MuiBadge-badge": {
+                                                color: colors.white,
+                                                backgroundColor:
+                                                    colors.darkBlue,
+                                                paddingLeft: "3px",
+                                                paddingRight: "3px",
+                                            },
+                                        }}
+                                    >
+                                        <NotificationIcon />
+                                    </Badge>
+                                </IconButton>
                             </IconButton>
                             <IconButton
                                 size="medium"
