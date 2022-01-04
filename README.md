@@ -1,7 +1,6 @@
-# Ukama Dashboard
+# Ukama-DASHBOARD 
 
-Ukama Dashboard Intro...
-
+## Architecture Diagram
 ## How to try
 - Clone ukamaDashboard repo.
 - ` git clone https://github.com/ukama/ukama-dashboard.git`
