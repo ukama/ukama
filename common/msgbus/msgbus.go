@@ -3,11 +3,12 @@ package msgbus
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"log"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -23,7 +24,7 @@ type IMsgBus interface {
 	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
 	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
 	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
-	PublishOnQueue(msg []byte, queueName string) error
+	PublishOnQueue(body []byte, queueName string, initQueue bool) error
 	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	Close()
@@ -34,8 +35,9 @@ type Publisher interface {
 	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
 	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
 	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
-	PublishOnQueue(msg []byte, queueName string) error
+	PublishOnQueue(msg []byte, queueName string, initQueue bool) error
 	PublishOnExchange(exchange string, routingKey string, body interface{}) error
+	DeclareQueue(queueName string, durable bool) (*amqp.Queue, error)
 	IsClosed() bool
 	Close()
 }
@@ -44,6 +46,8 @@ type Consumer interface {
 	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToServiceQueue(serviceName string, exchangeName string, routingKeys []RoutingKey, consumerId string, handlerFunc func(amqp.Delivery, chan<- bool)) error
+	SubscribeWithArgs(queueName string, exchangeName string, exchangeType string,
+		routingKeys []RoutingKey, consumerName string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	IsClosed() bool
 	Close()
 }
@@ -160,7 +164,7 @@ func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, 
 		return err
 	}
 
-	queue, err := m.declareQueue(m.channel, queueName, false)
+	queue, err := m.declareQueue(m.channel, queueName, false, nil)
 	if err != nil {
 		return err
 	}
@@ -189,18 +193,20 @@ func (m *MsgClient) Publish(body []byte, queueName string, exchangeName string, 
 }
 
 // Publish to Queue.
-func (m *MsgClient) PublishOnQueue(body []byte, queueName string) error {
-	queue, err := m.declareQueue(m.channel, queueName, false)
-	if err != nil {
-		return err
+func (m *MsgClient) PublishOnQueue(body []byte, queueName string, initQueue bool) error {
+	if initQueue {
+		_, err := m.declareQueue(m.channel, queueName, false, nil)
+		if err != nil {
+			return errors.Wrap(err, "error declaring queue")
+		}
 	}
 
 	// Publishes a message onto the queue.
-	err = m.channel.Publish(
-		"",         // exchange
-		queue.Name, // routing key
-		false,      // mandatory
-		false,      // immediate
+	err := m.channel.Publish(
+		"",        // exchange
+		queueName, // routing key
+		false,     // mandatory
+		false,     // immediate
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        body, // Our JSON body as []byte
@@ -208,7 +214,7 @@ func (m *MsgClient) PublishOnQueue(body []byte, queueName string) error {
 	if err != nil {
 		m.log.Errorf("Err: %s Failed to publish message to queue.", err)
 	} else {
-		m.log.Debugf("Message was sent on Queue %s ", queue.Name)
+		m.log.Debugf("Message was sent on Queue %s ", queueName)
 	}
 	return err
 }
@@ -239,8 +245,13 @@ func (m *MsgClient) PublishOnExchange(exchange string, routingKey string, body i
 	return nil
 }
 
-// Subscribe to exchange with option to listen to particular typr of message
+// Subscribe to exchange with option to listen to particular type of message
 func (m *MsgClient) Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error {
+	return m.SubscribeWithArgs(queueName, exchangeName, exchangeType, routingKeys, consumerName, nil, handlerFunc)
+}
+
+func (m *MsgClient) SubscribeWithArgs(queueName string, exchangeName string, exchangeType string,
+	routingKeys []RoutingKey, consumerName string, queueArgs map[string]interface{}, handlerFunc func(amqp.Delivery, chan<- bool)) error {
 	ch, err := m.createChannel()
 	if err != nil {
 		return err
@@ -252,7 +263,7 @@ func (m *MsgClient) Subscribe(queueName string, exchangeName string, exchangeTyp
 	}
 
 	log.Printf("declared Exchange, declaring Queue (%s)", "")
-	queue, err := m.declareQueue(ch, queueName, false)
+	queue, err := m.declareQueue(ch, queueName, false, queueArgs)
 	if err != nil {
 		return err
 	}
@@ -317,7 +328,7 @@ func (m *MsgClient) SubscribeToServiceQueue(serviceName string, exchangeName str
 		return err
 	}
 
-	queue, err := m.declareQueue(ch, serviceName, true)
+	queue, err := m.declareQueue(ch, serviceName, true, nil)
 	if err != nil {
 		return err
 	}
@@ -366,7 +377,7 @@ func (m *MsgClient) SubscribeToQueue(queueName string, consumerName string, hand
 		return err
 	}
 
-	queue, err := m.declareQueue(ch, queueName, false)
+	queue, err := m.declareQueue(ch, queueName, false, nil)
 	if err != nil {
 		return err
 	}
@@ -413,7 +424,8 @@ func (m *MsgClient) handleTransit(msg amqp.Delivery, handlerFunc func(d amqp.Del
 	select {
 
 	// Request processed but it may be success or failure
-	case <-done:
+	case res := <-done:
+		logrus.Debugf("Message %s acknowladged with result %v", msg.MessageId, res)
 		m.sendAck(msg)
 
 	case <-time.After(1 * time.Second):
@@ -472,7 +484,7 @@ func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exc
 		return nil, "", err
 	}
 
-	queue, err := m.declareQueue(ch, queueName, false)
+	queue, err := m.declareQueue(ch, queueName, false, nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -544,14 +556,30 @@ func (m *MsgClient) PublishRPC(body []byte, queueName string, exchangeName strin
 	done <- rpcResp
 }
 
-func (m *MsgClient) declareQueue(ch *amqp.Channel, queueName string, durable bool) (*amqp.Queue, error) {
-	queue, err := ch.QueueDeclare(
+func (m *MsgClient) DeclareQueue(queueName string, durable bool) (*amqp.Queue, error) {
+	queue, err := m.channel.QueueDeclare(
 		queueName, // our queue name
 		durable,   // durable
 		false,     // delete when unused
 		false,     // exclusive
 		false,     // no-wait
 		nil,       // arguments
+	)
+	if err != nil {
+		m.log.Errorf("Err: %s Failed to declare queue.", err)
+		return nil, err
+	}
+	return &queue, nil
+}
+
+func (m *MsgClient) declareQueue(ch *amqp.Channel, queueName string, durable bool, args map[string]interface{}) (*amqp.Queue, error) {
+	queue, err := ch.QueueDeclare(
+		queueName, // our queue name
+		durable,   // durable
+		false,     // delete when unused
+		false,     // exclusive
+		false,     // no-wait
+		args,      // arguments
 	)
 	if err != nil {
 		m.log.Errorf("Err: %s Failed to declare queue.", err)

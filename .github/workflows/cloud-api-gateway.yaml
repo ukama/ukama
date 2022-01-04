@@ -7,6 +7,7 @@ on:
     paths:
         - "cloud/api-gateway/**"
         - ".github/workflows/cloud-api-gateway.yaml"
+  workflow_dispatch:
 
 jobs:  
   build:
@@ -81,12 +82,12 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
-            
-    - name: OCI Push Registry test 
+
+    - name: OCI Push cloud/api-gateway test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/api-gateway
-      run: |
+      run: |                        
             buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
                 -t $REGISTRY\:latest-test .  && \
@@ -106,7 +107,7 @@ jobs:
           -Dsonar.projectKey=ukama_ukamaX_api-gateway
           -Dsonar.projectName=${{ env.working-directory }}
           -Dsonar.go.coverage.reportPaths=coverage.out
-          -Dsonar.test.exclusions=tests/**,test/**,test/**
+          -Dsonar.test.exclusions=tests/**
           -Dsonar.tests=tests/
           -Dsonar.verbose=true
           -Dsonar.sources=.

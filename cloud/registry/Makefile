@@ -22,7 +22,8 @@ deps:
 
 
 gen:
-	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=true
+	protoc -I ./pb -I ../../common/pb --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \
+ 			  registry.proto networking.proto
 	protoc --go_out=. --go-grpc_out=./pb/external pb/external/*.proto --go-grpc_opt=require_unimplemented_servers=false --go_opt=Mpb/external/link.proto=github.com/ukama/ukamaos/mesh
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg

@@ -5,7 +5,10 @@ go 1.16
 require (
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/golang-jwt/jwt/v4 v4.1.0
+	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/jackc/pgtype v1.7.0
+	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1

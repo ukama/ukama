@@ -14,7 +14,7 @@ import (
 type NodeRepo interface {
 	Add(node *Node, nestedFunc ...func() error) error
 	Get(id ukama.NodeID) (*Node, error)
-	GetByOrg(orgName string, ownerId uuid.UUID) ([]Node, error)
+	GetByOrg(orgName string) ([]Node, error)
 	Delete(id ukama.NodeID, nestedFunc ...func() error) error
 	Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error
 	GetByUser(ownerId uuid.UUID) ([]Node, error)
@@ -48,12 +48,12 @@ func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	return &node, nil
 }
 
-func (r *nodeRepo) GetByOrg(orgName string, ownerId uuid.UUID) ([]Node, error) {
+func (r *nodeRepo) GetByOrg(orgName string) ([]Node, error) {
 
 	db := r.Db.GetGormDb()
 	rows, err := db.Raw(`select * from nodes 
 									inner join orgs ON orgs.id = nodes.org_id
-									where orgs.name=? and orgs.owner=? `, orgName, ownerId).Rows()
+									where orgs.name=? and nodes.deleted_at is null`, orgName).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (r *nodeRepo) mapNodesToOrgs(rows *sql2.Rows, db *gorm.DB) ([]Node, error) 
 
 func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		return tx.Delete(&Node{}, id.StringLowercase())
+		return tx.Delete(&Node{}, "node_id = ?", id.StringLowercase())
 	}, nestedFunc...)
 
 	return err

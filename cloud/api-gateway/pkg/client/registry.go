@@ -59,7 +59,7 @@ func (r *Registry) GetOrg(orgName string) (*pb.Organization, *GrpcClientError) {
 }
 
 // GetOrg returns list of nodes
-func (r *Registry) GetNodes(owner string, orgName string) (*pb.NodesList, *GrpcClientError) {
+func (r *Registry) GetNodes(orgName string) (*pb.NodesList, *GrpcClientError) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -67,7 +67,7 @@ func (r *Registry) GetNodes(owner string, orgName string) (*pb.NodesList, *GrpcC
 		return nil, &GrpcClientError{HttpCode: http.StatusBadRequest, Message: "Organization name is required"}
 	}
 
-	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{Owner: owner, OrgName: orgName})
+	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 	if grpcErr, ok := marshalError(err); ok {
 		return nil, grpcErr
 	}

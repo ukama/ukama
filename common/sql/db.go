@@ -147,7 +147,7 @@ func (d *db) createDb() error {
 }
 
 func IsNotFoundError(err error) bool {
-	return  errors.Is(err, gorm.ErrRecordNotFound)
+	return errors.Is(err, gorm.ErrRecordNotFound)
 }
 
 func IsDuplicateKeyError(err error) bool {
@@ -177,5 +177,4 @@ func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nested
 
 		return nil
 	})
-
 }

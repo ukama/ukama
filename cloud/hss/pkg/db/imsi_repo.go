@@ -12,6 +12,8 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const TaiNotUpdatedErr = "more recent tai for imsi exist"
+
 // declare interface so that we can mock it
 type ImsiRepo interface {
 	Add(orgName string, imsi *Imsi) error
@@ -101,26 +103,29 @@ func (r *imsiRepo) DeleteByUserId(user uuid.UUID) error {
 func (r *imsiRepo) UpdateTai(imsi string, tai Tai) error {
 	var imsiM Imsi
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Model(&Imsi{}).Where("imsi=?", imsi).First(&imsiM)
-		if result.Error != nil {
-			return errors.Wrap(result.Error, "error getting imsi")
+		err := tx.Model(&Imsi{}).Where("imsi=?", imsi).First(&imsiM).Error
+		if err != nil {
+			return errors.Wrap(err, "error getting imsi")
 		}
 
 		var count int64
-		tx.Where("imsi = ? and device_updated_at >= ?", imsi, tai.DeviceUpdatedAt).Count(&count)
+		err = tx.Model(&tai).Where("imsi_id = ? and device_updated_at >= ?", imsiM.ID, tai.DeviceUpdatedAt).Count(&count).Error
+		if err != nil {
+			return errors.Wrap(err, "error getting tai count")
+		}
 		if count > 0 {
-			return fmt.Errorf("more recent tai for imsi exist")
+			return fmt.Errorf(TaiNotUpdatedErr)
 		}
 
-		tx.Where("imsi_id=?", imsiM.ID).Delete(&Tai{})
-		if result.Error != nil {
-			return errors.Wrap(result.Error, "error deleting tai")
+		err = tx.Where("imsi_id=?", imsiM.ID).Delete(&Tai{}).Error
+		if err != nil {
+			return errors.Wrap(err, "error deleting tai")
 		}
 
 		tai.ImsiID = imsiM.ID
-		result = tx.Create(&tai)
-		if result.Error != nil {
-			return errors.Wrap(result.Error, "error adding tai")
+		err = tx.Create(&tai).Error
+		if err != nil {
+			return errors.Wrap(err, "error adding tai")
 		}
 		return nil
 	})

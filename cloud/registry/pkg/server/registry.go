@@ -190,28 +190,18 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	logrus.Infof("Get nodes for org %s", req.OrgName)
 
-	owner, err := uuid2.FromString(req.Owner)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error: %s", err.Error())
-	}
-
 	var nodes []db.Node
+	var err error
 	if len(req.OrgName) != 0 {
-		nodes, err = r.nodeRepo.GetByOrg(req.OrgName, owner)
-	} else {
-		nodes, err = r.nodeRepo.GetByUser(owner)
+		nodes, err = r.nodeRepo.GetByOrg(req.OrgName)
 	}
-
 	if err != nil {
 		logrus.Error(err.Error())
 		return nil, status.Errorf(codes.Internal, "error getting nodes")
 	}
 	orgToNodes := map[string][]*pb.Node{}
+	orgToNodes[req.OrgName] = make([]*pb.Node, 0)
 	for _, n := range nodes {
-		if _, ok := orgToNodes[n.Org.Name]; !ok {
-			orgToNodes[n.Org.Name] = []*pb.Node{}
-		}
-
 		orgToNodes[n.Org.Name] = append(orgToNodes[n.Org.Name], dbNodeToPbNode(&n))
 	}
 
@@ -227,6 +217,11 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	}
 
 	return resp, nil
+}
+
+func (r *RegistryServer) ResolveNodeIp(ctx context.Context, request *pb.ResolveNodeIpRequest) (*pb.ResolveNodeIpResponse, error) {
+	logrus.Fatal("Not implemented")
+	return nil, nil
 }
 
 func pbNodeStateToDb(state pb.NodeState) db.NodeState {

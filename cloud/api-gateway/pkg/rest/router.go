@@ -110,14 +110,9 @@ func (r *Router) orgHandler(c *gin.Context) {
 }
 
 func (r *Router) nodesHandler(c *gin.Context) {
-	userId := c.GetString(USER_ID_KEY)
 	orgName := r.getOrgNameFromRoute(c)
-	if len(userId) == 0 {
-		c.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
 
-	resp, err := r.clients.Registry.GetNodes(userId, orgName)
+	resp, err := r.clients.Registry.GetNodes(orgName)
 	if err != nil {
 		urest.ThrowError(c, err.HttpCode, "Registry request failed. Error:"+err.Message, "", nil)
 		return

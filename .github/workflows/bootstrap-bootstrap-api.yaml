@@ -7,6 +7,7 @@ on:
     paths:
         - "bootstrap/bootstrap-api/**"
         - ".github/workflows/bootstrap-bootstrap-api.yaml"
+  workflow_dispatch:
 
 jobs:  
   build:
@@ -25,6 +26,7 @@ jobs:
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -40,7 +42,6 @@ jobs:
               --password-stdin \
               003664043471.dkr.ecr.us-east-1.amazonaws.com
 
-    # push image 
     - name: OCI build and push
       working-directory: ${{ env.working-directory }}
       env:
@@ -53,11 +54,11 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push bootstrap-api test 
+    - name: OCI Push bootstrap/bootstrap-api test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bootstrap-api
-      run: |
+      run: |                        
             buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
                 -t $REGISTRY\:latest-test .  && \
@@ -65,6 +66,7 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
             buildah push $REGISTRY\:latest-test
 
+   
 
   release:
       name: release

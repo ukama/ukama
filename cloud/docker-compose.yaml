@@ -42,6 +42,11 @@ services:
       - DB_HOST=postgresd
       - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
     restart: always
     networks:
       - intranet
@@ -69,6 +74,34 @@ services:
     environment:
       - QUEUE=amqp://guest:guest@rabbitmq:5672
 
+  device-feeder:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./device-feeder
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - intranet
+    environment:
+      - DEBUGMODE=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - REGISTRY_HOST=registry:9090
+      - DEVICE_PORT=8080
+      - LISTENER_THREADS=1
+      - RETRYPERIODSEC=30
+  
+  api-gateway:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./api-gateway
+    restart: always
+    networks:
+      - intranet
+    environment:
+      - DEBUGMODE=true
+      - BYPASSAUTHMODE=true
+      - CORS_ALLOWALLORIGINS=true
 
 networks:
   intranet:

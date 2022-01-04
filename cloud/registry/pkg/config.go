@@ -11,6 +11,7 @@ type Config struct {
 	BootstrapAuth     Auth
 	BootstrapUrl      string
 	DeviceGatewayHost string // should be an IP
+	Debug             Debug
 }
 
 type Auth struct {
@@ -19,6 +20,10 @@ type Auth struct {
 	Audience     string
 	GrantType    string
 	Auth0Host    string
+}
+
+type Debug struct {
+	DisableBootstrap bool
 }
 
 func NewConfig() *Config {
@@ -37,6 +42,9 @@ func NewConfig() *Config {
 		BootstrapAuth: Auth{
 			Audience:  "bootstrap.ukama.com",
 			GrantType: "client_credentials",
+		},
+		Debug: Debug{
+			DisableBootstrap: false,
 		},
 	}
 }

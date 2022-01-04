@@ -47,7 +47,9 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), pkg.NewHssQueue(serviceConfig.Queue))
+	subs := server.NewHssEventsSubscribers(pkg.NewHssNotifications(serviceConfig.Queue))
+
+	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), subs)
 	userService := server.NewUserService(db.NewUserRepo(gormdb), db.NewImsiRepo(gormdb))
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {

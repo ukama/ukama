@@ -7,6 +7,7 @@ on:
     paths:
         - "bootstrap/lookup/**"
         - ".github/workflows/bootstrap-lookup.yaml"
+  workflow_dispatch:
 
 jobs:  
   build:
@@ -82,7 +83,7 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push Lookup test 
+    - name: OCI Push bootstrap/lookup test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/lookup
@@ -93,7 +94,6 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
             buildah push $REGISTRY\:latest-test
-
 
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@v1.6
@@ -111,7 +111,7 @@ jobs:
           -Dsonar.tests=tests/
           -Dsonar.verbose=true
           -Dsonar.sources=.
-          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**
+          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
           -Dsonar.tests=.
           -Dsonar.test.inclusions=**/*_test.go
        

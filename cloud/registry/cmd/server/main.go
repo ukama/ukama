@@ -1,12 +1,11 @@
 package main
 
 import (
+	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
 	"os"
 
-	"github.com/ukama/ukamaX/cloud/registry/pkg"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
-
 	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
+	"github.com/ukama/ukamaX/cloud/registry/pkg"
 
 	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 
@@ -41,7 +40,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Org{}, &db.Network{}, &db.Site{}, &db.Node{})
+	err := d.Init(&db.Org{}, &db.Network{}, &db.Site{}, &db.Node{}, &db.NodeIp{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -49,13 +48,24 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
+
+	bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
+	if svcConf.Debug.DisableBootstrap {
+		bootstrapCl = bootstrap.DummyBootstrapClient{}
+	}
+
 	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb),
 		db.NewNodeRepo(gormdb),
-		bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth)),
+		bootstrapCl,
 		svcConf.DeviceGatewayHost)
+
+	netServer := server.NewNetworkingServer(
+		db.NewNetRepo(gormdb),
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterRegistryServiceServer(s, regServer)
+		generated.RegisterNetworkingServer(s, netServer)
 	})
 
 	grpcServer.StartServer()

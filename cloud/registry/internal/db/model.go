@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql/driver"
+	"github.com/jackc/pgtype"
 	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 	"time"
@@ -32,8 +33,11 @@ func (e NodeState) Value() (driver.Value, error) {
 }
 
 type Node struct {
-	BaseModel
-	NodeID    string `gorm:"type:string;uniqueIndex:node_id_idx_case_insensetive,expression:lower(node_id);size:23"`
+	ID        uint32 `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index;uniqueIndex:node_id_idx_case_insensitive"`
+	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id);size:23"`
 	OrgID     uint32
 	Org       *Org
 	NetworkID *uint32
@@ -56,4 +60,9 @@ type Network struct {
 type Site struct {
 	BaseModel
 	Nodes []Node
+}
+
+type NodeIp struct {
+	NodeId string      `gorm:"type:string;uniqueIndex:ip_node_id_idx_case_insensetive,expression:lower(node_id);size:23;"`
+	IP     pgtype.Inet `gorm:"type:inet"`
 }

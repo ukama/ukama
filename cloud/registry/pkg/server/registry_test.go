@@ -144,7 +144,6 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 	nodeUuid2 := ukama.NewVirtualNodeId(ukama.OEMCODE)
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	ownerId := uuid2.NewV1()
 
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
 		{NodeID: nodeUuid1.String(), State: db.Undefined, Org: &db.Org{Name: orgName}},
@@ -153,7 +152,6 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
 	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
 		OrgName: orgName,
-		Owner:   ownerId.String(),
 	})
 
 	assert.NoError(t, err)
@@ -165,54 +163,21 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 	nodeRepo.AssertExpectations(t)
 }
 
-func TestRegistryServer_GetNodesWhenOrgEmpty(t *testing.T) {
-	nodeUuid1 := ukama.NewVirtualNodeId("homenode")
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	ownerId := uuid2.NewV1()
-	orgName1 := "orgName1"
-	orgName2 := "orgName2"
-
-	nodeRepo.On("GetByUser", mock.Anything, mock.Anything).Return([]db.Node{
-		{NodeID: nodeUuid1.String(), State: db.Undefined, Org: &db.Org{Name: orgName1}},
-		{NodeID: "some-node-id", State: db.Undefined, Org: &db.Org{Name: orgName2}},
-	}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
-	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
-		Owner: ownerId.String(),
-	})
-
-	assert.NoError(t, err)
-	assert.Equal(t, 2, len(res.Orgs))
-	assert.Equal(t, 1, len(res.Orgs[0].GetNodes()))
-	assert.Equal(t, 1, len(res.Orgs[1].GetNodes()))
-	assert.Equal(t, pb.NodeState_UNDEFINED, res.Orgs[0].GetNodes()[0].State)
-	orgId := 0
-	if res.Orgs[1].OrgName == orgName1 {
-		orgId = 1
-	}
-
-	assert.Equal(t, nodeUuid1.String(), res.Orgs[orgId].GetNodes()[0].NodeId)
-	assert.Equal(t, orgName1, res.Orgs[orgId].OrgName)
-
-	nodeRepo.AssertExpectations(t)
-}
-
 func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	ownerId := uuid2.NewV1()
 
-	nodeRepo.On("GetByUser", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
+	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
 	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
 
 	// act
 	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
-		Owner: ownerId.String(),
+		OrgName: "org-test",
 	})
 
 	// assert
 	assert.NoError(t, err)
 	assert.NotNil(t, res.Orgs)
-	assert.Equal(t, 0, len(res.Orgs))
+	assert.Equal(t, 1, len(res.Orgs))
+	assert.Equal(t, 0, len(res.Orgs[0].Nodes))
 }

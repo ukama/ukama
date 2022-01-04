@@ -72,7 +72,7 @@ message GetImsiResponse{
 }
 
 message AddImsiRequest {
-    string org = 1;
+    string org = 1 [(validator.field) = { string_not_empty: true}];
     ImsiRecord imsi = 2 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
 }
 
@@ -81,7 +81,7 @@ message AddImsiResponse {
 }
 
 message UpdateImsiRequest{
-    string imsi_to_update =1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];;
+    string imsi_to_update =1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
     ImsiRecord imsi = 2  [(validator.field) = { msg_exists: true }]; // imsi field cannot be updated
 }
 

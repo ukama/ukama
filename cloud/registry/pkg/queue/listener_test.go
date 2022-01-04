@@ -2,6 +2,8 @@ package queue
 
 import (
 	"fmt"
+	"testing"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,6 @@ import (
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/protobuf/proto"
-	"testing"
 )
 
 func TestDeviceIncomingMessageHandler(t *testing.T) {
@@ -71,7 +72,7 @@ func TestUserRegisteredMessageHandler(t *testing.T) {
 }
 
 func TestIncomingMessageHandler_MessageFormatErrors(t *testing.T) {
-	nodeId := "randome node id"
+	nodeId := "random node id"
 	badUuidMessage, _ := proto.Marshal(&external.Link{Uuid: &nodeId})
 
 	tests := []struct {

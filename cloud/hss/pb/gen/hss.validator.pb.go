@@ -59,6 +59,9 @@ func (this *GetImsiResponse) Validate() error {
 	return nil
 }
 func (this *AddImsiRequest) Validate() error {
+	if this.Org == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
+	}
 	if this.Imsi != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Imsi); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", err)

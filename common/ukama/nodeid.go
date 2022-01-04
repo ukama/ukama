@@ -66,7 +66,7 @@ func NewVirtualNodeId(ntype string) NodeID {
 	year, week := t.ISOWeek()
 	yearstr := strconv.Itoa(year)
 	yearcode := yearstr[len(yearstr)-2:]
-	weekstr := strconv.Itoa(week)
+	weekstr := fmt.Sprintf("%02d",week)
 	code := GetNodeCodeForUnits(ntype)
 
 	/*2+1+6+1+5+1+2+1+4*/
@@ -79,6 +79,11 @@ func NewVirtualNodeId(ntype string) NodeID {
 	lid := strings.ToLower(uuid)
 
 	return NodeID(lid)
+}
+
+// Generate new node id for home node
+func NewVirtualHomeNodeId () NodeID{
+	return NewVirtualNodeId(NODE_ID_TYPE_HOMENODE)
 }
 
 func ValidateNodeId(id string) (NodeID, error) {

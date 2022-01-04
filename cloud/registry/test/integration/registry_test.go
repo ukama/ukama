@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -48,7 +49,6 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 		assert.NoError(i.T(), err, "did not connect: %v", err)
 		return
 	}
-	defer conn.Close()
 
 	c := pb.NewRegistryServiceClient(conn)
 
@@ -58,17 +58,17 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 
 	var r interface{}
 
-	i.Run("AddNode", func() {
+	i.Run("AddOrg", func() {
 		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: i.orgName, Owner: ownerId.String()})
 		i.handleResponse(err, r)
 	})
 
-	i.Run("GetNode", func() {
+	i.Run("GetOrg", func() {
 		r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: i.orgName})
 		i.handleResponse(err, r)
 	})
 
-	i.Run("UpdateNode", func() {
+	i.Run("AddUpdateNode", func() {
 		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: node.String(),
@@ -86,17 +86,26 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 		i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
 	})
 
+	i.Run("DeleteNode", func() {
+		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: node.String()})
+		i.handleResponse(err, r)
+
+		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
+			Node: &pb.Node{
+				NodeId: node.String(),
+				State:  pb.NodeState_UNDEFINED,
+			},
+			OrgName: i.orgName,
+		})
+		i.handleResponse(err, r)
+	})
+
 	i.Run("GetNodes", func() {
-		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{Owner: ownerId.String()})
+		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: i.orgName})
 		i.handleResponse(err, nodesResp)
 		i.Assert().Equal(1, len(nodesResp.Orgs[0].Nodes))
 		i.Assert().Equal(node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
 	})
-}
-
-func getContext() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), 3*time.Second)
-	return ctx
 }
 
 func (i *IntegrationTestSuite) Test_Listener() {
@@ -105,6 +114,9 @@ func (i *IntegrationTestSuite) Test_Listener() {
 	nodeId := "UK-SA2136-HNODE-A1-30DF"
 	ownerId := "474bd2c3-77a0-49f2-a143-dd840dce2c91"
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	conn, c, err := i.CreateRegistryClient()
 	defer conn.Close()
 	if err != nil {
@@ -112,7 +124,7 @@ func (i *IntegrationTestSuite) Test_Listener() {
 		return
 	}
 
-	_, err = c.AddOrg(getContext(), &pb.AddOrgRequest{Name: org, Owner: ownerId})
+	_, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: org, Owner: ownerId})
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("org already exist, err %+v\n", err)
@@ -121,7 +133,7 @@ func (i *IntegrationTestSuite) Test_Listener() {
 		return
 	}
 
-	_, err = c.AddNode(getContext(), &pb.AddNodeRequest{Node: &pb.Node{
+	_, err = c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
 		NodeId: nodeId, State: pb.NodeState_UNDEFINED,
 	}, OrgName: org})
 	e, ok = status.FromError(err)
@@ -132,7 +144,7 @@ func (i *IntegrationTestSuite) Test_Listener() {
 		return
 	}
 
-	_, err = c.UpdateNode(getContext(), &pb.UpdateNodeRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
+	_, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
 	assert.NoError(i.T(), err)
 
 	// Act
@@ -141,14 +153,16 @@ func (i *IntegrationTestSuite) Test_Listener() {
 
 	// Assert
 	time.Sleep(3 * time.Second)
-	nodeResp, err := c.GetNode(getContext(), &pb.GetNodeRequest{NodeId: nodeId})
+	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId})
 	i.Assert().NoError(err)
 	i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
 }
 
 func (i *IntegrationTestSuite) CreateRegistryClient() (*grpc.ClientConn, pb.RegistryServiceClient, error) {
 	logrus.Infoln("Connecting to registry ", i.config.RegistryHost)
-	conn, err := grpc.DialContext(context.Background(), i.config.RegistryHost, grpc.WithInsecure())
+	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+	conn, err := grpc.DialContext(context, i.config.RegistryHost, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, err
 	}

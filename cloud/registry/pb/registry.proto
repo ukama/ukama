@@ -2,6 +2,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
+
 package registry.v1;
 
 service RegistryService {
@@ -13,6 +14,7 @@ service RegistryService {
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
 }
+
 
 message AddOrgRequest {
     string name = 1;
@@ -60,8 +62,7 @@ message  UpdateNodeResponse{
 }
 
 message GetNodesRequest{    
-    string orgName = 1;
-    string owner = 2;
+    string orgName = 1 ;
 }
 
 message GetNodesResponse{    

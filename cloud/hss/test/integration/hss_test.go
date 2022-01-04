@@ -76,7 +76,7 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 			Mmec:   1,
 			Mtmsi:  uint32(time.Now().Unix()) + 1,
 		}, Imsi: testImsi,
-			UpdatedAt: uint32(time.Now().Unix())})
+			UpdatedAt: uint32(time.Now().Unix() + 1)})
 		i.handleResponse(err, delResp)
 	})
 
@@ -88,7 +88,7 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 
 	i.Run("UpdateTaiAddedEarlier", func() {
 		resp, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
-			UpdatedAt: uint32(time.Now().Unix())})
+			UpdatedAt: uint32(time.Now().Unix() + 1)})
 		i.handleResponse(err, resp)
 	})
 
@@ -98,11 +98,11 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 	})
 
 	i.Run("UpdateTaiValidationFailure", func() {
-		_, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
+		_, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: "000001111111111", Tac: 4654, PlmnId: "000001",
 			UpdatedAt: uint32(time.Now().Unix())})
 		s, ok := status.FromError(err)
 		i.True(ok, "should be a grpc error")
-		i.Equal(codes.NotFound, s.Code(), "should fail with invalid argument")
+		i.Equal(codes.NotFound, s.Code(), "should fail with not found")
 	})
 }
 

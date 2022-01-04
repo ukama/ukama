@@ -7,6 +7,7 @@ on:
     paths:
         - "cloud/registry/**"
         - ".github/workflows/cloud-registry.yaml"
+  workflow_dispatch:
 
 jobs:  
   build:
@@ -93,8 +94,8 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
-
-    - name: OCI Push Registry test 
+            
+    - name: OCI Push cloud/registry test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/registry
@@ -106,7 +107,6 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
             buildah push $REGISTRY\:latest-test
 
-        
     - name: SonarCloud Scan
       uses: sonarsource/sonarcloud-github-action@v1.6
       env:
@@ -123,10 +123,9 @@ jobs:
           -Dsonar.tests=tests/
           -Dsonar.verbose=true
           -Dsonar.sources=.
-          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**
+          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
           -Dsonar.tests=.
           -Dsonar.test.inclusions=**/*_test.go
-
        
   lint:
     name: lint
@@ -144,8 +143,6 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
             working-directory: ${{ env.working-directory }}
-  
-
 
 
   release:

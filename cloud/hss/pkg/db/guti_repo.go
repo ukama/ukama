@@ -2,10 +2,13 @@ package db
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/ukama/ukamaX/common/sql"
 	"gorm.io/gorm"
 	"time"
 )
+
+const GutiNotUpdatedErr = "more recent guti for imsi exist"
 
 type GutiRepo interface {
 	Update(guti *Guti) error
@@ -26,16 +29,21 @@ func (g gutiRepo) Update(guti *Guti) error {
 
 	err := g.db.GetGormDb().Transaction(
 		func(tx *gorm.DB) error {
-			tx.Where("imsi = ? and device_updated_at <= ?", guti.Imsi, guti.DeviceUpdatedAt).Count(&count)
+			err := tx.Model(&Guti{}).Where("imsi = ? and device_updated_at >= ?", guti.Imsi, guti.DeviceUpdatedAt).Count(&count).Error
+			if err != nil {
+				return errors.Wrap(err, "failed get guti count")
+			}
 			if count > 0 {
-				return fmt.Errorf("more recent guti for imsi exist")
+				return fmt.Errorf(GutiNotUpdatedErr)
 			}
 
-			tx.Delete(&Guti{}, "imsi = ? and device_updated_at >= ?  ", guti.Imsi, guti.DeviceUpdatedAt)
+			err = tx.Delete(&Guti{}, "imsi = ? and device_updated_at <= ?  ", guti.Imsi, guti.DeviceUpdatedAt).Error
+			if err != nil {
+				return errors.Wrap(err, "failed delete guti")
+			}
 
 			guti.CreatedAt = time.Now().UTC()
-			d := tx.Create(guti)
-			return d.Error
+			return tx.Create(guti).Error
 		})
 	return err
 }

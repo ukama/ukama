@@ -81,13 +81,13 @@ func (_m *NodeRepo) Get(id ukama.NodeID) (*db.Node, error) {
 	return r0, r1
 }
 
-// GetByOrg provides a mock function with given fields: orgName, ownerId
-func (_m *NodeRepo) GetByOrg(orgName string, ownerId uuid.UUID) ([]db.Node, error) {
-	ret := _m.Called(orgName, ownerId)
+// GetByOrg provides a mock function with given fields: orgName
+func (_m *NodeRepo) GetByOrg(orgName string) ([]db.Node, error) {
+	ret := _m.Called(orgName)
 
 	var r0 []db.Node
-	if rf, ok := ret.Get(0).(func(string, uuid.UUID) []db.Node); ok {
-		r0 = rf(orgName, ownerId)
+	if rf, ok := ret.Get(0).(func(string) []db.Node); ok {
+		r0 = rf(orgName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Node)
@@ -95,8 +95,8 @@ func (_m *NodeRepo) GetByOrg(orgName string, ownerId uuid.UUID) ([]db.Node, erro
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(string, uuid.UUID) error); ok {
-		r1 = rf(orgName, ownerId)
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(orgName)
 	} else {
 		r1 = ret.Error(1)
 	}
