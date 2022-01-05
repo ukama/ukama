@@ -9,7 +9,7 @@
 
 ## Get Started
 
-1.) Clone repository `https://github.com/ukama/ukama-bff.git`
+1.) Clone repository `git clone https://github.com/ukama/ukama-bff.git`
 
 2.) `yarn install` in directory
 
