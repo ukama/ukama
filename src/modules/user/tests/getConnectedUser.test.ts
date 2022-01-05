@@ -7,8 +7,6 @@ const nockResponse = {
     status: "success",
     data: {
         totalUser: 8,
-        residentUsers: 5,
-        guestUsers: 3,
     },
 };
 

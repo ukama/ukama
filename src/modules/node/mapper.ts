@@ -21,26 +21,42 @@ class NodeMapper implements INodeMapper {
         });
         return { nodes, activeNodes, totalNodes };
     };
-    dtoToNodesDto = (req: OrgNodeResponse): OrgNodeResponseDto => {
-        const orgName = req.orgName;
-        const nodesObj = req.nodes;
+    dtoToNodesDto = (
+        orgId: string,
+        req: OrgNodeResponse
+    ): OrgNodeResponseDto => {
+        const orgName = req.orgName ? req.orgName : orgId;
+        let nodesObj;
         let activeNodes = 0;
         const nodes: NodeDto[] = [];
-        const totalNodes = nodesObj.length;
-        nodesObj.forEach(node => {
-            if (node.state === ORG_NODE_STATE.ONBOARDED) {
-                activeNodes++;
-            }
-            const nodeObj = {
-                id: node.nodeId,
-                status: node.state,
-                title: defaultCasual._title(),
-                description: `${defaultCasual.random_value(NODE_TYPE)} node`,
-                totalUser: defaultCasual.integer(1, 99),
-            };
-            nodes.push(nodeObj);
-        });
+        if (req.nodes) {
+            nodesObj = req.nodes;
+
+            nodesObj.forEach(node => {
+                if (node.state === ORG_NODE_STATE.ONBOARDED) {
+                    activeNodes++;
+                }
+                const nodeObj = this.getNode(node.nodeId, node.state);
+                nodes.push(nodeObj);
+            });
+        } else {
+            nodesObj = this.getNode(
+                defaultCasual._uuid(),
+                defaultCasual.random_value(ORG_NODE_STATE)
+            );
+            nodes.push(nodesObj);
+        }
+        const totalNodes = nodes.length;
         return { orgName, nodes, activeNodes, totalNodes };
+    };
+    private getNode = (id: string, status: ORG_NODE_STATE): NodeDto => {
+        return {
+            id: id,
+            status: status,
+            title: defaultCasual._title(),
+            description: `${defaultCasual.random_value(NODE_TYPE)} node`,
+            totalUser: defaultCasual.integer(1, 99),
+        };
     };
 }
 export default <INodeMapper>new NodeMapper();

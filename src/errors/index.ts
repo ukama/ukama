@@ -22,13 +22,16 @@ export const axiosErrorHandler = (error: any): ErrorType => {
         if (error.response.data) {
             res = {
                 code: error.response.status,
-                message: error.response.data.details,
+                message: error.response.data.details
+                    ? error.response.data.details
+                    : error.response.data.message,
             };
-        } else
+        } else {
             res = {
                 code: error.response.status,
                 message: error.response.statusText,
             };
+        }
     } else if (error.request) {
         // The request was not made
 

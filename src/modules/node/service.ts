@@ -2,6 +2,11 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
+    GraphDto,
+    NodeDetailDto,
+    NodeMetaDataDto,
+    NodePhysicalHealthDto,
+    NodeRFDto,
     NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
@@ -9,13 +14,14 @@ import {
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
-import { Context, PaginationDto } from "../../common/types";
+import { HeaderType, PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
-import { catchAsyncIOMethod, getHeaders } from "../../common";
+import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
+import { NetworkDto } from "../network/types";
 
 @Service()
 export class NodeService implements INodeService {
@@ -68,18 +74,62 @@ export class NodeService implements INodeService {
     };
     getNodesByOrg = async (
         orgId: string,
-        ctx: Context
+        header: HeaderType
     ): Promise<OrgNodeResponseDto> => {
-        const header = getHeaders(ctx);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/nodes`,
             headers: header,
         });
 
-        if (checkError(res)) throw new Error(res.message);
-        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+        return NodeMapper.dtoToNodesDto(orgId, res);
+    };
+    getNodeDetials = async (): Promise<NodeDetailDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_DETAIL,
+        });
+        return res.data;
+    };
 
-        return NodeMapper.dtoToNodesDto(res);
+    nodeMetaData = async (): Promise<NodeMetaDataDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_META_DATA,
+        });
+        return res.data;
+    };
+    nodePhysicalHealth = async (): Promise<NodePhysicalHealthDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_PHYSICAL_HEALTH,
+        });
+        return res.data;
+    };
+    nodeRF = async (): Promise<NodeRFDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_RF_KPI,
+        });
+
+        return res.data;
+    };
+    getNetwork = async (): Promise<NetworkDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_NETWORK,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.data;
+    };
+    getNodeGraph = async (): Promise<[GraphDto]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_GRAPH,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        return res.data;
     };
 }

@@ -4,8 +4,6 @@ export const GET_CONNECTED_USERS_QUERY = `
     query getUsers($data:TIME_FILTER!) {
         getConnectedUsers(filter:$data) {
             totalUser
-            residentUsers
-            guestUsers
         }
     }
 `;
@@ -246,4 +244,60 @@ export const GET_USER_BY_ID_QUERY = `
             roaming
         }
     }
+`;
+
+export const GET_NODE_DETAILS_QUERY = `
+    query getNodeDetails {
+        getNodeDetails { 
+            id
+            modelType
+            serial
+            macAddress
+            osVersion
+            manufacturing
+            ukamaOS
+            hardware
+            description
+          }
+    }
+`;
+
+export const GET_NODE_PHYSICAL_HEALTH_QUERY = `
+    query getNodePhysicalHealth {
+        getNodePhysicalHealth { 
+            temperature
+            memory
+            cpu
+            io
+          }
+    }
+`;
+
+export const GET_NODE_META_DATA_QUERY = `
+    query getNodeMetaData {
+        getNodeMetaData { 
+            throughput
+            usersAttached
+          }
+    }
+`;
+
+export const GET_NODE_RF_KPI_QUERY = `
+    query getNodeRFKPI {
+        getNodeRFKPI { 
+            qam
+            rfOutput
+            rssi
+          }
+          }
+`;
+
+export const GET_NODE_NETWORK = `
+    query getNodeNetwork {
+        getNodeNetwork { 
+            id
+            status
+            description
+          }
+          }
 `;

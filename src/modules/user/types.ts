@@ -11,12 +11,6 @@ import {
 export class ConnectedUserDto {
     @Field()
     totalUser: number;
-
-    @Field()
-    residentUsers: number;
-
-    @Field()
-    guestUsers: number;
 }
 
 @ObjectType()

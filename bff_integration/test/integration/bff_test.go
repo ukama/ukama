@@ -4,16 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"time"
 
 	graphql "github.com/machinebox/graphql"
 	"github.com/stretchr/testify/suite"
+	"github.com/ukama/ukamaX/common/testing/kratos"
 )
 
 type TestConfig struct {
-	BFFHost string
+	BaseDomain string
 }
 
 type IntegrationTestSuite struct {
@@ -23,47 +22,44 @@ type IntegrationTestSuite struct {
 }
 
 func NewIntegrationTestSuite(config *TestConfig) *IntegrationTestSuite {
-	return &IntegrationTestSuite{config: config, graphqlClient: graphql.NewClient(config.BFFHost)}
+	return &IntegrationTestSuite{config: config, graphqlClient: graphql.NewClient("https://bff." + config.BaseDomain + "/graphql")}
 }
 
-func (i *IntegrationTestSuite) Test_Ping() {
-
-	var netTransport = &http.Transport{
-		Dial: (&net.Dialer{
-			Timeout: 10 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-	var netClient = &http.Client{
-		Timeout:   time.Second * 15,
-		Transport: netTransport,
-	}
-	response, error := netClient.Get("https://bff.dev.ukama.com/ping")
+func (i *IntegrationTestSuite) TestPing() {
+	var netClient = &http.Client{}
+	response, error := netClient.Get("https://bff." + i.config.BaseDomain + "/ping")
 	bodyBytes, _ := ioutil.ReadAll(response.Body)
 
-	fmt.Println("Response of Ping Service: ", string(bodyBytes))
 	i.Assert().NoError(error)
 	i.Assert().Equal(http.StatusOK, response.StatusCode)
 	i.Assert().Equal("pong", string(bodyBytes))
-
 }
 
-func (i *IntegrationTestSuite) Test_GetConnectedUsers() {
-
-	_, cancel := context.WithTimeout(context.Background(), time.Second*3)
-	defer cancel()
+func (i *IntegrationTestSuite) TestGetConnectedUsers() {
+	login, error := kratos.Login("https://auth." + i.config.BaseDomain + "/.api")
+	i.Assert().NoError(error)
 
 	graphqlRequest := graphql.NewRequest(GetConnectedUsers)
-
-	graphqlRequest.Header.Set("csrf-token", "authorization")
-	graphqlRequest.Header.Set("ukama-session", "test")
+	graphqlRequest.Header.Set("authorization", "Bearer "+login.GetSessionToken())
 
 	var res GetConnectedUsersResponse
-
 	err := i.graphqlClient.Run(context.Background(), graphqlRequest, &res)
-	fmt.Println("Response of Test_GetConnectedUsers Query: ", "%+v", res)
 
+	fmt.Println("TestGetConnectedUsers Response: ", res.ConnectedUser.TotalUsers)
 	i.Assert().NoError(err)
 	i.Assert().GreaterOrEqual(res.ConnectedUser.TotalUsers, 0)
+}
 
+func (i *IntegrationTestSuite) TestGetNodesByOrg() {
+	login, error := kratos.Login("https://auth." + i.config.BaseDomain + "/.api")
+	i.Assert().NoError(error)
+
+	graphqlRequest := graphql.NewRequest(fmt.Sprintf(GetNodesByOrg, login.Session.Identity.GetId()))
+	graphqlRequest.Header.Set("authorization", "Bearer "+login.GetSessionToken())
+
+	var res GetNodesByOrgResponse
+	err := i.graphqlClient.Run(context.Background(), graphqlRequest, &res)
+
+	fmt.Println("TestGetNodesByOrg Response: ", res.GetNodesByOrg.OrgName, res.GetNodesByOrg.TotalNodes)
+	i.Assert().NoError(err)
 }

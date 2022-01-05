@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import {
-    CONNECTED_USER_TYPE,
     DATA_BILL_FILTER,
     GET_USER_TYPE,
     NETWORK_TYPE,
@@ -9,7 +8,7 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import { NodeDto } from "../modules/node/types";
+import { GraphDto, NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual";
 
@@ -19,35 +18,27 @@ export const getUser = (req: Request, res: Response): void => {
 
     switch (filter) {
         case TIME_FILTER.TODAY:
-            users = casual.randomArray<UserDto>(2, 10, casual._user);
+            users = casual.randomArray<UserDto>(2, 5, casual._user);
             break;
         case TIME_FILTER.WEEK:
-            users = casual.randomArray<UserDto>(4, 40, casual._user);
+            users = casual.randomArray<UserDto>(4, 15, casual._user);
             break;
         case TIME_FILTER.MONTH:
-            users = casual.randomArray<UserDto>(14, 100, casual._user);
+            users = casual.randomArray<UserDto>(14, 25, casual._user);
             break;
         case TIME_FILTER.TOTAL:
-            users = casual.randomArray<UserDto>(28, 400, casual._user);
+            users = casual.randomArray<UserDto>(24, 60, casual._user);
             break;
         default:
             users = [];
             break;
     }
-    let residentUsers = 0;
     const totalUser = users.length;
-    for (let i = 0; i < totalUser; i++) {
-        if (users[i].type === CONNECTED_USER_TYPE.RESIDENTS) {
-            residentUsers++;
-        }
-    }
 
     res.send({
         status: "success",
         data: {
             totalUser: totalUser,
-            residentUsers: residentUsers,
-            guestUsers: totalUser - residentUsers,
         },
     });
 };
@@ -305,5 +296,47 @@ export const getUserByID = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data,
+    });
+};
+
+export const getNodeDetails = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeDetail(),
+    });
+};
+
+export const nodeMetaData = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeMetaData(),
+    });
+};
+
+export const nodePhysicalHealth = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodePhysicalHealth(),
+    });
+};
+
+export const nodeRF = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeRF(),
+    });
+};
+
+export const getNodeNetwork = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeNetwork(),
+    });
+};
+
+export const getNodeGraph = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual.randomArray<GraphDto>(15, 15, casual._nodeGraph),
     });
 };
