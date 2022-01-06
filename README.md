@@ -2,8 +2,10 @@
 
 ## Architecture Diagram
 
+
 <img width="571" alt="ukama-dashboard-diagram" src="https://github.com/ukama/ukama-dashboard/blob/a8dfd067e0f74109e7294b737725b5ae089fbf1b/img/ukama-dashboard-architecture-diagram.png">
-![GitHub Logo](/img/ukama-dashboard-architecture-diagram.PNG)
+
+
 ## How to try
 - Clone ukamaDashboard repo.
 - ` git clone https://github.com/ukama/ukama-dashboard.git`
