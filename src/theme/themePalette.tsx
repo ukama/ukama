@@ -4,6 +4,7 @@ const themePalette = {
     text: {
         primary: colors.black,
     },
+    mode: "dark",
     primary: {
         main: colors.primary,
     },
