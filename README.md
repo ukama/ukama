@@ -1,6 +1,8 @@
 # Ukama-DASHBOARD 
 
 ## Architecture Diagram
+
+![GitHub Logo](/img/ukama-dashboard-architecture-diagram.PNG)
 ## How to try
 - Clone ukamaDashboard repo.
 - ` git clone https://github.com/ukama/ukama-dashboard.git`
