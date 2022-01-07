@@ -26,6 +26,7 @@ type Config struct {
 	Registry          Registry
 	Device            DeviceNetworkConfig
 	Listener          ListenerConfig
+	Metrics           *config.Metrics
 }
 
 func NewConfig() *Config {
@@ -47,5 +48,6 @@ func NewConfig() *Config {
 			RetryPeriodSec:      30,
 			Threads:             3,
 		},
+		Metrics: config.DefaultMetrics(),
 	}
 }

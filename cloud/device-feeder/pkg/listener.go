@@ -5,6 +5,8 @@ import (
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
+	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/metrics"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"os"
@@ -144,7 +146,7 @@ func (q *QueueListener) StartQueueListening() (err error) {
 		deadLetterRoutingKeyHeaderName: string(msgbus.DeviceFeederRequestRoutingKey),
 	}
 
-	err = q.consumer.StartConsuming(q.incomingMessageHandler, QueueName, []string{string(msgbus.DeviceFeederRequestRoutingKey)},
+	err = q.consumer.StartConsuming(q.incomingMessageHandler, global.QueueName, []string{string(msgbus.DeviceFeederRequestRoutingKey)},
 		rabbitmq.WithConsumeOptionsQueueDurable,
 		rabbitmq.WithConsumeOptionsConsumerName(q.serviceId),
 		rabbitmq.WithConsumeOptionsQueueArgs(queueArgs),
@@ -167,14 +169,17 @@ func (q *QueueListener) StartQueueListening() (err error) {
 func (q *QueueListener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Action {
 
 	if q.isRetryLimitReached(delivery) {
+		metrics.RecordFailedRequestMetric()
 		return rabbitmq.Ack
 	}
 
 	err := q.processRequest(delivery)
 	if err != nil {
 		log.Errorf("Error processing request. Error: %+v", err)
+		metrics.RecordFailedRequestMetric()
 		return rabbitmq.NackDiscard
 	}
+	metrics.RecordSuccessfulRequestMetric()
 
 	return rabbitmq.Ack
 }
@@ -195,10 +200,10 @@ func (q *QueueListener) isRetryLimitReached(delivery rabbitmq.Delivery) bool {
 		if vals["exchange"] == deadLetterExchangeName {
 			count := vals["count"].(int64)
 			if count > q.maxRetryCount {
-				log.Infof("Retry limit reached for message: %v, target: %v", delivery.MessageId, delivery.Headers[OptionalTargetHeaderName])
+				log.Infof("Retry limit reached for message: %v, target: %v", delivery.MessageId, delivery.Headers[global.OptionalTargetHeaderName])
 				return true
 			} else {
-				log.Infof("Retry count: %v, target: %v", count, delivery.Headers[OptionalTargetHeaderName])
+				log.Infof("Retry count: %v, target: %v", count, delivery.Headers[global.OptionalTargetHeaderName])
 				return false
 			}
 		}

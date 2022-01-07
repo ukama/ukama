@@ -30,6 +30,11 @@ type Grpc struct {
 	Port int
 }
 
+type Metrics struct {
+	Port    int
+	Enabled bool
+}
+
 // LoadConfig loads configuration into `config` object
 // Pulls configuration from env vars and config file
 // Config should be a yaml file with `configFileName` and 'yaml' extension
@@ -67,5 +72,12 @@ func LoadConfig(configFileName string, config interface{}) {
 	err = e.Unmarshal(config)
 	if err != nil {
 		logrus.Fatalf("Unable to decode into struct, %v", err)
+	}
+}
+
+func DefaultMetrics() *Metrics {
+	return &Metrics{
+		Enabled: true,
+		Port:    10250,
 	}
 }
