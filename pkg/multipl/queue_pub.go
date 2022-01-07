@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
+	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 )
@@ -36,7 +37,7 @@ func (q *queuePublisher) Publish(msg pkg.DevicesUpdateRequest) error {
 	}
 	err = q.publisher.Publish(b, []string{string(msgbus.DeviceFeederRequestRoutingKey)},
 		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
-			pkg.OptionalTargetHeaderName: msg.Target,
+			global.OptionalTargetHeaderName: msg.Target,
 		}),
 		rabbitmq.WithPublishOptionsExchange(msgbus.DefaultExchange))
 

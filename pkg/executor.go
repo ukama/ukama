@@ -81,7 +81,14 @@ func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
 
 	logrus.Infof("Response status: %d", resp.StatusCode)
 
-	// request with >500 status code considered
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logrus.Warning("error reading response body ", err)
+	} else {
+		logrus.Debugf("Response body: %s", string(b))
+	}
+
+	// request with >500 status code considered as filed
 	if resp.StatusCode >= 500 {
 		return Device5xxServerError{
 			fmt.Errorf("server error: %d", resp.StatusCode),
@@ -90,13 +97,6 @@ func (e *requestExecutor) Execute(req *DevicesUpdateRequest) error {
 		return Device4xxServerError{
 			fmt.Errorf("server error: %d", resp.StatusCode),
 		}
-	}
-
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		logrus.Warning("error reading response body ", err)
-	} else {
-		logrus.Infof("Response body: %s", string(b))
 	}
 
 	if err != nil {
