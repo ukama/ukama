@@ -1,0 +1,40 @@
+
+#
+# Sample config file to build and create capp 
+#
+
+# Application build parameters
+
+[build.from]  # base rootfs
+	rootfs=default     # default is busybox minimal capp config
+	contained=default  # default namespace, cgroup, etc.
+
+[build.compile] # various parameters related to building the executable
+	version=0.1
+	static=false
+	source="/path/"     # source directory where 'cmd' will be run
+	cmd="make"          # command to call
+	bin_from="./sysctl" # absolute path & binary after build. 
+	bin_to="/sbin/"     # where it should be on the rootfs.
+
+[build.rootfs] # action to be taken on the rootfs. Optional
+	 mkdir="/proc/sys /etc/sysctl.d"
+
+[build.conf] # any configuration files which needs to be added to rootfs.
+	     # Optional
+       from="00-linuxkit.conf"
+       to="/conf/sysctl.conf"
+
+# Following are use to create config.json file which is used by lxce.d to start 
+# the capp within ukamaOS and pkg everything
+[capp.exec]
+	name="sysctl"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	arg="-f abc df ./ccc"
+	VAR="key1=value2 key2=value2"
+	
+	# Final output format for capp
+[capp.output] 
+	format="tar.gz"
+
+# Nothing to see here. Move on.
