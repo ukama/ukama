@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"github.com/pkg/errors"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/common/grpc"
@@ -94,7 +93,7 @@ func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (*pb.
 func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.AddGutiResponse, error) {
 	imsi, err := s.imsiRepo.GetByImsi(req.Imsi)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting imsi")
+		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
 	err = s.gutiRepo.Update(&db.Guti{
@@ -119,7 +118,7 @@ func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.Ad
 func (s *ImsiService) UpdateTai(c context.Context, req *pb.UpdateTaiRequest) (*pb.UpdateTaiResponse, error) {
 	imsi, err := s.imsiRepo.GetByImsi(req.Imsi)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
 	err = s.imsiRepo.UpdateTai(req.Imsi, db.Tai{

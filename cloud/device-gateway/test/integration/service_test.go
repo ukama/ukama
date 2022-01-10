@@ -54,23 +54,27 @@ func (i *IntegrationTestSuite) handleResponse(err error, r interface{}) {
 func (i *IntegrationTestSuite) Test_HssIntegration() {
 	client := resty.New()
 
-	imsi := fmt.Sprintf("00000%010d", time.Now().Unix())
-
+	imsi := "000000845466094"
+	// we check for 404 not found to make sure that device-gateway hitting the hss
 	i.Run("AddGuti", func() {
 		resp, err := client.R().
 			EnableTrace().
-			SetBody(fmt.Sprintf(`{ "imsi":"%s", "guti":  { "plmn_id": "000001", "mmegi": "0",  "mmec":"0", "mtmsi": "%d"  }}`, imsi, time.Now().Unix())).
+			SetBody(fmt.Sprintf(`{ 
+							"imsi":"%s", 
+							"guti":  { "plmn_id": "000001", "mmegi": "0",  "mmec":"0", "mtmsi": "%d" }, 
+							"updated_at": %d }`, imsi, time.Now().Unix(), time.Now().Unix())).
 			Post(i.config.BaseUrl + "/hss/guti")
 
 		logrus.Infof("response: %s", resp.Body())
 		i.NoError(err)
-		i.Equal(200, resp.StatusCode())
+		i.Equal(http.StatusNotFound, resp.StatusCode())
 	})
 
 	i.Run("UpdateTai", func() {
 		resp, err := client.R().
 			EnableTrace().
-			SetBody(fmt.Sprintf(`{ "imsi":"%s", "tac": 1234567,  "plmn_id": "000001"  }`, imsi)).
+			SetBody(fmt.Sprintf(`{ "imsi":"%s", "tac": 1234567,  "plmn_id": "000001", "updated_at": %d  }`,
+				imsi, time.Now().Unix())).
 			Post(i.config.BaseUrl + "/hss/tai")
 
 		logrus.Infof("response: %s", resp.Body())
