@@ -84,6 +84,23 @@ query getNodesByOrg($orgId: String!) {
         totalNodes
     }
 }
+query myUsers($orgId: String!) {
+    myUsers(orgId: $orgId) {
+        orgName
+        users {
+            id
+            name
+            email
+            eSimNumber
+            dataPlan
+            dataUsage
+            phone
+            roaming
+            iccid
+            status
+        }
+    }
+}
 
 query getResidents($data: PaginationDto!) {
     getResidents(data: $data) {

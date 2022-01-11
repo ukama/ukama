@@ -1,14 +1,20 @@
 import { ContainerHeader, UserCard, UserDetailsDialog } from "../../components";
-import { UserData } from "../../constants/stubData";
 import { Box } from "@mui/material";
 import { useState } from "react";
+import { useMyUsersQuery } from "../../generated";
+import { organizationId } from "../../recoil";
+import { useRecoilValue } from "recoil";
 
 const User = () => {
     const [showSimDialog, setShowSimDialog] = useState(false);
     const [userId, setUserId] = useState();
+    const orgId = useRecoilValue(organizationId);
     const handleSimDialog = () => {
         setShowSimDialog(false);
     };
+    const { data: usersRes } = useMyUsersQuery({
+        variables: { orgId: orgId || "" },
+    });
 
     const handleSimInstallation = () => {
         //console.log(value);
@@ -29,7 +35,7 @@ const User = () => {
     return (
         <Box sx={{ flexGrow: 1, mt: 3 }}>
             <UserCard
-                userDetails={UserData}
+                userDetails={usersRes?.myUsers.users}
                 handleMoreUserdetails={getUseDetails}
             >
                 <ContainerHeader
