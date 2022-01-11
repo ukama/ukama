@@ -74,8 +74,11 @@ build_busybox() {
 #
 build_app() {
 
+    CWD=`pwd`
     SRC=$1
     CMD=$2
+
+    cd ${SRC} && ${CMD} && cd ${CWD}
 }
     
 #
@@ -235,7 +238,7 @@ case "$ACTION" in
     "build")
 	if [ "$2" = "app" ]
 	then
-	    build_app $3 $4
+	    build_app $3 "$4"
 	elif [ "$2" = "busybox" ]
 	then
 	     build_busybox
