@@ -40,7 +40,7 @@ const User = () => {
             >
                 <ContainerHeader
                     title="My Users"
-                    stats={"78/2"}
+                    stats={`${usersRes?.myUsers.users.length}`}
                     handleButtonAction={handleSimInstallation}
                     buttonTitle="INSTALL SIMS"
                     handleSearchChange={getSearchValue}
