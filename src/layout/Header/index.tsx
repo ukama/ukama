@@ -9,6 +9,7 @@ import {
     IconButton,
     Typography,
     Badge,
+    Stack,
 } from "@mui/material";
 import {
     useGetAlertsQuery,
@@ -21,7 +22,7 @@ import { useHistory } from "react-router-dom";
 import { MoreVert } from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
-import { Alerts, LoadingWrapper } from "../../components";
+import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
 import React, { useEffect, useRef, useState } from "react";
 import { AccountIcon, NotificationIcon, SettingsIcon } from "../../assets/svg";
 
@@ -190,11 +191,15 @@ const Header = ({
                         width={120}
                         isLoading={isLoading}
                     >
-                        <Box sx={{ display: { xs: "none", md: "flex" } }}>
+                        <Stack
+                            direction="row"
+                            spacing={3}
+                            sx={{ display: { xs: "none", md: "flex" } }}
+                        >
+                            <DarkModToggle />
                             <IconButton
                                 size="medium"
                                 color="inherit"
-                                sx={{ padding: "0px 18px" }}
                                 onClick={handleSettingsClick}
                             >
                                 <SettingsIcon />
@@ -202,7 +207,6 @@ const Header = ({
                             <IconButton
                                 size="medium"
                                 color="inherit"
-                                sx={{ padding: "0px 18px" }}
                                 onClick={handleNotificationClick}
                             >
                                 <IconButton
@@ -229,14 +233,10 @@ const Header = ({
                                     </Badge>
                                 </IconButton>
                             </IconButton>
-                            <IconButton
-                                size="medium"
-                                color="inherit"
-                                sx={{ padding: "0px 18px" }}
-                            >
+                            <IconButton size="medium" color="inherit">
                                 <AccountIcon />
                             </IconButton>
-                        </Box>
+                        </Stack>
                     </LoadingWrapper>
 
                     <Box sx={{ display: { xs: "flex", md: "none" } }}>

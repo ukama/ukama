@@ -15,6 +15,7 @@ import AlertSettings from "./AlertSettings";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
+import DarkModToggle from "./DarkModToggle";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
 import NodeDetailsCard from "./NodeDetailsCard";
@@ -52,6 +53,7 @@ export {
     BasicDialog,
     NodeSettings,
     UserSettings,
+    DarkModToggle,
     AlertSettings,
     SimCardDesign,
     NetworkStatus,
