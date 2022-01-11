@@ -138,8 +138,14 @@ int main (int argc, char *argv[]) {
   if (!ret) {
     log_error("%s parsing error. Exiting.", configFile);
     clear_config(config, BUILD_ONLY & CAPP_ONLY);
+    free(config);
     exit(1);
+  } else {
+    log_config(config);
   }
 
+ done:
+  clear_config(config, BUILD_ONLY & CAPP_ONLY);
+  free(config);
   return 0;
 }

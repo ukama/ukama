@@ -8,12 +8,12 @@
 /* Various table defs */
 #define TABLE_BUILD         "build"
 #define TABLE_CAPP          "capp"
-#define TABLE_BUILD_FROM    "build.from"
-#define TABLE_BUILD_COMPILE "build.compile"
-#define TABLE_BUILD_ROOTFS  "build.rootfs"
-#define TABLE_BUILD_CONF    "build.conf"
-#define TABLE_CAPP_EXEC     "capp.exec"
-#define TABLE_CAPP_OUTPUT   "capp.output"
+#define TABLE_BUILD_FROM    "build-from"
+#define TABLE_BUILD_COMPILE "build-compile"
+#define TABLE_BUILD_ROOTFS  "build-rootfs"
+#define TABLE_BUILD_CONF    "build-conf"
+#define TABLE_CAPP_EXEC     "capp-exec"
+#define TABLE_CAPP_OUTPUT   "capp-output"
 
 /* Keys for various table */
 #define KEY_ROOTFS    "rootfs"
@@ -34,7 +34,7 @@
 #define KEY_ENVS      "envs"
 #define KEY_NAME      "name"
 
-#define DATUM_INT       0x01
+#define DATUM_BOOL      0x01
 #define DATUM_STRING    0x02
 #define DATUM_MANDATORY 0x04
 
@@ -86,5 +86,6 @@ typedef struct config_t {
 /* Function headers */
 int read_config_file(Config *config, char *fileName);
 void clear_config(Config *config, int flag);
+void log_config(Config *config);
 
 #endif /* CONFIG_H */

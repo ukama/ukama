@@ -44,6 +44,7 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
 		      int *destInt, int flag) {
 
   toml_datum_t datum;
+  int ret=TRUE;
 
   /* sanity check */
   if (table == NULL || key == NULL) return FALSE;
@@ -51,13 +52,20 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
   datum = toml_string_in(table, key);
 
   if (datum.ok) {
-    if (flag & DATUM_INT) {
-      *destInt = atoi(datum.u.s);
+    if (flag & DATUM_BOOL) {
+      if (strcasecmp(datum.u.s, "TRUE")==0) {
+	*destInt = TRUE;
+      } else if (strcasecmp(datum.u.s, "FALSE")==0) {
+	*destInt = FALSE;
+      } else {
+	log_error("[%s] is invalid, except 'true' or 'false'", key);
+	*destInt = -1;
+	ret = FALSE;
+      }
     } else if (flag & DATUM_STRING) {
       *destStr = strdup(datum.u.s);
     } else {
-      free(datum.u.s);
-      return FALSE;
+      ret = FALSE;
     }
   } else {
     if (flag & DATUM_MANDATORY) {
@@ -68,7 +76,7 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
 
   if (datum.ok) free(datum.u.s);
 
-  return TRUE;
+  return ret;
 }
 
 /*
@@ -95,12 +103,12 @@ static int read_capp_table(toml_table_t *table, Config *config,
 
   if (strcmp(type, TABLE_CAPP_EXEC)==0) { /* [capp.exec] */
     if (!read_entry(table, KEY_NAME, &capp->name, NULL,
-		  DATUM_STRING & DATUM_MANDATORY)) {
+		  DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_PATH, &capp->path, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
@@ -147,42 +155,42 @@ static int read_build_table(toml_table_t *table, Config *config,
 
   if (strcmp(type, TABLE_BUILD_FROM)==0) { /* [build.from] */
     if (!read_entry(table, KEY_ROOTFS, &build->rootfs, NULL,
-		  DATUM_STRING & DATUM_MANDATORY)) {
+		  DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_CONTAINED, &build->contained, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
   } else if (strcmp(type, TABLE_BUILD_COMPILE)==0) { /* [build.compile] */
     if (!read_entry(table, KEY_VERSION, &build->version, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_STATIC, NULL, &build->staticFlag,
-		    DATUM_INT & DATUM_MANDATORY)) {
+		    DATUM_BOOL | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_SOURCE, &build->source, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_CMD, &build->cmd, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_BIN_FROM, &build->binFrom, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
     if (!read_entry(table, KEY_BIN_TO, &build->binTo, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
   } else if (strcmp(type, TABLE_BUILD_ROOTFS)==0) { /* [build.rootfs] */
@@ -191,12 +199,12 @@ static int read_build_table(toml_table_t *table, Config *config,
     }
   } else if (strcmp(type, TABLE_BUILD_CONF)==0) { /* [build.conf] */
     if (!read_entry(table, KEY_FROM, &build->from, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
 
-    if (!read_entry(table, KEY_MKDIR, &build->mkdir, NULL,
-		    DATUM_STRING & DATUM_MANDATORY)) {
+    if (!read_entry(table, KEY_TO, &build->to, NULL,
+		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
   } else {
@@ -398,5 +406,65 @@ void clear_config(Config *config, int flag) {
     if (capp->format) free(capp->format);
 
     free(config->capp);
+  }
+}
+
+/*
+ * log_config --
+ *
+ */
+void log_config(Config *config) {
+
+  BuildConfig *build=NULL;
+  CappConfig *capp=NULL;
+
+  if (config == NULL) return;
+
+  if (config->build) {
+    build = config->build;
+    log_debug("--- Build Configuration ---");
+
+    log_debug("FROM:");
+    log_debug("\t rootfs:    %s", build->rootfs);
+    log_debug("\t contained: %s", build->contained);
+
+    log_debug("BUILD:");
+    log_debug("\t version: %s", build->version);
+    log_debug("\t static:  %d", build->staticFlag);
+    log_debug("\t source:  %s", build->source);
+    log_debug("\t command: %s", build->cmd);
+    log_debug("\t from:    %s", build->binFrom);
+    log_debug("\t to:      %s", build->binTo);
+
+    log_debug("ROOTFS:");
+    log_debug("\t mkdir: %s", build->mkdir);
+
+    log_debug("CONF:");
+    log_debug("\t from: %s", build->from);
+    log_debug("\t to:   %s", build->to);
+  } else {
+    log_debug("No Build configuration found");
+  }
+
+  if (config->capp) {
+    capp = config->capp;
+    log_debug("--- CAPP Configuration ---");
+
+    log_debug("EXEC:");
+    log_debug("\t name: %s", capp->name);
+    log_debug("\t path: %s", capp->path);
+    if (capp->args) {
+      log_debug("\t args: %s", capp->args);
+    } else {
+      log_debug("\t No args");
+    }
+    if (capp->envs) {
+      log_debug("\t envs: %s", capp->envs);
+    } else {
+      log_debug("\t No env");
+    }
+
+    log_debug("OUTPUT:");
+    log_debug("\t format: %s", capp->format);
   }
 }
