@@ -29,6 +29,9 @@ enum {
   CAPP_CMD_CREATE,
 };
 
+extern int build_capp(Config *config);
+extern int create_capp(Config *config);
+
 /*
  * usage -- 
  *
@@ -64,6 +67,7 @@ void set_log_level(char *slevel) {
 int main (int argc, char *argv[]) {
 
   int cmd=CAPP_CMD_NONE, ret=FALSE;
+  int exitStatus=1;
   char *configFile=NULL;
   char *debug=DEF_LOG_LEVEL;
   Config *config=NULL;
@@ -144,8 +148,20 @@ int main (int argc, char *argv[]) {
     log_config(config);
   }
 
+  if (!build_capp(config)) {
+    log_error("Error building the capp using: %s", configFile);
+    goto done;
+  }
+
+  if (!create_capp(config)) {
+    log_error("Error creating the capp using: %s", configFile);
+    goto done;
+  }
+
+  exitStatus = 0;
+
  done:
   clear_config(config, BUILD_ONLY & CAPP_ONLY);
   free(config);
-  return 0;
+  return exitStatus;
 }

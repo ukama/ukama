@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 # Copyright (c) 2021-present, Ukama Inc.
 # All rights reserved.
 
@@ -61,7 +61,9 @@ build_busybox() {
     fi
 
     cd ${CWD}
-    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* $ROOTFS
+    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* ${ROOTFS}
+
+    cp -rf ${ROOTFS} ${CWD}/
 
     # Go back and clean up
     cd ${BB_ROOT}
@@ -221,12 +223,6 @@ EOF
 
 # main
 
-#remove existing copy of rootfs
-if [ -d "${ROOTFS}" ]
-then
-    rm -rf ${ROOTFS}
-fi
-
 mkdir -p ${ROOTFS}
 BB_ROOTFS=${ROOTFS}
 
@@ -234,7 +230,6 @@ BB_ROOTFS=${ROOTFS}
 ACTION=$1
 
 case "$ACTION" in
-    #case 1
     "build")
 	if [ "$2" = "app" ]
 	then
@@ -247,10 +242,23 @@ case "$ACTION" in
 	fi
 	;;
     "cp")
-	cp $4 ${ROOTFS}/$4
+	cp $2 ${ROOTFS}/$3
 	;;
     "mkdir")
-	mkdir ${ROOTFS}/$4
+	mkdir ${ROOTFS}/$2
+	;;
+    "rename")
+	mv ${ROOTFS} $2
+	;;
+    "clean")
+	rm -rf ${ROOTFS}
+	;;
+    "pack")
+	tar -czf $2 ${ROOTFS}
+	if [ $3 -eq 1 ]
+	then
+	    rm -rf ${ROOTFS}
+	fi
 	;;
 esac
 

@@ -33,6 +33,7 @@
 #define KEY_ARGS      "args"
 #define KEY_ENVS      "envs"
 #define KEY_NAME      "name"
+#define KEY_BIN       "bin"
 
 #define DATUM_BOOL      0x01
 #define DATUM_STRING    0x02
@@ -70,7 +71,9 @@ typedef struct build_config_t {
 
 typedef struct capp_config_t {
 
-  char *name;   /* Name of the binary file */
+  char *name;   /* Name of the capp */
+  char *version;/* Version of the capp */
+  char *bin;    /* capp binary */
   char *path;   /* Absolute path to the bin */
   char *args;   /* Runtime arguments, if any */
   char *envs;   /* Environment variables, if any */

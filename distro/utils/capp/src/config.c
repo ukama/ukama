@@ -107,6 +107,16 @@ static int read_capp_table(toml_table_t *table, Config *config,
       return FALSE;
     }
 
+    if (!read_entry(table, KEY_VERSION, &capp->version, NULL,
+		  DATUM_STRING | DATUM_MANDATORY)) {
+      return FALSE;
+    }
+
+    if (!read_entry(table, KEY_BIN, &capp->bin, NULL,
+		  DATUM_STRING | DATUM_MANDATORY)) {
+      return FALSE;
+    }
+
     if (!read_entry(table, KEY_PATH, &capp->path, NULL,
 		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
@@ -398,12 +408,13 @@ void clear_config(Config *config, int flag) {
 
     capp = config->capp;
 
-    if (capp->name) free(capp->name);
-    if (capp->path) free(capp->path);
-    if (capp->args) free(capp->args);
-    if (capp->envs) free(capp->envs);
-
-    if (capp->format) free(capp->format);
+    if (capp->name)    free(capp->name);
+    if (capp->version) free(capp->version);
+    if (capp->bin)     free(capp->bin);
+    if (capp->path)    free(capp->path);
+    if (capp->args)    free(capp->args);
+    if (capp->envs)    free(capp->envs);
+    if (capp->format)  free(capp->format);
 
     free(config->capp);
   }
@@ -452,6 +463,8 @@ void log_config(Config *config) {
 
     log_debug("EXEC:");
     log_debug("\t name: %s", capp->name);
+    log_debug("\t version: %s", capp->version);
+    log_debug("\t binary:  %s", capp->bin);
     log_debug("\t path: %s", capp->path);
     if (capp->args) {
       log_debug("\t args: %s", capp->args);
