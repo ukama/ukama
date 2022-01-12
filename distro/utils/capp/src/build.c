@@ -41,6 +41,10 @@ int build_capp(Config *config) {
 
   sprintf(runMe, "%s clean", SCRIPT);
   if (system(runMe) < 0) return FALSE;
+
+  sprintf(runMe, "%s clean %s_%s", SCRIPT, config->capp->name,
+	  config->capp->version);
+  if (system(runMe) < 0) return FALSE;
   
   sprintf(runMe, "%s build busybox", SCRIPT);
   if (system(runMe) < 0) return FALSE;

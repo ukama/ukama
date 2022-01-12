@@ -27,7 +27,7 @@
 #define DEF_HOSTNAME "localhost"
 #define DEF_CONFIG   "config.json"
 
-#define JSON "{ \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": [ \"%s\" ], \n \t \t \"env\": [ \"%s\" ], \n \t } \n \t \"hostname\": \"%s\",\n \t \"namespace\" : [ \n \t \t { \"type\" : \"pid\", \n \t \t \"type\" : \"ipc\", \n \t \t \"type\" : \"mount\", \n \t \t \"type\" : \"user\", \n \t } \n \t ] \n ] \n"
+#define JSON "# Ukama capp config file \n { \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": [ \"%s\" ], \n \t \t \"env\": [ \"%s\" ], \n \t } \n \t \"hostname\": \"%s\",\n \t \"namespace\" : [ \n \t \t { \"type\" : \"pid\", \n \t \t \"type\" : \"ipc\", \n \t \t \"type\" : \"mount\", \n \t \t \"type\" : \"user\", \n \t } \n \t ] \n ] \n"
 
 /*
  * create_capp_config --
@@ -36,10 +36,14 @@
 static int create_capp_config(Config *config) {
 
   char str[2048] = {0};
-  char runMe[MAX_BUFFER] = {0};
-  int fd, ret=TRUE;
+  FILE *fp=NULL;
+  int ret=TRUE;
 
-  if ((fd = open(DEF_CONFIG, O_CREAT | O_TRUNC,S_IRWXU)) < 0) {
+  remove(DEF_CONFIG);
+
+  fp = fopen(DEF_CONFIG, "a+");
+
+  if (fp == NULL) {
     log_error("Error opening config file: config.json %s", strerror(errno));
     return FALSE;
   }
@@ -53,19 +57,16 @@ static int create_capp_config(Config *config) {
 
   log_debug("config.json: \n %s", str);
   
-  write(fd, str, strlen(str)+1);
-  close(fd);
-
-  /* Copy to / in rootfs and delete it locally */
-  sprintf(runMe, "%s cp %s /", SCRIPT, DEF_CONFIG);
-  if (system(runMe) < 0) {
-    log_error("Error copying %s to rootfs", DEF_CONFIG);
-    ret = FALSE;
-    goto cleanup;
+  if (fwrite(str,1,strlen(str)+1,fp)<=0) {
+    log_error("Error writing to json file: %s", strerror(errno));
+    ret=FALSE;
+    goto done;
   }
+  fflush(fp);
 
- cleanup:
-  remove(DEF_CONFIG);
+ done:
+  fclose(fp);
+  if (!ret) remove(DEF_CONFIG);
   return ret;
 }
 
@@ -87,6 +88,14 @@ int create_capp(Config *config) {
     return FALSE;
   }
 
+  /* Copy to / in rootfs and delete it locally */
+  sprintf(runMe, "%s cp %s /", SCRIPT, DEF_CONFIG);
+  if (system(runMe) < 0) {
+    log_error("Error copying %s to rootfs", DEF_CONFIG);
+    return FALSE;
+  }
+  remove(DEF_CONFIG);
+
   sprintf(runMe, "%s rename %s_%s", SCRIPT, config->capp->name,
 	  config->capp->version);
   if (system(runMe) < 0) {
@@ -96,8 +105,22 @@ int create_capp(Config *config) {
   }
 
   /* delete the directory afterwards */
-  sprintf(runMe, "%s pack %s_%s.tar.gz %d", SCRIPT, config->capp->name,
+  sprintf(runMe, "%s pack %s_%s.tar.gz %s_%s %d", SCRIPT, config->capp->name,
+	  config->capp->version, config->capp->name,
 	  config->capp->version, TRUE);
+  if (system(runMe) < 0) {
+    log_error("Error packing the capp to %s_%s", config->capp->name,
+	      config->capp->version);
+    return FALSE;
+  }
+
+  /* clean up */
+  sprintf(runMe, "%s clean %s_%s", SCRIPT, config->capp->name,
+	  config->capp->version);
+  if (system(runMe) < 0) return FALSE;
+
+  sprintf(runMe, "%s clean", SCRIPT);
+  if (system(runMe) < 0) return FALSE;
 
   return TRUE;
 }

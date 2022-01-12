@@ -251,13 +251,18 @@ case "$ACTION" in
 	mv ${ROOTFS} $2
 	;;
     "clean")
-	rm -rf ${ROOTFS}
-	;;
-    "pack")
-	tar -czf $2 ${ROOTFS}
-	if [ $3 -eq 1 ]
+	if [ "$2" = "" ]
 	then
 	    rm -rf ${ROOTFS}
+	else
+	    rm -rf $2
+	fi
+	;;
+    "pack")
+	tar -czf $2 $3
+	if [ $4 -eq 1 ]
+	then
+	    rm -rf $3 ${ROOTFS}
 	fi
 	;;
 esac
