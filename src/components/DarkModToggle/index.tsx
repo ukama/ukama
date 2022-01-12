@@ -10,7 +10,7 @@ const DarkModToggle = () => {
 
     return (
         <IconButton
-            edge="end"
+            size="small"
             color="inherit"
             aria-label="mode"
             onClick={handleToggle}

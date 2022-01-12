@@ -1,8 +1,7 @@
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useState } from "react";
-import { colors } from "../theme";
-import { Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { isSkeltonLoading, pageName } from "../recoil";
 import { useRecoilState, useRecoilValue } from "recoil";
 
@@ -24,7 +23,6 @@ const Layout = (props: any) => {
             sx={{
                 display: "flex",
                 height: "100%",
-                backgroundColor: colors.solitude,
             }}
         >
             <Sidebar
@@ -35,8 +33,7 @@ const Layout = (props: any) => {
                 handleDrawerToggle={handleDrawerToggle}
             />
 
-            <Box
-                component="main"
+            <Container
                 sx={{
                     width: "100%",
                     pl: { xs: 2, md: 3 },
@@ -51,7 +48,7 @@ const Layout = (props: any) => {
                 />
 
                 {children}
-            </Box>
+            </Container>
         </Box>
     );
 };

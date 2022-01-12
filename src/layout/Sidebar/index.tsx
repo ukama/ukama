@@ -8,6 +8,7 @@ import {
     ListItemIcon,
     ListItemText,
     Typography,
+    Paper,
 } from "@mui/material";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
@@ -24,23 +25,17 @@ const useStyles = makeStyles(() => ({
         marginTop: "6px",
         padding: "8px 12px",
         borderRadius: "4px",
-        fontFamily: "Work Sans",
-        backgroundColor: colors.white,
     },
-    listItemText: {
-        color: colors.vulcan,
-    },
+    listItemText: {},
     listItemDone: {
         opacity: 1,
         height: "40px",
         marginTop: "8px",
         padding: "8px 12px",
         borderRadius: "4px",
-        color: `${colors.vulcan} !important`,
-        backgroundColor: `${colors.solitude} !important`,
     },
     listItemDoneText: {
-        color: colors.vulcan,
+        // color: colors.vulcan,
     },
 }));
 
@@ -104,8 +99,8 @@ const Sidebar = (
     );
 
     const drawer = (
-        <div
-            style={{
+        <Paper
+            sx={{
                 height: "100%",
                 overflowY: "auto",
                 position: "relative",
@@ -134,7 +129,7 @@ const Sidebar = (
             >
                 <UpgradeNavFooter />
             </div>
-        </div>
+        </Paper>
     );
 
     const container =
@@ -144,8 +139,8 @@ const Sidebar = (
         <Box
             component="nav"
             sx={{
-                width: { xs: 0, sm: DRAWER_WIDTH },
                 flexShrink: { sm: 0 },
+                width: { xs: 0, sm: DRAWER_WIDTH },
                 boxShadow: "6px 0px 18px rgba(0, 0, 0, 0.06)",
             }}
             aria-label="mailbox folders"

@@ -20,5 +20,8 @@ const colors = {
     gainsboro: "#E0E0E0",
     lightRed: "#f8bfbf",
     darkGray: "#C4C4C4",
+    darkGreen: "#121212",
+    gradiantDarkBG:
+        "linear-gradient(0deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.05)), #121212",
 };
 export default colors;

@@ -19,12 +19,16 @@ import {
 import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
 import { useHistory } from "react-router-dom";
-import { MoreVert } from "@mui/icons-material";
+import {
+    MoreVert,
+    Settings,
+    Notifications,
+    AccountCircle,
+} from "@mui/icons-material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
-import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
 import React, { useEffect, useRef, useState } from "react";
-import { AccountIcon, NotificationIcon, SettingsIcon } from "../../assets/svg";
+import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
 
 type HeaderProps = {
     pageName: string;
@@ -151,13 +155,7 @@ const Header = ({
                     <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
                 </RoundedCard>
             </Popover>
-            <AppBar
-                elevation={0}
-                position="relative"
-                sx={{
-                    backgroundColor: colors.solitude,
-                }}
-            >
+            <AppBar elevation={0} position="relative" color="transparent">
                 <Toolbar sx={{ padding: "33px 0px 12px 0px !important" }}>
                     <IconButton
                         color="inherit"
@@ -166,7 +164,7 @@ const Header = ({
                         onClick={() => handleDrawerToggle()}
                         sx={{ mr: 2, display: { sm: "none" } }}
                     >
-                        <MenuIcon color={"primary"} />
+                        <MenuIcon />
                     </IconButton>
 
                     <LoadingWrapper
@@ -174,14 +172,7 @@ const Header = ({
                         width={82}
                         isLoading={isLoading}
                     >
-                        <Typography
-                            noWrap
-                            variant="h5"
-                            component="div"
-                            color="black"
-                        >
-                            {pageName}
-                        </Typography>
+                        <Typography variant="h5">{pageName}</Typography>
                     </LoadingWrapper>
 
                     <Box sx={{ flexGrow: 1 }} />
@@ -198,43 +189,38 @@ const Header = ({
                         >
                             <DarkModToggle />
                             <IconButton
-                                size="medium"
+                                size="small"
                                 color="inherit"
                                 onClick={handleSettingsClick}
                             >
-                                <SettingsIcon />
+                                <Settings />
                             </IconButton>
                             <IconButton
-                                size="medium"
+                                size="small"
                                 color="inherit"
                                 onClick={handleNotificationClick}
+                                aria-label={notificationsLabel(
+                                    alertsInfoRes?.getAlerts?.alerts.length
+                                )}
                             >
-                                <IconButton
-                                    aria-label={notificationsLabel(
+                                <Badge
+                                    badgeContent={
                                         alertsInfoRes?.getAlerts?.alerts.length
-                                    )}
+                                    }
+                                    sx={{
+                                        "& .MuiBadge-badge": {
+                                            color: colors.white,
+                                            backgroundColor: colors.darkBlue,
+                                            paddingLeft: "3px",
+                                            paddingRight: "3px",
+                                        },
+                                    }}
                                 >
-                                    <Badge
-                                        badgeContent={
-                                            alertsInfoRes?.getAlerts?.alerts
-                                                .length
-                                        }
-                                        sx={{
-                                            "& .MuiBadge-badge": {
-                                                color: colors.white,
-                                                backgroundColor:
-                                                    colors.darkBlue,
-                                                paddingLeft: "3px",
-                                                paddingRight: "3px",
-                                            },
-                                        }}
-                                    >
-                                        <NotificationIcon />
-                                    </Badge>
-                                </IconButton>
+                                    <Notifications />
+                                </Badge>
                             </IconButton>
-                            <IconButton size="medium" color="inherit">
-                                <AccountIcon />
+                            <IconButton size="small" color="inherit">
+                                <AccountCircle />
                             </IconButton>
                         </Stack>
                     </LoadingWrapper>
@@ -246,7 +232,7 @@ const Header = ({
                             aria-controls={menuId}
                             onClick={handleMobileMenuOpen}
                         >
-                            <MoreVert color={"primary"} />
+                            <MoreVert />
                         </IconButton>
                     </Box>
                 </Toolbar>

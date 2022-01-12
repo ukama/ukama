@@ -21,6 +21,9 @@ const theme = (isDarkMod: boolean) =>
         },
         palette: {
             mode: isDarkMod ? "dark" : "light",
+            background: {
+                default: isDarkMod ? colors.darkGreen : colors.solitude,
+            },
             primary: {
                 main: colors.primary,
             },
