@@ -12,25 +12,27 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/path/"     # source directory where 'cmd' will be run
-	cmd="make"          # command to call
-	bin_from="sysctl" # absolute path & binary after build
-	bin_to="/sbin/"     # where it should be on the rootfs
+	source="/home/kashif/work/ukama/ukamaOS/distro/system/example"
+	cmd="make"
+	bin_from="/home/kashif/work/ukama/ukamaOS/distro/system/example/example.d"
+	bin_to="/sbin/"
 
 [build-rootfs]
-	 mkdir="/proc/sys /etc/sysctl.d"
+	mkdir="/conf"
 
 [build-conf]
-       from="00-linuxkit.conf"
-       to="/conf/sysctl.conf"
+        from="/home/kashif/work/ukama/ukamaOS/distro/system/example/capp/conf/config.file"
+        to="/conf/config.file"
 
 # Following are use to create config.json file which is used by lxce.d to start 
 # the capp within ukamaOS and pkg everything
 [capp-exec]
-	name="sysctl"
+	name="example"
+	version="latest"
+	bin="example.d"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="-f abc df ./ccc"
-	envs="key1=value2 key2=value2"
+	args="-f /conf/config.file"
+	envs="key1=value1"
 	
 # Final output format for capp
 [capp-output]
