@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 # Copyright (c) 2021-present, Ukama Inc.
 # All rights reserved.
 
