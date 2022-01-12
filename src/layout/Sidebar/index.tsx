@@ -8,6 +8,7 @@ import {
     ListItemIcon,
     ListItemText,
     Typography,
+    Stack,
 } from "@mui/material";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
@@ -108,32 +109,39 @@ const Sidebar = (
             style={{
                 height: "100%",
                 overflowY: "auto",
-                position: "relative",
             }}
         >
             <Toolbar sx={{ padding: "33px 0px 12px 0px" }}>
                 <Logo width={"100%"} height={"36px"} />
             </Toolbar>
-            {MenuList(SIDEBAR_MENU1)}
-            <div
-                style={{
-                    width: "100%",
+            <Stack
+                sx={{
                     display: "flex",
-                    justifyContent: "center",
+                    minHeight: "200px",
+                    height: `calc(100% - 400px)`,
                 }}
             >
-                <Divider sx={{ width: 160, mt: "8px", mb: "0px !important" }} />
-            </div>
-            {MenuList(SIDEBAR_MENU2)}
-
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: "10px",
+                {MenuList(SIDEBAR_MENU1)}
+                <Divider
+                    sx={{
+                        width: 160,
+                        mt: "8px",
+                        mb: "0px !important",
+                        alignSelf: "center",
+                    }}
+                />
+                {MenuList(SIDEBAR_MENU2)}
+            </Stack>
+            <Box
+                sx={{
+                    m: 1.6,
+                    height: 272,
+                    display: "flex",
+                    alignItems: "flex-end",
                 }}
             >
                 <UpgradeNavFooter />
-            </div>
+            </Box>
         </div>
     );
 
