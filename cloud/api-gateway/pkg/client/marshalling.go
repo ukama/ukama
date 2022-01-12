@@ -5,9 +5,6 @@ import (
 	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
-	jsonpb "google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
-	"net/http"
 )
 
 type GrpcClientError struct {
@@ -15,25 +12,8 @@ type GrpcClientError struct {
 	Message  string
 }
 
-func MarshallResponse(err error, res proto.Message) (string, *GrpcClientError) {
-
-	clientError, done := marshalError(err)
-	if done {
-		return "", clientError
-	}
-	m := jsonpb.MarshalOptions{
-		EmitUnpopulated: true,
-	}
-
-	b, err := m.Marshal(res)
-	if err != nil {
-		return "", &GrpcClientError{
-			HttpCode: http.StatusInternalServerError,
-			Message:  err.Error(),
-		}
-	}
-
-	return string(b), nil
+func (g GrpcClientError) Error() string {
+	return g.Message
 }
 
 func marshalError(err error) (grpcError *GrpcClientError, isItAnError bool) {

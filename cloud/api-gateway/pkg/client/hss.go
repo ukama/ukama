@@ -43,7 +43,7 @@ func (r *Hss) Close() {
 	r.conn.Close()
 }
 
-func (r *Hss) AddUser(orgName string, user *pb.User) (*pb.AddUserResponse, *GrpcClientError) {
+func (r *Hss) AddUser(orgName string, user *pb.User) (*pb.AddUserResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -54,7 +54,7 @@ func (r *Hss) AddUser(orgName string, user *pb.User) (*pb.AddUserResponse, *Grpc
 	return res, nil
 }
 
-func (r *Hss) GetUsers(orgName string) (*pb.ListUsersResponse, *GrpcClientError) {
+func (r *Hss) GetUsers(orgName string) (*pb.ListUsersResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -67,10 +67,10 @@ func (r *Hss) GetUsers(orgName string) (*pb.ListUsersResponse, *GrpcClientError)
 	return res, nil
 }
 
-func (r *Hss) Delete(orgName string, userId string) (string, *GrpcClientError) {
+func (r *Hss) Delete(orgName string, userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
-	res, err := r.client.Delete(ctx, &pb.DeleteUserRequest{UserUuid: userId, Org: orgName})
-	return MarshallResponse(err, res)
+	_, err := r.client.Delete(ctx, &pb.DeleteUserRequest{UserUuid: userId, Org: orgName})
+	return err
 }

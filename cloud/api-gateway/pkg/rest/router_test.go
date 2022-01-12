@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
@@ -32,7 +33,7 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, NewClientsSet(&pkg.GrpcEndpoints{})).gin
+	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, NewClientsSet(&pkg.GrpcEndpoints{})).gin
 
 	// act
 	r.ServeHTTP(w, req)
@@ -47,7 +48,7 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, NewClientsSet(&pkg.GrpcEndpoints{})).gin
+	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, NewClientsSet(&pkg.GrpcEndpoints{})).gin
 
 	// act
 	r.ServeHTTP(w, req)
@@ -65,7 +66,7 @@ func TestGetOrg_NotFound(t *testing.T) {
 	m := &pbmocks.RegistryServiceClient{}
 	m.On("GetOrg", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
+	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
 		Registry: client.NewRegistryFromClient(m),
 	}).gin
 
@@ -90,7 +91,7 @@ func TestGetOrg(t *testing.T) {
 		Owner: "owner",
 	}, nil)
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
+	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
 		Registry: client.NewRegistryFromClient(m),
 	}).gin
 
@@ -100,7 +101,7 @@ func TestGetOrg(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	m.AssertExpectations(t)
-	assert.Contains(t, w.Body.String(), `"name":"org-name"`)
+	assert.Contains(t, w.Body.String(), `"name": "org-name"`)
 }
 
 func TestGetNodes(t *testing.T) {
@@ -124,7 +125,7 @@ func TestGetNodes(t *testing.T) {
 			},
 		}, nil)
 
-		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
+		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
 			Registry: client.NewRegistryFromClient(m),
 		}).gin
 
@@ -134,7 +135,7 @@ func TestGetNodes(t *testing.T) {
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
-		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"nodeId":"%s"`, nodeId.String()))
+		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"nodeId": "%s"`, nodeId.String()))
 	})
 
 	t.Run("NoNodesReturned", func(t *testing.T) {
@@ -144,7 +145,7 @@ func TestGetNodes(t *testing.T) {
 			Orgs: []*pb.NodesList{},
 		}, nil)
 
-		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
+		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
 			Registry: client.NewRegistryFromClient(m),
 		}).gin
 
@@ -167,36 +168,9 @@ func Test_HssMethods(t *testing.T) {
 	const firstName = "Joe"
 	const imsi = "0000010000000001"
 
-	m := &hssmocks.UserServiceClient{}
-	m.On("Add", mock.Anything, mock.MatchedBy(func(r *hsspb.AddUserRequest) bool {
-		return r.User.Uuid == userUuid && r.User.FirstName == firstName && r.User.Imsi == imsi
-	})).Return(&hsspb.AddUserResponse{
-		User: &hsspb.User{
-			FirstName: firstName,
-			Uuid:      userUuid,
-			Imsi:      imsi,
-		},
-	}, nil)
-
-	m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteUserRequest) bool {
-		return r.UserUuid == userUuid && r.Org == orgName
-	})).Return(&hsspb.DeleteUserResponse{}, nil)
-
-	m.On("List", mock.Anything, mock.MatchedBy(func(r *hsspb.ListUsersRequest) bool {
-		return r.Org == orgName
-	})).Return(&hsspb.ListUsersResponse{
-		Org: orgName,
-		Users: []*hsspb.User{
-			{
-				FirstName: firstName,
-				Uuid:      userUuid,
-				Imsi:      "",
-			},
-		},
-	}, nil)
-
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, &Clients{
-		Hss: client.NewTestHssFromClient(m),
+	m := hssmocks.UserServiceClient{}
+	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+		Hss: client.NewTestHssFromClient(&m),
 	}).gin
 
 	body, err := json.Marshal(&hsspb.User{FirstName: firstName, Uuid: userUuid, Imsi: imsi})
@@ -206,6 +180,17 @@ func Test_HssMethods(t *testing.T) {
 
 	// tests go here
 	t.Run("AddUser", func(t *testing.T) {
+		m = hssmocks.UserServiceClient{}
+		m.On("Add", mock.Anything, mock.MatchedBy(func(r *hsspb.AddUserRequest) bool {
+			return r.User.FirstName == firstName && r.User.Imsi == imsi
+		})).Return(&hsspb.AddUserResponse{
+			User: &hsspb.User{
+				FirstName: firstName,
+				Uuid:      userUuid,
+				Imsi:      imsi,
+			},
+		}, nil)
+
 		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
 		req.Header.Set("token", "bearer 123")
 		req.Header.Set("Content-Type", "application/json")
@@ -214,12 +199,17 @@ func Test_HssMethods(t *testing.T) {
 		r.ServeHTTP(w, req)
 
 		// assert
-		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Equal(t, http.StatusCreated, w.Code)
 
-		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"uuid":"%s"`, userUuid))
+		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"uuid": "%s"`, userUuid))
+		m.AssertExpectations(t)
 	})
 
 	t.Run("DeleteUser", func(t *testing.T) {
+		m = hssmocks.UserServiceClient{}
+		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteUserRequest) bool {
+			return r.UserUuid == userUuid && r.Org == orgName
+		})).Return(&hsspb.DeleteUserResponse{}, nil)
 		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
@@ -229,9 +219,23 @@ func Test_HssMethods(t *testing.T) {
 
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
+		m.AssertExpectations(t)
 	})
 
 	t.Run("ListUser", func(t *testing.T) {
+		m = hssmocks.UserServiceClient{}
+		m.On("List", mock.Anything, mock.MatchedBy(func(r *hsspb.ListUsersRequest) bool {
+			return r.Org == orgName
+		})).Return(&hsspb.ListUsersResponse{
+			Org: orgName,
+			Users: []*hsspb.User{
+				{
+					FirstName: firstName,
+					Imsi:      userUuid,
+				},
+			},
+		}, nil)
+
 		req, _ := http.NewRequest("GET", "/orgs/"+orgName+"/users", nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
@@ -244,8 +248,7 @@ func Test_HssMethods(t *testing.T) {
 		assert.Contains(t, w.Body.String(), userUuid)
 		assert.Contains(t, w.Body.String(), orgName)
 		assert.Contains(t, w.Body.String(), firstName)
-
+		m.AssertExpectations(t)
 	})
 
-	m.AssertExpectations(t)
 }

@@ -700,7 +700,7 @@ type NodesList struct {
 	unknownFields protoimpl.UnknownFields
 
 	OrgName string  `protobuf:"bytes,1,opt,name=orgName,proto3" json:"orgName,omitempty"`
-	Nodes   []*Node `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	Nodes   []*Node `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes"`
 }
 
 func (x *NodesList) Reset() {

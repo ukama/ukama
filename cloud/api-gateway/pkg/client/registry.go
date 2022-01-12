@@ -46,20 +46,19 @@ func (r *Registry) Close() {
 	r.conn.Close()
 }
 
-func (r *Registry) GetOrg(orgName string) (*pb.Organization, *GrpcClientError) {
+func (r *Registry) GetOrg(orgName string) (*pb.Organization, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
 	res, err := r.client.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
 	if grpcErr, ok := marshalError(err); ok {
-		return nil, grpcErr
+		return nil, *grpcErr
 	}
-
 	return res, nil
 }
 
 // GetOrg returns list of nodes
-func (r *Registry) GetNodes(orgName string) (*pb.NodesList, *GrpcClientError) {
+func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -85,10 +84,15 @@ func (r *Registry) GetNodes(orgName string) (*pb.NodesList, *GrpcClientError) {
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {
-		if err.HttpCode != http.StatusNotFound {
-			return false, nil
+		if gErr, ok := err.(GrpcClientError); ok {
+			if gErr.HttpCode != http.StatusNotFound {
+				return false, nil
+			}
+
+			return false, gErr
+		} else {
+			return false, fmt.Errorf(err.Error())
 		}
-		return false, fmt.Errorf(err.Message)
 	}
 	if orgResp.Owner == userId {
 		return true, nil

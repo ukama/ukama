@@ -23,7 +23,7 @@ func SendErrorResponseFromGet(c *gin.Context, entityType string, err error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		ThrowError(c, http.StatusNotFound, entityType+" not found", "", err)
 	} else {
-		ThrowError(c, http.StatusInternalServerError, "Error finding the "+entityType, "", err)
+		ThrowError(c, http.StatusInternalServerError, "Error getting the "+entityType, "", err)
 	}
 }
 

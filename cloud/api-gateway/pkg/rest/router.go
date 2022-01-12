@@ -2,6 +2,14 @@ package rest
 
 import (
 	"fmt"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
+	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/swagger"
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	"github.com/ukama/ukamaX/common/config"
+	"github.com/wI2L/fizz"
+	"github.com/wI2L/fizz/openapi"
+	ginprometheus "github.com/zsais/go-gin-prometheus"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -12,7 +20,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	urest "github.com/ukama/ukamaX/common/rest"
 )
 
 const ORG_URL_PARAMETER = "org"
@@ -23,6 +30,7 @@ type Router struct {
 	authMiddleware AuthMiddleware
 	cors           cors.Config
 	clients        *Clients
+	metricsConfig  config.Metrics
 }
 
 type Clients struct {
@@ -46,11 +54,13 @@ func NewRouter(port int,
 	debugMode bool,
 	authMiddleware AuthMiddleware,
 	cors cors.Config,
+	metrics config.Metrics,
 	clients *Clients) *Router {
 	r := &Router{
 		authMiddleware: authMiddleware,
 		clients:        clients,
 		cors:           cors,
+		metricsConfig:  metrics,
 	}
 	if !debugMode {
 		gin.SetMode(gin.ReleaseMode)
@@ -73,101 +83,107 @@ func (r *Router) init(port int) {
 	r.gin.Use(cors.New(r.cors))
 	r.port = port
 
-	authorized := r.gin.Group("/")
+	if r.metricsConfig.Enabled {
+		prometheus := ginprometheus.NewPrometheus("api_gateway")
+		prometheus.SetListenAddress(fmt.Sprint(":", r.metricsConfig.Port))
+		prometheus.Use(r.gin)
+	}
 
-	authorized.Use(r.authMiddleware.IsAuthenticated).Use(r.authMiddleware.IsAuthorized)
+	tonic.SetErrorHook(errorHook)
+
+	f := fizz.NewFromEngine(r.gin)
+
+	authorized := f.Group("/", "Authorization", "Requires authorization", r.authMiddleware.IsAuthenticated,
+		r.authMiddleware.IsAuthorized)
+
+	authorized.Use()
 	{
 		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
+		authorized.GET(org, []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
+
 		// registry
-		authorized.GET(org, r.orgHandler)
-		authorized.GET(org+"/nodes", r.nodesHandler)
+		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
+		nodes.GET("", nil, tonic.Handler(r.nodesHandler, http.StatusOK))
 
 		// hss
-		// returns list of users
-
-		authorized.GET(org+"/users", r.getUsersHandler)
-		authorized.POST(org+"/users", r.postUsersHandler)
-		authorized.DELETE(org+"/users/:user", r.deleteUserHandler)
+		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
+			"Do not confuse with organization users")
+		hss.GET("", nil, tonic.Handler(r.getUsersHandler, http.StatusOK))
+		authorized.POST(org+"/users", []fizz.OperationOption{}, tonic.Handler(r.postUsersHandler, http.StatusCreated))
+		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
 	}
 
-	r.gin.GET("/ping", r.pingHandler)
+	f.GET("/ping", nil, tonic.Handler(r.pingHandler, http.StatusOK))
+
+	infos := &openapi.Info{
+		Title:       "Ukama API Gateway",
+		Description: `Ukam API Gateway server`,
+		Version:     version.Version,
+	}
+	f.GET("/openapi.json", nil, f.OpenAPI(infos, "json"))
+	swagger.AddOpenApiUIHandler(r.gin, "swagger-ui", "/openapi.json")
+}
+
+func errorHook(c *gin.Context, e error) (int, interface{}) {
+	if e == nil {
+		logrus.Errorf("This erro means that something is broken but it's no clear what. Usually something bad with serialization")
+		return 0, nil
+	}
+	errcode, errpl := 500, e.Error()
+	if _, ok := e.(tonic.BindError); ok {
+		errcode = 400
+		errpl = e.Error()
+	} else {
+		if gErr, ok := e.(client.GrpcClientError); ok {
+			errcode = gErr.HttpCode
+			errpl = gErr.Message
+		}
+	}
+
+	return errcode, gin.H{`error`: errpl}
 }
 
 func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
 	return c.Param("org")
 }
 
-func (r *Router) orgHandler(c *gin.Context) {
+func (r *Router) orgHandler(c *gin.Context) (*pb.Organization, error) {
 	orgName := r.getOrgNameFromRoute(c)
-	resp, err := r.clients.Registry.GetOrg(orgName)
-
-	if err != nil {
-		urest.ThrowError(c, err.HttpCode, err.Message, "", nil)
-		return
-	}
-	c.JSON(http.StatusOK, resp)
+	return r.clients.Registry.GetOrg(orgName)
 }
 
-func (r *Router) nodesHandler(c *gin.Context) {
+func (r *Router) nodesHandler(c *gin.Context) (*pb.NodesList, error) {
 	orgName := r.getOrgNameFromRoute(c)
 
-	resp, err := r.clients.Registry.GetNodes(orgName)
-	if err != nil {
-		urest.ThrowError(c, err.HttpCode, "Registry request failed. Error:"+err.Message, "", nil)
-		return
-	}
-
-	mResp, err := client.MarshallResponse(nil, resp)
-	if err != nil {
-		urest.ThrowError(c, err.HttpCode, "Failed marshaling response. Error:"+err.Message, "", nil)
-		return
-	}
-	c.Header("Content-Type", "application/json")
-
-	c.String(http.StatusOK, mResp)
+	return r.clients.Registry.GetNodes(orgName)
 }
 
-func (rt *Router) pingHandler(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
+type PingResponse struct {
+	Message string `json:"message"`
+}
+
+func (rt *Router) pingHandler(c *gin.Context) (*PingResponse, error) {
+	return &PingResponse{Message: "pong"}, nil
+}
+
+func (r *Router) getUsersHandler(c *gin.Context) (*hsspb.ListUsersResponse, error) {
+	orgName := r.getOrgNameFromRoute(c)
+	return r.clients.Hss.GetUsers(orgName)
+}
+
+func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddUserResponse, error) {
+	return r.clients.Hss.AddUser(req.Org, &hsspb.User{
+		Imsi:      req.Imsi,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Email:     req.Email,
+		Phone:     req.Phone,
 	})
 }
 
-func (r *Router) getUsersHandler(c *gin.Context) {
-	orgName := r.getOrgNameFromRoute(c)
-	resp, err := r.clients.Hss.GetUsers(orgName)
-
-	if err != nil {
-		urest.ThrowError(c, err.HttpCode, err.Message, "", nil)
-		return
-	}
-
-	c.JSON(http.StatusOK, resp)
-}
-
-func (r *Router) postUsersHandler(c *gin.Context) {
-	var user hsspb.User
-	orgName := r.getOrgNameFromRoute(c)
-	err := c.ShouldBind(&user)
-	if err != nil {
-		urest.ThrowError(c, http.StatusInternalServerError, err.Error(), "", nil)
-		return
-	}
-
-	resp, grpcErr := r.clients.Hss.AddUser(orgName, &user)
-	if grpcErr != nil {
-		urest.ThrowError(c, grpcErr.HttpCode, "Failed to add a user", grpcErr.Message, nil)
-		return
-	}
-	c.JSON(http.StatusOK, resp)
-}
-
-func (r *Router) deleteUserHandler(c *gin.Context) {
+func (r *Router) deleteUserHandler(c *gin.Context) error {
 	orgName := r.getOrgNameFromRoute(c)
 	userId := c.Param("user")
-	_, err := r.clients.Hss.Delete(orgName, userId)
-	if err != nil {
-		urest.ThrowError(c, http.StatusInternalServerError, err.Message, "", nil)
-	}
+	return r.clients.Hss.Delete(orgName, userId)
 }

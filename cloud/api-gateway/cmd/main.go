@@ -28,7 +28,7 @@ func main() {
 		authMiddleware = rest.NewDebugAuthMiddleware()
 	}
 
-	r := rest.NewRouter(svcConf.Port, svcConf.DebugMode, authMiddleware, svcConf.Cors, clientSet)
+	r := rest.NewRouter(svcConf.Port, svcConf.DebugMode, authMiddleware, svcConf.Cors, svcConf.Metrics, clientSet)
 	r.Run()
 }
 

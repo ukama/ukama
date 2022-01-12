@@ -11,7 +11,8 @@ type Config struct {
 	Port              int
 	BypassAuthMode    bool
 	Cors              cors.Config
-	Services          GrpcEndpoints `mapstructure:"services"`
+	Services          GrpcEndpoints  `mapstructure:"services"`
+	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
 type Kratos struct {
@@ -43,6 +44,7 @@ func NewConfig() *Config {
 			Registry:       "registry:9090",
 			Hss:            "hss:9090",
 		},
-		Cors: defaultCors,
+		Cors:    defaultCors,
+		Metrics: *config.DefaultMetrics(),
 	}
 }
