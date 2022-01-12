@@ -32,6 +32,7 @@ int build_capp(Config *config) {
    * 3. copy the binary to rootfs
    * 4. Make any additional directories within rootfs
    * 5. Copy any config file to rootfs
+   * 6. Copy libs for non-static
    */
 
   if (config == NULL) return FALSE;
@@ -61,5 +62,9 @@ int build_capp(Config *config) {
   sprintf(runMe, "%s cp %s %s", SCRIPT, build->from, build->to);
   if (system(runMe) < 0) return FALSE;
 
+  if (!build->staticFlag) {
+    sprintf(runMe, "%s libs %s", SCRIPT, build->from);
+    if (system(runMe) < 0) return FALSE;
+  }
   return TRUE;
 }

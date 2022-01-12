@@ -82,7 +82,23 @@ build_app() {
 
     cd ${SRC} && ${CMD} && cd ${CWD}
 }
-    
+
+#
+# copy all the required lib to rootfs
+#
+copy_all_libs() {
+
+    BIN=$1
+
+    for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
+    do
+        if [ -f "${lib}" ]; then
+            cp --parents "${lib}" ${ROOTFS}
+            cp "${lib}" ${ROOTFS}/lib
+        fi
+    done
+}
+
 #
 # Build the usr directory structure
 #
@@ -246,6 +262,9 @@ case "$ACTION" in
 	;;
     "mkdir")
 	mkdir ${ROOTFS}/$2
+	;;
+    "libs")
+	copy_all_libs $2
 	;;
     "rename")
 	mv ${ROOTFS} $2

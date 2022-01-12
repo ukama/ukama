@@ -16,12 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <sys/stat.h>
 
 #include "config.h"
 #include "log.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
+#define MAX_BUFFER    256
 
 enum {
   CAPP_CMD_NONE=0,
@@ -69,7 +71,9 @@ int main (int argc, char *argv[]) {
   int cmd=CAPP_CMD_NONE, ret=FALSE;
   int exitStatus=1;
   char *configFile=NULL;
+  char cappFile[MAX_BUFFER] = {0};
   char *debug=DEF_LOG_LEVEL;
+  struct stat st;
   Config *config=NULL;
   
   /* Prase command line args. */
@@ -157,6 +161,10 @@ int main (int argc, char *argv[]) {
     log_error("Error creating the capp using: %s", configFile);
     goto done;
   }
+
+  sprintf(cappFile, "%s_%s.tar.gz", config->capp->name, config->capp->version);
+  stat(cappFile, &st);
+  log_debug("All done. cApp: %s Size: %dK", cappFile, (int)st.st_size/1000);
 
   exitStatus = 0;
 
