@@ -36,8 +36,8 @@ type Node struct {
 	ID        uint32 `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index;uniqueIndex:node_id_idx_case_insensitive"`
-	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id);size:23"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
 	OrgID     uint32
 	Org       *Org
 	NetworkID *uint32
