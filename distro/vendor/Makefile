@@ -43,8 +43,8 @@ export XCXX = $(XGCCPATH)$(XGXX)
 export XCC  = $(XGCCPATH)$(XGCC)
 export LD   = $(XGCCPATH)$(XLD)
 
-INC_FLAGS = -I.
-INC_FLAGS+= -I$(DEPDIR)/include
+INC_FLAGS  = -I.
+INC_FLAGS += -I$(DEPDIR)/include
 
 ifeq ($(TARGET), "anode")
 	INC_FLAGS+= -I$(XGCCPATH)../arm-linux-musleabihf/include
@@ -413,9 +413,9 @@ dhcpcd:
 	$(call print_msg,"dhcpcd")
 	(cd $@ && \
 	./configure --small --disable-inet6 --disable-embedded \
-		--libexecdir-/lib/dhcpcd dbdir=/var/lib/dhcpcd && \
-	$(MAKE) && \
-	$(MAKE) DESTDIR=${DEPDIR} install && \
+		--libexecdir=/lib/dhcpcd dbdir=/var/lib/dhcpcd && \
+	$(MAKE) CC="${XCC}"  && \
+	$(MAKE) CC="${XCC}" DESTDIR=${DEPDIR} install && \
 	cd ./src && $(MAKE) clean && cd ..)
 	$(call post_build_cleanup,$@/src/build)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -423,7 +423,7 @@ dhcpcd:
 sysctl:
 	$(call print_msg,"sysctl")
 	(cd $@ && \
-	$(MAKE) clean && $(MAKE) && \
+	$(MAKE) clean && $(MAKE) CC="${XCC}" && \
 	cp ./sysctl ${DEPDIR}/sbin && \
 	cp 00-linuxkit.conf ${DEPDIR}/etc && \
 	$(MAKE) clean)
