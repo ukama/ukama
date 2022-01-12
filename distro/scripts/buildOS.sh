@@ -131,7 +131,7 @@ build_init() {
     # build and copy init micros
     cd ${MICRO_INIT_ROOT}
     make clean; make
-    copy_file ${PREINIT_REL}/preInit ${ROOTFS}/boot/
+    copy_file ${PREINIT_REL}/preInit ${ROOTFS}
     copy_file ${SYSINIT_REL}/sysInit ${ROOTFS}/boot/
 
     # now build main init
@@ -267,12 +267,17 @@ build_rootfs_dirs() {
     DIRS="dev  ${DIRS}"
     DIRS="conf ${DIRS}"
     DIRS="mnt  ${DIRS}"
+    DIRS="proc ${DIRS}"
+    DIRS="run  ${DIRS}"
     DIRS="var/log ${DIRS}"
 
     cd ${ROOTFS}
     mkdir -p ${DIRS}
     build_etc_dirs
     build_usr_dirs
+
+    touch proc/mounts var/log/wtmp var/log/lastlog
+    sync
 
     cd ../
 
@@ -285,6 +290,8 @@ build_rootfs_dirs() {
 setup_etc() {
 
     cd ${ROOTFS}/etc/
+
+    printf "/dev/mmcblk0p1  /mmc  auto  errors=remount-ro  0  1" >> ./fstab
 
     printf "${OS_VERSION_ID}\n" > ./ukama-release
     printf "${HOSTNAME}\n"   > ./hostname
@@ -355,6 +362,23 @@ EOF
     cp ../../files/services  ./services
 
     cd ../../
+
+    sync
+}
+
+#
+# setup_device
+#
+setup_device() {
+
+    CWD=`pwd`
+
+    cd ${ROOTFS}
+    mknod dev/console c 5 1
+    mknod dev/tty c 5 0
+    sync
+
+    cd ${CWD}
 }
 
 #
@@ -431,6 +455,9 @@ build_lxce
 log_info "Setting up /etc contents under rootfs"
 setup_etc
 
+log_info "Setting up /dev"
+setup_device
+
 log_info "Copying all lib for executables"
 EXEC="${ROOTFS}/sbin/busybox"
 EXEC="${ROOTFS}/boot/preInit ${EXEC}"
@@ -440,10 +467,23 @@ EXEC="${ROOTFS}/sbin/lxce.d  ${EXEC}"
 copy_all_libs ${EXEC}
 
 # Change ownership and create archieve
-log_info "Changing ownership and creating cpio archive"
+log_info "Changing ownership, updating permission and creating cpio archive"
 cd ${ROOTFS}
+
+chmod 640  etc/shadow
+chmod 664  var/log/lastlog var/log/wtmp
+chmod 4755 bin/busybox
+chmod 755  usr/sbin/nologin
+chmod 644  etc/passwd etc/group etc/hostname etc/shells etc/hosts etc/fstab \
+      etc/issue etc/motd etc/profile
+
+sudo chown root:root .
 sudo chown -R root:root *
-find . | cpio  --quiet -H newc -o | gzip -9 -n > ${WD}/ukamaOS.img
+
+sync
+
+#Archive it up
+sudo find . | cpio  --quiet -H newc -o | gzip -9 -n > ${WD}/ukamaOS.img
 cd ${WD}
 
 TOTAL_ROOTFS_SIZE=`du -chs ${ROOTFS} | awk '{print $1}' | uniq`
