@@ -110,7 +110,7 @@ func (r *Router) init(port int) {
 		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
 			"Do not confuse with organization users")
 		hss.GET("", nil, tonic.Handler(r.getUsersHandler, http.StatusOK))
-		authorized.POST(org+"/users", []fizz.OperationOption{}, tonic.Handler(r.postUsersHandler, http.StatusCreated))
+		hss.POST("", []fizz.OperationOption{}, tonic.Handler(r.postUsersHandler, http.StatusCreated))
 		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
 	}
 
@@ -122,7 +122,7 @@ func (r *Router) init(port int) {
 		Version:     version.Version,
 	}
 	f.GET("/openapi.json", nil, f.OpenAPI(infos, "json"))
-	swagger.AddOpenApiUIHandler(r.gin, "swagger-ui", "/openapi.json")
+	swagger.AddOpenApiUIHandler(r.gin, "swagger", "/openapi.json")
 }
 
 func errorHook(c *gin.Context, e error) (int, interface{}) {

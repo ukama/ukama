@@ -28,6 +28,7 @@ type GrpcEndpoints struct {
 func NewConfig() *Config {
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
+	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
 
 	return &Config{
 		Kratos: Kratos{
