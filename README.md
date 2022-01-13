@@ -6,15 +6,6 @@
 
 
 
-## How to try
-
-Clone: `https://github.com/ukama/ukama-bff.git`
-
-After cloning run below command:
-
-    yarn 
-
-
 ## Project Folder Structure
 
     .
@@ -39,25 +30,37 @@ After cloning run below command:
     ├── tsconfig.json           # typescript configrations and Rules.
     └── package.json            # Include app metadata, dependencies and scripts.
 
-## Scripts
+## Contribute
 
-    yarn lint
+### Dev Container
+The repository supports [dev container](https://code.visualstudio.com/docs/remote/containers). To start working, clone the repo and reopen it in VS Remote Container. Mase user you have [Remote Development extenstion installed](https://aka.ms/vscode-remote/download/extension)
+
+[![VS Code Container](https://img.shields.io/static/v1?label=VS+Code&message=Container&logo=visualstudiocode&color=007ACC&logoColor=007ACC&labelColor=2C2C32)](https://open.vscode.dev/microsoft/vscode)
+
+
+### Otherwise
+
+Clone repository `git clone https://github.com/ukama/ukama-bff.git` and run `yarn`
+
+### Scripts 
+    `yarn lint`
 
 This script will tell all linting issues.
 
-    yarn dev
+    `yarn dev`
 
 This script will start the project in development.
 
-    yarn build
+    `yarn build`
 
 This script will build the project.
 
-    yarn test
+    `yarn test`
 
 This script will run unit tests.
 
 
-    yarn start
+    `yarn start`
 
 This script will start the project in production.
+
