@@ -356,25 +356,25 @@ int read_config_file(Config *config, char *fileName) {
   }
 
   /* get all mandatory tables for build and capp */
-  if (!get_table(fileData, TABLE_BUILD_FROM,    &buildFrom)) goto cleanup;
-  if (!get_table(fileData, TABLE_BUILD_COMPILE, &buildCompile)) goto cleanup;
-  if (!get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs)) goto cleanup;
-  if (!get_table(fileData, TABLE_BUILD_CONF,    &buildConf)) goto cleanup;
-  if (!get_table(fileData, TABLE_CAPP_EXEC,     &cappExec)) goto cleanup;
-  if (!get_table(fileData, TABLE_CAPP_OUTPUT,   &cappOutput)) goto cleanup;
+  if (!get_table(fileData, TABLE_BUILD_FROM,    &buildFrom))    goto done;
+  if (!get_table(fileData, TABLE_BUILD_COMPILE, &buildCompile)) goto done;
+  if (!get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs))  goto done;
+  if (!get_table(fileData, TABLE_BUILD_CONF,    &buildConf))    goto done;
+  if (!get_table(fileData, TABLE_CAPP_EXEC,     &cappExec))     goto done;
+  if (!get_table(fileData, TABLE_CAPP_OUTPUT,   &cappOutput))   goto done;
 
   ret = read_build_config(config, fileName, buildFrom, buildCompile,
 			  buildRootfs, buildConf);
-  if (ret == FALSE) goto cleanup;
+  if (ret == FALSE) goto done;
 
   ret = read_capp_config(config, fileName, cappExec, cappOutput);
-  if (ret == FALSE) goto cleanup;
+  if (ret == FALSE) goto done;
 
+  ret=TRUE;
+
+ done:
+  toml_free(fileData);
   return ret;
-
- cleanup:
-
-  return FALSE;
 }
 
 /*
@@ -391,10 +391,14 @@ void clear_config(Config *config, int flag) {
 
     build = config->build;
 
-    if (build->source) free(build->source);
-    if (build->cmd) free(build->cmd);
+    if (build->rootfs)    free(build->rootfs);
+    if (build->contained) free(build->contained);
+
+    if (build->version) free(build->version);
+    if (build->source)  free(build->source);
+    if (build->cmd)     free(build->cmd);
     if (build->binFrom) free(build->binFrom);
-    if (build->binTo) free(build->binTo);
+    if (build->binTo)   free(build->binTo);
 
     if (build->mkdir) free(build->mkdir);
 

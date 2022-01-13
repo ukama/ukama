@@ -169,7 +169,7 @@ int main (int argc, char *argv[]) {
   exitStatus = 0;
 
  done:
-  clear_config(config, BUILD_ONLY & CAPP_ONLY);
+  clear_config(config, BUILD_ONLY | CAPP_ONLY);
   free(config);
   return exitStatus;
 }
