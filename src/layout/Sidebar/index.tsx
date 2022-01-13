@@ -13,7 +13,9 @@ import {
 } from "@mui/material";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
+import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
+import { isDarkMod } from "../../recoil";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper, UpgradeNavFooter } from "../../components";
@@ -34,9 +36,6 @@ const useStyles = makeStyles(() => ({
         marginTop: "8px",
         padding: "8px 12px",
         borderRadius: "4px",
-    },
-    listItemDoneText: {
-        // color: colors.vulcan,
     },
 }));
 
@@ -61,6 +60,7 @@ const Sidebar = (
     const { window } = props;
     const classes = useStyles();
     const history = useHistory();
+    const _isDarkMod = useRecoilValue(isDarkMod);
 
     const MenuList = (list: any) => (
         <List sx={{ padding: "8px 20px" }}>
@@ -79,16 +79,19 @@ const Sidebar = (
                     }
                 >
                     <ListItemIcon sx={{ minWidth: "44px" }}>
-                        <Icon color={colors.vulcan} />
+                        <Icon
+                            fontSize="medium"
+                            sx={{
+                                fill: _isDarkMod ? colors.white : colors.vulcan,
+                            }}
+                        />
                     </ListItemIcon>
                     <ListItemText>
                         <Typography
                             variant="body1"
                             fontWeight={title === page ? "bold" : "normal"}
                             className={
-                                title === page
-                                    ? classes.listItemDoneText
-                                    : classes.listItemText
+                                title !== page ? classes.listItemText : ""
                             }
                         >
                             {title}

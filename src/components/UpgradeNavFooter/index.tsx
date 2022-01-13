@@ -39,7 +39,11 @@ const UpgradeNavFooter = () => {
                 <UpgradeIcon />
             </Box>
             <Box className={classes.container}>
-                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                <Typography
+                    variant="body2"
+                    color={"black"}
+                    sx={{ textAlign: "center" }}
+                >
                     Enjoy more features with Ukama Pro!
                 </Typography>
                 <Button

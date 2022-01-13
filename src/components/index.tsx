@@ -3,6 +3,7 @@ import UserCard from "./UserCard";
 import NodeCard from "./NodesCard";
 import StatsCard from "./StatsCard";
 import TabLayout from "./TabLayout";
+import EmptyView from "./EmptyView";
 import NodeStatus from "./NodeStatus";
 import StatusCard from "./StatusCard";
 import TextSelect from "./TextSelect";
@@ -41,6 +42,7 @@ import {
 export {
     Alerts,
     NodeCard,
+    EmptyView,
     TabLayout,
     StatsCard,
     UserCard,

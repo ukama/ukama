@@ -83,9 +83,7 @@ const RoundedCard = styled(Paper)(props => ({
     borderRadius: "10px",
     display: "inline-block",
     background:
-        props.theme.palette.mode === "dark"
-            ? colors.gradiantDarkBG
-            : colors.white,
+        props.theme.palette.mode === "dark" ? colors.darkGreen05 : colors.white,
     boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
     [props.theme.breakpoints.down("sm")]: {
         padding: "18px",

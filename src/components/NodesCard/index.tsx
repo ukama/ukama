@@ -1,49 +1,32 @@
 import {
     CpuIcon,
     NodeImg,
-    UsersIcon,
-    HistoryIcon,
     BatteryIcon,
     ThermometerIcon,
 } from "../../assets/svg";
 import { colors } from "../../theme";
-import { makeStyles } from "@mui/styles";
 import OptionsPopover from "../OptionsPopover";
 import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
-import { Paper, Typography, Stack, Grid, Divider } from "@mui/material";
-const useStyles = makeStyles(() => ({
-    container: {
-        width: "214px",
-        height: "206px",
-        display: "flex",
-        alignItems: "center",
-        padding: "15px 18px 8px 18px",
-        borderRadius: "10px",
-        justifyContent: "center",
-        background: colors.white,
-    },
-    textStyle: {
-        height: "20px",
-        overflow: "hidden",
-        display: "-webkit-box",
-        textOverflow: "ellipsis",
-    },
+import UsersIcon from "@mui/icons-material/PeopleAlt";
+import { Typography, Grid, Divider, Box, styled } from "@mui/material";
+
+const Container = styled(Box)((props: any) => ({
+    width: "214px",
+    height: "206px",
+    display: "flex",
+    alignItems: "center",
+    padding: "15px 18px 8px 18px",
+    borderRadius: "10px",
+    justifyContent: "center",
+    background:
+        props.theme.palette.mode === "dark" ? colors.darkGreen12 : colors.white,
 }));
 
 const IconStyle = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-};
-
-const ConfigureNode = () => {
-    return (
-        <Stack spacing={2} alignItems="center">
-            <Typography variant="body2">Configuring your node</Typography>
-            <HistoryIcon />
-        </Stack>
-    );
 };
 
 type NodeCardProps = {
@@ -60,20 +43,10 @@ const NodeCard = ({
     users,
     subTitle,
     loading,
-    isConfigure = false,
     handleOptionItemClick = () => {
         /* Default empty function */
     },
 }: NodeCardProps) => {
-    const classes = useStyles();
-
-    if (isConfigure)
-        return (
-            <Paper className={classes.container}>
-                <ConfigureNode />
-            </Paper>
-        );
-
     return (
         <>
             {loading ? (
@@ -83,18 +56,21 @@ const NodeCard = ({
                     height={206}
                 />
             ) : (
-                <Paper className={classes.container}>
+                <Container>
                     <Grid container spacing={0.8}>
                         <Grid item xs={10}>
                             <Grid textAlign="initial">
                                 <Typography
                                     variant="subtitle1"
                                     sx={{
+                                        height: "20px",
                                         fontWeight: 500,
-                                        letterSpacing: "-0.02em",
+                                        overflow: "hidden",
                                         lineHeight: "19px",
+                                        display: "-webkit-box",
+                                        letterSpacing: "-0.02em",
+                                        textOverflow: "ellipsis",
                                     }}
-                                    className={classes.textStyle}
                                 >
                                     {title}
                                 </Typography>
@@ -141,9 +117,9 @@ const NodeCard = ({
                                 pt="0px !important"
                             >
                                 <UsersIcon
+                                    fontSize="small"
                                     width="16px"
                                     height="16px"
-                                    color={colors.black}
                                 />
                                 <Typography variant="caption" pl="8px">
                                     {users}
@@ -160,7 +136,7 @@ const NodeCard = ({
                             </Grid>
                         </Grid>
                     </Grid>
-                </Paper>
+                </Container>
             )}
         </>
     );

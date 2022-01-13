@@ -1,0 +1,24 @@
+import { ElementType } from "react";
+import { Stack, Typography } from "@mui/material";
+
+interface IEmptyView {
+    icon: ElementType;
+    title: string;
+    size?: "small" | "medium" | "large";
+}
+const EmptyView = ({ title, icon: Icon, size = "medium" }: IEmptyView) => {
+    return (
+        <Stack
+            spacing={1}
+            sx={{
+                width: "100%",
+                alignItems: "center",
+            }}
+        >
+            <Typography variant="body1">{title}</Typography>
+            <Icon fontSize={size} />
+        </Stack>
+    );
+};
+
+export default EmptyView;

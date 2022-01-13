@@ -56,9 +56,9 @@ const theme = (isDarkMod: boolean) =>
             MuiListItem: {
                 styleOverrides: {
                     button: {
-                        "&:hover": {
-                            backgroundColor: colors.aliceBlue,
-                        },
+                        // "&:hover": {
+                        //     backgroundColor: colors.aliceBlue,
+                        // },
                     },
                 },
             },
@@ -103,6 +103,13 @@ const theme = (isDarkMod: boolean) =>
                 styleOverrides: {
                     paper: {
                         borderRight: "none",
+                    },
+                },
+            },
+            MuiTableCell: {
+                styleOverrides: {
+                    root: {
+                        backgroundColor: "transparent",
                     },
                 },
             },
