@@ -162,7 +162,8 @@ int main (int argc, char *argv[]) {
     goto done;
   }
 
-  sprintf(cappFile, "%s_%s.tar.gz", config->capp->name, config->capp->version);
+  sprintf(cappFile, "pkgs/%s_%s.tar.gz", config->capp->name,
+	  config->capp->version);
   stat(cappFile, &st);
   log_debug("All done. cApp: %s Size: %dK", cappFile, (int)st.st_size/1000);
 

@@ -14,7 +14,7 @@
 
 #include "config.h"
 
-#define SCRIPT "./mk_capp_rootfs.sh"
+#define SCRIPT "./scripts/mk_capp_rootfs.sh"
 #define MAX_BUFFER   1024
 
 /*

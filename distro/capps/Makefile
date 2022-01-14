@@ -5,11 +5,11 @@
 # Makefile for capp utility
 #
 
-include ../../../config.mk
+include ../../config.mk
 
 TARGET_EXEC = capp
 
-UKAMAOS_ROOT = ../../..
+UKAMAOS_ROOT = ../..
 
 VENDOR_DIR   = $(UKAMAOS_ROOT)/distro/vendor/
 VENDOR_BUILD = $(VENDOR_DIR)/build/

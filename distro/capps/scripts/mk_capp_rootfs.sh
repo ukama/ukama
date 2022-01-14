@@ -6,7 +6,7 @@
 # Used by the capp utility program
 
 # Base parameters
-UKAMA_OS=`realpath ../../../.`
+UKAMA_OS=`realpath ../../.`
 SYS_ROOT=${UKAMA_OS}/distro/
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
 BB_ROOT=${UKAMA_OS}/distro/system/busybox
@@ -278,7 +278,8 @@ case "$ACTION" in
 	fi
 	;;
     "pack")
-	tar -czf $2 $3
+	mkdir -p pkgs
+	tar -czf pkgs/$2 $3
 	if [ $4 -eq 1 ]
 	then
 	    rm -rf $3 ${ROOTFS}
