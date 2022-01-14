@@ -11,20 +11,32 @@ import {
     HorizontalContainer,
 } from "../../styles";
 import {
-    Box,
     Grid,
     Button,
     Divider,
     MenuList,
     MenuItem,
     Typography,
+    Card,
+    CardActions,
+    CardContent,
 } from "@mui/material";
+import {
+    pageName,
+    isDarkMod,
+    isSkeltonLoading,
+    organizationId,
+} from "../../recoil";
+import {
+    useRecoilState,
+    useRecoilValue,
+    useResetRecoilState,
+    useSetRecoilState,
+} from "recoil";
 import { colors } from "../../theme";
 import { useHistory } from "react-router-dom";
 import { SettingsMenuTypes } from "../../types";
 import React, { useEffect, useState } from "react";
-import { isSkeltonLoading, organizationId, pageName } from "../../recoil";
-import { useRecoilState, useResetRecoilState, useSetRecoilState } from "recoil";
 import { APP_VERSION, COPY_RIGHTS, SETTING_MENU } from "../../constants";
 
 interface TabPanelProps {
@@ -42,7 +54,7 @@ const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
     <MenuItem
         selected={isSelected}
         onClick={handleItemClick}
-        sx={{ color: `${label === "Log out" ? colors.red900 : "black"}` }}
+        sx={{ color: `${label === "Log out" ? colors.red900 : "primary"}` }}
     >
         {label}
     </MenuItem>
@@ -55,8 +67,8 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
             hidden={value !== index}
             style={{
                 width: "100%",
-                height: "100%",
-                position: "relative",
+                height: "400px",
+                overflowY: "scroll",
             }}
             id={`currentTab-indexpanel-${index}`}
             aria-labelledby={`currentTab-index-${index}`}
@@ -70,13 +82,7 @@ const ActionButtons = ({
     handleCancelAction,
     handleSaveAction,
 }: ActionButtonsProps) => (
-    <VerticalContainer
-        sx={{
-            right: 0,
-            bottom: 0,
-            position: "absolute",
-        }}
-    >
+    <VerticalContainer>
         <Divider sx={{ width: "100%" }} />
         <HorizontalContainer
             sx={{
@@ -101,6 +107,7 @@ const ActionButtons = ({
 const Settings = () => {
     const history = useHistory();
     const [menuId, setMenuId] = useState(1);
+    const _isDarkMod = useRecoilValue(isDarkMod);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(organizationId);
@@ -128,14 +135,25 @@ const Settings = () => {
     };
 
     return (
-        <Box p="40px 85px" height="100%">
-            <Box height="98%">
+        <Card
+            sx={{
+                height: "100%",
+                display: "flex",
+                overflow: "scroll",
+                flexDirection: "column",
+                p: "40px 85px 20px 85px",
+                backgroundColor: _isDarkMod ? colors.black : colors.solitude,
+                justifyContent: "space-between",
+            }}
+        >
+            <CardContent>
                 <Grid container spacing={2} height="80%">
                     <Grid item xs={12} md={3}>
                         <LoadingWrapper height={237} isLoading={skeltonLoading}>
                             <RoundedCard
                                 sx={{
                                     p: "12px 20px",
+                                    position: "relative",
                                     height: "fit-content",
                                 }}
                             >
@@ -169,53 +187,54 @@ const Settings = () => {
                         sx={{ mb: "18px", height: "90%" }}
                     >
                         <LoadingWrapper height={364} isLoading={skeltonLoading}>
-                            <RoundedCard sx={{ p: "40px 44px 24px" }}>
-                                <TabPanel index={1} value={menuId}>
-                                    <UserSettings />
+                            <Card
+                                sx={{
+                                    padding: "18px 28px",
+                                    borderRadius: "10px",
+                                    boxShadow:
+                                        "2px 2px 6px rgba(0, 0, 0, 0.05)",
+                                }}
+                            >
+                                <CardContent>
+                                    <TabPanel index={1} value={menuId}>
+                                        <UserSettings />
+                                    </TabPanel>
+                                    <TabPanel value={menuId} index={2}>
+                                        <NetworkSettings />
+                                    </TabPanel>
+                                    <TabPanel value={menuId} index={3}>
+                                        <AlertSettings />
+                                    </TabPanel>
+                                    <TabPanel value={menuId} index={4}>
+                                        <NodeSettings />
+                                    </TabPanel>
+                                </CardContent>
+                                <CardActions>
                                     <ActionButtons
                                         handleSaveAction={handleSave}
                                         handleCancelAction={handleCancel}
                                     />
-                                </TabPanel>
-                                <TabPanel value={menuId} index={2}>
-                                    <NetworkSettings />
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </TabPanel>
-                                <TabPanel value={menuId} index={3}>
-                                    <AlertSettings />
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </TabPanel>
-                                <TabPanel value={menuId} index={4}>
-                                    <NodeSettings />
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </TabPanel>
-                            </RoundedCard>
+                                </CardActions>
+                            </Card>
                         </LoadingWrapper>
                     </Grid>
                 </Grid>
-            </Box>
-            {!skeltonLoading && (
-                <Typography
-                    variant={"caption"}
-                    sx={{
-                        display: "block",
-                        textAlign: "center",
-                        color: colors.empress,
-                    }}
-                >
-                    {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
-                </Typography>
-            )}
-        </Box>
+            </CardContent>
+            <CardActions sx={{ alignItems: "center", display: "contents" }}>
+                {!skeltonLoading && (
+                    <Typography
+                        variant={"caption"}
+                        sx={{
+                            display: "block",
+                            textAlign: "center",
+                            color: colors.empress,
+                        }}
+                    >
+                        {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}
+                    </Typography>
+                )}
+            </CardActions>
+        </Card>
     );
 };
 

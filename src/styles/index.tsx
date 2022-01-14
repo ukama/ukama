@@ -97,10 +97,13 @@ const SkeletonRoundedCard = styled(Skeleton)(() => ({
     display: "inline-block",
 }));
 
-const FullscreenContainer = styled(Box)(() => ({
+const FullscreenContainer = styled(Box)(props => ({
     width: "100%",
     height: "100%",
-    backgroundColor: colors.solitude,
+    background:
+        props.theme.palette.mode === "dark"
+            ? colors.darkGreen
+            : colors.solitude,
 }));
 
 export {

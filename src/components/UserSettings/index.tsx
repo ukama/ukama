@@ -7,7 +7,6 @@ import {
     Typography,
 } from "@mui/material";
 import { useState } from "react";
-import colors from "../../theme/colors";
 import { ExportOptionsType } from "../../types";
 import { SettingsArrowIcon } from "../../assets/svg";
 import { LANGUAGE_OPTIONS, TimeZones } from "../../constants";
@@ -56,11 +55,6 @@ const UserSettings = () => {
                     <Grid item xs={12} sm={12} md={8}>
                         <TextField
                             select
-                            InputLabelProps={{
-                                style: {
-                                    color: colors.lightGrey,
-                                },
-                            }}
                             id="language"
                             label="LANGUAGE"
                             value={language}
@@ -80,11 +74,6 @@ const UserSettings = () => {
                     </Grid>
                     <Grid item xs={12} sm={12} md={8}>
                         <TextField
-                            InputLabelProps={{
-                                style: {
-                                    color: colors.lightGrey,
-                                },
-                            }}
                             select
                             id="timezone"
                             label="TIME ZONE"

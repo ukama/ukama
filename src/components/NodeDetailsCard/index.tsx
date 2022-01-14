@@ -8,7 +8,6 @@ const StyledPaper = styled(Paper)({
     cursor: "pointer",
     textAlign: "start",
     padding: "19px 24px",
-    background: "#FFFFFF",
     boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
 });
 
