@@ -21,7 +21,7 @@
 #include "config.h"
 #include "log.h"
 
-#define SCRIPT "./mk_capp_rootfs.sh"
+#define SCRIPT "./scripts/mk_capp_rootfs.sh"
 
 #define MAX_BUFFER   1024
 #define DEF_HOSTNAME "localhost"

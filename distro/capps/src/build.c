@@ -14,7 +14,7 @@
 
 #include "config.h"
 
-#define SCRIPT "./mk_capp_rootfs.sh"
+#define SCRIPT "./scripts/mk_capp_rootfs.sh"
 #define MAX_BUFFER   1024
 
 /*
@@ -50,7 +50,7 @@ int build_capp(Config *config) {
   sprintf(runMe, "%s build busybox", SCRIPT);
   if (system(runMe) < 0) return FALSE;
 
-  sprintf(runMe, "%s build app %s %s", SCRIPT, build->source, build->cmd);
+  sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
   if (system(runMe) < 0) return FALSE;
 
   sprintf(runMe, "%s cp %s %s", SCRIPT, build->binFrom, build->binTo);
