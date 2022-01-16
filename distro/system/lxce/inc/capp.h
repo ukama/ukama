@@ -52,8 +52,9 @@ enum { START_LIST=0,
        END_LIST
 };
 
-/* Default path, only for testing. */
-#define DEF_PATH   "./"
+/* Default various capps path */
+#define DEF_CAPP_PATH        "/capps/pkgs/"
+#define DEF_CAPP_UNPACK_PATH "/capps/pkgs/unpack/"
 #define DEF_CONFIG "config.json"
 
 typedef struct capp_params_t {

@@ -290,6 +290,11 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  /* For initial implementation, there is no checksum and the pkgs are
+   * unpack everytime (/capps/pkgs/unpack is build on every boot
+   */
+  remove(DEF_CAPP_UNPACK_PATH);
+
   /* Step-5: Move all valid cApps into pending list/state. */
   if (!capps_init(&apps, config, manifest, cSpaces)) {
     log_error("Error initializing the cApps. Exiting.");
