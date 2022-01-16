@@ -5,8 +5,14 @@
 
 	"ukama-cApp": [
 		{
-			"name": "hello-world",
-			"tag": "0.0.1",
+			"name": "sysctl",
+			"tag": "latest",
+			"restart": "no",
+			"contained": "boot"
+		},
+		{
+			"name": "dhcpcd",
+			"tag": "latest",
 			"restart": "no",
 			"contained": "boot"
 		}
