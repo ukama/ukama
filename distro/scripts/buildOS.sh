@@ -16,6 +16,7 @@
 UKAMA_OS=`realpath ../../.`
 SYS_ROOT=${UKAMA_OS}/distro/system
 SCRIPTS_ROOT=${UKAMA_OS}/distro/scripts
+CAPPS_ROOT=${UKAMA_OS}/distro/capps
 BB_ROOT=${SYS_ROOT}/busybox
 INIT_ROOT=${SYS_ROOT}/init
 LXCE_ROOT=${SYS_ROOT}/lxce
@@ -211,6 +212,52 @@ build_busybox() {
     cd ${CWD}
 
     log_info "Busybox successfully build"
+}
+
+#
+# Build capps and copy them to rootfs
+#
+
+build_capps() {
+
+    # Steps are:
+    # 1. Build capp utility
+    # 2. Build capp pkgs using the utility (sysctl and dhcpcd)
+    # 3. Create /capps onto rootfs (pkgs, store, registry, rootfs)
+    # 4. Copy pkgs
+
+    CWD=`pwd`
+
+    cd ${CAPPS_ROOT}
+    if [ "${TARGET}" != "local" ]
+    then
+	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+    else
+	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+    fi
+    make XGCCPATH=${XGCC_PATH}
+
+    if [ -d ${CAPPS_ROOT}/pkgs/ ]
+    then
+	rm -rf ${CAPPS_ROOT}/pkgs/
+    fi
+
+    # Build the pkgs
+    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/sysctl.toml
+    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/dhcpcd.toml
+
+    # create capps dir onto rootfs
+    DIRS="${ROOTFS}/capps/pkgs"
+    DIRS="${ROOTFS}/capps/store    ${DIRS}"
+    DIRS="${ROOTFS}/capps/registry ${DIRS}"
+    DIRS="${ROOTFS}/capps/rootfs   ${DIRS}"
+    mkdir -p ${DIRS}
+
+    # copy pkgs to rootfs /capps/pkgs
+    cp ${CAPPS_ROOT}/pkgs/* ${ROOTFS}/capps/pkgs
+
+    cd ${CWD}
+    log_info "capps succesfully build"
 }
 
 #
@@ -451,6 +498,9 @@ build_busybox
 log_info "Building system init, micros and lxce.d"
 build_init
 build_lxce
+
+log_info "Building capps"
+build_capps
 
 log_info "Setting up /etc contents under rootfs"
 setup_etc

@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <uuid/uuid.h>
 
 #include "lxce_config.h"
@@ -128,17 +130,31 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
 		int restart) {
 
   CApp *capp=NULL;
+  char fileName[CAPP_MAX_BUFFER] = {0};
 
   if (!config || !name || !tag || !space)
     return FALSE;
 
-#if 1
-  if (path == NULL) {
-    path = strdup(DEF_PATH);
-  }
-#endif
+  /* Pkgs can be found via:
+   * 0. tars at: /capps/pkgs/name_tag.tar.gz
+   * 1. untar at: /capps/pkgs/unpack/name_tag/
+   * 2. by calling wimc (which then fetches and stores it
+   *
+   * For initial implementation, there is no checksum and the pkgs are
+   * unpack everytime (/capps/pkgs/unpack is build on every boot
+   *
+   */
 
-  if (path == NULL){
+  /* check to see if capp pack exists at default location */
+  sprintf(fileName, "%s/%s_%s.tar.gz", DEF_CAPP_PATH, name, tag);
+  if (access(fileName, F_OK)) { /* unpack to /capps/pkgs/unpack */
+    if (capp_unpack(name, tag, &path)==FALSE) {
+      log_error("Error unpacking the capp. Name: %s Tag: %s", name, tag);
+      return FALSE;
+    } else {
+      log_debug("capp name %s tag %s unpack at: %s", name, tag, path);
+    }
+  } else { /* fetch from WIMC */
     if (get_capp_path(config, name, tag, path)==FALSE) {
       log_error("Error getting rootfs path from wimc. Name: %s Tag: %s",
 		name, tag);
