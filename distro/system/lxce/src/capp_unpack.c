@@ -61,7 +61,7 @@ int capp_unpack(char *name, char *tag, char **dest) {
     }
   }
   
-  sprintf(runMe, "tar xfz %s_%s.tar.gz --directory %s", name, tag,
+  sprintf(runMe, "tar xfz %s_%s.tar.gz -C %s", name, tag,
 	  DEF_CAPP_UNPACK_PATH);
   if (system(runMe) < 0) {
     log_error("Unable to unpack the capp: %s_%s.tar.gz to %s", name, tag,
