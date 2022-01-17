@@ -164,7 +164,18 @@ build_lxce() {
 
    cd ${LXCE_ROOT}
    make clean; make XGCCPATH=${XGCC_PATH}/
-   copy_file ${LXCE_ROOT}/lxce.d $ROOTFS/sbin
+   copy_file ${LXCE_ROOT}/lxce.d ${ROOTFS}/sbin
+
+   # copy all the config files
+   mkdir -p ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/config.toml ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/boot_contained.json ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/service_contained.json ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/shutdown_contained.json ${ROOTFS}/conf/lxce
+
+   # Copy manifest file
+   copy_file ${LXCE_ROOT}/configs/manifest.json ${ROOTFS}/conf/lxce/
+
 
    # Go back and clean up
    cd ${LXCE_ROOT}; make clean
