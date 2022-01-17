@@ -31,6 +31,7 @@ const PagePlaceholder = ({
                 alignItems: "center",
                 justifyContent: "center",
                 background: colors.white,
+                p: 10,
             }}
         >
             <PagePlaceholderSvg />

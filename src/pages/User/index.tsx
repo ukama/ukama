@@ -1,13 +1,18 @@
-import { ContainerHeader, UserCard, UserDetailsDialog } from "../../components";
+import {
+    ContainerHeader,
+    UserCard,
+    UserDetailsDialog,
+    PagePlaceholder,
+} from "../../components";
 import { Box } from "@mui/material";
 import { useState } from "react";
-import { useMyUsersQuery } from "../../generated";
+import { UserData } from "../../constants/stubData";
+import { useMyUsersQuery, useGetUserQuery } from "../../generated";
 import { organizationId } from "../../recoil";
 import { useRecoilValue } from "recoil";
-
 const User = () => {
     const [showSimDialog, setShowSimDialog] = useState(false);
-    const [userId, setUserId] = useState();
+    const [userId, setUserId] = useState<any>();
     const orgId = useRecoilValue(organizationId);
     const handleSimDialog = () => {
         setShowSimDialog(false);
@@ -15,7 +20,11 @@ const User = () => {
     const { data: usersRes } = useMyUsersQuery({
         variables: { orgId: orgId || "" },
     });
-
+    const { data: userRes } = useGetUserQuery({
+        variables: {
+            id: userId,
+        },
+    });
     const handleSimInstallation = () => {
         //console.log(value);
     };
@@ -34,33 +43,40 @@ const User = () => {
     };
     return (
         <Box sx={{ flexGrow: 1, mt: 3 }}>
-            <UserCard
-                userDetails={usersRes?.myUsers.users}
-                handleMoreUserdetails={getUseDetails}
-            >
-                <ContainerHeader
-                    title="My Users"
-                    stats={`${usersRes?.myUsers.users.length}`}
-                    handleButtonAction={handleSimInstallation}
-                    buttonTitle="INSTALL SIMS"
-                    handleSearchChange={getSearchValue}
-                    showSearchBox={true}
-                    showButton={true}
+            {usersRes?.myUsers?.users ? (
+                <UserCard
+                    userDetails={UserData}
+                    handleMoreUserdetails={getUseDetails}
+                >
+                    <ContainerHeader
+                        title="My Users"
+                        stats={`${UserData.length}`}
+                        handleButtonAction={handleSimInstallation}
+                        buttonTitle="INSTALL SIMS"
+                        handleSearchChange={getSearchValue}
+                        showSearchBox={true}
+                        showButton={true}
+                    />
+                    <UserDetailsDialog
+                        getUser={userRes?.getUser}
+                        isOpen={showSimDialog}
+                        userDetailsTitle="User Details"
+                        btnLabel="Submit"
+                        handleClose={handleSimDialog}
+                        simDetailsTitle="SIM Details"
+                        saveBtnLabel="save"
+                        closeBtnLabel="close"
+                        handleSaveSimUser={getSimData}
+                    />
+                </UserCard>
+            ) : (
+                <PagePlaceholder
+                    description="No users on network. Install SIMs to get started."
+                    hyperlink="Helll"
+                    buttonTitle="Install sims"
+                    showActionButton={true}
                 />
-                <UserDetailsDialog
-                    id={userId}
-                    userName="John Doe"
-                    data="- 1.5 GB data used, 0.5 free GB left"
-                    isOpen={showSimDialog}
-                    userDetailsTitle="User Details"
-                    btnLabel="Submit"
-                    handleClose={handleSimDialog}
-                    simDetailsTitle="SIM Details"
-                    saveBtnLabel="save"
-                    closeBtnLabel="close"
-                    handleSaveSimUser={getSimData}
-                />
-            </UserCard>
+            )}
         </Box>
     );
 };

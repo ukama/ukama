@@ -101,6 +101,20 @@ query myUsers($orgId: String!) {
         }
     }
 }
+query getUser($id: String!) {
+    getUser(id: $id) {
+        id
+        status
+        name
+        eSimNumber
+        iccid
+        email
+        phone
+        roaming
+        dataPlan
+        dataUsage
+    }
+}
 
 query getResidents($data: PaginationDto!) {
     getResidents(data: $data) {
