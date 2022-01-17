@@ -1,8 +1,11 @@
 import { colors } from "../../theme";
 import { LinkStyle } from "../../styles";
 import { PagePlaceholderSvg } from "../../assets/svg";
-import { Button, Stack, Typography } from "@mui/material";
-
+import { Button, Stack, styled, Typography, Box } from "@mui/material";
+const Container = styled(Box)((props: any) => ({
+    background:
+        props.theme.palette.mode === "dark" ? colors.darkGreen12 : colors.white,
+}));
 type PagePlaceholderProps = {
     linkText?: string;
     hyperlink?: string;
@@ -23,42 +26,43 @@ const PagePlaceholder = ({
     },
 }: PagePlaceholderProps) => {
     return (
-        <Stack
-            spacing={4}
-            sx={{
-                height: "100%",
-                borderRadius: "5px",
-                alignItems: "center",
-                justifyContent: "center",
-                background: colors.white,
-                p: 10,
-            }}
-        >
-            <PagePlaceholderSvg />
-            <Typography variant="body1">
-                {`${description} `}
-                {hyperlink && (
-                    <LinkStyle
-                        href={hyperlink}
-                        sx={{
-                            typography: "body1",
-                        }}
-                    >
-                        {linkText}
-                    </LinkStyle>
-                )}
-            </Typography>
+        <Container>
+            <Stack
+                spacing={4}
+                sx={{
+                    height: "100%",
+                    borderRadius: "5px",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    p: 10,
+                }}
+            >
+                <PagePlaceholderSvg />
+                <Typography variant="body1">
+                    {`${description} `}
+                    {hyperlink && (
+                        <LinkStyle
+                            href={hyperlink}
+                            sx={{
+                                typography: "body1",
+                            }}
+                        >
+                            {linkText}
+                        </LinkStyle>
+                    )}
+                </Typography>
 
-            {showActionButton && (
-                <Button
-                    variant="contained"
-                    sx={{ width: 190 }}
-                    onClick={() => handleAction()}
-                >
-                    {buttonTitle}
-                </Button>
-            )}
-        </Stack>
+                {showActionButton && (
+                    <Button
+                        variant="contained"
+                        sx={{ width: 190 }}
+                        onClick={() => handleAction()}
+                    >
+                        {buttonTitle}
+                    </Button>
+                )}
+            </Stack>
+        </Container>
     );
 };
 
