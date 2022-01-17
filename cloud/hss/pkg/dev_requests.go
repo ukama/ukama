@@ -97,6 +97,7 @@ func (d DeviceFeederReqGenerator) TaiUpdated(org string, tai *pb.UpdateTaiReques
 }
 
 func (d DeviceFeederReqGenerator) sendMessage(org string, path string, method string, body []byte) {
+	log.Infof("Sending message to device feeder.  Org: %s, path: %s", org, path)
 	req := DevicesUpdateRequest{
 		Target:     org + ".*",
 		Path:       path,

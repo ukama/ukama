@@ -47,7 +47,13 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-	subs := server.NewHssEventsSubscribers(pkg.NewHssNotifications(serviceConfig.Queue))
+
+	reqGenerator, err := pkg.NewDeviceFeederReqGenerator(serviceConfig.Queue.Uri)
+	if err != nil {
+		log.Fatalf("Failed to create device feeder request generator. Error: %v", err)
+	}
+
+	subs := server.NewHssEventsSubscribers(pkg.NewHssNotifications(serviceConfig.Queue), reqGenerator)
 
 	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), subs)
 	userService := server.NewUserService(db.NewUserRepo(gormdb), db.NewImsiRepo(gormdb))
