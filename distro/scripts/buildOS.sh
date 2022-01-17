@@ -246,7 +246,7 @@ build_capps() {
     else
 	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
-    make XGCCPATH=${XGCC_PATH}
+    make XGCCPATH=${XGCC_PATH}/
 
     if [ -d ${CAPPS_ROOT}/pkgs/ ]
     then
