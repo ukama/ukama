@@ -8,10 +8,14 @@ import {
     ListItemIcon,
     ListItemText,
     Typography,
+    Paper,
+    Stack,
 } from "@mui/material";
 import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
+import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
+import { isDarkmode } from "../../recoil";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper, UpgradeNavFooter } from "../../components";
@@ -24,23 +28,14 @@ const useStyles = makeStyles(() => ({
         marginTop: "6px",
         padding: "8px 12px",
         borderRadius: "4px",
-        fontFamily: "Work Sans",
-        backgroundColor: colors.white,
     },
-    listItemText: {
-        color: colors.vulcan,
-    },
+    listItemText: {},
     listItemDone: {
         opacity: 1,
         height: "40px",
         marginTop: "8px",
         padding: "8px 12px",
         borderRadius: "4px",
-        color: `${colors.vulcan} !important`,
-        backgroundColor: `${colors.solitude} !important`,
-    },
-    listItemDoneText: {
-        color: colors.vulcan,
     },
 }));
 
@@ -65,6 +60,7 @@ const Sidebar = (
     const { window } = props;
     const classes = useStyles();
     const history = useHistory();
+    const _isDarkMod = useRecoilValue(isDarkmode);
 
     const MenuList = (list: any) => (
         <List sx={{ padding: "8px 20px" }}>
@@ -83,16 +79,19 @@ const Sidebar = (
                     }
                 >
                     <ListItemIcon sx={{ minWidth: "44px" }}>
-                        <Icon color={colors.vulcan} />
+                        <Icon
+                            fontSize="medium"
+                            sx={{
+                                fill: _isDarkMod ? colors.white : colors.vulcan,
+                            }}
+                        />
                     </ListItemIcon>
                     <ListItemText>
                         <Typography
                             variant="body1"
                             fontWeight={title === page ? "bold" : "normal"}
                             className={
-                                title === page
-                                    ? classes.listItemDoneText
-                                    : classes.listItemText
+                                title !== page ? classes.listItemText : ""
                             }
                         >
                             {title}
@@ -104,37 +103,44 @@ const Sidebar = (
     );
 
     const drawer = (
-        <div
-            style={{
+        <Paper
+            sx={{
                 height: "100%",
                 overflowY: "auto",
-                position: "relative",
             }}
         >
             <Toolbar sx={{ padding: "33px 0px 12px 0px" }}>
                 <Logo width={"100%"} height={"36px"} />
             </Toolbar>
-            {MenuList(SIDEBAR_MENU1)}
-            <div
-                style={{
-                    width: "100%",
+            <Stack
+                sx={{
                     display: "flex",
-                    justifyContent: "center",
+                    minHeight: "200px",
+                    height: `calc(100% - 400px)`,
                 }}
             >
-                <Divider sx={{ width: 160, mt: "8px", mb: "0px !important" }} />
-            </div>
-            {MenuList(SIDEBAR_MENU2)}
-
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: "10px",
+                {MenuList(SIDEBAR_MENU1)}
+                <Divider
+                    sx={{
+                        width: 160,
+                        mt: "8px",
+                        mb: "0px !important",
+                        alignSelf: "center",
+                    }}
+                />
+                {MenuList(SIDEBAR_MENU2)}
+            </Stack>
+            <Box
+                sx={{
+                    m: 1.6,
+                    height: 272,
+                    display: "flex",
+                    alignItems: "flex-end",
                 }}
             >
                 <UpgradeNavFooter />
-            </div>
-        </div>
+            </Box>
+        </Paper>
     );
 
     const container =
@@ -144,8 +150,8 @@ const Sidebar = (
         <Box
             component="nav"
             sx={{
-                width: { xs: 0, sm: DRAWER_WIDTH },
                 flexShrink: { sm: 0 },
+                width: { xs: 0, sm: DRAWER_WIDTH },
                 boxShadow: "6px 0px 18px rgba(0, 0, 0, 0.06)",
             }}
             aria-label="mailbox folders"

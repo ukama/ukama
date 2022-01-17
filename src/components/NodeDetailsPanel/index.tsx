@@ -1,6 +1,7 @@
 import { STATS_PERIOD } from "../../constants";
 import NodePropertyStats from "../NodePropertyStats";
-import { Box, Button, styled, Typography } from "@mui/material";
+import { NodePlaceholder } from "../../assets/images";
+import { Box, Button, styled, Typography, Paper } from "@mui/material";
 
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",
@@ -41,8 +42,12 @@ const NodeDetailsPanel = ({
             aria-labelledby={`detailpanel-${index}`}
         >
             {value === index && (
-                <Box sx={{ p: "26px 28px", backgroundColor: "#FFFFFF" }}>
-                    <Box display="flex" justifyContent="space-between">
+                <Paper sx={{ p: "26px 28px" }}>
+                    <Box
+                        display="flex"
+                        justifyContent="space-between"
+                        mb="18px"
+                    >
                         <Typography variant={"h6"}>{title}</Typography>
                         {button && (
                             <StyledBtn
@@ -53,7 +58,7 @@ const NodeDetailsPanel = ({
                             </StyledBtn>
                         )}
                     </Box>
-                    {image && <Image alt={image.alt} src={image.src} />}
+                    {image && <Image alt={image.alt} src={NodePlaceholder} />}
                     {renderPropertyStats &&
                         properties.map((propery, keyIndex) => (
                             <NodePropertyStats
@@ -62,7 +67,7 @@ const NodeDetailsPanel = ({
                                 periodOptions={STATS_PERIOD}
                             />
                         ))}
-                </Box>
+                </Paper>
             )}
         </Box>
     );

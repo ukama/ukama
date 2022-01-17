@@ -8,6 +8,8 @@ import {
     Typography,
     TableContainer,
 } from "@mui/material";
+import { useRecoilValue } from "recoil";
+import { isDarkmode } from "../../recoil";
 import { colors } from "../../theme";
 import { ColumnsWithOptions } from "../../types";
 
@@ -28,6 +30,7 @@ const SimpleDataTable = ({
     selectedRows = [],
     rowSelection = false,
 }: SimpleDataTableInterface) => {
+    const _isDarkMode = useRecoilValue(isDarkmode);
     const onRowSelection = (id: number) => {
         setSelectedRows([...selectedRows, id]);
     };
@@ -82,7 +85,9 @@ const SimpleDataTable = ({
                             key={row.id}
                             sx={{
                                 ":hover": {
-                                    backgroundColor: colors.solitude,
+                                    backgroundColor: _isDarkMode
+                                        ? colors.darkGreen
+                                        : colors.solitude,
                                 },
                             }}
                             selected={selectedRows.includes(row.id)}

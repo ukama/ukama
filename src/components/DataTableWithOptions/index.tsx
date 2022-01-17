@@ -1,14 +1,20 @@
 import {
-    Table,
+    Box,
     Link,
+    Table,
     TableRow,
     TableBody,
     TableCell,
     TableHead,
     TableContainer,
 } from "@mui/material";
+import { EmptyView } from "..";
+import { colors } from "../../theme";
 import OptionsPopover from "../OptionsPopover";
+import UserIcon from "@mui/icons-material/Person";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
+import { useRecoilValue } from "recoil";
+import { isDarkmode } from "../../recoil";
 
 interface DataTableWithOptionsInterface {
     dataset: any;
@@ -56,65 +62,82 @@ const DataTableWithOptions = ({
     menuOptions,
     onMenuItemClick,
 }: DataTableWithOptionsInterface) => {
+    const _isDarkmode = useRecoilValue(isDarkmode);
     return (
-        <>
-            <TableContainer sx={{ maxHeight: 200 }}>
-                <Table stickyHeader>
-                    <TableHead>
-                        <TableRow>
-                            {columns?.map(column => (
-                                <TableCell
-                                    key={column.id}
-                                    align={column.align}
-                                    style={{
-                                        minWidth: column.minWidth,
-                                        padding: "6px 12px 12px 0px",
-                                        fontSize: "0.875rem",
-                                    }}
-                                >
-                                    <b>{column.label}</b>
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {dataset?.map((row: any) => (
-                            <TableRow role="row" tabIndex={-1} key={row.name}>
-                                {columns.map(
-                                    (
-                                        column: ColumnsWithOptions,
-                                        index: number
-                                    ) => (
-                                        <TableCell
-                                            key={`${row.name}-${index}`}
-                                            align={column.align}
-                                            sx={{
-                                                padding: "13px 12px 13px 0px",
-                                                fontSize: "0.875rem",
-                                            }}
-                                        >
-                                            <CellValueByType
-                                                row={row}
-                                                type={column.id}
-                                                menuOptions={menuOptions}
-                                                onMenuItemClick={(
-                                                    type: string
-                                                ) =>
-                                                    onMenuItemClick(
-                                                        row.id,
-                                                        type
-                                                    )
-                                                }
-                                            />
-                                        </TableCell>
-                                    )
-                                )}
+        <Box sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}>
+            {dataset?.length > 1 ? (
+                <TableContainer sx={{ maxHeight: 200 }}>
+                    <Table stickyHeader>
+                        <TableHead sx={{ backgroundColor: "black" }}>
+                            <TableRow>
+                                {columns?.map(column => (
+                                    <TableCell
+                                        key={column.id}
+                                        align={column.align}
+                                        style={{
+                                            fontSize: "0.875rem",
+                                            minWidth: column.minWidth,
+                                            padding: "6px 12px 12px 0px",
+                                            background: _isDarkmode
+                                                ? colors.darkGreen05
+                                                : colors.white,
+                                        }}
+                                    >
+                                        <b>{column.label}</b>
+                                    </TableCell>
+                                ))}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-        </>
+                        </TableHead>
+                        <TableBody>
+                            {dataset?.map((row: any) => (
+                                <TableRow
+                                    role="row"
+                                    tabIndex={-1}
+                                    key={row.name}
+                                >
+                                    {columns.map(
+                                        (
+                                            column: ColumnsWithOptions,
+                                            index: number
+                                        ) => (
+                                            <TableCell
+                                                key={`${row.name}-${index}`}
+                                                align={column.align}
+                                                sx={{
+                                                    padding:
+                                                        "13px 12px 13px 0px",
+                                                    fontSize: "0.875rem",
+                                                }}
+                                            >
+                                                <CellValueByType
+                                                    row={row}
+                                                    type={column.id}
+                                                    menuOptions={menuOptions}
+                                                    onMenuItemClick={(
+                                                        type: string
+                                                    ) =>
+                                                        onMenuItemClick(
+                                                            row.id,
+                                                            type
+                                                        )
+                                                    }
+                                                />
+                                            </TableCell>
+                                        )
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            ) : (
+                <EmptyView
+                    size="large"
+                    title="No residents yet!"
+                    icon={UserIcon}
+                />
+            )}
+        </Box>
     );
 };
 

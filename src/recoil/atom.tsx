@@ -14,6 +14,12 @@ const isSkeltonLoading = atom({
     effects_UNSTABLE: [persistAtom],
 });
 
+const isDarkmode = atom({
+    key: "isDarkmode",
+    default: false,
+    effects_UNSTABLE: [persistAtom],
+});
+
 const pageName = atom({
     key: "pageName",
     default: "Home",
@@ -26,4 +32,4 @@ const organizationId = atom<string | undefined>({
     effects_UNSTABLE: [persistAtom],
 });
 
-export { isSkeltonLoading, pageName, organizationId, isFirstVisit };
+export { isSkeltonLoading, pageName, organizationId, isFirstVisit, isDarkmode };

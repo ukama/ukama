@@ -12,27 +12,30 @@ import { RechartsData } from "../../constants/stubData";
 import { RoundedCard, SkeletonRoundedCard } from "../../styles";
 import { StatsItemType, statsPeriodItemType } from "../../types";
 import {
-    Bar,
     Line,
     XAxis,
     YAxis,
     Tooltip,
-    ComposedChart,
-    CartesianGrid,
+    LineChart,
     ResponsiveContainer,
 } from "recharts";
+import { useRecoilValue } from "recoil";
+import { isDarkmode } from "../../recoil";
+
+type StyleProps = { color: string };
 
 const useStyles = makeStyles(() => ({
-    selectStyle: {
-        width: "144px",
+    selectStyle: ({ color = colors.black }: StyleProps) => ({
+        width: "172px",
         "& p": {
             fontSize: "20px",
             fontWeight: "500",
             lineHeight: "160%",
             fontFamily: "Rubik",
             letterSpacing: "0.15px",
+            color: color,
         },
-    },
+    }),
 }));
 
 type StatsCardProps = {
@@ -54,7 +57,9 @@ const StatsCard = ({
     selectedButton,
     handleSelectedButton,
 }: StatsCardProps) => {
-    const classes = useStyles();
+    const _isDarkMod = useRecoilValue(isDarkmode);
+    const styleProps = { color: _isDarkMod ? colors.white : colors.black };
+    const classes = useStyles(styleProps);
     return (
         <>
             {loading ? (
@@ -131,22 +136,40 @@ const StatsCard = ({
                         </Grid>
                         <Grid item xs={12}>
                             <ResponsiveContainer width="100%" height={300}>
-                                <ComposedChart data={RechartsData}>
-                                    <CartesianGrid stroke="#f5f5f5" />
-                                    <XAxis dataKey="name" scale="band" />
-                                    <YAxis />
+                                <LineChart
+                                    width={500}
+                                    height={300}
+                                    data={RechartsData}
+                                    margin={{
+                                        top: 5,
+                                        right: 30,
+                                        left: 20,
+                                        bottom: 5,
+                                    }}
+                                >
+                                    <XAxis dataKey="name" fontSize={"14px"} />
+                                    <YAxis fontSize={"14px"} />
                                     <Tooltip />
-                                    <Bar
-                                        dataKey="uv"
-                                        barSize={20}
-                                        fill="#413ea0"
+                                    <Line
+                                        type="monotone"
+                                        dataKey="pv"
+                                        stroke="#8884d8"
+                                        activeDot={{ r: 8 }}
+                                        strokeWidth={2}
                                     />
                                     <Line
                                         type="monotone"
                                         dataKey="uv"
-                                        stroke="#ff7300"
+                                        stroke="#82ca9d"
+                                        strokeWidth={2}
                                     />
-                                </ComposedChart>
+                                    <Line
+                                        type="monotone"
+                                        dataKey="vx"
+                                        stroke="#E6534E"
+                                        strokeWidth={2}
+                                    />
+                                </LineChart>
                             </ResponsiveContainer>
                         </Grid>
                     </Grid>

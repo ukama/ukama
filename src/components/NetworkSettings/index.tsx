@@ -157,7 +157,6 @@ const NetworkSettings = () => {
                     </Grid>
                 </Grid>
             </Grid>
-            <LineDivider />
         </Grid>
     );
 };

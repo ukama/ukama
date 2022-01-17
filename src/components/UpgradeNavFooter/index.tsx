@@ -6,6 +6,7 @@ import { Box, Button, Typography } from "@mui/material";
 const useStyles = makeStyles(() => ({
     root: {
         display: "flex",
+        position: "relative",
         flexDirection: "column",
     },
     container: {
@@ -16,7 +17,6 @@ const useStyles = makeStyles(() => ({
         alignItems: "center",
         flexDirection: "column",
         justifyContent: "center",
-        margin: "18px",
         background: colors.aliceBlue,
     },
     buttonStyle: {
@@ -24,9 +24,10 @@ const useStyles = makeStyles(() => ({
         marginTop: "18px",
     },
     imageWrapper: {
+        top: -65,
         zIndex: 10,
         alignSelf: "center",
-        marginBottom: "-44px",
+        position: "absolute",
     },
 }));
 
@@ -38,7 +39,11 @@ const UpgradeNavFooter = () => {
                 <UpgradeIcon />
             </Box>
             <Box className={classes.container}>
-                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                <Typography
+                    variant="body2"
+                    color={"black"}
+                    sx={{ textAlign: "center" }}
+                >
                     Enjoy more features with Ukama Pro!
                 </Typography>
                 <Button
