@@ -32,6 +32,7 @@ BB_CONFIG=ukama_minimal_defconfig
 # command line arguments
 MIN_ARGS=2
 DEF_ROOTFS=_ukama_os_rootfs/
+DEF_CSPACE_ROOTFS=cspace_rootfs/
 
 # For os-release
 OS_NAME="ukamaOS"
@@ -52,6 +53,7 @@ TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_ROOTFS}
 ROOTFS=`realpath ${DEF_ROOTFS}`
+CSPACE_ROOTFS=`realpath ${DEF_CSPACE_ROOTFS}`
 
 log_info() {
     echo "Info: $1"
@@ -164,7 +166,18 @@ build_lxce() {
 
    cd ${LXCE_ROOT}
    make clean; make XGCCPATH=${XGCC_PATH}/
-   copy_file ${LXCE_ROOT}/lxce.d $ROOTFS/sbin
+   copy_file ${LXCE_ROOT}/lxce.d ${ROOTFS}/sbin
+
+   # copy all the config files
+   mkdir -p ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/config.toml ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/boot_contained.json ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/service_contained.json ${ROOTFS}/conf/lxce/
+   copy_file ${LXCE_ROOT}/configs/shutdown_contained.json ${ROOTFS}/conf/lxce
+
+   # Copy manifest file
+   copy_file ${LXCE_ROOT}/configs/manifest.json ${ROOTFS}/conf/lxce/
+
 
    # Go back and clean up
    cd ${LXCE_ROOT}; make clean
@@ -204,7 +217,7 @@ build_busybox() {
     fi
 
     cd ${CWD}
-    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* $ROOTFS
+    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* ${ROOTFS}
 
     # Go back and clean up
     cd ${BB_ROOT}
@@ -215,9 +228,22 @@ build_busybox() {
 }
 
 #
+# Build cspace rootfs
+#
+build_cspace_rootfs() {
+
+    # Build minimal fs
+    ${SCRIPTS_ROOT}/mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
+
+    # tar.gz, move to /capps/pkgs/ and clean up
+    tar -czf ${CSPACE_ROOTFS}.tar.gz ${CSPACE_ROOTFS}
+    mv ${CSPACE_ROOTFS}.tar.gz ${ROOTFS}/capps/pkgs/
+    #rm -rf ${CSPACE_ROOTFS}
+}
+
+#
 # Build capps and copy them to rootfs
 #
-
 build_capps() {
 
     # Steps are:
@@ -235,7 +261,7 @@ build_capps() {
     else
 	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
     fi
-    make XGCCPATH=${XGCC_PATH}
+    make XGCCPATH=${XGCC_PATH}/
 
     if [ -d ${CAPPS_ROOT}/pkgs/ ]
     then
@@ -255,6 +281,9 @@ build_capps() {
 
     # copy pkgs to rootfs /capps/pkgs
     cp ${CAPPS_ROOT}/pkgs/* ${ROOTFS}/capps/pkgs
+
+    # Build cspace rootfs pkg
+    build_cspace_rootfs
 
     cd ${CWD}
     log_info "capps succesfully build"

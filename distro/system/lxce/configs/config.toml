@@ -8,9 +8,9 @@
 	mesh-port    = "4449"
 	bridge-iface = "wlp3s0"
 	cSpace-configs = [
-		      "capp/conf/boot_contained.json",
-		      "capp/conf/service_contained.json",
-		      "capp/conf/shutdown_contained.json",
+		      "/conf/lxce/boot_contained.json",
+		      "/conf/lxce/service_contained.json",
+		      "/conf/lxce/shutdown_contained.json",
 		      ]
 
 #nothing here.

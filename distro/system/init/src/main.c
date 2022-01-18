@@ -164,9 +164,9 @@ static pid_t run_task(char *taskExe, int wait) {
     } else if (strcmp(taskExe, "lxce")==0) {
       cmd[0] = (char *)"/sbin/lxce.d";
       cmd[1] = (char *)"-c";
-      cmd[2] = (char *)"/conf/lxce_config.toml";
+      cmd[2] = (char *)"/conf/lxce/config.toml";
       cmd[3] = (char *)"-m";
-      cmd[4] = (char *)"/conf/manifest.json";
+      cmd[4] = (char *)"/conf/lxce/manifest.json";
       cmd[5] = NULL;
     }
 
