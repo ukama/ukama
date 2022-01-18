@@ -233,10 +233,10 @@ build_busybox() {
 build_cspace_rootfs() {
 
     # Build minimal fs
-    ./mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
+    ${SCRIPTS_ROOT}/mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
 
     # tar.gz, move to /capps/pkgs/ and clean up
-    tar -cfz ${CSPACE_ROOTFS}.tar.gz ${CSPACE_ROOTFS}
+    tar -czf ${CSPACE_ROOTFS}.tar.gz ${CSPACE_ROOTFS}
     mv ${CSPACE_ROOTFS}.tar.gz ${ROOTFS}/capps/pkgs/
     #rm -rf ${CSPACE_ROOTFS}
 }
