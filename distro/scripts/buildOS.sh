@@ -32,6 +32,7 @@ BB_CONFIG=ukama_minimal_defconfig
 # command line arguments
 MIN_ARGS=2
 DEF_ROOTFS=_ukama_os_rootfs/
+DEF_CSPACE_ROOTFS=cspace_rootfs/
 
 # For os-release
 OS_NAME="ukamaOS"
@@ -52,6 +53,7 @@ TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_ROOTFS}
 ROOTFS=`realpath ${DEF_ROOTFS}`
+CSPACE_ROOTFS=`realpath ${DEF_CSPACE_ROOTFS}`
 
 log_info() {
     echo "Info: $1"
@@ -215,7 +217,7 @@ build_busybox() {
     fi
 
     cd ${CWD}
-    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* $ROOTFS
+    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* ${ROOTFS}
 
     # Go back and clean up
     cd ${BB_ROOT}
@@ -226,9 +228,22 @@ build_busybox() {
 }
 
 #
+# Build cspace rootfs
+#
+build_cspace_rootfs() {
+
+    # Build minimal fs
+    ./mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
+
+    # tar.gz, move to /capps/pkgs/ and clean up
+    tar -cfz ${CSPACE_ROOTFS}.tar.gz ${CSPACE_ROOTFS}
+    mv ${CSPACE_ROOTFS}.tar.gz ${ROOTFS}/capps/pkgs/
+    #rm -rf ${CSPACE_ROOTFS}
+}
+
+#
 # Build capps and copy them to rootfs
 #
-
 build_capps() {
 
     # Steps are:
@@ -266,6 +281,9 @@ build_capps() {
 
     # copy pkgs to rootfs /capps/pkgs
     cp ${CAPPS_ROOT}/pkgs/* ${ROOTFS}/capps/pkgs
+
+    # Build cspace rootfs pkg
+    build_cspace_rootfs
 
     cd ${CWD}
     log_info "capps succesfully build"
