@@ -23,7 +23,7 @@ import {
 } from "@mui/material";
 import {
     pageName,
-    isDarkMod,
+    isDarkmode,
     isSkeltonLoading,
     organizationId,
 } from "../../recoil";
@@ -107,7 +107,7 @@ const ActionButtons = ({
 const Settings = () => {
     const history = useHistory();
     const [menuId, setMenuId] = useState(1);
-    const _isDarkMod = useRecoilValue(isDarkMod);
+    const _isDarkMod = useRecoilValue(isDarkmode);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(organizationId);

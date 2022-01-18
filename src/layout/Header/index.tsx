@@ -147,6 +147,11 @@ const Header = ({
                     vertical: "top",
                     horizontal: "center",
                 }}
+                PaperProps={{
+                    style: {
+                        background: "transparent",
+                    },
+                }}
             >
                 <RoundedCard>
                     <Typography variant="h6" sx={{ mb: "14px" }}>

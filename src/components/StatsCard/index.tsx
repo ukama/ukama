@@ -20,7 +20,7 @@ import {
     ResponsiveContainer,
 } from "recharts";
 import { useRecoilValue } from "recoil";
-import { isDarkMod } from "../../recoil";
+import { isDarkmode } from "../../recoil";
 
 type StyleProps = { color: string };
 
@@ -57,7 +57,7 @@ const StatsCard = ({
     selectedButton,
     handleSelectedButton,
 }: StatsCardProps) => {
-    const _isDarkMod = useRecoilValue(isDarkMod);
+    const _isDarkMod = useRecoilValue(isDarkmode);
     const styleProps = { color: _isDarkMod ? colors.white : colors.black };
     const classes = useStyles(styleProps);
     return (

@@ -1,6 +1,6 @@
 import {
     pageName,
-    isDarkMod,
+    isDarkmode,
     isFirstVisit,
     organizationId,
     isSkeltonLoading,
@@ -15,7 +15,7 @@ import {
 
 export {
     pageName,
-    isDarkMod,
+    isDarkmode,
     withPageName,
     isFirstVisit,
     withIsDarkMod,

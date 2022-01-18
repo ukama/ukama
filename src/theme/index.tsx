@@ -1,7 +1,7 @@
 import colors from "./colors";
 import { createTheme } from "@mui/material/styles";
 
-const theme = (isDarkMod: boolean) =>
+const theme = (isDarkmode: boolean) =>
     createTheme({
         typography: {
             fontFamily: "Rubik, sans-serif;",
@@ -20,9 +20,9 @@ const theme = (isDarkMod: boolean) =>
             },
         },
         palette: {
-            mode: isDarkMod ? "dark" : "light",
+            mode: isDarkmode ? "dark" : "light",
             background: {
-                default: isDarkMod ? colors.darkGreen : colors.solitude,
+                default: isDarkmode ? colors.darkGreen : colors.solitude,
             },
             primary: {
                 main: colors.primary,

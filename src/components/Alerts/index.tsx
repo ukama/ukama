@@ -25,11 +25,11 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                     <ListItem key={id} sx={{ p: "0px 12px 8px 0px" }}>
                         <Grid container spacing={1}>
                             <Grid item xs={8} container>
-                                <Stack direction="row">
+                                <Stack direction="row" spacing={1}>
                                     <CloudOffIcon
                                         color={getColorByType(type)}
                                     />
-                                    <Typography variant="body1" color="initial">
+                                    <Typography variant="body1">
                                         {title}
                                     </Typography>
                                 </Stack>
@@ -43,16 +43,17 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                             >
                                 <Typography
                                     variant="caption"
-                                    color={colors.empress}
-                                ></Typography>
-                                {format(alertDate, "M/d/YY h a")}
+                                    color={colors.vulcan}
+                                >
+                                    {format(alertDate, "M/d/YY h a")}
+                                </Typography>
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography
                                     variant="body2"
                                     color={colors.empress}
                                     sx={{
-                                        left: "25px",
+                                        left: "36px",
                                         bottom: "5px",
                                         overflow: "hidden",
                                         position: "relative",

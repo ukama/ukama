@@ -9,7 +9,7 @@ import {
     TableContainer,
 } from "@mui/material";
 import { useRecoilValue } from "recoil";
-import { isDarkMod } from "../../recoil";
+import { isDarkmode } from "../../recoil";
 import { colors } from "../../theme";
 import { ColumnsWithOptions } from "../../types";
 
@@ -30,7 +30,7 @@ const SimpleDataTable = ({
     selectedRows = [],
     rowSelection = false,
 }: SimpleDataTableInterface) => {
-    const _isDarkMode = useRecoilValue(isDarkMod);
+    const _isDarkMode = useRecoilValue(isDarkmode);
     const onRowSelection = (id: number) => {
         setSelectedRows([...selectedRows, id]);
     };

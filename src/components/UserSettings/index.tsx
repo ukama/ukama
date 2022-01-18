@@ -11,7 +11,7 @@ import { ExportOptionsType } from "../../types";
 import { SettingsArrowIcon } from "../../assets/svg";
 import { LANGUAGE_OPTIONS, TimeZones } from "../../constants";
 import { useRecoilValue } from "recoil";
-import { isDarkMod } from "../../recoil";
+import { isDarkmode } from "../../recoil";
 
 const LineDivider = () => (
     <Grid item xs={12}>
@@ -20,7 +20,7 @@ const LineDivider = () => (
 );
 
 const UserSettings = () => {
-    const _isDarkMod = useRecoilValue(isDarkMod);
+    const _isDarkMod = useRecoilValue(isDarkmode);
     const [language, setLanguage] = useState("EN");
     const [timezone, setTimezone] = useState("Pacific Standard Time");
     const handleLanguageChange = (event: any) => {

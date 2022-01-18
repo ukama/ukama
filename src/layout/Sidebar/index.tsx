@@ -15,7 +15,7 @@ import { colors } from "../../theme";
 import { Logo } from "../../assets/svg";
 import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
-import { isDarkMod } from "../../recoil";
+import { isDarkmode } from "../../recoil";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper, UpgradeNavFooter } from "../../components";
@@ -60,7 +60,7 @@ const Sidebar = (
     const { window } = props;
     const classes = useStyles();
     const history = useHistory();
-    const _isDarkMod = useRecoilValue(isDarkMod);
+    const _isDarkMod = useRecoilValue(isDarkmode);
 
     const MenuList = (list: any) => (
         <List sx={{ padding: "8px 20px" }}>

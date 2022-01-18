@@ -1,7 +1,7 @@
 import { selector } from "recoil";
 import {
     pageName,
-    isDarkMod,
+    isDarkmode,
     isFirstVisit,
     organizationId,
     isSkeltonLoading,
@@ -29,7 +29,7 @@ const withIsFirstVisit = selector({
 
 const withIsDarkMod = selector({
     key: "withIsDarkMod",
-    get: ({ get }) => get(isDarkMod),
+    get: ({ get }) => get(isDarkmode),
 });
 
 export {
