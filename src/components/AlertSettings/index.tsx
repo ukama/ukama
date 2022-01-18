@@ -85,7 +85,6 @@ const AlertSettings = () => {
                     ))}
                 </Grid>
             </Grid>
-            <LineDivider />
         </Grid>
     );
 };

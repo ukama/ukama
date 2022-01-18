@@ -9,14 +9,15 @@ import useWhoami from "./helpers/useWhoami";
 import { ThemeProvider } from "@emotion/react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
-import { isFirstVisit, isSkeltonLoading } from "./recoil";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { isDarkMod, isFirstVisit, isSkeltonLoading } from "./recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { CircularProgress, CssBaseline } from "@mui/material";
 
 const App = () => {
     const { loading, response } = useWhoami();
-    const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
+    const _isDarkMod = useRecoilValue(isDarkMod);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
+    const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const [showValidationError, setShowValidationError] =
         useState<boolean>(false);
 
@@ -55,7 +56,7 @@ const App = () => {
 
     return (
         <ApolloProvider client={client}>
-            <ThemeProvider theme={theme}>
+            <ThemeProvider theme={theme(_isDarkMod)}>
                 <CssBaseline />
                 <BrowserRouter>
                     <Router routes={routes} />

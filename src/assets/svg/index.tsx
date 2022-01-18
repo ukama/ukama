@@ -1,6 +1,7 @@
 import Logo from "./Logo";
 import CpuIcon from "./CpuIcon";
 import NodeImg from "./NodeImg";
+import InfoIcon from "./InfoIcon";
 import HomeIcon from "./HomeIcon";
 import MenuDots from "./MenuDots";
 import AlertIcon from "./AlertIcon";
@@ -8,7 +9,6 @@ import DataUsage from "./DataUsage";
 import UsersIcon from "./UsersIcon";
 import RouterIcon from "./RouterIcon";
 import SimCardIcon from "./SimCardIcon";
-import AccountIcon from "./AccountIcon";
 import BatteryIcon from "./BatteryIcon";
 import BillingIcon from "./BillingIcon";
 import DataBilling from "./DataBilling";
@@ -17,13 +17,10 @@ import UpgradeIcon from "./UpgradeIcon";
 import UsersWithBG from "./UsersWithBG";
 import ActivityIcon from "./ActivityIcon";
 import CloudOffIcon from "./CloudOffIcon";
-import SettingsIcon from "./SettingsIcon";
 import ModuleStoreIcon from "./ModuleStoreIcon";
 import ThermometerIcon from "./ThermometerIcon";
-import NotificationIcon from "./NotificationIcon";
 import AmountBalanceImg from "./AmountBalanceImg";
 import SettingsArrowIcon from "./SettingsArrowIcon";
-import InfoIcon from "./InfoIcon";
 import PagePlaceholderSvg from "./PagePlaceholderSvg";
 export {
     Logo,
@@ -36,7 +33,6 @@ export {
     DataUsage,
     UsersIcon,
     RouterIcon,
-    AccountIcon,
     BatteryIcon,
     BillingIcon,
     DataBilling,
@@ -46,10 +42,8 @@ export {
     SimCardIcon,
     ActivityIcon,
     CloudOffIcon,
-    SettingsIcon,
     ModuleStoreIcon,
     ThermometerIcon,
-    NotificationIcon,
     AmountBalanceImg,
     SettingsArrowIcon,
     PagePlaceholderSvg,

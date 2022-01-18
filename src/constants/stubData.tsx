@@ -1,47 +1,56 @@
+import { NodePlaceholder, NodePlaceholderAlt } from "../assets/images";
 const RechartsData = [
     {
-        name: "10 AM",
-        uv: 590,
-        pv: 800,
-        amt: 1400,
-        cnt: 490,
+        name: "Page A",
+        uv: 4000,
+        pv: 2400,
+        vx: 1000,
+        amt: 2400,
     },
     {
-        name: "8 PM",
-        uv: 868,
-        pv: 967,
-        amt: 1506,
-        cnt: 590,
+        name: "Page B",
+        uv: 3000,
+        pv: 1398,
+        vx: 1000,
+        amt: 2210,
     },
     {
-        name: "12 PM",
-        uv: 1397,
-        pv: 1098,
-        amt: 989,
-        cnt: 350,
+        name: "Page C",
+        uv: 2000,
+        pv: 9800,
+        vx: 4000,
+        amt: 2290,
     },
     {
-        name: "4 AM",
-        uv: 1480,
-        pv: 1200,
-        amt: 1228,
-        cnt: 480,
+        name: "Page D",
+        uv: 2780,
+        pv: 3908,
+        vx: 9000,
+        amt: 2000,
     },
     {
-        name: "6 AM",
-        uv: 1520,
-        pv: 1108,
-        amt: 1100,
-        cnt: 460,
+        name: "Page E",
+        uv: 1890,
+        pv: 4800,
+        vx: 2400,
+        amt: 2181,
     },
     {
-        name: "10 PM",
-        uv: 1400,
-        pv: 680,
-        amt: 1700,
-        cnt: 380,
+        name: "Page F",
+        uv: 2390,
+        pv: 3800,
+        vx: 4500,
+        amt: 2500,
+    },
+    {
+        name: "Page G",
+        uv: 3490,
+        pv: 4300,
+        vx: 8000,
+        amt: 2100,
     },
 ];
+
 const CREDIT_CARD = [
     {
         id: 1,
@@ -177,7 +186,85 @@ const NodesData = [
     },
 ];
 
+const NodeDetailsStub = [
+    {
+        title: "Node Details",
+        renderPropertyStats: false,
+        image: {
+            alt: "Node Image",
+            src: NodePlaceholder,
+        },
+        button: {
+            label: "view diagnostics",
+            onClick: () => {
+                return;
+            },
+        },
+        properties: [
+            {
+                name: "Model type",
+                value: "Home Node",
+            },
+            {
+                name: "Serial #",
+                value: "1111111111111111111",
+            },
+            {
+                name: "MAC address",
+                value: "1111111111111111111",
+            },
+            { name: "OS version", value: "1.0" },
+            {
+                name: "Manufacturing #",
+                value: "1209391023209103",
+            },
+            { name: "Ukama OS", value: "1.0" },
+            { name: "Hardware", value: "1.0" },
+            {
+                name: "Description",
+                value: "Home node is a xyz.",
+            },
+        ],
+    },
+    {
+        title: "Meta Data",
+        properties: [
+            { name: "Throughput", value: "10" },
+            {
+                name: "Users Attached",
+                value: "5",
+            },
+        ],
+    },
+    {
+        title: "Physical Health",
+        image: {
+            alt: "Node Image Alt",
+            src: NodePlaceholderAlt,
+        },
+        properties: [
+            { name: "Temperature", value: "10" },
+            { name: "Memory", value: "5" },
+            { name: "CPU", value: "10" },
+            { name: "IO", value: "10" },
+        ],
+    },
+    {
+        title: "RF KPIs",
+        image: {
+            alt: "Node Image Alt",
+            src: NodePlaceholderAlt,
+        },
+        properties: [
+            { name: "QAM", value: "10" },
+            { name: "RF Output", value: "5" },
+            { name: "RSSI", value: "10" },
+        ],
+    },
+];
+
 export {
+    NodeDetailsStub,
     SimCardData,
     CurrentBillingData,
     CurrentBilling,

@@ -1,7 +1,6 @@
 import {
     Grid,
     Switch,
-    Divider,
     MenuItem,
     TextField,
     Typography,
@@ -9,12 +8,6 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { RF_NODES } from "../../constants";
-
-const LineDivider = () => (
-    <Grid item xs={12}>
-        <Divider sx={{ width: "100%" }} />
-    </Grid>
-);
 
 const NodeSettings = () => {
     const [rf, setRf] = useState(false);
@@ -79,7 +72,6 @@ const NodeSettings = () => {
                     </Grid>
                 </Grid>
             </Grid>
-            <LineDivider />
         </Grid>
     );
 };

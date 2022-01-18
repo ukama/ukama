@@ -1,11 +1,13 @@
 import {
     pageName,
+    isDarkMod,
     isFirstVisit,
     organizationId,
     isSkeltonLoading,
 } from "./atom";
 import {
     withPageName,
+    withIsDarkMod,
     withIsFirstVisit,
     withOrganizationId,
     withIsSkeltonLoading,
@@ -13,8 +15,10 @@ import {
 
 export {
     pageName,
+    isDarkMod,
     withPageName,
     isFirstVisit,
+    withIsDarkMod,
     organizationId,
     isSkeltonLoading,
     withIsFirstVisit,

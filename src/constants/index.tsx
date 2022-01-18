@@ -1,14 +1,12 @@
-import {
-    HomeIcon,
-    UsersIcon,
-    RouterIcon,
-    BillingIcon,
-    ModuleStoreIcon,
-} from "../assets/svg";
 import { MenuItemType } from "../types";
 import { Network_Type } from "../generated";
+import AppsIcon from "@mui/icons-material/Apps";
+import HomeIcon from "@mui/icons-material/Home";
 import EditIcon from "@mui/icons-material/Edit";
+import RouterIcon from "@mui/icons-material/Router";
 import DeleteIcon from "@mui/icons-material/Delete";
+import UsersIcon from "@mui/icons-material/PeopleAlt";
+import BillingIcon from "@mui/icons-material/CreditCard";
 import { DataTableWithOptionColumns } from "./tableColumns";
 
 const DRAWER_WIDTH = 200;
@@ -48,7 +46,7 @@ const STATS_PERIOD = [
 ];
 
 const SIDEBAR_MENU2 = [
-    { id: "5", title: "Integrations", Icon: ModuleStoreIcon, route: "/store" },
+    { id: "5", title: "Integrations", Icon: AppsIcon, route: "/store" },
 ];
 const MONTH_FILTER = [
     { id: 1, label: "January ", value: "JANUARY " },

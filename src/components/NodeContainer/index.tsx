@@ -1,6 +1,7 @@
-import { MultiSlideCarousel, NodeCard } from "..";
+import { Box } from "@mui/material";
+import RouterIcon from "@mui/icons-material/Router";
 import { GetNodesByOrgQuery } from "../../generated";
-
+import { EmptyView, MultiSlideCarousel, NodeCard } from "..";
 type NodeContainerProps = {
     items?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"];
     slidesToShow: number;
@@ -15,7 +16,7 @@ const NodeContainer = ({
     handleItemAction,
 }: NodeContainerProps) => {
     return (
-        <>
+        <Box sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}>
             {count > 1 ? (
                 <MultiSlideCarousel
                     numberOfSlides={slidesToShow}
@@ -35,9 +36,13 @@ const NodeContainer = ({
                     ))}
                 </MultiSlideCarousel>
             ) : (
-                <NodeCard isConfigure={true} />
+                <EmptyView
+                    size="large"
+                    title="No nodes yet!"
+                    icon={RouterIcon}
+                />
             )}
-        </>
+        </Box>
     );
 };
 

@@ -1,9 +1,10 @@
 import { selector } from "recoil";
 import {
-    isSkeltonLoading,
     pageName,
-    organizationId,
+    isDarkMod,
     isFirstVisit,
+    organizationId,
+    isSkeltonLoading,
 } from "./atom";
 
 const withIsSkeltonLoading = selector({
@@ -26,9 +27,15 @@ const withIsFirstVisit = selector({
     get: ({ get }) => get(isFirstVisit),
 });
 
+const withIsDarkMod = selector({
+    key: "withIsDarkMod",
+    get: ({ get }) => get(isDarkMod),
+});
+
 export {
-    withIsSkeltonLoading,
     withPageName,
-    withOrganizationId,
+    withIsDarkMod,
     withIsFirstVisit,
+    withOrganizationId,
+    withIsSkeltonLoading,
 };
