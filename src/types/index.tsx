@@ -56,6 +56,7 @@ export type PaymentMethodType = {
 };
 export type SVGType = {
     color?: string;
+    color2?: string;
     width?: string;
     height?: string;
 };

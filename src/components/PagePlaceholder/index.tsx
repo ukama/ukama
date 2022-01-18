@@ -2,6 +2,8 @@ import { colors } from "../../theme";
 import { LinkStyle } from "../../styles";
 import { PagePlaceholderSvg } from "../../assets/svg";
 import { Button, Stack, styled, Typography, Box } from "@mui/material";
+import { isDarkmode } from "../../recoil";
+import { useRecoilValue } from "recoil";
 const Container = styled(Box)((props: any) => ({
     background:
         props.theme.palette.mode === "dark" ? colors.darkGreen12 : colors.white,
@@ -25,6 +27,7 @@ const PagePlaceholder = ({
         //Default behaviour
     },
 }: PagePlaceholderProps) => {
+    const _isDarkmode = useRecoilValue(isDarkmode);
     return (
         <Container>
             <Stack
@@ -37,7 +40,10 @@ const PagePlaceholder = ({
                     p: 10,
                 }}
             >
-                <PagePlaceholderSvg />
+                <PagePlaceholderSvg
+                    color={_isDarkmode ? colors.greyish : colors.whiteGrey}
+                    color2={_isDarkmode ? colors.nightGrey : colors.white}
+                />
                 <Typography variant="body1">
                     {`${description} `}
                     {hyperlink && (
