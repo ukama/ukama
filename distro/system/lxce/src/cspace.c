@@ -53,6 +53,7 @@ static int send_response_packet(CSpace *space, int seqno, char *resp);
 static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid);
 static int cspace_capps_init(CApps **capps);
 static int handle_crud_requests(CSpace *space);
+static int valid_cspace_rootfs_pkg(char *fileName);
 
 /*
  * adjust_capabilities -- Adjust capabilties for the cspace
@@ -327,9 +328,8 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
   set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
   set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
 
-  if (!set_str_object_value(json, &(space->rootfs), JSON_ROOTFS, TRUE, NULL)) {
-    return FALSE;
-  }
+  /* default rootfs for all cspaces. */
+  space->rootfs = strdup(DEF_CSPACE_ROOTFS_PATH);
 
   /* Look for namespaces. */
   space->nameSpaces = 0;
@@ -653,4 +653,77 @@ static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid) {
  failure:
   clear_capp(capp);
   return NULL;
+}
+
+/*
+ * valid_cspace_rootfs_pkg --
+ *
+ */
+static int valid_cspace_rootfs_pkg(char *fileName) {
+
+  struct stat stats;
+
+  if (fileName == NULL) return FALSE;
+
+  stat(fileName, &stats);
+  if (S_ISREG(stats.st_mode)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/*
+ * cspace_unpack_rootfs --
+ *
+ */
+int cspace_unpack_rootfs() {
+
+  char pkg[CSPACE_MAX_BUFFER] = {0};
+  char runMe[CSPACE_MAX_BUFFER] = {0};
+  struct stat stats;
+  int ret;
+
+  /* Steps are as follow:
+   * 1. check the existance of rootfs pkg "cspace_rootfs.tar.gz"
+   * 2. remove existing rootfs at /cspace/rootfs/
+   * 3. untar pkg to /cspace/rootfs
+   */
+
+  sprintf(pkg, "%s/%s", DEF_CSPACE_ROOTFS_PKG_PATH, DEF_CSPACE_ROOTFS_PKG_NAME);
+  if (valid_cspace_rootfs_pkg(pkg) == FALSE) {
+    log_error("Unable to find cspace rootfs pkg at: %s", pkg);
+    return FALSE;
+  }
+
+  /* Check if directory exist */
+  stat(DEF_CSPACE_ROOTFS_PATH, &stats);
+  if (S_ISDIR(stats.st_mode)) {
+    if (rmdir(DEF_CSPACE_ROOTFS_PATH) < 0) {
+      log_error("Error removing existing cspace rootfs path at: %s Error: %s",
+		DEF_CSPACE_ROOTFS_PATH, strerror(errno));
+      return FALSE;
+    }
+  } else {
+    /* something bad happend. It should've existed. Log it for now. */
+    log_debug("Missing cspace rootfs dir at: %s", DEF_CSPACE_ROOTFS_PATH);
+  }
+
+  /* re-create the directory */
+  if(mkdir(DEF_CSPACE_ROOTFS_PATH, 0700) < 0) {
+    log_error("Error creating default cspsace rootfs dir: %s Error: %s",
+		DEF_CSPACE_ROOTFS_PATH, strerror(errno));
+    return FALSE;
+  }
+
+  /* untar to default cspace rootfs */
+  sprintf(runMe, "tar xfz %s -C %s", DEF_CSPACE_ROOTFS_PKG_NAME,
+	  DEF_CSPACE_ROOTFS_PATH);
+  if ((ret = system(runMe)) < 0) {
+    log_error("Unable to unpack the cspace rootfs: %s to %s Code: %d",
+	      DEF_CSPACE_ROOTFS_PKG_NAME, DEF_CSPACE_ROOTFS_PATH, ret);
+    return FALSE;
+  }
+
+  return TRUE;
 }

@@ -5,7 +5,6 @@
 
 	"name": "boot",
 	"hostname": "ukama-boot",
-	"rootfs"  : "/home/kashif/work/ukama/ukamaOS/distro/system/lxce/rootfs",
 	"uid": "0",
 	"gid": "0",
 
