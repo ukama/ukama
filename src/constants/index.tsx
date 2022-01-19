@@ -31,7 +31,7 @@ const LANGUAGE_OPTIONS = [
 const SIDEBAR_MENU1 = [
     { id: "1", title: "Home", Icon: HomeIcon, route: "/" },
     { id: "2", title: "Nodes", Icon: RouterIcon, route: "/nodes" },
-    { id: "3", title: "User", Icon: UsersIcon, route: "/user" },
+    { id: "3", title: "Users", Icon: UsersIcon, route: "/users" },
     { id: "4", title: "Billing", Icon: BillingIcon, route: "/billing" },
 ];
 const STATS_OPTIONS = [

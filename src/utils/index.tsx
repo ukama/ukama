@@ -11,8 +11,8 @@ const getTitleFromPath = (path: string) => {
             return "Notification";
         case "/nodes":
             return "Nodes";
-        case "/user":
-            return "User";
+        case "/users":
+            return "Users";
         case "/billing":
             return "Billing";
         case "/store":

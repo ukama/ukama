@@ -3,7 +3,7 @@ import { UserData } from "../../constants/stubData";
 import { Box } from "@mui/material";
 import { useState } from "react";
 
-const User = () => {
+const Users = () => {
     const [showSimDialog, setShowSimDialog] = useState(false);
     const [userId, setUserId] = useState();
     const handleSimDialog = () => {
@@ -59,4 +59,4 @@ const User = () => {
     );
 };
 
-export default User;
+export default Users;

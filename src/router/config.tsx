@@ -57,7 +57,7 @@ export const routes: IRoute[] = [
     //Privatte Routes//
     getRouteObject("/", "Home", true),
     getRouteObject("/nodes", "Nodes", true),
-    getRouteObject("/user", "User", true),
+    getRouteObject("/users", "Users", true),
     getRouteObject("/settings", "Settings", true, true),
     getRouteObject("/billing", "Billing", true),
     getRouteObject("/store", "Store", true),
