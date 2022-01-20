@@ -198,6 +198,12 @@ int main(int argc, char **argv) {
   /* Initialize cspace threads list */
   init_cspace_thread_list();
 
+  /* unpack cspace rootfs */
+  if (!cspace_unpack_rootfs()) {
+    log_error("cspace rootfs error. Exiting");
+    exit(1);
+  }
+
   /* Before we open the socket for REST, process the config file and
    * start them containers.
    */

@@ -25,7 +25,6 @@
 #define JSON_UID          "uid"
 #define JSON_GID          "gid"
 #define JSON_TYPE         "type"
-#define JSON_ROOTFS       "rootfs"
 #define JSON_HOSTNAME     "hostname"
 #define JSON_NAMESPACES   "namespaces"
 #define JSON_CAPABILITIES "capabilities"
@@ -45,6 +44,12 @@
 #define CSPACE_MEMORY_ERROR 3
 
 #define LXCE_SERIAL "serial"
+
+/* Related to cspace rootfs pkg */
+#define DEF_CSPACE_ROOTFS_PKG_PATH "/capps/pkgs"
+#define DEF_CSPACE_ROOTFS_PKG_NAME "cspace_rootfs.tar.gz"
+#define DEF_CSPACE_ROOTFS_PATH     "/cspace/rootfs"
+
 
 /* Definition of Ukama's contained space as per config file */
 typedef struct cSpace_t {
@@ -77,5 +82,6 @@ typedef struct cSpace_t {
 
 int create_cspace(CSpace *space, pid_t *pid);
 int process_cspace_config(char *fileName, CSpace *space);
+int cspace_unpack_rootfs();
 
 #endif /* LXCE_CSPACE_H */
