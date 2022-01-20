@@ -197,7 +197,7 @@ build_busybox() {
     BB_CONFIG=ukama_minimal_defconfig
     #Execute make and copy conent of _ukamafs to rootfs
 
-    mkdir -p ${BB_ROOT}/${BB_ROOTFS}
+    mkdir -p ${BB_ROOTFS}
 
     # setup proper compiler option
     if [ "${TARGET}" != "local" ]
@@ -208,7 +208,7 @@ build_busybox() {
     fi
 
     make XGCCPATH=${XGCC_PATH}/ BBCONFIG=${BB_CONFIG} \
-	 ROOTFSPATH=${BB_ROOT}/${BB_ROOTFS}
+	 ROOTFSPATH=${BB_ROOTFS}
 
     if [ $? -ne 0 ]
     then
@@ -217,7 +217,7 @@ build_busybox() {
     fi
 
     cd ${CWD}
-    cp -rf ${BB_ROOT}/${BB_ROOTFS}/* ${ROOTFS}
+    cp -rf ${BB_ROOTFS}/* ${ROOTFS}
 
     # Go back and clean up
     cd ${BB_ROOT}
@@ -281,6 +281,7 @@ build_capps() {
 
     # copy pkgs to rootfs /capps/pkgs
     cp ${CAPPS_ROOT}/pkgs/* ${ROOTFS}/capps/pkgs
+    cd ${CWD}
 
     # Build cspace rootfs pkg
     build_cspace_rootfs
@@ -450,8 +451,8 @@ setup_device() {
     CWD=`pwd`
 
     cd ${ROOTFS}
-    mknod dev/console c 5 1
-    mknod dev/tty c 5 0
+    sudo mknod ./dev/console c 5 1
+    sudo mknod ./dev/tty c 5 0
     sync
 
     cd ${CWD}
@@ -537,6 +538,9 @@ setup_etc
 log_info "Setting up /dev"
 setup_device
 
+# Copy networking script.
+cp setup_space_network.sh ${ROOTFS}/sbin/
+
 log_info "Copying all lib for executables"
 EXEC="${ROOTFS}/sbin/busybox"
 EXEC="${ROOTFS}/boot/preInit ${EXEC}"
@@ -554,7 +558,7 @@ chmod 664  var/log/lastlog var/log/wtmp
 chmod 4755 bin/busybox
 chmod 755  usr/sbin/nologin
 chmod 644  etc/passwd etc/group etc/hostname etc/shells etc/hosts etc/fstab \
-      etc/issue etc/motd etc/profile
+      etc/issue etc/motd
 
 sudo chown root:root .
 sudo chown -R root:root *
