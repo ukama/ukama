@@ -48,7 +48,7 @@
 /* Related to cspace rootfs pkg */
 #define DEF_CSPACE_ROOTFS_PKG_PATH "/capps/pkgs"
 #define DEF_CSPACE_ROOTFS_PKG_NAME "cspace_rootfs.tar.gz"
-#define DEF_CSPACE_ROOTFS_PATH     "/cspace/rootfs"
+#define DEF_CSPACE_ROOTFS_PATH     "/capps/rootfs"
 
 
 /* Definition of Ukama's contained space as per config file */

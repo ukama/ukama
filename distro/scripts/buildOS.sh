@@ -53,7 +53,7 @@ TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_ROOTFS}
 ROOTFS=`realpath ${DEF_ROOTFS}`
-CSPACE_ROOTFS=`realpath ${DEF_CSPACE_ROOTFS}`
+CSPACE_ROOTFS=${DEF_CSPACE_ROOTFS}
 
 log_info() {
     echo "Info: $1"

@@ -717,11 +717,12 @@ int cspace_unpack_rootfs() {
   }
 
   /* untar to default cspace rootfs */
-  sprintf(runMe, "tar xfz %s -C %s", DEF_CSPACE_ROOTFS_PKG_NAME,
-	  DEF_CSPACE_ROOTFS_PATH);
+  sprintf(runMe, "/bin/tar xfz %s/%s -C %s", DEF_CSPACE_ROOTFS_PKG_PATH,
+	  DEF_CSPACE_ROOTFS_PKG_NAME, DEF_CSPACE_ROOTFS_PATH);
   if ((ret = system(runMe)) < 0) {
-    log_error("Unable to unpack the cspace rootfs: %s to %s Code: %d",
-	      DEF_CSPACE_ROOTFS_PKG_NAME, DEF_CSPACE_ROOTFS_PATH, ret);
+    log_error("Unable to unpack the cspace rootfs: %s/%s to %s Code: %d",
+	      DEF_CSPACE_ROOTFS_PKG_PATH, DEF_CSPACE_ROOTFS_PKG_NAME,
+	      DEF_CSPACE_ROOTFS_PATH, ret);
     return FALSE;
   }
 

@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <uuid/uuid.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "lxce_config.h"
 #include "wimc.h"
@@ -36,6 +38,9 @@ static int capp_init_policy(CApp *capp, int flag);
 extern int add_to_shmem_list(ThreadShMem *mem);
 extern ThreadShMem *remove_from_shmem_list();
 void reset_shmem_list();
+
+/* from capp_unpack.c */
+int capp_unpack(char *name, char *tag, char **dest);
 
 /*
  * capp_init_params --
@@ -131,6 +136,7 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
 
   CApp *capp=NULL;
   char fileName[CAPP_MAX_BUFFER] = {0};
+  struct stat stats;
 
   if (!config || !name || !tag || !space)
     return FALSE;
@@ -147,7 +153,10 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
 
   /* check to see if capp pack exists at default location */
   sprintf(fileName, "%s/%s_%s.tar.gz", DEF_CAPP_PATH, name, tag);
-  if (access(fileName, F_OK)) { /* unpack to /capps/pkgs/unpack */
+  log_debug("Checking to see if %s exists", fileName);
+
+  stat(fileName, &stats);
+  if (S_ISREG(stats.st_mode)) { /* unpack to /capps/pkgs/unpack */
     if (capp_unpack(name, tag, &path)==FALSE) {
       log_error("Error unpacking the capp. Name: %s Tag: %s", name, tag);
       return FALSE;

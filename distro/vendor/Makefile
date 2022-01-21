@@ -413,7 +413,7 @@ dhcpcd:
 	$(call print_msg,"dhcpcd")
 	(cd $@ && \
 	./configure --small --disable-inet6 --disable-embedded \
-		--libexecdir=/lib/dhcpcd dbdir=/var/lib/dhcpcd && \
+		--libexecdir=/lib/dhcpcd --dbdir=/var/lib/dhcpcd && \
 	$(MAKE) CC="${XCC}"  && \
 	$(MAKE) CC="${XCC}" DESTDIR=${DEPDIR} install && \
 	cd ./src && $(MAKE) clean && cd ..)
