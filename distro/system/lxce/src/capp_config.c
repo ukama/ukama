@@ -38,7 +38,7 @@ int valid_path(char *path) {
 
   sprintf(fileName, "%s/config.json", path);
 
-  if ((fp = fopen(fileName, "rb")) == NULL) {
+  if ((fp = fopen(fileName, "r")) == NULL) {
     log_error("Error opening file: %s Error %s", fileName, strerror(errno));
     return FALSE;
   }
@@ -62,7 +62,7 @@ int process_capp_config_file(CAppConfig *config, char *fileName) {
 
   if (!fileName) return FALSE;
 
-  if ((fp = fopen(fileName, "rb")) == NULL) {
+  if ((fp = fopen(fileName, "r")) == NULL) {
     log_error("Error opening file: %s Error %s", fileName, strerror(errno));
     return FALSE;
   }

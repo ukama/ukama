@@ -26,13 +26,18 @@
 static int is_valid_capp(char *path) {
 
   char fileName[CAPP_MAX_BUFFER] = {0};
+  struct stat stats;
 
-  if (path==NULL) return FALSE;
+  if (path == NULL) return FALSE;
 
   sprintf(fileName, "%s/%s", path, DEF_CONFIG);
 
-  if (access(fileName, F_OK)) {
+  stat(fileName, &stats);
+  if (S_ISREG(stats.st_mode)) {
+    log_debug("Valid config file at: %s", fileName);
     return TRUE;
+  } else {
+    log_error("Default config file not found: %s", fileName);
   }
 
   return FALSE;
@@ -41,14 +46,14 @@ static int is_valid_capp(char *path) {
 /*
  * capp_unpack -- unpack the capp to default location.
  *                Currently using tar eventually should be done via
- *                libarchieve (TODO)
+ *                libarchive (TODO)
  */
 int capp_unpack(char *name, char *tag, char **dest) {
 
   char runMe[CAPP_MAX_BUFFER] = {0};
   char path[CAPP_MAX_BUFFER] = {0};
   struct stat stats;
-  
+
   if (name == NULL || tag == NULL) return FALSE;
 
   /* Check if directory exist or not */
@@ -60,9 +65,11 @@ int capp_unpack(char *name, char *tag, char **dest) {
       return FALSE;
     }
   }
-  
-  sprintf(runMe, "tar xfz %s_%s.tar.gz -C %s", name, tag,
-	  DEF_CAPP_UNPACK_PATH);
+
+  log_debug("Unpacking the capp: %s/%s_%s.tar.gz",  DEF_CAPP_PATH,
+	    name, tag);
+  sprintf(runMe, "/bin/tar xfz %s/%s_%s.tar.gz -C %s",  DEF_CAPP_PATH,
+	  name, tag, DEF_CAPP_UNPACK_PATH);
   if (system(runMe) < 0) {
     log_error("Unable to unpack the capp: %s_%s.tar.gz to %s", name, tag,
 	      DEF_CAPP_UNPACK_PATH);

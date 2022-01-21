@@ -192,7 +192,6 @@ int main(int argc, char **argv) {
       exit(0);
     }
   }
-  
   log_debug("Starting lxce.d ... \n");
 
   /* Initialize cspace threads list */
