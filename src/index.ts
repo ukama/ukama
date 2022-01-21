@@ -1,17 +1,21 @@
+import dotenv from "dotenv";
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
+import cors from "cors";
 import "reflect-metadata";
+import { PORT } from "./constants";
+import { createServer } from "http";
+import cookieParser from "cookie-parser";
+import { mockServer } from "./mockServer";
+import { job } from "./jobs/subscriptionJob";
 import setupLogger from "./config/setupLogger";
 import configureExpress from "./config/configureExpress";
 import configureApolloServer from "./config/configureApolloServer";
-import { mockServer } from "./mockServer";
-import { PORT } from "./constants";
-import { createServer } from "http";
-import { job } from "./jobs/subscriptionJob";
 import {
+    MiddlewareOptions,
     renderPlaygroundPage,
     RenderPageOptions as PlaygroundRenderPageOptions,
 } from "@apollographql/graphql-playground-html";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 
 const logger = setupLogger("app");
 
@@ -21,7 +25,7 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: ["https://app.dev.ukama.com", "http://localhost:3000"],
+        origin: process.env.DASHBOARD_APP_URL,
         credentials: true,
     };
     app.use(cors(corsOptions));
@@ -35,7 +39,7 @@ const initializeApp = async () => {
 
     app.get("/playground", (req, res) => {
         if (hasSession(req.headers.cookie || "")) {
-            const playgroundRenderPageOptions: PlaygroundRenderPageOptions = {
+            const playgroundRenderPageOptions: MiddlewareOptions = {
                 endpoint: "/graphql",
             };
 
@@ -45,8 +49,9 @@ const initializeApp = async () => {
             res.write(playground);
             res.end();
         } else {
-            res.cookie("redirect", "https://bff.dev.ukama.com/playground");
-            res.redirect("https://auth.dev.ukama.com/auth/login");
+            res.redirect(
+                `${process.env.AUTH_APP_URL}?redirect=${req.headers.host}${req.originalUrl}`
+            );
             res.end();
         }
     });

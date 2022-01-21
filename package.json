@@ -5,9 +5,9 @@
   "author": "",
   "license": "MIT",
   "scripts": {
-    "dev": " nodemon",
+    "dev": "NODE_ENV=development nodemon",
     "lint": "eslint . --ext .ts",
-    "start": "ts-node src/index.ts",
+    "start": "NODE_ENV=production ts-node src/index.ts ",
     "test": "jest",
     "build": "tsc -b"
   },
@@ -47,7 +47,7 @@
     "class-validator": "^0.13.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^10.0.0",
+    "dotenv": "^14.2.0",
     "envalid": "^7.1.1",
     "express": "^4.17.1",
     "express-graphql": "^0.12.0",

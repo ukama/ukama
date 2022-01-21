@@ -1,9 +1,8 @@
 import { registerEnumType } from "type-graphql";
 
-export const NODE_ENV = "development";
-export const PORT = "8080";
+export const PORT = process.env.PORT;
+export const DEV_URL = process.env.API_URL;
 export const BASE_URL = `http://localhost:${PORT}`;
-export const DEV_URL = `https://api.dev.ukama.com`;
 export const HEADER = {
     headers: {
         cookie: "ukama_session=test; csrf_token=test",
