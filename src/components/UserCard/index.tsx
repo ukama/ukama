@@ -20,7 +20,7 @@ const UserCard = ({
 }: UserCardProps) => {
     return (
         <>
-            <RoundedCard sx={{ height: "100%" }}>
+            <RoundedCard sx={{ height: "38rem" }}>
                 {children}
                 <Grid
                     container

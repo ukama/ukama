@@ -215,7 +215,7 @@ const NodeDetailsStub = [
             },
             { name: "OS version", value: "1.0" },
             {
-                name: "Manufacturing #",
+                name: "Manufacturing ",
                 value: "1209391023209103",
             },
             { name: "Ukama OS", value: "1.0" },

@@ -10,6 +10,7 @@ import { styled } from "@mui/material/styles";
 import { colors } from "../../theme";
 import SearchIcon from "@mui/icons-material/Search";
 import InputBase from "@mui/material/InputBase";
+
 import { useState, useEffect } from "react";
 type ContainerHeaderProps = {
     title?: string;
@@ -24,7 +25,7 @@ type ContainerHeaderProps = {
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
     color: "inherit",
     "& .MuiInputBase-input": {
-        paddingLeft: `calc(1em + ${theme.spacing(1)})`,
+        paddingLeft: `calc(1em + ${theme.spacing(0)})`,
         width: "100%",
     },
 }));
@@ -68,19 +69,21 @@ const ContainerHeader = ({
             </Grid>
 
             <Grid item xs={12} md={6} container>
-                <Grid container spacing={1} sx={{ alignItems: "center" }}>
+                <Grid container sx={{ alignItems: "center" }}>
                     {showSearchBox && (
-                        <Grid item xs={6}>
+                        <Grid item xs={6} container justifyContent="flex-end">
                             <Paper
                                 sx={{
+                                    borderRadius: 2,
                                     border: `1px solid ${colors.darkGray}`,
+                                    padding: "0px !important",
                                     width: "100%",
                                 }}
                                 elevation={0}
                             >
                                 <Stack
                                     direction="row"
-                                    justifyContent="space-between"
+                                    justifyContent="flex-between"
                                 >
                                     <StyledInputBase
                                         placeholder="Search…"
@@ -98,8 +101,7 @@ const ContainerHeader = ({
                                     >
                                         <SearchIcon
                                             sx={{
-                                                fill: colors.darkGray,
-                                                color: colors.darkGray,
+                                                color: colors.black,
                                             }}
                                             fontSize="small"
                                         />
@@ -118,7 +120,7 @@ const ContainerHeader = ({
                         {showButton && (
                             <Button
                                 variant="contained"
-                                sx={{ width: showSearchBox ? "100%" : null }}
+                                sx={{ width: showSearchBox ? "70%" : null }}
                                 onClick={() => handleButtonAction()}
                             >
                                 {buttonTitle}
