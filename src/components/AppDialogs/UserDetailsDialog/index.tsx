@@ -1,9 +1,8 @@
 import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
-import { useState, useEffect } from "react";
-import { GetUserDto } from "../../../generated";
 import {
+    Tooltip,
     Box,
     Switch,
     Button,
@@ -14,9 +13,12 @@ import {
     DialogActions,
     Divider,
     Grid,
+    DialogContent,
 } from "@mui/material";
-import { InfoIcon } from "../../../assets/svg";
 import colors from "../../../theme/colors";
+import { InfoIcon } from "../../../assets/svg";
+import { ContainerJustifySpaceBtw } from "../../../styles";
+import { GetUserDto, Get_User_Status_Type } from "../../../generated";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -29,11 +31,11 @@ const useStyles = makeStyles(() => ({
 }));
 
 type BasicDialogProps = {
-    getUser: any;
+    user: GetUserDto;
     isOpen: boolean;
-    btnLabel: string;
-    handleClose: any;
+    setUserForm: any;
     isClosable?: boolean;
+    handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
     handleSaveSimUser?: any;
@@ -42,298 +44,236 @@ type BasicDialogProps = {
 };
 
 const UserDetailsDialog = ({
-    getUser,
-    userDetailsTitle,
+    user,
     isOpen,
-    simDetailsTitle,
-    closeBtnLabel,
-    saveBtnLabel,
+    setUserForm,
     handleClose,
+    saveBtnLabel,
+    closeBtnLabel,
+    simDetailsTitle,
+    userDetailsTitle,
     isClosable = true,
     handleSaveSimUser = () => {
         /* Default empty function */
     },
 }: BasicDialogProps) => {
     const classes = useStyles();
-    const [roaming, setRoaming] = useState(false);
-    const [name, setName] = useState<any>();
-    const [currentEmail, setCurrentEmail] = useState<any>();
-    const [phone, setPhone] = useState<any>();
-    const [isOff, setIsOff] = useState(true);
-    const [formData, setFormData] = useState<any>();
-    const handleRoaming = (e: any) => {
-        setRoaming(e.target.checked);
-    };
-    const handleSave = () => {
-        const datas = {
-            name: name,
-            email: currentEmail,
-            phone: phone,
-            service: isOff,
-            roaming: roaming,
-        };
-        setFormData(datas);
-    };
-    useEffect(() => {
-        handleSaveSimUser(formData);
-    }, [formData]);
+    const {
+        id,
+        name,
+        email,
+        phone,
+        iccid,
+        status,
+        roaming,
+        dataPlan,
+        dataUsage,
+        eSimNumber,
+    } = user;
 
     return (
-        <>
-            {getUser.map(
-                ({
-                    id,
-                    status,
-                    name,
-                    eSimNumber,
-                    iccid,
-                    email,
-                    phone,
-                    roaming,
-                    dataPlan,
-                    dataUsage,
-                }: GetUserDto) => (
-                    <Dialog
-                        key={id}
-                        open={isOpen}
-                        onBackdropClick={() => isClosable && handleClose()}
-                        hideBackdrop
+        <Dialog
+            key={id}
+            open={isOpen}
+            hideBackdrop
+            onBackdropClick={() => isClosable && handleClose()}
+        >
+            <Box
+                sx={{
+                    width: { xs: "100%", md: "500px" },
+                    padding: "16px 24px",
+                }}
+            >
+                <Box className={classes.basicDialogHeaderStyle}>
+                    <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={1}
                     >
-                        <Box
-                            sx={{
-                                width: { xs: "100%", md: "500px" },
-                                padding: "16px 8px 8px 24px",
-                            }}
+                        <Typography variant="h5">{name}</Typography>
+                    </Stack>
+                    {isClosable && (
+                        <IconButton
+                            onClick={() => handleClose()}
+                            sx={{ ml: "24px", p: "8px" }}
                         >
-                            <Box className={classes.basicDialogHeaderStyle}>
-                                <Stack
-                                    direction="row"
-                                    sx={{ alignItems: "center" }}
-                                    spacing={1}
+                            <CloseIcon />
+                        </IconButton>
+                    )}
+                </Box>
+                <DialogContent sx={{ padding: 0, mb: 4 }}>
+                    <Grid>
+                        <Grid container>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {userDetailsTitle} {id}
+                                </Typography>
+                                <Divider />
+                            </Grid>
+                        </Grid>
+                        <Grid item container spacing={1}>
+                            <Grid item xs={12}>
+                                <Typography
+                                    variant="body1"
+                                    sx={{ color: colors.vulcan }}
                                 >
-                                    <Typography variant="h5">{name}</Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ color: colors.darkGrey }}
-                                    >
-                                        - {dataUsage} GB data used, {dataPlan}
-                                        free GB left
-                                    </Typography>
-                                </Stack>
-                                {isClosable && (
-                                    <IconButton
-                                        onClick={handleClose}
-                                        sx={{ ml: "24px", p: "8px" }}
-                                    >
-                                        <CloseIcon />
-                                    </IconButton>
-                                )}
-                            </Box>
-
-                            <Grid container>
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle2">
-                                        {userDetailsTitle} {id}
-                                    </Typography>
-                                    <Divider sx={{ width: "450px" }} />
-                                </Grid>
+                                    {dataUsage} GB data used, {dataPlan}
+                                    free GB left
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={9}>
+                                <EditableTextField
+                                    value={name || ""}
+                                    label={"NAME"}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, name: value })
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={9}>
+                                <EditableTextField
+                                    value={email || ""}
+                                    label={"EMAIL"}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, email: value })
+                                    }
+                                />
+                            </Grid>
+                            <Grid item xs={9}>
+                                <EditableTextField
+                                    value={phone || ""}
+                                    label={"PHONE"}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, email: value })
+                                    }
+                                />
+                            </Grid>
+                        </Grid>
+                        <Grid container sx={{ mt: 1 }} spacing={1}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {simDetailsTitle}
+                                </Typography>
+                                <Divider />
                             </Grid>
                             <Grid item container>
-                                <Grid item container xs={12} spacing={2}>
-                                    <Grid item xs={9}>
-                                        <EditableTextField
-                                            value={name || ""}
-                                            label={"NAME"}
-                                            handleOnChange={(value: string) => {
-                                                setName(value);
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={9}>
-                                        <EditableTextField
-                                            value={email || ""}
-                                            label={"EMAIL"}
-                                            handleOnChange={(value: string) => {
-                                                setCurrentEmail(value);
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={9}>
-                                        <EditableTextField
-                                            value={phone || ""}
-                                            label={"PHONE"}
-                                            handleOnChange={(value: string) => {
-                                                setPhone(value);
-                                            }}
-                                        />
-                                    </Grid>
-                                </Grid>
-                            </Grid>
-                            <Grid container sx={{ mt: 1 }}>
                                 <Grid item xs={12}>
-                                    <Typography variant="subtitle2">
-                                        {simDetailsTitle}
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: colors.lightGrey,
+                                        }}
+                                    >
+                                        STATUS
                                     </Typography>
-                                    <Divider sx={{ width: "450px" }} />
                                 </Grid>
-                                <Grid
-                                    item
-                                    container
-                                    direction="row"
-                                    justifyContent="space-between"
-                                >
-                                    <Grid item>
-                                        <Stack direction="column">
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: colors.lightGrey,
-                                                }}
-                                            >
-                                                STATUS
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                {status}
-                                            </Typography>
-                                        </Stack>
-                                    </Grid>
-                                    <Grid item>
+                                <Grid item xs={12}>
+                                    <ContainerJustifySpaceBtw>
+                                        <Typography variant="body2">
+                                            {status}
+                                        </Typography>
                                         <Button
-                                            onClick={() => setIsOff(!isOff)}
                                             size="small"
+                                            color="error"
                                             variant="outlined"
-                                            sx={{
-                                                color: "red",
-                                                border: "1px solid red",
-                                                position: "relative",
-                                                top: "12px",
-                                                mr: 2,
-                                                "&:hover": {
-                                                    borderColor: "red",
-                                                },
-                                            }}
+                                            onClick={() =>
+                                                setUserForm({
+                                                    ...user,
+                                                    status:
+                                                        status ===
+                                                        Get_User_Status_Type.Active
+                                                            ? Get_User_Status_Type.Inactive
+                                                            : Get_User_Status_Type.Active,
+                                                })
+                                            }
                                         >
-                                            {isOff
+                                            {status ===
+                                            Get_User_Status_Type.Active
                                                 ? "PAUSE SERVICE"
                                                 : "RESUME SERVICE "}
                                         </Button>
-                                    </Grid>
-                                </Grid>
-                                <Grid
-                                    item
-                                    container
-                                    direction="row"
-                                    justifyContent="space-between"
-                                >
-                                    <Grid item>
-                                        <Stack direction="column">
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: colors.lightGrey,
-                                                }}
-                                            >
-                                                {iccid}
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                {eSimNumber}
-                                            </Typography>
-                                        </Stack>
-                                    </Grid>
-                                </Grid>
-                                <Grid
-                                    item
-                                    container
-                                    direction="row"
-                                    justifyContent="space-between"
-                                >
-                                    <Grid item>
-                                        <Stack direction="column">
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: colors.lightGrey,
-                                                }}
-                                            >
-                                                ICCID
-                                            </Typography>
-                                            <Typography variant="body2">
-                                                1234812374109374139434173470
-                                            </Typography>
-                                        </Stack>
-                                    </Grid>
-                                </Grid>
-                                <Grid
-                                    item
-                                    container
-                                    direction="row"
-                                    justifyContent="space-between"
-                                >
-                                    <Grid item>
-                                        <Stack direction="column">
-                                            <Typography
-                                                variant="caption"
-                                                sx={{
-                                                    color: colors.lightGrey,
-                                                }}
-                                            >
-                                                ROAMING
-                                            </Typography>
-
-                                            <Stack
-                                                direction="row"
-                                                alignItems="center"
-                                                spacing={1}
-                                            >
-                                                <Typography variant="body2">
-                                                    Roaming enabled
-                                                </Typography>
-                                                <InfoIcon />
-                                            </Stack>
-                                        </Stack>
-                                    </Grid>
-                                    <Grid item>
-                                        <Switch
-                                            sx={{
-                                                color: colors.lightGrey,
-                                                position: "relative",
-                                                top: "12px",
-                                                mr: 1,
-                                            }}
-                                            size="small"
-                                            checked={roaming}
-                                            onClick={handleRoaming}
-                                            value="active"
-                                            inputProps={{
-                                                "aria-label":
-                                                    "secondary checkbox",
-                                            }}
-                                        />
-                                    </Grid>
+                                    </ContainerJustifySpaceBtw>
                                 </Grid>
                             </Grid>
-
-                            <DialogActions>
-                                <Button
-                                    onClick={handleClose}
-                                    color="primary"
-                                    sx={{ mr: 2, justifyItems: "center" }}
-                                >
-                                    {closeBtnLabel}
-                                </Button>
-                                <Button
-                                    onClick={handleSave}
-                                    color="primary"
-                                    variant="contained"
-                                >
-                                    {saveBtnLabel}
-                                </Button>
-                            </DialogActions>
-                        </Box>
-                    </Dialog>
-                )
-            )}
-        </>
+                            <Grid item container xs={12}>
+                                <Grid item xs={12}>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: colors.lightGrey,
+                                        }}
+                                    >
+                                        IMEI NUMBER
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2">
+                                        {eSimNumber}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid item container xs={12}>
+                                <Grid item xs={12}>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: colors.lightGrey,
+                                        }}
+                                    >
+                                        ICCID
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2">
+                                        {iccid}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                            <Grid item container xs={12}>
+                                <ContainerJustifySpaceBtw>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            color: colors.lightGrey,
+                                            alignSelf: "end",
+                                        }}
+                                    >
+                                        ROAMING
+                                        <Tooltip title="Info about roming">
+                                            <IconButton>
+                                                <InfoIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </Typography>
+                                    <Switch
+                                        size="small"
+                                        value="active"
+                                        checked={roaming}
+                                        onClick={(e: any) =>
+                                            setUserForm({
+                                                ...user,
+                                                roaming: e.target.checked,
+                                            })
+                                        }
+                                    />
+                                </ContainerJustifySpaceBtw>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions sx={{ padding: 0 }}>
+                    <Button
+                        onClick={() => handleClose()}
+                        sx={{ mr: 2, justifyItems: "center" }}
+                    >
+                        {closeBtnLabel}
+                    </Button>
+                    <Button onClick={handleSaveSimUser} variant="contained">
+                        {saveBtnLabel}
+                    </Button>
+                </DialogActions>
+            </Box>
+        </Dialog>
     );
 };
 

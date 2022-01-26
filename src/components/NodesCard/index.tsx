@@ -20,7 +20,7 @@ const Container = styled(Box)((props: any) => ({
     borderRadius: "10px",
     justifyContent: "center",
     background:
-        props.theme.palette.mode === "dark" ? colors.darkGreen12 : colors.white,
+        props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
 }));
 
 const IconStyle = {

@@ -68,6 +68,7 @@ const MessageContainer = styled(Box)({
 });
 
 const ContainerJustifySpaceBtw = styled(Box)(props => ({
+    width: "100%",
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
@@ -83,7 +84,7 @@ const RoundedCard = styled(Paper)(props => ({
     borderRadius: "10px",
     display: "inline-block",
     background:
-        props.theme.palette.mode === "dark" ? colors.darkGreen05 : colors.white,
+        props.theme.palette.mode === "dark" ? colors.nightGrey05 : colors.white,
     boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
     [props.theme.breakpoints.down("sm")]: {
         padding: "18px",
@@ -102,7 +103,7 @@ const FullscreenContainer = styled(Box)(props => ({
     height: "100%",
     background:
         props.theme.palette.mode === "dark"
-            ? colors.darkGreen
+            ? colors.nightGrey
             : colors.solitude,
 }));
 

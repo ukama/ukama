@@ -1,81 +1,130 @@
 import {
-    ContainerHeader,
     UserCard,
+    ContainerHeader,
     UserDetailsDialog,
     PagePlaceholder,
+    LoadingWrapper,
 } from "../../components";
 import { Box } from "@mui/material";
-import { useState } from "react";
-import { useMyUsersQuery, useGetUserQuery } from "../../generated";
-import { organizationId } from "../../recoil";
 import { useRecoilValue } from "recoil";
+import { useState, useEffect } from "react";
+import { isSkeltonLoading, organizationId } from "../../recoil";
+import {
+    GetUserDto,
+    Get_User_Status_Type,
+    useGetUserLazyQuery,
+    useMyUsersLazyQuery,
+} from "../../generated";
+import { RoundedCard } from "../../styles";
+
 const User = () => {
+    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
-    const [userId, setUserId] = useState<string>();
+    const [userForm, setUserForm] = useState<GetUserDto>({
+        //TODO: Remove these static initilization after UI review
+        id: "123",
+        status: Get_User_Status_Type.Active,
+        name: "Test123",
+        eSimNumber: "123456789",
+        iccid: "0987654321",
+        email: "test@123.com",
+        phone: "1231231",
+        roaming: true,
+        dataPlan: 100.0,
+        dataUsage: 12.3,
+    });
     const orgId = useRecoilValue(organizationId);
     const handleSimDialog = () => {
         setShowSimDialog(false);
     };
-    const { data: usersRes } = useMyUsersQuery({
-        variables: { orgId: orgId || "" },
-    });
-    const { data: userRes } = useGetUserQuery({
-        variables: {
-            id: userId || "",
-        },
-    });
+
+    const [getUsersByOrgId, { data: usersRes, loading: usersByOrgLoading }] =
+        useMyUsersLazyQuery();
+
+    const [getUser, { data: userRes, loading: userLoading }] =
+        useGetUserLazyQuery();
+
+    useEffect(() => {
+        if (orgId) {
+            getUsersByOrgId({
+                variables: {
+                    orgId: orgId,
+                },
+            });
+        }
+    }, [orgId]);
+
+    useEffect(() => {
+        if (userRes) {
+            setUserForm({ ...userRes.getUser });
+        }
+    }, [userRes]);
+
+    const getUseDetails = (simDetailsId: string) => {
+        setShowSimDialog(true);
+        getUser({
+            variables: {
+                id: simDetailsId,
+            },
+        });
+    };
+
     const handleSimInstallation = () => {
-        /* TODO:handle sim activation */
+        setShowSimDialog(true);
     };
 
     const getSearchValue = () => {
-        /* TODO:handle HandleSearch */
+        /* TODO: Handle HandleSearch */
     };
-    const getUseDetails = (simDetailsId: any) => {
-        setShowSimDialog(true);
-        setUserId(simDetailsId);
+
+    const handleSave = () => {
+        /* TODO: CALL UPDATE USER API HERE */
     };
-    const getSimData = () => {
-        /* TODO:Get sim Details */
-    };
+
     return (
         <Box sx={{ flexGrow: 1, mt: 3 }}>
-            {usersRes?.myUsers?.users ? (
-                <>
-                    <ContainerHeader
-                        title="My Users"
-                        stats={`${usersRes?.myUsers?.users.length || "0"}`}
-                        handleButtonAction={handleSimInstallation}
-                        buttonTitle="INSTALL SIMS"
-                        handleSearchChange={getSearchValue}
-                        showSearchBox={true}
-                        showButton={true}
+            <LoadingWrapper
+                width="100%"
+                height="700px"
+                isLoading={isSkeltonLoad || userLoading || usersByOrgLoading}
+            >
+                {usersRes?.myUsers?.users ? (
+                    <RoundedCard>
+                        <ContainerHeader
+                            title="My Users"
+                            showButton={true}
+                            showSearchBox={true}
+                            buttonTitle="INSTALL SIMS"
+                            handleSearchChange={getSearchValue}
+                            handleButtonAction={handleSimInstallation}
+                            stats={`${usersRes?.myUsers?.users.length || "0"}`}
+                        />
+                        <UserCard
+                            userDetails={usersRes?.myUsers?.users}
+                            handleMoreUserdetails={getUseDetails}
+                        />
+                    </RoundedCard>
+                ) : (
+                    <PagePlaceholder
+                        hyperlink=""
+                        showActionButton={true}
+                        buttonTitle="Install sims"
+                        handleAction={() => setShowSimDialog(true)}
+                        description="No users on network. Install SIMs to get started."
                     />
-                    <UserCard
-                        userDetails={usersRes?.myUsers?.users}
-                        handleMoreUserdetails={getUseDetails}
-                    />
-
-                    <UserDetailsDialog
-                        getUser={userRes && userRes?.getUser}
-                        isOpen={showSimDialog}
-                        userDetailsTitle="User Details"
-                        btnLabel="Submit"
-                        handleClose={handleSimDialog}
-                        simDetailsTitle="SIM Details"
-                        saveBtnLabel="save"
-                        closeBtnLabel="close"
-                        handleSaveSimUser={getSimData}
-                    />
-                </>
-            ) : (
-                <PagePlaceholder
-                    description="No users on network. Install SIMs to get started."
-                    hyperlink="Helll"
-                    buttonTitle="Install sims"
-                    showActionButton={true}
+                )}
+                <UserDetailsDialog
+                    user={userForm}
+                    saveBtnLabel="save"
+                    closeBtnLabel="close"
+                    isOpen={showSimDialog}
+                    setUserForm={setUserForm}
+                    handleClose={handleSimDialog}
+                    simDetailsTitle="SIM Details"
+                    handleSaveSimUser={handleSave}
+                    userDetailsTitle="User Details"
                 />
-            )}
+            </LoadingWrapper>
         </Box>
     );
 };

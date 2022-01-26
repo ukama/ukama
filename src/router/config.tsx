@@ -44,16 +44,6 @@ const getRouteObject = (
 };
 
 export const routes: IRoute[] = [
-    //Default routes//
-    {
-        path: "/",
-        exact: true,
-        private: true,
-        component: lazy(() => import(`../pages/Home`)),
-        fallback: Loader,
-    },
-    //
-
     //Privatte Routes//
     getRouteObject("/", "Home", true),
     getRouteObject("/nodes", "Nodes", true),
@@ -64,5 +54,6 @@ export const routes: IRoute[] = [
     //
 
     //Public Routes//
+    getRouteObject("/*", "ErrorPage", true, true),
     //
 ];

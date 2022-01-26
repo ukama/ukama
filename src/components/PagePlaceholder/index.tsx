@@ -6,7 +6,7 @@ import { isDarkmode } from "../../recoil";
 import { useRecoilValue } from "recoil";
 const Container = styled(Box)((props: any) => ({
     background:
-        props.theme.palette.mode === "dark" ? colors.darkGreen12 : colors.white,
+        props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
 }));
 type PagePlaceholderProps = {
     linkText?: string;
@@ -42,7 +42,7 @@ const PagePlaceholder = ({
             >
                 <PagePlaceholderSvg
                     color={_isDarkmode ? colors.greyish : colors.whiteGrey}
-                    color2={_isDarkmode ? colors.darkGreen12 : colors.white}
+                    color2={_isDarkmode ? colors.nightGrey12 : colors.white}
                 />
                 <Typography variant="body1">
                     {`${description} `}
