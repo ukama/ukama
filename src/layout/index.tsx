@@ -34,10 +34,11 @@ const Layout = (props: any) => {
             />
 
             <Container
+                maxWidth={false}
                 sx={{
                     width: "100%",
-                    pl: { xs: 2, md: 3 },
-                    pr: { xs: 2, md: 3 },
+                    pl: { xs: 2, md: 3, xl: 5 },
+                    pr: { xs: 2, md: 3, xl: 5 },
                 }}
             >
                 <Header
