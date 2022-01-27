@@ -31,7 +31,7 @@ func main() {
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = pkg.NewConfig()
-	config.LoadConfig("", serviceConfig)
+	config.LoadConfig(pkg.ServiceName, serviceConfig)
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 

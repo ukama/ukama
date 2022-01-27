@@ -9,10 +9,13 @@ TOKEN=$(curl -s -X POST -H  "Accept: application/json" -H "Content-Type: applica
     -d "{\"password_identifier\": \"${EMAIL}\", \"password\": \"${PASSWORD}\", \"method\": \"password\"}" \
     "$actionUrl" | jq -r '.session_token')
 
+echo TOKEN: $TOKEN
+
 # Get default org ID for a user
 ORG=$(curl --request GET \
   --url $AUTH_URL/sessions/whoami \
   --header "X-Session-Token: ${TOKEN}" | jq -r '.identity.id')
+
 
 # Call nodes endpoint
 curl --request GET \

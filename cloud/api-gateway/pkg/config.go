@@ -12,6 +12,7 @@ type Config struct {
 	BypassAuthMode    bool
 	Cors              cors.Config
 	Services          GrpcEndpoints  `mapstructure:"services"`
+	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
 }
 
@@ -23,6 +24,11 @@ type GrpcEndpoints struct {
 	TimeoutSeconds int `mapstructure:"timeoutSeconds"`
 	Registry       string
 	Hss            string
+}
+
+type HttpEndpoints struct {
+	TimeoutSeconds int `mapstructure:"timeoutSeconds"`
+	NodeMetrics    string
 }
 
 func NewConfig() *Config {
@@ -45,6 +51,11 @@ func NewConfig() *Config {
 			Registry:       "registry:9090",
 			Hss:            "hss:9090",
 		},
+		HttpServices: HttpEndpoints{
+			TimeoutSeconds: 5,
+			NodeMetrics:    "http://localhost",
+		},
+
 		Cors:    defaultCors,
 		Metrics: *config.DefaultMetrics(),
 	}

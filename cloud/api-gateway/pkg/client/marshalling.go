@@ -7,16 +7,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type GrpcClientError struct {
+type HttpError struct {
 	HttpCode int
 	Message  string
 }
 
-func (g GrpcClientError) Error() string {
+func (g HttpError) Error() string {
 	return g.Message
 }
 
-func marshalError(err error) (grpcError *GrpcClientError, isItAnError bool) {
+func marshalError(err error) (grpcError *HttpError, isItAnError bool) {
 	if err != nil {
 		var customStatus *grpcGate.HTTPStatusError
 		if errors.As(err, &customStatus) {
@@ -30,7 +30,7 @@ func marshalError(err error) (grpcError *GrpcClientError, isItAnError bool) {
 		if customStatus != nil {
 			st = customStatus.HTTPStatus
 		}
-		return &GrpcClientError{
+		return &HttpError{
 			HttpCode: st,
 			Message:  pb.Message,
 		}, true

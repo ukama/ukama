@@ -1,17 +1,17 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-common
+name: build-metrics-node
 on:  
   push:   
     paths:
-        - "common/**"
-        - ".github/workflows/common.yml"
+        - "metrics/node-metrics/**"
+        - ".github/workflows/metrics-node.yml"
 
 jobs:  
   build:
     env: 
-      working-directory: common
+      working-directory: metrics/node
 
     name: build and test
     runs-on: ubuntu-latest    

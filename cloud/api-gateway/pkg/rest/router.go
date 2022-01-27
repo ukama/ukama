@@ -10,7 +10,9 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 
@@ -20,17 +22,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	nodeMetr "github.com/ukama/ukamaX/metrics/node-metrics"
 )
 
 const ORG_URL_PARAMETER = "org"
 
 type Router struct {
 	gin            *gin.Engine
-	port           int
 	authMiddleware AuthMiddleware
-	cors           cors.Config
 	clients        *Clients
-	metricsConfig  config.Metrics
+	config         *RouterConfig
+}
+
+type RouterConfig struct {
+	metricsConfig config.Metrics
+	httpEndpoints *pkg.HttpEndpoints
+	cors          cors.Config
+	port          int
+	debugMode     bool
 }
 
 type Clients struct {
@@ -50,28 +59,35 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	return c
 }
 
-func NewRouter(port int,
-	debugMode bool,
+func NewRouter(
 	authMiddleware AuthMiddleware,
-	cors cors.Config,
-	metrics config.Metrics,
-	clients *Clients) *Router {
+	clients *Clients,
+	config *RouterConfig) *Router {
 	r := &Router{
 		authMiddleware: authMiddleware,
 		clients:        clients,
-		cors:           cors,
-		metricsConfig:  metrics,
+		config:         config,
 	}
-	if !debugMode {
+	if !config.debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	r.init(port)
+	r.init(config.port)
 	return r
 }
 
+func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
+	return &RouterConfig{
+		metricsConfig: svcConf.Metrics,
+		httpEndpoints: &svcConf.HttpServices,
+		cors:          svcConf.Cors,
+		port:          svcConf.Port,
+		debugMode:     svcConf.DebugMode,
+	}
+}
+
 func (rt *Router) Run() {
-	logrus.Info("Listening on port ", rt.port)
-	err := rt.gin.Run(fmt.Sprint(":", rt.port))
+	logrus.Info("Listening on port ", rt.config.port)
+	err := rt.gin.Run(fmt.Sprint(":", rt.config.port))
 	if err != nil {
 		panic(err)
 	}
@@ -80,12 +96,12 @@ func (rt *Router) Run() {
 func (r *Router) init(port int) {
 	r.gin = gin.Default()
 	r.gin.Use(gin.Logger())
-	r.gin.Use(cors.New(r.cors))
-	r.port = port
+	r.gin.Use(cors.New(r.config.cors))
+	r.config.port = port
 
-	if r.metricsConfig.Enabled {
+	if r.config.metricsConfig.Enabled {
 		prometheus := ginprometheus.NewPrometheus("api_gateway")
-		prometheus.SetListenAddress(fmt.Sprint(":", r.metricsConfig.Port))
+		prometheus.SetListenAddress(fmt.Sprint(":", r.config.metricsConfig.Port))
 		prometheus.Use(r.gin)
 	}
 
@@ -105,6 +121,13 @@ func (r *Router) init(port int) {
 		// registry
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
 		nodes.GET("", nil, tonic.Handler(r.nodesHandler, http.StatusOK))
+
+		// metrics
+		nodes.GET("/:node/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+			}}, tonic.Handler(r.metricHandler, http.StatusOK))
+		nodes.GET("/:node/metrics/list", nil, tonic.Handler(r.metricListHandler, http.StatusOK))
 
 		// hss
 		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
@@ -135,7 +158,7 @@ func errorHook(c *gin.Context, e error) (int, interface{}) {
 		errcode = 400
 		errpl = e.Error()
 	} else {
-		if gErr, ok := e.(client.GrpcClientError); ok {
+		if gErr, ok := e.(client.HttpError); ok {
 			errcode = gErr.HttpCode
 			errpl = gErr.Message
 		}
@@ -157,6 +180,47 @@ func (r *Router) nodesHandler(c *gin.Context) (*pb.NodesList, error) {
 	orgName := r.getOrgNameFromRoute(c)
 
 	return r.clients.Registry.GetNodes(orgName)
+}
+
+func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {
+	return nodeMetr.MetricTypes, nil
+}
+
+func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
+	exist := false
+	for _, m := range nodeMetr.MetricTypes {
+		if strings.EqualFold(m, in.Metric) {
+			exist = true
+		}
+	}
+	if !exist {
+		return client.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	metr := nodeMetr.Metrics{
+		PrometheusUrl: r.config.httpEndpoints.NodeMetrics,
+		Timeout:       uint(r.config.httpEndpoints.TimeoutSeconds),
+	}
+
+	c.Stream(func(w io.Writer) bool {
+		httpCode, err := metr.GetMetric(strings.ToLower(in.Metric), in.NodeID, &nodeMetr.Interval{
+			Start: in.From,
+			End:   in.To,
+			Step:  in.Step,
+		}, w)
+
+		c.Status(httpCode)
+		if err != nil {
+			logrus.Errorf("Error while getting metrics: %v", err)
+			return true
+		}
+
+		return false
+	})
+
+	return nil
 }
 
 type PingResponse struct {

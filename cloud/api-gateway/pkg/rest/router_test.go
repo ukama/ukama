@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
@@ -33,7 +32,9 @@ func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, NewClientsSet(&pkg.GrpcEndpoints{})).gin
+	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
+		cors: defaultCors,
+	}).gin
 
 	// act
 	r.ServeHTTP(w, req)
@@ -48,7 +49,9 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, NewClientsSet(&pkg.GrpcEndpoints{})).gin
+	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
+		cors: defaultCors,
+	}).gin
 
 	// act
 	r.ServeHTTP(w, req)
@@ -66,8 +69,10 @@ func TestGetOrg_NotFound(t *testing.T) {
 	m := &pbmocks.RegistryServiceClient{}
 	m.On("GetOrg", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
+	}, &RouterConfig{
+		cors: defaultCors,
 	}).gin
 
 	// act
@@ -91,8 +96,10 @@ func TestGetOrg(t *testing.T) {
 		Owner: "owner",
 	}, nil)
 
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
+	}, &RouterConfig{
+		cors: defaultCors,
 	}).gin
 
 	// act
@@ -101,7 +108,7 @@ func TestGetOrg(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	m.AssertExpectations(t)
-	assert.Contains(t, w.Body.String(), `"name": "org-name"`)
+	assert.Contains(t, w.Body.String(), `"name":"org-name"`)
 }
 
 func TestGetNodes(t *testing.T) {
@@ -125,8 +132,10 @@ func TestGetNodes(t *testing.T) {
 			},
 		}, nil)
 
-		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
+		}, &RouterConfig{
+			cors: defaultCors,
 		}).gin
 
 		// act
@@ -135,7 +144,7 @@ func TestGetNodes(t *testing.T) {
 		// assert
 		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
-		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"nodeId": "%s"`, nodeId.String()))
+		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"nodeId":"%s"`, nodeId.String()))
 	})
 
 	t.Run("NoNodesReturned", func(t *testing.T) {
@@ -145,8 +154,10 @@ func TestGetNodes(t *testing.T) {
 			Orgs: []*pb.NodesList{},
 		}, nil)
 
-		r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
+		}, &RouterConfig{
+			cors: defaultCors,
 		}).gin
 
 		// act
@@ -169,8 +180,10 @@ func Test_HssMethods(t *testing.T) {
 	const imsi = "0000010000000001"
 
 	m := hssmocks.UserServiceClient{}
-	r := NewRouter(123456, true, NewDebugAuthMiddleware(), defaultCors, config.Metrics{}, &Clients{
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Hss: client.NewTestHssFromClient(&m),
+	}, &RouterConfig{
+		cors: defaultCors,
 	}).gin
 
 	body, err := json.Marshal(&hsspb.User{FirstName: firstName, Uuid: userUuid, Imsi: imsi})
@@ -201,7 +214,7 @@ func Test_HssMethods(t *testing.T) {
 		// assert
 		assert.Equal(t, http.StatusCreated, w.Code)
 
-		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"uuid": "%s"`, userUuid))
+		assert.Contains(t, w.Body.String(), fmt.Sprintf(`"uuid":"%s"`, userUuid))
 		m.AssertExpectations(t)
 	})
 

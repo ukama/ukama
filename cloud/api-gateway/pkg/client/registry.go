@@ -63,7 +63,7 @@ func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
 	defer cancel()
 
 	if len(orgName) == 0 {
-		return nil, &GrpcClientError{HttpCode: http.StatusBadRequest, Message: "Organization name is required"}
+		return nil, &HttpError{HttpCode: http.StatusBadRequest, Message: "Organization name is required"}
 	}
 
 	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
@@ -75,7 +75,7 @@ func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
 	if len(res.GetOrgs()) == 1 {
 		return res.GetOrgs()[0], nil
 	} else if len(res.GetOrgs()) > 1 {
-		return nil, &GrpcClientError{HttpCode: http.StatusInternalServerError, Message: "Unexpected number of orgs in response"}
+		return nil, &HttpError{HttpCode: http.StatusInternalServerError, Message: "Unexpected number of orgs in response"}
 	}
 
 	return &pb.NodesList{Nodes: []*pb.Node{}}, nil
@@ -84,7 +84,7 @@ func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {
-		if gErr, ok := err.(GrpcClientError); ok {
+		if gErr, ok := err.(HttpError); ok {
 			if gErr.HttpCode != http.StatusNotFound {
 				return false, nil
 			}
