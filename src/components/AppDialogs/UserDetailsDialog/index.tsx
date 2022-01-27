@@ -1,8 +1,8 @@
 import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
-import { useState, useEffect } from "react";
 import {
+    Tooltip,
     Box,
     Switch,
     Button,
@@ -13,9 +13,12 @@ import {
     DialogActions,
     Divider,
     Grid,
+    DialogContent,
 } from "@mui/material";
-import { InfoIcon } from "../../../assets/svg";
 import colors from "../../../theme/colors";
+import { InfoIcon } from "../../../assets/svg";
+import { ContainerJustifySpaceBtw } from "../../../styles";
+import { GetUserDto, Get_User_Status_Type } from "../../../generated";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -28,150 +31,133 @@ const useStyles = makeStyles(() => ({
 }));
 
 type BasicDialogProps = {
-    userName: string;
+    user: GetUserDto;
     isOpen: boolean;
-    userDetailsTitle: string;
-    simDetailsTitle: string;
-    btnLabel: string;
-    handleClose: any;
+    setUserForm: any;
     isClosable?: boolean;
+    handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
     handleSaveSimUser?: any;
-    data: string;
-    id: any;
+    userDetailsTitle: string;
+    simDetailsTitle: string;
 };
 
 const UserDetailsDialog = ({
-    userName,
+    user,
     isOpen,
+    setUserForm,
+    handleClose,
+    saveBtnLabel,
+    closeBtnLabel,
     simDetailsTitle,
     userDetailsTitle,
-    closeBtnLabel,
-    saveBtnLabel,
-    handleClose,
-    data,
-    id,
     isClosable = true,
     handleSaveSimUser = () => {
         /* Default empty function */
     },
 }: BasicDialogProps) => {
     const classes = useStyles();
-    const [roaming, setRoaming] = useState(false);
-    const [name, setName] = useState<string>("JohnDoe");
-    const [email, setEmail] = useState<string>("john@ukama.com");
-    const [phone, setPhone] = useState<string>("(111) 111-1111");
-    const [isOff, setIsOff] = useState(true);
-    const [formData, setFormData] = useState<any>();
-    const handleRoaming = (e: any) => {
-        setRoaming(e.target.checked);
-    };
-    const handleSave = () => {
-        const datas = {
-            name: name,
-            email: email,
-            phone: phone,
-            service: isOff,
-            roaming: roaming,
-        };
-        setFormData(datas);
-    };
-    useEffect(() => {
-        handleSaveSimUser(formData);
-    }, [formData]);
+    const {
+        id,
+        name,
+        email,
+        phone,
+        iccid,
+        status,
+        roaming,
+        dataPlan,
+        dataUsage,
+        eSimNumber,
+    } = user;
 
     return (
-        <>
-            <Dialog
-                open={isOpen}
-                onBackdropClick={() => isClosable && handleClose()}
-                hideBackdrop
+        <Dialog
+            key={id}
+            open={isOpen}
+            hideBackdrop
+            onBackdropClick={() => isClosable && handleClose()}
+        >
+            <Box
+                sx={{
+                    width: { xs: "100%", md: "500px" },
+                    padding: "16px 24px",
+                }}
             >
-                <Box
-                    sx={{
-                        width: { xs: "100%", md: "500px" },
-                        padding: "16px 8px 8px 24px",
-                    }}
-                >
-                    <Box className={classes.basicDialogHeaderStyle}>
-                        <Stack
-                            direction="row"
-                            sx={{ alignItems: "center" }}
-                            spacing={1}
+                <Box className={classes.basicDialogHeaderStyle}>
+                    <Stack
+                        direction="row"
+                        sx={{ alignItems: "center" }}
+                        spacing={1}
+                    >
+                        <Typography variant="h5">{name}</Typography>
+                    </Stack>
+                    {isClosable && (
+                        <IconButton
+                            onClick={() => handleClose()}
+                            sx={{ ml: "24px", p: "8px" }}
                         >
-                            <Typography variant="h5">{userName}</Typography>
-                            <Typography
-                                variant="body1"
-                                sx={{ color: colors.darkGrey }}
-                            >
-                                {data}
-                            </Typography>
-                        </Stack>
-                        {isClosable && (
-                            <IconButton
-                                onClick={handleClose}
-                                sx={{ ml: "24px", p: "8px" }}
-                            >
-                                <CloseIcon />
-                            </IconButton>
-                        )}
-                    </Box>
-
-                    <Grid container>
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2">
-                                {userDetailsTitle} {id}
-                            </Typography>
-                            <Divider sx={{ width: "450px" }} />
+                            <CloseIcon />
+                        </IconButton>
+                    )}
+                </Box>
+                <DialogContent sx={{ padding: 0, mb: 4 }}>
+                    <Grid>
+                        <Grid container>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {userDetailsTitle} {id}
+                                </Typography>
+                                <Divider />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                    <Grid item container>
-                        <Grid item container xs={12} spacing={2}>
+                        <Grid item container spacing={1}>
+                            <Grid item xs={12}>
+                                <Typography
+                                    variant="body1"
+                                    sx={{ color: colors.vulcan }}
+                                >
+                                    {dataUsage} GB data used, {dataPlan}
+                                    free GB left
+                                </Typography>
+                            </Grid>
                             <Grid item xs={9}>
                                 <EditableTextField
-                                    value={name}
+                                    value={name || ""}
                                     label={"NAME"}
-                                    handleOnChange={(value: string) => {
-                                        setName(value);
-                                    }}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, name: value })
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={9}>
                                 <EditableTextField
-                                    value={email}
+                                    value={email || ""}
                                     label={"EMAIL"}
-                                    handleOnChange={(value: string) => {
-                                        setEmail(value);
-                                    }}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, email: value })
+                                    }
                                 />
                             </Grid>
                             <Grid item xs={9}>
                                 <EditableTextField
-                                    value={phone}
+                                    value={phone || ""}
                                     label={"PHONE"}
-                                    handleOnChange={(value: string) => {
-                                        setPhone(value);
-                                    }}
+                                    handleOnChange={(value: string) =>
+                                        setUserForm({ ...user, email: value })
+                                    }
                                 />
                             </Grid>
                         </Grid>
-                    </Grid>
-                    <Grid container sx={{ mt: 1 }}>
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2">
-                                {simDetailsTitle}
-                            </Typography>
-                            <Divider sx={{ width: "450px" }} />
-                        </Grid>
-                        <Grid
-                            item
-                            container
-                            direction="row"
-                            justifyContent="space-between"
-                        >
-                            <Grid item>
-                                <Stack direction="column">
+                        <Grid container sx={{ mt: 1 }} spacing={1}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {simDetailsTitle}
+                                </Typography>
+                                <Divider />
+                            </Grid>
+                            <Grid item container>
+                                <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
                                         sx={{
@@ -180,41 +166,37 @@ const UserDetailsDialog = ({
                                     >
                                         STATUS
                                     </Typography>
-                                    <Typography variant="body2">
-                                        Active
-                                    </Typography>
-                                </Stack>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <ContainerJustifySpaceBtw>
+                                        <Typography variant="body2">
+                                            {status}
+                                        </Typography>
+                                        <Button
+                                            size="small"
+                                            color="error"
+                                            variant="outlined"
+                                            onClick={() =>
+                                                setUserForm({
+                                                    ...user,
+                                                    status:
+                                                        status ===
+                                                        Get_User_Status_Type.Active
+                                                            ? Get_User_Status_Type.Inactive
+                                                            : Get_User_Status_Type.Active,
+                                                })
+                                            }
+                                        >
+                                            {status ===
+                                            Get_User_Status_Type.Active
+                                                ? "PAUSE SERVICE"
+                                                : "RESUME SERVICE "}
+                                        </Button>
+                                    </ContainerJustifySpaceBtw>
+                                </Grid>
                             </Grid>
-                            <Grid item>
-                                <Button
-                                    onClick={() => setIsOff(!isOff)}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{
-                                        color: "red",
-                                        border: "1px solid red",
-                                        position: "relative",
-                                        top: "12px",
-                                        mr: 2,
-                                        "&:hover": {
-                                            borderColor: "red",
-                                        },
-                                    }}
-                                >
-                                    {isOff
-                                        ? "PAUSE SERVICE"
-                                        : "RESUME SERVICE "}
-                                </Button>
-                            </Grid>
-                        </Grid>
-                        <Grid
-                            item
-                            container
-                            direction="row"
-                            justifyContent="space-between"
-                        >
-                            <Grid item>
-                                <Stack direction="column">
+                            <Grid item container xs={12}>
+                                <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
                                         sx={{
@@ -223,20 +205,15 @@ const UserDetailsDialog = ({
                                     >
                                         IMEI NUMBER
                                     </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
                                     <Typography variant="body2">
-                                        1234812374109374139434173470
+                                        {eSimNumber}
                                     </Typography>
-                                </Stack>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                        <Grid
-                            item
-                            container
-                            direction="row"
-                            justifyContent="space-between"
-                        >
-                            <Grid item>
-                                <Stack direction="column">
+                            <Grid item container xs={12}>
+                                <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
                                         sx={{
@@ -245,80 +222,58 @@ const UserDetailsDialog = ({
                                     >
                                         ICCID
                                     </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
                                     <Typography variant="body2">
-                                        1234812374109374139434173470
+                                        {iccid}
                                     </Typography>
-                                </Stack>
+                                </Grid>
                             </Grid>
-                        </Grid>
-                        <Grid
-                            item
-                            container
-                            direction="row"
-                            justifyContent="space-between"
-                        >
-                            <Grid item>
-                                <Stack direction="column">
+                            <Grid item container xs={12}>
+                                <ContainerJustifySpaceBtw>
                                     <Typography
                                         variant="caption"
                                         sx={{
                                             color: colors.lightGrey,
+                                            alignSelf: "end",
                                         }}
                                     >
                                         ROAMING
+                                        <Tooltip title="Info about roming">
+                                            <IconButton>
+                                                <InfoIcon />
+                                            </IconButton>
+                                        </Tooltip>
                                     </Typography>
-
-                                    <Stack
-                                        direction="row"
-                                        alignItems="center"
-                                        spacing={1}
-                                    >
-                                        <Typography variant="body2">
-                                            Roaming enabled
-                                        </Typography>
-                                        <InfoIcon />
-                                    </Stack>
-                                </Stack>
-                            </Grid>
-                            <Grid item>
-                                <Switch
-                                    sx={{
-                                        color: colors.lightGrey,
-                                        position: "relative",
-                                        top: "12px",
-                                        mr: 1,
-                                    }}
-                                    size="small"
-                                    checked={roaming}
-                                    onClick={handleRoaming}
-                                    value="active"
-                                    inputProps={{
-                                        "aria-label": "secondary checkbox",
-                                    }}
-                                />
+                                    <Switch
+                                        size="small"
+                                        value="active"
+                                        checked={roaming}
+                                        onClick={(e: any) =>
+                                            setUserForm({
+                                                ...user,
+                                                roaming: e.target.checked,
+                                            })
+                                        }
+                                    />
+                                </ContainerJustifySpaceBtw>
                             </Grid>
                         </Grid>
                     </Grid>
-
-                    <DialogActions>
-                        <Button
-                            onClick={handleClose}
-                            color="primary"
-                            sx={{ mr: 2, justifyItems: "center" }}
-                        >
-                            {closeBtnLabel}
-                        </Button>
-                        <Button
-                            onClick={handleSave}
-                            color="primary"
-                            variant="contained"
-                        >
-                            {saveBtnLabel}
-                        </Button>
-                    </DialogActions>
-                </Box>
-            </Dialog>
-        </>
+                </DialogContent>
+                <DialogActions sx={{ padding: 0 }}>
+                    <Button
+                        onClick={() => handleClose()}
+                        sx={{ mr: 2, justifyItems: "center" }}
+                    >
+                        {closeBtnLabel}
+                    </Button>
+                    <Button onClick={handleSaveSimUser} variant="contained">
+                        {saveBtnLabel}
+                    </Button>
+                </DialogActions>
+            </Box>
+        </Dialog>
     );
 };
 

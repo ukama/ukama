@@ -69,7 +69,7 @@ const ContainerHeader = ({
             </Grid>
 
             <Grid item xs={12} md={6} container>
-                <Grid container sx={{ alignItems: "center" }}>
+                <Grid container spacing={2} sx={{ alignItems: "center" }}>
                     {showSearchBox && (
                         <Grid item xs={6} container justifyContent="flex-end">
                             <Paper

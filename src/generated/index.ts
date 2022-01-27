@@ -289,6 +289,14 @@ export type GetUserResponseDto = {
     status: Scalars["String"];
 };
 
+export type GraphDto = {
+    __typename?: "GraphDto";
+    amt: Scalars["Float"];
+    pv: Scalars["Float"];
+    time: Scalars["String"];
+    uv: Scalars["Float"];
+};
+
 export type HeaderType = {
     __typename?: "HeaderType";
     Authorization: Scalars["String"];
@@ -372,6 +380,19 @@ export type NetworkResponse = {
     status: Scalars["String"];
 };
 
+export type NodeDetailDto = {
+    __typename?: "NodeDetailDto";
+    description: Scalars["String"];
+    hardware: Scalars["Float"];
+    id: Scalars["String"];
+    macAddress: Scalars["Float"];
+    manufacturing: Scalars["Float"];
+    modelType: Scalars["String"];
+    osVersion: Scalars["Float"];
+    serial: Scalars["Float"];
+    ukamaOS: Scalars["Float"];
+};
+
 export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
@@ -379,6 +400,27 @@ export type NodeDto = {
     status: Org_Node_State;
     title: Scalars["String"];
     totalUser: Scalars["Float"];
+};
+
+export type NodeMetaDataDto = {
+    __typename?: "NodeMetaDataDto";
+    throughput: Scalars["Float"];
+    usersAttached: Scalars["Float"];
+};
+
+export type NodePhysicalHealthDto = {
+    __typename?: "NodePhysicalHealthDto";
+    cpu: Scalars["Float"];
+    io: Scalars["Float"];
+    memory: Scalars["Float"];
+    temperature: Scalars["Float"];
+};
+
+export type NodeRfDto = {
+    __typename?: "NodeRFDto";
+    qam: Scalars["Float"];
+    rfOutput: Scalars["Float"];
+    rssi: Scalars["Float"];
 };
 
 export type NodeResponse = {
@@ -467,6 +509,13 @@ export type Query = {
     getDataUsage: DataUsageDto;
     getEsims: Array<EsimDto>;
     getNetwork: NetworkDto;
+    getNodeDetails: NodeDetailDto;
+    getNodeMetaData: NodeMetaDataDto;
+    getNodeNetwork: NetworkDto;
+    getNodePhysicalHealth: NodePhysicalHealthDto;
+    getNodeRFKPI: NodeRfDto;
+    getNodeThroughput: Array<GraphDto>;
+    getNodeUserAttached: Array<GraphDto>;
     getNodes: NodesResponse;
     getNodesByOrg: OrgNodeResponseDto;
     getResidents: ResidentsResponse;
@@ -539,6 +588,9 @@ export type Subscription = {
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
     getNetwork: NetworkDto;
+    getNodeMetaData: NodeMetaDataDto;
+    getNodePhysicalHealth: NodePhysicalHealthDto;
+    getNodeRFKPI: NodeRfDto;
 };
 
 export enum Time_Filter {
@@ -723,6 +775,52 @@ export type GetNodesByOrgQuery = {
             description: string;
             totalUser: number;
         }>;
+    };
+};
+
+export type MyUsersQueryVariables = Exact<{
+    orgId: Scalars["String"];
+}>;
+
+export type MyUsersQuery = {
+    __typename?: "Query";
+    myUsers: {
+        __typename?: "OrgUserResponseDto";
+        orgName: string;
+        users: Array<{
+            __typename?: "GetUserDto";
+            id: string;
+            name: string;
+            email?: string | null | undefined;
+            eSimNumber: string;
+            dataPlan: number;
+            dataUsage: number;
+            phone?: string | null | undefined;
+            roaming: boolean;
+            iccid: string;
+            status: Get_User_Status_Type;
+        }>;
+    };
+};
+
+export type GetUserQueryVariables = Exact<{
+    id: Scalars["String"];
+}>;
+
+export type GetUserQuery = {
+    __typename?: "Query";
+    getUser: {
+        __typename?: "GetUserDto";
+        id: string;
+        status: Get_User_Status_Type;
+        name: string;
+        eSimNumber: string;
+        iccid: string;
+        email?: string | null | undefined;
+        phone?: string | null | undefined;
+        roaming: boolean;
+        dataPlan: number;
+        dataUsage: number;
     };
 };
 
@@ -1335,6 +1433,129 @@ export type GetNodesByOrgLazyQueryHookResult = ReturnType<
 export type GetNodesByOrgQueryResult = Apollo.QueryResult<
     GetNodesByOrgQuery,
     GetNodesByOrgQueryVariables
+>;
+export const MyUsersDocument = gql`
+    query myUsers($orgId: String!) {
+        myUsers(orgId: $orgId) {
+            orgName
+            users {
+                id
+                name
+                email
+                eSimNumber
+                dataPlan
+                dataUsage
+                phone
+                roaming
+                iccid
+                status
+            }
+        }
+    }
+`;
+
+/**
+ * __useMyUsersQuery__
+ *
+ * To run a query within a React component, call `useMyUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyUsersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyUsersQuery({
+ *   variables: {
+ *      orgId: // value for 'orgId'
+ *   },
+ * });
+ */
+export function useMyUsersQuery(
+    baseOptions: Apollo.QueryHookOptions<MyUsersQuery, MyUsersQueryVariables>
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<MyUsersQuery, MyUsersQueryVariables>(
+        MyUsersDocument,
+        options
+    );
+}
+export function useMyUsersLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        MyUsersQuery,
+        MyUsersQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<MyUsersQuery, MyUsersQueryVariables>(
+        MyUsersDocument,
+        options
+    );
+}
+export type MyUsersQueryHookResult = ReturnType<typeof useMyUsersQuery>;
+export type MyUsersLazyQueryHookResult = ReturnType<typeof useMyUsersLazyQuery>;
+export type MyUsersQueryResult = Apollo.QueryResult<
+    MyUsersQuery,
+    MyUsersQueryVariables
+>;
+export const GetUserDocument = gql`
+    query getUser($id: String!) {
+        getUser(id: $id) {
+            id
+            status
+            name
+            eSimNumber
+            iccid
+            email
+            phone
+            roaming
+            dataPlan
+            dataUsage
+        }
+    }
+`;
+
+/**
+ * __useGetUserQuery__
+ *
+ * To run a query within a React component, call `useGetUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetUserQuery(
+    baseOptions: Apollo.QueryHookOptions<GetUserQuery, GetUserQueryVariables>
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetUserQuery, GetUserQueryVariables>(
+        GetUserDocument,
+        options
+    );
+}
+export function useGetUserLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetUserQuery,
+        GetUserQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetUserQuery, GetUserQueryVariables>(
+        GetUserDocument,
+        options
+    );
+}
+export type GetUserQueryHookResult = ReturnType<typeof useGetUserQuery>;
+export type GetUserLazyQueryHookResult = ReturnType<typeof useGetUserLazyQuery>;
+export type GetUserQueryResult = Apollo.QueryResult<
+    GetUserQuery,
+    GetUserQueryVariables
 >;
 export const GetResidentsDocument = gql`
     query getResidents($data: PaginationDto!) {

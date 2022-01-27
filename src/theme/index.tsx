@@ -22,7 +22,7 @@ const theme = (isDarkmode: boolean) =>
         palette: {
             mode: isDarkmode ? "dark" : "light",
             background: {
-                default: isDarkmode ? colors.darkGreen : colors.solitude,
+                default: isDarkmode ? colors.nightGrey : colors.solitude,
             },
             primary: {
                 main: colors.primary,

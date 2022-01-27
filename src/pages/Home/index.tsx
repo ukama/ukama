@@ -353,7 +353,7 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} lg={4} item>
                     <LoadingWrapper
-                        height={337}
+                        height={312}
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||

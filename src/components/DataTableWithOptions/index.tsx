@@ -79,7 +79,7 @@ const DataTableWithOptions = ({
                                             minWidth: column.minWidth,
                                             padding: "6px 12px 12px 0px",
                                             background: _isDarkmode
-                                                ? colors.darkGreen05
+                                                ? colors.nightGrey05
                                                 : colors.white,
                                         }}
                                     >

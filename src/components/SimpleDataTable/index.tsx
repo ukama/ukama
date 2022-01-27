@@ -86,7 +86,7 @@ const SimpleDataTable = ({
                             sx={{
                                 ":hover": {
                                     backgroundColor: _isDarkMode
-                                        ? colors.darkGreen
+                                        ? colors.nightGrey
                                         : colors.solitude,
                                 },
                             }}
