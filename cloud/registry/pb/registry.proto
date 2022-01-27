@@ -3,7 +3,7 @@ syntax = "proto3";
 option go_package = "pb/gen";
 
 
-package registry.v1;
+package ukama.registry.v1;
 
 service RegistryService {
     rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);

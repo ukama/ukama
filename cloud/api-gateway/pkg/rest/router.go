@@ -2,6 +2,10 @@ package rest
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
+
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
 	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/swagger"
@@ -10,9 +14,6 @@ import (
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 	ginprometheus "github.com/zsais/go-gin-prometheus"
-	"io"
-	"net/http"
-	"strings"
 
 	"github.com/gin-contrib/cors"
 
@@ -176,10 +177,14 @@ func (r *Router) orgHandler(c *gin.Context) (*pb.Organization, error) {
 	return r.clients.Registry.GetOrg(orgName)
 }
 
-func (r *Router) nodesHandler(c *gin.Context) (*pb.NodesList, error) {
+func (r *Router) nodesHandler(c *gin.Context) (*NodesList, error) {
 	orgName := r.getOrgNameFromRoute(c)
+	nl, err := r.clients.Registry.GetNodes(orgName)
+	if err != nil {
+		return nil, err
+	}
 
-	return r.clients.Registry.GetNodes(orgName)
+	return MapNodesList(nl), nil
 }
 
 func (r *Router) metricListHandler(c *gin.Context) ([]string, error) {

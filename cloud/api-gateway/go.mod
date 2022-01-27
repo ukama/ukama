@@ -23,6 +23,7 @@ require (
 	github.com/ukama/ukamaX/cloud/hss v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20210818102821-83b756ff1d75
 	github.com/ukama/ukamaX/common v0.0.0-20211015093708-cd6e230254b5
+	github.com/ukama/ukamaX/metrics/node-metrics v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.17.0
 	github.com/zsais/go-gin-prometheus v0.1.0
 	google.golang.org/grpc v1.42.0

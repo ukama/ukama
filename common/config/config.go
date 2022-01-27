@@ -30,6 +30,10 @@ type Grpc struct {
 	Port int
 }
 
+type Http struct {
+	Port int
+}
+
 type Metrics struct {
 	Port    int
 	Enabled bool

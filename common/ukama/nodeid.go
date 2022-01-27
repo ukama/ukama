@@ -27,11 +27,11 @@ const (
 
 type NodeID string
 
-func (n *NodeID) String() string {
-	return string(*n)
+func (n NodeID) String() string {
+	return string(n)
 }
 
-func (n *NodeID) StringLowercase() string {
+func (n NodeID) StringLowercase() string {
 	return strings.ToLower(n.String())
 }
 

@@ -36,7 +36,7 @@ func NewImsiServiceClient(cc grpc.ClientConnInterface) ImsiServiceClient {
 
 func (c *imsiServiceClient) Get(ctx context.Context, in *GetImsiRequest, opts ...grpc.CallOption) (*GetImsiResponse, error) {
 	out := new(GetImsiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *imsiServiceClient) Get(ctx context.Context, in *GetImsiRequest, opts ..
 
 func (c *imsiServiceClient) Add(ctx context.Context, in *AddImsiRequest, opts ...grpc.CallOption) (*AddImsiResponse, error) {
 	out := new(AddImsiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (c *imsiServiceClient) Add(ctx context.Context, in *AddImsiRequest, opts ..
 
 func (c *imsiServiceClient) Update(ctx context.Context, in *UpdateImsiRequest, opts ...grpc.CallOption) (*UpdateImsiResponse, error) {
 	out := new(UpdateImsiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/Update", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (c *imsiServiceClient) Update(ctx context.Context, in *UpdateImsiRequest, o
 
 func (c *imsiServiceClient) Delete(ctx context.Context, in *DeleteImsiRequest, opts ...grpc.CallOption) (*DeleteImsiResponse, error) {
 	out := new(DeleteImsiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (c *imsiServiceClient) Delete(ctx context.Context, in *DeleteImsiRequest, o
 
 func (c *imsiServiceClient) AddGuti(ctx context.Context, in *AddGutiRequest, opts ...grpc.CallOption) (*AddGutiResponse, error) {
 	out := new(AddGutiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/AddGuti", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/AddGuti", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ func (c *imsiServiceClient) AddGuti(ctx context.Context, in *AddGutiRequest, opt
 
 func (c *imsiServiceClient) UpdateTai(ctx context.Context, in *UpdateTaiRequest, opts ...grpc.CallOption) (*UpdateTaiResponse, error) {
 	out := new(UpdateTaiResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.ImsiService/UpdateTai", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.ImsiService/UpdateTai", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func _ImsiService_Get_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/Get",
+		FullMethod: "/ukama.hss.v1.ImsiService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).Get(ctx, req.(*GetImsiRequest))
@@ -164,7 +164,7 @@ func _ImsiService_Add_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/Add",
+		FullMethod: "/ukama.hss.v1.ImsiService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).Add(ctx, req.(*AddImsiRequest))
@@ -182,7 +182,7 @@ func _ImsiService_Update_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/Update",
+		FullMethod: "/ukama.hss.v1.ImsiService/Update",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).Update(ctx, req.(*UpdateImsiRequest))
@@ -200,7 +200,7 @@ func _ImsiService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/Delete",
+		FullMethod: "/ukama.hss.v1.ImsiService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).Delete(ctx, req.(*DeleteImsiRequest))
@@ -218,7 +218,7 @@ func _ImsiService_AddGuti_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/AddGuti",
+		FullMethod: "/ukama.hss.v1.ImsiService/AddGuti",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).AddGuti(ctx, req.(*AddGutiRequest))
@@ -236,7 +236,7 @@ func _ImsiService_UpdateTai_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.ImsiService/UpdateTai",
+		FullMethod: "/ukama.hss.v1.ImsiService/UpdateTai",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ImsiServiceServer).UpdateTai(ctx, req.(*UpdateTaiRequest))
@@ -248,7 +248,7 @@ func _ImsiService_UpdateTai_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ImsiService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "hss.v1.ImsiService",
+	ServiceName: "ukama.hss.v1.ImsiService",
 	HandlerType: (*ImsiServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -302,7 +302,7 @@ func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 
 func (c *userServiceClient) Add(ctx context.Context, in *AddUserRequest, opts ...grpc.CallOption) (*AddUserResponse, error) {
 	out := new(AddUserResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.UserService/Add", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +311,7 @@ func (c *userServiceClient) Add(ctx context.Context, in *AddUserRequest, opts ..
 
 func (c *userServiceClient) Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
 	out := new(DeleteUserResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.UserService/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -320,7 +320,7 @@ func (c *userServiceClient) Delete(ctx context.Context, in *DeleteUserRequest, o
 
 func (c *userServiceClient) List(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
 	out := new(ListUsersResponse)
-	err := c.cc.Invoke(ctx, "/hss.v1.UserService/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -376,7 +376,7 @@ func _UserService_Add_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.UserService/Add",
+		FullMethod: "/ukama.hss.v1.UserService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).Add(ctx, req.(*AddUserRequest))
@@ -394,7 +394,7 @@ func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.UserService/Delete",
+		FullMethod: "/ukama.hss.v1.UserService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).Delete(ctx, req.(*DeleteUserRequest))
@@ -412,7 +412,7 @@ func _UserService_List_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/hss.v1.UserService/List",
+		FullMethod: "/ukama.hss.v1.UserService/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(UserServiceServer).List(ctx, req.(*ListUsersRequest))
@@ -424,7 +424,7 @@ func _UserService_List_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "hss.v1.UserService",
+	ServiceName: "ukama.hss.v1.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

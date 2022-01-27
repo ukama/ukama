@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
-package hss.v1;
+package ukama.hss.v1;
 
 import "google/api/annotations.proto";
 import "dep/validator.proto";

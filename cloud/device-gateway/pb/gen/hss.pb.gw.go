@@ -146,7 +146,7 @@ func RegisterImsiServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/hss.v1.ImsiService/Get", runtime.WithHTTPPathPattern("/hss/subscriber"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/Get", runtime.WithHTTPPathPattern("/hss/subscriber"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -169,7 +169,7 @@ func RegisterImsiServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/hss.v1.ImsiService/AddGuti", runtime.WithHTTPPathPattern("/hss/guti"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/AddGuti", runtime.WithHTTPPathPattern("/hss/guti"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -192,7 +192,7 @@ func RegisterImsiServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/hss.v1.ImsiService/UpdateTai", runtime.WithHTTPPathPattern("/hss/tai"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/UpdateTai", runtime.WithHTTPPathPattern("/hss/tai"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -239,7 +239,7 @@ func RegisterImsiServiceHandlerFromEndpoint(ctx context.Context, mux *runtime.Se
 
 // RegisterImsiServiceHandler registers the http handlers for service ImsiService to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterImsiServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn grpc.ClientConnInterface) error {
+func RegisterImsiServiceHandler(ctx context.Context, mux *runtime.ServeMux, conn *grpc.ClientConn) error {
 	return RegisterImsiServiceHandlerClient(ctx, mux, extGen.NewImsiServiceClient(conn))
 }
 
@@ -254,7 +254,7 @@ func RegisterImsiServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/hss.v1.ImsiService/Get", runtime.WithHTTPPathPattern("/hss/subscriber"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/Get", runtime.WithHTTPPathPattern("/hss/subscriber"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -274,7 +274,7 @@ func RegisterImsiServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/hss.v1.ImsiService/AddGuti", runtime.WithHTTPPathPattern("/hss/guti"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/AddGuti", runtime.WithHTTPPathPattern("/hss/guti"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -294,7 +294,7 @@ func RegisterImsiServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/hss.v1.ImsiService/UpdateTai", runtime.WithHTTPPathPattern("/hss/tai"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ukama.hss.v1.ImsiService/UpdateTai", runtime.WithHTTPPathPattern("/hss/tai"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

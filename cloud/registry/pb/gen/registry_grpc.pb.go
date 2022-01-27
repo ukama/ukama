@@ -37,7 +37,7 @@ func NewRegistryServiceClient(cc grpc.ClientConnInterface) RegistryServiceClient
 
 func (c *registryServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error) {
 	out := new(AddOrgResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/AddOrg", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/AddOrg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +46,7 @@ func (c *registryServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, o
 
 func (c *registryServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*Organization, error) {
 	out := new(Organization)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/GetOrg", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/GetOrg", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (c *registryServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, o
 
 func (c *registryServiceClient) AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error) {
 	out := new(AddNodeResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/AddNode", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/AddNode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (c *registryServiceClient) AddNode(ctx context.Context, in *AddNodeRequest,
 
 func (c *registryServiceClient) DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error) {
 	out := new(DeleteNodeResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/DeleteNode", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/DeleteNode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (c *registryServiceClient) DeleteNode(ctx context.Context, in *DeleteNodeRe
 
 func (c *registryServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
 	out := new(GetNodeResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/GetNode", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/GetNode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func (c *registryServiceClient) GetNode(ctx context.Context, in *GetNodeRequest,
 
 func (c *registryServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error) {
 	out := new(UpdateNodeResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/UpdateNode", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/UpdateNode", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (c *registryServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeRe
 
 func (c *registryServiceClient) GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error) {
 	out := new(GetNodesResponse)
-	err := c.cc.Invoke(ctx, "/registry.v1.RegistryService/GetNodes", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/GetNodes", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func _RegistryService_AddOrg_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/AddOrg",
+		FullMethod: "/ukama.registry.v1.RegistryService/AddOrg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).AddOrg(ctx, req.(*AddOrgRequest))
@@ -178,7 +178,7 @@ func _RegistryService_GetOrg_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/GetOrg",
+		FullMethod: "/ukama.registry.v1.RegistryService/GetOrg",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetOrg(ctx, req.(*GetOrgRequest))
@@ -196,7 +196,7 @@ func _RegistryService_AddNode_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/AddNode",
+		FullMethod: "/ukama.registry.v1.RegistryService/AddNode",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).AddNode(ctx, req.(*AddNodeRequest))
@@ -214,7 +214,7 @@ func _RegistryService_DeleteNode_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/DeleteNode",
+		FullMethod: "/ukama.registry.v1.RegistryService/DeleteNode",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).DeleteNode(ctx, req.(*DeleteNodeRequest))
@@ -232,7 +232,7 @@ func _RegistryService_GetNode_Handler(srv interface{}, ctx context.Context, dec 
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/GetNode",
+		FullMethod: "/ukama.registry.v1.RegistryService/GetNode",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetNode(ctx, req.(*GetNodeRequest))
@@ -250,7 +250,7 @@ func _RegistryService_UpdateNode_Handler(srv interface{}, ctx context.Context, d
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/UpdateNode",
+		FullMethod: "/ukama.registry.v1.RegistryService/UpdateNode",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).UpdateNode(ctx, req.(*UpdateNodeRequest))
@@ -268,7 +268,7 @@ func _RegistryService_GetNodes_Handler(srv interface{}, ctx context.Context, dec
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/registry.v1.RegistryService/GetNodes",
+		FullMethod: "/ukama.registry.v1.RegistryService/GetNodes",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetNodes(ctx, req.(*GetNodesRequest))
@@ -280,7 +280,7 @@ func _RegistryService_GetNodes_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var RegistryService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "registry.v1.RegistryService",
+	ServiceName: "ukama.registry.v1.RegistryService",
 	HandlerType: (*RegistryServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

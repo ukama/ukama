@@ -219,11 +219,6 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	return resp, nil
 }
 
-func (r *RegistryServer) ResolveNodeIp(ctx context.Context, request *pb.ResolveNodeIpRequest) (*pb.ResolveNodeIpResponse, error) {
-	logrus.Fatal("Not implemented")
-	return nil, nil
-}
-
 func pbNodeStateToDb(state pb.NodeState) db.NodeState {
 	var dbState db.NodeState
 	switch state {
