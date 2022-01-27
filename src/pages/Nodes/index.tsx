@@ -7,8 +7,8 @@ const Nodes = () => {
     const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
 
     return (
-        <Box sx={{ height: "calc(100vh - 8vh)", p: "28px 0px" }}>
-            <Box sx={{ flexGrow: 1, pb: "18px" }}>
+        <Box sx={{ height: "calc(100vh - 8vh)" }}>
+            <Box sx={{ flexGrow: 1 }}>
                 <Grid container spacing={3}>
                     <Grid xs={12} item>
                         <NodeStatus
