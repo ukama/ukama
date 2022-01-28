@@ -79,8 +79,8 @@ const DataTableWithOptions = ({
                                             minWidth: column.minWidth,
                                             padding: "6px 12px 12px 0px",
                                             background: _isDarkmode
-                                                ? colors.nightGrey05
-                                                : colors.white,
+                                                ? colors._nightGrey5
+                                                : colors._white,
                                         }}
                                     >
                                         <b>{column.label}</b>

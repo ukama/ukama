@@ -4,14 +4,13 @@ import {
     BatteryIcon,
     ThermometerIcon,
 } from "../../assets/svg";
-import { colors } from "../../theme";
 import OptionsPopover from "../OptionsPopover";
 import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import { Typography, Grid, Divider, Box, styled } from "@mui/material";
 
-const Container = styled(Box)((props: any) => ({
+const Container = styled(Box)(() => ({
     width: "214px",
     height: "206px",
     display: "flex",
@@ -19,8 +18,8 @@ const Container = styled(Box)((props: any) => ({
     padding: "15px 18px 8px 18px",
     borderRadius: "10px",
     justifyContent: "center",
-    background:
-        props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
+    // HERE background:
+    //     props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
 }));
 
 const IconStyle = {

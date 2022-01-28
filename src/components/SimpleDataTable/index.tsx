@@ -86,8 +86,8 @@ const SimpleDataTable = ({
                             sx={{
                                 ":hover": {
                                     backgroundColor: _isDarkMode
-                                        ? colors.nightGrey
-                                        : colors.solitude,
+                                        ? colors._nightGrey
+                                        : colors._solitude,
                                 },
                             }}
                             selected={selectedRows.includes(row.id)}

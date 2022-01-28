@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { colors } from "../../theme";
 import { AlertDto } from "../../generated";
 import { getColorByType } from "../../utils";
 import { CloudOffIcon } from "../../assets/svg";
@@ -43,7 +42,7 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                             >
                                 <Typography
                                     variant="caption"
-                                    color={colors.vulcan}
+                                    color={"textSecondary"}
                                 >
                                     {format(alertDate, "M/d/YY h a")}
                                 </Typography>
@@ -51,7 +50,7 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                             <Grid item xs={12}>
                                 <Typography
                                     variant="body2"
-                                    color={colors.empress}
+                                    color={"textSecondary"}
                                     sx={{
                                         left: "36px",
                                         bottom: "5px",

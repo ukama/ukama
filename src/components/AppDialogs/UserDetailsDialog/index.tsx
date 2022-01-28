@@ -15,7 +15,6 @@ import {
     Grid,
     DialogContent,
 } from "@mui/material";
-import colors from "../../../theme/colors";
 import { InfoIcon } from "../../../assets/svg";
 import { ContainerJustifySpaceBtw } from "../../../styles";
 import { GetUserDto, Get_User_Status_Type } from "../../../generated";
@@ -115,7 +114,7 @@ const UserDetailsDialog = ({
                             <Grid item xs={12}>
                                 <Typography
                                     variant="body1"
-                                    sx={{ color: colors.vulcan }}
+                                    // HERE sx={{ color: colors.vulcan }}
                                 >
                                     {dataUsage} GB data used, {dataPlan}
                                     free GB left
@@ -160,9 +159,11 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        sx={
+                                            {
+                                                // HERE color: colors.lightGrey,
+                                            }
+                                        }
                                     >
                                         STATUS
                                     </Typography>
@@ -199,9 +200,11 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        sx={
+                                            {
+                                                // HERE color: colors.lightGrey,
+                                            }
+                                        }
                                     >
                                         IMEI NUMBER
                                     </Typography>
@@ -216,9 +219,11 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        sx={
+                                            {
+                                                // HERE color: colors.lightGrey,
+                                            }
+                                        }
                                     >
                                         ICCID
                                     </Typography>
@@ -234,7 +239,7 @@ const UserDetailsDialog = ({
                                     <Typography
                                         variant="caption"
                                         sx={{
-                                            color: colors.lightGrey,
+                                            // HERE color: colors.lightGrey,
                                             alignSelf: "end",
                                         }}
                                     >

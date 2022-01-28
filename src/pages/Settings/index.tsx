@@ -54,7 +54,7 @@ const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
     <MenuItem
         selected={isSelected}
         onClick={handleItemClick}
-        sx={{ color: `${label === "Log out" ? colors.red900 : "primary"}` }}
+        sx={{ color: `${label === "Log out" ? colors._error : "primary"}` }}
     >
         {label}
     </MenuItem>
@@ -142,7 +142,7 @@ const Settings = () => {
                 overflow: "scroll",
                 flexDirection: "column",
                 p: "40px 85px 20px 85px",
-                backgroundColor: _isDarkMod ? colors.black : colors.solitude,
+                backgroundColor: _isDarkMod ? colors.black : colors._solitude,
                 justifyContent: "space-between",
             }}
         >
@@ -227,7 +227,7 @@ const Settings = () => {
                         sx={{
                             display: "block",
                             textAlign: "center",
-                            color: colors.empress,
+                            // HERE color: colors.empress,
                         }}
                     >
                         {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}

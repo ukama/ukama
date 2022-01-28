@@ -29,7 +29,6 @@ import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
 import NodePropertyStats from "./NodePropertyStats";
 import MultiSlideCarousel from "./MultiSlideCarousel";
-import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
 import {
@@ -74,7 +73,6 @@ export {
     NodePropertyStats,
     UserDetailsDialog,
     MultiSlideCarousel,
-    withAuthWrapperHOC,
     DataTableWithOptions,
     UserActivationDialog,
     FormControlCheckboxes,

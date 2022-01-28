@@ -1,4 +1,3 @@
-import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
 import { UpgradeIcon } from "../../assets/svg";
 import { Box, Button, Typography } from "@mui/material";
@@ -17,7 +16,7 @@ const useStyles = makeStyles(() => ({
         alignItems: "center",
         flexDirection: "column",
         justifyContent: "center",
-        background: colors.aliceBlue,
+        // HERE background: colors.aliceBlue,
     },
     buttonStyle: {
         width: "124px",

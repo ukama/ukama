@@ -10,7 +10,6 @@ import {
     DialogContent,
     Stack,
 } from "@mui/material";
-import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { globalUseStyles } from "../../../styles";
 import CloseIcon from "@mui/icons-material/Close";
@@ -32,8 +31,8 @@ const useStyles = makeStyles(() => ({
     },
     stepButtonStyle: {
         "&:disabled": {
-            color: colors.white,
-            backgroundColor: `${colors.darkGrey}`,
+            // HERE color: colors.white,
+            // backgroundColor: `${colors.darkGrey}`,
         },
     },
 }));

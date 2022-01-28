@@ -12,7 +12,6 @@ import {
     Stack,
 } from "@mui/material";
 import { SimCardDesign } from "../..";
-import { colors } from "../../../theme";
 import { globalUseStyles } from "../../../styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ChangeEventHandler, useState } from "react";
@@ -34,8 +33,8 @@ const useStyles = makeStyles(() => ({
     },
     stepButtonStyle: {
         "&:disabled": {
-            color: colors.white,
-            backgroundColor: `${colors.darkGrey}`,
+            // HERE color: colors.white,
+            // backgroundColor: `${colors.darkGrey}`,
         },
     },
 }));

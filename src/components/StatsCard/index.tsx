@@ -25,7 +25,7 @@ import { isDarkmode } from "../../recoil";
 type StyleProps = { color: string };
 
 const useStyles = makeStyles(() => ({
-    selectStyle: ({ color = colors.black }: StyleProps) => ({
+    selectStyle: ({ color }: StyleProps) => ({
         width: "172px",
         "& p": {
             fontSize: "20px",
@@ -58,7 +58,7 @@ const StatsCard = ({
     handleSelectedButton,
 }: StatsCardProps) => {
     const _isDarkMod = useRecoilValue(isDarkmode);
-    const styleProps = { color: _isDarkMod ? colors.white : colors.black };
+    const styleProps = { color: _isDarkMod ? colors._white : colors.black };
     const classes = useStyles(styleProps);
     return (
         <>
@@ -115,8 +115,8 @@ const StatsCard = ({
                                                 value={label}
                                                 style={{
                                                     height: "32px",
-                                                    color: colors.lightBlue,
-                                                    border: `1px solid ${colors.lightBlue}`,
+                                                    color: colors.primaryMain,
+                                                    border: `1px solid ${colors.primaryMain}`,
                                                 }}
                                             >
                                                 <Typography

@@ -81,7 +81,7 @@ const NodeStatus = ({
                         <Typography
                             ml="8px"
                             variant={"h6"}
-                            color={colors.empress}
+                            // HERE color={colors.empress}
                         >
                             {nodes[selectedNodeIndex].duration}
                         </Typography>

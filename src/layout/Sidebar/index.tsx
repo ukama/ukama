@@ -82,7 +82,9 @@ const Sidebar = (
                         <Icon
                             fontSize="medium"
                             sx={{
-                                fill: _isDarkMod ? colors.white : colors.vulcan,
+                                fill: _isDarkMod
+                                    ? colors._white
+                                    : colors._vulcan,
                             }}
                         />
                     </ListItemIcon>

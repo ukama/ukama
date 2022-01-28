@@ -4,9 +4,9 @@ import { PagePlaceholderSvg } from "../../assets/svg";
 import { Button, Stack, styled, Typography, Box } from "@mui/material";
 import { isDarkmode } from "../../recoil";
 import { useRecoilValue } from "recoil";
-const Container = styled(Box)((props: any) => ({
-    background:
-        props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
+const Container = styled(Box)(() => ({
+    // HERE background:
+    //     props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
 }));
 type PagePlaceholderProps = {
     linkText?: string;
@@ -41,8 +41,8 @@ const PagePlaceholder = ({
                 }}
             >
                 <PagePlaceholderSvg
-                    color={_isDarkmode ? colors.greyish : colors.whiteGrey}
-                    color2={_isDarkmode ? colors.nightGrey12 : colors.white}
+                    color={_isDarkmode ? colors._white38 : colors.silver}
+                    color2={_isDarkmode ? colors._nightGrey12 : colors._white}
                 />
                 <Typography variant="body1">
                     {`${description} `}

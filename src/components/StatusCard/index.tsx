@@ -1,16 +1,15 @@
-import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
 import { RoundedCard } from "../../styles";
 import { SelectItemType } from "../../types";
 import LoadingWrapper from "../LoadingWrapper";
-import { Grid, MenuItem, Select, Typography } from "@mui/material";
+import { Grid, MenuItem, Select, Theme, Typography } from "@mui/material";
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles<Theme>(theme => ({
     selectStyle: {
         width: "108px",
         textAlign: "end",
-        color: colors.empress,
         "& p": {
+            color: theme?.palette?.text?.secondary,
             fontWeight: 500,
             fontSize: "14px",
             lineHeight: "157%",
@@ -134,7 +133,7 @@ const StatusCard = ({
 
                                 <Typography
                                     variant="body1"
-                                    color={colors.empress}
+                                    // HERE color={colors.empress}
                                     sx={{
                                         display: "flex",
                                         alignItems: "center",

@@ -68,8 +68,8 @@ const NodePropertyStats = ({
                                     value={label}
                                     style={{
                                         height: "32px",
-                                        color: colors.lightBlue,
-                                        border: `1px solid ${colors.lightBlue}`,
+                                        color: colors.primaryMain,
+                                        border: `1px solid ${colors.primaryMain}`,
                                     }}
                                 >
                                     <Typography

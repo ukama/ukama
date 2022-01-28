@@ -16,7 +16,6 @@ import {
     GetLatestAlertsDocument,
     GetLatestAlertsSubscription,
 } from "../../generated";
-import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
 import { useHistory } from "react-router-dom";
 import {
@@ -214,8 +213,8 @@ const Header = ({
                                     }
                                     sx={{
                                         "& .MuiBadge-badge": {
-                                            color: colors.white,
-                                            backgroundColor: colors.vulcan,
+                                            // HERE color: colors.white,
+                                            // backgroundColor: colors.vulcan,
                                             paddingLeft: "3px",
                                             paddingRight: "3px",
                                         },

@@ -21,11 +21,26 @@ const theme = (isDarkmode: boolean) =>
         },
         palette: {
             mode: isDarkmode ? "dark" : "light",
+            text: {
+                primary: isDarkmode ? colors._white : colors.black,
+                secondary: isDarkmode ? colors._white38 : colors._vulcan60,
+            },
             background: {
-                default: isDarkmode ? colors.nightGrey : colors.solitude,
+                default: isDarkmode ? colors._nightGrey : colors._solitude,
+                paper: isDarkmode ? colors._nightGrey5 : colors._white,
             },
             primary: {
-                main: colors.primary,
+                main: colors.primaryMain,
+                light: colors.primaryLight,
+                dark: colors.primaryDark,
+            },
+            secondary: {
+                main: colors.secondaryMain,
+                light: colors.secondaryLight,
+                dark: colors.secondaryDark,
+            },
+            error: {
+                main: colors._error,
             },
         },
         components: {
@@ -69,7 +84,7 @@ const theme = (isDarkmode: boolean) =>
                             backgroundColor: "transparent",
                         },
                         "&:hover svg path": {
-                            fill: colors.primary,
+                            fill: colors.primaryMain,
                         },
                     },
                 },
@@ -78,7 +93,7 @@ const theme = (isDarkmode: boolean) =>
                 styleOverrides: {
                     contained: {
                         fontWeight: 500,
-                        color: colors.white,
+                        color: colors._white,
                         letterSpacing: "0.4px",
                         boxShadow:
                             "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)",
