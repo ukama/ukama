@@ -115,7 +115,7 @@ func TestGetDeviceRouteRepoError(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	assert.Contains(t, w.Body.String(), "Error finding the node")
+	assert.Contains(t, w.Body.String(), "Error getting the node")
 
 	nodeRepo.AssertExpectations(t)
 }
