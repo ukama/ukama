@@ -9,10 +9,10 @@ import (
 
 	"github.com/ukama/ukamaX/cloud/net/cmd/version"
 
+	dnspb "github.com/coredns/coredns/pb"
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	ugrpc "github.com/ukama/ukamaX/common/grpc"
-
 	"google.golang.org/grpc"
 )
 
@@ -40,9 +40,12 @@ func initConfig() {
 }
 
 func runGrpcServer(nns *server.Nns) {
-	srv := server.NewNnsServer(nns)
+
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
+		srv := server.NewNnsServer(nns)
 		pb.RegisterNnsServer(s, srv)
+
+		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
 	})
 
 	grpcServer.StartServer()

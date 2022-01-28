@@ -1,0 +1,62 @@
+version: "3.3"
+services:
+  etcd:
+    image: 'bitnami/etcd:latest'
+    container_name: etcd
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+    ports:
+      - 2379:2379
+      - 2380:2380
+    networks:
+      app_net:
+          ipv4_address: 10.5.0.10
+
+  net:
+    build:
+      context: .
+    restart: always
+    networks:
+      app_net:
+         ipv4_address: 10.5.0.5
+    environment:
+      - DEBUGMODE=true
+      - DNS_NODEDOMAIN=node.mesh
+      - ETCDHOST=etcd:2379
+
+  coredns:
+    image: coredns/coredns:latest
+    command: -conf /etc/coredns/Corefile -dns.port 53
+    container_name: coredns
+    restart: on-failure
+    expose:
+      - '53'
+      - '53/udp'
+    ports:
+      - '53:53'
+      - '53:53/udp'
+    volumes:
+      - './DEBUG/Corefile:/etc/coredns/Corefile'
+    networks:
+      app_net:
+        ipv4_address: 10.5.0.20
+
+
+  bastion:
+    image: nicolaka/netshoot:latest
+    command: tail -F anything
+    container_name: bastion
+    restart: always
+    networks:
+      app_net:
+        ipv4_address: 10.5.0.99
+
+networks:
+  app_net:
+    ipam:
+        driver: default
+        config:
+            - subnet: 10.5.0.0/16
+
+

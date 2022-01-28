@@ -15,13 +15,13 @@ import (
 )
 
 type HttpServer struct {
-	nnsClient       *Nns
+	nnsClient       NnsReader
 	httpConf        config.Http
 	grpcConf        config.Grpc
 	nodeMetricsPort int
 }
 
-func NewHttpServer(httpConf config.Http, grpcConf config.Grpc, nodeMetricsPort int, nnsClient *Nns) *HttpServer {
+func NewHttpServer(httpConf config.Http, grpcConf config.Grpc, nodeMetricsPort int, nnsClient NnsReader) *HttpServer {
 	return &HttpServer{nnsClient: nnsClient,
 		httpConf:        httpConf,
 		grpcConf:        grpcConf,

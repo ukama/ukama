@@ -12,6 +12,11 @@ type Config struct {
 	Http              config.Http
 	DialTimeoutSecond time.Duration
 	NodeMetricsPort   int
+	Dns               *DnsConfig
+}
+
+type DnsConfig struct {
+	NodeDomain string // nodes domain like : ukama.node or mesh.node
 }
 
 func NewConfig() *Config {
@@ -25,5 +30,8 @@ func NewConfig() *Config {
 			Port: 8080,
 		},
 		NodeMetricsPort: 10250,
+		Dns: &DnsConfig{
+			NodeDomain: "node.mesh",
+		},
 	}
 }
