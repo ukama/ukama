@@ -23,6 +23,7 @@ import {
     getNodeNetwork,
     getNodeGraph,
     getActiveUserMetrics,
+    getCpuUsageMetrics,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -51,4 +52,5 @@ export const mockServer = (app: Express): void => {
     app.get("/node/get_network", getNodeNetwork);
     app.get("/node/graph", getNodeGraph);
     app.get("/metrics/user", getActiveUserMetrics);
+    app.get("/metrics/cpu", getCpuUsageMetrics);
 };

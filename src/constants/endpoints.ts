@@ -27,4 +27,5 @@ export const SERVER = {
     GET_NODE_NETWORK: `${BASE_URL}/node/get_network`,
     GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
     GET_ACTIVE_USER_METRICS: `${BASE_URL}/metrics/user`,
+    GET_CPU_USAGE_METRICS: `${BASE_URL}/metrics/cpu`,
 };
