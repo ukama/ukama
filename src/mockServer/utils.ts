@@ -9,7 +9,11 @@ import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { GraphDto, NodeDto } from "../modules/node/types";
-import { GetUserDto, UserDto } from "../modules/user/types";
+import {
+    ActiveUserMetricsDto,
+    GetUserDto,
+    UserDto,
+} from "../modules/user/types";
 import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
@@ -338,5 +342,30 @@ export const getNodeGraph = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: casual.randomArray<GraphDto>(15, 15, casual._nodeGraph),
+    });
+};
+
+export const getActiveUserMetrics = (req: Request, res: Response): void => {
+    const data = casual.randomArray<ActiveUserMetricsDto>(
+        1,
+        10,
+        casual._activeUserMetrics
+    );
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let metrics = [];
+    if (!pageNo) metrics = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) metrics.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: metrics,
+        length: data.length,
     });
 };
