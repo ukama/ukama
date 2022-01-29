@@ -41,6 +41,7 @@ const initializeApp = async () => {
         if (hasSession(req.headers.cookie || "")) {
             const playgroundRenderPageOptions: MiddlewareOptions = {
                 endpoint: "/graphql",
+                subscriptionEndpoint: "/graphql",
             };
 
             const playground = renderPlaygroundPage(
