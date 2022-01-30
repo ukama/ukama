@@ -192,18 +192,6 @@ export class NodePhysicalHealthDto {
 }
 
 @ObjectType()
-export class NodeRFDto {
-    @Field()
-    qam: number;
-
-    @Field()
-    rfOutput: number;
-
-    @Field()
-    rssi: number;
-}
-
-@ObjectType()
 export class GraphDto {
     @Field()
     uv: number;
@@ -234,4 +222,25 @@ export class CpuUsageMetricsDto {
 export class CpuUsageMetricsResponse extends PaginationResponse {
     @Field(() => [CpuUsageMetricsDto])
     data: CpuUsageMetricsDto[];
+}
+
+@ObjectType()
+export class NodeRFDto {
+    @Field()
+    qam: number;
+
+    @Field()
+    rfOutput: number;
+
+    @Field()
+    rssi: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class NodeRFDtoResponse extends PaginationResponse {
+    @Field(() => [NodeRFDto])
+    data: NodeRFDto[];
 }

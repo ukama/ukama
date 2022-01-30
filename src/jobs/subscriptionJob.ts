@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import schedule from "node-schedule";
 import {
-    GET_ACTIVATED_USERS_METRICS_QUERY,
+    GET_USERS_ATTACHED_METRICS_QUERY,
     GET_ALERTS_QUERY,
     GET_CONNECTED_USERS_QUERY,
     GET_CPU_USAGE_METRICS_QUERY,
@@ -83,13 +83,6 @@ export const job = (schema: GraphQLSchema): void => {
         });
         await graphql({
             schema,
-            source: GET_NODE_RF_KPI_QUERY,
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
             source: GET_NODE_PHYSICAL_HEALTH_QUERY,
             contextValue: {
                 req: HEADER,
@@ -104,7 +97,7 @@ export const job = (schema: GraphQLSchema): void => {
         });
         await graphql({
             schema,
-            source: GET_ACTIVATED_USERS_METRICS_QUERY,
+            source: GET_USERS_ATTACHED_METRICS_QUERY,
             variableValues: {
                 input: meta,
             },
@@ -115,6 +108,16 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_CPU_USAGE_METRICS_QUERY,
+            variableValues: {
+                input: meta,
+            },
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_NODE_RF_KPI_QUERY,
             variableValues: {
                 input: meta,
             },

@@ -282,16 +282,6 @@ export const GET_NODE_META_DATA_QUERY = `
     }
 `;
 
-export const GET_NODE_RF_KPI_QUERY = `
-    query getNodeRFKPI {
-        getNodeRFKPI { 
-            qam
-            rfOutput
-            rssi
-          }
-          }
-`;
-
 export const GET_NODE_NETWORK = `
     query getNodeNetwork {
         getNodeNetwork { 
@@ -302,7 +292,7 @@ export const GET_NODE_NETWORK = `
           }
 `;
 
-export const GET_ACTIVATED_USERS_METRICS_QUERY = `
+export const GET_USERS_ATTACHED_METRICS_QUERY = `
     query getUsersAttachedMetrics($input:PaginationDto!) {
         getUsersAttachedMetrics(data:$input){
         meta{
@@ -334,6 +324,25 @@ export const GET_CPU_USAGE_METRICS_QUERY = `
             usage
             timestamp
         }
-        }
     }
+  }
+`;
+
+export const GET_NODE_RF_KPI_QUERY = `
+query getNodeRFKPI($input: PaginationDto!) {
+    getNodeRFKPI(data: $input) {
+      meta {
+        count
+        page
+        size
+        pages
+      }
+      data {
+        qam
+        rfOutput
+        rssi
+        timestamp
+      }
+    }
+  }
 `;

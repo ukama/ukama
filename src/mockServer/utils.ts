@@ -8,8 +8,13 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import { CpuUsageMetricsDto, GraphDto, NodeDto } from "../modules/node/types";
 import { createPaginatedResponse } from "../utils";
+import {
+    CpuUsageMetricsDto,
+    GraphDto,
+    NodeDto,
+    NodeRFDto,
+} from "../modules/node/types";
 import {
     GetUserDto,
     UserDto,
@@ -325,13 +330,6 @@ export const nodePhysicalHealth = (req: Request, res: Response): void => {
     });
 };
 
-export const nodeRF = (req: Request, res: Response): void => {
-    res.send({
-        status: "success",
-        data: casual._nodeRF(),
-    });
-};
-
 export const getNodeNetwork = (req: Request, res: Response): void => {
     res.send({
         status: "success",
@@ -380,6 +378,27 @@ export const getCpuUsageMetrics = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: paginatedRes,
+        length: data.length,
+    });
+};
+
+export const nodeRF = (req: Request, res: Response): void => {
+    const data = casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF);
+
+    const pageNo = Number(req.query.pageNo);
+    const pageSize = Number(req.query.pageSize);
+
+    let metrics = [];
+    if (!pageNo) metrics = data;
+    else {
+        const index = (pageNo - 1) * pageSize;
+        for (let i = index; i < index + pageSize; i++) {
+            if (data[i]) metrics.push(data[i]);
+        }
+    }
+    res.send({
+        status: "success",
+        data: metrics,
         length: data.length,
     });
 };
