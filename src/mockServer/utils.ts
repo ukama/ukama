@@ -14,6 +14,7 @@ import {
     GetUserDto,
     UserDto,
 } from "../modules/user/types";
+import { createPaginatedResponse } from "../utils";
 import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
@@ -351,21 +352,15 @@ export const getActiveUserMetrics = (req: Request, res: Response): void => {
         10,
         casual._activeUserMetrics
     );
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
 
-    const pageNo = Number(req.query.pageNo);
-    const pageSize = Number(req.query.pageSize);
-
-    let metrics = [];
-    if (!pageNo) metrics = data;
-    else {
-        const index = (pageNo - 1) * pageSize;
-        for (let i = index; i < index + pageSize; i++) {
-            if (data[i]) metrics.push(data[i]);
-        }
-    }
     res.send({
         status: "success",
-        data: metrics,
+        data: paginatedRes,
         length: data.length,
     });
 };
@@ -375,21 +370,15 @@ export const getCpuUsageMetrics = (req: Request, res: Response): void => {
         10,
         casual._cpuUsageMetrics
     );
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
 
-    const pageNo = Number(req.query.pageNo);
-    const pageSize = Number(req.query.pageSize);
-
-    let metrics = [];
-    if (!pageNo) metrics = data;
-    else {
-        const index = (pageNo - 1) * pageSize;
-        for (let i = index; i < index + pageSize; i++) {
-            if (data[i]) metrics.push(data[i]);
-        }
-    }
     res.send({
         status: "success",
-        data: metrics,
+        data: paginatedRes,
         length: data.length,
     });
 };
