@@ -350,6 +350,7 @@ export const getUsersAttachedMetrics = (req: Request, res: Response): void => {
         10,
         casual._usersAttachedMetrics
     );
+
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),
         Number(req.query.pageSize),
@@ -385,20 +386,15 @@ export const getCpuUsageMetrics = (req: Request, res: Response): void => {
 export const nodeRF = (req: Request, res: Response): void => {
     const data = casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF);
 
-    const pageNo = Number(req.query.pageNo);
-    const pageSize = Number(req.query.pageSize);
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
 
-    let metrics = [];
-    if (!pageNo) metrics = data;
-    else {
-        const index = (pageNo - 1) * pageSize;
-        for (let i = index; i < index + pageSize; i++) {
-            if (data[i]) metrics.push(data[i]);
-        }
-    }
     res.send({
         status: "success",
-        data: metrics,
+        data: paginatedRes,
         length: data.length,
     });
 };
