@@ -8,8 +8,13 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import { CpuUsageMetricsDto, GraphDto, NodeDto } from "../modules/node/types";
 import { createPaginatedResponse } from "../utils";
+import {
+    CpuUsageMetricsDto,
+    GraphDto,
+    NodeDto,
+    NodeRFDto,
+} from "../modules/node/types";
 import {
     GetUserDto,
     UserDto,
@@ -325,13 +330,6 @@ export const nodePhysicalHealth = (req: Request, res: Response): void => {
     });
 };
 
-export const nodeRF = (req: Request, res: Response): void => {
-    res.send({
-        status: "success",
-        data: casual._nodeRF(),
-    });
-};
-
 export const getNodeNetwork = (req: Request, res: Response): void => {
     res.send({
         status: "success",
@@ -352,6 +350,7 @@ export const getUsersAttachedMetrics = (req: Request, res: Response): void => {
         10,
         casual._usersAttachedMetrics
     );
+
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),
         Number(req.query.pageSize),
@@ -371,6 +370,22 @@ export const getCpuUsageMetrics = (req: Request, res: Response): void => {
         10,
         casual._cpuUsageMetrics
     );
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
+
+    res.send({
+        status: "success",
+        data: paginatedRes,
+        length: data.length,
+    });
+};
+
+export const nodeRF = (req: Request, res: Response): void => {
+    const data = casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF);
+
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),
         Number(req.query.pageSize),

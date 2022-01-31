@@ -7,7 +7,7 @@ import {
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
-    NodeRFDto,
+    NodeRFDtoResponse,
     NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
@@ -107,14 +107,6 @@ export class NodeService implements INodeService {
         });
         return res.data;
     };
-    nodeRF = async (): Promise<NodeRFDto> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_RF_KPI,
-        });
-
-        return res.data;
-    };
     getNetwork = async (): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -145,6 +137,22 @@ export class NodeService implements INodeService {
 
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const data = NodeMapper.dtoToCpuUsageMetricsDto(res);
+        if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
+        return {
+            data,
+            meta,
+        };
+    };
+    nodeRF = async (req: PaginationDto): Promise<NodeRFDtoResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_RF_KPI,
+            params: req,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
+        const data = NodeMapper.dtoToNodeRFKPIDto(res);
         if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
         return {
             data,

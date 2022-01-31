@@ -233,13 +233,6 @@ const nodePhysicalHealth = (): NodePhysicalHealthDto => {
         io: defaultCasual.integer(1, 19),
     };
 };
-const nodeRF = (): NodeRFDto => {
-    return {
-        qam: defaultCasual.integer(1, 19),
-        rfOutput: defaultCasual.integer(1, 19),
-        rssi: defaultCasual.integer(1, 19),
-    };
-};
 const nodeNetwork = (): NetworkDto => {
     return {
         id: defaultCasual._uuid(),
@@ -274,6 +267,15 @@ const cpuUsageMetrics = (): CpuUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         usage: defaultCasual.integer(1, 200),
+        timestamp: new Date().getTime(),
+    };
+};
+
+const nodeRF = (): NodeRFDto => {
+    return {
+        qam: defaultCasual.integer(1, 19),
+        rfOutput: defaultCasual.integer(1, 19),
+        rssi: defaultCasual.integer(1, 19),
         timestamp: new Date().getTime(),
     };
 };

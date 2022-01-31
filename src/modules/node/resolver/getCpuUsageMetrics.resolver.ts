@@ -24,7 +24,6 @@ export class GetCpuUsageMetricsResolver {
         @PubSub() pubsub: PubSubEngine
     ): Promise<CpuUsageMetricsResponse | null> {
         const cpuUsageMetrics = this.cpuUsageMetrics.cpuUsageMetrics(data);
-
         pubsub.publish("cpuUsageMetrics", cpuUsageMetrics);
         return cpuUsageMetrics;
     }
