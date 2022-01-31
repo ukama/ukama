@@ -302,9 +302,9 @@ export const GET_NODE_NETWORK = `
           }
 `;
 
-export const GET_ACTIVE_USER_METRICS_QUERY = `
-    query getAlerts($input:PaginationDto!) {
-        getActiveUserMetrics(data:$input){
+export const GET_ACTIVATED_USERS_METRICS_QUERY = `
+    query getUsersAttachedMetrics($input:PaginationDto!) {
+        getUsersAttachedMetrics(data:$input){
         meta{
             count
             page
@@ -321,20 +321,19 @@ export const GET_ACTIVE_USER_METRICS_QUERY = `
 `;
 
 export const GET_CPU_USAGE_METRICS_QUERY = `
-query getCpuUsageMetrics($input: PaginationDto!) {
-    getCpuUsageMetrics(data: $input) {
-      meta {
-        count
-        page
-        size
-        pages
-      }
-      data {
-        id
-        usage
-        timestamp
-      }
+    query getCpuUsageMetrics($input: PaginationDto!) {
+        getCpuUsageMetrics(data: $input) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        data {
+            id
+            usage
+            timestamp
+        }
+        }
     }
-  }
-  
 `;

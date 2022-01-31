@@ -7,11 +7,11 @@ import {
 
 @Service()
 @Resolver()
-export class GetActiveUserMetricsSubscriptionResolver {
+export class GetUsersAttachedMetricsSubscriptionResolver {
     @Subscription(() => UsersAttachedMetricsDto, {
-        topics: "activeUserMetrics",
+        topics: "usersAttachedMetrics",
     })
-    async getActiveUserMetrics(
+    async getUsersAttachedMetrics(
         @Root() data: UsersAttachedMetricsResponse
     ): Promise<UsersAttachedMetricsDto> {
         return data.data[0];

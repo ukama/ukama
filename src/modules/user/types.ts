@@ -279,7 +279,7 @@ export class OrgUserResponse {
 }
 
 @ObjectType()
-export class ActiveUserMetricsDto {
+export class UsersAttachedMetricsDto {
     @Field({ nullable: true })
     id: string;
 
@@ -291,7 +291,7 @@ export class ActiveUserMetricsDto {
 }
 
 @ObjectType()
-export class ActiveUserMetricsResponse extends PaginationResponse {
-    @Field(() => [ActiveUserMetricsDto])
-    data: ActiveUserMetricsDto[];
+export class UsersAttachedMetricsResponse extends PaginationResponse {
+    @Field(() => [UsersAttachedMetricsDto])
+    data: UsersAttachedMetricsDto[];
 }

@@ -9,12 +9,12 @@ import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { CpuUsageMetricsDto, GraphDto, NodeDto } from "../modules/node/types";
+import { createPaginatedResponse } from "../utils";
 import {
-    ActiveUserMetricsDto,
     GetUserDto,
     UserDto,
+    UsersAttachedMetricsDto,
 } from "../modules/user/types";
-import { createPaginatedResponse } from "../utils";
 import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
@@ -346,11 +346,11 @@ export const getNodeGraph = (req: Request, res: Response): void => {
     });
 };
 
-export const getActiveUserMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<ActiveUserMetricsDto>(
+export const getUsersAttachedMetrics = (req: Request, res: Response): void => {
+    const data = casual.randomArray<UsersAttachedMetricsDto>(
         1,
         10,
-        casual._activeUserMetrics
+        casual._usersAttachedMetrics
     );
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),
@@ -364,6 +364,7 @@ export const getActiveUserMetrics = (req: Request, res: Response): void => {
         length: data.length,
     });
 };
+
 export const getCpuUsageMetrics = (req: Request, res: Response): void => {
     const data = casual.randomArray<CpuUsageMetricsDto>(
         1,
