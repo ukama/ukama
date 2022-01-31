@@ -253,6 +253,7 @@ export class AddUserResponse {
     @Field()
     uuid: string;
 }
+
 @ObjectType()
 export class OrgUserDto {
     @Field()
@@ -275,4 +276,22 @@ export class OrgUserResponse {
 
     @Field(() => [OrgUserDto])
     users: OrgUserDto[];
+}
+
+@ObjectType()
+export class UsersAttachedMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    users: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class UsersAttachedMetricsResponse extends PaginationResponse {
+    @Field(() => [UsersAttachedMetricsDto])
+    data: UsersAttachedMetricsDto[];
 }

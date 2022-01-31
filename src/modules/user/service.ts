@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 import {
     ActivateUserDto,
-    ActivateUserResponse,
+    UsersAttachedMetricsResponse,
     ConnectedUserDto,
     DeactivateResponse,
     GetUserPaginationDto,
@@ -13,6 +13,7 @@ import {
     OrgUserResponseDto,
     AddUserDto,
     AddUserResponse,
+    ActivateUserResponse,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -159,6 +160,24 @@ export class UserService implements IUserService {
         if (checkError(res)) throw new Error(res.message);
         return {
             success: true,
+        };
+    };
+    usersAttachedMetricsService = async (
+        req: PaginationDto
+    ): Promise<UsersAttachedMetricsResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_USERS_ATTACHED_METRICS,
+            params: req,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
+        const data = UserMapper.dtoToUsersAttachedMetricsDto(res);
+        if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
+        return {
+            data,
+            meta,
         };
     };
 }

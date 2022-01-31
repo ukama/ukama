@@ -301,3 +301,21 @@ export const GET_NODE_NETWORK = `
           }
           }
 `;
+
+export const GET_ACTIVATED_USERS_METRICS_QUERY = `
+    query getUsersAttachedMetrics($input:PaginationDto!) {
+        getUsersAttachedMetrics(data:$input){
+        meta{
+            count
+            page
+            size
+            pages
+        }
+        data{
+            id
+            users
+            timestamp
+        }
+        }
+    }
+`;

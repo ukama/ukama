@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import schedule from "node-schedule";
 import {
+    GET_ACTIVATED_USERS_METRICS_QUERY,
     GET_ALERTS_QUERY,
     GET_CONNECTED_USERS_QUERY,
     GET_DATA_BILL_QUERY,
@@ -96,6 +97,16 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_NODE_META_DATA_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_ACTIVATED_USERS_METRICS_QUERY,
+            variableValues: {
+                input: meta,
+            },
             contextValue: {
                 req: HEADER,
             },

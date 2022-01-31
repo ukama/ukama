@@ -26,4 +26,5 @@ export const SERVER = {
     GET_NODE_RF_KPI: `${BASE_URL}/node/rf_kpis`,
     GET_NODE_NETWORK: `${BASE_URL}/node/get_network`,
     GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
+    GET_USERS_ATTACHED_METRICS: `${BASE_URL}/metrics/user`,
 };
