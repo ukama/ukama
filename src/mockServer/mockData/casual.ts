@@ -23,7 +23,7 @@ import {
 } from "../../modules/node/types";
 
 import {
-    ActiveUserMetricsDto,
+    UsersAttachedMetricsDto,
     DeactivateResponse,
     GetUserDto,
     UserDto,
@@ -261,7 +261,7 @@ const nodeGraph = (): GraphDto => {
     };
 };
 
-const activeUserMetrics = (): ActiveUserMetricsDto => {
+const usersAttachedMetrics = (): UsersAttachedMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         users: defaultCasual.integer(1, 50),
@@ -306,7 +306,7 @@ interface Generators extends Casual.Generators {
     _nodeRF: () => NodeRFDto;
     _nodeNetwork: () => NetworkDto;
     _nodeGraph: () => GraphDto;
-    _activeUserMetrics: () => ActiveUserMetricsDto;
+    _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -345,7 +345,7 @@ interface Functions extends Casual.functions {
     nodeRF: () => NodeRFDto;
     nodeNetwork: () => NetworkDto;
     nodeGraph: () => GraphDto;
-    activeUserMetrics: () => ActiveUserMetricsDto;
+    usersAttachedMetrics: () => UsersAttachedMetricsDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -368,7 +368,7 @@ defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
 defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("nodeGraph", nodeGraph);
-defaultCasual.define("activeUserMetrics", activeUserMetrics);
+defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

@@ -302,9 +302,9 @@ export const GET_NODE_NETWORK = `
           }
 `;
 
-export const GET_ACTIVE_USER_METRICS_QUERY = `
-    query getAlerts($input:PaginationDto!) {
-        getActiveUserMetrics(data:$input){
+export const GET_ACTIVATED_USERS_METRICS_QUERY = `
+    query getUsersAttachedMetrics($input:PaginationDto!) {
+        getUsersAttachedMetrics(data:$input){
         meta{
             count
             page

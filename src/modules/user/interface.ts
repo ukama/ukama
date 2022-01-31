@@ -3,8 +3,8 @@ import { TIME_FILTER } from "../../constants";
 import {
     ActivateUserDto,
     ActivateUserResponse,
-    ActiveUserMetricsDto,
-    ActiveUserMetricsResponse,
+    UsersAttachedMetricsDto,
+    UsersAttachedMetricsResponse,
     AddUserDto,
     AddUserResponse,
     ConnectedUserDto,
@@ -51,7 +51,7 @@ export interface IUserMapper {
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
     dtoToUsersDto(req: OrgUserResponse): OrgUserResponseDto;
-    dtoToActiveUserMetricsDto(
-        req: ActiveUserMetricsResponse
-    ): ActiveUserMetricsDto[];
+    dtoToUsersAttachedMetricsDto(
+        req: UsersAttachedMetricsResponse
+    ): UsersAttachedMetricsDto[];
 }
