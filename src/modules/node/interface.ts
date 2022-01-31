@@ -19,6 +19,8 @@ import {
     CpuUsageMetricsDto,
     CpuUsageMetricsResponse,
     NodeRFDtoResponse,
+    RamUsageMetricsDto,
+    RamUsageMetricsResponse,
 } from "./types";
 
 export interface INodeService {
@@ -42,4 +44,5 @@ export interface INodeMapper {
     dtoToNodeRFKPIDto(req: NodeRFDtoResponse): NodeRFDto[];
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
     dtoToCpuUsageMetricsDto(req: CpuUsageMetricsResponse): CpuUsageMetricsDto[];
+    dtoToRamUsageMetricsDto(req: RamUsageMetricsResponse): RamUsageMetricsDto[];
 }

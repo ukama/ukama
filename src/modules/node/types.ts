@@ -244,3 +244,21 @@ export class NodeRFDtoResponse extends PaginationResponse {
     @Field(() => [NodeRFDto])
     data: NodeRFDto[];
 }
+
+@ObjectType()
+export class RamUsageMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    usage: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class RamUsageMetricsResponse extends PaginationResponse {
+    @Field(() => [RamUsageMetricsDto])
+    data: RamUsageMetricsDto[];
+}

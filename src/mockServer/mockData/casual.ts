@@ -20,6 +20,7 @@ import {
     NodeMetaDataDto,
     NodePhysicalHealthDto,
     NodeRFDto,
+    RamUsageMetricsDto,
     UpdateNodeResponse,
 } from "../../modules/node/types";
 
@@ -280,6 +281,14 @@ const nodeRF = (): NodeRFDto => {
     };
 };
 
+const ramUsageMetrics = (): RamUsageMetricsDto => {
+    return {
+        id: defaultCasual._uuid(),
+        usage: defaultCasual.integer(1, 4096),
+        timestamp: new Date().getTime(),
+    };
+};
+
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
@@ -318,6 +327,7 @@ interface Generators extends Casual.Generators {
     _nodeNetwork: () => NetworkDto;
     _nodeGraph: () => GraphDto;
     _cpuUsageMetrics: () => CpuUsageMetricsDto;
+    _ramUsageMetrics: () => RamUsageMetricsDto;
     _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     functions(): Functions;
 }
@@ -358,6 +368,7 @@ interface Functions extends Casual.functions {
     nodeNetwork: () => NetworkDto;
     nodeGraph: () => GraphDto;
     cpuUsageMetrics: () => CpuUsageMetricsDto;
+    ramUsageMetrics: () => RamUsageMetricsDto;
     usersAttachedMetrics: () => UsersAttachedMetricsDto;
 }
 
@@ -382,6 +393,7 @@ defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("nodeGraph", nodeGraph);
 defaultCasual.define("cpuUsageMetrics", cpuUsageMetrics);
+defaultCasual.define("ramUsageMetrics", ramUsageMetrics);
 defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 

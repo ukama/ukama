@@ -11,6 +11,7 @@ import {
     GET_NODE_META_DATA_QUERY,
     GET_NODE_PHYSICAL_HEALTH_QUERY,
     GET_NODE_RF_KPI_QUERY,
+    GET_RAM_USAGE_METRICS_QUERY,
 } from "../common/graphql";
 
 import {
@@ -118,6 +119,16 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_NODE_RF_KPI_QUERY,
+            variableValues: {
+                input: meta,
+            },
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_RAM_USAGE_METRICS_QUERY,
             variableValues: {
                 input: meta,
             },

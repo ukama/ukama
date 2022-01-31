@@ -346,3 +346,21 @@ query getNodeRFKPI($input: PaginationDto!) {
     }
   }
 `;
+
+export const GET_RAM_USAGE_METRICS_QUERY = `
+    query getRamUsageMetrics($input: PaginationDto!) {
+        getRamUsageMetrics(data: $input) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        data {
+            id
+            usage
+            timestamp
+        }
+    }
+  }
+`;
