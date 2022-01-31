@@ -192,7 +192,7 @@ export class NodePhysicalHealthDto {
 }
 
 @ObjectType()
-export class GraphDto {
+export class ThroughputMetricsDto {
     @Field()
     uv: number;
 
@@ -261,4 +261,25 @@ export class TemperatureMetricsDto {
 export class TemperatureMetricsResponse extends PaginationResponse {
     @Field(() => [TemperatureMetricsDto])
     data: TemperatureMetricsDto[];
+}
+
+@ObjectType()
+export class IOMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    input: number;
+
+    @Field()
+    output: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class IOMetricsResponse extends PaginationResponse {
+    @Field(() => [IOMetricsDto])
+    data: IOMetricsDto[];
 }

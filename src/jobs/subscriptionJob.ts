@@ -12,6 +12,8 @@ import {
     GET_NODE_PHYSICAL_HEALTH_QUERY,
     GET_NODE_RF_KPI_QUERY,
     GET_TEMPERATURE_METRICS_QUERY,
+    GET_IO_METRICS_QUERY,
+    GET_THROUGHPUT_METRICS_QUERY,
 } from "../common/graphql";
 
 import {
@@ -132,6 +134,23 @@ export const job = (schema: GraphQLSchema): void => {
             variableValues: {
                 input: meta,
             },
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_IO_METRICS_QUERY,
+            variableValues: {
+                input: meta,
+            },
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_THROUGHPUT_METRICS_QUERY,
             contextValue: {
                 req: HEADER,
             },

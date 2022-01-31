@@ -12,6 +12,8 @@ import {
     NodeRFDtoResponse,
     TemperatureMetricsDto,
     TemperatureMetricsResponse,
+    IOMetricsResponse,
+    IOMetricsDto,
 } from "./types";
 import * as defaultCasual from "casual";
 
@@ -98,6 +100,20 @@ class NodeMapper implements INodeMapper {
         }
 
         return cpuUsageMetrics;
+    };
+    dtoToIOMetricsDto = (res: IOMetricsResponse): IOMetricsDto[] => {
+        const ioMetrics: IOMetricsDto[] = [];
+        for (const metric of res.data) {
+            const metricObj = {
+                id: metric.id,
+                timestamp: metric.timestamp,
+                input: metric.input,
+                output: metric.output,
+            };
+            ioMetrics.push(metricObj);
+        }
+
+        return ioMetrics;
     };
     private getNode = (id: string, status: ORG_NODE_STATE): NodeDto => {
         return {

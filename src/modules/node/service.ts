@@ -3,7 +3,8 @@ import {
     AddNodeDto,
     AddNodeResponse,
     CpuUsageMetricsResponse,
-    GraphDto,
+    ThroughputMetricsDto,
+    IOMetricsResponse,
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
@@ -117,10 +118,10 @@ export class NodeService implements INodeService {
 
         return res.data;
     };
-    getNodeGraph = async (): Promise<[GraphDto]> => {
+    getThroughputMetrics = async (): Promise<[ThroughputMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_GRAPH,
+            path: SERVER.GET_THROUGHPUT_METRICS,
         });
         if (checkError(res)) throw new Error(res.message);
 
@@ -172,6 +173,22 @@ export class NodeService implements INodeService {
 
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const data = NodeMapper.dtoToTemperatureMetricsDto(res);
+        if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
+        return {
+            data,
+            meta,
+        };
+    };
+    ioMetrics = async (req: PaginationDto): Promise<IOMetricsResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_IO_METRICS,
+            params: req,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
+        const data = NodeMapper.dtoToIOMetricsDto(res);
         if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
         return {
             data,

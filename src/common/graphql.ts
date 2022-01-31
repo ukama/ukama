@@ -363,5 +363,34 @@ query getTemperatureMetrics($input: PaginationDto!) {
       }
     }
   }
-  
+`;
+
+export const GET_IO_METRICS_QUERY = `
+query getIOMetrics($input: PaginationDto!) {
+    getIOMetrics(data: $input) {
+      meta {
+        count
+        page
+        size
+        pages
+      }
+      data {
+        id
+        input
+        output
+        timestamp
+      }
+    }
+  }  
+`;
+
+export const GET_THROUGHPUT_METRICS_QUERY = `
+query getThroughputMetrics {
+    getThroughputMetrics {
+      uv
+      pv
+      amt
+      time
+    }
+  }  
 `;

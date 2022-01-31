@@ -14,7 +14,8 @@ import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
     CpuUsageMetricsDto,
-    GraphDto,
+    ThroughputMetricsDto,
+    IOMetricsDto,
     NodeDetailDto,
     NodeDto,
     NodeMetaDataDto,
@@ -241,7 +242,7 @@ const nodeNetwork = (): NetworkDto => {
         description: "21 days 5 hours 1 minute",
     };
 };
-const nodeGraph = (): GraphDto => {
+const throughputMetrics = (): ThroughputMetricsDto => {
     const time = {
         AM: "AM",
         PM: "PM",
@@ -289,6 +290,15 @@ const temperatureMetrics = (): TemperatureMetricsDto => {
     };
 };
 
+const getIOMetrics = (): IOMetricsDto => {
+    return {
+        id: defaultCasual._uuid(),
+        input: defaultCasual.integer(1, 200),
+        output: defaultCasual.integer(1, 200),
+        timestamp: new Date().getTime(),
+    };
+};
+
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
@@ -325,10 +335,11 @@ interface Generators extends Casual.Generators {
     _nodePhysicalHealth: () => NodePhysicalHealthDto;
     _nodeRF: () => NodeRFDto;
     _nodeNetwork: () => NetworkDto;
-    _nodeGraph: () => GraphDto;
+    _throughputMetrics: () => ThroughputMetricsDto;
     _cpuUsageMetrics: () => CpuUsageMetricsDto;
     _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     _temperatureMetrics: () => TemperatureMetricsDto;
+    _ioMetrics: () => IOMetricsDto;
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -366,10 +377,11 @@ interface Functions extends Casual.functions {
     nodePhysicalHealth: () => NodePhysicalHealthDto;
     nodeRF: () => NodeRFDto;
     nodeNetwork: () => NetworkDto;
-    nodeGraph: () => GraphDto;
+    throughputMetrics: () => ThroughputMetricsDto;
     cpuUsageMetrics: () => CpuUsageMetricsDto;
     usersAttachedMetrics: () => UsersAttachedMetricsDto;
     temperatureMetrics: () => TemperatureMetricsDto;
+    ioMetrics: () => IOMetricsDto;
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -391,10 +403,11 @@ defaultCasual.define("nodeMetaData", nodeMetaData);
 defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
 defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
-defaultCasual.define("nodeGraph", nodeGraph);
+defaultCasual.define("throughputMetrics", throughputMetrics);
 defaultCasual.define("cpuUsageMetrics", cpuUsageMetrics);
 defaultCasual.define("temperatureMetrics", temperatureMetrics);
 defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
+defaultCasual.define("ioMetrics", getIOMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;

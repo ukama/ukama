@@ -11,10 +11,11 @@ import { EsimDto } from "../modules/esim/types";
 import { createPaginatedResponse } from "../utils";
 import {
     CpuUsageMetricsDto,
-    GraphDto,
+    IOMetricsDto,
     NodeDto,
     NodeRFDto,
     TemperatureMetricsDto,
+    ThroughputMetricsDto,
 } from "../modules/node/types";
 import {
     GetUserDto,
@@ -338,10 +339,14 @@ export const getNodeNetwork = (req: Request, res: Response): void => {
     });
 };
 
-export const getNodeGraph = (req: Request, res: Response): void => {
+export const getThroughputMetrics = (req: Request, res: Response): void => {
     res.send({
         status: "success",
-        data: casual.randomArray<GraphDto>(15, 15, casual._nodeGraph),
+        data: casual.randomArray<ThroughputMetricsDto>(
+            15,
+            15,
+            casual._throughputMetrics
+        ),
     });
 };
 
@@ -406,6 +411,22 @@ export const getTemperatureMetrics = (req: Request, res: Response): void => {
         10,
         casual._temperatureMetrics
     );
+
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
+
+    res.send({
+        status: "success",
+        data: paginatedRes,
+        length: data.length,
+    });
+};
+
+export const getIOMetrics = (req: Request, res: Response): void => {
+    const data = casual.randomArray<IOMetricsDto>(1, 10, casual._ioMetrics);
 
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),

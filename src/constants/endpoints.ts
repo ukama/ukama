@@ -25,8 +25,9 @@ export const SERVER = {
     GET_NODE_PHYSICAL_HEALTH: `${BASE_URL}/node/physical_health`,
     GET_NODE_RF_KPI: `${BASE_URL}/node/rf_kpis`,
     GET_NODE_NETWORK: `${BASE_URL}/node/get_network`,
-    GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
+    GET_THROUGHPUT_METRICS: `${BASE_URL}/metrics/throughput`,
     GET_USERS_ATTACHED_METRICS: `${BASE_URL}/metrics/user`,
     GET_CPU_USAGE_METRICS: `${BASE_URL}/metrics/cpu`,
     GET_TEMPERATURE_METRICS: `${BASE_URL}/metrics/temperature`,
+    GET_IO_METRICS: `${BASE_URL}/metrics/io`,
 };
