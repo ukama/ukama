@@ -48,7 +48,15 @@ describe("Get Node RF KPIs ", () => {
 
         expect(response).toMatchObject({
             data: {
-                getNodeRFKPI: nockResponse.data,
+                getNodeRFKPI: {
+                    data: nockResponse.data,
+                    meta: {
+                        count: 7,
+                        page: 1,
+                        size: 3,
+                        pages: 3,
+                    },
+                },
             },
         });
     });
