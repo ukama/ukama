@@ -16,6 +16,8 @@ import {
     NodePhysicalHealthDto,
     NodeRFDto,
     GraphDto,
+    CpuUsageMetricsDto,
+    CpuUsageMetricsResponse,
 } from "./types";
 
 export interface INodeService {
@@ -38,4 +40,5 @@ export interface INodeService {
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
+    dtoToCpuUsageMetricsDto(req: CpuUsageMetricsResponse): CpuUsageMetricsDto[];
 }

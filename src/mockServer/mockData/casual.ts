@@ -13,6 +13,7 @@ import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
+    CpuUsageMetricsDto,
     GraphDto,
     NodeDetailDto,
     NodeDto,
@@ -269,6 +270,14 @@ const usersAttachedMetrics = (): UsersAttachedMetricsDto => {
     };
 };
 
+const cpuUsageMetrics = (): CpuUsageMetricsDto => {
+    return {
+        id: defaultCasual._uuid(),
+        usage: defaultCasual.integer(1, 200),
+        timestamp: new Date().getTime(),
+    };
+};
+
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
@@ -306,6 +315,7 @@ interface Generators extends Casual.Generators {
     _nodeRF: () => NodeRFDto;
     _nodeNetwork: () => NetworkDto;
     _nodeGraph: () => GraphDto;
+    _cpuUsageMetrics: () => CpuUsageMetricsDto;
     _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     functions(): Functions;
 }
@@ -345,6 +355,7 @@ interface Functions extends Casual.functions {
     nodeRF: () => NodeRFDto;
     nodeNetwork: () => NetworkDto;
     nodeGraph: () => GraphDto;
+    cpuUsageMetrics: () => CpuUsageMetricsDto;
     usersAttachedMetrics: () => UsersAttachedMetricsDto;
 }
 
@@ -368,6 +379,7 @@ defaultCasual.define("nodePhysicalHealth", nodePhysicalHealth);
 defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("nodeGraph", nodeGraph);
+defaultCasual.define("cpuUsageMetrics", cpuUsageMetrics);
 defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 

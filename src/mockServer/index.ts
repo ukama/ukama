@@ -22,6 +22,7 @@ import {
     nodeRF,
     getNodeNetwork,
     getNodeGraph,
+    getCpuUsageMetrics,
     getUsersAttachedMetrics,
 } from "./utils";
 
@@ -50,5 +51,6 @@ export const mockServer = (app: Express): void => {
     app.get("/node/rf_kpis", nodeRF);
     app.get("/node/get_network", getNodeNetwork);
     app.get("/node/graph", getNodeGraph);
+    app.get("/metrics/cpu", getCpuUsageMetrics);
     app.get("/metrics/user", getUsersAttachedMetrics);
 };

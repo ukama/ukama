@@ -217,3 +217,21 @@ export class GraphDto {
     @Field()
     time: string;
 }
+
+@ObjectType()
+export class CpuUsageMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    usage: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class CpuUsageMetricsResponse extends PaginationResponse {
+    @Field(() => [CpuUsageMetricsDto])
+    data: CpuUsageMetricsDto[];
+}
