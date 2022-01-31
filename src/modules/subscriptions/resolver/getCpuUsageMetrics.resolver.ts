@@ -1,6 +1,6 @@
 import { Resolver, Root, Subscription } from "type-graphql";
 import { Service } from "typedi";
-import { CpuUsageMetricsDto, CpuUsageMetricsResponse } from "../../node/types";
+import { CpuUsageMetricsDto } from "../../node/types";
 
 @Service()
 @Resolver()
@@ -9,8 +9,8 @@ export class GetCpuUsageMetricsSubscriptionResolver {
         topics: "cpuUsageMetrics",
     })
     async getCpuUsageMetrics(
-        @Root() data: CpuUsageMetricsResponse
+        @Root() data: [CpuUsageMetricsDto]
     ): Promise<CpuUsageMetricsDto> {
-        return data.data[0];
+        return data[0];
     }
 }

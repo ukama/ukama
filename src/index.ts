@@ -14,7 +14,6 @@ import configureApolloServer from "./config/configureApolloServer";
 import {
     MiddlewareOptions,
     renderPlaygroundPage,
-    RenderPageOptions as PlaygroundRenderPageOptions,
 } from "@apollographql/graphql-playground-html";
 
 const logger = setupLogger("app");

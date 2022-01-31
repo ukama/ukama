@@ -219,12 +219,6 @@ export class CpuUsageMetricsDto {
 }
 
 @ObjectType()
-export class CpuUsageMetricsResponse extends PaginationResponse {
-    @Field(() => [CpuUsageMetricsDto])
-    data: CpuUsageMetricsDto[];
-}
-
-@ObjectType()
 export class NodeRFDto {
     @Field()
     qam: number;
@@ -240,12 +234,6 @@ export class NodeRFDto {
 }
 
 @ObjectType()
-export class NodeRFDtoResponse extends PaginationResponse {
-    @Field(() => [NodeRFDto])
-    data: NodeRFDto[];
-}
-
-@ObjectType()
 export class TemperatureMetricsDto {
     @Field({ nullable: true })
     id: string;
@@ -255,12 +243,6 @@ export class TemperatureMetricsDto {
 
     @Field()
     timestamp: number;
-}
-
-@ObjectType()
-export class TemperatureMetricsResponse extends PaginationResponse {
-    @Field(() => [TemperatureMetricsDto])
-    data: TemperatureMetricsDto[];
 }
 
 @ObjectType()
@@ -276,10 +258,4 @@ export class IOMetricsDto {
 
     @Field()
     timestamp: number;
-}
-
-@ObjectType()
-export class IOMetricsResponse extends PaginationResponse {
-    @Field(() => [IOMetricsDto])
-    data: IOMetricsDto[];
 }

@@ -1,6 +1,5 @@
 import {
     Resolver,
-    Arg,
     Query,
     UseMiddleware,
     PubSubEngine,
@@ -8,8 +7,7 @@ import {
 } from "type-graphql";
 import { Service } from "typedi";
 import { NodeService } from "../service";
-import { TemperatureMetricsResponse } from "../types";
-import { PaginationDto } from "../../../common/types";
+import { TemperatureMetricsDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
@@ -17,13 +15,12 @@ import { Authentication } from "../../../common/Authentication";
 export class GetTemperatureMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => TemperatureMetricsResponse)
+    @Query(() => [TemperatureMetricsDto])
     @UseMiddleware(Authentication)
     async getTemperatureMetrics(
-        @Arg("data") data: PaginationDto,
         @PubSub() pubsub: PubSubEngine
-    ): Promise<TemperatureMetricsResponse | null> {
-        const temperatureMetrics = this.nodeService.temperatureMetrics(data);
+    ): Promise<[TemperatureMetricsDto] | null> {
+        const temperatureMetrics = this.nodeService.temperatureMetrics();
         pubsub.publish("temperatureMetrics", temperatureMetrics);
         return temperatureMetrics;
     }

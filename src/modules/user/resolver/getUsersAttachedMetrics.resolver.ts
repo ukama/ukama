@@ -1,6 +1,5 @@
 import {
     Resolver,
-    Arg,
     Query,
     UseMiddleware,
     PubSubEngine,
@@ -8,8 +7,7 @@ import {
 } from "type-graphql";
 import { Service } from "typedi";
 import { UserService } from "../service";
-import { UsersAttachedMetricsResponse } from "../types";
-import { PaginationDto } from "../../../common/types";
+import { UsersAttachedMetricsDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
@@ -17,15 +15,13 @@ import { Authentication } from "../../../common/Authentication";
 export class GetUsersAttachedMetricsResolver {
     constructor(private readonly activeUserMetricsService: UserService) {}
 
-    @Query(() => UsersAttachedMetricsResponse)
+    @Query(() => [UsersAttachedMetricsDto])
     @UseMiddleware(Authentication)
     async getUsersAttachedMetrics(
-        @Arg("data") data: PaginationDto,
         @PubSub() pubsub: PubSubEngine
-    ): Promise<UsersAttachedMetricsResponse | null> {
+    ): Promise<[UsersAttachedMetricsDto] | null> {
         const activeUserMetrics =
-            this.activeUserMetricsService.usersAttachedMetricsService(data);
-
+            this.activeUserMetricsService.usersAttachedMetricsService();
         pubsub.publish("usersAttachedMetrics", activeUserMetrics);
         return activeUserMetrics;
     }

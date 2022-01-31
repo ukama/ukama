@@ -101,9 +101,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_USERS_ATTACHED_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -111,9 +108,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_CPU_USAGE_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -121,9 +115,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_NODE_RF_KPI_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -131,9 +122,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_TEMPERATURE_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -141,9 +129,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_IO_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },

@@ -8,7 +8,6 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import { createPaginatedResponse } from "../utils";
 import {
     CpuUsageMetricsDto,
     IOMetricsDto,
@@ -351,92 +350,48 @@ export const getThroughputMetrics = (req: Request, res: Response): void => {
 };
 
 export const getUsersAttachedMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<UsersAttachedMetricsDto>(
-        1,
-        10,
-        casual._usersAttachedMetrics
-    );
-
-    const paginatedRes = createPaginatedResponse(
-        Number(req.query.pageNo),
-        Number(req.query.pageSize),
-        data
-    );
-
     res.send({
         status: "success",
-        data: paginatedRes,
-        length: data.length,
+        data: casual.randomArray<UsersAttachedMetricsDto>(
+            15,
+            15,
+            casual._usersAttachedMetrics
+        ),
     });
 };
 
 export const getCpuUsageMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<CpuUsageMetricsDto>(
-        1,
-        10,
-        casual._cpuUsageMetrics
-    );
-    const paginatedRes = createPaginatedResponse(
-        Number(req.query.pageNo),
-        Number(req.query.pageSize),
-        data
-    );
-
     res.send({
         status: "success",
-        data: paginatedRes,
-        length: data.length,
+        data: casual.randomArray<CpuUsageMetricsDto>(
+            15,
+            15,
+            casual._cpuUsageMetrics
+        ),
     });
 };
 
 export const nodeRF = (req: Request, res: Response): void => {
-    const data = casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF);
-
-    const paginatedRes = createPaginatedResponse(
-        Number(req.query.pageNo),
-        Number(req.query.pageSize),
-        data
-    );
-
     res.send({
         status: "success",
-        data: paginatedRes,
-        length: data.length,
+        data: casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF),
     });
 };
 
 export const getTemperatureMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<TemperatureMetricsDto>(
-        1,
-        10,
-        casual._temperatureMetrics
-    );
-
-    const paginatedRes = createPaginatedResponse(
-        Number(req.query.pageNo),
-        Number(req.query.pageSize),
-        data
-    );
-
     res.send({
         status: "success",
-        data: paginatedRes,
-        length: data.length,
+        data: casual.randomArray<TemperatureMetricsDto>(
+            1,
+            10,
+            casual._temperatureMetrics
+        ),
     });
 };
 
 export const getIOMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<IOMetricsDto>(1, 10, casual._ioMetrics);
-
-    const paginatedRes = createPaginatedResponse(
-        Number(req.query.pageNo),
-        Number(req.query.pageSize),
-        data
-    );
-
     res.send({
         status: "success",
-        data: paginatedRes,
-        length: data.length,
+        data: casual.randomArray<IOMetricsDto>(1, 10, casual._ioMetrics),
     });
 };

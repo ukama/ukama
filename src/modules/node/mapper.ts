@@ -6,14 +6,6 @@ import {
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDto,
-    CpuUsageMetricsResponse,
-    CpuUsageMetricsDto,
-    NodeRFDto,
-    NodeRFDtoResponse,
-    TemperatureMetricsDto,
-    TemperatureMetricsResponse,
-    IOMetricsResponse,
-    IOMetricsDto,
 } from "./types";
 import * as defaultCasual from "casual";
 
@@ -57,64 +49,7 @@ class NodeMapper implements INodeMapper {
         const totalNodes = nodes.length;
         return { orgName, nodes, activeNodes, totalNodes };
     };
-    dtoToCpuUsageMetricsDto = (
-        res: CpuUsageMetricsResponse
-    ): CpuUsageMetricsDto[] => {
-        const cpuUsageMetrics: CpuUsageMetricsDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                id: metric.id,
-                usage: metric.usage,
-                timestamp: metric.timestamp,
-            };
-            cpuUsageMetrics.push(metricObj);
-        }
 
-        return cpuUsageMetrics;
-    };
-    dtoToNodeRFKPIDto = (res: NodeRFDtoResponse): NodeRFDto[] => {
-        const cpuUsageMetrics: NodeRFDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                qam: metric.qam,
-                rfOutput: metric.rfOutput,
-                rssi: metric.rssi,
-                timestamp: metric.timestamp,
-            };
-            cpuUsageMetrics.push(metricObj);
-        }
-
-        return cpuUsageMetrics;
-    };
-    dtoToTemperatureMetricsDto = (
-        res: TemperatureMetricsResponse
-    ): TemperatureMetricsDto[] => {
-        const cpuUsageMetrics: TemperatureMetricsDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                id: metric.id,
-                timestamp: metric.timestamp,
-                temperature: metric.temperature,
-            };
-            cpuUsageMetrics.push(metricObj);
-        }
-
-        return cpuUsageMetrics;
-    };
-    dtoToIOMetricsDto = (res: IOMetricsResponse): IOMetricsDto[] => {
-        const ioMetrics: IOMetricsDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                id: metric.id,
-                timestamp: metric.timestamp,
-                input: metric.input,
-                output: metric.output,
-            };
-            ioMetrics.push(metricObj);
-        }
-
-        return ioMetrics;
-    };
     private getNode = (id: string, status: ORG_NODE_STATE): NodeDto => {
         return {
             id: id,

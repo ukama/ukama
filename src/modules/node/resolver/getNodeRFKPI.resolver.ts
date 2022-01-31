@@ -4,12 +4,10 @@ import {
     UseMiddleware,
     PubSubEngine,
     PubSub,
-    Arg,
 } from "type-graphql";
 import { Service } from "typedi";
+import { NodeRFDto } from "../types";
 import { NodeService } from "../service";
-import { NodeRFDtoResponse } from "../types";
-import { PaginationDto } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
@@ -17,13 +15,12 @@ import { Authentication } from "../../../common/Authentication";
 export class GetNodeRFKPIResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => NodeRFDtoResponse)
+    @Query(() => [NodeRFDto])
     @UseMiddleware(Authentication)
     async getNodeRFKPI(
-        @Arg("data") data: PaginationDto,
         @PubSub() pubsub: PubSubEngine
-    ): Promise<NodeRFDtoResponse | null> {
-        const nodeRF = this.nodeService.nodeRF(data);
+    ): Promise<[NodeRFDto] | null> {
+        const nodeRF = this.nodeService.nodeRF();
         pubsub.publish("getNodeRFKPI", nodeRF);
         return nodeRF;
     }

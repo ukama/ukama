@@ -1,9 +1,6 @@
 import { Resolver, Root, Subscription } from "type-graphql";
 import { Service } from "typedi";
-import {
-    TemperatureMetricsDto,
-    TemperatureMetricsResponse,
-} from "../../node/types";
+import { TemperatureMetricsDto } from "../../node/types";
 
 @Service()
 @Resolver()
@@ -12,8 +9,8 @@ export class GetTemperatureMetricsSubscriptionResolver {
         topics: "temperatureMetrics",
     })
     async getTemperatureMetrics(
-        @Root() data: TemperatureMetricsResponse
+        @Root() data: [TemperatureMetricsDto]
     ): Promise<TemperatureMetricsDto> {
-        return data.data[0];
+        return data[0];
     }
 }
