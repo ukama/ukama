@@ -10,6 +10,8 @@ import {
     CpuUsageMetricsDto,
     NodeRFDto,
     NodeRFDtoResponse,
+    TemperatureMetricsDto,
+    TemperatureMetricsResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 
@@ -76,6 +78,21 @@ class NodeMapper implements INodeMapper {
                 rfOutput: metric.rfOutput,
                 rssi: metric.rssi,
                 timestamp: metric.timestamp,
+            };
+            cpuUsageMetrics.push(metricObj);
+        }
+
+        return cpuUsageMetrics;
+    };
+    dtoToTemperatureMetricsDto = (
+        res: TemperatureMetricsResponse
+    ): TemperatureMetricsDto[] => {
+        const cpuUsageMetrics: TemperatureMetricsDto[] = [];
+        for (const metric of res.data) {
+            const metricObj = {
+                id: metric.id,
+                timestamp: metric.timestamp,
+                temperature: metric.temperature,
             };
             cpuUsageMetrics.push(metricObj);
         }

@@ -14,6 +14,7 @@ import {
     GraphDto,
     NodeDto,
     NodeRFDto,
+    TemperatureMetricsDto,
 } from "../modules/node/types";
 import {
     GetUserDto,
@@ -385,6 +386,26 @@ export const getCpuUsageMetrics = (req: Request, res: Response): void => {
 
 export const nodeRF = (req: Request, res: Response): void => {
     const data = casual.randomArray<NodeRFDto>(1, 10, casual._nodeRF);
+
+    const paginatedRes = createPaginatedResponse(
+        Number(req.query.pageNo),
+        Number(req.query.pageSize),
+        data
+    );
+
+    res.send({
+        status: "success",
+        data: paginatedRes,
+        length: data.length,
+    });
+};
+
+export const getTemperatureMetrics = (req: Request, res: Response): void => {
+    const data = casual.randomArray<TemperatureMetricsDto>(
+        1,
+        10,
+        casual._temperatureMetrics
+    );
 
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),

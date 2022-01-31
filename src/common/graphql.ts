@@ -346,3 +346,22 @@ query getNodeRFKPI($input: PaginationDto!) {
     }
   }
 `;
+
+export const GET_TEMPERATURE_METRICS_QUERY = `
+query getTemperatureMetrics($input: PaginationDto!) {
+    getTemperatureMetrics(data: $input) {
+      meta {
+        count
+        page
+        size
+        pages
+      }
+      data {
+        id
+        temperature
+        timestamp
+      }
+    }
+  }
+  
+`;

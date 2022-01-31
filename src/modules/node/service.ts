@@ -10,6 +10,7 @@ import {
     NodeRFDtoResponse,
     NodesResponse,
     OrgNodeResponseDto,
+    TemperatureMetricsResponse,
     UpdateNodeDto,
     UpdateNodeResponse,
 } from "./types";
@@ -153,6 +154,24 @@ export class NodeService implements INodeService {
 
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
         const data = NodeMapper.dtoToNodeRFKPIDto(res);
+        if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
+        return {
+            data,
+            meta,
+        };
+    };
+    temperatureMetrics = async (
+        req: PaginationDto
+    ): Promise<TemperatureMetricsResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_TEMPERATURE_METRICS,
+            params: req,
+        });
+        if (checkError(res)) throw new Error(res.message);
+
+        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
+        const data = NodeMapper.dtoToTemperatureMetricsDto(res);
         if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
         return {
             data,

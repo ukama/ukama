@@ -244,3 +244,21 @@ export class NodeRFDtoResponse extends PaginationResponse {
     @Field(() => [NodeRFDto])
     data: NodeRFDto[];
 }
+
+@ObjectType()
+export class TemperatureMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    temperature: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class TemperatureMetricsResponse extends PaginationResponse {
+    @Field(() => [TemperatureMetricsDto])
+    data: TemperatureMetricsDto[];
+}
