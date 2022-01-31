@@ -10,7 +10,7 @@ import {
     NodeRFDtoResponse,
     NodesResponse,
     OrgNodeResponseDto,
-    RamUsageMetricsResponse,
+    MemoryUsageMetricsResponse,
     UpdateNodeDto,
     UpdateNodeResponse,
 } from "./types";
@@ -160,18 +160,18 @@ export class NodeService implements INodeService {
             meta,
         };
     };
-    ramUsageMetrics = async (
+    memoryUsageMetrics = async (
         req: PaginationDto
-    ): Promise<RamUsageMetricsResponse> => {
+    ): Promise<MemoryUsageMetricsResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_RAM_USAGE_METRICS,
+            path: SERVER.GET_MEMORY_USAGE_METRICS,
             params: req,
         });
         if (checkError(res)) throw new Error(res.message);
 
         const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const data = NodeMapper.dtoToRamUsageMetricsDto(res);
+        const data = NodeMapper.dtoToMemoryUsageMetricsDto(res);
         if (!data) throw new HTTP404Error(Messages.ERR_USER_METRICS_NOT_FOUND);
         return {
             data,

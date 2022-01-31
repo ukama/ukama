@@ -182,7 +182,7 @@ export class NodePhysicalHealthDto {
     temperature: number;
 
     @Field()
-    memory: number;
+    Memory: number;
 
     @Field()
     cpu: number;
@@ -246,7 +246,7 @@ export class NodeRFDtoResponse extends PaginationResponse {
 }
 
 @ObjectType()
-export class RamUsageMetricsDto {
+export class MemoryUsageMetricsDto {
     @Field({ nullable: true })
     id: string;
 
@@ -258,7 +258,7 @@ export class RamUsageMetricsDto {
 }
 
 @ObjectType()
-export class RamUsageMetricsResponse extends PaginationResponse {
-    @Field(() => [RamUsageMetricsDto])
-    data: RamUsageMetricsDto[];
+export class MemoryUsageMetricsResponse extends PaginationResponse {
+    @Field(() => [MemoryUsageMetricsDto])
+    data: MemoryUsageMetricsDto[];
 }

@@ -266,7 +266,7 @@ export const GET_NODE_PHYSICAL_HEALTH_QUERY = `
     query getNodePhysicalHealth {
         getNodePhysicalHealth { 
             temperature
-            memory
+            Memory
             cpu
             io
           }
@@ -347,9 +347,9 @@ query getNodeRFKPI($input: PaginationDto!) {
   }
 `;
 
-export const GET_RAM_USAGE_METRICS_QUERY = `
-    query getRamUsageMetrics($input: PaginationDto!) {
-        getRamUsageMetrics(data: $input) {
+export const GET_MEMORY_USAGE_METRICS_QUERY = `
+    query getMemoryUsageMetrics($input: PaginationDto!) {
+        getMemoryUsageMetrics(data: $input) {
         meta {
             count
             page

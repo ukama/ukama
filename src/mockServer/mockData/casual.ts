@@ -20,7 +20,7 @@ import {
     NodeMetaDataDto,
     NodePhysicalHealthDto,
     NodeRFDto,
-    RamUsageMetricsDto,
+    MemoryUsageMetricsDto,
     UpdateNodeResponse,
 } from "../../modules/node/types";
 
@@ -229,7 +229,7 @@ const nodeMetaData = (): NodeMetaDataDto => {
 const nodePhysicalHealth = (): NodePhysicalHealthDto => {
     return {
         temperature: defaultCasual.integer(1, 19),
-        memory: defaultCasual.integer(1, 19),
+        Memory: defaultCasual.integer(1, 19),
         cpu: defaultCasual.integer(1, 19),
         io: defaultCasual.integer(1, 19),
     };
@@ -281,7 +281,7 @@ const nodeRF = (): NodeRFDto => {
     };
 };
 
-const ramUsageMetrics = (): RamUsageMetricsDto => {
+const memoryUsageMetrics = (): MemoryUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         usage: defaultCasual.integer(1, 4096),
@@ -327,7 +327,7 @@ interface Generators extends Casual.Generators {
     _nodeNetwork: () => NetworkDto;
     _nodeGraph: () => GraphDto;
     _cpuUsageMetrics: () => CpuUsageMetricsDto;
-    _ramUsageMetrics: () => RamUsageMetricsDto;
+    _memoryUsageMetrics: () => MemoryUsageMetricsDto;
     _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     functions(): Functions;
 }
@@ -368,7 +368,7 @@ interface Functions extends Casual.functions {
     nodeNetwork: () => NetworkDto;
     nodeGraph: () => GraphDto;
     cpuUsageMetrics: () => CpuUsageMetricsDto;
-    ramUsageMetrics: () => RamUsageMetricsDto;
+    memoryUsageMetrics: () => MemoryUsageMetricsDto;
     usersAttachedMetrics: () => UsersAttachedMetricsDto;
 }
 
@@ -393,7 +393,7 @@ defaultCasual.define("nodeRF", nodeRF);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("nodeGraph", nodeGraph);
 defaultCasual.define("cpuUsageMetrics", cpuUsageMetrics);
-defaultCasual.define("ramUsageMetrics", ramUsageMetrics);
+defaultCasual.define("memoryUsageMetrics", memoryUsageMetrics);
 defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 

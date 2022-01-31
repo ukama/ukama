@@ -28,5 +28,5 @@ export const SERVER = {
     GET_NODE_GRAPH: `${BASE_URL}/node/graph`,
     GET_USERS_ATTACHED_METRICS: `${BASE_URL}/metrics/user`,
     GET_CPU_USAGE_METRICS: `${BASE_URL}/metrics/cpu`,
-    GET_RAM_USAGE_METRICS: `${BASE_URL}/metrics/ram`,
+    GET_MEMORY_USAGE_METRICS: `${BASE_URL}/metrics/memory`,
 };

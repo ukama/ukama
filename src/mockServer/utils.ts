@@ -14,7 +14,7 @@ import {
     GraphDto,
     NodeDto,
     NodeRFDto,
-    RamUsageMetricsDto,
+    MemoryUsageMetricsDto,
 } from "../modules/node/types";
 import {
     GetUserDto,
@@ -400,11 +400,11 @@ export const nodeRF = (req: Request, res: Response): void => {
     });
 };
 
-export const getRamUsageMetrics = (req: Request, res: Response): void => {
-    const data = casual.randomArray<RamUsageMetricsDto>(
+export const getMemoryUsageMetrics = (req: Request, res: Response): void => {
+    const data = casual.randomArray<MemoryUsageMetricsDto>(
         1,
         10,
-        casual._ramUsageMetrics
+        casual._memoryUsageMetrics
     );
     const paginatedRes = createPaginatedResponse(
         Number(req.query.pageNo),

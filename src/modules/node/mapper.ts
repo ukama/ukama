@@ -10,8 +10,8 @@ import {
     CpuUsageMetricsDto,
     NodeRFDto,
     NodeRFDtoResponse,
-    RamUsageMetricsResponse,
-    RamUsageMetricsDto,
+    MemoryUsageMetricsResponse,
+    MemoryUsageMetricsDto,
 } from "./types";
 import * as defaultCasual from "casual";
 
@@ -84,10 +84,10 @@ class NodeMapper implements INodeMapper {
 
         return cpuUsageMetrics;
     };
-    dtoToRamUsageMetricsDto = (
-        res: RamUsageMetricsResponse
-    ): RamUsageMetricsDto[] => {
-        const ramUsageMetrics: RamUsageMetricsDto[] = [];
+    dtoToMemoryUsageMetricsDto = (
+        res: MemoryUsageMetricsResponse
+    ): MemoryUsageMetricsDto[] => {
+        const ramUsageMetrics: MemoryUsageMetricsDto[] = [];
         for (const metric of res.data) {
             const metricObj = {
                 id: metric.id,

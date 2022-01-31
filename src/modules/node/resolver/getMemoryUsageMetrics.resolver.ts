@@ -8,23 +8,23 @@ import {
 } from "type-graphql";
 import { Service } from "typedi";
 import { NodeService } from "../service";
-import { RamUsageMetricsResponse } from "../types";
+import { MemoryUsageMetricsResponse } from "../types";
 import { PaginationDto } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetRamUsageMetricsResolver {
+export class GetMemoryUsageMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => RamUsageMetricsResponse)
+    @Query(() => MemoryUsageMetricsResponse)
     @UseMiddleware(Authentication)
-    async getRamUsageMetrics(
+    async getMemoryUsageMetrics(
         @Arg("data") data: PaginationDto,
         @PubSub() pubsub: PubSubEngine
-    ): Promise<RamUsageMetricsResponse | null> {
-        const ramUsageMetrics = this.nodeService.ramUsageMetrics(data);
-        pubsub.publish("ramUsageMetrics", ramUsageMetrics);
+    ): Promise<MemoryUsageMetricsResponse | null> {
+        const ramUsageMetrics = this.nodeService.memoryUsageMetrics(data);
+        pubsub.publish("memoryUsageMetrics", ramUsageMetrics);
         return ramUsageMetrics;
     }
 }
