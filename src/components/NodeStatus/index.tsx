@@ -5,7 +5,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Box, Typography, Grid, Button, Stack } from "@mui/material";
-
+import { GetNodesByOrgQuery } from "../../generated";
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",
     minWidth: "max-content",
@@ -13,14 +13,13 @@ const StyledBtn = styled(Button)({
 
 const getStatusDetails = (status: string) => {
     switch (status) {
-        case "BEING_CONFIGURED":
+        case "PENDING":
             return {
                 showDuration: true,
                 text: " is being configured.",
                 icon: <InfoIcon htmlColor={colors.yellow} />,
             };
-
-        case "ONLINE":
+        case "ONBOARDED":
             return {
                 showDuration: true,
                 text: " is online and well for ",
@@ -35,10 +34,9 @@ const getStatusDetails = (status: string) => {
             };
     }
 };
-type Node = { name: string; duration: string; statusType: string };
 
 type NodeStatusProps = {
-    nodes: Node[];
+    nodes?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"] | any;
     selectedNodeIndex: number;
     setSelectedNodeIndex: (_index: number) => void;
 };
@@ -49,7 +47,7 @@ const NodeStatus = ({
     setSelectedNodeIndex,
 }: NodeStatusProps) => {
     const { icon, text, showDuration } = getStatusDetails(
-        nodes[selectedNodeIndex].statusType
+        nodes[selectedNodeIndex].status
     );
 
     const handleRestartNode = () => {
@@ -76,7 +74,7 @@ const NodeStatus = ({
                     <TextSelect
                         value={selectedNodeIndex}
                         setValue={setSelectedNodeIndex}
-                        options={nodes.map(({ name }) => name)}
+                        options={nodes.map(({ title }: any) => title)}
                     />
                     <Typography variant={"h6"}>{text}</Typography>
                     {showDuration && (
