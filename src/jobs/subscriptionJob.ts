@@ -112,6 +112,16 @@ export const job = (schema: GraphQLSchema): void => {
                 req: HEADER,
             },
         });
+        await graphql({
+            schema,
+            source: GET_CPU_USAGE_METRICS_QUERY,
+            variableValues: {
+                input: meta,
+            },
+            contextValue: {
+                req: HEADER,
+            },
+        });
         logger.info(`Job Completed`);
     });
 };
