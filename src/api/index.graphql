@@ -84,6 +84,19 @@ query getNodesByOrg($orgId: String!) {
         totalNodes
     }
 }
+query getNodeDetails {
+    getNodeDetails {
+        id
+        modelType
+        serial
+        macAddress
+        osVersion
+        manufacturing
+        ukamaOS
+        hardware
+        description
+    }
+}
 query myUsers($orgId: String!) {
     myUsers(orgId: $orgId) {
         orgName
