@@ -182,7 +182,7 @@ export class NodePhysicalHealthDto {
     temperature: number;
 
     @Field()
-    memory: number;
+    Memory: number;
 
     @Field()
     cpu: number;
@@ -255,6 +255,18 @@ export class IOMetricsDto {
 
     @Field()
     output: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class MemoryUsageMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    usage: number;
 
     @Field()
     timestamp: number;

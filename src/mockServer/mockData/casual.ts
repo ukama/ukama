@@ -22,6 +22,7 @@ import {
     NodePhysicalHealthDto,
     NodeRFDto,
     TemperatureMetricsDto,
+    MemoryUsageMetricsDto,
     UpdateNodeResponse,
 } from "../../modules/node/types";
 
@@ -230,7 +231,7 @@ const nodeMetaData = (): NodeMetaDataDto => {
 const nodePhysicalHealth = (): NodePhysicalHealthDto => {
     return {
         temperature: defaultCasual.integer(1, 19),
-        memory: defaultCasual.integer(1, 19),
+        Memory: defaultCasual.integer(1, 19),
         cpu: defaultCasual.integer(1, 19),
         io: defaultCasual.integer(1, 19),
     };
@@ -299,6 +300,14 @@ const getIOMetrics = (): IOMetricsDto => {
     };
 };
 
+const memoryUsageMetrics = (): MemoryUsageMetricsDto => {
+    return {
+        id: defaultCasual._uuid(),
+        usage: defaultCasual.integer(1, 4096),
+        timestamp: new Date().getTime(),
+    };
+};
+
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
@@ -337,6 +346,7 @@ interface Generators extends Casual.Generators {
     _nodeNetwork: () => NetworkDto;
     _throughputMetrics: () => ThroughputMetricsDto;
     _cpuUsageMetrics: () => CpuUsageMetricsDto;
+    _memoryUsageMetrics: () => MemoryUsageMetricsDto;
     _usersAttachedMetrics: () => UsersAttachedMetricsDto;
     _temperatureMetrics: () => TemperatureMetricsDto;
     _ioMetrics: () => IOMetricsDto;
@@ -379,6 +389,7 @@ interface Functions extends Casual.functions {
     nodeNetwork: () => NetworkDto;
     throughputMetrics: () => ThroughputMetricsDto;
     cpuUsageMetrics: () => CpuUsageMetricsDto;
+    memoryUsageMetrics: () => MemoryUsageMetricsDto;
     usersAttachedMetrics: () => UsersAttachedMetricsDto;
     temperatureMetrics: () => TemperatureMetricsDto;
     ioMetrics: () => IOMetricsDto;
@@ -406,6 +417,7 @@ defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("throughputMetrics", throughputMetrics);
 defaultCasual.define("cpuUsageMetrics", cpuUsageMetrics);
 defaultCasual.define("temperatureMetrics", temperatureMetrics);
+defaultCasual.define("memoryUsageMetrics", memoryUsageMetrics);
 defaultCasual.define("usersAttachedMetrics", usersAttachedMetrics);
 defaultCasual.define("ioMetrics", getIOMetrics);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;

@@ -26,6 +26,7 @@ import {
     getTemperatureMetrics,
     getIOMetrics,
     getThroughputMetrics,
+    getMemoryUsageMetrics,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -57,4 +58,5 @@ export const mockServer = (app: Express): void => {
     app.get("/metrics/user", getUsersAttachedMetrics);
     app.get("/metrics/temperature", getTemperatureMetrics);
     app.get("/metrics/io", getIOMetrics);
+    app.get("/metrics/memory", getMemoryUsageMetrics);
 };

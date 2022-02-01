@@ -15,6 +15,7 @@ import {
     NodeRFDto,
     TemperatureMetricsDto,
     ThroughputMetricsDto,
+    MemoryUsageMetricsDto,
 } from "../modules/node/types";
 import {
     GetUserDto,
@@ -393,5 +394,16 @@ export const getIOMetrics = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: casual.randomArray<IOMetricsDto>(1, 10, casual._ioMetrics),
+    });
+};
+
+export const getMemoryUsageMetrics = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual.randomArray<MemoryUsageMetricsDto>(
+            1,
+            10,
+            casual._memoryUsageMetrics
+        ),
     });
 };

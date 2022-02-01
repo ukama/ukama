@@ -14,6 +14,7 @@ import {
     IOMetricsDto,
     NodeRFDto,
     TemperatureMetricsDto,
+    MemoryUsageMetricsDto,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -155,6 +156,14 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_IO_METRICS,
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return res.data;
+    };
+    memoryUsageMetrics = async (): Promise<[MemoryUsageMetricsDto]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_MEMORY_USAGE_METRICS,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;

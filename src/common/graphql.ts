@@ -267,7 +267,7 @@ export const GET_NODE_PHYSICAL_HEALTH_QUERY = `
     query getNodePhysicalHealth {
         getNodePhysicalHealth { 
             temperature
-            memory
+            Memory
             cpu
             io
         }
@@ -355,4 +355,15 @@ query getThroughputMetrics {
       time
     }
   }  
+`;
+
+export const GET_MEMORY_USAGE_METRICS_QUERY = `
+    query getMemoryUsageMetrics {
+        getMemoryUsageMetrics {
+            id
+            usage
+            timestamp
+        }
+    }
+  }
 `;

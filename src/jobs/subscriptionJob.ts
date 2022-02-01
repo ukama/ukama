@@ -14,6 +14,7 @@ import {
     GET_TEMPERATURE_METRICS_QUERY,
     GET_IO_METRICS_QUERY,
     GET_THROUGHPUT_METRICS_QUERY,
+    GET_MEMORY_USAGE_METRICS_QUERY,
 } from "../common/graphql";
 
 import {
@@ -136,6 +137,16 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_THROUGHPUT_METRICS_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_MEMORY_USAGE_METRICS_QUERY,
+            variableValues: {
+                input: meta,
+            },
             contextValue: {
                 req: HEADER,
             },
