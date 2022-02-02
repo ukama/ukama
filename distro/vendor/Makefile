@@ -88,10 +88,6 @@ LIST += protobuf
 LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
-LIST += dhcpcd
-LIST += sysctl
-LIST += iptables
-LIST += iproute2
 
 .PHONY: $(LIST)
 
@@ -414,7 +410,7 @@ endif
 dhcpcd:
 	$(call print_msg,"dhcpcd")
 	(cd $@ && \
-	./configure --small --disable-inet6 --disable-embedded \
+	CC="${XCC}" ./configure --small --disable-inet6 --disable-embedded \
 		--libexecdir=/lib/dhcpcd --dbdir=/var/lib/dhcpcd && \
 	$(MAKE) CC="${XCC}"  && \
 	$(MAKE) CC="${XCC}" DESTDIR=${DEPDIR} install && \
