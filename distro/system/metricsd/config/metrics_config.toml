@@ -1,0 +1,416 @@
+# This is a metrics.d config file
+# sources tells where to read kpi data from.
+# stats describe what to read and how to read kpi data.
+# agents tells how to read data from source.
+# URL tells path or http url
+# EXT is used in extention to URL path as end point to reach specific api.
+#cat /sys/class/thermal/thermal_zone7/temp cat /sys/class/thermal/thermal_zone7/type => x86_pkg_temp
+
+version = "0.0.1"
+scraping_time_period = 5
+ukamnode = "TRX"
+metric_server_port = 7001
+
+[[stats]]
+		[[stats.generic]]
+			source = "system"
+			agent = "sys_generic"
+			url = ""
+			[[stats.generic.system.kpi]]
+				name = "uptime"
+				ext = ""
+				desc = "Time elapsed from most recent bootup"
+				unit = "seconds"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+[[stats]]
+		[[stats.SoC]]
+			source = "cpu"
+			agent = "cpu_agent"
+			url = "/proc/cpu_info"
+			[[stats.SoC.cpu.kpi]]
+				name = "cores"
+				ext = ""
+				desc = "Number of cores available"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "usage"
+				ext = ""
+				desc = "Usage in %age for CPU "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "Temperature"
+				ext = ""
+				desc = "CPU Temperature "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name = "user_usage"
+				ext = ""
+				desc = "Usage time of each user in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "system_usage"
+				ext = ""
+				desc = "Usage in %age for CPU "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "nice"
+				ext = ""
+				desc = "CPU Temperature "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name = "idle_time"
+				ext = ""
+				desc = "Idle time in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "io_wait_time"
+				ext = ""
+				desc = "IO wait time in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "hardirq"
+				ext = ""
+				desc = "Time used to handle hw IRQ in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "softirq"
+				ext = ""
+				desc = "Time used to handle soft IRQ in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu.kpi]]
+				name= "steal"
+				ext = ""
+				desc = "Time used by host vm's in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+		[[stats.SoC]]
+		    source = "cpu_core"
+			agent = "cpu_agent"
+			url = "/proc/cpu_info"
+			range = [0, 1, 2, 3]
+			[[stats.SoC.cpu_core.kpi]]
+				name = "frequency"
+				ext = ""
+				desc = "Ferquency im MHz "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name = "user_usage"
+				ext = ""
+				desc = "Usage time of each user in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "system_usage"
+				ext = ""
+				desc = "Usage in %age for CPU "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "nice"
+				ext = ""
+				desc = "CPU Temperature "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name = "idle_time"
+				ext = ""
+				desc = "Idle time in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "io_wait_time"
+				ext = ""
+				desc = "IO wait time in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "hardirq"
+				ext = ""
+				desc = "Time used to handle hw IRQ in jiffies "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "softirq"
+				ext = ""
+				desc = "Time used to handle soft IRQ in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.SoC.cpu_core.kpi]]
+				name= "steal"
+				ext = ""
+				desc = "Time used by host vm's in jiffies"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+
+[[stats]]
+		[[stats.memory]]
+		    source = "ddr"
+			agent = "memory_agent"
+			url ="/proc/meminfo"
+
+			[[stats.memory.ddr.kpi]]
+				name = "total"
+				ext = ""
+				desc = "Total memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.memory.ddr.kpi]]
+				name = "used"
+				ext = ""
+				desc = "Used memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.memory.ddr.kpi]]
+				name = "free"
+				ext = ""
+				desc = "Free memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+		[[stats.memory]]
+		    source = "swap"
+			agent = "memory_agent"
+			url ="/proc/meminfo"
+
+			[[stats.memory.swap.kpi]]
+				name = "total"
+				ext = ""
+				desc = "Total Memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.memory.swap.kpi]]
+				name = "Used memory"
+				ext = ""
+				desc = "Used memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.memory.swap.kpi]]
+				name = "Free memory"
+				ext = ""
+				desc = "Free memory"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+[[stats]]
+		[[stats.network]]
+		    source = "wlp0s20f3"
+			agent = "network_agent"
+			url ="/proc/net"
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "link"
+				ext = ""
+				desc = "Link status"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "latency"
+				ext = ""
+				desc = "Latency to reach cloud"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "linkspeed"
+				ext = ""
+				desc = "Link speed negotiated"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "rx_bytes"
+				ext = ""
+				desc = "Recieved bytes"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "rx_error"
+				ext = ""
+				desc = "Receive errors"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "rx_dropped"
+				ext = ""
+				desc = "Receive packet dropped "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "rx_overruns"
+				ext = ""
+				desc = "Receive overruns"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "rx_packets"
+				ext = ""
+				desc = "Receive packets"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "tx_bytes"
+				ext = ""
+				desc = "Transmitted bytes"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "tx_error"
+				ext = ""
+				desc = "Transmitted errors"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "tx_dropped"
+				ext = ""
+				desc = "Transmitted packet dropped "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "tx_overruns"
+				ext = ""
+				desc = "Transmitted overruns"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.network.wlp0s20f3.kpi]]
+				name = "tx_packets"
+				ext = ""
+				desc = "Transmitted packets"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+[[stats]]
+		[[stats.storage]]
+		    source = "emmc"
+			agent = "ssd_agent"
+			url ="/"
+
+			[[stats.storage.emmc.kpi]]
+				name = "Total"
+				ext = ""
+				desc = "Total Storage "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.storage.emmc.kpi]]
+				name = "Used"
+				ext = ""
+				desc = "Used Storage"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.storage.emmc.kpi]]
+				name = "Free"
+				ext = ""
+				desc = "Available storage"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+[[stats]]
+		[[stats.sensors]]
+		    source = "x86_pkg_temp"
+			agent = "sysfs_agent"
+			url = "/sys/class/thermal/"
+
+		[[stats.sensors.x86_pkg_temp.kpi]]
+				name = "temp"
+				ext = "thermal_zone7/temp"
+				desc = "Temperature for x86 pkg "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+		[[stats.sensors]]
+		    source = "iwlwifi_1"
+			agent = "sysfs_agent"
+			url = "/sys/class/thermal/"
+
+			[[stats.sensors.iwlwifi_1.kpi]]
+				name = "temp"
+				ext = "thermal_zone7/temp"
+				desc = "Temperature "
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+[[stats]]
+	   [[stats.lte]]
+		    source = "stack"
+		    agent = "lte_agent"
+		    url = "./config/lte_stats.file"
+		    [[stats.lte.stack.kpi]]
+				name = "throughput_downlink"
+				ext = ""
+				desc = "Downlink speed"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+		    [[stats.lte.stack.kpi]]
+				name = "throughput_uplink"
+				ext = ""
+				desc = "Uplink speed"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+		    [[stats.lte.stack.kpi]]
+				name = "cell_id"
+				ext = ""
+				desc = "cell Identifier"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+			[[stats.lte.stack.kpi]]
+				name = "Signal_Strength"
+				ext = ""
+				desc = "Signal strength"
+				type = "METRICTYPE_GAUGE"
+				labels = []
+
+
+
+
+
+
