@@ -39,6 +39,7 @@ typedef struct _arrayElem {
   char *name;      /* Name of the cApp */
   char *tag;       /* cApp tag */
   char *contained; /* where this app is contained (boot, service, shutdown) */
+  char *rootfs;
   int  restart;    /* 1: yes, always restart. 0: No */
 
   struct _arrayElem *next; /* Next in the list */
@@ -57,5 +58,6 @@ typedef struct {
 int process_manifest(char *fileName, Manifest *manifest, void *space);
 void get_containers_local_path(Manifest *manifest, Config *config);
 void clear_manifest(Manifest *manifest);
+void copy_capps_to_cspace_rootfs(Manifest *manifest, char *sPath, char *dPath);
 
 #endif /* LXCE_MANIFEST_H */

@@ -15,6 +15,11 @@
 #include <jansson.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "capp_config.h"
 #include "cspace.h"
@@ -26,24 +31,56 @@
 static int deserialize_capp_config_file(CAppConfig *config, json_t *json);
 
 /*
+ * log_config --
+ */
+
+static void log_config(CAppConfig *config) {
+
+  int i;
+
+  log_debug("Version: %s", (config->version ? config->version: "NULL"));
+  log_debug("Serial:  %s", (config->serial ? config->serial: "NULL"));
+  log_debug("hostname: %s", (config->hostName ? config->hostName : "NULL"));
+
+  if (config->process) {
+    log_debug("process:", config->process->exec);
+    log_debug("\t exec: %s", config->process->exec);
+
+    log_debug("\t argc: %d", config->process->argc);
+    for (i=0; i<config->process->argc; i++) {
+      log_debug("\t argv[%d]: %s", i, config->process->argv[i]);
+    }
+
+    log_debug("\t envc: %d", config->process->envc);
+    for (i=0; i<config->process->envc; i++) {
+      log_debug("\t env[%d]: %s", i, config->process->env[i]);
+    }
+  } else {
+    log_debug("process: NULL");
+  }
+}
+
+/*
  * valid_path -- path is valid if there is readable json file present
  *
  */
 int valid_path(char *path) {
 
-  FILE *fp=NULL;
   char fileName[MAX_BUFFER] = {0};
+  struct stat stats;
 
   if (!path) return FALSE;
 
   sprintf(fileName, "%s/config.json", path);
 
-  if ((fp = fopen(fileName, "r")) == NULL) {
-    log_error("Error opening file: %s Error %s", fileName, strerror(errno));
+  stat(fileName, &stats);
+
+  if (S_ISREG(stats.st_mode)) {
+    log_debug("Valid config file at: %s", fileName);
+  } else {
+    log_error("Default config file not found: %s", fileName);
     return FALSE;
   }
-
-  fclose(fp);
 
   return TRUE;
 }
@@ -54,6 +91,7 @@ int valid_path(char *path) {
  */
 int process_capp_config_file(CAppConfig *config, char *fileName) {
 
+  int ret;
   FILE *fp=NULL;
   char *buffer=NULL;
   long size=0;
@@ -66,6 +104,8 @@ int process_capp_config_file(CAppConfig *config, char *fileName) {
     log_error("Error opening file: %s Error %s", fileName, strerror(errno));
     return FALSE;
   }
+
+  log_debug("Reading the capp's config.json file: %s", fileName);
 
   /* Read everything into buffer */
   fseek(fp, 0, SEEK_END);
@@ -96,10 +136,19 @@ int process_capp_config_file(CAppConfig *config, char *fileName) {
               fileName, size);
     log_error("JSON error on line: %d: %s", jerror.line, jerror.text);
     goto done;
+  } else {
+    log_debug("JSON successfully loaded. %s", fileName);
   }
 
   /* convert into internal structure */
-  return deserialize_capp_config_file(config, json);
+  ret=deserialize_capp_config_file(config, json);
+  if (ret) {
+    log_config(config);
+  } else {
+    log_error("Error deser capp config file");
+  }
+
+  return ret;
 
  done:
   if (buffer) free(buffer);
@@ -153,11 +202,12 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
 
     /* Get arguments */
     get_json_arrary_elems(jProc, &(config->process->argc),
-			  config->process->argv, JSON_ARGS);
+			  &(config->process->argv), JSON_ARGS);
 
     /* Get env variables */
     get_json_arrary_elems(jProc, &(config->process->envc),
-			  config->process->env, JSON_ENV);
+			  &(config->process->env), JSON_ENV);
+
   } else {
     log_error("No valid process info found.");
   }
@@ -175,13 +225,12 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
 	if (obj) {
 	  str = json_string_value(obj);
 	  /* For capp, currently only allow mount, user and pid. */
-	  if (!strcmp(str, "mount") ||
-	      !strcmp(str, "user")  ||
-	      !strcmp(str, "pid")) {
-	    log_error("Invalid namespace for capp specified: %s", str);
-	    return FALSE;
-	  } else {
+	  if (strcmp(str, "mount") == 0 ||
+	      strcmp(str, "user")  == 0 ||
+	      strcmp(str, "pid")   == 0 ) {
 	    config->nameSpaces |= namespaces_flag(json_string_value(obj));
+	  } else {
+	    log_error("Invalid namespace for capp: %s", str);
 	  }
 	}
       }
@@ -189,6 +238,8 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
   } else {
     log_debug("No valid namespaces found.");
   }
+
+  log_debug("config.json successfully parsed");
 
   return TRUE;
 }

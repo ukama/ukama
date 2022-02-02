@@ -28,7 +28,6 @@
 #include <grp.h>
 #include <signal.h>
 #include <uuid/uuid.h>
-#include <dirent.h>
 
 #include "space.h"
 #include "cspace.h"
@@ -41,7 +40,6 @@
 static int prepare_child_map_files(char *areaType, int sockets[2], pid_t pid,
 				   char *name);
 static int pivot_root(const char *new, const char *old);
-static void log_rootfs();
 
 /*
  * prepare_child_map_files -- setup map files (uid_map, gid_map and setgroups)
@@ -51,10 +49,15 @@ static int prepare_child_map_files(char *areaType,
 				   int *sockets, pid_t pid,
 				   char *name) {
 
-  int ns=0, size, i;
+  int ns=0, size, i, ret;
   int mapFd = 0;
   char *mapFiles[] = {"uid_map", "gid_map"};
   char mapPath[LXCE_MAX_PATH] = {0};
+  char runMe[LXCE_MAX_PATH] = {0};
+
+  if (strcmp(areaType, AREA_TYPE_CAPP) == 0) { /* XXX */
+    goto proceed;
+  }
 
   size = read(sockets[PARENT_SOCKET], &ns, sizeof(ns));
   if (size != sizeof(ns)) {
@@ -68,10 +71,20 @@ static int prepare_child_map_files(char *areaType,
     return FALSE;
   }
 
-  for (i=0; i<2; i++) {
-    sprintf(mapPath, "/proc/%d/%s", pid, mapFiles[i]);
+  sprintf(runMe, "/bin/mkdir -p %s/%s/proc/%d/", DEF_CSPACE_ROOTFS_PATH, name,
+	  (int)pid);
+  log_debug("Running command: %s", runMe);
+  if ((ret = system(runMe)) < 0) {
+    log_error("Unable to execute cmd %s for space: %s Code: %d", runMe, name,
+	      ret);
+    return FALSE;
+  }
 
-    if ((mapFd = open(mapPath, O_WRONLY)) == -1) {
+  for (i=0; i<2; i++) {
+    sprintf(mapPath, "%s/%s/proc/%d/%s", DEF_CSPACE_ROOTFS_PATH, name, pid,
+	    mapFiles[i]);
+
+    if ((mapFd = open(mapPath, O_CREAT | O_WRONLY, 0644)) == -1) {
       log_error("%s: %s error opening map file: %s Error: %s", areaType,
 		name, mapPath, strerror(errno));
       return FALSE;
@@ -87,6 +100,7 @@ static int prepare_child_map_files(char *areaType,
     close(mapFd);
   }
 
+ proceed:
   /* Inform child, it can proceed. */
   size = write(sockets[PARENT_SOCKET], &(int){TRUE}, sizeof(int));
   if (size != sizeof(int)) {
@@ -109,7 +123,7 @@ int create_space(char *areaType,
 
   char *stack=NULL;
 
-  if (!sockets || !name || !areaType) return FALSE;
+  if (!name || !areaType) return FALSE;
 
   /* Create socket pairs.
    * Re: SOCK_SEQPACKET:
@@ -127,14 +141,19 @@ int create_space(char *areaType,
   }
 
   /* clone with proper flags for namespaces */
-  *pid = clone(func, stack + SPACE_STACK_SIZE, SIGCHLD | namespaces, arg);
+  if (strcmp(areaType, AREA_TYPE_CAPP)==0) { /* XXX, Fix me */
+    *pid = clone(func, stack + SPACE_STACK_SIZE, SIGCHLD, arg);
+  } else {
+    *pid = clone(func, stack + SPACE_STACK_SIZE, SIGCHLD | namespaces, arg);
+  }
+
   if (*pid == -1) {
     log_error("%s: %s Unable to clone cInit. Error :%s", areaType, name,
 	      strerror(errno));
     return FALSE;
   }
 
-  if (*pid > 0) {
+  if (*pid > 0 ) {
     /* Close child socket */
     close(sockets[CHILD_SOCKET]);
 
@@ -158,31 +177,6 @@ int create_space(char *areaType,
  */
 static int pivot_root(const char *new, const char *old) {
   return syscall(SYS_pivot_root, new, old);
-}
-
-/*
- * log_rootfs --
- *
- */
-static void log_rootfs() {
-
-  struct dirent *hFile;
-  DIR *dirFile;
-
-  dirFile = opendir( "." );
-
-  if (dirFile) {
-    while ((hFile = readdir(dirFile)) != NULL ) {
-      /* Ignore hidden files. */
-      if (!strcmp(hFile->d_name, ".")  ||
-	  !strcmp(hFile->d_name, "..") ||
-	  hFile->d_name[0] == '.')
-	continue;
-
-      log_debug("%s", hFile->d_name);
-    }
-  closedir( dirFile );
-  }
 }
 
 /*
@@ -251,9 +245,6 @@ int setup_mounts(char *areaType, char *rootfs, char *name) {
     log_error("%s: failed to remove old root directory: %s", areaType, rmv);
     return FALSE;
   }
-
-  /* For debugging, print the tree of / */
-  log_rootfs();
 
   return TRUE;
 }

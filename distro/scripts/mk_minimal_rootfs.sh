@@ -150,6 +150,7 @@ build_rootfs_dirs() {
     DIRS="usr  ${DIRS}"
     DIRS="var  ${DIRS}"
     DIRS="dev  ${DIRS}"
+    DIRS="proc ${DIRS}"
 
     cd ${ROOTFS}
     mkdir -p ${DIRS}

@@ -257,6 +257,8 @@ static int cspace_init_clone(void *arg) {
   //setup_cspace_security_profile(space);
 
   /* Step-3: Setup mounts */
+  log_debug("Setting up mounts for space: %s at rootfs: %s", space->name,
+	    space->rootfs);
   if (!setup_mounts(AREA_TYPE_CSPACE, space->rootfs, space->name)) {
     log_error("Space: %s Error setting up rootfs mount: %s", space->name,
 	      space->rootfs);
@@ -301,8 +303,7 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
   if (space == NULL) return FALSE;
   if (json == NULL) return FALSE;
 
-  if (!set_str_object_value(json, &(space->version), JSON_VERSION, TRUE,
-			    NULL)) {
+  if (!set_str_object_value(json, &(space->version), JSON_VERSION, TRUE, NULL)) {
     return FALSE;
   }
 
@@ -328,8 +329,10 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
   set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
   set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
 
-  /* default rootfs for all cspaces. */
-  space->rootfs = strdup(DEF_CSPACE_ROOTFS_PATH);
+  /* 3: 2 for / and 1 for NULL */
+  space->rootfs = (char *)malloc(strlen(DEF_CSPACE_ROOTFS_PATH) +
+				 strlen(space->name) + 3);
+  sprintf(space->rootfs, "%s/%s/", DEF_CSPACE_ROOTFS_PATH, space->name);
 
   /* Look for namespaces. */
   space->nameSpaces = 0;
@@ -492,7 +495,7 @@ static int handle_crud_requests(CSpace *space) {
     sscanf(buffer, "%s %d %s", cmd, &seqno, params);
 
     log_debug("%d %s %d %s", count, cmd, seqno, params);
-
+    
     if (strcmp(cmd, CAPP_CMD_CREATE)==0) {
       handle_create_request(space, seqno, params);
       create_and_run_capps(space->apps);
@@ -627,12 +630,16 @@ static CApp *cspace_capp_init(char *name, char *tag, char *path, uuid_t uuid) {
     return NULL;
   }
 
-  capp->params = (CAppParams *)malloc(sizeof(CAppParams));
-  capp->state = (CAppState *)malloc(sizeof(CAppState));
+  capp->params  = (CAppParams *)calloc(1, sizeof(CAppParams));
+  capp->state   = (CAppState *)calloc(1, sizeof(CAppState));
+  capp->config  = (CAppConfig *)calloc(1, sizeof(CAppConfig));
+  capp->runtime = (CAppRuntime *)calloc(1, sizeof(CAppRuntime));
 
-  if (capp->params == NULL || capp->state == NULL) {
-    log_error("Memory allocation error of sizes: %d %d", sizeof(CAppParams),
-	      sizeof(CAppState));
+  if (capp->params == NULL || capp->state == NULL || capp->config == NULL ||
+      capp->runtime == NULL ) {
+    log_error("Memory allocation error of sizes: %d %d %d %d ",
+	      sizeof(CAppParams), sizeof(CAppState), sizeof(CAppConfig),
+	      sizeof(CAppRuntime));
     goto failure;
   }
 
@@ -677,7 +684,7 @@ static int valid_cspace_rootfs_pkg(char *fileName) {
  * cspace_unpack_rootfs --
  *
  */
-int cspace_unpack_rootfs() {
+int cspace_unpack_rootfs(char *destDir) {
 
   char pkg[CSPACE_MAX_BUFFER] = {0};
   char runMe[CSPACE_MAX_BUFFER] = {0};
@@ -685,9 +692,10 @@ int cspace_unpack_rootfs() {
   int ret;
 
   /* Steps are as follow:
-   * 1. check the existance of rootfs pkg "cspace_rootfs.tar.gz"
-   * 2. remove existing rootfs at /cspace/rootfs/
-   * 3. untar pkg to /cspace/rootfs
+   * 1. check the existance of rootfs pkg "cspace_rootfs.tar.gz". Currently,
+   *    default location is /capps/pkgs
+   * 2. remove existing rootfs at 'destDir'
+   * 3. untar pkg to 'destDir'
    */
 
   sprintf(pkg, "%s/%s", DEF_CSPACE_ROOTFS_PKG_PATH, DEF_CSPACE_ROOTFS_PKG_NAME);
@@ -697,34 +705,34 @@ int cspace_unpack_rootfs() {
   }
 
   /* Check if directory exist */
-  stat(DEF_CSPACE_ROOTFS_PATH, &stats);
+  stat(destDir, &stats);
   if (S_ISDIR(stats.st_mode)) {
-    if (rmdir(DEF_CSPACE_ROOTFS_PATH) < 0) {
+    sprintf(runMe, "/bin/rm -rf %s", destDir);
+    if ((ret = system(runMe)) < 0) {
       log_error("Error removing existing cspace rootfs path at: %s Error: %s",
-		DEF_CSPACE_ROOTFS_PATH, strerror(errno));
+		destDir, strerror(errno));
       return FALSE;
     }
-  } else {
-    /* something bad happend. It should've existed. Log it for now. */
-    log_debug("Missing cspace rootfs dir at: %s", DEF_CSPACE_ROOTFS_PATH);
   }
 
   /* re-create the directory */
-  if(mkdir(DEF_CSPACE_ROOTFS_PATH, 0700) < 0) {
-    log_error("Error creating default cspsace rootfs dir: %s Error: %s",
-		DEF_CSPACE_ROOTFS_PATH, strerror(errno));
+  if(mkdir(destDir, 0700) < 0) {
+    log_error("Error creating cspsace rootfs dir: %s Error: %s", destDir,
+	      strerror(errno));
     return FALSE;
   }
 
-  /* untar to default cspace rootfs */
+  /* untar to destDir */
   sprintf(runMe, "/bin/tar xfz %s/%s -C %s", DEF_CSPACE_ROOTFS_PKG_PATH,
-	  DEF_CSPACE_ROOTFS_PKG_NAME, DEF_CSPACE_ROOTFS_PATH);
+	  DEF_CSPACE_ROOTFS_PKG_NAME, destDir);
   if ((ret = system(runMe)) < 0) {
     log_error("Unable to unpack the cspace rootfs: %s/%s to %s Code: %d",
 	      DEF_CSPACE_ROOTFS_PKG_PATH, DEF_CSPACE_ROOTFS_PKG_NAME,
-	      DEF_CSPACE_ROOTFS_PATH, ret);
+	      destDir, ret);
     return FALSE;
   }
+
+  log_debug("cspace rootfs successfully unpack at: %s", destDir);
 
   return TRUE;
 }

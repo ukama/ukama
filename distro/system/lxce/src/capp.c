@@ -141,29 +141,7 @@ CApp *capp_init(Config *config, char *name, char *tag, char *path, char *space,
   if (!config || !name || !tag || !space)
     return FALSE;
 
-  /* Pkgs can be found via:
-   * 0. tars at: /capps/pkgs/name_tag.tar.gz
-   * 1. untar at: /capps/pkgs/unpack/name_tag/
-   * 2. by calling wimc (which then fetches and stores it
-   *
-   * For initial implementation, there is no checksum and the pkgs are
-   * unpack everytime (/capps/pkgs/unpack is build on every boot
-   *
-   */
-
-  /* check to see if capp pack exists at default location */
-  sprintf(fileName, "%s/%s_%s.tar.gz", DEF_CAPP_PATH, name, tag);
-  log_debug("Checking to see if %s exists", fileName);
-
-  stat(fileName, &stats);
-  if (S_ISREG(stats.st_mode)) { /* unpack to /capps/pkgs/unpack */
-    if (capp_unpack(name, tag, &path)==FALSE) {
-      log_error("Error unpacking the capp. Name: %s Tag: %s", name, tag);
-      return FALSE;
-    } else {
-      log_debug("capp name %s tag %s unpack at: %s", name, tag, path);
-    }
-  } else { /* fetch from WIMC */
+  if (path == NULL) {
     if (get_capp_path(config, name, tag, path)==FALSE) {
       log_error("Error getting rootfs path from wimc. Name: %s Tag: %s",
 		name, tag);
@@ -225,7 +203,7 @@ int capps_init(CApps **capps, Config *config, Manifest *manifest,
       continue;
     }
 
-    app = capp_init(config, ptr->name, ptr->tag, NULL, ptr->contained,
+    app = capp_init(config, ptr->name, ptr->tag, ptr->rootfs, ptr->contained,
 		    ptr->restart);
     if (app==NULL) {
       log_error("Error initializing the cApp. Name: %s Tag: %s Ignoring.",

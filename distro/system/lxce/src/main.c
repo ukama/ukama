@@ -197,12 +197,6 @@ int main(int argc, char **argv) {
   /* Initialize cspace threads list */
   init_cspace_thread_list();
 
-  /* unpack cspace rootfs */
-  if (!cspace_unpack_rootfs()) {
-    log_error("cspace rootfs error. Exiting");
-    exit(1);
-  }
-
   /* Before we open the socket for REST, process the config file and
    * start them containers.
    */
@@ -239,6 +233,12 @@ int main(int argc, char **argv) {
       }
     }
 
+    /* unpack rootfs for the cspace */
+    if (!cspace_unpack_rootfs(cPtr->rootfs)) {
+      log_error("Error unpacking rootfs for space: %s. Exiting", cPtr->name);
+      exit(1);
+    }
+
     if (i+1 != config->cSpaceCount) {
       cPtr->next =  (CSpace *)calloc(1, sizeof(CSpace));
     } else {
@@ -255,7 +255,31 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  /* Step-3: setup cSpaces */
+  /* Step-3: process manifest.json file. */
+  manifest = (Manifest *)calloc(1, sizeof(Manifest));
+  if (!manifest) {
+    log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
+    exit(1);
+  }
+
+  if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
+    log_error("Error process the manifest file: %s", manifestFile);
+    exit(1);
+  }
+
+  /* Step-4: for each cspace copy their respective capp to their rootfs at
+   *          /capps/rootfs/[cspace_name]/capps/pkgs
+   *          DEF_CAPP_PATH: /capps/pkgs
+   *          DEF_CSPACE_ROOTFS_PATH: /capps/rootfs
+   */
+  copy_capps_to_cspace_rootfs(manifest, DEF_CAPP_PATH, DEF_CSPACE_ROOTFS_PATH);
+  if (!unpack_all_capps_to_cspace_rootfs(manifest, DEF_CSPACE_ROOTFS_PATH,
+					 DEF_CAPP_PATH)) {
+    log_error("Unable to unpack the capps for cspace rootfs. Exiting.");
+    exit(1);
+  }
+
+  /* Step-5: setup cSpaces */
   /* For each space, we create a thread which would clone and parent
    * would wait for the space to exit. Space is currently active until the
    * device restarts.
@@ -283,33 +307,16 @@ int main(int argc, char **argv) {
 	     * this to be done via flag
 	     */
 
-  /* Step-4: process manifest.json file. */
-  manifest = (Manifest *)calloc(1, sizeof(Manifest));
-  if (!manifest) {
-    log_error("Memory allocation failure. Size: %d", sizeof(Manifest));
-    exit(1);
-  }
-
-  if (process_manifest(manifestFile, manifest, cSpaces) != TRUE) {
-    log_error("Error process the manifest file: %s", manifestFile);
-    exit(1);
-  }
-
-  /* For initial implementation, there is no checksum and the pkgs are
-   * unpack everytime (/capps/pkgs/unpack is build on every boot
-   */
-  remove(DEF_CAPP_UNPACK_PATH);
-
-  /* Step-5: Move all valid cApps into pending list/state. */
+  /* Step-6: Move all valid cApps into pending list/state. */
   if (!capps_init(&apps, config, manifest, cSpaces)) {
     log_error("Error initializing the cApps. Exiting.");
     exit(1);
   }
 
-  /* Step-6: start capps via cspace threads */
+  /* Step-7: start capps via cspace threads */
   capps_start(apps);
 
-  /* Step-6: open REST interface. */
+  /* Step-8: open REST interface. */
   if (!start_web_services(config, &clientInst)) {
     log_error("Webservice failed to setup for clients. Exiting.");
     goto done;
@@ -320,10 +327,10 @@ int main(int argc, char **argv) {
 
  done:
   log_debug("End World!\n");
-  
+
   ulfius_stop_framework(&clientInst);
   ulfius_clean_instance(&clientInst);
-  
+
   clear_config(config);
   clear_manifest(manifest);
 

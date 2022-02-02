@@ -27,7 +27,7 @@
 #define DEF_HOSTNAME "localhost"
 #define DEF_CONFIG   "config.json"
 
-#define JSON "# Ukama capp config file \n { \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": [ \"%s\" ], \n \t \t \"env\": [ \"%s\" ], \n \t } \n \t \"hostname\": \"%s\",\n \t \"namespace\" : [ \n \t \t { \"type\" : \"pid\", \n \t \t \"type\" : \"ipc\", \n \t \t \"type\" : \"mount\", \n \t \t \"type\" : \"user\", \n \t } \n \t ] \n ] \n"
+#define JSON "{ \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": [ \"%s\" ], \n \t \t \"env\": [ \"%s\" ] \n \t }, \n \t \"hostname\": \"%s\",\n \t \"namespaces\" : [ \n \t \t { \"type\" : \"pid\"}, \n \t {\t \"type\" : \"mount\"}, \n \t { \t \"type\" : \"user\"} \n \n \t ] \n } \n"
 
 /*
  * create_capp_config --
@@ -36,6 +36,7 @@
 static int create_capp_config(Config *config) {
 
   char str[2048] = {0};
+  char *envs, *args;
   FILE *fp=NULL;
   int ret=TRUE;
 
@@ -48,11 +49,23 @@ static int create_capp_config(Config *config) {
     return FALSE;
   }
 
+  if (config->capp->envs) {
+    envs = config->capp->envs;
+  } else {
+    envs = "";
+  }
+
+  if (config->capp->args) {
+    args = config->capp->args;
+  } else {
+    args = "";
+  }
+
   /* version & target */
   sprintf(str, JSON, config->build->version,
 	  config->capp->path, config->capp->bin,
-	  config->capp->args,
-	  config->capp->envs,
+	  args,
+	  envs,
 	  DEF_HOSTNAME);
 
   log_debug("config.json: \n %s", str);

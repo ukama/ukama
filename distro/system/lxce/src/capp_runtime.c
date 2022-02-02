@@ -103,6 +103,7 @@ int create_and_run_capps(void *args) {
  */
 static int exec_capp(CApp *capp) {
 
+  int i;
   CAppProc *process;
 
   if (!capp || !capp->config) return FALSE;
@@ -110,6 +111,11 @@ static int exec_capp(CApp *capp) {
   process = capp->config->process;
 
   if (!process->exec) return FALSE;
+
+  log_debug("Executing capp: binary: %s argc: %d", process->exec, process->argc);
+  for (i=0; i<process->argc; i++) {
+    log_debug("\t argc-%d: %s", i, process->argv[i]);
+  }
 
   execvpe(process->exec, /* binary */
 	  process->argv, /* arguments to the binary */
@@ -129,6 +135,7 @@ static int capp_init_clone(void *arg) {
   CApp *capp = (CApp *)arg;
   char *hostName=NULL;
 
+#if 0
   if (capp->config->hostName) {
     hostName = capp->config->hostName;
   } else {
@@ -140,6 +147,9 @@ static int capp_init_clone(void *arg) {
               hostName);
     return FALSE;
   }
+#endif
+
+  log_debug("Exec'ing into capp.");
 
   /* execv into program */
   ret = exec_capp(capp);
@@ -161,6 +171,8 @@ static int capp_init_clone(void *arg) {
 static int create_capp(CApp *capp) {
 
   if (capp == NULL) return FALSE;
+
+  log_debug("Creating the capp: %s", capp->params->name);
 
   return create_space(AREA_TYPE_CAPP,
 		      capp->runtime->sockets, capp->config->nameSpaces,

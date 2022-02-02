@@ -32,7 +32,7 @@ BB_CONFIG=ukama_minimal_defconfig
 # command line arguments
 MIN_ARGS=2
 DEF_ROOTFS=_ukama_os_rootfs/
-DEF_CSPACE_ROOTFS=cspace_rootfs/
+DEF_CSPACE_ROOTFS=cspace_rootfs
 
 # For os-release
 OS_NAME="ukamaOS"
@@ -232,13 +232,15 @@ build_busybox() {
 #
 build_cspace_rootfs() {
 
+    CWD=`pwd`
     # Build minimal fs
     ${SCRIPTS_ROOT}/mk_minimal_rootfs.sh -p ${CSPACE_ROOTFS}
 
     # tar.gz, move to /capps/pkgs/ and clean up
-    tar -czf ${CSPACE_ROOTFS}.tar.gz ${CSPACE_ROOTFS}
-    mv ${CSPACE_ROOTFS}.tar.gz ${ROOTFS}/capps/pkgs/
-    #rm -rf ${CSPACE_ROOTFS}
+    cd ${CSPACE_ROOTFS}
+    tar -cvzf ${ROOTFS}/capps/pkgs/${CSPACE_ROOTFS}.tar.gz *
+    cd ${CWD}
+    rm -rf ${CSPACE_ROOTFS}
 }
 
 #

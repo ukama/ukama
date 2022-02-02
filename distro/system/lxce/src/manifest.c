@@ -244,6 +244,7 @@ static void clear_cApp_cfg(ArrayElem *elem) {
     free(ptr->name);
     free(ptr->tag);
     free(ptr->contained);
+    free(ptr->rootfs);
 
     prev = ptr;
     ptr = ptr->next;
@@ -269,4 +270,49 @@ void clear_manifest(Manifest *manifest) {
   clear_cApp_cfg(manifest->arrayElem);
 
   return;
+}
+
+/*
+ * copy_capps_to_cspace_rootfs --
+ *                             sPath: /capps/pkgs
+ *                             dPath: /capps/rootfs
+ */
+void copy_capps_to_cspace_rootfs(Manifest *manifest, char *sPath, char *dPath) {
+
+  int ret=0;
+  ArrayElem *ptr=NULL;
+  char src[CSPACE_MAX_BUFFER]        = {0};
+  char dest[CSPACE_MAX_BUFFER]       = {0};
+  char runMe[CSPACE_MAX_BUFFER]      = {0};
+
+  if (manifest == NULL) return;
+
+  for (ptr = manifest->arrayElem; ptr; ptr=ptr->next) {
+    if (!ptr->name || !ptr->tag || !ptr->contained) {
+      log_error("Invalid manifest entry. Ignoring");
+      continue;
+    }
+
+    /* Create dest dir if needed */
+    sprintf(runMe, "/bin/mkdir -p %s/%s/%s", dPath, ptr->contained, sPath);
+    log_debug("Running command: %s", runMe);
+    if ((ret = system(runMe)) < 0) {
+      log_error("Unable to execute cmd %s for space: %s Code: %d", runMe,
+		ptr->contained, ret);
+      continue;
+    }
+
+    /* Copy the pkg from /capps/pkgs/[name]_[tag].tar.gz to
+     * /capps/rootfs/[contained]/capps/pkgs/[name]_[tag].tar.gz
+     */
+    sprintf(src,  "%s/%s_%s.tar.gz", sPath, ptr->name, ptr->tag);
+    sprintf(dest, "%s/%s/%s/%s_%s.tar.gz", dPath, ptr->contained, sPath,
+	    ptr->name, ptr->tag);
+    sprintf(runMe, "/bin/cp %s %s", src, dest);
+    log_debug("Running command: %s", runMe);
+    if ((ret = system(runMe)) < 0) {
+      log_error("Unable to copy file src: %s dest: %s Code: %d", src, dest, ret);
+      continue;
+    }
+  }
 }
