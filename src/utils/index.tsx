@@ -1,5 +1,4 @@
 import { Alert_Type } from "../generated";
-import { colors } from "../theme";
 
 const getTitleFromPath = (path: string) => {
     switch (path) {
@@ -25,11 +24,11 @@ const getTitleFromPath = (path: string) => {
 const getColorByType = (type: Alert_Type) => {
     switch (type) {
         case Alert_Type.Error:
-            return colors.red;
+            return "error";
         case Alert_Type.Warning:
-            return colors.yellow;
+            return "warning";
         default:
-            return colors.green;
+            return "success";
     }
 };
 

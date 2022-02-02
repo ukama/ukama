@@ -3,12 +3,12 @@ import { SVGType } from "../../types";
 const CloudOffIcon = ({
     color = "#E30000",
     width = "28",
-    height = "28",
+    height = "20",
 }: SVGType) => (
     <svg
         width={width}
         height={height}
-        viewBox="0 0 28 28"
+        viewBox="0 0 28 22"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
     >

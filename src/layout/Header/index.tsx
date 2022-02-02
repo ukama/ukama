@@ -15,6 +15,7 @@ import {
     useGetAlertsQuery,
     GetLatestAlertsDocument,
     GetLatestAlertsSubscription,
+    Alert_Type,
 } from "../../generated";
 import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
@@ -157,8 +158,40 @@ const Header = ({
                     <Typography variant="h6" sx={{ mb: "14px" }}>
                         Alerts
                     </Typography>
-                    <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
+                    <Alerts
+                        alertOptions={[
+                            {
+                                id: "1",
+                                title: "Alert 1",
+                                alertDate: new Date().toISOString(),
+                                description: "Alert 1 description",
+                                type: Alert_Type.Info,
+                            },
+                            {
+                                id: "2",
+                                title: "Alert 2",
+                                alertDate: new Date().toISOString(),
+                                description: "Alert 2 description",
+                                type: Alert_Type.Info,
+                            },
+                            {
+                                id: "3",
+                                title: "Alert 3",
+                                alertDate: new Date().toISOString(),
+                                description: "Alert 3 description",
+                                type: Alert_Type.Error,
+                            },
+                            {
+                                id: "4",
+                                title: "Alert 4",
+                                alertDate: new Date().toISOString(),
+                                description: "Alert 4 description",
+                                type: Alert_Type.Warning,
+                            },
+                        ]}
+                    />
                 </RoundedCard>
+                {/* alertsInfoRes?.getAlerts?.alerts */}
             </Popover>
             <AppBar elevation={0} position="relative" color="transparent">
                 <Toolbar sx={{ padding: "33px 0px 12px 0px !important" }}>
@@ -221,7 +254,13 @@ const Header = ({
                                         },
                                     }}
                                 >
-                                    <Notifications />
+                                    <Notifications
+                                        color={
+                                            notificationAnchorEl
+                                                ? "primary"
+                                                : "inherit"
+                                        }
+                                    />
                                 </Badge>
                             </IconButton>
                             <IconButton size="small" color="inherit">
