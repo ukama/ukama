@@ -16,6 +16,7 @@ interface NodeDetailsPanelProps {
     index: number;
     value: number;
     title: string;
+
     renderPropertyStats?: boolean;
     image?: { src: string; alt: string };
     button?: { label: string; onClick: Function };
@@ -26,6 +27,7 @@ const NodeDetailsPanel = ({
     image,
     title,
     value,
+
     index,
     button,
     properties,
@@ -49,6 +51,7 @@ const NodeDetailsPanel = ({
                         mb="18px"
                     >
                         <Typography variant={"h6"}>{title}</Typography>
+
                         {button && (
                             <StyledBtn
                                 variant="contained"

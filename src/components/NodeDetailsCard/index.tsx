@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { styled } from "@mui/styles";
-import { Button, Box, Paper, Typography, Grid } from "@mui/material";
+import { LoadingWrapper } from "../../components";
+import { Button, Paper, Typography, Grid } from "@mui/material";
 
 const StyledPaper = styled(Paper)({
     width: "100%",
@@ -13,6 +14,7 @@ const StyledPaper = styled(Paper)({
 
 interface NodeDetailsCardProps {
     title: string;
+    loading?: any;
     index: number;
     value: number;
     onClick: Function;
@@ -24,6 +26,7 @@ const NodeDetailsCard = ({
     index,
     value,
     onClick,
+    loading,
     properties,
 }: NodeDetailsCardProps) => {
     const selected = index === value;
@@ -42,38 +45,41 @@ const NodeDetailsCard = ({
                 },
             }}
         >
-            <Typography variant="h6">{title}</Typography>
-            {(viewMore ? properties : properties.slice(0, 4)).map(
-                ({ name, value: properyValue }, keyIndex) => (
-                    <Grid container spacing={5} key={keyIndex}>
-                        <Grid item xs={6}>
-                            <Typography variant="subtitle1" fontWeight={500}>
-                                {name}
-                            </Typography>
-                        </Grid>
-                        <Grid item xs={6} sx={{ p: "10px" }}>
-                            <Box pr={1}>
+            <LoadingWrapper width="100%" height="100px" isLoading={loading}>
+                <Typography variant="h6">{title}</Typography>
+                {(viewMore ? properties : properties.slice(0, 4)).map(
+                    ({ name, value: properyValue }, keyIndex) => (
+                        <Grid container spacing={5} key={keyIndex}>
+                            <Grid item xs={5}>
+                                <Typography
+                                    variant="subtitle1"
+                                    fontWeight={500}
+                                >
+                                    {name}
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={7}>
                                 <Typography variant="subtitle1">
                                     {properyValue}
                                 </Typography>
-                            </Box>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                )
-            )}
-            {properties.length > 4 && (
-                <Button
-                    variant="text"
-                    style={{ textTransform: "none" }}
-                    onClick={e => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        setViewMore(val => !val);
-                    }}
-                >
-                    {viewMore ? "View less" : "View more"}
-                </Button>
-            )}
+                    )
+                )}
+                {properties.length > 4 && (
+                    <Button
+                        variant="text"
+                        style={{ textTransform: "none" }}
+                        onClick={e => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setViewMore(val => !val);
+                        }}
+                    >
+                        {viewMore ? "View less" : "View more"}
+                    </Button>
+                )}
+            </LoadingWrapper>
         </StyledPaper>
     );
 };

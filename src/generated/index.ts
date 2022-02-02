@@ -161,6 +161,19 @@ export type ConnectedUserResponse = {
     status: Scalars["String"];
 };
 
+export type CpuUsageMetricsDto = {
+    __typename?: "CpuUsageMetricsDto";
+    id?: Maybe<Scalars["String"]>;
+    timestamp: Scalars["Float"];
+    usage: Scalars["Float"];
+};
+
+export type CpuUsageMetricsResponse = {
+    __typename?: "CpuUsageMetricsResponse";
+    data: Array<CpuUsageMetricsDto>;
+    meta: Meta;
+};
+
 export type CurrentBillDto = {
     __typename?: "CurrentBillDto";
     dataUsed: Scalars["Float"];
@@ -421,6 +434,13 @@ export type NodeRfDto = {
     qam: Scalars["Float"];
     rfOutput: Scalars["Float"];
     rssi: Scalars["Float"];
+    timestamp: Scalars["Float"];
+};
+
+export type NodeRfDtoResponse = {
+    __typename?: "NodeRFDtoResponse";
+    data: Array<NodeRfDto>;
+    meta: Meta;
 };
 
 export type NodeResponse = {
@@ -501,9 +521,11 @@ export type PaginationResponse = {
 
 export type Query = {
     __typename?: "Query";
+    getActiveUserMetrics: UsersAttachedMetricsResponse;
     getAlerts: AlertsResponse;
     getBillHistory: Array<BillHistoryDto>;
     getConnectedUsers: ConnectedUserDto;
+    getCpuUsageMetrics: CpuUsageMetricsResponse;
     getCurrentBill: BillResponse;
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
@@ -513,7 +535,7 @@ export type Query = {
     getNodeMetaData: NodeMetaDataDto;
     getNodeNetwork: NetworkDto;
     getNodePhysicalHealth: NodePhysicalHealthDto;
-    getNodeRFKPI: NodeRfDto;
+    getNodeRFKPI: NodeRfDtoResponse;
     getNodeThroughput: Array<GraphDto>;
     getNodeUserAttached: Array<GraphDto>;
     getNodes: NodesResponse;
@@ -521,7 +543,12 @@ export type Query = {
     getResidents: ResidentsResponse;
     getUser: GetUserDto;
     getUsers: GetUserResponse;
+    getUsersAttachedMetrics: UsersAttachedMetricsResponse;
     myUsers: OrgUserResponseDto;
+};
+
+export type QueryGetActiveUserMetricsArgs = {
+    data: PaginationDto;
 };
 
 export type QueryGetAlertsArgs = {
@@ -530,6 +557,10 @@ export type QueryGetAlertsArgs = {
 
 export type QueryGetConnectedUsersArgs = {
     filter: Time_Filter;
+};
+
+export type QueryGetCpuUsageMetricsArgs = {
+    data: PaginationDto;
 };
 
 export type QueryGetDataBillArgs = {
@@ -542,6 +573,10 @@ export type QueryGetDataUsageArgs = {
 
 export type QueryGetNetworkArgs = {
     filter: Network_Type;
+};
+
+export type QueryGetNodeRfkpiArgs = {
+    data: PaginationDto;
 };
 
 export type QueryGetNodesArgs = {
@@ -564,6 +599,10 @@ export type QueryGetUsersArgs = {
     data: GetUserPaginationDto;
 };
 
+export type QueryGetUsersAttachedMetricsArgs = {
+    data: PaginationDto;
+};
+
 export type QueryMyUsersArgs = {
     orgId: Scalars["String"];
 };
@@ -583,14 +622,17 @@ export type ResidentsResponse = {
 
 export type Subscription = {
     __typename?: "Subscription";
+    getActiveUserMetrics: UsersAttachedMetricsDto;
     getAlerts: AlertDto;
     getConnectedUsers: ConnectedUserDto;
+    getCpuUsageMetrics: CpuUsageMetricsDto;
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
     getNetwork: NetworkDto;
     getNodeMetaData: NodeMetaDataDto;
     getNodePhysicalHealth: NodePhysicalHealthDto;
     getNodeRFKPI: NodeRfDto;
+    getUsersAttachedMetrics: UsersAttachedMetricsDto;
 };
 
 export enum Time_Filter {
@@ -638,6 +680,19 @@ export type UserResponse = {
     name: Scalars["String"];
     phone: Scalars["String"];
     sim: Scalars["String"];
+};
+
+export type UsersAttachedMetricsDto = {
+    __typename?: "UsersAttachedMetricsDto";
+    id?: Maybe<Scalars["String"]>;
+    timestamp: Scalars["Float"];
+    users: Scalars["Float"];
+};
+
+export type UsersAttachedMetricsResponse = {
+    __typename?: "UsersAttachedMetricsResponse";
+    data: Array<UsersAttachedMetricsDto>;
+    meta: Meta;
 };
 
 export type GetDataUsageQueryVariables = Exact<{
@@ -775,6 +830,24 @@ export type GetNodesByOrgQuery = {
             description: string;
             totalUser: number;
         }>;
+    };
+};
+
+export type GetNodeDetailsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetNodeDetailsQuery = {
+    __typename?: "Query";
+    getNodeDetails: {
+        __typename?: "NodeDetailDto";
+        id: string;
+        modelType: string;
+        serial: number;
+        macAddress: number;
+        osVersion: number;
+        manufacturing: number;
+        ukamaOS: number;
+        hardware: number;
+        description: string;
     };
 };
 
@@ -1433,6 +1506,71 @@ export type GetNodesByOrgLazyQueryHookResult = ReturnType<
 export type GetNodesByOrgQueryResult = Apollo.QueryResult<
     GetNodesByOrgQuery,
     GetNodesByOrgQueryVariables
+>;
+export const GetNodeDetailsDocument = gql`
+    query getNodeDetails {
+        getNodeDetails {
+            id
+            modelType
+            serial
+            macAddress
+            osVersion
+            manufacturing
+            ukamaOS
+            hardware
+            description
+        }
+    }
+`;
+
+/**
+ * __useGetNodeDetailsQuery__
+ *
+ * To run a query within a React component, call `useGetNodeDetailsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeDetailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeDetailsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodeDetailsQuery(
+    baseOptions?: Apollo.QueryHookOptions<
+        GetNodeDetailsQuery,
+        GetNodeDetailsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodeDetailsQuery, GetNodeDetailsQueryVariables>(
+        GetNodeDetailsDocument,
+        options
+    );
+}
+export function useGetNodeDetailsLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeDetailsQuery,
+        GetNodeDetailsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetNodeDetailsQuery,
+        GetNodeDetailsQueryVariables
+    >(GetNodeDetailsDocument, options);
+}
+export type GetNodeDetailsQueryHookResult = ReturnType<
+    typeof useGetNodeDetailsQuery
+>;
+export type GetNodeDetailsLazyQueryHookResult = ReturnType<
+    typeof useGetNodeDetailsLazyQuery
+>;
+export type GetNodeDetailsQueryResult = Apollo.QueryResult<
+    GetNodeDetailsQuery,
+    GetNodeDetailsQueryVariables
 >;
 export const MyUsersDocument = gql`
     query myUsers($orgId: String!) {

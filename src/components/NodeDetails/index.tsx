@@ -5,6 +5,7 @@ import { NodeDetailsPanel, NodeDetailsCard } from "../../components";
 interface NodeDetailsProps {
     detailsList: Array<{
         title: string;
+        loading?: any;
         renderPropertyStats?: boolean;
         image?: { src: string; alt: string };
         button?: { label: string; onClick: Function };
@@ -38,16 +39,19 @@ const NodeDetails = ({ detailsList }: NodeDetailsProps) => {
                     ))}
                 </Tabs>
                 <Stack spacing={2}>
-                    {detailsList.map(({ title, properties }, index) => (
-                        <NodeDetailsCard
-                            key={index}
-                            index={index}
-                            title={title}
-                            value={selectedDetail}
-                            properties={properties}
-                            onClick={() => setSelectedDetail(index)}
-                        />
-                    ))}
+                    {detailsList.map(
+                        ({ title, loading, properties }, index) => (
+                            <NodeDetailsCard
+                                key={index}
+                                index={index}
+                                title={title}
+                                loading={loading}
+                                value={selectedDetail}
+                                properties={properties}
+                                onClick={() => setSelectedDetail(index)}
+                            />
+                        )
+                    )}
                 </Stack>
             </Grid>
             <Grid item xs={12} md={8}>
