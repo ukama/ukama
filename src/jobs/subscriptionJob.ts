@@ -11,6 +11,10 @@ import {
     GET_NODE_META_DATA_QUERY,
     GET_NODE_PHYSICAL_HEALTH_QUERY,
     GET_NODE_RF_KPI_QUERY,
+    GET_TEMPERATURE_METRICS_QUERY,
+    GET_IO_METRICS_QUERY,
+    GET_THROUGHPUT_METRICS_QUERY,
+    GET_MEMORY_USAGE_METRICS_QUERY,
 } from "../common/graphql";
 
 import {
@@ -98,9 +102,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_USERS_ATTACHED_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -108,9 +109,6 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_CPU_USAGE_METRICS_QUERY,
-            variableValues: {
-                input: meta,
-            },
             contextValue: {
                 req: HEADER,
             },
@@ -118,6 +116,34 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_NODE_RF_KPI_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_TEMPERATURE_METRICS_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_IO_METRICS_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_THROUGHPUT_METRICS_QUERY,
+            contextValue: {
+                req: HEADER,
+            },
+        });
+        await graphql({
+            schema,
+            source: GET_MEMORY_USAGE_METRICS_QUERY,
             variableValues: {
                 input: meta,
             },

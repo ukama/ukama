@@ -6,22 +6,22 @@ import {
     PubSub,
 } from "type-graphql";
 import { Service } from "typedi";
-import { NodeRFDto } from "../types";
+import { ThroughputMetricsDto } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetNodeRFKPIResolver {
+export class GetThroughputMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => [NodeRFDto])
+    @Query(() => [ThroughputMetricsDto])
     @UseMiddleware(Authentication)
-    async getNodeRFKPI(
+    async getThroughputMetrics(
         @PubSub() pubsub: PubSubEngine
-    ): Promise<[NodeRFDto] | null> {
-        const nodeRF = this.nodeService.nodeRF();
-        pubsub.publish("getNodeRFKPI", nodeRF);
-        return nodeRF;
+    ): Promise<[ThroughputMetricsDto]> {
+        const throughputMetrics = this.nodeService.getThroughputMetrics();
+        pubsub.publish("throughputMetrics", throughputMetrics);
+        return throughputMetrics;
     }
 }

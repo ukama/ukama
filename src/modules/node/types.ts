@@ -182,7 +182,7 @@ export class NodePhysicalHealthDto {
     temperature: number;
 
     @Field()
-    memory: number;
+    Memory: number;
 
     @Field()
     cpu: number;
@@ -192,7 +192,7 @@ export class NodePhysicalHealthDto {
 }
 
 @ObjectType()
-export class GraphDto {
+export class ThroughputMetricsDto {
     @Field()
     uv: number;
 
@@ -219,12 +219,6 @@ export class CpuUsageMetricsDto {
 }
 
 @ObjectType()
-export class CpuUsageMetricsResponse extends PaginationResponse {
-    @Field(() => [CpuUsageMetricsDto])
-    data: CpuUsageMetricsDto[];
-}
-
-@ObjectType()
 export class NodeRFDto {
     @Field()
     qam: number;
@@ -240,7 +234,40 @@ export class NodeRFDto {
 }
 
 @ObjectType()
-export class NodeRFDtoResponse extends PaginationResponse {
-    @Field(() => [NodeRFDto])
-    data: NodeRFDto[];
+export class TemperatureMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    temperature: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class IOMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    input: number;
+
+    @Field()
+    output: number;
+
+    @Field()
+    timestamp: number;
+}
+
+@ObjectType()
+export class MemoryUsageMetricsDto {
+    @Field({ nullable: true })
+    id: string;
+
+    @Field()
+    usage: number;
+
+    @Field()
+    timestamp: number;
 }

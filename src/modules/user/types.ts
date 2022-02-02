@@ -289,9 +289,3 @@ export class UsersAttachedMetricsDto {
     @Field()
     timestamp: number;
 }
-
-@ObjectType()
-export class UsersAttachedMetricsResponse extends PaginationResponse {
-    @Field(() => [UsersAttachedMetricsDto])
-    data: UsersAttachedMetricsDto[];
-}

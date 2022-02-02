@@ -21,9 +21,12 @@ import {
     nodePhysicalHealth,
     nodeRF,
     getNodeNetwork,
-    getNodeGraph,
     getCpuUsageMetrics,
     getUsersAttachedMetrics,
+    getTemperatureMetrics,
+    getIOMetrics,
+    getThroughputMetrics,
+    getMemoryUsageMetrics,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -50,7 +53,10 @@ export const mockServer = (app: Express): void => {
     app.get("/node/physical_health", nodePhysicalHealth);
     app.get("/node/rf_kpis", nodeRF);
     app.get("/node/get_network", getNodeNetwork);
-    app.get("/node/graph", getNodeGraph);
+    app.get("/metrics/throughput", getThroughputMetrics);
     app.get("/metrics/cpu", getCpuUsageMetrics);
     app.get("/metrics/user", getUsersAttachedMetrics);
+    app.get("/metrics/temperature", getTemperatureMetrics);
+    app.get("/metrics/io", getIOMetrics);
+    app.get("/metrics/memory", getMemoryUsageMetrics);
 };

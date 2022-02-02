@@ -6,10 +6,6 @@ import {
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDto,
-    CpuUsageMetricsResponse,
-    CpuUsageMetricsDto,
-    NodeRFDto,
-    NodeRFDtoResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 
@@ -53,35 +49,7 @@ class NodeMapper implements INodeMapper {
         const totalNodes = nodes.length;
         return { orgName, nodes, activeNodes, totalNodes };
     };
-    dtoToCpuUsageMetricsDto = (
-        res: CpuUsageMetricsResponse
-    ): CpuUsageMetricsDto[] => {
-        const cpuUsageMetrics: CpuUsageMetricsDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                id: metric.id,
-                usage: metric.usage,
-                timestamp: metric.timestamp,
-            };
-            cpuUsageMetrics.push(metricObj);
-        }
 
-        return cpuUsageMetrics;
-    };
-    dtoToNodeRFKPIDto = (res: NodeRFDtoResponse): NodeRFDto[] => {
-        const cpuUsageMetrics: NodeRFDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                qam: metric.qam,
-                rfOutput: metric.rfOutput,
-                rssi: metric.rssi,
-                timestamp: metric.timestamp,
-            };
-            cpuUsageMetrics.push(metricObj);
-        }
-
-        return cpuUsageMetrics;
-    };
     private getNode = (id: string, status: ORG_NODE_STATE): NodeDto => {
         return {
             id: id,

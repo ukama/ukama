@@ -6,22 +6,22 @@ import {
     PubSub,
 } from "type-graphql";
 import { Service } from "typedi";
-import { NodeRFDto } from "../types";
 import { NodeService } from "../service";
+import { IOMetricsDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetNodeRFKPIResolver {
+export class GetIOMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => [NodeRFDto])
+    @Query(() => [IOMetricsDto])
     @UseMiddleware(Authentication)
-    async getNodeRFKPI(
+    async getIOMetrics(
         @PubSub() pubsub: PubSubEngine
-    ): Promise<[NodeRFDto] | null> {
-        const nodeRF = this.nodeService.nodeRF();
-        pubsub.publish("getNodeRFKPI", nodeRF);
-        return nodeRF;
+    ): Promise<[IOMetricsDto] | null> {
+        const ioMetrics = this.nodeService.ioMetrics();
+        pubsub.publish("ioMetrics", ioMetrics);
+        return ioMetrics;
     }
 }

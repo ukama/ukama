@@ -6,22 +6,22 @@ import {
     PubSub,
 } from "type-graphql";
 import { Service } from "typedi";
-import { NodeRFDto } from "../types";
 import { NodeService } from "../service";
+import { MemoryUsageMetricsDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetNodeRFKPIResolver {
+export class GetMemoryUsageMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => [NodeRFDto])
+    @Query(() => [MemoryUsageMetricsDto])
     @UseMiddleware(Authentication)
-    async getNodeRFKPI(
+    async getMemoryUsageMetrics(
         @PubSub() pubsub: PubSubEngine
-    ): Promise<[NodeRFDto] | null> {
-        const nodeRF = this.nodeService.nodeRF();
-        pubsub.publish("getNodeRFKPI", nodeRF);
-        return nodeRF;
+    ): Promise<[MemoryUsageMetricsDto] | null> {
+        const memoryUsageMetrics = this.nodeService.memoryUsageMetrics();
+        pubsub.publish("memoryUsageMetrics", memoryUsageMetrics);
+        return memoryUsageMetrics;
     }
 }

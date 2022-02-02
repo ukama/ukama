@@ -14,11 +14,7 @@ import {
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
-    NodeRFDto,
-    GraphDto,
-    CpuUsageMetricsDto,
-    CpuUsageMetricsResponse,
-    NodeRFDtoResponse,
+    ThroughputMetricsDto,
 } from "./types";
 
 export interface INodeService {
@@ -27,7 +23,7 @@ export interface INodeService {
     getNodeDetials(): Promise<NodeDetailDto>;
     nodeMetaData(): Promise<NodeMetaDataDto>;
     nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
-    getNodeGraph(): Promise<[GraphDto]>;
+    getThroughputMetrics(): Promise<[ThroughputMetricsDto]>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType
@@ -39,7 +35,5 @@ export interface INodeService {
 
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
-    dtoToNodeRFKPIDto(req: NodeRFDtoResponse): NodeRFDto[];
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
-    dtoToCpuUsageMetricsDto(req: CpuUsageMetricsResponse): CpuUsageMetricsDto[];
 }

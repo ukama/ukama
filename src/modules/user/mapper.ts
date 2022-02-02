@@ -1,8 +1,6 @@
 import { GET_STATUS_TYPE } from "../../constants";
 import { IUserMapper } from "./interface";
 import {
-    UsersAttachedMetricsDto,
-    UsersAttachedMetricsResponse,
     ConnectedUserDto,
     ConnectedUserResponse,
     GetUserDto,
@@ -72,21 +70,6 @@ class UserMapper implements IUserMapper {
             orgName,
             users,
         };
-    };
-    dtoToUsersAttachedMetricsDto = (
-        res: UsersAttachedMetricsResponse
-    ): UsersAttachedMetricsDto[] => {
-        const activeUserMetrics: UsersAttachedMetricsDto[] = [];
-        for (const metric of res.data) {
-            const metricObj = {
-                id: metric.id,
-                users: metric.users,
-                timestamp: metric.timestamp,
-            };
-            activeUserMetrics.push(metricObj);
-        }
-
-        return activeUserMetrics;
     };
 }
 export default <IUserMapper>new UserMapper();

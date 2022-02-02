@@ -6,22 +6,22 @@ import {
     PubSub,
 } from "type-graphql";
 import { Service } from "typedi";
-import { NodeRFDto } from "../types";
 import { NodeService } from "../service";
+import { TemperatureMetricsDto } from "../types";
 import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
-export class GetNodeRFKPIResolver {
+export class GetTemperatureMetricsResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Query(() => [NodeRFDto])
+    @Query(() => [TemperatureMetricsDto])
     @UseMiddleware(Authentication)
-    async getNodeRFKPI(
+    async getTemperatureMetrics(
         @PubSub() pubsub: PubSubEngine
-    ): Promise<[NodeRFDto] | null> {
-        const nodeRF = this.nodeService.nodeRF();
-        pubsub.publish("getNodeRFKPI", nodeRF);
-        return nodeRF;
+    ): Promise<[TemperatureMetricsDto] | null> {
+        const temperatureMetrics = this.nodeService.temperatureMetrics();
+        pubsub.publish("temperatureMetrics", temperatureMetrics);
+        return temperatureMetrics;
     }
 }

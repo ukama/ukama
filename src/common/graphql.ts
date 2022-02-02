@@ -175,9 +175,10 @@ export const GET_BILL_HISTORY = `
             description
             date
             totalUsage
-            subtotal}
+            subtotal
         }
-    `;
+    }
+`;
 
 export const GET_NETWORK_QUERY = `
     query getNetwork($data:NETWORK_TYPE!) {
@@ -206,7 +207,7 @@ export const DEACTIVATE_USER_MUTATION = `
         deactivateUser(id:$input){
             id
             success
-          }
+        }
     }
 `;
 
@@ -225,7 +226,7 @@ export const DELETE_NODE_MUTATION = `
         deleteNode(id:$input){
             id
             success
-          }
+        }
     }
 `;
 
@@ -258,7 +259,7 @@ export const GET_NODE_DETAILS_QUERY = `
             ukamaOS
             hardware
             description
-          }
+        }
     }
 `;
 
@@ -266,10 +267,10 @@ export const GET_NODE_PHYSICAL_HEALTH_QUERY = `
     query getNodePhysicalHealth {
         getNodePhysicalHealth { 
             temperature
-            memory
+            Memory
             cpu
             io
-          }
+        }
     }
 `;
 
@@ -278,7 +279,7 @@ export const GET_NODE_META_DATA_QUERY = `
         getNodeMetaData { 
             throughput
             usersAttached
-          }
+        }
     }
 `;
 
@@ -288,61 +289,81 @@ export const GET_NODE_NETWORK = `
             id
             status
             description
-          }
-          }
-`;
-
-export const GET_USERS_ATTACHED_METRICS_QUERY = `
-    query getUsersAttachedMetrics($input:PaginationDto!) {
-        getUsersAttachedMetrics(data:$input){
-        meta{
-            count
-            page
-            size
-            pages
-        }
-        data{
-            id
-            users
-            timestamp
-        }
         }
     }
 `;
 
+export const GET_USERS_ATTACHED_METRICS_QUERY = `
+query getUsersAttachedMetrics {
+    getUsersAttachedMetrics {
+     id
+      users
+      timestamp
+    }
+  }  
+`;
+
 export const GET_CPU_USAGE_METRICS_QUERY = `
-    query getCpuUsageMetrics($input: PaginationDto!) {
-        getCpuUsageMetrics(data: $input) {
-        meta {
-            count
-            page
-            size
-            pages
-        }
-        data {
-            id
-            usage
-            timestamp
-        }
+query getCpuUsageMetrics {
+    getCpuUsageMetrics {
+      id
+      usage
+      timestamp
+    }
+  }  
+`;
+
+export const GET_NODE_RF_KPI_QUERY = `
+query getNodeRFKPI {
+    getNodeRFKPI {
+      qam
+      rfOutput
+      rssi
+      timestamp
     }
   }
 `;
 
-export const GET_NODE_RF_KPI_QUERY = `
-query getNodeRFKPI($input: PaginationDto!) {
-    getNodeRFKPI(data: $input) {
-      meta {
-        count
-        page
-        size
-        pages
-      }
-      data {
-        qam
-        rfOutput
-        rssi
-        timestamp
-      }
+export const GET_TEMPERATURE_METRICS_QUERY = `
+query getTemperatureMetrics {
+    getTemperatureMetrics {
+      id
+      temperature
+      timestamp
+    }
+  }
+  
+`;
+
+export const GET_IO_METRICS_QUERY = `
+query getIOMetrics {
+    getIOMetrics {
+      id
+      input
+      output
+      timestamp
+    }
+  }  
+`;
+
+export const GET_THROUGHPUT_METRICS_QUERY = `
+query getThroughputMetrics {
+    getThroughputMetrics {
+      uv
+      pv
+      amt
+      time
+    }
+  }  
+`;
+
+export const GET_MEMORY_USAGE_METRICS_QUERY = `
+    query getMemoryUsageMetrics {
+        getMemoryUsageMetrics {
+            id
+            usage
+            timestamp
+        }
     }
   }
 `;
