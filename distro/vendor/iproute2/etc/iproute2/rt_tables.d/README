@@ -1,2 +1,0 @@
-Each file in this directory is an rt_tables configuration file. iproute2
-commands scan this directory processing all files that end in '.conf'.

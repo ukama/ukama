@@ -23,6 +23,7 @@ BB_ROOT=${SYS_ROOT}/busybox
 INIT_ROOT=${SYS_ROOT}/init
 LXCE_ROOT=${SYS_ROOT}/lxce
 MICRO_INIT_ROOT=${INIT_ROOT}/src/micros
+DHCPCD_SRC_ROOT=${UKAMA_OS}/distro/system/dhcpcd
 
 # Release related parameters
 PREINIT_REL=${MICRO_INIT_ROOT}/preInit/target/x86_64-unknown-linux-musl/release
@@ -129,21 +130,49 @@ build_ip_utils() {
     if [ "${TARGET}" != "local" ]
     then
 	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+	XTARGET=${TARGET}
     else
 	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+	XTARGET="linux"
     fi
-
+   
     # build and copy iptables
     cd ${VENDOR_ROOT}
-    make XGCCPATH=${XGCC_PATH}/ iptables
-    make XGCCPATH=${XGCC_PATH}/ iproute2
+    make TARGET=${XTARGET} XGCCPATH=${XGCC_PATH}/ DEPDIR=${ROOTFS} iptables
+    make TARGET=${XTARGET} XGCCPATH=${XGCC_PATH}/ DEPDIR=${ROOTFS} iproute2
 
-    copy_file ${VENDOR_BUILD}/sbin/iptables $ROOTFS/sbin/
+    #copy_file ${VENDOR_BUILD}/sbin/iptables $ROOTFS/sbin/
     # remove the link to busybox
-    rm $ROOTFS/sbin/ip
-    copy_file ${VENDOR_BUILD}/sbin/ip $ROOTFS/sbin/
-
+    #rm $ROOTFS/sbin/ip
+    sync
+    rm -rf ${ROOTFS}/*.Po 
+    rm -rf ${ROOTFS}/*.Plo
+    
+    #copy_file ${VENDOR_BUILD}/sbin/ip $ROOTFS/sbin/
+    sync
     cd ${CWD}
+}
+
+#
+# dhcpcd build
+#
+build_dhcpcd() {
+    CWD=`pwd`
+    
+    # setup proper compiler option
+    if [ "${TARGET}" != "local" ]
+    then
+        XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+    else
+        XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+    fi
+
+    # build and copy init micros
+    cd ${DHCPCD_SRC_ROOT}
+    make XGCCPATH=${XGCC_PATH} ROOTFSPATH=${ROOTFS}
+    cd ${CWD}
+    
+   log_info "dhcpcd successfully build"   
 }
 
 #
@@ -162,7 +191,13 @@ build_init() {
 
     # build and copy init micros
     cd ${MICRO_INIT_ROOT}
-    make clean; make
+    
+su $SUDO_USER << EOF
+    source ~/.profile
+    make clean
+    make
+EOF
+ 
     copy_file ${PREINIT_REL}/preInit ${ROOTFS}
     copy_file ${SYSINIT_REL}/sysInit ${ROOTFS}/boot/
 
@@ -172,9 +207,13 @@ build_init() {
     copy_file ${INIT_ROOT}/init $ROOTFS/boot
 
     # Go back and clean up
-    cd ${MICRO_INIT_ROOT}; make clean
+
+    #cd ${MICRO_INIT_ROOT}; make clean
     cd ${INIT_ROOT}; make clean
     cd ${CWD}
+	
+    # Hack to be removed later on. Copy temp init script to /
+    copy_file preInit.sh $ROOTFS/
 
     log_info "init successfully build" 
 }
@@ -211,6 +250,12 @@ build_lxce() {
    # Go back and clean up
    cd ${LXCE_ROOT}; make clean
    cd ${CWD}
+	
+   # overriding config lxce
+   # bridge if has to be for qemu not for host this need to fixed in lxce
+   # Also we need put some checks no wifi iface is added in here
+   # this is done for quick tests since we would only have eth0 availbale for us. 
+   copy_file config.toml ${ROOTFS}/conf/lxce/
 
    log_info "lxce.d successfully build"
 }
@@ -562,6 +607,9 @@ build_busybox
 log_info "Building system init, micros and lxce.d"
 build_init
 build_lxce
+
+log_info "Building dhcpcd"
+build_dhcpcd
 
 log_info "Building ip utils"
 build_ip_utils

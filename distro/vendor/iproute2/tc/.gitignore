@@ -1,5 +1,0 @@
-*.tab.c
-*.lex.c
-*.output
-*.tab.h
-tc

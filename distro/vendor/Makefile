@@ -89,7 +89,7 @@ LIST += protobuf-c
 LIST += libunistring
 LIST += libcap
 
-.PHONY: $(LIST)
+.PHONY: $(LIST) iptables iproute2 
 
 build: $(LIST)
 
@@ -429,18 +429,19 @@ sysctl:
 
 iptables:
 	$(call print_msg,"iptables")
-	(cd $@ && CC=${XCC} ./configure --disable-nftables --prefix=${DEPDIR} \
-		--exec-prefix=${DEPDIR} && \
-	$(MAKE) && ${MAKE} install && \
-	$(MAKE) clean)
+	(mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && cd ${BUILD_DIR} && \
+        CC=${XCC} ../configure --prefix=/ --host=${HOST} && \
+        $(MAKE) && $(MAKE) install DESTDIR=${DEPDIR} && \
+        $(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 iproute2:
 	$(call print_msg,"iproute2")
-	(cd $@ && CC=${XCC} ./configure && \
-	$(MAKE) clean && ${MAKE} && \
-	cp ./ip/ip ${DEPDIR}/sbin/ && \
-	$(MAKE) clean)
+	@echo "DESTDIR:"${DESTDIR}
+	(cd $@  && \
+        CC=${XCC} ./configure && \
+        $(MAKE) && $(MAKE) install DESTDIR=${DEPDIR} && \
+        $(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 
 clean:

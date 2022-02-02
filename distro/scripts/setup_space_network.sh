@@ -74,6 +74,7 @@ add_bridge() {
     # Setup host machine to allow NATing.
     $IPTABLES -t nat -A POSTROUTING -o ${BR} -j MASQUERADE
     $IPTABLES -t nat -A POSTROUTING -o ${IF} -j MASQUERADE
+
 }
 
 add_cspace() {
@@ -89,11 +90,8 @@ add_cspace() {
 
     # Bring up the host iface
     $IP link   set dev veth1_${SP} up
-    $IP tuntap add tap_${SP} mode tap
-    $IP link   set dev tap_${SP} up
 
     # Attach iface to the bridge
-    $IP link set tap_${SP}   master ${BR}
     $IP link set veth1_${SP} master ${BR}
 
     # Give address to the bridge
