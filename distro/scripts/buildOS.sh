@@ -192,11 +192,10 @@ build_init() {
     # build and copy init micros
     cd ${MICRO_INIT_ROOT}
     
-su $SUDO_USER << EOF
-    source ~/.profile
-    make clean
-    make
-EOF
+#su $SUDO_USER << EOF
+#    source ~/.profile
+    make clean;  make
+#EOF
  
     copy_file ${PREINIT_REL}/preInit ${ROOTFS}
     copy_file ${SYSINIT_REL}/sysInit ${ROOTFS}/boot/
