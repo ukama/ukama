@@ -90,6 +90,8 @@ LIST += libunistring
 LIST += libcap
 LIST += dhcpcd
 LIST += sysctl
+LIST += iptables
+LIST += iproute2
 
 .PHONY: $(LIST)
 
@@ -426,6 +428,22 @@ sysctl:
 	$(MAKE) clean && $(MAKE) CC="${XCC}" && \
 	cp ./sysctl ${DEPDIR}/sbin && \
 	cp 00-linuxkit.conf ${DEPDIR}/etc && \
+	$(MAKE) clean)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+iptables:
+	$(call print_msg,"iptables")
+	(cd $@ && CC=${XCC} ./configure --disable-nftables --prefix=${DEPDIR} \
+		--exec-prefix=${DEPDIR} && \
+	$(MAKE) && ${MAKE} install && \
+	$(MAKE) clean)
+	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
+iproute2:
+	$(call print_msg,"iproute2")
+	(cd $@ && CC=${XCC} ./configure && \
+	$(MAKE) clean && ${MAKE} && \
+	cp ./ip/ip ${DEPDIR}/sbin/ && \
 	$(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 

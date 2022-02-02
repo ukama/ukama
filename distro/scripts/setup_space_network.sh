@@ -9,6 +9,9 @@ UKAMA_OS=../../
 DEF_BRIDGE="ukama_bridge"
 MIN_ARGS=4
 
+IPTABLES=/sbin/iptables
+IP=/sbin/ip
+
 CMD="NaN"
 DEV="NaN"
 PID="NaN"
@@ -41,7 +44,7 @@ valid_args() {
     # --add bridge iface bridge_name
     if [ "${DEV}" = "cspace" ]; then
 	# Test valid PID
-	ps -p ${PID} > /dev/null
+	/bin/ps -p ${PID} > /dev/null
 	if [ "$?" -eq "1" ]
 	then
 	    exit 101
@@ -51,7 +54,7 @@ valid_args() {
     # --add cspace pid space_name bridge_name
     if [ "${DEV}" = "bridge" ]; then
 	# Test valid interface
-	ip -o a show | cut -d ' ' -f 2,7 | \
+	$IP -o a show | cut -d ' ' -f 2,7 | \
 	    awk '{print $1}' | grep ${IFACE} > /dev/null
 	if [ "$?" -eq "1" ]
 	then
@@ -66,11 +69,11 @@ add_bridge() {
     BR=$2
 
     # Setup bridge
-    ip link add ${BR} type bridge
+    $IP link add ${BR} type bridge
 
     # Setup host machine to allow NATing.
-    iptables -t nat -A POSTROUTING -o ${BR} -j MASQUERADE
-    iptables -t nat -A POSTROUTING -o ${IF} -j MASQUERADE
+    $IPTABLES -t nat -A POSTROUTING -o ${BR} -j MASQUERADE
+    $IPTABLES -t nat -A POSTROUTING -o ${IF} -j MASQUERADE
 }
 
 add_cspace() {
@@ -82,36 +85,36 @@ add_cspace() {
     NS=${SP}
 
     # Setup paired veth for each cspace on the host
-    ip link   add dev veth1_${SP} type veth peer name veth2_${SP}
+    $IP link   add dev veth1_${SP} type veth peer name veth2_${SP}
 
     # Bring up the host iface
-    ip link   set dev veth1_${SP} up
-    ip tuntap add tap_${SP} mode tap
-    ip link   set dev tap_${SP} up
+    $IP link   set dev veth1_${SP} up
+    $IP tuntap add tap_${SP} mode tap
+    $IP link   set dev tap_${SP} up
 
     # Attach iface to the bridge
-    ip link set tap_${SP}   master ${BR}
-    ip link set veth1_${SP} master ${BR}
+    $IP link set tap_${SP}   master ${BR}
+    $IP link set veth1_${SP} master ${BR}
 
     # Give address to the bridge
-    ip addr add 10.0.0.1/24 dev ${BR}
-    ip link set dev ${BR} up
+    $IP addr add 10.0.0.1/24 dev ${BR}
+    $IP link set dev ${BR} up
 
     # setup named network namespace and attach to cspace PID
-    ip netns add ${NS}
-    ip netns attach ${NS} ${ID}
+    /bin/mkdir -p /var/run/netns/
+    $IP netns add ${NS}
+    $IP netns attach ${NS} ${ID}
 
     # Move the veth2 into network namespace
-    ip link set veth2_${SP} netns ${NS}
+    $IP link set veth2_${SP} netns ${NS}
 
     # Enable loopback interface on the new namespace
-    ip netns exec ${NS} ip link set dev lo up
+    $IP netns exec ${NS} $IP link set dev lo up
 
     # Setup the veth2 on the cspace
-    ip netns exec ${NS} ip addr add 10.0.0.2/24 dev veth2_${SP}
-    ip netns exec ${NS} ip link set dev veth2_${SP} up
-    ip netns exec ${NS} ip route add default via 10.0.0.1
-
+    $IP netns exec ${NS} $IP addr add 10.0.0.2/24 dev veth2_${SP}
+    $IP netns exec ${NS} $IP link set dev veth2_${SP} up
+    $IP netns exec ${NS} $IP route add default via 10.0.0.1
 }
 
 # Script main
@@ -145,7 +148,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 # Test PID and IFACE are valid
-valid_args
+#valid_args
 
 if [ "$CMD" = "add" ]; then
     if [ "${DEV}" = "bridge" ]; then

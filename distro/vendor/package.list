@@ -29,3 +29,5 @@ yder			GNU LGPL v2.1                   ./yder/LICENSE 				https://github.com/bab
 zlib						        ./zlib/README				https://github.com/madler/zlib
 dhcpcd							./dhcpcd/LICENSE			https://github.com/NetworkConfiguration/dhcpcd.git
 sysctl			Apache License 2.0		./sysctl/LICENSE			https://github.com/linuxkit/linuxkit.git
+iptables		GNU GPL v2			https://www.netfilter.org/licensing.html https://git.netfilter.org/iptables/
+iproute2		GNU GPL				./iproute2/COPYING			https://mirrors.edge.kernel.org/pub/linux/utils/net/iproute2/

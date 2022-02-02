@@ -14,6 +14,8 @@
 
 # Base parameters
 UKAMA_OS=`realpath ../../.`
+VENDOR_ROOT=${UKAMA_OS}/distro/vendor
+VENDOR_BUILD=${VENDOR_ROOT}/build/
 SYS_ROOT=${UKAMA_OS}/distro/system
 SCRIPTS_ROOT=${UKAMA_OS}/distro/scripts
 CAPPS_ROOT=${UKAMA_OS}/distro/capps
@@ -115,6 +117,33 @@ copy_all_libs() {
 	    fi
 	done
     done
+}
+
+#
+# Build ip utilies (iptables and ip)
+#
+build_ip_utils() {
+    CWD=`pwd`
+
+    # setup proper compiler option
+    if [ "${TARGET}" != "local" ]
+    then
+	XGCC_PATH=${UKAMA_OS}/distro/tools/musl-cross-make/output/bin
+    else
+	XGCC_PATH=`which gcc | awk 'BEGIN{FS=OFS="/"}{NF--; print}'`
+    fi
+
+    # build and copy iptables
+    cd ${VENDOR_ROOT}
+    make XGCCPATH=${XGCC_PATH}/ iptables
+    make XGCCPATH=${XGCC_PATH}/ iproute2
+
+    copy_file ${VENDOR_BUILD}/sbin/iptables $ROOTFS/sbin/
+    # remove the link to busybox
+    rm $ROOTFS/sbin/ip
+    copy_file ${VENDOR_BUILD}/sbin/ip $ROOTFS/sbin/
+
+    cd ${CWD}
 }
 
 #
@@ -349,9 +378,12 @@ build_rootfs_dirs() {
     DIRS="proc ${DIRS}"
     DIRS="run  ${DIRS}"
     DIRS="var/log ${DIRS}"
+    DIRS="var/run/netns ${DIRS}"
 
     cd ${ROOTFS}
     mkdir -p ${DIRS}
+
+    mkdir -p /var/run/netns
     build_etc_dirs
     build_usr_dirs
 
@@ -531,6 +563,9 @@ log_info "Building system init, micros and lxce.d"
 build_init
 build_lxce
 
+log_info "Building ip utils"
+build_ip_utils
+
 log_info "Building capps"
 build_capps
 
@@ -544,12 +579,14 @@ setup_device
 cp setup_space_network.sh ${ROOTFS}/sbin/
 
 log_info "Copying all lib for executables"
-EXEC="${ROOTFS}/sbin/busybox"
-EXEC="${ROOTFS}/boot/preInit ${EXEC}"
-EXEC="${ROOTFS}/boot/sysInit ${EXEC}"
-EXEC="${ROOTFS}/boot/init    ${EXEC}"
-EXEC="${ROOTFS}/sbin/lxce.d  ${EXEC}"
-copy_all_libs ${EXEC}
+EXEC="${ROOTFS}/bin/busybox"
+EXEC="${EXEC} ${ROOTFS}/boot/preInit"
+EXEC="${EXEC} ${ROOTFS}/boot/sysInit"
+EXEC="${EXEC} ${ROOTFS}/boot/init"
+EXEC="${EXEC} ${ROOTFS}/sbin/lxce.d"
+EXCE="${EXEC} ${ROOTFS}/sbin/iptables"
+EXEC="${EXEC} ${ROOTFS}/sbin/ip"
+copy_all_libs "${EXEC}"
 
 # Change ownership and create archieve
 log_info "Changing ownership, updating permission and creating cpio archive"
