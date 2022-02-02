@@ -4,7 +4,7 @@ import { NodeDetails, NodeStatus, LoadingWrapper } from "../../components";
 import { useGetNodesByOrgQuery, useGetNodeDetailsQuery } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
-import { NodePlaceholder, NodePlaceholderAlt } from "../../assets/images";
+import { NodePlaceholder } from "../../assets/images";
 
 const Nodes = () => {
     const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
@@ -37,8 +37,9 @@ const Nodes = () => {
                         <NodeDetails
                             detailsList={[
                                 {
+                                    loading: nodeDetailsResLoading,
                                     title: "Node Details",
-                                    renderPropertyStats: false,
+
                                     image: {
                                         alt: "Node Image",
                                         src: NodePlaceholder,
@@ -55,7 +56,7 @@ const Nodes = () => {
                                             value: `${nodeDetailsRes?.getNodeDetails.modelType}`,
                                         },
                                         {
-                                            name: "Serial #",
+                                            name: "Serial#",
                                             value: `${nodeDetailsRes?.getNodeDetails.serial}`,
                                         },
                                         {
@@ -67,7 +68,7 @@ const Nodes = () => {
                                             value: `${nodeDetailsRes?.getNodeDetails.osVersion}`,
                                         },
                                         {
-                                            name: "Manufacturing #",
+                                            name: "Manufacturing#",
                                             value: `${nodeDetailsRes?.getNodeDetails.manufacturing}`,
                                         },
                                         {
@@ -86,6 +87,7 @@ const Nodes = () => {
                                 },
                                 {
                                     title: "Meta Data",
+
                                     properties: [
                                         {
                                             name: "Throughput",
@@ -99,6 +101,7 @@ const Nodes = () => {
                                 },
                                 {
                                     title: "Physical Health",
+
                                     image: {
                                         alt: "Node Image Alt",
                                         src: "NodePlaceholderAlt",
