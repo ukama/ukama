@@ -9,9 +9,9 @@ import StatusCard from "./StatusCard";
 import TextSelect from "./TextSelect";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
-import NodeDetails from "./NodeDetails";
 import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
+import NodeInfoCard from "./NodeInfoCard";
 import AlertSettings from "./AlertSettings";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
@@ -24,10 +24,8 @@ import SimpleDataTable from "./SimpleDataTable";
 import PagePlaceholder from "./PagePlaceholder";
 import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
-import NodeDetailsPanel from "./NodeDetailsPanel";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
-import NodePropertyStats from "./NodePropertyStats";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
@@ -49,12 +47,12 @@ export {
     NodeStatus,
     TextSelect,
     StatusCard,
-    NodeDetails,
     CurrentBill,
     TableHeader,
     BasicDialog,
     NodeSettings,
     UserSettings,
+    NodeInfoCard,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,
@@ -62,16 +60,14 @@ export {
     NodeContainer,
     OptionsPopover,
     LoadingWrapper,
-    NodeDetailsCard,
     NetworkSettings,
+    NodeDetailsCard,
     SimpleDataTable,
     PagePlaceholder,
     ContainerHeader,
-    NodeDetailsPanel,
     UpgradeNavFooter,
     ActivationDialog,
     BillingDataTable,
-    NodePropertyStats,
     UserDetailsDialog,
     MultiSlideCarousel,
     withAuthWrapperHOC,

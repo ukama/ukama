@@ -1,156 +1,118 @@
 import { useState } from "react";
-import { Box, Grid } from "@mui/material";
-import { NodeDetails, NodeStatus, LoadingWrapper } from "../../components";
-import { useGetNodesByOrgQuery, useGetNodeDetailsQuery } from "../../generated";
 import { useRecoilValue } from "recoil";
+import { RoundedCard } from "../../styles";
+import { Box, Grid, Stack } from "@mui/material";
 import { isSkeltonLoading, organizationId } from "../../recoil";
-import { NodePlaceholder } from "../../assets/images";
+import {
+    NodeDetailsCard,
+    NodeStatus,
+    NodeInfoCard,
+    LoadingWrapper,
+    PagePlaceholder,
+} from "../../components";
+import {
+    NODES,
+    NODE_PROPERTIES8,
+    NODE_PROPERTIES2,
+    NODE_PROPERTIES4,
+    NODE_PROPERTIES3,
+} from "../../constants/stubData";
+import { useGetNodesByOrgQuery } from "../../generated";
 
 const Nodes = () => {
-    const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
+    const [selectedNodeIndex, setSelectedNodeIndex] = useState(1);
+    const [selectedTab, setSelectedTab] = useState(1);
     const orgId = useRecoilValue(organizationId);
-    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
     });
-    const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
-        useGetNodeDetailsQuery();
+    // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
+    //     useGetNodeDetailsQuery();
+
+    const onTabSelected = (value: number) => setSelectedTab(value);
+
+    const isLoading = skeltonLoading || nodesLoading;
+
+    if (nodesRes && nodesRes?.getNodesByOrg?.nodes?.length === 0)
+        return (
+            <RoundedCard
+                sx={{
+                    p: 0,
+                    mt: 3,
+                    mb: 2,
+                    borderRadius: "4px",
+                    height: "calc(100% - 15%)",
+                }}
+            >
+                <PagePlaceholder description="Order your node now." />
+            </RoundedCard>
+        );
 
     return (
-        <Box sx={{ height: "calc(100vh - 8vh)" }}>
-            <Box sx={{ flexGrow: 1 }}>
-                <Grid container spacing={3}>
-                    <Grid xs={12} item>
-                        <LoadingWrapper
-                            width="100%"
-                            height="30px"
-                            isLoading={isSkeltonLoad || nodesLoading}
-                        >
-                            <NodeStatus
-                                nodes={nodesRes?.getNodesByOrg?.nodes}
-                                selectedNodeIndex={selectedNodeIndex}
-                                setSelectedNodeIndex={setSelectedNodeIndex}
-                            />
-                        </LoadingWrapper>
-                    </Grid>
-                    <Grid xs={12} item container spacing={3}>
-                        <NodeDetails
-                            detailsList={[
-                                {
-                                    loading: nodeDetailsResLoading,
-                                    title: "Node Details",
-
-                                    image: {
-                                        alt: "Node Image",
-                                        src: NodePlaceholder,
-                                    },
-                                    button: {
-                                        label: "view diagnostics",
-                                        onClick: () => {
-                                            return;
-                                        },
-                                    },
-                                    properties: [
-                                        {
-                                            name: "Model type",
-                                            value: `${nodeDetailsRes?.getNodeDetails.modelType}`,
-                                        },
-                                        {
-                                            name: "Serial#",
-                                            value: `${nodeDetailsRes?.getNodeDetails.serial}`,
-                                        },
-                                        {
-                                            name: "MAC address",
-                                            value: `${nodeDetailsRes?.getNodeDetails.macAddress}`,
-                                        },
-                                        {
-                                            name: "OS version",
-                                            value: `${nodeDetailsRes?.getNodeDetails.osVersion}`,
-                                        },
-                                        {
-                                            name: "Manufacturing#",
-                                            value: `${nodeDetailsRes?.getNodeDetails.manufacturing}`,
-                                        },
-                                        {
-                                            name: "Ukama OS",
-                                            value: `${nodeDetailsRes?.getNodeDetails.ukamaOS}`,
-                                        },
-                                        {
-                                            name: "Hardware",
-                                            value: `${nodeDetailsRes?.getNodeDetails.hardware}`,
-                                        },
-                                        {
-                                            name: "Description",
-                                            value: `${nodeDetailsRes?.getNodeDetails.description}`,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "Meta Data",
-
-                                    properties: [
-                                        {
-                                            name: "Throughput",
-                                            value: `i3iopwiopiwpoe`,
-                                        },
-                                        {
-                                            name: "Users Attached",
-                                            value: 12,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "Physical Health",
-
-                                    image: {
-                                        alt: "Node Image Alt",
-                                        src: "NodePlaceholderAlt",
-                                    },
-                                    properties: [
-                                        {
-                                            name: "Temperature",
-                                            value: `98398`,
-                                        },
-                                        {
-                                            name: "Memory",
-                                            value: `92839`,
-                                        },
-                                        {
-                                            name: "CPU",
-                                            value: `392`,
-                                        },
-                                        {
-                                            name: "IO",
-                                            value: `28`,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "RF KPIs",
-                                    image: {
-                                        alt: "Node Image Alt",
-                                        src: "NodePlaceholderAlt",
-                                    },
-                                    properties: [
-                                        {
-                                            name: "QAM",
-                                            value: `343`,
-                                        },
-                                        {
-                                            name: "RF Output",
-                                            value: `32`,
-                                        },
-                                        {
-                                            name: "RSSI",
-                                            value: `23`,
-                                        },
-                                    ],
-                                },
-                            ]}
-                        />
-                    </Grid>
+        <Box
+            sx={{
+                p: 0,
+                mt: 3,
+                pb: 2,
+            }}
+        >
+            <Grid container spacing={2}>
+                <Grid item xs={12}>
+                    <NodeStatus
+                        selectedNodeIndex={selectedNodeIndex}
+                        setSelectedNodeIndex={setSelectedNodeIndex}
+                        nodes={nodesRes?.getNodesByOrg?.nodes || NODES}
+                    />
                 </Grid>
-            </Box>
+                <Grid item container xs={4}>
+                    <Stack spacing={2} sx={{ width: "100%" }}>
+                        <NodeInfoCard
+                            index={1}
+                            loading={isLoading}
+                            title={"Node Detail"}
+                            properties={NODE_PROPERTIES8}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 1}
+                        />
+                        <NodeInfoCard
+                            index={2}
+                            loading={isLoading}
+                            title={"Meta Data"}
+                            properties={NODE_PROPERTIES2}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 2}
+                        />
+                        <NodeInfoCard
+                            index={3}
+                            loading={isLoading}
+                            title={"Physical Health"}
+                            properties={NODE_PROPERTIES4}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 3}
+                        />
+                        <NodeInfoCard
+                            index={4}
+                            loading={isLoading}
+                            title={"RF KPIs"}
+                            properties={NODE_PROPERTIES3}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 4}
+                        />
+                    </Stack>
+                </Grid>
+                <Grid item container xs={8}>
+                    <RoundedCard sx={{ borderRadius: "4px" }}>
+                        <LoadingWrapper
+                            height={"70%"}
+                            radius={"small"}
+                            isLoading={isLoading}
+                        >
+                            {selectedTab === 1 && <NodeDetailsCard />}
+                        </LoadingWrapper>
+                    </RoundedCard>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

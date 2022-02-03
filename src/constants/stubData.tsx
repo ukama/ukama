@@ -1,4 +1,3 @@
-import { NodePlaceholder, NodePlaceholderAlt } from "../assets/images";
 const RechartsData = [
     {
         name: "Page A",
@@ -202,85 +201,97 @@ const NodesData = [
     },
 ];
 
-const NodeDetailsStub = [
+const NODE_PROPERTIES8 = [
     {
-        title: "Node Details",
-        renderPropertyStats: false,
-        image: {
-            alt: "Node Image",
-            src: NodePlaceholder,
-        },
-        button: {
-            label: "view diagnostics",
-            onClick: () => {
-                return;
-            },
-        },
-        properties: [
-            {
-                name: "Model type",
-                value: "Home Node",
-            },
-            {
-                name: "Serial #",
-                value: "1111111111111111111",
-            },
-            {
-                name: "MAC address",
-                value: "1111111111111111111",
-            },
-            { name: "OS version", value: "1.0" },
-            {
-                name: "Manufacturing ",
-                value: "1209391023209103",
-            },
-            { name: "Ukama OS", value: "1.0" },
-            { name: "Hardware", value: "1.0" },
-            {
-                name: "Description",
-                value: "Home node is a xyz.",
-            },
-        ],
+        name: "Model type",
+        value: "Home Node",
     },
     {
-        title: "Meta Data",
-        properties: [
-            { name: "Throughput", value: "10" },
-            {
-                name: "Users Attached",
-                value: "5",
-            },
-        ],
+        name: "Serial #",
+        value: "1111111111111111111",
     },
     {
-        title: "Physical Health",
-        image: {
-            alt: "Node Image Alt",
-            src: NodePlaceholderAlt,
-        },
-        properties: [
-            { name: "Temperature", value: "10" },
-            { name: "Memory", value: "5" },
-            { name: "CPU", value: "10" },
-            { name: "IO", value: "10" },
-        ],
+        name: "MAC address",
+        value: "1111111111111111111",
+    },
+    { name: "OS version", value: "1.0" },
+    {
+        name: "Manufacturing ",
+        value: "1209391023209103",
+    },
+    { name: "Ukama OS", value: "1.0" },
+    { name: "Hardware", value: "1.0" },
+    {
+        name: "Description",
+        value: "Home node is a xyz.",
+    },
+];
+const NODE_PROPERTIES2 = [
+    {
+        name: "Model type",
+        value: "Home Node",
     },
     {
-        title: "RF KPIs",
-        image: {
-            alt: "Node Image Alt",
-            src: NodePlaceholderAlt,
-        },
-        properties: [
-            { name: "QAM", value: "10" },
-            { name: "RF Output", value: "5" },
-            { name: "RSSI", value: "10" },
-        ],
+        name: "Serial #",
+        value: "1111111111111111111",
+    },
+];
+const NODE_PROPERTIES3 = [
+    {
+        name: "Model type",
+        value: "Home Node",
+    },
+    {
+        name: "Serial #",
+        value: "1111111111111111111",
+    },
+    {
+        name: "Description",
+        value: "Home node is a xyz.",
+    },
+];
+
+const NODE_PROPERTIES4 = [
+    {
+        name: "Model type",
+        value: "Home Node",
+    },
+    {
+        name: "Serial #",
+        value: "1111111111111111111",
+    },
+    {
+        name: "Description",
+        value: "Home node is a xyz.",
+    },
+    { name: "Ukama OS", value: "1.0" },
+];
+
+const NODES = [
+    {
+        id: "1",
+        totalUser: 4,
+        title: "Node 1",
+        status: "PENDING",
+        description: "Node 1 description",
+    },
+    {
+        id: "2",
+        totalUser: 2,
+        title: "Node 2",
+        status: "PENDING",
+        description: "Node 2 description",
+    },
+    {
+        id: "3",
+        totalUser: 6,
+        title: "Node 3",
+        status: "ONGOING",
+        description: "Node 4 description",
     },
 ];
 
 export {
-    NodeDetailsStub,
     SimCardData,
     CurrentBillingData,
     CurrentBilling,
@@ -288,4 +299,9 @@ export {
     UserData,
     CREDIT_CARD,
     NodesData,
+    NODES,
+    NODE_PROPERTIES2,
+    NODE_PROPERTIES3,
+    NODE_PROPERTIES8,
+    NODE_PROPERTIES4,
 };

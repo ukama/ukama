@@ -189,9 +189,12 @@ const Header = ({
                         isLoading={isLoading}
                     >
                         <Stack
-                            direction="row"
                             spacing={3}
-                            sx={{ display: { xs: "none", md: "flex" } }}
+                            direction="row"
+                            sx={{
+                                display: { xs: "none", md: "flex" },
+                                justifyContent: "flex-end",
+                            }}
                         >
                             <DarkModToggle />
                             <IconButton

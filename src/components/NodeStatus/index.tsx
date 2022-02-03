@@ -61,7 +61,7 @@ const NodeStatus = ({
     };
 
     return (
-        <Grid width="100%" container pt="18px">
+        <Grid width="100%" container m="8px 0px">
             <Grid item xs={12} lg={7}>
                 <Box
                     height="100%"
