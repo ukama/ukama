@@ -221,7 +221,13 @@ const Header = ({
                                         },
                                     }}
                                 >
-                                    <Notifications />
+                                    <Notifications
+                                        color={
+                                            notificationAnchorEl
+                                                ? "primary"
+                                                : "inherit"
+                                        }
+                                    />
                                 </Badge>
                             </IconButton>
                             <IconButton size="small" color="inherit">

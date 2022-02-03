@@ -16,7 +16,6 @@ import HistoryIcon from "./HistoryIcon";
 import UpgradeIcon from "./UpgradeIcon";
 import UsersWithBG from "./UsersWithBG";
 import ActivityIcon from "./ActivityIcon";
-import CloudOffIcon from "./CloudOffIcon";
 import PageNotFound from "./PageNotFound";
 import ModuleStoreIcon from "./ModuleStoreIcon";
 import ThermometerIcon from "./ThermometerIcon";
@@ -42,7 +41,6 @@ export {
     UsersWithBG,
     SimCardIcon,
     ActivityIcon,
-    CloudOffIcon,
     PageNotFound,
     ModuleStoreIcon,
     ThermometerIcon,
