@@ -15,7 +15,6 @@ import {
     useGetAlertsQuery,
     GetLatestAlertsDocument,
     GetLatestAlertsSubscription,
-    Alert_Type,
 } from "../../generated";
 import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
