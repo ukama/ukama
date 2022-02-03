@@ -97,7 +97,7 @@ const User = () => {
                             buttonTitle="INSTALL SIMS"
                             handleSearchChange={getSearchValue}
                             handleButtonAction={handleSimInstallation}
-                            stats={`${usersRes?.myUsers?.users.length || "0"}`}
+                            stats={`${usersRes?.myUsers?.users?.length || "0"}`}
                         />
                         <UserCard
                             userDetails={usersRes?.myUsers?.users}

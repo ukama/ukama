@@ -29,7 +29,7 @@ const PagePlaceholder = ({
 }: PagePlaceholderProps) => {
     const _isDarkmode = useRecoilValue(isDarkmode);
     return (
-        <Container>
+        <Container sx={{ borderRadius: "4px" }}>
             <Stack
                 spacing={4}
                 sx={{
