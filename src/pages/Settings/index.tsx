@@ -34,6 +34,7 @@ import {
     useSetRecoilState,
 } from "recoil";
 import { colors } from "../../theme";
+import { routes } from "../../router/config";
 import { useHistory } from "react-router-dom";
 import { SettingsMenuTypes } from "../../types";
 import React, { useEffect, useState } from "react";
@@ -131,7 +132,7 @@ const Settings = () => {
         /* TODO: Handle Save Action */
     };
     const handleCancel = () => {
-        history.push("/");
+        history.push(routes.Root.path);
     };
 
     return (

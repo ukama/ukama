@@ -61,7 +61,7 @@ const App = () => {
             <ThemeProvider theme={theme(_isDarkMod)}>
                 <CssBaseline />
                 <BrowserRouter>
-                    <Router routes={routes} />
+                    <Router routes={Object.values(routes)} />
                 </BrowserRouter>
                 <BasicDialog
                     isClosable={false}
