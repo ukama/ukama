@@ -1,13 +1,10 @@
 import { colors } from "../../theme";
 import { LinkStyle } from "../../styles";
 import { PagePlaceholderSvg } from "../../assets/svg";
-import { Button, Stack, styled, Typography, Box } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { isDarkmode } from "../../recoil";
 import { useRecoilValue } from "recoil";
-const Container = styled(Box)((props: any) => ({
-    background:
-        props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
-}));
+
 type PagePlaceholderProps = {
     linkText?: string;
     hyperlink?: string;
@@ -29,46 +26,44 @@ const PagePlaceholder = ({
 }: PagePlaceholderProps) => {
     const _isDarkmode = useRecoilValue(isDarkmode);
     return (
-        <Container sx={{ borderRadius: "4px" }}>
-            <Stack
-                spacing={4}
-                sx={{
-                    height: "100%",
-                    borderRadius: "5px",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    p: 10,
-                }}
-            >
-                <PagePlaceholderSvg
-                    color={_isDarkmode ? colors.greyish : colors.whiteGrey}
-                    color2={_isDarkmode ? colors.nightGrey12 : colors.white}
-                />
-                <Typography variant="body1">
-                    {`${description} `}
-                    {hyperlink && (
-                        <LinkStyle
-                            href={hyperlink}
-                            sx={{
-                                typography: "body1",
-                            }}
-                        >
-                            {linkText}
-                        </LinkStyle>
-                    )}
-                </Typography>
-
-                {showActionButton && (
-                    <Button
-                        variant="contained"
-                        sx={{ width: 190 }}
-                        onClick={() => handleAction()}
+        <Stack
+            spacing={4}
+            sx={{
+                height: "100%",
+                borderRadius: "5px",
+                alignItems: "center",
+                justifyContent: "center",
+                p: 10,
+            }}
+        >
+            <PagePlaceholderSvg
+                color={_isDarkmode ? colors.greyish : colors.whiteGrey}
+                color2={_isDarkmode ? colors.nightGrey12 : colors.white}
+            />
+            <Typography variant="body1">
+                {`${description} `}
+                {hyperlink && (
+                    <LinkStyle
+                        href={hyperlink}
+                        sx={{
+                            typography: "body1",
+                        }}
                     >
-                        {buttonTitle}
-                    </Button>
+                        {linkText}
+                    </LinkStyle>
                 )}
-            </Stack>
-        </Container>
+            </Typography>
+
+            {showActionButton && (
+                <Button
+                    variant="contained"
+                    sx={{ width: 190 }}
+                    onClick={() => handleAction()}
+                >
+                    {buttonTitle}
+                </Button>
+            )}
+        </Stack>
     );
 };
 

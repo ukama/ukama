@@ -252,7 +252,11 @@ const UserDetailsDialog = ({
                                         }}
                                     >
                                         ROAMING
-                                        <Tooltip title="Info about roming">
+                                        <Tooltip
+                                            title="Explain roaming policy for CS folks."
+                                            placement="right"
+                                            arrow
+                                        >
                                             <IconButton>
                                                 <InfoIcon />
                                             </IconButton>
