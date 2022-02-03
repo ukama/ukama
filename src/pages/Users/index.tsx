@@ -16,6 +16,7 @@ import {
     useMyUsersLazyQuery,
 } from "../../generated";
 import { RoundedCard } from "../../styles";
+import { UserData } from "../../constants/stubData";
 
 const User = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
@@ -82,37 +83,44 @@ const User = () => {
     };
 
     return (
-        <Box sx={{ flexGrow: 1, mt: 3 }}>
+        <Box sx={{ mt: 3, height: "calc(100% - 15%)" }}>
             <LoadingWrapper
                 width="100%"
-                height="700px"
+                height="100%"
                 isLoading={isSkeltonLoad || userLoading || usersByOrgLoading}
             >
-                {usersRes?.myUsers?.users ? (
-                    <RoundedCard>
-                        <ContainerHeader
-                            title="My Users"
-                            showButton={true}
-                            showSearchBox={true}
-                            buttonTitle="INSTALL SIMS"
-                            handleSearchChange={getSearchValue}
-                            handleButtonAction={handleSimInstallation}
-                            stats={`${usersRes?.myUsers?.users.length || "0"}`}
+                <RoundedCard sx={{ borderRadius: "4px" }}>
+                    {usersRes?.myUsers?.users || UserData ? (
+                        <>
+                            <ContainerHeader
+                                title="My Users"
+                                showButton={true}
+                                showSearchBox={true}
+                                buttonTitle="INSTALL SIMS"
+                                handleSearchChange={getSearchValue}
+                                handleButtonAction={handleSimInstallation}
+                                stats={`${
+                                    usersRes?.myUsers?.users?.length ||
+                                    UserData.length
+                                }`}
+                            />
+                            <UserCard
+                                userDetails={
+                                    usersRes?.myUsers?.users || UserData
+                                }
+                                handleMoreUserdetails={getUseDetails}
+                            />
+                        </>
+                    ) : (
+                        <PagePlaceholder
+                            hyperlink=""
+                            showActionButton={true}
+                            buttonTitle="Install sims"
+                            handleAction={() => setShowSimDialog(true)}
+                            description="No users on network. Install SIMs to get started."
                         />
-                        <UserCard
-                            userDetails={usersRes?.myUsers?.users}
-                            handleMoreUserdetails={getUseDetails}
-                        />
-                    </RoundedCard>
-                ) : (
-                    <PagePlaceholder
-                        hyperlink=""
-                        showActionButton={true}
-                        buttonTitle="Install sims"
-                        handleAction={() => setShowSimDialog(true)}
-                        description="No users on network. Install SIMs to get started."
-                    />
-                )}
+                    )}
+                </RoundedCard>
                 <UserDetailsDialog
                     user={userForm}
                     saveBtnLabel="save"

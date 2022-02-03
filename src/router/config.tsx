@@ -43,17 +43,15 @@ const getRouteObject = (
     };
 };
 
-export const routes: IRoute[] = [
-    //Privatte Routes//
-    getRouteObject("/", "Home", true),
-    getRouteObject("/nodes", "Nodes", true),
-    getRouteObject("/users", "Users", true),
-    getRouteObject("/settings", "Settings", true, true),
-    getRouteObject("/billing", "Billing", true),
-    getRouteObject("/store", "Store", true),
-    //
+export const routes = {
+    Root: getRouteObject("/", "Home", true),
+    Nodes: getRouteObject("/nodes", "Nodes", true),
+    Users: getRouteObject("/users", "Users", true),
+    Settings: getRouteObject("/settings", "Settings", true, true),
+    Billing: getRouteObject("/billing", "Billing", true),
+    Store: getRouteObject("/store", "Store", true),
 
     //Public Routes//
-    getRouteObject("/*", "ErrorPage", true, true),
+    Error: getRouteObject("/*", "ErrorPage", true, true),
     //
-];
+};
