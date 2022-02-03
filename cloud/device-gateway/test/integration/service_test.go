@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukamaX/common/config"
 	"net/http"
 	"time"
 
@@ -15,6 +16,19 @@ import (
 
 type TestConfig struct {
 	BaseUrl string
+}
+
+func loadConfig() *TestConfig {
+	testConf := &TestConfig{
+		BaseUrl: "http://localhost:8080",
+	}
+
+	config.LoadConfig("integration", testConf)
+
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEURL")
+	logrus.Infof("%+v", testConf)
+
+	return testConf
 }
 
 type IntegrationTestSuite struct {

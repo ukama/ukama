@@ -45,8 +45,10 @@ func (d *DnsServer) Query(ctx context.Context, p *pb.DnsPacket) (*pb.DnsPacket, 
 			r.Answer = append(r.Answer, &dns.A{
 				Hdr: hdr,
 				A:   ip})
+		case dns.TypeAAAA:
+			return nil, status.Error(codes.NotFound, "No AAAA record found")
 		default:
-			return nil, fmt.Errorf("only A supported, got qtype=%d", q.Qtype)
+			return nil, fmt.Errorf("only A and AAAA supported, got qtype=%d", q.Qtype)
 		}
 	}
 

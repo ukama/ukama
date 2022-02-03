@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
 	pbmocks "github.com/ukama/ukamaX/cloud/registry/pb/gen/mocks"
 	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/protobuf/proto"
 )
@@ -25,7 +25,7 @@ func TestDeviceIncomingMessageHandler(t *testing.T) {
 		return r.NodeId == nodeId && r.State == pb.NodeState_ONBOARDED
 	}), mock.Anything).Return(nil, nil)
 
-	message, err := proto.Marshal(&external.Link{Uuid: &nodeId})
+	message, err := proto.Marshal(&mesh.Link{Uuid: &nodeId, Ip: proto.String("192.168.0.1")})
 	assert.NoError(t, err)
 	delivery := amqp.Delivery{Body: message, RoutingKey: string(msgbus.DeviceConnectedRoutingKey)}
 
@@ -73,7 +73,7 @@ func TestUserRegisteredMessageHandler(t *testing.T) {
 
 func TestIncomingMessageHandler_MessageFormatErrors(t *testing.T) {
 	nodeId := "random node id"
-	badUuidMessage, _ := proto.Marshal(&external.Link{Uuid: &nodeId})
+	badUuidMessage, _ := proto.Marshal(&mesh.Link{Uuid: &nodeId})
 
 	tests := []struct {
 		name       string

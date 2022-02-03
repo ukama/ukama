@@ -9,7 +9,7 @@
 
 syntax = "proto2";
 
-option go_package = "pb/gen/external";
+option go_package = "pb/gen/ukamaos/mesh";
 
 message Link {
         required string uuid = 1; // UUID of the device.

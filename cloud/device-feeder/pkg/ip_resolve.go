@@ -2,11 +2,13 @@ package pkg
 
 import (
 	"context"
+	"google.golang.org/grpc/credentials/insecure"
+	"time"
+
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/grpc"
-	"time"
 )
 
 type NodeIpResolver interface {
@@ -14,27 +16,27 @@ type NodeIpResolver interface {
 }
 
 type deviceIpResolver struct {
-	netClient     pb.NetworkingClient
+	netClient     pb.NnsClient
 	timeoutSecond int
 }
 
-func NewDeviceIpResolver(registryHost string, timeoutSecond int) (*deviceIpResolver, error) {
+func NewDeviceIpResolver(netHost string, timeoutSecond int) (*deviceIpResolver, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, registryHost, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, netHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
 	if err != nil {
-		logrus.Errorf("Could not connect to registry: %v", err)
+		logrus.Errorf("Could not connect to network service: %v", err)
 		return nil, err
 	}
 
-	return &deviceIpResolver{timeoutSecond: timeoutSecond, netClient: pb.NewNetworkingClient(conn)}, nil
+	return &deviceIpResolver{timeoutSecond: timeoutSecond, netClient: pb.NewNnsClient(conn)}, nil
 }
 
 func (r *deviceIpResolver) Resolve(nodeId ukama.NodeID) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeoutSecond)*time.Second)
 	defer cancel()
-	res, err := r.netClient.ResolveNodeIp(ctx, &pb.ResolveNodeIpRequest{NodeId: nodeId.String()})
+	res, err := r.netClient.Get(ctx, &pb.GetRequest{NodeId: nodeId.String()})
 	if err != nil {
 		return "", err
 	}

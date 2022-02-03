@@ -12,10 +12,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
+	pbnet "github.com/ukama/ukamaX/cloud/net/pb/gen"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"os"
 	"time"
@@ -27,6 +29,7 @@ type TestConfig struct {
 	DevicePort   int
 	WaitingTime  int
 	DevicesCount int
+	NetHost      string
 }
 
 type IntegrationTestSuite struct {
@@ -87,14 +90,21 @@ func (is *IntegrationTestSuite) PrepareRegistryData() (*grpc.ClientConn, pb.Regi
 	defer cancel()
 
 	log.Infoln("Connecting to registry ", is.config.RegistryHost)
-	conn, err := grpc.DialContext(ctx, is.config.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	regConn, err := grpc.DialContext(ctx, is.config.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		is.FailNow("Failed to connect to registry", err)
 		return nil, nil, nil
 	}
 
-	c := pb.NewRegistryServiceClient(conn)
-	nt := pb.NewNetworkingClient(conn)
+	c := pb.NewRegistryServiceClient(regConn)
+
+	log.Infoln("Connecting to net ", is.config.NetHost)
+	netConn, err := grpc.DialContext(ctx, is.config.NetHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		is.FailNow("Failed to connect to net service", err)
+		return nil, nil, nil
+	}
+	nt := pbnet.NewNnsClient(netConn)
 
 	ownerId := uuid2.NewV4()
 
@@ -129,7 +139,7 @@ func (is *IntegrationTestSuite) PrepareRegistryData() (*grpc.ClientConn, pb.Regi
 			return nil, nil, nil
 		}
 
-		_, err = nt.SetNodeIp(ctx, &pb.SetNodeIpRequest{
+		_, err = nt.Set(ctx, &pbnet.SetRequest{
 			NodeId: node,
 			Ip:     ip.String(),
 		})
@@ -140,7 +150,7 @@ func (is *IntegrationTestSuite) PrepareRegistryData() (*grpc.ClientConn, pb.Regi
 		}
 	}
 
-	return conn, c, nodes
+	return regConn, c, nodes
 }
 
 func (i *IntegrationTestSuite) handleResponse(err error, r interface{}) {

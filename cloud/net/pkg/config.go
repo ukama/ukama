@@ -13,6 +13,7 @@ type Config struct {
 	DialTimeoutSecond time.Duration
 	NodeMetricsPort   int
 	Dns               *DnsConfig
+	Metrics           config.Metrics
 }
 
 type DnsConfig struct {
@@ -32,6 +33,10 @@ func NewConfig() *Config {
 		NodeMetricsPort: 10250,
 		Dns: &DnsConfig{
 			NodeDomain: "node.mesh",
+		},
+		Metrics: config.Metrics{
+			Port:    10250,
+			Enabled: true,
 		},
 	}
 }

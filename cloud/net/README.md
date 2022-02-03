@@ -8,6 +8,47 @@ Prometheus to scrape metrics from nodes. Available at `/prometheus`
 that could be integrated with CoreDNS to resolve node-id on DNS level. Useful for running in Kubernetes  
 
 
+## CoreDNS Integration
+
+Network service acts as a [CoreDNS grpc plugin](https://coredns.io/plugins/grpc/) that resolves A  DNS requests only.
+Refer to CoreDNS documentation for more details. 
+
+Here is an example of CoreDNS config map that resolves all subdomains of `.node.mesh` via network service:
+``` yaml
+apiVersion: v1
+data:
+  Corefile: |
+           node.mesh {
+              errors
+              log
+              grpc . 172.20.224.224:9090
+            }
+           .:53 {
+              errors
+              health
+              kubernetes cluster.local in-addr.arpa ip6.arpa {
+                  pods insecure
+                  fallthrough in-addr.arpa ip6.arpa
+              }
+              prometheus :9153
+              forward    . /etc/resolv.conf
+              cache 30
+              loop
+              reload
+              loadbalance
+              }
+kind: ConfigMap
+metadata:
+  labels:
+    eks.amazonaws.com/component: coredns
+    k8s-app: kube-dns
+  name: coredns
+  namespace: kube-system
+```
+
+`172.20.224.224` is the IP of the Net service running in cluster 
+
+
 ## Running Locally
 
 1. Build the app:

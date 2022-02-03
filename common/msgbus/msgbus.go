@@ -17,7 +17,7 @@ import (
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
 
 // Defines our interface for connecting and consuming messages.
-// Deprecated: use Publisher or Consumer instead
+// Depreacted: use github.com/wagslane/go-rabbitmq instead
 type IMsgBus interface {
 	ConnectToBroker(connectionString string)
 	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error
@@ -93,12 +93,14 @@ func randomString(l int) string {
 }
 
 // creates a message consumer and initializes connection
+// Depreacted: use github.com/wagslane/go-rabbitmq instead
 func NewConsumerClient(connectionString string) (Consumer, error) {
 	return createClient(connectionString)
 }
 
 // NewPublisherClient creates a publisher and opens connection and channel
 // Use one publisher per thread as it's common practice to use one channel per thread
+// Depreacted: use github.com/wagslane/go-rabbitmq instead
 func NewPublisherClient(connectionString string) (Publisher, error) {
 	return createClient(connectionString)
 }

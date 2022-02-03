@@ -6,11 +6,13 @@ package integration
 import (
 	"context"
 	"fmt"
-	uuid2 "github.com/satori/go.uuid"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukamaX/common/config"
+	"testing"
 	"time"
 
-	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
+	uuid2 "github.com/satori/go.uuid"
+	"github.com/ukama/ukamaX/common/ukama"
+
 	"github.com/ukama/ukamaX/common/msgbus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,35 +20,43 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
 	"google.golang.org/grpc"
 )
+
+var tConfig *TestConfig
+var orgName string
+
+func init() {
+	// set org name
+	orgName = fmt.Sprintf("registry-integration-self-test-org-%d", time.Now().Unix())
+
+	// load config
+	tConfig = &TestConfig{
+		RegistryHost: "localhost:9090",
+		Rabbitmq:     "amqp://guest:guest@localhost:5672",
+	}
+
+	config.LoadConfig("integration", tConfig)
+
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: REGISTRYHOST")
+	logrus.Infof("Config: %+v\n", tConfig)
+}
 
 type TestConfig struct {
 	RegistryHost string
 	Rabbitmq     string
 }
 
-type IntegrationTestSuite struct {
-	suite.Suite
-	config  *TestConfig
-	orgName string
-}
-
-func NewIntegrationTestSuite(config *TestConfig) *IntegrationTestSuite {
-	return &IntegrationTestSuite{config: config,
-		orgName: fmt.Sprintf("registry-integration-self-test-org-%d", time.Now().Unix())}
-}
-
-func (i *IntegrationTestSuite) Test_FullFlow() {
+func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to registry ", i.config.RegistryHost)
-	conn, err := grpc.DialContext(ctx, i.config.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
+	conn, err := grpc.DialContext(ctx, tConfig.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		assert.NoError(i.T(), err, "did not connect: %v", err)
+		assert.NoError(t, err, "did not connect: %v", err)
 		return
 	}
 
@@ -58,69 +68,69 @@ func (i *IntegrationTestSuite) Test_FullFlow() {
 
 	var r interface{}
 
-	i.Run("AddOrg", func() {
-		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: i.orgName, Owner: ownerId.String()})
-		i.handleResponse(err, r)
+	t.Run("AddOrg", func(tt *testing.T) {
+		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId.String()})
+		handleResponse(tt, err, r)
 	})
 
-	i.Run("GetOrg", func() {
-		r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: i.orgName})
-		i.handleResponse(err, r)
+	t.Run("GetOrg", func(tt *testing.T) {
+		r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
+		handleResponse(tt, err, r)
 	})
 
-	i.Run("AddUpdateNode", func() {
+	t.Run("AddUpdateNode", func(tt *testing.T) {
 		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: node.String(),
 				State:  pb.NodeState_UNDEFINED,
 			},
-			OrgName: i.orgName,
+			OrgName: orgName,
 		})
-		i.handleResponse(err, r)
+		handleResponse(tt, err, r)
 
 		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
-		i.handleResponse(err, r)
+		handleResponse(tt, err, r)
 
 		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
-		i.handleResponse(err, nodeResp)
-		i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
+		handleResponse(tt, err, nodeResp)
+		assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.Node.State)
 	})
 
-	i.Run("DeleteNode", func() {
+	t.Run("DeleteNode", func(tt *testing.T) {
 		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: node.String()})
-		i.handleResponse(err, r)
+		handleResponse(tt, err, r)
 
 		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: node.String(),
 				State:  pb.NodeState_UNDEFINED,
 			},
-			OrgName: i.orgName,
+			OrgName: orgName,
 		})
-		i.handleResponse(err, r)
+		handleResponse(tt, err, r)
 	})
 
-	i.Run("GetNodes", func() {
-		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: i.orgName})
-		i.handleResponse(err, nodesResp)
-		i.Assert().Equal(1, len(nodesResp.Orgs[0].Nodes))
-		i.Assert().Equal(node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
+	t.Run("GetNodes", func(tt *testing.T) {
+		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
+		handleResponse(t, err, nodesResp)
+		assert.Equal(tt, 1, len(nodesResp.Orgs[0].Nodes))
+		assert.Equal(tt, node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
 	})
 }
 
-func (i *IntegrationTestSuite) Test_Listener() {
+func Test_Listener(t *testing.T) {
 	// Arrange
 	org := "registry-listener-integration-test-org"
 	nodeId := "UK-SA2136-HNODE-A1-30DF"
 	ownerId := "474bd2c3-77a0-49f2-a143-dd840dce2c91"
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	conn, c, err := i.CreateRegistryClient()
+	conn, c, err := CreateRegistryClient()
 	defer conn.Close()
 	if err != nil {
-		assert.NoErrorf(i.T(), err, "did not connect: %+v\n", err)
+		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
 		return
 	}
 
@@ -129,7 +139,7 @@ func (i *IntegrationTestSuite) Test_Listener() {
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("org already exist, err %+v\n", err)
 	} else {
-		assert.NoError(i.T(), err)
+		assert.NoError(t, err)
 		return
 	}
 
@@ -140,29 +150,33 @@ func (i *IntegrationTestSuite) Test_Listener() {
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("node already exist, err %+v\n", err)
 	} else {
-		assert.NoError(i.T(), err)
+		assert.NoError(t, err)
 		return
 	}
 
 	_, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
-	assert.NoError(i.T(), err)
+	if err != nil {
+		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
+	}
 
 	// Act
-	err = i.sendMessageToQueue(nodeId)
-	assert.NoError(i.T(), err)
+	err = sendMessageToQueue(nodeId)
 
 	// Assert
+	assert.NoError(t, err)
 	time.Sleep(3 * time.Second)
 	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId})
-	i.Assert().NoError(err)
-	i.Assert().Equal(pb.NodeState_ONBOARDED, nodeResp.Node.State)
+	assert.NoError(t, err)
+	if err != nil {
+		assert.Equal(t, pb.NodeState_ONBOARDED, nodeResp.Node.State)
+	}
 }
 
-func (i *IntegrationTestSuite) CreateRegistryClient() (*grpc.ClientConn, pb.RegistryServiceClient, error) {
-	logrus.Infoln("Connecting to registry ", i.config.RegistryHost)
+func CreateRegistryClient() (*grpc.ClientConn, pb.RegistryServiceClient, error) {
+	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	conn, err := grpc.DialContext(context, i.config.RegistryHost, grpc.WithInsecure())
+	conn, err := grpc.DialContext(context, tConfig.RegistryHost, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -171,21 +185,24 @@ func (i *IntegrationTestSuite) CreateRegistryClient() (*grpc.ClientConn, pb.Regi
 	return conn, c, nil
 }
 
-func (i *IntegrationTestSuite) sendMessageToQueue(nodeId string) error {
-	rabbit, err := msgbus.NewPublisherClient(i.config.Rabbitmq)
-	i.Assert().NoError(err)
+func sendMessageToQueue(nodeId string) error {
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Rabbitmq)
+
 	if err != nil {
 		return err
 	}
 
-	message, err := proto.Marshal(&external.Link{Uuid: &nodeId})
-	i.Assert().NoError(err)
+	message, err := proto.Marshal(&commonpb.Link{Uuid: &nodeId, Ip: proto.String("1.1.1.1")})
+	if err != nil {
+		return err
+	}
 	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
-	i.Assert().NoError(err)
 	return err
 }
 
-func (i *IntegrationTestSuite) handleResponse(err error, r interface{}) {
+func handleResponse(t *testing.T, err error, r interface{}) {
 	fmt.Printf("Response: %v\n", r)
-	i.Assert().NoErrorf(err, "Request failed: %v\n", err)
+	if err != nil {
+		assert.FailNow(t, "Request failed: %v\n", err)
+	}
 }

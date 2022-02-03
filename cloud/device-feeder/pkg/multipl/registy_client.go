@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 )
 
@@ -21,7 +22,7 @@ type RegistryClient interface {
 func NewRegistryClient(registryHost string, timeoutSecond int) (*registryClient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
 	defer cancel()
-	conn, err := grpc.DialContext(ctx, registryHost, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, registryHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
 		log.Errorf("Could not connect to registry: %v", err)

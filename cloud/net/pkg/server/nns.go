@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/cloud/net/pkg"
+	"github.com/ukama/ukamaX/cloud/net/pkg/metrics"
 	"github.com/ukama/ukamaX/common/ukama"
 	"go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
@@ -47,16 +48,19 @@ func (n *Nns) Get(c context.Context, nodeId string) (ip string, err error) {
 	nodeId = strings.ToLower(nodeId)
 
 	if _, err = ukama.ValidateNodeId(nodeId); err != nil {
+		metrics.RecordIpRequestFailureMetric()
 		return "", status.Error(codes.InvalidArgument, err.Error())
 	}
 	var ok bool
 	if ip, ok = n.cache[nodeId]; !ok {
 		if ip, err = n.getFromEtcd(c, nodeId); err != nil {
+			metrics.RecordIpRequestFailureMetric()
 			return "", err
 		}
 		n.cache[nodeId] = ip
 	}
 
+	metrics.RecordIpRequestSuccessMetric()
 	return ip, nil
 }
 
@@ -78,7 +82,7 @@ func (n *Nns) getFromEtcd(c context.Context, nodeId string) (string, error) {
 
 func (n *Nns) Set(c context.Context, nodeId string, ip string) (err error) {
 	nodeId = strings.ToLower(nodeId)
-
+	metrics.RecordSetIpMetric()
 	if _, err = ukama.ValidateNodeId(nodeId); err != nil {
 		return status.Error(codes.InvalidArgument, err.Error())
 	}

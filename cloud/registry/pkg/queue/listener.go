@@ -3,13 +3,14 @@ package queue
 import (
 	"context"
 	"encoding/json"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/ukama/ukamaX/cloud/registry/pb/gen/external"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+
+	pbmesh "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
 	"google.golang.org/protobuf/proto"
 
 	log "github.com/sirupsen/logrus"
@@ -106,7 +107,7 @@ func (q *QueueListener) processUserRegisteredMsg(ctx context.Context, delivery a
 }
 
 func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery amqp.Delivery) {
-	link := &external.Link{}
+	link := &pbmesh.Link{}
 	err := proto.Unmarshal(delivery.Body, link)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)

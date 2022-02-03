@@ -33,11 +33,12 @@ type Imsi struct {
 }
 
 // Tracking Area Identity (TAI)
+// Assumption: one IMIS can have only one tracking area
 type Tai struct {
 	gorm.Model
-	ImsiID          uint      `gorm:"not null"`
-	PlmId           string    `gorm:"size:6;uniqueIndex:tai_unique_idx;not null"` // Public Land Mobile Network Identity (MCC+MNC)
-	Tac             uint32    `gorm:"uniqueIndex:tai_unique_idx,where:deleted_at is null;not null"`
+	ImsiID          uint      `gorm:"uniqueIndex:tai_imsi_unique_idx;not null"`
+	PlmId           string    `gorm:"size:6;uniqueIndex:tai_imsi_unique_idx;not null"` // Public Land Mobile Network Identity (MCC+MNC)
+	Tac             uint32    `gorm:"uniqueIndex:tai_imsi_unique_idx,where:deleted_at is null;not null"`
 	DeviceUpdatedAt time.Time // time when it was updated on the device
 }
 

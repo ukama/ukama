@@ -13,6 +13,7 @@ import (
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	ugrpc "github.com/ukama/ukamaX/common/grpc"
+	"github.com/ukama/ukamaX/common/metrics"
 	"google.golang.org/grpc"
 )
 
@@ -25,6 +26,7 @@ func main() {
 
 	nnsClient := server.NewNns(serviceConfig)
 
+	metrics.StartMetricsServer(serviceConfig.Metrics)
 	go func() {
 		srv := server.NewHttpServer(serviceConfig.Http, serviceConfig.Grpc, serviceConfig.NodeMetricsPort, nnsClient)
 		srv.RunHttpServer()
