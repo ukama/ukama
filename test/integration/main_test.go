@@ -21,6 +21,7 @@ func loadConfig() *TestConfig {
 	testConf := &TestConfig{
 		QueueUri:     "amqp://guest:guest@localhost:5672/",
 		RegistryHost: "localhost:9090",
+		NetHost:      "localhost:9090",
 		DevicePort:   8080,
 		WaitingTime:  10,
 		DevicesCount: 3,

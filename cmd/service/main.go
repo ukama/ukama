@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/multipl"
-	"net/http"
-	"os"
 
 	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
 
@@ -35,7 +36,7 @@ func main() {
 
 	m := multipl.NewRequestMultiplier(registryClient, pub)
 
-	ipResolve, err := pkg.NewDeviceIpResolver(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds)
+	ipResolve, err := pkg.NewDeviceIpResolver(serviceConfig.Net.Host, serviceConfig.Registry.TimeoutSeconds)
 	if err != nil {
 		logrus.Fatalf("Failed to create device ip resolver: %v", err)
 	}
@@ -63,6 +64,9 @@ func initConfig() {
 	serviceConfig = pkg.NewConfig()
 	config.LoadConfig(global.ServiceName, serviceConfig)
 	global.IsDebugMode = serviceConfig.DebugMode
+	if global.IsDebugMode {
+		logrus.Infof("Configuration: %+v", serviceConfig)
+	}
 }
 
 func exposeMetrics() {
