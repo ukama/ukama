@@ -9,6 +9,7 @@ import StatusCard from "./StatusCard";
 import TextSelect from "./TextSelect";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
+import NodeRFKpiTab from "./NodeRFKpiTab";
 import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
 import NodeInfoCard from "./NodeInfoCard";
@@ -52,6 +53,7 @@ export {
     NodeSettings,
     UserSettings,
     NodeInfoCard,
+    NodeRFKpiTab,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,

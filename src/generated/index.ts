@@ -168,12 +168,6 @@ export type CpuUsageMetricsDto = {
     usage: Scalars["Float"];
 };
 
-export type CpuUsageMetricsResponse = {
-    __typename?: "CpuUsageMetricsResponse";
-    data: Array<CpuUsageMetricsDto>;
-    meta: Meta;
-};
-
 export type CurrentBillDto = {
     __typename?: "CurrentBillDto";
     dataUsed: Scalars["Float"];
@@ -302,18 +296,25 @@ export type GetUserResponseDto = {
     status: Scalars["String"];
 };
 
-export type GraphDto = {
-    __typename?: "GraphDto";
-    amt: Scalars["Float"];
-    pv: Scalars["Float"];
-    time: Scalars["String"];
-    uv: Scalars["Float"];
-};
-
 export type HeaderType = {
     __typename?: "HeaderType";
     Authorization: Scalars["String"];
     Cookie: Scalars["String"];
+};
+
+export type IoMetricsDto = {
+    __typename?: "IOMetricsDto";
+    id?: Maybe<Scalars["String"]>;
+    input: Scalars["Float"];
+    output: Scalars["Float"];
+    timestamp: Scalars["Float"];
+};
+
+export type MemoryUsageMetricsDto = {
+    __typename?: "MemoryUsageMetricsDto";
+    id?: Maybe<Scalars["String"]>;
+    timestamp: Scalars["Float"];
+    usage: Scalars["Float"];
 };
 
 export type Meta = {
@@ -423,9 +424,9 @@ export type NodeMetaDataDto = {
 
 export type NodePhysicalHealthDto = {
     __typename?: "NodePhysicalHealthDto";
+    Memory: Scalars["Float"];
     cpu: Scalars["Float"];
     io: Scalars["Float"];
-    memory: Scalars["Float"];
     temperature: Scalars["Float"];
 };
 
@@ -435,12 +436,6 @@ export type NodeRfDto = {
     rfOutput: Scalars["Float"];
     rssi: Scalars["Float"];
     timestamp: Scalars["Float"];
-};
-
-export type NodeRfDtoResponse = {
-    __typename?: "NodeRFDtoResponse";
-    data: Array<NodeRfDto>;
-    meta: Meta;
 };
 
 export type NodeResponse = {
@@ -521,34 +516,31 @@ export type PaginationResponse = {
 
 export type Query = {
     __typename?: "Query";
-    getActiveUserMetrics: UsersAttachedMetricsResponse;
     getAlerts: AlertsResponse;
     getBillHistory: Array<BillHistoryDto>;
     getConnectedUsers: ConnectedUserDto;
-    getCpuUsageMetrics: CpuUsageMetricsResponse;
+    getCpuUsageMetrics: Array<CpuUsageMetricsDto>;
     getCurrentBill: BillResponse;
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
     getEsims: Array<EsimDto>;
+    getIOMetrics: Array<IoMetricsDto>;
+    getMemoryUsageMetrics: Array<MemoryUsageMetricsDto>;
     getNetwork: NetworkDto;
     getNodeDetails: NodeDetailDto;
     getNodeMetaData: NodeMetaDataDto;
     getNodeNetwork: NetworkDto;
     getNodePhysicalHealth: NodePhysicalHealthDto;
-    getNodeRFKPI: NodeRfDtoResponse;
-    getNodeThroughput: Array<GraphDto>;
-    getNodeUserAttached: Array<GraphDto>;
+    getNodeRFKPI: Array<NodeRfDto>;
     getNodes: NodesResponse;
     getNodesByOrg: OrgNodeResponseDto;
     getResidents: ResidentsResponse;
+    getTemperatureMetrics: Array<TemperatureMetricsDto>;
+    getThroughputMetrics: Array<ThroughputMetricsDto>;
     getUser: GetUserDto;
     getUsers: GetUserResponse;
-    getUsersAttachedMetrics: UsersAttachedMetricsResponse;
+    getUsersAttachedMetrics: Array<UsersAttachedMetricsDto>;
     myUsers: OrgUserResponseDto;
-};
-
-export type QueryGetActiveUserMetricsArgs = {
-    data: PaginationDto;
 };
 
 export type QueryGetAlertsArgs = {
@@ -557,10 +549,6 @@ export type QueryGetAlertsArgs = {
 
 export type QueryGetConnectedUsersArgs = {
     filter: Time_Filter;
-};
-
-export type QueryGetCpuUsageMetricsArgs = {
-    data: PaginationDto;
 };
 
 export type QueryGetDataBillArgs = {
@@ -573,10 +561,6 @@ export type QueryGetDataUsageArgs = {
 
 export type QueryGetNetworkArgs = {
     filter: Network_Type;
-};
-
-export type QueryGetNodeRfkpiArgs = {
-    data: PaginationDto;
 };
 
 export type QueryGetNodesArgs = {
@@ -599,10 +583,6 @@ export type QueryGetUsersArgs = {
     data: GetUserPaginationDto;
 };
 
-export type QueryGetUsersAttachedMetricsArgs = {
-    data: PaginationDto;
-};
-
 export type QueryMyUsersArgs = {
     orgId: Scalars["String"];
 };
@@ -622,16 +602,19 @@ export type ResidentsResponse = {
 
 export type Subscription = {
     __typename?: "Subscription";
-    getActiveUserMetrics: UsersAttachedMetricsDto;
     getAlerts: AlertDto;
     getConnectedUsers: ConnectedUserDto;
     getCpuUsageMetrics: CpuUsageMetricsDto;
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
+    getIOMetrics: IoMetricsDto;
+    getMemoryUsageMetrics: MemoryUsageMetricsDto;
     getNetwork: NetworkDto;
     getNodeMetaData: NodeMetaDataDto;
     getNodePhysicalHealth: NodePhysicalHealthDto;
     getNodeRFKPI: NodeRfDto;
+    getTemperatureMetrics: TemperatureMetricsDto;
+    getThroughputMetrics: ThroughputMetricsDto;
     getUsersAttachedMetrics: UsersAttachedMetricsDto;
 };
 
@@ -641,6 +624,21 @@ export enum Time_Filter {
     Total = "TOTAL",
     Week = "WEEK",
 }
+
+export type TemperatureMetricsDto = {
+    __typename?: "TemperatureMetricsDto";
+    id?: Maybe<Scalars["String"]>;
+    temperature: Scalars["Float"];
+    timestamp: Scalars["Float"];
+};
+
+export type ThroughputMetricsDto = {
+    __typename?: "ThroughputMetricsDto";
+    amt: Scalars["Float"];
+    pv: Scalars["Float"];
+    time: Scalars["String"];
+    uv: Scalars["Float"];
+};
 
 export type UpdateNodeDto = {
     id: Scalars["String"];
@@ -687,12 +685,6 @@ export type UsersAttachedMetricsDto = {
     id?: Maybe<Scalars["String"]>;
     timestamp: Scalars["Float"];
     users: Scalars["Float"];
-};
-
-export type UsersAttachedMetricsResponse = {
-    __typename?: "UsersAttachedMetricsResponse";
-    data: Array<UsersAttachedMetricsDto>;
-    meta: Meta;
 };
 
 export type GetDataUsageQueryVariables = Exact<{
@@ -1026,6 +1018,34 @@ export type DeleteNodeMutation = {
         id: string;
         success: boolean;
     };
+};
+
+export type GetNodeRfkpisSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetNodeRfkpisSubscription = {
+    __typename?: "Subscription";
+    getNodeRFKPI: {
+        __typename?: "NodeRFDto";
+        qam: number;
+        rfOutput: number;
+        rssi: number;
+        timestamp: number;
+    };
+};
+
+export type GetNodeRfkpiqQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetNodeRfkpiqQuery = {
+    __typename?: "Query";
+    getNodeRFKPI: Array<{
+        __typename?: "NodeRFDto";
+        qam: number;
+        rfOutput: number;
+        rssi: number;
+        timestamp: number;
+    }>;
 };
 
 export const GetDataUsageDocument = gql`
@@ -2173,4 +2193,107 @@ export type DeleteNodeMutationResult =
 export type DeleteNodeMutationOptions = Apollo.BaseMutationOptions<
     DeleteNodeMutation,
     DeleteNodeMutationVariables
+>;
+export const GetNodeRfkpisDocument = gql`
+    subscription getNodeRFKPIS {
+        getNodeRFKPI {
+            qam
+            rfOutput
+            rssi
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetNodeRfkpisSubscription__
+ *
+ * To run a query within a React component, call `useGetNodeRfkpisSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeRfkpisSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeRfkpisSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodeRfkpisSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetNodeRfkpisSubscription,
+        GetNodeRfkpisSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetNodeRfkpisSubscription,
+        GetNodeRfkpisSubscriptionVariables
+    >(GetNodeRfkpisDocument, options);
+}
+export type GetNodeRfkpisSubscriptionHookResult = ReturnType<
+    typeof useGetNodeRfkpisSubscription
+>;
+export type GetNodeRfkpisSubscriptionResult =
+    Apollo.SubscriptionResult<GetNodeRfkpisSubscription>;
+export const GetNodeRfkpiqDocument = gql`
+    query getNodeRFKPIQ {
+        getNodeRFKPI {
+            qam
+            rfOutput
+            rssi
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetNodeRfkpiqQuery__
+ *
+ * To run a query within a React component, call `useGetNodeRfkpiqQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeRfkpiqQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeRfkpiqQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodeRfkpiqQuery(
+    baseOptions?: Apollo.QueryHookOptions<
+        GetNodeRfkpiqQuery,
+        GetNodeRfkpiqQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodeRfkpiqQuery, GetNodeRfkpiqQueryVariables>(
+        GetNodeRfkpiqDocument,
+        options
+    );
+}
+export function useGetNodeRfkpiqLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeRfkpiqQuery,
+        GetNodeRfkpiqQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodeRfkpiqQuery, GetNodeRfkpiqQueryVariables>(
+        GetNodeRfkpiqDocument,
+        options
+    );
+}
+export type GetNodeRfkpiqQueryHookResult = ReturnType<
+    typeof useGetNodeRfkpiqQuery
+>;
+export type GetNodeRfkpiqLazyQueryHookResult = ReturnType<
+    typeof useGetNodeRfkpiqLazyQuery
+>;
+export type GetNodeRfkpiqQueryResult = Apollo.QueryResult<
+    GetNodeRfkpiqQuery,
+    GetNodeRfkpiqQueryVariables
 >;

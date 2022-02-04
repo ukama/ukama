@@ -205,3 +205,21 @@ mutation deleteNode($id: String!) {
         success
     }
 }
+
+subscription getNodeRFKPIS {
+    getNodeRFKPI {
+        qam
+        rfOutput
+        rssi
+        timestamp
+    }
+}
+
+query getNodeRFKPIQ {
+    getNodeRFKPI {
+        qam
+        rfOutput
+        rssi
+        timestamp
+    }
+}
