@@ -25,11 +25,11 @@ import {
 
 const Nodes = () => {
     const [selectedNode, setSelectedNode] = useState<NodeDto>({
-        id: "temp",
+        id: "1",
         totalUser: 3,
         title: "Node 1",
         description: "testing",
-        status: Org_Node_State.Undefined,
+        status: Org_Node_State.Pending,
     });
     const [selectedTab, setSelectedTab] = useState(1);
     const orgId = useRecoilValue(organizationId);
@@ -80,6 +80,7 @@ const Nodes = () => {
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <NodeStatus
+                        loading={isLoading}
                         selectedNode={selectedNode}
                         onNodeRFClick={onNodeRFClick}
                         onNodeSelected={onNodeSelected}

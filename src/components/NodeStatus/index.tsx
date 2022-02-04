@@ -15,6 +15,7 @@ import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { HorizontalContainerJustify } from "../../styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { GetNodesByOrgQuery, NodeDto, Org_Node_State } from "../../generated";
+import { LoadingWrapper } from "..";
 
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",
@@ -49,16 +50,18 @@ const getStatusIcon = (status: Org_Node_State) => {
 };
 
 interface INodeStatus {
-    nodes?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"] | any;
-    selectedNode: NodeDto | undefined;
+    loading: boolean;
     onNodeRFClick: Function;
     onNodeSelected: Function;
     onNodeSwitchClick: Function;
     onRestartNodeClick: Function;
+    selectedNode: NodeDto | undefined;
+    nodes?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"] | any;
 }
 
 const NodeStatus = ({
     nodes,
+    loading = false,
     selectedNode = {
         id: "1",
         totalUser: 4,
@@ -97,37 +100,45 @@ const NodeStatus = ({
 
     return (
         <HorizontalContainerJustify>
+            <LoadingWrapper isLoading={loading} height={40} width={"30%"}>
+                <Stack direction={"row"} spacing={2}>
+                    <Box display={"flex"} alignItems={"center"}>
+                        {getStatusIcon(selectedNode?.status)}
+                    </Box>
+                    <Select
+                        sx={{
+                            width: "auto",
+                        }}
+                        disableUnderline
+                        variant="standard"
+                        value={selectedNode.id}
+                        onChange={handleChange}
+                        className={classes.selectStyle}
+                    >
+                        {nodes.map(({ id, title }: NodeDto) => (
+                            <MenuItem key={id} value={id}>
+                                <Typography variant="body1">{title}</Typography>
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </Stack>
+            </LoadingWrapper>
             <Stack direction={"row"} spacing={2}>
-                <Box display={"flex"} alignItems={"center"}>
-                    {getStatusIcon(selectedNode?.status)}
-                </Box>
-                <Select
-                    sx={{
-                        width: "auto",
-                    }}
-                    disableUnderline
-                    variant="standard"
-                    value={selectedNode.id}
-                    onChange={handleChange}
-                    className={classes.selectStyle}
-                >
-                    {nodes.map(({ id, title }: NodeDto) => (
-                        <MenuItem key={id} value={id}>
-                            <Typography variant="body1">{title}</Typography>
-                        </MenuItem>
-                    ))}
-                </Select>
-            </Stack>
-            <Stack direction={"row"} spacing={2}>
-                <StyledBtn variant="contained" onClick={handleRestartNode}>
-                    restart
-                </StyledBtn>
-                <StyledBtn variant="contained" onClick={handleRFClick}>
-                    turn rf off
-                </StyledBtn>
-                <StyledBtn variant="contained" onClick={handleNodeSwitch}>
-                    turn node off
-                </StyledBtn>
+                <LoadingWrapper isLoading={loading} height={40} width={100}>
+                    <StyledBtn variant="contained" onClick={handleRestartNode}>
+                        restart
+                    </StyledBtn>
+                </LoadingWrapper>
+                <LoadingWrapper isLoading={loading} height={40} width={100}>
+                    <StyledBtn variant="contained" onClick={handleRFClick}>
+                        turn rf off
+                    </StyledBtn>
+                </LoadingWrapper>
+                <LoadingWrapper isLoading={loading} height={40} width={100}>
+                    <StyledBtn variant="contained" onClick={handleNodeSwitch}>
+                        turn node off
+                    </StyledBtn>
+                </LoadingWrapper>
             </Stack>
         </HorizontalContainerJustify>
     );
