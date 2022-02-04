@@ -91,3 +91,5 @@ export type ResponseProps = {
     error: any | null;
     response: { isValid: boolean } | void | null;
 };
+
+export type TObject = { [key: string]: boolean | string | number };
