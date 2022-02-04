@@ -56,8 +56,9 @@ const NodeInfoCard = ({
                             <Grid container spacing={3} key={keyIndex}>
                                 <Grid item xs={5}>
                                     <Typography
-                                        variant="subtitle1"
                                         fontWeight={500}
+                                        variant="subtitle1"
+                                        sx={{ textTransform: "capitalize" }}
                                     >
                                         {name}
                                     </Typography>

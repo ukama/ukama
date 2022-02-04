@@ -14,21 +14,23 @@ import {
     NODE_PROPERTIES8,
     NODE_PROPERTIES2,
     NODE_PROPERTIES4,
-    NODE_PROPERTIES3,
 } from "../../constants/stubData";
 import {
     NodeDto,
     useGetNodesByOrgQuery,
     useGetNodeRfkpiqQuery,
-    GetNodeRfkpisSubscription,
     GetNodeRfkpisDocument,
+    GetNodeRfkpisSubscription,
 } from "../../generated";
+import { TObject } from "../../types";
+import { parseObjectInNameValue } from "../../utils";
 
 const Nodes = () => {
-    const [selectedNode, setSelectedNode] = useState<NodeDto>();
-    const [selectedTab, setSelectedTab] = useState(4);
     const orgId = useRecoilValue(organizationId);
+    const [selectedTab, setSelectedTab] = useState(4);
+    const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
         onCompleted: res => {
@@ -49,6 +51,7 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getNodeRFKPI;
+                setRfKpiStats(parseObjectInNameValue(metrics));
                 return Object.assign({}, prev, {
                     getNodeRFKPI: [metrics, ...prev.getNodeRFKPI],
                 });
@@ -56,6 +59,12 @@ const Nodes = () => {
         });
 
     useEffect(() => {
+        if (nodeRFKpiRes) {
+            nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
+                setRfKpiStats(
+                    parseObjectInNameValue(nodeRFKpiRes?.getNodeRFKPI[0])
+                );
+        }
         let unsub = nodeRFKpiMetricsSubscription();
         return () => {
             unsub && unsub();
@@ -142,11 +151,11 @@ const Nodes = () => {
                         />
                         <NodeInfoCard
                             index={4}
-                            loading={isLoading}
                             title={"RF KPIs"}
-                            properties={NODE_PROPERTIES3}
+                            properties={rfKpiStats}
                             onSelected={onTabSelected}
                             isSelected={selectedTab === 4}
+                            loading={isLoading || nodeRFKpiLoading}
                         />
                     </Stack>
                 </Grid>
