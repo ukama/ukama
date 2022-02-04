@@ -10,6 +10,7 @@ import { format } from "date-fns";
 import { LoadingWrapper } from "..";
 import { RoundedCard } from "../../styles";
 import { NodeRfDto } from "../../generated";
+import { Typography } from "@mui/material";
 
 interface INodeRFKpiTab {
     loading: boolean;
@@ -25,6 +26,7 @@ const NodeRFKpiTab = ({ loading, metrics }: INodeRFKpiTab) => {
                     height: "fit-content",
                 }}
             >
+                <Typography variant="h6">RF KPIs</Typography>
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart
                         width={500}
@@ -41,7 +43,7 @@ const NodeRFKpiTab = ({ loading, metrics }: INodeRFKpiTab) => {
                             dataKey="timestamp"
                             fontSize={"14px"}
                             tickFormatter={(value: any) =>
-                                format(value, "MMM dd h:mm a")
+                                format(value, "MMM dd HH:mm:ss")
                             }
                         />
                         <YAxis fontSize={"14px"} />

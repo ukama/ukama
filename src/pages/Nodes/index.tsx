@@ -21,9 +21,8 @@ import {
     useGetNodesByOrgQuery,
     useGetNodeRfkpiqQuery,
     GetNodeRfkpisSubscription,
-    GetNodeRfkpiqDocument,
+    GetNodeRfkpisDocument,
 } from "../../generated";
-import { cloneDeep } from "@apollo/client/utilities";
 
 const Nodes = () => {
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
@@ -40,23 +39,27 @@ const Nodes = () => {
 
     const {
         data: nodeRFKpiRes,
-        subscribeToMore: subscribeToNodeRFKpiMetrics,
         loading: nodeRFKpiLoading,
+        subscribeToMore: subscribeToNodeRFKpiMetrics,
     } = useGetNodeRfkpiqQuery();
 
+    const nodeRFKpiMetricsSubscription = () =>
+        subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
+            document: GetNodeRfkpisDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getNodeRFKPI;
+                return Object.assign({}, prev, {
+                    getNodeRFKPI: [metrics, ...prev.getNodeRFKPI],
+                });
+            },
+        });
+
     useEffect(() => {
-        if (nodeRFKpiRes) {
-            subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
-                document: GetNodeRfkpiqDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = cloneDeep(prev);
-                    const metrics = subscriptionData.data.getNodeRFKPI;
-                    if (metrics.__typename === "NodeRFDto")
-                        data.getNodeRFKPI = [metrics, ...data.getNodeRFKPI];
-                    return data;
-                },
-            });
-        }
+        let unsub = nodeRFKpiMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
     }, [nodeRFKpiRes]);
 
     // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
