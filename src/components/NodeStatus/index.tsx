@@ -1,124 +1,135 @@
 import { colors } from "../../theme";
-import { styled } from "@mui/styles";
-import TextSelect from "../TextSelect";
-import InfoIcon from "@mui/icons-material/Info";
-import CancelIcon from "@mui/icons-material/Cancel";
+import {
+    Box,
+    Button,
+    Stack,
+    Select,
+    MenuItem,
+    Typography,
+    SelectChangeEvent,
+} from "@mui/material";
+import { useRecoilValue } from "recoil";
+import { isDarkmode } from "../../recoil";
+import { makeStyles, styled } from "@mui/styles";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
+import { HorizontalContainerJustify } from "../../styles";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { Box, Typography, Grid, Button, Stack } from "@mui/material";
-import { GetNodesByOrgQuery } from "../../generated";
+import { GetNodesByOrgQuery, NodeDto, Org_Node_State } from "../../generated";
+
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",
     minWidth: "max-content",
 });
 
-const getStatusDetails = (status: string) => {
-    switch (status) {
-        case "PENDING":
-            return {
-                showDuration: true,
-                text: " is being configured.",
-                icon: <InfoIcon htmlColor={colors.yellow} />,
-            };
-        case "ONBOARDED":
-            return {
-                showDuration: true,
-                text: " is online and well for ",
-                icon: <CheckCircleIcon htmlColor={colors.green} />,
-            };
+type StyleProps = { color: string };
 
+const useStyles = makeStyles(() => ({
+    selectStyle: ({ color = colors.black }: StyleProps) => ({
+        width: "144px",
+        "& p": {
+            fontSize: "20px",
+            fontWeight: "500",
+            lineHeight: "160%",
+            fontFamily: "Rubik",
+            letterSpacing: "0.15px",
+            color: color,
+        },
+    }),
+}));
+
+const getStatusIcon = (status: Org_Node_State) => {
+    switch (status) {
+        case Org_Node_State.Onboarded:
+            return <CheckCircleIcon htmlColor={colors.green} />;
+        case Org_Node_State.Pending:
+            return <InfoIcon htmlColor={colors.yellow} />;
         default:
-            return {
-                showDuration: false,
-                text: " has something wrong.",
-                icon: <CancelIcon htmlColor={colors.red} />,
-            };
+            return <InfoIcon />;
     }
 };
 
-type NodeStatusProps = {
+interface INodeStatus {
     nodes?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"] | any;
-    selectedNodeIndex: number;
-    setSelectedNodeIndex: (_index: number) => void;
-};
+    selectedNode: NodeDto | undefined;
+    onNodeRFClick: Function;
+    onNodeSelected: Function;
+    onNodeSwitchClick: Function;
+    onRestartNodeClick: Function;
+}
 
 const NodeStatus = ({
     nodes,
-    selectedNodeIndex,
-    setSelectedNodeIndex,
-}: NodeStatusProps) => {
-    const { icon, text, showDuration } = getStatusDetails(
-        nodes[selectedNodeIndex].status
-    );
+    selectedNode = {
+        id: "1",
+        totalUser: 4,
+        title: "Node 1",
+        status: Org_Node_State.Undefined,
+        description: "Node 1 description",
+    },
+    onNodeSelected,
+    onNodeRFClick,
+    onNodeSwitchClick,
+    onRestartNodeClick,
+}: INodeStatus) => {
+    const _isDarkMod = useRecoilValue(isDarkmode);
+    const styleProps = { color: _isDarkMod ? colors.white : colors.black };
+    const classes = useStyles(styleProps);
 
-    const handleRestartNode = () => {
-        return;
-    };
-    const handleTurnRFOff = () => {
-        return;
-    };
-    const handleTurnNodeOff = () => {
-        return;
-    };
+    const handleRestartNode = () =>
+        onRestartNodeClick(
+            nodes.find((item: NodeDto) => item.id === selectedNode.id)
+        );
+
+    const handleRFClick = () =>
+        onNodeRFClick(
+            nodes.find((item: NodeDto) => item.id === selectedNode.id)
+        );
+
+    const handleNodeSwitch = () =>
+        onNodeSwitchClick(
+            nodes.find((item: NodeDto) => item.id === selectedNode.id)
+        );
+
+    const handleChange = (e: SelectChangeEvent<string>) =>
+        onNodeSelected(
+            nodes.find((item: NodeDto) => item.id === e.target.value)
+        );
 
     return (
-        <Grid width="100%" container m="8px 0px">
-            <Grid item xs={12} lg={7}>
-                <Box
-                    height="100%"
-                    display="flex"
-                    flexWrap="wrap"
-                    flexDirection="row"
-                    alignItems="center"
-                >
-                    {icon}
-                    <TextSelect
-                        value={selectedNodeIndex}
-                        setValue={setSelectedNodeIndex}
-                        options={nodes.map(({ title }: any) => title)}
-                    />
-                    <Typography variant={"h6"}>{text}</Typography>
-                    {showDuration && (
-                        <Typography
-                            ml="8px"
-                            variant={"h6"}
-                            color={colors.empress}
-                        >
-                            {nodes[selectedNodeIndex].duration}
-                        </Typography>
-                    )}
+        <HorizontalContainerJustify>
+            <Stack direction={"row"} spacing={2}>
+                <Box display={"flex"} alignItems={"center"}>
+                    {getStatusIcon(selectedNode?.status)}
                 </Box>
-            </Grid>
-            <Grid item xs={12} lg={5} display="flex" justifyContent="flex-end">
-                <Stack
-                    direction={{
-                        xs: "column",
-                        sm: "row",
+                <Select
+                    sx={{
+                        width: "auto",
                     }}
-                    spacing={2}
-                    width="100%"
-                    justifyContent="flex-end"
+                    disableUnderline
+                    variant="standard"
+                    value={selectedNode.id}
+                    onChange={handleChange}
+                    className={classes.selectStyle}
                 >
-                    <StyledBtn
-                        variant="contained"
-                        onClick={() => handleRestartNode()}
-                    >
-                        restart
-                    </StyledBtn>
-                    <StyledBtn
-                        variant="contained"
-                        onClick={() => handleTurnRFOff()}
-                    >
-                        turn rf off
-                    </StyledBtn>
-                    <StyledBtn
-                        variant="contained"
-                        onClick={() => handleTurnNodeOff()}
-                    >
-                        turn node off
-                    </StyledBtn>
-                </Stack>
-            </Grid>
-        </Grid>
+                    {nodes.map(({ id, title }: NodeDto) => (
+                        <MenuItem key={id} value={id}>
+                            <Typography variant="body1">{title}</Typography>
+                        </MenuItem>
+                    ))}
+                </Select>
+            </Stack>
+            <Stack direction={"row"} spacing={2}>
+                <StyledBtn variant="contained" onClick={handleRestartNode}>
+                    restart
+                </StyledBtn>
+                <StyledBtn variant="contained" onClick={handleRFClick}>
+                    turn rf off
+                </StyledBtn>
+                <StyledBtn variant="contained" onClick={handleNodeSwitch}>
+                    turn node off
+                </StyledBtn>
+            </Stack>
+        </HorizontalContainerJustify>
     );
 };
 

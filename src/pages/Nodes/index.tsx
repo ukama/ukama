@@ -17,10 +17,20 @@ import {
     NODE_PROPERTIES4,
     NODE_PROPERTIES3,
 } from "../../constants/stubData";
-import { useGetNodesByOrgQuery } from "../../generated";
+import {
+    NodeDto,
+    useGetNodesByOrgQuery,
+    Org_Node_State,
+} from "../../generated";
 
 const Nodes = () => {
-    const [selectedNodeIndex, setSelectedNodeIndex] = useState(1);
+    const [selectedNode, setSelectedNode] = useState<NodeDto>({
+        id: "temp",
+        totalUser: 3,
+        title: "Node 1",
+        description: "testing",
+        status: Org_Node_State.Undefined,
+    });
     const [selectedTab, setSelectedTab] = useState(1);
     const orgId = useRecoilValue(organizationId);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
@@ -31,6 +41,16 @@ const Nodes = () => {
     //     useGetNodeDetailsQuery();
 
     const onTabSelected = (value: number) => setSelectedTab(value);
+    const onNodeSelected = (node: NodeDto) => setSelectedNode(node);
+    const onNodeRFClick = () => {
+        //TODO: Handle NODE RF ACTIONS
+    };
+    const onNodeSwitchClick = () => {
+        //TODO: Handle NODE ON/OFF ACTIONS
+    };
+    const onRestartNodeClick = () => {
+        //TODO: Handle NODE RESTART ACTION
+    };
 
     const isLoading = skeltonLoading || nodesLoading;
 
@@ -60,8 +80,11 @@ const Nodes = () => {
             <Grid container spacing={2}>
                 <Grid item xs={12}>
                     <NodeStatus
-                        selectedNodeIndex={selectedNodeIndex}
-                        setSelectedNodeIndex={setSelectedNodeIndex}
+                        selectedNode={selectedNode}
+                        onNodeRFClick={onNodeRFClick}
+                        onNodeSelected={onNodeSelected}
+                        onNodeSwitchClick={onNodeSwitchClick}
+                        onRestartNodeClick={onRestartNodeClick}
                         nodes={nodesRes?.getNodesByOrg?.nodes || NODES}
                     />
                 </Grid>

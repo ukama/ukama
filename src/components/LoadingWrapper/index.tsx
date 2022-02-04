@@ -29,7 +29,9 @@ const LoadingWrapper = ({
             />
         );
 
-    return <div style={{ height: "100%", width: "100%" }}>{children}</div>;
+    return (
+        <div style={{ height: "inherit", width: "inherit" }}>{children}</div>
+    );
 };
 
 export default LoadingWrapper;
