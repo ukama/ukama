@@ -27,7 +27,6 @@ import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
 import MultiSlideCarousel from "./MultiSlideCarousel";
-import withAuthWrapperHOC from "./withAuthWrapperHOC";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
 import {
@@ -70,7 +69,6 @@ export {
     BillingDataTable,
     UserDetailsDialog,
     MultiSlideCarousel,
-    withAuthWrapperHOC,
     DataTableWithOptions,
     UserActivationDialog,
     FormControlCheckboxes,

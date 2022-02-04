@@ -16,7 +16,7 @@ import {
     DialogContent,
 } from "@mui/material";
 import colors from "../../../theme/colors";
-import { InfoIcon } from "../../../assets/svg";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { ContainerJustifySpaceBtw } from "../../../styles";
 import { GetUserDto, Get_User_Status_Type } from "../../../generated";
 
