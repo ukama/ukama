@@ -11,6 +11,6 @@ export class GetThroughputMetricsSubscriptionResolver {
     async getThroughputMetrics(
         @Root() data: [ThroughputMetricsDto]
     ): Promise<ThroughputMetricsDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }

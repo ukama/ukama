@@ -116,3 +116,11 @@ export enum ORG_NODE_STATE {
 registerEnumType(ORG_NODE_STATE, {
     name: "ORG_NODE_STATE",
 });
+export enum GRAPH_FILTER {
+    DAY = "DAY",
+    WEEK = "WEEK",
+    MONTH = "MONTH",
+}
+registerEnumType(GRAPH_FILTER, {
+    name: "GRAPH_FILTER",
+});

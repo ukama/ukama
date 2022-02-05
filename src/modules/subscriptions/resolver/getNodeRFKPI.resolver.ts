@@ -9,6 +9,6 @@ export class GetNodeRFKPISubscriptionResolver {
         topics: "getNodeRFKPI",
     })
     async getNodeRFKPI(@Root() data: [NodeRFDto]): Promise<NodeRFDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }

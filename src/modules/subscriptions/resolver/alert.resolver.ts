@@ -9,6 +9,6 @@ export class GetAlertsSubscriptionResolver {
         topics: "getAlerts",
     })
     async getAlerts(@Root() alerts: AlertsResponse): Promise<AlertDto> {
-        return alerts.alerts[0];
+        return alerts.alerts[alerts.alerts.length - 1];
     }
 }

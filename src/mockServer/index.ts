@@ -42,7 +42,6 @@ export const mockServer = (app: Express): void => {
     app.get("/bill/get_current_bill", getCurrentBill);
     app.get("/bill/get_bill_history", getBillHistory);
     app.get("/network/get_network", getNetwork);
-    app.get("/network/get_network", getNetwork);
     app.post("/user/update_user", updateUser);
     app.post("/node/update_node", updateNode);
     app.post("/user/deactivate_user", deleteRes);

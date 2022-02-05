@@ -11,6 +11,6 @@ export class GetMemoryUsageMetricsSubscriptionResolver {
     async getMemoryUsageMetrics(
         @Root() data: [MemoryUsageMetricsDto]
     ): Promise<MemoryUsageMetricsDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }
