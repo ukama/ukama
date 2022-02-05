@@ -15,8 +15,7 @@ export const getPaginatedOutput = (
 };
 
 export const getUniqueTimeStamp = (index?: number, length?: number): number =>
-    Math.floor(new Date().valueOf() / 1000) -
-    (length ? length - (index || 1) : 0);
+    new Date().valueOf() - (length ? length - 1000 * (index || 1) : 0);
 
 export const getRecordsLengthByFilter = (
     filter: string | undefined

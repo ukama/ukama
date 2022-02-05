@@ -294,8 +294,8 @@ export const GET_NODE_NETWORK = `
 `;
 
 export const GET_USERS_ATTACHED_METRICS_QUERY = `
-query getUsersAttachedMetrics {
-    getUsersAttachedMetrics {
+query getUsersAttachedMetrics($filter: GRAPH_FILTER!) {
+    getUsersAttachedMetrics(filter: $filter) {
      id
       users
       timestamp
@@ -304,8 +304,8 @@ query getUsersAttachedMetrics {
 `;
 
 export const GET_CPU_USAGE_METRICS_QUERY = `
-query getCpuUsageMetrics {
-    getCpuUsageMetrics {
+query getCpuUsageMetrics($filter: GRAPH_FILTER!) {
+    getCpuUsageMetrics(filter: $filter) {
       id
       usage
       timestamp
@@ -314,8 +314,8 @@ query getCpuUsageMetrics {
 `;
 
 export const GET_NODE_RF_KPI_QUERY = `
-query getNodeRFKPI {
-    getNodeRFKPI {
+query getNodeRFKPI($filter: GRAPH_FILTER!) {
+    getNodeRFKPI(filter: $filter) {
       qam
       rfOutput
       rssi
@@ -325,8 +325,8 @@ query getNodeRFKPI {
 `;
 
 export const GET_TEMPERATURE_METRICS_QUERY = `
-query getTemperatureMetrics {
-    getTemperatureMetrics {
+query getTemperatureMetrics($filter: GRAPH_FILTER!) {
+    getTemperatureMetrics(filter: $filter) {
       id
       temperature
       timestamp
@@ -336,8 +336,8 @@ query getTemperatureMetrics {
 `;
 
 export const GET_IO_METRICS_QUERY = `
-query getIOMetrics {
-    getIOMetrics {
+query getIOMetrics($filter: GRAPH_FILTER!) {
+    getIOMetrics(filter: $filter) {
       id
       input
       output
@@ -347,8 +347,8 @@ query getIOMetrics {
 `;
 
 export const GET_THROUGHPUT_METRICS_QUERY = `
-query getThroughputMetrics {
-    getThroughputMetrics {
+query getThroughputMetrics($filter: GRAPH_FILTER!) {
+    getThroughputMetrics(filter: $filter) {
       uv
       pv
       amt
@@ -358,8 +358,8 @@ query getThroughputMetrics {
 `;
 
 export const GET_MEMORY_USAGE_METRICS_QUERY = `
-    query getMemoryUsageMetrics {
-        getMemoryUsageMetrics {
+    query getMemoryUsageMetrics($filter: GRAPH_FILTER!) {
+        getMemoryUsageMetrics(filter: $filter) {
             id
             usage
             timestamp

@@ -280,9 +280,9 @@ const cpuUsageMetrics = (index: number, length: number): CpuUsageMetricsDto => {
 
 const nodeRF = (index: number, length: number): NodeRFDto => {
     return {
-        qam: defaultCasual.integer(1, 19),
-        rfOutput: defaultCasual.integer(1, 19),
-        rssi: defaultCasual.integer(1, 19),
+        qam: defaultCasual.integer(1, 25),
+        rfOutput: defaultCasual.integer(1, 100),
+        rssi: defaultCasual.integer(25, 50),
         timestamp: getUniqueTimeStamp(index, length),
     };
 };
