@@ -54,18 +54,21 @@ const NodeRFKpiTab = ({ loading, metrics }: INodeRFKpiTab) => {
                             stroke="#8884d8"
                             activeDot={{ r: 8 }}
                             strokeWidth={2}
+                            animationDuration={300}
                         />
                         <Line
                             type="monotone"
                             dataKey="rfOutput"
                             stroke="#82ca9d"
                             strokeWidth={2}
+                            animationDuration={300}
                         />
                         <Line
                             type="monotone"
                             dataKey="rssi"
                             stroke="#E6534E"
                             strokeWidth={2}
+                            animationDuration={300}
                         />
                     </LineChart>
                 </ResponsiveContainer>

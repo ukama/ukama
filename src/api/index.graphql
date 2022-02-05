@@ -215,8 +215,8 @@ subscription getNodeRFKPIS {
     }
 }
 
-query getNodeRFKPIQ {
-    getNodeRFKPI {
+query getNodeRFKPIQ($filter: GRAPH_FILTER!) {
+    getNodeRFKPI(filter: $filter) {
         qam
         rfOutput
         rssi

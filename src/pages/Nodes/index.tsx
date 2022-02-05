@@ -17,6 +17,7 @@ import {
 } from "../../constants/stubData";
 import {
     NodeDto,
+    Graph_Filter,
     useGetNodesByOrgQuery,
     useGetNodeRfkpiqQuery,
     GetNodeRfkpisDocument,
@@ -43,7 +44,11 @@ const Nodes = () => {
         data: nodeRFKpiRes,
         loading: nodeRFKpiLoading,
         subscribeToMore: subscribeToNodeRFKpiMetrics,
-    } = useGetNodeRfkpiqQuery();
+    } = useGetNodeRfkpiqQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
 
     const nodeRFKpiMetricsSubscription = () =>
         subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
@@ -52,8 +57,9 @@ const Nodes = () => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getNodeRFKPI;
                 setRfKpiStats(parseObjectInNameValue(metrics));
+                const spreadPrev = prev ? prev?.getNodeRFKPI : [];
                 return Object.assign({}, prev, {
-                    getNodeRFKPI: [metrics, ...prev.getNodeRFKPI],
+                    getNodeRFKPI: [metrics, ...spreadPrev],
                 });
             },
         });

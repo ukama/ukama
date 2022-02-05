@@ -263,6 +263,12 @@ export enum Get_User_Type {
     Visitor = "VISITOR",
 }
 
+export enum Graph_Filter {
+    Day = "DAY",
+    Month = "MONTH",
+    Week = "WEEK",
+}
+
 export type GetUserDto = {
     __typename?: "GetUserDto";
     dataPlan: Scalars["Float"];
@@ -551,6 +557,10 @@ export type QueryGetConnectedUsersArgs = {
     filter: Time_Filter;
 };
 
+export type QueryGetCpuUsageMetricsArgs = {
+    filter: Graph_Filter;
+};
+
 export type QueryGetDataBillArgs = {
     filter: Data_Bill_Filter;
 };
@@ -559,8 +569,20 @@ export type QueryGetDataUsageArgs = {
     filter: Time_Filter;
 };
 
+export type QueryGetIoMetricsArgs = {
+    filter: Graph_Filter;
+};
+
+export type QueryGetMemoryUsageMetricsArgs = {
+    filter: Graph_Filter;
+};
+
 export type QueryGetNetworkArgs = {
     filter: Network_Type;
+};
+
+export type QueryGetNodeRfkpiArgs = {
+    filter: Graph_Filter;
 };
 
 export type QueryGetNodesArgs = {
@@ -575,12 +597,24 @@ export type QueryGetResidentsArgs = {
     data: PaginationDto;
 };
 
+export type QueryGetTemperatureMetricsArgs = {
+    filter: Graph_Filter;
+};
+
+export type QueryGetThroughputMetricsArgs = {
+    filter: Graph_Filter;
+};
+
 export type QueryGetUserArgs = {
     id: Scalars["String"];
 };
 
 export type QueryGetUsersArgs = {
     data: GetUserPaginationDto;
+};
+
+export type QueryGetUsersAttachedMetricsArgs = {
+    filter: Graph_Filter;
 };
 
 export type QueryMyUsersArgs = {
@@ -1035,7 +1069,9 @@ export type GetNodeRfkpisSubscription = {
     };
 };
 
-export type GetNodeRfkpiqQueryVariables = Exact<{ [key: string]: never }>;
+export type GetNodeRfkpiqQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
 
 export type GetNodeRfkpiqQuery = {
     __typename?: "Query";
@@ -2238,8 +2274,8 @@ export type GetNodeRfkpisSubscriptionHookResult = ReturnType<
 export type GetNodeRfkpisSubscriptionResult =
     Apollo.SubscriptionResult<GetNodeRfkpisSubscription>;
 export const GetNodeRfkpiqDocument = gql`
-    query getNodeRFKPIQ {
-        getNodeRFKPI {
+    query getNodeRFKPIQ($filter: GRAPH_FILTER!) {
+        getNodeRFKPI(filter: $filter) {
             qam
             rfOutput
             rssi
@@ -2260,11 +2296,12 @@ export const GetNodeRfkpiqDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodeRfkpiqQuery({
  *   variables: {
+ *      filter: // value for 'filter'
  *   },
  * });
  */
 export function useGetNodeRfkpiqQuery(
-    baseOptions?: Apollo.QueryHookOptions<
+    baseOptions: Apollo.QueryHookOptions<
         GetNodeRfkpiqQuery,
         GetNodeRfkpiqQueryVariables
     >
