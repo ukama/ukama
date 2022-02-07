@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { TObject } from "../types";
 import { Alert_Type } from "../generated";
 
 const getTitleFromPath = (path: string) => {
@@ -52,4 +53,12 @@ const parseObjectInNameValue = (obj: any) => {
     return updatedObj;
 };
 
-export { getTitleFromPath, getColorByType, parseObjectInNameValue };
+const uniqueObjectsArray = (name: string, list: TObject[]): TObject[] | [] =>
+    list.length > 0 ? list.filter((item: TObject) => item.name !== name) : [];
+
+export {
+    getColorByType,
+    getTitleFromPath,
+    uniqueObjectsArray,
+    parseObjectInNameValue,
+};

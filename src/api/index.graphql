@@ -223,3 +223,35 @@ query getNodeRFKPIQ($filter: GRAPH_FILTER!) {
         timestamp
     }
 }
+
+subscription getUsersAttachedMetricsS {
+    getUsersAttachedMetrics {
+        id
+        users
+        timestamp
+    }
+}
+
+query getUsersAttachedMetricsQ($filter: GRAPH_FILTER!) {
+    getUsersAttachedMetrics(filter: $filter) {
+        id
+        users
+        timestamp
+    }
+}
+
+subscription getThroughputMetricsS {
+    getThroughputMetrics {
+        id
+        amount
+        timestamp
+    }
+}
+
+query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
+    getThroughputMetrics(filter: $filter) {
+        id
+        amount
+        timestamp
+    }
+}

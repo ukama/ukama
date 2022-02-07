@@ -26,7 +26,9 @@ const NodeRFKpiTab = ({ loading, metrics }: INodeRFKpiTab) => {
                     height: "fit-content",
                 }}
             >
-                <Typography variant="h6">RF KPIs</Typography>
+                <Typography variant="h6" mb={4}>
+                    RF KPIs
+                </Typography>
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart
                         width={500}
