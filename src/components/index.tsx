@@ -14,6 +14,7 @@ import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
 import NodeInfoCard from "./NodeInfoCard";
 import AlertSettings from "./AlertSettings";
+import NodeHealthTab from "./NodeHealthTab";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
@@ -55,6 +56,7 @@ export {
     UserSettings,
     NodeInfoCard,
     NodeRFKpiTab,
+    NodeHealthTab,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,

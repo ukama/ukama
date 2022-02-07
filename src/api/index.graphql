@@ -255,3 +255,19 @@ query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
         timestamp
     }
 }
+
+subscription getTemperatureMetricsS {
+    getTemperatureMetrics {
+        id
+        temperature
+        timestamp
+    }
+}
+
+query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
+    getTemperatureMetrics(filter: $filter) {
+        id
+        temperature
+        timestamp
+    }
+}

@@ -1139,6 +1139,34 @@ export type GetThroughputMetricsQQuery = {
     }>;
 };
 
+export type GetTemperatureMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetTemperatureMetricsSSubscription = {
+    __typename?: "Subscription";
+    getTemperatureMetrics: {
+        __typename?: "TemperatureMetricsDto";
+        id?: string | null | undefined;
+        temperature: number;
+        timestamp: number;
+    };
+};
+
+export type GetTemperatureMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetTemperatureMetricsQQuery = {
+    __typename?: "Query";
+    getTemperatureMetrics: Array<{
+        __typename?: "TemperatureMetricsDto";
+        id?: string | null | undefined;
+        temperature: number;
+        timestamp: number;
+    }>;
+};
+
 export const GetDataUsageDocument = gql`
     query getDataUsage($filter: TIME_FILTER!) {
         getDataUsage(filter: $filter) {
@@ -2592,4 +2620,106 @@ export type GetThroughputMetricsQLazyQueryHookResult = ReturnType<
 export type GetThroughputMetricsQQueryResult = Apollo.QueryResult<
     GetThroughputMetricsQQuery,
     GetThroughputMetricsQQueryVariables
+>;
+export const GetTemperatureMetricsSDocument = gql`
+    subscription getTemperatureMetricsS {
+        getTemperatureMetrics {
+            id
+            temperature
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetTemperatureMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetTemperatureMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetTemperatureMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTemperatureMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetTemperatureMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetTemperatureMetricsSSubscription,
+        GetTemperatureMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetTemperatureMetricsSSubscription,
+        GetTemperatureMetricsSSubscriptionVariables
+    >(GetTemperatureMetricsSDocument, options);
+}
+export type GetTemperatureMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetTemperatureMetricsSSubscription
+>;
+export type GetTemperatureMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetTemperatureMetricsSSubscription>;
+export const GetTemperatureMetricsQDocument = gql`
+    query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
+        getTemperatureMetrics(filter: $filter) {
+            id
+            temperature
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetTemperatureMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetTemperatureMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTemperatureMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTemperatureMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetTemperatureMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >(GetTemperatureMetricsQDocument, options);
+}
+export function useGetTemperatureMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >(GetTemperatureMetricsQDocument, options);
+}
+export type GetTemperatureMetricsQQueryHookResult = ReturnType<
+    typeof useGetTemperatureMetricsQQuery
+>;
+export type GetTemperatureMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetTemperatureMetricsQLazyQuery
+>;
+export type GetTemperatureMetricsQQueryResult = Apollo.QueryResult<
+    GetTemperatureMetricsQQuery,
+    GetTemperatureMetricsQQueryVariables
 >;

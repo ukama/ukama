@@ -1,6 +1,6 @@
 import { format } from "date-fns";
-import { TObject } from "../types";
 import { Alert_Type } from "../generated";
+import { TObject } from "../types";
 
 const getTitleFromPath = (path: string) => {
     switch (path) {

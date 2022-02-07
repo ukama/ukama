@@ -7,11 +7,12 @@ import {
     NodeStatus,
     NodeInfoCard,
     NodeRFKpiTab,
+    NodeHealthTab,
     NodeDetailsCard,
     PagePlaceholder,
     NodeMetaDataTab,
 } from "../../components";
-import { NODE_PROPERTIES8, NODE_PROPERTIES4 } from "../../constants/stubData";
+import { NODE_PROPERTIES8 } from "../../constants/stubData";
 import {
     NodeDto,
     Graph_Filter,
@@ -25,17 +26,21 @@ import {
     useGetThroughputMetricsQQuery,
     GetThroughputMetricsSSubscription,
     GetThroughputMetricsSDocument,
+    useGetTemperatureMetricsQQuery,
+    GetTemperatureMetricsSDocument,
+    GetTemperatureMetricsSSubscription,
 } from "../../generated";
 import { TObject } from "../../types";
 import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
 
 const Nodes = () => {
     const orgId = useRecoilValue(organizationId);
-    const [selectedTab, setSelectedTab] = useState(2);
+    const [selectedTab, setSelectedTab] = useState(3);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
     const [metaDataStats, setMetaDataStats] = useState<TObject[]>([]);
+    const [healthStats, setHealthStats] = useState<TObject[]>([]);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
         onCompleted: res => {
@@ -69,6 +74,16 @@ const Nodes = () => {
         loading: nodeThroughpuLoading,
         subscribeToMore: subscribeToThroughputMetrics,
     } = useGetThroughputMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeTempMetricsRes,
+        loading: nodeTempMetricsLoading,
+        subscribeToMore: subscribeToTempMetrics,
+    } = useGetTemperatureMetricsQQuery({
         variables: {
             filter: Graph_Filter.Week,
         },
@@ -129,6 +144,29 @@ const Nodes = () => {
             },
         });
 
+    const nodeTempMetricsSubscription = () =>
+        subscribeToTempMetrics<GetTemperatureMetricsSSubscription>({
+            document: GetTemperatureMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getTemperatureMetrics;
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Temperature", prev),
+                    {
+                        name: "Temperature",
+                        value: metrics.temperature,
+                    },
+                ]);
+                const spreadPrev =
+                    prev && prev.getTemperatureMetrics
+                        ? prev.getTemperatureMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getTemperatureMetrics: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
     useEffect(() => {
         if (nodeRFKpiRes) {
             nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
@@ -177,6 +215,24 @@ const Nodes = () => {
             unsub && unsub();
         };
     }, [nodeThroughputRes]);
+
+    useEffect(() => {
+        if (nodeTempMetricsRes) {
+            nodeTempMetricsRes?.getTemperatureMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Temperature", prev),
+                    {
+                        name: "Temperature",
+                        value: nodeTempMetricsRes?.getTemperatureMetrics[0]
+                            ?.temperature,
+                    },
+                ]);
+        }
+        let unsub = nodeTempMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeTempMetricsRes]);
 
     // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
     //     useGetNodeDetailsQuery();
@@ -256,7 +312,7 @@ const Nodes = () => {
                             index={3}
                             loading={isLoading}
                             title={"Physical Health"}
-                            properties={NODE_PROPERTIES4}
+                            properties={healthStats}
                             onSelected={onTabSelected}
                             isSelected={selectedTab === 3}
                         />
@@ -286,6 +342,14 @@ const Nodes = () => {
                             }
                             throughputMetrics={
                                 nodeThroughputRes?.getThroughputMetrics || []
+                            }
+                        />
+                    )}
+                    {selectedTab === 3 && (
+                        <NodeHealthTab
+                            loading={isLoading || nodeTempMetricsLoading}
+                            temperatureMetrics={
+                                nodeTempMetricsRes?.getTemperatureMetrics || []
                             }
                         />
                     )}
