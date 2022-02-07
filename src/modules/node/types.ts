@@ -193,17 +193,14 @@ export class NodePhysicalHealthDto {
 
 @ObjectType()
 export class ThroughputMetricsDto {
-    @Field()
-    uv: number;
+    @Field({ nullable: true })
+    id: string;
 
     @Field()
-    pv: number;
+    amount: number;
 
     @Field()
-    amt: number;
-
-    @Field()
-    time: string;
+    timestamp: number;
 }
 
 @ObjectType()

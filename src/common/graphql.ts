@@ -349,10 +349,9 @@ query getIOMetrics($filter: GRAPH_FILTER!) {
 export const GET_THROUGHPUT_METRICS_QUERY = `
 query getThroughputMetrics($filter: GRAPH_FILTER!) {
     getThroughputMetrics(filter: $filter) {
-      uv
-      pv
-      amt
-      time
+        id
+        amount
+        timestamp
     }
   }  
 `;
