@@ -250,7 +250,7 @@ const throughputMetrics = (
 ): ThroughputMetricsDto => {
     return {
         id: defaultCasual._uuid(),
-        amount: defaultCasual.integer(150, 1500),
+        amount: defaultCasual.integer(-500, 1500),
         timestamp: getUniqueTimeStamp(index, length),
     };
 };
