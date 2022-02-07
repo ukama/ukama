@@ -289,7 +289,7 @@ const temperatureMetrics = (
 ): TemperatureMetricsDto => {
     return {
         id: defaultCasual._uuid(),
-        temperature: defaultCasual.integer(1, 150),
+        temperature: defaultCasual.integer(-20, 80),
         timestamp: getUniqueTimeStamp(index, length),
     };
 };
