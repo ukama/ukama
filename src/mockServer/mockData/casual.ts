@@ -244,18 +244,14 @@ const nodeNetwork = (): NetworkDto => {
         description: "21 days 5 hours 1 minute",
     };
 };
-const throughputMetrics = (): ThroughputMetricsDto => {
-    const time = {
-        AM: "AM",
-        PM: "PM",
-    };
+const throughputMetrics = (
+    index: number,
+    length: number
+): ThroughputMetricsDto => {
     return {
-        uv: defaultCasual.integer(50, 500),
-        pv: defaultCasual.integer(50, 500),
-        amt: defaultCasual.integer(150, 1500),
-        time: `${defaultCasual.integer(1, 12)} ${defaultCasual.random_value(
-            time
-        )}`,
+        id: defaultCasual._uuid(),
+        amount: defaultCasual.integer(-500, 1500),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
