@@ -22,7 +22,7 @@ import { HeaderType, PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
-import { API_METHOD_TYPE } from "../../constants";
+import { API_METHOD_TYPE, GRAPH_FILTER } from "../../constants";
 import { SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
 import { NetworkDto } from "../network/types";
@@ -119,51 +119,65 @@ export class NodeService implements INodeService {
 
         return res.data;
     };
-    getThroughputMetrics = async (): Promise<[ThroughputMetricsDto]> => {
+    getThroughputMetrics = async (
+        filter: GRAPH_FILTER
+    ): Promise<[ThroughputMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_THROUGHPUT_METRICS,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
 
         return res.data;
     };
-    cpuUsageMetrics = async (): Promise<[CpuUsageMetricsDto]> => {
+    cpuUsageMetrics = async (
+        filter: GRAPH_FILTER
+    ): Promise<[CpuUsageMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_CPU_USAGE_METRICS,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    nodeRF = async (): Promise<[NodeRFDto]> => {
+    nodeRF = async (filter: GRAPH_FILTER): Promise<[NodeRFDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_NODE_RF_KPI,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    temperatureMetrics = async (): Promise<[TemperatureMetricsDto]> => {
+    temperatureMetrics = async (
+        filter: GRAPH_FILTER
+    ): Promise<[TemperatureMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_TEMPERATURE_METRICS,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    ioMetrics = async (): Promise<[IOMetricsDto]> => {
+    ioMetrics = async (filter: GRAPH_FILTER): Promise<[IOMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_IO_METRICS,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    memoryUsageMetrics = async (): Promise<[MemoryUsageMetricsDto]> => {
+    memoryUsageMetrics = async (
+        filter: GRAPH_FILTER
+    ): Promise<[MemoryUsageMetricsDto]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: SERVER.GET_MEMORY_USAGE_METRICS,
+            params: `${filter}`,
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;

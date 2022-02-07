@@ -11,6 +11,6 @@ export class GetUsersAttachedMetricsSubscriptionResolver {
     async getUsersAttachedMetrics(
         @Root() data: [UsersAttachedMetricsDto]
     ): Promise<UsersAttachedMetricsDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }

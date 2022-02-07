@@ -14,7 +14,6 @@ import {
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
-    ThroughputMetricsDto,
 } from "./types";
 
 export interface INodeService {
@@ -23,7 +22,6 @@ export interface INodeService {
     getNodeDetials(): Promise<NodeDetailDto>;
     nodeMetaData(): Promise<NodeMetaDataDto>;
     nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
-    getThroughputMetrics(): Promise<[ThroughputMetricsDto]>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType

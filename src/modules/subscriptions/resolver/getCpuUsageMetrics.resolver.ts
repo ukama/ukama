@@ -11,6 +11,6 @@ export class GetCpuUsageMetricsSubscriptionResolver {
     async getCpuUsageMetrics(
         @Root() data: [CpuUsageMetricsDto]
     ): Promise<CpuUsageMetricsDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }

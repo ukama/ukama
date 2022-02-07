@@ -19,6 +19,7 @@ import {
 
 import {
     DATA_BILL_FILTER,
+    GRAPH_FILTER,
     HEADER,
     NETWORK_TYPE,
     TIME_FILTER,
@@ -35,6 +36,7 @@ export const job = (schema: GraphQLSchema): void => {
             pageNo: 1,
             pageSize: 3,
         };
+
         await graphql({
             schema,
             source: GET_CONNECTED_USERS_QUERY,
@@ -102,6 +104,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_USERS_ATTACHED_METRICS_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -109,6 +114,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_CPU_USAGE_METRICS_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -116,6 +124,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_NODE_RF_KPI_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -123,6 +134,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_TEMPERATURE_METRICS_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -130,6 +144,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_IO_METRICS_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -137,6 +154,9 @@ export const job = (schema: GraphQLSchema): void => {
         await graphql({
             schema,
             source: GET_THROUGHPUT_METRICS_QUERY,
+            variableValues: {
+                filter: GRAPH_FILTER.DAY,
+            },
             contextValue: {
                 req: HEADER,
             },
@@ -145,7 +165,7 @@ export const job = (schema: GraphQLSchema): void => {
             schema,
             source: GET_MEMORY_USAGE_METRICS_QUERY,
             variableValues: {
-                input: meta,
+                filter: GRAPH_FILTER.DAY,
             },
             contextValue: {
                 req: HEADER,

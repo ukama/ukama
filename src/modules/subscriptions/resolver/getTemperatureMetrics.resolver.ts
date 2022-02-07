@@ -11,6 +11,6 @@ export class GetTemperatureMetricsSubscriptionResolver {
     async getTemperatureMetrics(
         @Root() data: [TemperatureMetricsDto]
     ): Promise<TemperatureMetricsDto> {
-        return data[0];
+        return data[data.length - 1];
     }
 }

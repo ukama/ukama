@@ -33,16 +33,17 @@ import {
     UserDto,
     UserResponse,
 } from "../../modules/user/types";
+import { getUniqueTimeStamp } from "../../utils";
 
 function randomArray<T>(
     minLength: number,
     maxLength: number,
-    elementGenerator: () => T
+    elementGenerator: (index?: number, length?: number) => T
 ): T[] {
     const length = casual.integer(minLength, maxLength);
     const result = [];
     for (let i = 0; i < length; i++) {
-        result.push(elementGenerator());
+        result.push(elementGenerator(i + 1, maxLength));
     }
     return result;
 }
@@ -258,53 +259,62 @@ const throughputMetrics = (): ThroughputMetricsDto => {
     };
 };
 
-const usersAttachedMetrics = (): UsersAttachedMetricsDto => {
+const usersAttachedMetrics = (
+    index: number,
+    length: number
+): UsersAttachedMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         users: defaultCasual.integer(1, 50),
-        timestamp: new Date().getTime(),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
-const cpuUsageMetrics = (): CpuUsageMetricsDto => {
+const cpuUsageMetrics = (index: number, length: number): CpuUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         usage: defaultCasual.integer(1, 200),
-        timestamp: new Date().getTime(),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
-const nodeRF = (): NodeRFDto => {
+const nodeRF = (index: number, length: number): NodeRFDto => {
     return {
-        qam: defaultCasual.integer(1, 19),
-        rfOutput: defaultCasual.integer(1, 19),
-        rssi: defaultCasual.integer(1, 19),
-        timestamp: new Date().getTime(),
+        qam: defaultCasual.integer(1, 25),
+        rfOutput: defaultCasual.integer(1, 100),
+        rssi: defaultCasual.integer(25, 50),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
-const temperatureMetrics = (): TemperatureMetricsDto => {
+const temperatureMetrics = (
+    index: number,
+    length: number
+): TemperatureMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         temperature: defaultCasual.integer(1, 150),
-        timestamp: new Date().getTime(),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
-const getIOMetrics = (): IOMetricsDto => {
+const getIOMetrics = (index: number, length: number): IOMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         input: defaultCasual.integer(1, 200),
         output: defaultCasual.integer(1, 200),
-        timestamp: new Date().getTime(),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
-const memoryUsageMetrics = (): MemoryUsageMetricsDto => {
+const memoryUsageMetrics = (
+    index: number,
+    length: number
+): MemoryUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
         usage: defaultCasual.integer(1, 4096),
-        timestamp: new Date().getTime(),
+        timestamp: getUniqueTimeStamp(index, length),
     };
 };
 
@@ -312,7 +322,7 @@ interface Generators extends Casual.Generators {
     _randomArray: <T>(
         minLength: number,
         maxLength: number,
-        elementGenerator: () => T
+        elementGenerator: (index?: number) => T
     ) => Array<T>;
 
     _user: () => UserDto;
@@ -356,7 +366,7 @@ interface Functions extends Casual.functions {
     randomArray: <T>(
         minLength: number,
         maxLength: number,
-        elementGenerator: () => T
+        elementGenerator: (index?: number) => T
     ) => Array<T>;
     user: () => UserDto;
     dataUsage: () => DataUsageDto;
