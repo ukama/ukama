@@ -21,6 +21,7 @@ import NetworkStatus from "./NetworkStatus";
 import DarkModToggle from "./DarkModToggle";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
+import NodeMetaDataTab from "./NodeMetaDataTab";
 import NodeDetailsCard from "./NodeDetailsCard";
 import SimpleDataTable from "./SimpleDataTable";
 import PagePlaceholder from "./PagePlaceholder";
@@ -63,6 +64,7 @@ export {
     NodeContainer,
     OptionsPopover,
     LoadingWrapper,
+    NodeMetaDataTab,
     NetworkSettings,
     NodeDetailsCard,
     SimpleDataTable,

@@ -4,17 +4,14 @@ import { RoundedCard } from "../../styles";
 import { Box, Grid, Stack } from "@mui/material";
 import { isSkeltonLoading, organizationId } from "../../recoil";
 import {
-    NodeDetailsCard,
     NodeStatus,
     NodeInfoCard,
-    PagePlaceholder,
     NodeRFKpiTab,
+    NodeDetailsCard,
+    PagePlaceholder,
+    NodeMetaDataTab,
 } from "../../components";
-import {
-    NODE_PROPERTIES8,
-    NODE_PROPERTIES2,
-    NODE_PROPERTIES4,
-} from "../../constants/stubData";
+import { NODE_PROPERTIES8, NODE_PROPERTIES4 } from "../../constants/stubData";
 import {
     NodeDto,
     Graph_Filter,
@@ -22,16 +19,23 @@ import {
     useGetNodeRfkpiqQuery,
     GetNodeRfkpisDocument,
     GetNodeRfkpisSubscription,
+    useGetUsersAttachedMetricsQQuery,
+    GetUsersAttachedMetricsSDocument,
+    GetUsersAttachedMetricsSSubscription,
+    useGetThroughputMetricsQQuery,
+    GetThroughputMetricsSSubscription,
+    GetThroughputMetricsSDocument,
 } from "../../generated";
 import { TObject } from "../../types";
-import { parseObjectInNameValue } from "../../utils";
+import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
 
 const Nodes = () => {
     const orgId = useRecoilValue(organizationId);
-    const [selectedTab, setSelectedTab] = useState(4);
-    const [selectedNode, setSelectedNode] = useState<NodeDto>();
+    const [selectedTab, setSelectedTab] = useState(2);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
+    const [metaDataStats, setMetaDataStats] = useState<TObject[]>([]);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
         onCompleted: res => {
@@ -50,6 +54,26 @@ const Nodes = () => {
         },
     });
 
+    const {
+        data: nodeUserAttachRes,
+        loading: nodeUserAttachLoading,
+        subscribeToMore: subscribeToUserAttachMetrics,
+    } = useGetUsersAttachedMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeThroughputRes,
+        loading: nodeThroughpuLoading,
+        subscribeToMore: subscribeToThroughputMetrics,
+    } = useGetThroughputMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
     const nodeRFKpiMetricsSubscription = () =>
         subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
             document: GetNodeRfkpisDocument,
@@ -57,9 +81,50 @@ const Nodes = () => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getNodeRFKPI;
                 setRfKpiStats(parseObjectInNameValue(metrics));
-                const spreadPrev = prev ? prev?.getNodeRFKPI : [];
+                const spreadPrev =
+                    prev && prev.getNodeRFKPI ? prev.getNodeRFKPI : [];
                 return Object.assign({}, prev, {
                     getNodeRFKPI: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
+    const nodeUserAttachMetricsSubscription = () =>
+        subscribeToUserAttachMetrics<GetUsersAttachedMetricsSSubscription>({
+            document: GetUsersAttachedMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getUsersAttachedMetrics;
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Users Attached", prev),
+                    { name: "Users Attached", value: metrics.users },
+                ]);
+                const spreadPrev =
+                    prev && prev.getUsersAttachedMetrics
+                        ? prev.getUsersAttachedMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getUsersAttachedMetrics: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
+    const nodeThroughputMetricsSubscription = () =>
+        subscribeToThroughputMetrics<GetThroughputMetricsSSubscription>({
+            document: GetThroughputMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getThroughputMetrics;
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Throughput", prev),
+                    { name: "Throughput", value: metrics.amount },
+                ]);
+                const spreadPrev =
+                    prev && prev.getThroughputMetrics
+                        ? prev.getThroughputMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getThroughputMetrics: [metrics, ...spreadPrev],
                 });
             },
         });
@@ -76,6 +141,42 @@ const Nodes = () => {
             unsub && unsub();
         };
     }, [nodeRFKpiRes]);
+
+    useEffect(() => {
+        if (nodeUserAttachRes) {
+            nodeUserAttachRes?.getUsersAttachedMetrics?.length > 0 &&
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Users Attached", prev),
+                    {
+                        name: "Users Attached",
+                        value: nodeUserAttachRes.getUsersAttachedMetrics[0]
+                            .users,
+                    },
+                ]);
+        }
+        let unsub = nodeUserAttachMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeUserAttachRes]);
+
+    useEffect(() => {
+        if (nodeThroughputRes) {
+            nodeThroughputRes?.getThroughputMetrics?.length > 0 &&
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Throughput", prev),
+                    {
+                        name: "Throughput",
+                        value: nodeThroughputRes?.getThroughputMetrics[0]
+                            ?.amount,
+                    },
+                ]);
+        }
+        let unsub = nodeThroughputMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeThroughputRes]);
 
     // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
     //     useGetNodeDetailsQuery();
@@ -141,11 +242,15 @@ const Nodes = () => {
                         />
                         <NodeInfoCard
                             index={2}
-                            loading={isLoading}
                             title={"Meta Data"}
-                            properties={NODE_PROPERTIES2}
+                            properties={metaDataStats}
                             onSelected={onTabSelected}
                             isSelected={selectedTab === 2}
+                            loading={
+                                isLoading ||
+                                nodeUserAttachLoading ||
+                                nodeThroughpuLoading
+                            }
                         />
                         <NodeInfoCard
                             index={3}
@@ -168,6 +273,21 @@ const Nodes = () => {
                 <Grid item container xs={8}>
                     {selectedTab === 1 && (
                         <NodeDetailsCard loading={isLoading} />
+                    )}
+                    {selectedTab === 2 && (
+                        <NodeMetaDataTab
+                            loading={
+                                isLoading ||
+                                nodeUserAttachLoading ||
+                                nodeThroughpuLoading
+                            }
+                            usersAttachedMetrics={
+                                nodeUserAttachRes?.getUsersAttachedMetrics || []
+                            }
+                            throughputMetrics={
+                                nodeThroughputRes?.getThroughputMetrics || []
+                            }
+                        />
                     )}
                     {selectedTab === 4 && (
                         <NodeRFKpiTab

@@ -668,10 +668,9 @@ export type TemperatureMetricsDto = {
 
 export type ThroughputMetricsDto = {
     __typename?: "ThroughputMetricsDto";
-    amt: Scalars["Float"];
-    pv: Scalars["Float"];
-    time: Scalars["String"];
-    uv: Scalars["Float"];
+    amount: Scalars["Float"];
+    id?: Maybe<Scalars["String"]>;
+    timestamp: Scalars["Float"];
 };
 
 export type UpdateNodeDto = {
@@ -1080,6 +1079,62 @@ export type GetNodeRfkpiqQuery = {
         qam: number;
         rfOutput: number;
         rssi: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetUsersAttachedMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetUsersAttachedMetricsSSubscription = {
+    __typename?: "Subscription";
+    getUsersAttachedMetrics: {
+        __typename?: "UsersAttachedMetricsDto";
+        id?: string | null | undefined;
+        users: number;
+        timestamp: number;
+    };
+};
+
+export type GetUsersAttachedMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetUsersAttachedMetricsQQuery = {
+    __typename?: "Query";
+    getUsersAttachedMetrics: Array<{
+        __typename?: "UsersAttachedMetricsDto";
+        id?: string | null | undefined;
+        users: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetThroughputMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetThroughputMetricsSSubscription = {
+    __typename?: "Subscription";
+    getThroughputMetrics: {
+        __typename?: "ThroughputMetricsDto";
+        id?: string | null | undefined;
+        amount: number;
+        timestamp: number;
+    };
+};
+
+export type GetThroughputMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetThroughputMetricsQQuery = {
+    __typename?: "Query";
+    getThroughputMetrics: Array<{
+        __typename?: "ThroughputMetricsDto";
+        id?: string | null | undefined;
+        amount: number;
         timestamp: number;
     }>;
 };
@@ -2333,4 +2388,208 @@ export type GetNodeRfkpiqLazyQueryHookResult = ReturnType<
 export type GetNodeRfkpiqQueryResult = Apollo.QueryResult<
     GetNodeRfkpiqQuery,
     GetNodeRfkpiqQueryVariables
+>;
+export const GetUsersAttachedMetricsSDocument = gql`
+    subscription getUsersAttachedMetricsS {
+        getUsersAttachedMetrics {
+            id
+            users
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetUsersAttachedMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetUsersAttachedMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetUsersAttachedMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUsersAttachedMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetUsersAttachedMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetUsersAttachedMetricsSSubscription,
+        GetUsersAttachedMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetUsersAttachedMetricsSSubscription,
+        GetUsersAttachedMetricsSSubscriptionVariables
+    >(GetUsersAttachedMetricsSDocument, options);
+}
+export type GetUsersAttachedMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetUsersAttachedMetricsSSubscription
+>;
+export type GetUsersAttachedMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetUsersAttachedMetricsSSubscription>;
+export const GetUsersAttachedMetricsQDocument = gql`
+    query getUsersAttachedMetricsQ($filter: GRAPH_FILTER!) {
+        getUsersAttachedMetrics(filter: $filter) {
+            id
+            users
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetUsersAttachedMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetUsersAttachedMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUsersAttachedMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUsersAttachedMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetUsersAttachedMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetUsersAttachedMetricsQQuery,
+        GetUsersAttachedMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetUsersAttachedMetricsQQuery,
+        GetUsersAttachedMetricsQQueryVariables
+    >(GetUsersAttachedMetricsQDocument, options);
+}
+export function useGetUsersAttachedMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetUsersAttachedMetricsQQuery,
+        GetUsersAttachedMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetUsersAttachedMetricsQQuery,
+        GetUsersAttachedMetricsQQueryVariables
+    >(GetUsersAttachedMetricsQDocument, options);
+}
+export type GetUsersAttachedMetricsQQueryHookResult = ReturnType<
+    typeof useGetUsersAttachedMetricsQQuery
+>;
+export type GetUsersAttachedMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetUsersAttachedMetricsQLazyQuery
+>;
+export type GetUsersAttachedMetricsQQueryResult = Apollo.QueryResult<
+    GetUsersAttachedMetricsQQuery,
+    GetUsersAttachedMetricsQQueryVariables
+>;
+export const GetThroughputMetricsSDocument = gql`
+    subscription getThroughputMetricsS {
+        getThroughputMetrics {
+            id
+            amount
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetThroughputMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetThroughputMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetThroughputMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetThroughputMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetThroughputMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetThroughputMetricsSSubscription,
+        GetThroughputMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetThroughputMetricsSSubscription,
+        GetThroughputMetricsSSubscriptionVariables
+    >(GetThroughputMetricsSDocument, options);
+}
+export type GetThroughputMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetThroughputMetricsSSubscription
+>;
+export type GetThroughputMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetThroughputMetricsSSubscription>;
+export const GetThroughputMetricsQDocument = gql`
+    query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
+        getThroughputMetrics(filter: $filter) {
+            id
+            amount
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetThroughputMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetThroughputMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetThroughputMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetThroughputMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetThroughputMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetThroughputMetricsQQuery,
+        GetThroughputMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetThroughputMetricsQQuery,
+        GetThroughputMetricsQQueryVariables
+    >(GetThroughputMetricsQDocument, options);
+}
+export function useGetThroughputMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetThroughputMetricsQQuery,
+        GetThroughputMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetThroughputMetricsQQuery,
+        GetThroughputMetricsQQueryVariables
+    >(GetThroughputMetricsQDocument, options);
+}
+export type GetThroughputMetricsQQueryHookResult = ReturnType<
+    typeof useGetThroughputMetricsQQuery
+>;
+export type GetThroughputMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetThroughputMetricsQLazyQuery
+>;
+export type GetThroughputMetricsQQueryResult = Apollo.QueryResult<
+    GetThroughputMetricsQQuery,
+    GetThroughputMetricsQQueryVariables
 >;
