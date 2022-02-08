@@ -137,11 +137,10 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getNodeRFKPI;
-                setRfKpiStats(parseObjectInNameValue(metrics));
                 const spreadPrev =
                     prev && prev.getNodeRFKPI ? prev.getNodeRFKPI : [];
                 return Object.assign({}, prev, {
-                    getNodeRFKPI: [metrics, ...spreadPrev],
+                    getNodeRFKPI: [...spreadPrev, metrics],
                 });
             },
         });
@@ -152,16 +151,12 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getUsersAttachedMetrics;
-                setMetaDataStats(_prev => [
-                    ...uniqueObjectsArray("Users Attached", _prev),
-                    { name: "Users Attached", value: metrics.users },
-                ]);
                 const spreadPrev =
                     prev && prev.getUsersAttachedMetrics
                         ? prev.getUsersAttachedMetrics
                         : [];
                 return Object.assign({}, prev, {
-                    getUsersAttachedMetrics: [metrics, ...spreadPrev],
+                    getUsersAttachedMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -172,16 +167,12 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getThroughputMetrics;
-                setMetaDataStats(_prev => [
-                    ...uniqueObjectsArray("Throughput", _prev),
-                    { name: "Throughput", value: metrics.amount },
-                ]);
                 const spreadPrev =
                     prev && prev.getThroughputMetrics
                         ? prev.getThroughputMetrics
                         : [];
                 return Object.assign({}, prev, {
-                    getThroughputMetrics: [metrics, ...spreadPrev],
+                    getThroughputMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -192,19 +183,12 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getTemperatureMetrics;
-                setHealthStats(_prev => [
-                    ...uniqueObjectsArray("Temperature", _prev),
-                    {
-                        name: "Temperature",
-                        value: metrics.temperature,
-                    },
-                ]);
                 const spreadPrev =
                     prev && prev.getTemperatureMetrics
                         ? prev.getTemperatureMetrics
                         : [];
                 return Object.assign({}, prev, {
-                    getTemperatureMetrics: [metrics, ...spreadPrev],
+                    getTemperatureMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -215,19 +199,12 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getCpuUsageMetrics;
-                setHealthStats(_prev => [
-                    ...uniqueObjectsArray("CPU", _prev),
-                    {
-                        name: "CPU",
-                        value: `${metrics.usage}%`,
-                    },
-                ]);
                 const spreadPrev =
                     prev && prev.getCpuUsageMetrics
                         ? prev.getCpuUsageMetrics
                         : [];
                 return Object.assign({}, prev, {
-                    getCpuUsageMetrics: [metrics, ...spreadPrev],
+                    getCpuUsageMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -238,19 +215,12 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getMemoryUsageMetrics;
-                setHealthStats(_prev => [
-                    ...uniqueObjectsArray("Memory", _prev),
-                    {
-                        name: "Memory",
-                        value: `${metrics.usage}%`,
-                    },
-                ]);
                 const spreadPrev =
                     prev && prev.getMemoryUsageMetrics
                         ? prev.getMemoryUsageMetrics
                         : [];
                 return Object.assign({}, prev, {
-                    getMemoryUsageMetrics: [metrics, ...spreadPrev],
+                    getMemoryUsageMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -261,17 +231,10 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getIOMetrics;
-                setHealthStats(_prev => [
-                    ...uniqueObjectsArray("IO", _prev),
-                    {
-                        name: "IO",
-                        value: `${metrics.input} Input | ${metrics.output} Output`,
-                    },
-                ]);
                 const spreadPrev =
                     prev && prev.getIOMetrics ? prev.getIOMetrics : [];
                 return Object.assign({}, prev, {
-                    getIOMetrics: [metrics, ...spreadPrev],
+                    getIOMetrics: [...spreadPrev, metrics],
                 });
             },
         });
@@ -280,7 +243,11 @@ const Nodes = () => {
         if (nodeRFKpiRes) {
             nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
                 setRfKpiStats(
-                    parseObjectInNameValue(nodeRFKpiRes?.getNodeRFKPI[0])
+                    parseObjectInNameValue(
+                        nodeRFKpiRes?.getNodeRFKPI[
+                            nodeRFKpiRes.getNodeRFKPI.length - 1
+                        ]
+                    )
                 );
         }
         let unsub = nodeRFKpiMetricsSubscription();
@@ -296,8 +263,9 @@ const Nodes = () => {
                     ...uniqueObjectsArray("Users Attached", prev),
                     {
                         name: "Users Attached",
-                        value: nodeUserAttachRes.getUsersAttachedMetrics[0]
-                            .users,
+                        value: nodeUserAttachRes.getUsersAttachedMetrics[
+                            nodeUserAttachRes.getUsersAttachedMetrics.length - 1
+                        ].users,
                     },
                 ]);
         }
@@ -314,8 +282,9 @@ const Nodes = () => {
                     ...uniqueObjectsArray("Throughput", prev),
                     {
                         name: "Throughput",
-                        value: nodeThroughputRes?.getThroughputMetrics[0]
-                            ?.amount,
+                        value: nodeThroughputRes?.getThroughputMetrics[
+                            nodeThroughputRes?.getThroughputMetrics.length - 1
+                        ]?.amount,
                     },
                 ]);
         }
@@ -332,8 +301,9 @@ const Nodes = () => {
                     ...uniqueObjectsArray("Temperature", prev),
                     {
                         name: "Temperature",
-                        value: nodeTempMetricsRes?.getTemperatureMetrics[0]
-                            ?.temperature,
+                        value: nodeTempMetricsRes?.getTemperatureMetrics[
+                            nodeTempMetricsRes.getTemperatureMetrics.length - 1
+                        ]?.temperature,
                     },
                 ]);
         }
@@ -350,7 +320,12 @@ const Nodes = () => {
                     ...uniqueObjectsArray("CPU", prev),
                     {
                         name: "CPU",
-                        value: `${nodeCpuUsageMetricsRes?.getCpuUsageMetrics[0]?.usage}%`,
+                        value: `${
+                            nodeCpuUsageMetricsRes?.getCpuUsageMetrics[
+                                nodeCpuUsageMetricsRes.getCpuUsageMetrics
+                                    .length - 1
+                            ]?.usage
+                        }%`,
                     },
                 ]);
         }
@@ -367,7 +342,12 @@ const Nodes = () => {
                     ...uniqueObjectsArray("Memory", prev),
                     {
                         name: "Memory",
-                        value: `${nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics[0]?.usage}%`,
+                        value: `${
+                            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics[
+                                nodeMemoryUsageMetricsRes.getMemoryUsageMetrics
+                                    .length - 1
+                            ]?.usage
+                        }%`,
                     },
                 ]);
         }
@@ -384,7 +364,15 @@ const Nodes = () => {
                     ...uniqueObjectsArray("IO", prev),
                     {
                         name: "IO",
-                        value: `${nodeIoMetricsRes.getIOMetrics[0].input} Input | ${nodeIoMetricsRes.getIOMetrics[0].output} Output`,
+                        value: `${
+                            nodeIoMetricsRes.getIOMetrics[
+                                nodeIoMetricsRes.getIOMetrics.length - 1
+                            ].input
+                        } Input | ${
+                            nodeIoMetricsRes.getIOMetrics[
+                                nodeIoMetricsRes.getIOMetrics.length - 1
+                            ].output
+                        } Output`,
                     },
                 ]);
         }

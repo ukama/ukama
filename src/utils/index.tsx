@@ -58,8 +58,13 @@ const parseObjectInNameValue = (obj: any) => {
     return updatedObj;
 };
 
-const uniqueObjectsArray = (name: string, list: TObject[]): TObject[] | [] =>
-    list.length > 0 ? list.filter((item: TObject) => item.name !== name) : [];
+const uniqueObjectsArray = (name: string, list: TObject[]): TObject[] | [] => {
+    const last =
+        list.length > 0
+            ? list.filter((item: TObject) => item.name !== name)
+            : [];
+    return last;
+};
 
 export {
     getColorByType,
