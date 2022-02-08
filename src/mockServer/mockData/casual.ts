@@ -269,7 +269,7 @@ const usersAttachedMetrics = (
 const cpuUsageMetrics = (index: number, length: number): CpuUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
-        usage: defaultCasual.integer(1, 200),
+        usage: defaultCasual.integer(1, 100),
         timestamp: getUniqueTimeStamp(index, length),
     };
 };
@@ -309,7 +309,7 @@ const memoryUsageMetrics = (
 ): MemoryUsageMetricsDto => {
     return {
         id: defaultCasual._uuid(),
-        usage: defaultCasual.integer(1, 4096),
+        usage: defaultCasual.integer(1, 100),
         timestamp: getUniqueTimeStamp(index, length),
     };
 };
