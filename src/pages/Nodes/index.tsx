@@ -149,8 +149,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getUsersAttachedMetrics;
-                setMetaDataStats(prev => [
-                    ...uniqueObjectsArray("Users Attached", prev),
+                setMetaDataStats(_prev => [
+                    ...uniqueObjectsArray("Users Attached", _prev),
                     { name: "Users Attached", value: metrics.users },
                 ]);
                 const spreadPrev =
@@ -169,8 +169,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getThroughputMetrics;
-                setMetaDataStats(prev => [
-                    ...uniqueObjectsArray("Throughput", prev),
+                setMetaDataStats(_prev => [
+                    ...uniqueObjectsArray("Throughput", _prev),
                     { name: "Throughput", value: metrics.amount },
                 ]);
                 const spreadPrev =
@@ -189,8 +189,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getTemperatureMetrics;
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("Temperature", prev),
+                setHealthStats(_prev => [
+                    ...uniqueObjectsArray("Temperature", _prev),
                     {
                         name: "Temperature",
                         value: metrics.temperature,
@@ -212,8 +212,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getCpuUsageMetrics;
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("CPU", prev),
+                setHealthStats(_prev => [
+                    ...uniqueObjectsArray("CPU", _prev),
                     {
                         name: "CPU",
                         value: `${metrics.usage}%`,
@@ -235,8 +235,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getMemoryUsageMetrics;
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("Memory", prev),
+                setHealthStats(_prev => [
+                    ...uniqueObjectsArray("Memory", _prev),
                     {
                         name: "Memory",
                         value: `${metrics.usage}%`,
@@ -258,8 +258,8 @@ const Nodes = () => {
             updateQuery: (prev, { subscriptionData }) => {
                 if (!subscriptionData.data) return prev;
                 const metrics = subscriptionData.data.getIOMetrics;
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("IO", prev),
+                setHealthStats(_prev => [
+                    ...uniqueObjectsArray("IO", _prev),
                     {
                         name: "IO",
                         value: `${metrics.input} Input | ${metrics.output} Output`,
