@@ -18,7 +18,7 @@ import { makeStyles } from "@mui/styles";
 import { isDarkmode } from "../../recoil";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
-import { LoadingWrapper, UpgradeNavFooter } from "../../components";
+import { LoadingWrapper } from "../../components";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
 
 const useStyles = makeStyles(() => ({
@@ -132,16 +132,6 @@ const Sidebar = (
                 />
                 {MenuList(SIDEBAR_MENU2)}
             </Stack>
-            <Box
-                sx={{
-                    m: 1.6,
-                    height: 272,
-                    display: "flex",
-                    alignItems: "flex-end",
-                }}
-            >
-                <UpgradeNavFooter />
-            </Box>
         </Paper>
     );
 

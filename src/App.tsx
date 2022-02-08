@@ -9,12 +9,13 @@ import useWhoami from "./helpers/useWhoami";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
-import { isDarkmode, isFirstVisit, isSkeltonLoading } from "./recoil";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { CircularProgress, CssBaseline } from "@mui/material";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { isDarkmode, isFirstVisit, isSkeltonLoading, pageName } from "./recoil";
 
 const App = () => {
     const { loading, response } = useWhoami();
+    const setPage = useSetRecoilState(pageName);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
@@ -28,6 +29,7 @@ const App = () => {
     useEffect(() => {
         if (response) {
             if (!response?.isValid) {
+                setPage("Home");
                 if (_isFirstVisit) {
                     handleGoToLogin();
                 } else {
@@ -59,7 +61,7 @@ const App = () => {
             <ThemeProvider theme={theme(_isDarkMod)}>
                 <CssBaseline />
                 <BrowserRouter>
-                    <Router routes={routes} />
+                    <Router routes={Object.values(routes)} />
                 </BrowserRouter>
                 <BasicDialog
                     isClosable={false}

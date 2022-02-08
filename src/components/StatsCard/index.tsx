@@ -1,17 +1,4 @@
 import {
-    Grid,
-    Select,
-    MenuItem,
-    Typography,
-    ToggleButton,
-    ToggleButtonGroup,
-} from "@mui/material";
-import { colors } from "../../theme";
-import { makeStyles } from "@mui/styles";
-import { RechartsData } from "../../constants/stubData";
-import { RoundedCard, SkeletonRoundedCard } from "../../styles";
-import { StatsItemType, statsPeriodItemType } from "../../types";
-import {
     Line,
     XAxis,
     YAxis,
@@ -19,8 +6,15 @@ import {
     LineChart,
     ResponsiveContainer,
 } from "recharts";
+import { TimeFilter } from "..";
+import { colors } from "../../theme";
 import { useRecoilValue } from "recoil";
+import { makeStyles } from "@mui/styles";
 import { isDarkmode } from "../../recoil";
+import { StatsItemType } from "../../types";
+import { RechartsData } from "../../constants/stubData";
+import { RoundedCard, SkeletonRoundedCard } from "../../styles";
+import { Grid, Select, MenuItem, Typography } from "@mui/material";
 
 type StyleProps = { color: string };
 
@@ -45,7 +39,6 @@ type StatsCardProps = {
     selectedButton: string;
     options: StatsItemType[];
     handleSelectedButton: any;
-    periodOptions: statsPeriodItemType[];
 };
 
 const StatsCard = ({
@@ -53,7 +46,6 @@ const StatsCard = ({
     loading,
     selectOption,
     handleSelect,
-    periodOptions,
     selectedButton,
     handleSelectedButton,
 }: StatsCardProps) => {
@@ -97,41 +89,10 @@ const StatsCard = ({
                                 display="flex"
                                 justifyContent={"flex-end"}
                             >
-                                <ToggleButtonGroup
-                                    size="small"
-                                    color="primary"
-                                    exclusive
-                                    value={selectedButton}
-                                    onChange={handleSelectedButton}
-                                >
-                                    {periodOptions.map(
-                                        ({
-                                            id,
-                                            label,
-                                        }: statsPeriodItemType) => (
-                                            <ToggleButton
-                                                fullWidth
-                                                key={id}
-                                                value={label}
-                                                style={{
-                                                    height: "32px",
-                                                    color: colors.primaryMain,
-                                                    border: `1px solid ${colors.primaryMain}`,
-                                                }}
-                                            >
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        p: "0px 2px",
-                                                        fontWeight: 600,
-                                                    }}
-                                                >
-                                                    {label}
-                                                </Typography>
-                                            </ToggleButton>
-                                        )
-                                    )}
-                                </ToggleButtonGroup>
+                                <TimeFilter
+                                    filter={selectedButton}
+                                    handleFilterSelect={handleSelectedButton}
+                                />
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>

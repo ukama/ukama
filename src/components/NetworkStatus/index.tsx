@@ -79,7 +79,7 @@ const NetworkStatus = ({
                             sx={{ width: "164px" }}
                             onClick={() => handleActivateUser()}
                         >
-                            ACTIVATER USER
+                            ACTIVATE USER
                         </Button>
                     </HorizontalContainer>
                 </LoadingWrapper>

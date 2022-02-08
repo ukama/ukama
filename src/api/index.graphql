@@ -205,3 +205,119 @@ mutation deleteNode($id: String!) {
         success
     }
 }
+
+subscription getNodeRFKPIS {
+    getNodeRFKPI {
+        qam
+        rfOutput
+        rssi
+        timestamp
+    }
+}
+
+query getNodeRFKPIQ($filter: GRAPH_FILTER!) {
+    getNodeRFKPI(filter: $filter) {
+        qam
+        rfOutput
+        rssi
+        timestamp
+    }
+}
+
+subscription getUsersAttachedMetricsS {
+    getUsersAttachedMetrics {
+        id
+        users
+        timestamp
+    }
+}
+
+query getUsersAttachedMetricsQ($filter: GRAPH_FILTER!) {
+    getUsersAttachedMetrics(filter: $filter) {
+        id
+        users
+        timestamp
+    }
+}
+
+subscription getThroughputMetricsS {
+    getThroughputMetrics {
+        id
+        amount
+        timestamp
+    }
+}
+
+query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
+    getThroughputMetrics(filter: $filter) {
+        id
+        amount
+        timestamp
+    }
+}
+
+subscription getTemperatureMetricsS {
+    getTemperatureMetrics {
+        id
+        temperature
+        timestamp
+    }
+}
+
+query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
+    getTemperatureMetrics(filter: $filter) {
+        id
+        temperature
+        timestamp
+    }
+}
+
+subscription getCpuUsageMetricsS {
+    getCpuUsageMetrics {
+        id
+        usage
+        timestamp
+    }
+}
+
+query getCpuUsageMetricsQ($filter: GRAPH_FILTER!) {
+    getCpuUsageMetrics(filter: $filter) {
+        id
+        usage
+        timestamp
+    }
+}
+
+subscription getMemoryUsageMetricsS {
+    getMemoryUsageMetrics {
+        id
+        usage
+        timestamp
+    }
+}
+
+query getMemoryUsageMetricsQ($filter: GRAPH_FILTER!) {
+    getMemoryUsageMetrics(filter: $filter) {
+        id
+        usage
+        timestamp
+    }
+}
+
+subscription getIOMetricsS {
+    getIOMetrics {
+        id
+        input
+        output
+        timestamp
+    }
+}
+
+query getIOMetricsQ($filter: GRAPH_FILTER!) {
+    getIOMetrics(filter: $filter) {
+        id
+        input
+        output
+        timestamp
+    }
+}

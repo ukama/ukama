@@ -16,14 +16,15 @@ import {
     GetLatestAlertsDocument,
     GetLatestAlertsSubscription,
 } from "../../generated";
-import { RoundedCard } from "../../styles";
-import { useHistory } from "react-router-dom";
 import {
     MoreVert,
     Settings,
     Notifications,
     AccountCircle,
 } from "@mui/icons-material";
+import { RoundedCard } from "../../styles";
+import { routes } from "../../router/config";
+import { useHistory } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
 import React, { useEffect, useRef, useState } from "react";
@@ -78,7 +79,7 @@ const Header = ({
     const handleSettingsClick = () => {
         handleMenuClose();
         handlePageChange("Settings");
-        history.push("/settings");
+        history.push(routes.Settings.path);
     };
 
     const { data: alertsInfoRes, subscribeToMore: subscribeToLatestAlerts } =
@@ -187,9 +188,12 @@ const Header = ({
                         isLoading={isLoading}
                     >
                         <Stack
-                            direction="row"
                             spacing={3}
-                            sx={{ display: { xs: "none", md: "flex" } }}
+                            direction="row"
+                            sx={{
+                                display: { xs: "none", md: "flex" },
+                                justifyContent: "flex-end",
+                            }}
                         >
                             <DarkModToggle />
                             <IconButton
@@ -220,7 +224,13 @@ const Header = ({
                                         },
                                     }}
                                 >
-                                    <Notifications />
+                                    <Notifications
+                                        color={
+                                            notificationAnchorEl
+                                                ? "primary"
+                                                : "inherit"
+                                        }
+                                    />
                                 </Badge>
                             </IconButton>
                             <IconButton size="small" color="inherit">

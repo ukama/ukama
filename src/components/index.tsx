@@ -7,27 +7,30 @@ import EmptyView from "./EmptyView";
 import NodeStatus from "./NodeStatus";
 import StatusCard from "./StatusCard";
 import TextSelect from "./TextSelect";
+import TimeFilter from "./TimeFilter";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
-import NodeDetails from "./NodeDetails";
+import NodeRFKpiTab from "./NodeRFKpiTab";
 import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
+import NodeInfoCard from "./NodeInfoCard";
 import AlertSettings from "./AlertSettings";
+import NodeHealthTab from "./NodeHealthTab";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import DarkModToggle from "./DarkModToggle";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
+import NodeMetaDataTab from "./NodeMetaDataTab";
 import NodeDetailsCard from "./NodeDetailsCard";
 import SimpleDataTable from "./SimpleDataTable";
 import PagePlaceholder from "./PagePlaceholder";
 import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
-import NodeDetailsPanel from "./NodeDetailsPanel";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
-import NodePropertyStats from "./NodePropertyStats";
+import GraphTitleWrapper from "./GraphTitleWrapper";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
@@ -41,19 +44,22 @@ import {
 export {
     Alerts,
     NodeCard,
+    UserCard,
     EmptyView,
     TabLayout,
     StatsCard,
-    UserCard,
+    TimeFilter,
     NodeStatus,
     TextSelect,
     StatusCard,
-    NodeDetails,
     CurrentBill,
     TableHeader,
     BasicDialog,
     NodeSettings,
     UserSettings,
+    NodeInfoCard,
+    NodeRFKpiTab,
+    NodeHealthTab,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,
@@ -61,17 +67,17 @@ export {
     NodeContainer,
     OptionsPopover,
     LoadingWrapper,
-    NodeDetailsCard,
+    NodeMetaDataTab,
     NetworkSettings,
+    NodeDetailsCard,
     SimpleDataTable,
     PagePlaceholder,
     ContainerHeader,
-    NodeDetailsPanel,
     UpgradeNavFooter,
     ActivationDialog,
     BillingDataTable,
-    NodePropertyStats,
     UserDetailsDialog,
+    GraphTitleWrapper,
     MultiSlideCarousel,
     DataTableWithOptions,
     UserActivationDialog,

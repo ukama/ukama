@@ -15,7 +15,7 @@ import {
     Grid,
     DialogContent,
 } from "@mui/material";
-import { InfoIcon } from "../../../assets/svg";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { ContainerJustifySpaceBtw } from "../../../styles";
 import { GetUserDto, Get_User_Status_Type } from "../../../generated";
 
@@ -105,20 +105,33 @@ const UserDetailsDialog = ({
                         <Grid container>
                             <Grid item xs={12}>
                                 <Typography variant="subtitle2">
-                                    {userDetailsTitle} {id}
+                                    {userDetailsTitle}
                                 </Typography>
                                 <Divider />
                             </Grid>
                         </Grid>
                         <Grid item container spacing={1}>
                             <Grid item xs={12}>
-                                <Typography
-                                    variant="body1"
-                                    // HERE sx={{ color: colors.vulcan }}
-                                >
-                                    {dataUsage} GB data used, {dataPlan}
-                                    free GB left
-                                </Typography>
+                                <Stack direction="row" spacing={1}>
+                                    <Typography
+                                        variant="body1"
+                                        //HERE sx={{ color: colors.vulcan }}
+                                    >
+                                        {dataUsage} GB data used,
+                                    </Typography>
+                                    <Typography
+                                        variant="body1"
+                                        //HERE sx={{ color: colors.vulcan }}
+                                    >
+                                        {dataPlan}
+                                    </Typography>
+                                    <Typography
+                                        variant="body1"
+                                        //HERE sx={{ color: colors.vulcan }}
+                                    >
+                                        free GB left
+                                    </Typography>
+                                </Stack>
                             </Grid>
                             <Grid item xs={9}>
                                 <EditableTextField
@@ -244,7 +257,11 @@ const UserDetailsDialog = ({
                                         }}
                                     >
                                         ROAMING
-                                        <Tooltip title="Info about roming">
+                                        <Tooltip
+                                            title="Explain roaming policy for CS folks."
+                                            placement="right"
+                                            arrow
+                                        >
                                             <IconButton>
                                                 <InfoIcon />
                                             </IconButton>

@@ -1,156 +1,529 @@
-import { useState } from "react";
-import { Box, Grid } from "@mui/material";
-import { NodeDetails, NodeStatus, LoadingWrapper } from "../../components";
-import { useGetNodesByOrgQuery, useGetNodeDetailsQuery } from "../../generated";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
+import { RoundedCard } from "../../styles";
+import { Box, Grid, Stack } from "@mui/material";
 import { isSkeltonLoading, organizationId } from "../../recoil";
-import { NodePlaceholder } from "../../assets/images";
+import {
+    NodeStatus,
+    NodeInfoCard,
+    NodeRFKpiTab,
+    NodeHealthTab,
+    NodeDetailsCard,
+    PagePlaceholder,
+    NodeMetaDataTab,
+} from "../../components";
+import {
+    NodeDto,
+    Graph_Filter,
+    useGetNodesByOrgQuery,
+    useGetNodeRfkpiqQuery,
+    GetNodeRfkpisDocument,
+    GetNodeRfkpisSubscription,
+    useGetUsersAttachedMetricsQQuery,
+    GetUsersAttachedMetricsSDocument,
+    GetUsersAttachedMetricsSSubscription,
+    useGetThroughputMetricsQQuery,
+    GetThroughputMetricsSSubscription,
+    GetThroughputMetricsSDocument,
+    useGetTemperatureMetricsQQuery,
+    GetTemperatureMetricsSDocument,
+    GetTemperatureMetricsSSubscription,
+    useGetCpuUsageMetricsQQuery,
+    GetCpuUsageMetricsSSubscription,
+    GetCpuUsageMetricsSDocument,
+    useGetMemoryUsageMetricsQQuery,
+    GetMemoryUsageMetricsSSubscription,
+    GetMemoryUsageMetricsSDocument,
+    useGetIoMetricsQQuery,
+    GetIoMetricsSSubscription,
+    GetIoMetricsSDocument,
+    useGetNodeDetailsQuery,
+} from "../../generated";
+import { TObject } from "../../types";
+import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
 
 const Nodes = () => {
-    const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
     const orgId = useRecoilValue(organizationId);
-    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const [selectedTab, setSelectedTab] = useState(1);
+    const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [selectedNode, setSelectedNode] = useState<NodeDto>();
+    const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
+    const [metaDataStats, setMetaDataStats] = useState<TObject[]>([]);
+    const [healthStats, setHealthStats] = useState<TObject[]>([]);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
+        onCompleted: res => {
+            res.getNodesByOrg.nodes.length > 0 &&
+                setSelectedNode(res.getNodesByOrg.nodes[0]);
+        },
     });
-    const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
+
+    const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
 
+    const {
+        data: nodeRFKpiRes,
+        loading: nodeRFKpiLoading,
+        subscribeToMore: subscribeToNodeRFKpiMetrics,
+    } = useGetNodeRfkpiqQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeUserAttachRes,
+        loading: nodeUserAttachLoading,
+        subscribeToMore: subscribeToUserAttachMetrics,
+    } = useGetUsersAttachedMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeThroughputRes,
+        loading: nodeThroughpuLoading,
+        subscribeToMore: subscribeToThroughputMetrics,
+    } = useGetThroughputMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeTempMetricsRes,
+        loading: nodeTempMetricsLoading,
+        subscribeToMore: subscribeToTempMetrics,
+    } = useGetTemperatureMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeCpuUsageMetricsRes,
+        loading: nodeCpuUsageMetricsLoading,
+        subscribeToMore: subscribeToCpuUsageMetrics,
+    } = useGetCpuUsageMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeMemoryUsageMetricsRes,
+        loading: nodeMemoryUsageMetricsLoading,
+        subscribeToMore: subscribeToMemoryUsageMetrics,
+    } = useGetMemoryUsageMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeIoMetricsRes,
+        loading: nodeIoMetricsLoading,
+        subscribeToMore: subscribeToIoMetrics,
+    } = useGetIoMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const nodeRFKpiMetricsSubscription = () =>
+        subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
+            document: GetNodeRfkpisDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getNodeRFKPI;
+                const spreadPrev =
+                    prev && prev.getNodeRFKPI ? prev.getNodeRFKPI : [];
+                return Object.assign({}, prev, {
+                    getNodeRFKPI: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeUserAttachMetricsSubscription = () =>
+        subscribeToUserAttachMetrics<GetUsersAttachedMetricsSSubscription>({
+            document: GetUsersAttachedMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getUsersAttachedMetrics;
+                const spreadPrev =
+                    prev && prev.getUsersAttachedMetrics
+                        ? prev.getUsersAttachedMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getUsersAttachedMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeThroughputMetricsSubscription = () =>
+        subscribeToThroughputMetrics<GetThroughputMetricsSSubscription>({
+            document: GetThroughputMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getThroughputMetrics;
+                const spreadPrev =
+                    prev && prev.getThroughputMetrics
+                        ? prev.getThroughputMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getThroughputMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeTempMetricsSubscription = () =>
+        subscribeToTempMetrics<GetTemperatureMetricsSSubscription>({
+            document: GetTemperatureMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getTemperatureMetrics;
+                const spreadPrev =
+                    prev && prev.getTemperatureMetrics
+                        ? prev.getTemperatureMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getTemperatureMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeCpuUsageMetricsSubscription = () =>
+        subscribeToCpuUsageMetrics<GetCpuUsageMetricsSSubscription>({
+            document: GetCpuUsageMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getCpuUsageMetrics;
+                const spreadPrev =
+                    prev && prev.getCpuUsageMetrics
+                        ? prev.getCpuUsageMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getCpuUsageMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeMemoryUsageMetricsSubscription = () =>
+        subscribeToMemoryUsageMetrics<GetMemoryUsageMetricsSSubscription>({
+            document: GetMemoryUsageMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getMemoryUsageMetrics;
+                const spreadPrev =
+                    prev && prev.getMemoryUsageMetrics
+                        ? prev.getMemoryUsageMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getMemoryUsageMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    const nodeIoMetricsSubscription = () =>
+        subscribeToIoMetrics<GetIoMetricsSSubscription>({
+            document: GetIoMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getIOMetrics;
+                const spreadPrev =
+                    prev && prev.getIOMetrics ? prev.getIOMetrics : [];
+                return Object.assign({}, prev, {
+                    getIOMetrics: [...spreadPrev, metrics],
+                });
+            },
+        });
+
+    useEffect(() => {
+        if (nodeRFKpiRes) {
+            nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
+                setRfKpiStats(
+                    parseObjectInNameValue(
+                        nodeRFKpiRes?.getNodeRFKPI[
+                            nodeRFKpiRes.getNodeRFKPI.length - 1
+                        ]
+                    )
+                );
+        }
+        let unsub = nodeRFKpiMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeRFKpiRes]);
+
+    useEffect(() => {
+        if (nodeUserAttachRes) {
+            nodeUserAttachRes?.getUsersAttachedMetrics?.length > 0 &&
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Users Attached", prev),
+                    {
+                        name: "Users Attached",
+                        value: nodeUserAttachRes.getUsersAttachedMetrics[
+                            nodeUserAttachRes.getUsersAttachedMetrics.length - 1
+                        ].users,
+                    },
+                ]);
+        }
+        let unsub = nodeUserAttachMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeUserAttachRes]);
+
+    useEffect(() => {
+        if (nodeThroughputRes) {
+            nodeThroughputRes?.getThroughputMetrics?.length > 0 &&
+                setMetaDataStats(prev => [
+                    ...uniqueObjectsArray("Throughput", prev),
+                    {
+                        name: "Throughput",
+                        value: nodeThroughputRes?.getThroughputMetrics[
+                            nodeThroughputRes?.getThroughputMetrics.length - 1
+                        ]?.amount,
+                    },
+                ]);
+        }
+        let unsub = nodeThroughputMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeThroughputRes]);
+
+    useEffect(() => {
+        if (nodeTempMetricsRes) {
+            nodeTempMetricsRes?.getTemperatureMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Temperature", prev),
+                    {
+                        name: "Temperature",
+                        value: nodeTempMetricsRes?.getTemperatureMetrics[
+                            nodeTempMetricsRes.getTemperatureMetrics.length - 1
+                        ]?.temperature,
+                    },
+                ]);
+        }
+        let unsub = nodeTempMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeTempMetricsRes]);
+
+    useEffect(() => {
+        if (nodeCpuUsageMetricsRes) {
+            nodeCpuUsageMetricsRes?.getCpuUsageMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("CPU", prev),
+                    {
+                        name: "CPU",
+                        value: `${
+                            nodeCpuUsageMetricsRes?.getCpuUsageMetrics[
+                                nodeCpuUsageMetricsRes.getCpuUsageMetrics
+                                    .length - 1
+                            ]?.usage
+                        }%`,
+                    },
+                ]);
+        }
+        let unsub = nodeCpuUsageMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeCpuUsageMetricsRes]);
+
+    useEffect(() => {
+        if (nodeMemoryUsageMetricsRes) {
+            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Memory", prev),
+                    {
+                        name: "Memory",
+                        value: `${
+                            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics[
+                                nodeMemoryUsageMetricsRes.getMemoryUsageMetrics
+                                    .length - 1
+                            ]?.usage
+                        }%`,
+                    },
+                ]);
+        }
+        let unsub = nodeMemoryUsageMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeMemoryUsageMetricsRes]);
+
+    useEffect(() => {
+        if (nodeIoMetricsRes) {
+            nodeIoMetricsRes?.getIOMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("IO", prev),
+                    {
+                        name: "IO",
+                        value: `${
+                            nodeIoMetricsRes.getIOMetrics[
+                                nodeIoMetricsRes.getIOMetrics.length - 1
+                            ].input
+                        } Input | ${
+                            nodeIoMetricsRes.getIOMetrics[
+                                nodeIoMetricsRes.getIOMetrics.length - 1
+                            ].output
+                        } Output`,
+                    },
+                ]);
+        }
+        let unsub = nodeIoMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeIoMetricsRes]);
+
+    const onTabSelected = (value: number) => setSelectedTab(value);
+    const onNodeSelected = (node: NodeDto) => setSelectedNode(node);
+    const onNodeRFClick = () => {
+        //TODO: Handle NODE RF ACTIONS
+    };
+    const onNodeSwitchClick = () => {
+        //TODO: Handle NODE ON/OFF ACTIONS
+    };
+    const onRestartNodeClick = () => {
+        //TODO: Handle NODE RESTART ACTION
+    };
+
+    const isLoading = skeltonLoading || nodesLoading;
+
+    if (nodesRes && nodesRes?.getNodesByOrg?.nodes?.length === 0)
+        return (
+            <RoundedCard
+                sx={{
+                    p: 0,
+                    mt: 3,
+                    mb: 2,
+                    borderRadius: "4px",
+                    height: "calc(100% - 15%)",
+                }}
+            >
+                <PagePlaceholder description="Order your node now." />
+            </RoundedCard>
+        );
+
     return (
-        <Box sx={{ height: "calc(100vh - 8vh)" }}>
-            <Box sx={{ flexGrow: 1 }}>
-                <Grid container spacing={3}>
-                    <Grid xs={12} item>
-                        <LoadingWrapper
-                            width="100%"
-                            height="30px"
-                            isLoading={isSkeltonLoad || nodesLoading}
-                        >
-                            <NodeStatus
-                                nodes={nodesRes?.getNodesByOrg?.nodes}
-                                selectedNodeIndex={selectedNodeIndex}
-                                setSelectedNodeIndex={setSelectedNodeIndex}
-                            />
-                        </LoadingWrapper>
-                    </Grid>
-                    <Grid xs={12} item container spacing={3}>
-                        <NodeDetails
-                            detailsList={[
-                                {
-                                    loading: nodeDetailsResLoading,
-                                    title: "Node Details",
-
-                                    image: {
-                                        alt: "Node Image",
-                                        src: NodePlaceholder,
-                                    },
-                                    button: {
-                                        label: "view diagnostics",
-                                        onClick: () => {
-                                            return;
-                                        },
-                                    },
-                                    properties: [
-                                        {
-                                            name: "Model type",
-                                            value: `${nodeDetailsRes?.getNodeDetails.modelType}`,
-                                        },
-                                        {
-                                            name: "Serial#",
-                                            value: `${nodeDetailsRes?.getNodeDetails.serial}`,
-                                        },
-                                        {
-                                            name: "MAC address",
-                                            value: `${nodeDetailsRes?.getNodeDetails.macAddress}`,
-                                        },
-                                        {
-                                            name: "OS version",
-                                            value: `${nodeDetailsRes?.getNodeDetails.osVersion}`,
-                                        },
-                                        {
-                                            name: "Manufacturing#",
-                                            value: `${nodeDetailsRes?.getNodeDetails.manufacturing}`,
-                                        },
-                                        {
-                                            name: "Ukama OS",
-                                            value: `${nodeDetailsRes?.getNodeDetails.ukamaOS}`,
-                                        },
-                                        {
-                                            name: "Hardware",
-                                            value: `${nodeDetailsRes?.getNodeDetails.hardware}`,
-                                        },
-                                        {
-                                            name: "Description",
-                                            value: `${nodeDetailsRes?.getNodeDetails.description}`,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "Meta Data",
-
-                                    properties: [
-                                        {
-                                            name: "Throughput",
-                                            value: `i3iopwiopiwpoe`,
-                                        },
-                                        {
-                                            name: "Users Attached",
-                                            value: 12,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "Physical Health",
-
-                                    image: {
-                                        alt: "Node Image Alt",
-                                        src: "NodePlaceholderAlt",
-                                    },
-                                    properties: [
-                                        {
-                                            name: "Temperature",
-                                            value: `98398`,
-                                        },
-                                        {
-                                            name: "Memory",
-                                            value: `92839`,
-                                        },
-                                        {
-                                            name: "CPU",
-                                            value: `392`,
-                                        },
-                                        {
-                                            name: "IO",
-                                            value: `28`,
-                                        },
-                                    ],
-                                },
-                                {
-                                    title: "RF KPIs",
-                                    image: {
-                                        alt: "Node Image Alt",
-                                        src: "NodePlaceholderAlt",
-                                    },
-                                    properties: [
-                                        {
-                                            name: "QAM",
-                                            value: `343`,
-                                        },
-                                        {
-                                            name: "RF Output",
-                                            value: `32`,
-                                        },
-                                        {
-                                            name: "RSSI",
-                                            value: `23`,
-                                        },
-                                    ],
-                                },
-                            ]}
-                        />
-                    </Grid>
+        <Box
+            sx={{
+                p: 0,
+                mt: 3,
+                pb: 2,
+            }}
+        >
+            <Grid container spacing={2}>
+                <Grid item xs={12}>
+                    <NodeStatus
+                        loading={isLoading}
+                        selectedNode={selectedNode}
+                        onNodeRFClick={onNodeRFClick}
+                        onNodeSelected={onNodeSelected}
+                        onNodeSwitchClick={onNodeSwitchClick}
+                        onRestartNodeClick={onRestartNodeClick}
+                        nodes={nodesRes?.getNodesByOrg?.nodes}
+                    />
                 </Grid>
-            </Box>
+                <Grid item container xs={4}>
+                    <Stack spacing={2} sx={{ width: "100%" }}>
+                        <NodeInfoCard
+                            index={1}
+                            title={"Node Details"}
+                            loading={isLoading || nodeDetailLoading}
+                            properties={
+                                parseObjectInNameValue(
+                                    nodeDetailRes?.getNodeDetails || {}
+                                ) || []
+                            }
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 1}
+                        />
+                        <NodeInfoCard
+                            index={2}
+                            title={"Meta Data"}
+                            properties={metaDataStats}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 2}
+                            loading={
+                                isLoading ||
+                                nodeUserAttachLoading ||
+                                nodeThroughpuLoading
+                            }
+                        />
+                        <NodeInfoCard
+                            index={3}
+                            loading={
+                                isLoading ||
+                                nodeIoMetricsLoading ||
+                                nodeTempMetricsLoading ||
+                                nodeCpuUsageMetricsLoading ||
+                                nodeMemoryUsageMetricsLoading
+                            }
+                            title={"Physical Health"}
+                            properties={healthStats}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 3}
+                        />
+                        <NodeInfoCard
+                            index={4}
+                            title={"RF KPIs"}
+                            properties={rfKpiStats}
+                            onSelected={onTabSelected}
+                            isSelected={selectedTab === 4}
+                            loading={isLoading || nodeRFKpiLoading}
+                        />
+                    </Stack>
+                </Grid>
+                <Grid item container xs={8}>
+                    {selectedTab === 1 && (
+                        <NodeDetailsCard loading={isLoading} />
+                    )}
+                    {selectedTab === 2 && (
+                        <NodeMetaDataTab
+                            loading={
+                                isLoading ||
+                                nodeUserAttachLoading ||
+                                nodeThroughpuLoading
+                            }
+                            usersAttachedMetrics={
+                                nodeUserAttachRes?.getUsersAttachedMetrics || []
+                            }
+                            throughputMetrics={
+                                nodeThroughputRes?.getThroughputMetrics || []
+                            }
+                        />
+                    )}
+                    {selectedTab === 3 && (
+                        <NodeHealthTab
+                            loading={isLoading || nodeTempMetricsLoading}
+                            temperatureMetrics={
+                                nodeTempMetricsRes?.getTemperatureMetrics || []
+                            }
+                            cpuUsageMetrics={
+                                nodeCpuUsageMetricsRes?.getCpuUsageMetrics || []
+                            }
+                            memoryUsageMetrics={
+                                nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics ||
+                                []
+                            }
+                            ioMetrics={nodeIoMetricsRes?.getIOMetrics || []}
+                        />
+                    )}
+                    {selectedTab === 4 && (
+                        <NodeRFKpiTab
+                            loading={isLoading || nodeRFKpiLoading}
+                            metrics={nodeRFKpiRes?.getNodeRFKPI || []}
+                        />
+                    )}
+                </Grid>
+            </Grid>
         </Box>
     );
 };

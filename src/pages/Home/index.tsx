@@ -12,7 +12,6 @@ import {
 import {
     TIME_FILTER,
     MONTH_FILTER,
-    STATS_PERIOD,
     STATS_OPTIONS,
     UserActivation,
     DataTableWithOptionColumns,
@@ -21,29 +20,29 @@ import {
 import "../../i18n/i18n";
 import {
     Time_Filter,
+    Network_Type,
     Data_Bill_Filter,
-    useGetNodesByOrgQuery,
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
     useGetResidentsQuery,
+    useGetNodesByOrgQuery,
+    GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useGetConnectedUsersQuery,
-    GetLatestConnectedUsersSubscription,
-    GetLatestConnectedUsersDocument,
-    GetLatestDataUsageSubscription,
-    GetLatestDataUsageDocument,
-    GetLatestDataBillSubscription,
     GetLatestDataBillDocument,
+    GetLatestDataUsageDocument,
     GetLatestNetworkSubscription,
-    GetLatestNetworkDocument,
-    Network_Type,
+    GetLatestDataBillSubscription,
+    GetLatestDataUsageSubscription,
+    GetLatestConnectedUsersDocument,
+    GetLatestConnectedUsersSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
-import { isSkeltonLoading, organizationId } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, useMediaQuery } from "@mui/material";
+import { isSkeltonLoading, organizationId } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
@@ -323,7 +322,6 @@ const Home = () => {
                         loading={isSkeltonLoad}
                         options={STATS_OPTIONS}
                         selectedButton={selectedBtn}
-                        periodOptions={STATS_PERIOD}
                         selectOption={statOptionValue}
                         handleSelect={handleStatsChange}
                         handleSelectedButton={handleSelectedButtonChange}
