@@ -29,9 +29,11 @@ import { PaginationDto } from "../common/types";
 import setupLogger from "../config/setupLogger";
 
 const logger = setupLogger("Job");
+const rule = new schedule.RecurrenceRule();
+rule.second = [0, 10, 20];
 
 export const job = (schema: GraphQLSchema): void => {
-    schedule.scheduleJob("*/1 * * * *", async function () {
+    schedule.scheduleJob(rule, async function () {
         const meta: PaginationDto = {
             pageNo: 1,
             pageSize: 3,
