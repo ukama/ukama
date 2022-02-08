@@ -29,6 +29,7 @@ import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
+import GraphTitleWrapper from "./GraphTitleWrapper";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
@@ -74,6 +75,7 @@ export {
     ActivationDialog,
     BillingDataTable,
     UserDetailsDialog,
+    GraphTitleWrapper,
     MultiSlideCarousel,
     DataTableWithOptions,
     UserActivationDialog,

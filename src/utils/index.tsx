@@ -35,20 +35,25 @@ const getColorByType = (type: Alert_Type) => {
 };
 
 const parseObjectInNameValue = (obj: any) => {
-    obj?.id && delete obj.id;
+    let updatedObj: TObject[] = [];
+    if (obj) {
+        updatedObj = Object.keys(obj).map(key => {
+            return {
+                name: key,
+                value:
+                    key === "timestamp"
+                        ? format(obj[key], "MMM dd HH:mm:ss")
+                        : obj[key],
+            };
+        });
 
-    let updatedObj = Object.keys(obj).map(key => {
-        return {
-            name: key,
-            value:
-                key === "timestamp"
-                    ? format(obj[key], "MMM dd HH:mm:ss")
-                    : obj[key],
-        };
-    });
-
-    const removeIndex = updatedObj.map(item => item.name).indexOf("__typename");
-    ~removeIndex && updatedObj.splice(removeIndex, 1);
+        let removeIndex = updatedObj
+            .map(item => item?.name)
+            .indexOf("__typename");
+        ~removeIndex && updatedObj.splice(removeIndex, 1);
+        removeIndex = updatedObj.map(item => item?.name).indexOf("id");
+        ~removeIndex && updatedObj.splice(removeIndex, 1);
+    }
 
     return updatedObj;
 };

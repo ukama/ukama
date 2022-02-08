@@ -12,7 +12,6 @@ import {
     PagePlaceholder,
     NodeMetaDataTab,
 } from "../../components";
-import { NODE_PROPERTIES8 } from "../../constants/stubData";
 import {
     NodeDto,
     Graph_Filter,
@@ -38,13 +37,14 @@ import {
     useGetIoMetricsQQuery,
     GetIoMetricsSSubscription,
     GetIoMetricsSDocument,
+    useGetNodeDetailsQuery,
 } from "../../generated";
 import { TObject } from "../../types";
 import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
 
 const Nodes = () => {
     const orgId = useRecoilValue(organizationId);
-    const [selectedTab, setSelectedTab] = useState(3);
+    const [selectedTab, setSelectedTab] = useState(1);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
@@ -57,6 +57,9 @@ const Nodes = () => {
                 setSelectedNode(res.getNodesByOrg.nodes[0]);
         },
     });
+
+    const { data: nodeDetailRes, loading: nodeDetailLoading } =
+        useGetNodeDetailsQuery();
 
     const {
         data: nodeRFKpiRes,
@@ -391,9 +394,6 @@ const Nodes = () => {
         };
     }, [nodeIoMetricsRes]);
 
-    // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
-    //     useGetNodeDetailsQuery();
-
     const onTabSelected = (value: number) => setSelectedTab(value);
     const onNodeSelected = (node: NodeDto) => setSelectedNode(node);
     const onNodeRFClick = () => {
@@ -447,9 +447,13 @@ const Nodes = () => {
                     <Stack spacing={2} sx={{ width: "100%" }}>
                         <NodeInfoCard
                             index={1}
-                            loading={isLoading}
-                            title={"Node Detail"}
-                            properties={NODE_PROPERTIES8}
+                            title={"Node Details"}
+                            loading={isLoading || nodeDetailLoading}
+                            properties={
+                                parseObjectInNameValue(
+                                    nodeDetailRes?.getNodeDetails || {}
+                                ) || []
+                            }
                             onSelected={onTabSelected}
                             isSelected={selectedTab === 1}
                         />
