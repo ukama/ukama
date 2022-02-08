@@ -29,6 +29,15 @@ import {
     useGetTemperatureMetricsQQuery,
     GetTemperatureMetricsSDocument,
     GetTemperatureMetricsSSubscription,
+    useGetCpuUsageMetricsQQuery,
+    GetCpuUsageMetricsSSubscription,
+    GetCpuUsageMetricsSDocument,
+    useGetMemoryUsageMetricsQQuery,
+    GetMemoryUsageMetricsSSubscription,
+    GetMemoryUsageMetricsSDocument,
+    useGetIoMetricsQQuery,
+    GetIoMetricsSSubscription,
+    GetIoMetricsSDocument,
 } from "../../generated";
 import { TObject } from "../../types";
 import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
@@ -84,6 +93,36 @@ const Nodes = () => {
         loading: nodeTempMetricsLoading,
         subscribeToMore: subscribeToTempMetrics,
     } = useGetTemperatureMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeCpuUsageMetricsRes,
+        loading: nodeCpuUsageMetricsLoading,
+        subscribeToMore: subscribeToCpuUsageMetrics,
+    } = useGetCpuUsageMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeMemoryUsageMetricsRes,
+        loading: nodeMemoryUsageMetricsLoading,
+        subscribeToMore: subscribeToMemoryUsageMetrics,
+    } = useGetMemoryUsageMetricsQQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const {
+        data: nodeIoMetricsRes,
+        loading: nodeIoMetricsLoading,
+        subscribeToMore: subscribeToIoMetrics,
+    } = useGetIoMetricsQQuery({
         variables: {
             filter: Graph_Filter.Week,
         },
@@ -167,6 +206,73 @@ const Nodes = () => {
             },
         });
 
+    const nodeCpuUsageMetricsSubscription = () =>
+        subscribeToCpuUsageMetrics<GetCpuUsageMetricsSSubscription>({
+            document: GetCpuUsageMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getCpuUsageMetrics;
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("CPU", prev),
+                    {
+                        name: "CPU",
+                        value: `${metrics.usage}%`,
+                    },
+                ]);
+                const spreadPrev =
+                    prev && prev.getCpuUsageMetrics
+                        ? prev.getCpuUsageMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getCpuUsageMetrics: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
+    const nodeMemoryUsageMetricsSubscription = () =>
+        subscribeToMemoryUsageMetrics<GetMemoryUsageMetricsSSubscription>({
+            document: GetMemoryUsageMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getMemoryUsageMetrics;
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Memory", prev),
+                    {
+                        name: "Memory",
+                        value: `${metrics.usage}%`,
+                    },
+                ]);
+                const spreadPrev =
+                    prev && prev.getMemoryUsageMetrics
+                        ? prev.getMemoryUsageMetrics
+                        : [];
+                return Object.assign({}, prev, {
+                    getMemoryUsageMetrics: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
+    const nodeIoMetricsSubscription = () =>
+        subscribeToIoMetrics<GetIoMetricsSSubscription>({
+            document: GetIoMetricsSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getIOMetrics;
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("IO", prev),
+                    {
+                        name: "IO",
+                        value: `${metrics.input} Input | ${metrics.output} Output`,
+                    },
+                ]);
+                const spreadPrev =
+                    prev && prev.getIOMetrics ? prev.getIOMetrics : [];
+                return Object.assign({}, prev, {
+                    getIOMetrics: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
     useEffect(() => {
         if (nodeRFKpiRes) {
             nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
@@ -233,6 +339,57 @@ const Nodes = () => {
             unsub && unsub();
         };
     }, [nodeTempMetricsRes]);
+
+    useEffect(() => {
+        if (nodeCpuUsageMetricsRes) {
+            nodeCpuUsageMetricsRes?.getCpuUsageMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("CPU", prev),
+                    {
+                        name: "CPU",
+                        value: `${nodeCpuUsageMetricsRes?.getCpuUsageMetrics[0]?.usage}%`,
+                    },
+                ]);
+        }
+        let unsub = nodeCpuUsageMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeCpuUsageMetricsRes]);
+
+    useEffect(() => {
+        if (nodeMemoryUsageMetricsRes) {
+            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("Memory", prev),
+                    {
+                        name: "Memory",
+                        value: `${nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics[0]?.usage}%`,
+                    },
+                ]);
+        }
+        let unsub = nodeMemoryUsageMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeMemoryUsageMetricsRes]);
+
+    useEffect(() => {
+        if (nodeIoMetricsRes) {
+            nodeIoMetricsRes?.getIOMetrics?.length > 0 &&
+                setHealthStats(prev => [
+                    ...uniqueObjectsArray("IO", prev),
+                    {
+                        name: "IO",
+                        value: `${nodeIoMetricsRes.getIOMetrics[0].input} Input | ${nodeIoMetricsRes.getIOMetrics[0].output} Output`,
+                    },
+                ]);
+        }
+        let unsub = nodeIoMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeIoMetricsRes]);
 
     // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
     //     useGetNodeDetailsQuery();
@@ -310,7 +467,13 @@ const Nodes = () => {
                         />
                         <NodeInfoCard
                             index={3}
-                            loading={isLoading}
+                            loading={
+                                isLoading ||
+                                nodeIoMetricsLoading ||
+                                nodeTempMetricsLoading ||
+                                nodeCpuUsageMetricsLoading ||
+                                nodeMemoryUsageMetricsLoading
+                            }
                             title={"Physical Health"}
                             properties={healthStats}
                             onSelected={onTabSelected}
@@ -351,6 +514,14 @@ const Nodes = () => {
                             temperatureMetrics={
                                 nodeTempMetricsRes?.getTemperatureMetrics || []
                             }
+                            cpuUsageMetrics={
+                                nodeCpuUsageMetricsRes?.getCpuUsageMetrics || []
+                            }
+                            memoryUsageMetrics={
+                                nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics ||
+                                []
+                            }
+                            ioMetrics={nodeIoMetricsRes?.getIOMetrics || []}
                         />
                     )}
                     {selectedTab === 4 && (
