@@ -255,3 +255,69 @@ query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
         timestamp
     }
 }
+
+subscription getTemperatureMetricsS {
+    getTemperatureMetrics {
+        id
+        temperature
+        timestamp
+    }
+}
+
+query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
+    getTemperatureMetrics(filter: $filter) {
+        id
+        temperature
+        timestamp
+    }
+}
+
+subscription getCpuUsageMetricsS {
+    getCpuUsageMetrics {
+        id
+        usage
+        timestamp
+    }
+}
+
+query getCpuUsageMetricsQ($filter: GRAPH_FILTER!) {
+    getCpuUsageMetrics(filter: $filter) {
+        id
+        usage
+        timestamp
+    }
+}
+
+subscription getMemoryUsageMetricsS {
+    getMemoryUsageMetrics {
+        id
+        usage
+        timestamp
+    }
+}
+
+query getMemoryUsageMetricsQ($filter: GRAPH_FILTER!) {
+    getMemoryUsageMetrics(filter: $filter) {
+        id
+        usage
+        timestamp
+    }
+}
+
+subscription getIOMetricsS {
+    getIOMetrics {
+        id
+        input
+        output
+        timestamp
+    }
+}
+
+query getIOMetricsQ($filter: GRAPH_FILTER!) {
+    getIOMetrics(filter: $filter) {
+        id
+        input
+        output
+        timestamp
+    }
+}

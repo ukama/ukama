@@ -15,6 +15,7 @@ import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
 import NodeInfoCard from "./NodeInfoCard";
 import AlertSettings from "./AlertSettings";
+import NodeHealthTab from "./NodeHealthTab";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
@@ -29,6 +30,7 @@ import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
 import UpgradeNavFooter from "./UpgradeNavFooter";
 import BillingDataTable from "./BillingDataTable";
+import GraphTitleWrapper from "./GraphTitleWrapper";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
@@ -57,6 +59,7 @@ export {
     UserSettings,
     NodeInfoCard,
     NodeRFKpiTab,
+    NodeHealthTab,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,
@@ -74,6 +77,7 @@ export {
     ActivationDialog,
     BillingDataTable,
     UserDetailsDialog,
+    GraphTitleWrapper,
     MultiSlideCarousel,
     DataTableWithOptions,
     UserActivationDialog,

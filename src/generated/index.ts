@@ -1139,6 +1139,120 @@ export type GetThroughputMetricsQQuery = {
     }>;
 };
 
+export type GetTemperatureMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetTemperatureMetricsSSubscription = {
+    __typename?: "Subscription";
+    getTemperatureMetrics: {
+        __typename?: "TemperatureMetricsDto";
+        id?: string | null | undefined;
+        temperature: number;
+        timestamp: number;
+    };
+};
+
+export type GetTemperatureMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetTemperatureMetricsQQuery = {
+    __typename?: "Query";
+    getTemperatureMetrics: Array<{
+        __typename?: "TemperatureMetricsDto";
+        id?: string | null | undefined;
+        temperature: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetCpuUsageMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetCpuUsageMetricsSSubscription = {
+    __typename?: "Subscription";
+    getCpuUsageMetrics: {
+        __typename?: "CpuUsageMetricsDto";
+        id?: string | null | undefined;
+        usage: number;
+        timestamp: number;
+    };
+};
+
+export type GetCpuUsageMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetCpuUsageMetricsQQuery = {
+    __typename?: "Query";
+    getCpuUsageMetrics: Array<{
+        __typename?: "CpuUsageMetricsDto";
+        id?: string | null | undefined;
+        usage: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetMemoryUsageMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMemoryUsageMetricsSSubscription = {
+    __typename?: "Subscription";
+    getMemoryUsageMetrics: {
+        __typename?: "MemoryUsageMetricsDto";
+        id?: string | null | undefined;
+        usage: number;
+        timestamp: number;
+    };
+};
+
+export type GetMemoryUsageMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetMemoryUsageMetricsQQuery = {
+    __typename?: "Query";
+    getMemoryUsageMetrics: Array<{
+        __typename?: "MemoryUsageMetricsDto";
+        id?: string | null | undefined;
+        usage: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetIoMetricsSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetIoMetricsSSubscription = {
+    __typename?: "Subscription";
+    getIOMetrics: {
+        __typename?: "IOMetricsDto";
+        id?: string | null | undefined;
+        input: number;
+        output: number;
+        timestamp: number;
+    };
+};
+
+export type GetIoMetricsQQueryVariables = Exact<{
+    filter: Graph_Filter;
+}>;
+
+export type GetIoMetricsQQuery = {
+    __typename?: "Query";
+    getIOMetrics: Array<{
+        __typename?: "IOMetricsDto";
+        id?: string | null | undefined;
+        input: number;
+        output: number;
+        timestamp: number;
+    }>;
+};
+
 export const GetDataUsageDocument = gql`
     query getDataUsage($filter: TIME_FILTER!) {
         getDataUsage(filter: $filter) {
@@ -2592,4 +2706,414 @@ export type GetThroughputMetricsQLazyQueryHookResult = ReturnType<
 export type GetThroughputMetricsQQueryResult = Apollo.QueryResult<
     GetThroughputMetricsQQuery,
     GetThroughputMetricsQQueryVariables
+>;
+export const GetTemperatureMetricsSDocument = gql`
+    subscription getTemperatureMetricsS {
+        getTemperatureMetrics {
+            id
+            temperature
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetTemperatureMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetTemperatureMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetTemperatureMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTemperatureMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetTemperatureMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetTemperatureMetricsSSubscription,
+        GetTemperatureMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetTemperatureMetricsSSubscription,
+        GetTemperatureMetricsSSubscriptionVariables
+    >(GetTemperatureMetricsSDocument, options);
+}
+export type GetTemperatureMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetTemperatureMetricsSSubscription
+>;
+export type GetTemperatureMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetTemperatureMetricsSSubscription>;
+export const GetTemperatureMetricsQDocument = gql`
+    query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
+        getTemperatureMetrics(filter: $filter) {
+            id
+            temperature
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetTemperatureMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetTemperatureMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetTemperatureMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetTemperatureMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetTemperatureMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >(GetTemperatureMetricsQDocument, options);
+}
+export function useGetTemperatureMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetTemperatureMetricsQQuery,
+        GetTemperatureMetricsQQueryVariables
+    >(GetTemperatureMetricsQDocument, options);
+}
+export type GetTemperatureMetricsQQueryHookResult = ReturnType<
+    typeof useGetTemperatureMetricsQQuery
+>;
+export type GetTemperatureMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetTemperatureMetricsQLazyQuery
+>;
+export type GetTemperatureMetricsQQueryResult = Apollo.QueryResult<
+    GetTemperatureMetricsQQuery,
+    GetTemperatureMetricsQQueryVariables
+>;
+export const GetCpuUsageMetricsSDocument = gql`
+    subscription getCpuUsageMetricsS {
+        getCpuUsageMetrics {
+            id
+            usage
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetCpuUsageMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetCpuUsageMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetCpuUsageMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCpuUsageMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCpuUsageMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetCpuUsageMetricsSSubscription,
+        GetCpuUsageMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetCpuUsageMetricsSSubscription,
+        GetCpuUsageMetricsSSubscriptionVariables
+    >(GetCpuUsageMetricsSDocument, options);
+}
+export type GetCpuUsageMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetCpuUsageMetricsSSubscription
+>;
+export type GetCpuUsageMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetCpuUsageMetricsSSubscription>;
+export const GetCpuUsageMetricsQDocument = gql`
+    query getCpuUsageMetricsQ($filter: GRAPH_FILTER!) {
+        getCpuUsageMetrics(filter: $filter) {
+            id
+            usage
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetCpuUsageMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetCpuUsageMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCpuUsageMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCpuUsageMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetCpuUsageMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetCpuUsageMetricsQQuery,
+        GetCpuUsageMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetCpuUsageMetricsQQuery,
+        GetCpuUsageMetricsQQueryVariables
+    >(GetCpuUsageMetricsQDocument, options);
+}
+export function useGetCpuUsageMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetCpuUsageMetricsQQuery,
+        GetCpuUsageMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetCpuUsageMetricsQQuery,
+        GetCpuUsageMetricsQQueryVariables
+    >(GetCpuUsageMetricsQDocument, options);
+}
+export type GetCpuUsageMetricsQQueryHookResult = ReturnType<
+    typeof useGetCpuUsageMetricsQQuery
+>;
+export type GetCpuUsageMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetCpuUsageMetricsQLazyQuery
+>;
+export type GetCpuUsageMetricsQQueryResult = Apollo.QueryResult<
+    GetCpuUsageMetricsQQuery,
+    GetCpuUsageMetricsQQueryVariables
+>;
+export const GetMemoryUsageMetricsSDocument = gql`
+    subscription getMemoryUsageMetricsS {
+        getMemoryUsageMetrics {
+            id
+            usage
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetMemoryUsageMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetMemoryUsageMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemoryUsageMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemoryUsageMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMemoryUsageMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMemoryUsageMetricsSSubscription,
+        GetMemoryUsageMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMemoryUsageMetricsSSubscription,
+        GetMemoryUsageMetricsSSubscriptionVariables
+    >(GetMemoryUsageMetricsSDocument, options);
+}
+export type GetMemoryUsageMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetMemoryUsageMetricsSSubscription
+>;
+export type GetMemoryUsageMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetMemoryUsageMetricsSSubscription>;
+export const GetMemoryUsageMetricsQDocument = gql`
+    query getMemoryUsageMetricsQ($filter: GRAPH_FILTER!) {
+        getMemoryUsageMetrics(filter: $filter) {
+            id
+            usage
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetMemoryUsageMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetMemoryUsageMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMemoryUsageMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMemoryUsageMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetMemoryUsageMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMemoryUsageMetricsQQuery,
+        GetMemoryUsageMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMemoryUsageMetricsQQuery,
+        GetMemoryUsageMetricsQQueryVariables
+    >(GetMemoryUsageMetricsQDocument, options);
+}
+export function useGetMemoryUsageMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMemoryUsageMetricsQQuery,
+        GetMemoryUsageMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMemoryUsageMetricsQQuery,
+        GetMemoryUsageMetricsQQueryVariables
+    >(GetMemoryUsageMetricsQDocument, options);
+}
+export type GetMemoryUsageMetricsQQueryHookResult = ReturnType<
+    typeof useGetMemoryUsageMetricsQQuery
+>;
+export type GetMemoryUsageMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetMemoryUsageMetricsQLazyQuery
+>;
+export type GetMemoryUsageMetricsQQueryResult = Apollo.QueryResult<
+    GetMemoryUsageMetricsQQuery,
+    GetMemoryUsageMetricsQQueryVariables
+>;
+export const GetIoMetricsSDocument = gql`
+    subscription getIOMetricsS {
+        getIOMetrics {
+            id
+            input
+            output
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetIoMetricsSSubscription__
+ *
+ * To run a query within a React component, call `useGetIoMetricsSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetIoMetricsSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetIoMetricsSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetIoMetricsSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetIoMetricsSSubscription,
+        GetIoMetricsSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetIoMetricsSSubscription,
+        GetIoMetricsSSubscriptionVariables
+    >(GetIoMetricsSDocument, options);
+}
+export type GetIoMetricsSSubscriptionHookResult = ReturnType<
+    typeof useGetIoMetricsSSubscription
+>;
+export type GetIoMetricsSSubscriptionResult =
+    Apollo.SubscriptionResult<GetIoMetricsSSubscription>;
+export const GetIoMetricsQDocument = gql`
+    query getIOMetricsQ($filter: GRAPH_FILTER!) {
+        getIOMetrics(filter: $filter) {
+            id
+            input
+            output
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetIoMetricsQQuery__
+ *
+ * To run a query within a React component, call `useGetIoMetricsQQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetIoMetricsQQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetIoMetricsQQuery({
+ *   variables: {
+ *      filter: // value for 'filter'
+ *   },
+ * });
+ */
+export function useGetIoMetricsQQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetIoMetricsQQuery,
+        GetIoMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetIoMetricsQQuery, GetIoMetricsQQueryVariables>(
+        GetIoMetricsQDocument,
+        options
+    );
+}
+export function useGetIoMetricsQLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetIoMetricsQQuery,
+        GetIoMetricsQQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetIoMetricsQQuery, GetIoMetricsQQueryVariables>(
+        GetIoMetricsQDocument,
+        options
+    );
+}
+export type GetIoMetricsQQueryHookResult = ReturnType<
+    typeof useGetIoMetricsQQuery
+>;
+export type GetIoMetricsQLazyQueryHookResult = ReturnType<
+    typeof useGetIoMetricsQLazyQuery
+>;
+export type GetIoMetricsQQueryResult = Apollo.QueryResult<
+    GetIoMetricsQQuery,
+    GetIoMetricsQQueryVariables
 >;

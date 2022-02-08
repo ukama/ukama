@@ -10,7 +10,7 @@ import { format } from "date-fns";
 import { LoadingWrapper } from "..";
 import { RoundedCard } from "../../styles";
 import { NodeRfDto } from "../../generated";
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 interface INodeRFKpiTab {
     loading: boolean;
@@ -26,54 +26,54 @@ const NodeRFKpiTab = ({ loading, metrics }: INodeRFKpiTab) => {
                     height: "fit-content",
                 }}
             >
-                <Typography variant="h6" mb={4}>
-                    RF KPIs
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                    <LineChart
-                        width={500}
-                        height={300}
-                        data={metrics}
-                        margin={{
-                            top: 5,
-                            right: 30,
-                            left: 20,
-                            bottom: 5,
-                        }}
-                    >
-                        <XAxis
-                            dataKey="timestamp"
-                            fontSize={"14px"}
-                            tickFormatter={(value: any) =>
-                                format(value, "MMM dd HH:mm:ss")
-                            }
-                        />
-                        <YAxis fontSize={"14px"} />
-                        <Tooltip />
-                        <Line
-                            type="monotone"
-                            dataKey="qam"
-                            stroke="#8884d8"
-                            activeDot={{ r: 8 }}
-                            strokeWidth={2}
-                            animationDuration={300}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="rfOutput"
-                            stroke="#82ca9d"
-                            strokeWidth={2}
-                            animationDuration={300}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="rssi"
-                            stroke="#E6534E"
-                            strokeWidth={2}
-                            animationDuration={300}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
+                <Stack spacing={4}>
+                    <Typography variant="h6">RF KPIs</Typography>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <LineChart
+                            width={500}
+                            height={300}
+                            data={metrics}
+                            margin={{
+                                top: 5,
+                                right: 30,
+                                left: 20,
+                                bottom: 5,
+                            }}
+                        >
+                            <XAxis
+                                dataKey="timestamp"
+                                fontSize={"14px"}
+                                tickFormatter={(value: any) =>
+                                    format(value, "MMM dd HH:mm:ss")
+                                }
+                            />
+                            <YAxis fontSize={"14px"} />
+                            <Tooltip />
+                            <Line
+                                type="monotone"
+                                dataKey="qam"
+                                stroke="#8884d8"
+                                activeDot={{ r: 8 }}
+                                strokeWidth={2}
+                                animationDuration={300}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="rfOutput"
+                                stroke="#82ca9d"
+                                strokeWidth={2}
+                                animationDuration={300}
+                            />
+                            <Line
+                                type="monotone"
+                                dataKey="rssi"
+                                stroke="#E6534E"
+                                strokeWidth={2}
+                                animationDuration={300}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </Stack>
             </RoundedCard>
         </LoadingWrapper>
     );
