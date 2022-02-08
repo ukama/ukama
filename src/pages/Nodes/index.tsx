@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { Box, Grid, Stack } from "@mui/material";
@@ -7,36 +7,76 @@ import {
     NodeDetailsCard,
     NodeStatus,
     NodeInfoCard,
-    LoadingWrapper,
     PagePlaceholder,
+    NodeRFKpiTab,
 } from "../../components";
 import {
-    NODES,
     NODE_PROPERTIES8,
     NODE_PROPERTIES2,
     NODE_PROPERTIES4,
-    NODE_PROPERTIES3,
 } from "../../constants/stubData";
 import {
     NodeDto,
+    Graph_Filter,
     useGetNodesByOrgQuery,
-    Org_Node_State,
+    useGetNodeRfkpiqQuery,
+    GetNodeRfkpisDocument,
+    GetNodeRfkpisSubscription,
 } from "../../generated";
+import { TObject } from "../../types";
+import { parseObjectInNameValue } from "../../utils";
 
 const Nodes = () => {
-    const [selectedNode, setSelectedNode] = useState<NodeDto>({
-        id: "1",
-        totalUser: 3,
-        title: "Node 1",
-        description: "testing",
-        status: Org_Node_State.Pending,
-    });
-    const [selectedTab, setSelectedTab] = useState(1);
     const orgId = useRecoilValue(organizationId);
+    const [selectedTab, setSelectedTab] = useState(4);
+    const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: orgId || "" },
+        onCompleted: res => {
+            res.getNodesByOrg.nodes.length > 0 &&
+                setSelectedNode(res.getNodesByOrg.nodes[0]);
+        },
     });
+
+    const {
+        data: nodeRFKpiRes,
+        loading: nodeRFKpiLoading,
+        subscribeToMore: subscribeToNodeRFKpiMetrics,
+    } = useGetNodeRfkpiqQuery({
+        variables: {
+            filter: Graph_Filter.Week,
+        },
+    });
+
+    const nodeRFKpiMetricsSubscription = () =>
+        subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
+            document: GetNodeRfkpisDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getNodeRFKPI;
+                setRfKpiStats(parseObjectInNameValue(metrics));
+                const spreadPrev = prev ? prev?.getNodeRFKPI : [];
+                return Object.assign({}, prev, {
+                    getNodeRFKPI: [metrics, ...spreadPrev],
+                });
+            },
+        });
+
+    useEffect(() => {
+        if (nodeRFKpiRes) {
+            nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
+                setRfKpiStats(
+                    parseObjectInNameValue(nodeRFKpiRes?.getNodeRFKPI[0])
+                );
+        }
+        let unsub = nodeRFKpiMetricsSubscription();
+        return () => {
+            unsub && unsub();
+        };
+    }, [nodeRFKpiRes]);
+
     // const { data: nodeDetailsRes, loading: nodeDetailsResLoading } =
     //     useGetNodeDetailsQuery();
 
@@ -86,7 +126,7 @@ const Nodes = () => {
                         onNodeSelected={onNodeSelected}
                         onNodeSwitchClick={onNodeSwitchClick}
                         onRestartNodeClick={onRestartNodeClick}
-                        nodes={nodesRes?.getNodesByOrg?.nodes || NODES}
+                        nodes={nodesRes?.getNodesByOrg?.nodes}
                     />
                 </Grid>
                 <Grid item container xs={4}>
@@ -117,24 +157,24 @@ const Nodes = () => {
                         />
                         <NodeInfoCard
                             index={4}
-                            loading={isLoading}
                             title={"RF KPIs"}
-                            properties={NODE_PROPERTIES3}
+                            properties={rfKpiStats}
                             onSelected={onTabSelected}
                             isSelected={selectedTab === 4}
+                            loading={isLoading || nodeRFKpiLoading}
                         />
                     </Stack>
                 </Grid>
                 <Grid item container xs={8}>
-                    <RoundedCard sx={{ borderRadius: "4px" }}>
-                        <LoadingWrapper
-                            height={"70%"}
-                            radius={"small"}
-                            isLoading={isLoading}
-                        >
-                            {selectedTab === 1 && <NodeDetailsCard />}
-                        </LoadingWrapper>
-                    </RoundedCard>
+                    {selectedTab === 1 && (
+                        <NodeDetailsCard loading={isLoading} />
+                    )}
+                    {selectedTab === 4 && (
+                        <NodeRFKpiTab
+                            loading={isLoading || nodeRFKpiLoading}
+                            metrics={nodeRFKpiRes?.getNodeRFKPI || []}
+                        />
+                    )}
                 </Grid>
             </Grid>
         </Box>

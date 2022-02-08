@@ -26,7 +26,7 @@ type StyleProps = { color: string };
 
 const useStyles = makeStyles(() => ({
     selectStyle: ({ color = colors.black }: StyleProps) => ({
-        width: "144px",
+        width: "fit-content",
         "& p": {
             fontSize: "20px",
             fontWeight: "500",
@@ -113,9 +113,10 @@ const NodeStatus = ({
                         variant="standard"
                         value={selectedNode.id}
                         onChange={handleChange}
+                        placeholder="Select Node"
                         className={classes.selectStyle}
                     >
-                        {nodes.map(({ id, title }: NodeDto) => (
+                        {nodes?.map(({ id, title }: NodeDto) => (
                             <MenuItem key={id} value={id}>
                                 <Typography variant="body1">{title}</Typography>
                             </MenuItem>

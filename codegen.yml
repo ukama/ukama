@@ -1,5 +1,5 @@
 overwrite: true
-schema: https://bff.dev.ukama.com/graphql
+schema: http://localhost:8080/graphql
 documents: "./src/api/*.graphql"
 generates:
   ./src/generated/index.ts:
