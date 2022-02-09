@@ -56,7 +56,7 @@ const NetworkStatus = ({
                             <Typography
                                 ml="8px"
                                 variant={"h6"}
-                                // HERE color={colors.empress}
+                                color="secondary"
                             >
                                 {duration}
                             </Typography>

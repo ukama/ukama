@@ -18,6 +18,7 @@ import {
     TableRow,
     Paper,
 } from "@mui/material";
+import { colors } from "../../theme";
 type BillingTableProps = {
     tableTitle: string;
     isBillingHistory: boolean;
@@ -48,7 +49,7 @@ const BillingDataTable = ({
                             onChange={handleExportOptions}
                             displayEmpty
                             sx={{
-                                // HERE color: colors.primary,
+                                color: colors.primaryMain,
                                 width: "20%",
                                 textAlign: "center",
                             }}

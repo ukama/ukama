@@ -55,7 +55,7 @@ const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
     <MenuItem
         selected={isSelected}
         onClick={handleItemClick}
-        sx={{ color: `${label === "Log out" ? colors._error : "primary"}` }}
+        sx={{ color: `${label === "Log out" ? colors.error : "primary"}` }}
     >
         {label}
     </MenuItem>
@@ -143,7 +143,7 @@ const Settings = () => {
                 overflow: "scroll",
                 flexDirection: "column",
                 p: "40px 85px 20px 85px",
-                backgroundColor: _isDarkMod ? colors.black : colors._solitude,
+                backgroundColor: _isDarkMod ? colors.black : colors.solitude,
                 justifyContent: "space-between",
             }}
         >
@@ -225,10 +225,10 @@ const Settings = () => {
                 {!skeltonLoading && (
                     <Typography
                         variant={"caption"}
+                        color="textSecondary"
                         sx={{
                             display: "block",
                             textAlign: "center",
-                            // HERE color: colors.empress,
                         }}
                     >
                         {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}

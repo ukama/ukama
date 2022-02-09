@@ -32,14 +32,13 @@ const EditableTextField = ({
             sx={{ width: "440px" }}
             InputLabelProps={{
                 shrink: true,
-                // HERE style: { color: colors.lightGrey },
             }}
             onChange={e => handleOnChange(e.target.value)}
             inputRef={input => iseditable && input?.focus()}
             InputProps={{
                 type: type,
                 disableUnderline: true,
-                // HERE style: { color: colors.black },
+                color: "primary",
                 endAdornment: (
                     <InputAdornment
                         position="end"

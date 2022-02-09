@@ -22,12 +22,13 @@ const theme = (isDarkmode: boolean) =>
         palette: {
             mode: isDarkmode ? "dark" : "light",
             text: {
-                primary: isDarkmode ? colors._white : colors.black,
-                secondary: isDarkmode ? colors._white38 : colors._vulcan60,
+                primary: isDarkmode ? colors.white : colors.black,
+                secondary: isDarkmode ? colors.white70 : colors.black70,
+                disabled: isDarkmode ? colors.white38 : colors.black38,
             },
             background: {
-                default: isDarkmode ? colors._nightGrey : colors._solitude,
-                paper: isDarkmode ? colors._nightGrey5 : colors._white,
+                default: isDarkmode ? colors.nightGrey : colors.solitude,
+                paper: isDarkmode ? colors.nightGrey5 : colors.white,
             },
             primary: {
                 main: colors.primaryMain,
@@ -40,7 +41,7 @@ const theme = (isDarkmode: boolean) =>
                 dark: colors.secondaryDark,
             },
             error: {
-                main: colors._error,
+                main: colors.error,
             },
         },
         components: {
@@ -93,7 +94,7 @@ const theme = (isDarkmode: boolean) =>
                 styleOverrides: {
                     contained: {
                         fontWeight: 500,
-                        color: colors._white,
+                        color: colors.white,
                         letterSpacing: "0.4px",
                         boxShadow:
                             "0px 3px 1px -2px rgba(0, 0, 0, 0.2), 0px 2px 2px rgba(0, 0, 0, 0.14), 0px 1px 5px rgba(0, 0, 0, 0.12)",
@@ -101,6 +102,7 @@ const theme = (isDarkmode: boolean) =>
                     text: {
                         padding: "0px",
                         minWidth: "auto",
+                        color: isDarkmode ? colors.white70 : colors.black70,
                     },
                 },
             },

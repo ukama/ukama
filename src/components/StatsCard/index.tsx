@@ -50,7 +50,7 @@ const StatsCard = ({
     handleSelectedButton,
 }: StatsCardProps) => {
     const _isDarkMod = useRecoilValue(isDarkmode);
-    const styleProps = { color: _isDarkMod ? colors._white : colors.black };
+    const styleProps = { color: _isDarkMod ? colors.white : colors.black };
     const classes = useStyles(styleProps);
     return (
         <>

@@ -9,12 +9,9 @@ import {
     TableContainer,
 } from "@mui/material";
 import { EmptyView } from "..";
-import { colors } from "../../theme";
 import OptionsPopover from "../OptionsPopover";
 import UserIcon from "@mui/icons-material/Person";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
-import { useRecoilValue } from "recoil";
-import { isDarkmode } from "../../recoil";
 
 interface DataTableWithOptionsInterface {
     dataset: any;
@@ -62,13 +59,12 @@ const DataTableWithOptions = ({
     menuOptions,
     onMenuItemClick,
 }: DataTableWithOptionsInterface) => {
-    const _isDarkmode = useRecoilValue(isDarkmode);
     return (
         <Box sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}>
             {dataset?.length > 1 ? (
                 <TableContainer sx={{ maxHeight: 200 }}>
                     <Table stickyHeader>
-                        <TableHead sx={{ backgroundColor: "black" }}>
+                        <TableHead>
                             <TableRow>
                                 {columns?.map(column => (
                                     <TableCell
@@ -78,9 +74,6 @@ const DataTableWithOptions = ({
                                             fontSize: "0.875rem",
                                             minWidth: column.minWidth,
                                             padding: "6px 12px 12px 0px",
-                                            background: _isDarkmode
-                                                ? colors._nightGrey5
-                                                : colors._white,
                                         }}
                                     >
                                         <b>{column.label}</b>

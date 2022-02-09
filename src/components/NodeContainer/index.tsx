@@ -11,7 +11,7 @@ type NodeContainerProps = {
 
 const NodeContainer = ({
     count = 0,
-    items = [],
+    items,
     slidesToShow,
     handleItemAction,
 }: NodeContainerProps) => {
@@ -22,7 +22,7 @@ const NodeContainer = ({
                     numberOfSlides={slidesToShow}
                     disableArrows={count < 3}
                 >
-                    {items.map(({ id, title, totalUser, description }) => (
+                    {items?.map(({ id, title, totalUser, description }) => (
                         <NodeCard
                             key={id}
                             title={title}

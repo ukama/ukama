@@ -43,7 +43,7 @@ const NodeInfoCard = ({
                         borderLeft: {
                             xs: "none",
                             md: `8px solid ${
-                                isSelected ? colors.primaryMain : colors._white
+                                isSelected ? colors.primaryMain : colors.white
                             }`,
                         },
                     }}

@@ -16,7 +16,6 @@ const useStyles = makeStyles(() => ({
         alignItems: "center",
         flexDirection: "column",
         justifyContent: "center",
-        // HERE background: colors.aliceBlue,
     },
     buttonStyle: {
         width: "124px",

@@ -82,9 +82,7 @@ const Sidebar = (
                         <Icon
                             fontSize="medium"
                             sx={{
-                                fill: _isDarkMod
-                                    ? colors._white
-                                    : colors._vulcan,
+                                fill: _isDarkMod ? colors.white : colors.vulcan,
                             }}
                         />
                     </ListItemIcon>
@@ -112,7 +110,11 @@ const Sidebar = (
             }}
         >
             <Toolbar sx={{ padding: "33px 0px 12px 0px" }}>
-                <Logo width={"100%"} height={"36px"} />
+                <Logo
+                    width={"100%"}
+                    height={"36px"}
+                    color={_isDarkMod ? colors.white : colors.primaryMain}
+                />
             </Toolbar>
             <Stack
                 sx={{

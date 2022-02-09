@@ -36,8 +36,8 @@ const PagePlaceholder = ({
             }}
         >
             <PagePlaceholderSvg
-                color={_isDarkmode ? colors._white38 : colors.silver}
-                color2={_isDarkmode ? colors._nightGrey12 : colors._white}
+                color={_isDarkmode ? colors.white38 : colors.silver}
+                color2={_isDarkmode ? colors.nightGrey12 : colors.white}
             />
             <Typography variant="body1">
                 {`${description} `}

@@ -29,6 +29,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
 import React, { useEffect, useRef, useState } from "react";
 import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
+import { colors } from "../../theme";
 
 type HeaderProps = {
     pageName: string;
@@ -217,8 +218,8 @@ const Header = ({
                                     }
                                     sx={{
                                         "& .MuiBadge-badge": {
-                                            // HERE color: colors.white,
-                                            // backgroundColor: colors.vulcan,
+                                            color: "textPrimary",
+                                            backgroundColor: colors.vulcan,
                                             paddingLeft: "3px",
                                             paddingRight: "3px",
                                         },

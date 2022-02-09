@@ -17,6 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { ChangeEventHandler, useState } from "react";
 import { SimActivateFormType } from "../../../types";
 import { SimCardData } from "../../../constants/stubData";
+import { colors } from "../../../theme";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -33,8 +34,8 @@ const useStyles = makeStyles(() => ({
     },
     stepButtonStyle: {
         "&:disabled": {
-            // HERE color: colors.white,
-            // backgroundColor: `${colors.darkGrey}`,
+            color: colors.white,
+            backgroundColor: colors.nightGrey,
         },
     },
 }));

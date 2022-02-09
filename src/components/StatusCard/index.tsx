@@ -133,7 +133,7 @@ const StatusCard = ({
 
                                 <Typography
                                     variant="body1"
-                                    // HERE color={colors.empress}
+                                    color="textSecondary"
                                     sx={{
                                         display: "flex",
                                         alignItems: "center",

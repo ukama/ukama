@@ -18,8 +18,6 @@ const Container = styled(Box)(() => ({
     padding: "15px 18px 8px 18px",
     borderRadius: "10px",
     justifyContent: "center",
-    // HERE background:
-    //     props.theme.palette.mode === "dark" ? colors.nightGrey12 : colors.white,
 }));
 
 const IconStyle = {

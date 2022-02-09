@@ -61,7 +61,7 @@ const ContainerHeader = ({
                     <Typography
                         variant="subtitle2"
                         letterSpacing="4px"
-                        // HERE color={colors.empress}
+                        color={"textSecondary"}
                     >
                         &#40;{stats}&#41;
                     </Typography>
@@ -99,14 +99,7 @@ const ContainerHeader = ({
                                         aria-label="simSearch"
                                         component="span"
                                     >
-                                        <SearchIcon
-                                            sx={
-                                                {
-                                                    // HERE color: colors.black,
-                                                }
-                                            }
-                                            fontSize="small"
-                                        />
+                                        <SearchIcon fontSize="small" />
                                     </IconButton>
                                 </Stack>
                             </Paper>
