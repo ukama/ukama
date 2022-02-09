@@ -9,15 +9,22 @@ import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import { Typography, Grid, Divider, Box, styled } from "@mui/material";
+import { hexToRGB } from "../../utils";
 
-const Container = styled(Box)(() => ({
+const Container = styled(Box)(props => ({
     width: "214px",
     height: "206px",
     display: "flex",
     alignItems: "center",
-    padding: "15px 18px 8px 18px",
     borderRadius: "10px",
     justifyContent: "center",
+    padding: "15px 18px 8px 18px",
+    border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.3)}`,
+}));
+
+const Line = styled(Divider)(props => ({
+    margin: "18px -18px 4px -18px",
+    background: hexToRGB(props.theme.palette.text.primary, 0.3),
 }));
 
 const IconStyle = {
@@ -96,7 +103,7 @@ const NodeCard = ({
                             <NodeImg />
                         </Grid>
                         <Grid item xs={12}>
-                            <Divider sx={{ m: "18px -18px 4px -18px" }} />
+                            <Line />
                         </Grid>
                         <Grid
                             item
@@ -114,9 +121,7 @@ const NodeCard = ({
                                 pt="0px !important"
                             >
                                 <UsersIcon
-                                    fontSize="small"
-                                    width="16px"
-                                    height="16px"
+                                    sx={{ width: "16px", height: "16px" }}
                                 />
                                 <Typography variant="caption" pl="8px">
                                     {users}

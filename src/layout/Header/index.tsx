@@ -219,7 +219,7 @@ const Header = ({
                                     sx={{
                                         "& .MuiBadge-badge": {
                                             color: "textPrimary",
-                                            backgroundColor: colors.vulcan,
+                                            backgroundColor: colors.primaryMain,
                                             paddingLeft: "3px",
                                             paddingRight: "3px",
                                         },
