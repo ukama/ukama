@@ -6,8 +6,8 @@ import {
     IconButton,
 } from "@mui/material";
 import { useState } from "react";
-import { MenuDots } from "../../assets/svg";
 import { MenuItemType } from "../../types";
+import MenuDots from "@mui/icons-material/MoreHoriz";
 
 type ItemProps = {
     Icon: any;

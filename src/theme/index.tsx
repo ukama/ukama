@@ -128,6 +128,9 @@ const theme = (isDarkmode: boolean) =>
                     root: {
                         backgroundColor: "transparent",
                     },
+                    stickyHeader: {
+                        backgroundColor: isDarkmode ? "#292929" : colors.white,
+                    },
                 },
             },
         },

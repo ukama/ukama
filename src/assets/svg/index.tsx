@@ -1,7 +1,6 @@
 import Logo from "./Logo";
 import CpuIcon from "./CpuIcon";
 import NodeImg from "./NodeImg";
-import MenuDots from "./MenuDots";
 import DataUsage from "./DataUsage";
 import BatteryIcon from "./BatteryIcon";
 import BillingIcon from "./BillingIcon";
@@ -17,7 +16,6 @@ export {
     Logo,
     CpuIcon,
     NodeImg,
-    MenuDots,
     DataUsage,
     BatteryIcon,
     BillingIcon,
