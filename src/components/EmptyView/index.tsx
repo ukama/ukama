@@ -16,7 +16,11 @@ const EmptyView = ({ title, icon: Icon, size = "medium" }: IEmptyView) => {
             }}
         >
             <Typography variant="body1">{title}</Typography>
-            <Icon fontSize={size} />
+            <Icon
+                fontSize={size}
+                color="textPrimary"
+                style={{ opacity: 0.6 }}
+            />
         </Stack>
     );
 };

@@ -55,7 +55,7 @@ const LinkStyle = styled(Link)({
     fontSize: "0.75rem",
     width: "fit-content",
     alignSelf: "flex-end",
-    color: colors.primary,
+    color: colors.primaryMain,
     letterSpacing: "0.4px",
     textDecoration: "none",
     "&:hover": {
@@ -83,8 +83,6 @@ const RoundedCard = styled(Paper)(props => ({
     height: "100%",
     borderRadius: "10px",
     display: "inline-block",
-    background:
-        props.theme.palette.mode === "dark" ? colors.nightGrey05 : colors.white,
     boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
     [props.theme.breakpoints.down("sm")]: {
         padding: "18px",
@@ -98,13 +96,9 @@ const SkeletonRoundedCard = styled(Skeleton)(() => ({
     display: "inline-block",
 }));
 
-const FullscreenContainer = styled(Box)(props => ({
+const FullscreenContainer = styled(Box)(() => ({
     width: "100%",
     height: "100%",
-    background:
-        props.theme.palette.mode === "dark"
-            ? colors.nightGrey
-            : colors.solitude,
 }));
 
 export {

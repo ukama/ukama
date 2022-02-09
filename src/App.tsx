@@ -6,12 +6,12 @@ import { CenterContainer } from "./styles";
 import { BasicDialog } from "./components";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
-import { ThemeProvider } from "@emotion/react";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
-import { isDarkmode, isFirstVisit, isSkeltonLoading, pageName } from "./recoil";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { ThemeProvider } from "@mui/material/styles";
 import { CircularProgress, CssBaseline } from "@mui/material";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { isDarkmode, isFirstVisit, isSkeltonLoading, pageName } from "./recoil";
 
 const App = () => {
     const { loading, response } = useWhoami();

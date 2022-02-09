@@ -14,7 +14,7 @@ const useStyles = makeStyles<Theme, StyleProps>(() => ({
         cursor: "pointer",
         padding: "13px 18px",
         border: ({ isSelected }) =>
-            isSelected ? `2px solid ${colors.primary}` : "none",
+            isSelected ? `2px solid ${colors.primaryMain}` : "none",
     },
 }));
 
@@ -52,7 +52,7 @@ const SimCardDesign = ({
                     {isActivate && (
                         <Typography
                             variant="body1"
-                            sx={{ color: colors.primary }}
+                            sx={{ color: colors.primaryMain }}
                         >
                             Activated
                         </Typography>

@@ -15,7 +15,6 @@ import {
     Grid,
     DialogContent,
 } from "@mui/material";
-import colors from "../../../theme/colors";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { ContainerJustifySpaceBtw } from "../../../styles";
 import { GetUserDto, Get_User_Status_Type } from "../../../generated";
@@ -114,22 +113,13 @@ const UserDetailsDialog = ({
                         <Grid item container spacing={1}>
                             <Grid item xs={12}>
                                 <Stack direction="row" spacing={1}>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ color: colors.vulcan }}
-                                    >
+                                    <Typography variant="body1">
                                         {dataUsage} GB data used,
                                     </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ color: colors.vulcan }}
-                                    >
+                                    <Typography variant="body1">
                                         {dataPlan}
                                     </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ color: colors.vulcan }}
-                                    >
+                                    <Typography variant="body1">
                                         free GB left
                                     </Typography>
                                 </Stack>
@@ -173,9 +163,7 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        color="textSecondary"
                                     >
                                         STATUS
                                     </Typography>
@@ -212,9 +200,7 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        color="textSecondary"
                                     >
                                         IMEI NUMBER
                                     </Typography>
@@ -229,9 +215,7 @@ const UserDetailsDialog = ({
                                 <Grid item xs={12}>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                        }}
+                                        color="textSecondary"
                                     >
                                         ICCID
                                     </Typography>
@@ -246,10 +230,8 @@ const UserDetailsDialog = ({
                                 <ContainerJustifySpaceBtw>
                                     <Typography
                                         variant="caption"
-                                        sx={{
-                                            color: colors.lightGrey,
-                                            alignSelf: "end",
-                                        }}
+                                        color="textSecondary"
+                                        alignSelf={"end"}
                                     >
                                         ROAMING
                                         <Tooltip

@@ -22,7 +22,6 @@ import {
     Notifications,
     AccountCircle,
 } from "@mui/icons-material";
-import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
 import { routes } from "../../router/config";
 import { useHistory } from "react-router-dom";
@@ -30,6 +29,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
 import React, { useEffect, useRef, useState } from "react";
 import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
+import { colors } from "../../theme";
 
 type HeaderProps = {
     pageName: string;
@@ -218,7 +218,7 @@ const Header = ({
                                     }
                                     sx={{
                                         "& .MuiBadge-badge": {
-                                            color: colors.white,
+                                            color: "textPrimary",
                                             backgroundColor: colors.vulcan,
                                             paddingLeft: "3px",
                                             paddingRight: "3px",

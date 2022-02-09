@@ -55,7 +55,7 @@ const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
     <MenuItem
         selected={isSelected}
         onClick={handleItemClick}
-        sx={{ color: `${label === "Log out" ? colors.red900 : "primary"}` }}
+        sx={{ color: `${label === "Log out" ? colors.error : "primary"}` }}
     >
         {label}
     </MenuItem>
@@ -225,10 +225,10 @@ const Settings = () => {
                 {!skeltonLoading && (
                     <Typography
                         variant={"caption"}
+                        color="textSecondary"
                         sx={{
                             display: "block",
                             textAlign: "center",
-                            color: colors.empress,
                         }}
                     >
                         {`${APP_VERSION}`} <br /> {`${COPY_RIGHTS}`}

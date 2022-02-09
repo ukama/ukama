@@ -19,7 +19,7 @@ import { Grid, Select, MenuItem, Typography } from "@mui/material";
 type StyleProps = { color: string };
 
 const useStyles = makeStyles(() => ({
-    selectStyle: ({ color = colors.black }: StyleProps) => ({
+    selectStyle: ({ color }: StyleProps) => ({
         width: "172px",
         "& p": {
             fontSize: "20px",

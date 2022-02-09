@@ -30,8 +30,8 @@ const TimeFilter = ({ filter, handleFilterSelect }: ITimeFilter) => {
                         value={label}
                         style={{
                             height: "32px",
-                            color: colors.lightBlue,
-                            border: `1px solid ${colors.lightBlue}`,
+                            color: colors.hoverColor,
+                            border: `1px solid ${colors.hoverColor}`,
                         }}
                     >
                         <Typography

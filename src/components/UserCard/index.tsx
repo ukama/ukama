@@ -6,7 +6,7 @@ import {
     Paper,
     Typography,
 } from "@mui/material";
-import colors from "../../theme/colors";
+import { colors } from "../../theme";
 type UserCardProps = {
     userDetails?: any;
     children?: any;
@@ -23,7 +23,7 @@ const UserCard = ({ userDetails, handleMoreUserdetails }: UserCardProps) => {
                                 <Grid item>
                                     <Typography
                                         variant="body2"
-                                        sx={{ color: colors.empress }}
+                                        color="textSecondary"
                                     >
                                         {eSimNumber}
                                     </Typography>
@@ -76,14 +76,13 @@ const UserCard = ({ userDetails, handleMoreUserdetails }: UserCardProps) => {
                                         value={dataPlan - dataUsage}
                                         sx={{
                                             height: "8px",
-                                            backgroundColor: colors.darkGray,
+                                            backgroundColor: colors.silver,
                                         }}
                                     />
                                 </Grid>
                                 <Grid item>
                                     <Button
                                         variant="text"
-                                        sx={{ color: colors.darkGrey }}
                                         onClick={() =>
                                             handleMoreUserdetails(id)
                                         }

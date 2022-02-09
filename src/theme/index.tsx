@@ -21,11 +21,27 @@ const theme = (isDarkmode: boolean) =>
         },
         palette: {
             mode: isDarkmode ? "dark" : "light",
+            text: {
+                primary: isDarkmode ? colors.white : colors.black,
+                secondary: isDarkmode ? colors.white70 : colors.black70,
+                disabled: isDarkmode ? colors.white38 : colors.black38,
+            },
             background: {
                 default: isDarkmode ? colors.nightGrey : colors.solitude,
+                paper: isDarkmode ? colors.nightGrey5 : colors.white,
             },
             primary: {
-                main: colors.primary,
+                main: colors.primaryMain,
+                light: colors.primaryLight,
+                dark: colors.primaryDark,
+            },
+            secondary: {
+                main: colors.secondaryMain,
+                light: colors.secondaryLight,
+                dark: colors.secondaryDark,
+            },
+            error: {
+                main: colors.error,
             },
         },
         components: {
@@ -69,7 +85,7 @@ const theme = (isDarkmode: boolean) =>
                             backgroundColor: "transparent",
                         },
                         "&:hover svg path": {
-                            fill: colors.primary,
+                            fill: colors.primaryMain,
                         },
                     },
                 },
@@ -86,6 +102,7 @@ const theme = (isDarkmode: boolean) =>
                     text: {
                         padding: "0px",
                         minWidth: "auto",
+                        color: isDarkmode ? colors.white70 : colors.black70,
                     },
                 },
             },
@@ -110,6 +127,9 @@ const theme = (isDarkmode: boolean) =>
                 styleOverrides: {
                     root: {
                         backgroundColor: "transparent",
+                    },
+                    stickyHeader: {
+                        backgroundColor: isDarkmode ? "#292929" : colors.white,
                     },
                 },
             },

@@ -10,12 +10,12 @@ import {
     DialogContent,
     Stack,
 } from "@mui/material";
-import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { globalUseStyles } from "../../../styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ChangeEventHandler, useState } from "react";
 import { UserActivateFormType } from "../../../types";
+import { colors } from "../../../theme";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -33,7 +33,7 @@ const useStyles = makeStyles(() => ({
     stepButtonStyle: {
         "&:disabled": {
             color: colors.white,
-            backgroundColor: `${colors.darkGrey}`,
+            backgroundColor: colors.nightGrey,
         },
     },
 }));
