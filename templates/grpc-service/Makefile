@@ -14,10 +14,7 @@ lint:
 	golangci-lint run
 
 deps:
-	go get google.golang.org/protobuf/cmd/protoc-gen-go \
-			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
-			github.com/vektra/mockery/v2/.../
-
+	go install
 
 gen:
 	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=true		

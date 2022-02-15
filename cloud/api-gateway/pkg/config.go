@@ -3,14 +3,14 @@ package pkg
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukamaX/common/rest"
 )
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Kratos            Kratos `mapstructure:"kratos"`
-	Port              int
+	Server            rest.HttpConfig
 	BypassAuthMode    bool
-	Cors              cors.Config
 	Services          GrpcEndpoints  `mapstructure:"services"`
 	HttpServices      HttpEndpoints  `mapstructure:"httpServices"`
 	Metrics           config.Metrics `mapstructure:"metrics"`
@@ -40,7 +40,6 @@ func NewConfig() *Config {
 		Kratos: Kratos{
 			"http://kratos",
 		},
-		Port:           8080,
 		BypassAuthMode: false,
 		BaseConfig: config.BaseConfig{
 			DebugMode: false,
@@ -56,7 +55,10 @@ func NewConfig() *Config {
 			NodeMetrics:    "http://localhost",
 		},
 
-		Cors:    defaultCors,
+		Server: rest.HttpConfig{
+			Port: 8080,
+			Cors: defaultCors,
+		},
 		Metrics: *config.DefaultMetrics(),
 	}
 }

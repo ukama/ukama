@@ -2,21 +2,15 @@ package client
 
 import (
 	"errors"
+
+	"github.com/ukama/ukamaX/common/rest"
+
 	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
 )
 
-type HttpError struct {
-	HttpCode int
-	Message  string
-}
-
-func (g HttpError) Error() string {
-	return g.Message
-}
-
-func marshalError(err error) (grpcError *HttpError, isItAnError bool) {
+func marshalError(err error) (grpcError *rest.HttpError, isItAnError bool) {
 	if err != nil {
 		var customStatus *grpcGate.HTTPStatusError
 		if errors.As(err, &customStatus) {
@@ -30,7 +24,7 @@ func marshalError(err error) (grpcError *HttpError, isItAnError bool) {
 		if customStatus != nil {
 			st = customStatus.HTTPStatus
 		}
-		return &HttpError{
+		return &rest.HttpError{
 			HttpCode: st,
 			Message:  pb.Message,
 		}, true

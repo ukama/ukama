@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	"github.com/ukama/ukamaX/common/rest"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
@@ -33,8 +34,10 @@ func TestPingRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
-		cors: defaultCors,
-	}).gin
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+	}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -50,8 +53,10 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
 	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
-		cors: defaultCors,
-	}).gin
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+	}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -72,8 +77,10 @@ func TestGetOrg_NotFound(t *testing.T) {
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
 	}, &RouterConfig{
-		cors: defaultCors,
-	}).gin
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+	}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -99,8 +106,10 @@ func TestGetOrg(t *testing.T) {
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
 	}, &RouterConfig{
-		cors: defaultCors,
-	}).gin
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+	}).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -135,8 +144,10 @@ func TestGetNodes(t *testing.T) {
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
 		}, &RouterConfig{
-			cors: defaultCors,
-		}).gin
+			serverConf: &rest.HttpConfig{
+				Cors: defaultCors,
+			},
+		}).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -157,8 +168,10 @@ func TestGetNodes(t *testing.T) {
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
 		}, &RouterConfig{
-			cors: defaultCors,
-		}).gin
+			serverConf: &rest.HttpConfig{
+				Cors: defaultCors,
+			},
+		}).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -183,8 +196,10 @@ func Test_HssMethods(t *testing.T) {
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Hss: client.NewTestHssFromClient(&m),
 	}, &RouterConfig{
-		cors: defaultCors,
-	}).gin
+		serverConf: &rest.HttpConfig{
+			Cors: defaultCors,
+		},
+	}).f.Engine()
 
 	body, err := json.Marshal(&hsspb.User{FirstName: firstName, Uuid: userUuid, Imsi: imsi})
 	if err != nil {

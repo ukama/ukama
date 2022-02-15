@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func StartMetricsServer(conf config.Metrics) {
+func StartMetricsServer(conf *config.Metrics) {
 	if conf.Enabled {
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())

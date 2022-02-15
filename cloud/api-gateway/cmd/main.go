@@ -12,10 +12,9 @@ import (
 )
 
 var svcConf = pkg.NewConfig()
-var ServiceName = "api-gateway"
 
 func main() {
-	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	initConfig()
 
 	clientSet := rest.NewClientsSet(&svcConf.Services)
@@ -34,5 +33,5 @@ func main() {
 
 func initConfig() {
 	svcConf = pkg.NewConfig()
-	config.LoadConfig(ServiceName, svcConf)
+	config.LoadConfig(pkg.ServiceName, svcConf)
 }

@@ -5,32 +5,26 @@ package integration
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukamaX/common/config"
 	"net/http"
+	"testing"
 	"time"
 
 	"github.com/ukama/ukamaX/common/testing/kratos"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/suite"
-	"github.com/ukama/ukamaX/common/config"
 )
 
 type TestConfig struct {
 	BaseDomain string
 }
 
-type IntegrationTestSuite struct {
-	suite.Suite
-	config *TestConfig
-}
+var testConf *TestConfig
 
-func (t *IntegrationTestSuite) SetupSuite() {
-	t.config = loadConfig()
-}
-
-func loadConfig() *TestConfig {
-	testConf := &TestConfig{
+func init() {
+	testConf = &TestConfig{
 		BaseDomain: "dev.ukama.com",
 	}
 
@@ -38,15 +32,13 @@ func loadConfig() *TestConfig {
 
 	config.LoadConfig("integration", testConf)
 	logrus.Infof("Config: %+v", testConf)
-
-	return testConf
 }
 
-func (i *IntegrationTestSuite) Test_RegistryApi() {
-	login, err := kratos.Login(i.getKratosUrl())
+func Test_RegistryApi(t *testing.T) {
+	login, err := kratos.Login(getKratosUrl())
 	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
 	if err != nil {
-		i.NoError(err, "Failed to login to Kratos")
+		assert.NoError(t, err, "Failed to login to Kratos")
 		return
 	}
 
@@ -54,52 +46,52 @@ func (i *IntegrationTestSuite) Test_RegistryApi() {
 
 	kratos.PrintJSONPretty(login)
 
-	i.Run("GetOrg", func() {
+	t.Run("GetOrg", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId())
+			Get(getApiUrl() + "/orgs/" + login.Session.Identity.GetId())
 
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
+		assert.NoError(t, err)
+		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 		//i.Assert().Contains(resp.String(), "Organization not found")
 	})
 
-	i.Run("GetOrgNotFound", func() {
+	t.Run("GetOrgNotFound", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			Get(i.getApiUrl() + "/orgs/" + "someRandomOrgThatShouldNotExist")
+			Get(getApiUrl() + "/orgs/" + "someRandomOrgThatShouldNotExist")
 
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusNotFound, resp.StatusCode())
-		i.Assert().Contains(resp.String(), "Organization not found")
+		assert.NoError(t, err)
+		assert.Equal(tt, http.StatusNotFound, resp.StatusCode())
+		assert.Contains(tt, resp.String(), "Organization not found")
 	})
 
-	i.Run("GetNodesUnauthorized", func() {
+	t.Run("GetNodesUnauthorized", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+"random session").
-			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusUnauthorized, resp.StatusCode())
+			Get(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
+		assert.NoError(t, err)
+		assert.Equal(tt, http.StatusUnauthorized, resp.StatusCode())
 	})
 
-	i.Run("GetNodes", func() {
+	t.Run("GetNodes", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			Get(i.getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
-		i.Assert().NoError(err)
-		i.Assert().Equal(http.StatusOK, resp.StatusCode())
+			Get(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes")
+		assert.NoError(t, err)
+		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 		fmt.Println("Response: ", resp.String())
 	})
 }
 
-func (i *IntegrationTestSuite) getApiUrl() string {
-	return "https://api." + i.config.BaseDomain
+func getApiUrl() string {
+	return "https://api." + testConf.BaseDomain
 }
 
-func (i *IntegrationTestSuite) getKratosUrl() string {
-	return "https://auth." + i.config.BaseDomain + "/.api"
+func getKratosUrl() string {
+	return "https://auth." + testConf.BaseDomain + "/.api"
 }

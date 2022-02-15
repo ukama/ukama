@@ -30,10 +30,6 @@ type Grpc struct {
 	Port int
 }
 
-type Http struct {
-	Port int
-}
-
 type Metrics struct {
 	Port    int
 	Enabled bool
@@ -68,7 +64,7 @@ func LoadConfig(configFileName string, config interface{}) {
 	// If a config file is found, read it in.
 	err = e.ReadInConfig()
 	if err == nil {
-		logrus.Info("Using config file:", viper.ConfigFileUsed())
+		logrus.Info("Using config file:", e.ConfigFileUsed())
 	} else {
 		logrus.Infof("Config file was not loaded. Reason: %v\n", err)
 	}
@@ -76,6 +72,12 @@ func LoadConfig(configFileName string, config interface{}) {
 	err = e.Unmarshal(config)
 	if err != nil {
 		logrus.Fatalf("Unable to decode into struct, %v", err)
+	}
+
+	if e.GetBool("DebugMode"){
+		logrus.Infof("Debug mode is enabled")
+		logrus.Infof("Config file used:")
+		logrus.Infof("%+v", config)
 	}
 }
 
