@@ -249,7 +249,7 @@ int main(int argc, char **argv) {
 
   /* setup bridge/NAT */
   if (ipnet_setup(IPNET_DEV_TYPE_BRIDGE, DEF_BRIDGE, config->bridgeIface,
-		  NULL, 0) != TRUE) {
+		  config->bridgeIP, NULL, NULL, 0) != TRUE) {
     log_error("Error setting up bridge %s on interface %s", DEF_BRIDGE,
 	      config->bridgeIface);
     exit(1);
@@ -289,7 +289,8 @@ int main(int argc, char **argv) {
   /* Go over the cSpaces, start thread and create actual contained spaces. */
   for (cPtr=cSpaces; cPtr; cPtr=cPtr->next) {
 
-    csThread = init_cspace_thread(cPtr->name, config->bridgeIface, cPtr);
+    csThread = init_cspace_thread(cPtr->name, config->bridgeIface,
+				  config->bridgeIP, cPtr);
 
     if (add_to_cspace_thread_list(csThread)) {
       if (pthread_create(&(csThread->tid), NULL, cspace_thread_start,
@@ -302,7 +303,7 @@ int main(int argc, char **argv) {
       log_error("Failed to create cspace thread for: %s", cPtr->name);
     }
   }
-  sleep(5); /* temporary fix. TODO. Allowing enough time for thread
+  sleep(25); /* temporary fix. TODO. Allowing enough time for thread
 	     * to be created to avoid missing any mutex issues. Ideally
 	     * this to be done via flag
 	     */

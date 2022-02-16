@@ -43,12 +43,77 @@
 static int exec_capp(CApp *capp);
 static int capp_init_clone(void *arg);
 static int create_capp(CApp *capp);
+static int token_count(char *str);
+static int create_list(char *exec, char *arg, char ***argv);
+
+/*
+ * token_count --
+ *
+ */
+static int token_count(char *str) {
+
+  int count=0, i;
+
+  if (!str) return count;
+  if (!strlen(str)) return count;
+
+  for (i=0; i<strlen(str); i++) {
+    if (str[i] == ' ') {
+      count++;
+    }
+  }
+
+  return count++;
+}
+
+/*
+ * create_list --
+ *
+ */
+static int create_list(char *exec, char *arg, char ***argv) {
+
+  int count=0, i=0;
+  char *str, *token;
+
+  if (arg == NULL) return 0;
+
+  count = token_count(arg);
+  if (exec) {
+    count += 2; /* for binary and NULL, see exec(3) */
+    log_debug("Creating args list for capp: %s", exec);
+  } else {
+    count += 1; /* for env variables. */
+    log_debug("Creating env list for capp");
+  }
+
+  *argv = (char **)calloc(count, sizeof(char *));
+  if (argv == NULL) {
+    log_error("Error allocating memory of size: %d", count * sizeof(char *));
+    return FALSE;
+  }
+
+  str = strdup(arg);
+
+  if (exec) { /* only need for runtime arguments. */
+    (*argv)[0] = strdup(exec);
+    i++;
+  }
+
+  token = strtok(str, " ");
+  while (token != NULL) {
+    (*argv)[i] = strdup(token);
+    token = strtok(NULL, " ");
+    i++;
+  }
+  (*argv)[i] = (char *) NULL;
+
+  return count;
+}
 
 /*
  * create_and_run_capps -- Run all the apps from the PEND list
  *
  */
-
 int create_and_run_capps(void *args) {
 
   CAppList *list=NULL;
@@ -103,8 +168,9 @@ int create_and_run_capps(void *args) {
  */
 static int exec_capp(CApp *capp) {
 
-  int i;
-  CAppProc *process;
+  int i=0, argc=0, envc=0;
+  CAppProc *process=NULL;
+  char **argv=NULL, **env=NULL;
 
   if (!capp || !capp->config) return FALSE;
 
@@ -112,16 +178,51 @@ static int exec_capp(CApp *capp) {
 
   if (!process->exec) return FALSE;
 
-  log_debug("Executing capp: binary: %s argc: %d", process->exec, process->argc);
-  for (i=0; i<process->argc; i++) {
-    log_debug("\t argc-%d: %s", i, process->argv[i]);
+  /* Runtime argument list */
+  if ((argc = create_list(process->exec, process->argv, &argv)) == FALSE) {
+    log_error("Error creating argument list for capp execution: %s",
+	      process->exec);
+    return FALSE;
   }
 
-  execvpe(process->exec, /* binary */
-	  process->argv, /* arguments to the binary */
-	  process->env); /* environment variables */
+  /* Environment varaibles list */
+  if (process->env) {
+    if ((envc = create_list(NULL, process->env, &env)) == FALSE) {
+      log_error("Error creating env list for capp execution: %s",
+	      process->exec);
+      return FALSE;
+    }
+  }
 
-  /* Only if there was an error */
+  log_debug("Executing capp: binary: %s argc: %d env: %d", process->exec,
+	    argc, envc);
+  for (i=0; i<argc; i++) {
+    if (argv[i]) {
+      log_debug("\t argc-%d: %s", i, argv[i]);
+    }
+  }
+
+  for (i=0; i<envc; i++) {
+    if (env[i]) {
+      log_debug("\t envc-%d: %s", i, env[i]);
+    }
+  }
+
+  execvpe(process->exec, argv, env);
+
+  /* executed only if there was an error with exec */
+  for (i=0; i<argc; i++) {
+    if(argv[i]) free(argv[i]);
+  }
+  if (argv) free(argv);
+
+  for (i=0; i<envc; i++) {
+    if(env[i]) free(env[i]);
+  }
+  if (env) free(env);
+
+  log_error("capp execution failed. Code: %d Error: %s", errno,
+	    strerror(errno));
   return errno;
 }
 

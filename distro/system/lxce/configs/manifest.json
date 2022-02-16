@@ -4,18 +4,6 @@
 	"target": "serial",
 
 	"ukama-cApp": [
-		{
-			"name": "sysctl",
-			"tag": "latest",
-			"restart": "no",
-			"contained": "boot"
-		},
-		{
-			"name": "dhcpcd",
-			"tag": "latest",
-			"restart": "no",
-			"contained": "boot"
-		}
                {
                         "name": "mesh",
                         "tag": "latest",

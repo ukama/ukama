@@ -36,8 +36,6 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json);
 
 static void log_config(CAppConfig *config) {
 
-  int i;
-
   log_debug("Version: %s", (config->version ? config->version: "NULL"));
   log_debug("Serial:  %s", (config->serial ? config->serial: "NULL"));
   log_debug("hostname: %s", (config->hostName ? config->hostName : "NULL"));
@@ -45,15 +43,11 @@ static void log_config(CAppConfig *config) {
   if (config->process) {
     log_debug("process:", config->process->exec);
     log_debug("\t exec: %s", config->process->exec);
-
-    log_debug("\t argc: %d", config->process->argc);
-    for (i=0; i<config->process->argc; i++) {
-      log_debug("\t argv[%d]: %s", i, config->process->argv[i]);
+    if (config->process->argv) {
+      log_debug("\t argv: %s", config->process->argv);
     }
-
-    log_debug("\t envc: %d", config->process->envc);
-    for (i=0; i<config->process->envc; i++) {
-      log_debug("\t env[%d]: %s", i, config->process->env[i]);
+    if (config->process->env) {
+      log_debug("\t env: %s", config->process->env);
     }
   } else {
     log_debug("process: NULL");
@@ -201,13 +195,16 @@ static int deserialize_capp_config_file(CAppConfig *config, json_t *json) {
     }
 
     /* Get arguments */
-    get_json_arrary_elems(jProc, &(config->process->argc),
-			  &(config->process->argv), JSON_ARGS);
+    if (!set_str_object_value(jProc, &(config->process->argv), JSON_ARGS,
+			      FALSE, NULL)) {
+      return FALSE;
+    }
 
     /* Get env variables */
-    get_json_arrary_elems(jProc, &(config->process->envc),
-			  &(config->process->env), JSON_ENV);
-
+    if (!set_str_object_value(jProc, &(config->process->env), JSON_ENV,
+			      FALSE, NULL)) {
+      return FALSE;
+    }
   } else {
     log_error("No valid process info found.");
   }

@@ -19,6 +19,7 @@
 #include "capp.h"
 
 #define CSPACE_DEFAULT_HOSTNAME "localhost"
+#define CSPACE_DEFAULT_VETH_IP  "192.168.0.2"
 
 /* For parsing the contained configuration file */
 
@@ -26,6 +27,7 @@
 #define JSON_GID          "gid"
 #define JSON_TYPE         "type"
 #define JSON_HOSTNAME     "hostname"
+#define JSON_VETH_IP      "veth-ip"
 #define JSON_NAMESPACES   "namespaces"
 #define JSON_CAPABILITIES "capabilities"
 
@@ -33,7 +35,8 @@
 #define CONFIG_MAX_SIZE 1000000
 
 #define LXCE_MAX_PATH  256
-#define USER_NS_OFFSET 1000
+#define USER_NS_OFFSET 10000
+#define USER_NS_COUNT  2000
 
 #define CONTD_MAX_CAPS 20
 
@@ -66,6 +69,8 @@ typedef struct cSpace_t {
 
   uid_t uid;          /* default uid of space */
   gid_t gid;          /* default gid of space */
+
+  char *vethIP;       /* veth IP address */
 
   int nameSpaces;     /* linux namespaces enabled in this space */
 

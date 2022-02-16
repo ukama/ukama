@@ -109,10 +109,12 @@ static int ipnet_run(char *exec, char *args, int testFlag) {
 /*
  * ipnet_setup --
  */
-int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid) {
+int ipnet_setup(int type, char *brName, char *iface, char *brIP, char *vethIP,
+		char *spName, pid_t pid) {
 
   char *exec=NULL, *args=NULL, *dev=NULL;
   char *arg1=NULL, *arg2=NULL, *arg3=NULL;
+  char *arg4=NULL, *arg5=NULL;
   char pidStr[21]={0};
   int size, ret;
 
@@ -131,16 +133,20 @@ int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid) {
 
   if (type == IPNET_DEV_TYPE_BRIDGE) {
     /* setup_space_network br <name> */
-    dev = IPNET_DEV_BRIDGE;
+    dev  = IPNET_DEV_BRIDGE;
     arg1 = iface;
     arg2 = brName;
-    arg3 = "";
+    arg3 = brIP;
+    arg4 = "";
+    arg5 = "";
   } else if (type == IPNET_DEV_TYPE_CSPACE) {
     /* setup_space_network ns <space_name> <pid> */
     dev  = IPNET_DEV_CSPACE;
     arg1 = pidStr;
     arg2 = spName;
     arg3 = brName;
+    arg4 = brIP;
+    arg5 = vethIP;
   } else {
     log_error("Invalid type: %d Ignoring and not running %s", type, NET_EXEC);
     free(exec);
@@ -148,7 +154,7 @@ int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid) {
     return FALSE;
   }
 
-  sprintf(args, "--add %s %s %s %s", dev, arg1, arg2, arg3);
+  sprintf(args, "--add %s %s %s %s %s %s", dev, arg1, arg2, arg3, arg4, arg5);
 
   ret = ipnet_run(exec, args, FALSE);
 
@@ -171,7 +177,7 @@ int ipnet_test(char *spName) {
 
   if (spName == NULL) return FALSE;
 
-  sprintf(args, "netns exec %s %s -v4 -c10 %s", spName, PING_BIN, TEST_IP);
+  sprintf(args, "netns exec %s %s -v4 -c4 %s", spName, PING_BIN, TEST_IP);
 
   status = ipnet_run(IP_BIN, args, TRUE);
 

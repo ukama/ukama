@@ -29,7 +29,7 @@ int parse_config(Config *config, toml_table_t *configData) {
 
   int ret=FALSE, i, size;
   toml_datum_t localAccept, localEP, wimcHost, wimcPort, meshPort;
-  toml_datum_t cspace, bridgeIface;
+  toml_datum_t cspace, bridgeIface, bridgeIP;
   toml_array_t *csArray;
 
   /* sanity check */
@@ -97,6 +97,16 @@ int parse_config(Config *config, toml_table_t *configData) {
     config->bridgeIface = strdup(bridgeIface.u.s);
   }
 
+  /* bridge-ip */
+  bridgeIP = toml_string_in(configData, BRIDGE_IP);
+  if (!bridgeIP.ok) {
+    log_debug("[%s] is missing, setting to default: %s", BRIDGE_IP,
+	      DEF_BRIDGE_IP);
+    config->bridgeIP = strdup(DEF_BRIDGE_IP);
+  } else {
+    config->bridgeIP = strdup(bridgeIP.u.s);
+  }
+
   /* cSpace-configs */
   csArray = toml_array_in(configData, CSPACE_CONFIGS);
   if (!csArray) {
@@ -126,6 +136,7 @@ int parse_config(Config *config, toml_table_t *configData) {
   if (wimcPort.ok)    free(wimcPort.u.s);
   if (meshPort.ok)    free(meshPort.u.s);
   if (bridgeIface.ok) free(bridgeIface.u.s);
+  if (bridgeIP.ok)    free(bridgeIP.u.s);
 
   return ret;
 }
@@ -207,6 +218,10 @@ void print_config(Config *config) {
     log_debug("bridge-iface: %s", config->bridgeIface);
   }
 
+  if (config->bridgeIP) {
+    log_debug("bridge-ip: %s", config->bridgeIP);
+  }
+
   if (config->cSpaceConfigs) {
     log_debug("Contained Spaces Config files: ");
     for (i=0; i<config->cSpaceCount; i++) {
@@ -231,6 +246,7 @@ void clear_config(Config *config) {
   free(config->wimcPort);
   free(config->meshPort);
   free(config->bridgeIface);
+  free(config->bridgeIP);
   if (config->cSpaceConfigs) {
     for (i=0; i<config->cSpaceCount; i++) {
       if (config->cSpaceConfigs[i]) { free(config->cSpaceConfigs[i]); }

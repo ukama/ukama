@@ -84,6 +84,9 @@ typedef struct cspace_thread_t {
   int       sockets[2];  /* socket pair between parent and cspace */
   int       state;       /* state of the space. */
   int       exit_status; /* only if state is ABORT or DELETED, otherwise is 0*/
+  char      *bridge;
+  char      *bridgeIP;
+
   CSpace    *space;      /* cspace associated with this thread. */
 
   ActionList  *actionList; /* On-going action associated with this thread */
@@ -100,7 +103,8 @@ typedef struct cspace_thread_list_t {
   struct cspace_thread_list_t *next;
 } CSThreadsList;
 
-CSpaceThread *init_cspace_thread(char *name, char *iface, CSpace *space);
+CSpaceThread *init_cspace_thread(char *name, char *iface, char *bridgeIP,
+				 CSpace *space);
 int init_cspace_thread_list(void);
 int add_to_cspace_thread_list(CSpaceThread *thread);
 void* cspace_thread_start(void *args);

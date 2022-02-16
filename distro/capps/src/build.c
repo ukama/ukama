@@ -34,6 +34,7 @@ int build_capp(Config *config) {
    * 5. Copy any config file to rootfs
    * 6. Any misc related command
    * 7. Copy libs for non-static
+   * 8. patch ELF to set rpath
    */
 
   if (config == NULL) return FALSE;
@@ -53,6 +54,12 @@ int build_capp(Config *config) {
 
   sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
   if (system(runMe) < 0) return FALSE;
+
+  if (!build->staticFlag) {
+    /* set rpath for the executable */
+    sprintf(runMe, "%s patchelf %s", SCRIPT, build->binFrom);
+    if (system(runMe) < 0 ) return FALSE;
+  }
 
   sprintf(runMe, "%s cp %s %s", SCRIPT, build->binFrom, build->binTo);
   if (system(runMe) < 0) return FALSE;

@@ -116,6 +116,7 @@ copy_all_libs() {
 		cp --parents "${lib}" ${ROOTFS}
 		cp "${lib}" ${ROOTFS}/lib
 	    fi
+	    patchelf --set-rpath /lib ${BIN}
 	done
     done
 }

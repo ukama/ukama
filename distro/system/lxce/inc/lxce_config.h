@@ -23,6 +23,7 @@
 #define WIMC_PORT    "wimc-port"
 #define MESH_PORT    "mesh-port"
 #define BRIDGE_IFACE "bridge-iface"
+#define BRIDGE_IP    "bridge-ip"
 
 #define CSPACE_CONFIGS "cSpace-configs"
 
@@ -33,6 +34,7 @@
 #define DEF_WIMC_HOST    "localhost"
 #define DEF_LOCAL_EP     "/lxce/"
 #define DEF_BRIDGE_IFACE "eth0"
+#define DEF_BRIDGE_IP    "192.168.0.1"
 
 #define MAX_BUFFER 256
 
@@ -49,6 +51,7 @@ typedef struct {
   char *wimcPort;    /* Port where WIMC.d is listening */
   char *meshPort;    /* Port where MESH.d is listening */
   char *bridgeIface; /* Interface for network bridge for outbound traffic */
+  char *bridgeIP;    /* IP for network bridge */
 
   int  cSpaceCount;     /* number of cSpace */
   char **cSpaceConfigs; /* cSpace config files */

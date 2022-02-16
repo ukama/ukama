@@ -27,7 +27,8 @@
 #define IPNET_DEV_BRIDGE "bridge"
 #define IPNET_DEV_CSPACE "cspace"
 
-int ipnet_setup(int type, char *brName, char *iface, char *spName, pid_t pid);
+int ipnet_setup(int type, char *brName, char *iface, char *brIP, char *vethIP,
+		char *spName, pid_t pid);
 int ipnet_test(char *spName);
 
 #endif /* LXCE_IPNET_H */

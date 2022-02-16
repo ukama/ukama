@@ -263,6 +263,9 @@ case "$ACTION" in
     "exec")
 	$2
 	;;
+    "patchelf")
+	patchelf --set-rpath /lib $2
+	;;
     "mkdir")
 	mkdir ${ROOTFS}/$2
 	;;

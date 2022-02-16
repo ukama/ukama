@@ -27,7 +27,7 @@
 #define DEF_HOSTNAME "localhost"
 #define DEF_CONFIG   "config.json"
 
-#define JSON "{ \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": [ \"%s\" ], \n \t \t \"env\": [ \"%s\" ] \n \t }, \n \t \"hostname\": \"%s\",\n \t \"namespaces\" : [ \n \t \t { \"type\" : \"pid\"}, \n \t {\t \"type\" : \"mount\"}, \n \t { \t \"type\" : \"user\"} \n \n \t ] \n } \n"
+#define JSON "{ \n \t \"version\": \"%s\", \n \t \"target\": \"all\", \n \t \"process\": { \n \t \t \"exec\": \" %s/%s \", \n \t \t \"args\": \"%s\", \n \t \t \"env\": \"%s\" \n \t }, \n \t \"hostname\": \"%s\",\n \t \"namespaces\" : [ \n \t \t { \"type\" : \"pid\"}, \n \t {\t \"type\" : \"mount\"}, \n \t { \t \"type\" : \"user\"} \n \n \t ] \n } \n"
 
 /*
  * create_capp_config --

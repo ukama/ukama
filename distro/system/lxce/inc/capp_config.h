@@ -35,10 +35,8 @@
 typedef struct capp_process_t {
 
   char *exec;  /* Executable name */
-  int  argc;   /* Number of arguments to executable */
-  char **argv; /* Arguments to the executable */
-  int  envc;   /* Number of enviroment variables */
-  char **env;  /* Environment variables setup for executable */
+  char *argv; /* Arguments to the executable */
+  char *env;  /* Environment variables setup for executable */
 } CAppProc;
 
 /* Store capp config.json values */
@@ -50,6 +48,7 @@ typedef struct capp_config_t {
 
   char *hostName;     /* host name associated with space */
   int nameSpaces;     /* linux namespaces enabled in this space */
+
   CAppProc *process;  /* Info related to the process/executable */
 } CAppConfig;
 

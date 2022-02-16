@@ -204,7 +204,7 @@ static int setup_user_namespace(CSpace *space) {
   log_debug("Space: %s Switching to uid: %d and gid: %d", space->name,
 	    space->uid, space->gid);
 
-  ret = setgroups(1, &space->gid);
+  ret = setgroups(1, & (gid_t) {space->gid});
   if (ret != 0) {
     log_error("Space: %s error setting groups. gid: %d Error: %s", space->name,
 	      space->gid, strerror(errno));
@@ -328,6 +328,10 @@ static int deserialize_cspace_file(CSpace *space, json_t *json) {
 
   set_integer_object_value(json, &(space->uid), JSON_UID, FALSE, 0);
   set_integer_object_value(json, &(space->gid), JSON_GID, FALSE, 0);
+
+  /* setup veth IP address */
+  set_str_object_value(json, &(space->vethIP), JSON_VETH_IP, FALSE,
+		       CSPACE_DEFAULT_VETH_IP);
 
   /* 3: 2 for / and 1 for NULL */
   space->rootfs = (char *)malloc(strlen(DEF_CSPACE_ROOTFS_PATH) +

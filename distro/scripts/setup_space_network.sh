@@ -18,6 +18,8 @@ PID="NaN"
 IFACE="NaN"
 SPACE="NaN"
 BRIDGE="NaN"
+BRIDGE_IP="NaN"
+VETH_IP="NaN"
 
 usage() {
     echo 'Usage: setup_space_network.sh interface space_name'
@@ -32,10 +34,13 @@ msg_usage() {
     echo "   Dev=bridge:          # args when dev is 'bridge'"
     echo "       interface        # Interface to use to connect with Internet"
     echo "       bridge_name      # name to the master bridge"
+    echo "       bridge_ip        # IP to assign to bridge"
     echo "   Dev=cspace:          # args when dev is 'cspace'"
     echo "       pid              # PID of the cspace process"
     echo "       space_name       # name of space"
     echo "       bridge_name      # name to valid master bridge"
+    echo "       bridge_ip        # IP of the bridge"
+    echo "       veth_ip          # IP to assign to veth"
     exit 100
 }
 
@@ -67,6 +72,7 @@ add_bridge() {
 
     IF=$1
     BR=$2
+    IP=$3
 
     # Setup bridge
     $IP link add ${BR} type bridge
@@ -74,7 +80,6 @@ add_bridge() {
     # Setup host machine to allow NATing.
     $IPTABLES -t nat -A POSTROUTING -o ${BR} -j MASQUERADE
     $IPTABLES -t nat -A POSTROUTING -o ${IF} -j MASQUERADE
-
 }
 
 add_cspace() {
@@ -82,6 +87,8 @@ add_cspace() {
     ID=$1
     SP=$2
     BR=$3
+    BR_IP=$4
+    VETH_IP=$5
 
     NS=${SP}
 
@@ -95,7 +102,7 @@ add_cspace() {
     $IP link set veth1_${SP} master ${BR}
 
     # Give address to the bridge
-    $IP addr add 10.0.0.1/24 dev ${BR}
+    $IP addr add ${BR_IP}/24 dev ${BR}
     $IP link set dev ${BR} up
 
     # setup named network namespace and attach to cspace PID
@@ -110,9 +117,9 @@ add_cspace() {
     $IP netns exec ${NS} $IP link set dev lo up
 
     # Setup the veth2 on the cspace
-    $IP netns exec ${NS} $IP addr add 10.0.0.2/24 dev veth2_${SP}
+    $IP netns exec ${NS} $IP addr add ${VETH_IP}/24 dev veth2_${SP}
     $IP netns exec ${NS} $IP link set dev veth2_${SP} up
-    $IP netns exec ${NS} $IP route add default via 10.0.0.1
+    $IP netns exec ${NS} $IP route add default via ${BR_IP}
 }
 
 # Script main
@@ -131,10 +138,13 @@ if [ "$#" -gt 0 ]; then
 	    if [ "${DEV}" = "bridge" ]; then
 		IFACE=$3
 		BRIDGE=$4
+		BRIDGE_IP=$5
 	    elif [ "${DEV}" = "cspace" ]; then
 		PID=$3
 		SPACE=$4
 		BRIDGE=$5
+		BRIDGE_IP=$6
+		VETH_IP=$7
 	    else
 		exit 100
 	    fi
@@ -150,9 +160,9 @@ fi
 
 if [ "$CMD" = "add" ]; then
     if [ "${DEV}" = "bridge" ]; then
-	add_bridge $IFACE $BRIDGE
+	add_bridge $IFACE $BRIDGE $BRIDGE_IP
     elif [ "${DEV}" = "cspace" ]; then
-	add_cspace $PID $SPACE $BRIDGE
+	add_cspace $PID $SPACE $BRIDGE $BRIDGE_IP $VETH_IP
     else
 	exit 100
     fi

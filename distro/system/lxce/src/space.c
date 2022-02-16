@@ -90,7 +90,7 @@ static int prepare_child_map_files(char *areaType,
       return FALSE;
     }
 
-    if (dprintf(mapFd, "0 %d 1\n", USER_NS_OFFSET) == -1) {
+    if (dprintf(mapFd, "0 %d %d\n", USER_NS_OFFSET, USER_NS_COUNT) == -1) {
       log_error("%s: %s Error writing to map file: %s Error: %s", areaType,
 		name, mapPath, strerror(errno));
       close(mapFd);
