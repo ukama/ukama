@@ -260,6 +260,9 @@ case "$ACTION" in
     "cp")
 	cp $2 ${ROOTFS}/$3
 	;;
+    "exec")
+	$2
+	;;
     "mkdir")
 	mkdir ${ROOTFS}/$2
 	;;

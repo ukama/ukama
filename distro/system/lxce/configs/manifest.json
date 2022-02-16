@@ -16,6 +16,13 @@
 			"restart": "no",
 			"contained": "boot"
 		}
+               {
+                        "name": "mesh",
+                        "tag": "latest",
+                        "restart": "no",
+                        "contained": "boot"
+                }
+
 	],
 
 	"namespaces": [{

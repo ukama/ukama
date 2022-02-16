@@ -12,6 +12,7 @@
 #define TABLE_BUILD_COMPILE "build-compile"
 #define TABLE_BUILD_ROOTFS  "build-rootfs"
 #define TABLE_BUILD_CONF    "build-conf"
+#define TABLE_BUILD_MISC    "build-misc"
 #define TABLE_CAPP_EXEC     "capp-exec"
 #define TABLE_CAPP_OUTPUT   "capp-output"
 
@@ -67,6 +68,10 @@ typedef struct build_config_t {
   /* conf */
   char *from;
   char *to;
+
+  /* Misc. */
+  char *miscFrom;
+  char *miscTo;
 }BuildConfig;
 
 typedef struct capp_config_t {

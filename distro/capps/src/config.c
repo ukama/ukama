@@ -31,7 +31,8 @@ static int read_build_config(Config *config, char *fileName,
 			     toml_table_t *buildFrom,
 			     toml_table_t *buildCompile,
 			     toml_table_t *buildRootfs,
-			     toml_table_t *buildConf);
+			     toml_table_t *buildConf,
+			     toml_table_t *buildMisc);
 static int read_capp_config(Config *config, char *fileName,
 			    toml_table_t *cappExec,
 			    toml_table_t *cappOutput);
@@ -217,6 +218,17 @@ static int read_build_table(toml_table_t *table, Config *config,
 		    DATUM_STRING | DATUM_MANDATORY)) {
       return FALSE;
     }
+
+  } else if (strcmp(type, TABLE_BUILD_MISC)==0) { /* [build-misc] */
+    if (!read_entry(table, KEY_FROM, &build->miscFrom, NULL,
+		    DATUM_STRING | DATUM_MANDATORY)) {
+      return FALSE;
+    }
+
+    if (!read_entry(table, KEY_TO, &build->miscTo, NULL,
+		    DATUM_STRING | DATUM_MANDATORY)) {
+      return FALSE;
+    }
   } else {
     return FALSE;
   }
@@ -247,7 +259,8 @@ static int read_build_config(Config *config, char *fileName,
 			     toml_table_t *buildFrom,
 			     toml_table_t *buildCompile,
 			     toml_table_t *buildRootfs,
-			     toml_table_t *buildConf) {
+			     toml_table_t *buildConf,
+			     toml_table_t *buildMisc) {
 
   int ret=TRUE;
 
@@ -281,6 +294,14 @@ static int read_build_config(Config *config, char *fileName,
 	      TABLE_BUILD_CONF, fileName);
     clear_config(config, BUILD_ONLY);
     goto done;
+  }
+
+  if (buildMisc) {
+    if (read_build_table(buildMisc, config, TABLE_BUILD_MISC) == FALSE) {
+      log_error("[%s] section parsing error in config file: %s Ignoring",
+		TABLE_BUILD_MISC, fileName);
+      goto done;
+    }
   }
 
  done:
@@ -329,7 +350,7 @@ int read_config_file(Config *config, char *fileName) {
 
   toml_table_t *fileData=NULL;
   toml_table_t *buildFrom=NULL, *buildCompile=NULL, *buildRootfs=NULL;
-  toml_table_t *buildConf=NULL;
+  toml_table_t *buildConf=NULL, *buildMisc=NULL;
   toml_table_t *cappExec=NULL, *cappOutput=NULL;
 
   char errBuf[MAX_ERR_BUFFER] ={0};
@@ -363,8 +384,11 @@ int read_config_file(Config *config, char *fileName) {
   if (!get_table(fileData, TABLE_CAPP_EXEC,     &cappExec))     goto done;
   if (!get_table(fileData, TABLE_CAPP_OUTPUT,   &cappOutput))   goto done;
 
+  /* non-mandatory. */
+  get_table(fileData, TABLE_BUILD_MISC, &buildMisc);
+
   ret = read_build_config(config, fileName, buildFrom, buildCompile,
-			  buildRootfs, buildConf);
+			  buildRootfs, buildConf, buildMisc);
   if (ret == FALSE) goto done;
 
   ret = read_capp_config(config, fileName, cappExec, cappOutput);
@@ -402,8 +426,11 @@ void clear_config(Config *config, int flag) {
 
     if (build->mkdir) free(build->mkdir);
 
-    if (build->from) free(build->from);
-    if (build->to) free(build->to);
+    if (build->from)     free(build->from);
+    if (build->to)       free(build->to);
+
+    if (build->miscFrom) free(build->miscFrom);
+    if (build->miscTo)   free(build->miscTo);
 
     free(config->build);
   }
@@ -439,24 +466,28 @@ void log_config(Config *config) {
     build = config->build;
     log_debug("--- Build Configuration ---");
 
-    log_debug("FROM:");
+    log_debug("[FROM:]");
     log_debug("\t rootfs:    %s", build->rootfs);
     log_debug("\t contained: %s", build->contained);
 
-    log_debug("BUILD:");
+    log_debug("[BUILD:]");
     log_debug("\t version: %s", build->version);
-    log_debug("\t static:  %d", build->staticFlag);
+    log_debug("\t static:  %s", (build->staticFlag ? "true": "false"));
     log_debug("\t source:  %s", build->source);
     log_debug("\t command: %s", build->cmd);
     log_debug("\t from:    %s", build->binFrom);
     log_debug("\t to:      %s", build->binTo);
 
-    log_debug("ROOTFS:");
+    log_debug("[ROOTFS:]");
     log_debug("\t mkdir: %s", build->mkdir);
 
-    log_debug("CONF:");
+    log_debug("[CONF:]");
     log_debug("\t from: %s", build->from);
     log_debug("\t to:   %s", build->to);
+
+    log_debug("[MISC:]");
+    log_debug("\t from: %s", build->miscFrom);
+    log_debug("\t to:   %s", build->miscTo);
   } else {
     log_debug("No Build configuration found");
   }
@@ -465,7 +496,7 @@ void log_config(Config *config) {
     capp = config->capp;
     log_debug("--- CAPP Configuration ---");
 
-    log_debug("EXEC:");
+    log_debug("[EXEC:]");
     log_debug("\t name: %s", capp->name);
     log_debug("\t version: %s", capp->version);
     log_debug("\t binary:  %s", capp->bin);
@@ -481,7 +512,7 @@ void log_config(Config *config) {
       log_debug("\t No env");
     }
 
-    log_debug("OUTPUT:");
+    log_debug("[OUTPUT:]");
     log_debug("\t format: %s", capp->format);
   }
 }

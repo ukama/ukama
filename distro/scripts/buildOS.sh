@@ -290,7 +290,6 @@ build_busybox() {
     fi
 
     cd ${CWD}
-    cp -rf ${BB_ROOTFS}/* ${ROOTFS}
 
     # Go back and clean up
     cd ${BB_ROOT}
@@ -323,7 +322,7 @@ build_capps() {
 
     # Steps are:
     # 1. Build capp utility
-    # 2. Build capp pkgs using the utility (sysctl and dhcpcd)
+    # 2. Build capp pkgs using the utility
     # 3. Create /capps onto rootfs (pkgs, store, registry, rootfs)
     # 4. Copy pkgs
 
@@ -346,6 +345,7 @@ build_capps() {
     # Build the pkgs
     ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/sysctl.toml
     ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/dhcpcd.toml
+    ${CAPPS_ROOT}/capp --create --config ${CAPPS_ROOT}/configs/mesh.toml
 
     # create capps dir onto rootfs
     DIRS="${ROOTFS}/capps/pkgs"
