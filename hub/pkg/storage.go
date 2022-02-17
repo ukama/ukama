@@ -22,6 +22,7 @@ var NameRegex = regexp.MustCompile("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
 
 const BucketNamePrefix = "artifact-hub-"
 const TarGzExtension = ".tar.gz"
+const ChunkIndexExtension = ".caibx"
 const cappsRoot = "capps/"
 
 type InvalidInputError struct {
@@ -44,8 +45,8 @@ type CappInfo struct {
 }
 
 type Storage interface {
-	PutFile(ctx context.Context, artifactName string, version *semver.Version, content io.Reader) error
-	GetFile(ctx context.Context, artifactName string, version *semver.Version) (reader io.ReadCloser, err error)
+	PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error)
+	GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error)
 	List(ctx context.Context, artifactName string) (*[]AritfactInfo, error)
 	ListApps(ctx context.Context) (*[]CappInfo, error)
 }
@@ -76,26 +77,35 @@ func formatCappPath(artifactName string) string {
 	return cappsRoot + artifactName
 }
 
-func formatCappFilename(artifactName string, version *semver.Version) string {
-	return formatCappPath(artifactName) + "/" + version.String() + TarGzExtension
+func formatCappFilename(artifactName string, version *semver.Version, ext string) string {
+	return formatCappPath(artifactName) + "/" + version.String() + ext
 }
 
-func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version *semver.Version, content io.Reader) error {
+// PutFile stores the file in storage. Based on input params we build the file path: /<artifactName>/<version>.<ext>
+// artifactName - name of the artifact without extension
+// version - artifact version
+// ext - extension, use consts declared in this package to stay consistent
+// content - content of file
+// returns remote location of the file or error
+func (m *MinioWrapper) PutFile(ctx context.Context, artifactName string, version *semver.Version, ext string, content io.Reader) (string, error) {
 	if !NameRegex.MatchString(artifactName) {
-		return InvalidInputError{Message: "artifact name should not contain dot"}
+		return "", InvalidInputError{Message: "artifact name should not contain dot"}
 	}
 
-	n, err := m.minioClient.PutObject(ctx, m.bucketName, formatCappFilename(artifactName, version), content, -1, minio.PutObjectOptions{})
+	n, err := m.minioClient.PutObject(ctx, m.bucketName, formatCappFilename(artifactName, version, ext), content, -1, minio.PutObjectOptions{})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	logrus.Infof("Successfully uploaded %s of size %v\n", artifactName, n.Size)
-	return nil
+	if IsDebugMode {
+		logrus.Infof("File info: %+v", n)
+	}
+	return n.Location, nil
 }
 
-func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version *semver.Version) (reader io.ReadCloser, err error) {
-	o, err := m.minioClient.GetObject(ctx, m.bucketName, formatCappFilename(artifactName, version), minio.GetObjectOptions{})
+func (m *MinioWrapper) GetFile(ctx context.Context, artifactName string, version *semver.Version, ext string) (reader io.ReadCloser, err error) {
+	o, err := m.minioClient.GetObject(ctx, m.bucketName, formatCappFilename(artifactName, version, ext), minio.GetObjectOptions{})
 
 	if err != nil {
 		return nil, err

@@ -22,8 +22,10 @@ func main() {
 	initConfig()
 
 	storage := pkg.NewMinioWrapper(&serviceConfig.Storage)
+	chunker := pkg.NewChunker(&serviceConfig.Chunker, storage)
 
-	r := server.NewRouter(&serviceConfig.Server, storage, time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second)
+	r := server.NewRouter(&serviceConfig.Server, storage, chunker,
+		time.Duration(serviceConfig.Storage.TimeoutSecond)*time.Second)
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 	r.Run()
 }

@@ -24,6 +24,7 @@ type Router struct {
 	port                  int
 	storage               pkg.Storage
 	storageRequestTimeout time.Duration
+	chunker               pkg.Chunker
 }
 
 func (r *Router) Run() {
@@ -34,14 +35,15 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *rest.HttpConfig, storage pkg.Storage, storageTimeout time.Duration) *Router {
+func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker, storageTimeout time.Duration) *Router {
 	f := rest.NewFizzRouter(config, pkg.ServiceName, version.Version, pkg.IsDebugMode)
 
 	r := &Router{
 		fizz:                  f,
 		port:                  config.Port,
 		storage:               storage,
-		storageRequestTimeout: storageTimeout}
+		storageRequestTimeout: storageTimeout,
+		chunker:               chunker}
 	r.init()
 	return r
 }
@@ -67,7 +69,7 @@ func (r *Router) cappGetHandler(c *gin.Context, req *CAppRequest) error {
 
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s.tar.gz", req.Name, v.String()))
-	rd, err := r.storage.GetFile(ctx, req.Name, v)
+	rd, err := r.storage.GetFile(ctx, req.Name, v, pkg.TarGzExtension)
 	if err != nil {
 		return err
 	}
@@ -120,11 +122,18 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 	}
 	bufReader.Reset()
 
-	err = r.storage.PutFile(ctx, name, v, bufReader)
+	loc, err := r.storage.PutFile(ctx, name, v, pkg.TarGzExtension, bufReader)
 	if err != nil {
 		logrus.Errorf("Error adding artifact: %s %s", name, ver)
 		return err
 	}
+
+	go func() {
+		err = r.chunker.Chunk(name, v, loc)
+		if err != nil {
+			logrus.Errorf("Error chunking artifact: %s %s. Error: %+v", name, ver, err)
+		}
+	}()
 
 	return nil
 }

@@ -10,7 +10,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/minio/minio-go/v7 v7.0.21
 	github.com/pkg/errors v0.9.1

@@ -11,6 +11,7 @@ type Config struct {
 	Metrics           *config.Metrics
 	Server            rest.HttpConfig
 	Storage           MinioConfig
+	Chunker           ChunkerConfig
 }
 
 type MinioConfig struct {
@@ -20,6 +21,11 @@ type MinioConfig struct {
 	SecretKey     string
 	BucketSuffix  string
 	Region        string
+}
+
+type ChunkerConfig struct {
+	Host          string
+	TimeoutSecond int
 }
 
 func NewConfig() *Config {
@@ -36,6 +42,10 @@ func NewConfig() *Config {
 			AccessKey:     "minio",
 			SecretKey:     "minio123",
 			BucketSuffix:  "local-test",
+			TimeoutSecond: 3,
+		},
+		Chunker: ChunkerConfig{
+			Host:          "http://localhost:8080",
 			TimeoutSecond: 3,
 		},
 	}
