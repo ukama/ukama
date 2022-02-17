@@ -93,22 +93,26 @@ const Header = ({
             },
         });
 
+    const alertSubscription = () =>
+        subscribeToLatestAlerts<GetLatestAlertsSubscription>({
+            document: GetLatestAlertsDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = cloneDeep(prev);
+                const latestAlert = subscriptionData.data.getAlerts;
+                if (latestAlert.__typename === "AlertDto")
+                    data.getAlerts.alerts = [
+                        latestAlert,
+                        ...data.getAlerts.alerts,
+                    ];
+                return data;
+            },
+        });
+
     useEffect(() => {
-        if (alertsInfoRes) {
-            subscribeToLatestAlerts<GetLatestAlertsSubscription>({
-                document: GetLatestAlertsDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = cloneDeep(prev);
-                    const latestAlert = subscriptionData.data.getAlerts;
-                    if (latestAlert.__typename === "AlertDto")
-                        data.getAlerts.alerts = [
-                            latestAlert,
-                            ...data.getAlerts.alerts,
-                        ];
-                    return data;
-                },
-            });
-        }
+        let unsub = alertSubscription();
+        return () => {
+            unsub && unsub();
+        };
     }, [alertsInfoRes]);
 
     const renderMenu = (
