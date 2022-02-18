@@ -56,7 +56,7 @@ func LoadConfig(configFileName string, config interface{}) {
 	}
 
 	e.AddConfigPath(home)
-	e.AddConfigPath("")
+	e.AddConfigPath("./")
 	e.SetConfigName(configFileName + ".yaml")
 
 	e.AutomaticEnv() // read in environment variables that match
@@ -74,9 +74,9 @@ func LoadConfig(configFileName string, config interface{}) {
 		logrus.Fatalf("Unable to decode into struct, %v", err)
 	}
 
-	if e.GetBool("DebugMode"){
-		logrus.Infof("Debug mode is enabled")
-		logrus.Infof("Config file used:")
+	if e.GetBool("DebugMode") {
+		logrus.Infoln("Debug mode is enabled")
+		logrus.Infoln("vvvv Config file vvvv")
 		logrus.Infof("%+v", config)
 	}
 }

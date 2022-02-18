@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
 	"time"
 
@@ -21,7 +22,7 @@ type Registry struct {
 }
 
 func NewRegistry(host string, timeout int) *Registry {
-	conn, err := grpc.Dial(host, grpc.WithInsecure())
+	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

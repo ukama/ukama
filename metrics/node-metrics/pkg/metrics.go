@@ -1,9 +1,8 @@
-package nodemetrics
+package pkg
 
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
@@ -11,40 +10,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/pkg/errors"
 )
 
-const (
-	MetricTypeCpu         = "cpu"
-	MetricTypeMemory      = "memory"
-	MetricTypeActiveUsers = "users"
-)
-
-var MetricTypes = []string{
-	MetricTypeCpu,
-	MetricTypeMemory,
-	MetricTypeActiveUsers,
-}
-
-type metricQuery struct {
-	NeedRate bool
-	Metric   string
-}
-
-var prometheusMetric = map[string]*metricQuery{
-	MetricTypeCpu:         &metricQuery{true, "system_process_cpu_seconds_total"},
-	MetricTypeMemory:      &metricQuery{true, "system_process_virtual_memory_bytes"},
-	MetricTypeActiveUsers: &metricQuery{false, "epc_active_ue"},
+type Metric struct {
+	NeedRate bool   `json:"needRate"`
+	Metric   string `json:"metric"`
+	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
+	// if NeedRate is false then this field is ignored
+	// Example: 1d or 5h, or 30s
+	RateInterval string `json:"rateInterval"`
 }
 
 type Metrics struct {
-	PrometheusUrl string
-	Timeout       uint
-	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
-	// Example: 1d or 5h, or 30s
-	// Should be not less then ScrapeInterval*4 (that's a recommended value)
-	// Default is 1h
-	RateInterval string
+	conf *NodeMetricsConfig
 }
 
 type Interval struct {
@@ -56,24 +37,33 @@ type Interval struct {
 	Step uint
 }
 
+// NewMetrics create new instance of metrics
+// when metricsConfig in null then defaul config is used
+func NewMetrics(config *NodeMetricsConfig) (m *Metrics, err error) {
+	return &Metrics{
+		conf: config,
+	}, nil
+}
+
 // GetMetrics returns metrics for specified interval and metric type.
 // metricType should be a value from  MetricTypes array (case-sensitive)
 func (m *Metrics) GetMetric(metricType string, nodeId string, in *Interval, w io.Writer) (httpStatus int, err error) {
 
-	if _, ok := prometheusMetric[metricType]; !ok {
-		return http.StatusBadRequest, errors.New("unknown metric type")
+	mi, ok := m.conf.Metrics[metricType]
+	if !ok {
+		return http.StatusNotFound, errors.New("metric type not found")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.Timeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
 	defer cancel()
 
-	u := fmt.Sprintf("%s/api/v1/query_range", strings.TrimSuffix(m.PrometheusUrl, "/"))
+	u := fmt.Sprintf("%s/api/v1/query_range", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
 	data.Set("start", strconv.FormatInt(in.Start, 10))
 	data.Set("end", strconv.FormatInt(in.End, 10))
 	data.Set("step", strconv.FormatUint(uint64(in.Step), 10))
-	data.Set("query", prometheusMetric[metricType].getQuery(nodeId, m.RateInterval))
+	data.Set("query", m.conf.Metrics[metricType].getQuery(nodeId, mi.RateInterval, m.conf.DefaultRateInterval))
 
 	logrus.Infof("GetMetric query: %s", data.Encode())
 
@@ -98,9 +88,21 @@ func (m *Metrics) GetMetric(metricType string, nodeId string, in *Interval, w io
 	return res.StatusCode, nil
 }
 
-func (m *metricQuery) getQuery(nodeId string, rateInteral string) string {
-	if len(rateInteral) == 0 {
-		rateInteral = "1h"
+func (m *Metrics) MetricsExist(metricType string) bool {
+	_, ok := m.conf.Metrics[metricType]
+	return ok
+}
+
+func (m *Metrics) List() (r []string) {
+	for k := range m.conf.Metrics {
+		r = append(r, k)
+	}
+	return r
+}
+
+func (m Metric) getQuery(nodeId string, rateInteral string, defaultRateInterval string) string {
+	if m.NeedRate && len(rateInteral) == 0 {
+		rateInteral = defaultRateInterval
 	}
 	if m.NeedRate {
 		return fmt.Sprintf("avg(rate(%s {nodeid='%s'}[%s])) without (job, instance)", m.Metric,

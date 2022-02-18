@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type Hss struct {
 }
 
 func NewHss(host string, timeout int) *Hss {
-	conn, err := grpc.Dial(host, grpc.WithInsecure())
+	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

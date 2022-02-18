@@ -1,18 +1,18 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-hub
+name: build-node-metrics
 on:  
   push:   
     paths:
-        - "hub/**"
-        - ".github/workflows/hub.yaml"
+        - "metrics/node-metrics/**"
+        - ".github/workflows/node-metrics.yml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: hub
+      working-directory: metrics/node-metrics
 
     name: build and test
     runs-on: ubuntu-latest    
@@ -35,7 +35,7 @@ jobs:
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
   
-    - name: Build hub
+    - name: Build node-metrics
       env:
         BUILD_NUMBER: ${{ github.run_number }}
       run: make build
@@ -63,7 +63,7 @@ jobs:
     - name: OCI build and push
       working-directory: ${{ env.working-directory }}
       env:
-        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/hub
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/metrics/node-metrics
       run: |                        
             buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -72,10 +72,10 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push hub test 
+    - name: OCI Push node-metrics test 
       working-directory: ${{ env.working-directory }}
       env:
-        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/hub
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/metrics/node-metrics
       run: |                        
             buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
@@ -93,7 +93,7 @@ jobs:
         projectBaseDir:  ${{ env.working-directory }}
         args: >
           -Dsonar.organization=ukama
-          -Dsonar.projectKey=ukama_ukamaX_hub_service
+          -Dsonar.projectKey=ukama_ukamaX_node_metrics
           -Dsonar.projectName=${{ env.working-directory }}
           -Dsonar.go.coverage.reportPaths=coverage.out
           -Dsonar.test.exclusions=tests/**
@@ -108,7 +108,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: hub
+      working-directory: metrics/node-metrics
     steps:
       - uses: actions/checkout@v2
 
@@ -138,11 +138,11 @@ jobs:
             echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
             echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-        - name: update gitops                
+        - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/hub-helmfile.yaml"
-            key: "hubImageTag"
+            filename: "releases/node-metrics-helmfile.yaml"
+            key: "nodemetricsImageTag"
             value:  ${{ steps.vars_step.outputs.sha_short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"

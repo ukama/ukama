@@ -29,15 +29,20 @@ var defaultCors = cors.Config{
 	AllowAllOrigins: true,
 }
 
+var routerConfig = &RouterConfig{
+	serverConf: &rest.HttpConfig{
+		Cors: defaultCors,
+	},
+	httpEndpoints: &pkg.HttpEndpoints{
+		NodeMetrics: "localhost:8080",
+	},
+}
+
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
-		serverConf: &rest.HttpConfig{
-			Cors: defaultCors,
-		},
-	}).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -52,11 +57,7 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), &RouterConfig{
-		serverConf: &rest.HttpConfig{
-			Cors: defaultCors,
-		},
-	}).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -76,11 +77,7 @@ func TestGetOrg_NotFound(t *testing.T) {
 
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
-	}, &RouterConfig{
-		serverConf: &rest.HttpConfig{
-			Cors: defaultCors,
-		},
-	}).f.Engine()
+	}, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -105,11 +102,7 @@ func TestGetOrg(t *testing.T) {
 
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Registry: client.NewRegistryFromClient(m),
-	}, &RouterConfig{
-		serverConf: &rest.HttpConfig{
-			Cors: defaultCors,
-		},
-	}).f.Engine()
+	}, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -143,11 +136,7 @@ func TestGetNodes(t *testing.T) {
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
-		}, &RouterConfig{
-			serverConf: &rest.HttpConfig{
-				Cors: defaultCors,
-			},
-		}).f.Engine()
+		}, routerConfig).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -167,11 +156,7 @@ func TestGetNodes(t *testing.T) {
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 			Registry: client.NewRegistryFromClient(m),
-		}, &RouterConfig{
-			serverConf: &rest.HttpConfig{
-				Cors: defaultCors,
-			},
-		}).f.Engine()
+		}, routerConfig).f.Engine()
 
 		// act
 		r.ServeHTTP(w, req)
@@ -195,11 +180,7 @@ func Test_HssMethods(t *testing.T) {
 	m := hssmocks.UserServiceClient{}
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Hss: client.NewTestHssFromClient(&m),
-	}, &RouterConfig{
-		serverConf: &rest.HttpConfig{
-			Cors: defaultCors,
-		},
-	}).f.Engine()
+	}, routerConfig).f.Engine()
 
 	body, err := json.Marshal(&hsspb.User{FirstName: firstName, Uuid: userUuid, Imsi: imsi})
 	if err != nil {
@@ -278,5 +259,4 @@ func Test_HssMethods(t *testing.T) {
 		assert.Contains(t, w.Body.String(), firstName)
 		m.AssertExpectations(t)
 	})
-
 }
