@@ -60,7 +60,7 @@ typedef enum {
 
 typedef  USysErrorCodeIdx USysError;
 
-char* usys_error(int err);
+const char* usys_error(int err);
 
 #ifdef __cplusplus
 extern "C" {
