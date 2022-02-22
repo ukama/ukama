@@ -22,7 +22,7 @@ const char *usysErrorCodes[] = {
  * @param err
  * @return char*
  */
-char* usys_error(int err) {
+const char* usys_error(int err) {
     if (err < USYS_BASE_ERROR_CODE) {
         return strerror(err);
     } else {
