@@ -1,11 +1,7 @@
 import React from "react";
 import { IRoute } from "../router/config";
 import { CenterContainer } from "../styles";
-const PageNotFound = React.lazy(() =>
-    import("../assets/svg").then(module => ({
-        default: module.PageNotFound,
-    }))
-);
+import { Stack, Typography } from "@mui/material";
 
 interface IProps {
     routes: IRoute[];
@@ -14,7 +10,13 @@ interface IProps {
 const ErrorPage: React.FC<IProps> = () => {
     return (
         <CenterContainer>
-            <PageNotFound />
+            <Stack spacing={2} alignItems="center">
+                <Typography variant="h2">404</Typography>
+                <Typography variant="h5">Not Found</Typography>
+                <Typography variant="subtitle2">
+                    The resource requested could not be found on this server!
+                </Typography>
+            </Stack>
         </CenterContainer>
     );
 };

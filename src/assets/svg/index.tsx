@@ -5,7 +5,6 @@ export { BatteryIcon } from "./BatteryIcon";
 export { BillingIcon } from "./BillingIcon";
 export { DataBilling } from "./DataBilling";
 export { UsersWithBG } from "./UsersWithBG";
-export { PageNotFound } from "./PageNotFound";
 export { ThermometerIcon } from "./ThermometerIcon";
 export { SettingsArrowIcon } from "./SettingsArrowIcon";
 export { PagePlaceholderSvg } from "./PagePlaceholderSvg";
