@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) 2020-present, Ukama.
+ * All rights reserved.
+ *
+ * This source code is licensed under the BSD-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
 #ifndef USYS_SYS_TYPES_H
 #define USYS_SYS_TYPES_H
 
@@ -44,11 +53,12 @@ extern "C" {
 #include <sys/time.h>
 #include <sys/types.h>
 
+
 /**
  * @typedef USysMachineWord
- * 
+ *
  * @brief  A machine word is the amount of data that a machine can process at one time
- * 
+ *
  */
 #if (ARCH == 64)
 typedef uint64_t USysMachineWord;
@@ -58,64 +68,59 @@ typedef uint32_t USysMachineWord;
 
 /**
  * @typedef USysMutex
- * 
+ *
  * @brief mutex object
- * 
+ *
  */
 typedef pthread_mutex_t USysMutex;
 
 /**
  * @typedef USysSem
- * 
+ *
  * @brief semaphore object
- * 
+ *
  */
 typedef sem_t USysSem;
 
 
 /**
  * @typedef USysSpinLock
- * 
- * @brief spinlock object 
- * 
+ *
+ * @brief spinlock object
+ *
  */
 typedef pthread_spinlock_t USysSpinlock;
 
 /**
  * @typedef USysThreadId
- * 
+ *
  * @brief Thread identifier
- * 
+ *
  */
 typedef pthread_t USysThreadId;
 
 /**
  * @typedef  USysThreadKey
- * 
+ *
  * @brief  thread keys
- * 
+ *
  */
 typedef pthread_key_t USysThreadKey;
 
 /**
  * @typedef USysSharedMemMgrHandle
- * 
+ *
  * @brief  System Shared Memory Management Handle Type Definition
- * 
+ *
  */
 typedef void* USysSharedMemMgrHandle;
 
-/*!***************************************************************************************************************************************************
- * \typedef        sp_sys_phys_addr_t
- *
- * \brief          Physical address type of the machine
- *
- ****************************************************************************************************************************************************/
+
 /**
  * @typedef USysPhysAddr
- * 
+ *
  * @brief  System Shared Memory Management Handle Type Definition
- * 
+ *
  */
 
 #if (ARCH == 64)
@@ -128,5 +133,5 @@ typedef uint32_t USysPhysAddr;
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 #endif
