@@ -2,6 +2,7 @@ import { colors } from "../../theme";
 import { LoadingWrapper } from "..";
 import { HorizontalContainer } from "../../styles";
 import { Box, Typography, Grid, Button } from "@mui/material";
+import { getStatusByType } from "../../utils";
 
 const DOT = (color: string) => (
     <span style={{ color: `${color}`, fontSize: "24px", marginRight: 14 }}>
@@ -35,19 +36,16 @@ const NetworkStatus = ({
     handleAddNode,
     handleActivateUser,
 }: NetworkStatusProps) => {
-    const getStatusByType = (status: string) => {
-        if (status === "BEING_CONFIGURED")
-            return "Your network is being configured.";
-        else if (status === "ONLINE")
-            return "Your network is online and well for ";
-        else return "Something went wrong.";
-    };
-
     return (
         <Grid width="100%" container pt="18px">
             <Grid item xs={12} md={8}>
                 <LoadingWrapper height={30} width={280} isLoading={loading}>
-                    <Box display="flex" flexDirection="row" alignItems="center">
+                    <Box
+                        component="div"
+                        display="flex"
+                        flexDirection="row"
+                        alignItems="center"
+                    >
                         {getIconByStatus(statusType)}
                         <Typography variant={"h6"}>
                             {getStatusByType(statusType)}

@@ -1,9 +1,12 @@
 import { Stack, Typography } from "@mui/material";
-import { Variant } from "@mui/material/styles/createTypography";
 import React from "react";
+import { EmptyView } from "..";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import { Variant } from "@mui/material/styles/createTypography";
 
 interface IGraphTitleWrapper {
-    title: string;
+    title?: string;
+    hasData?: boolean;
     variant?: Variant;
     children: React.ReactNode;
 }
@@ -11,14 +14,25 @@ interface IGraphTitleWrapper {
 const GraphTitleWrapper = ({
     children,
     title = "",
+    hasData = false,
     variant = "subtitle1",
 }: IGraphTitleWrapper) => {
     return (
         <Stack spacing={2}>
-            <Typography variant={variant} pl={2}>
-                {title}
-            </Typography>
-            {children}
+            {title && (
+                <Typography variant={variant} pl={2} fontWeight={500}>
+                    {title}
+                </Typography>
+            )}
+            {hasData ? (
+                children
+            ) : (
+                <EmptyView
+                    size="large"
+                    title="No activity yet!"
+                    icon={BarChartIcon}
+                />
+            )}
         </Stack>
     );
 };

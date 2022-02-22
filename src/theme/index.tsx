@@ -69,15 +69,6 @@ const theme = (isDarkmode: boolean) =>
                     },
                 },
             },
-            MuiListItem: {
-                styleOverrides: {
-                    button: {
-                        // "&:hover": {
-                        //     backgroundColor: colors.aliceBlue,
-                        // },
-                    },
-                },
-            },
             MuiIconButton: {
                 styleOverrides: {
                     root: {
@@ -102,7 +93,7 @@ const theme = (isDarkmode: boolean) =>
                     text: {
                         padding: "0px",
                         minWidth: "auto",
-                        color: isDarkmode ? colors.white70 : colors.black70,
+                        color: isDarkmode ? colors.white : colors.black,
                     },
                 },
             },
@@ -130,6 +121,13 @@ const theme = (isDarkmode: boolean) =>
                     },
                     stickyHeader: {
                         backgroundColor: isDarkmode ? "#292929" : colors.white,
+                    },
+                },
+            },
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        boxShadow: "2px 2px 6px rgba(0, 0, 0, 0.05)",
                     },
                 },
             },

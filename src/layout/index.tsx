@@ -20,6 +20,7 @@ const Layout = (props: any) => {
 
     return (
         <Box
+            component="div"
             sx={{
                 display: "flex",
                 height: "100%",

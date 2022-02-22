@@ -1,4 +1,4 @@
-const SettingsArrowIcon = () => {
+export const SettingsArrowIcon = () => {
     return (
         <>
             <svg
@@ -16,4 +16,3 @@ const SettingsArrowIcon = () => {
         </>
     );
 };
-export default SettingsArrowIcon;

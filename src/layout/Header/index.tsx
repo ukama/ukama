@@ -12,9 +12,9 @@ import {
     Stack,
 } from "@mui/material";
 import {
-    useGetAlertsQuery,
     GetLatestAlertsDocument,
     GetLatestAlertsSubscription,
+    useGetAlertsQuery,
 } from "../../generated";
 import {
     MoreVert,
@@ -26,10 +26,10 @@ import { RoundedCard } from "../../styles";
 import { routes } from "../../router/config";
 import { useHistory } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
-import { cloneDeep } from "@apollo/client/utilities";
 import React, { useEffect, useRef, useState } from "react";
 import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
 import { colors } from "../../theme";
+import { cloneDeep } from "@apollo/client/utilities";
 
 type HeaderProps = {
     pageName: string;
@@ -138,7 +138,7 @@ const Header = ({
     );
 
     return (
-        <Box>
+        <Box component="div">
             <Popover
                 open={open}
                 id={notificationAnchorElId}
@@ -165,7 +165,12 @@ const Header = ({
                     <Alerts alertOptions={alertsInfoRes?.getAlerts?.alerts} />
                 </RoundedCard>
             </Popover>
-            <AppBar elevation={0} position="relative" color="transparent">
+            <AppBar
+                elevation={0}
+                position="relative"
+                color="transparent"
+                sx={{ boxShadow: "none !important" }}
+            >
                 <Toolbar sx={{ padding: "33px 0px 12px 0px !important" }}>
                     <IconButton
                         color="inherit"
@@ -185,7 +190,7 @@ const Header = ({
                         <Typography variant="h5">{pageName}</Typography>
                     </LoadingWrapper>
 
-                    <Box sx={{ flexGrow: 1 }} />
+                    <Box component="div" sx={{ flexGrow: 1 }} />
 
                     <LoadingWrapper
                         height={30}
@@ -222,10 +227,11 @@ const Header = ({
                                     }
                                     sx={{
                                         "& .MuiBadge-badge": {
-                                            color: "textPrimary",
-                                            backgroundColor: colors.primaryMain,
+                                            color: "inherit",
                                             paddingLeft: "3px",
                                             paddingRight: "3px",
+                                            backgroundColor:
+                                                colors.secondaryMain,
                                         },
                                     }}
                                 >
@@ -244,7 +250,10 @@ const Header = ({
                         </Stack>
                     </LoadingWrapper>
 
-                    <Box sx={{ display: { xs: "flex", md: "none" } }}>
+                    <Box
+                        component="div"
+                        sx={{ display: { xs: "flex", md: "none" } }}
+                    >
                         <IconButton
                             size="large"
                             color="inherit"

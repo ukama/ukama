@@ -60,7 +60,10 @@ const DataTableWithOptions = ({
     onMenuItemClick,
 }: DataTableWithOptionsInterface) => {
     return (
-        <Box sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}>
+        <Box
+            component="div"
+            sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}
+        >
             {dataset?.length > 1 ? (
                 <TableContainer sx={{ maxHeight: 200 }}>
                     <Table stickyHeader>

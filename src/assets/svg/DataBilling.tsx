@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const DataBilling = ({ width = "48", height = "48" }: SVGType) => (
+export const DataBilling = ({ width = "48", height = "48" }: SVGType) => (
     <svg
         height={height}
         viewBox="0 0 48 48"
@@ -20,5 +20,3 @@ const DataBilling = ({ width = "48", height = "48" }: SVGType) => (
         />
     </svg>
 );
-
-export default DataBilling;

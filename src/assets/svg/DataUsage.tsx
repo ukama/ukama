@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const DataUsage = ({
+export const DataUsage = ({
     color = "#6974F8",
     width = "48",
     height = "48",
@@ -19,5 +19,3 @@ const DataUsage = ({
         />
     </svg>
 );
-
-export default DataUsage;

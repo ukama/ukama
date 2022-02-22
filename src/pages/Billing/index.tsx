@@ -1,42 +1,49 @@
 import {
-    TabLayout,
     TableHeader,
     SimpleDataTable,
     CurrentBill,
     LoadingWrapper,
 } from "../../components";
 import "../../i18n/i18n";
-import { useState } from "react";
-import { BillingTabs } from "../../constants";
-import { Box, Grid, Typography } from "@mui/material";
-import { CenterContainer, RoundedCard } from "../../styles";
-import { CurrentBillingData } from "../../constants/stubData";
-import { CurrentBillColumns } from "../../constants/tableColumns";
-import { isSkeltonLoading } from "../../recoil";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
+import { isSkeltonLoading } from "../../recoil";
+import { CenterContainer, RoundedCard } from "../../styles";
+import { Box, Grid, Tabs, Typography, Tab } from "@mui/material";
+import { CurrentBillColumns } from "../../constants/tableColumns";
+import { BillingTabs, CurrentBillingData } from "../../constants";
 
 const Billing = () => {
-    const [tab, setTab] = useState("1");
+    const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
-    const handleTabChange = (value: string) => setTab(value);
+    const handleTabChange = (event: React.SyntheticEvent, value: any) =>
+        setTab(value);
     const handleExport = () => {
         /* TODO: Handle export action */
     };
 
     return (
         <LoadingWrapper isLoading={_isSkeltonLoading} height={"90%"}>
-            <Box>
-                <TabLayout
-                    tab={tab}
-                    tabs={BillingTabs}
-                    onTabChange={handleTabChange}
-                />
+            <Box component="div">
+                <Tabs
+                    value={tab}
+                    onChange={handleTabChange}
+                    sx={{ mt: 2, mb: 4 }}
+                >
+                    {BillingTabs.map(({ id, label, value }) => (
+                        <Tab
+                            key={id}
+                            label={label}
+                            id={`billing-tab-${value}`}
+                        />
+                    ))}
+                </Tabs>
 
-                {tab === "1" && (
+                {tab === 0 && (
                     <Grid container item spacing={2}>
                         <Grid xs={12} md={5} item>
                             <CurrentBill
@@ -87,7 +94,7 @@ const Billing = () => {
                         </Grid>
                     </Grid>
                 )}
-                {tab === "2" && (
+                {tab === 1 && (
                     <RoundedCard>
                         <TableHeader
                             title={"Billing history"}

@@ -1,5 +1,4 @@
 import { MenuItemType } from "../types";
-import { Network_Type } from "../generated";
 import AppsIcon from "@mui/icons-material/Apps";
 import HomeIcon from "@mui/icons-material/Home";
 import EditIcon from "@mui/icons-material/Edit";
@@ -18,6 +17,7 @@ const SETTING_MENU = [
     { id: 3, title: "Alerts" },
     { id: 4, title: "Node Settings" },
 ];
+const NODE_ACTIONS = ["Turn node off", "Restart", "Turn RF off"];
 const TABLE_EXPORT_OPTIONS = [
     { id: 1, label: "EXPORT", value: "EXPORT" },
     { id: 2, label: "WORD", value: "WORD" },
@@ -70,11 +70,6 @@ const TIME_FILTER = [
     { id: 4, label: "Total", value: "TOTAL" },
 ];
 
-const NETWORKS = [
-    { id: 1, label: "Public Network", value: Network_Type.Public },
-    { id: 2, label: "Private Network", value: Network_Type.Private },
-];
-
 const BASIC_MENU_ACTIONS: MenuItemType[] = [
     { id: 1, Icon: EditIcon, title: "Edit", route: "edit" },
     {
@@ -85,50 +80,6 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
     },
 ];
 
-const BILLING_TABLE_HEADER_OPTIONS = [
-    {
-        id: 1,
-
-        label: "Name",
-    },
-    {
-        id: 2,
-
-        label: "Data Used",
-    },
-    {
-        id: 3,
-
-        label: "Rate",
-    },
-    {
-        id: 4,
-
-        label: "SubTotal",
-    },
-];
-const BILLING_HOSTORY_TABLE_HEADER_OPTIONS = [
-    {
-        id: 1231,
-
-        label: "Date",
-    },
-    {
-        id: 28392,
-
-        label: "Description",
-    },
-    {
-        id: 32323,
-
-        label: "Total usage",
-    },
-    {
-        id: 2343453,
-
-        label: "SubTotal",
-    },
-];
 const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
     {
         id: 1,
@@ -146,13 +97,8 @@ const UserActivation = {
 };
 
 const BillingTabs = [
-    { id: 1, label: "CURRENT BILL", value: "1" },
-    { id: 2, label: "HISTORY", value: "2" },
-];
-
-const UsersTabs = [
-    { id: 1, label: "OVERVIEW", value: "1" },
-    { id: 2, label: "CURRENTLY CONNECTED", value: "2" },
+    { id: 0, label: "CURRENT BILL", value: "1" },
+    { id: 1, label: "HISTORY", value: "2" },
 ];
 
 const TimeZones = [
@@ -1440,22 +1386,64 @@ const RF_NODES = [
     },
 ];
 
+const TooltipsText = {
+    TRX: "TRX Tooltip text",
+    COM: "COM Tooltip text",
+    TRX_ALERT: "TRX ALERT tooltip text",
+    COM_ALERT: "COM ALERT tooltip text",
+    ATTACHED: "Attached Tooltip text",
+    ACTIVE: "Active Tooltip text",
+    DL: "DL Tooltip text",
+    UL: "UL Tooltip text",
+    RRCCNX: "RRCCNX Tooltip text",
+    ERAB: "ERAB Tooltip text",
+    RLS: "RLS Tooltip text",
+    MTRX: "MTRX Tooltip text",
+    MCOM: "MCOM Tooltip text",
+    CPUTRX: "CPUTRX Tooltip text",
+    CPUCOM: "CPUCOM Tooltip text",
+    DISKTRX: "DISKTRX Tooltip text",
+    DISKCOM: "DISKCOM Tooltip text",
+    POWER: "POWER Tooltip text",
+    TXPOWER: "TXPOWER Tooltip text",
+    RXPOWER: "RXPOWER Tooltip text",
+    PAPOWER: "PAPOWER Tooltip text",
+};
+
+const NodePageTabs = [
+    { id: "node-tab-0", label: "Overview", value: 0 },
+    { id: "node-tab-1", label: "Network", value: 1 },
+    { id: "node-tab-2", label: "Resources", value: 2 },
+    { id: "node-tab-3", label: "Radio", value: 3 },
+    { id: "node-tab-4", label: "Software", value: 4 },
+    // { id: "node-tab-5", label: "Schematic", value: 5 },
+];
+
+export {
+    UserData,
+    NodeApps,
+    NodeAppLogs,
+    SimCardData,
+    CurrentBillingData,
+} from "./stubData";
+
 export {
     RF_NODES,
-    NETWORKS,
     TimeZones,
-    UsersTabs,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,
     BillingTabs,
+    TooltipsText,
     SETTING_MENU,
     DRAWER_WIDTH,
     MONTH_FILTER,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,
+    NODE_ACTIONS,
     STATS_OPTIONS,
     STATS_PERIOD,
+    NodePageTabs,
     UserActivation,
     ROAMING_SELECT,
     DEFAULT_RESPONSE,
@@ -1464,6 +1452,4 @@ export {
     TABLE_EXPORT_OPTIONS,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
-    BILLING_TABLE_HEADER_OPTIONS,
-    BILLING_HOSTORY_TABLE_HEADER_OPTIONS,
 };

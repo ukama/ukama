@@ -1,6 +1,9 @@
 import { SVGType } from "../../types";
 
-const AmountBalanceImg = ({ width = "192", height = "140" }: SVGType) => {
+export const AmountBalanceImg = ({
+    width = "192",
+    height = "140",
+}: SVGType) => {
     return (
         <svg
             width={width}
@@ -33,4 +36,3 @@ const AmountBalanceImg = ({ width = "192", height = "140" }: SVGType) => {
         </svg>
     );
 };
-export default AmountBalanceImg;

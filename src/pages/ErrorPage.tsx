@@ -1,7 +1,11 @@
 import React from "react";
 import { IRoute } from "../router/config";
 import { CenterContainer } from "../styles";
-import { PageNotFound } from "../assets/svg";
+const PageNotFound = React.lazy(() =>
+    import("../assets/svg").then(module => ({
+        default: module.PageNotFound,
+    }))
+);
 
 interface IProps {
     routes: IRoute[];

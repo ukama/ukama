@@ -43,7 +43,9 @@ const SimCardDesign = ({
                     <SimCardOutlinedIcon />
                 </Grid>
                 <Grid item xs={2}>
-                    <LinkStyle sx={{ fontSize: "14px" }}>{title}</LinkStyle>
+                    <LinkStyle underline="hover" sx={{ fontSize: "14px" }}>
+                        {title}
+                    </LinkStyle>
                 </Grid>
                 <Grid item xs={7}>
                     <Typography variant="body1">{serial}</Typography>

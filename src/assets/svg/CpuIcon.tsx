@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const CpuIcon = ({
+export const CpuIcon = ({
     color = "#03744B",
     width = "22px",
     height = "20px",
@@ -96,5 +96,3 @@ const CpuIcon = ({
         </defs>
     </svg>
 );
-
-export default CpuIcon;

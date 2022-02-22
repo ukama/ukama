@@ -250,7 +250,7 @@ const Home = () => {
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     return (
-        <Box sx={{ flexGrow: 1, pb: "18px" }}>
+        <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
             <Grid container spacing={3}>
                 <Grid xs={12} item>
                     <NetworkStatus

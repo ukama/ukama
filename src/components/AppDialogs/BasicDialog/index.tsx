@@ -44,12 +44,13 @@ const BasicDialog = ({
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box
+                component="div"
                 sx={{
                     width: { xs: "100%", md: "500px" },
                     padding: "16px 8px 8px 24px",
                 }}
             >
-                <Box className={classes.basicDialogHeaderStyle}>
+                <Box component="div" className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">{title}</Typography>
                     {isClosable && (
                         <IconButton

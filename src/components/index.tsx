@@ -1,41 +1,48 @@
 import Alerts from "./Alerts";
 import UserCard from "./UserCard";
+import TabPanel from "./TabPanel";
 import NodeCard from "./NodesCard";
 import StatsCard from "./StatsCard";
-import TabLayout from "./TabLayout";
+import LineChart from "./LineChart";
 import EmptyView from "./EmptyView";
 import NodeStatus from "./NodeStatus";
 import StatusCard from "./StatusCard";
-import TextSelect from "./TextSelect";
 import TimeFilter from "./TimeFilter";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
-import NodeRFKpiTab from "./NodeRFKpiTab";
+import NodeDropDown from "./NodeDropDown";
 import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
-import NodeInfoCard from "./NodeInfoCard";
+import NodeStatItem from "./NodeStatItem";
+import NodeRadioTab from "./NodeRadioTab";
 import AlertSettings from "./AlertSettings";
-import NodeHealthTab from "./NodeHealthTab";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import DarkModToggle from "./DarkModToggle";
+import NodeNetworkTab from "./NodeNetworkTab";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
-import NodeMetaDataTab from "./NodeMetaDataTab";
+import NodeOverviewTab from "./NodeOverviewTab";
+import NodeSoftwareTab from "./NodeSoftwareTab";
 import NodeDetailsCard from "./NodeDetailsCard";
 import SimpleDataTable from "./SimpleDataTable";
 import PagePlaceholder from "./PagePlaceholder";
 import NetworkSettings from "./NetworkSettings";
 import ContainerHeader from "./ContainerHeader";
-import UpgradeNavFooter from "./UpgradeNavFooter";
+import StackedAreaChart from "./StackedAreaChart";
+import NodeResourcesTab from "./NodeResourcesTab";
 import BillingDataTable from "./BillingDataTable";
 import GraphTitleWrapper from "./GraphTitleWrapper";
+import CustomRadioButton from "./CustomRadioButton";
+import NodeStatsContainer from "./NodeStatsContainer";
 import MultiSlideCarousel from "./MultiSlideCarousel";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
+import SplitButton from "./SplitButton";
 import {
     BasicDialog,
+    NodeAppDetailsDialog,
     ActivationDialog,
     UserDetailsDialog,
     UserActivationDialog,
@@ -45,40 +52,47 @@ export {
     Alerts,
     NodeCard,
     UserCard,
+    TabPanel,
+    LineChart,
+    SplitButton,
     EmptyView,
-    TabLayout,
     StatsCard,
     TimeFilter,
+    NodeAppDetailsDialog,
     NodeStatus,
-    TextSelect,
     StatusCard,
     CurrentBill,
     TableHeader,
     BasicDialog,
+    NodeDropDown,
     NodeSettings,
     UserSettings,
-    NodeInfoCard,
-    NodeRFKpiTab,
-    NodeHealthTab,
+    NodeStatItem,
+    NodeRadioTab,
     DarkModToggle,
     AlertSettings,
     SimCardDesign,
     NetworkStatus,
     NodeContainer,
     OptionsPopover,
+    NodeNetworkTab,
     LoadingWrapper,
-    NodeMetaDataTab,
+    NodeOverviewTab,
     NetworkSettings,
     NodeDetailsCard,
     SimpleDataTable,
     PagePlaceholder,
     ContainerHeader,
-    UpgradeNavFooter,
+    NodeSoftwareTab,
+    StackedAreaChart,
+    NodeResourcesTab,
     ActivationDialog,
     BillingDataTable,
+    CustomRadioButton,
     UserDetailsDialog,
     GraphTitleWrapper,
     MultiSlideCarousel,
+    NodeStatsContainer,
     DataTableWithOptions,
     UserActivationDialog,
     FormControlCheckboxes,

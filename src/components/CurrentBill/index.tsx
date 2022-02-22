@@ -1,6 +1,11 @@
+import React from "react";
 import { RoundedCard } from "../../styles";
-import { AmountBalanceImg } from "../../assets/svg";
 import { Typography, Grid, Button, Chip } from "@mui/material";
+const AmountBalanceImg = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.AmountBalanceImg,
+    }))
+);
 
 type CurrentBillProps = {
     title: string;

@@ -16,14 +16,18 @@ const globalUseStyles = makeStyles(() => ({
     },
 }));
 
-const HorizontalContainerJustify = styled(Box)({
+const HorizontalContainerJustify = styled(Box)(props => ({
     width: "100%",
     height: "auto",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-});
+    [props.theme.breakpoints.down("md")]: {
+        flexDirection: "column",
+        alignItems: "flex-start",
+    },
+}));
 
 const HorizontalContainer = styled(Box)({
     width: "100%",
@@ -67,15 +71,12 @@ const MessageContainer = styled(Box)({
     paddingBottom: "5%",
 });
 
-const ContainerJustifySpaceBtw = styled(Box)(props => ({
+const ContainerJustifySpaceBtw = styled(Box)({
     width: "100%",
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    [props.theme.breakpoints.down("sm")]: {
-        flexDirection: "column",
-    },
-}));
+});
 
 const RoundedCard = styled(Paper)(props => ({
     width: "100%",

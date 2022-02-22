@@ -1,5 +1,5 @@
 import { SVGType } from "../../types";
-const BillingIcon = ({
+export const BillingIcon = ({
     color = "black",
     width = "24",
     height = "24",
@@ -17,4 +17,3 @@ const BillingIcon = ({
         />
     </svg>
 );
-export default BillingIcon;

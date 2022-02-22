@@ -1,30 +1,13 @@
-import Logo from "./Logo";
-import CpuIcon from "./CpuIcon";
-import NodeImg from "./NodeImg";
-import DataUsage from "./DataUsage";
-import BatteryIcon from "./BatteryIcon";
-import BillingIcon from "./BillingIcon";
-import DataBilling from "./DataBilling";
-import UpgradeIcon from "./UpgradeIcon";
-import UsersWithBG from "./UsersWithBG";
-import PageNotFound from "./PageNotFound";
-import ThermometerIcon from "./ThermometerIcon";
-import AmountBalanceImg from "./AmountBalanceImg";
-import SettingsArrowIcon from "./SettingsArrowIcon";
-import PagePlaceholderSvg from "./PagePlaceholderSvg";
-export {
-    Logo,
-    CpuIcon,
-    NodeImg,
-    DataUsage,
-    BatteryIcon,
-    BillingIcon,
-    DataBilling,
-    UpgradeIcon,
-    UsersWithBG,
-    PageNotFound,
-    ThermometerIcon,
-    AmountBalanceImg,
-    SettingsArrowIcon,
-    PagePlaceholderSvg,
-};
+export { Logo } from "./Logo";
+export { CpuIcon } from "./CpuIcon";
+export { NodeImg } from "./NodeImg";
+export { DataUsage } from "./DataUsage";
+export { BatteryIcon } from "./BatteryIcon";
+export { BillingIcon } from "./BillingIcon";
+export { DataBilling } from "./DataBilling";
+export { UsersWithBG } from "./UsersWithBG";
+export { PageNotFound } from "./PageNotFound";
+export { ThermometerIcon } from "./ThermometerIcon";
+export { AmountBalanceImg } from "./AmountBalanceImg";
+export { SettingsArrowIcon } from "./SettingsArrowIcon";
+export { PagePlaceholderSvg } from "./PagePlaceholderSvg";

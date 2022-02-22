@@ -16,7 +16,7 @@ import {
     useMyUsersLazyQuery,
 } from "../../generated";
 import { RoundedCard } from "../../styles";
-import { UserData } from "../../constants/stubData";
+import { UserData } from "../../constants";
 
 const User = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
@@ -83,7 +83,7 @@ const User = () => {
     };
 
     return (
-        <Box sx={{ mt: 3, height: "calc(100% - 15%)" }}>
+        <Box component="div" sx={{ mt: 3, height: "calc(100% - 15%)" }}>
             <LoadingWrapper
                 width="100%"
                 height="100%"

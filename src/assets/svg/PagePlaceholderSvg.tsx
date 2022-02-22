@@ -1,5 +1,5 @@
 import { SVGType } from "../../types";
-const PagePlaceholderSvg = ({
+export const PagePlaceholderSvg = ({
     width = "326",
     height = "322",
     color,
@@ -174,5 +174,3 @@ const PagePlaceholderSvg = ({
         />
     </svg>
 );
-
-export default PagePlaceholderSvg;

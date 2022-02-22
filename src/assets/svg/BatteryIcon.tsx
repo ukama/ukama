@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const BatteryIcon = ({
+export const BatteryIcon = ({
     color = "#03744B",
     width = "20px",
     height = "10px",
@@ -19,5 +19,3 @@ const BatteryIcon = ({
         />
     </svg>
 );
-
-export default BatteryIcon;

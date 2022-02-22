@@ -1,4 +1,4 @@
-const PageNotFound = () => (
+export const PageNotFound = () => (
     <svg
         width={500}
         height={500}
@@ -368,5 +368,3 @@ const PageNotFound = () => (
         </g>
     </svg>
 );
-
-export default PageNotFound;

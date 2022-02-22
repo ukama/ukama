@@ -11,3 +11,4 @@ yarn-debug.log*
 yarn-error.log*
 src/react-app-env.d.ts
 coverage
+.DS_Store

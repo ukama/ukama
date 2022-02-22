@@ -52,7 +52,7 @@ type FormContainerProps = {
 const FormFlowOne = ({ values, handleChange }: FormContainerProps) => {
     const classes = globalUseStyles();
     return (
-        <Box sx={{ p: "8px 0px" }}>
+        <Box component="div" sx={{ p: "8px 0px" }}>
             <Grid item container spacing={3}>
                 <Grid item container xs={12} spacing={1}>
                     <Grid item xs={12} md={6}>
@@ -96,7 +96,7 @@ const FormFlowOne = ({ values, handleChange }: FormContainerProps) => {
 const FormFlowTwo = ({ values, handleChange }: FormContainerProps) => {
     const classes = globalUseStyles();
     return (
-        <Box sx={{ p: "8px 0px" }}>
+        <Box component="div" sx={{ p: "8px 0px" }}>
             <Grid item container spacing={3}>
                 <Grid item xs={12}>
                     <TextField
@@ -164,12 +164,13 @@ const ActivationDialog = ({
     return (
         <Dialog open={isOpen} onClose={handleClose}>
             <Box
+                component="div"
                 sx={{
                     width: { xs: "100%", md: "560px" },
                     padding: "16px 24px",
                 }}
             >
-                <Box className={classes.basicDialogHeaderStyle}>
+                <Box component="div" className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">
                         {flowScreen === 1
                             ? dialogTitle

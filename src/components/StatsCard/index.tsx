@@ -1,18 +1,9 @@
-import {
-    Line,
-    XAxis,
-    YAxis,
-    Tooltip,
-    LineChart,
-    ResponsiveContainer,
-} from "recharts";
-import { TimeFilter } from "..";
+import { LineChart, TimeFilter } from "..";
 import { colors } from "../../theme";
 import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
 import { isDarkmode } from "../../recoil";
 import { StatsItemType } from "../../types";
-import { RechartsData } from "../../constants/stubData";
 import { RoundedCard, SkeletonRoundedCard } from "../../styles";
 import { Grid, Select, MenuItem, Typography } from "@mui/material";
 
@@ -96,42 +87,7 @@ const StatsCard = ({
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
-                            <ResponsiveContainer width="100%" height={300}>
-                                <LineChart
-                                    width={500}
-                                    height={300}
-                                    data={RechartsData}
-                                    margin={{
-                                        top: 5,
-                                        right: 30,
-                                        left: 20,
-                                        bottom: 5,
-                                    }}
-                                >
-                                    <XAxis dataKey="name" fontSize={"14px"} />
-                                    <YAxis fontSize={"14px"} />
-                                    <Tooltip />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="pv"
-                                        stroke="#8884d8"
-                                        activeDot={{ r: 8 }}
-                                        strokeWidth={2}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="uv"
-                                        stroke="#82ca9d"
-                                        strokeWidth={2}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="vx"
-                                        stroke="#E6534E"
-                                        strokeWidth={2}
-                                    />
-                                </LineChart>
-                            </ResponsiveContainer>
+                            <LineChart hasData={true} title={""} />
                         </Grid>
                     </Grid>
                 </RoundedCard>

@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const UsersWithBG = ({
+export const UsersWithBG = ({
     color = "#2190F6",
     width = "48",
     height = "48",
@@ -19,5 +19,3 @@ const UsersWithBG = ({
         />
     </svg>
 );
-
-export default UsersWithBG;

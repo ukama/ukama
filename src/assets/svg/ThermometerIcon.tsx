@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const ThermometerIcon = ({
+export const ThermometerIcon = ({
     color = "#03744B",
     width = "21",
     height = "20",
@@ -21,5 +21,3 @@ const ThermometerIcon = ({
         />
     </svg>
 );
-
-export default ThermometerIcon;

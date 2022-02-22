@@ -16,7 +16,10 @@ const NodeContainer = ({
     handleItemAction,
 }: NodeContainerProps) => {
     return (
-        <Box sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}>
+        <Box
+            component="div"
+            sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}
+        >
             {count > 1 ? (
                 <MultiSlideCarousel
                     numberOfSlides={slidesToShow}

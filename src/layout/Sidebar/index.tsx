@@ -11,8 +11,8 @@ import {
     Paper,
     Stack,
 } from "@mui/material";
+import React from "react";
 import { colors } from "../../theme";
-import { Logo } from "../../assets/svg";
 import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
 import { isDarkmode } from "../../recoil";
@@ -20,6 +20,12 @@ import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper } from "../../components";
 import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
+
+const Logo = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.Logo,
+    }))
+);
 
 const useStyles = makeStyles(() => ({
     listItem: {

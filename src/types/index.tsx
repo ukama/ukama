@@ -13,6 +13,12 @@ export type StatsItemType = {
     label: string;
     value: string;
 };
+export type NodeAppDetailsTypes = {
+    id: number;
+    cpu: number;
+    memory: number;
+    nodeAppName: string;
+};
 export type statsPeriodItemType = {
     id: number;
     label: string;
@@ -34,8 +40,8 @@ export type BillingType = {
     label: string;
 };
 export type ExportOptionsType = {
-    id?: number;
-    value: string;
+    id?: number | string;
+    value: string | number;
     label: string;
 };
 
@@ -91,5 +97,7 @@ export type ResponseProps = {
     error: any | null;
     response: { isValid: boolean } | void | null;
 };
+
+export type TVariant = "small" | "medium" | "large";
 
 export type TObject = { [key: string]: boolean | string | number };

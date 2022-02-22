@@ -1,57 +1,40 @@
-import { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
-import { RoundedCard } from "../../styles";
-import { Box, Grid, Stack } from "@mui/material";
-import { isSkeltonLoading, organizationId } from "../../recoil";
-import {
-    NodeStatus,
-    NodeInfoCard,
-    NodeRFKpiTab,
-    NodeHealthTab,
-    NodeDetailsCard,
-    PagePlaceholder,
-    NodeMetaDataTab,
-} from "../../components";
 import {
     NodeDto,
-    Graph_Filter,
-    useGetNodesByOrgQuery,
-    useGetNodeRfkpiqQuery,
-    GetNodeRfkpisDocument,
-    GetNodeRfkpisSubscription,
-    useGetUsersAttachedMetricsQQuery,
-    GetUsersAttachedMetricsSDocument,
-    GetUsersAttachedMetricsSSubscription,
-    useGetThroughputMetricsQQuery,
-    GetThroughputMetricsSSubscription,
-    GetThroughputMetricsSDocument,
-    useGetTemperatureMetricsQQuery,
-    GetTemperatureMetricsSDocument,
-    GetTemperatureMetricsSSubscription,
-    useGetCpuUsageMetricsQQuery,
-    GetCpuUsageMetricsSSubscription,
-    GetCpuUsageMetricsSDocument,
-    useGetMemoryUsageMetricsQQuery,
-    GetMemoryUsageMetricsSSubscription,
-    GetMemoryUsageMetricsSDocument,
-    useGetIoMetricsQQuery,
-    GetIoMetricsSSubscription,
-    GetIoMetricsSDocument,
     useGetNodeDetailsQuery,
+    useGetNodesByOrgQuery,
 } from "../../generated";
-import { TObject } from "../../types";
-import { parseObjectInNameValue, uniqueObjectsArray } from "../../utils";
+import {
+    TabPanel,
+    NodeStatus,
+    NodeRadioTab,
+    LoadingWrapper,
+    NodeNetworkTab,
+    NodeSoftwareTab,
+    NodeOverviewTab,
+    PagePlaceholder,
+    NodeResourcesTab,
+    NodeAppDetailsDialog,
+} from "../../components";
+import React, { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { isSkeltonLoading } from "../../recoil";
+import { parseObjectInNameValue } from "../../utils";
+import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
+import {
+    NodePageTabs,
+    NODE_ACTIONS,
+    NodeApps,
+    NodeAppLogs,
+} from "../../constants";
 
 const Nodes = () => {
-    const orgId = useRecoilValue(organizationId);
-    const [selectedTab, setSelectedTab] = useState(1);
+    const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
-    const [rfKpiStats, setRfKpiStats] = useState<TObject[]>([]);
-    const [metaDataStats, setMetaDataStats] = useState<TObject[]>([]);
-    const [healthStats, setHealthStats] = useState<TObject[]>([]);
+    const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
+
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
-        variables: { orgId: orgId || "" },
+        variables: { orgId: "1" || "" },
         onCompleted: res => {
             res.getNodesByOrg.nodes.length > 0 &&
                 setSelectedNode(res.getNodesByOrg.nodes[0]);
@@ -61,469 +44,154 @@ const Nodes = () => {
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
 
-    const {
-        data: nodeRFKpiRes,
-        loading: nodeRFKpiLoading,
-        subscribeToMore: subscribeToNodeRFKpiMetrics,
-    } = useGetNodeRfkpiqQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeUserAttachRes,
-        loading: nodeUserAttachLoading,
-        subscribeToMore: subscribeToUserAttachMetrics,
-    } = useGetUsersAttachedMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeThroughputRes,
-        loading: nodeThroughpuLoading,
-        subscribeToMore: subscribeToThroughputMetrics,
-    } = useGetThroughputMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeTempMetricsRes,
-        loading: nodeTempMetricsLoading,
-        subscribeToMore: subscribeToTempMetrics,
-    } = useGetTemperatureMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeCpuUsageMetricsRes,
-        loading: nodeCpuUsageMetricsLoading,
-        subscribeToMore: subscribeToCpuUsageMetrics,
-    } = useGetCpuUsageMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeMemoryUsageMetricsRes,
-        loading: nodeMemoryUsageMetricsLoading,
-        subscribeToMore: subscribeToMemoryUsageMetrics,
-    } = useGetMemoryUsageMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const {
-        data: nodeIoMetricsRes,
-        loading: nodeIoMetricsLoading,
-        subscribeToMore: subscribeToIoMetrics,
-    } = useGetIoMetricsQQuery({
-        variables: {
-            filter: Graph_Filter.Week,
-        },
-    });
-
-    const nodeRFKpiMetricsSubscription = () =>
-        subscribeToNodeRFKpiMetrics<GetNodeRfkpisSubscription>({
-            document: GetNodeRfkpisDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getNodeRFKPI;
-                const spreadPrev =
-                    prev && prev.getNodeRFKPI ? prev.getNodeRFKPI : [];
-                return Object.assign({}, prev, {
-                    getNodeRFKPI: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeUserAttachMetricsSubscription = () =>
-        subscribeToUserAttachMetrics<GetUsersAttachedMetricsSSubscription>({
-            document: GetUsersAttachedMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getUsersAttachedMetrics;
-                const spreadPrev =
-                    prev && prev.getUsersAttachedMetrics
-                        ? prev.getUsersAttachedMetrics
-                        : [];
-                return Object.assign({}, prev, {
-                    getUsersAttachedMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeThroughputMetricsSubscription = () =>
-        subscribeToThroughputMetrics<GetThroughputMetricsSSubscription>({
-            document: GetThroughputMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getThroughputMetrics;
-                const spreadPrev =
-                    prev && prev.getThroughputMetrics
-                        ? prev.getThroughputMetrics
-                        : [];
-                return Object.assign({}, prev, {
-                    getThroughputMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeTempMetricsSubscription = () =>
-        subscribeToTempMetrics<GetTemperatureMetricsSSubscription>({
-            document: GetTemperatureMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getTemperatureMetrics;
-                const spreadPrev =
-                    prev && prev.getTemperatureMetrics
-                        ? prev.getTemperatureMetrics
-                        : [];
-                return Object.assign({}, prev, {
-                    getTemperatureMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeCpuUsageMetricsSubscription = () =>
-        subscribeToCpuUsageMetrics<GetCpuUsageMetricsSSubscription>({
-            document: GetCpuUsageMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getCpuUsageMetrics;
-                const spreadPrev =
-                    prev && prev.getCpuUsageMetrics
-                        ? prev.getCpuUsageMetrics
-                        : [];
-                return Object.assign({}, prev, {
-                    getCpuUsageMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeMemoryUsageMetricsSubscription = () =>
-        subscribeToMemoryUsageMetrics<GetMemoryUsageMetricsSSubscription>({
-            document: GetMemoryUsageMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getMemoryUsageMetrics;
-                const spreadPrev =
-                    prev && prev.getMemoryUsageMetrics
-                        ? prev.getMemoryUsageMetrics
-                        : [];
-                return Object.assign({}, prev, {
-                    getMemoryUsageMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    const nodeIoMetricsSubscription = () =>
-        subscribeToIoMetrics<GetIoMetricsSSubscription>({
-            document: GetIoMetricsSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getIOMetrics;
-                const spreadPrev =
-                    prev && prev.getIOMetrics ? prev.getIOMetrics : [];
-                return Object.assign({}, prev, {
-                    getIOMetrics: [...spreadPrev, metrics],
-                });
-            },
-        });
-
-    useEffect(() => {
-        if (nodeRFKpiRes) {
-            nodeRFKpiRes?.getNodeRFKPI?.length > 0 &&
-                setRfKpiStats(
-                    parseObjectInNameValue(
-                        nodeRFKpiRes?.getNodeRFKPI[
-                            nodeRFKpiRes.getNodeRFKPI.length - 1
-                        ]
-                    )
-                );
-        }
-        let unsub = nodeRFKpiMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeRFKpiRes]);
-
-    useEffect(() => {
-        if (nodeUserAttachRes) {
-            nodeUserAttachRes?.getUsersAttachedMetrics?.length > 0 &&
-                setMetaDataStats(prev => [
-                    ...uniqueObjectsArray("Users Attached", prev),
-                    {
-                        name: "Users Attached",
-                        value: nodeUserAttachRes.getUsersAttachedMetrics[
-                            nodeUserAttachRes.getUsersAttachedMetrics.length - 1
-                        ].users,
-                    },
-                ]);
-        }
-        let unsub = nodeUserAttachMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeUserAttachRes]);
-
-    useEffect(() => {
-        if (nodeThroughputRes) {
-            nodeThroughputRes?.getThroughputMetrics?.length > 0 &&
-                setMetaDataStats(prev => [
-                    ...uniqueObjectsArray("Throughput", prev),
-                    {
-                        name: "Throughput",
-                        value: nodeThroughputRes?.getThroughputMetrics[
-                            nodeThroughputRes?.getThroughputMetrics.length - 1
-                        ]?.amount,
-                    },
-                ]);
-        }
-        let unsub = nodeThroughputMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeThroughputRes]);
-
-    useEffect(() => {
-        if (nodeTempMetricsRes) {
-            nodeTempMetricsRes?.getTemperatureMetrics?.length > 0 &&
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("Temperature", prev),
-                    {
-                        name: "Temperature",
-                        value: nodeTempMetricsRes?.getTemperatureMetrics[
-                            nodeTempMetricsRes.getTemperatureMetrics.length - 1
-                        ]?.temperature,
-                    },
-                ]);
-        }
-        let unsub = nodeTempMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeTempMetricsRes]);
-
-    useEffect(() => {
-        if (nodeCpuUsageMetricsRes) {
-            nodeCpuUsageMetricsRes?.getCpuUsageMetrics?.length > 0 &&
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("CPU", prev),
-                    {
-                        name: "CPU",
-                        value: `${
-                            nodeCpuUsageMetricsRes?.getCpuUsageMetrics[
-                                nodeCpuUsageMetricsRes.getCpuUsageMetrics
-                                    .length - 1
-                            ]?.usage
-                        }%`,
-                    },
-                ]);
-        }
-        let unsub = nodeCpuUsageMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeCpuUsageMetricsRes]);
-
-    useEffect(() => {
-        if (nodeMemoryUsageMetricsRes) {
-            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics?.length > 0 &&
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("Memory", prev),
-                    {
-                        name: "Memory",
-                        value: `${
-                            nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics[
-                                nodeMemoryUsageMetricsRes.getMemoryUsageMetrics
-                                    .length - 1
-                            ]?.usage
-                        }%`,
-                    },
-                ]);
-        }
-        let unsub = nodeMemoryUsageMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeMemoryUsageMetricsRes]);
-
-    useEffect(() => {
-        if (nodeIoMetricsRes) {
-            nodeIoMetricsRes?.getIOMetrics?.length > 0 &&
-                setHealthStats(prev => [
-                    ...uniqueObjectsArray("IO", prev),
-                    {
-                        name: "IO",
-                        value: `${
-                            nodeIoMetricsRes.getIOMetrics[
-                                nodeIoMetricsRes.getIOMetrics.length - 1
-                            ].input
-                        } Input | ${
-                            nodeIoMetricsRes.getIOMetrics[
-                                nodeIoMetricsRes.getIOMetrics.length - 1
-                            ].output
-                        } Output`,
-                    },
-                ]);
-        }
-        let unsub = nodeIoMetricsSubscription();
-        return () => {
-            unsub && unsub();
-        };
-    }, [nodeIoMetricsRes]);
-
-    const onTabSelected = (value: number) => setSelectedTab(value);
+    const onTabSelected = (event: React.SyntheticEvent, value: any) =>
+        setSelectedTab(value);
     const onNodeSelected = (node: NodeDto) => setSelectedNode(node);
-    const onNodeRFClick = () => {
-        //TODO: Handle NODE RF ACTIONS
-    };
-    const onNodeSwitchClick = () => {
-        //TODO: Handle NODE ON/OFF ACTIONS
-    };
-    const onRestartNodeClick = () => {
+
+    const onUpdateNodeClick = () => {
         //TODO: Handle NODE RESTART ACTION
+    };
+    const onAddNode = () => {
+        //TODO: Handle NODE ADD ACTION
+    };
+    const handleUpdateNode = () => {
+        // TODO: Handle Update node Action
+    };
+    const handleNodeActionItemSelected = () => {
+        //Todo :Handle nodeAction Itemselected
+    };
+
+    const handleNodeActioOptionClicked = () => {
+        //Todo :Handle nodeAction selected and clicked
+    };
+    const getNodeDetails = () => {
+        //TODO:Handle nodeDetails
+        setShowNodeAppDialog(true);
+    };
+    const handleNodAppDetailsDialog = () => {
+        setShowNodeAppDialog(false);
     };
 
     const isLoading = skeltonLoading || nodesLoading;
 
-    if (nodesRes && nodesRes?.getNodesByOrg?.nodes?.length === 0)
-        return (
-            <RoundedCard
-                sx={{
-                    p: 0,
-                    mt: 3,
-                    mb: 2,
-                    borderRadius: "4px",
-                    height: "calc(100% - 15%)",
-                }}
-            >
-                <PagePlaceholder description="Order your node now." />
-            </RoundedCard>
-        );
-
     return (
         <Box
+            component="div"
             sx={{
                 p: 0,
                 mt: 3,
                 pb: 2,
             }}
         >
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <NodeStatus
-                        loading={isLoading}
-                        selectedNode={selectedNode}
-                        onNodeRFClick={onNodeRFClick}
-                        onNodeSelected={onNodeSelected}
-                        onNodeSwitchClick={onNodeSwitchClick}
-                        onRestartNodeClick={onRestartNodeClick}
-                        nodes={nodesRes?.getNodesByOrg?.nodes}
-                    />
-                </Grid>
-                <Grid item container xs={4}>
-                    <Stack spacing={2} sx={{ width: "100%" }}>
-                        <NodeInfoCard
+            {nodesRes || isLoading ? (
+                <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                        <NodeStatus
+                            onAddNode={onAddNode}
+                            loading={nodesLoading}
+                            handleNodeActionClick={handleNodeActioOptionClicked}
+                            selectedNode={selectedNode}
+                            onNodeActionItemSelected={
+                                handleNodeActionItemSelected
+                            }
+                            onNodeSelected={onNodeSelected}
+                            nodeActionOptions={NODE_ACTIONS}
+                            onUpdateNodeClick={onUpdateNodeClick}
+                            nodes={nodesRes?.getNodesByOrg?.nodes || []}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <LoadingWrapper isLoading={isLoading} height={"40px"}>
+                            <Tabs value={selectedTab} onChange={onTabSelected}>
+                                {NodePageTabs.map(({ id, label, value }) => (
+                                    <Tab
+                                        key={id}
+                                        label={label}
+                                        id={`node-tab-${value}`}
+                                    />
+                                ))}
+                            </Tabs>
+                        </LoadingWrapper>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <TabPanel
+                            id={"node-tab-0"}
+                            value={selectedTab}
+                            index={0}
+                        >
+                            <NodeOverviewTab
+                                isUpdateAvailable={true}
+                                selectedNode={selectedNode}
+                                handleUpdateNode={handleUpdateNode}
+                                loading={isLoading || nodeDetailLoading}
+                                nodeDetails={parseObjectInNameValue(
+                                    nodeDetailRes?.getNodeDetails
+                                )}
+                            />
+                        </TabPanel>
+                        <TabPanel
+                            id={"node-tab-1"}
+                            value={selectedTab}
                             index={1}
-                            title={"Node Details"}
-                            loading={isLoading || nodeDetailLoading}
-                            properties={
-                                parseObjectInNameValue(
-                                    nodeDetailRes?.getNodeDetails || {}
-                                ) || []
-                            }
-                            onSelected={onTabSelected}
-                            isSelected={selectedTab === 1}
-                        />
-                        <NodeInfoCard
+                        >
+                            <NodeNetworkTab
+                                loading={isLoading || nodeDetailLoading}
+                            />
+                        </TabPanel>
+                        <TabPanel
+                            id={"node-tab-2"}
+                            value={selectedTab}
                             index={2}
-                            title={"Meta Data"}
-                            properties={metaDataStats}
-                            onSelected={onTabSelected}
-                            isSelected={selectedTab === 2}
-                            loading={
-                                isLoading ||
-                                nodeUserAttachLoading ||
-                                nodeThroughpuLoading
-                            }
-                        />
-                        <NodeInfoCard
+                        >
+                            <NodeResourcesTab
+                                loading={isLoading || nodeDetailLoading}
+                            />
+                        </TabPanel>
+                        <TabPanel
+                            id={"node-tab-3"}
+                            value={selectedTab}
                             index={3}
-                            loading={
-                                isLoading ||
-                                nodeIoMetricsLoading ||
-                                nodeTempMetricsLoading ||
-                                nodeCpuUsageMetricsLoading ||
-                                nodeMemoryUsageMetricsLoading
-                            }
-                            title={"Physical Health"}
-                            properties={healthStats}
-                            onSelected={onTabSelected}
-                            isSelected={selectedTab === 3}
-                        />
-                        <NodeInfoCard
+                        >
+                            <NodeRadioTab
+                                loading={isLoading || nodeDetailLoading}
+                            />
+                        </TabPanel>
+                        <TabPanel
+                            id={"node-tab-4"}
+                            value={selectedTab}
                             index={4}
-                            title={"RF KPIs"}
-                            properties={rfKpiStats}
-                            onSelected={onTabSelected}
-                            isSelected={selectedTab === 4}
-                            loading={isLoading || nodeRFKpiLoading}
-                        />
-                    </Stack>
+                        >
+                            <NodeSoftwareTab
+                                loading={isLoading || nodeDetailLoading}
+                                nodeApps={NodeApps}
+                                NodeLogs={NodeAppLogs}
+                                getNodeAppDetails={getNodeDetails}
+                            />
+                        </TabPanel>
+                        <TabPanel
+                            id={"node-tab-5"}
+                            value={selectedTab}
+                            index={5}
+                        >
+                            <Paper>Schematic</Paper>
+                        </TabPanel>
+                    </Grid>
                 </Grid>
-                <Grid item container xs={8}>
-                    {selectedTab === 1 && (
-                        <NodeDetailsCard loading={isLoading} />
-                    )}
-                    {selectedTab === 2 && (
-                        <NodeMetaDataTab
-                            loading={
-                                isLoading ||
-                                nodeUserAttachLoading ||
-                                nodeThroughpuLoading
-                            }
-                            usersAttachedMetrics={
-                                nodeUserAttachRes?.getUsersAttachedMetrics || []
-                            }
-                            throughputMetrics={
-                                nodeThroughputRes?.getThroughputMetrics || []
-                            }
-                        />
-                    )}
-                    {selectedTab === 3 && (
-                        <NodeHealthTab
-                            loading={isLoading || nodeTempMetricsLoading}
-                            temperatureMetrics={
-                                nodeTempMetricsRes?.getTemperatureMetrics || []
-                            }
-                            cpuUsageMetrics={
-                                nodeCpuUsageMetricsRes?.getCpuUsageMetrics || []
-                            }
-                            memoryUsageMetrics={
-                                nodeMemoryUsageMetricsRes?.getMemoryUsageMetrics ||
-                                []
-                            }
-                            ioMetrics={nodeIoMetricsRes?.getIOMetrics || []}
-                        />
-                    )}
-                    {selectedTab === 4 && (
-                        <NodeRFKpiTab
-                            loading={isLoading || nodeRFKpiLoading}
-                            metrics={nodeRFKpiRes?.getNodeRFKPI || []}
-                        />
-                    )}
-                </Grid>
-            </Grid>
+            ) : (
+                <PagePlaceholder
+                    hyperlink="#"
+                    linkText={"here"}
+                    showActionButton={false}
+                    buttonTitle="Install sims"
+                    description="Your nodes have not arrived yet. View their status"
+                />
+            )}
+            <NodeAppDetailsDialog
+                closeBtnLabel="close"
+                isOpen={showNodeAppDialog}
+                handleClose={handleNodAppDetailsDialog}
+            />
         </Box>
     );
 };

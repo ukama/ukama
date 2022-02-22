@@ -1,6 +1,6 @@
 import { SVGType } from "../../types";
 
-const NodeImg = ({
+export const NodeImg = ({
     color = "#03744B",
     width = "89px",
     height = "78px",
@@ -36,5 +36,3 @@ const NodeImg = ({
         </defs>
     </svg>
 );
-
-export default NodeImg;

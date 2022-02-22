@@ -15,7 +15,7 @@ interface ITimeFilter {
 
 const TimeFilter = ({ filter, handleFilterSelect }: ITimeFilter) => {
     return (
-        <Box>
+        <Box component="div">
             <ToggleButtonGroup
                 exclusive
                 size="small"

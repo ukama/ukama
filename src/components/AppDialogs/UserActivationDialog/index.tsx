@@ -12,12 +12,12 @@ import {
     Stack,
 } from "@mui/material";
 import { SimCardDesign } from "../..";
+import { colors } from "../../../theme";
+import { SimCardData } from "../../../constants";
 import { globalUseStyles } from "../../../styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { ChangeEventHandler, useState } from "react";
 import { SimActivateFormType } from "../../../types";
-import { SimCardData } from "../../../constants/stubData";
-import { colors } from "../../../theme";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -56,7 +56,7 @@ type FormContainerProps = {
 const FormContainer = ({ values, handleChange }: FormContainerProps) => {
     const classes = globalUseStyles();
     return (
-        <Box sx={{ p: "8px 0px" }}>
+        <Box component="div" sx={{ p: "8px 0px" }}>
             <Grid item container spacing={3}>
                 <Grid item xs={12}>
                     <TextField
@@ -191,12 +191,13 @@ const UserActivationDialog = ({
     return (
         <Dialog open={isOpen} onClose={handleClose}>
             <Box
+                component="div"
                 sx={{
                     width: { xs: "100%", md: "600px" },
                     padding: "16px 24px",
                 }}
             >
-                <Box className={classes.basicDialogHeaderStyle}>
+                <Box component="div" className={classes.basicDialogHeaderStyle}>
                     <Typography variant="h6">{dialogTitle}</Typography>
 
                     <IconButton

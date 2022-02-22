@@ -1,15 +1,31 @@
-import {
-    CpuIcon,
-    NodeImg,
-    BatteryIcon,
-    ThermometerIcon,
-} from "../../assets/svg";
+import React from "react";
+import { hexToRGB } from "../../utils";
 import OptionsPopover from "../OptionsPopover";
 import { SkeletonRoundedCard } from "../../styles";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import { Typography, Grid, Divider, Box, styled } from "@mui/material";
-import { hexToRGB } from "../../utils";
+
+const NodeImg = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.NodeImg,
+    }))
+);
+const CpuIcon = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.CpuIcon,
+    }))
+);
+const BatteryIcon = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.BatteryIcon,
+    }))
+);
+const ThermometerIcon = React.lazy(() =>
+    import("../../assets/svg").then(module => ({
+        default: module.ThermometerIcon,
+    }))
+);
 
 const Container = styled(Box)(props => ({
     width: "214px",
