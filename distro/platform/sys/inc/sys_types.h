@@ -92,6 +92,14 @@ typedef sem_t USysSem;
 typedef pthread_spinlock_t USysSpinlock;
 
 /**
+ * @typedef USysThreadAttr
+ *
+ * @brief Thread attributes
+ *
+ */
+typedef pthread_attr_t USysThreadAttr;
+
+/**
  * @typedef USysThreadId
  *
  * @brief Thread identifier
