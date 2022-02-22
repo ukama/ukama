@@ -12,9 +12,9 @@ const DarkModToggle = () => {
         <IconButton
             size="small"
             color="inherit"
-            aria-label="mode"
             onClick={handleToggle}
             sx={{ p: "8px" }}
+            aria-label="darkmode-btn"
         >
             {icon}
         </IconButton>

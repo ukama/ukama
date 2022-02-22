@@ -209,6 +209,7 @@ const Header = ({
                             <IconButton
                                 size="small"
                                 color="inherit"
+                                aria-label="setting-btn"
                                 onClick={handleSettingsClick}
                             >
                                 <Settings />
@@ -216,10 +217,11 @@ const Header = ({
                             <IconButton
                                 size="small"
                                 color="inherit"
+                                aria-label="notification-btn"
                                 onClick={handleNotificationClick}
-                                aria-label={notificationsLabel(
-                                    alertsInfoRes?.getAlerts?.alerts.length
-                                )}
+                                // aria-label={notificationsLabel(
+                                //     alertsInfoRes?.getAlerts?.alerts.length
+                                // )}
                             >
                                 <Badge
                                     badgeContent={
@@ -244,7 +246,11 @@ const Header = ({
                                     />
                                 </Badge>
                             </IconButton>
-                            <IconButton size="small" color="inherit">
+                            <IconButton
+                                size="small"
+                                color="inherit"
+                                aria-label="account-btn"
+                            >
                                 <AccountCircle />
                             </IconButton>
                         </Stack>
