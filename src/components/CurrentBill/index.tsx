@@ -1,11 +1,5 @@
-import React from "react";
 import { RoundedCard } from "../../styles";
 import { Typography, Grid, Button, Chip } from "@mui/material";
-const AmountBalanceImg = React.lazy(() =>
-    import("../../assets/svg").then(module => ({
-        default: module.AmountBalanceImg,
-    }))
-);
 
 type CurrentBillProps = {
     title: string;
@@ -63,7 +57,12 @@ const CurrentBill = ({
                             </Grid>
                         )}
                         <Grid item>
-                            <AmountBalanceImg />
+                            <img
+                                src="https://ovalloqu.sirv.com/Images/amt_balance.png"
+                                width="192"
+                                height="128"
+                                alt="balance"
+                            />
                         </Grid>
                     </Grid>
                 </Grid>

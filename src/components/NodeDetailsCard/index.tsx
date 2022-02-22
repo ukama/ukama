@@ -1,9 +1,9 @@
 import { LoadingWrapper } from "..";
-import { HorizontalContainerJustify, LinkStyle } from "../../styles";
-import { Chip, Paper, Stack, Typography } from "@mui/material";
-
-import DeviceModalView from "../DeviceModalView";
 import colors from "../../theme/colors";
+import DeviceModalView from "../DeviceModalView";
+import { Chip, Paper, Stack, Typography } from "@mui/material";
+import { HorizontalContainerJustify, LinkStyle } from "../../styles";
+
 interface INodeDetailsCard {
     loading: boolean;
     nodeTitle: string;

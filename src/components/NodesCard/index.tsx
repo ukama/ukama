@@ -6,11 +6,6 @@ import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import { Typography, Grid, Divider, Box, styled } from "@mui/material";
 
-const NodeImg = React.lazy(() =>
-    import("../../assets/svg").then(module => ({
-        default: module.NodeImg,
-    }))
-);
 const CpuIcon = React.lazy(() =>
     import("../../assets/svg").then(module => ({
         default: module.CpuIcon,
@@ -116,7 +111,12 @@ const NodeCard = ({
                             />
                         </Grid>
                         <Grid item xs={12} sx={{ ...IconStyle }}>
-                            <NodeImg />
+                            <img
+                                src="https://ovalloqu.sirv.com/Images/node.png"
+                                width="86"
+                                height="76"
+                                alt="node-img"
+                            />
                         </Grid>
                         <Grid item xs={12}>
                             <Line />

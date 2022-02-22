@@ -1,6 +1,5 @@
 export { Logo } from "./Logo";
 export { CpuIcon } from "./CpuIcon";
-export { NodeImg } from "./NodeImg";
 export { DataUsage } from "./DataUsage";
 export { BatteryIcon } from "./BatteryIcon";
 export { BillingIcon } from "./BillingIcon";
@@ -8,6 +7,5 @@ export { DataBilling } from "./DataBilling";
 export { UsersWithBG } from "./UsersWithBG";
 export { PageNotFound } from "./PageNotFound";
 export { ThermometerIcon } from "./ThermometerIcon";
-export { AmountBalanceImg } from "./AmountBalanceImg";
 export { SettingsArrowIcon } from "./SettingsArrowIcon";
 export { PagePlaceholderSvg } from "./PagePlaceholderSvg";

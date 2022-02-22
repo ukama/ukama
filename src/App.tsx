@@ -2,19 +2,18 @@ import { theme } from "./theme";
 import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
-import { CenterContainer } from "./styles";
 import { BasicDialog } from "./components";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
+import { CssBaseline } from "@mui/material";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
-import { CircularProgress, CssBaseline } from "@mui/material";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { isDarkmode, isFirstVisit, isSkeltonLoading, pageName } from "./recoil";
 
 const App = () => {
-    const { loading, response } = useWhoami();
+    const { response } = useWhoami();
     const setPage = useSetRecoilState(pageName);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
@@ -48,13 +47,6 @@ const App = () => {
     const handleGoToLogin = () => {
         window.location.replace(process.env.REACT_APP_AUTH_URL || "");
     };
-
-    if (loading)
-        return (
-            <CenterContainer>
-                <CircularProgress />
-            </CenterContainer>
-        );
 
     return (
         <ApolloProvider client={client}>

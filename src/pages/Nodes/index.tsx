@@ -51,12 +51,6 @@ const Nodes = () => {
     const onUpdateNodeClick = () => {
         //TODO: Handle NODE RESTART ACTION
     };
-    const onAddNode = () => {
-        //TODO: Handle NODE ADD ACTION
-    };
-    const handleUpdateNode = () => {
-        // TODO: Handle Update node Action
-    };
     const handleNodeActionItemSelected = () => {
         //Todo :Handle nodeAction Itemselected
     };
@@ -64,6 +58,13 @@ const Nodes = () => {
     const handleNodeActioOptionClicked = () => {
         //Todo :Handle nodeAction selected and clicked
     };
+    const onAddNode = () => {
+        //TODO: Handle NODE ADD ACTION
+    };
+    const handleUpdateNode = () => {
+        // TODO: Handle Update node Action
+    };
+
     const getNodeDetails = () => {
         //TODO:Handle nodeDetails
         setShowNodeAppDialog(true);
