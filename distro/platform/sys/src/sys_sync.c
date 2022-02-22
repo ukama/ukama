@@ -290,7 +290,3 @@ USysError usys_spinlock_destroy(USysSpinlock* spinlock) {
     }
 }
 
-#ifdef __cplusplus
-}
-#endif
-#endif /*! SYS_SYNC_H */
