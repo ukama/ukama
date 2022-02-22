@@ -160,6 +160,7 @@
 html,
 body {
     height: 100vh;
+    overflow-x: hidden;
 }
 
 .BrainhubCarousel__customArrows {

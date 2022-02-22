@@ -56,15 +56,6 @@ const Header = ({
     const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
-    const notificationsLabel = (alertLength: any) => {
-        if (alertLength === 0) {
-            return "no notifications";
-        }
-        if (alertLength > 999) {
-            return "more than 999 notifications";
-        }
-        return `${alertLength} notifications`;
-    };
 
     const [notificationAnchorEl, setNotificationAnchorEl] =
         useState<HTMLButtonElement | null>(null);
