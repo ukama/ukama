@@ -47,6 +47,7 @@ const UserCard = ({
                     value={dataPlan - dataUsage}
                     sx={{
                         height: "8px",
+                        borderRadius: "2px",
                         backgroundColor: colors.silver,
                     }}
                 />
