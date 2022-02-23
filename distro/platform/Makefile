@@ -1,7 +1,7 @@
 PROJECT := $(notdir $(CURDIR))
 BUILDSATICLIB = libusys.a
-BUILDDYNAMICLIB = libusys.so
-PLATFORMLIBS := $(BUILDDYNAMICLIB)
+BUILDDYNAMICLIB = $(BUILDDIR)/libusys.so
+PLATFORMLIBS = $(BUILDDYNAMICLIB)
 
 
 VERSION = v0.0.1
@@ -127,8 +127,8 @@ $(PLATFORMLIBS): $(OBJECTS)
 		
 # Clean all build files
 clean:
-	@rm -rf $(PLATFORMLIBS)
-	@rm -rf $(BUILDDIR)
+	rm -rf $(PLATFORMLIBS)
+	rm -rf $(BUILDDIR)
 	@echo Cleaned.
 
 # Force build of all files
