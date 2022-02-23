@@ -34,7 +34,7 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
                     nameInfo={TooltipsText.PAPOWER}
                 />
             </NodeStatsContainer>
-            <Paper sx={{ padding: "28px 18px", width: "100%" }}>
+            <Paper sx={{ p: 3, width: "100%" }}>
                 <Typography variant="h6">Radio</Typography>
                 <Stack spacing={6} pt={2}>
                     <StackedAreaChart hasData={true} title={"TX Power"} />
