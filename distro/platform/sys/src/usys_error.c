@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "sys_error.h"
+#include "usys_error.h"
 
 const char *usysErrorCodes[] = {
     [USYS_ERROR_CODE(ERR_SOCK_CREATION)] = "Failed to create socket",

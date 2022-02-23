@@ -30,7 +30,7 @@ $(info Objects :: $(OBJECTS))
 
 # Compilers and flags
 CC=gcc
-LDLIBS = -lpthread
+LDLIBS = -lpthread -lrt
 
 override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DDMT_ABORT_NULL
 override LDFLAGS +=  $(LDPATH) $(LDLIBS) 

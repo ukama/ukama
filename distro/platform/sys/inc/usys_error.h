@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include "sys_types.h"
+#include "usys_types.h"
 
 #define   USYS_BASE_ERROR_CODE      (1000)
 #define   USYS_ERROR_CODE(code)     ((code) - USYS_BASE_ERROR_CODE)

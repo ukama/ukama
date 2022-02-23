@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "sys_sync.h"
+#include "usys_sync.h"
 #include "usys_log.h"
 
 USysError usys_mutex_init(USysMutex* mutex) {
