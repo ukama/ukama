@@ -74,7 +74,6 @@ const UserDetailsDialog = ({
         <Dialog
             key={id}
             open={isOpen}
-            hideBackdrop
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box

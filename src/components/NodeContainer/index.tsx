@@ -29,8 +29,8 @@ const NodeContainer = ({
                         <NodeCard
                             key={id}
                             title={title}
-                            users={totalUser}
                             loading={false}
+                            users={totalUser}
                             subTitle={description}
                             handleOptionItemClick={(type: string) =>
                                 handleItemAction(id, type)

@@ -1,15 +1,8 @@
-import {
-    Typography,
-    Button,
-    IconButton,
-    Paper,
-    Stack,
-    Grid,
-} from "@mui/material";
-import { styled } from "@mui/material/styles";
 import { colors } from "../../theme";
-import SearchIcon from "@mui/icons-material/Search";
+import { styled } from "@mui/material/styles";
 import InputBase from "@mui/material/InputBase";
+import SearchIcon from "@mui/icons-material/Search";
+import { Grid, Stack, Button, Typography, IconButton } from "@mui/material";
 
 import { useState, useEffect } from "react";
 type ContainerHeaderProps = {
@@ -22,10 +15,9 @@ type ContainerHeaderProps = {
     showButton?: boolean;
 };
 
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
+const StyledInputBase = styled(InputBase)(() => ({
     color: "inherit",
     "& .MuiInputBase-input": {
-        paddingLeft: `calc(1em + ${theme.spacing(0)})`,
         width: "100%",
     },
 }));
@@ -51,11 +43,11 @@ const ContainerHeader = ({
 
     return (
         <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={8}>
                 <Stack
-                    direction="row"
                     spacing={2}
-                    sx={{ alignItems: "center" }}
+                    direction="row"
+                    sx={{ alignItems: "baseline" }}
                 >
                     <Typography variant="h6">{title}</Typography>
                     <Typography
@@ -68,61 +60,45 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid item xs={12} md={6} container>
-                <Grid container spacing={2} sx={{ alignItems: "center" }}>
-                    {showSearchBox && (
-                        <Grid item xs={6} container justifyContent="flex-end">
-                            <Paper
-                                sx={{
-                                    borderRadius: 2,
-                                    border: `1px solid ${colors.silver}`,
-                                    padding: "0px !important",
-                                    width: "100%",
-                                }}
-                                elevation={0}
-                            >
-                                <Stack
-                                    direction="row"
-                                    justifyContent="flex-between"
+            <Grid container item xs={12} md={4} spacing={2}>
+                {showSearchBox && (
+                    <Grid item xs={8}>
+                        <StyledInputBase
+                            placeholder="Search…"
+                            value={currentSearchValue}
+                            onChange={(e: any) =>
+                                setCurrentSearchValue(e.target.value)
+                            }
+                            sx={{
+                                width: "100%",
+                                height: "48px",
+                                borderRadius: 2,
+                                border: `1px solid ${colors.silver}`,
+                                padding: "4px 8px 4px 12px !important",
+                            }}
+                            endAdornment={
+                                <IconButton
+                                    color="primary"
+                                    aria-label="simSearch"
+                                    component="span"
                                 >
-                                    <StyledInputBase
-                                        placeholder="Search…"
-                                        value={currentSearchValue}
-                                        onChange={(e: any) =>
-                                            setCurrentSearchValue(
-                                                e.target.value
-                                            )
-                                        }
-                                    />
-                                    <IconButton
-                                        color="primary"
-                                        aria-label="simSearch"
-                                        component="span"
-                                    >
-                                        <SearchIcon fontSize="small" />
-                                    </IconButton>
-                                </Stack>
-                            </Paper>
-                        </Grid>
-                    )}
-
-                    <Grid
-                        item
-                        container
-                        xs={showSearchBox ? 6 : 12}
-                        justifyContent="flex-end"
-                    >
-                        {showButton && (
-                            <Button
-                                variant="contained"
-                                sx={{ width: showSearchBox ? "70%" : null }}
-                                onClick={() => handleButtonAction()}
-                            >
-                                {buttonTitle}
-                            </Button>
-                        )}
+                                    <SearchIcon fontSize="small" />
+                                </IconButton>
+                            }
+                        />
                     </Grid>
-                </Grid>
+                )}
+                {showButton && (
+                    <Grid item xs={4}>
+                        <Button
+                            variant="contained"
+                            sx={{ height: "48px" }}
+                            onClick={() => handleButtonAction()}
+                        >
+                            {buttonTitle}
+                        </Button>
+                    </Grid>
+                )}
             </Grid>
         </Grid>
     );

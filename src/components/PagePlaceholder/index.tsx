@@ -32,7 +32,7 @@ const PagePlaceholder = ({
 }: PagePlaceholderProps) => {
     const _isDarkmode = useRecoilValue(isDarkmode);
     return (
-        <Paper>
+        <Paper sx={{ height: "inherit" }}>
             <Stack
                 spacing={4}
                 sx={{

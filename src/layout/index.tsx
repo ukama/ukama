@@ -1,7 +1,7 @@
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import { useState } from "react";
-import { Box, Container } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { isSkeltonLoading, pageName } from "../recoil";
 import { useRecoilState, useRecoilValue } from "recoil";
 
@@ -34,8 +34,8 @@ const Layout = (props: any) => {
                 handleDrawerToggle={handleDrawerToggle}
             />
 
-            <Container
-                maxWidth={false}
+            <Stack
+                spacing={4}
                 sx={{
                     width: "100%",
                     pl: { xs: 2, md: 3, xl: 5 },
@@ -50,7 +50,7 @@ const Layout = (props: any) => {
                 />
 
                 {children}
-            </Container>
+            </Stack>
         </Box>
     );
 };
