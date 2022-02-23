@@ -2,14 +2,14 @@ PROJECT := $(notdir $(CURDIR))
 BUILDSATICLIB = libusys.a
 BUILDDYNAMICLIB = $(BUILDDIR)/libusys.so
 PLATFORMLIBS = $(BUILDDYNAMICLIB)
-
+TESTEXEC = $(BUILDDIR)/$(PROJECT)
 
 VERSION = v0.0.1
 
 SRCDIRS := sys/src log/src
 INCDIRS := sys/inc log/inc
 BUILDDIR := build
-
+TESTDIRS := $(SRCDIRS) test
 # Source extensions
 SRCEXTS := c
 
@@ -20,6 +20,9 @@ HDREXTS := h
 SOURCES := $(foreach dir, $(SRCDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
 OBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(SOURCES))))
 INCLUDES := $(foreach dir, $(INCDIRS), $(foreach ext, $(HDREXTS), $(wildcard $(dir)/*.$(ext))))
+
+TESTSRCS := $(foreach dir, $(TESTDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
+TESTOBJS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(TESTSRCS))))
 
 $(info Sources :: $(SOURCES))
 $(info Includes:: $(INCLUDES))
@@ -64,7 +67,7 @@ $(BUILDDIR)/%.d: ;
 .PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug container $(PLATFORMLIBS) 
 
 # Main target for building
-all: $(PLATFORMLIBS)
+all: $(PLATFORMLIBS) $(TESTEXEC)
 	@echo Done.
 
 # Print commands
@@ -124,7 +127,18 @@ include $(wildcard $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%
 $(PLATFORMLIBS): $(OBJECTS)
 	@echo "Building dynamic lib" 
 	$(CC) -o $@ $^ $(LDPATH) $(LDLIBS) -shared
-		
+
+
+# Compile binary if necessary, checks for modified files first
+$(TESTEXEC):$(TESTOBJS) $(PLATFORMLIBS) $(MAKEFILE) $@
+ifeq ($(filter-out %.c,$(TESTSRCS)),$(blank))
+	@$(CC) -o $@ $(TESTOBJS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS)
+	@echo CC: $@ 
+else
+	$(CXX) -o $@ $(TESTOBJS) $(CXXFLAGS) $(LDFLAGS)
+	@echo CXX: $@
+endif
+	
 # Clean all build files
 clean:
 	rm -rf $(PLATFORMLIBS)
