@@ -14,7 +14,7 @@
 extern "C" {
 #endif
 
-#include "sys_types.h"
+#include "usys_types.h"
 
 /**
  * @fn     char usys_strtok*(char*, const char*)

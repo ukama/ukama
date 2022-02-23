@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#include "sys_types.h"
+#include "usys_types.h"
 
 /**
  * @fn     int usys_thread_attr_init()
