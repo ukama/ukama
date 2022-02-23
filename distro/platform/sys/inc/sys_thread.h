@@ -16,17 +16,6 @@ extern "C" {
 #include "sys_types.h"
 
 /**
- * @fn    void usys_thread_init(int)
- * @brief This function initializes the threads system.
- *        It should be called as the first function in the application's main program function.
- *
- * @param preemptible
- */
-static inline void  usys_thread_init(int preemptible) {
-    pthread_init(preemptible);
-}
-
-/**
  * @fn     int usys_thread_attr_init()
  * @brief  initializes the thread
  *         attributes object pointed to by attr with default attribute
@@ -36,8 +25,8 @@ static inline void  usys_thread_init(int preemptible) {
  * @return On success, these functions return 0; on error, they return a
  *         nonzero error number.
  */
-static int usys_thread_attr_init(USysThreadAttr *attr) {
-    return pthread_attr_init(&attr);
+static inline int usys_thread_attr_init(USysThreadAttr *attr) {
+    return pthread_attr_init(attr);
 }
 
 /**
@@ -47,7 +36,7 @@ static int usys_thread_attr_init(USysThreadAttr *attr) {
  * @return On success, these functions return 0; on error, they return a
  *         nonzero error number.
  */
-static int usys_thread_attr_destroy(USysThreadAttr *attr) {
+static inline int usys_thread_attr_destroy(USysThreadAttr *attr) {
     return pthread_attr_destroy(attr);
 }
 
@@ -154,7 +143,7 @@ static inline int usys_thread_setschedparam(USysThreadId thread, int policy,
  * @return On success, these functions return 0; on error, they return a
  *         nonzero error number.
  */
-static inline int usys_thread_attr_setstacksize(USysThreadId *attr, size_t stacksize) {
+static inline int usys_thread_attr_setstacksize(USysThreadAttr *attr, size_t stacksize) {
     return pthread_attr_setstacksize(attr, stacksize);
 }
 

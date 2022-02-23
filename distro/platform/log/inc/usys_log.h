@@ -63,7 +63,7 @@ static inline void usys_log_set_level(int level) {
  *
  * @param enable
  */
-void usys_log_set_quiet(bool enable){
+static inline void usys_log_set_quiet(bool enable){
     log_set_quiet(enable);
 }
 
