@@ -15,10 +15,11 @@ import {
     NodeRFDto,
     TemperatureMetricsDto,
     MemoryUsageMetricsDto,
+    MetricsCpuTRXDto,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
-import { HeaderType, PaginationDto } from "../../common/types";
+import { HeaderType, MetricsInputDTO, PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
@@ -181,5 +182,18 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
+    };
+    metricsCpuTRX = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricsCpuTRXDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/cpu`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricsCpuTRXDto(data, res.data);
     };
 }

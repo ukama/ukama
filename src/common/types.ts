@@ -80,3 +80,21 @@ export class HeaderType {
     @IsOptional()
     Authorization?: string;
 }
+
+@InputType()
+export class MetricsInputDTO {
+    @Field()
+    orgId: string;
+
+    @Field()
+    nodeId: string;
+
+    @Field()
+    from: number;
+
+    @Field()
+    to: number;
+
+    @Field()
+    step: number;
+}

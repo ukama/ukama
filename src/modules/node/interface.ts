@@ -1,4 +1,4 @@
-import { HeaderType, PaginationDto } from "../../common/types";
+import { HeaderType, MetricsInputDTO, PaginationDto } from "../../common/types";
 import { NetworkDto } from "../network/types";
 import { DeactivateResponse } from "../user/types";
 import {
@@ -14,6 +14,7 @@ import {
     NodeDetailDto,
     NodeMetaDataDto,
     NodePhysicalHealthDto,
+    MetricsCpuTRXDto,
 } from "./types";
 
 export interface INodeService {
@@ -34,4 +35,5 @@ export interface INodeService {
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
+    dtoToMetricsCpuTRXDto(data: MetricsInputDTO, res: any): MetricsCpuTRXDto[];
 }
