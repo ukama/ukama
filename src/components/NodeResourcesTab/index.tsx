@@ -58,7 +58,7 @@ const NodeResourcesTab = ({ loading }: INodeResourcesTab) => {
                     nameInfo={TooltipsText.POWER}
                 />
             </NodeStatsContainer>
-            <Paper sx={{ padding: "28px 18px", width: "100%" }}>
+            <Paper sx={{ p: 3, width: "100%" }}>
                 <Typography variant="h6">Resources</Typography>
                 <Stack spacing={6} pt={2}>
                     <StackedAreaChart hasData={true} title={"Memory-TRX"} />

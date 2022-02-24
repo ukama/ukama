@@ -1,4 +1,5 @@
 import { colors } from "../theme";
+import { hexToRGB } from "../utils";
 import { makeStyles } from "@mui/styles";
 import { Box, styled, Link, Paper, Skeleton } from "@mui/material";
 
@@ -102,9 +103,23 @@ const FullscreenContainer = styled(Box)(() => ({
     height: "100%",
 }));
 
+const CardContainer = styled(Box)(props => ({
+    // width: "214px",
+    // height: "206px",
+    display: "flex",
+    width: "inherit",
+    height: "inherit",
+    alignItems: "center",
+    borderRadius: "10px",
+    justifyContent: "center",
+    padding: "15px 18px 8px 18px",
+    border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.3)}`,
+}));
+
 export {
     LinkStyle,
     RoundedCard,
+    CardContainer,
     globalUseStyles,
     CenterContainer,
     MessageContainer,

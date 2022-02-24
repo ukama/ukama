@@ -1,100 +1,65 @@
-import {
-    Button,
-    Grid,
-    LinearProgress,
-    Stack,
-    Paper,
-    Typography,
-} from "@mui/material";
 import { colors } from "../../theme";
+import { Grid, Button, Typography, LinearProgress, Stack } from "@mui/material";
+
 type UserCardProps = {
-    userDetails?: any;
-    children?: any;
+    id: string;
+    name: string;
+    dataPlan: number;
+    dataUsage: number;
+    eSimNumber: string;
     handleMoreUserdetails?: any;
 };
-const UserCard = ({ userDetails, handleMoreUserdetails }: UserCardProps) => {
+
+const UserCard = ({
+    id,
+    name,
+    dataPlan,
+    dataUsage,
+    eSimNumber,
+    handleMoreUserdetails,
+}: UserCardProps) => {
     return (
-        <Grid container spacing={3} justifyContent="center" alignItems="center">
-            {userDetails?.map(
-                ({ id, name, eSimNumber, dataPlan, dataUsage }: any) => (
-                    <Grid item xs={12} md={6} lg={3} key={id}>
-                        <Paper elevation={2} sx={{ p: 2 }}>
-                            <Grid container item spacing={1} direction="column">
-                                <Grid item>
-                                    <Typography
-                                        variant="body2"
-                                        color="textSecondary"
-                                    >
-                                        {eSimNumber}
-                                    </Typography>
-                                </Grid>
-                                <Grid item>
-                                    <Typography variant="h5">{name}</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid item container spacing={2} sx={{ mt: 1 }}>
-                                <Grid
-                                    item
-                                    xs={12}
-                                    md={6}
-                                    lg={3}
-                                    container
-                                    justifyContent="flex-start"
-                                >
-                                    <Stack direction="row" spacing={1 / 2}>
-                                        <Typography
-                                            variant="h5"
-                                            sx={{
-                                                position: "relative",
-                                                bottom: "9px",
-                                            }}
-                                        >
-                                            {dataPlan}
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            GB
-                                        </Typography>
-                                    </Stack>
-                                </Grid>
-                                <Grid
-                                    item
-                                    container
-                                    justifyContent="flex-end"
-                                    xs={12}
-                                    md={6}
-                                    lg={9}
-                                >
-                                    <Typography variant="body2">
-                                        {dataUsage} GB free data left
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container spacing={2} direction="column">
-                                <Grid item>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={dataPlan - dataUsage}
-                                        sx={{
-                                            height: "8px",
-                                            backgroundColor: colors.silver,
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item>
-                                    <Button
-                                        variant="text"
-                                        onClick={() =>
-                                            handleMoreUserdetails(id)
-                                        }
-                                    >
-                                        VIEW MORE
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </Grid>
-                )
-            )}
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <Typography variant="body2" color="textSecondary">
+                    {eSimNumber}
+                </Typography>
+            </Grid>
+            <Grid item xs={12}>
+                <Typography variant="h5">{name}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+                <Stack direction="row" spacing={"4px"} alignItems="baseline">
+                    <Typography variant="h5">{`${dataPlan}`}</Typography>
+                    <Typography variant="body2" textAlign={"end"}>
+                        GB
+                    </Typography>
+                </Stack>
+            </Grid>
+            <Grid item xs={6} alignSelf="end" mb={"2px"}>
+                <Typography variant="body2" textAlign={"end"}>
+                    {`${dataUsage} GB free data left`}
+                </Typography>
+            </Grid>
+            <Grid item xs={12}>
+                <LinearProgress
+                    variant="determinate"
+                    value={dataPlan - dataUsage}
+                    sx={{
+                        height: "8px",
+                        borderRadius: "2px",
+                        backgroundColor: colors.silver,
+                    }}
+                />
+            </Grid>
+            <Grid item xs={12}>
+                <Button
+                    variant="text"
+                    onClick={() => handleMoreUserdetails(id)}
+                >
+                    VIEW MORE
+                </Button>
+            </Grid>
         </Grid>
     );
 };

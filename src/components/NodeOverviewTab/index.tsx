@@ -96,7 +96,7 @@ const NodeOverviewTab = ({
                     />
                 )}
                 {selected === 1 && (
-                    <Paper sx={{ padding: "28px 18px" }}>
+                    <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Node Health</Typography>
                         <Stack spacing={6} pt={2}>
                             <LineChart
@@ -112,7 +112,7 @@ const NodeOverviewTab = ({
                     </Paper>
                 )}
                 {selected === 2 && (
-                    <Paper sx={{ padding: "28px 18px" }}>
+                    <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Subscribers</Typography>
                         <Stack spacing={6} pt={2}>
                             <LineChart hasData={true} title={"Attached"} />

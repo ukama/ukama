@@ -20,7 +20,7 @@ const GraphTitleWrapper = ({
     return (
         <Stack spacing={2}>
             {title && (
-                <Typography variant={variant} pl={2} fontWeight={500}>
+                <Typography variant={variant} fontWeight={500}>
                     {title}
                 </Typography>
             )}

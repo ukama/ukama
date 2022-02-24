@@ -33,13 +33,13 @@ const NodeSoftwareTab = ({
         <LoadingWrapper isLoading={loading} height={400}>
             <Paper
                 sx={{
-                    height: "100%",
                     p: 3,
+                    height: "100%",
                     borderRadius: "4px",
                     marginBottom: 2,
                 }}
             >
-                <Typography variant="h6" sx={{ marginBottom: 4 }}>
+                <Typography variant="h6" sx={{ marginBottom: 3 }}>
                     Change Logs
                 </Typography>
                 <SimpleDataTable columns={NodeAppsColumns} dataset={NodeLogs} />
