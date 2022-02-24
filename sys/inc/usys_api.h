@@ -376,6 +376,35 @@ static inline double usys_atan(double num) {
     return atan(num);
 }
 
+/**
+ * @fn     uint32_t sleep(uint32_t)
+ * @brief  causes the calling thread to sleep either until the
+ *         number of real-time seconds specified in seconds have elapsed or
+ *         until a signal arrives which is not ignored.
+ *
+ * @param  sec
+ * @return Zero if the requested time has elapsed, or the number of seconds
+ *         left to sleep, if the call was interrupted by a signal handler.
+ */
+static inline uint32_t usys_sleep(uint32_t sec) {
+    return sleep(sec);
+}
+
+/**
+ * @fn     int usleep(uint32_t)
+ * @brief  The usleep() function suspends execution of the calling thread
+ *         for (at least) usec microseconds.  The sleep may be lengthened
+ *         slightly by any system activity or by the time spent processing
+ *         the call or by the granularity of system timers.
+ *
+ * @param  usec
+ * @return The usleep() function returns 0 on success.  On error, -1 is
+ *         returned, with errno set to indicate the error.
+ */
+static inline int usys_usleep(useconds_t usec) {
+    return usleep(usec);
+}
+
 #ifdef __cplusplus
 }
 #endif
