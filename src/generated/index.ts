@@ -331,6 +331,21 @@ export type Meta = {
     size: Scalars["Float"];
 };
 
+export type MetricsCpuTrxDto = {
+    __typename?: "MetricsCpuTRXDto";
+    id?: Maybe<Scalars["String"]>;
+    timestamp: Scalars["Float"];
+    usage: Scalars["Float"];
+};
+
+export type MetricsInputDto = {
+    from: Scalars["Float"];
+    nodeId: Scalars["String"];
+    orgId: Scalars["String"];
+    step: Scalars["Float"];
+    to: Scalars["Float"];
+};
+
 export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
@@ -470,6 +485,25 @@ export enum Org_Node_State {
     Undefined = "UNDEFINED",
 }
 
+export type OrgMetricDto = {
+    __typename?: "OrgMetricDto";
+    nodeId: Scalars["String"];
+    receive: Scalars["String"];
+    tenant_id: Scalars["String"];
+};
+
+export type OrgMetricResponse = {
+    __typename?: "OrgMetricResponse";
+    metric: OrgMetricDto;
+    values: Array<OrgMetricValueDto>;
+};
+
+export type OrgMetricValueDto = {
+    __typename?: "OrgMetricValueDto";
+    x: Scalars["Float"];
+    y: Scalars["String"];
+};
+
 export type OrgNodeDto = {
     __typename?: "OrgNodeDto";
     nodeId: Scalars["String"];
@@ -532,6 +566,7 @@ export type Query = {
     getEsims: Array<EsimDto>;
     getIOMetrics: Array<IoMetricsDto>;
     getMemoryUsageMetrics: Array<MemoryUsageMetricsDto>;
+    getMetricsCpuTRX: Array<MetricsCpuTrxDto>;
     getNetwork: NetworkDto;
     getNodeDetails: NodeDetailDto;
     getNodeMetaData: NodeMetaDataDto;
@@ -575,6 +610,10 @@ export type QueryGetIoMetricsArgs = {
 
 export type QueryGetMemoryUsageMetricsArgs = {
     filter: Graph_Filter;
+};
+
+export type QueryGetMetricsCpuTrxArgs = {
+    data: MetricsInputDto;
 };
 
 export type QueryGetNetworkArgs = {
@@ -1249,6 +1288,20 @@ export type GetIoMetricsQQuery = {
         id?: string | null | undefined;
         input: number;
         output: number;
+        timestamp: number;
+    }>;
+};
+
+export type GetMetricsCpuTrxQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsCpuTrxQuery = {
+    __typename?: "Query";
+    getMetricsCpuTRX: Array<{
+        __typename?: "MetricsCpuTRXDto";
+        id?: string | null | undefined;
+        usage: number;
         timestamp: number;
     }>;
 };
@@ -3116,4 +3169,64 @@ export type GetIoMetricsQLazyQueryHookResult = ReturnType<
 export type GetIoMetricsQQueryResult = Apollo.QueryResult<
     GetIoMetricsQQuery,
     GetIoMetricsQQueryVariables
+>;
+export const GetMetricsCpuTrxDocument = gql`
+    query getMetricsCpuTRX($data: MetricsInputDTO!) {
+        getMetricsCpuTRX(data: $data) {
+            id
+            usage
+            timestamp
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsCpuTrxQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsCpuTrxQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsCpuTrxQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsCpuTrxQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsCpuTrxQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >(GetMetricsCpuTrxDocument, options);
+}
+export function useGetMetricsCpuTrxLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >(GetMetricsCpuTrxDocument, options);
+}
+export type GetMetricsCpuTrxQueryHookResult = ReturnType<
+    typeof useGetMetricsCpuTrxQuery
+>;
+export type GetMetricsCpuTrxLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsCpuTrxLazyQuery
+>;
+export type GetMetricsCpuTrxQueryResult = Apollo.QueryResult<
+    GetMetricsCpuTrxQuery,
+    GetMetricsCpuTrxQueryVariables
 >;

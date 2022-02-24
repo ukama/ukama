@@ -1,5 +1,6 @@
 import {
     NodeDto,
+    useGetMetricsCpuTrxQuery,
     useGetNodeDetailsQuery,
     useGetNodesByOrgQuery,
 } from "../../generated";
@@ -18,13 +19,13 @@ import {
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
-import { parseObjectInNameValue } from "../../utils";
+import { getGraphTimespan, parseObjectInNameValue } from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 import {
     NodePageTabs,
-    NODE_ACTIONS,
     NodeApps,
     NodeAppLogs,
+    NODE_ACTIONS,
 } from "../../constants";
 
 const Nodes = () => {
@@ -32,6 +33,17 @@ const Nodes = () => {
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
+    const [cpuTrxLastTimespan, setCpuTrxLastTimespan] = useState<number | null>(
+        null
+    );
+
+    const getMetricsPayload = (orgId: string, nodeId: string) => {
+        return {
+            orgId: orgId,
+            nodeId: nodeId,
+            ...getGraphTimespan(cpuTrxLastTimespan),
+        };
+    };
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: "1" || "" },
@@ -43,6 +55,21 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+
+    const { data: nodeCpuTrxRes } = useGetMetricsCpuTrxQuery({
+        variables: {
+            data: getMetricsPayload(
+                "a32485e4-d842-45da-bf3e-798889c68ad0",
+                "uk-test36-hnode-a1-30df"
+            ),
+        },
+        // pollInterval: 10000, //120000,
+        onCompleted: res => {
+            setCpuTrxLastTimespan(
+                res.getMetricsCpuTRX[res.getMetricsCpuTRX.length - 1].timestamp
+            );
+        },
+    });
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);

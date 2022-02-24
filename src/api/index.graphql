@@ -321,3 +321,11 @@ query getIOMetricsQ($filter: GRAPH_FILTER!) {
         timestamp
     }
 }
+
+query getMetricsCpuTRX($data: MetricsInputDTO!) {
+    getMetricsCpuTRX(data: $data) {
+        id
+        usage
+        timestamp
+    }
+}

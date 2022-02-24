@@ -86,10 +86,20 @@ const hexToRGB = (hex: string, alpha: number): string => {
     return `rgba(${r}, ${g}, ${b})`;
 };
 
+const getGraphTimespan = (last?: number | null) => {
+    const current = Math.floor(new Date().getTime() / 1000);
+    return {
+        to: current,
+        from: last ? last + 1 : current - 300000, //5 mint
+        step: 1000, // 1 sec step
+    };
+};
+
 export {
     hexToRGB,
     getColorByType,
     getStatusByType,
+    getGraphTimespan,
     getTitleFromPath,
     uniqueObjectsArray,
     parseObjectInNameValue,

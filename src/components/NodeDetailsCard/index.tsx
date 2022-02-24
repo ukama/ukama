@@ -48,7 +48,7 @@ const NodeDetailsCard = ({
                             )}
                         </Stack>
                     </HorizontalContainerJustify>
-                    <DeviceModalView />
+                    {/* <DeviceModalView /> */}
                 </Stack>
             </Paper>
         </LoadingWrapper>
