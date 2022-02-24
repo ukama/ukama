@@ -7,24 +7,23 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "usys_api.h"
-#include "usys_error.h"
-#include "usys_log.h"
-#include "usys_string.h"
-#include "usys_sync.h"
-#include "usys_thread.h"
-#include "usys_types.h"
 #include "usys_mem.h"
 
-int main() {
-    usys_log_set_level(LOG_TRACE);
-
-    usys_log_info("Starting test app for platform.");
-
-    return 0;
+void* usys_malloc(size_t size) {
+    return malloc(size);
 }
 
+void usys_free(void* ptr) {
+    free(ptr);
+}
 
+void* usys_realloc( void *ptr, size_t new_size ) {
+    return realloc(ptr, new_size);
+}
+
+void* usys_calloc( size_t num, size_t size ) {
+    return calloc(num, size);
+}
 
 
 
