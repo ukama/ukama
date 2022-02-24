@@ -280,3 +280,33 @@ export class MetricsCpuTRXDto {
     @Field()
     timestamp: number;
 }
+
+@ObjectType()
+export class OrgMetricResponse {
+    @Field(() => OrgMetricDto)
+    metric: OrgMetricDto;
+
+    @Field(() => [OrgMetricValueDto])
+    values: OrgMetricValueDto[];
+}
+
+@ObjectType()
+export class OrgMetricDto {
+    @Field()
+    nodeId: string;
+
+    @Field()
+    receive: string;
+
+    @Field()
+    tenant_id: string;
+}
+
+@ObjectType()
+export class OrgMetricValueDto {
+    @Field()
+    x: number;
+
+    @Field()
+    y: string;
+}

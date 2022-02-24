@@ -7,6 +7,7 @@ import {
     OrgNodeResponseDto,
     NodeDto,
     MetricsCpuTRXDto,
+    OrgMetricResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 import { MetricsInputDTO } from "../../common/types";
@@ -52,20 +53,16 @@ class NodeMapper implements INodeMapper {
         return { orgName, nodes, activeNodes, totalNodes };
     };
 
-    dtoToMetricsCpuTRXDto = (
-        res: any,
-        data: MetricsInputDTO
-    ): MetricsCpuTRXDto[] => {
+    dtoToMetricsCpuTRXDto = (res: OrgMetricResponse[]): MetricsCpuTRXDto[] => {
         const metrics: MetricsCpuTRXDto[] = [];
-        res.result.map((metric: any) =>
-            metric.values.map((item: any, index: number) =>
+        if (res.length > 0)
+            res[0].values.map((item: any) =>
                 metrics.push({
                     id: `${item[0]}`,
                     timestamp: item[0],
                     usage: item[1],
                 })
-            )
-        );
+            );
         return metrics;
     };
 
