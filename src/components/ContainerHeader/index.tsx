@@ -60,7 +60,7 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid container item xs={12} md={4} spacing={2}>
+            <Grid container item xs={12} md={4} spacing={1}>
                 {showSearchBox && (
                     <Grid item xs={8}>
                         <StyledInputBase
@@ -89,7 +89,7 @@ const ContainerHeader = ({
                     </Grid>
                 )}
                 {showButton && (
-                    <Grid item xs={4}>
+                    <Grid item xs={4} justifyContent="flex-end" display="flex">
                         <Button
                             variant="contained"
                             sx={{ height: "48px" }}
