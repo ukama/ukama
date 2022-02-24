@@ -26,8 +26,7 @@ extern "C" {
  * @param  mode
  * @return On success a nonnegative file descriptor and On failure, returns -1
  */
-static inline int usys_shm_open(const char* name, int oflag, mode_t mode)
-{
+static inline int usys_shm_open(const char* name, int oflag, mode_t mode) {
     return shm_open(name, oflag, mode);
 }
 
@@ -38,8 +37,7 @@ static inline int usys_shm_open(const char* name, int oflag, mode_t mode)
  * @param  name
  * @return 0 on success, or -1 on error.
  */
-static inline int usys_shm_unlink(const char* name)
-{
+static inline int usys_shm_unlink(const char* name) {
     return shm_unlink(name);
 }
 
@@ -52,8 +50,7 @@ static inline int usys_shm_unlink(const char* name)
  * @param  length
  * @return On success, zero is returned. On error, -1 is returned.
  */
-static inline int usys_ftruncate(int fd, off_t length)
-{
+static inline int usys_ftruncate(int fd, off_t length) {
     return ftruncate(fd, length);
 }
 
@@ -71,8 +68,7 @@ static inline int usys_ftruncate(int fd, off_t length)
  * @return On success returns a pointer to the mapped area.
  *         Onerror, the value MAP_FAILED (that is, (void *) -1) is returned
  */
-static inline void* usys_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
-{
+static inline void* usys_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
     return mmap(addr, length, prot, flags, fd, offset);
 }
 
@@ -86,8 +82,7 @@ static inline void* usys_mmap(void* addr, size_t length, int prot, int flags, in
  * @param  length
  * @return On success, zero is returned. On error, -1 is returned.
  */
-static inline int usys_munmap(void* addr, size_t length)
-{
+static inline int usys_munmap(void* addr, size_t length) {
     return munmap(addr, length);
 }
 

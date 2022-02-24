@@ -7,13 +7,13 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-
+#include "usys_api.h"
 #include "usys_error.h"
+#include "usys_log.h"
 #include "usys_string.h"
 #include "usys_sync.h"
 #include "usys_thread.h"
 #include "usys_types.h"
-#include "usys_log.h"
 
 int main() {
     usys_log_set_level(LOG_TRACE);
