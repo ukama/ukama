@@ -6,10 +6,11 @@ TESTEXEC = $(BUILDDIR)/$(PROJECT)
 
 VERSION = v0.0.1
 
+UNITYROOT := ../tools/unity
 SRCDIRS := sys/src log/src
-INCDIRS := sys/inc log/inc
+INCDIRS := sys/inc log/inc $(UNITYROOT)/src
 BUILDDIR := build
-TESTDIRS := $(SRCDIRS) test
+TESTDIRS := $(SRCDIRS) test $(UNITYROOT)/src
 # Source extensions
 SRCEXTS := c
 
