@@ -43,3 +43,6 @@
 [submodule "distro/vendor/iproute2"]
 	path = distro/vendor/iproute2
 	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+[submodule "distro/tools/unity"]
+	path = distro/tools/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
