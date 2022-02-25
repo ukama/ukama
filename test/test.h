@@ -19,5 +19,6 @@ void tearDown(void);
 void test_usys_fopen_should_return_file_pointer(void);
 void test_usys_fopen_should_return_null(void);
 void test_usys_fopen_create_new_file(void);
+void test_usys_foperations(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */
