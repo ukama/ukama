@@ -19,6 +19,9 @@ void tearDown(void);
 void test_usys_fopen_should_return_file_pointer(void);
 void test_usys_fopen_should_return_null(void);
 void test_usys_fopen_create_new_file(void);
-void test_usys_foperations(void);
+void test_usys_fread_fwrite_fseek(void);
+void test_usys_fgets(void);
+void test_usys_threads_with_mutex(void);
+void test_usys_threads_with_semaphore(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */

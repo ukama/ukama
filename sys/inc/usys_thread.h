@@ -82,7 +82,7 @@ static inline int usys_thread_detach(USysThreadId thread){
  * @return On success, pthread_join() returns 0; on error, it returns an
  *         error number.
  */
-int usys_thread_join(USysThreadId thread, void **status){
+static inline int usys_thread_join(USysThreadId thread, void **status){
     return pthread_join(thread, status);
 }
 
