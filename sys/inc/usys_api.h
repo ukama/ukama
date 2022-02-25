@@ -65,6 +65,19 @@ static inline int usys_fwrite(const void* ptr, size_t size, size_t nmemb, FILE *
     return fwrite(ptr, size, nmemb, stream);
 }
 
+/**
+ * @fn     int usys_fseek(FILE*, long int, int)
+ * @brief  Sets the position indicator associated with the stream to a new position.
+ *
+ * @param  stream
+ * @param  offset
+ * @param  origin
+ * @return On Success, the function returns zero.
+ *         On Failure, it returns non-zero value.
+ */
+static inline int usys_fseek(FILE * stream, long int offset, int origin) {
+    return fseek(stream, offset, origin);
+}
 
 /**
  * @fn     char usys_fgets*(char*, int, FILE*)
