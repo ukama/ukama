@@ -29,7 +29,10 @@ int main() {
     RUN_TEST(test_usys_fopen_should_return_file_pointer);
     RUN_TEST(test_usys_fopen_should_return_null);
     RUN_TEST(test_usys_fopen_create_new_file);
-    RUN_TEST(test_usys_foperations);
+    RUN_TEST(test_usys_fread_fwrite_fseek);
+    RUN_TEST(test_usys_fgets);
+    RUN_TEST(test_usys_threads_with_mutex);
+    RUN_TEST(test_usys_threads_with_semaphore);
     return UNITY_END();
 }
 
