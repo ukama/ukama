@@ -17,12 +17,24 @@
 #include "usys_sync.h"
 #include "usys_thread.h"
 
+extern const char *usysErrorCodes[];
+
 void setUp(void) {
     // set stuff up here
 }
 
 void tearDown(void) {
     // clean stuff up here
+}
+
+/* Test error codes */
+void test_usys_errors(){
+
+    USysErrorCodeIdx idx= USYS_BASE_ERROR_CODE;
+    for (;idx < ERR_MAX_ERROR_CODE; idx++) {
+        usys_log_trace("Error Code %d Error string %s", idx, usys_error(idx));
+        TEST_ASSERT_EQUAL_STRING(usysErrorCodes[idx-USYS_BASE_ERROR_CODE], usys_error(idx));
+    }
 }
 
 /* File Operations test */
@@ -88,6 +100,9 @@ void *thread_function_with_mutex(void* arg) {
     USysError err;
     int *tstat = (int*)arg;
 
+    USysThreadId tmpid = usys_thread_id();
+    usys_log_trace("Thread id %ld", tmpid);
+
     err = usys_mutex_lock(&mutex);
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
@@ -146,6 +161,9 @@ USysSem sem;
 void *thread_function_with_semaphore(void* arg) {
     USysError err;
     int *tstat = (int*)arg;
+
+    USysThreadId tmpid = usys_thread_id();
+    usys_log_trace("Thread id %ld", tmpid);
 
     err = usys_sem_wait(&sem);
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));

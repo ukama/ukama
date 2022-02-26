@@ -16,6 +16,7 @@ extern "C" {
 
 void setUp(void);
 void tearDown(void);
+void test_usys_errors(void);
 void test_usys_fopen_should_return_file_pointer(void);
 void test_usys_fopen_should_return_null(void);
 void test_usys_fopen_create_new_file(void);
