@@ -26,6 +26,7 @@ int main() {
     usys_log_info("Starting test app for platform.");
 
     UNITY_BEGIN();
+    RUN_TEST(test_usys_errors);
     RUN_TEST(test_usys_fopen_should_return_file_pointer);
     RUN_TEST(test_usys_fopen_should_return_null);
     RUN_TEST(test_usys_fopen_create_new_file);
