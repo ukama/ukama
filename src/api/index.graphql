@@ -324,8 +324,7 @@ query getIOMetricsQ($filter: GRAPH_FILTER!) {
 
 query getMetricsCpuTRX($data: MetricsInputDTO!) {
     getMetricsCpuTRX(data: $data) {
-        id
-        usage
-        timestamp
+        y
+        x
     }
 }

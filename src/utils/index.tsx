@@ -86,20 +86,24 @@ const hexToRGB = (hex: string, alpha: number): string => {
     return `rgba(${r}, ${g}, ${b})`;
 };
 
-const getGraphTimespan = (last?: number | null) => {
-    const current = Math.floor(new Date().getTime() / 1000);
-    return {
-        to: current,
-        from: last ? last + 1 : current - 300000, //5 mint
-        step: 1000, // 1 sec step
-    };
+const random = (min: number, max: number) => Math.random() * (max - min) + min;
+
+const getRandomData = () => {
+    const data = [];
+    for (let i = 0; i < 10; i++) {
+        data.push({
+            x: Date.now() / 1000 - (10 - i),
+            y: random(-2, 2),
+        });
+    }
+    return data;
 };
 
 export {
     hexToRGB,
+    getRandomData,
     getColorByType,
     getStatusByType,
-    getGraphTimespan,
     getTitleFromPath,
     uniqueObjectsArray,
     parseObjectInNameValue,

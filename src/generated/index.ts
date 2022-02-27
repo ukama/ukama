@@ -11,7 +11,7 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
     [SubKey in K]: Maybe<T[SubKey]>;
 };
-const defaultOptions = {};
+const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
     ID: string;
@@ -333,9 +333,8 @@ export type Meta = {
 
 export type MetricsCpuTrxDto = {
     __typename?: "MetricsCpuTRXDto";
-    id?: Maybe<Scalars["String"]>;
-    timestamp: Scalars["Float"];
-    usage: Scalars["Float"];
+    x: Scalars["Float"];
+    y: Scalars["Float"];
 };
 
 export type MetricsInputDto = {
@@ -850,11 +849,11 @@ export type GetAlertsQuery = {
         };
         alerts: Array<{
             __typename?: "AlertDto";
-            id?: string | null | undefined;
+            id?: string | null;
             type: Alert_Type;
-            title?: string | null | undefined;
-            description?: string | null | undefined;
-            alertDate?: any | null | undefined;
+            title?: string | null;
+            description?: string | null;
+            alertDate?: any | null;
         }>;
     };
 };
@@ -867,11 +866,11 @@ export type GetLatestAlertsSubscription = {
     __typename?: "Subscription";
     getAlerts: {
         __typename?: "AlertDto";
-        id?: string | null | undefined;
+        id?: string | null;
         type: Alert_Type;
-        title?: string | null | undefined;
-        description?: string | null | undefined;
-        alertDate?: any | null | undefined;
+        title?: string | null;
+        description?: string | null;
+        alertDate?: any | null;
     };
 };
 
@@ -928,11 +927,11 @@ export type MyUsersQuery = {
             __typename?: "GetUserDto";
             id: string;
             name: string;
-            email?: string | null | undefined;
+            email?: string | null;
             eSimNumber: string;
             dataPlan: number;
             dataUsage: number;
-            phone?: string | null | undefined;
+            phone?: string | null;
             roaming: boolean;
             iccid: string;
             status: Get_User_Status_Type;
@@ -953,8 +952,8 @@ export type GetUserQuery = {
         name: string;
         eSimNumber: string;
         iccid: string;
-        email?: string | null | undefined;
-        phone?: string | null | undefined;
+        email?: string | null;
+        phone?: string | null;
         roaming: boolean;
         dataPlan: number;
         dataUsage: number;
@@ -1000,7 +999,7 @@ export type GetNetworkQuery = {
         __typename?: "NetworkDto";
         id: string;
         status: Network_Status;
-        description?: string | null | undefined;
+        description?: string | null;
     };
 };
 
@@ -1014,7 +1013,7 @@ export type GetLatestNetworkSubscription = {
         __typename?: "NetworkDto";
         id: string;
         status: Network_Status;
-        description?: string | null | undefined;
+        description?: string | null;
     };
 };
 
@@ -1130,7 +1129,7 @@ export type GetUsersAttachedMetricsSSubscription = {
     __typename?: "Subscription";
     getUsersAttachedMetrics: {
         __typename?: "UsersAttachedMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         users: number;
         timestamp: number;
     };
@@ -1144,7 +1143,7 @@ export type GetUsersAttachedMetricsQQuery = {
     __typename?: "Query";
     getUsersAttachedMetrics: Array<{
         __typename?: "UsersAttachedMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         users: number;
         timestamp: number;
     }>;
@@ -1158,7 +1157,7 @@ export type GetThroughputMetricsSSubscription = {
     __typename?: "Subscription";
     getThroughputMetrics: {
         __typename?: "ThroughputMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         amount: number;
         timestamp: number;
     };
@@ -1172,7 +1171,7 @@ export type GetThroughputMetricsQQuery = {
     __typename?: "Query";
     getThroughputMetrics: Array<{
         __typename?: "ThroughputMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         amount: number;
         timestamp: number;
     }>;
@@ -1186,7 +1185,7 @@ export type GetTemperatureMetricsSSubscription = {
     __typename?: "Subscription";
     getTemperatureMetrics: {
         __typename?: "TemperatureMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         temperature: number;
         timestamp: number;
     };
@@ -1200,7 +1199,7 @@ export type GetTemperatureMetricsQQuery = {
     __typename?: "Query";
     getTemperatureMetrics: Array<{
         __typename?: "TemperatureMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         temperature: number;
         timestamp: number;
     }>;
@@ -1214,7 +1213,7 @@ export type GetCpuUsageMetricsSSubscription = {
     __typename?: "Subscription";
     getCpuUsageMetrics: {
         __typename?: "CpuUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     };
@@ -1228,7 +1227,7 @@ export type GetCpuUsageMetricsQQuery = {
     __typename?: "Query";
     getCpuUsageMetrics: Array<{
         __typename?: "CpuUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     }>;
@@ -1242,7 +1241,7 @@ export type GetMemoryUsageMetricsSSubscription = {
     __typename?: "Subscription";
     getMemoryUsageMetrics: {
         __typename?: "MemoryUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     };
@@ -1256,7 +1255,7 @@ export type GetMemoryUsageMetricsQQuery = {
     __typename?: "Query";
     getMemoryUsageMetrics: Array<{
         __typename?: "MemoryUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     }>;
@@ -1270,7 +1269,7 @@ export type GetIoMetricsSSubscription = {
     __typename?: "Subscription";
     getIOMetrics: {
         __typename?: "IOMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         input: number;
         output: number;
         timestamp: number;
@@ -1285,7 +1284,7 @@ export type GetIoMetricsQQuery = {
     __typename?: "Query";
     getIOMetrics: Array<{
         __typename?: "IOMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         input: number;
         output: number;
         timestamp: number;
@@ -1300,9 +1299,8 @@ export type GetMetricsCpuTrxQuery = {
     __typename?: "Query";
     getMetricsCpuTRX: Array<{
         __typename?: "MetricsCpuTRXDto";
-        id?: string | null | undefined;
-        usage: number;
-        timestamp: number;
+        y: number;
+        x: number;
     }>;
 };
 
@@ -3173,9 +3171,8 @@ export type GetIoMetricsQQueryResult = Apollo.QueryResult<
 export const GetMetricsCpuTrxDocument = gql`
     query getMetricsCpuTRX($data: MetricsInputDTO!) {
         getMetricsCpuTRX(data: $data) {
-            id
-            usage
-            timestamp
+            y
+            x
         }
     }
 `;

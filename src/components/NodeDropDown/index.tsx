@@ -95,7 +95,7 @@ const NodeDropDown = ({
                     renderValue={selected => selected}
                 >
                     {nodes.map(({ id, title }) => (
-                        <MenuItem key={id} value={id} sx={{ m: 0, p: 0 }}>
+                        <MenuItem key={id} value={title} sx={{ m: 0, p: 0 }}>
                             <CustomRadioButton
                                 label={title}
                                 value={id === selectedNode?.id}

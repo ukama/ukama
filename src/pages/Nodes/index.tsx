@@ -1,10 +1,4 @@
 import {
-    NodeDto,
-    useGetMetricsCpuTrxQuery,
-    useGetNodeDetailsQuery,
-    useGetNodesByOrgQuery,
-} from "../../generated";
-import {
     TabPanel,
     NodeStatus,
     NodeRadioTab,
@@ -16,34 +10,29 @@ import {
     NodeResourcesTab,
     NodeAppDetailsDialog,
 } from "../../components";
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { isSkeltonLoading } from "../../recoil";
-import { getGraphTimespan, parseObjectInNameValue } from "../../utils";
-import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 import {
-    NodePageTabs,
     NodeApps,
     NodeAppLogs,
+    NodePageTabs,
     NODE_ACTIONS,
 } from "../../constants";
+import {
+    NodeDto,
+    useGetNodesByOrgQuery,
+    useGetNodeDetailsQuery,
+    useGetMetricsCpuTrxLazyQuery,
+} from "../../generated";
+import { useRecoilValue } from "recoil";
+import { isSkeltonLoading } from "../../recoil";
+import React, { useEffect, useState } from "react";
+import { parseObjectInNameValue } from "../../utils";
+import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 
 const Nodes = () => {
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
-    const [cpuTrxLastTimespan, setCpuTrxLastTimespan] = useState<number | null>(
-        null
-    );
-
-    const getMetricsPayload = (orgId: string, nodeId: string) => {
-        return {
-            orgId: orgId,
-            nodeId: nodeId,
-            ...getGraphTimespan(cpuTrxLastTimespan),
-        };
-    };
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: "1" || "" },
@@ -56,20 +45,22 @@ const Nodes = () => {
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
 
-    const { data: nodeCpuTrxRes } = useGetMetricsCpuTrxQuery({
-        variables: {
-            data: getMetricsPayload(
-                "a32485e4-d842-45da-bf3e-798889c68ad0",
-                "uk-test36-hnode-a1-30df"
-            ),
-        },
-        // pollInterval: 10000, //120000,
-        onCompleted: res => {
-            setCpuTrxLastTimespan(
-                res.getMetricsCpuTRX[res.getMetricsCpuTRX.length - 1].timestamp
-            );
-        },
-    });
+    const [getCpuTrxMetrics, { data: nodeCpuTrxRes }] =
+        useGetMetricsCpuTrxLazyQuery({ fetchPolicy: "network-only" });
+
+    useEffect(() => {
+        getCpuTrxMetrics({
+            variables: {
+                data: {
+                    nodeId: "uk-test36-hnode-a1-30df",
+                    orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                    to: Math.round(Date.now() / 1000),
+                    from: Math.round(Date.now() / 1000) - 240,
+                    step: 1,
+                },
+            },
+        });
+    }, []);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
@@ -99,6 +90,23 @@ const Nodes = () => {
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
     };
+
+    const fetchCpuTrxData = () =>
+        nodeCpuTrxRes &&
+        getCpuTrxMetrics({
+            variables: {
+                data: {
+                    nodeId: "uk-test36-hnode-a1-30df",
+                    orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                    to: Math.round(Date.now() / 1000),
+                    from:
+                        nodeCpuTrxRes.getMetricsCpuTRX[
+                            nodeCpuTrxRes.getMetricsCpuTRX.length - 1
+                        ].x + 1,
+                    step: 1,
+                },
+            },
+        });
 
     const isLoading = skeltonLoading || nodesLoading;
 
@@ -149,8 +157,10 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
+                                cpuTrxData={nodeCpuTrxRes?.getMetricsCpuTRX}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
+                                onRefreshTempTrx={fetchCpuTrxData}
                                 handleUpdateNode={handleUpdateNode}
                                 loading={isLoading || nodeDetailLoading}
                                 nodeDetails={parseObjectInNameValue(

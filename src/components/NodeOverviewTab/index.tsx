@@ -3,22 +3,27 @@ import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
 import { TooltipsText } from "../../constants";
+import ApexLineChartIntegration from "../ApexLineChart";
+import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { Grid, Paper, Stack, Typography } from "@mui/material";
-import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
 
 interface INodeOverviewTab {
+    cpuTrxData: any;
     loading: boolean;
     nodeDetails: TObject[];
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
+    onRefreshTempTrx: Function;
     selectedNode: NodeDto | undefined;
 }
 
 const NodeOverviewTab = ({
     loading,
+    cpuTrxData = [],
     selectedNode,
-    isUpdateAvailable,
     handleUpdateNode,
+    onRefreshTempTrx,
+    isUpdateAvailable,
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
 
@@ -99,14 +104,19 @@ const NodeOverviewTab = ({
                     <Paper sx={{ padding: "28px 18px" }}>
                         <Typography variant="h6">Node Health</Typography>
                         <Stack spacing={6} pt={2}>
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={"Temperature-TRX"}
+                                isStatic={false}
+                                initData={cpuTrxData}
+                                refreshInterval={20000}
+                                // name={"Temperature-TRX"}
+                                name={"CPU-TRX (For demo)"}
+                                onRefreshData={onRefreshTempTrx}
                             />
-
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={"Temperature-COM"}
+                                initData={[]}
+                                name={"Temperature-COM"}
                             />
                         </Stack>
                     </Paper>
@@ -115,8 +125,16 @@ const NodeOverviewTab = ({
                     <Paper sx={{ padding: "28px 18px" }}>
                         <Typography variant="h6">Subscribers</Typography>
                         <Stack spacing={6} pt={2}>
-                            <LineChart hasData={true} title={"Attached"} />
-                            <LineChart hasData={true} title={"Active"} />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                initData={[]}
+                                name={"Attached"}
+                            />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                initData={[]}
+                                name={"Active"}
+                            />
                         </Stack>
                     </Paper>
                 )}
