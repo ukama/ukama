@@ -189,14 +189,14 @@ export class NodeService implements INodeService {
     ): Promise<MetricsCpuTRXDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            headers: header,
-            // headers: {
-            //     authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-            // },
+            // headers: header,
+            headers: {
+                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
+            },
             path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/cpu`,
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricsCpuTRXDto(res.data.result);
+        return NodeMapper.dtoToMetricsCpuTRXDto(res.data?.result);
     };
 }

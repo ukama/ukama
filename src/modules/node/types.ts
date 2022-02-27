@@ -271,14 +271,14 @@ export class MemoryUsageMetricsDto {
 
 @ObjectType()
 export class MetricsCpuTRXDto {
-    @Field({ nullable: true })
-    id: string;
+    // @Field({ nullable: true })
+    // id: string;
 
     @Field()
-    usage: number;
+    y: number;
 
     @Field()
-    timestamp: number;
+    x: number;
 }
 
 @ObjectType()

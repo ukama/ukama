@@ -55,12 +55,11 @@ class NodeMapper implements INodeMapper {
 
     dtoToMetricsCpuTRXDto = (res: OrgMetricResponse[]): MetricsCpuTRXDto[] => {
         const metrics: MetricsCpuTRXDto[] = [];
-        if (res.length > 0)
+        if (res && res.length > 0)
             res[0].values.map((item: any) =>
                 metrics.push({
-                    id: `${item[0]}`,
-                    timestamp: item[0],
-                    usage: item[1],
+                    x: item[0],
+                    y: item[1],
                 })
             );
         return metrics;
