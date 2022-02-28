@@ -83,6 +83,7 @@ const alert = (): AlertDto => {
 
 const node = (): NodeDto => {
     return {
+        type: "TOWER",
         id: defaultCasual._uuid(),
         title: defaultCasual._title(),
         description: `${defaultCasual.random_value(NODE_TYPE)} node`,

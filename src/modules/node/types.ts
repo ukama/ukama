@@ -11,6 +11,9 @@ export class NodeDto {
     title: string;
 
     @Field()
+    type: string;
+
+    @Field()
     description: string;
 
     @Field(() => ORG_NODE_STATE)
@@ -108,6 +111,9 @@ export class UpdateNodeResponse {
 export class OrgNodeDto {
     @Field()
     nodeId: string;
+
+    @Field()
+    type: string;
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;

@@ -84,9 +84,11 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/nodes`,
-            headers: header,
+            // headers: header,
+            headers: {
+                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
+            },
         });
-
         return NodeMapper.dtoToNodesDto(orgId, res);
     };
     getNodeDetials = async (): Promise<NodeDetailDto> => {

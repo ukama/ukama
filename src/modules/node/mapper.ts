@@ -39,13 +39,18 @@ class NodeMapper implements INodeMapper {
                 if (node.state === ORG_NODE_STATE.ONBOARDED) {
                     activeNodes++;
                 }
-                const nodeObj = this.getNode(node.nodeId, node.state);
+                const nodeObj = this.getNode(
+                    node.nodeId,
+                    node.state,
+                    node.type
+                );
                 nodes.push(nodeObj);
             });
         } else {
             nodesObj = this.getNode(
                 defaultCasual._uuid(),
-                defaultCasual.random_value(ORG_NODE_STATE)
+                defaultCasual.random_value(ORG_NODE_STATE),
+                "TOWER"
             );
             nodes.push(nodesObj);
         }
@@ -65,9 +70,14 @@ class NodeMapper implements INodeMapper {
         return metrics;
     };
 
-    private getNode = (id: string, status: ORG_NODE_STATE): NodeDto => {
+    private getNode = (
+        id: string,
+        status: ORG_NODE_STATE,
+        type: string
+    ): NodeDto => {
         return {
             id: id,
+            type: type,
             status: status,
             title: defaultCasual._title(),
             description: `${defaultCasual.random_value(NODE_TYPE)} node`,
