@@ -23,12 +23,19 @@ const ApexLineChart = (props: any) => {
                 right: 30, // or whatever value that works
             },
         },
+        stroke: {
+            lineCap: "butt",
+            curve: "smooth",
+            width: 5,
+        },
         chart: {
             minHeight: "200px",
             height: "100%",
             width: "100%",
             zoom: {
+                type: "x",
                 enabled: false,
+                autoScaleYaxis: true,
             },
             animations: {
                 enabled: true,
@@ -36,6 +43,14 @@ const ApexLineChart = (props: any) => {
                 dynamicAnimation: {
                     speed: 1000,
                 },
+            },
+            dropShadow: {
+                enabled: true,
+                enabledSeries: [0],
+                top: -2,
+                left: 2,
+                blur: 5,
+                opacity: 0.06,
             },
         },
         xaxis: {
@@ -52,8 +67,13 @@ const ApexLineChart = (props: any) => {
         },
         yaxis: {
             labels: {
+                // offsetX: 14,
+                // offsetY: -5,
                 formatter: (val: any) => val.toFixed(2),
             },
+            // tooltip: {
+            //     enabled: true,
+            // },
             tickAmount: 10,
         },
     };
@@ -95,7 +115,7 @@ const ApexLineChartIntegration = ({
                 );
             } else
                 onRefreshData &&
-                    onRefreshData().then((res: any) => {
+                    onRefreshData()?.then((res: any) => {
                         if (res && res?.data && res.data?.getMetricsCpuTRX)
                             setDataList(
                                 dataList.map(val => {

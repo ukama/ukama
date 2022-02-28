@@ -46,21 +46,24 @@ const Nodes = () => {
         useGetNodeDetailsQuery();
 
     const [getCpuTrxMetrics, { data: nodeCpuTrxRes }] =
-        useGetMetricsCpuTrxLazyQuery({ fetchPolicy: "network-only" });
+        useGetMetricsCpuTrxLazyQuery({
+            fetchPolicy: "network-only",
+        });
 
     useEffect(() => {
-        getCpuTrxMetrics({
-            variables: {
-                data: {
-                    nodeId: "uk-test36-hnode-a1-30df",
-                    orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
-                    to: Math.round(Date.now() / 1000),
-                    from: Math.round(Date.now() / 1000) - 240,
-                    step: 1,
+        if (selectedTab === 0)
+            getCpuTrxMetrics({
+                variables: {
+                    data: {
+                        nodeId: "uk-test36-hnode-a1-30df",
+                        orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                        to: Math.round(Date.now() / 1000),
+                        from: Math.round(Date.now() / 1000) - 240,
+                        step: 1,
+                    },
                 },
-            },
-        });
-    }, []);
+            });
+    }, [selectedTab]);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
