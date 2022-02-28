@@ -270,10 +270,7 @@ export class MemoryUsageMetricsDto {
 }
 
 @ObjectType()
-export class MetricsCpuTRXDto {
-    // @Field({ nullable: true })
-    // id: string;
-
+export class MetricDto {
     @Field()
     y: number;
 

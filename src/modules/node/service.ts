@@ -15,7 +15,7 @@ import {
     NodeRFDto,
     TemperatureMetricsDto,
     MemoryUsageMetricsDto,
-    MetricsCpuTRXDto,
+    MetricDto,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -186,7 +186,7 @@ export class NodeService implements INodeService {
     metricsCpuTRX = async (
         data: MetricsInputDTO,
         header: HeaderType
-    ): Promise<MetricsCpuTRXDto[]> => {
+    ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             // headers: header,
@@ -197,6 +197,38 @@ export class NodeService implements INodeService {
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricsCpuTRXDto(res.data?.result);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    metricsMemoryTRX = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            // headers: header,
+            headers: {
+                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
+            },
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/memory`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getMetricsUptime = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            // headers: header,
+            headers: {
+                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
+            },
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/uptime`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
     };
 }

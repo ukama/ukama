@@ -8,15 +8,18 @@ import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
 
 @Service()
 @Resolver()
-export class GetMetricsCpuTRXResolver {
+export class GetMetricsUptimeResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async getMetricsCpuTRX(
+    async getMetricsUptime(
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        const metrics = this.nodeService.metricsCpuTRX(data, getHeaders(ctx));
+        const metrics = this.nodeService.getMetricsUptime(
+            data,
+            getHeaders(ctx)
+        );
         return metrics;
     }
 }

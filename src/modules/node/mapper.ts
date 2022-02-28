@@ -6,7 +6,7 @@ import {
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDto,
-    MetricsCpuTRXDto,
+    MetricDto,
     OrgMetricResponse,
 } from "./types";
 import * as defaultCasual from "casual";
@@ -53,8 +53,8 @@ class NodeMapper implements INodeMapper {
         return { orgName, nodes, activeNodes, totalNodes };
     };
 
-    dtoToMetricsCpuTRXDto = (res: OrgMetricResponse[]): MetricsCpuTRXDto[] => {
-        const metrics: MetricsCpuTRXDto[] = [];
+    dtoToMetricDto = (res: OrgMetricResponse[]): MetricDto[] => {
+        const metrics: MetricDto[] = [];
         if (res && res.length > 0)
             res[0].values.map((item: any) =>
                 metrics.push({
