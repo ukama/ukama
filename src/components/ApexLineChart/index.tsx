@@ -2,15 +2,13 @@ import React from "react";
 import Chart from "react-apexcharts";
 import { format } from "date-fns";
 import { GraphTitleWrapper } from "..";
-import { getRandomData } from "../../utils";
 
 const TIME_RANGE_IN_MILLISECONDS = 1 * 300;
 
 interface IApexLineChartIntegration {
     name: string;
-    initData: any;
+    data: any;
     hasData: boolean;
-    isStatic?: boolean;
     refreshInterval?: number;
     onRefreshData?: Function;
 }
@@ -19,8 +17,8 @@ const ApexLineChart = (props: any) => {
     const options: any = {
         grid: {
             padding: {
-                left: 30, // or whatever value that works
-                right: 30, // or whatever value that works
+                left: 30,
+                right: 30,
             },
         },
         stroke: {
@@ -89,46 +87,14 @@ const ApexLineChart = (props: any) => {
 
 const ApexLineChartIntegration = ({
     name,
-    initData = [],
+    data = [],
     onRefreshData,
-    isStatic = true,
     hasData = false,
     refreshInterval = 10000,
 }: IApexLineChartIntegration) => {
-    const nameList = [name];
-    const defaultDataList = nameList.map(name => ({
-        name: name,
-        data: initData,
-    }));
-    const [dataList, setDataList] = React.useState(defaultDataList);
-
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (isStatic) {
-                setDataList(
-                    dataList.map(val => {
-                        return {
-                            name: val.name,
-                            data: [...val.data, ...getRandomData()],
-                        };
-                    })
-                );
-            } else
-                onRefreshData &&
-                    onRefreshData()?.then((res: any) => {
-                        if (res && res?.data && res.data?.getMetricsCpuTRX)
-                            setDataList(
-                                dataList.map(val => {
-                                    return {
-                                        name: val.name,
-                                        data: [
-                                            ...val.data,
-                                            ...res.data?.getMetricsCpuTRX,
-                                        ],
-                                    };
-                                })
-                            );
-                    });
+            onRefreshData && onRefreshData();
         }, refreshInterval);
 
         return () => clearInterval(interval);
@@ -136,10 +102,7 @@ const ApexLineChartIntegration = ({
 
     return (
         <GraphTitleWrapper hasData={hasData} variant="subtitle1" title={name}>
-            <ApexLineChart
-                dataList={dataList}
-                range={TIME_RANGE_IN_MILLISECONDS}
-            />
+            <ApexLineChart dataList={data} range={TIME_RANGE_IN_MILLISECONDS} />
         </GraphTitleWrapper>
     );
 };

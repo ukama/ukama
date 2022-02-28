@@ -21,6 +21,7 @@ import {
     useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
     useGetMetricsCpuTrxLazyQuery,
+    MetricsCpuTrxDto,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
@@ -28,11 +29,23 @@ import React, { useEffect, useState } from "react";
 import { parseObjectInNameValue } from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 
+const getDefaultList = (names: string[]) =>
+    names.map(name => ({
+        name: name,
+        data: [],
+    }));
+
 const Nodes = () => {
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
+    const [cpuTrxMetrics, setCpuTrxMetrics] = useState<
+        {
+            name: string;
+            data: MetricsCpuTrxDto[];
+        }[]
+    >(getDefaultList(["CPU-TRX (For demo)"]));
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: "1" || "" },
@@ -48,6 +61,18 @@ const Nodes = () => {
     const [getCpuTrxMetrics, { data: nodeCpuTrxRes }] =
         useGetMetricsCpuTrxLazyQuery({
             fetchPolicy: "network-only",
+            onCompleted: res => {
+                if (res?.getMetricsCpuTRX) {
+                    setCpuTrxMetrics(
+                        cpuTrxMetrics.map(item => {
+                            return {
+                                name: item.name,
+                                data: [...item.data, ...res.getMetricsCpuTRX],
+                            };
+                        })
+                    );
+                }
+            },
         });
 
     useEffect(() => {
@@ -160,7 +185,7 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
-                                cpuTrxData={nodeCpuTrxRes?.getMetricsCpuTRX}
+                                cpuTrxMetrics={cpuTrxMetrics}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 onRefreshTempTrx={fetchCpuTrxData}
