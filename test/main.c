@@ -34,6 +34,13 @@ int main() {
     RUN_TEST(test_usys_fgets);
     RUN_TEST(test_usys_threads_with_mutex);
     RUN_TEST(test_usys_threads_with_semaphore);
+    RUN_TEST(test_usys_memcmp_memset_memcpy);
+    RUN_TEST(test_usys_strcat);
+    RUN_TEST(test_usys_strcpy);
+    RUN_TEST(test_usys_strncmp);
+    RUN_TEST(test_usys_strlen);
+    RUN_TEST(test_usys_strstr);
+    RUN_TEST(test_usys_strtok);
     return UNITY_END();
 }
 

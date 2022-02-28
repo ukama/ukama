@@ -25,4 +25,11 @@ void test_usys_fgets(void);
 void test_usys_threads_with_mutex(void);
 void test_usys_threads_with_semaphore(void);
 
+void test_usys_memcmp_memset_memcpy(void);
+void test_usys_strcat(void);
+void test_usys_strcpy(void);
+void test_usys_strncmp(void);
+void test_usys_strlen(void);
+void test_usys_strstr(void);
+void test_usys_strtok(void);
 #endif /* USYS_UNIT_TEST_CASE_H_ */

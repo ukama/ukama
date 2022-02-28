@@ -216,3 +216,106 @@ void test_usys_threads_with_semaphore() {
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
 }
+
+/* Strings  test */
+
+/* string copy */
+void test_usys_strcpy() {
+    char src[12] = "Test Case.";
+    char dest[12] = {'\0'};
+
+    /* String compare */
+    int ret = usys_strcmp(src, dest);
+    TEST_ASSERT_MESSAGE(ret != 0, "Strings are already same.");
+
+    /* String copy */
+    usys_strcpy(dest, src);
+
+    /* String compare */
+    ret = usys_strcmp(src, dest);
+    TEST_ASSERT_MESSAGE(ret == 0, "Strings compare failed after copy");
+
+}
+
+/* string compare */
+void test_usys_strncmp() {
+    char str1[12] = "Test Case.";
+    char str2[5] = "Test";
+    char str3[5] = "test";
+
+    int ret = usys_strncmp(str1, str2, strlen(str2));
+    TEST_ASSERT_EQUAL_INT(ret, 0 );
+
+    ret = usys_strncmp(str1, str3, strlen(str3));
+    TEST_ASSERT_NOT_EQUAL_INT(ret, 0 );
+
+}
+
+/* string  length */
+void test_usys_strlen() {
+    char src[12] = "Test Case.";
+    TEST_ASSERT_EQUAL_INT(usys_strlen(src), 10 );
+}
+
+/* string cat */
+void test_usys_strcat() {
+    char exp[12] = "Test Case.";
+    char src1[5] = "Test";
+    char src2[7] = {" Case."};
+
+    TEST_ASSERT_EQUAL_STRING(exp, usys_strcat(src1, src2));
+}
+
+/* substring string */
+void test_usys_strstr() {
+    char str[] ="This is a simple string";
+    char * pch;
+    int ret = -1;
+    pch = usys_strstr (str,"simple");
+    if (pch != NULL)
+        ret = usys_strncmp (pch,"simple", 6);
+    TEST_ASSERT_EQUAL_INT(ret, 0 );
+}
+
+/* string memcmp, memcpy and memset */
+void test_usys_memcmp_memset_memcpy() {
+    char str[11] = "memory set";
+    char mset[11] = "----------";
+    char test[5] = "test";
+
+    int ret = usys_memcmp(str, mset, usys_strlen(str));
+    TEST_ASSERT_NOT_EQUAL_INT(ret, 0 );
+
+    usys_memset (str,'-', usys_strlen(str));
+    TEST_ASSERT_EQUAL_STRING(str, mset);
+
+    usys_memcpy(str, test, usys_strlen(test));
+    ret = usys_memcmp(str, test, usys_strlen(test));
+    TEST_ASSERT_EQUAL_INT(ret, 0 );
+
+}
+
+/* string to token */
+void test_usys_strtok() {
+    char str[] = "memory - set . test";
+    char *tok;
+    char *tokens[] = {
+            "memory",
+            "set",
+            "test"
+    };
+    tok = strtok(str, " -.");
+    int ret = usys_memcmp(tok, tokens[0], usys_strlen(tokens[0]));
+    TEST_ASSERT_EQUAL_INT(ret, 0 );
+    int i = 0;
+    while (tok != NULL) {
+        i++;
+        tok = strtok(NULL," -.");
+        if (tok) {
+            ret = usys_memcmp(tok, tokens[i], usys_strlen(tokens[i]));
+            TEST_ASSERT_EQUAL_INT(ret, 0 );
+        }
+    }
+
+}
+
