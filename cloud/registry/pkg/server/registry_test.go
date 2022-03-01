@@ -90,6 +90,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, node.Org.Name)
 	assert.Equal(t, pb.NodeState_PENDING, node.Node.State)
+	assert.Equal(t, pb.NodeType_HOME, node.Node.Type)
 	nodeRepo.AssertExpectations(t)
 	orgRepo.AssertExpectations(t)
 }

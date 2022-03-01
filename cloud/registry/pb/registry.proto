@@ -85,8 +85,14 @@ enum NodeState {
     PENDING = 1;
     ONBOARDED = 2;
 }
+enum NodeType{
+    HOME = 0;
+    TOWER = 1;
+    AMPLIFIER = 2;
+}
 
 message Node {
     string nodeId = 1;
     NodeState state = 4;
+    NodeType type = 5;
 }

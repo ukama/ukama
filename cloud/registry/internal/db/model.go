@@ -23,6 +23,14 @@ const (
 	Onboarded NodeState = 2
 )
 
+type NodeType uint8
+
+const (
+	NodeTypeHome      = 0
+	NodeTypeTower     = 1
+	NodeTypeAmplifier = 2
+)
+
 func (e *NodeState) Scan(value interface{}) error {
 	*e = NodeState(uint8(value.(int64)))
 	return nil
@@ -43,6 +51,8 @@ type Node struct {
 	NetworkID *uint32
 	SiteID    *uint32
 	State     NodeState `gorm:"type:uint;"`
+	TypeID    *uint32
+	Type      NodeType `gorm:"type:uint;"`
 }
 
 type Org struct {

@@ -19,6 +19,7 @@ type NodesList struct {
 type Node struct {
 	NodeId string `json:"nodeId,omitempty"`
 	State  string `json:"state,omitempty"`
+	Type   string `json:"type,omitempty"`
 }
 
 func MapNodesList(pbList *pb.NodesList) *NodesList {
@@ -27,6 +28,7 @@ func MapNodesList(pbList *pb.NodesList) *NodesList {
 		nodes = append(nodes, &Node{
 			NodeId: node.NodeId,
 			State:  pb.NodeState_name[int32(node.State)],
+			Type:   pb.NodeType_name[int32(node.Type)],
 		})
 	}
 	return &NodesList{
