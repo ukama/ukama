@@ -1,16 +1,9 @@
 import { LoadingWrapper } from "..";
-import {
-    Paper,
-    Typography,
-    Box,
-    Stack,
-    Button,
-    Grid,
-    styled,
-} from "@mui/material";
+import { Paper, Typography, Stack, Button, Grid } from "@mui/material";
 import { SimpleDataTable } from "../../components";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { colors } from "../../theme";
+import { SimpleCardWithBorder } from "../../styles";
 import { NodeAppsColumns } from "../../constants/tableColumns";
 interface INodeRadioTab {
     loading: boolean;
@@ -18,10 +11,6 @@ interface INodeRadioTab {
     NodeLogs: any[];
     getNodeAppDetails: Function;
 }
-const Container = styled(Box)({
-    borderRadius: "10px",
-    border: `1px solid ${colors.darkGradient}`,
-});
 
 const NodeSoftwareTab = ({
     getNodeAppDetails,
@@ -48,11 +37,11 @@ const NodeSoftwareTab = ({
                 <Typography variant="h6" sx={{ mb: 4 }}>
                     Node Apps
                 </Typography>
-                <Grid container spacing={2} sx={{ p: 0 }}>
+                <Grid container spacing={3} sx={{ p: 0 }}>
                     {nodeApps?.map(
                         ({ id, nodeAppName, cpu, memory, version }: any) => (
                             <Grid item xs={12} md={6} lg={3} key={id}>
-                                <Container>
+                                <SimpleCardWithBorder>
                                     <Stack
                                         direction="column"
                                         justifyContent="flex-start"
@@ -101,7 +90,7 @@ const NodeSoftwareTab = ({
                                             VIEW MORE
                                         </Button>
                                     </Stack>
-                                </Container>
+                                </SimpleCardWithBorder>
                             </Grid>
                         )
                     )}

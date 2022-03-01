@@ -12,11 +12,13 @@ interface INodeOverviewTab {
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
+    getNodeSoftwareUpdateInfos: Function;
 }
 
 const NodeOverviewTab = ({
     loading,
     selectedNode,
+    getNodeSoftwareUpdateInfos,
     isUpdateAvailable,
     handleUpdateNode,
 }: INodeOverviewTab) => {
@@ -89,6 +91,7 @@ const NodeOverviewTab = ({
             <Grid item xs={12} md={8}>
                 {selected === 0 && (
                     <NodeDetailsCard
+                        getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
                         nodeTitle={selectedNode?.title || ""}
                         handleUpdateNode={handleUpdateNode}

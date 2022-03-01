@@ -14,6 +14,7 @@ interface INodeStatsContainer {
     isCollapsable?: boolean;
     handleAction?: Function;
     children: React.ReactNode;
+    onCollapse?: any;
 }
 
 const NodeStatsContainer = ({
@@ -21,6 +22,7 @@ const NodeStatsContainer = ({
     title,
     loading,
     children,
+    onCollapse,
     handleAction,
     selected = -1,
     isAlert = false,
@@ -38,10 +40,9 @@ const NodeStatsContainer = ({
         >
             <Paper
                 sx={{
-                    minWidth: isCollapse ? "fit-content" : 340,
                     padding: "24px 24px 24px 0px",
                     cursor:
-                        isCollapsable || !isClickable ? "defautl" : "pointer",
+                        isCollapsable || !isClickable ? "default" : "pointer",
                     paddingLeft:
                         isAlert && selected !== index ? "16px" : "24px",
                     borderLeft: {
@@ -66,11 +67,15 @@ const NodeStatsContainer = ({
                         <IconButton
                             sx={{
                                 p: 0,
+
                                 transform: isCollapse
                                     ? "rotate(180deg)"
                                     : "none",
                             }}
-                            onClick={() => setIsCollapse(!isCollapse)}
+                            onClick={() => {
+                                setIsCollapse(!isCollapse);
+                                onCollapse(!isCollapse);
+                            }}
                         >
                             <MenuOpenIcon />
                         </IconButton>

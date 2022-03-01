@@ -116,6 +116,11 @@ const CardContainer = styled(Box)(props => ({
     border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.3)}`,
 }));
 
+const SimpleCardWithBorder = styled(Box)(props => ({
+    padding: "8px 0px 8px 10px",
+    borderRadius: "4px",
+    border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
+}));
 export {
     LinkStyle,
     RoundedCard,
@@ -124,6 +129,7 @@ export {
     CenterContainer,
     MessageContainer,
     VerticalContainer,
+    SimpleCardWithBorder,
     SkeletonRoundedCard,
     HorizontalContainer,
     FullscreenContainer,

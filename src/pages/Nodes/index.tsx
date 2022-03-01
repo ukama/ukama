@@ -14,6 +14,7 @@ import {
     PagePlaceholder,
     NodeResourcesTab,
     NodeAppDetailsDialog,
+    NodeSoftwareInfosDialog,
 } from "../../components";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
@@ -32,7 +33,8 @@ const Nodes = () => {
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
-
+    const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
+        useState<any>();
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: "1" || "" },
         onCompleted: res => {
@@ -72,7 +74,12 @@ const Nodes = () => {
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
     };
-
+    const handleCloseNodeInfos = () => {
+        setShowNodeSoftwareUpdatInfos(false);
+    };
+    const handleSoftwareInfos = () => {
+        setShowNodeSoftwareUpdatInfos(true);
+    };
     const isLoading = skeltonLoading || nodesLoading;
 
     return (
@@ -122,6 +129,7 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
+                                getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 handleUpdateNode={handleUpdateNode}
@@ -192,6 +200,11 @@ const Nodes = () => {
                 closeBtnLabel="close"
                 isOpen={showNodeAppDialog}
                 handleClose={handleNodAppDetailsDialog}
+            />
+            <NodeSoftwareInfosDialog
+                closeBtnLabel="close"
+                isOpen={showNodeSoftwareUpdatInfos}
+                handleClose={handleCloseNodeInfos}
             />
         </Box>
     );
