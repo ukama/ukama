@@ -13,7 +13,7 @@
 #include "usys_types.h"
 
 /**
- * @fn bool sp_start_sys_timer(uint32_t, void(*)())
+ * @fn bool usys_timer(uint32_t, void(*)())
  * @brief
  *
  * @param  resolution
@@ -21,7 +21,7 @@
  * @return On Success true
  *         On Failure false
  */
-bool sp_start_sys_timer(uint32_t resolution, void (*tick_handler)());
+bool usys_timer(uint32_t resolution, void (*tick_handler)());
 
 
 #endif /* USYS_TIMER_H */

@@ -36,7 +36,7 @@ bool usys_timer(uint32_t resolution, void (*tick_handler)())
     interval_timer.it_value.tv_usec = resolution;
     interval_timer.it_interval.tv_sec = 0;
     interval_timer.it_interval.tv_usec = resolution;
-    if (setitimer(ITIMER_REAL,&interval_timer,NULL))
+    if (setitimer(ITIMER_REAL, &interval_timer, NULL))
     {
         usys_log_error("Error in setting up the timer\n");
         return false;
