@@ -6,20 +6,19 @@ interface INodeResourcesTab {
     loading: boolean;
 }
 const NodeResourcesTab = ({ loading }: INodeResourcesTab) => {
-    const [isCollapse, setIsCollapse] = useState<boolean>();
-    const onRessourceMenuCollapse = (isCollapseStatus: boolean) => {
-        setIsCollapse(isCollapseStatus);
-    };
+    const [isCollapse, setIsCollapse] = useState<boolean>(false);
+    const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
             <Grid item lg={!isCollapse ? 3 : 1} md xs>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
                     loading={loading}
-                    title={"Network"}
+                    title={"Resources"}
                     isCollapsable={true}
-                    onCollapse={onRessourceMenuCollapse}
+                    isCollapse={isCollapse}
+                    onCollapse={handleCollapse}
                 >
                     <NodeStatItem
                         value={"NNN"}

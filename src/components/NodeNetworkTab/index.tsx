@@ -6,20 +6,20 @@ interface INodeOverviewTab {
     loading: boolean;
 }
 const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
-    const [isCollapse, setIsCollapse] = useState<boolean>();
-    const onNetworkMenuCollapse = (isCollapseStatus: boolean) => {
-        setIsCollapse(isCollapseStatus);
-    };
+    const [isCollapse, setIsCollapse] = useState<boolean>(false);
+    const handleCollapse = () => setIsCollapse(prev => !prev);
+
     return (
-        <Grid container spacing={2}>
-            <Grid item lg={!isCollapse ? 3 : 1} md xs>
+        <Grid container spacing={3}>
+            <Grid md xs item lg={!isCollapse ? 3 : 1}>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
                     loading={loading}
                     title={"Network"}
                     isCollapsable={true}
-                    onCollapse={onNetworkMenuCollapse}
+                    isCollapse={isCollapse}
+                    onCollapse={handleCollapse}
                 >
                     <NodeStatItem
                         variant={"large"}

@@ -1,6 +1,6 @@
+import React from "react";
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
-import React, { useState } from "react";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { ContainerJustifySpaceBtw } from "../../styles";
 import { IconButton, Paper, Typography } from "@mui/material";
@@ -10,11 +10,12 @@ interface INodeStatsContainer {
     loading: boolean;
     selected?: number;
     isAlert?: boolean; //Pass true to show red border
+    isCollapse?: boolean;
     isClickable?: boolean;
+    onCollapse?: Function;
     isCollapsable?: boolean;
     handleAction?: Function;
     children: React.ReactNode;
-    onCollapse?: any;
 }
 
 const NodeStatsContainer = ({
@@ -26,11 +27,10 @@ const NodeStatsContainer = ({
     handleAction,
     selected = -1,
     isAlert = false,
+    isCollapse = false,
     isClickable = false,
     isCollapsable = false,
 }: INodeStatsContainer) => {
-    const [isCollapse, setIsCollapse] = useState(false);
-
     return (
         <LoadingWrapper
             width="100%"
@@ -72,12 +72,9 @@ const NodeStatsContainer = ({
                                     ? "rotate(180deg)"
                                     : "none",
                             }}
-                            onClick={() => {
-                                setIsCollapse(!isCollapse);
-                                onCollapse(!isCollapse);
-                            }}
+                            onClick={() => onCollapse && onCollapse()}
                         >
-                            <MenuOpenIcon />
+                            <MenuOpenIcon fontSize="medium" />
                         </IconButton>
                     )}
                 </ContainerJustifySpaceBtw>
