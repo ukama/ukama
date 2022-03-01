@@ -7,15 +7,8 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "usys_api.h"
-#include "usys_error.h"
-#include "usys_log.h"
-#include "usys_string.h"
-#include "usys_sync.h"
-#include "usys_thread.h"
-#include "usys_types.h"
-#include "usys_mem.h"
 #include "test.h"
+#include "usys_log.h"
 
 #include "unity.h"
 
@@ -24,7 +17,6 @@ int main() {
     usys_log_set_level(LOG_TRACE);
 
     usys_log_info("Starting test app for platform.");
-
     UNITY_BEGIN();
     RUN_TEST(test_usys_errors);
     RUN_TEST(test_usys_fopen_should_return_file_pointer);
