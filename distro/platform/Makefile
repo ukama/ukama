@@ -1,6 +1,7 @@
 PROJECT := $(notdir $(CURDIR))
-BUILDSATICLIB = libusys.a
-BUILDDYNAMICLIB = $(BUILDDIR)/libusys.so
+PLATFORMLIB := usys
+BUILDSATICLIB = lib$(PLATFORMLIB).a
+BUILDDYNAMICLIB = $(BUILDDIR)/lib$(PLATFORMLIB).so
 PLATFORMLIBS = $(BUILDDYNAMICLIB)
 TESTEXEC = $(BUILDDIR)/$(PROJECT)
 
@@ -10,7 +11,7 @@ UNITYROOT := ../tools/unity
 SRCDIRS := sys/src log/src
 INCDIRS := sys/inc log/inc $(UNITYROOT)/src
 BUILDDIR := build
-TESTDIRS := $(SRCDIRS) test $(UNITYROOT)/src
+TESTDIRS := test $(UNITYROOT)/src
 # Source extensions
 SRCEXTS := c
 
@@ -34,11 +35,12 @@ CC=gcc
 LDLIBS = -lpthread -lrt
 
 override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DDMT_ABORT_NULL
-override LDFLAGS +=  $(LDPATH) $(LDLIBS) 
+override LDFLAGS +=  $(LDPATH) -L$(CURDIR)/$(BUILDDIR) $(LDLIBS) 
 INCFLAGS := $(INCDIRS:%=-I%)
 DEPFLAGS := -MMD -MP
 MEMCHECKREPORT := $(BUILDDIR)/memcheck.report
 
+$(info LDFLAGS :: $(LDFLAGS))
 # Tools and flags
 CPPLINT := cpplint
 override CPPLINTFLAGS += --linelength=100 --filter=-build/header_guard,-runtime/references,-runtime/indentation_namespace,-build/namespaces --extensions=$(subst $( ),$(,),$(SRCEXTS)) --headers=$(subst $( ),$(,),$(HDREXTS))
@@ -133,12 +135,15 @@ $(PLATFORMLIBS): $(OBJECTS)
 # Compile binary if necessary, checks for modified files first
 $(TESTEXEC):$(TESTOBJS) $(PLATFORMLIBS) $(MAKEFILE) $@
 ifeq ($(filter-out %.c,$(TESTSRCS)),$(blank))
-	@$(CC) -o $@ $(TESTOBJS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS)
+	@$(CC) -o $@ $(TESTOBJS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS) -l$(PLATFORMLIB)
 	@echo CC: $@ 
 else
-	$(CXX) -o $@ $(TESTOBJS) $(CXXFLAGS) $(LDFLAGS)
+	$(CXX) -o $@ $(TESTOBJS) $(CXXFLAGS) $(LDFLAGS) -l$(PLATFORMLIBS)
 	@echo CXX: $@
 endif
+
+run: $(TESTEXEC)
+	@LD_LIBRARY_PATH=$(BUILDDIR) ./$(TESTEXEC)
 	
 # Clean all build files
 clean:

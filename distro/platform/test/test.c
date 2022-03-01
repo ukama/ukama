@@ -117,10 +117,13 @@ void *thread_function_with_mutex(void* arg) {
 
     usys_log_trace("Job %d has finished", counter);
 
+    *tstat = counter;
+
     err = usys_mutex_unlock(&mutex);
+
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
-    *tstat = counter;
+
     pthread_exit(tstat);
 }
 
@@ -179,10 +182,12 @@ void *thread_function_with_semaphore(void* arg) {
 
     usys_log_trace("Job %d has finished", counter);
 
+    *tstat = counter;
+
     err = usys_sem_post(&sem);
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
-    *tstat = counter;
+
     pthread_exit(tstat);
 }
 
@@ -212,7 +217,7 @@ void test_usys_threads_with_semaphore() {
 
     ret = usys_thread_join(thread[1], (void **)(&status[1]));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 2.");
-    TEST_ASSERT_EQUAL_INT(2 ,*status[1]);
+    TEST_ASSERT_EQUAL_INT( 2 ,*status[1]);
 
     /* Mutex destroy */
     err = usys_sem_destroy(&sem);
@@ -436,7 +441,7 @@ void test_shm_reader(char *readdata) {
     /* unlink from the shared memory file */
     usys_shm_unlink(SHMFILE);
 
-    usys_log_error("[%d] %s : completed.", getpid(), __FUNCTION__ );
+    usys_log_trace("[%d] %s : completed.", getpid(), __FUNCTION__ );
 }
 
 /* Test function for shared memory */
@@ -491,6 +496,7 @@ void test_usys_timer(void) {
     ret = usys_timer(0, timer_stat);
     TEST_ASSERT_EQUAL_INT( 1, ret );
 
+    usys_log_trace("Waiting to stop timer.");
     num = 0xFFFFFFFF;
     while(num >0) {
         num--;
