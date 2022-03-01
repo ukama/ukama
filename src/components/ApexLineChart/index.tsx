@@ -3,7 +3,7 @@ import Chart from "react-apexcharts";
 import { format } from "date-fns";
 import { GraphTitleWrapper } from "..";
 
-const TIME_RANGE_IN_MILLISECONDS = 1 * 300;
+const TIME_RANGE_IN_MILLISECONDS = 100;
 
 interface IApexLineChartIntegration {
     name: string;
@@ -65,14 +65,14 @@ const ApexLineChart = (props: any) => {
         },
         yaxis: {
             labels: {
-                // offsetX: 14,
-                // offsetY: -5,
                 formatter: (val: any) => val.toFixed(2),
             },
+            // min: 0,
+            // max: 100,
             // tooltip: {
             //     enabled: true,
             // },
-            tickAmount: 10,
+            tickAmount: 8,
         },
     };
     return (

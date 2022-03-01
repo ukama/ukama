@@ -76,7 +76,8 @@ const Nodes = () => {
         });
 
     useEffect(() => {
-        if (selectedTab === 0)
+        if (selectedTab === 0) {
+            setCpuTrxMetrics(getDefaultList(["CPU-TRX (For demo)"]));
             getCpuTrxMetrics({
                 variables: {
                     data: {
@@ -88,6 +89,7 @@ const Nodes = () => {
                     },
                 },
             });
+        }
     }, [selectedTab]);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>

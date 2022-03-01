@@ -7,6 +7,8 @@ import ApexLineChartIntegration from "../ApexLineChart";
 import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { Grid, Paper, Stack, Typography } from "@mui/material";
 
+const REFRESH_INTERVAL = 20000; // 20 sec
+
 interface INodeOverviewTab {
     loading: boolean;
     cpuTrxMetrics: any;
@@ -107,9 +109,9 @@ const NodeOverviewTab = ({
                             <ApexLineChartIntegration
                                 hasData={true}
                                 data={cpuTrxMetrics}
-                                refreshInterval={20000}
                                 name={"CPU-TRX (For demo)"} //"Temperature-TRX"
                                 onRefreshData={onRefreshTempTrx}
+                                refreshInterval={REFRESH_INTERVAL}
                             />
                             {/* <ApexLineChartIntegration
                                 hasData={true}
