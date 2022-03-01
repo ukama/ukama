@@ -13,9 +13,11 @@
 #include "usys_api.h"
 #include "usys_error.h"
 #include "usys_log.h"
+#include "usys_shm.h"
 #include "usys_string.h"
 #include "usys_sync.h"
 #include "usys_thread.h"
+#include "usys_types.h"
 
 extern const char *usysErrorCodes[];
 
@@ -319,3 +321,142 @@ void test_usys_strtok() {
 
 }
 
+/* shared memory */
+
+#define BLOCKSIZE           256
+#define SHMFILE             "/shmfd"
+#define PERM                0644
+#define SEMAPHORE           "shmSem"
+#define BLOCKDATA           "Testing shared memory."
+
+void test_shm_writer() {
+
+    int fd = usys_shm_open(SHMFILE, O_RDWR | O_CREAT, PERM);
+    if (fd < 0) {
+        usys_log_error("%s : Failed to create a shared memory", __FUNCTION__ );
+        return;
+    }
+
+    usys_ftruncate(fd, BLOCKSIZE);
+
+    caddr_t mem = usys_mmap(NULL, BLOCKSIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+            fd, 0);
+    if ((caddr_t) -1  == mem) {
+        usys_log_error("%s : Failed to map a shared memory", __FUNCTION__ );
+        return;
+    }
+
+    usys_log_trace("%s : shared mem address: %p [0..%d]\n", __FUNCTION__ , mem, BLOCKSIZE - 1);
+    usys_log_trace("%s : shared mem file:       /dev/shm%s\n", __FUNCTION__, SHMFILE);
+
+    /* Semaphore code to lock the shared mem */
+    USysSem* sem = usys_sem_open(SEMAPHORE ,O_CREAT, PERM, 0);
+    if (!sem)  {
+        usys_log_error("%s : failed to create open semaphore", __FUNCTION__ );
+        return;
+    }
+
+    /* Copy data to shared memory */
+    usys_strcpy(mem, BLOCKDATA);
+
+    /* Semaphore post */
+    if (usys_sem_post(sem) < 0) {
+        usys_log_error("%s : failed to post semaphore", __FUNCTION__ );
+        return;
+    }
+
+    usys_sleep(10);
+
+    /* Clean up */
+    if (usys_munmap(mem, BLOCKSIZE) != 0) {
+        usys_log_error("%s: failed to unmap shared memory", __FUNCTION__ );
+        return;
+    }
+
+    close(fd);
+
+    if(usys_sem_close(sem) != 0) {
+        usys_log_error("%s: failed to close semaphore", __FUNCTION__ );
+        return;
+    }
+
+    /* unlink from the shared memory file */
+    usys_shm_unlink(SHMFILE);
+
+    usys_log_error("[%d] %s : completed.", getpid(), __FUNCTION__ );
+}
+
+void test_shm_reader(char *readdata) {
+    int fd = usys_shm_open(SHMFILE, O_RDWR, PERM);
+    if (fd < 0) {
+        usys_log_error("%s : Failed to create a shared memory", __FUNCTION__ );
+        return;
+    }
+
+    caddr_t mem = usys_mmap(NULL, BLOCKSIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
+            fd, 0);
+    if ((caddr_t) -1  == mem) {
+        usys_log_error("%s : Failed to map a shared memory", __FUNCTION__ );
+        return;
+    }
+
+    usys_log_trace("%s : shared mem address: %p [0..%d]\n", __FUNCTION__ , mem, BLOCKSIZE - 1);
+    usys_log_trace("%s : shared mem file:       /dev/shm%s\n", __FUNCTION__, SHMFILE);
+
+    /* Semaphore code to lock the shared mem */
+    USysSem* sem = usys_sem_open(SEMAPHORE ,O_CREAT, PERM, 0);
+    if (!sem)  {
+        usys_log_error("%s : failed to create open semaphore", __FUNCTION__ );
+        return;
+    }
+
+    /* Wait to acquire sem  */
+    if (!usys_sem_wait(sem)) {
+
+        /* Copy data from shared memory */
+        usys_memcpy(readdata, mem,  strlen(BLOCKDATA));
+
+        usys_sem_post(sem);
+    }
+
+    /* Clean up */
+    if (usys_munmap(mem, BLOCKSIZE) != 0) {
+        usys_log_error("%s: failed to unmap shared memory", __FUNCTION__ );
+        return;
+    }
+
+    close(fd);
+
+    if(usys_sem_close(sem) != 0) {
+        usys_log_error("%s: failed to close semaphore", __FUNCTION__ );
+        return;
+    }
+
+    /* unlink from the shared memory file */
+    usys_shm_unlink(SHMFILE);
+
+    usys_log_error("[%d] %s : completed.", getpid(), __FUNCTION__ );
+}
+
+void test_shm(void) {
+    pid_t child_pid;
+    char readdata[BLOCKSIZE] = {'\0'};
+    child_pid = fork ();
+    if ( child_pid == 0) {
+        usys_log_trace("[%d] child process for shm writer successfully created", getpid());
+        usys_log_trace ("[%d] child_PID = %d,parent_PID = %d\n",
+                getpid(), getpid(), getppid( ) );
+        test_shm_writer();
+        usys_log_trace("[%d] child process for shm writer completed", getpid());
+        _Exit(0);
+    } else if (child_pid > 0) {
+        usys_sleep(5);
+        usys_log_trace("[%d] shm reader successfully created!", getpid());
+        test_shm_reader(readdata);
+        wait(NULL);
+
+        int ret = usys_memcmp(readdata, BLOCKDATA, strlen(BLOCKDATA));
+        TEST_ASSERT_EQUAL_INT(ret, 0);
+    }
+    usys_log_trace("[%d] test shm completed", getpid());
+}

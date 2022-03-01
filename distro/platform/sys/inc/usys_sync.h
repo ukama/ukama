@@ -90,6 +90,34 @@ USysError usys_mutex_destroy(USysMutex* mutex);
 USysError usys_sem_init(USysSem* sem, uint32_t init_value);
 
 /**
+ * @fn     USysMutex usys_sem_open*(const char*, int, mode_t, unsigned int)
+ * @brief  Creates a new POSIX semaphore or opens an existing semaphore.
+ *         The semaphore is identified by name.
+ *
+ * @param  name
+ * @param  oflag
+ * @param  mode
+ * @param  value
+ * @return On success returns the address of the new semaphore
+ *         On error return SEM_FAILED
+ */
+static inline USysSem* usys_sem_open(const char *name, int oflag,
+        mode_t mode, unsigned int value){
+    return sem_open(name, oflag, mode, value);
+}
+
+/**
+ * @fn     int usys_sem_close(USysSem*)
+ * @brief  closes the named semaphore referred to by sem.
+ *
+ * @param  sem
+ * @return On success 0
+ *         On error -1
+ */
+static inline int usys_sem_close(USysSem* sem) {
+    return sem_close(sem);
+}
+/**
  * @brief
  *
  * @param sem

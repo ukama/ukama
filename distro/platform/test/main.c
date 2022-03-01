@@ -41,6 +41,7 @@ int main() {
     RUN_TEST(test_usys_strlen);
     RUN_TEST(test_usys_strstr);
     RUN_TEST(test_usys_strtok);
+    RUN_TEST(test_shm);
     return UNITY_END();
 }
 
