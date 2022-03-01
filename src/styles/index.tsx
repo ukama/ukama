@@ -104,8 +104,6 @@ const FullscreenContainer = styled(Box)(() => ({
 }));
 
 const CardContainer = styled(Box)(props => ({
-    // width: "214px",
-    // height: "206px",
     display: "flex",
     width: "inherit",
     height: "inherit",

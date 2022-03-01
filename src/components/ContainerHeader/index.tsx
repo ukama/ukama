@@ -42,8 +42,13 @@ const ContainerHeader = ({
     }, [currentSearchValue]);
 
     return (
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={8}>
+        <Grid
+            container
+            spacing={2}
+            sx={{ mb: 2 }}
+            justifyContent="space-between"
+        >
+            <Grid item xs={12} md={4}>
                 <Stack
                     spacing={2}
                     direction="row"
@@ -60,9 +65,9 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid container item xs={12} md={4} spacing={1}>
+            <Grid container item xs={12} md={5} spacing={1}>
                 {showSearchBox && (
-                    <Grid item xs={8}>
+                    <Grid item xs={12} sm={7}>
                         <StyledInputBase
                             placeholder="Search…"
                             value={currentSearchValue}
@@ -89,8 +94,15 @@ const ContainerHeader = ({
                     </Grid>
                 )}
                 {showButton && (
-                    <Grid item xs={4} justifyContent="flex-end" display="flex">
+                    <Grid
+                        item
+                        xs={12}
+                        sm={5}
+                        justifyContent="flex-end"
+                        display="flex"
+                    >
                         <Button
+                            fullWidth
                             variant="contained"
                             sx={{ height: "48px" }}
                             onClick={() => handleButtonAction()}

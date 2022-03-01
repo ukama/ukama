@@ -5,18 +5,18 @@ import {
     PagePlaceholder,
     LoadingWrapper,
 } from "../../components";
-import { Box, Grid } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { useState, useEffect } from "react";
-import { isSkeltonLoading, organizationId } from "../../recoil";
 import {
     GetUserDto,
     Get_User_Status_Type,
     useGetUserLazyQuery,
     useMyUsersLazyQuery,
 } from "../../generated";
-import { CardContainer, RoundedCard } from "../../styles";
+import { useRecoilValue } from "recoil";
 import { UserData } from "../../constants";
+import { RoundedCard } from "../../styles";
+import { useState, useEffect } from "react";
+import { Box, Card, Grid } from "@mui/material";
+import { isSkeltonLoading, organizationId } from "../../recoil";
 
 const User = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
@@ -114,7 +114,12 @@ const User = () => {
                                     eSimNumber,
                                 }: any) => (
                                     <Grid key={id} item xs={12} md={6} lg={3}>
-                                        <CardContainer>
+                                        <Card
+                                            variant="outlined"
+                                            sx={{
+                                                padding: "15px 18px 8px 18px",
+                                            }}
+                                        >
                                             <UserCard
                                                 id={id}
                                                 name={name}
@@ -125,7 +130,7 @@ const User = () => {
                                                     getUseDetails
                                                 }
                                             />
-                                        </CardContainer>
+                                        </Card>
                                     </Grid>
                                 )
                             )}
