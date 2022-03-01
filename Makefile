@@ -31,7 +31,13 @@ $(info Includes:: $(INCLUDES))
 $(info Objects :: $(OBJECTS))
 
 # Compilers and flags
+ifdef XGCCPATH
+CC = $(XGCCPATH)$(XGCC)
+LD = $(XGCCPATH)$(XLD)
+else
 CC=gcc
+endif
+
 LDLIBS = -lpthread -lrt
 
 override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DDMT_ABORT_NULL
@@ -40,7 +46,9 @@ INCFLAGS := $(INCDIRS:%=-I%)
 DEPFLAGS := -MMD -MP
 MEMCHECKREPORT := $(BUILDDIR)/memcheck.report
 
+$(info CC:: $(CC))
 $(info LDFLAGS :: $(LDFLAGS))
+
 # Tools and flags
 CPPLINT := cpplint
 override CPPLINTFLAGS += --linelength=100 --filter=-build/header_guard,-runtime/references,-runtime/indentation_namespace,-build/namespaces --extensions=$(subst $( ),$(,),$(SRCEXTS)) --headers=$(subst $( ),$(,),$(HDREXTS))
