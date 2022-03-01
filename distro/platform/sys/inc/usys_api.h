@@ -119,6 +119,31 @@ static inline int usys_fseek(FILE * stream, long int offset, int origin) {
 }
 
 /**
+ * @fn     int usys_rename(const char*, const char*)
+ * @brief  renames a file.
+ *
+ * @param  oldpath
+ * @param  newpath
+ * @return On success, zero is returned.
+ *         On error, -1 is returned,
+ */
+static inline int usys_rename(const char *oldpath, const char *newpath) {
+    return rename(oldpath, newpath);
+}
+
+/**
+ * @fn     int usys_remove(const char*)
+ * @brief  deletes the given filename so that it is no longer accessible.
+ *
+ * @param  filename
+ * @return On success, zero is returned.
+ *         On error, -1 is returned.
+ */
+static inline int usys_remove(const char *filename) {
+    return remove(filename);
+}
+
+/**
  * @fn    int usys_access(const char*, int)
  * @brief The access function checks to see whether the file named by filename can be accessed in the way
  *        specified by the how argument.
