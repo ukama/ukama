@@ -119,6 +119,152 @@ static inline int usys_fseek(FILE * stream, long int offset, int origin) {
 }
 
 /**
+ * @fn    int usys_access(const char*, int)
+ * @brief The access function checks to see whether the file named by filename can be accessed in the way
+ *        specified by the how argument.
+ *
+ * @param  filename
+ * @param  how
+ * @return On Success, the function returns zero.
+ *         On Failure, it returns -1.
+ */
+static inline int usys_access(const char *filename, int how) {
+    return  access (filename, how);
+}
+
+/**
+ * @fn     int usys_open(const char*, int, mode_t)
+ * @brief  opens the file specified by pathname.
+ *
+ * @param  pathname
+ * @param  flags
+ * @param  mode
+ * @return On success return the new file descriptor.
+ *         On error, -1
+ */
+static inline int usys_open(const char *pathname, int flags, mode_t mode){
+    return open(pathname, flags, mode);
+};
+
+/**
+ * @fn     int usys_close(int)
+ * @brief  closes a file descriptor
+ *
+ * @param  fd
+ * @return On success return 0.
+ *         On error, -1
+ */
+static inline int usys_close(int fd) {
+    return close(fd);
+}
+
+/**
+ * @fn     int usys_fsync(int)
+ * @brief  flushes the data of file referred to by the file
+ *         descriptor fd to the disk device
+ *
+ * @param  fd
+ * @return On success, return zero.
+ *         On error, -1
+ */
+static inline int usys_fsync(int fd){
+    return fsync(fd);
+}
+
+/**
+ * @fn     int usys_stat(const char*, struct stat*)
+ * @brief  return information about a file, in the buffer
+ *         pointed to by statbuf.
+ *
+ * @param  pathname
+ * @param  statbuf
+ * @return On success, return zero.
+ *         On error, -1
+ */
+static inline int usys_stat(const char *pathname,
+                struct stat *statbuf){
+    return stat(pathname, statbuf);
+}
+
+/**
+ * @fn     int usys_lstat(const char*, struct stat*)
+ * @brief  return information about a link, in the buffer
+ *         pointed to by statbuf.
+ *
+ * @param  pathname
+ * @param  statbuf
+ * @return On success, return zero.
+ *         On error, -1
+ */
+static inline int usys_lstat(const char *pathname,
+               struct stat *statbuf){
+    return stat(pathname, statbuf);
+}
+
+/**
+ * @fn off_t usys_lseek(int, off_t, int)
+ * @brief  repositions the file offset of the open file description
+ *         associated with the file descriptor fd to the argument offset
+ *         according to the directive whence
+ *
+ * @param fd
+ * @param offset
+ * @param whence
+ * @return On success resulting offset location as measured in bytes
+ *         from the beginning of the file.
+ *         On error, -1
+ */
+static inline off_t usys_lseek(int fd, off_t offset, int whence){
+    return lseek(fd, offset, whence);
+}
+
+/**
+ * @fn     ssize_t usys_read(int, void*, size_t)
+ * @brief  attempts to read up to count bytes from file descriptor fd
+ *         into the buffer starting at buf.
+ *
+ * @param  fd
+ * @param  buf
+ * @param  count
+ * @return On success, the number of bytes read is returned.
+ *         On error, -1 is returned
+ */
+static inline ssize_t usys_read(int fd, void *buf, size_t count){
+    return read( fd, *buf, count);
+}
+
+/**
+ * @fn     ssize_t usys_write(int, const void*, size_t)
+ * @brief  writes up to count bytes from the buffer starting at buf
+ *         to the file referred to by the file descriptor fd.
+ *
+ * @param  fd
+ * @param  buf
+ * @param  count
+ * @return On success, the number of bytes written is returned.
+ *         On error, -1 is returned.
+ */
+static inline ssize_t usys_write(int fd, const void *buf, size_t count){
+    return write(fd, buf, count);
+}
+
+/**
+ * @fn     ssize_t usys_readlink(const char*, char*, size_t)
+ * @brief  places the contents of the symbolic link pathname in
+ *         the buffer buf, which has size bufsiz.
+ *
+ * @param  pathname
+ * @param  buf
+ * @param  bufsiz
+ * @return On success, these calls return the number of bytes placed in buf.
+ *         On error, -1 is returned
+ */
+static inline ssize_t usys_readlink(const char *pathname, char *buf,
+                        size_t bufsiz){
+    return readlink(pathname, buf, bufsiz);
+}
+
+/**
  * @fn     char usys_fgets*(char*, int, FILE*)
  * @brief  Reads characters from stream and stores them as a C string into str until (num-1)
  *         characters have been read or either a newline or the end-of-file is reached,
