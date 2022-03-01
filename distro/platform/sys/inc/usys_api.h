@@ -17,6 +17,45 @@ extern "C" {
 #include "usys_types.h"
 
 /**
+ * @fn    void _usys_Exit()
+ * @brief terminates the calling process "immediately".  Any open
+ *        file descriptors belonging to the process are closed.  Any
+ *        children of the process are inherited by init(1) (or by the
+ *        nearest "subreaper" process as defined through the use of the
+ *        prctl(2) PR_SET_CHILD_SUBREAPER operation).  The process's parent
+ *        is sent a SIGCHLD signal.
+ * @param status
+ *
+ */
+static inline void _usys_Exit(int status) {
+    _Exit(status);
+}
+
+/**
+ * @fn    void usys_exit()
+ * @brief The exit() function causes normal process termination and the
+ *        least significant byte of status (i.e., status & 0xFF) is
+ *        returned to the parent
+ * @param status
+ */
+static inline void usys_exit(int status) {
+    exit(status);
+}
+
+/**
+ * @fn     USysPid usys_wait(int*)
+ * @brief  used to wait for state changes in a
+ *         child of the calling process, and obtain information about the
+ *         child whose state has changed
+ *
+ * @param  wstatus
+ * @return On success, returns the process ID of the terminated child
+ *         On failure, -1 is returned.
+ */
+static inline USysPid usys_wait(int *wstatus) {
+    return wait(wstatus);
+}
+/**
  * @fn     FILE usys_fopen*(const char*, const char*)
  * @brief  Opens the filename pointed to, by filename using the given mode.
  *

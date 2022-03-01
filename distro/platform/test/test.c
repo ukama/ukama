@@ -448,12 +448,12 @@ void test_shm(void) {
                 getpid(), getpid(), getppid( ) );
         test_shm_writer();
         usys_log_trace("[%d] child process for shm writer completed", getpid());
-        _Exit(0);
+        _usys_Exit(0);
     } else if (child_pid > 0) {
         usys_sleep(5);
         usys_log_trace("[%d] shm reader successfully created!", getpid());
         test_shm_reader(readdata);
-        wait(NULL);
+        usys_wait(NULL);
 
         int ret = usys_memcmp(readdata, BLOCKDATA, strlen(BLOCKDATA));
         TEST_ASSERT_EQUAL_INT(ret, 0);
