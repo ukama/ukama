@@ -32,7 +32,7 @@ void test_usys_strncmp(void);
 void test_usys_strlen(void);
 void test_usys_strstr(void);
 void test_usys_strtok(void);
-
-void test_shm(void);
+void test_usys_shm(void);
+void test_usys_timer(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */

@@ -188,13 +188,12 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  * @fn    struct timeval usys_gettimeofday()
  * @brief function gets the system’s clock time
  *
- * @return On success,return time value
- *         On failure the returns 0 initilaized values.
+ * @param  tv
+ * @return void
+ *
  */
-static inline struct timeval usys_gettimeofday() {
-    struct timeval tv = {0};
-    gettimeofday(&tv, NULL);
-    return tv;
+static inline void usys_gettimeofday(struct timeval* tv) {
+    gettimeofday(tv, NULL);
 }
 
 /**

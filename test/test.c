@@ -17,6 +17,7 @@
 #include "usys_string.h"
 #include "usys_sync.h"
 #include "usys_thread.h"
+#include "usys_timer.h"
 #include "usys_types.h"
 
 extern const char *usysErrorCodes[];
@@ -145,11 +146,11 @@ void test_usys_threads_with_mutex() {
 
     ret = usys_thread_join(thread[0], (void **)(&status[0]));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 1.");
-    TEST_ASSERT_EQUAL_INT(*status[0], 1 );
+    TEST_ASSERT_EQUAL_INT( 1 , *status[0]);
 
     ret = usys_thread_join(thread[1], (void **)(&status[1]));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 2.");
-    TEST_ASSERT_EQUAL_INT(*status[1], 2 );
+    TEST_ASSERT_EQUAL_INT( 2, *status[1]);
 
     /* Mutex destroy */
     err = usys_mutex_destroy(&mutex);
@@ -207,11 +208,11 @@ void test_usys_threads_with_semaphore() {
 
     ret = usys_thread_join(thread[0], (void **)(&status[0]));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 1.");
-    TEST_ASSERT_EQUAL_INT(*status[0], 1 );
+    TEST_ASSERT_EQUAL_INT( 1, *status[0]);
 
     ret = usys_thread_join(thread[1], (void **)(&status[1]));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 2.");
-    TEST_ASSERT_EQUAL_INT(*status[1], 2 );
+    TEST_ASSERT_EQUAL_INT(2 ,*status[1]);
 
     /* Mutex destroy */
     err = usys_sem_destroy(&sem);
@@ -246,17 +247,17 @@ void test_usys_strncmp() {
     char str3[5] = "test";
 
     int ret = usys_strncmp(str1, str2, strlen(str2));
-    TEST_ASSERT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_EQUAL_INT(0, ret);
 
     ret = usys_strncmp(str1, str3, strlen(str3));
-    TEST_ASSERT_NOT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_NOT_EQUAL_INT(0, ret);
 
 }
 
 /* string  length */
 void test_usys_strlen() {
     char src[12] = "Test Case.";
-    TEST_ASSERT_EQUAL_INT(usys_strlen(src), 10 );
+    TEST_ASSERT_EQUAL_INT( 10, usys_strlen(src));
 }
 
 /* string cat */
@@ -276,7 +277,7 @@ void test_usys_strstr() {
     pch = usys_strstr (str,"simple");
     if (pch != NULL)
         ret = usys_strncmp (pch,"simple", 6);
-    TEST_ASSERT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_EQUAL_INT(0, ret );
 }
 
 /* string memcmp, memcpy and memset */
@@ -286,14 +287,14 @@ void test_usys_memcmp_memset_memcpy() {
     char test[5] = "test";
 
     int ret = usys_memcmp(str, mset, usys_strlen(str));
-    TEST_ASSERT_NOT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_NOT_EQUAL_INT(0, ret );
 
     usys_memset (str,'-', usys_strlen(str));
-    TEST_ASSERT_EQUAL_STRING(str, mset);
+    TEST_ASSERT_EQUAL_STRING(mset, str);
 
     usys_memcpy(str, test, usys_strlen(test));
     ret = usys_memcmp(str, test, usys_strlen(test));
-    TEST_ASSERT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_EQUAL_INT(0, ret );
 
 }
 
@@ -438,7 +439,8 @@ void test_shm_reader(char *readdata) {
     usys_log_error("[%d] %s : completed.", getpid(), __FUNCTION__ );
 }
 
-void test_shm(void) {
+/* Test function for shared memory */
+void test_usys_shm(void) {
     pid_t child_pid;
     char readdata[BLOCKSIZE] = {'\0'};
     child_pid = fork ();
@@ -459,4 +461,38 @@ void test_shm(void) {
         TEST_ASSERT_EQUAL_INT(ret, 0);
     }
     usys_log_trace("[%d] test shm completed", getpid());
+}
+
+/* Timer callback */
+void timer_stat(int signum){
+    struct timeval current_time;
+    usys_gettimeofday(&current_time);
+    usys_log_info("Timer Callback seconds : %ld micro seconds : %ld",
+            current_time.tv_sec, current_time.tv_usec);
+}
+
+/* Test timer  Just check the creation of timer
+ * Not a high resolution timer */
+void test_usys_timer(void) {
+
+    struct timeval current_time;
+    usys_gettimeofday(&current_time);
+    usys_log_info("seconds : %ld micro seconds : %ld",
+        current_time.tv_sec, current_time.tv_usec);
+
+    int ret = usys_timer(100000, timer_stat);
+    TEST_ASSERT_EQUAL_INT( 1, ret );
+
+    unsigned int num = 0xFFFFFFFF;
+    while(num >0) {
+        num--;
+    };
+
+    ret = usys_timer(0, timer_stat);
+    TEST_ASSERT_EQUAL_INT( 1, ret );
+
+    num = 0xFFFFFFFF;
+    while(num >0) {
+        num--;
+    };
 }
