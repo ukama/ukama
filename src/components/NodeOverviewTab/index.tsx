@@ -7,15 +7,19 @@ import ApexLineChartIntegration from "../ApexLineChart";
 import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { Grid, Paper, Stack, Typography } from "@mui/material";
 
-const REFRESH_INTERVAL = 20000; // 20 sec
+const REFRESH_INTERVAL = 10000; // 20 sec
 
 interface INodeOverviewTab {
     loading: boolean;
     cpuTrxMetrics: any;
+    uptimeMetrics: any;
+    memoryTrxMetrics: any;
     nodeDetails: TObject[];
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     onRefreshTempTrx: Function;
+    onRefreshMemoryTrx: Function;
+    onRefreshUptime: Function;
     selectedNode: NodeDto | undefined;
 }
 
@@ -24,8 +28,12 @@ const NodeOverviewTab = ({
     selectedNode,
     handleUpdateNode,
     onRefreshTempTrx,
+    onRefreshMemoryTrx,
+    onRefreshUptime,
     isUpdateAvailable,
     cpuTrxMetrics = [],
+    uptimeMetrics = [],
+    memoryTrxMetrics = [],
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
 
@@ -111,6 +119,20 @@ const NodeOverviewTab = ({
                                 data={cpuTrxMetrics}
                                 name={"CPU-TRX (For demo)"} //"Temperature-TRX"
                                 onRefreshData={onRefreshTempTrx}
+                                refreshInterval={REFRESH_INTERVAL}
+                            />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                data={uptimeMetrics}
+                                name={"UPTIME (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshUptime}
+                                refreshInterval={REFRESH_INTERVAL}
+                            />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                data={memoryTrxMetrics}
+                                name={"MEMORY-TRX (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshMemoryTrx}
                                 refreshInterval={REFRESH_INTERVAL}
                             />
                             {/* <ApexLineChartIntegration

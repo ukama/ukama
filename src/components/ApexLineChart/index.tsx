@@ -78,9 +78,10 @@ const ApexLineChart = (props: any) => {
     return (
         <Chart
             type="line"
+            key={props.name}
+            height={"300px"}
             options={options}
             series={props.dataList}
-            height={"300px"}
         />
     );
 };
@@ -101,8 +102,18 @@ const ApexLineChartIntegration = ({
     });
 
     return (
-        <GraphTitleWrapper hasData={hasData} variant="subtitle1" title={name}>
-            <ApexLineChart dataList={data} range={TIME_RANGE_IN_MILLISECONDS} />
+        <GraphTitleWrapper
+            key={name}
+            hasData={hasData}
+            variant="subtitle1"
+            title={name}
+        >
+            <ApexLineChart
+                key={name}
+                name={name}
+                dataList={data}
+                range={TIME_RANGE_IN_MILLISECONDS}
+            />
         </GraphTitleWrapper>
     );
 };

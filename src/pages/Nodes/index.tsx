@@ -21,7 +21,9 @@ import {
     useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
     useGetMetricsCpuTrxLazyQuery,
-    MetricsCpuTrxDto,
+    MetricDto,
+    useGetMetricsUptimeLazyQuery,
+    useGetMetricsMemoryTrxLazyQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
@@ -43,9 +45,21 @@ const Nodes = () => {
     const [cpuTrxMetrics, setCpuTrxMetrics] = useState<
         {
             name: string;
-            data: MetricsCpuTrxDto[];
+            data: MetricDto[];
         }[]
     >(getDefaultList(["CPU-TRX (For demo)"]));
+    const [uptimeMetrics, setUptimeMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["UPTIME (For demo)"]));
+    const [memoryTrxMetrics, setMemoryTrxMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["MEMORY-TRX (For demo)"]));
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: { orgId: "1" || "" },
@@ -58,27 +72,94 @@ const Nodes = () => {
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
 
-    const [getCpuTrxMetrics, { data: nodeCpuTrxRes }] =
-        useGetMetricsCpuTrxLazyQuery({
-            fetchPolicy: "network-only",
-            onCompleted: res => {
-                if (res?.getMetricsCpuTRX) {
-                    setCpuTrxMetrics(
-                        cpuTrxMetrics.map(item => {
-                            return {
-                                name: item.name,
-                                data: [...item.data, ...res.getMetricsCpuTRX],
-                            };
-                        })
-                    );
-                }
-            },
-        });
+    const [
+        getCpuTrxMetrics,
+        { data: nodeCpuTrxRes, refetch: refetchCpuTrxMetrics },
+    ] = useGetMetricsCpuTrxLazyQuery({
+        fetchPolicy: "network-only",
+        notifyOnNetworkStatusChange: true,
+        onCompleted: res => {
+            if (res?.getMetricsCpuTRX) {
+                setCpuTrxMetrics(
+                    cpuTrxMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [...item.data, ...res.getMetricsCpuTRX],
+                        };
+                    })
+                );
+            }
+        },
+    });
+
+    const [
+        getUptimeMetrics,
+        { data: nodeUptimeMetricsRes, refetch: refetchUptimeMetrics },
+    ] = useGetMetricsUptimeLazyQuery({
+        fetchPolicy: "network-only",
+        notifyOnNetworkStatusChange: true,
+        onCompleted: res => {
+            if (res?.getMetricsUptime) {
+                setUptimeMetrics(
+                    uptimeMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [...item.data, ...res.getMetricsUptime],
+                        };
+                    })
+                );
+            }
+        },
+    });
+
+    const [
+        getMemoryTrxMetrics,
+        { data: nodeMemoryTrxRes, refetch: refetchMemoryTrxMetrics },
+    ] = useGetMetricsMemoryTrxLazyQuery({
+        fetchPolicy: "network-only",
+        notifyOnNetworkStatusChange: true,
+        onCompleted: res => {
+            if (res?.getMetricsMemoryTRX) {
+                setMemoryTrxMetrics(
+                    memoryTrxMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [...item.data, ...res.getMetricsMemoryTRX],
+                        };
+                    })
+                );
+            }
+        },
+    });
 
     useEffect(() => {
         if (selectedTab === 0) {
+            setCpuTrxMetrics(getDefaultList(["UPTIME (For demo)"]));
             setCpuTrxMetrics(getDefaultList(["CPU-TRX (For demo)"]));
+            setCpuTrxMetrics(getDefaultList(["MEMORY-TRX (For demo)"]));
             getCpuTrxMetrics({
+                variables: {
+                    data: {
+                        nodeId: "uk-test36-hnode-a1-30df",
+                        orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                        to: Math.round(Date.now() / 1000),
+                        from: Math.round(Date.now() / 1000) - 240,
+                        step: 1,
+                    },
+                },
+            });
+            getUptimeMetrics({
+                variables: {
+                    data: {
+                        nodeId: "uk-test36-hnode-a1-30df",
+                        orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                        to: Math.round(Date.now() / 1000),
+                        from: Math.round(Date.now() / 1000) - 240,
+                        step: 1,
+                    },
+                },
+            });
+            getMemoryTrxMetrics({
                 variables: {
                     data: {
                         nodeId: "uk-test36-hnode-a1-30df",
@@ -123,18 +204,46 @@ const Nodes = () => {
 
     const fetchCpuTrxData = () =>
         nodeCpuTrxRes &&
-        getCpuTrxMetrics({
-            variables: {
-                data: {
-                    nodeId: "uk-test36-hnode-a1-30df",
-                    orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
-                    to: Math.round(Date.now() / 1000),
-                    from:
-                        nodeCpuTrxRes.getMetricsCpuTRX[
-                            nodeCpuTrxRes.getMetricsCpuTRX.length - 1
-                        ].x + 1,
-                    step: 1,
-                },
+        refetchCpuTrxMetrics({
+            data: {
+                nodeId: "uk-test36-hnode-a1-30df",
+                orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                to: Math.round(Date.now() / 1000),
+                from:
+                    nodeCpuTrxRes.getMetricsCpuTRX[
+                        nodeCpuTrxRes.getMetricsCpuTRX.length - 1
+                    ].x + 1,
+                step: 1,
+            },
+        });
+
+    const fetchUptimeData = () =>
+        nodeUptimeMetricsRes &&
+        refetchUptimeMetrics({
+            data: {
+                nodeId: "uk-test36-hnode-a1-30df",
+                orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                to: Math.round(Date.now() / 1000),
+                from:
+                    nodeUptimeMetricsRes?.getMetricsUptime[
+                        nodeUptimeMetricsRes.getMetricsUptime.length - 1
+                    ].x + 1,
+                step: 1,
+            },
+        });
+
+    const fetchMemoryTrxData = () =>
+        nodeMemoryTrxRes &&
+        refetchMemoryTrxMetrics({
+            data: {
+                nodeId: "uk-test36-hnode-a1-30df",
+                orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+                to: Math.round(Date.now() / 1000),
+                from:
+                    nodeMemoryTrxRes?.getMetricsMemoryTRX[
+                        nodeMemoryTrxRes.getMetricsMemoryTRX.length - 1
+                    ].x + 1,
+                step: 1,
             },
         });
 
@@ -187,10 +296,14 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
-                                cpuTrxMetrics={cpuTrxMetrics}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
+                                cpuTrxMetrics={cpuTrxMetrics}
                                 onRefreshTempTrx={fetchCpuTrxData}
+                                memoryTrxMetrics={memoryTrxMetrics}
+                                onRefreshMemoryTrx={fetchMemoryTrxData}
+                                uptimeMetrics={uptimeMetrics}
+                                onRefreshUptime={fetchUptimeData}
                                 handleUpdateNode={handleUpdateNode}
                                 loading={isLoading || nodeDetailLoading}
                                 nodeDetails={parseObjectInNameValue(
