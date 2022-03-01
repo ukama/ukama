@@ -52,7 +52,7 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-
+#include <sys/wait.h>
 
 /**
  * @typedef USysMachineWord
@@ -138,6 +138,13 @@ typedef uint64_t USysPhysAddr;
 typedef uint32_t USysPhysAddr;
 #endif
 
+/**
+ * @typedef USysPid
+ *
+ * @brief  Process Identifier
+ *
+ */
+typedef pid_t USysPid;
 
 #ifdef __cplusplus
 }
