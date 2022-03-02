@@ -554,6 +554,7 @@ void test_usys_write_failure_no_file_exist() {
     char testbuff[32] = { '\0' };
     int size = usys_strlen(buff);
     TEST_ASSERT_GREATER_THAN( size ,  usys_file_write(filename, buff, 0, size));
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
 }
 
 

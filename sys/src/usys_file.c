@@ -352,9 +352,9 @@ int usys_file_add_record(char *filename, char *rowdesc, char *data) {
             return ret;
         }
         /* Add column description */
-        usys_file_append(filename, rowdesc, 0, usys_strlen(rowdesc));
+        ret = usys_file_append(filename, rowdesc, 0, usys_strlen(rowdesc));
     }
     /* Add data to file */
-    usys_file_append(filename, data, 0, usys_strlen(data));
+    ret = usys_file_append(filename, data, 0, usys_strlen(data));
     return ret;
 }
