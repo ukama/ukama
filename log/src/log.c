@@ -40,8 +40,8 @@ static struct {
   Callback callbacks[MAX_CALLBACKS];
 } l;
 
-static const char *level_strings[] = {"TRACE", "DEBUG", "INFO",
-                                      "WARN",  "ERROR", "FATAL"};
+static const char *levelStrings[] = {"TRACE", "DEBUG", "INFO",
+                                     "WARN",  "ERROR", "FATAL"};
 
 #ifdef LOG_USE_COLOR
 static const char *level_colors[] = {"\x1b[94m", "\x1b[36m", "\x1b[32m",
@@ -56,7 +56,7 @@ static void stdout_callback(log_Event *ev) {
           level_colors[ev->level], level_strings[ev->level], ev->file,
           ev->line);
 #else
-  fprintf(ev->udata, "%s %-5s %s:%d: ", buf, level_strings[ev->level], ev->file,
+  fprintf(ev->udata, "%s %-5s %s:%d: ", buf, levelStrings[ev->level], ev->file,
           ev->line);
 #endif
   vfprintf(ev->udata, ev->fmt, ev->ap);
@@ -67,7 +67,7 @@ static void stdout_callback(log_Event *ev) {
 static void file_callback(log_Event *ev) {
   char buf[64];
   buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
-  fprintf(ev->udata, "%s %-5s %s:%d: ", buf, level_strings[ev->level], ev->file,
+  fprintf(ev->udata, "%s %-5s %s:%d: ", buf, levelStrings[ev->level], ev->file,
           ev->line);
   vfprintf(ev->udata, ev->fmt, ev->ap);
   fprintf(ev->udata, "\n");
@@ -86,7 +86,7 @@ static void unlock(void) {
   }
 }
 
-const char *log_level_string(int level) { return level_strings[level]; }
+const char *log_level_string(int level) { return levelStrings[level]; }
 
 void log_set_lock(log_LockFn fn, void *udata) {
   l.lock = fn;

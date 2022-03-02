@@ -119,12 +119,12 @@ check-style:
 		echo "clang-tidy: ";\
 		clang-tidy-10 --checks='-*,readability-identifier-naming' \
 			-config="{CheckOptions: [ \
-                    { key: readability-identifier-naming.NamespaceCase, value: lower_case },\
-                    { key: readability-identifier-naming.ClassCase, value: lower_case  },\
-                    { key: readability-identifier-naming.StructCase, value: lower_case  },\
+                    { key: readability-identifier-naming.NamespaceCase, value: camelBack },\
+                    { key: readability-identifier-naming.ClassCase, value: CamelCase  },\
+                    { key: readability-identifier-naming.StructCase, value: CamelCase  },\
                     { key: readability-identifier-naming.FunctionCase, value: lower_case },\
-                    { key: readability-identifier-naming.VariableCase, value: lower_case },\
-                    { key: readability-identifier-naming.GlobalConstantCase, value: lower_case }\
+                    { key: readability-identifier-naming.VariableCase, value: camelBack },\
+                    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack }\
                     ]}" --quiet "$$src" -- $(INCFLAGS); \
 	done
 	@echo "Ukama Coding Style check pass..!!"
@@ -209,12 +209,12 @@ define clang-format
 	$(shell clang-format-9 -i $1;)
 	$(shell clang-tidy-10 -checks='-*,readability-identifier-naming' \
 		    -config="{CheckOptions: [ \
-		    { key: readability-identifier-naming.NamespaceCase, value: lower_case },\
-		    { key: readability-identifier-naming.ClassCase, value: lower_case  },\
-		    { key: readability-identifier-naming.StructCase, value: lower_case  },\
+		    { key: readability-identifier-naming.NamespaceCase, value: camelBack },\
+		    { key: readability-identifier-naming.ClassCase, value: CamelCase  },\
+		    { key: readability-identifier-naming.StructCase, value: CamelCase  },\
 		    { key: readability-identifier-naming.FunctionCase, value: lower_case },\
-		    { key: readability-identifier-naming.VariableCase, value: lower_case },\
-		    { key: readability-identifier-naming.GlobalConstantCase, value: lower_case }\
+		    { key: readability-identifier-naming.VariableCase, value: camelBack },\
+		    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack }\
 		    ]}" --fix "$1" -- $(INCFLAGS) )
 endef
 
