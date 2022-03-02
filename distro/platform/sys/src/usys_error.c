@@ -38,13 +38,15 @@ const char *usysErrCodes[] = {
 };
 
 /**
- * @brief Read error description
+ * @brief  Read error description
  *
- * @param err
+ * @param  err
  * @return char*
+ *
  */
 const char* usys_error(int err) {
     if (err < USYS_BASE_ERR_CODE) {
+        /* TBU: check if we can use some thread safe api like strerror_r */
         return strerror(err);
     } else {
         if (err < ERR_MAX_ERR_CODE) {
