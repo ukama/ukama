@@ -28,7 +28,7 @@ export const getHeaders = (ctx: Context): HeaderType => {
         };
     } else if (ctx.cookie) {
         header = {
-            Cookie: ctx.cookie,
+            cookie: ctx.cookie,
         };
     }
 

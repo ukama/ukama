@@ -16,6 +16,7 @@ class ApiMethods {
             headers: headers,
             params: params,
             timeout: 30000,
+            withCredentials: true,
         }).catch(err => {
             throw err;
         });

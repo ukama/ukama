@@ -84,10 +84,7 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/nodes`,
-            // headers: header,
-            headers: {
-                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-            },
+            headers: header,
         });
         return NodeMapper.dtoToNodesDto(orgId, res);
     };
@@ -191,10 +188,7 @@ export class NodeService implements INodeService {
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            // headers: header,
-            headers: {
-                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-            },
+            headers: header,
             path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/cpu`,
             params: { from: data.from, to: data.to, step: data.step },
         });
@@ -207,10 +201,7 @@ export class NodeService implements INodeService {
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            // headers: header,
-            headers: {
-                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-            },
+            headers: header,
             path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/memory`,
             params: { from: data.from, to: data.to, step: data.step },
         });
@@ -223,11 +214,34 @@ export class NodeService implements INodeService {
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            // headers: header,
-            headers: {
-                authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-            },
+            headers: header,
             path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/uptime`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getThroughputUL = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/throughputuplink`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getThroughputDL = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/throughputdownlink`,
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
