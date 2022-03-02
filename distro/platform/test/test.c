@@ -12,6 +12,7 @@
 #include "unity.h"
 #include "usys_api.h"
 #include "usys_error.h"
+#include "usys_file.h"
 #include "usys_log.h"
 #include "usys_shm.h"
 #include "usys_string.h"
@@ -314,14 +315,14 @@ void test_usys_strtok() {
     };
     tok = strtok(str, " -.");
     int ret = usys_memcmp(tok, tokens[0], usys_strlen(tokens[0]));
-    TEST_ASSERT_EQUAL_INT(ret, 0 );
+    TEST_ASSERT_EQUAL_INT(0, ret);
     int i = 0;
     while (tok != NULL) {
         i++;
         tok = strtok(NULL," -.");
         if (tok) {
             ret = usys_memcmp(tok, tokens[i], usys_strlen(tokens[i]));
-            TEST_ASSERT_EQUAL_INT(ret, 0 );
+            TEST_ASSERT_EQUAL_INT(0, ret);
         }
     }
 
@@ -502,3 +503,57 @@ void test_usys_timer(void) {
         num--;
     };
 }
+
+void test_usys_read_write_strings_to_file() {
+    char* filename = "./test/data/testfile.txt";
+    char buff[32] = "Ukama test file created.";
+    char testbuff[32] = { '\0' };
+    int size = usys_strlen(buff);
+    usys_file_init(filename);
+    usys_file_write(filename, buff, 0, size);
+    usys_file_read(filename, testbuff, 0, size);
+    usys_log_trace("Read data is %s.\n", testbuff);
+    TEST_ASSERT_EQUAL_STRING(buff, testbuff);
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+}
+
+void test_usys_read_write_numbers_to_file() {
+    int type = 12;
+    int test_type;
+    char ty1[4];
+    char ty[4];
+    char* filename = "./test/data/testfile.txt";
+    usys_memcpy(ty, &type, 4);
+    usys_file_init(filename);
+    usys_log_trace("Write: %x %x %x %x\n", ty[0], ty[1], ty[2], ty[3]);
+    usys_file_write(filename, ty, 18, 4);
+    usys_file_read(filename, ty1, 18, 4);
+    usys_log_trace("Read: %x %x %x %x \n", ty1[0], ty[1], ty[2], ty[3]);
+    usys_memcpy(&test_type, ty1, 4);
+    usys_log_trace("Read data is %s and %d.", ty1, test_type);
+    TEST_ASSERT_EQUAL_CHAR_ARRAY(ty, ty1, 4);
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+}
+
+void test_usys_read_write_arrays_to_file() {
+    char* filename = "./test/data/testfile.txt";
+    uint16_t write[3] = { 455, 35, 6335 };
+    uint16_t read[3] = { 0 };
+    usys_file_init(filename);
+    usys_file_write_number(filename, write, 22, 3, sizeof(uint16_t));
+    usys_file_read_number(filename, read, 22, 3, sizeof(uint16_t));
+    usys_log_trace("Write %d %d %d  and read %d %d %d.\n", write[0], write[1], write[2],
+           read[0], read[1], read[2]);
+    TEST_ASSERT_EQUAL_UINT16_ARRAY(write, read, 3);
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+}
+
+void test_usys_write_failure_no_file_exist() {
+    char* filename = "./test/data/testfile.txt";
+    char buff[32] = "Ukama test file created.";
+    char testbuff[32] = { '\0' };
+    int size = usys_strlen(buff);
+    TEST_ASSERT_GREATER_THAN( size ,  usys_file_write(filename, buff, 0, size));
+}
+
+

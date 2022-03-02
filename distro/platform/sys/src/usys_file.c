@@ -30,26 +30,32 @@ int usys_file_path_exist(char *fname) {
 int usys_file_exist(char *fname) {
     int ret = 0;
     struct stat sb;
+
     int fd = usys_file_open(fname, O_RDONLY);
     if (fd > 0) {
         ret = 1;
         usys_stat(fname, &sb);
+
         ret = S_ISREG(sb.st_mode);
         if (!ret) {
             usys_log_error("Err: FILE:: %s is not a file.", fname);
         }
         usys_file_close(fd);
+
     }
+
     return ret;
 }
 
 int usys_file_open(char *fname, int flags) {
     int fd = 0;
+
     /* Create input file descriptor */
     fd = usys_open(fname, flags, 0644);
     if (fd == -1) {
-        perror("open");
+        usys_log_error("Opening file %s failed.", fname);
     }
+
     return fd;
 }
 
@@ -57,6 +63,7 @@ int usys_file_remove(void *data) {
     int ret = -1;
     if (data) {
         char *fname = data;
+
         ret = usys_remove(fname);
         if (!ret) {
             usys_log_debug("FILE:: %s db file deleted successfully.", fname);
@@ -64,6 +71,7 @@ int usys_file_remove(void *data) {
             usys_log_debug("Err(%d): FILE:: %s db file deleted successfully.", ret,
                       fname);
         }
+
     }
     return ret;
 }
@@ -88,14 +96,16 @@ char *usys_file_read_sym_link(char *fname) {
     struct stat sb;
     int readbytes = 0;
     if (usys_lstat(fname, &sb) == -1) {
-        perror("lstat");
+        usys_log_error("lstat for file %s failed.", fname);
         return NULL;
     }
+
     char *linkname = usys_malloc(sb.st_size + 1);
     if (linkname) {
+
         readbytes = usys_readlink(fname, linkname, sb.st_size + 1);
         if (readbytes < 0) {
-            perror("lstat");
+            usys_log_error("read for file %s failed.", fname);
             usys_free(linkname);
             return NULL;
         }
@@ -105,12 +115,14 @@ char *usys_file_read_sym_link(char *fname) {
             usys_free(linkname);
             return NULL;
         }
-        linkname[sb.st_size] = '\0';
 
+        linkname[sb.st_size] = '\0';
         usys_log_trace("FILE:: '%s' points to '%s'\n", fname, linkname);
+
     } else {
         return NULL;
     }
+
     return linkname;
 }
 
@@ -120,20 +132,23 @@ int usys_file_raw_read(char *fname, void *buff, off_t offset, uint16_t size) {
     /* Create input file descriptor */
     int fd = usys_open(fname, O_RDONLY, 0644);
     if (fd == -1) {
-        perror("open");
+        usys_log_error("Opening file %s failed.", fname);
         return fd;
     }
+
     off_t off = usys_lseek(fd, offset, SEEK_SET);
     if (off < offset) {
         read_bytes = -1;
         return read_bytes;
     }
+
     read_bytes = usys_read(fd, buff, size);
     return read_bytes;
 }
 
 int usys_file_read(void *fname, void *buff, off_t offset, uint16_t size) {
     int read_bytes = 0;
+
     int fd = usys_file_open(fname, O_RDONLY);
     if (fd < 0) {
         read_bytes = -1;
@@ -156,11 +171,13 @@ int usys_file_read(void *fname, void *buff, off_t offset, uint16_t size) {
 
 int usys_file_write(void *fname, void *buff, off_t offset, uint16_t size) {
     int write_bytes = 0;
+
     int fd = usys_file_open(fname, O_WRONLY);
     if (fd < 0) {
         write_bytes = -1;
         return write_bytes;
     }
+
     off_t off = usys_lseek(fd, offset, SEEK_SET);
     if (off < offset) {
         write_bytes = -1;
@@ -177,11 +194,13 @@ int usys_file_write(void *fname, void *buff, off_t offset, uint16_t size) {
 
 int usys_file_append(void *fname, void *buff, off_t offset, uint16_t size) {
     int write_bytes = 0;
+
     int fd = usys_file_open(fname, O_WRONLY);
     if (fd < 0) {
         write_bytes = -1;
         return write_bytes;
     }
+
     off_t off = usys_lseek(fd, offset, SEEK_END);
     if (off < offset) {
         write_bytes = -1;
@@ -199,6 +218,7 @@ int usys_file_append(void *fname, void *buff, off_t offset, uint16_t size) {
 int usys_file_erase(void *fname, off_t offset, uint16_t size) {
     int write_bytes = 0;
     int fd = -1;
+
     char *buff = usys_malloc(sizeof(char) * size);
     if (buff) {
         usys_memset(buff, 0xff, size);
@@ -212,10 +232,10 @@ int usys_file_erase(void *fname, off_t offset, uint16_t size) {
         write_bytes = usys_write(fd, buff, size);
 
         usys_file_close(fd);
-    }
-    if (buff) {
+
         usys_free(buff);
     }
+
     usys_log_trace("FILE:: Erased bytes: %d from %d", write_bytes, fd);
     return write_bytes;
 }
@@ -226,18 +246,23 @@ int usys_file_read_number(void *fname, void *data, off_t offset, uint16_t count,
     char val[8];
     uint16_t idx = 0;
     char *value = (char *)data;
+
     while (idx < count) {
         if (usys_file_read(fname, val, offset, size) < size) {
             return -1;
         }
+
         usys_memcpy((value + (idx * size)), val, size);
+
         for (int i = 0; i < size; i++) {
             usys_log_trace("\t \t File[%d] = 0x%x.", offset,
                       (uint8_t) * (value + (idx * size) + i));
         }
+
         offset = offset + size;
         idx++;
     }
+
     return ret;
 }
 
@@ -247,15 +272,19 @@ int usys_file_write_number(void *fname, void *data, off_t offset, uint16_t count
     uint16_t idx = 0;
     char val[8];
     char *value = (char *)data;
+
     while (idx < count) {
         usys_memcpy(val, value + (idx * size), size);
+
         if (usys_file_write(fname, val, offset, size) < size) {
             return -1;
         }
+
         for (int i = 0; i < size; i++) {
             usys_log_trace("\t \t File[%d] = 0x%x.", offset,
                       (uint8_t) * (value + (idx * size) + i));
         }
+
         offset = offset + size;
         idx++;
     }
@@ -271,15 +300,19 @@ int usys_file_init(void *data) {
     char fname[MAX_STR_LENGTH] = { '\0' };
     int size = usys_strlen((char *)data);
     usys_memcpy(fname, data, size);
+
     int fd = usys_file_open(fname, O_RDONLY);
     if (fd < 0) {
         /* This means db doesn't exist.*/
-        usys_log_debug("FILE:: %s doesn't exist.So creating it", fname);
+        usys_log_warn("FILE:: %s doesn't exist.So creating it", fname);
+
         fd = usys_file_open(fname, (O_WRONLY | O_CREAT));
         if (fd < 0) {
             return -1;
         }
+
     }
+
     usys_file_close(fd);
     usys_log_debug("FILE::File %s is ready.", fname);
     return 0;
@@ -287,12 +320,14 @@ int usys_file_init(void *data) {
 
 int usys_file_cleanup(void *fname) {
     int ret = 0;
+
     ret = usys_remove(fname);
     if (!ret) {
         usys_log_debug("FILE:: DB %s deleted successfully.", fname);
     } else {
         usys_log_debug("FILE:: DB %s deletion failed.", fname);
     }
+
     return ret;
 }
 
@@ -311,14 +346,15 @@ int usys_file_add_record(char *filename, char *rowdesc, char *data) {
     int ret = 0;
     /* Check if we need to create a new file */
     if (!usys_file_exist(filename)) {
+
         ret = usys_file_init(filename);
         if (ret) {
             return ret;
         }
         /* Add column description */
-        usys_file_append(filename, rowdesc, 0, strlen(rowdesc));
+        usys_file_append(filename, rowdesc, 0, usys_strlen(rowdesc));
     }
     /* Add data to file */
-    usys_file_append(filename, data, 0, strlen(data));
+    usys_file_append(filename, data, 0, usys_strlen(data));
     return ret;
 }
