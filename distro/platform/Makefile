@@ -124,7 +124,9 @@ check-style:
                     { key: readability-identifier-naming.StructCase, value: CamelCase  },\
                     { key: readability-identifier-naming.FunctionCase, value: lower_case },\
                     { key: readability-identifier-naming.VariableCase, value: camelBack },\
-                    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack }\
+                    { key: readability-identifier-naming.TypedefCase, value: CamelCase },\
+                    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack },\
+                    { key: readability-braces-around-statements.ShortStatementLines, value: 0}\
                     ]}" --quiet "$$src" -- $(INCFLAGS); \
 	done
 	@echo "Ukama Coding Style check pass..!!"
@@ -214,7 +216,9 @@ define clang-format
 		    { key: readability-identifier-naming.StructCase, value: CamelCase  },\
 		    { key: readability-identifier-naming.FunctionCase, value: lower_case },\
 		    { key: readability-identifier-naming.VariableCase, value: camelBack },\
-		    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack }\
+		    { key: readability-identifier-naming.TypedefCase, value: CamelCase },\
+		    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack },\
+		    { key: readability-braces-around-statements.ShortStatementLines, value: 0}\
 		    ]}" --fix "$1" -- $(INCFLAGS) )
 endef
 
