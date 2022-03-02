@@ -28,7 +28,7 @@ const pageName = atom({
 
 const organizationId = atom<string | undefined>({
     key: "organizationId",
-    default: undefined,
+    default: "a32485e4-d842-45da-bf3e-798889c68ad0",
     effects_UNSTABLE: [persistAtom],
 });
 

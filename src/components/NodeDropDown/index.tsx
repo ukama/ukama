@@ -55,7 +55,7 @@ const NodeDropDown = ({
         const { target } = e;
         target.value &&
             onNodeSelected(
-                nodes.find((item: NodeDto) => item.id === target.value)
+                nodes.find((item: NodeDto) => item.title === target.value)
             );
     };
     return (

@@ -123,16 +123,16 @@ const NodeOverviewTab = ({
                             />
                             <ApexLineChartIntegration
                                 hasData={true}
-                                data={uptimeMetrics}
-                                name={"UPTIME (For demo)"} //"Temperature-TRX"
-                                onRefreshData={onRefreshUptime}
+                                data={memoryTrxMetrics}
+                                name={"MEMORY-TRX (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshMemoryTrx}
                                 refreshInterval={REFRESH_INTERVAL}
                             />
                             <ApexLineChartIntegration
                                 hasData={true}
-                                data={memoryTrxMetrics}
-                                name={"MEMORY-TRX (For demo)"} //"Temperature-TRX"
-                                onRefreshData={onRefreshMemoryTrx}
+                                data={uptimeMetrics}
+                                name={"UPTIME (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshUptime}
                                 refreshInterval={REFRESH_INTERVAL}
                             />
                             {/* <ApexLineChartIntegration
