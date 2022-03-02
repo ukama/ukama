@@ -11,6 +11,7 @@
 
 #include "unity.h"
 #include "usys_api.h"
+#include "usys_dir.h"
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_log.h"
@@ -451,6 +452,7 @@ void test_usys_shm(void) {
     char readdata[BLOCKSIZE] = {'\0'};
     child_pid = fork ();
     if ( child_pid == 0) {
+    	/* Child process */
         usys_log_trace("[%d] child process for shm writer successfully created", getpid());
         usys_log_trace ("[%d] child_PID = %d,parent_PID = %d\n",
                 getpid(), getpid(), getppid( ) );
@@ -458,7 +460,8 @@ void test_usys_shm(void) {
         usys_log_trace("[%d] child process for shm writer completed", getpid());
         _usys_Exit(0);
     } else if (child_pid > 0) {
-        usys_sleep(5);
+    	/* Parent process */
+        usys_sleep(2);
         usys_log_trace("[%d] shm reader successfully created!", getpid());
         test_shm_reader(readdata);
         usys_wait(NULL);
@@ -486,75 +489,214 @@ void test_usys_timer(void) {
     usys_log_info("seconds : %ld micro seconds : %ld",
         current_time.tv_sec, current_time.tv_usec);
 
+    /* create a timer */
     int ret = usys_timer(100000, timer_stat);
     TEST_ASSERT_EQUAL_INT( 1, ret );
 
+    /* some time for timer to run */
     unsigned int num = 0xFFFFFFFF;
     while(num >0) {
         num--;
     };
 
+    /* stop timer */
     ret = usys_timer(0, timer_stat);
     TEST_ASSERT_EQUAL_INT( 1, ret );
 
     usys_log_trace("Waiting to stop timer.");
-    num = 0xFFFFFFFF;
+    /* some time for timer to stop */
+    num = 0xFFFFFF;
     while(num >0) {
         num--;
     };
 }
 
 void test_usys_read_write_strings_to_file() {
-    char* filename = "./test/data/testfile.txt";
+    char* fileName = "./test/data/testfile.txt";
     char buff[32] = "Ukama test file created.";
-    char testbuff[32] = { '\0' };
+    char testBuff[32] = { '\0' };
     int size = usys_strlen(buff);
-    usys_file_init(filename);
-    usys_file_write(filename, buff, 0, size);
-    usys_file_read(filename, testbuff, 0, size);
-    usys_log_trace("Read data is %s.\n", testbuff);
-    TEST_ASSERT_EQUAL_STRING(buff, testbuff);
-    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+
+    /* Create file */
+    usys_file_init(fileName);
+
+    /* Write to file */
+    usys_file_write(fileName, buff, 0, size);
+
+    /* read from file */
+    usys_file_read(fileName, testBuff, 0, size);
+
+    /* compare read and written string */
+    TEST_ASSERT_EQUAL_STRING(buff, testBuff);
+
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(fileName));
 }
 
 void test_usys_read_write_numbers_to_file() {
-    int type = 12;
-    int test_type;
+    int type = 0xabcd;
+    int testType;
     char ty1[4];
     char ty[4];
-    char* filename = "./test/data/testfile.txt";
+    char* fileName = "./test/data/testfile.txt";
     usys_memcpy(ty, &type, 4);
-    usys_file_init(filename);
-    usys_log_trace("Write: %x %x %x %x\n", ty[0], ty[1], ty[2], ty[3]);
-    usys_file_write(filename, ty, 18, 4);
-    usys_file_read(filename, ty1, 18, 4);
-    usys_log_trace("Read: %x %x %x %x \n", ty1[0], ty[1], ty[2], ty[3]);
-    usys_memcpy(&test_type, ty1, 4);
-    usys_log_trace("Read data is %s and %d.", ty1, test_type);
+
+    /* Create file */
+    usys_file_init(fileName);
+
+    /* Write a number */
+    usys_file_write(fileName, ty, 0, 4);
+
+    /* read a number */
+    usys_file_read(fileName, ty1, 0, 4);
+
+    usys_memcpy(&testType, ty1, 4);
+
+    /* compare read and written number */
     TEST_ASSERT_EQUAL_CHAR_ARRAY(ty, ty1, 4);
-    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+
+    /* Remove file */
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(fileName));
 }
 
 void test_usys_read_write_arrays_to_file() {
-    char* filename = "./test/data/testfile.txt";
+    char* fileName = "./test/data/testfile.txt";
     uint16_t write[3] = { 455, 35, 6335 };
     uint16_t read[3] = { 0 };
-    usys_file_init(filename);
-    usys_file_write_number(filename, write, 22, 3, sizeof(uint16_t));
-    usys_file_read_number(filename, read, 22, 3, sizeof(uint16_t));
-    usys_log_trace("Write %d %d %d  and read %d %d %d.\n", write[0], write[1], write[2],
-           read[0], read[1], read[2]);
+
+    /* Create a file */
+    usys_file_init(fileName);
+
+    /* Write numbers */
+    usys_file_write_number(fileName, write, 22, 3, sizeof(uint16_t));
+
+    /* Read */
+    usys_file_read_number(fileName, read, 22, 3, sizeof(uint16_t));
+
+    /* compare read and written bytes */
     TEST_ASSERT_EQUAL_UINT16_ARRAY(write, read, 3);
-    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+
+    /* Remove file */
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(fileName));
 }
 
 void test_usys_write_failure_no_file_exist() {
-    char* filename = "./test/data/testfile.txt";
+    char* fileName = "./test/data/testfile.txt";
     char buff[32] = "Ukama test file created.";
-    char testbuff[32] = { '\0' };
+    char testBuff[32] = { '\0' };
+
     int size = usys_strlen(buff);
-    TEST_ASSERT_GREATER_THAN( size ,  usys_file_write(filename, buff, 0, size));
-    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(filename));
+
+    /* Write to file */
+    TEST_ASSERT_GREATER_THAN( size ,
+    		usys_file_write(fileName, buff, 0, size));
+
+    /* Remove file */
+    TEST_ASSERT_EQUAL_INT( 0 , usys_remove(fileName));
 }
 
+/* Directory related test cases */
 
+void test_usys_open_read_close_dir() {
+	struct dirent *de;
+	/* open directory */
+	DIR *dr = usys_opendir(".");
+	if (dr == NULL) {
+		TEST_ASSERT_MESSAGE(dr != NULL, usys_error(errno));
+	}
+
+	while ((de = usys_readdir(dr)) != NULL) {
+		usys_log_trace("%s\n", de->d_name);
+	}
+
+	TEST_ASSERT_EQUAL_INT( 0 , usys_closedir(dr));
+}
+
+void test_usys_opendir_fail() {
+	struct dirent *de;
+	/* open directory */
+	DIR *dr = usys_opendir("/xyz");
+	usys_log_warn("Error: %s", usys_error(errno));
+	TEST_ASSERT_MESSAGE(dr == NULL, "Directory wasn't expected");
+
+}
+
+void test_usys_getcwd_ch_dir() {
+	struct dirent *de;
+	/* cuurent working directory */
+	char cwd[256];
+	TEST_ASSERT_MESSAGE(getcwd(cwd, sizeof(cwd)) != NULL, "Couldn't get "
+			"current working dir.");
+	usys_log_trace("Current working dir is %s", cwd);
+
+	/* open directory */
+	DIR *dr = usys_opendir(".");
+	if (dr == NULL) {
+		TEST_ASSERT_MESSAGE(dr != NULL, usys_error(errno));
+	}
+
+	while ((de = usys_readdir(dr)) != NULL) {
+		usys_log_trace("%s\n", de->d_name);
+	}
+
+	/* Close directory */
+	TEST_ASSERT_EQUAL_INT( 0 , usys_closedir(dr));
+
+	/* Change directory */
+	TEST_ASSERT_MESSAGE( usys_chdir("/") == 0, "Change directory failed");
+
+	/* Open directory */
+	dr = usys_opendir(".");
+	if (dr == NULL) {
+		TEST_ASSERT_MESSAGE(dr != NULL, usys_error(errno));
+	}
+
+	/* Read directory */
+	while ((de = usys_readdir(dr)) != NULL) {
+		usys_log_trace("%s\n", de->d_name);
+	}
+
+	/* Close directory */
+	TEST_ASSERT_EQUAL_INT( 0 , usys_closedir(dr));
+
+	/* Change directory */
+	TEST_ASSERT_MESSAGE( usys_chdir(cwd) == 0, "Change directory failed");
+}
+
+void test_usys_seek_tell_dir() {
+	struct dirent *de ;
+	DIR *dir;
+	long int offset = 0;
+	long int loc= 0;
+	int idx = 0;
+	/* open dir */
+	dir = usys_opendir(".");
+
+	/* Read directory */
+	while ((de = usys_readdir(dir))!= NULL) {
+
+		/* tell dir */
+		offset = usys_telldir(dir);
+		TEST_ASSERT_GREATER_THAN_INT64( 0 , offset);
+		if (idx++ == 2) {
+			loc = offset;
+		}
+
+		usys_log_debug("DName:%s Offset: %ld ", de->d_name, offset) ;
+	}
+
+	/* seek dir */
+	usys_seekdir(dir, loc);
+
+	usys_log_debug("reading again");
+	while ((de = usys_readdir(dir))!= NULL) {
+
+		/* tell dir */
+		offset = usys_telldir(dir);
+		TEST_ASSERT_GREATER_THAN_INT64( 0 , offset);
+
+		usys_log_debug("DName:%s Offset: %ld", de->d_name, offset);
+	}
+
+	/* Close directory */
+	TEST_ASSERT_EQUAL_INT( 0 , usys_closedir(dir));
+}

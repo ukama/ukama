@@ -38,5 +38,9 @@ void test_usys_read_write_arrays_to_file(void);
 void test_usys_read_write_numbers_to_file(void);
 void test_usys_read_write_strings_to_file(void);
 void test_usys_write_failure_no_file_exist(void);
+void test_usys_open_read_close_dir(void);
+void test_usys_opendir_fail(void);
+void test_usys_getcwd_ch_dir(void);
+void test_usys_seek_tell_dir(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */
