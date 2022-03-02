@@ -34,5 +34,9 @@ void test_usys_strstr(void);
 void test_usys_strtok(void);
 void test_usys_shm(void);
 void test_usys_timer(void);
+void test_usys_read_write_arrays_to_file(void);
+void test_usys_read_write_numbers_to_file(void);
+void test_usys_read_write_strings_to_file(void);
+void test_usys_write_failure_no_file_exist(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */

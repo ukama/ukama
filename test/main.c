@@ -35,6 +35,9 @@ int main() {
     RUN_TEST(test_usys_strtok);
     RUN_TEST(test_usys_shm);
     RUN_TEST(test_usys_timer);
+    RUN_TEST(test_usys_read_write_arrays_to_file);
+    RUN_TEST(test_usys_read_write_numbers_to_file);
+    RUN_TEST(test_usys_read_write_strings_to_file);
     return UNITY_END();
 }
 
