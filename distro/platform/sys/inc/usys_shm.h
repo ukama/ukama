@@ -68,7 +68,8 @@ static inline int usys_ftruncate(int fd, off_t length) {
  * @return On success returns a pointer to the mapped area.
  *         Onerror, the value MAP_FAILED (that is, (void *) -1) is returned
  */
-static inline void* usys_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t offset) {
+static inline void* usys_mmap(void* addr, size_t length, int prot, int flags,
+		int fd, off_t offset) {
     return mmap(addr, length, prot, flags, fd, offset);
 }
 
@@ -98,7 +99,8 @@ static inline int usys_munmap(void* addr, size_t length) {
  * @return On success returns a pointer to the new virtual memory area.
  *         On error, the value MAP_FAILED (that is, (void *) -1) is returned.
  */
-static inline void* usys_mremap (void *address, size_t length, size_t new_length, int flag) {
+static inline void* usys_mremap (void *address, size_t length,
+		size_t new_length, int flag) {
     return mremap(address, length, new_length, flag);
 }
 #endif

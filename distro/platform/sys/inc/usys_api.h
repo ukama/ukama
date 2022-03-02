@@ -81,16 +81,19 @@ static inline int usys_fclose(FILE* fp) {
 /**
  * @fn     usys_fread
  *
- * @brief  This function is a wrapper over glibc fread. Refer fread man page for details.
+ * @brief  reads nmemb items of data, each size bytes long,
+ *         from the stream pointed to by stream, storing them at the
+ *         location given by ptr.
  *
  */
-static inline int usys_fread(void* ptr, size_t size, size_t nmemb, FILE *stream) {
+static inline int usys_fread(void* ptr, size_t size, size_t nmemb,
+		FILE *stream) {
     return fread(ptr, size, nmemb, stream);
 }
 
 /**
  * @fn     int usys_fwrite(const void*, size_t, size_t, FILE*)
- * @brief  Writes an array of count elements, each one with a size of size bytes,
+ * @brief  Writes an array of count elements,each one with a size of size bytes,
  *         from the block of memory pointed by ptr to the current position
  *         in the stream.
  *
@@ -100,13 +103,15 @@ static inline int usys_fread(void* ptr, size_t size, size_t nmemb, FILE *stream)
  * @param  stream
  * @return The total number of elements successfully written is returned.
  */
-static inline int usys_fwrite(const void* ptr, size_t size, size_t nmemb, FILE *stream) {
+static inline int usys_fwrite(const void* ptr, size_t size, size_t nmemb,
+		FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
 /**
  * @fn     int usys_fseek(FILE*, long int, int)
- * @brief  Sets the position indicator associated with the stream to a new position.
+ * @brief  Sets the position indicator associated with the stream to a
+ *         new position.
  *
  * @param  stream
  * @param  offset
@@ -145,8 +150,8 @@ static inline int usys_remove(const char *filename) {
 
 /**
  * @fn    int usys_access(const char*, int)
- * @brief The access function checks to see whether the file named by filename can be accessed in the way
- *        specified by the how argument.
+ * @brief The access function checks to see whether the file named by
+ *        filename can be accessed in the way specified by the how argument.
  *
  * @param  filename
  * @param  how
@@ -207,7 +212,7 @@ static inline int usys_fsync(int fd){
  *         On error, -1
  */
 static inline int usys_stat(const char *pathname,
-                struct stat *statbuf){
+        struct stat *statbuf){
     return stat(pathname, statbuf);
 }
 
@@ -222,7 +227,7 @@ static inline int usys_stat(const char *pathname,
  *         On error, -1
  */
 static inline int usys_lstat(const char *pathname,
-               struct stat *statbuf){
+        struct stat *statbuf){
     return stat(pathname, statbuf);
 }
 
@@ -285,23 +290,25 @@ static inline ssize_t usys_write(int fd, const void *buf, size_t count){
  *         On error, -1 is returned
  */
 static inline ssize_t usys_readlink(const char *pathname, char *buf,
-                        size_t bufsiz){
+        size_t bufsiz){
     return readlink(pathname, buf, bufsiz);
 }
 
 /**
  * @fn     char usys_fgets*(char*, int, FILE*)
- * @brief  Reads characters from stream and stores them as a C string into str until (num-1)
- *         characters have been read or either a newline or the end-of-file is reached,
- *         whichever happens first.
+ * @brief  Reads characters from stream and stores them as a C string into str
+ *         until (num-1) characters have been read or either a newline or
+ *         the end-of-file is reached, whichever happens first.
  *
  * @param  s
  * @param  size
  * @param  stream
  * @return On success, the function returns str.
- *         If the end-of-file is encountered while attempting to read a character, the eof indicator is set (feof).
- *         If this happens before any characters could be read, the pointer returned is a null pointer.
- *         If a read error occurs, the error indicator (ferror) is set and a null pointer is also returned
+ *         If the end-of-file is encountered while attempting to read a
+ *         character, the eof indicator is set (feof). If this happens before
+ *         any characters could be read, the pointer returned is a null pointer.
+ *         If a read error occurs, the error indicator (ferror)
+ *         is set and a null pointer is also returned
  */
 static inline char* usys_fgets(char* s, int size, FILE* stream) {
     return fgets(s, size, stream);
@@ -313,7 +320,8 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *         The content is stored as a C string in the buffer pointed by str
  *         with size as max length.
  */
-#define usys_snprintf(str, size, format, ...) snprintf(str, size, format, ##__VA_ARGS__);
+#define usys_snprintf(str, size, format, ...) \
+	        snprintf(str, size, format, ##__VA_ARGS__);
 
 /**
  * @def   usys_fprintf
@@ -321,9 +329,9 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *        Writes the C string pointed by format to the stream.
  */
 #define usys_fprintf(stream, format, ...)\
-{\
+        {\
     fprintf(stream, format, ##__VA_ARGS__);\
-}
+        }
 
 /**
  * @def   usys_printf
@@ -331,9 +339,9 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *        Writes the C string pointed by format to the standard output (stdout).
  */
 #define usys_printf(format, ...)\
-{\
+        {\
     printf(format, ##__VA_ARGS__);\
-}
+        }
 
 /**
  * @def   usys_sprintf
@@ -341,9 +349,9 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *        The content is stored as a C string in the buffer pointed by str
  */
 #define usys_sprintf(str, format, ...)\
-{\
+        {\
     sprintf(str, format, ##__VA_ARGS__);\
-}
+        }
 
 /**
  * @def   usys_sscanf
@@ -351,9 +359,9 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *        format into the locations given by the additional arguments.
  */
 #define usys_sscanf(str, format, ...)\
-{\
+        {\
     sscanf(str, format, ##__VA_ARGS__);\
-}
+        }
 
 /**
  * @fn    struct timeval usys_gettimeofday()
@@ -379,7 +387,8 @@ static inline void usys_gettimeofday(struct timeval* tv) {
  * @param  tm
  * @return returns the number of bytes placed in the array s
  */
-static inline size_t usys_strftime(char *s, size_t max, const char *format, const struct tm *tm) {
+static inline size_t usys_strftime(char *s, size_t max, const char *format,
+		const struct tm *tm) {
     return strftime(s, max, format, tm);
 }
 
@@ -391,7 +400,8 @@ static inline size_t usys_strftime(char *s, size_t max, const char *format, cons
  *
  * @param  timep
  * @return A pointer to a tm structure with its members filled
- *         with the values that correspond to the local time representation of timer.
+ *         with the values that correspond to the local time representation
+ *         of timer.
  */
 static inline struct tm *usys_localtime(const time_t* timep) {
     return localtime(timep);
@@ -399,8 +409,8 @@ static inline struct tm *usys_localtime(const time_t* timep) {
 
 /**
  * @fn     uint16_t usys_ntohs(uint16_t)
- * @brief  Converts the unsigned short integer netshort from network byte order to
- *         host byte order.
+ * @brief  Converts the unsigned short integer netshort from network byte order
+ *         to host byte order.
  *
  * @param  netshort
  * @return uint16_t
@@ -533,7 +543,8 @@ static inline int usys_inet_pton_ipv6(const char* data, uint8_t* ip_addr) {
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char* usys_inet_ntop_ipv4(const char* data, char* ip_addr, socklen_t size) {
+static inline const char* usys_inet_ntop_ipv4(const char* data, char* ip_addr,
+		socklen_t size) {
     return inet_ntop(AF_INET, data, ip_addr, size);
 }
 
@@ -548,13 +559,15 @@ static inline const char* usys_inet_ntop_ipv4(const char* data, char* ip_addr, s
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char* usys_inet_ntop_ipv6(const char* data, char* ip_addr, socklen_t size) {
+static inline const char* usys_inet_ntop_ipv6(const char* data, char* ip_addr,
+		socklen_t size) {
     return inet_ntop(AF_INET6, data, ip_addr, size);
 }
 
 /**
  * @fn     double usys_sqrt(double)
- * @brief  This function calculates the nonnegative value of the square root of x.
+ * @brief  This function calculates the nonnegative value of the square
+ *         root of x.
  *
  * @param  num
  * @return double

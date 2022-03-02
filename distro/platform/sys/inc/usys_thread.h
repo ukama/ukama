@@ -97,9 +97,10 @@ static inline USysThreadId usys_thread_id(void){
 }
 
 /**
- * @fn     int usys_thread_create(USysThreadId*, const USysThreadAttr*, void*(*)(void*), void*)
- * @brief  Creates a new thread. This function starts a new thread in the calling
- *         process.  The new thread starts execution by invoking
+ * @fn     int usys_thread_create(USysThreadId*, const USysThreadAttr*,
+ *         void*(*)(void*), void*)
+ * @brief  Creates a new thread. This function starts a new thread in the
+ *         calling process.  The new thread starts execution by invoking
  *         start_routine(); arg is passed as the sole argument of
  *         start_routine()
  *
@@ -110,13 +111,14 @@ static inline USysThreadId usys_thread_id(void){
  * @return On success, pthread_create() returns 0; on error, it returns an
  *         error number, and the contents of *thread are undefined
  */
-static inline int usys_thread_create(USysThreadId *thread, const USysThreadAttr *attr,
-            void *(*start_routine)(void *), void *arg){
+static inline int usys_thread_create(USysThreadId *thread,
+		const USysThreadAttr *attr, void *(*start_routine)(void *), void *arg){
     return pthread_create(thread, attr, start_routine, arg);
 }
 
 /**
- * @fn     int usys_thread_setschedparam(pthread_t, int, const struct sched_param*)
+ * @fn     int usys_thread_setschedparam(pthread_t, int,
+ *          const struct sched_param*)
  * @brief  sets the scheduling policy and parameters of the thread thread
  *
  * @param  thread
@@ -143,7 +145,8 @@ static inline int usys_thread_setschedparam(USysThreadId thread, int policy,
  * @return On success, these functions return 0; on error, they return a
  *         nonzero error number.
  */
-static inline int usys_thread_attr_setstacksize(USysThreadAttr *attr, size_t stacksize) {
+static inline int usys_thread_attr_setstacksize(USysThreadAttr *attr,
+		size_t stacksize) {
     return pthread_attr_setstacksize(attr, stacksize);
 }
 
