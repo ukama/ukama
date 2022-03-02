@@ -9,15 +9,18 @@
 
 #include "usys_error.h"
 
-const char *usysErrCodes[] = {
+const char *usys_err_codes[] = {
     [USYS_ERR_CODE(ERR_SOCK_CREATION)] = "failed to create socket",
     [USYS_ERR_CODE(ERR_SOCK_CONNECT)] = "failed to connect to socket",
     [USYS_ERR_CODE(ERR_SOCK_SEND)] = "failed to send on socket",
     [USYS_ERR_CODE(ERR_SOCK_RECV)] = "failed to read from socket",
     [USYS_ERR_CODE(ERR_MUTEX_OBJ_NULL)] = "failed to create mutex",
-    [USYS_ERR_CODE(ERR_MUTEX_ATTR_INIT_FAIL)] = "failed to initialize mutex attributes",
-    [USYS_ERR_CODE(ERR_MUTEX_ATTR_SET_PROTO_FAIL)] = "failed to set protocol for mutex",
-    [USYS_ERR_CODE(ERR_MUTEX_ATTR_SET_TYPE_FAIL)] = "failed to set mutex attributes",
+    [USYS_ERR_CODE(ERR_MUTEX_ATTR_INIT_FAIL)] =
+        "failed to initialize mutex attributes",
+    [USYS_ERR_CODE(ERR_MUTEX_ATTR_SET_PROTO_FAIL)] =
+        "failed to set protocol for mutex",
+    [USYS_ERR_CODE(ERR_MUTEX_ATTR_SET_TYPE_FAIL)] =
+        "failed to set mutex attributes",
     [USYS_ERR_CODE(ERR_MUTEX_INIT_FAILED)] = "failed to initialize mutex",
     [USYS_ERR_CODE(ERR_MUTEX_LOCK_FAILED)] = "mutex lock failed",
     [USYS_ERR_CODE(ERR_MUTEX_TRYLOCK_FAILED)] = "mutex try lock failed",
@@ -44,14 +47,14 @@ const char *usysErrCodes[] = {
  * @return char*
  *
  */
-const char* usys_error(int err) {
-    if (err < USYS_BASE_ERR_CODE) {
-        /* TBU: check if we can use some thread safe api like strerror_r */
-        return strerror(err);
-    } else {
-        if (err < ERR_MAX_ERR_CODE) {
-         return usysErrCodes[err-USYS_BASE_ERR_CODE];
-        }
-        return NULL;
+const char *usys_error(int err) {
+  if (err < USYS_BASE_ERR_CODE) {
+    /* TBU: check if we can use some thread safe api like strerror_r */
+    return strerror(err);
+  } else {
+    if (err < ERR_MAX_ERR_CODE) {
+      return usys_err_codes[err - USYS_BASE_ERR_CODE];
     }
+    return NULL;
+  }
 }

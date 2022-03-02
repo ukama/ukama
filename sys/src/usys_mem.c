@@ -9,21 +9,12 @@
 
 #include "usys_mem.h"
 
-void* usys_malloc(size_t size) {
-    return malloc(size);
+void *usys_malloc(size_t size) { return malloc(size); }
+
+void usys_free(void *ptr) { free(ptr); }
+
+void *usys_realloc(void *ptr, size_t new_size) {
+  return realloc(ptr, new_size);
 }
 
-void usys_free(void* ptr) {
-    free(ptr);
-}
-
-void* usys_realloc( void *ptr, size_t new_size ) {
-    return realloc(ptr, new_size);
-}
-
-void* usys_calloc( size_t num, size_t size ) {
-    return calloc(num, size);
-}
-
-
-
+void *usys_calloc(size_t num, size_t size) { return calloc(num, size); }

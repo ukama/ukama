@@ -44,8 +44,8 @@ static inline int usys_strtol(const char* nptr, char** endptr, int base) {
 
 /**
  * @fn     char usys_strcpy*(char*, const char*)
- * @brief  Copies the C string pointed by source into the array pointed by destination,
- *         including the terminating null character
+ * @brief  Copies the C string pointed by source into the array pointed by
+ *         destination, including the terminating null character
  *
  * @param  dest
  * @param  src
@@ -98,7 +98,8 @@ static inline int usys_strncmp(const char* s1, const char* s2, size_t n) {
 
 /**
  * @fn     size_t usys_strlen(const char*)
- * @brief  The length of a C string is determined by the terminating null-character
+ * @brief  The length of a C string is determined by the terminating
+ *         null-character
  *
  * @param  s
  * @return integer value indicating length of string.
