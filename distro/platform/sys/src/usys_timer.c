@@ -11,14 +11,14 @@
 #include "usys_log.h"
 
 bool usys_timer(uint32_t resolution, void (*tick_handler)()) {
-  sigset_t th_mask;
+  sigset_t thMask;
   struct sigaction sa;
-  struct itimerval interval_timer;
+  struct itimerval intervalTimer;
 
   /* Create a tick handler */
-  sigemptyset(&th_mask);
-  sigaddset(&th_mask, SIGALRM);
-  pthread_sigmask(SIG_UNBLOCK, &th_mask, NULL);
+  sigemptyset(&thMask);
+  sigaddset(&thMask, SIGALRM);
+  pthread_sigmask(SIG_UNBLOCK, &thMask, NULL);
 
   sigfillset(&sa.sa_mask);
   sa.sa_handler = tick_handler;
@@ -29,11 +29,11 @@ bool usys_timer(uint32_t resolution, void (*tick_handler)()) {
   }
 
   /* Setup a periodic tick of given resolution in Micro seconds with iTimers */
-  interval_timer.it_value.tv_sec = 0;
-  interval_timer.it_value.tv_usec = resolution;
-  interval_timer.it_interval.tv_sec = 0;
-  interval_timer.it_interval.tv_usec = resolution;
-  if (setitimer(ITIMER_REAL, &interval_timer, NULL)) {
+  intervalTimer.it_value.tv_sec = 0;
+  intervalTimer.it_value.tv_usec = resolution;
+  intervalTimer.it_interval.tv_sec = 0;
+  intervalTimer.it_interval.tv_usec = resolution;
+  if (setitimer(ITIMER_REAL, &intervalTimer, NULL)) {
     usys_log_error("Error in setting up the timer\n");
     return false;
   }

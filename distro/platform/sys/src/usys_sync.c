@@ -17,33 +17,33 @@ USysError usys_mutex_init(USysMutex *mutex) {
     return ERR_MUTEX_OBJ_NULL;
   }
 
-  pthread_mutexattr_t mutex_attr;
+  pthread_mutexattr_t mutexAttr;
 
-  if (pthread_mutexattr_init(&mutex_attr) != 0) {
+  if (pthread_mutexattr_init(&mutexAttr) != 0) {
     usys_log_warn("Mutex attribute init failed");
 
     return ERR_MUTEX_ATTR_INIT_FAIL;
   }
 
-  if (pthread_mutexattr_setprotocol(&mutex_attr, PTHREAD_PRIO_INHERIT) != 0) {
+  if (pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT) != 0) {
     usys_log_warn("Mutex attribute set protocol failed");
 
     return ERR_MUTEX_ATTR_SET_PROTO_FAIL;
   }
 
-  if (pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE) != 0) {
+  if (pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE) != 0) {
     usys_log_warn("Mutex attribute set type RECURSIVE failed");
 
     return ERR_MUTEX_ATTR_SET_TYPE_FAIL;
   }
 
-  if (pthread_mutex_init(mutex, &mutex_attr) != 0) {
+  if (pthread_mutex_init(mutex, &mutexAttr) != 0) {
     usys_log_warn("Mutex init with attribute failed");
 
     return ERR_MUTEX_INIT_FAILED;
   }
 
-  if (pthread_mutexattr_destroy(&mutex_attr) != 0) {
+  if (pthread_mutexattr_destroy(&mutexAttr) != 0) {
     usys_log_warn("Mutex attr destroy failed");
   }
 
@@ -79,17 +79,17 @@ USysError usys_mutex_trylock(USysMutex *mutex) {
 }
 
 USysError usys_mutex_timedlock_sec(USysMutex *mutex, uint32_t wait_time) {
-  struct timespec abs_time;
+  struct timespec absTime;
 
   if (mutex == NULL) {
     usys_log_warn("Mutex Object NULL");
     return ERR_MUTEX_OBJ_NULL;
   }
 
-  clock_gettime(CLOCK_REALTIME, &abs_time);
-  abs_time.tv_sec += wait_time;
+  clock_gettime(CLOCK_REALTIME, &absTime);
+  absTime.tv_sec += wait_time;
 
-  if (pthread_mutex_timedlock(mutex, &abs_time) == 0) {
+  if (pthread_mutex_timedlock(mutex, &absTime) == 0) {
     return ERR_NONE;
   } else {
     usys_log_warn("Mutex timedlock failed");
@@ -98,17 +98,17 @@ USysError usys_mutex_timedlock_sec(USysMutex *mutex, uint32_t wait_time) {
 }
 
 USysError usys_mutex_timedlock_nsec(USysMutex *mutex, uint32_t wait_time) {
-  struct timespec abs_time;
+  struct timespec absTime;
 
   if (mutex == NULL) {
     usys_log_warn("Mutex Object NULL");
     return ERR_MUTEX_OBJ_NULL;
   }
 
-  clock_gettime(CLOCK_REALTIME, &abs_time);
-  abs_time.tv_nsec += wait_time;
+  clock_gettime(CLOCK_REALTIME, &absTime);
+  absTime.tv_nsec += wait_time;
 
-  if (pthread_mutex_timedlock(mutex, &abs_time) == 0) {
+  if (pthread_mutex_timedlock(mutex, &absTime) == 0) {
     return ERR_NONE;
   } else {
     usys_log_warn("Mutex timedlock failed");
@@ -187,17 +187,17 @@ USysError usys_sem_trywait(USysSem *sem) {
 }
 
 USysError usys_sem_timedwait_sec(USysSem *sem, uint32_t wait_time) {
-  struct timespec abs_time;
+  struct timespec absTime;
 
   if (sem == NULL) {
     usys_log_warn("Semaphore Object NULL");
     return ERR_SEM_OBJ_NULL;
   }
 
-  clock_gettime(CLOCK_REALTIME, &abs_time);
-  abs_time.tv_sec += wait_time;
+  clock_gettime(CLOCK_REALTIME, &absTime);
+  absTime.tv_sec += wait_time;
 
-  if (sem_timedwait(sem, &abs_time) == 0) {
+  if (sem_timedwait(sem, &absTime) == 0) {
     return ERR_NONE;
   } else {
     usys_log_warn("Semaphore sem_timedwait failed");
@@ -206,17 +206,17 @@ USysError usys_sem_timedwait_sec(USysSem *sem, uint32_t wait_time) {
 }
 
 USysError usys_sem_timedwait_nsec(USysSem *sem, uint32_t wait_time) {
-  struct timespec abs_time;
+  struct timespec absTime;
 
   if (sem == NULL) {
     usys_log_warn("Semaphore Object NULL");
     return ERR_SEM_OBJ_NULL;
   }
 
-  clock_gettime(CLOCK_REALTIME, &abs_time);
-  abs_time.tv_nsec += wait_time;
+  clock_gettime(CLOCK_REALTIME, &absTime);
+  absTime.tv_nsec += wait_time;
 
-  if (sem_timedwait(sem, &abs_time) == 0) {
+  if (sem_timedwait(sem, &absTime) == 0) {
     return ERR_NONE;
   } else {
     usys_log_warn("Semaphore sem_timedwait failed");

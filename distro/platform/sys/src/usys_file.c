@@ -134,7 +134,7 @@ char *usys_file_read_sym_link(char *fname) {
 
 /*Used for master db info read.*/
 int usys_file_raw_read(char *fname, void *buff, off_t offset, uint16_t size) {
-  int read_bytes = 0;
+  int readBytes = 0;
   /* Create input file descriptor */
   int fd = usys_open(fname, O_RDONLY, 0644);
   if (fd == -1) {
@@ -147,91 +147,91 @@ int usys_file_raw_read(char *fname, void *buff, off_t offset, uint16_t size) {
   if (off < offset) {
     usys_log_error("Seek operation on file %s failed. Error: %s", fname,
                    usys_error(errno));
-    read_bytes = -1;
-    return read_bytes;
+    readBytes = -1;
+    return readBytes;
   }
 
-  read_bytes = usys_read(fd, buff, size);
-  return read_bytes;
+  readBytes = usys_read(fd, buff, size);
+  return readBytes;
 }
 
 int usys_file_read(void *fname, void *buff, off_t offset, uint16_t size) {
-  int read_bytes = 0;
+  int readBytes = 0;
 
   int fd = usys_file_open(fname, O_RDONLY);
   if (fd < 0) {
-    read_bytes = -1;
-    return read_bytes;
+    readBytes = -1;
+    return readBytes;
   }
 
   off_t off = usys_lseek(fd, offset, SEEK_SET);
   if (off < offset) {
     usys_log_error("Seek operation on file %s failed. Error: %s", fname,
                    usys_error(errno));
-    read_bytes = -1;
-    return read_bytes;
+    readBytes = -1;
+    return readBytes;
   }
 
-  read_bytes = usys_read(fd, buff, size);
+  readBytes = usys_read(fd, buff, size);
 
   usys_file_close(fd);
-  usys_log_trace("Read %d bytes from file %s at offset 0x%x.", read_bytes,
-                 fname, offset);
-  return read_bytes;
+  usys_log_trace("Read %d bytes from file %s at offset 0x%x.", readBytes, fname,
+                 offset);
+  return readBytes;
 }
 
 int usys_file_write(void *fname, void *buff, off_t offset, uint16_t size) {
-  int write_bytes = 0;
+  int writeBytes = 0;
 
   int fd = usys_file_open(fname, O_WRONLY);
   if (fd < 0) {
     usys_log_error("Seek operation on file %s failed. Error: %s", fname,
                    usys_error(errno));
-    write_bytes = -1;
-    return write_bytes;
+    writeBytes = -1;
+    return writeBytes;
   }
 
   off_t off = usys_lseek(fd, offset, SEEK_SET);
   if (off < offset) {
-    write_bytes = -1;
-    return write_bytes;
+    writeBytes = -1;
+    return writeBytes;
   }
 
-  write_bytes = write(fd, buff, size);
+  writeBytes = write(fd, buff, size);
 
   usys_file_close(fd);
-  usys_log_trace("Written %d bytes to file %s at offset 0x%x.", write_bytes,
+  usys_log_trace("Written %d bytes to file %s at offset 0x%x.", writeBytes,
                  fname, offset);
-  return write_bytes;
+  return writeBytes;
 }
 
 int usys_file_append(void *fname, void *buff, off_t offset, uint16_t size) {
-  int write_bytes = 0;
+  int writeBytes = 0;
 
   int fd = usys_file_open(fname, O_WRONLY);
   if (fd < 0) {
-    write_bytes = -1;
-    return write_bytes;
+    writeBytes = -1;
+    return writeBytes;
   }
 
   off_t off = usys_lseek(fd, offset, SEEK_END);
   if (off < offset) {
     usys_log_error("Seek operation on file %s failed. Error: %s", fname,
                    usys_error(errno));
-    write_bytes = -1;
-    return write_bytes;
+    writeBytes = -1;
+    return writeBytes;
   }
 
-  write_bytes = usys_write(fd, buff, size);
+  writeBytes = usys_write(fd, buff, size);
 
   usys_file_close(fd);
-  usys_log_trace("Written %d bytes to file %s at offset 0x%x.", write_bytes,
+  usys_log_trace("Written %d bytes to file %s at offset 0x%x.", writeBytes,
                  fname, offset);
-  return write_bytes;
+  return writeBytes;
 }
 
 int usys_file_erase(void *fname, off_t offset, uint16_t size) {
-  int write_bytes = 0;
+  int writeBytes = 0;
   int fd = -1;
 
   char *buff = usys_malloc(sizeof(char) * size);
@@ -239,20 +239,20 @@ int usys_file_erase(void *fname, off_t offset, uint16_t size) {
     usys_memset(buff, 0xff, size);
     fd = usys_file_open(fname, O_WRONLY);
     if (fd < 0) {
-      write_bytes = -1;
-      return write_bytes;
+      writeBytes = -1;
+      return writeBytes;
     }
     usys_lseek(fd, offset, SEEK_SET);
 
-    write_bytes = usys_write(fd, buff, size);
+    writeBytes = usys_write(fd, buff, size);
 
     usys_file_close(fd);
 
     usys_free(buff);
   }
 
-  usys_log_trace("Erased bytes: %d from %d", write_bytes, fd);
-  return write_bytes;
+  usys_log_trace("Erased bytes: %d from %d", writeBytes, fd);
+  return writeBytes;
 }
 
 int usys_file_read_number(void *fname, void *data, off_t offset, uint16_t count,
