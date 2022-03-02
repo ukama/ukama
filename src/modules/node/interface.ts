@@ -1,4 +1,4 @@
-import { HeaderType, MetricsInputDTO, PaginationDto } from "../../common/types";
+import { HeaderType, PaginationDto } from "../../common/types";
 import { NetworkDto } from "../network/types";
 import { DeactivateResponse } from "../user/types";
 import {

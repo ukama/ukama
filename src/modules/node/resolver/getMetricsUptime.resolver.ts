@@ -16,10 +16,6 @@ export class GetMetricsUptimeResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        const metrics = this.nodeService.getMetricsUptime(
-            data,
-            getHeaders(ctx)
-        );
-        return metrics;
+        return this.nodeService.getMetricsUptime(data, getHeaders(ctx));
     }
 }

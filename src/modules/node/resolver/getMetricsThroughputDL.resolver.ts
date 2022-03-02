@@ -16,7 +16,6 @@ export class GetMetricsThroughputDLResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        const metrics = this.nodeService.metricsCpuTRX(data, getHeaders(ctx));
-        return metrics;
+        return this.nodeService.metricsCpuTRX(data, getHeaders(ctx));
     }
 }

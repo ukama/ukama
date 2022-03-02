@@ -16,10 +16,6 @@ export class GetMetricsSubActiveResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        const metrics = this.nodeService.getSubscribersActive(
-            data,
-            getHeaders(ctx)
-        );
-        return metrics;
+        return this.nodeService.getSubscribersActive(data, getHeaders(ctx));
     }
 }

@@ -10,7 +10,6 @@ import {
     OrgMetricResponse,
 } from "./types";
 import * as defaultCasual from "casual";
-import { MetricsInputDTO } from "../../common/types";
 
 class NodeMapper implements INodeMapper {
     dtoToDto = (req: NodeResponse): NodeResponseDto => {
@@ -61,7 +60,7 @@ class NodeMapper implements INodeMapper {
     dtoToMetricDto = (res: OrgMetricResponse[]): MetricDto[] => {
         const metrics: MetricDto[] = [];
         if (res && res.length > 0)
-            res[0].values.map((item: any) =>
+            res[0].values.forEach((item: any) =>
                 metrics.push({
                     x: item[0],
                     y: item[1],

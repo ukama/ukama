@@ -16,10 +16,6 @@ export class GetMetricsMemoryTRXResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        const metrics = this.nodeService.metricsMemoryTRX(
-            data,
-            getHeaders(ctx)
-        );
-        return metrics;
+        return this.nodeService.metricsMemoryTRX(data, getHeaders(ctx));
     }
 }
