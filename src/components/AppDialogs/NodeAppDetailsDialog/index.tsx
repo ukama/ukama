@@ -52,7 +52,6 @@ const NodeAppDetailsDialog = ({
             key={id}
             open={isOpen}
             maxWidth="xl"
-            hideBackdrop
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box
