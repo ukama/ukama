@@ -8,6 +8,8 @@
  */
 
 #include "usys_shm.h"
+
+#include "usys_error.h"
 #include "usys_log.h"
 
 /**
@@ -26,36 +28,26 @@ void* usys_allocate_shared_mem(const char* name, uint32_t size)
 
     if ((fd = usys_shm_open(name, O_CREAT|O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0)
     {
-        perror("usys_allocate_shared_mem:shm_open");
-        usys_log_info("[%s][%s][%d] Could not open shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_error("Shared memory open failed. Error %s", usys_error(errno));
         return NULL;
     }
 
     if ((ret = ftruncate(fd, size)) == -1)
     {
-        perror("usys_allocate_shared_mem:ftruncate");
-        usys_log_info("[%s][%s][%d] Could not truncate shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_error("Shared memory ftruncate failed. Error %s", usys_error(errno));
         return NULL;
     }
 
     if ((mem = mmap(0, size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
     {
-        perror("usys_allocate_shared_mem:mmap");
-        usys_log_info("[%s][%s][%d] Could not map shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_error("Shared memory mmap failed. Error %s", usys_error(errno));
         return NULL;
     }
 
-    usys_log_info("[%s][%s][%d] Allocated shared memory size %lu (%s)", __FILE__, __FUNCTION__, __LINE__, (long unsigned int)size, name);
+    usys_log_trace(" Allocated shared memory size %lu (%s)",(long unsigned int)size, name);
     return mem;
 }
 
-
-/*!***************************************************************************************************************************************************
- * \function       usys_free_shared_mem
- *
- * \brief          This function uses glibc functions munmap and shm_unlink to free shared memory
- *
- ****************************************************************************************************************************************************/
 /**
  * @fn     int usys_free_shared_mem(const char*, void*, uint32_t)
  * @brief  Use functions usys_munmap and usys_shm_unlink to free shared memory
@@ -72,13 +64,13 @@ int usys_free_shared_mem(const char* name, void* ptr, uint32_t size)
 
     if ((ret = usys_munmap(ptr, size)) < 0)
     {
-        usys_log_info("[%s][%s][%d] Could not munmap shared memory %s, ptr %p", __FILE__, __FUNCTION__, __LINE__, name, ptr);
+        usys_log_error("Could not munmap shared memory %s, ptr %p. Error: %s", name, ptr, usys_error(errno));
         return ret;
     }
 
     if ((ret = usys_shm_unlink(name)) < 0)
     {
-        usys_log_info("[%s][%s][%d] Could not unlink shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_error("Could not unlink shared memory %s. Error: %s", name, usys_error(errno));
         return ret;
     }
     return ret;
@@ -100,15 +92,13 @@ void* usys_map_shared_mem(const char* name, uint32_t size)
 
     if ((fd = usys_shm_open(name, O_RDWR, S_IRWXU|S_IRWXG|S_IRWXO)) < 0)
     {
-        perror("usys_map_shared_mem:shm_open");
-        usys_log_info("[%s][%s][%d] Could not open shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_error("Could not open shared memory %s. Error %s", name, usys_error(errno));
         return NULL;
     }
 
     if ((mem = usys_mmap(0, size, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0)) == MAP_FAILED)
     {
-        perror("usys_map_shared_mem:mmap");
-        usys_log_info("[%s][%s][%d] Could not map shared memory %s", __FILE__, __FUNCTION__, __LINE__, name);
+        usys_log_info("Could not map shared memory %s",name, usys_error(errno));
         return NULL;
     }
 
@@ -133,8 +123,8 @@ static inline void* usys_remap_shared_mem(void* old_address, size_t old_size, si
 
     if ((mem = usys_mremap(old_address, old_size, new_size, MREMAP_MAYMOVE)) == MAP_FAILED)
     {
-        usys_log_info("[%s][%s][%d] Could not remap shared memory (old size %d, new size %d)", __FILE__, __FUNCTION__, __LINE__, (int)old_size,
-               (int)new_size);
+        usys_log_info("Could not remap shared memory (old size %d, new size %d). Error: %s", (int)old_size,
+               (int)new_size, usys_error(errno));
         return NULL;
     }
 
