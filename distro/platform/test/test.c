@@ -21,7 +21,7 @@
 #include "usys_timer.h"
 #include "usys_types.h"
 
-extern const char *usysErrorCodes[];
+extern const char *usysErrCodes[];
 
 void setUp(void) {
     // set stuff up here
@@ -34,10 +34,10 @@ void tearDown(void) {
 /* Test error codes */
 void test_usys_errors(){
 
-    USysErrorCodeIdx idx= USYS_BASE_ERROR_CODE;
-    for (;idx < ERR_MAX_ERROR_CODE; idx++) {
+    USysErrCodeIdx idx= USYS_BASE_ERR_CODE;
+    for (;idx < ERR_MAX_ERR_CODE; idx++) {
         usys_log_trace("Error Code %d Error string %s", idx, usys_error(idx));
-        TEST_ASSERT_EQUAL_STRING(usysErrorCodes[idx-USYS_BASE_ERROR_CODE], usys_error(idx));
+        TEST_ASSERT_EQUAL_STRING(usysErrCodes[idx-USYS_BASE_ERR_CODE], usys_error(idx));
     }
 }
 
