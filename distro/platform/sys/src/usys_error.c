@@ -9,7 +9,7 @@
 
 #include "usys_error.h"
 
-const char *usys_err_codes[] = {
+const char *usysErrCodes[] = {
     [USYS_ERR_CODE(ERR_SOCK_CREATION)] = "failed to create socket",
     [USYS_ERR_CODE(ERR_SOCK_CONNECT)] = "failed to connect to socket",
     [USYS_ERR_CODE(ERR_SOCK_SEND)] = "failed to send on socket",
@@ -53,7 +53,7 @@ const char *usys_error(int err) {
     return strerror(err);
   } else {
     if (err < ERR_MAX_ERR_CODE) {
-      return usys_err_codes[err - USYS_BASE_ERR_CODE];
+      return usysErrCodes[err - USYS_BASE_ERR_CODE];
     }
     return NULL;
   }
