@@ -38,6 +38,10 @@ int main() {
     RUN_TEST(test_usys_read_write_arrays_to_file);
     RUN_TEST(test_usys_read_write_numbers_to_file);
     RUN_TEST(test_usys_read_write_strings_to_file);
+    RUN_TEST(test_usys_open_read_close_dir);
+    RUN_TEST(test_usys_opendir_fail);
+    RUN_TEST(test_usys_getcwd_ch_dir);
+    RUN_TEST(test_usys_seek_tell_dir);
     return UNITY_END();
 }
 
