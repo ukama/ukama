@@ -231,18 +231,18 @@ func TestListApps(t *testing.T) {
 			name: "ReturnsList",
 			artifacts: &[]pkg.AritfactInfo{
 				{
-					Url:       "capps/test-app",
 					Version:   "1.2.3",
 					CreatedAt: time.Now().Add(-5 * time.Hour),
+					Chunked:   true,
 				},
 				{
-					Url:       "capps/test-app",
 					Version:   "1.2.4",
 					CreatedAt: time.Now().Add(-4 * time.Hour),
 				},
 			},
-			wantBodyContains: []string{"capps/test-app", "1.2.4", "1.2.3"},
-			wantCode:         200,
+			wantBodyContains: []string{"capps/test-app/1.2.4.tar.gz", "1.2.4", "1.2.3",
+				"capps/test-app/1.2.3.caidx", `"type": "chunk"`},
+			wantCode: 200,
 		},
 
 		{

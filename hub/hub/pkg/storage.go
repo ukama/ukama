@@ -35,7 +35,6 @@ func (e InvalidInputError) Error() string {
 }
 
 type AritfactInfo struct {
-	Url       string    `json:"url"`
 	Version   string    `json:"version"`
 	CreatedAt time.Time `json:"created_at"`
 	SizeBytes int64     `json:"size_bytes"`
@@ -155,7 +154,6 @@ func (m *MinioWrapper) ListVersions(ctx context.Context, artifactName string) (*
 			}
 
 			ls[strings.TrimSuffix(object.Key, TarGzExtension)] = AritfactInfo{
-				Url:       formatCappPath(artifactName),
 				Version:   version,
 				CreatedAt: object.LastModified,
 				SizeBytes: object.Size,

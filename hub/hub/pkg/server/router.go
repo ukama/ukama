@@ -17,9 +17,12 @@ import (
 	"github.com/wI2L/fizz"
 	"io"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 )
+
+const CappsPath = "/capps"
 
 type Router struct {
 	fizz                  *fizz.Fizz
@@ -51,7 +54,7 @@ func NewRouter(config *rest.HttpConfig, storage pkg.Storage, chunker pkg.Chunker
 }
 
 func (r *Router) init() {
-	capps := r.fizz.Group("/capps", "CApps", "CApps operations")
+	capps := r.fizz.Group(CappsPath, "CApps", "CApps operations")
 	capps.GET("/:name/:filename", nil, tonic.Handler(r.cappGetHandler, http.StatusOK))
 	capps.PUT("/:name/:version", nil, tonic.Handler(r.cappPutHandler, http.StatusCreated))
 	capps.GET("/:name", nil, tonic.Handler(r.cappListVersionsHandler, http.StatusOK))
@@ -160,7 +163,7 @@ func (r *Router) cappPutHandler(c *gin.Context) error {
 	return nil
 }
 
-func (r *Router) cappListVersionsHandler(c *gin.Context, req *CAppListRequest) (*CAppListResponse, error) {
+func (r *Router) cappListVersionsHandler(c *gin.Context, req *VersionListRequest) (*VersionListResponse, error) {
 	logrus.Infof("Getting version list: %s", req.Name)
 	ctx, cancel := context.WithTimeout(context.Background(), r.storageRequestTimeout)
 	defer cancel()
@@ -175,9 +178,35 @@ func (r *Router) cappListVersionsHandler(c *gin.Context, req *CAppListRequest) (
 			Message:  "No artifacts found",
 		}
 	}
+	vers := []VersionInfo{}
+	for _, v := range *ls {
+		formats := []FormatInfo{
+			{
+				Url:       path.Join(CappsPath, req.Name, v.Version+pkg.TarGzExtension),
+				CreatedAt: v.CreatedAt,
+				SizeBytes: v.SizeBytes,
+				Type:      "tar.gz",
+			}}
 
-	return &CAppListResponse{
-		Artifacts: ls,
+		if v.Chunked {
+			formats = append(formats, FormatInfo{
+				Url:  path.Join(CappsPath, req.Name, v.Version+pkg.ChunkIndexExtension),
+				Type: "chunk",
+				ExtraInfo: map[string]string{
+					"chunks": "/chunks/",
+				},
+			})
+		}
+
+		vers = append(vers, VersionInfo{
+			Version: v.Version,
+			Formats: formats,
+		})
+	}
+
+	return &VersionListResponse{
+		Name:     req.Name,
+		Versions: &vers,
 	}, nil
 }
 
