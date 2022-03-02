@@ -255,7 +255,7 @@ static inline off_t usys_lseek(int fd, off_t offset, int whence){
  *         On error, -1 is returned
  */
 static inline ssize_t usys_read(int fd, void *buf, size_t count){
-    return read( fd, *buf, count);
+    return read( fd, buf, count);
 }
 
 /**
