@@ -115,7 +115,6 @@ const CardContainer = styled(Box)(props => ({
 }));
 
 const SimpleCardWithBorder = styled(Box)(props => ({
-    padding: "8px 0px 8px 10px",
     borderRadius: "4px",
     border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
 }));

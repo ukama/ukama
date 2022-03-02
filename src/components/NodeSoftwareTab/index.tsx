@@ -1,9 +1,17 @@
 import { LoadingWrapper } from "..";
-import { Paper, Typography, Stack, Button, Grid } from "@mui/material";
+import {
+    Paper,
+    Typography,
+    Card,
+    Button,
+    Stack,
+    Grid,
+    CardContent,
+    CardActions,
+} from "@mui/material";
 import { SimpleDataTable } from "../../components";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { colors } from "../../theme";
-import { SimpleCardWithBorder } from "../../styles";
 import { NodeAppsColumns } from "../../constants/tableColumns";
 interface INodeRadioTab {
     loading: boolean;
@@ -41,12 +49,8 @@ const NodeSoftwareTab = ({
                     {nodeApps?.map(
                         ({ id, nodeAppName, cpu, memory, version }: any) => (
                             <Grid item xs={12} md={6} lg={3} key={id}>
-                                <SimpleCardWithBorder>
-                                    <Stack
-                                        direction="column"
-                                        justifyContent="flex-start"
-                                        sx={{ p: 1 }}
-                                    >
+                                <Card sx={{ width: "100%" }} variant="outlined">
+                                    <CardContent>
                                         <Stack
                                             direction="row"
                                             sx={{ alignItems: "center" }}
@@ -64,8 +68,8 @@ const NodeSoftwareTab = ({
                                         </Stack>
                                         <Typography
                                             variant="body2"
+                                            color="text.secondary"
                                             sx={{
-                                                color: colors.black70,
                                                 mb: 1,
                                             }}
                                         >
@@ -78,10 +82,11 @@ const NodeSoftwareTab = ({
                                         <Typography variant="body2">
                                             memory: {memory} KB
                                         </Typography>
+                                    </CardContent>
+                                    <CardActions>
                                         <Button
                                             sx={{
-                                                justifyContent: "flex-start",
-                                                mt: 1,
+                                                ml: "3px",
                                             }}
                                             onClick={() =>
                                                 getNodeAppDetails(id)
@@ -89,8 +94,8 @@ const NodeSoftwareTab = ({
                                         >
                                             VIEW MORE
                                         </Button>
-                                    </Stack>
-                                </SimpleCardWithBorder>
+                                    </CardActions>
+                                </Card>
                             </Grid>
                         )
                     )}
