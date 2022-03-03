@@ -41,6 +41,9 @@ const BasicDialog = ({
     return (
         <Dialog
             open={isOpen}
+            onClose={handleClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box

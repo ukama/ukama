@@ -9,6 +9,7 @@ import {
     PagePlaceholder,
     NodeResourcesTab,
     NodeAppDetailsDialog,
+    NodeSoftwareInfosDialog,
 } from "../../components";
 import {
     NodeApps,
@@ -61,6 +62,9 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["MEMORY-TRX (For demo)"]));
+
+    const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
+        useState<any>();
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
@@ -255,6 +259,12 @@ const Nodes = () => {
             },
         });
 
+    const handleCloseNodeInfos = () => {
+        setShowNodeSoftwareUpdatInfos(false);
+    };
+    const handleSoftwareInfos = () => {
+        setShowNodeSoftwareUpdatInfos(true);
+    };
     const isLoading = skeltonLoading || nodesLoading;
 
     return (
@@ -304,6 +314,7 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
+                                getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 cpuTrxMetrics={cpuTrxMetrics}
@@ -380,6 +391,11 @@ const Nodes = () => {
                 closeBtnLabel="close"
                 isOpen={showNodeAppDialog}
                 handleClose={handleNodAppDetailsDialog}
+            />
+            <NodeSoftwareInfosDialog
+                closeBtnLabel="close"
+                isOpen={showNodeSoftwareUpdatInfos}
+                handleClose={handleCloseNodeInfos}
             />
         </Box>
     );

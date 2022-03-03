@@ -1,7 +1,6 @@
+import React from "react";
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
-import React, { useState } from "react";
-import MenuIcon from "@mui/icons-material/Menu";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { ContainerJustifySpaceBtw } from "../../styles";
 import { IconButton, Paper, Typography } from "@mui/material";
@@ -11,7 +10,9 @@ interface INodeStatsContainer {
     loading: boolean;
     selected?: number;
     isAlert?: boolean; //Pass true to show red border
+    isCollapse?: boolean;
     isClickable?: boolean;
+    onCollapse?: Function;
     isCollapsable?: boolean;
     handleAction?: Function;
     children: React.ReactNode;
@@ -22,14 +23,14 @@ const NodeStatsContainer = ({
     title,
     loading,
     children,
+    onCollapse,
     handleAction,
     selected = -1,
     isAlert = false,
+    isCollapse = false,
     isClickable = false,
     isCollapsable = false,
 }: INodeStatsContainer) => {
-    const [isCollapse, setIsCollapse] = useState(false);
-
     return (
         <LoadingWrapper
             width="100%"
@@ -39,19 +40,18 @@ const NodeStatsContainer = ({
         >
             <Paper
                 sx={{
-                    minWidth: isCollapse ? "fit-content" : 340,
-                    padding: "20px 21px 20px 0px",
+                    padding: "24px 24px 24px 0px",
                     cursor:
-                        isCollapsable || !isClickable ? "defautl" : "pointer",
+                        isCollapsable || !isClickable ? "default" : "pointer",
                     paddingLeft:
-                        isAlert && selected !== index ? "28px" : "21px",
+                        isAlert && selected !== index ? "16px" : "24px",
                     borderLeft: {
                         md:
                             selected === index
                                 ? `8px solid ${colors.secondaryMain}`
                                 : isAlert
                                 ? `1px solid ${colors.error}`
-                                : "8px solid transparent",
+                                : `8px solid ${colors.silver}`,
                     },
                     border: isAlert ? `0.5px solid ${colors.error}` : "none",
                 }}
@@ -65,10 +65,16 @@ const NodeStatsContainer = ({
                     )}
                     {isCollapsable && (
                         <IconButton
-                            sx={{ p: 0 }}
-                            onClick={() => setIsCollapse(!isCollapse)}
+                            sx={{
+                                p: 0,
+
+                                transform: isCollapse
+                                    ? "rotate(180deg)"
+                                    : "none",
+                            }}
+                            onClick={() => onCollapse && onCollapse()}
                         >
-                            {isCollapse ? <MenuIcon /> : <MenuOpenIcon />}
+                            <MenuOpenIcon fontSize="medium" />
                         </IconButton>
                     )}
                 </ContainerJustifySpaceBtw>

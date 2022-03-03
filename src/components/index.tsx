@@ -44,6 +44,7 @@ import {
     BasicDialog,
     NodeAppDetailsDialog,
     ActivationDialog,
+    NodeSoftwareInfosDialog,
     UserDetailsDialog,
     UserActivationDialog,
 } from "./AppDialogs";
@@ -53,6 +54,7 @@ export {
     NodeCard,
     UserCard,
     TabPanel,
+    NodeSoftwareInfosDialog,
     LineChart,
     SplitButton,
     EmptyView,

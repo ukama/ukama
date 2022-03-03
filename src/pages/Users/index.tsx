@@ -5,18 +5,18 @@ import {
     PagePlaceholder,
     LoadingWrapper,
 } from "../../components";
-import { Box } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { useState, useEffect } from "react";
-import { isSkeltonLoading, organizationId } from "../../recoil";
 import {
     GetUserDto,
     Get_User_Status_Type,
     useGetUserLazyQuery,
     useMyUsersLazyQuery,
 } from "../../generated";
-import { RoundedCard } from "../../styles";
+import { useRecoilValue } from "recoil";
 import { UserData } from "../../constants";
+import { RoundedCard } from "../../styles";
+import { useState, useEffect } from "react";
+import { Box, Card, Grid } from "@mui/material";
+import { isSkeltonLoading, organizationId } from "../../recoil";
 
 const User = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
@@ -83,44 +83,69 @@ const User = () => {
     };
 
     return (
-        <Box component="div" sx={{ mt: 3, height: "calc(100% - 15%)" }}>
+        <Box component="div" sx={{ height: "calc(100% - 3%)" }}>
             <LoadingWrapper
                 width="100%"
-                height="100%"
+                height="inherit"
                 isLoading={isSkeltonLoad || userLoading || usersByOrgLoading}
             >
-                <RoundedCard sx={{ borderRadius: "4px" }}>
-                    {usersRes?.myUsers?.users || UserData ? (
-                        <>
-                            <ContainerHeader
-                                title="My Users"
-                                showButton={true}
-                                showSearchBox={true}
-                                buttonTitle="INSTALL SIMS"
-                                handleSearchChange={getSearchValue}
-                                handleButtonAction={handleSimInstallation}
-                                stats={`${
-                                    usersRes?.myUsers?.users?.length ||
-                                    UserData.length
-                                }`}
-                            />
-                            <UserCard
-                                userDetails={
-                                    usersRes?.myUsers?.users || UserData
-                                }
-                                handleMoreUserdetails={getUseDetails}
-                            />
-                        </>
-                    ) : (
-                        <PagePlaceholder
-                            hyperlink=""
-                            showActionButton={true}
-                            buttonTitle="Install sims"
-                            handleAction={() => setShowSimDialog(true)}
-                            description="No users on network. Install SIMs to get started."
+                {(usersRes && usersRes?.myUsers?.users?.length > 0) ||
+                UserData?.length > 0 ? (
+                    <RoundedCard sx={{ borderRadius: "4px", overflow: "auto" }}>
+                        <ContainerHeader
+                            title="My Users"
+                            showButton={true}
+                            showSearchBox={true}
+                            buttonTitle="INSTALL SIMS"
+                            handleSearchChange={getSearchValue}
+                            handleButtonAction={handleSimInstallation}
+                            stats={`${
+                                usersRes?.myUsers?.users?.length ||
+                                UserData.length
+                            }`}
                         />
-                    )}
-                </RoundedCard>
+                        <Grid container spacing={2} mt={2}>
+                            {UserData.map(
+                                ({
+                                    id,
+                                    name,
+                                    dataPlan,
+                                    dataUsage,
+                                    eSimNumber,
+                                }: any) => (
+                                    <Grid key={id} item xs={12} md={6} lg={3}>
+                                        <Card
+                                            variant="outlined"
+                                            sx={{
+                                                padding: "15px 18px 8px 18px",
+                                            }}
+                                        >
+                                            <UserCard
+                                                id={id}
+                                                name={name}
+                                                dataPlan={dataPlan}
+                                                dataUsage={dataUsage}
+                                                eSimNumber={eSimNumber}
+                                                handleMoreUserdetails={
+                                                    getUseDetails
+                                                }
+                                            />
+                                        </Card>
+                                    </Grid>
+                                )
+                            )}
+                        </Grid>
+                    </RoundedCard>
+                ) : (
+                    <PagePlaceholder
+                        hyperlink=""
+                        showActionButton={true}
+                        buttonTitle="Install sims"
+                        handleAction={() => setShowSimDialog(true)}
+                        description="No users on network. Install SIMs to get started."
+                    />
+                )}
+
                 <UserDetailsDialog
                     user={userForm}
                     saveBtnLabel="save"

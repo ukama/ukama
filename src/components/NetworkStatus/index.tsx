@@ -37,7 +37,7 @@ const NetworkStatus = ({
     handleActivateUser,
 }: NetworkStatusProps) => {
     return (
-        <Grid width="100%" container pt="18px">
+        <Grid width="100%" container>
             <Grid item xs={12} md={8}>
                 <LoadingWrapper height={30} width={280} isLoading={loading}>
                     <Box

@@ -21,11 +21,13 @@ interface INodeOverviewTab {
     onRefreshMemoryTrx: Function;
     onRefreshUptime: Function;
     selectedNode: NodeDto | undefined;
+    getNodeSoftwareUpdateInfos: Function;
 }
 
 const NodeOverviewTab = ({
     loading,
     selectedNode,
+    getNodeSoftwareUpdateInfos,
     handleUpdateNode,
     onRefreshTempTrx,
     onRefreshMemoryTrx,
@@ -104,6 +106,7 @@ const NodeOverviewTab = ({
             <Grid item xs={12} md={8}>
                 {selected === 0 && (
                     <NodeDetailsCard
+                        getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
                         nodeTitle={selectedNode?.title || ""}
                         handleUpdateNode={handleUpdateNode}
@@ -111,7 +114,7 @@ const NodeOverviewTab = ({
                     />
                 )}
                 {selected === 1 && (
-                    <Paper sx={{ padding: "28px 18px" }}>
+                    <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Node Health</Typography>
                         <Stack spacing={6} pt={2}>
                             <ApexLineChartIntegration
@@ -144,7 +147,7 @@ const NodeOverviewTab = ({
                     </Paper>
                 )}
                 {selected === 2 && (
-                    <Paper sx={{ padding: "28px 18px" }}>
+                    <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Subscribers</Typography>
                         <Stack spacing={6} pt={2}>
                             {/* <ApexLineChartIntegration
