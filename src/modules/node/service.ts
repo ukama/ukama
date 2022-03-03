@@ -300,4 +300,43 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return NodeMapper.dtoToMetricDto(res.data?.result);
     };
+    getMetricsRrc = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rrc`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getMetricsErab = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/erab`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getMetricsRlc = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rlc`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
 }
