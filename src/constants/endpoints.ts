@@ -32,3 +32,9 @@ export const SERVER = {
     GET_IO_METRICS: `${BASE_URL}/metrics/io`,
     GET_MEMORY_USAGE_METRICS: `${BASE_URL}/metrics/memory`,
 };
+
+export const getMetricUri = (
+    orgId: string,
+    nodeId: string,
+    endpoint: string
+): string => `${SERVER.ORG}/${orgId}/nodes/${nodeId}/metrics/${endpoint}`;

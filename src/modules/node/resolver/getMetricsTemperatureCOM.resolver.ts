@@ -16,6 +16,10 @@ export class GetMetricsTemperatureCOMResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getMetricsTemperatureCom(data, getHeaders(ctx));
+        return this.nodeService.getSingleMetric(
+            data,
+            getHeaders(ctx),
+            "temperaturecom"
+        );
     }
 }

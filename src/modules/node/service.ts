@@ -24,7 +24,7 @@ import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE, GRAPH_FILTER } from "../../constants";
-import { SERVER } from "../../constants/endpoints";
+import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
 import { NetworkDto } from "../network/types";
 
@@ -182,197 +182,15 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    metricsCpuTRX = async (
+    getSingleMetric = async (
         data: MetricsInputDTO,
-        header: HeaderType
+        header: HeaderType,
+        endpoint: string
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/cpu`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    metricsMemoryTRX = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/memory`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsUptime = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/uptime`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getThroughputUL = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/throughputuplink`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getThroughputDL = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/throughputdownlink`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getSubscribersActive = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/subscribersactive`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getSubscribersAttached = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/subscribersattached`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsTemperatureCom = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/temperaturecom`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-
-    getMetricsTemperatureTrx = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/temperaturetrx`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsRrc = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rrc`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsErab = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/erab`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsRlc = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rlc`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsTxPower = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/txpower`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsRxPower = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rxpower`,
-            params: { from: data.from, to: data.to, step: data.step },
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
-    };
-    getMetricsPaPower = async (
-        data: MetricsInputDTO,
-        header: HeaderType
-    ): Promise<MetricDto[]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/papower`,
+            path: getMetricUri(data.orgId, data.nodeId, endpoint),
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);

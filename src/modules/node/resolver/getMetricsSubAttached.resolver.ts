@@ -16,6 +16,10 @@ export class GetMetricsSubAttachedResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getSubscribersAttached(data, getHeaders(ctx));
+        return this.nodeService.getSingleMetric(
+            data,
+            getHeaders(ctx),
+            "subscribersattached"
+        );
     }
 }

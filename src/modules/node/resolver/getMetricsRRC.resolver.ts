@@ -16,6 +16,6 @@ export class GetMetricsRRCResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getMetricsRrc(data, getHeaders(ctx));
+        return this.nodeService.getSingleMetric(data, getHeaders(ctx), "rrc");
     }
 }
