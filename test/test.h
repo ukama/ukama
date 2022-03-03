@@ -42,5 +42,6 @@ void test_usys_open_read_close_dir(void);
 void test_usys_opendir_fail(void);
 void test_usys_getcwd_ch_dir(void);
 void test_usys_seek_tell_dir(void);
+void test_usys_fork_wait_pid_ppid_prgp(void);
 
 #endif /* USYS_UNIT_TEST_CASE_H_ */

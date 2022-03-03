@@ -42,6 +42,7 @@ int main() {
     RUN_TEST(test_usys_opendir_fail);
     RUN_TEST(test_usys_getcwd_ch_dir);
     RUN_TEST(test_usys_seek_tell_dir);
+    RUN_TEST(test_usys_fork_wait_pid_ppid_prgp);
     return UNITY_END();
 }
 
