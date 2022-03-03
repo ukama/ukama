@@ -42,19 +42,7 @@ static inline void usys_exit(int status) {
     exit(status);
 }
 
-/**
- * @fn     USysPid usys_wait(int*)
- * @brief  used to wait for state changes in a
- *         child of the calling process, and obtain information about the
- *         child whose state has changed
- *
- * @param  wstatus
- * @return On success, returns the process ID of the terminated child
- *         On failure, -1 is returned.
- */
-static inline USysPid usys_wait(int *wstatus) {
-    return wait(wstatus);
-}
+
 /**
  * @fn     FILE usys_fopen*(const char*, const char*)
  * @brief  Opens the filename pointed to, by filename using the given mode.

@@ -34,6 +34,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <ulimit.h>
 #include <unistd.h>
 #include <asm/types.h>
 #include <arpa/inet.h>
@@ -49,6 +50,7 @@ extern "C" {
 #include <sys/mman.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
