@@ -104,8 +104,6 @@ const FullscreenContainer = styled(Box)(() => ({
 }));
 
 const CardContainer = styled(Box)(props => ({
-    // width: "214px",
-    // height: "206px",
     display: "flex",
     width: "inherit",
     height: "inherit",
@@ -116,6 +114,10 @@ const CardContainer = styled(Box)(props => ({
     border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.3)}`,
 }));
 
+const SimpleCardWithBorder = styled(Box)(props => ({
+    borderRadius: "4px",
+    border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
+}));
 export {
     LinkStyle,
     RoundedCard,
@@ -124,6 +126,7 @@ export {
     CenterContainer,
     MessageContainer,
     VerticalContainer,
+    SimpleCardWithBorder,
     SkeletonRoundedCard,
     HorizontalContainer,
     FullscreenContainer,

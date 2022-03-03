@@ -9,12 +9,14 @@ interface INodeDetailsCard {
     nodeTitle: string;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
+    getNodeUpdateInfos: Function;
 }
 
 const NodeDetailsCard = ({
     loading,
     nodeTitle,
     isUpdateAvailable,
+    getNodeUpdateInfos,
 }: INodeDetailsCard) => {
     return (
         <LoadingWrapper
@@ -36,13 +38,22 @@ const NodeDetailsCard = ({
                                         border: `1px solid ${colors.primaryMain}`,
                                     }}
                                     label={
-                                        <LinkStyle
-                                            underline="hover"
-                                            sx={{ fontSize: "14px" }}
-                                        >
+                                        <>
                                             Software update available -- view
-                                            notes
-                                        </LinkStyle>
+                                            <LinkStyle
+                                                underline="hover"
+                                                onClick={() =>
+                                                    getNodeUpdateInfos()
+                                                }
+                                                sx={{
+                                                    fontSize: "14px",
+                                                    paddingLeft: 1,
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                notes
+                                            </LinkStyle>
+                                        </>
                                     }
                                 />
                             )}

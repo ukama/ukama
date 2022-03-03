@@ -1,7 +1,6 @@
 import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import colors from "../../../theme/colors";
-import { StackedAreaChart } from "../..";
 import {
     Box,
     Button,
@@ -10,10 +9,8 @@ import {
     Typography,
     Stack,
     DialogActions,
-    Divider,
     DialogContent,
 } from "@mui/material";
-import { NodeAppDetailsTypes } from "../../../types";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
         padding: "0px 0px 18px 0px",
@@ -29,29 +26,21 @@ type BasicDialogProps = {
     isClosable?: boolean;
     handleClose: Function;
     closeBtnLabel?: string;
-    nodeData?: NodeAppDetailsTypes;
 };
 
-const NodeAppDetailsDialog = ({
+const NodeSoftwareInfosDialog = ({
     isOpen,
-    nodeData = {
-        id: 1,
-        cpu: 23,
-        memory: 34,
-        nodeAppName: "App 1",
-    },
     handleClose,
     closeBtnLabel,
     isClosable = true,
 }: BasicDialogProps) => {
     const classes = useStyles();
-    const { id, nodeAppName, cpu, memory } = nodeData;
 
     return (
         <Dialog
-            key={id}
             open={isOpen}
             maxWidth="xl"
+            hideBackdrop
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box
@@ -62,9 +51,7 @@ const NodeAppDetailsDialog = ({
                 }}
             >
                 <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h6">
-                        {nodeAppName} - {"Version - 0.1"}
-                    </Typography>
+                    <Typography variant="h6">{"Update Notes 12.4"}</Typography>
                     {isClosable && (
                         <IconButton
                             onClick={() => handleClose()}
@@ -75,34 +62,15 @@ const NodeAppDetailsDialog = ({
                     )}
                 </Box>
                 <DialogContent sx={{ padding: 0, mb: 4 }}>
-                    <Typography variant="body1">App Information</Typography>
-                    <Divider />
-                    <Stack direction="column" sx={{ mb: 4 }}>
-                        <Typography
-                            variant="body1"
-                            sx={{ color: colors.black70 }}
-                        >
-                            CPU:{cpu} %
-                        </Typography>
-                        <Typography
-                            variant="body1"
-                            sx={{ color: colors.black70 }}
-                        >
-                            Memory:{memory} KB
-                        </Typography>
-                    </Stack>
+                    <Typography variant="body1">Short introduction.</Typography>
 
-                    <Stack spacing={6} pt={2}>
-                        <StackedAreaChart
-                            hasData={true}
-                            height={140}
-                            title={"CPU"}
-                        />
-                        <StackedAreaChart
-                            hasData={true}
-                            height={140}
-                            title={"Memory"}
-                        />
+                    <Stack direction="column" sx={{ mb: 4 }}>
+                        <Typography variant="body1">TL;DR</Typography>
+                        <Typography variant="body1">*** NEW ***</Typography>
+                        <Typography variant="body1">
+                            *** IMPROVEMENTS
+                        </Typography>
+                        <Typography variant="body1">*** FIXES ***</Typography>
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ padding: 0 }}>
@@ -122,4 +90,4 @@ const NodeAppDetailsDialog = ({
     );
 };
 
-export default NodeAppDetailsDialog;
+export default NodeSoftwareInfosDialog;
