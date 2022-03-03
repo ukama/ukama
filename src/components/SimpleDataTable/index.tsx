@@ -32,7 +32,7 @@ const SimpleDataTable = ({
 }: SimpleDataTableInterface) => {
     const _isDarkMode = useRecoilValue(isDarkmode);
     const onRowSelection = (id: number) => {
-        setSelectedRows([...selectedRows, id]);
+        setSelectedRows && setSelectedRows([...selectedRows, id]);
     };
 
     const onRowsSelection = () => {
