@@ -15,6 +15,7 @@
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_log.h"
+#include "usys_process.h"
 #include "usys_shm.h"
 #include "usys_string.h"
 #include "usys_sync.h"
