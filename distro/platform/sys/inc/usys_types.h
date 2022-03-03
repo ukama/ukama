@@ -85,7 +85,6 @@ typedef pthread_mutex_t USysMutex;
  */
 typedef sem_t USysSem;
 
-
 /**
  * @typedef USysSpinLock
  *
@@ -124,8 +123,7 @@ typedef pthread_key_t USysThreadKey;
  * @brief  System Shared Memory Management Handle Type Definition
  *
  */
-typedef void* USysSharedMemMgrHandle;
-
+typedef void *USysSharedMemMgrHandle;
 
 /**
  * @typedef USysPhysAddr

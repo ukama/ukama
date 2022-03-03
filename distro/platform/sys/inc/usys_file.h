@@ -163,7 +163,7 @@ int usys_file_read(void *fname, void *buff, off_t offset, uint16_t size);
  *         On error -1
  */
 int usys_file_read_number(void *fname, void *data, off_t offset, uint16_t count,
-		uint8_t size);
+                          uint8_t size);
 /**
  * @fn     int usys_file_remove(void*)
  * @brief  delete a file
@@ -221,7 +221,7 @@ int usys_file_write(void *fname, void *buff, off_t offset, uint16_t size);
  *         On error -1
  */
 int usys_file_write_number(void *fname, void *data, off_t offset,
-		uint16_t count, uint8_t size);
+                           uint16_t count, uint8_t size);
 /**
  * @fn     void usys_file_close(int)
  * @brief  close a file

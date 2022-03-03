@@ -17,7 +17,7 @@ extern "C" {
 #include "usys_types.h"
 
 /**
- * @fn    void _usys_Exit()
+ * @fn    void usys_qexit()
  * @brief terminates the calling process "immediately".  Any open
  *        file descriptors belonging to the process are closed.  Any
  *        children of the process are inherited by init(1) (or by the
@@ -27,8 +27,8 @@ extern "C" {
  * @param status
  *
  */
-static inline void _usys_Exit(int status) {
-    _Exit(status);
+static inline void usys_qexit(int status) {
+    _exit(status);
 }
 
 /**
@@ -42,7 +42,6 @@ static inline void usys_exit(int status) {
     exit(status);
 }
 
-
 /**
  * @fn     FILE usys_fopen*(const char*, const char*)
  * @brief  Opens the filename pointed to, by filename using the given mode.
@@ -51,7 +50,7 @@ static inline void usys_exit(int status) {
  * @param  mode
  * @return On Success FILE pointer otherwise NULL
  */
-static inline FILE* usys_fopen(const char* path, const char* mode) {
+static inline FILE *usys_fopen(const char *path, const char *mode) {
     return fopen(path, mode);
 }
 
@@ -62,7 +61,7 @@ static inline FILE* usys_fopen(const char* path, const char* mode) {
  * @param  fp
  * @return On Success 0 otherwise EOF
  */
-static inline int usys_fclose(FILE* fp) {
+static inline int usys_fclose(FILE *fp) {
     return fclose(fp);
 }
 
@@ -74,8 +73,8 @@ static inline int usys_fclose(FILE* fp) {
  *         location given by ptr.
  *
  */
-static inline int usys_fread(void* ptr, size_t size, size_t nmemb,
-		FILE *stream) {
+static inline int usys_fread(void *ptr, size_t size, size_t nmemb,
+                             FILE *stream) {
     return fread(ptr, size, nmemb, stream);
 }
 
@@ -91,8 +90,8 @@ static inline int usys_fread(void* ptr, size_t size, size_t nmemb,
  * @param  stream
  * @return The total number of elements successfully written is returned.
  */
-static inline int usys_fwrite(const void* ptr, size_t size, size_t nmemb,
-		FILE *stream) {
+static inline int usys_fwrite(const void *ptr, size_t size, size_t nmemb,
+                              FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
@@ -107,7 +106,7 @@ static inline int usys_fwrite(const void* ptr, size_t size, size_t nmemb,
  * @return On Success, the function returns zero.
  *         On Failure, it returns non-zero value.
  */
-static inline int usys_fseek(FILE * stream, long int offset, int origin) {
+static inline int usys_fseek(FILE *stream, long int offset, int origin) {
     return fseek(stream, offset, origin);
 }
 
@@ -147,7 +146,7 @@ static inline int usys_remove(const char *filename) {
  *         On Failure, it returns -1.
  */
 static inline int usys_access(const char *filename, int how) {
-    return  access (filename, how);
+    return access(filename, how);
 }
 
 /**
@@ -160,7 +159,7 @@ static inline int usys_access(const char *filename, int how) {
  * @return On success return the new file descriptor.
  *         On error, -1
  */
-static inline int usys_open(const char *pathname, int flags, mode_t mode){
+static inline int usys_open(const char *pathname, int flags, mode_t mode) {
     return open(pathname, flags, mode);
 };
 
@@ -185,7 +184,7 @@ static inline int usys_close(int fd) {
  * @return On success, return zero.
  *         On error, -1
  */
-static inline int usys_fsync(int fd){
+static inline int usys_fsync(int fd) {
     return fsync(fd);
 }
 
@@ -199,8 +198,7 @@ static inline int usys_fsync(int fd){
  * @return On success, return zero.
  *         On error, -1
  */
-static inline int usys_stat(const char *pathname,
-        struct stat *statbuf){
+static inline int usys_stat(const char *pathname, struct stat *statbuf) {
     return stat(pathname, statbuf);
 }
 
@@ -214,8 +212,7 @@ static inline int usys_stat(const char *pathname,
  * @return On success, return zero.
  *         On error, -1
  */
-static inline int usys_lstat(const char *pathname,
-        struct stat *statbuf){
+static inline int usys_lstat(const char *pathname, struct stat *statbuf) {
     return stat(pathname, statbuf);
 }
 
@@ -232,7 +229,7 @@ static inline int usys_lstat(const char *pathname,
  *         from the beginning of the file.
  *         On error, -1
  */
-static inline off_t usys_lseek(int fd, off_t offset, int whence){
+static inline off_t usys_lseek(int fd, off_t offset, int whence) {
     return lseek(fd, offset, whence);
 }
 
@@ -247,8 +244,8 @@ static inline off_t usys_lseek(int fd, off_t offset, int whence){
  * @return On success, the number of bytes read is returned.
  *         On error, -1 is returned
  */
-static inline ssize_t usys_read(int fd, void *buf, size_t count){
-    return read( fd, buf, count);
+static inline ssize_t usys_read(int fd, void *buf, size_t count) {
+    return read(fd, buf, count);
 }
 
 /**
@@ -262,7 +259,7 @@ static inline ssize_t usys_read(int fd, void *buf, size_t count){
  * @return On success, the number of bytes written is returned.
  *         On error, -1 is returned.
  */
-static inline ssize_t usys_write(int fd, const void *buf, size_t count){
+static inline ssize_t usys_write(int fd, const void *buf, size_t count) {
     return write(fd, buf, count);
 }
 
@@ -278,7 +275,7 @@ static inline ssize_t usys_write(int fd, const void *buf, size_t count){
  *         On error, -1 is returned
  */
 static inline ssize_t usys_readlink(const char *pathname, char *buf,
-        size_t bufsiz){
+                                    size_t bufsiz) {
     return readlink(pathname, buf, bufsiz);
 }
 
@@ -298,7 +295,7 @@ static inline ssize_t usys_readlink(const char *pathname, char *buf,
  *         If a read error occurs, the error indicator (ferror)
  *         is set and a null pointer is also returned
  */
-static inline char* usys_fgets(char* s, int size, FILE* stream) {
+static inline char *usys_fgets(char *s, int size, FILE *stream) {
     return fgets(s, size, stream);
 }
 
@@ -309,47 +306,39 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  *         with size as max length.
  */
 #define usys_snprintf(str, size, format, ...) \
-	        snprintf(str, size, format, ##__VA_ARGS__);
+    snprintf(str, size, format, ##__VA_ARGS__);
 
 /**
  * @def   usys_fprintf
  * @brief Wraps fprintf function.
  *        Writes the C string pointed by format to the stream.
  */
-#define usys_fprintf(stream, format, ...)\
-        {\
-    fprintf(stream, format, ##__VA_ARGS__);\
-        }
+#define usys_fprintf(stream, format, ...) \
+    { fprintf(stream, format, ##__VA_ARGS__); }
 
 /**
  * @def   usys_printf
  * @brief Wraps printf function
  *        Writes the C string pointed by format to the standard output (stdout).
  */
-#define usys_printf(format, ...)\
-        {\
-    printf(format, ##__VA_ARGS__);\
-        }
+#define usys_printf(format, ...) \
+    { printf(format, ##__VA_ARGS__); }
 
 /**
  * @def   usys_sprintf
  * @brief Wraps sprintf function.
  *        The content is stored as a C string in the buffer pointed by str
  */
-#define usys_sprintf(str, format, ...)\
-        {\
-    sprintf(str, format, ##__VA_ARGS__);\
-        }
+#define usys_sprintf(str, format, ...) \
+    { sprintf(str, format, ##__VA_ARGS__); }
 
 /**
  * @def   usys_sscanf
  * @brief Reads data from str and stores them according to parameter
  *        format into the locations given by the additional arguments.
  */
-#define usys_sscanf(str, format, ...)\
-        {\
-    sscanf(str, format, ##__VA_ARGS__);\
-        }
+#define usys_sscanf(str, format, ...) \
+    { sscanf(str, format, ##__VA_ARGS__); }
 
 /**
  * @fn    struct timeval usys_gettimeofday()
@@ -359,7 +348,7 @@ static inline char* usys_fgets(char* s, int size, FILE* stream) {
  * @return void
  *
  */
-static inline void usys_gettimeofday(struct timeval* tv) {
+static inline void usys_gettimeofday(struct timeval *tv) {
     gettimeofday(tv, NULL);
 }
 
@@ -376,7 +365,7 @@ static inline void usys_gettimeofday(struct timeval* tv) {
  * @return returns the number of bytes placed in the array s
  */
 static inline size_t usys_strftime(char *s, size_t max, const char *format,
-		const struct tm *tm) {
+                                   const struct tm *tm) {
     return strftime(s, max, format, tm);
 }
 
@@ -391,7 +380,7 @@ static inline size_t usys_strftime(char *s, size_t max, const char *format,
  *         with the values that correspond to the local time representation
  *         of timer.
  */
-static inline struct tm *usys_localtime(const time_t* timep) {
+static inline struct tm *usys_localtime(const time_t *timep) {
     return localtime(timep);
 }
 
@@ -451,7 +440,7 @@ static inline uint32_t usys_htonl(uint32_t hostlong) {
  * @param  data
  * @return uint32_t
  */
-static inline uint32_t usys_inet_addr(const char* data) {
+static inline uint32_t usys_inet_addr(const char *data) {
     return inet_addr(data);
 }
 
@@ -499,7 +488,7 @@ static inline uint32_t usys_rand() {
  *         0 if src does not contain a character string representing a valid
  *         network address.
  */
-static inline int usys_inet_pton_ipv4(const char* data, uint32_t* ip_addr) {
+static inline int usys_inet_pton_ipv4(const char *data, uint32_t *ip_addr) {
     return inet_pton(AF_INET, data, ip_addr);
 }
 
@@ -515,10 +504,9 @@ static inline int usys_inet_pton_ipv4(const char* data, uint32_t* ip_addr) {
  *         0 if src does not contain a character string representing a valid
  *         network address.
  */
-static inline int usys_inet_pton_ipv6(const char* data, uint8_t* ip_addr) {
+static inline int usys_inet_pton_ipv6(const char *data, uint8_t *ip_addr) {
     return inet_pton(AF_INET6, data, ip_addr);
 }
-
 
 /**
  * @fn     const char usys_inet_ntop_ipv4*(const char*, char*, socklen_t)
@@ -531,8 +519,8 @@ static inline int usys_inet_pton_ipv6(const char* data, uint8_t* ip_addr) {
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char* usys_inet_ntop_ipv4(const char* data, char* ip_addr,
-		socklen_t size) {
+static inline const char *usys_inet_ntop_ipv4(const char *data, char *ip_addr,
+                                              socklen_t size) {
     return inet_ntop(AF_INET, data, ip_addr, size);
 }
 
@@ -547,8 +535,8 @@ static inline const char* usys_inet_ntop_ipv4(const char* data, char* ip_addr,
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char* usys_inet_ntop_ipv6(const char* data, char* ip_addr,
-		socklen_t size) {
+static inline const char *usys_inet_ntop_ipv6(const char *data, char *ip_addr,
+                                              socklen_t size) {
     return inet_ntop(AF_INET6, data, ip_addr, size);
 }
 
@@ -564,7 +552,6 @@ static inline double usys_sqrt(double num) {
     return sqrt(num);
 }
 
-
 /**
  * @fn     double usys_cos(double)
  * @brief  function calculates the cosine of num.
@@ -575,7 +562,6 @@ static inline double usys_sqrt(double num) {
 static inline double usys_cos(double num) {
     return cos(num);
 }
-
 
 /**
  * @fn     double usys_sin(double)

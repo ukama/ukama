@@ -16,8 +16,8 @@ extern "C" {
 
 #include "usys_types.h"
 
-#define   USYS_BASE_ERR_CODE      (1000)
-#define   USYS_ERR_CODE(code)     ((code) - USYS_BASE_ERR_CODE)
+#define USYS_BASE_ERR_CODE (1000)
+#define USYS_ERR_CODE(code) ((code)-USYS_BASE_ERR_CODE)
 
 /*
 *
@@ -26,7 +26,7 @@ extern "C" {
 typedef enum {
     ERR_NONE = 0,
     /* Sample error code */
-    ERR_SOCK_CREATION = (USYS_BASE_ERR_CODE+1),
+    ERR_SOCK_CREATION = (USYS_BASE_ERR_CODE + 1),
     ERR_SOCK_CONNECT,
     ERR_SOCK_SEND,
     ERR_SOCK_RECV,
@@ -58,9 +58,9 @@ typedef enum {
     ERR_MAX_ERR_CODE
 } USysErrCodeIdx;
 
-typedef  USysErrCodeIdx USysError;
+typedef USysErrCodeIdx USysError;
 
-const char* usys_error(int err);
+const char *usys_error(int err);
 
 #ifdef __cplusplus
 extern "C" {

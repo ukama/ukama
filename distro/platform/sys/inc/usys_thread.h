@@ -46,8 +46,8 @@ static inline int usys_thread_attr_destroy(USysThreadAttr *attr) {
  *
  * @param status
  */
-static inline void usys_thread_exit(void* status) {
-   return pthread_exit(status);
+static inline void usys_thread_exit(void *status) {
+    return pthread_exit(status);
 }
 
 /**
@@ -69,7 +69,7 @@ static inline int usys_thread_cancel(USysThreadId thread) {
  * @return On success, pthread_detach() returns 0; on error, it returns an
  *         error number.
  */
-static inline int usys_thread_detach(USysThreadId thread){
+static inline int usys_thread_detach(USysThreadId thread) {
     return pthread_detach(thread);
 }
 
@@ -82,7 +82,7 @@ static inline int usys_thread_detach(USysThreadId thread){
  * @return On success, pthread_join() returns 0; on error, it returns an
  *         error number.
  */
-static inline int usys_thread_join(USysThreadId thread, void **status){
+static inline int usys_thread_join(USysThreadId thread, void **status) {
     return pthread_join(thread, status);
 }
 
@@ -92,7 +92,7 @@ static inline int usys_thread_join(USysThreadId thread, void **status){
  *
  * @return Thread ID
  */
-static inline USysThreadId usys_thread_id(void){
+static inline USysThreadId usys_thread_id(void) {
     return pthread_self();
 }
 
@@ -112,7 +112,9 @@ static inline USysThreadId usys_thread_id(void){
  *         error number, and the contents of *thread are undefined
  */
 static inline int usys_thread_create(USysThreadId *thread,
-		const USysThreadAttr *attr, void *(*start_routine)(void *), void *arg){
+                                     const USysThreadAttr *attr,
+                                     void *(*start_routine)(void *),
+                                     void *arg) {
     return pthread_create(thread, attr, start_routine, arg);
 }
 
@@ -129,9 +131,8 @@ static inline int usys_thread_create(USysThreadId *thread,
  *         scheduling policy and parameters of thread are not changed.
  */
 static inline int usys_thread_setschedparam(USysThreadId thread, int policy,
-               const struct sched_param *param) {
-    return  pthread_setschedparam(thread, policy,
-                   param);
+                                            const struct sched_param *param) {
+    return pthread_setschedparam(thread, policy, param);
 }
 
 /**
@@ -146,7 +147,7 @@ static inline int usys_thread_setschedparam(USysThreadId thread, int policy,
  *         nonzero error number.
  */
 static inline int usys_thread_attr_setstacksize(USysThreadAttr *attr,
-		size_t stacksize) {
+                                                size_t stacksize) {
     return pthread_attr_setstacksize(attr, stacksize);
 }
 
