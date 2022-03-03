@@ -18,9 +18,9 @@ void *usys_malloc(size_t size) {
 }
 
 void usys_free(void *ptr) {
-	if(ptr) {
-		free(ptr);
-	}
+    if (ptr) {
+        free(ptr);
+    }
 }
 
 void *usys_realloc(void *ptr, size_t new_size) {
@@ -32,33 +32,32 @@ void *usys_calloc(size_t num, size_t size) {
 }
 
 void *usys_emalloc(size_t size) {
-    void* mem = usys_malloc(size);
+    void *mem = usys_malloc(size);
     if (!mem) {
-    	usys_log_error("Failed to allocate memory. Error: %s",
-    			usys_error(errno));
-    	usys_exit(errno);
+        usys_log_error("Failed to allocate memory. Error: %s",
+                       usys_error(errno));
+        usys_exit(errno);
     }
     return mem;
 }
 
 void *usys_erealloc(void *ptr, size_t new_size) {
-	void* mem = usys_realloc(ptr, new_size);
-	if(mem) {
-    	usys_log_error("Failed to reallocate memory of %d bytes. Error: %s",
-    			new_size, usys_error(errno));
-    	usys_exit(errno);
-	}
-	return mem;
+    void *mem = usys_realloc(ptr, new_size);
+    if (mem) {
+        usys_log_error("Failed to reallocate memory of %d bytes. Error: %s",
+                       new_size, usys_error(errno));
+        usys_exit(errno);
+    }
+    return mem;
 }
 
 void *usys_ecalloc(size_t num, size_t size) {
-	void* mem = usys_calloc(num, size);
-	if(mem) {
-    	usys_log_error("Failed to allocate memory for %d objects of %d bytes. "
-    			"Error: %s", num, size, usys_error(errno));
+    void *mem = usys_calloc(num, size);
+    if (mem) {
+        usys_log_error("Failed to allocate memory for %d objects of %d bytes. "
+                       "Error: %s",
+                       num, size, usys_error(errno));
         usys_exit(errno);
-	}
-	return mem;
+    }
+    return mem;
 }
-
-
