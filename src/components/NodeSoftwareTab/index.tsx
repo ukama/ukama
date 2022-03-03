@@ -49,11 +49,12 @@ const NodeSoftwareTab = ({
                     {nodeApps?.map(
                         ({ id, nodeAppName, cpu, memory, version }: any) => (
                             <Grid item xs={12} md={6} lg={3} key={id}>
-                                <Card sx={{ width: "100%" }} variant="outlined">
+                                <Card sx={{ minWidth: 275 }} variant="outlined">
                                     <CardContent>
                                         <Stack
                                             direction="row"
                                             sx={{ alignItems: "center" }}
+                                            spacing={1}
                                         >
                                             <CheckCircleIcon
                                                 htmlColor={colors.green}
@@ -69,25 +70,35 @@ const NodeSoftwareTab = ({
                                         <Typography
                                             variant="body2"
                                             color="text.secondary"
-                                            sx={{
-                                                mb: 1,
-                                            }}
+                                            gutterBottom
                                         >
-                                            version: {version}
+                                            Version: {version}
                                         </Typography>
-
-                                        <Typography variant="body2">
-                                            CPU: {cpu}%
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            memory: {memory} KB
-                                        </Typography>
+                                        <Stack direction="row" spacing={1 / 2}>
+                                            <Typography variant="body2">
+                                                CPU:
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ color: colors.darkBlue }}
+                                            >
+                                                {cpu}%
+                                            </Typography>
+                                        </Stack>
+                                        <Stack direction="row" spacing={1 / 2}>
+                                            <Typography variant="body2">
+                                                memory:
+                                            </Typography>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{ color: colors.darkBlue }}
+                                            >
+                                                {memory} KB
+                                            </Typography>
+                                        </Stack>
                                     </CardContent>
                                     <CardActions>
                                         <Button
-                                            sx={{
-                                                ml: "3px",
-                                            }}
                                             onClick={() =>
                                                 getNodeAppDetails(id)
                                             }
