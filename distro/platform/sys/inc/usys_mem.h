@@ -53,7 +53,7 @@ void *usys_realloc( void *ptr, size_t new_size );
 /**
  * @fn     void calloc*(size_t, size_t)
  * @brief  Allocates memory for an array of num objects of size and
- *        initializes all bytes in the allocated storage to zero.
+ *         initializes all bytes in the allocated storage to zero.
  *
  * @param  num
  * @param  size
@@ -62,6 +62,39 @@ void *usys_realloc( void *ptr, size_t new_size );
  *         On failure, returns a null pointer.
  */
 void* usys_calloc( size_t num, size_t size );
+
+/**
+ * @fn     void usys_emalloc*(size_t)
+ * @brief  Wrapper with error handling on top of usys_malloc function.
+ *
+ *
+ * @param  size
+ * @return On success base address of memory allocated.
+ * 		   On error call usys_exit(errno)
+ */
+void *usys_emalloc(size_t size);
+
+/**
+ * @fn     void usys_erealloc*(void*, size_t)
+ * @brief  Wrapper with error handling on top of usys_realloc function.
+ *
+ * @param  ptr
+ * @param  new_size
+ * @return On success base address of memory allocated.
+ * 		   On error call usys_exit(errno)
+ */
+void *usys_erealloc(void *ptr, size_t new_size);
+
+/**
+ * @fn     void usys_ecalloc*(size_t, size_t)
+ * @brief  Wrapper with error handling on top of usys_calloc function.
+ *
+ * @param  num
+ * @param  size
+ * @return On success base address of memory allocated.
+ * 		   On error call usys_exit(errno)
+ */
+void *usys_ecalloc(size_t num, size_t size);
 
 #ifdef __cplusplus
 }
