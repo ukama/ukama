@@ -150,6 +150,19 @@ static inline int usys_getrlimit(int resource, struct rlimit *rlp){
 }
 
 /**
+ * @fn     int usys_setrlimit(int, struct rlimit*)
+ * @brief  function set the resource limit for the specified resource.
+ *
+ * @param  resource
+ * @param  rlp
+ * @return On success 0
+ * 		   On error -1. The errno variable is set to indicate the error.
+ */
+static inline int usys_setrlimit(int resource, struct rlimit *rlp){
+	return setrlimit(resource, rlp);
+}
+
+/**
  * @fn     int usys_getopt(int, char* const[], const char*)
  * @brief  function returns the next flag letter in the argv
  *         list that matches a letter in optionstring.

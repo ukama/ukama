@@ -746,3 +746,24 @@ void test_usys_fork_wait_pid_ppid_prgp() {
     	}
     }
 }
+
+void test_usys_get_set_rlimit() {
+	  struct rlimit limit;
+
+	  /* Get the file size resource limit. */
+	  TEST_ASSERT_MESSAGE(usys_getrlimit(RLIMIT_FSIZE, &limit) == 0,
+			  "Reading resource limit failed.");
+	  usys_log_debug("Soft limit is %llu hard limit is %llu", limit.rlim_cur, limit.rlim_max);
+
+	  /* Set the file size resource limit. */
+	  limit.rlim_cur = 65535;
+	  limit.rlim_max = 65535;
+	  TEST_ASSERT_MESSAGE(usys_setrlimit(RLIMIT_FSIZE, &limit) == 0,
+			  "Setting resource limit failed.");
+
+	  /* Get the file size resource limit. */
+	  TEST_ASSERT_MESSAGE(usys_getrlimit(RLIMIT_FSIZE, &limit) == 0,
+			  "Reading resource limit failed.");
+	  usys_log_debug("Soft limit is %llu hard limit is %llu", limit.rlim_cur, limit.rlim_max);
+
+}
