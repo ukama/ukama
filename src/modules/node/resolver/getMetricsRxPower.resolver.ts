@@ -8,14 +8,14 @@ import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
 
 @Service()
 @Resolver()
-export class GetMetricsRRCResolver {
+export class GetMetricsRxPowerResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async getMetricsRRC(
+    async getMetricsRxPower(
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getMetricsRrc(data, getHeaders(ctx));
+        return this.nodeService.getMetricsRxPower(data, getHeaders(ctx));
     }
 }
