@@ -16,6 +16,10 @@ export class GetMetricsThroughputULResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.metricsCpuTRX(data, getHeaders(ctx));
+        return this.nodeService.getSingleMetric(
+            data,
+            getHeaders(ctx),
+            "throughputuplink"
+        );
     }
 }

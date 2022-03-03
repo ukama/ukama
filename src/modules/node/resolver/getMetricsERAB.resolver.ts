@@ -16,6 +16,6 @@ export class GetMetricsERABResolver {
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getMetricsErab(data, getHeaders(ctx));
+        return this.nodeService.getSingleMetric(data, getHeaders(ctx), "erab");
     }
 }
