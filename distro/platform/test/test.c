@@ -254,10 +254,10 @@ void test_usys_strncmp() {
     char str2[5] = "Test";
     char str3[5] = "test";
 
-    int ret = usys_strncmp(str1, str2, strlen(str2));
+    int ret = usys_strncmp(str1, str2, usys_strlen(str2));
     TEST_ASSERT_EQUAL_INT(0, ret);
 
-    ret = usys_strncmp(str1, str3, strlen(str3));
+    ret = usys_strncmp(str1, str3, usys_strlen(str3));
     TEST_ASSERT_NOT_EQUAL_INT(0, ret);
 
 }
@@ -392,7 +392,7 @@ void test_shm_writer() {
     /* unlink from the shared memory file */
     usys_shm_unlink(SHMFILE);
 
-    usys_log_error("[%d] %s : completed.", getpid(), __FUNCTION__ );
+    usys_log_error("[%d] %s : completed.", usys_getpid(), __FUNCTION__ );
 }
 
 void test_shm_reader(char *readdata) {
@@ -423,7 +423,7 @@ void test_shm_reader(char *readdata) {
     if (!usys_sem_wait(sem)) {
 
         /* Copy data from shared memory */
-        usys_memcpy(readdata, mem,  strlen(BLOCKDATA));
+        usys_memcpy(readdata, mem,  usys_strlen(BLOCKDATA));
 
         usys_sem_post(sem);
     }
@@ -444,33 +444,33 @@ void test_shm_reader(char *readdata) {
     /* unlink from the shared memory file */
     usys_shm_unlink(SHMFILE);
 
-    usys_log_trace("[%d] %s : completed.", getpid(), __FUNCTION__ );
+    usys_log_trace("[%d] %s : completed.", usys_getpid(), __FUNCTION__ );
 }
 
 /* Test function for shared memory */
 void test_usys_shm(void) {
-    pid_t child_pid;
+	USysPid child_pid;
     char readdata[BLOCKSIZE] = {'\0'};
-    child_pid = fork ();
+    child_pid = usys_fork ();
     if ( child_pid == 0) {
     	/* Child process */
-        usys_log_trace("[%d] child process for shm writer successfully created", getpid());
+        usys_log_trace("[%d] child process for shm writer successfully created", usys_getpid());
         usys_log_trace ("[%d] child_PID = %d,parent_PID = %d\n",
-                getpid(), getpid(), getppid( ) );
+        		usys_getpid(), usys_getpid(), usys_getppid( ) );
         test_shm_writer();
-        usys_log_trace("[%d] child process for shm writer completed", getpid());
+        usys_log_trace("[%d] child process for shm writer completed", usys_getpid());
         _usys_Exit(0);
     } else if (child_pid > 0) {
     	/* Parent process */
         usys_sleep(2);
-        usys_log_trace("[%d] shm reader successfully created!", getpid());
+        usys_log_trace("[%d] shm reader successfully created!", usys_getpid());
         test_shm_reader(readdata);
         usys_wait(NULL);
 
-        int ret = usys_memcmp(readdata, BLOCKDATA, strlen(BLOCKDATA));
+        int ret = usys_memcmp(readdata, BLOCKDATA, usys_strlen(BLOCKDATA));
         TEST_ASSERT_EQUAL_INT(ret, 0);
     }
-    usys_log_trace("[%d] test shm completed", getpid());
+    usys_log_trace("[%d] test shm completed", usys_getpid());
 }
 
 /* Timer callback */
@@ -700,4 +700,49 @@ void test_usys_seek_tell_dir() {
 
 	/* Close directory */
 	TEST_ASSERT_EQUAL_INT( 0 , usys_closedir(dir));
+}
+
+/* Test process related API's */
+
+void test_usys_fork_wait_pid_ppid_prgp() {
+	USysPid child_pid;
+	int waitstatus = 0;
+
+	USysPid c_pid = usys_getpid();
+	usys_log_debug("Current Process id %d, parent_PID = %d groupid %d",
+			c_pid, usys_getppid(), usys_getpgrp());
+
+    child_pid = usys_fork ();
+    if ( child_pid == 0) {
+    	/* Child process */
+        usys_log_trace(" [%d] Child process created", usys_getpid());
+        usys_log_trace ("[%d] child_PID = %d, parent_PID = %d groupid %d",
+        		usys_getpid(), usys_getpid(), usys_getppid(), usys_getpgrp());
+
+        usys_log_trace("[%d] child process completed", usys_getpid());
+        _usys_Exit(10);
+
+    } else if (child_pid > 0) {
+
+    	/* Parent process */
+    	usys_log_trace("[%d] Back in parent process !", usys_getpid());
+    	usys_wait(&waitstatus);
+
+    	if (waitstatus == -1) {
+    		usys_log_error("Failed to wait for child exit status.");
+    		TEST_ASSERT_MESSAGE(waitstatus, "Failed to wait for "
+    				"child exit status.");
+    	}
+
+    	if (WIFEXITED(waitstatus)) {
+    		int exitstatus = WEXITSTATUS(waitstatus);
+    		usys_log_error("Exit status of a child process %d",
+    				exitstatus);
+    		TEST_ASSERT_MESSAGE(exitstatus == 10 , "Failed to get proper "
+    				"exit status from child.");
+    	}
+    	else {
+    		usys_log_error("FAILURE: unknown child exited");
+    	}
+    }
 }
