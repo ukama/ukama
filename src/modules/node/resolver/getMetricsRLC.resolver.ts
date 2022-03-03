@@ -12,7 +12,7 @@ export class GetMetricsRLCResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async GetMetricsRLC(
+    async getMetricsRLC(
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO
     ): Promise<MetricDto[] | null> {

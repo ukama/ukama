@@ -339,4 +339,43 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return NodeMapper.dtoToMetricDto(res.data?.result);
     };
+    getMetricsTxPower = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/txpower`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getMetricsRxPower = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/rxpower`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getMetricsPaPower = async (
+        data: MetricsInputDTO,
+        header: HeaderType
+    ): Promise<MetricDto[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            headers: header,
+            path: `${SERVER.ORG}/${data.orgId}/nodes/${data.nodeId}/metrics/papower`,
+            params: { from: data.from, to: data.to, step: data.step },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
 }
