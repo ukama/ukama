@@ -23,5 +23,4 @@
  */
 bool usys_timer(uint32_t resolution, void (*tick_handler)());
 
-
 #endif /* USYS_TIMER_H */

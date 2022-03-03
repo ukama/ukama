@@ -26,7 +26,7 @@ extern "C" {
  *         On error, -1
  */
 static inline int usys_mkdir(const char *pathname, mode_t mode) {
-	return mkdir(pathname, mode);
+    return mkdir(pathname, mode);
 }
 
 /**
@@ -39,7 +39,7 @@ static inline int usys_mkdir(const char *pathname, mode_t mode) {
  * 		  On error, NULL is returned, and errno is set to indicate the error.
  */
 static inline DIR *usys_opendir(const char *name) {
-	return opendir(name);
+    return opendir(name);
 }
 
 /**
@@ -53,7 +53,7 @@ static inline DIR *usys_opendir(const char *name) {
  *         indicate the error.
  */
 static inline struct dirent *usys_readdir(DIR *dirp) {
-	return readdir(dirp);
+    return readdir(dirp);
 }
 
 /**
@@ -65,7 +65,7 @@ static inline struct dirent *usys_readdir(DIR *dirp) {
  *         On error, -1
  */
 static inline int usys_rmdir(const char *pathname) {
-	return rmdir(pathname);
+    return rmdir(pathname);
 }
 
 /**
@@ -77,7 +77,7 @@ static inline int usys_rmdir(const char *pathname) {
  * 		   On error, -1
  */
 static inline int usys_closedir(DIR *dirp) {
-	return closedir(dirp);
+    return closedir(dirp);
 }
 
 /**
@@ -94,7 +94,7 @@ static inline int usys_closedir(DIR *dirp) {
  *         indicate the error.
  */
 static inline char *usys_getcwd(char *buf, size_t size) {
-	return getcwd(buf, size);
+    return getcwd(buf, size);
 }
 
 /**
@@ -105,7 +105,7 @@ static inline char *usys_getcwd(char *buf, size_t size) {
  * @param dirp
  */
 static inline void usys_rewinddir(DIR *dirp) {
-	rewinddir(dirp);
+    rewinddir(dirp);
 }
 
 /**
@@ -116,7 +116,7 @@ static inline void usys_rewinddir(DIR *dirp) {
  * @param  loc
  */
 static inline void usys_seekdir(DIR *dirp, long loc) {
-	seekdir(dirp, loc);
+    seekdir(dirp, loc);
 }
 
 /**
@@ -127,8 +127,8 @@ static inline void usys_seekdir(DIR *dirp, long loc) {
  * @return On success, returns the current location of directory stream
  *         On error, -1 is returned, and errno is set to indicate the error.
  */
-static inline long int usys_telldir(DIR *dirp){
-	return telldir(dirp);
+static inline long int usys_telldir(DIR *dirp) {
+    return telldir(dirp);
 }
 
 /**
@@ -141,7 +141,7 @@ static inline long int usys_telldir(DIR *dirp){
  *         On error, -1
  */
 static inline int usys_chdir(const char *path) {
-	return chdir(path);
+    return chdir(path);
 }
 
 /**
@@ -153,8 +153,8 @@ static inline int usys_chdir(const char *path) {
  * @return On success, 0.
  *         On error, -1, errno is set to indicate the error.
  */
-static inline  int usy_chroot(const char *path) {
-	return chroot(path);
+static inline int usy_chroot(const char *path) {
+    return chroot(path);
 }
 
 #ifdef __cplusplus

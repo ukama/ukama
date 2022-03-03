@@ -24,16 +24,15 @@ extern "C" {
  * @return On Success start of the memory address.
  *         On failure NULL
  */
-void* usys_malloc(size_t size);
+void *usys_malloc(size_t size);
 
-
- /**
+/**
   * @fn    void usys_free(void*)
   * @brief Free memory allocated by usys_malloc
   *
   * @param ptr
   */
-void usys_free(void* ptr);
+void usys_free(void *ptr);
 
 /**
  * @fn     void usys_realloc*(void*, size_t)
@@ -48,7 +47,7 @@ void usys_free(void* ptr);
  *         allocated memory.
  *         On failure, returns a null pointer.
  */
-void *usys_realloc( void *ptr, size_t new_size );
+void *usys_realloc(void *ptr, size_t new_size);
 
 /**
  * @fn     void calloc*(size_t, size_t)
@@ -61,7 +60,7 @@ void *usys_realloc( void *ptr, size_t new_size );
  *         allocated memory.
  *         On failure, returns a null pointer.
  */
-void* usys_calloc( size_t num, size_t size );
+void *usys_calloc(size_t num, size_t size);
 
 /**
  * @fn     void usys_emalloc*(size_t)

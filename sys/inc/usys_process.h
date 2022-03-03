@@ -26,7 +26,7 @@ extern "C" {
            The value contains process ID of newly created child process.
  */
 static inline USysPid usys_fork(void) {
-	return fork();
+    return fork();
 }
 
 /**
@@ -43,8 +43,8 @@ static inline USysPid usys_fork(void) {
  * @return The return value is -1 on error and errno is set to indicate the error
  *         otherwise doesn't return.
  */
-static inline int usys_execv(const char *path, char *const argv[]){
- return execv(path, argv);
+static inline int usys_execv(const char *path, char *const argv[]) {
+    return execv(path, argv);
 }
 
 /**
@@ -75,8 +75,8 @@ static inline USysPid usys_wait(int *wstatus) {
  *         0 if no child process was immediately available.
  *         On error -1 The errno value is set to indicate the error.
  */
-static inline USysPid usys_waitpid(USysPid pid, int *status, int options){
-	return waitpid(pid, status, options);
+static inline USysPid usys_waitpid(USysPid pid, int *status, int options) {
+    return waitpid(pid, status, options);
 }
 
 /**
@@ -85,8 +85,8 @@ static inline USysPid usys_waitpid(USysPid pid, int *status, int options){
  *
  * @return USysPid
  */
-static inline USysPid usys_getpid(){
-	return getpid();
+static inline USysPid usys_getpid() {
+    return getpid();
 }
 
 /**
@@ -95,8 +95,8 @@ static inline USysPid usys_getpid(){
  *
  * @return USysPid
  */
-static inline USysPid usys_getppid(){
-	return getppid();
+static inline USysPid usys_getppid() {
+    return getppid();
 }
 
 /**
@@ -105,8 +105,8 @@ static inline USysPid usys_getppid(){
  *
  * @return USysPid
  */
-static inline USysPid usys_getpgrp(){
-	return getpgrp();
+static inline USysPid usys_getpgrp() {
+    return getpgrp();
 }
 
 /**
@@ -119,8 +119,8 @@ static inline USysPid usys_getpgrp(){
  * @return On Success 0
  * 		   On error -1. The errno variable is set to indicate the error.
  */
-static inline int usys_setpgid(USysPid pid, USysPid pgid){
-	return setpgid(pid, pgid);
+static inline int usys_setpgid(USysPid pid, USysPid pgid) {
+    return setpgid(pid, pgid);
 }
 
 /**
@@ -131,9 +131,9 @@ static inline int usys_setpgid(USysPid pid, USysPid pgid){
  * @return On success 0
  * 		   On error -1. The errno variable is set to indicate the error.
  */
-static inline long int usys_ulimit(int cmd, ...){
-	va_list args;
-	return ulimit(cmd, args);
+static inline long int usys_ulimit(int cmd, ...) {
+    va_list args;
+    return ulimit(cmd, args);
 }
 
 /**
@@ -145,8 +145,8 @@ static inline long int usys_ulimit(int cmd, ...){
  * @return On success 0
  * 		   On error -1. The errno variable is set to indicate the error.
  */
-static inline int usys_getrlimit(int resource, struct rlimit *rlp){
-	return getrlimit(resource, rlp);
+static inline int usys_getrlimit(int resource, struct rlimit *rlp) {
+    return getrlimit(resource, rlp);
 }
 
 /**
@@ -158,8 +158,8 @@ static inline int usys_getrlimit(int resource, struct rlimit *rlp){
  * @return On success 0
  * 		   On error -1. The errno variable is set to indicate the error.
  */
-static inline int usys_setrlimit(int resource, struct rlimit *rlp){
-	return setrlimit(resource, rlp);
+static inline int usys_setrlimit(int resource, struct rlimit *rlp) {
+    return setrlimit(resource, rlp);
 }
 
 /**
@@ -173,9 +173,9 @@ static inline int usys_setrlimit(int resource, struct rlimit *rlp){
  * @return EOF on successful processing of all flags.
  * 		   ? on unkown flag.
  */
-static inline int usys_getopt(int argc, char * const argv[],
-     const char *optionstring) {
-	return getopt(argc, argv, optionstring);
+static inline int usys_getopt(int argc, char *const argv[],
+                              const char *optionstring) {
+    return getopt(argc, argv, optionstring);
 }
 
 #ifdef __cplusplus

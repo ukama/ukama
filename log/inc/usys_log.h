@@ -18,8 +18,8 @@ extern "C" {
 
 #define usys_log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 #define usys_log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_info(...)  log_log(LOG_INFO,  __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_warn(...)  log_log(LOG_WARN,  __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_info(...) log_log(LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_warn(...) log_log(LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
 #define usys_log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define usys_log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
@@ -29,7 +29,7 @@ extern "C" {
  * @param level
  * @return const char*
  */
-static inline const char* usys_log_level_string(int level) {
+static inline const char *usys_log_level_string(int level) {
     return log_level_string(level);
 }
 
@@ -41,7 +41,7 @@ static inline const char* usys_log_level_string(int level) {
  * @param fn
  * @param udata
  */
-void static inline  usys_log_set_lock(log_LockFn fn, void *udata) {
+void static inline usys_log_set_lock(log_LockFn fn, void *udata) {
     log_set_lock(fn, udata);
 }
 
@@ -63,7 +63,7 @@ static inline void usys_log_set_level(int level) {
  *
  * @param enable
  */
-static inline void usys_log_set_quiet(bool enable){
+static inline void usys_log_set_quiet(bool enable) {
     log_set_quiet(enable);
 }
 
@@ -78,7 +78,7 @@ static inline void usys_log_set_quiet(bool enable){
  * @param level
  * @return int
  */
-static inline int usys_log_add_callback(log_LogFn fn, void *udata, int level){
+static inline int usys_log_add_callback(log_LogFn fn, void *udata, int level) {
     return log_add_callback(fn, udata, level);
 }
 
@@ -90,7 +90,7 @@ static inline int usys_log_add_callback(log_LogFn fn, void *udata, int level){
  * @param level
  * @return int
  */
-static inline int usys_log_add_fp(FILE *fp, int level){
+static inline int usys_log_add_fp(FILE *fp, int level) {
     return log_add_fp(fp, level);
 }
 

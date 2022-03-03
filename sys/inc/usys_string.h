@@ -25,7 +25,7 @@ extern "C" {
  * @return If a token is found, a pointer to the beginning of the token.
  *         Otherwise, a null pointer.
  */
-static inline char* usys_strtok(char* str, const char* delim) {
+static inline char *usys_strtok(char *str, const char *delim) {
     return strtok(str, delim);
 }
 
@@ -38,7 +38,7 @@ static inline char* usys_strtok(char* str, const char* delim) {
  * @param  base
  * @return
  */
-static inline int usys_strtol(const char* nptr, char** endptr, int base) {
+static inline int usys_strtol(const char *nptr, char **endptr, int base) {
     return strtol(nptr, endptr, base);
 }
 
@@ -51,7 +51,7 @@ static inline int usys_strtol(const char* nptr, char** endptr, int base) {
  * @param  src
  * @return destination
  */
-static inline char* usys_strcpy(char* dest, const char* src) {
+static inline char *usys_strcpy(char *dest, const char *src) {
     return strcpy(dest, src);
 }
 
@@ -67,7 +67,7 @@ static inline char* usys_strcpy(char* dest, const char* src) {
  * @param  n
  * @return destination string
  */
-static inline char* usys_strncpy(char* dest, const char* src, size_t n) {
+static inline char *usys_strncpy(char *dest, const char *src, size_t n) {
     return strncpy(dest, src, n);
 }
 
@@ -79,7 +79,7 @@ static inline char* usys_strncpy(char* dest, const char* src, size_t n) {
  * @param  s2
  * @return Returns an integral value indicating the difference in strings
  */
-static inline int usys_strcmp(const char* s1, const char* s2) {
+static inline int usys_strcmp(const char *s1, const char *s2) {
     return strcmp(s1, s2);
 }
 
@@ -92,7 +92,7 @@ static inline int usys_strcmp(const char* s1, const char* s2) {
  * @param  n
  * @return Returns an integral value indicating the difference in strings
  */
-static inline int usys_strncmp(const char* s1, const char* s2, size_t n) {
+static inline int usys_strncmp(const char *s1, const char *s2, size_t n) {
     return strncmp(s1, s2, n);
 }
 
@@ -104,7 +104,7 @@ static inline int usys_strncmp(const char* s1, const char* s2, size_t n) {
  * @param  s
  * @return integer value indicating length of string.
  */
-static inline size_t usys_strlen(const char* s) {
+static inline size_t usys_strlen(const char *s) {
     return strlen(s);
 }
 
@@ -116,7 +116,7 @@ static inline size_t usys_strlen(const char* s) {
  * @param  src
  * @return destination string
  */
-static inline char* usys_strcat(char *dest, const char *src) {
+static inline char *usys_strcat(char *dest, const char *src) {
     return strcat(dest, src);
 }
 
@@ -129,7 +129,7 @@ static inline char* usys_strcat(char *dest, const char *src) {
  * @param  num
  * @return destination string
  */
-static inline char* usys_strncat(char * dest, const char * src, size_t num ) {
+static inline char *usys_strncat(char *dest, const char *src, size_t num) {
     return strcat(dest, src);
 }
 
@@ -144,8 +144,8 @@ static inline char* usys_strncat(char * dest, const char * src, size_t num ) {
  *         of characters specified in str2, or a null pointer if the sequence
  *         is not present in str1.
  */
-static inline char* usys_strstr(const char *str1, const char *str2) {
-    return strstr((char*)str1, (char*)str2);
+static inline char *usys_strstr(const char *str1, const char *str2) {
+    return strstr((char *)str1, (char *)str2);
 }
 
 /**
@@ -158,7 +158,7 @@ static inline char* usys_strstr(const char *str1, const char *str2) {
  * @return
  */
 static inline int usys_strspn(const char *str1, const char *str2) {
-    return strspn((char*)str1, (char*)str2);
+    return strspn((char *)str1, (char *)str2);
 }
 
 /**
@@ -171,7 +171,7 @@ static inline int usys_strspn(const char *str1, const char *str2) {
  * @param  num
  * @return ptr
  */
-static inline void* usys_memset(void * ptr, int value, size_t num) {
+static inline void *usys_memset(void *ptr, int value, size_t num) {
     return memset(ptr, value, num);
 }
 
@@ -185,7 +185,7 @@ static inline void* usys_memset(void * ptr, int value, size_t num) {
  * @param  num
  * @return dest
  */
-static inline char* usys_memcpy(void * dest, void* src, size_t num ) {
+static inline char *usys_memcpy(void *dest, void *src, size_t num) {
     return memcpy(dest, src, num);
 }
 
@@ -201,7 +201,7 @@ static inline char* usys_memcpy(void * dest, void* src, size_t num ) {
  * @param  num
  * @return
  */
-static inline int usys_memcmp(void * ptr1, void* ptr2, size_t num ) {
+static inline int usys_memcmp(void *ptr1, void *ptr2, size_t num) {
     return memcmp(ptr1, ptr2, num);
 }
 

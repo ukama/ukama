@@ -100,7 +100,10 @@ help:
 
 format-style:
 	$(foreach src, $(SOURCES), $(call clang-format,$(src)))	
-	@echo "Done"
+	@echo "Source file Done."
+	#$(foreach inc, $(INCLUDES), $(call clang-format,$(inc)))
+	#@echo "Include file Done."
+
 
 check-style:
 	$(eval CWD = $(shell pwd))

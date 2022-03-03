@@ -459,7 +459,7 @@ void test_usys_shm(void) {
         		usys_getpid(), usys_getpid(), usys_getppid( ) );
         test_shm_writer();
         usys_log_trace("[%d] child process for shm writer completed", usys_getpid());
-        _usys_Exit(0);
+        usys_qexit(0);
     } else if (child_pid > 0) {
     	/* Parent process */
         usys_sleep(2);
@@ -720,7 +720,7 @@ void test_usys_fork_wait_pid_ppid_prgp() {
         		usys_getpid(), usys_getpid(), usys_getppid(), usys_getpgrp());
 
         usys_log_trace("[%d] child process completed", usys_getpid());
-        _usys_Exit(10);
+        usys_qexit(10);
 
     } else if (child_pid > 0) {
 
