@@ -43,6 +43,7 @@ int main() {
     RUN_TEST(test_usys_getcwd_ch_dir);
     RUN_TEST(test_usys_seek_tell_dir);
     RUN_TEST(test_usys_fork_wait_pid_ppid_prgp);
+    RUN_TEST(test_usys_get_set_rlimit);
     return UNITY_END();
 }
 
