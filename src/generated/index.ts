@@ -11,7 +11,7 @@ export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
     [SubKey in K]: Maybe<T[SubKey]>;
 };
-const defaultOptions = {};
+const defaultOptions = {} as const;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
     ID: string;
@@ -331,6 +331,20 @@ export type Meta = {
     size: Scalars["Float"];
 };
 
+export type MetricDto = {
+    __typename?: "MetricDto";
+    x: Scalars["Float"];
+    y: Scalars["Float"];
+};
+
+export type MetricsInputDto = {
+    from: Scalars["Float"];
+    nodeId: Scalars["String"];
+    orgId: Scalars["String"];
+    step: Scalars["Float"];
+    to: Scalars["Float"];
+};
+
 export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
@@ -420,6 +434,7 @@ export type NodeDto = {
     status: Org_Node_State;
     title: Scalars["String"];
     totalUser: Scalars["Float"];
+    type: Scalars["String"];
 };
 
 export type NodeMetaDataDto = {
@@ -470,10 +485,30 @@ export enum Org_Node_State {
     Undefined = "UNDEFINED",
 }
 
+export type OrgMetricDto = {
+    __typename?: "OrgMetricDto";
+    nodeId: Scalars["String"];
+    receive: Scalars["String"];
+    tenant_id: Scalars["String"];
+};
+
+export type OrgMetricResponse = {
+    __typename?: "OrgMetricResponse";
+    metric: OrgMetricDto;
+    values: Array<OrgMetricValueDto>;
+};
+
+export type OrgMetricValueDto = {
+    __typename?: "OrgMetricValueDto";
+    x: Scalars["Float"];
+    y: Scalars["String"];
+};
+
 export type OrgNodeDto = {
     __typename?: "OrgNodeDto";
     nodeId: Scalars["String"];
     state: Org_Node_State;
+    type: Scalars["String"];
 };
 
 export type OrgNodeResponse = {
@@ -532,6 +567,9 @@ export type Query = {
     getEsims: Array<EsimDto>;
     getIOMetrics: Array<IoMetricsDto>;
     getMemoryUsageMetrics: Array<MemoryUsageMetricsDto>;
+    getMetricsCpuTRX: Array<MetricDto>;
+    getMetricsMemoryTRX: Array<MetricDto>;
+    getMetricsUptime: Array<MetricDto>;
     getNetwork: NetworkDto;
     getNodeDetails: NodeDetailDto;
     getNodeMetaData: NodeMetaDataDto;
@@ -575,6 +613,18 @@ export type QueryGetIoMetricsArgs = {
 
 export type QueryGetMemoryUsageMetricsArgs = {
     filter: Graph_Filter;
+};
+
+export type QueryGetMetricsCpuTrxArgs = {
+    data: MetricsInputDto;
+};
+
+export type QueryGetMetricsMemoryTrxArgs = {
+    data: MetricsInputDto;
+};
+
+export type QueryGetMetricsUptimeArgs = {
+    data: MetricsInputDto;
 };
 
 export type QueryGetNetworkArgs = {
@@ -811,11 +861,11 @@ export type GetAlertsQuery = {
         };
         alerts: Array<{
             __typename?: "AlertDto";
-            id?: string | null | undefined;
+            id?: string | null;
             type: Alert_Type;
-            title?: string | null | undefined;
-            description?: string | null | undefined;
-            alertDate?: any | null | undefined;
+            title?: string | null;
+            description?: string | null;
+            alertDate?: any | null;
         }>;
     };
 };
@@ -828,11 +878,11 @@ export type GetLatestAlertsSubscription = {
     __typename?: "Subscription";
     getAlerts: {
         __typename?: "AlertDto";
-        id?: string | null | undefined;
+        id?: string | null;
         type: Alert_Type;
-        title?: string | null | undefined;
-        description?: string | null | undefined;
-        alertDate?: any | null | undefined;
+        title?: string | null;
+        description?: string | null;
+        alertDate?: any | null;
     };
 };
 
@@ -852,6 +902,7 @@ export type GetNodesByOrgQuery = {
             id: string;
             status: Org_Node_State;
             title: string;
+            type: string;
             description: string;
             totalUser: number;
         }>;
@@ -889,11 +940,11 @@ export type MyUsersQuery = {
             __typename?: "GetUserDto";
             id: string;
             name: string;
-            email?: string | null | undefined;
+            email?: string | null;
             eSimNumber: string;
             dataPlan: number;
             dataUsage: number;
-            phone?: string | null | undefined;
+            phone?: string | null;
             roaming: boolean;
             iccid: string;
             status: Get_User_Status_Type;
@@ -914,8 +965,8 @@ export type GetUserQuery = {
         name: string;
         eSimNumber: string;
         iccid: string;
-        email?: string | null | undefined;
-        phone?: string | null | undefined;
+        email?: string | null;
+        phone?: string | null;
         roaming: boolean;
         dataPlan: number;
         dataUsage: number;
@@ -961,7 +1012,7 @@ export type GetNetworkQuery = {
         __typename?: "NetworkDto";
         id: string;
         status: Network_Status;
-        description?: string | null | undefined;
+        description?: string | null;
     };
 };
 
@@ -975,7 +1026,7 @@ export type GetLatestNetworkSubscription = {
         __typename?: "NetworkDto";
         id: string;
         status: Network_Status;
-        description?: string | null | undefined;
+        description?: string | null;
     };
 };
 
@@ -1091,7 +1142,7 @@ export type GetUsersAttachedMetricsSSubscription = {
     __typename?: "Subscription";
     getUsersAttachedMetrics: {
         __typename?: "UsersAttachedMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         users: number;
         timestamp: number;
     };
@@ -1105,7 +1156,7 @@ export type GetUsersAttachedMetricsQQuery = {
     __typename?: "Query";
     getUsersAttachedMetrics: Array<{
         __typename?: "UsersAttachedMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         users: number;
         timestamp: number;
     }>;
@@ -1119,7 +1170,7 @@ export type GetThroughputMetricsSSubscription = {
     __typename?: "Subscription";
     getThroughputMetrics: {
         __typename?: "ThroughputMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         amount: number;
         timestamp: number;
     };
@@ -1133,7 +1184,7 @@ export type GetThroughputMetricsQQuery = {
     __typename?: "Query";
     getThroughputMetrics: Array<{
         __typename?: "ThroughputMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         amount: number;
         timestamp: number;
     }>;
@@ -1147,7 +1198,7 @@ export type GetTemperatureMetricsSSubscription = {
     __typename?: "Subscription";
     getTemperatureMetrics: {
         __typename?: "TemperatureMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         temperature: number;
         timestamp: number;
     };
@@ -1161,7 +1212,7 @@ export type GetTemperatureMetricsQQuery = {
     __typename?: "Query";
     getTemperatureMetrics: Array<{
         __typename?: "TemperatureMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         temperature: number;
         timestamp: number;
     }>;
@@ -1175,7 +1226,7 @@ export type GetCpuUsageMetricsSSubscription = {
     __typename?: "Subscription";
     getCpuUsageMetrics: {
         __typename?: "CpuUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     };
@@ -1189,7 +1240,7 @@ export type GetCpuUsageMetricsQQuery = {
     __typename?: "Query";
     getCpuUsageMetrics: Array<{
         __typename?: "CpuUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     }>;
@@ -1203,7 +1254,7 @@ export type GetMemoryUsageMetricsSSubscription = {
     __typename?: "Subscription";
     getMemoryUsageMetrics: {
         __typename?: "MemoryUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     };
@@ -1217,7 +1268,7 @@ export type GetMemoryUsageMetricsQQuery = {
     __typename?: "Query";
     getMemoryUsageMetrics: Array<{
         __typename?: "MemoryUsageMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         usage: number;
         timestamp: number;
     }>;
@@ -1231,7 +1282,7 @@ export type GetIoMetricsSSubscription = {
     __typename?: "Subscription";
     getIOMetrics: {
         __typename?: "IOMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         input: number;
         output: number;
         timestamp: number;
@@ -1246,10 +1297,41 @@ export type GetIoMetricsQQuery = {
     __typename?: "Query";
     getIOMetrics: Array<{
         __typename?: "IOMetricsDto";
-        id?: string | null | undefined;
+        id?: string | null;
         input: number;
         output: number;
         timestamp: number;
+    }>;
+};
+
+export type GetMetricsCpuTrxQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsCpuTrxQuery = {
+    __typename?: "Query";
+    getMetricsCpuTRX: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
+};
+
+export type GetMetricsUptimeQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsUptimeQuery = {
+    __typename?: "Query";
+    getMetricsUptime: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
+};
+
+export type GetMetricsMemoryTrxQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsMemoryTrxQuery = {
+    __typename?: "Query";
+    getMetricsMemoryTRX: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
     }>;
 };
 
@@ -1673,6 +1755,7 @@ export const GetNodesByOrgDocument = gql`
                 id
                 status
                 title
+                type
                 description
                 totalUser
             }
@@ -3116,4 +3199,181 @@ export type GetIoMetricsQLazyQueryHookResult = ReturnType<
 export type GetIoMetricsQQueryResult = Apollo.QueryResult<
     GetIoMetricsQQuery,
     GetIoMetricsQQueryVariables
+>;
+export const GetMetricsCpuTrxDocument = gql`
+    query getMetricsCpuTRX($data: MetricsInputDTO!) {
+        getMetricsCpuTRX(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsCpuTrxQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsCpuTrxQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsCpuTrxQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsCpuTrxQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsCpuTrxQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >(GetMetricsCpuTrxDocument, options);
+}
+export function useGetMetricsCpuTrxLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsCpuTrxQuery,
+        GetMetricsCpuTrxQueryVariables
+    >(GetMetricsCpuTrxDocument, options);
+}
+export type GetMetricsCpuTrxQueryHookResult = ReturnType<
+    typeof useGetMetricsCpuTrxQuery
+>;
+export type GetMetricsCpuTrxLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsCpuTrxLazyQuery
+>;
+export type GetMetricsCpuTrxQueryResult = Apollo.QueryResult<
+    GetMetricsCpuTrxQuery,
+    GetMetricsCpuTrxQueryVariables
+>;
+export const GetMetricsUptimeDocument = gql`
+    query getMetricsUptime($data: MetricsInputDTO!) {
+        getMetricsUptime(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsUptimeQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsUptimeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsUptimeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsUptimeQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsUptimeQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsUptimeQuery,
+        GetMetricsUptimeQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsUptimeQuery,
+        GetMetricsUptimeQueryVariables
+    >(GetMetricsUptimeDocument, options);
+}
+export function useGetMetricsUptimeLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsUptimeQuery,
+        GetMetricsUptimeQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsUptimeQuery,
+        GetMetricsUptimeQueryVariables
+    >(GetMetricsUptimeDocument, options);
+}
+export type GetMetricsUptimeQueryHookResult = ReturnType<
+    typeof useGetMetricsUptimeQuery
+>;
+export type GetMetricsUptimeLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsUptimeLazyQuery
+>;
+export type GetMetricsUptimeQueryResult = Apollo.QueryResult<
+    GetMetricsUptimeQuery,
+    GetMetricsUptimeQueryVariables
+>;
+export const GetMetricsMemoryTrxDocument = gql`
+    query getMetricsMemoryTRX($data: MetricsInputDTO!) {
+        getMetricsMemoryTRX(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsMemoryTrxQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsMemoryTrxQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsMemoryTrxQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsMemoryTrxQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsMemoryTrxQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsMemoryTrxQuery,
+        GetMetricsMemoryTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsMemoryTrxQuery,
+        GetMetricsMemoryTrxQueryVariables
+    >(GetMetricsMemoryTrxDocument, options);
+}
+export function useGetMetricsMemoryTrxLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsMemoryTrxQuery,
+        GetMetricsMemoryTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsMemoryTrxQuery,
+        GetMetricsMemoryTrxQueryVariables
+    >(GetMetricsMemoryTrxDocument, options);
+}
+export type GetMetricsMemoryTrxQueryHookResult = ReturnType<
+    typeof useGetMetricsMemoryTrxQuery
+>;
+export type GetMetricsMemoryTrxLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsMemoryTrxLazyQuery
+>;
+export type GetMetricsMemoryTrxQueryResult = Apollo.QueryResult<
+    GetMetricsMemoryTrxQuery,
+    GetMetricsMemoryTrxQueryVariables
 >;

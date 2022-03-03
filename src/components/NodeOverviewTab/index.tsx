@@ -3,14 +3,23 @@ import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
 import { TooltipsText } from "../../constants";
+import ApexLineChartIntegration from "../ApexLineChart";
+import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { Grid, Paper, Stack, Typography } from "@mui/material";
-import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
+
+const REFRESH_INTERVAL = 10000; // 20 sec
 
 interface INodeOverviewTab {
     loading: boolean;
+    cpuTrxMetrics: any;
+    uptimeMetrics: any;
+    memoryTrxMetrics: any;
     nodeDetails: TObject[];
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
+    onRefreshTempTrx: Function;
+    onRefreshMemoryTrx: Function;
+    onRefreshUptime: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
 }
@@ -19,8 +28,14 @@ const NodeOverviewTab = ({
     loading,
     selectedNode,
     getNodeSoftwareUpdateInfos,
-    isUpdateAvailable,
     handleUpdateNode,
+    onRefreshTempTrx,
+    onRefreshMemoryTrx,
+    onRefreshUptime,
+    isUpdateAvailable,
+    cpuTrxMetrics = [],
+    uptimeMetrics = [],
+    memoryTrxMetrics = [],
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
 
@@ -102,15 +117,32 @@ const NodeOverviewTab = ({
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Node Health</Typography>
                         <Stack spacing={6} pt={2}>
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={"Temperature-TRX"}
+                                data={cpuTrxMetrics}
+                                name={"CPU-TRX (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshTempTrx}
+                                refreshInterval={REFRESH_INTERVAL}
                             />
-
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={"Temperature-COM"}
+                                data={memoryTrxMetrics}
+                                name={"MEMORY-TRX (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshMemoryTrx}
+                                refreshInterval={REFRESH_INTERVAL}
                             />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                data={uptimeMetrics}
+                                name={"UPTIME (For demo)"} //"Temperature-TRX"
+                                onRefreshData={onRefreshUptime}
+                                refreshInterval={REFRESH_INTERVAL}
+                            />
+                            {/* <ApexLineChartIntegration
+                                hasData={true}
+                                initData={[]}
+                                name={"Temperature-COM"}
+                            /> */}
                         </Stack>
                     </Paper>
                 )}
@@ -118,8 +150,16 @@ const NodeOverviewTab = ({
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Subscribers</Typography>
                         <Stack spacing={6} pt={2}>
-                            <LineChart hasData={true} title={"Attached"} />
-                            <LineChart hasData={true} title={"Active"} />
+                            {/* <ApexLineChartIntegration
+                                hasData={true}
+                                initData={[]}
+                                name={"Attached"}
+                            />
+                            <ApexLineChartIntegration
+                                hasData={true}
+                                initData={[]}
+                                name={"Active"}
+                            /> */}
                         </Stack>
                     </Paper>
                 )}

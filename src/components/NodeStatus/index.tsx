@@ -26,8 +26,9 @@ const NodeStatus = ({
     loading = false,
     selectedNode = {
         id: "1",
+        title: "",
+        type: "HOME",
         totalUser: 4,
-        title: "Node 1",
         status: Org_Node_State.Undefined,
         description: "Node 1 description",
     },

@@ -55,7 +55,7 @@ const NodeDropDown = ({
         const { target } = e;
         target.value &&
             onNodeSelected(
-                nodes.find((item: NodeDto) => item.id === target.value)
+                nodes.find((item: NodeDto) => item.title === target.value)
             );
     };
     return (
@@ -95,7 +95,7 @@ const NodeDropDown = ({
                     renderValue={selected => selected}
                 >
                     {nodes.map(({ id, title }) => (
-                        <MenuItem key={id} value={id} sx={{ m: 0, p: 0 }}>
+                        <MenuItem key={id} value={title} sx={{ m: 0, p: 0 }}>
                             <CustomRadioButton
                                 label={title}
                                 value={id === selectedNode?.id}

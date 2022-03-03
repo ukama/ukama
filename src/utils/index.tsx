@@ -86,8 +86,22 @@ const hexToRGB = (hex: string, alpha: number): string => {
     return `rgba(${r}, ${g}, ${b})`;
 };
 
+const random = (min: number, max: number) => Math.random() * (max - min) + min;
+
+const getRandomData = () => {
+    const data = [];
+    for (let i = 0; i < 10; i++) {
+        data.push({
+            x: Date.now() / 1000 - (10 - i),
+            y: random(-2, 2),
+        });
+    }
+    return data;
+};
+
 export {
     hexToRGB,
+    getRandomData,
     getColorByType,
     getStatusByType,
     getTitleFromPath,
