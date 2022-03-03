@@ -11,6 +11,9 @@ export class NodeDto {
     title: string;
 
     @Field()
+    type: string;
+
+    @Field()
     description: string;
 
     @Field(() => ORG_NODE_STATE)
@@ -108,6 +111,9 @@ export class UpdateNodeResponse {
 export class OrgNodeDto {
     @Field()
     nodeId: string;
+
+    @Field()
+    type: string;
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
@@ -267,4 +273,43 @@ export class MemoryUsageMetricsDto {
 
     @Field()
     timestamp: number;
+}
+
+@ObjectType()
+export class MetricDto {
+    @Field()
+    y: number;
+
+    @Field()
+    x: number;
+}
+
+@ObjectType()
+export class OrgMetricResponse {
+    @Field(() => OrgMetricDto)
+    metric: OrgMetricDto;
+
+    @Field(() => [OrgMetricValueDto])
+    values: OrgMetricValueDto[];
+}
+
+@ObjectType()
+export class OrgMetricDto {
+    @Field()
+    nodeId: string;
+
+    @Field()
+    receive: string;
+
+    @Field()
+    tenant_id: string;
+}
+
+@ObjectType()
+export class OrgMetricValueDto {
+    @Field()
+    x: number;
+
+    @Field()
+    y: string;
 }

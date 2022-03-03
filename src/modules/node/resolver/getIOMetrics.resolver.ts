@@ -9,8 +9,8 @@ import {
 import { Service } from "typedi";
 import { NodeService } from "../service";
 import { IOMetricsDto } from "../types";
-import { Authentication } from "../../../common/Authentication";
 import { GRAPH_FILTER } from "../../../constants";
+import { Authentication } from "../../../common/Authentication";
 
 @Service()
 @Resolver()
@@ -23,8 +23,8 @@ export class GetIOMetricsResolver {
         @Arg("filter", () => GRAPH_FILTER) filter: GRAPH_FILTER,
         @PubSub() pubsub: PubSubEngine
     ): Promise<[IOMetricsDto] | null> {
-        const ioMetrics = this.nodeService.ioMetrics(filter);
-        pubsub.publish("ioMetrics", ioMetrics);
+        const ioMetrics = await this.nodeService.ioMetrics(filter);
+        pubsub.publish("ioMetrics", ioMetrics[0]);
         return ioMetrics;
     }
 }

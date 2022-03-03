@@ -8,7 +8,7 @@ export class GetIOMetricsSubscriptionResolver {
     @Subscription(() => IOMetricsDto, {
         topics: "ioMetrics",
     })
-    async getIOMetrics(@Root() data: [IOMetricsDto]): Promise<IOMetricsDto> {
-        return data[data.length - 1];
+    async getIOMetrics(@Root() data: IOMetricsDto): Promise<IOMetricsDto> {
+        return data;
     }
 }
