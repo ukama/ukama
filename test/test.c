@@ -230,7 +230,7 @@ void test_usys_threads_with_semaphore() {
 
 /* Strings  test */
 
-/* string copy */
+/* String copy */
 void test_usys_strcpy() {
     char src[12] = "Test Case.";
     char dest[12] = {'\0'};
@@ -262,13 +262,13 @@ void test_usys_strncmp() {
 
 }
 
-/* string  length */
+/* String  length */
 void test_usys_strlen() {
     char src[12] = "Test Case.";
     TEST_ASSERT_EQUAL_INT( 10, usys_strlen(src));
 }
 
-/* string cat */
+/* String cat */
 void test_usys_strcat() {
     char exp[12] = "Test Case.";
     char src1[5] = "Test";
@@ -277,7 +277,7 @@ void test_usys_strcat() {
     TEST_ASSERT_EQUAL_STRING(exp, usys_strcat(src1, src2));
 }
 
-/* substring string */
+/* Substring string */
 void test_usys_strstr() {
     char str[] ="This is a simple string";
     char * pch;
@@ -288,7 +288,7 @@ void test_usys_strstr() {
     TEST_ASSERT_EQUAL_INT(0, ret );
 }
 
-/* string memcmp, memcpy and memset */
+/* String memcmp, memcpy and memset */
 void test_usys_memcmp_memset_memcpy() {
     char str[11] = "memory set";
     char mset[11] = "----------";
@@ -306,7 +306,7 @@ void test_usys_memcmp_memset_memcpy() {
 
 }
 
-/* string to token */
+/* String to token */
 void test_usys_strtok() {
     char str[] = "memory - set . test";
     char *tok;
@@ -330,7 +330,7 @@ void test_usys_strtok() {
 
 }
 
-/* shared memory */
+/* Shared memory */
 
 #define BLOCKSIZE           256
 #define SHMFILE             "/shmfd"
@@ -389,7 +389,7 @@ void test_shm_writer() {
         return;
     }
 
-    /* unlink from the shared memory file */
+    /* Unlink from the shared memory file */
     usys_shm_unlink(SHMFILE);
 
     usys_log_error("[%d] %s : completed.", usys_getpid(), __FUNCTION__ );
@@ -441,7 +441,7 @@ void test_shm_reader(char *readdata) {
         return;
     }
 
-    /* unlink from the shared memory file */
+    /* Unlink from the shared memory file */
     usys_shm_unlink(SHMFILE);
 
     usys_log_trace("[%d] %s : completed.", usys_getpid(), __FUNCTION__ );
@@ -490,22 +490,22 @@ void test_usys_timer(void) {
     usys_log_info("seconds : %ld micro seconds : %ld",
         current_time.tv_sec, current_time.tv_usec);
 
-    /* create a timer */
+    /* Create a timer */
     int ret = usys_timer(100000, timer_stat);
     TEST_ASSERT_EQUAL_INT( 1, ret );
 
-    /* some time for timer to run */
+    /* Come time for timer to run */
     unsigned int num = 0xFFFFFFFF;
     while(num >0) {
         num--;
     };
 
-    /* stop timer */
+    /* Stop timer */
     ret = usys_timer(0, timer_stat);
     TEST_ASSERT_EQUAL_INT( 1, ret );
 
     usys_log_trace("Waiting to stop timer.");
-    /* some time for timer to stop */
+    /* Some time for timer to stop */
     num = 0xFFFFFF;
     while(num >0) {
         num--;
@@ -524,10 +524,10 @@ void test_usys_read_write_strings_to_file() {
     /* Write to file */
     usys_file_write(fileName, buff, 0, size);
 
-    /* read from file */
+    /* Read from file */
     usys_file_read(fileName, testBuff, 0, size);
 
-    /* compare read and written string */
+    /* Compare read and written string */
     TEST_ASSERT_EQUAL_STRING(buff, testBuff);
 
     TEST_ASSERT_EQUAL_INT( 0 , usys_remove(fileName));
@@ -547,12 +547,12 @@ void test_usys_read_write_numbers_to_file() {
     /* Write a number */
     usys_file_write(fileName, ty, 0, 4);
 
-    /* read a number */
+    /* Read a number */
     usys_file_read(fileName, ty1, 0, 4);
 
     usys_memcpy(&testType, ty1, 4);
 
-    /* compare read and written number */
+    /* Compare read and written number */
     TEST_ASSERT_EQUAL_CHAR_ARRAY(ty, ty1, 4);
 
     /* Remove file */
@@ -573,7 +573,7 @@ void test_usys_read_write_arrays_to_file() {
     /* Read */
     usys_file_read_number(fileName, read, 22, 3, sizeof(uint16_t));
 
-    /* compare read and written bytes */
+    /* Compare read and written bytes */
     TEST_ASSERT_EQUAL_UINT16_ARRAY(write, read, 3);
 
     /* Remove file */
@@ -599,12 +599,14 @@ void test_usys_write_failure_no_file_exist() {
 
 void test_usys_open_read_close_dir() {
 	struct dirent *de;
-	/* open directory */
+
+	/* Open directory */
 	DIR *dr = usys_opendir(".");
 	if (dr == NULL) {
 		TEST_ASSERT_MESSAGE(dr != NULL, usys_error(errno));
 	}
 
+	/* Read directory */
 	while ((de = usys_readdir(dr)) != NULL) {
 		usys_log_trace("%s\n", de->d_name);
 	}
@@ -614,7 +616,8 @@ void test_usys_open_read_close_dir() {
 
 void test_usys_opendir_fail() {
 	struct dirent *de;
-	/* open directory */
+
+	/* Open directory */
 	DIR *dr = usys_opendir("/xyz");
 	usys_log_warn("Error: %s", usys_error(errno));
 	TEST_ASSERT_MESSAGE(dr == NULL, "Directory wasn't expected");
@@ -669,13 +672,14 @@ void test_usys_seek_tell_dir() {
 	long int offset = 0;
 	long int loc= 0;
 	int idx = 0;
-	/* open dir */
+
+	/* Open dir */
 	dir = usys_opendir(".");
 
 	/* Read directory */
 	while ((de = usys_readdir(dir))!= NULL) {
 
-		/* tell dir */
+		/* Tell dir */
 		offset = usys_telldir(dir);
 		TEST_ASSERT_GREATER_THAN_INT64( 0 , offset);
 		if (idx++ == 2) {
@@ -685,13 +689,13 @@ void test_usys_seek_tell_dir() {
 		usys_log_debug("DName:%s Offset: %ld ", de->d_name, offset) ;
 	}
 
-	/* seek dir */
+	/* Seek dir */
 	usys_seekdir(dir, loc);
 
 	usys_log_debug("reading again");
 	while ((de = usys_readdir(dir))!= NULL) {
 
-		/* tell dir */
+		/* Tell dir */
 		offset = usys_telldir(dir);
 		TEST_ASSERT_GREATER_THAN_INT64( 0 , offset);
 
@@ -726,8 +730,9 @@ void test_usys_fork_wait_pid_ppid_prgp() {
 
     	/* Parent process */
     	usys_log_trace("[%d] Back in parent process !", usys_getpid());
-    	usys_wait(&waitstatus);
 
+    	/* Waitng for child */
+    	usys_wait(&waitstatus);
     	if (waitstatus == -1) {
     		usys_log_error("Failed to wait for child exit status.");
     		TEST_ASSERT_MESSAGE(waitstatus, "Failed to wait for "
