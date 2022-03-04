@@ -28,7 +28,7 @@ type BasicDialogProps = {
 };
 
 const NodeSoftwareInfosDialog = ({
-    isOpen,
+    isOpen = false,
     handleClose,
     closeBtnLabel,
     isClosable = true,
