@@ -170,28 +170,7 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   unsigned long long total = idle +nonidle;
 
-  unsigned long long  acc_cpu = (cpuStat->cpuUser + cpuStat->cpuNice +
-          cpuStat->cpuSys + cpuStat->cpuIdle +
-          cpuStat->cpuIowait + cpuStat->cpuHardirq +
-          cpuStat->cpuSoftirq + cpuStat->cpuSteal +
-          cpuStat->cpuGuest + cpuStat->cpuGuestNice);
-
-  double usage = 100 - ((double)(cpuStat->cpuIdle * 100) / acc_cpu);
-
-  log_trace("cpuUser: %llu cpuNice: %llu cpuSys: %llu cpuIdle: %llu cpuIowait: %llu cpuHardirq: %llu cpuSoftirq: %llu cpuSteal: %llu cpuGuest: %llu cpuGuestNice: %llu \n acc_cpu: %llu Usage: %lf",
-		     cpuStat->cpuUser, cpuStat->cpuNice, cpuStat->cpuSys,
-			 cpuStat->cpuIdle, cpuStat->cpuIowait, cpuStat->cpuHardirq,
-			 cpuStat->cpuSoftirq, cpuStat->cpuSteal, cpuStat->cpuGuest,
-			 cpuStat->cpuGuestNice, acc_cpu, usage);
-
-  KPIConfig *kpi = kpi_lookup(cpuCfg, "cpu_usage");
-  if (kpi) {
-    addFunc(kpi, &usage);
-  }
-  log_trace("Metrics: Pushed cpu usage %lf to metrics server.", usage);
-
-  /* Calculate real time cpu usage */
-
+  /* Calculate real time cpu usage based on htop */
   unsigned long long  old_idle =  pCpuStat.cpuIdle + pCpuStat.cpuIowait;
 
   unsigned long long  old_nonidle =  (pCpuStat.cpuUser + pCpuStat.cpuNice +
@@ -201,16 +180,6 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   unsigned long long old_total = old_idle + old_nonidle;
 
-  unsigned long long  old_acc_cpu = (pCpuStat.cpuUser + pCpuStat.cpuNice +
-          pCpuStat.cpuSys + pCpuStat.cpuIdle +
-          pCpuStat.cpuIowait + pCpuStat.cpuHardirq +
-          pCpuStat.cpuSoftirq + pCpuStat.cpuSteal +
-          pCpuStat.cpuGuest + pCpuStat.cpuGuestNice);
-
-  double realUsage = 100 - ((double)( (cpuStat->cpuIdle - pCpuStat.cpuIdle)  * 100) / (acc_cpu - old_acc_cpu));
-
-  log_trace("Real usage is %lf previous cpuStatIdle %llu previous acc_cpu %llu", realUsage, pCpuStat.cpuIdle, old_acc_cpu);
-
   unsigned long long dtotal = total - old_total;
 
   unsigned long long didle = idle - old_idle;
@@ -219,7 +188,7 @@ int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
 
   memcpy(&pCpuStat,cpuStat, sizeof(SysCPUMetrics));
 
-  kpi = kpi_lookup(cpuCfg, "cpu_realtime_usage");
+  KPIConfig *kpi = kpi_lookup(cpuCfg, "cpu_usage");
   if (kpi) {
 	  addFunc(kpi, &cpu_per);
   }

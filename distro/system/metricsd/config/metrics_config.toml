@@ -44,13 +44,6 @@ metric_server_port = 7001
 				labels = []
 
 			[[stats.SoC.cpu.kpi]]
-                name= "realtime_usage"
-                ext = ""
-                desc = "Usage in %age for CPU realtime 5sec interval "
-                type = "METRICTYPE_GAUGE"
-                labels = []
-
-			[[stats.SoC.cpu.kpi]]
 				name= "Temperature"
 				ext = ""
 				desc = "CPU Temperature "
