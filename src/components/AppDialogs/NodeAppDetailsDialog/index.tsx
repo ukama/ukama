@@ -2,6 +2,7 @@ import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import colors from "../../../theme/colors";
 import { StackedAreaChart } from "../..";
+import React from "react";
 import {
     Box,
     Button,
@@ -10,7 +11,6 @@ import {
     Typography,
     Stack,
     DialogActions,
-    Divider,
     DialogContent,
 } from "@mui/material";
 import { NodeAppDetailsTypes } from "../../../types";
