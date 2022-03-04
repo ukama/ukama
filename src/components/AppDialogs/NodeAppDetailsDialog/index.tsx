@@ -16,7 +16,7 @@ import {
 import { NodeAppDetailsTypes } from "../../../types";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
+        padding: "0px 0px 10px 0px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -62,32 +62,34 @@ const NodeAppDetailsDialog = ({
                 }}
             >
                 <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h6">
-                        {nodeAppName} - {"Version - 0.1"}
-                    </Typography>
+                    <Stack direction="row" spacing={1}>
+                        <Typography variant="h6">{nodeAppName}</Typography>
+                        <Typography
+                            variant="h6"
+                            sx={{ color: colors.darkBlue }}
+                        >
+                            - {"Version - 0.1"}
+                        </Typography>
+                    </Stack>
+
                     {isClosable && (
                         <IconButton
                             onClick={() => handleClose()}
-                            sx={{ ml: "24px", p: "8px" }}
+                            sx={{
+                                ml: "25px",
+                                p: "8px",
+                                position: "relative",
+                                left: 10,
+                            }}
                         >
                             <CloseIcon />
                         </IconButton>
                     )}
                 </Box>
                 <DialogContent sx={{ padding: 0, mb: 4 }}>
-                    <Typography variant="body1">App Information</Typography>
-                    <Divider />
                     <Stack direction="column" sx={{ mb: 4 }}>
-                        <Typography
-                            variant="body1"
-                            sx={{ color: colors.black70 }}
-                        >
-                            CPU:{cpu} %
-                        </Typography>
-                        <Typography
-                            variant="body1"
-                            sx={{ color: colors.black70 }}
-                        >
+                        <Typography variant="body1">CPU:{cpu} %</Typography>
+                        <Typography variant="body1">
                             Memory:{memory} KB
                         </Typography>
                     </Stack>
@@ -110,8 +112,9 @@ const NodeAppDetailsDialog = ({
                         onClick={() => handleClose()}
                         sx={{
                             mr: 2,
-                            justifyItems: "center",
                             color: colors.primaryMain,
+                            position: "relative",
+                            left: 10,
                         }}
                     >
                         {closeBtnLabel}

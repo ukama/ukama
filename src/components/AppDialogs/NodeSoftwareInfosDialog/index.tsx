@@ -13,7 +13,6 @@ import {
 } from "@mui/material";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -39,8 +38,6 @@ const NodeSoftwareInfosDialog = ({
     return (
         <Dialog
             open={isOpen}
-            maxWidth="xl"
-            hideBackdrop
             onBackdropClick={() => isClosable && handleClose()}
         >
             <Box
@@ -78,6 +75,8 @@ const NodeSoftwareInfosDialog = ({
                         onClick={() => handleClose()}
                         sx={{
                             mr: 2,
+                            position: "relative",
+                            left: 7,
                             justifyItems: "center",
                             color: colors.primaryMain,
                         }}

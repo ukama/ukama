@@ -64,7 +64,7 @@ const Nodes = () => {
     >(getDefaultList(["MEMORY-TRX (For demo)"]));
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
-        useState<any>();
+        useState<boolean>(false);
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
