@@ -99,10 +99,21 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		logrus.Error(err)
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+
+	nId, err := ukama.ValidateNodeId(req.Node.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+
+	if req.Node.Type != pb.NodeType_NODE_TYPE_UNDEFINED {
+		return nil, status.Errorf(codes.InvalidArgument, "type is determined from nodeId and can not be set specifically")
+	}
+
 	node := &db.Node{
 		NodeID: req.Node.NodeId,
 		OrgID:  org.ID,
 		State:  pbNodeStateToDb(req.Node.State),
+		Type:   toDbNodeType(nId.GetNodeType()),
 	}
 
 	err = r.nodeRepo.Add(node, func() error {
@@ -119,6 +130,19 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	}
 
 	return &pb.AddNodeResponse{}, nil
+}
+
+func toDbNodeType(nodeType string) db.NodeType {
+	switch nodeType {
+	case ukama.NODE_ID_TYPE_AMPNODE:
+		return db.NodeTypeAmplifier
+	case ukama.NODE_ID_TYPE_COMPNODE:
+		return db.NodeTypeTower
+	case ukama.NODE_ID_TYPE_HOMENODE:
+		return db.NodeTypeHome
+	default:
+		return db.NodeTypeUnknown
+	}
 }
 
 func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
@@ -250,5 +274,21 @@ func dbNodeToPbNode(n *db.Node) *pb.Node {
 	return &pb.Node{
 		NodeId: n.NodeID,
 		State:  dbNodeStateToPb(n.State),
+		Type:   dbNodeTypeToPb(n.Type),
 	}
+}
+
+func dbNodeTypeToPb(nodeType db.NodeType) pb.NodeType {
+	var pbNodeType pb.NodeType
+	switch nodeType {
+	case db.NodeTypeAmplifier:
+		pbNodeType = pb.NodeType_AMPLIFIER
+	case db.NodeTypeTower:
+		pbNodeType = pb.NodeType_TOWER
+	case db.NodeTypeHome:
+		pbNodeType = pb.NodeType_HOME
+	default:
+		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
+	}
+	return pbNodeType
 }

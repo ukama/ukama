@@ -23,20 +23,30 @@ const (
 	Onboarded NodeState = 2
 )
 
-type NodeType uint8
-
-const (
-	NodeTypeHome      = 0
-	NodeTypeTower     = 1
-	NodeTypeAmplifier = 2
-)
-
 func (e *NodeState) Scan(value interface{}) error {
 	*e = NodeState(uint8(value.(int64)))
 	return nil
 }
 
 func (e NodeState) Value() (driver.Value, error) {
+	return uint8(e), nil
+}
+
+type NodeType uint8
+
+const (
+	NodeTypeUnknown   = 0
+	NodeTypeHome      = 1
+	NodeTypeTower     = 2
+	NodeTypeAmplifier = 3
+)
+
+func (e *NodeType) Scan(value interface{}) error {
+	*e = NodeType(uint8(value.(int64)))
+	return nil
+}
+
+func (e NodeType) Value() (driver.Value, error) {
 	return uint8(e), nil
 }
 
@@ -50,9 +60,8 @@ type Node struct {
 	Org       *Org
 	NetworkID *uint32
 	SiteID    *uint32
-	State     NodeState `gorm:"type:uint;"`
-	TypeID    *uint32
-	Type      NodeType `gorm:"type:uint;"`
+	State     NodeState `gorm:"type:uint;not null"`
+	Type      NodeType  `gorm:"type:uint;not null"`
 }
 
 type Org struct {

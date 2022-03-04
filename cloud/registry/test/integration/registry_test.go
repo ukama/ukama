@@ -94,6 +94,7 @@ func Test_FullFlow(t *testing.T) {
 		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
 		handleResponse(tt, err, nodeResp)
 		assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.Node.State)
+		assert.Equal(tt, pb.NodeType_HOME, nodeResp.Node.Type)
 	})
 
 	t.Run("DeleteNode", func(tt *testing.T) {

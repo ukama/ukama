@@ -6,7 +6,7 @@ services:
       - "5432:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=pass
+      - POSTGRES_PASSWORD=Pass2020!
     networks:
       - intranet
     volumes:
@@ -40,7 +40,7 @@ services:
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
-      - DB_PASSWORD=pass
+      - DB_PASSWORD=Pass2020!
       - DB_USER=postgres
     restart: always
     networks:

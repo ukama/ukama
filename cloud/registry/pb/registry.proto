@@ -86,9 +86,10 @@ enum NodeState {
     ONBOARDED = 2;
 }
 enum NodeType{
-    HOME = 0;
-    TOWER = 1;
-    AMPLIFIER = 2;
+    NODE_TYPE_UNDEFINED = 0;
+    HOME = 1;
+    TOWER = 2;
+    AMPLIFIER = 3;
 }
 
 message Node {

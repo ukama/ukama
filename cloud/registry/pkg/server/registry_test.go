@@ -80,7 +80,8 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	ownerId := uuid2.NewV1()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(), State: db.Pending,
+	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
+		State: db.Pending, Type: db.NodeTypeHome,
 		Org: &db.Org{
 			Name:  orgName,
 			Owner: ownerId,
@@ -181,4 +182,36 @@ func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {
 	assert.NotNil(t, res.Orgs)
 	assert.Equal(t, 1, len(res.Orgs))
 	assert.Equal(t, 0, len(res.Orgs[0].Nodes))
+}
+
+func Test_toDbNodeType(t *testing.T) {
+
+	tests := []struct {
+		nodeId ukama.NodeID
+		want   db.NodeType
+	}{
+		{
+			nodeId: ukama.NewVirtualHomeNodeId(),
+			want:   db.NodeTypeHome,
+		},
+		{
+			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_COMPNODE),
+			want:   db.NodeTypeTower,
+		},
+		{
+			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE),
+			want:   db.NodeTypeAmplifier,
+		},
+		{
+			nodeId: ukama.NewVirtualNodeId("unknown"),
+			want:   db.NodeTypeUnknown,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.nodeId.String(), func(t *testing.T) {
+
+			got := toDbNodeType(tt.nodeId.GetNodeType())
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
