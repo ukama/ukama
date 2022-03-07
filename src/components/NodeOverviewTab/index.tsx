@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
@@ -32,6 +32,10 @@ const NodeOverviewTab = ({
     getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
+
+    useEffect(() => {
+        setSelected(0);
+    }, [selectedNode]);
 
     const handleOnSelected = (value: number) => setSelected(value);
     const onfilterChange = (key: string, value: string) =>

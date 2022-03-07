@@ -25,25 +25,32 @@ const GraphTitleWrapper = ({
 }: IGraphTitleWrapper) => {
     return (
         <Grid item container spacing={2} my={2} width="100%">
-            <Grid item container width="100%">
-                <Grid item xs={6}>
+            {(title || showFilter) && (
+                <Grid item container width="100%">
                     {title && (
-                        <Typography variant={variant} fontWeight={500}>
-                            {title}
-                        </Typography>
+                        <Grid item xs={6}>
+                            <Typography variant={variant} fontWeight={500}>
+                                {title}
+                            </Typography>
+                        </Grid>
                     )}
-                </Grid>
-                <Grid item xs={6} display="flex" justifyContent="flex-end">
                     {showFilter && (
-                        <TimeFilter
-                            filter={filter}
-                            handleFilterSelect={(v: string) =>
-                                handleFilterChange && handleFilterChange(v)
-                            }
-                        />
+                        <Grid
+                            item
+                            xs={6}
+                            display="flex"
+                            justifyContent="flex-end"
+                        >
+                            <TimeFilter
+                                filter={filter}
+                                handleFilterSelect={(v: string) =>
+                                    handleFilterChange && handleFilterChange(v)
+                                }
+                            />
+                        </Grid>
                     )}
                 </Grid>
-            </Grid>
+            )}
             <Grid item width="100%">
                 {hasData ? (
                     children
