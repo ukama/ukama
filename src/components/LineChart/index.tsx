@@ -114,11 +114,27 @@ const config: any = {
 
 interface ILineChart {
     title: string;
+    filter?: string;
     hasData?: boolean;
+    showFilter?: boolean;
+    handleFilterChange?: Function;
 }
 
-const LineChart = ({ title, hasData }: ILineChart) => (
-    <GraphTitleWrapper hasData={hasData} variant="subtitle1" title={title}>
+const LineChart = ({
+    title,
+    filter,
+    hasData,
+    showFilter = true,
+    handleFilterChange,
+}: ILineChart) => (
+    <GraphTitleWrapper
+        title={title}
+        filter={filter}
+        hasData={hasData}
+        variant="subtitle1"
+        showFilter={showFilter}
+        handleFilterChange={handleFilterChange}
+    >
         <Line
             key={title}
             id={title}

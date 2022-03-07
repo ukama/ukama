@@ -1419,6 +1419,53 @@ const NodePageTabs = [
     // { id: "node-tab-5", label: "Schematic", value: 5 },
 ];
 
+const NodeResourcesTabConfigure: any = {
+    HOME: [
+        { name: "MEMORY-TRX", show: true },
+        { name: "none", show: false },
+        { name: "CPU-TRX", show: true },
+        { name: "none", show: false },
+        { name: "DISK-TRX", show: true },
+        { name: "none", show: false },
+        { name: "none", show: false },
+    ],
+    AMPLIFIER: [
+        { name: "MEMORY-CTL", show: true },
+        { name: "none", show: false },
+        { name: "CPU-CTL", show: true },
+        { name: "none", show: false },
+        { name: "DISK-CTL", show: true },
+        { name: "none", show: false },
+        { name: "none", show: false },
+    ],
+    TOWER: [
+        { name: "MEMORY-TRX", show: true },
+        { name: "MEMORY-COM", show: true },
+        { name: "CPU-TRX", show: true },
+        { name: "CPU-COM", show: true },
+        { name: "DISK-TRX", show: true },
+        { name: "DISK-COM", show: true },
+        { name: "POWER", show: true },
+    ],
+};
+const HealtChartsConfigure: any = {
+    HOME: [
+        { name: "Temp. (TRX)", show: true },
+        { name: "Temp. (RFE)", show: true },
+        { name: "none", show: false },
+    ],
+    AMPLIFIER: [
+        { name: "Temp. (CTL)", show: true },
+        { name: "Temp. (RFE)", show: true },
+        { name: "none", show: false },
+    ],
+    TOWER: [
+        { name: "Temp. (TRX)", show: true },
+        { name: "Temp. (COM)", show: true },
+        { name: "Uptime", show: true },
+    ],
+};
+
 export {
     UserData,
     NodeApps,
@@ -1450,6 +1497,8 @@ export {
     LANGUAGE_OPTIONS,
     BASIC_MENU_ACTIONS,
     TABLE_EXPORT_OPTIONS,
+    HealtChartsConfigure,
+    NodeResourcesTabConfigure,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 };

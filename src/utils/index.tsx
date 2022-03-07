@@ -99,6 +99,26 @@ const getRandomData = () => {
     return data;
 };
 
+const getGraphFilterByType = (type: string) => {
+    switch (type) {
+        case "DAY":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 86400,
+            };
+        case "WEEK":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 604800,
+            };
+        case "MONTH":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 2628002,
+            };
+    }
+};
+
 export {
     hexToRGB,
     getRandomData,
@@ -106,5 +126,6 @@ export {
     getStatusByType,
     getTitleFromPath,
     uniqueObjectsArray,
+    getGraphFilterByType,
     parseObjectInNameValue,
 };
