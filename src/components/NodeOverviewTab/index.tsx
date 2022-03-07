@@ -4,8 +4,8 @@ import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
 import { TooltipsText } from "../../constants";
 import ApexLineChartIntegration from "../ApexLineChart";
-import { NodeDetailsCard, NodeStatsContainer } from "..";
-import { Grid, Paper, Stack, Typography } from "@mui/material";
+import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
+import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 
 const REFRESH_INTERVAL = 10000; // 20 sec
 
@@ -53,7 +53,12 @@ const NodeOverviewTab = ({
                         title={"Node Information"}
                         handleAction={handleOnSelected}
                     >
-                        <NodeStatItem value={"Home Node"} name={"Model type"} />
+                        <NodeStatItem
+                            value={`${capitalize(
+                                selectedNode?.type.toLowerCase() || ""
+                            )} Node`}
+                            name={"Model type"}
+                        />
                         <NodeStatItem value={"11111111111"} name={"Serial #"} />
                         <NodeStatItem
                             value={"Amplifier Node 1"}
@@ -120,14 +125,14 @@ const NodeOverviewTab = ({
                             <ApexLineChartIntegration
                                 hasData={true}
                                 data={cpuTrxMetrics}
-                                name={"CPU-TRX (For demo)"} //"Temperature-TRX"
+                                name={"CPU-TRX (For demo)"}
                                 onRefreshData={onRefreshTempTrx}
                                 refreshInterval={REFRESH_INTERVAL}
                             />
                             <ApexLineChartIntegration
                                 hasData={true}
                                 data={memoryTrxMetrics}
-                                name={"MEMORY-TRX (For demo)"} //"Temperature-TRX"
+                                name={"MEMORY-TRX (For demo)"}
                                 onRefreshData={onRefreshMemoryTrx}
                                 refreshInterval={REFRESH_INTERVAL}
                             />
@@ -150,16 +155,8 @@ const NodeOverviewTab = ({
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Subscribers</Typography>
                         <Stack spacing={6} pt={2}>
-                            {/* <ApexLineChartIntegration
-                                hasData={true}
-                                initData={[]}
-                                name={"Attached"}
-                            />
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                initData={[]}
-                                name={"Active"}
-                            /> */}
+                            <LineChart hasData={true} title={"Attached"} />
+                            <LineChart hasData={true} title={"Active"} />
                         </Stack>
                     </Paper>
                 )}

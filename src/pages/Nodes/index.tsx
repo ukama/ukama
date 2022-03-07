@@ -301,6 +301,17 @@ const Nodes = () => {
                                         key={id}
                                         label={label}
                                         id={`node-tab-${value}`}
+                                        sx={{
+                                            display:
+                                                (selectedNode?.type ===
+                                                    "HOME" &&
+                                                    label === "Radio") ||
+                                                (selectedNode?.type ===
+                                                    "AMPLIFIER" &&
+                                                    label === "Network")
+                                                    ? "none"
+                                                    : "block",
+                                        }}
                                     />
                                 ))}
                             </Tabs>

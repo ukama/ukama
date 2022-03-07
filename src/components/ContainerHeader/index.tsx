@@ -65,7 +65,7 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid container item xs={12} md={5} spacing={1}>
+            <Grid container item xs={12} md={5} spacing={3}>
                 {showSearchBox && (
                     <Grid item xs={12} sm={7}>
                         <StyledInputBase
@@ -76,7 +76,7 @@ const ContainerHeader = ({
                             }
                             sx={{
                                 width: "100%",
-                                height: "48px",
+                                height: "42px",
                                 borderRadius: 2,
                                 border: `1px solid ${colors.silver}`,
                                 padding: "4px 8px 4px 12px !important",
@@ -104,7 +104,7 @@ const ContainerHeader = ({
                         <Button
                             fullWidth
                             variant="contained"
-                            sx={{ height: "48px" }}
+                            size="large"
                             onClick={() => handleButtonAction()}
                         >
                             {buttonTitle}
