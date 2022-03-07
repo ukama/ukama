@@ -87,7 +87,11 @@ const StatsCard = ({
                             </Grid>
                         </Grid>
                         <Grid item xs={12}>
-                            <LineChart hasData={true} title={""} />
+                            <LineChart
+                                title={""}
+                                hasData={true}
+                                showFilter={false}
+                            />
                         </Grid>
                     </Grid>
                 </RoundedCard>

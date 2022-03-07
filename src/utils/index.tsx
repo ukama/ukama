@@ -99,17 +99,33 @@ const getRandomData = () => {
     return data;
 };
 
-const capitalize = (str: string, lower = false) =>
-    (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match =>
-        match.toUpperCase()
-    );
+const getGraphFilterByType = (type: string) => {
+    switch (type) {
+        case "DAY":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 86400,
+            };
+        case "WEEK":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 604800,
+            };
+        case "MONTH":
+            return {
+                to: Math.round(Date.now() / 1000),
+                from: Math.round(Date.now() / 1000) - 2628002,
+            };
+    }
+};
+
 export {
     hexToRGB,
-    capitalize,
     getRandomData,
     getColorByType,
     getStatusByType,
     getTitleFromPath,
     uniqueObjectsArray,
+    getGraphFilterByType,
     parseObjectInNameValue,
 };

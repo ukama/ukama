@@ -6,21 +6,17 @@ import { GraphTitleWrapper } from "..";
 const TIME_RANGE_IN_MILLISECONDS = 100;
 
 interface IApexLineChartIntegration {
-    name: string;
     data: any;
+    name: string;
+    filter: string;
     hasData: boolean;
     refreshInterval?: number;
     onRefreshData?: Function;
+    onFilterChange?: Function;
 }
 
 const ApexLineChart = (props: any) => {
     const options: any = {
-        grid: {
-            padding: {
-                left: 30,
-                right: 30,
-            },
-        },
         stroke: {
             lineCap: "butt",
             curve: "smooth",
@@ -90,8 +86,12 @@ const ApexLineChartIntegration = ({
     name,
     data = [],
     onRefreshData,
+    filter = "DAY",
     hasData = false,
     refreshInterval = 10000,
+    onFilterChange = () => {
+        /*DEFAULT FUNCTION*/
+    },
 }: IApexLineChartIntegration) => {
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -104,9 +104,11 @@ const ApexLineChartIntegration = ({
     return (
         <GraphTitleWrapper
             key={name}
+            title={name}
+            filter={filter}
             hasData={hasData}
             variant="subtitle1"
-            title={name}
+            handleFilterChange={onFilterChange}
         >
             <ApexLineChart
                 key={name}

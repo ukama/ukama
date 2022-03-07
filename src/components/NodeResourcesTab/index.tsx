@@ -1,11 +1,13 @@
-import { TooltipsText } from "../../constants";
-import { Stack, Paper, Grid, Typography } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
 import { useState } from "react";
+import { NodeDto } from "../../generated";
+import { Paper, Grid, Typography } from "@mui/material";
+import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
+import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
     loading: boolean;
+    selectedNode: NodeDto | undefined;
 }
-const NodeResourcesTab = ({ loading }: INodeResourcesTab) => {
+const NodeResourcesTab = ({ loading, selectedNode }: INodeResourcesTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
@@ -20,62 +22,116 @@ const NodeResourcesTab = ({ loading }: INodeResourcesTab) => {
                     isCollapse={isCollapse}
                     onCollapse={handleCollapse}
                 >
-                    <NodeStatItem
-                        value={"NNN"}
-                        variant={"large"}
-                        name={"Memory-TRX"}
-                        nameInfo={TooltipsText.MTRX}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        variant={"large"}
-                        name={"Memory-COM"}
-                        nameInfo={TooltipsText.MCOM}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        name={"CPU-TRX"}
-                        variant={"large"}
-                        nameInfo={TooltipsText.CPUTRX}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        name={"CPU-COM"}
-                        variant={"large"}
-                        nameInfo={TooltipsText.CPUCOM}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        variant={"large"}
-                        name={"DISK - TRX"}
-                        nameInfo={TooltipsText.DISKTRX}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        variant={"large"}
-                        name={"DISK - COM"}
-                        nameInfo={TooltipsText.DISKCOM}
-                    />
-                    <NodeStatItem
-                        value={"NNN"}
-                        name={"Power"}
-                        variant={"large"}
-                        nameInfo={TooltipsText.POWER}
-                    />
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][0].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            variant={"large"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][0].name
+                            }
+                            nameInfo={TooltipsText.MTRX}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][1].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            variant={"large"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][1].name
+                            }
+                            nameInfo={TooltipsText.MCOM}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][2].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][2].name
+                            }
+                            variant={"large"}
+                            nameInfo={TooltipsText.CPUTRX}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][3].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][3].name
+                            }
+                            variant={"large"}
+                            nameInfo={TooltipsText.CPUCOM}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][4].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            variant={"large"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][4].name
+                            }
+                            nameInfo={TooltipsText.DISKTRX}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][5].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            variant={"large"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][5].name
+                            }
+                            nameInfo={TooltipsText.DISKCOM}
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][6].show && (
+                        <NodeStatItem
+                            value={"NNN"}
+                            name={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][6].name
+                            }
+                            variant={"large"}
+                            nameInfo={TooltipsText.POWER}
+                        />
+                    )}
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 9} md xs>
                 <Paper sx={{ p: 3, width: "100%" }}>
                     <Typography variant="h6">Resources</Typography>
-                    <Stack spacing={6} pt={2}>
-                        <StackedAreaChart hasData={true} title={"Memory-TRX"} />
-                        <StackedAreaChart hasData={true} title={"Memory-COM"} />
-                        <StackedAreaChart hasData={true} title={"CPU-TRX"} />
-                        <StackedAreaChart hasData={true} title={"CPU-COM"} />
-                        <StackedAreaChart hasData={true} title={"DISK-TRX"} />
-                        <StackedAreaChart hasData={true} title={"DISK-COM"} />
-                        <StackedAreaChart hasData={true} title={"POWER"} />
-                    </Stack>
+                    <StackedAreaChart hasData={true} title={"Memory-TRX"} />
+                    <StackedAreaChart hasData={true} title={"Memory-COM"} />
+                    <StackedAreaChart hasData={true} title={"CPU-TRX"} />
+                    <StackedAreaChart hasData={true} title={"CPU-COM"} />
+                    <StackedAreaChart hasData={true} title={"DISK-TRX"} />
+                    <StackedAreaChart hasData={true} title={"DISK-COM"} />
+                    <StackedAreaChart hasData={true} title={"POWER"} />
                 </Paper>
             </Grid>
         </Grid>

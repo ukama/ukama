@@ -31,6 +31,7 @@ import { isSkeltonLoading, organizationId } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { parseObjectInNameValue } from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
+import { TObject } from "../../types";
 
 const getDefaultList = (names: string[]) =>
     names.map(name => ({
@@ -65,6 +66,16 @@ const Nodes = () => {
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
+
+    const [graphFilters, setGraphFilters] = useState<TObject>({
+        cpuTrx: "DAY",
+        uptime: "DAY",
+        tempTrx: "DAY",
+        tempCom: "DAY",
+        memoryTrx: "DAY",
+        subActive: "DAY",
+        subAttached: "DAY",
+    });
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
@@ -262,9 +273,14 @@ const Nodes = () => {
     const handleCloseNodeInfos = () => {
         setShowNodeSoftwareUpdatInfos(false);
     };
+
     const handleSoftwareInfos = () => {
         setShowNodeSoftwareUpdatInfos(true);
     };
+
+    const handleGraphFilterChange = (key: string, value: string) =>
+        setGraphFilters(prev => ({ ...prev, [key]: value }));
+
     const isLoading = skeltonLoading || nodesLoading;
 
     return (
@@ -325,6 +341,10 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
+                                graphFilters={graphFilters}
+                                handleGraphFilterChange={
+                                    handleGraphFilterChange
+                                }
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
@@ -335,7 +355,12 @@ const Nodes = () => {
                                 uptimeMetrics={uptimeMetrics}
                                 onRefreshUptime={fetchUptimeData}
                                 handleUpdateNode={handleUpdateNode}
-                                loading={isLoading || nodeDetailLoading}
+                                loading={
+                                    isLoading ||
+                                    nodeDetailLoading ||
+                                    nodesLoading ||
+                                    !selectedNode
+                                }
                                 nodeDetails={parseObjectInNameValue(
                                     nodeDetailRes?.getNodeDetails
                                 )}
@@ -356,6 +381,7 @@ const Nodes = () => {
                             index={2}
                         >
                             <NodeResourcesTab
+                                selectedNode={selectedNode}
                                 loading={isLoading || nodeDetailLoading}
                             />
                         </TabPanel>

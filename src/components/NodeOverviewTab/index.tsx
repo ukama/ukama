@@ -2,24 +2,23 @@ import { useState } from "react";
 import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
-import { TooltipsText } from "../../constants";
-import ApexLineChartIntegration from "../ApexLineChart";
 import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
+import { HealtChartsConfigure, TooltipsText } from "../../constants";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
-
-const REFRESH_INTERVAL = 10000; // 20 sec
 
 interface INodeOverviewTab {
     loading: boolean;
     cpuTrxMetrics: any;
     uptimeMetrics: any;
+    graphFilters: TObject;
     memoryTrxMetrics: any;
     nodeDetails: TObject[];
+    onRefreshUptime: Function;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     onRefreshTempTrx: Function;
     onRefreshMemoryTrx: Function;
-    onRefreshUptime: Function;
+    handleGraphFilterChange: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
 }
@@ -27,19 +26,16 @@ interface INodeOverviewTab {
 const NodeOverviewTab = ({
     loading,
     selectedNode,
-    getNodeSoftwareUpdateInfos,
     handleUpdateNode,
-    onRefreshTempTrx,
-    onRefreshMemoryTrx,
-    onRefreshUptime,
     isUpdateAvailable,
-    cpuTrxMetrics = [],
-    uptimeMetrics = [],
-    memoryTrxMetrics = [],
+    handleGraphFilterChange,
+    getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
 
     const handleOnSelected = (value: number) => setSelected(value);
+    const onfilterChange = (key: string, value: string) =>
+        handleGraphFilterChange(key, value);
 
     return (
         <Grid container spacing={2}>
@@ -55,7 +51,7 @@ const NodeOverviewTab = ({
                     >
                         <NodeStatItem
                             value={`${capitalize(
-                                selectedNode?.type.toLowerCase() || ""
+                                selectedNode?.type.toLowerCase() || "HOME"
                             )} Node`}
                             name={"Model type"}
                         />
@@ -73,39 +69,71 @@ const NodeOverviewTab = ({
                         title={"Node Health"}
                         handleAction={handleOnSelected}
                     >
-                        <NodeStatItem
-                            value={"50 °C"}
-                            name={"Temp. (TRX)"}
-                            showAlertInfo={true}
-                            nameInfo={TooltipsText.TRX}
-                            valueInfo={TooltipsText.TRX_ALERT}
-                        />
-                        <NodeStatItem
-                            value={"50 °C"}
-                            name={"Temp. (COM)"}
-                            nameInfo={TooltipsText.COM}
-                            valueInfo={TooltipsText.COM_ALERT}
-                        />
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][0].show && (
+                            <NodeStatItem
+                                value={"50 °C"}
+                                name={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][0].name
+                                }
+                                showAlertInfo={true}
+                                nameInfo={TooltipsText.TRX}
+                                valueInfo={TooltipsText.TRX_ALERT}
+                            />
+                        )}
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][1].show && (
+                            <NodeStatItem
+                                value={"50 °C"}
+                                name={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][1].name
+                                }
+                                nameInfo={TooltipsText.COM}
+                                valueInfo={TooltipsText.COM_ALERT}
+                            />
+                        )}
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][2].show && (
+                            <NodeStatItem
+                                name={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][2].name
+                                }
+                                value={"200 hours"}
+                                nameInfo={TooltipsText.COM}
+                                valueInfo={TooltipsText.COM_ALERT}
+                            />
+                        )}
                     </NodeStatsContainer>
-                    <NodeStatsContainer
-                        index={2}
-                        loading={loading}
-                        isClickable={true}
-                        selected={selected}
-                        title={"Subscribers"}
-                        handleAction={handleOnSelected}
-                    >
-                        <NodeStatItem
-                            name={"Attached"}
-                            value={"100"}
-                            nameInfo={TooltipsText.ATTACHED}
-                        />
-                        <NodeStatItem
-                            name={"Active"}
-                            value={"100000"}
-                            nameInfo={TooltipsText.ACTIVE}
-                        />
-                    </NodeStatsContainer>
+                    {selectedNode?.type !== "AMPLIFIER" && (
+                        <NodeStatsContainer
+                            index={2}
+                            loading={loading}
+                            isClickable={true}
+                            selected={selected}
+                            title={"Subscribers"}
+                            handleAction={handleOnSelected}
+                        >
+                            <NodeStatItem
+                                name={"Attached"}
+                                value={"100"}
+                                nameInfo={TooltipsText.ATTACHED}
+                            />
+                            <NodeStatItem
+                                name={"Active"}
+                                value={"100000"}
+                                nameInfo={TooltipsText.ACTIVE}
+                            />
+                        </NodeStatsContainer>
+                    )}
                 </Stack>
             </Grid>
             <Grid item xs={12} md={8}>
@@ -113,7 +141,7 @@ const NodeOverviewTab = ({
                     <NodeDetailsCard
                         getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
-                        nodeTitle={selectedNode?.title || ""}
+                        nodeTitle={selectedNode?.title || "HOME"}
                         handleUpdateNode={handleUpdateNode}
                         isUpdateAvailable={isUpdateAvailable}
                     />
@@ -121,43 +149,53 @@ const NodeOverviewTab = ({
                 {selected === 1 && (
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Node Health</Typography>
-                        <Stack spacing={6} pt={2}>
-                            <ApexLineChartIntegration
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][0].show && (
+                            <LineChart
                                 hasData={true}
-                                data={cpuTrxMetrics}
-                                name={"CPU-TRX (For demo)"}
-                                onRefreshData={onRefreshTempTrx}
-                                refreshInterval={REFRESH_INTERVAL}
+                                title={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][0].name
+                                }
+                                filter={"DAY"}
+                                handleFilterChange={(value: string) =>
+                                    onfilterChange("memoryTrx", value)
+                                }
                             />
-                            <ApexLineChartIntegration
+                        )}
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][1].show && (
+                            <LineChart
                                 hasData={true}
-                                data={memoryTrxMetrics}
-                                name={"MEMORY-TRX (For demo)"}
-                                onRefreshData={onRefreshMemoryTrx}
-                                refreshInterval={REFRESH_INTERVAL}
+                                title={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][1].name
+                                }
                             />
-                            <ApexLineChartIntegration
+                        )}
+                        {HealtChartsConfigure[
+                            (selectedNode?.type as string) || "HOME"
+                        ][2].show && (
+                            <LineChart
                                 hasData={true}
-                                data={uptimeMetrics}
-                                name={"UPTIME (For demo)"} //"Temperature-TRX"
-                                onRefreshData={onRefreshUptime}
-                                refreshInterval={REFRESH_INTERVAL}
+                                title={
+                                    HealtChartsConfigure[
+                                        (selectedNode?.type as string) || "HOME"
+                                    ][2].name
+                                }
                             />
-                            {/* <ApexLineChartIntegration
-                                hasData={true}
-                                initData={[]}
-                                name={"Temperature-COM"}
-                            /> */}
-                        </Stack>
+                        )}
                     </Paper>
                 )}
-                {selected === 2 && (
+                {selected === 2 && selectedNode?.type !== "AMPLIFIER" && (
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6">Subscribers</Typography>
-                        <Stack spacing={6} pt={2}>
-                            <LineChart hasData={true} title={"Attached"} />
-                            <LineChart hasData={true} title={"Active"} />
-                        </Stack>
+                        <LineChart hasData={true} title={"Attached"} />
+                        <LineChart hasData={true} title={"Active"} />
                     </Paper>
                 )}
             </Grid>
