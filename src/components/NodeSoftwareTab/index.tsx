@@ -48,7 +48,7 @@ const NodeSoftwareTab = ({
                 <Grid container spacing={3} sx={{ p: 0 }}>
                     {nodeApps?.map(
                         ({ id, nodeAppName, cpu, memory, version }: any) => (
-                            <Grid item xs={12} md={6} lg={3} key={id}>
+                            <Grid item md xs key={id} spacing={2}>
                                 <Card sx={{ minWidth: 275 }} variant="outlined">
                                     <CardContent>
                                         <Stack
@@ -61,6 +61,7 @@ const NodeSoftwareTab = ({
                                                 sx={{
                                                     position: "relative",
                                                     left: -3,
+                                                    fontSize: "23px",
                                                 }}
                                             />
                                             <Typography variant="h5">
@@ -87,7 +88,7 @@ const NodeSoftwareTab = ({
                                         </Stack>
                                         <Stack direction="row" spacing={1 / 2}>
                                             <Typography variant="body2">
-                                                memory:
+                                                MEMORY:
                                             </Typography>
                                             <Typography
                                                 variant="body2"
@@ -97,7 +98,7 @@ const NodeSoftwareTab = ({
                                             </Typography>
                                         </Stack>
                                     </CardContent>
-                                    <CardActions>
+                                    <CardActions sx={{ ml: 1 }}>
                                         <Button
                                             onClick={() =>
                                                 getNodeAppDetails(id)
