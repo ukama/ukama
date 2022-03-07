@@ -65,9 +65,9 @@ const NodeResourcesTab = ({ loading }: INodeResourcesTab) => {
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ p: 3, width: "100%" }}>
+                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Resources</Typography>
-                    <Stack spacing={6} pt={2}>
+                    <Stack spacing={6}>
                         <StackedAreaChart hasData={true} title={"Memory-TRX"} />
                         <StackedAreaChart hasData={true} title={"Memory-COM"} />
                         <StackedAreaChart hasData={true} title={"CPU-TRX"} />

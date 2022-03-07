@@ -41,9 +41,9 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ p: 3, width: "100%" }}>
+                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Radio</Typography>
-                    <Stack spacing={6} pt={2}>
+                    <Stack spacing={6}>
                         <StackedAreaChart hasData={true} title={"TX Power"} />
                         <StackedAreaChart hasData={true} title={"RX Power "} />
                         <StackedAreaChart hasData={true} title={"PA Power "} />
