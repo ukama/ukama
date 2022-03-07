@@ -1,5 +1,5 @@
 import { TooltipsText } from "../../constants";
-import { Stack, Paper, Grid, Typography } from "@mui/material";
+import { Paper, Grid, Typography } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, LineChart } from "..";
 import { useState } from "react";
 interface INodeOverviewTab {
@@ -56,14 +56,11 @@ const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
             <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Network</Typography>
-
-                    <Stack spacing={6}>
-                        <LineChart hasData={true} title={"Throughput (U/L)"} />
-                        <LineChart hasData={true} title={"Throughput (D/L)"} />
-                        <LineChart hasData={true} title={"RRC CNX Success "} />
-                        <LineChart hasData={true} title={"ERAB Drop Rate"} />
-                        <LineChart hasData={true} title={"RLS  Drop Rate"} />
-                    </Stack>
+                    <LineChart hasData={true} title={"Throughput (U/L)"} />
+                    <LineChart hasData={true} title={"Throughput (D/L)"} />
+                    <LineChart hasData={true} title={"RRC CNX Success "} />
+                    <LineChart hasData={true} title={"ERAB Drop Rate"} />
+                    <LineChart hasData={true} title={"RLS  Drop Rate"} />
                 </Paper>
             </Grid>
         </Grid>
