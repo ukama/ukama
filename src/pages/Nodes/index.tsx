@@ -1,3 +1,4 @@
+/* eslint-disable no-empty-pattern */
 import {
     TabPanel,
     NodeStatus,
@@ -19,17 +20,24 @@ import {
 } from "../../constants";
 import {
     NodeDto,
+    MetricDto,
     useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
+    useGetMetricsThroughputUlLazyQuery,
+    useGetMetricsThroughputDlLazyQuery,
+    useGetMetricsThroughputUlsSubscription,
+    useGetMetricsThroughputDlsSubscription,
+    useGetMetricsCpuTrxSSubscription,
     useGetMetricsCpuTrxLazyQuery,
-    MetricDto,
-    useGetMetricsUptimeLazyQuery,
     useGetMetricsMemoryTrxLazyQuery,
+    useGetMetricsMemoryTrxSSubscription,
+    useGetMetricsUptimeLazyQuery,
+    useGetMetricsUptimeSSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
 import React, { useEffect, useState } from "react";
-import { parseObjectInNameValue } from "../../utils";
+import { getMetricPayload, parseObjectInNameValue } from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 import { TObject } from "../../types";
 
@@ -40,29 +48,41 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    const _organizationId = useRecoilValue(organizationId);
+    const _organizationId = useRecoilValue(organizationId) || "";
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
-    const [cpuTrxMetrics, setCpuTrxMetrics] = useState<
-        {
-            name: string;
-            data: MetricDto[];
-        }[]
-    >(getDefaultList(["CPU-TRX (For demo)"]));
-    const [uptimeMetrics, setUptimeMetrics] = useState<
+    const [uptimeMetric, setUptimeMetrics] = useState<
         {
             name: string;
             data: MetricDto[];
         }[]
     >(getDefaultList(["UPTIME (For demo)"]));
-    const [memoryTrxMetrics, setMemoryTrxMetrics] = useState<
+    const [cpuTrxMetric, setCpuTrxMetric] = useState<
         {
             name: string;
             data: MetricDto[];
         }[]
-    >(getDefaultList(["MEMORY-TRX (For demo)"]));
+    >(getDefaultList(["CPU (TRX)"]));
+    const [memoryTrxMetric, setMemoryTrxMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["MEMORY (TRX)"]));
+    const [throughputULMetric, setThroughputULMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Throughput (UL)"]));
+    const [throughputDLMetric, setThroughputDLMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Throughput (DL)"]));
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
@@ -91,105 +111,205 @@ const Nodes = () => {
         useGetNodeDetailsQuery();
 
     const [
-        getCpuTrxMetrics,
-        { data: nodeCpuTrxRes, refetch: refetchCpuTrxMetrics },
-    ] = useGetMetricsCpuTrxLazyQuery({
-        fetchPolicy: "network-only",
-        notifyOnNetworkStatusChange: true,
-        onCompleted: res => {
-            if (res?.getMetricsCpuTRX) {
-                setCpuTrxMetrics(
-                    cpuTrxMetrics.map(item => {
-                        return {
-                            name: item.name,
-                            data: [...item.data, ...res.getMetricsCpuTRX],
-                        };
-                    })
-                );
-            }
+        getMetricThroughtpuUl,
+        { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
+    ] = useGetMetricsThroughputUlLazyQuery();
+
+    const {} = useGetMetricsThroughputUlsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setThroughputULMetric(
+                throughputULMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsThroughputUL || []),
+                        ],
+                    };
+                })
+            );
         },
     });
 
     const [
-        getUptimeMetrics,
-        { data: nodeUptimeMetricsRes, refetch: refetchUptimeMetrics },
-    ] = useGetMetricsUptimeLazyQuery({
-        fetchPolicy: "network-only",
-        notifyOnNetworkStatusChange: true,
-        onCompleted: res => {
-            if (res?.getMetricsUptime) {
-                setUptimeMetrics(
-                    uptimeMetrics.map(item => {
-                        return {
-                            name: item.name,
-                            data: [...item.data, ...res.getMetricsUptime],
-                        };
-                    })
-                );
-            }
+        getMetricThroughtpuDl,
+        { data: metricThroughtputDlRes, refetch: metricThroughtputDlRefetch },
+    ] = useGetMetricsThroughputDlLazyQuery();
+
+    const {} = useGetMetricsThroughputDlsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setThroughputDLMetric(
+                throughputDLMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsThroughputDL || []),
+                        ],
+                    };
+                })
+            );
         },
     });
 
     const [
-        getMemoryTrxMetrics,
-        { data: nodeMemoryTrxRes, refetch: refetchMemoryTrxMetrics },
-    ] = useGetMetricsMemoryTrxLazyQuery({
-        fetchPolicy: "network-only",
-        notifyOnNetworkStatusChange: true,
-        onCompleted: res => {
-            if (res?.getMetricsMemoryTRX) {
-                setMemoryTrxMetrics(
-                    memoryTrxMetrics.map(item => {
-                        return {
-                            name: item.name,
-                            data: [...item.data, ...res.getMetricsMemoryTRX],
-                        };
-                    })
-                );
-            }
+        getMetricCpuTrx,
+        { data: metricCpuTrxRes, refetch: metricCpuTrxRefetch },
+    ] = useGetMetricsCpuTrxLazyQuery();
+
+    const {} = useGetMetricsCpuTrxSSubscription({
+        skip: selectedTab !== 2,
+        onSubscriptionData: res => {
+            setCpuTrxMetric(
+                cpuTrxMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsCpuTrx ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricMemoryTrx,
+        { data: metricMemoryTrxRes, refetch: metricMemoryTrxRefetch },
+    ] = useGetMetricsMemoryTrxLazyQuery();
+
+    const {} = useGetMetricsMemoryTrxSSubscription({
+        skip: selectedTab !== 2,
+        onSubscriptionData: res => {
+            setMemoryTrxMetric(
+                memoryTrxMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsMemoryTrx || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
+    const [
+        getMetricUptime,
+        { data: metricUptimeTrxRes, refetch: metricUptimeRefetch },
+    ] = useGetMetricsUptimeLazyQuery();
+
+    const {} = useGetMetricsUptimeSSubscription({
+        skip: selectedTab !== 0,
+        onSubscriptionData: res => {
+            setUptimeMetrics(
+                uptimeMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsUptime ||
+                                []),
+                        ],
+                    };
+                })
+            );
         },
     });
 
     useEffect(() => {
-        if (selectedTab === 0 && selectedNode) {
-            setCpuTrxMetrics(getDefaultList(["UPTIME (For demo)"]));
-            setCpuTrxMetrics(getDefaultList(["CPU-TRX (For demo)"]));
-            setCpuTrxMetrics(getDefaultList(["MEMORY-TRX (For demo)"]));
-            getCpuTrxMetrics({
+        if (selectedTab === 0) {
+            getMetricUptime({
                 variables: {
-                    data: {
-                        nodeId: selectedNode?.id || "",
-                        orgId: _organizationId || "",
-                        to: Math.round(Date.now() / 1000),
-                        from: Math.round(Date.now() / 1000) - 240,
-                        step: 1,
-                    },
+                    ...getMetricPayload(
+                        "uk-test36-hnode-a1-30df",
+                        _organizationId
+                    ),
                 },
             });
-            getUptimeMetrics({
+        } else if (selectedTab === 1) {
+            getMetricThroughtpuUl({
                 variables: {
-                    data: {
-                        nodeId: selectedNode?.id || "",
-                        orgId: _organizationId || "",
-                        to: Math.round(Date.now() / 1000),
-                        from: Math.round(Date.now() / 1000) - 240,
-                        step: 1,
-                    },
+                    ...getMetricPayload(
+                        "uk-test36-hnode-a1-30df",
+                        _organizationId
+                    ),
                 },
             });
-            getMemoryTrxMetrics({
+            getMetricThroughtpuDl({
                 variables: {
-                    data: {
-                        nodeId: selectedNode?.id || "",
-                        orgId: _organizationId || "",
-                        to: Math.round(Date.now() / 1000),
-                        from: Math.round(Date.now() / 1000) - 240,
-                        step: 1,
-                    },
+                    ...getMetricPayload(
+                        "uk-test36-hnode-a1-30df",
+                        _organizationId
+                    ),
+                },
+            });
+        } else if (selectedTab === 2) {
+            getMetricCpuTrx({
+                variables: {
+                    ...getMetricPayload(
+                        "uk-test36-hnode-a1-30df",
+                        _organizationId
+                    ),
+                },
+            });
+            getMetricMemoryTrx({
+                variables: {
+                    ...getMetricPayload(
+                        "uk-test36-hnode-a1-30df",
+                        _organizationId
+                    ),
                 },
             });
         }
     }, [selectedTab, selectedNode]);
+
+    useEffect(() => {
+        if (selectedTab === 0 && metricUptimeTrxRes) {
+            metricUptimeRefetch({
+                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+            });
+        }
+    }, [metricUptimeTrxRes]);
+
+    useEffect(() => {
+        if (selectedTab === 1 && metricThroughtputUlRes) {
+            metricThroughtputUlRefetch({
+                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+            });
+        }
+    }, [metricThroughtputUlRes]);
+
+    useEffect(() => {
+        if (selectedTab === 1 && metricThroughtputDlRes) {
+            metricThroughtputDlRefetch({
+                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+            });
+        }
+    }, [metricThroughtputDlRes]);
+
+    useEffect(() => {
+        if (selectedTab === 2 && metricCpuTrxRes) {
+            metricCpuTrxRefetch({
+                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+            });
+        }
+    }, [metricCpuTrxRes]);
+
+    useEffect(() => {
+        if (selectedTab === 2 && metricMemoryTrxRes) {
+            metricMemoryTrxRefetch({
+                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+            });
+        }
+    }, [metricMemoryTrxRes]);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
@@ -221,54 +341,6 @@ const Nodes = () => {
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
     };
-
-    const fetchCpuTrxData = () =>
-        nodeCpuTrxRes &&
-        nodeCpuTrxRes.getMetricsCpuTRX.length > 0 &&
-        refetchCpuTrxMetrics({
-            data: {
-                nodeId: selectedNode?.id || "",
-                orgId: _organizationId || "",
-                to: Math.round(Date.now() / 1000),
-                from:
-                    nodeCpuTrxRes.getMetricsCpuTRX[
-                        nodeCpuTrxRes.getMetricsCpuTRX.length - 1
-                    ].x + 1,
-                step: 1,
-            },
-        });
-
-    const fetchUptimeData = () =>
-        nodeUptimeMetricsRes &&
-        nodeUptimeMetricsRes?.getMetricsUptime.length > 0 &&
-        refetchUptimeMetrics({
-            data: {
-                nodeId: selectedNode?.id || "",
-                orgId: _organizationId || "",
-                to: Math.round(Date.now() / 1000),
-                from:
-                    nodeUptimeMetricsRes?.getMetricsUptime[
-                        nodeUptimeMetricsRes.getMetricsUptime.length - 1
-                    ].x + 1,
-                step: 1,
-            },
-        });
-
-    const fetchMemoryTrxData = () =>
-        nodeMemoryTrxRes &&
-        nodeMemoryTrxRes.getMetricsMemoryTRX.length > 0 &&
-        refetchMemoryTrxMetrics({
-            data: {
-                nodeId: selectedNode?.id || "",
-                orgId: _organizationId || "",
-                to: Math.round(Date.now() / 1000),
-                from:
-                    nodeMemoryTrxRes?.getMetricsMemoryTRX[
-                        nodeMemoryTrxRes.getMetricsMemoryTRX.length - 1
-                    ].x + 1,
-                step: 1,
-            },
-        });
 
     const handleCloseNodeInfos = () => {
         setShowNodeSoftwareUpdatInfos(false);
@@ -348,12 +420,7 @@ const Nodes = () => {
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
-                                cpuTrxMetrics={cpuTrxMetrics}
-                                onRefreshTempTrx={fetchCpuTrxData}
-                                memoryTrxMetrics={memoryTrxMetrics}
-                                onRefreshMemoryTrx={fetchMemoryTrxData}
-                                uptimeMetrics={uptimeMetrics}
-                                onRefreshUptime={fetchUptimeData}
+                                uptimeMetrics={uptimeMetric}
                                 handleUpdateNode={handleUpdateNode}
                                 loading={
                                     isLoading ||
@@ -373,6 +440,8 @@ const Nodes = () => {
                         >
                             <NodeNetworkTab
                                 loading={isLoading || nodeDetailLoading}
+                                throughpuULMetric={throughputULMetric}
+                                throughpuDLMetric={throughputDLMetric}
                             />
                         </TabPanel>
                         <TabPanel
@@ -382,6 +451,8 @@ const Nodes = () => {
                         >
                             <NodeResourcesTab
                                 selectedNode={selectedNode}
+                                cpuTrxMetric={cpuTrxMetric}
+                                memoryTrxMetric={memoryTrxMetric}
                                 loading={isLoading || nodeDetailLoading}
                             />
                         </TabPanel>

@@ -41,8 +41,9 @@ const STATS_OPTIONS = [
 ];
 const STATS_PERIOD = [
     { id: 1, label: "DAY" },
-    { id: 2, label: "WEEK " },
-    { id: 3, label: "MONTH " },
+    { id: 2, label: "WEEK" },
+    { id: 3, label: "MONTH" },
+    { id: 4, label: "LIVE" },
 ];
 
 const SIDEBAR_MENU2 = [

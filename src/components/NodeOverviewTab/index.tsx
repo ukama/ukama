@@ -5,19 +5,15 @@ import NodeStatItem from "../NodeStatItem";
 import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
+import ApexLineChartIntegration from "../ApexLineChart";
 
 interface INodeOverviewTab {
     loading: boolean;
-    cpuTrxMetrics: any;
     uptimeMetrics: any;
     graphFilters: TObject;
-    memoryTrxMetrics: any;
     nodeDetails: TObject[];
-    onRefreshUptime: Function;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
-    onRefreshTempTrx: Function;
-    onRefreshMemoryTrx: Function;
     handleGraphFilterChange: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
@@ -26,6 +22,7 @@ interface INodeOverviewTab {
 const NodeOverviewTab = ({
     loading,
     selectedNode,
+    uptimeMetrics,
     handleUpdateNode,
     isUpdateAvailable,
     handleGraphFilterChange,
@@ -184,13 +181,15 @@ const NodeOverviewTab = ({
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][2].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={uptimeMetrics}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][2].name
                                 }
+                                filter={"LIVE"}
                             />
                         )}
                     </Paper>

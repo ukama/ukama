@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { NodeDto } from "../../generated";
 import { Paper, Grid, Typography } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
+import {
+    NodeStatsContainer,
+    NodeStatItem,
+    StackedAreaChart,
+    ApexStackAreaChart,
+} from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
     loading: boolean;
+    cpuTrxMetric: any;
+    memoryTrxMetric: any;
     selectedNode: NodeDto | undefined;
 }
-const NodeResourcesTab = ({ loading, selectedNode }: INodeResourcesTab) => {
+const NodeResourcesTab = ({
+    loading,
+    selectedNode,
+    cpuTrxMetric = [],
+    memoryTrxMetric = [],
+}: INodeResourcesTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
@@ -128,13 +140,15 @@ const NodeResourcesTab = ({ loading, selectedNode }: INodeResourcesTab) => {
                     {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][0].show && (
-                        <StackedAreaChart
+                        <ApexStackAreaChart
                             hasData={true}
-                            title={
+                            filter={"LIVE"}
+                            name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
                                 ][0].name
                             }
+                            data={memoryTrxMetric}
                         />
                     )}
                     {NodeResourcesTabConfigure[
@@ -152,13 +166,15 @@ const NodeResourcesTab = ({ loading, selectedNode }: INodeResourcesTab) => {
                     {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][2].show && (
-                        <StackedAreaChart
+                        <ApexStackAreaChart
                             hasData={true}
-                            title={
+                            name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
                                 ][2].name
                             }
+                            filter={"LIVE"}
+                            data={cpuTrxMetric}
                         />
                     )}
                     {NodeResourcesTabConfigure[

@@ -119,8 +119,21 @@ const getGraphFilterByType = (type: string) => {
     }
 };
 
+const getMetricPayload = (nodeId: string, orgId: string) => {
+    return {
+        data: {
+            orgId: orgId,
+            nodeId: nodeId,
+            to: Math.round(Date.now() / 1000),
+            from: Math.round(Date.now() / 1000) - 120,
+            step: 1,
+        },
+    };
+};
+
 export {
     hexToRGB,
+    getMetricPayload,
     getRandomData,
     getColorByType,
     getStatusByType,
