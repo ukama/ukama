@@ -285,7 +285,7 @@ int usys_file_write_number(void *fname, void *data, off_t offset,
                            uint16_t count, uint8_t size) {
     int ret = 0;
     uint16_t idx = 0;
-    char val[8];
+    char val[8] = {0};
     char *value = (char *)data;
 
     while (idx < count) {
@@ -312,7 +312,7 @@ int usys_file_protect(void *fname) {
 }
 
 int usys_file_init(void *data) {
-    char fname[MAX_STR_LENGTH] = { '\0' };
+    char fname[MAX_STR_LENGTH] = {0};
     int size = usys_strlen((char *)data);
     usys_memcpy(fname, data, size);
 

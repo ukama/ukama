@@ -57,6 +57,11 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/wait.h>
 
+/* Macro's for boolean values */
+#define USYS_FALSE        false
+#define USYS_TRUE         true
+
+#define
 /**
  * @typedef USysMachineWord
  *

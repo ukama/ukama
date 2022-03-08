@@ -11,13 +11,12 @@
 #include "usys_log.h"
 
 USysError usys_mutex_init(USysMutex *mutex) {
+	pthread_mutexattr_t mutexAttr;
+
     if (mutex == NULL) {
         usys_log_warn("Mutex Object is NULL");
-
         return ERR_MUTEX_OBJ_NULL;
     }
-
-    pthread_mutexattr_t mutexAttr;
 
     if (pthread_mutexattr_init(&mutexAttr) != 0) {
         usys_log_warn("Mutex attribute init failed");
@@ -51,17 +50,19 @@ USysError usys_mutex_init(USysMutex *mutex) {
 }
 
 USysError usys_mutex_lock(USysMutex *mutex) {
-    if (mutex == NULL) {
+
+	USysError err = ERR_NONE;
+
+	if (mutex == NULL) {
         usys_log_warn("Mutex Object NULL");
-        return ERR_MUTEX_OBJ_NULL;
+        err = ERR_MUTEX_OBJ_NULL;
+    } else {
+    	if (pthread_mutex_lock(mutex) != 0) {
+    		err =  ERR_MUTEX_LOCK_FAILED;
+    	}
     }
 
-    if (pthread_mutex_lock(mutex) == 0) {
-        return ERR_NONE;
-    } else {
-        usys_log_warn("Mutex lock failed");
-        return ERR_MUTEX_LOCK_FAILED;
-    }
+    return err;
 }
 
 USysError usys_mutex_trylock(USysMutex *mutex) {
