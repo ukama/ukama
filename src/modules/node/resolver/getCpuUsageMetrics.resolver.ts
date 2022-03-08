@@ -5,26 +5,39 @@ import {
     PubSubEngine,
     PubSub,
     Arg,
+    Ctx,
 } from "type-graphql";
 import { Service } from "typedi";
+import { MetricDto } from "../types";
 import { NodeService } from "../service";
-import { CpuUsageMetricsDto } from "../types";
+import { getHeaders } from "../../../common";
+import { oneSecSleep } from "../../../utils";
 import { Authentication } from "../../../common/Authentication";
-import { GRAPH_FILTER } from "../../../constants";
+import { Context, MetricsInputDTO } from "../../../common/types";
 
 @Service()
 @Resolver()
 export class GetCpuUsageMetricsResolver {
     constructor(private readonly cpuUsageMetrics: NodeService) {}
 
-    @Query(() => [CpuUsageMetricsDto])
+    @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
     async getCpuUsageMetrics(
-        @Arg("filter", () => GRAPH_FILTER) filter: GRAPH_FILTER,
+        @Ctx() ctx: Context,
+        @Arg("data") data: MetricsInputDTO,
         @PubSub() pubsub: PubSubEngine
-    ): Promise<[CpuUsageMetricsDto] | null> {
-        const cpuUsageMetrics = this.cpuUsageMetrics.cpuUsageMetrics(filter);
-        pubsub.publish("cpuUsageMetrics", cpuUsageMetrics);
+    ): Promise<MetricDto[] | null> {
+        const cpuUsageMetrics = await this.cpuUsageMetrics.getSingleMetric(
+            data,
+            getHeaders(ctx),
+            "cpu"
+        );
+
+        for (let i = 0; i < cpuUsageMetrics.length; i++) {
+            await oneSecSleep();
+            pubsub.publish("cpuUsageMetrics", [cpuUsageMetrics[i]]);
+        }
+
         return cpuUsageMetrics;
     }
 }

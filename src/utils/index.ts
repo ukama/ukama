@@ -1,5 +1,6 @@
 import { Meta } from "../common/types";
 import { GRAPH_FILTER } from "../constants";
+import { MetricDto } from "../modules/node/types";
 
 export const getPaginatedOutput = (
     page: number,
@@ -29,3 +30,6 @@ export const getRecordsLengthByFilter = (
             return 10;
     }
 };
+
+export const oneSecSleep = (t = 1000): any =>
+    new Promise(res => setTimeout(res, t));

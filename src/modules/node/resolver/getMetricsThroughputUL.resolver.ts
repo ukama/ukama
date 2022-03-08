@@ -4,7 +4,16 @@ import { NodeService } from "../service";
 import { getHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsInputDTO } from "../../../common/types";
-import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    UseMiddleware,
+    Arg,
+    Ctx,
+    PubSubEngine,
+    PubSub,
+} from "type-graphql";
+import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
@@ -14,12 +23,20 @@ export class GetMetricsThroughputULResolver {
     @UseMiddleware(Authentication)
     async getMetricsThroughputUL(
         @Ctx() ctx: Context,
-        @Arg("data") data: MetricsInputDTO
+        @Arg("data") data: MetricsInputDTO,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getSingleMetric(
+        const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
             "throughputuplink"
         );
+
+        for (let i = 0; i < metric.length; i++) {
+            await oneSecSleep();
+            pubsub.publish("metricsThroughputUL", [metric[i]]);
+        }
+
+        return metric;
     }
 }

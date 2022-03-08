@@ -4,11 +4,13 @@ import { MetricDto } from "../../node/types";
 
 @Service()
 @Resolver()
-export class GetCpuUsageMetricsSubscriptionResolver {
+export class getMetricsThroughputDLSubscriptionResolver {
     @Subscription(() => [MetricDto], {
-        topics: "cpuUsageMetrics",
+        topics: "metricsThroughputDL",
     })
-    async getCpuUsageMetrics(@Root() data: [MetricDto]): Promise<MetricDto[]> {
+    async getMetricsThroughputDL(
+        @Root() data: [MetricDto]
+    ): Promise<MetricDto[]> {
         return data;
     }
 }
