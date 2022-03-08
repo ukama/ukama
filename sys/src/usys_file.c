@@ -258,7 +258,7 @@ int usys_file_erase(void *fname, off_t offset, uint16_t size) {
 int usys_file_read_number(void *fname, void *data, off_t offset, uint16_t count,
                           uint8_t size) {
     int ret = 0;
-    char val[8];
+    char val[8] = {0};
     uint16_t idx = 0;
     char *value = (char *)data;
 
@@ -303,6 +303,7 @@ int usys_file_write_number(void *fname, void *data, off_t offset,
         offset = offset + size;
         idx++;
     }
+
     return ret;
 }
 
@@ -334,7 +335,6 @@ int usys_file_init(void *data) {
 
 int usys_file_cleanup(void *fname) {
     int ret = 0;
-
     ret = usys_remove(fname);
     if (!ret) {
         usys_log_debug("File %s deleted successfully.", fname);
@@ -346,16 +346,17 @@ int usys_file_cleanup(void *fname) {
     return ret;
 }
 
-int usys_file_rename(char *old_name, char *new_name) {
-    int ret = 0;
-    if (usys_rename(old_name, new_name) == 0) {
-        usys_log_debug("File %s renamed to %s.", old_name, new_name);
-    } else {
-        ret = -1;
-        usys_log_error("Unable to rename file %s to %s. Error: %s", old_name,
-                       new_name, usys_error(errno));
-    }
-    return ret;
+USysError usys_file_rename(char *old_name, char *new_name) {
+	int ret = 0;
+	ret = usys_rename(old_name, new_name);
+	if (!ret) {
+		usys_log_debug("File %s renamed to %s.", old_name, new_name);
+	} else {
+		usys_log_error("Unable to rename file %s to %s. Error: %s", old_name,
+				new_name, usys_error(errno));
+	}
+
+	return ret;
 }
 
 int usys_file_add_record(char *filename, char *rowdesc, char *data) {
@@ -369,6 +370,7 @@ int usys_file_add_record(char *filename, char *rowdesc, char *data) {
         /* Add column description */
         ret = usys_file_append(filename, rowdesc, 0, usys_strlen(rowdesc));
     }
+
     /* Add data to file */
     ret = usys_file_append(filename, data, 0, usys_strlen(data));
     return ret;
