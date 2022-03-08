@@ -20,25 +20,21 @@ USysError usys_mutex_init(USysMutex *mutex) {
 
     if (pthread_mutexattr_init(&mutexAttr) != 0) {
         usys_log_warn("Mutex attribute init failed");
-
         return ERR_MUTEX_ATTR_INIT_FAIL;
     }
 
     if (pthread_mutexattr_setprotocol(&mutexAttr, PTHREAD_PRIO_INHERIT) != 0) {
         usys_log_warn("Mutex attribute set protocol failed");
-
         return ERR_MUTEX_ATTR_SET_PROTO_FAIL;
     }
 
     if (pthread_mutexattr_settype(&mutexAttr, PTHREAD_MUTEX_RECURSIVE) != 0) {
         usys_log_warn("Mutex attribute set type RECURSIVE failed");
-
         return ERR_MUTEX_ATTR_SET_TYPE_FAIL;
     }
 
     if (pthread_mutex_init(mutex, &mutexAttr) != 0) {
         usys_log_warn("Mutex init with attribute failed");
-
         return ERR_MUTEX_INIT_FAILED;
     }
 
@@ -50,19 +46,17 @@ USysError usys_mutex_init(USysMutex *mutex) {
 }
 
 USysError usys_mutex_lock(USysMutex *mutex) {
-
-	USysError err = ERR_NONE;
-
 	if (mutex == NULL) {
         usys_log_warn("Mutex Object NULL");
-        err = ERR_MUTEX_OBJ_NULL;
-    } else {
-    	if (pthread_mutex_lock(mutex) != 0) {
-    		err =  ERR_MUTEX_LOCK_FAILED;
-    	}
+        return ERR_MUTEX_OBJ_NULL;
     }
 
-    return err;
+	if (pthread_mutex_lock(mutex) != 0) {
+        usys_log_warn("Mutex lock failed");
+        return ERR_MUTEX_LOCK_FAILED;
+	}
+
+    return ERR_NONE;
 }
 
 USysError usys_mutex_trylock(USysMutex *mutex) {
@@ -71,12 +65,12 @@ USysError usys_mutex_trylock(USysMutex *mutex) {
         return ERR_MUTEX_OBJ_NULL;
     }
 
-    if (pthread_mutex_trylock(mutex) == 0) {
-        return ERR_NONE;
-    } else {
+    if (pthread_mutex_trylock(mutex) != 0) {
         usys_log_warn("Mutex trylock failed");
         return ERR_MUTEX_TRYLOCK_FAILED;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_mutex_timedlock_sec(USysMutex *mutex, uint32_t wait_time) {
@@ -90,12 +84,12 @@ USysError usys_mutex_timedlock_sec(USysMutex *mutex, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_sec += wait_time;
 
-    if (pthread_mutex_timedlock(mutex, &absTime) == 0) {
-        return ERR_NONE;
-    } else {
+    if (pthread_mutex_timedlock(mutex, &absTime) != 0) {
         usys_log_warn("Mutex timedlock failed");
         return ERR_MUTEX_TIMEDLOCK_FAILED;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_mutex_timedlock_nsec(USysMutex *mutex, uint32_t wait_time) {
@@ -109,12 +103,12 @@ USysError usys_mutex_timedlock_nsec(USysMutex *mutex, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_nsec += wait_time;
 
-    if (pthread_mutex_timedlock(mutex, &absTime) == 0) {
-        return ERR_NONE;
-    } else {
+    if (pthread_mutex_timedlock(mutex, &absTime) != 0) {
         usys_log_warn("Mutex timedlock failed");
         return ERR_MUTEX_TIMEDLOCK_FAILED;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_mutex_unlock(USysMutex *mutex) {
@@ -123,12 +117,12 @@ USysError usys_mutex_unlock(USysMutex *mutex) {
         return ERR_MUTEX_OBJ_NULL;
     }
 
-    if (pthread_mutex_unlock(mutex) == 0) {
-        return ERR_NONE;
-    } else {
+    if (pthread_mutex_unlock(mutex) != 0) {
         usys_log_warn("Mutex unlock failed");
         return ERR_MUTEX_UNLOCK_FAILED;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_mutex_destroy(USysMutex *mutex) {
@@ -137,12 +131,12 @@ USysError usys_mutex_destroy(USysMutex *mutex) {
         return ERR_MUTEX_OBJ_NULL;
     }
 
-    if (pthread_mutex_destroy(mutex) == 0) {
-        return ERR_NONE;
-    } else {
+    if (pthread_mutex_destroy(mutex) != 0) {
         usys_log_warn("Mutex destroy failed");
         return ERR_MUTEX_DESTROY_FAILED;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_init(USysSem *sem, uint32_t init_value) {
@@ -151,12 +145,12 @@ USysError usys_sem_init(USysSem *sem, uint32_t init_value) {
         return ERR_SEM_OBJ_NULL;
     }
 
-    if (sem_init(sem, 0, init_value) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_init(sem, 0, init_value) != 0) {
         usys_log_warn("Semaphore sem_init failed");
         return ERR_SEM_INIT_FAILURE;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_wait(USysSem *sem) {
@@ -165,12 +159,12 @@ USysError usys_sem_wait(USysSem *sem) {
         return ERR_SEM_OBJ_NULL;
     }
 
-    if (sem_wait(sem) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_wait(sem) != 0) {
         usys_log_warn("Semaphore failed sem_wait failed");
         return ERR_SEM_WAIT_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_trywait(USysSem *sem) {
@@ -179,12 +173,12 @@ USysError usys_sem_trywait(USysSem *sem) {
         return ERR_SEM_OBJ_NULL;
     }
 
-    if (sem_trywait(sem) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_trywait(sem) != 0) {
         usys_log_warn("Semaphore sem_trywait failed");
         return ERR_SEM_TRYWAIT_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_timedwait_sec(USysSem *sem, uint32_t wait_time) {
@@ -198,12 +192,12 @@ USysError usys_sem_timedwait_sec(USysSem *sem, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_sec += wait_time;
 
-    if (sem_timedwait(sem, &absTime) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_timedwait(sem, &absTime) != 0) {
         usys_log_warn("Semaphore sem_timedwait failed");
         return ERR_SEM_TIMEDWAIT_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_timedwait_nsec(USysSem *sem, uint32_t wait_time) {
@@ -217,12 +211,12 @@ USysError usys_sem_timedwait_nsec(USysSem *sem, uint32_t wait_time) {
     clock_gettime(CLOCK_REALTIME, &absTime);
     absTime.tv_nsec += wait_time;
 
-    if (sem_timedwait(sem, &absTime) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_timedwait(sem, &absTime) != 0) {
         usys_log_warn("Semaphore sem_timedwait failed");
         return ERR_SEM_TIMEDWAIT_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_post(USysSem *sem) {
@@ -231,12 +225,12 @@ USysError usys_sem_post(USysSem *sem) {
         return ERR_SEM_OBJ_NULL;
     }
 
-    if (sem_post(sem) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_post(sem) != 0) {
         usys_log_warn("Semaphore sem_post failed");
         return ERR_SEM_POST_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_sem_destroy(USysSem *sem) {
@@ -245,47 +239,46 @@ USysError usys_sem_destroy(USysSem *sem) {
         return ERR_SEM_OBJ_NULL;
     }
 
-    if (sem_destroy(sem) == 0) {
-        return ERR_NONE;
-    } else {
+    if (sem_destroy(sem) != 0) {
         usys_log_warn("Semaphore sem_destroy failed");
         return ERR_SEM_DESTROY_FAIL;
     }
+
+    return ERR_NONE;
 }
 
 USysError usys_spinlock_init(USysSpinlock *spinlock) {
-    int ret = pthread_spin_init(spinlock, PTHREAD_PROCESS_PRIVATE);
+	if(pthread_spin_init(spinlock, PTHREAD_PROCESS_PRIVATE) != 0) {
+		usys_log_warn("spinlock  initialization failed");
+		return ERR_SPIN_LOCK_INIT_FAILED;
+	}
 
-    if (ret == 0) {
-        return ERR_NONE;
-    } else {
-        return ERR_SPIN_LOCK_INIT_FAILED;
-    }
+	return ERR_NONE;
 }
 
 USysError usys_spinlock_lock(USysSpinlock *spinlock) {
-    int ret = pthread_spin_lock(spinlock);
-    if (ret == 0) {
-        return ERR_NONE;
-    } else {
-        return ERR_SPIN_LOCK_LOCK_FAILED;
-    }
+	if(pthread_spin_lock(spinlock) != 0) {
+		usys_log_warn("spinlock lock failed");
+		return ERR_SPIN_LOCK_LOCK_FAILED;
+	}
+
+	return ERR_NONE;
 }
 
 USysError usys_spinlock_unlock(USysSpinlock *spinlock) {
-    int ret = pthread_spin_unlock(spinlock);
-    if (ret == 0) {
-        return ERR_NONE;
-    } else {
-        return ERR_SPIN_LOCK_UNLOCK_FAILED;
-    }
+	if(pthread_spin_unlock(spinlock) != 0) {
+		usys_log_warn("spinlock unlock failed");
+		return ERR_SPIN_LOCK_UNLOCK_FAILED;
+	}
+
+	return ERR_NONE;
 }
 
 USysError usys_spinlock_destroy(USysSpinlock *spinlock) {
-    int ret = pthread_spin_destroy(spinlock);
-    if (ret == 0) {
-        return ERR_NONE;
-    } else {
-        return ERR_SPIN_LOCK_DESTROY_FAILED;
-    }
+	if(pthread_spin_destroy(spinlock) != 0) {
+		usys_log_warn("spinlock destroy failed");
+		return ERR_SPIN_LOCK_DESTROY_FAILED;
+	}
+
+	return ERR_NONE;
 }
