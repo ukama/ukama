@@ -87,6 +87,42 @@ static inline int usys_munmap(void *addr, size_t length) {
     return munmap(addr, length);
 }
 
+/**
+ * @fn     void usys_allocate_shared_mem*(const char*, uint32_t)
+ * @brief  Creates a shared memory using usys_shm_open, usys_ftruncate and
+ * usys_mmap api's.
+ *
+ * @param  name
+ * @param  size
+ * @return On Success memmory address for shared memory
+ *         On failure NULL
+ */
+void *usys_allocate_shared_mem(const char *name, uint32_t size);
+
+/**
+ * @fn     int usys_free_shared_mem(const char*, void*, uint32_t)
+ * @brief  Use functions usys_munmap and usys_shm_unlink to free shared memory
+ *
+ * @param  name
+ * @param  ptr
+ * @param  size
+ * @return On Success return 0.
+ *         On failure -1
+ */
+int usys_free_shared_mem(const char *name, void *ptr, uint32_t size);
+
+/**
+ * @fn     void usys_map_shared_mem*(const char*, uint32_t)
+ * @brief  This function usese usys_shm_open and usys_mmap to map a shared
+ * memory created
+ *
+ * @param  name
+ * @param  size
+ * @return On Success memmory address for shared memory
+ *         On failure NULL
+ */
+void *usys_map_shared_mem(const char *name, uint32_t size);
+
 #ifdef __GNU_FLAG
 /**
  * @fn     void mremap*(void*, size_t, size_t, int)
@@ -104,4 +140,20 @@ static inline void *usys_mremap(void *address, size_t length, size_t new_length,
     return mremap(address, length, new_length, flag);
 }
 #endif
+
+#ifdef __GNU_FLAG
+/**
+ * @fn     void usys_remap_shared_mem*(void*, size_t, size_t)
+ * @brief  This function usys_mremap to remap the shared memory mapped using
+ * usys_map_shared_mem with a different size
+ *
+ * @param  old_address
+ * @param  old_size
+ * @param  new_size
+ * @return On success returns a pointer to the new virtual memory area.
+ *         On error, the value MAP_FAILED (that is, (void *) -1) is returned.
+ */
+static inline void *usys_remap_shared_mem(void *old_address, size_t old_size,
+                                          size_t new_size)
+
 #endif /* USYS_SHM_H_ */

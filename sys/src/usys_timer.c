@@ -25,7 +25,7 @@ bool usys_timer(uint32_t resolution, void (*tick_handler)()) {
     sa.sa_flags = SA_SIGINFO;
     if (sigaction(SIGALRM, &sa, NULL) == -1) {
         usys_log_error("Error in Sigaction\n");
-        return false;
+        return USYS_FALSE;
     }
 
     /* Setup a periodic tick of given resolution in Micro seconds with iTimers */
@@ -35,7 +35,7 @@ bool usys_timer(uint32_t resolution, void (*tick_handler)()) {
     intervalTimer.it_interval.tv_usec = resolution;
     if (setitimer(ITIMER_REAL, &intervalTimer, NULL)) {
         usys_log_error("Error in setting up the timer\n");
-        return false;
+        return USYS_FALSE;
     }
-    return true;
+    return USYS_TRUE;
 }

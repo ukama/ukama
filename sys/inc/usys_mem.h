@@ -64,8 +64,8 @@ void *usys_calloc(size_t num, size_t size);
 
 /**
  * @fn     void usys_emalloc*(size_t)
- * @brief  Wrapper with error handling on top of usys_malloc function.
- *
+ * @brief  Wrapper on usys_calloc function which exits the calling process
+ * 	       on failure.
  *
  * @param  size
  * @return On success base address of memory allocated.
@@ -75,7 +75,8 @@ void *usys_emalloc(size_t size);
 
 /**
  * @fn     void usys_erealloc*(void*, size_t)
- * @brief  Wrapper with error handling on top of usys_realloc function.
+ * @brief  Wrapper on usys_realloc function which exits the process
+ * 	       on failure.
  *
  * @param  ptr
  * @param  new_size
@@ -86,8 +87,8 @@ void *usys_erealloc(void *ptr, size_t new_size);
 
 /**
  * @fn     void usys_ecalloc*(size_t, size_t)
- * @brief  Wrapper with error handling on top of usys_calloc function.
- *
+ * @brief  Wrapper on usys_realloc function which exits the process
+ * 	       on failure.
  * @param  num
  * @param  size
  * @return On success base address of memory allocated.
