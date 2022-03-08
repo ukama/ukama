@@ -1,3 +1,12 @@
+# Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
+
+#
+# Makefile for the platform library
+#
+
+include ../../../config.mk
+
 PROJECT := $(notdir $(CURDIR))
 PLATFORMLIB := usys
 BUILDSATICLIB = lib$(PLATFORMLIB).a
