@@ -50,7 +50,7 @@ const StackAreaChart = (props: any) => {
             range: props.range,
             labels: {
                 formatter: (val: any) =>
-                    val ? format(new Date(val * 1000), "mm:ss") : "",
+                    val ? format(new Date(val * 1000), "hh:mm:ss") : "",
             },
             tooltip: {
                 enabled: false,

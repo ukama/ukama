@@ -125,7 +125,7 @@ const getMetricPayload = (nodeId: string, orgId: string) => {
             orgId: orgId,
             nodeId: nodeId,
             to: Math.round(Date.now() / 1000),
-            from: Math.round(Date.now() / 1000) - 60,
+            from: Math.round(Date.now() / 1000) - 20, //20sec
             step: 1,
         },
     };
