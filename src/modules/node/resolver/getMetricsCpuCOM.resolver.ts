@@ -17,11 +17,11 @@ import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
-export class GetMetricsMemoryTRXResolver {
+export class getMetricsCpuCOMResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async getMetricsMemoryTRX(
+    async getMetricsCpuCOM(
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO,
         @PubSub() pubsub: PubSubEngine
@@ -29,12 +29,12 @@ export class GetMetricsMemoryTRXResolver {
         const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
-            "memorytrxused"
+            "cpucomusage"
         );
         if (data.regPolling && metric && metric.length > 0) {
             for (const element of metric) {
                 await oneSecSleep();
-                pubsub.publish("metricMemoryTrx", [element]);
+                pubsub.publish("metricCpuCom", [element]);
             }
         }
         return metric;

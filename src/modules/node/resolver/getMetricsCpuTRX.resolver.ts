@@ -29,7 +29,7 @@ export class GetMetricsCpuTRXResolver {
         const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
-            "cpu"
+            "cputrxusage"
         );
         if (data.regPolling && metric && metric.length > 0) {
             for (const element of metric) {
