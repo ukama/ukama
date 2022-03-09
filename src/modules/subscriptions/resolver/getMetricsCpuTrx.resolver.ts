@@ -4,7 +4,7 @@ import { MetricDto } from "../../node/types";
 
 @Service()
 @Resolver()
-export class getMetricsCpuTrxSubscriptionResolver {
+export class GetMetricsCpuTrxSubscriptionResolver {
     @Subscription(() => [MetricDto], {
         topics: "metricCpuTrx",
     })

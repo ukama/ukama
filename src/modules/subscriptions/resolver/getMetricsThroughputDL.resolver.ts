@@ -4,7 +4,7 @@ import { MetricDto } from "../../node/types";
 
 @Service()
 @Resolver()
-export class getMetricsThroughputDLSubscriptionResolver {
+export class GetMetricsThroughputDLSubscriptionResolver {
     @Subscription(() => [MetricDto], {
         topics: "metricsThroughputDL",
     })

@@ -17,7 +17,7 @@ import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
-export class getMetricsCpuCOMResolver {
+export class GetMetricsCpuCOMResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
