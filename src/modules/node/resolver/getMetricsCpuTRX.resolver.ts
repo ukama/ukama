@@ -31,12 +31,12 @@ export class GetMetricsCpuTRXResolver {
             getHeaders(ctx),
             "cpu"
         );
-
-        for (let i = 0; i < metric.length; i++) {
-            await oneSecSleep();
-            pubsub.publish("metricCpuTrx", [metric[i]]);
+        if (data.regPolling && metric && metric.length > 0) {
+            for (const element of metric) {
+                await oneSecSleep();
+                pubsub.publish("metricCpuTrx", [element]);
+            }
         }
-
         return metric;
     }
 }

@@ -87,6 +87,9 @@ export class MetricsInputDTO {
     orgId: string;
 
     @Field()
+    regPolling: boolean;
+
+    @Field()
     nodeId: string;
 
     @Field()

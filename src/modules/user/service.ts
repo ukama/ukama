@@ -13,7 +13,6 @@ import {
     AddUserDto,
     AddUserResponse,
     ActivateUserResponse,
-    UsersAttachedMetricsDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -161,17 +160,5 @@ export class UserService implements IUserService {
         return {
             success: true,
         };
-    };
-    usersAttachedMetricsService = async (
-        filter: GRAPH_FILTER
-    ): Promise<[UsersAttachedMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_USERS_ATTACHED_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-
-        return res.data;
     };
 }

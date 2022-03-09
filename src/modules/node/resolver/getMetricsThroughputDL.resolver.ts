@@ -31,12 +31,12 @@ export class GetMetricsThroughputDLResolver {
             getHeaders(ctx),
             "throughputdownlink"
         );
-
-        for (let i = 0; i < metric.length; i++) {
-            await oneSecSleep();
-            pubsub.publish("metricsThroughputDL", [metric[i]]);
+        if (data.regPolling && metric && metric.length > 0) {
+            for (const element of metric) {
+                await oneSecSleep();
+                pubsub.publish("metricsThroughputDL", [element]);
+            }
         }
-
         return metric;
     }
 }

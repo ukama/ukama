@@ -31,12 +31,12 @@ export class GetMetricsUptimeResolver {
             getHeaders(ctx),
             "uptime"
         );
-
-        for (let i = 0; i < metric.length; i++) {
-            await oneSecSleep();
-            pubsub.publish("metricUptime", [metric[i]]);
+        if (data.regPolling && metric && metric.length > 0) {
+            for (const element of metric) {
+                await oneSecSleep();
+                pubsub.publish("metricUptime", [element]);
+            }
         }
-
         return metric;
     }
 }
