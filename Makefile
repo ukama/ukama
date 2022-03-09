@@ -33,6 +33,7 @@ LIBS+=-lrt
 
 # Compiler flags
 CFLAGS+=-g
+CFLAGS+=-O0
 CFLAGS+=-Wall
 CFLAGS+=-Wno-unused-variable
 CFLAGS+=-fPIC
@@ -148,7 +149,7 @@ $(BUILD_DIR)/%.o: %.c
 
 # Memory check
 memcheck: $(UTEST_BIN)
-	LD_LIBRARY_PATH=$(BUILD_DIR) $(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
+	$(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
 		
 # Clean all build files
 clean:
