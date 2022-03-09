@@ -65,7 +65,7 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid container item xs={12} md={5} spacing={3}>
+            <Grid container item xs={12} md={8} lg={5} spacing={3}>
                 {showSearchBox && (
                     <Grid item xs={12} sm={7}>
                         <StyledInputBase

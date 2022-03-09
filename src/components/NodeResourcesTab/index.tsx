@@ -125,13 +125,90 @@ const NodeResourcesTab = ({ loading, selectedNode }: INodeResourcesTab) => {
             <Grid item lg={isCollapse ? 11 : 9} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Resources</Typography>
-                    <StackedAreaChart hasData={true} title={"Memory-TRX"} />
-                    <StackedAreaChart hasData={true} title={"Memory-COM"} />
-                    <StackedAreaChart hasData={true} title={"CPU-TRX"} />
-                    <StackedAreaChart hasData={true} title={"CPU-COM"} />
-                    <StackedAreaChart hasData={true} title={"DISK-TRX"} />
-                    <StackedAreaChart hasData={true} title={"DISK-COM"} />
-                    <StackedAreaChart hasData={true} title={"POWER"} />
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][0].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][0].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][1].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][1].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][2].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][2].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][3].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][3].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][4].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][4].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][5].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][5].name
+                            }
+                        />
+                    )}
+                    {NodeResourcesTabConfigure[
+                        (selectedNode?.type as string) || ""
+                    ][6].show && (
+                        <StackedAreaChart
+                            hasData={true}
+                            title={
+                                NodeResourcesTabConfigure[
+                                    (selectedNode?.type as string) || ""
+                                ][6].name
+                            }
+                        />
+                    )}
                 </Paper>
             </Grid>
         </Grid>

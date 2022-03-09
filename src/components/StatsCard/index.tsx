@@ -49,7 +49,7 @@ const StatsCard = ({
                 <SkeletonRoundedCard variant="rectangular" height={337} />
             ) : (
                 <RoundedCard>
-                    <Grid container spacing={1}>
+                    <Grid container>
                         <Grid item container xs={12}>
                             <Grid item xs={12} sm={6}>
                                 <Select
@@ -75,9 +75,10 @@ const StatsCard = ({
                             </Grid>
                             <Grid
                                 item
-                                xs={12}
                                 sm={6}
+                                xs={12}
                                 display="flex"
+                                alignItems="flex-end"
                                 justifyContent={"flex-end"}
                             >
                                 <TimeFilter
