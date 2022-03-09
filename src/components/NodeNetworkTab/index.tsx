@@ -11,7 +11,7 @@ const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
 
     return (
         <Grid container spacing={3}>
-            <Grid md xs item lg={!isCollapse ? 3 : 1}>
+            <Grid md xs item lg={!isCollapse ? 4 : 1}>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
@@ -53,8 +53,8 @@ const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
                     />
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ p: 3, width: "100%" }}>
+            <Grid item lg={isCollapse ? 11 : 8} md xs>
+                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Network</Typography>
                     <LineChart hasData={true} title={"Throughput (U/L)"} />
                     <LineChart hasData={true} title={"Throughput (D/L)"} />

@@ -77,6 +77,7 @@ const ContainerJustifySpaceBtw = styled(Box)({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
+    textAlign: "center",
 });
 
 const RoundedCard = styled(Paper)(props => ({

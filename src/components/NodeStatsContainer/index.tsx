@@ -59,7 +59,7 @@ const NodeStatsContainer = ({
                     isClickable && handleAction && handleAction(index)
                 }
             >
-                <ContainerJustifySpaceBtw sx={{ pb: 1 }}>
+                <ContainerJustifySpaceBtw>
                     {!isCollapse && (
                         <Typography variant="h6">{title}</Typography>
                     )}

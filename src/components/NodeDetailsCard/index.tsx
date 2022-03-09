@@ -39,20 +39,29 @@ const NodeDetailsCard = ({
                                     }}
                                     label={
                                         <>
-                                            Software update available -- view
-                                            <LinkStyle
-                                                underline="hover"
-                                                onClick={() =>
-                                                    getNodeUpdateInfos()
-                                                }
-                                                sx={{
-                                                    fontSize: "14px",
-                                                    paddingLeft: 1,
-                                                    cursor: "pointer",
-                                                }}
-                                            >
-                                                notes
-                                            </LinkStyle>
+                                            <Stack direction="row">
+                                                <Typography variant="body2">
+                                                    Software update available —
+                                                    view view
+                                                </Typography>
+
+                                                <LinkStyle
+                                                    underline="hover"
+                                                    onClick={() =>
+                                                        getNodeUpdateInfos()
+                                                    }
+                                                    sx={{
+                                                        fontSize: "14px",
+                                                        paddingLeft: 1,
+                                                        cursor: "pointer",
+                                                        textDecoration:
+                                                            "underline",
+                                                        color: colors.primaryDark,
+                                                    }}
+                                                >
+                                                    notes
+                                                </LinkStyle>
+                                            </Stack>
                                         </>
                                     }
                                 />
