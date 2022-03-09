@@ -89,7 +89,7 @@ const NodeAppDetailsDialog = ({
                     <Stack direction="column" sx={{ mb: 4 }}>
                         <Typography variant="body1">CPU:{cpu} %</Typography>
                         <Typography variant="body1">
-                            Memory:{memory} KB
+                            MEMORY:{memory} KB
                         </Typography>
                     </Stack>
 
@@ -102,7 +102,7 @@ const NodeAppDetailsDialog = ({
                         <StackedAreaChart
                             hasData={true}
                             height={140}
-                            title={"Memory"}
+                            title={"MEMORY"}
                         />
                     </Stack>
                 </DialogContent>
