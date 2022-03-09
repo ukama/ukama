@@ -61,7 +61,6 @@ extern "C" {
 #define USYS_FALSE        false
 #define USYS_TRUE         true
 
-#define
 /**
  * @typedef USysMachineWord
  *

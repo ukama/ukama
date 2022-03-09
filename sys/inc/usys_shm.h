@@ -156,4 +156,5 @@ static inline void *usys_mremap(void *address, size_t length, size_t new_length,
 static inline void *usys_remap_shared_mem(void *old_address, size_t old_size,
                                           size_t new_size)
 
+#endif
 #endif /* USYS_SHM_H_ */
