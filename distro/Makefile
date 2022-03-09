@@ -9,6 +9,7 @@ DISTRODIR := $(dir $(DISTROMAKE))
 #Targets for the makefile
 DISTROSUBDIRS := system addons utils
 CROSSCCDIR := tools
+PLATFORM := platform
 
 
 #Final UKAMA ROOTFS path and name
@@ -28,7 +29,7 @@ $(info Skipping CC tools for $(TARGETBOARD))
 endif	
 
 
-.PHONY: subdirs $(DISTROSUBDIRS) vendor $(TOOLCHAIN) clean
+.PHONY: subdirs $(DISTROSUBDIRS) $(PLATFORM) vendor $(TOOLCHAIN) clean
 
 #Exporting Varibles
 export
@@ -38,8 +39,11 @@ ukamarfs: subdirs
 
 #Build subdirs
 subdirs: $(DISTROSUBDIRS)
-$(DISTROSUBDIRS): rootfs 
+$(DISTROSUBDIRS): rootfs $(PLATFORM)
 	$(MAKE) -C $@
+
+$(PLATFORM): $(TOOLCHAIN)
+	 $(MAKE) -C $@ CC=$(XGCCPATH)$(XGCC)
 
 #Root FS directory hierarchy
 rootfs: vendor
