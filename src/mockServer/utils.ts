@@ -8,21 +8,8 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import {
-    CpuUsageMetricsDto,
-    IOMetricsDto,
-    NodeDto,
-    NodeRFDto,
-    TemperatureMetricsDto,
-    ThroughputMetricsDto,
-    MemoryUsageMetricsDto,
-} from "../modules/node/types";
-import {
-    GetUserDto,
-    UserDto,
-    UsersAttachedMetricsDto,
-} from "../modules/user/types";
-import { getRecordsLengthByFilter } from "../utils";
+import { NodeDto } from "../modules/node/types";
+import { GetUserDto, UserDto } from "../modules/user/types";
 import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {
@@ -319,107 +306,9 @@ export const getNodeDetails = (req: Request, res: Response): void => {
     });
 };
 
-export const nodeMetaData = (req: Request, res: Response): void => {
-    res.send({
-        status: "success",
-        data: casual._nodeMetaData(),
-    });
-};
-
-export const nodePhysicalHealth = (req: Request, res: Response): void => {
-    res.send({
-        status: "success",
-        data: casual._nodePhysicalHealth(),
-    });
-};
-
 export const getNodeNetwork = (req: Request, res: Response): void => {
     res.send({
         status: "success",
         data: casual._nodeNetwork(),
-    });
-};
-
-export const getThroughputMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<ThroughputMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._throughputMetrics
-        ),
-    });
-};
-
-export const getUsersAttachedMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<UsersAttachedMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._usersAttachedMetrics
-        ),
-    });
-};
-
-export const getCpuUsageMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<CpuUsageMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._cpuUsageMetrics
-        ),
-    });
-};
-
-export const nodeRF = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<NodeRFDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._nodeRF
-        ),
-    });
-};
-
-export const getTemperatureMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<TemperatureMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._temperatureMetrics
-        ),
-    });
-};
-
-export const getIOMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<IOMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._ioMetrics
-        ),
-    });
-};
-
-export const getMemoryUsageMetrics = (req: Request, res: Response): void => {
-    const numberOfRecords = getRecordsLengthByFilter(req.query[0]?.toString());
-    res.send({
-        status: "success",
-        data: casual.randomArray<MemoryUsageMetricsDto>(
-            numberOfRecords,
-            numberOfRecords,
-            casual._memoryUsageMetrics
-        ),
     });
 };

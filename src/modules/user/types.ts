@@ -277,15 +277,3 @@ export class OrgUserResponse {
     @Field(() => [OrgUserDto])
     users: OrgUserDto[];
 }
-
-@ObjectType()
-export class UsersAttachedMetricsDto {
-    @Field({ nullable: true })
-    id: string;
-
-    @Field()
-    users: number;
-
-    @Field()
-    timestamp: number;
-}

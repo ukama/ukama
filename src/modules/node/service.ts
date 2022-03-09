@@ -2,19 +2,11 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
-    ThroughputMetricsDto,
     NodeDetailDto,
-    NodeMetaDataDto,
-    NodePhysicalHealthDto,
     NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
     UpdateNodeResponse,
-    CpuUsageMetricsDto,
-    IOMetricsDto,
-    NodeRFDto,
-    TemperatureMetricsDto,
-    MemoryUsageMetricsDto,
     MetricDto,
 } from "./types";
 import { INodeService } from "./interface";
@@ -23,7 +15,7 @@ import { HeaderType, MetricsInputDTO, PaginationDto } from "../../common/types";
 import NodeMapper from "./mapper";
 import { getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
-import { API_METHOD_TYPE, GRAPH_FILTER } from "../../constants";
+import { API_METHOD_TYPE } from "../../constants";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
 import { NetworkDto } from "../network/types";
@@ -95,21 +87,6 @@ export class NodeService implements INodeService {
         });
         return res.data;
     };
-
-    nodeMetaData = async (): Promise<NodeMetaDataDto> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_META_DATA,
-        });
-        return res.data;
-    };
-    nodePhysicalHealth = async (): Promise<NodePhysicalHealthDto> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_PHYSICAL_HEALTH,
-        });
-        return res.data;
-    };
     getNetwork = async (): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -117,69 +94,6 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
-    };
-    getThroughputMetrics = async (
-        filter: GRAPH_FILTER
-    ): Promise<[ThroughputMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_THROUGHPUT_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-
-        return res.data;
-    };
-    cpuUsageMetrics = async (
-        filter: GRAPH_FILTER
-    ): Promise<[CpuUsageMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_CPU_USAGE_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return res.data;
-    };
-    nodeRF = async (filter: GRAPH_FILTER): Promise<[NodeRFDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_RF_KPI,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return res.data;
-    };
-    temperatureMetrics = async (
-        filter: GRAPH_FILTER
-    ): Promise<[TemperatureMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_TEMPERATURE_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return res.data;
-    };
-    ioMetrics = async (filter: GRAPH_FILTER): Promise<[IOMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_IO_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        return res.data;
-    };
-    memoryUsageMetrics = async (
-        filter: GRAPH_FILTER
-    ): Promise<[MemoryUsageMetricsDto]> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_MEMORY_USAGE_METRICS,
-            params: `${filter}`,
-        });
-        if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
     getSingleMetric = async (

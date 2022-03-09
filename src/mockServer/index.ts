@@ -17,16 +17,7 @@ import {
     deleteRes,
     getUserByID,
     getNodeDetails,
-    nodeMetaData,
-    nodePhysicalHealth,
-    nodeRF,
     getNodeNetwork,
-    getCpuUsageMetrics,
-    getUsersAttachedMetrics,
-    getTemperatureMetrics,
-    getIOMetrics,
-    getThroughputMetrics,
-    getMemoryUsageMetrics,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -48,14 +39,5 @@ export const mockServer = (app: Express): void => {
     app.post("/node/delete_node", deleteRes);
     app.get("/user/get_user", getUserByID);
     app.get("/node/node_details", getNodeDetails);
-    app.get("/node/meta_data", nodeMetaData);
-    app.get("/node/physical_health", nodePhysicalHealth);
-    app.get("/node/rf_kpis", nodeRF);
     app.get("/node/get_network", getNodeNetwork);
-    app.get("/metrics/throughput", getThroughputMetrics);
-    app.get("/metrics/cpu", getCpuUsageMetrics);
-    app.get("/metrics/user", getUsersAttachedMetrics);
-    app.get("/metrics/temperature", getTemperatureMetrics);
-    app.get("/metrics/io", getIOMetrics);
-    app.get("/metrics/memory", getMemoryUsageMetrics);
 };

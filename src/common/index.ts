@@ -31,6 +31,5 @@ export const getHeaders = (ctx: Context): HeaderType => {
             cookie: ctx.cookie,
         };
     }
-
     return header;
 };

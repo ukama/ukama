@@ -4,7 +4,16 @@ import { NodeService } from "../service";
 import { getHeaders } from "../../../common";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsInputDTO } from "../../../common/types";
-import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
+import {
+    Resolver,
+    Query,
+    UseMiddleware,
+    Arg,
+    Ctx,
+    PubSubEngine,
+    PubSub,
+} from "type-graphql";
+import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
@@ -14,12 +23,20 @@ export class GetMetricsMemoryTRXResolver {
     @UseMiddleware(Authentication)
     async getMetricsMemoryTRX(
         @Ctx() ctx: Context,
-        @Arg("data") data: MetricsInputDTO
+        @Arg("data") data: MetricsInputDTO,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<MetricDto[] | null> {
-        return this.nodeService.getSingleMetric(
+        const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
-            "memory"
+            "memorytrxused"
         );
+        if (data.regPolling && metric && metric.length > 0) {
+            for (const element of metric) {
+                await oneSecSleep();
+                pubsub.publish("metricMemoryTrx", [element]);
+            }
+        }
+        return metric;
     }
 }

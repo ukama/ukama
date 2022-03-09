@@ -17,24 +17,24 @@ import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
-export class GetMetricsRxPowerResolver {
+export class GetMetricsDiskTRXResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async getMetricsRxPower(
+    async getMetricsDiskTRX(
         @Ctx() ctx: Context,
-        @PubSub() pubsub: PubSubEngine,
-        @Arg("data") data: MetricsInputDTO
+        @Arg("data") data: MetricsInputDTO,
+        @PubSub() pubsub: PubSubEngine
     ): Promise<MetricDto[] | null> {
         const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
-            "rxpower"
+            "disktrxused"
         );
         if (data.regPolling && metric && metric.length > 0) {
             for (const element of metric) {
                 await oneSecSleep();
-                pubsub.publish("metricRxPower", [element]);
+                pubsub.publish("metricDiskTrx", [element]);
             }
         }
         return metric;

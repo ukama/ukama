@@ -29,3 +29,6 @@ export const getRecordsLengthByFilter = (
             return 10;
     }
 };
+
+export const oneSecSleep = (t = 1000): any =>
+    new Promise(res => setTimeout(res, t));
