@@ -15,6 +15,7 @@
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_process.h"
 #include "usys_shm.h"
 #include "usys_string.h"
@@ -104,7 +105,8 @@ USysThreadId thread[2];
 USysMutex mutex;
 void *thread_function_with_mutex(void* arg) {
     USysError err;
-    int *tstat = (int*)arg;
+
+    int *tstat = usys_emalloc(sizeof(int));
 
     USysThreadId tmpid = usys_thread_id();
     usys_log_trace("Thread id %ld waiting for mutex", tmpid);
@@ -115,6 +117,7 @@ void *thread_function_with_mutex(void* arg) {
     /* Critical section begins */
 
     counter += 1;
+
     int temp = counter;
 
     usys_log_trace("Job %d has started", counter);
@@ -125,7 +128,7 @@ void *thread_function_with_mutex(void* arg) {
 
     usys_log_trace("Job %d has finished", counter);
 
-    TEST_ASSERT_EQUAL_INT_MESSAGE(temp, counter, "ctritical section access breach");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(temp, counter, "critical section access breach");
 
     /* Critical section begins */
 
@@ -143,7 +146,7 @@ void test_usys_threads_with_mutex() {
     USysError err;
     int ret = 0;
     int arg[2] = {0};
-    int *status[2] = {0};
+    int *status = 0;
     err = usys_mutex_init(&mutex);
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
@@ -157,12 +160,13 @@ void test_usys_threads_with_mutex() {
         idx++;
     }
 
-    ret = usys_thread_join(thread[0], (void **)(&status[0]));
+    ret = usys_thread_join(thread[0], (void **)(&status));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 1.");
-    TEST_ASSERT_EQUAL_INT_MESSAGE( 1, *status[0], "Thread 1 status failed");
+    usys_free(status);
 
-    ret = usys_thread_join(thread[1], (void **)(&status[1]));
+    ret = usys_thread_join(thread[1], (void **)(&status));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 2.");
+    usys_free(status);
 
     /* Mutex destroy */
     err = usys_mutex_destroy(&mutex);
@@ -176,7 +180,8 @@ USysSem sem;
 
 void *thread_function_with_semaphore(void* arg) {
     USysError err;
-    int *tstat = (int*)arg;
+
+    int *tstat = usys_emalloc(sizeof(int));
 
     USysThreadId tmpid = usys_thread_id();
     usys_log_trace("Thread id %ld waiting for sem", tmpid);
@@ -197,7 +202,7 @@ void *thread_function_with_semaphore(void* arg) {
 
     usys_log_trace("Job %d has finished", counter);
 
-    TEST_ASSERT_EQUAL_INT_MESSAGE(temp, counter, "ctritical section access breach");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(temp, counter, "critical section access breach");
 
     /* Critical section begins */
 
@@ -214,7 +219,7 @@ void test_usys_threads_with_semaphore() {
     USysError err;
     int ret = 0;
     int arg[2] = {0};
-    int *status[2] = {0};
+    int *status = 0;
     err = usys_sem_init(&sem, 1);
     TEST_ASSERT_MESSAGE(ERR_NONE == err, usys_error(err));
 
@@ -228,12 +233,13 @@ void test_usys_threads_with_semaphore() {
         idx++;
     }
 
-    ret = usys_thread_join(thread[0], (void **)(&status[0]));
+    ret = usys_thread_join(thread[0], (void **)(&status));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 1.");
-    TEST_ASSERT_EQUAL_INT_MESSAGE( 1, *status[0], "Thread 1 status failed");
+    usys_free(status);
 
-    ret = usys_thread_join(thread[1], (void **)(&status[1]));
+    ret = usys_thread_join(thread[1], (void **)(&status));
     TEST_ASSERT_MESSAGE(ret == 0, "Failed to join thread 2.");
+    usys_free(status);
 
     /* Mutex destroy */
     err = usys_sem_destroy(&sem);
