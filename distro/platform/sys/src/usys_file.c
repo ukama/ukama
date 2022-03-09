@@ -346,7 +346,7 @@ int usys_file_cleanup(void *fname) {
     return ret;
 }
 
-USysError usys_file_rename(char *old_name, char *new_name) {
+int usys_file_rename(char *old_name, char *new_name) {
 	int ret = 0;
 	ret = usys_rename(old_name, new_name);
 	if (!ret) {
