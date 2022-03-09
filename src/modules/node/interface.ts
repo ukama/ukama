@@ -12,8 +12,6 @@ import {
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDetailDto,
-    NodeMetaDataDto,
-    NodePhysicalHealthDto,
     OrgMetricResponse,
     MetricDto,
 } from "./types";
@@ -22,8 +20,6 @@ export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
     getNetwork(): Promise<NetworkDto>;
     getNodeDetials(): Promise<NodeDetailDto>;
-    nodeMetaData(): Promise<NodeMetaDataDto>;
-    nodePhysicalHealth(): Promise<NodePhysicalHealthDto>;
     getNodesByOrg(
         orgId: string,
         header: HeaderType

@@ -8,17 +8,8 @@ import {
 import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
-import {
-    CpuUsageMetricsDto,
-    IOMetricsDto,
-    NodeDto,
-    NodeRFDto,
-    TemperatureMetricsDto,
-    ThroughputMetricsDto,
-    MemoryUsageMetricsDto,
-} from "../modules/node/types";
+import { NodeDto } from "../modules/node/types";
 import { GetUserDto, UserDto } from "../modules/user/types";
-import { getRecordsLengthByFilter } from "../utils";
 import casual from "./mockData/casual";
 
 export const getUser = (req: Request, res: Response): void => {

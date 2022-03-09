@@ -1,6 +1,5 @@
 import { Meta } from "../common/types";
 import { GRAPH_FILTER } from "../constants";
-import { MetricDto } from "../modules/node/types";
 
 export const getPaginatedOutput = (
     page: number,

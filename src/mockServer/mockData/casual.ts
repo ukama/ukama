@@ -13,16 +13,8 @@ import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
-    CpuUsageMetricsDto,
-    ThroughputMetricsDto,
-    IOMetricsDto,
     NodeDetailDto,
     NodeDto,
-    NodeMetaDataDto,
-    NodePhysicalHealthDto,
-    NodeRFDto,
-    TemperatureMetricsDto,
-    MemoryUsageMetricsDto,
     UpdateNodeResponse,
 } from "../../modules/node/types";
 
@@ -32,7 +24,6 @@ import {
     UserDto,
     UserResponse,
 } from "../../modules/user/types";
-import { getUniqueTimeStamp } from "../../utils";
 
 function randomArray<T>(
     minLength: number,

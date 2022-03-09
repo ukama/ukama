@@ -17,7 +17,7 @@ import {
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
 import UserMapper from "./mapper";
-import { API_METHOD_TYPE, GRAPH_FILTER, TIME_FILTER } from "../../constants";
+import { API_METHOD_TYPE, TIME_FILTER } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
