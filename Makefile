@@ -5,116 +5,104 @@
 # Makefile for the platform library
 #
 
-include ../../../config.mk
+include ../../config.mk
 
-PROJECT := $(notdir $(CURDIR))
-PLATFORMLIB := usys
-BUILDSATICLIB = lib$(PLATFORMLIB).a
-BUILDDYNAMICLIB = $(BUILDDIR)/lib$(PLATFORMLIB).so
-PLATFORMLIBS = $(BUILDDYNAMICLIB)
-TESTEXEC = $(BUILDDIR)/$(PROJECT)
+# Targets
+TARGET := usys
+TARGET_LIB := lib$(TARGET).so
+UTEST_BIN := platform
 
-VERSION = v0.0.1
-
-UNITYROOT := ../tools/unity
-SRCDIRS := sys/src log/src
-INCDIRS := sys/inc log/inc $(UNITYROOT)/src
-BUILDDIR := build
-TESTDIRS := test $(UNITYROOT)/src
-# Source extensions
-SRCEXTS := c
-
-# Header extensions
-HDREXTS := h 
-
-# List of all recognized files found in the specified directories for test
-SOURCES := $(foreach dir, $(SRCDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
-OBJECTS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(SOURCES))))
-INCLUDES := $(foreach dir, $(INCDIRS), $(foreach ext, $(HDREXTS), $(wildcard $(dir)/*.$(ext))))
-
-TESTSRCS := $(foreach dir, $(TESTDIRS), $(foreach ext, $(SRCEXTS), $(wildcard $(dir)/*.$(ext))))
-TESTOBJS := $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.o, $(filter %.$(ext), $(TESTSRCS))))
-
-$(info Sources :: $(SOURCES))
-$(info Includes:: $(INCLUDES))
-$(info Objects :: $(OBJECTS))
+# Source paths
+UNITY_ROOT := ../tools/unity
+SRC_DIRS := sys/src log/src
+INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src
+BUILD_DIR := build
+TEST_DIRS := test $(UNITY_ROOT)/src
 
 # Compilers and flags
 ifdef XGCCPATH
-CC = $(XGCCPATH)$(XGCC)
-LD = $(XGCCPATH)$(XLD)
+XCC = $(XGCCPATH)$(XGCC)
+XLD = $(XGCCPATH)$(XLD)
 else
-CC=gcc
+XCC=gcc
 endif
 
-LDLIBS = -lpthread -lrt
+# Libraries
+LIBS+=-lpthread
+LIBS+=-lrt
 
-override CFLAGS += -g -Wall -Wno-unused-variable -fPIC -DHAVE_SYS_TIME_H -DDMT_ABORT_NULL
-override LDFLAGS +=  $(LDPATH) -L$(CURDIR)/$(BUILDDIR) $(LDLIBS) 
-INCFLAGS := $(INCDIRS:%=-I%)
-DEPFLAGS := -MMD -MP
-MEMCHECKREPORT := $(BUILDDIR)/memcheck.report
+# Compiler flags
+CFLAGS+=-g
+CFLAGS+=-Wall
+CFLAGS+=-Wno-unused-variable
+CFLAGS+=-fPIC
+CFLAGS+=-DHAVE_SYS_TIME_H
+
+LDFLAGS+=$(LDPATH)
+LDFLAGS+=-L$(CURDIR)/$(BUILD_DIR) 
+
+# Memory check and input flags
+MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
+MEMCHECK := valgrind
+MEMCHECK_FLAGS+=--log-file=$(MEMCHECK_REPORT)
+MEMCHECK_FLAGS+=--track-origins=yes
+MEMCHECK_FLAGS+=--leak-check=full 
+MEMCHECK_FLAGS+=--show-leak-kinds=all
+
+# Source extensions
+SRC_EXTS := c
+
+# Header extensions
+HDR_EXTS := h 
+
+# List of all recognized files found in the specified directories for test
+CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
+OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(CFILES))))
+INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
+
+# Unit Test 
+TEST_CFILES := $(foreach dir, $(TEST_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
+TEST_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(TEST_CFILES))))
+
+INC_FILES := $(INC_DIRS:%=-I%)
 
 $(info CC:: $(CC))
 $(info LDFLAGS :: $(LDFLAGS))
 
-# Tools and flags
-CPPLINT := cpplint
-override CPPLINTFLAGS += --linelength=100 --filter=-build/header_guard,-runtime/references,-runtime/indentation_namespace,-build/namespaces --extensions=$(subst $( ),$(,),$(SRCEXTS)) --headers=$(subst $( ),$(,),$(HDREXTS))
-CPPCHECK := cppcheck
-override CPPCHECKFLAGS += --enable=style,warning,missingInclude
-MEMCHECK := valgrind
-override MEMCHECKFLAGS += --log-file=$(MEMCHECKREPORT) --track-origins=yes --leak-check=full --show-leak-kinds=all
+$(info CFILES :: $(CFILES))
+$(info OBJFILES :: $(OBJFILES))
+$(info INC :: $(INC_FILES))
 
-# This makefile name
-MAKEFILE := $(lastword $(MAKEFILE_LIST))
-
-# Function to compile using $(CC) : (files: .c)
-define compilecc
-	@mkdir -p $(dir $1)
-	@$(CC) -c $2 -o $1 $(CFLAGS) $(INCFLAGS) -MT $1 -MF $(BUILDDIR)/$3.Td $(DEPFLAGS)
-	@mv -f $(BUILDDIR)/$3.Td $(BUILDDIR)/$3.d && touch $1
-	@echo CC: $1
-endef
-
-# Rules to build objects for each source file extension
-$(BUILDDIR)/%.o: %.c $(BUILDDIR)/%.d $(MAKEFILE) $@
-	$(call compilecc,$@,$<,$*)
-
-$(BUILDDIR)/%.d: ;
-
-
-.PHONY: all help run clean force cpplint cppcheck info list-headers list-sources list-objects debug container $(PLATFORMLIBS) 
+.PHONY: $(TARGET_LIB) $(TEST_EXE) $(BUILD) formatcodestyle checkcodestyle memcheck clean
 
 # Main target for building
-all: $(PLATFORMLIBS) $(TESTEXEC)
+all: $(TARGET_LIB) $(UTEST_BIN)
 	@echo Done.
 
-# Print commands
-help:
-	@echo "Some useful make targets:"
-	@echo " make all          - Build entire project (modified sources only or dependents)"
-	@echo " make run          - Build and launch excecutable immediately"
-	@echo " make force        - Force rebuild of entire project (clean first)"
-	@echo " make clean        - Remove all build output"
-	@echo " make info         - Print out project configurations"
-	@echo " make format-style  - Format your code to Ukama C Style"	
-	@echo " make check-style   - Ukama C style checker tool"
-	@echo " make memcheck     - Launch executable and does memory analysis."
-	@echo " make cppcheck     - Static code analysis tool for the C and C++"
-	@echo " make list-headers - Print out all recognized headers files"
-	@echo " make list-sources - Print out all recognized sources files"
-	@echo " make list-objects - Print out final objects"
-	@echo ""
+# CLANG FORMAT
+define clang-format
+	@echo "Formatting $1"; 
+	$(shell clang-format-9 -i $1;)
+	$(shell clang-tidy-10 -checks='-*,readability-identifier-naming' \
+		    -config="{CheckOptions: [ \
+		    { key: readability-identifier-naming.NamespaceCase, value: camelBack },\
+		    { key: readability-identifier-naming.ClassCase, value: CamelCase  },\
+		    { key: readability-identifier-naming.StructCase, value: CamelCase  },\
+		    { key: readability-identifier-naming.FunctionCase, value: lower_case },\
+		    { key: readability-identifier-naming.VariableCase, value: camelBack },\
+		    { key: readability-identifier-naming.TypedefCase, value: CamelCase },\
+		    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack },\
+		    { key: readability-braces-around-statements.ShortStatementLines, value: 0}\
+		    ]}" --fix "$1" -- $(INCFLAGS) )
+endef
 
-format-style:
+# Format code to ukama style
+formatcodestyle:
 	$(foreach src, $(SOURCES), $(call clang-format,$(src)))	
 	@echo "Source file Done."
-	#$(foreach inc, $(INCLUDES), $(call clang-format,$(inc)))
-	#@echo "Include file Done."
 
-
-check-style:
+# Check ukama code style
+checkcodestyle:
 	$(eval CWD = $(shell pwd))
 	echo $(CWD)
 	@for src in $(SOURCES) ; do \
@@ -143,109 +131,30 @@ check-style:
 	done
 	@echo "Ukama Coding Style check pass..!!"
 
-# Make sure Make do not delete included dependencies files
-.PRECIOUS: $(BUILDDIR)/%.d
-
-# Include the dependency files here (should not be before first target)
-include $(wildcard $(foreach ext, $(SRCEXTS), $(patsubst %.$(ext), $(BUILDDIR)/%.d, $(filter %.$(ext), $(SOURCES)))))
-
-$(PLATFORMLIBS): $(OBJECTS)
+# Build Target lib
+$(TARGET_LIB): $(OBJFILES)
 	@echo "Building dynamic lib" 
-	$(CC) -o $@ $^ $(LDPATH) $(LDLIBS) -shared
+	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
 
+# Build Unit test binary
+$(UTEST_BIN):$(TEST_OBJFILES) $(TARGET_LIB)
+	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TARGET)
+	@echo CC: $(BUILD_DIR)/$@ 
 
-# Compile binary if necessary, checks for modified files first
-$(TESTEXEC):$(TESTOBJS) $(PLATFORMLIBS) $(MAKEFILE) $@
-ifeq ($(filter-out %.c,$(TESTSRCS)),$(blank))
-	@$(CC) -o $@ $(TESTOBJS) $(LINKFLAG) $(CFLAGS) $(LDFLAGS) -l$(PLATFORMLIB)
-	@echo CC: $@ 
-else
-	$(CXX) -o $@ $(TESTOBJS) $(CXXFLAGS) $(LDFLAGS) -l$(PLATFORMLIBS)
-	@echo CXX: $@
-endif
+# Build Object files 
+$(BUILD_DIR)/%.o: %.c 
+	mkdir -p $(dir $@)
+	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
-run: $(TESTEXEC)
-	@LD_LIBRARY_PATH=$(BUILDDIR) ./$(TESTEXEC)
-	
+# Memory check
+memcheck: $(UTEST_BIN)
+	LD_LIBRARY_PATH=$(BUILD_DIR) $(MEMCHECK) $(MEMCHECK_FLAGS) ./$(BUILD_DIR)/$(UTEST_BIN)
+		
 # Clean all build files
 clean:
-	rm -rf $(PLATFORMLIBS)
-	rm -rf $(BUILDDIR)
+	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
 
-# Force build of all files
-force: clean all
-
-# C++ style checker tool (following Google's C++ style guide)
-cpplint:
-	@$(CPPLINT) $(CPPLINTFLAGS) $(SOURCES) $(INCLUDES)
-
-# Static code analysis tool for the C and C++
-cppcheck:
-	@$(CPPCHECK) $(CPPCHECKFLAGS) $(SOURCES) $(INCLUDES) $(INCFLAGS)
-
-# Prints out project configurations
-info:
-	@echo Project: $(PROJECT)
-	@echo Excecutable: $(EXCECUTABLE)
-	@echo SourceDirs: $(SRCDIRS)
-	@echo IncludeDirs: $(INCDIRS)
-	@echo BuildDir: $(BUILDDIR)
-	@echo CC: $(CC)
-	@echo CCFlags: $(CFLAGS)
-	@echo LDFlags: $(LDFLAGS)
-	@echo IncFlags: $(INCFLAGS)
-	@echo DepFlags: $(DEPFLAGS)
-	@echo CppLintFlags : $(CPPLINTFLAGS)
-	@echo CppCheckFlags: $(CPPCHECKFLAGS)
-	@echo MemCheckFlags: $(MEMCHECKFLAGS)
 
 
-list-sources:
-	$(foreach src, $(SOURCES), $(call print,$(src)))
 
-list-headers:
-	$(foreach hdr, $(INCLUDES), $(call print,$(hdr)))
-
-list-objects:
-	$(foreach obj, $(OBJECTS), $(call print,$(obj)))
-
-
-# Debugging of this makefile, for development
-debug:
-	@echo SourceExts: $(SRCEXTS)
-	@echo HeaderExts: $(HDREXTS)
-#
-# ### CLANG FORMAT ###
-#
-define clang-format
-	@echo "Formatting $1"; 
-	$(shell clang-format-9 -i $1;)
-	$(shell clang-tidy-10 -checks='-*,readability-identifier-naming' \
-		    -config="{CheckOptions: [ \
-		    { key: readability-identifier-naming.NamespaceCase, value: camelBack },\
-		    { key: readability-identifier-naming.ClassCase, value: CamelCase  },\
-		    { key: readability-identifier-naming.StructCase, value: CamelCase  },\
-		    { key: readability-identifier-naming.FunctionCase, value: lower_case },\
-		    { key: readability-identifier-naming.VariableCase, value: camelBack },\
-		    { key: readability-identifier-naming.TypedefCase, value: CamelCase },\
-		    { key: readability-identifier-naming.GlobalConstantCase, value: camelBack },\
-		    { key: readability-braces-around-statements.ShortStatementLines, value: 0}\
-		    ]}" --fix "$1" -- $(INCFLAGS) )
-endef
-
-# 
-# ### Utils ###
-#
-define print
-	@echo $1
-
-endef
-
-# comma -> $(,)
-, = ,
-# blank -> $(blank)
-blank =
-# space -> $( )
-space = $(blank) $(blank)
-$(space) = $(space)
