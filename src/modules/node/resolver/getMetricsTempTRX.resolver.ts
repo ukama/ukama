@@ -17,11 +17,11 @@ import { oneSecSleep } from "../../../utils";
 
 @Service()
 @Resolver()
-export class GetMetricsTemperatureCOMResolver {
+export class GetMetricsTempTRXResolver {
     constructor(private readonly nodeService: NodeService) {}
     @Query(() => [MetricDto])
     @UseMiddleware(Authentication)
-    async getMetricsTemperatureCOM(
+    async getMetricsTempTRX(
         @Ctx() ctx: Context,
         @Arg("data") data: MetricsInputDTO,
         @PubSub() pubsub: PubSubEngine
@@ -29,15 +29,14 @@ export class GetMetricsTemperatureCOMResolver {
         const metric = await this.nodeService.getSingleMetric(
             data,
             getHeaders(ctx),
-            "temperaturecom"
+            "temperaturetrx"
         );
         if (data.regPolling && metric && metric.length > 0) {
             for (const element of metric) {
                 await oneSecSleep();
-                pubsub.publish("metricTempCom", [element]);
+                pubsub.publish("metricTempTrx", [element]);
             }
         }
-
         return metric;
     }
 }
