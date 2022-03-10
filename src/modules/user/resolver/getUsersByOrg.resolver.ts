@@ -13,7 +13,7 @@ export class GetUsersByOrgResolver {
 
     @Query(() => OrgUserResponseDto)
     @UseMiddleware(Authentication)
-    async myUsers(
+    async getUsersByOrg(
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
     ): Promise<OrgUserResponseDto> {

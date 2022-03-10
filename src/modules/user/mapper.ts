@@ -60,8 +60,9 @@ class UserMapper implements IUserMapper {
                     11010,
                     99999
                 )}`,
-                dataPlan: defaultCasual.integer(5, 60),
-                dataUsage: defaultCasual.integer(1, 39),
+                dataPlan: 1024,
+                dataUsage: defaultCasual.integer(1, 1024),
+                phone: "123456789",
                 roaming: defaultCasual.random_value([true, false]),
             };
             users.push(userObj);
