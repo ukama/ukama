@@ -135,7 +135,7 @@ const Nodes = () => {
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
     ] = useGetMetricsThroughputUlLazyQuery();
 
-    const {} = useGetMetricsThroughputUlsSubscription({
+    useGetMetricsThroughputUlsSubscription({
         skip: selectedTab !== 1,
         onSubscriptionData: res => {
             setThroughputULMetric(
@@ -158,7 +158,7 @@ const Nodes = () => {
         { data: metricThroughtputDlRes, refetch: metricThroughtputDlRefetch },
     ] = useGetMetricsThroughputDlLazyQuery();
 
-    const {} = useGetMetricsThroughputDlsSubscription({
+    useGetMetricsThroughputDlsSubscription({
         skip: selectedTab !== 1,
         onSubscriptionData: res => {
             setThroughputDLMetric(
@@ -181,7 +181,7 @@ const Nodes = () => {
         { data: metricCpuTrxRes, refetch: metricCpuTrxRefetch },
     ] = useGetMetricsCpuTrxLazyQuery();
 
-    const {} = useGetMetricsCpuTrxsSubscription({
+    useGetMetricsCpuTrxsSubscription({
         skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setCpuTrxMetric(
@@ -203,7 +203,7 @@ const Nodes = () => {
         { data: metricMemoryTrxRes, refetch: metricMemoryTrxRefetch },
     ] = useGetMetricsMemoryTrxLazyQuery();
 
-    const {} = useGetMetricsMemoryTrxsSubscription({
+    useGetMetricsMemoryTrxsSubscription({
         skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setMemoryTrxMetric(
@@ -226,7 +226,7 @@ const Nodes = () => {
         { data: metricUptimeTrxRes, refetch: metricUptimeRefetch },
     ] = useGetMetricsUptimeLazyQuery();
 
-    const {} = useGetMetricsUptimeSSubscription({
+    useGetMetricsUptimeSSubscription({
         skip: selectedTab !== 0,
         onSubscriptionData: res => {
             setUptimeMetrics(
