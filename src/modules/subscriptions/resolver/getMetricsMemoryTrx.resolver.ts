@@ -4,11 +4,11 @@ import { MetricDto } from "../../node/types";
 
 @Service()
 @Resolver()
-export class GetMetricsMemoryTrxSubscriptionResolver {
+export class GetMetricsMemoryTRXSubscriptionResolver {
     @Subscription(() => [MetricDto], {
         topics: "metricMemoryTrx",
     })
-    async getMetricsMemoryTrx(@Root() data: [MetricDto]): Promise<MetricDto[]> {
+    async getMetricsMemoryTRX(@Root() data: [MetricDto]): Promise<MetricDto[]> {
         return data;
     }
 }
