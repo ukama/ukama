@@ -25,7 +25,6 @@ import {
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
-    useGetResidentsQuery,
     useGetNodesByOrgQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
@@ -37,6 +36,7 @@ import {
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
     GetLatestConnectedUsersSubscription,
+    useGetUsersByOrgQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
@@ -51,7 +51,7 @@ const Home = () => {
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const orgId = useRecoilValue(organizationId);
+    const orgId = useRecoilValue(organizationId) || "";
     const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -73,64 +73,6 @@ const Home = () => {
             filter: userStatusFilter,
         },
     });
-    useEffect(() => {
-        if (connectedUserRes) {
-            subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>(
-                {
-                    document: GetLatestConnectedUsersDocument,
-                    updateQuery: (prev, { subscriptionData }) => {
-                        let data = { ...prev };
-                        const latestConnectedUser =
-                            subscriptionData.data.getConnectedUsers;
-                        if (
-                            latestConnectedUser.__typename ===
-                            "ConnectedUserDto"
-                        )
-                            data.getConnectedUsers = latestConnectedUser;
-                        return data;
-                    },
-                }
-            );
-        }
-    }, [connectedUserRes]);
-
-    const {
-        data: residentsRes,
-        loading: residentsloading,
-        refetch: refetchUser,
-    } = useGetResidentsQuery({
-        variables: {
-            data: {
-                pageNo: 1,
-                pageSize: 50,
-            },
-        },
-    });
-
-    const {
-        data: dataUsageRes,
-        loading: dataUsageloading,
-        subscribeToMore: subscribeToLatestDataUsage,
-    } = useGetDataUsageQuery({
-        variables: {
-            filter: dataStatusFilter,
-        },
-    });
-    useEffect(() => {
-        if (dataUsageRes) {
-            subscribeToLatestDataUsage<GetLatestDataUsageSubscription>({
-                document: GetLatestDataUsageDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = { ...prev };
-                    const latestDataUsage = subscriptionData.data.getDataUsage;
-                    if (latestDataUsage.__typename === "DataUsageDto")
-                        data.getDataUsage = latestDataUsage;
-                    return data;
-                },
-            });
-        }
-    }, [dataUsageRes]);
-
     const {
         data: dataBillingRes,
         loading: dataBillingloading,
@@ -140,23 +82,30 @@ const Home = () => {
             filter: billingStatusFilter,
         },
     });
-    useEffect(() => {
-        if (dataBillingRes) {
-            subscribeToLatestDataBill<GetLatestDataBillSubscription>({
-                document: GetLatestDataBillDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = { ...prev };
-                    const latestDataBill = subscriptionData.data.getDataBill;
-                    if (latestDataBill.__typename === "DataBillDto")
-                        data.getDataBill = latestDataBill;
-                    return data;
-                },
-            });
-        }
-    }, [dataBillingRes]);
+    const {
+        data: dataUsageRes,
+        loading: dataUsageloading,
+        subscribeToMore: subscribeToLatestDataUsage,
+    } = useGetDataUsageQuery({
+        variables: {
+            filter: dataStatusFilter,
+        },
+    });
+
+    const {
+        data: residentsRes,
+        loading: residentsloading,
+        refetch: refetchUser,
+    } = useGetUsersByOrgQuery({
+        variables: {
+            orgId: orgId,
+        },
+    });
 
     const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
-        variables: { orgId: orgId || "" },
+        variables: {
+            orgId: orgId,
+        },
     });
 
     const {
@@ -168,6 +117,65 @@ const Home = () => {
             filter: Network_Type.Public,
         },
     });
+
+    const subToConnectedUser = () =>
+        subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
+            document: GetLatestConnectedUsersDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestConnectedUser =
+                    subscriptionData.data.getConnectedUsers;
+                if (latestConnectedUser.__typename === "ConnectedUserDto")
+                    data.getConnectedUsers = latestConnectedUser;
+                return data;
+            },
+        });
+
+    const subToDataUsage = () =>
+        subscribeToLatestDataUsage<GetLatestDataUsageSubscription>({
+            document: GetLatestDataUsageDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestDataUsage = subscriptionData.data.getDataUsage;
+                if (latestDataUsage.__typename === "DataUsageDto")
+                    data.getDataUsage = latestDataUsage;
+                return data;
+            },
+        });
+
+    const subToDataBill = () =>
+        subscribeToLatestDataBill<GetLatestDataBillSubscription>({
+            document: GetLatestDataBillDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestDataBill = subscriptionData.data.getDataBill;
+                if (latestDataBill.__typename === "DataBillDto")
+                    data.getDataBill = latestDataBill;
+                return data;
+            },
+        });
+
+    useEffect(() => {
+        let unsub = subToConnectedUser();
+        return () => {
+            unsub && unsub();
+        };
+    }, [connectedUserRes]);
+
+    useEffect(() => {
+        let unsub = subToDataUsage();
+        return () => {
+            unsub && unsub();
+        };
+    }, [dataUsageRes]);
+
+    useEffect(() => {
+        let unsub = subToDataBill();
+        return () => {
+            unsub && unsub();
+        };
+    }, [dataBillingRes]);
+
     useEffect(() => {
         if (networkStatusRes) {
             subscribeToLatestNetworkStatus<GetLatestNetworkSubscription>({
@@ -362,20 +370,10 @@ const Home = () => {
                             <ContainerHeader
                                 title="Residents"
                                 showButton={false}
-                                stats={`${
-                                    residentsRes?.getResidents?.residents
-                                        ?.activeResidents || "0"
-                                }/${
-                                    residentsRes?.getResidents?.residents
-                                        ?.totalResidents || "-"
-                                }`}
                             />
                             <DataTableWithOptions
                                 columns={DataTableWithOptionColumns}
-                                dataset={
-                                    residentsRes?.getResidents.residents
-                                        .residents
-                                }
+                                dataset={residentsRes?.getUsersByOrg.users}
                                 menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                 onMenuItemClick={onResidentsTableMenuItem}
                             />

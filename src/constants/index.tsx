@@ -1468,7 +1468,6 @@ const HealtChartsConfigure: any = {
 };
 
 export {
-    UserData,
     NodeApps,
     NodeAppLogs,
     SimCardData,

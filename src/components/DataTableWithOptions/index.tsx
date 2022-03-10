@@ -49,7 +49,7 @@ const CellValueByType = ({
                 />
             );
         default:
-            return <>{`${row[type]} GB`}</>;
+            return <>{`${row[type]} MB`}</>;
     }
 };
 

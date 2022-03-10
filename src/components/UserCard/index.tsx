@@ -1,36 +1,27 @@
 import { colors } from "../../theme";
+import { GetUserDto } from "../../generated";
 import { Grid, Button, Typography, LinearProgress, Stack } from "@mui/material";
 
 type UserCardProps = {
-    id: string;
-    name: string;
-    dataPlan: number;
-    dataUsage: number;
-    eSimNumber: string;
-    handleMoreUserdetails?: any;
+    user: GetUserDto;
+    // eslint-disable-next-line no-unused-vars
+    handleMoreUserdetails: (user: GetUserDto) => void;
 };
 
-const UserCard = ({
-    id,
-    name,
-    dataPlan,
-    dataUsage,
-    eSimNumber,
-    handleMoreUserdetails,
-}: UserCardProps) => {
+const UserCard = ({ user, handleMoreUserdetails }: UserCardProps) => {
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <Typography variant="body2" color="textSecondary">
-                    {eSimNumber}
+                    {user.eSimNumber}
                 </Typography>
             </Grid>
             <Grid item xs={12}>
-                <Typography variant="h5">{name}</Typography>
+                <Typography variant="h5">{user.name}</Typography>
             </Grid>
             <Grid item xs={6}>
                 <Stack direction="row" spacing={"4px"} alignItems="baseline">
-                    <Typography variant="h5">{`${dataPlan}`}</Typography>
+                    <Typography variant="h5">{user.dataPlan}</Typography>
                     <Typography variant="body2" textAlign={"end"}>
                         GB
                     </Typography>
@@ -38,13 +29,13 @@ const UserCard = ({
             </Grid>
             <Grid item xs={6} alignSelf="end" mb={"2px"}>
                 <Typography variant="body2" textAlign={"end"}>
-                    {`${dataUsage} GB free data left`}
+                    {`${user.dataUsage} GB free data left`}
                 </Typography>
             </Grid>
             <Grid item xs={12}>
                 <LinearProgress
                     variant="determinate"
-                    value={dataPlan - dataUsage}
+                    value={user.dataPlan - user.dataUsage}
                     sx={{
                         height: "8px",
                         borderRadius: "2px",
@@ -55,7 +46,7 @@ const UserCard = ({
             <Grid item xs={12}>
                 <Button
                     variant="text"
-                    onClick={() => handleMoreUserdetails(id)}
+                    onClick={() => handleMoreUserdetails(user)}
                 >
                     VIEW MORE
                 </Button>

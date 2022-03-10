@@ -2,7 +2,7 @@ import { colors } from "../../theme";
 import { styled } from "@mui/material/styles";
 import InputBase from "@mui/material/InputBase";
 import SearchIcon from "@mui/icons-material/Search";
-import { Grid, Stack, Button, Typography, IconButton } from "@mui/material";
+import { Grid, Stack, Button, Typography } from "@mui/material";
 
 import { useState, useEffect } from "react";
 type ContainerHeaderProps = {
@@ -38,7 +38,7 @@ const ContainerHeader = ({
     const [currentSearchValue, setCurrentSearchValue] = useState<string>("");
 
     useEffect(() => {
-        handleSearchChange(currentSearchValue);
+        handleSearchChange(currentSearchValue.toLowerCase());
     }, [currentSearchValue]);
 
     return (
@@ -55,13 +55,15 @@ const ContainerHeader = ({
                     sx={{ alignItems: "baseline" }}
                 >
                     <Typography variant="h6">{title}</Typography>
-                    <Typography
-                        variant="subtitle2"
-                        letterSpacing="4px"
-                        color={"textSecondary"}
-                    >
-                        &#40;{stats}&#41;
-                    </Typography>
+                    {stats && (
+                        <Typography
+                            variant="subtitle2"
+                            letterSpacing="4px"
+                            color={"textSecondary"}
+                        >
+                            &#40;{stats}&#41;
+                        </Typography>
+                    )}
                 </Stack>
             </Grid>
 
@@ -82,13 +84,7 @@ const ContainerHeader = ({
                                 padding: "4px 8px 4px 12px !important",
                             }}
                             endAdornment={
-                                <IconButton
-                                    color="primary"
-                                    aria-label="simSearch"
-                                    component="span"
-                                >
-                                    <SearchIcon fontSize="small" />
-                                </IconButton>
+                                <SearchIcon fontSize="small" color="primary" />
                             }
                         />
                     </Grid>
