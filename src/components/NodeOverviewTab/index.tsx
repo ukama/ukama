@@ -10,11 +10,11 @@ import ApexLineChartIntegration from "../ApexLineChart";
 interface INodeOverviewTab {
     loading: boolean;
     uptimeMetrics: any;
-    graphFilters: TObject;
+    tempTrxMetric: any;
+    tempComMetric: any;
     nodeDetails: TObject[];
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
-    handleGraphFilterChange: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
 }
@@ -22,10 +22,11 @@ interface INodeOverviewTab {
 const NodeOverviewTab = ({
     loading,
     selectedNode,
+    tempTrxMetric,
+    tempComMetric,
     uptimeMetrics,
     handleUpdateNode,
     isUpdateAvailable,
-    handleGraphFilterChange,
     getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
@@ -35,8 +36,6 @@ const NodeOverviewTab = ({
     }, [selectedNode]);
 
     const handleOnSelected = (value: number) => setSelected(value);
-    const onfilterChange = (key: string, value: string) =>
-        handleGraphFilterChange(key, value);
 
     return (
         <Grid container spacing={2}>
@@ -153,24 +152,23 @@ const NodeOverviewTab = ({
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][0].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={tempTrxMetric}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][0].name
-                                }
-                                handleFilterChange={(value: string) =>
-                                    onfilterChange("memoryTrx", value)
                                 }
                             />
                         )}
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][1].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={tempComMetric}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][1].name

@@ -529,8 +529,8 @@ export type Query = {
     getMetricsRxPower: Array<MetricDto>;
     getMetricsSubActive: Array<MetricDto>;
     getMetricsSubAttached: Array<MetricDto>;
-    getMetricsTemperatureCOM: Array<MetricDto>;
-    getMetricsTemperatureTRX: Array<MetricDto>;
+    getMetricsTempCOM: Array<MetricDto>;
+    getMetricsTempTRX: Array<MetricDto>;
     getMetricsThroughputDL: Array<MetricDto>;
     getMetricsThroughputUL: Array<MetricDto>;
     getMetricsTxPower: Array<MetricDto>;
@@ -618,11 +618,11 @@ export type QueryGetMetricsSubAttachedArgs = {
     data: MetricsInputDto;
 };
 
-export type QueryGetMetricsTemperatureComArgs = {
+export type QueryGetMetricsTempComArgs = {
     data: MetricsInputDto;
 };
 
-export type QueryGetMetricsTemperatureTrxArgs = {
+export type QueryGetMetricsTempTrxArgs = {
     data: MetricsInputDto;
 };
 
@@ -1205,6 +1205,76 @@ export type GetMetricsCpuTrxsSubscriptionVariables = Exact<{
 export type GetMetricsCpuTrxsSubscription = {
     __typename?: "Subscription";
     getMetricsCpuTRX: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
+};
+
+export type GetMetricsPowerQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsPowerQuery = {
+    __typename?: "Query";
+    getMetricsPower: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
+};
+
+export type GetMetricsPowerSSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsPowerSSubscription = {
+    __typename?: "Subscription";
+    getMetricsPower: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
+};
+
+export type GetMetricsTempTrxQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsTempTrxQuery = {
+    __typename?: "Query";
+    getMetricsTempTRX: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsTempTrxsSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsTempTrxsSubscription = {
+    __typename?: "Subscription";
+    getMetricsTempTRX: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsTempComQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsTempComQuery = {
+    __typename?: "Query";
+    getMetricsTempCOM: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsTempComsSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsTempComsSubscription = {
+    __typename?: "Subscription";
+    getMetricsTempCOM: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
 };
 
 export const GetDataUsageDocument = gql`
@@ -2854,3 +2924,303 @@ export type GetMetricsCpuTrxsSubscriptionHookResult = ReturnType<
 >;
 export type GetMetricsCpuTrxsSubscriptionResult =
     Apollo.SubscriptionResult<GetMetricsCpuTrxsSubscription>;
+export const GetMetricsPowerDocument = gql`
+    query getMetricsPower($data: MetricsInputDTO!) {
+        getMetricsPower(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsPowerQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsPowerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsPowerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsPowerQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsPowerQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsPowerQuery,
+        GetMetricsPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetMetricsPowerQuery, GetMetricsPowerQueryVariables>(
+        GetMetricsPowerDocument,
+        options
+    );
+}
+export function useGetMetricsPowerLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsPowerQuery,
+        GetMetricsPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsPowerQuery,
+        GetMetricsPowerQueryVariables
+    >(GetMetricsPowerDocument, options);
+}
+export type GetMetricsPowerQueryHookResult = ReturnType<
+    typeof useGetMetricsPowerQuery
+>;
+export type GetMetricsPowerLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsPowerLazyQuery
+>;
+export type GetMetricsPowerQueryResult = Apollo.QueryResult<
+    GetMetricsPowerQuery,
+    GetMetricsPowerQueryVariables
+>;
+export const GetMetricsPowerSDocument = gql`
+    subscription getMetricsPowerS {
+        getMetricsPower {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsPowerSSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsPowerSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsPowerSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsPowerSSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsPowerSSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsPowerSSubscription,
+        GetMetricsPowerSSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsPowerSSubscription,
+        GetMetricsPowerSSubscriptionVariables
+    >(GetMetricsPowerSDocument, options);
+}
+export type GetMetricsPowerSSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsPowerSSubscription
+>;
+export type GetMetricsPowerSSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsPowerSSubscription>;
+export const GetMetricsTempTrxDocument = gql`
+    query getMetricsTempTRX($data: MetricsInputDTO!) {
+        getMetricsTempTRX(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTempTrxQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsTempTrxQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTempTrxQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTempTrxQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsTempTrxQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsTempTrxQuery,
+        GetMetricsTempTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsTempTrxQuery,
+        GetMetricsTempTrxQueryVariables
+    >(GetMetricsTempTrxDocument, options);
+}
+export function useGetMetricsTempTrxLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsTempTrxQuery,
+        GetMetricsTempTrxQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsTempTrxQuery,
+        GetMetricsTempTrxQueryVariables
+    >(GetMetricsTempTrxDocument, options);
+}
+export type GetMetricsTempTrxQueryHookResult = ReturnType<
+    typeof useGetMetricsTempTrxQuery
+>;
+export type GetMetricsTempTrxLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsTempTrxLazyQuery
+>;
+export type GetMetricsTempTrxQueryResult = Apollo.QueryResult<
+    GetMetricsTempTrxQuery,
+    GetMetricsTempTrxQueryVariables
+>;
+export const GetMetricsTempTrxsDocument = gql`
+    subscription getMetricsTempTRXS {
+        getMetricsTempTRX {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTempTrxsSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsTempTrxsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTempTrxsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTempTrxsSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsTempTrxsSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsTempTrxsSubscription,
+        GetMetricsTempTrxsSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsTempTrxsSubscription,
+        GetMetricsTempTrxsSubscriptionVariables
+    >(GetMetricsTempTrxsDocument, options);
+}
+export type GetMetricsTempTrxsSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsTempTrxsSubscription
+>;
+export type GetMetricsTempTrxsSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsTempTrxsSubscription>;
+export const GetMetricsTempComDocument = gql`
+    query getMetricsTempCOM($data: MetricsInputDTO!) {
+        getMetricsTempCOM(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTempComQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsTempComQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTempComQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTempComQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsTempComQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsTempComQuery,
+        GetMetricsTempComQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsTempComQuery,
+        GetMetricsTempComQueryVariables
+    >(GetMetricsTempComDocument, options);
+}
+export function useGetMetricsTempComLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsTempComQuery,
+        GetMetricsTempComQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsTempComQuery,
+        GetMetricsTempComQueryVariables
+    >(GetMetricsTempComDocument, options);
+}
+export type GetMetricsTempComQueryHookResult = ReturnType<
+    typeof useGetMetricsTempComQuery
+>;
+export type GetMetricsTempComLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsTempComLazyQuery
+>;
+export type GetMetricsTempComQueryResult = Apollo.QueryResult<
+    GetMetricsTempComQuery,
+    GetMetricsTempComQueryVariables
+>;
+export const GetMetricsTempComsDocument = gql`
+    subscription getMetricsTempCOMS {
+        getMetricsTempCOM {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTempComsSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsTempComsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTempComsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTempComsSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsTempComsSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsTempComsSubscription,
+        GetMetricsTempComsSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsTempComsSubscription,
+        GetMetricsTempComsSubscriptionVariables
+    >(GetMetricsTempComsDocument, options);
+}
+export type GetMetricsTempComsSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsTempComsSubscription
+>;
+export type GetMetricsTempComsSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsTempComsSubscription>;

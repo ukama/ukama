@@ -1,4 +1,3 @@
-/* eslint-disable no-empty-pattern */
 import {
     TabPanel,
     NodeStatus,
@@ -33,6 +32,12 @@ import {
     useGetMetricsUptimeSSubscription,
     useGetMetricsMemoryTrxsSubscription,
     useGetMetricsCpuTrxsSubscription,
+    useGetMetricsPowerLazyQuery,
+    useGetMetricsPowerSSubscription,
+    useGetMetricsTempTrxLazyQuery,
+    useGetMetricsTempTrxsSubscription,
+    useGetMetricsTempComLazyQuery,
+    useGetMetricsTempComsSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
@@ -43,7 +48,6 @@ import {
     parseObjectInNameValue,
 } from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
-import { TObject } from "../../types";
 
 const getDefaultList = (names: string[]) =>
     names.map(name => ({
@@ -87,6 +91,24 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Throughput (DL)"]));
+    const [powerMetric, setPowerMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Power"]));
+    const [tempTrxMetric, setTempTrxMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Temp. (TRX)"]));
+    const [tempComMetric, setTempComMetric] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Temp. (COM)"]));
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
@@ -106,16 +128,6 @@ const Nodes = () => {
             orgId: _organizationId,
             from: from + 1,
         });
-
-    const [graphFilters, setGraphFilters] = useState<TObject>({
-        cpuTrx: "DAY",
-        uptime: "DAY",
-        tempTrx: "DAY",
-        tempCom: "DAY",
-        memoryTrx: "DAY",
-        subActive: "DAY",
-        subAttached: "DAY",
-    });
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
@@ -244,9 +256,88 @@ const Nodes = () => {
         },
     });
 
+    const [
+        getMetricPower,
+        { data: metricPowerRes, refetch: metricPowerRefetch },
+    ] = useGetMetricsPowerLazyQuery();
+
+    useGetMetricsPowerSSubscription({
+        skip: selectedTab !== 2,
+        onSubscriptionData: res => {
+            setPowerMetric(
+                powerMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsPower ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
+    const [
+        getMetricTempTrx,
+        { data: metricTempTrxRes, refetch: metricTempTrxRefetch },
+    ] = useGetMetricsTempTrxLazyQuery();
+
+    useGetMetricsTempTrxsSubscription({
+        skip: selectedTab !== 0,
+        onSubscriptionData: res => {
+            setTempTrxMetric(
+                tempTrxMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsTempTRX ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
+    const [
+        getMetricTempCom,
+        { data: metricTempComRes, refetch: metricTempComRefetch },
+    ] = useGetMetricsTempComLazyQuery();
+
+    useGetMetricsTempComsSubscription({
+        skip: selectedTab !== 0,
+        onSubscriptionData: res => {
+            setTempComMetric(
+                tempComMetric.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsTempCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
     useEffect(() => {
         if (selectedTab === 0) {
             getMetricUptime({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricTempTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricTempCom({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -269,6 +360,11 @@ const Nodes = () => {
                 },
             });
             getMetricMemoryTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricPower({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -304,6 +400,64 @@ const Nodes = () => {
             });
         }
     }, [metricUptimeTrxRes]);
+
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricTempTrxRes &&
+            metricTempTrxRes.getMetricsTempTRX.length > 0
+        ) {
+            if (!isMetricData(tempTrxMetric)) {
+                setTempTrxMetric(
+                    tempTrxMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricTempTrxRes.getMetricsTempTRX || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricTempTrxRefetch({
+                ...getMetricPollingCallPayload(
+                    metricTempTrxRes.getMetricsTempTRX[
+                        metricTempTrxRes.getMetricsTempTRX.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricTempTrxRes]);
+
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricTempComRes &&
+            metricTempComRes.getMetricsTempCOM.length > 0
+        ) {
+            if (!isMetricData(tempComMetric)) {
+                setTempComMetric(
+                    tempComMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricTempComRes.getMetricsTempCOM || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricTempComRefetch({
+                ...getMetricPollingCallPayload(
+                    metricTempComRes.getMetricsTempCOM[
+                        metricTempComRes.getMetricsTempCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricTempComRes]);
 
     useEffect(() => {
         if (
@@ -424,6 +578,35 @@ const Nodes = () => {
         }
     }, [metricMemoryTrxRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab === 2 &&
+            metricPowerRes &&
+            metricPowerRes.getMetricsPower.length > 0
+        ) {
+            if (!isMetricData(powerMetric)) {
+                setPowerMetric(
+                    powerMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricPowerRes.getMetricsPower || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricPowerRefetch({
+                ...getMetricPollingCallPayload(
+                    metricPowerRes.getMetricsPower[
+                        metricPowerRes.getMetricsPower.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricPowerRes]);
+
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
 
@@ -463,9 +646,6 @@ const Nodes = () => {
     const handleSoftwareInfos = () => {
         setShowNodeSoftwareUpdatInfos(true);
     };
-
-    const handleGraphFilterChange = (key: string, value: string) =>
-        setGraphFilters(prev => ({ ...prev, [key]: value }));
 
     const isLoading = skeltonLoading || nodesLoading;
 
@@ -527,15 +707,13 @@ const Nodes = () => {
                             index={0}
                         >
                             <NodeOverviewTab
-                                graphFilters={graphFilters}
-                                handleGraphFilterChange={
-                                    handleGraphFilterChange
-                                }
-                                getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 uptimeMetrics={uptimeMetric}
+                                tempTrxMetric={tempTrxMetric}
+                                tempComMetric={tempComMetric}
                                 handleUpdateNode={handleUpdateNode}
+                                getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 loading={
                                     isLoading ||
                                     nodeDetailLoading ||

@@ -276,3 +276,45 @@ subscription getMetricsCpuTRXS {
         x
     }
 }
+
+query getMetricsPower($data: MetricsInputDTO!) {
+    getMetricsPower(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsPowerS {
+    getMetricsPower {
+        y
+        x
+    }
+}
+
+query getMetricsTempTRX($data: MetricsInputDTO!) {
+    getMetricsTempTRX(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsTempTRXS {
+    getMetricsTempTRX {
+        y
+        x
+    }
+}
+
+query getMetricsTempCOM($data: MetricsInputDTO!) {
+    getMetricsTempCOM(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsTempCOMS {
+    getMetricsTempCOM {
+        y
+        x
+    }
+}
