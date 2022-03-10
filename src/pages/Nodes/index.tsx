@@ -27,17 +27,21 @@ import {
     useGetMetricsThroughputDlLazyQuery,
     useGetMetricsThroughputUlsSubscription,
     useGetMetricsThroughputDlsSubscription,
-    useGetMetricsCpuTrxSSubscription,
     useGetMetricsCpuTrxLazyQuery,
     useGetMetricsMemoryTrxLazyQuery,
-    useGetMetricsMemoryTrxSSubscription,
     useGetMetricsUptimeLazyQuery,
     useGetMetricsUptimeSSubscription,
+    useGetMetricsMemoryTrxsSubscription,
+    useGetMetricsCpuTrxsSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
 import React, { useEffect, useState } from "react";
-import { getMetricPayload, parseObjectInNameValue } from "../../utils";
+import {
+    getMetricPayload,
+    isMetricData,
+    parseObjectInNameValue,
+} from "../../utils";
 import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 import { TObject } from "../../types";
 
@@ -87,6 +91,22 @@ const Nodes = () => {
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
 
+    const getFirstMetricCallPayload = () =>
+        getMetricPayload({
+            nodeId: selectedNode?.id,
+            orgId: _organizationId,
+            regPolling: false,
+            to: Math.floor(Date.now() / 1000) - 20,
+            from: Math.floor(Date.now() / 1000) - 180,
+        });
+
+    const getMetricPollingCallPayload = (from: number) =>
+        getMetricPayload({
+            nodeId: selectedNode?.id,
+            orgId: _organizationId,
+            from: from + 1,
+        });
+
     const [graphFilters, setGraphFilters] = useState<TObject>({
         cpuTrx: "DAY",
         uptime: "DAY",
@@ -99,7 +119,7 @@ const Nodes = () => {
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
-            orgId: _organizationId || "a32485e4-d842-45da-bf3e-798889c68ad0",
+            orgId: _organizationId,
         },
         onCompleted: res => {
             res?.getNodesByOrg?.nodes.length > 0 &&
@@ -161,7 +181,7 @@ const Nodes = () => {
         { data: metricCpuTrxRes, refetch: metricCpuTrxRefetch },
     ] = useGetMetricsCpuTrxLazyQuery();
 
-    const {} = useGetMetricsCpuTrxSSubscription({
+    const {} = useGetMetricsCpuTrxsSubscription({
         skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setCpuTrxMetric(
@@ -170,7 +190,7 @@ const Nodes = () => {
                         name: item.name,
                         data: [
                             ...item.data,
-                            ...(res.subscriptionData.data?.getMetricsCpuTrx ||
+                            ...(res.subscriptionData.data?.getMetricsCpuTRX ||
                                 []),
                         ],
                     };
@@ -183,7 +203,7 @@ const Nodes = () => {
         { data: metricMemoryTrxRes, refetch: metricMemoryTrxRefetch },
     ] = useGetMetricsMemoryTrxLazyQuery();
 
-    const {} = useGetMetricsMemoryTrxSSubscription({
+    const {} = useGetMetricsMemoryTrxsSubscription({
         skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setMemoryTrxMetric(
@@ -193,7 +213,7 @@ const Nodes = () => {
                         data: [
                             ...item.data,
                             ...(res.subscriptionData.data
-                                ?.getMetricsMemoryTrx || []),
+                                ?.getMetricsMemoryTRX || []),
                         ],
                     };
                 })
@@ -228,91 +248,185 @@ const Nodes = () => {
         if (selectedTab === 0) {
             getMetricUptime({
                 variables: {
-                    ...getMetricPayload(
-                        "uk-test36-hnode-a1-30df",
-                        _organizationId
-                    ),
+                    ...getFirstMetricCallPayload(),
                 },
             });
         } else if (selectedTab === 1) {
             getMetricThroughtpuUl({
                 variables: {
-                    ...getMetricPayload(
-                        "uk-test36-hnode-a1-30df",
-                        _organizationId
-                    ),
+                    ...getFirstMetricCallPayload(),
                 },
             });
             getMetricThroughtpuDl({
                 variables: {
-                    ...getMetricPayload(
-                        "uk-test36-hnode-a1-30df",
-                        _organizationId
-                    ),
+                    ...getFirstMetricCallPayload(),
                 },
             });
         } else if (selectedTab === 2) {
             getMetricCpuTrx({
                 variables: {
-                    ...getMetricPayload(
-                        "uk-test36-hnode-a1-30df",
-                        _organizationId
-                    ),
+                    ...getFirstMetricCallPayload(),
                 },
             });
             getMetricMemoryTrx({
                 variables: {
-                    ...getMetricPayload(
-                        "uk-test36-hnode-a1-30df",
-                        _organizationId
-                    ),
+                    ...getFirstMetricCallPayload(),
                 },
             });
         }
     }, [selectedTab, selectedNode]);
 
     useEffect(() => {
-        if (selectedTab === 0 && metricUptimeTrxRes) {
+        if (
+            selectedTab === 0 &&
+            metricUptimeTrxRes &&
+            metricUptimeTrxRes.getMetricsUptime.length > 0
+        ) {
+            if (!isMetricData(uptimeMetric)) {
+                setUptimeMetrics(
+                    uptimeMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricUptimeTrxRes.getMetricsUptime || []),
+                            ],
+                        };
+                    })
+                );
+            }
             metricUptimeRefetch({
-                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+                ...getMetricPollingCallPayload(
+                    metricUptimeTrxRes.getMetricsUptime[
+                        metricUptimeTrxRes.getMetricsUptime.length - 1
+                    ].x
+                ),
             });
         }
     }, [metricUptimeTrxRes]);
 
     useEffect(() => {
-        if (selectedTab === 1 && metricThroughtputUlRes) {
+        if (
+            selectedTab === 1 &&
+            metricThroughtputUlRes &&
+            metricThroughtputUlRes.getMetricsThroughputUL.length > 0
+        ) {
+            if (!isMetricData(throughputULMetric)) {
+                setThroughputULMetric(
+                    throughputULMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricThroughtputUlRes.getMetricsThroughputUL ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
             metricThroughtputUlRefetch({
-                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+                ...getMetricPollingCallPayload(
+                    metricThroughtputUlRes.getMetricsThroughputUL[
+                        metricThroughtputUlRes.getMetricsThroughputUL.length - 1
+                    ].x
+                ),
             });
         }
     }, [metricThroughtputUlRes]);
 
     useEffect(() => {
-        if (selectedTab === 1 && metricThroughtputDlRes) {
+        if (
+            selectedTab === 1 &&
+            metricThroughtputDlRes &&
+            metricThroughtputDlRes.getMetricsThroughputDL.length > 0
+        ) {
+            if (!isMetricData(throughputDLMetric)) {
+                setThroughputDLMetric(
+                    throughputDLMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricThroughtputDlRes.getMetricsThroughputDL ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
             metricThroughtputDlRefetch({
-                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+                ...getMetricPollingCallPayload(
+                    metricThroughtputDlRes.getMetricsThroughputDL[
+                        metricThroughtputDlRes.getMetricsThroughputDL.length - 1
+                    ].x
+                ),
             });
         }
     }, [metricThroughtputDlRes]);
 
     useEffect(() => {
-        if (selectedTab === 2 && metricCpuTrxRes) {
+        if (
+            selectedTab === 2 &&
+            metricCpuTrxRes &&
+            metricCpuTrxRes.getMetricsCpuTRX.length > 0
+        ) {
+            if (!isMetricData(cpuTrxMetric)) {
+                setCpuTrxMetric(
+                    cpuTrxMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricCpuTrxRes.getMetricsCpuTRX || []),
+                            ],
+                        };
+                    })
+                );
+            }
             metricCpuTrxRefetch({
-                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+                ...getMetricPollingCallPayload(
+                    metricCpuTrxRes.getMetricsCpuTRX[
+                        metricCpuTrxRes.getMetricsCpuTRX.length - 1
+                    ].x
+                ),
             });
         }
     }, [metricCpuTrxRes]);
 
     useEffect(() => {
-        if (selectedTab === 2 && metricMemoryTrxRes) {
+        if (
+            selectedTab === 2 &&
+            metricMemoryTrxRes &&
+            metricMemoryTrxRes.getMetricsMemoryTRX.length > 0
+        ) {
+            if (!isMetricData(memoryTrxMetric)) {
+                setMemoryTrxMetric(
+                    memoryTrxMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricMemoryTrxRes.getMetricsMemoryTRX ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
             metricMemoryTrxRefetch({
-                ...getMetricPayload("uk-test36-hnode-a1-30df", _organizationId),
+                ...getMetricPollingCallPayload(
+                    metricMemoryTrxRes.getMetricsMemoryTRX[
+                        metricMemoryTrxRes.getMetricsMemoryTRX.length - 1
+                    ].x
+                ),
             });
         }
     }, [metricMemoryTrxRes]);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
+
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
     };

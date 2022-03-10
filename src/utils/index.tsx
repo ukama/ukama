@@ -119,24 +119,48 @@ const getGraphFilterByType = (type: string) => {
     }
 };
 
-const getMetricPayload = (nodeId: string, orgId: string) => {
+const getMetricPayload = ({
+    orgId = "",
+    nodeId = "",
+    regPolling = true,
+    to = Math.floor(Date.now() / 1000),
+    from = Math.floor(Date.now() / 1000),
+}: {
+    to?: number;
+    from?: number;
+    nodeId?: string;
+    orgId?: string;
+    regPolling?: boolean;
+}) => {
     return {
         data: {
+            step: 1,
             orgId: orgId,
             nodeId: nodeId,
-            to: Math.round(Date.now() / 1000),
-            from: Math.round(Date.now() / 1000) - 20, //20sec
-            step: 1,
+            regPolling: regPolling,
+            to: to,
+            from: from, //20sec
         },
     };
 };
 
+const isMetricData = (metric: any) => {
+    let isData = false;
+    metric.forEach((item: any) => {
+        if (item.data.length > 0) {
+            isData = true;
+        }
+    });
+    return isData;
+};
+
 export {
     hexToRGB,
-    getMetricPayload,
+    isMetricData,
     getRandomData,
     getColorByType,
     getStatusByType,
+    getMetricPayload,
     getTitleFromPath,
     uniqueObjectsArray,
     getGraphFilterByType,

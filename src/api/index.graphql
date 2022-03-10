@@ -221,20 +221,6 @@ subscription getMetricsUptimeS {
     }
 }
 
-query getCpuUsageMetrics($data: MetricsInputDTO!) {
-    getCpuUsageMetrics(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getCpuUsageMetricsS {
-    getCpuUsageMetrics {
-        y
-        x
-    }
-}
-
 query getMetricsThroughputUL($data: MetricsInputDTO!) {
     getMetricsThroughputUL(data: $data) {
         y
@@ -270,8 +256,8 @@ query getMetricsMemoryTRX($data: MetricsInputDTO!) {
     }
 }
 
-subscription getMetricsMemoryTrxS {
-    getMetricsMemoryTrx {
+subscription getMetricsMemoryTRXS {
+    getMetricsMemoryTRX {
         y
         x
     }
@@ -284,8 +270,8 @@ query getMetricsCpuTRX($data: MetricsInputDTO!) {
     }
 }
 
-subscription getMetricsCpuTrxS {
-    getMetricsCpuTrx {
+subscription getMetricsCpuTRXS {
+    getMetricsCpuTRX {
         y
         x
     }

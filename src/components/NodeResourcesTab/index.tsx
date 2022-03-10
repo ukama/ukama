@@ -142,7 +142,6 @@ const NodeResourcesTab = ({
                     ][0].show && (
                         <ApexStackAreaChart
                             hasData={true}
-                            filter={"LIVE"}
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
@@ -173,7 +172,6 @@ const NodeResourcesTab = ({
                                     (selectedNode?.type as string) || ""
                                 ][2].name
                             }
-                            filter={"LIVE"}
                             data={cpuTrxMetric}
                         />
                     )}

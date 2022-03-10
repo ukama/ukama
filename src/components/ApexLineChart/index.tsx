@@ -8,7 +8,7 @@ const TIME_RANGE_IN_MILLISECONDS = 100;
 interface IApexLineChartIntegration {
     data: any;
     name: string;
-    filter: string;
+    filter?: string;
     hasData: boolean;
     refreshInterval?: number;
     onRefreshData?: Function;
@@ -86,7 +86,7 @@ const ApexLineChartIntegration = ({
     name,
     data = [],
     onRefreshData,
-    filter = "DAY",
+    filter = "LIVE",
     hasData = false,
     refreshInterval = 10000,
     onFilterChange = () => {

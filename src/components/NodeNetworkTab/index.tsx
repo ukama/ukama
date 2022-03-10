@@ -68,14 +68,12 @@ const NodeNetworkTab = ({
                         hasData={true}
                         data={throughpuULMetric}
                         name={"Throughput (U/L)"}
-                        filter={"LIVE"}
                     />
 
                     <ApexLineChartIntegration
                         hasData={true}
                         data={throughpuDLMetric}
                         name={"Throughput (D/L)"}
-                        filter={"LIVE"}
                     />
 
                     <LineChart hasData={true} title={"RRC CNX Success "} />

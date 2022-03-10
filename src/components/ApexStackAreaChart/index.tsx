@@ -7,7 +7,7 @@ const TIME_RANGE_IN_MILLISECONDS = 100;
 interface IApexStackAreaChart {
     data: any;
     name: string;
-    filter: string;
+    filter?: string;
     hasData: boolean;
     refreshInterval?: number;
     onRefreshData?: Function;
@@ -84,7 +84,7 @@ const StackAreaChart = (props: any) => {
 const ApexStackAreaChart = ({
     name,
     data = [],
-    filter = "DAY",
+    filter = "LIVE",
     hasData = false,
     onFilterChange = () => {
         /*DEFAULT FUNCTION*/

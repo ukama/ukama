@@ -160,7 +160,6 @@ const NodeOverviewTab = ({
                                         (selectedNode?.type as string) || "HOME"
                                     ][0].name
                                 }
-                                filter={"DAY"}
                                 handleFilterChange={(value: string) =>
                                     onfilterChange("memoryTrx", value)
                                 }
@@ -189,7 +188,6 @@ const NodeOverviewTab = ({
                                         (selectedNode?.type as string) || "HOME"
                                     ][2].name
                                 }
-                                filter={"LIVE"}
                             />
                         )}
                     </Paper>
