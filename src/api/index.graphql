@@ -98,8 +98,8 @@ query getNodeDetails {
         description
     }
 }
-query myUsers($orgId: String!) {
-    myUsers(orgId: $orgId) {
+query getUsersByOrg($orgId: String!) {
+    getUsersByOrg(orgId: $orgId) {
         orgName
         users {
             id
