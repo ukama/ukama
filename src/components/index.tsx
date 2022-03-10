@@ -37,6 +37,7 @@ import GraphTitleWrapper from "./GraphTitleWrapper";
 import CustomRadioButton from "./CustomRadioButton";
 import NodeStatsContainer from "./NodeStatsContainer";
 import MultiSlideCarousel from "./MultiSlideCarousel";
+import ApexStackAreaChart from "./ApexStackAreaChart";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
 import SplitButton from "./SplitButton";
@@ -54,6 +55,7 @@ export {
     NodeCard,
     UserCard,
     TabPanel,
+    ApexStackAreaChart,
     NodeSoftwareInfosDialog,
     LineChart,
     SplitButton,

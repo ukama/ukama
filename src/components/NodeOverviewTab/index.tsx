@@ -5,20 +5,16 @@ import NodeStatItem from "../NodeStatItem";
 import { LineChart, NodeDetailsCard, NodeStatsContainer } from "..";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
+import ApexLineChartIntegration from "../ApexLineChart";
 
 interface INodeOverviewTab {
     loading: boolean;
-    cpuTrxMetrics: any;
     uptimeMetrics: any;
-    graphFilters: TObject;
-    memoryTrxMetrics: any;
+    tempTrxMetric: any;
+    tempComMetric: any;
     nodeDetails: TObject[];
-    onRefreshUptime: Function;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
-    onRefreshTempTrx: Function;
-    onRefreshMemoryTrx: Function;
-    handleGraphFilterChange: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
 }
@@ -26,9 +22,11 @@ interface INodeOverviewTab {
 const NodeOverviewTab = ({
     loading,
     selectedNode,
+    tempTrxMetric,
+    tempComMetric,
+    uptimeMetrics,
     handleUpdateNode,
     isUpdateAvailable,
-    handleGraphFilterChange,
     getNodeSoftwareUpdateInfos,
 }: INodeOverviewTab) => {
     const [selected, setSelected] = useState<number>(0);
@@ -38,8 +36,6 @@ const NodeOverviewTab = ({
     }, [selectedNode]);
 
     const handleOnSelected = (value: number) => setSelected(value);
-    const onfilterChange = (key: string, value: string) =>
-        handleGraphFilterChange(key, value);
 
     return (
         <Grid container spacing={2}>
@@ -156,25 +152,23 @@ const NodeOverviewTab = ({
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][0].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={tempTrxMetric}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][0].name
-                                }
-                                filter={"DAY"}
-                                handleFilterChange={(value: string) =>
-                                    onfilterChange("memoryTrx", value)
                                 }
                             />
                         )}
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][1].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={tempComMetric}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][1].name
@@ -184,9 +178,10 @@ const NodeOverviewTab = ({
                         {HealtChartsConfigure[
                             (selectedNode?.type as string) || "HOME"
                         ][2].show && (
-                            <LineChart
+                            <ApexLineChartIntegration
                                 hasData={true}
-                                title={
+                                data={uptimeMetrics}
+                                name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
                                     ][2].name

@@ -207,119 +207,59 @@ mutation deleteNode($id: String!) {
     }
 }
 
-subscription getNodeRFKPIS {
-    getNodeRFKPI {
-        qam
-        rfOutput
-        rssi
-        timestamp
+query getMetricsUptime($data: MetricsInputDTO!) {
+    getMetricsUptime(data: $data) {
+        y
+        x
     }
 }
 
-query getNodeRFKPIQ($filter: GRAPH_FILTER!) {
-    getNodeRFKPI(filter: $filter) {
-        qam
-        rfOutput
-        rssi
-        timestamp
+subscription getMetricsUptimeS {
+    getMetricsUptime {
+        y
+        x
     }
 }
 
-subscription getUsersAttachedMetricsS {
-    getUsersAttachedMetrics {
-        id
-        users
-        timestamp
+query getMetricsThroughputUL($data: MetricsInputDTO!) {
+    getMetricsThroughputUL(data: $data) {
+        y
+        x
     }
 }
 
-query getUsersAttachedMetricsQ($filter: GRAPH_FILTER!) {
-    getUsersAttachedMetrics(filter: $filter) {
-        id
-        users
-        timestamp
+subscription getMetricsThroughputULS {
+    getMetricsThroughputUL {
+        y
+        x
     }
 }
 
-subscription getThroughputMetricsS {
-    getThroughputMetrics {
-        id
-        amount
-        timestamp
+query getMetricsThroughputDL($data: MetricsInputDTO!) {
+    getMetricsThroughputDL(data: $data) {
+        y
+        x
     }
 }
 
-query getThroughputMetricsQ($filter: GRAPH_FILTER!) {
-    getThroughputMetrics(filter: $filter) {
-        id
-        amount
-        timestamp
+subscription getMetricsThroughputDLS {
+    getMetricsThroughputDL {
+        y
+        x
     }
 }
 
-subscription getTemperatureMetricsS {
-    getTemperatureMetrics {
-        id
-        temperature
-        timestamp
+query getMetricsMemoryTRX($data: MetricsInputDTO!) {
+    getMetricsMemoryTRX(data: $data) {
+        y
+        x
     }
 }
 
-query getTemperatureMetricsQ($filter: GRAPH_FILTER!) {
-    getTemperatureMetrics(filter: $filter) {
-        id
-        temperature
-        timestamp
-    }
-}
-
-subscription getCpuUsageMetricsS {
-    getCpuUsageMetrics {
-        id
-        usage
-        timestamp
-    }
-}
-
-query getCpuUsageMetricsQ($filter: GRAPH_FILTER!) {
-    getCpuUsageMetrics(filter: $filter) {
-        id
-        usage
-        timestamp
-    }
-}
-
-subscription getMemoryUsageMetricsS {
-    getMemoryUsageMetrics {
-        id
-        usage
-        timestamp
-    }
-}
-
-query getMemoryUsageMetricsQ($filter: GRAPH_FILTER!) {
-    getMemoryUsageMetrics(filter: $filter) {
-        id
-        usage
-        timestamp
-    }
-}
-
-subscription getIOMetricsS {
-    getIOMetrics {
-        id
-        input
-        output
-        timestamp
-    }
-}
-
-query getIOMetricsQ($filter: GRAPH_FILTER!) {
-    getIOMetrics(filter: $filter) {
-        id
-        input
-        output
-        timestamp
+subscription getMetricsMemoryTRXS {
+    getMetricsMemoryTRX {
+        y
+        x
     }
 }
 
@@ -330,15 +270,50 @@ query getMetricsCpuTRX($data: MetricsInputDTO!) {
     }
 }
 
-query getMetricsUptime($data: MetricsInputDTO!) {
-    getMetricsUptime(data: $data) {
+subscription getMetricsCpuTRXS {
+    getMetricsCpuTRX {
         y
         x
     }
 }
 
-query getMetricsMemoryTRX($data: MetricsInputDTO!) {
-    getMetricsMemoryTRX(data: $data) {
+query getMetricsPower($data: MetricsInputDTO!) {
+    getMetricsPower(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsPowerS {
+    getMetricsPower {
+        y
+        x
+    }
+}
+
+query getMetricsTempTRX($data: MetricsInputDTO!) {
+    getMetricsTempTRX(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsTempTRXS {
+    getMetricsTempTRX {
+        y
+        x
+    }
+}
+
+query getMetricsTempCOM($data: MetricsInputDTO!) {
+    getMetricsTempCOM(data: $data) {
+        y
+        x
+    }
+}
+
+subscription getMetricsTempCOMS {
+    getMetricsTempCOM {
         y
         x
     }

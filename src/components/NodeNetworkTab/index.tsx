@@ -2,10 +2,17 @@ import { TooltipsText } from "../../constants";
 import { Paper, Grid, Typography } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, LineChart } from "..";
 import { useState } from "react";
+import ApexLineChartIntegration from "../ApexLineChart";
 interface INodeOverviewTab {
     loading: boolean;
+    throughpuULMetric: any;
+    throughpuDLMetric: any;
 }
-const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
+const NodeNetworkTab = ({
+    loading,
+    throughpuULMetric,
+    throughpuDLMetric,
+}: INodeOverviewTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
 
@@ -56,8 +63,19 @@ const NodeNetworkTab = ({ loading }: INodeOverviewTab) => {
             <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Typography variant="h6">Network</Typography>
-                    <LineChart hasData={true} title={"Throughput (U/L)"} />
-                    <LineChart hasData={true} title={"Throughput (D/L)"} />
+
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={throughpuULMetric}
+                        name={"Throughput (U/L)"}
+                    />
+
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={throughpuDLMetric}
+                        name={"Throughput (D/L)"}
+                    />
+
                     <LineChart hasData={true} title={"RRC CNX Success "} />
                     <LineChart hasData={true} title={"ERAB Drop Rate"} />
                     <LineChart hasData={true} title={"RLS  Drop Rate"} />

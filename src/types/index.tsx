@@ -20,7 +20,7 @@ export type NodeAppDetailsTypes = {
     nodeAppName: string;
 };
 export type statsPeriodItemType = {
-    id: number;
+    id: string;
     label: string;
 };
 export type HeaderMenuItemType = {

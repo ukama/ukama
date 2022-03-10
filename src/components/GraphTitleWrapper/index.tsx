@@ -17,7 +17,7 @@ interface IGraphTitleWrapper {
 const GraphTitleWrapper = ({
     children,
     title = "",
-    filter = "DAY",
+    filter = "LIVE",
     hasData = false,
     showFilter = true,
     variant = "subtitle1",

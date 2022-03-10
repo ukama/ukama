@@ -40,9 +40,10 @@ const STATS_OPTIONS = [
     { id: 3, label: "Throughput", value: "Throughput" },
 ];
 const STATS_PERIOD = [
-    { id: 1, label: "DAY" },
-    { id: 2, label: "WEEK " },
-    { id: 3, label: "MONTH " },
+    { id: "1", label: "DAY" },
+    { id: "2", label: "WEEK" },
+    { id: "3", label: "MONTH" },
+    { id: "4", label: "LIVE" },
 ];
 
 const SIDEBAR_MENU2 = [

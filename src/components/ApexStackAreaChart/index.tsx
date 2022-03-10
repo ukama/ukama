@@ -1,11 +1,10 @@
-import React from "react";
 import Chart from "react-apexcharts";
 import { format } from "date-fns";
 import { GraphTitleWrapper } from "..";
 
 const TIME_RANGE_IN_MILLISECONDS = 100;
 
-interface IApexLineChartIntegration {
+interface IApexStackAreaChart {
     data: any;
     name: string;
     filter?: string;
@@ -15,36 +14,35 @@ interface IApexLineChartIntegration {
     onFilterChange?: Function;
 }
 
-const ApexLineChart = (props: any) => {
+const StackAreaChart = (props: any) => {
     const options: any = {
-        stroke: {
-            lineCap: "butt",
-            curve: "smooth",
-            width: 5,
-        },
         chart: {
-            minHeight: "200px",
-            height: "100%",
-            width: "100%",
+            type: "area",
+            height: 350,
+            stacked: true,
             zoom: {
                 type: "x",
                 enabled: false,
                 autoScaleYaxis: true,
             },
-            animations: {
-                enabled: true,
-                easing: "linear",
-                dynamicAnimation: {
-                    speed: 1000,
-                },
+        },
+        colors: ["#008FFB"],
+        plotOptions: {
+            area: {
+                fillTo: "end",
             },
-            dropShadow: {
-                enabled: true,
-                enabledSeries: [0],
-                top: -2,
-                left: 2,
-                blur: 5,
-                opacity: 0.06,
+        },
+        dataLabels: {
+            enabled: false,
+        },
+        stroke: {
+            curve: "smooth",
+        },
+        fill: {
+            type: "gradient",
+            gradient: {
+                opacityFrom: 0.6,
+                opacityTo: 0.8,
             },
         },
         xaxis: {
@@ -52,7 +50,7 @@ const ApexLineChart = (props: any) => {
             range: props.range,
             labels: {
                 formatter: (val: any) =>
-                    val ? format(new Date(val * 1000), "mm:ss") : "",
+                    val ? format(new Date(val * 1000), "hh:mm:ss") : "",
             },
             tooltip: {
                 enabled: false,
@@ -71,6 +69,7 @@ const ApexLineChart = (props: any) => {
             tickAmount: 8,
         },
     };
+
     return (
         <Chart
             type="line"
@@ -82,25 +81,15 @@ const ApexLineChart = (props: any) => {
     );
 };
 
-const ApexLineChartIntegration = ({
+const ApexStackAreaChart = ({
     name,
     data = [],
-    onRefreshData,
     filter = "LIVE",
     hasData = false,
-    refreshInterval = 10000,
     onFilterChange = () => {
         /*DEFAULT FUNCTION*/
     },
-}: IApexLineChartIntegration) => {
-    React.useEffect(() => {
-        const interval = setInterval(() => {
-            onRefreshData && onRefreshData();
-        }, refreshInterval);
-
-        return () => clearInterval(interval);
-    });
-
+}: IApexStackAreaChart) => {
     return (
         <GraphTitleWrapper
             key={name}
@@ -110,7 +99,7 @@ const ApexLineChartIntegration = ({
             variant="subtitle1"
             handleFilterChange={onFilterChange}
         >
-            <ApexLineChart
+            <StackAreaChart
                 key={name}
                 name={name}
                 dataList={data}
@@ -120,4 +109,4 @@ const ApexLineChartIntegration = ({
     );
 };
 
-export default ApexLineChartIntegration;
+export default ApexStackAreaChart;

@@ -5,15 +5,19 @@ import {
     Typography,
 } from "@mui/material";
 import { colors } from "../../theme";
-import { STATS_PERIOD } from "../../constants";
 import { statsPeriodItemType } from "../../types";
 
 interface ITimeFilter {
-    filter: string;
+    filter?: string;
+    options?: statsPeriodItemType[];
     handleFilterSelect: Function;
 }
 
-const TimeFilter = ({ filter, handleFilterSelect }: ITimeFilter) => {
+const TimeFilter = ({
+    filter = "LIVE",
+    handleFilterSelect,
+    options = [{ id: "1", label: "LIVE" }],
+}: ITimeFilter) => {
     return (
         <Box component="div">
             <ToggleButtonGroup
@@ -23,7 +27,7 @@ const TimeFilter = ({ filter, handleFilterSelect }: ITimeFilter) => {
                 value={filter}
                 onChange={(_, value: string) => handleFilterSelect(value)}
             >
-                {STATS_PERIOD.map(({ id, label }: statsPeriodItemType) => (
+                {options.map(({ id, label }: statsPeriodItemType) => (
                     <ToggleButton
                         fullWidth
                         key={id}
