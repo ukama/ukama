@@ -26,10 +26,21 @@ const pageName = atom({
     effects_UNSTABLE: [persistAtom],
 });
 
-const organizationId = atom<string | undefined>({
-    key: "organizationId",
-    default: "a32485e4-d842-45da-bf3e-798889c68ad0",
-    effects_UNSTABLE: [persistAtom],
+const snackbarMessage = atom({
+    key: "snackbarMessage",
+    default: { id: "message-id", message: "", type: "info", show: false },
 });
 
-export { isSkeltonLoading, pageName, organizationId, isFirstVisit, isDarkmode };
+const user = atom({
+    key: "user",
+    default: { id: "", name: "", email: "" },
+    effects_UNSTABLE: [persistAtom],
+});
+export {
+    user,
+    pageName,
+    isDarkmode,
+    isFirstVisit,
+    snackbarMessage,
+    isSkeltonLoading,
+};

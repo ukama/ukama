@@ -40,7 +40,7 @@ import {
     useGetMetricsTempComsSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { isSkeltonLoading, user } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import {
     getMetricPayload,
@@ -56,7 +56,7 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    const _organizationId = useRecoilValue(organizationId) || "";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
@@ -116,7 +116,7 @@ const Nodes = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             regPolling: false,
             to: Math.floor(Date.now() / 1000) - 20,
             from: Math.floor(Date.now() / 1000) - 180,
@@ -125,13 +125,13 @@ const Nodes = () => {
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             from: from + 1,
         });
 
     const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
         variables: {
-            orgId: _organizationId,
+            orgId: orgId,
         },
         onCompleted: res => {
             res?.getNodesByOrg?.nodes.length > 0 &&

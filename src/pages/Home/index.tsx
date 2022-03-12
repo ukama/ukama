@@ -41,8 +41,8 @@ import {
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import React, { useEffect, useState } from "react";
+import { isSkeltonLoading, user } from "../../recoil";
 import { Box, Grid, useMediaQuery } from "@mui/material";
-import { isSkeltonLoading, organizationId } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
@@ -51,7 +51,7 @@ const Home = () => {
     const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const orgId = useRecoilValue(organizationId) || "";
+    const { id: orgId } = useRecoilValue(user);
     const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -78,6 +78,7 @@ const Home = () => {
         loading: dataBillingloading,
         subscribeToMore: subscribeToLatestDataBill,
     } = useGetDataBillQuery({
+        skip: true,
         variables: {
             filter: billingStatusFilter,
         },

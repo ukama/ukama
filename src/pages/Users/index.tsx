@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { isSkeltonLoading, user } from "../../recoil";
 
 const userInit = {
     id: "",
@@ -30,7 +30,7 @@ const userInit = {
 };
 
 const User = () => {
-    const orgId = useRecoilValue(organizationId) || "";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [users, setUsers] = useState<GetUserDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
