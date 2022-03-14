@@ -56,7 +56,7 @@ const NodeCard = ({
         <LoadingWrapper
             isLoading={loading}
             variant="rectangular"
-            width={204}
+            width={214}
             height={206}
         >
             <CardContainer

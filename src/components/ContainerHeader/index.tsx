@@ -42,12 +42,7 @@ const ContainerHeader = ({
     }, [currentSearchValue]);
 
     return (
-        <Grid
-            container
-            spacing={2}
-            sx={{ mb: 2 }}
-            justifyContent="space-between"
-        >
+        <Grid container spacing={2} justifyContent="space-between">
             <Grid item xs={12} md={4}>
                 <Stack
                     spacing={2}

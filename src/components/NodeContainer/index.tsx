@@ -1,43 +1,17 @@
 import { Box } from "@mui/material";
+import { NodeDto } from "../../generated";
+import { EmptyView, NodeSlider } from "..";
 import RouterIcon from "@mui/icons-material/Router";
-import { GetNodesByOrgQuery } from "../../generated";
-import { EmptyView, MultiSlideCarousel, NodeCard } from "..";
 type NodeContainerProps = {
-    items?: GetNodesByOrgQuery["getNodesByOrg"]["nodes"];
-    slidesToShow: number;
-    count: number | undefined;
+    items: NodeDto[];
     handleItemAction: Function;
 };
 
-const NodeContainer = ({
-    count = 0,
-    items,
-    slidesToShow,
-    handleItemAction,
-}: NodeContainerProps) => {
+const NodeContainer = ({ items, handleItemAction }: NodeContainerProps) => {
     return (
-        <Box
-            component="div"
-            sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}
-        >
-            {count > 1 ? (
-                <MultiSlideCarousel
-                    numberOfSlides={slidesToShow}
-                    disableArrows={count < 3}
-                >
-                    {items?.map(({ id, title, totalUser, description }) => (
-                        <NodeCard
-                            key={id}
-                            title={title}
-                            loading={false}
-                            users={totalUser}
-                            subTitle={description}
-                            handleOptionItemClick={(type: string) =>
-                                handleItemAction(id, type)
-                            }
-                        />
-                    ))}
-                </MultiSlideCarousel>
+        <Box component="div" sx={{ display: "flex", alignItems: "center" }}>
+            {items.length > 0 ? (
+                <NodeSlider items={items} handleItemAction={handleItemAction} />
             ) : (
                 <EmptyView
                     size="large"

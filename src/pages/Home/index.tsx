@@ -42,13 +42,10 @@ import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import React, { useEffect, useState } from "react";
 import { isSkeltonLoading, user } from "../../recoil";
-import { Box, Grid, useMediaQuery } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 
 const Home = () => {
-    const isSliderLarge = useMediaQuery("(min-width:1410px)");
-    const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
-    const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId } = useRecoilValue(user);
@@ -338,7 +335,7 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} lg={8} item>
                     <LoadingWrapper
-                        height={312}
+                        height={314}
                         isLoading={nodeLoading || isSkeltonLoad}
                     >
                         <RoundedCard>
@@ -350,9 +347,7 @@ const Home = () => {
                                 }/${nodeRes?.getNodesByOrg.totalNodes || "-"}`}
                             />
                             <NodeContainer
-                                slidesToShow={slidesToShow}
-                                items={nodeRes?.getNodesByOrg.nodes}
-                                count={nodeRes?.getNodesByOrg.nodes.length}
+                                items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
                         </RoundedCard>
@@ -360,7 +355,7 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} lg={4} item>
                     <LoadingWrapper
-                        height={312}
+                        height={314}
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||

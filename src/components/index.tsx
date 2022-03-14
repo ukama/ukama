@@ -8,6 +8,7 @@ import EmptyView from "./EmptyView";
 import NodeStatus from "./NodeStatus";
 import StatusCard from "./StatusCard";
 import TimeFilter from "./TimeFilter";
+import NodeSlider from "./NodesSlider";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
 import NodeDropDown from "./NodeDropDown";
@@ -36,7 +37,6 @@ import BillingDataTable from "./BillingDataTable";
 import GraphTitleWrapper from "./GraphTitleWrapper";
 import CustomRadioButton from "./CustomRadioButton";
 import NodeStatsContainer from "./NodeStatsContainer";
-import MultiSlideCarousel from "./MultiSlideCarousel";
 import ApexStackAreaChart from "./ApexStackAreaChart";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
@@ -55,14 +55,12 @@ export {
     NodeCard,
     UserCard,
     TabPanel,
-    ApexStackAreaChart,
-    NodeSoftwareInfosDialog,
     LineChart,
+    NodeSlider,
     SplitButton,
     EmptyView,
     StatsCard,
     TimeFilter,
-    NodeAppDetailsDialog,
     NodeStatus,
     StatusCard,
     CurrentBill,
@@ -95,9 +93,11 @@ export {
     CustomRadioButton,
     UserDetailsDialog,
     GraphTitleWrapper,
-    MultiSlideCarousel,
     NodeStatsContainer,
+    ApexStackAreaChart,
     DataTableWithOptions,
     UserActivationDialog,
+    NodeAppDetailsDialog,
     FormControlCheckboxes,
+    NodeSoftwareInfosDialog,
 };

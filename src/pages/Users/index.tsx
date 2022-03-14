@@ -90,7 +90,7 @@ const User = () => {
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />
-                        <Grid container spacing={2} mt={2}>
+                        <Grid container spacing={2} mt={4}>
                             {users.map((item: GetUserDto) => (
                                 <Grid key={item.id} item xs={12} md={6} lg={3}>
                                     <Card
