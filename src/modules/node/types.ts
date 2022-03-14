@@ -21,6 +21,18 @@ export class NodeDto {
 
     @Field()
     totalUser: number;
+
+    @Field()
+    isUpdateAvailable: boolean;
+
+    @Field()
+    updateVersion: string;
+
+    @Field()
+    updateShortNote: string;
+
+    @Field()
+    updateDescription: string;
 }
 
 @ObjectType()

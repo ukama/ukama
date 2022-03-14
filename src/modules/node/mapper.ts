@@ -81,6 +81,12 @@ class NodeMapper implements INodeMapper {
             title: defaultCasual._title(),
             description: `${defaultCasual.random_value(NODE_TYPE)} node`,
             totalUser: defaultCasual.integer(1, 99),
+            isUpdateAvailable: Math.random() < 0.7,
+            updateShortNote:
+                "Software update available. Estimated 10 minutes, and will (be/not be) disruptive. ",
+            updateDescription:
+                "Short introduction.\n\n TL;DR\n\n*** NEW ***\nPoint 1\nPoint 2\nPoint 3\n\n*** IMPROVEMENTS ***\nPoint 1\nPoint 2\nPoint 3\n\n*** FIXES ***\nPoint 1\nPoint 2\nPoint 3\n\nWe would love to hear your feedback -- if you have anything to share, please xyz.",
+            updateVersion: "12.4",
         };
     };
 }
