@@ -21,9 +21,11 @@ import {
     NodeDto,
     MetricDto,
     useGetNodesByOrgQuery,
+    useGetMetricsRrCsSubscription,
     useGetNodeDetailsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
+    useGetMetricsRrcLazyQuery,
     useGetMetricsThroughputUlsSubscription,
     useGetMetricsThroughputDlsSubscription,
     useGetMetricsCpuTrxLazyQuery,
@@ -109,6 +111,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Temp. (COM)"]));
+    const [rrcCnxSuccessMetrix, setRrcCnxSuccessMetrix] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RRC CNX Success"]));
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
@@ -141,7 +149,25 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+    const [getMetricsRRC, { data: metricsRRCRes, refetch: metricRRCRefetch }] =
+        useGetMetricsRrcLazyQuery();
 
+    useGetMetricsRrCsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setRrcCnxSuccessMetrix(
+                rrcCnxSuccessMetrix.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsRRC || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const [
         getMetricThroughtpuUl,
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
@@ -337,6 +363,11 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsRRC({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricTempCom({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -462,18 +493,17 @@ const Nodes = () => {
     useEffect(() => {
         if (
             selectedTab === 1 &&
-            metricThroughtputUlRes &&
-            metricThroughtputUlRes.getMetricsThroughputUL.length > 0
+            metricsRRCRes &&
+            metricsRRCRes.getMetricsRRC.length > 0
         ) {
-            if (!isMetricData(throughputULMetric)) {
-                setThroughputULMetric(
-                    throughputULMetric.map(item => {
+            if (!isMetricData(rrcCnxSuccessMetrix)) {
+                setRrcCnxSuccessMetrix(
+                    rrcCnxSuccessMetrix.map(item => {
                         return {
                             name: item.name,
                             data: [
                                 ...item.data,
-                                ...(metricThroughtputUlRes.getMetricsThroughputUL ||
-                                    []),
+                                ...(metricsRRCRes.getMetricsRRC || []),
                             ],
                         };
                     })
@@ -481,14 +511,43 @@ const Nodes = () => {
             }
             metricThroughtputUlRefetch({
                 ...getMetricPollingCallPayload(
-                    metricThroughtputUlRes.getMetricsThroughputUL[
-                        metricThroughtputUlRes.getMetricsThroughputUL.length - 1
+                    metricsRRCRes.getMetricsRRC[
+                        metricsRRCRes.getMetricsRRC.length - 1
                     ].x
                 ),
             });
         }
-    }, [metricThroughtputUlRes]);
+    }, [metricsRRCRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab === 1 &&
+            metricThroughtputDlRes &&
+            metricThroughtputDlRes.getMetricsThroughputDL.length > 0
+        ) {
+            if (!isMetricData(throughputDLMetric)) {
+                setThroughputDLMetric(
+                    throughputDLMetric.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricThroughtputDlRes.getMetricsThroughputDL ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricThroughtputDlRefetch({
+                ...getMetricPollingCallPayload(
+                    metricThroughtputDlRes.getMetricsThroughputDL[
+                        metricThroughtputDlRes.getMetricsThroughputDL.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricThroughtputDlRes]);
     useEffect(() => {
         if (
             selectedTab === 1 &&
@@ -734,6 +793,7 @@ const Nodes = () => {
                                 loading={isLoading || nodeDetailLoading}
                                 throughpuULMetric={throughputULMetric}
                                 throughpuDLMetric={throughputDLMetric}
+                                rrcCnxSuccessMetrix={rrcCnxSuccessMetrix}
                             />
                         </TabPanel>
                         <TabPanel

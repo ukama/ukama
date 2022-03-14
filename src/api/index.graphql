@@ -234,7 +234,43 @@ subscription getMetricsThroughputULS {
         x
     }
 }
+query getMetricsRLC($data: MetricsInputDTO!) {
+    getMetricsRLC(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsRLCs {
+    getMetricsRLC {
+        y
+        x
+    }
+}
 
+query getMetricsERAB($data: MetricsInputDTO!) {
+    getMetricsERAB(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsERABs {
+    getMetricsERAB {
+        y
+        x
+    }
+}
+query getMetricsRRC($data: MetricsInputDTO!) {
+    getMetricsRRC(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsRRCs {
+    getMetricsRRC {
+        y
+        x
+    }
+}
 query getMetricsThroughputDL($data: MetricsInputDTO!) {
     getMetricsThroughputDL(data: $data) {
         y

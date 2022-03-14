@@ -7,10 +7,12 @@ interface INodeOverviewTab {
     loading: boolean;
     throughpuULMetric: any;
     throughpuDLMetric: any;
+    rrcCnxSuccessMetrix: any;
 }
 const NodeNetworkTab = ({
     loading,
     throughpuULMetric,
+    rrcCnxSuccessMetrix,
     throughpuDLMetric,
 }: INodeOverviewTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
@@ -75,8 +77,11 @@ const NodeNetworkTab = ({
                         data={throughpuDLMetric}
                         name={"Throughput (D/L)"}
                     />
-
-                    <LineChart hasData={true} title={"RRC CNX Success "} />
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={rrcCnxSuccessMetrix}
+                        name={"RRC CNX Success"}
+                    />
                     <LineChart hasData={true} title={"ERAB Drop Rate"} />
                     <LineChart hasData={true} title={"RLS  Drop Rate"} />
                 </Paper>
