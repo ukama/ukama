@@ -29,6 +29,8 @@ import {
     useGetMetricsCpuTrxLazyQuery,
     useGetMetricsEraBsSubscription,
     useGetMetricsRlCsSubscription,
+    useGetMetricsCpuCoMsSubscription,
+    useGetMetricsCpuComLazyQuery,
     useGetMetricsErabLazyQuery,
     useGetMetricsRrCsSubscription,
     useGetMetricsRlcLazyQuery,
@@ -81,6 +83,13 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["ERAB Drop Rate"]));
+
+    const [cpuComMetrics, setCpuComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["CPU-COM"]));
     const [rlsDropRateMetrics, setRlsDropRateMetrics] = useState<
         {
             name: string;
@@ -172,6 +181,28 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+    const [
+        getMetricsCpuCOM,
+        { data: cpuComMetricsRes, refetch: cpuComMetricsRefetch },
+    ] = useGetMetricsCpuComLazyQuery();
+
+    useGetMetricsCpuCoMsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setCpuComMetrics(
+                cpuComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsCpuCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const [
         getMetricsMemoryCOM,
         { data: metricsMemoryComres, refetch: metricsMemoryComRefetch },
@@ -448,6 +479,11 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsCpuCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricsRLC({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -536,6 +572,34 @@ const Nodes = () => {
             });
         }
     }, [metricsERABres]);
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            cpuComMetricsRes &&
+            cpuComMetricsRes.getMetricsCpuCOM.length > 0
+        ) {
+            if (!isMetricData(cpuComMetrics)) {
+                setCpuComMetrics(
+                    cpuComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(cpuComMetricsRes.getMetricsCpuCOM || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            cpuComMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    cpuComMetricsRes.getMetricsCpuCOM[
+                        cpuComMetricsRes.getMetricsCpuCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [cpuComMetricsRes]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -998,6 +1062,7 @@ const Nodes = () => {
                                 memoryTrxMetric={memoryTrxMetric}
                                 loading={isLoading || nodeDetailLoading}
                                 memoryComMetrics={memoryComMetrics}
+                                cpuComMetrics={cpuComMetrics}
                             />
                         </TabPanel>
                         <TabPanel

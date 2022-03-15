@@ -13,11 +13,13 @@ interface INodeResourcesTab {
     cpuTrxMetric: any;
     memoryTrxMetric: any;
     memoryComMetrics: any;
+    cpuComMetrics: any;
     selectedNode: NodeDto | undefined;
 }
 const NodeResourcesTab = ({
     loading,
     selectedNode,
+    cpuComMetrics = [],
     memoryComMetrics = [],
     cpuTrxMetric = [],
     memoryTrxMetric = [],
@@ -181,13 +183,14 @@ const NodeResourcesTab = ({
                     {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][3].show && (
-                        <StackedAreaChart
+                        <ApexStackAreaChart
                             hasData={true}
-                            title={
+                            name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
-                                ][3].name
+                                ][2].name
                             }
+                            data={cpuComMetrics}
                         />
                     )}
                     {NodeResourcesTabConfigure[
