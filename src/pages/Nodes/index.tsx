@@ -32,6 +32,8 @@ import {
     useGetMetricsErabLazyQuery,
     useGetMetricsRrCsSubscription,
     useGetMetricsRlcLazyQuery,
+    useGetMetricsMemoryComsSubscription,
+    useGetMetricsMemoryComLazyQuery,
     useGetMetricsMemoryTrxLazyQuery,
     useGetMetricsUptimeLazyQuery,
     useGetMetricsUptimeSSubscription,
@@ -133,7 +135,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Temp. (COM)"]));
-
+    const [memoryComMetrics, setMemoryComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["MEMORY (COM)"]));
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
 
@@ -165,24 +172,29 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
-    // const [getMetricsRLC, { data: metricsRLCres, refetch: metricsRLCRefetch }] =
-    //     useGetMetricsRlcLazyQuery();
-    // useGetMetricsRlcsSubscription({
-    //     skip: selectedTab !== 1,
-    //     onSubscriptionData: res => {
-    //         setRlsDropRateMetrics(
-    //             rlsDropRateMetrics.map(item => {
-    //                 return {
-    //                     name: item.name,
-    //                     data: [
-    //                         ...item.data,
-    //                         ...(res.subscriptionData.data?.getMetricsRLC || []),
-    //                     ],
-    //                 };
-    //             })
-    //         );
-    //     },
-    // });
+    const [
+        getMetricsMemoryCOM,
+        { data: metricsMemoryComres, refetch: metricsMemoryComRefetch },
+    ] = useGetMetricsMemoryComLazyQuery();
+
+    useGetMetricsMemoryComsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setMemoryComMetrics(
+                memoryComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsMemoryCOM || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
     const [getMetricsRLC, { data: metricsRLCres, refetch: metricsRlcRefetch }] =
         useGetMetricsRlcLazyQuery();
 
@@ -202,6 +214,7 @@ const Nodes = () => {
             );
         },
     });
+
     const [
         getMetricsERAB,
         { data: metricsERABres, refetch: metricsERABresRefetch },
@@ -445,6 +458,11 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsMemoryCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricTempTrx({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -546,7 +564,35 @@ const Nodes = () => {
             });
         }
     }, [metricUptimeTrxRes]);
-
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricsMemoryComres &&
+            metricsMemoryComres.getMetricsMemoryCOM.length > 0
+        ) {
+            if (!isMetricData(memoryComMetrics)) {
+                setMemoryComMetrics(
+                    memoryComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsMemoryComres.getMetricsMemoryCOM ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsMemoryComRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsMemoryComres.getMetricsMemoryCOM[
+                        metricsMemoryComres.getMetricsMemoryCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsMemoryComres]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -951,6 +997,7 @@ const Nodes = () => {
                                 cpuTrxMetric={cpuTrxMetric}
                                 memoryTrxMetric={memoryTrxMetric}
                                 loading={isLoading || nodeDetailLoading}
+                                memoryComMetrics={memoryComMetrics}
                             />
                         </TabPanel>
                         <TabPanel

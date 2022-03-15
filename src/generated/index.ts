@@ -1204,6 +1204,32 @@ export type GetMetricsThroughputDlQuery = {
     }>;
 };
 
+export type GetMetricsMemoryComsSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsMemoryComsSubscription = {
+    __typename?: "Subscription";
+    getMetricsMemoryCOM: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsMemoryComQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsMemoryComQuery = {
+    __typename?: "Query";
+    getMetricsMemoryCOM: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
 export type GetMetricsThroughputDlsSubscriptionVariables = Exact<{
     [key: string]: never;
 }>;
@@ -3043,6 +3069,106 @@ export type GetMetricsThroughputDlLazyQueryHookResult = ReturnType<
 export type GetMetricsThroughputDlQueryResult = Apollo.QueryResult<
     GetMetricsThroughputDlQuery,
     GetMetricsThroughputDlQueryVariables
+>;
+export const GetMetricsMemoryComsDocument = gql`
+    subscription getMetricsMemoryCOMS {
+        getMetricsMemoryCOM {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsMemoryComsSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsMemoryComsSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsMemoryComsSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsMemoryComsSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsMemoryComsSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsMemoryComsSubscription,
+        GetMetricsMemoryComsSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsMemoryComsSubscription,
+        GetMetricsMemoryComsSubscriptionVariables
+    >(GetMetricsMemoryComsDocument, options);
+}
+export type GetMetricsMemoryComsSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsMemoryComsSubscription
+>;
+export type GetMetricsMemoryComsSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsMemoryComsSubscription>;
+export const GetMetricsMemoryComDocument = gql`
+    query getMetricsMemoryCOM($data: MetricsInputDTO!) {
+        getMetricsMemoryCOM(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsMemoryComQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsMemoryComQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsMemoryComQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsMemoryComQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsMemoryComQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsMemoryComQuery,
+        GetMetricsMemoryComQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsMemoryComQuery,
+        GetMetricsMemoryComQueryVariables
+    >(GetMetricsMemoryComDocument, options);
+}
+export function useGetMetricsMemoryComLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsMemoryComQuery,
+        GetMetricsMemoryComQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsMemoryComQuery,
+        GetMetricsMemoryComQueryVariables
+    >(GetMetricsMemoryComDocument, options);
+}
+export type GetMetricsMemoryComQueryHookResult = ReturnType<
+    typeof useGetMetricsMemoryComQuery
+>;
+export type GetMetricsMemoryComLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsMemoryComLazyQuery
+>;
+export type GetMetricsMemoryComQueryResult = Apollo.QueryResult<
+    GetMetricsMemoryComQuery,
+    GetMetricsMemoryComQueryVariables
 >;
 export const GetMetricsThroughputDlsDocument = gql`
     subscription getMetricsThroughputDLS {

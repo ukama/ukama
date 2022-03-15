@@ -277,6 +277,18 @@ query getMetricsThroughputDL($data: MetricsInputDTO!) {
         x
     }
 }
+subscription getMetricsMemoryCOMS {
+    getMetricsMemoryCOM {
+        y
+        x
+    }
+}
+query getMetricsMemoryCOM($data: MetricsInputDTO!) {
+    getMetricsMemoryCOM(data: $data) {
+        y
+        x
+    }
+}
 
 subscription getMetricsThroughputDLS {
     getMetricsThroughputDL {
