@@ -188,12 +188,12 @@ const NodeResourcesTab = ({
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
-                                ][2].name
+                                ][3].name
                             }
                             data={cpuComMetrics}
                         />
                     )}
-                    {NodeResourcesTabConfigure[
+                    {/* {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][4].show && (
                         <StackedAreaChart
@@ -204,8 +204,8 @@ const NodeResourcesTab = ({
                                 ][4].name
                             }
                         />
-                    )}
-                    {NodeResourcesTabConfigure[
+                    )} */}
+                    {/* {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][5].show && (
                         <StackedAreaChart
@@ -216,8 +216,8 @@ const NodeResourcesTab = ({
                                 ][5].name
                             }
                         />
-                    )}
-                    {NodeResourcesTabConfigure[
+                    )} */}
+                    {/* {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][6].show && (
                         <StackedAreaChart
@@ -228,7 +228,7 @@ const NodeResourcesTab = ({
                                 ][6].name
                             }
                         />
-                    )}
+                    )} */}
                 </Paper>
             </Grid>
         </Grid>
