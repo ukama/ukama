@@ -9,10 +9,12 @@ interface INodeOverviewTab {
     throughpuDLMetric: any;
     erabDropRateMetrix: any;
     rrcCnxSuccessMetrix: any;
+    rlsDropRateMetrics: any;
 }
 const NodeNetworkTab = ({
     loading,
     throughpuULMetric,
+    rlsDropRateMetrics,
     erabDropRateMetrix,
     rrcCnxSuccessMetrix,
     throughpuDLMetric,
@@ -89,7 +91,11 @@ const NodeNetworkTab = ({
                         data={erabDropRateMetrix}
                         name={"ERAB Drop Rate"}
                     />
-                    <LineChart hasData={true} title={"RLS  Drop Rate"} />
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={rlsDropRateMetrics}
+                        name={"RLS  Drop Rate"}
+                    />
                 </Paper>
             </Grid>
         </Grid>

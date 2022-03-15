@@ -28,8 +28,10 @@ import {
     useGetMetricsThroughputDlsSubscription,
     useGetMetricsCpuTrxLazyQuery,
     useGetMetricsEraBsSubscription,
+    useGetMetricsRlCsSubscription,
     useGetMetricsErabLazyQuery,
     useGetMetricsRrCsSubscription,
+    useGetMetricsRlcLazyQuery,
     useGetMetricsMemoryTrxLazyQuery,
     useGetMetricsUptimeLazyQuery,
     useGetMetricsUptimeSSubscription,
@@ -77,6 +79,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["ERAB Drop Rate"]));
+    const [rlsDropRateMetrics, setRlsDropRateMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RLS Drop Rate"]));
     const [uptimeMetric, setUptimeMetrics] = useState<
         {
             name: string;
@@ -157,6 +165,43 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+    // const [getMetricsRLC, { data: metricsRLCres, refetch: metricsRLCRefetch }] =
+    //     useGetMetricsRlcLazyQuery();
+    // useGetMetricsRlcsSubscription({
+    //     skip: selectedTab !== 1,
+    //     onSubscriptionData: res => {
+    //         setRlsDropRateMetrics(
+    //             rlsDropRateMetrics.map(item => {
+    //                 return {
+    //                     name: item.name,
+    //                     data: [
+    //                         ...item.data,
+    //                         ...(res.subscriptionData.data?.getMetricsRLC || []),
+    //                     ],
+    //                 };
+    //             })
+    //         );
+    //     },
+    // });
+    const [getMetricsRLC, { data: metricsRLCres, refetch: metricsRlcRefetch }] =
+        useGetMetricsRlcLazyQuery();
+
+    useGetMetricsRlCsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setRlsDropRateMetrics(
+                rlsDropRateMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsRLC || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const [
         getMetricsERAB,
         { data: metricsERABres, refetch: metricsERABresRefetch },
@@ -390,6 +435,11 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsRLC({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricsRRC({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -526,6 +576,34 @@ const Nodes = () => {
         }
     }, [metricTempTrxRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricsRLCres &&
+            metricsRLCres.getMetricsRLC.length > 0
+        ) {
+            if (!isMetricData(rlsDropRateMetrics)) {
+                setRlsDropRateMetrics(
+                    rlsDropRateMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsRLCres.getMetricsRLC || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsRlcRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsRLCres.getMetricsRLC[
+                        metricsRLCres.getMetricsRLC.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsRLCres]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -860,6 +938,7 @@ const Nodes = () => {
                                 throughpuDLMetric={throughputDLMetric}
                                 rrcCnxSuccessMetrix={rrcCnxSuccessMetrix}
                                 erabDropRateMetrix={erabDropRateMetrix}
+                                rlsDropRateMetrics={rlsDropRateMetrics}
                             />
                         </TabPanel>
                         <TabPanel
