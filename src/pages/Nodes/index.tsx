@@ -21,14 +21,15 @@ import {
     NodeDto,
     MetricDto,
     useGetNodesByOrgQuery,
-    useGetMetricsRrCsSubscription,
     useGetNodeDetailsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
-    useGetMetricsRrcLazyQuery,
     useGetMetricsThroughputUlsSubscription,
     useGetMetricsThroughputDlsSubscription,
     useGetMetricsCpuTrxLazyQuery,
+    useGetMetricsEraBsSubscription,
+    useGetMetricsErabLazyQuery,
+    useGetMetricsRrCsSubscription,
     useGetMetricsMemoryTrxLazyQuery,
     useGetMetricsUptimeLazyQuery,
     useGetMetricsUptimeSSubscription,
@@ -40,6 +41,7 @@ import {
     useGetMetricsTempTrxsSubscription,
     useGetMetricsTempComLazyQuery,
     useGetMetricsTempComsSubscription,
+    useGetMetricsRrcLazyQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
@@ -63,6 +65,18 @@ const Nodes = () => {
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedNode, setSelectedNode] = useState<NodeDto>();
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
+    const [rrcCnxSuccessMetrix, setRrcCnxSuccessMetrix] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RRC CNX Success"]));
+    const [erabDropRateMetrix, setErabDropRateMetrix] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["ERAB Drop Rate"]));
     const [uptimeMetric, setUptimeMetrics] = useState<
         {
             name: string;
@@ -111,12 +125,6 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Temp. (COM)"]));
-    const [rrcCnxSuccessMetrix, setRrcCnxSuccessMetrix] = useState<
-        {
-            name: string;
-            data: MetricDto[];
-        }[]
-    >(getDefaultList(["RRC CNX Success"]));
 
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
@@ -149,8 +157,32 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
-    const [getMetricsRRC, { data: metricsRRCRes, refetch: metricRRCRefetch }] =
-        useGetMetricsRrcLazyQuery();
+    const [
+        getMetricsERAB,
+        { data: metricsERABres, refetch: metricsERABresRefetch },
+    ] = useGetMetricsErabLazyQuery();
+
+    useGetMetricsEraBsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setErabDropRateMetrix(
+                erabDropRateMetrix.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsERAB ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsRRC,
+        { data: metricsRRCRes, refetch: metricsRRCResRefetch },
+    ] = useGetMetricsRrcLazyQuery();
 
     useGetMetricsRrCsSubscription({
         skip: selectedTab !== 1,
@@ -358,17 +390,22 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-            getMetricTempTrx({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
             getMetricsRRC({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricTempTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricTempCom({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsERAB({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -403,6 +440,34 @@ const Nodes = () => {
         }
     }, [selectedTab, selectedNode]);
 
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricsERABres &&
+            metricsERABres.getMetricsERAB.length > 0
+        ) {
+            if (!isMetricData(uptimeMetric)) {
+                setErabDropRateMetrix(
+                    erabDropRateMetrix.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsERABres.getMetricsERAB || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsERABresRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsERABres.getMetricsERAB[
+                        metricsERABres.getMetricsERAB.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsERABres]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -493,17 +558,18 @@ const Nodes = () => {
     useEffect(() => {
         if (
             selectedTab === 1 &&
-            metricsRRCRes &&
-            metricsRRCRes.getMetricsRRC.length > 0
+            metricThroughtputUlRes &&
+            metricThroughtputUlRes.getMetricsThroughputUL.length > 0
         ) {
-            if (!isMetricData(rrcCnxSuccessMetrix)) {
-                setRrcCnxSuccessMetrix(
-                    rrcCnxSuccessMetrix.map(item => {
+            if (!isMetricData(throughputULMetric)) {
+                setThroughputULMetric(
+                    throughputULMetric.map(item => {
                         return {
                             name: item.name,
                             data: [
                                 ...item.data,
-                                ...(metricsRRCRes.getMetricsRRC || []),
+                                ...(metricThroughtputUlRes.getMetricsThroughputUL ||
+                                    []),
                             ],
                         };
                     })
@@ -511,43 +577,14 @@ const Nodes = () => {
             }
             metricThroughtputUlRefetch({
                 ...getMetricPollingCallPayload(
-                    metricsRRCRes.getMetricsRRC[
-                        metricsRRCRes.getMetricsRRC.length - 1
+                    metricThroughtputUlRes.getMetricsThroughputUL[
+                        metricThroughtputUlRes.getMetricsThroughputUL.length - 1
                     ].x
                 ),
             });
         }
-    }, [metricsRRCRes]);
+    }, [metricThroughtputUlRes]);
 
-    useEffect(() => {
-        if (
-            selectedTab === 1 &&
-            metricThroughtputDlRes &&
-            metricThroughtputDlRes.getMetricsThroughputDL.length > 0
-        ) {
-            if (!isMetricData(throughputDLMetric)) {
-                setThroughputDLMetric(
-                    throughputDLMetric.map(item => {
-                        return {
-                            name: item.name,
-                            data: [
-                                ...item.data,
-                                ...(metricThroughtputDlRes.getMetricsThroughputDL ||
-                                    []),
-                            ],
-                        };
-                    })
-                );
-            }
-            metricThroughtputDlRefetch({
-                ...getMetricPollingCallPayload(
-                    metricThroughtputDlRes.getMetricsThroughputDL[
-                        metricThroughtputDlRes.getMetricsThroughputDL.length - 1
-                    ].x
-                ),
-            });
-        }
-    }, [metricThroughtputDlRes]);
     useEffect(() => {
         if (
             selectedTab === 1 &&
@@ -666,6 +703,34 @@ const Nodes = () => {
         }
     }, [metricPowerRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            metricsRRCRes &&
+            metricsRRCRes.getMetricsRRC.length > 0
+        ) {
+            if (!isMetricData(rrcCnxSuccessMetrix)) {
+                setRrcCnxSuccessMetrix(
+                    rrcCnxSuccessMetrix.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsRRCRes.getMetricsRRC || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsRRCResRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsRRCRes.getMetricsRRC[
+                        metricsRRCRes.getMetricsRRC.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsRRCRes]);
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
 
@@ -794,6 +859,7 @@ const Nodes = () => {
                                 throughpuULMetric={throughputULMetric}
                                 throughpuDLMetric={throughputDLMetric}
                                 rrcCnxSuccessMetrix={rrcCnxSuccessMetrix}
+                                erabDropRateMetrix={erabDropRateMetrix}
                             />
                         </TabPanel>
                         <TabPanel
