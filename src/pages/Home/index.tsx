@@ -44,11 +44,12 @@ import React, { useEffect, useState } from "react";
 import { isSkeltonLoading, user } from "../../recoil";
 import { Box, Grid } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+import { isContainNodeUpdate } from "../../utils";
 
 const Home = () => {
     const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const { id: orgId } = useRecoilValue(user);
+    const { id: orgId = "" } = useRecoilValue(user);
     const [statOptionValue, setstatOptionValue] = useState(3);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -255,6 +256,11 @@ const Home = () => {
     };
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
+    // eslint-disable-next-line no-unused-vars
+    const handleNodeUpdateActin = (id: string) => {
+        /* Handle node update  action */
+    };
+
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
             <Grid container spacing={3}>
@@ -341,12 +347,17 @@ const Home = () => {
                         <RoundedCard>
                             <ContainerHeader
                                 title="My Nodes"
-                                showButton={false}
+                                showButton={isContainNodeUpdate(
+                                    nodeRes?.getNodesByOrg.nodes
+                                )}
+                                buttonSize={"small"}
+                                buttonTitle={"Update All"}
                                 stats={`${
                                     nodeRes?.getNodesByOrg.activeNodes || "0"
                                 }/${nodeRes?.getNodesByOrg.totalNodes || "-"}`}
                             />
                             <NodeContainer
+                                handleNodeUpdate={handleNodeUpdateActin}
                                 items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />

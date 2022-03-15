@@ -20,7 +20,6 @@ import {
 import {
     NodeDto,
     MetricDto,
-    useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
@@ -38,6 +37,8 @@ import {
     useGetMetricsTempTrxsSubscription,
     useGetMetricsTempComLazyQuery,
     useGetMetricsTempComsSubscription,
+    useGetNodesByOrgLazyQuery,
+    Org_Node_State,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, user } from "../../recoil";
@@ -59,7 +60,18 @@ const Nodes = () => {
     const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
-    const [selectedNode, setSelectedNode] = useState<NodeDto>();
+    const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
+        id: "",
+        type: "",
+        title: "",
+        totalUser: 0,
+        description: "",
+        updateVersion: "",
+        updateShortNote: "",
+        updateDescription: "",
+        isUpdateAvailable: false,
+        status: Org_Node_State.Undefined,
+    });
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
     const [uptimeMetric, setUptimeMetrics] = useState<
         {
@@ -129,15 +141,13 @@ const Nodes = () => {
             from: from + 1,
         });
 
-    const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-        onCompleted: res => {
-            res?.getNodesByOrg?.nodes.length > 0 &&
-                setSelectedNode(res?.getNodesByOrg?.nodes[0]);
-        },
-    });
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            onCompleted: res => {
+                res?.getNodesByOrg?.nodes.length > 0 &&
+                    setSelectedNode(res?.getNodesByOrg?.nodes[0]);
+            },
+        });
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
@@ -324,6 +334,10 @@ const Nodes = () => {
             );
         },
     });
+
+    useEffect(() => {
+        getNodesByOrg({ variables: { orgId: orgId } });
+    }, []);
 
     useEffect(() => {
         if (selectedTab === 0) {
@@ -658,12 +672,13 @@ const Nodes = () => {
                 pb: 2,
             }}
         >
-            {nodesRes || isLoading ? (
+            {(nodesRes && nodesRes?.getNodesByOrg?.nodes.length > 0) ||
+            isLoading ? (
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
                         <NodeStatus
                             onAddNode={onAddNode}
-                            loading={nodesLoading}
+                            loading={isLoading || nodesLoading}
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
                             onNodeActionItemSelected={

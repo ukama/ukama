@@ -5,13 +5,25 @@ import RouterIcon from "@mui/icons-material/Router";
 type NodeContainerProps = {
     items: NodeDto[];
     handleItemAction: Function;
+    handleNodeUpdate: Function;
 };
 
-const NodeContainer = ({ items, handleItemAction }: NodeContainerProps) => {
+const NodeContainer = ({
+    items,
+    handleItemAction,
+    handleNodeUpdate,
+}: NodeContainerProps) => {
     return (
-        <Box component="div" sx={{ display: "flex", alignItems: "center" }}>
+        <Box
+            component="div"
+            sx={{ display: "flex", minHeight: "246px", alignItems: "center" }}
+        >
             {items.length > 0 ? (
-                <NodeSlider items={items} handleItemAction={handleItemAction} />
+                <NodeSlider
+                    items={items}
+                    handleItemAction={handleItemAction}
+                    handleNodeUpdate={handleNodeUpdate}
+                />
             ) : (
                 <EmptyView
                     size="large"

@@ -1,11 +1,19 @@
 import React from "react";
+import { LoadingWrapper } from "..";
 import { hexToRGB } from "../../utils";
-import { CardContainer } from "../../styles";
 import OptionsPopover from "../OptionsPopover";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
-import { Typography, Grid, Divider, styled } from "@mui/material";
-import { LoadingWrapper } from "..";
+import {
+    Typography,
+    Grid,
+    Divider,
+    styled,
+    Card,
+    IconButton,
+    Tooltip,
+} from "@mui/material";
+import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
 
 const CpuIcon = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -35,20 +43,30 @@ const IconStyle = {
 };
 
 type NodeCardProps = {
-    title?: string;
+    id: string;
+    title: string;
     users?: number;
     loading?: boolean;
-    subTitle?: string;
+    subTitle: string;
     isConfigure?: boolean;
+    updateShortNote: string;
+    isUpdateAvailable: boolean;
+    handleNodeUpdate: Function;
     handleOptionItemClick?: Function;
 };
 
 const NodeCard = ({
+    id,
     title,
     users,
     subTitle,
     loading,
+    updateShortNote = "",
+    isUpdateAvailable = false,
     handleOptionItemClick = () => {
+        /* Default empty function */
+    },
+    handleNodeUpdate = () => {
         /* Default empty function */
     },
 }: NodeCardProps) => {
@@ -56,13 +74,17 @@ const NodeCard = ({
         <LoadingWrapper
             isLoading={loading}
             variant="rectangular"
-            width={214}
+            width={218}
             height={206}
         >
-            <CardContainer
+            <Card
+                variant="outlined"
                 sx={{
-                    width: "214px",
+                    width: "218px",
                     height: "206px",
+                    borderRadius: "10px",
+                    justifyContent: "center",
+                    padding: "15px 18px 8px 18px",
                 }}
             >
                 <Grid container spacing={0.8}>
@@ -89,19 +111,40 @@ const NodeCard = ({
                             </Typography>
                         </Grid>
                     </Grid>
-                    <Grid item xs={2} m="4px 0px">
-                        <OptionsPopover
-                            style={{
-                                cursor: "pointer",
-                                position: "relative",
-                                bottom: "13px",
-                            }}
-                            cid={"node-card-options"}
-                            menuOptions={BASIC_MENU_ACTIONS}
-                            handleItemClick={(type: string) =>
-                                handleOptionItemClick(type)
-                            }
-                        />
+                    <Grid
+                        item
+                        xs={2}
+                        m="4px 0px"
+                        display={"flex"}
+                        alignItems="flex-start"
+                        justifyContent={"flex-end"}
+                    >
+                        {isUpdateAvailable ? (
+                            <Tooltip title={updateShortNote}>
+                                <IconButton
+                                    sx={{ p: 0, cursor: "pointer" }}
+                                    onClick={() => handleNodeUpdate(id)}
+                                >
+                                    <UpdateIcon
+                                        fontSize="small"
+                                        color="primary"
+                                    />
+                                </IconButton>
+                            </Tooltip>
+                        ) : (
+                            <OptionsPopover
+                                style={{
+                                    cursor: "pointer",
+                                    position: "relative",
+                                    bottom: "13px",
+                                }}
+                                cid={"node-card-options"}
+                                menuOptions={BASIC_MENU_ACTIONS}
+                                handleItemClick={(type: string) =>
+                                    handleOptionItemClick(type)
+                                }
+                            />
+                        )}
                     </Grid>
                     <Grid item xs={12} sx={{ ...IconStyle }}>
                         <img
@@ -145,7 +188,7 @@ const NodeCard = ({
                         </Grid>
                     </Grid>
                 </Grid>
-            </CardContainer>
+            </Card>
         </LoadingWrapper>
     );
 };

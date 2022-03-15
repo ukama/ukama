@@ -55,11 +55,16 @@ const NodeOverviewTab = ({
                             )} Node`}
                             name={"Model type"}
                         />
-                        <NodeStatItem value={"11111111111"} name={"Serial #"} />
                         <NodeStatItem
-                            value={"Amplifier Node 1"}
-                            name={"Node Group"}
+                            value={selectedNode?.id || "-"}
+                            name={"Serial #"}
                         />
+                        {selectedNode?.type === "TOWER" && (
+                            <NodeStatItem
+                                value={"Amplifier Node 1"}
+                                name={"Node Group"}
+                            />
+                        )}
                     </NodeStatsContainer>
                     <NodeStatsContainer
                         index={1}
