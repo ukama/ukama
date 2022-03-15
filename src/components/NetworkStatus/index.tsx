@@ -68,16 +68,16 @@ const NetworkStatus = ({
                         <Button
                             variant="contained"
                             sx={{ width: "144px", mr: "18px" }}
-                            onClick={() => handleAddNode()}
+                            onClick={() => handleActivateUser()}
                         >
-                            ADD NODE
+                            INVITE USER
                         </Button>
                         <Button
                             variant="contained"
                             sx={{ width: "164px" }}
-                            onClick={() => handleActivateUser()}
+                            onClick={() => handleAddNode()}
                         >
-                            ACTIVATE USER
+                            REGISTER NODE
                         </Button>
                     </HorizontalContainer>
                 </LoadingWrapper>

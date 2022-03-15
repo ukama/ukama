@@ -92,9 +92,9 @@ const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
 ];
 
 const UserActivation = {
-    title: "Activate User",
+    title: "Invite Users",
     subTitle:
-        "Choose all the eSIM(s) you want to assign to a user at this time. Once you pair an eSIM with a user ....................... policy details ................................",
+        "If you haven’t already, install Ukama eSIMs on all desired devices. For remote installation, you can share digial instructions here, and you can always complete this step later.",
 };
 
 const BillingTabs = [
