@@ -75,6 +75,7 @@ const MessageContainer = styled(Box)({
 const ContainerJustifySpaceBtw = styled(Box)({
     width: "100%",
     display: "flex",
+    paddingBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     textAlign: "center",

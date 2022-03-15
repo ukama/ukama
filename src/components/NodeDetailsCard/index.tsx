@@ -39,10 +39,13 @@ const NodeDetailsCard = ({
                                     }}
                                     label={
                                         <>
-                                            <Stack direction="row">
+                                            <Stack
+                                                direction="row"
+                                                alignItems="center"
+                                            >
                                                 <Typography variant="body2">
                                                     Software update available —
-                                                    view view
+                                                    view
                                                 </Typography>
 
                                                 <LinkStyle
