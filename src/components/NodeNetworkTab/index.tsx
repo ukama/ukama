@@ -1,6 +1,6 @@
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Typography } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, LineChart } from "..";
+import { NodeStatsContainer, NodeStatItem } from "..";
 import { useState } from "react";
 import ApexLineChartIntegration from "../ApexLineChart";
 interface INodeOverviewTab {

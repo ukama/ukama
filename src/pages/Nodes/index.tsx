@@ -48,6 +48,8 @@ import {
     useGetMetricsTempComLazyQuery,
     useGetMetricsTempComsSubscription,
     useGetMetricsRrcLazyQuery,
+    useGetMetricsDiskTrXsSubscription,
+    useGetMetricsDiskTrxLazyQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
@@ -77,6 +79,18 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["RRC CNX Success"]));
+    const [diskComMetrics, setDiskComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["DISK-COM"]));
+    const [diskTrxMatrics, setDiskTrxMatrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["DISK-COM"]));
     const [erabDropRateMetrix, setErabDropRateMetrix] = useState<
         {
             name: string;
@@ -196,6 +210,28 @@ const Nodes = () => {
                         data: [
                             ...item.data,
                             ...(res.subscriptionData.data?.getMetricsCpuCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsDiskTRX,
+        { data: diskTrxMetricsRes, refetch: diskTrxMetricsResRefetch },
+    ] = useGetMetricsDiskTrxLazyQuery();
+
+    useGetMetricsDiskTrXsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setDiskTrxMatrics(
+                cpuComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsDiskTRX ||
                                 []),
                         ],
                     };
@@ -489,6 +525,11 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsDiskTRX({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricsRRC({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -543,7 +584,34 @@ const Nodes = () => {
             });
         }
     }, [selectedTab, selectedNode]);
-
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            diskTrxMetricsRes &&
+            diskTrxMetricsRes.getMetricsDiskTRX.length > 0
+        ) {
+            if (!isMetricData(diskTrxMatrics)) {
+                setDiskTrxMatrics(
+                    diskTrxMatrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(diskTrxMetricsRes.getMetricsDiskTRX || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            diskTrxMetricsResRefetch({
+                ...getMetricPollingCallPayload(
+                    diskTrxMetricsRes.getMetricsDiskTRX[
+                        diskTrxMetricsRes.getMetricsDiskTRX.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [diskTrxMetricsRes]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -1063,6 +1131,9 @@ const Nodes = () => {
                                 loading={isLoading || nodeDetailLoading}
                                 memoryComMetrics={memoryComMetrics}
                                 cpuComMetrics={cpuComMetrics}
+                                diskTrxMatrics={diskTrxMatrics}
+                                diskComMetrics={diskComMetrics}
+                                powerMetrics={powerMetric}
                             />
                         </TabPanel>
                         <TabPanel
