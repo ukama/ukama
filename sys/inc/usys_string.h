@@ -30,19 +30,6 @@ static inline char *usys_strtok(char *str, const char *delim) {
 }
 
 /**
- * @fn     int usys_strtol(const char*, char**, int)
- * @brief
- *
- * @param  nptr
- * @param  endptr
- * @param  base
- * @return
- */
-static inline int usys_strtol(const char *nptr, char **endptr, int base) {
-    return strtol(nptr, endptr, base);
-}
-
-/**
  * @fn     char usys_strcpy*(char*, const char*)
  * @brief  Copies the C string pointed by source into the array pointed by
  *         destination, including the terminating null character
