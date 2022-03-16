@@ -59,10 +59,19 @@
 #define JSON_PROVIDER_RESPONSE "provider_response"
 #define JSON_WIMC_RESPONSE     "wimc_response"
 
+#define JSON_ARTIFACTS    "artifacts"
+#define JSON_EXTRA_INFO   "extra_info"
+#define JSON_VERSION      "version"
+#define JSON_CREATED_AT   "created_at"
+#define JSON_SIZE_BYTES   "size_bytes"
+#define JSON_FORMATS      "formats"
+#define JSON_CHUNKS       "chunks"
+
 int serialize_wimc_request(WimcReq *request, json_t **json);
 int deserialize_agent_request(AgentReq **request, json_t *json);
 int deserialize_provider_response(ServiceURL **urls, int *counter,
 				  json_t *json);
+int deserialize_hub_response(Artifact ***artifacts, int *counter, json_t *json);
 int serialize_task(WTasks *task, json_t **json);
 int serialize_result(WRespType type, char *str, json_t **json);
 

@@ -57,35 +57,19 @@ MethodType convert_str_to_method(char *str) {
 
 char *convert_tx_state_to_str(TransferState state) {
 
-  char *str;
-
-  switch(state) {
-
-  case REQUEST:
-    str = AGENT_TX_STATE_REQUEST_STR;
-    break;
-
-  case FETCH:
-    str = AGENT_TX_STATE_FETCH_STR;
-    break;
-
-  case UNPACK:
-    str = AGENT_TX_STATE_UNPACK_STR;
-    break;
-
-  case DONE:
-    str = AGENT_TX_STATE_DONE_STR;
-    break;
-
-  case ERR:
-    str = AGENT_TX_STATE_ERR_STR;
-    break;
-
-  default:
-    str = "";
+  if (state == REQUEST) {
+    return strdup(AGENT_TX_STATE_REQUEST_STR);
+  } else if (state == FETCH) {
+    return strdup(AGENT_TX_STATE_FETCH_STR);
+  } else if (state == UNPACK) {
+    return strdup(AGENT_TX_STATE_UNPACK_STR);
+  } else if (state == DONE) {
+    return strdup(AGENT_TX_STATE_DONE_STR);
+  } else if (state == ERR) {
+    return strdup(AGENT_TX_STATE_ERR_STR);
+  } else {
+    return strdup("");
   }
-
-  return str;
 }
 
 AgentState convert_str_to_state(char *str) {

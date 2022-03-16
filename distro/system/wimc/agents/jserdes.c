@@ -150,12 +150,14 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   json_t *jupdate=NULL;
   Update *update;
   char idStr[36+1];
+  char *state=NULL;
 
   if (req==NULL || req->update==NULL) {
     return FALSE;
   }
 
   update = req->update;
+  state = convert_tx_state_to_str(update->transferState);
 
   json_object_set_new(*json, JSON_TYPE, json_string(AGENT_REQ_TYPE_UPDATE));
 
@@ -170,7 +172,7 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   json_object_set_new(jupdate, JSON_TRANSFER_KBYTES,
 		      json_integer(update->transferKB));
   json_object_set_new(jupdate, JSON_TRANSFER_STATE,
-		      json_string(convert_tx_state_to_str(update->transferState)));
+		      json_string(state));
   
   /* void str is non-zero only if there was an error or we are done (will
    * have final path. Otherwise is empty
@@ -181,7 +183,8 @@ int serialize_agent_request_update(AgentReq *req, json_t **json) {
   } else {
     json_object_set_new(jupdate, JSON_VOID_STR, json_string(""));
   }
-  
+
+  free(state);
   return TRUE;
 }
 

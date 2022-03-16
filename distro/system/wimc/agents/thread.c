@@ -248,10 +248,8 @@ static void configure_runtime_args(WFetch *fetch, char **args) {
   args[2] = strdup(content->indexURL);
   args[3] = strdup("--store");
   args[4] = strdup(content->storeURL);
-  args[5] = strdup("--mem-file");
-  args[6] = strdup(memFile);
-  args[7] = strdup(folder);
-  args[8] = NULL; /* Null terminate for execv */
+  args[5] = strdup(folder);
+  args[6] = NULL; /* Null terminate for execv */
 
   return;
  done:

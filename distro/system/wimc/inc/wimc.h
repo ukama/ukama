@@ -53,6 +53,7 @@
 #define WIMC_EP_TASKS    "/content/tasks"
 #define WIMC_EP_ADMIN    "/admin"
 #define WIMC_EP_AGENT    "/admin/agent"
+#define WIMC_EP_HUB_CAPPS    "capps"
 #define WIMC_EP_AGENT_UPDATE "/admin/agent/update"
 
 #define WIMC_MAX_NAME_LEN   256
@@ -90,6 +91,51 @@ typedef struct {
   char *iURL;   /* Index URL - only when method is chunk */
   char *sURL;   /* Chunk store URL - only when method is chunk */
 } ServiceURL;
+
+/*
+ {
+    "name": "cspace",
+    "artifacts": [
+        {
+            "version": "0.0.1",
+            "formats": [
+                {
+                    "type": "tar.gz",
+                    "url": "/capps/cspace/0.0.1.tar.gz",
+                    "created_at": "2022-02-24T23:53:48Z",
+                    "size_bytes": 279435
+                },
+                {
+                    "type": "chunk",
+                    "url": "/capps/cspace/0.0.1.caidx",
+                    "created_at": "0001-01-01T00:00:00Z",
+                    "extra_info": {
+                        "chunks": "/chunks/"
+                    }
+                }
+            ]
+        }
+    ]
+}
+*/
+
+typedef struct {
+
+  char *type;      /* type of artifact, e.g., tgz, chunk, etc. */
+  char *url;       /* to get the artifact from */
+  char *extraInfo; /* any additional info. e.g., chunk URL */
+  char *createdAt; /* when was it created (and updated) */
+  int  size;       /* size of the artifact (in bytes) */
+} ArtifactFormat;
+
+typedef struct {
+
+  char *name;        /* Name of the artifact */
+  char *version;     /* version/tag */
+  int  formatsCount; /* various format for the artifact */
+
+  ArtifactFormat **formats; /* def of the format */
+} Artifact;
 
 typedef enum {
 
@@ -207,7 +253,7 @@ typedef struct {
   char    *clientPort;
   char    *dbFile;
   char    *adminPort;
-  char    *cloud;      /* cloud-based service provider URL. */
+  char    *hubURL;     /* Hub URL */
   sqlite3 *db;         /* SQLite3 db for various stats */
   int     maxAgents;   /* Max. number of agents allowed. */
   Agent   **agents;    /* Ptr to Agents, needed for http callback func() */

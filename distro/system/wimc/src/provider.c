@@ -8,7 +8,7 @@
  */
 
 /*
- * Functions to interact with the service provider in the cloud.
+ * Functions to interact with the hub.
  *
  */
 
@@ -100,7 +100,7 @@ static int process_response_from_provider(WimcCfg *cfg, long statusCode,
 static void create_provider_url(WimcCfg *cfg, char *url, char *name,
 				char *tag) {
 
-  sprintf(url, "%s/%s?name=%s&tag=%s", cfg->cloud, WIMC_EP_PROVIDER, name, tag);
+  sprintf(url, "%s/%s?name=%s&tag=%s", cfg->hubURL, WIMC_EP_PROVIDER, name, tag);
 
   return;
 }

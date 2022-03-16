@@ -29,7 +29,7 @@
 #define ENV_CLIENT_PORT "WIMC_CLIENT_PORT"
 #define ENV_ADMIN_PORT  "WMIN_ADMIN_PORT"
 #define ENV_DB_FILE     "WIMC_DB"
-#define ENV_UKAMA_CLOUD "WIMC_UKAMA_CLOUD"
+#define ENV_UKAMA_HUB   "WIMC_UKAMA_HUB"
 #define DEF_LOG_LEVEL   "TRACE"
 
 #define TRUE 1
@@ -50,9 +50,9 @@ static void usage() {
   printf("Usage: wimc.d [options] \n");
   printf("Options:\n");
   printf("--h, --help                         This help menu. \n");
-  printf("--u, --url                          Cloud URL - http://host:port/\n");
+  printf("--u, --url                          Hub URL - http://host:port/\n");
   printf("--d, --dbFile                       Full path for db file. \n");
-  printf("--c, --cPort                         Client listening port. \n");
+  printf("--c, --cPort                        Client listening port. \n");
   printf("--p, --aPort                        Admin listneing port. \n");
   printf("--l, --level <ERROR | DEBUG | INFO> Log level for the process. \n");
   printf("--v, --version                      Version. \n");
@@ -100,14 +100,14 @@ void is_valid_config(WimcCfg *cfg) {
   }
   
   /* Make sure the URL is in right format. */
-  if (valid_url_format(cfg->cloud) != TRUE) {
-    log_error("Invalid URL: %s\n", cfg->cloud);
+  if (valid_url_format(cfg->hubURL) != TRUE) {
+    log_error("Invalid URL: %s\n", cfg->hubURL);
     usage();
     exit(0);
   }
 
-  log_debug("Using following configuration: \n clientPort: %s \n dbFile: %s \n adminPort: %s \n Cloud-URL: %s", cfg->clientPort, cfg->dbFile, cfg->adminPort,
-	    cfg->cloud);
+  log_debug("Using following configuration: \n clientPort: %s \n dbFile: %s \n adminPort: %s \n Hub-URL: %s", cfg->clientPort, cfg->dbFile, cfg->adminPort,
+	    cfg->hubURL);
 }
 
 /*
@@ -136,7 +136,7 @@ int main (int argc, char **argv) {
   cfg->clientPort = getenv(ENV_CLIENT_PORT);
   cfg->adminPort  = getenv(ENV_ADMIN_PORT);
   cfg->dbFile     = getenv(ENV_DB_FILE);
-  cfg->cloud      = getenv(ENV_UKAMA_CLOUD);
+  cfg->hubURL     = getenv(ENV_UKAMA_HUB);
   cfg->maxAgents  = MAX_AGENTS;
   
   /* Prase command line args. */
@@ -163,8 +163,8 @@ int main (int argc, char **argv) {
 
     switch (opt) {
     case 'u':
-      if (cfg->cloud == NULL) {
-	cfg->cloud = optarg;
+      if (cfg->hubURL == NULL) {
+	cfg->hubURL = optarg;
       }
       break;
       
@@ -277,7 +277,6 @@ int main (int argc, char **argv) {
   clear_agents(agents);
   clear_tasks(&tasks);
 
-  free(tasks);
   free(cfg);
   free(agents);
   

@@ -11,12 +11,16 @@
  * Callback functions for various endpoints and REST methods.
  */
 
+#include <curl/curl.h>
+
 #include "callback.h"
 #include "tasks.h"
 #include "jserdes.h"
+#include "hub.h"
 
 static void free_agent_request(AgentReq *req);
-
+static int create_hub_urls_for_agent(char *hubURL, char *srcURL, char *destURL,
+				     char *srcExtraURL, char *destExtraURL);
 /*
  * decode a u_map into a string
  */
@@ -65,6 +69,51 @@ static void log_request(const struct _u_request *request) {
 	    request->http_url);
 }
 
+/*
+ * create_cb_url_for_agent --
+ *
+ */
+static char *create_cb_url_for_agent(char *port) {
+
+  char *cbURL = NULL;
+
+  if (port==NULL) {
+    return NULL;
+  }
+
+  cbURL = (char *)malloc(WIMC_MAX_URL_LEN);
+  if (cbURL) {
+    sprintf(cbURL, "http://localhost:%s/%s", port, WIMC_EP_AGENT_UPDATE);
+  }
+
+  return cbURL;
+}
+
+/*
+ * create_hub_urls_for_agent --
+ *
+ */
+static int create_hub_urls_for_agent(char *hubURL, char *srcURL, char *destURL,
+				     char *srcExtraURL, char *destExtraURL) {
+
+  if (hubURL == NULL || srcURL == NULL || destURL == NULL) return FALSE;
+  if (srcExtraURL == NULL || destExtraURL == NULL)         return FALSE;
+
+  if (strstr(srcURL, "https://") == NULL || strstr(srcURL, "http://") == NULL) {
+    sprintf(destURL, "%s/%s", hubURL, srcURL);
+  } else {
+    strncpy(destURL, srcURL, strlen(srcURL));
+  }
+
+  if (strstr(srcExtraURL, "https://") == NULL ||
+      strstr(srcExtraURL, "http://") == NULL) {
+    sprintf(destExtraURL, "%s/%s", hubURL, srcExtraURL);
+  } else {
+    strncpy(destExtraURL, srcExtraURL, strlen(srcExtraURL));
+  }
+
+  return TRUE;
+}
 
 /*
  * callback_post_container --
@@ -75,23 +124,24 @@ int callback_post_container(const struct _u_request *request,
 			   struct _u_response *response,
 			   void *user_data) {
 
-  int resCode=200;
-  int count=0, i=0;
+  int ret=TRUE, resCode=200, i=0;
   uuid_t uuid;
 
-  char idStr[36+1] = {0};
-  char path[WIMC_MAX_PATH_LEN] = {0};
-  char *errStr=NULL;
+  char idStr[36+1]={0};
+  char path[WIMC_MAX_PATH_LEN]={0};
+  char url[WIMC_MAX_URL_LEN]={0};
+  char extraURL[WIMC_MAX_URL_LEN]={0};
+
+  char *errStr=NULL, *cbURL=NULL;
   char *respBody=NULL, *name=NULL, *tag=NULL;
   WimcCfg *cfg=NULL;
-  ServiceURL **urls=NULL;
+  Artifact *artifact=NULL;
   WRespType respType=WRESP_ERROR;
-
+  CURLcode curlCode;
   Agent *agent=NULL;
-  char *providerURL=NULL, *indexURL=NULL, *storeURL=NULL;
+  ArtifactFormat *artifactFormat=NULL;
   
   cfg = (WimcCfg *)user_data;
-  urls = (ServiceURL **)calloc(sizeof(ServiceURL *), 1);
   uuid_clear(uuid);
 
   log_request(request);
@@ -108,43 +158,69 @@ int callback_post_container(const struct _u_request *request,
   }
 
   log_debug("Processing container name: %s with tag: %s", name, tag);
-
+#if 0
   if (db_read_path(cfg->db, name, tag, &path[0])) {
     /* we have the contents stored locally. Return the location. */
     respType = WRESP_RESULT;
     goto reply;
   }
+#endif
+  /* Step-1: Enquire hub for artifacts */
+  artifact = (Artifact *)calloc(1, sizeof(Artifact));
 
-  /* Step-1: Ask service provider for the link. */
-  resCode = get_service_url_from_provider(cfg, name, tag, &urls[0], &count);
-  if (resCode != 200) {
-    resCode = 404;
-    errStr = msprintf("No service provider found");
+  ret = get_artifacts_info_from_hub(artifact, cfg, name, tag, &curlCode);
+  if (ret == -1) {
+    /* Curl error */
+    resCode = 500;
+    errStr = msprintf("Hub error: %s", curl_easy_strerror(curlCode));
     goto reply;
-  }
-  
-  /* Step-2: find out which register agent can handle the method
-   *         returned by the service provider.
-   */
-  agent = find_matching_agent(*cfg->agents, *urls, count, &providerURL,
-			      &indexURL, &storeURL);
-  if (agent == NULL) {
-    resCode = 404; /*Not found but might be available in furture. */
-    errStr = msprintf("No service provider found");
+  } else if (ret == FALSE) {
+    resCode = 404;
+    errStr = msprintf("No matching capp found on the hub. Name: %s Tag: %s",
+		      name, tag);
     goto reply;
   } else {
-    uuid_unparse(agent->uuid, &idStr[0]);
-    log_debug("Matching agent found. Agent Id: %s Method: %s URL: %s",
-	      idStr, agent->method, agent->url);
+    resCode = 200;
   }
 
-  /* Step-3: Ask agent to fetch the data. Agent will update the status
-   *         of this transfer via special status CB url and UID.
-   *         Tasks list is also updated.
-   */
+  /* Step-2: find out which register agent can handle the method.
+   * in case there are multiple format, the first one to match it is */
+  for (i=0; i<artifact->formatsCount; i++) {
+    agent = find_matching_agent(*cfg->agents, artifact->formats[i]->type);
+    if (agent) {
+      artifactFormat = artifact->formats[i];
+      uuid_unparse(agent->uuid, &idStr[0]);
+      log_debug("Matching agent found. Agent Id: %s Method: %s URL: %s",
+		idStr, agent->method, agent->url);
+      break;
+    }
+  }
 
-  resCode = communicate_with_the_agent(WREQ_FETCH, name, tag, providerURL,
-				       indexURL, storeURL, agent, cfg, &uuid);
+  if (agent == NULL) {
+    resCode = 404; /*Not found but might be available in furture */
+    errStr = msprintf("No matching agent found for capp format(s)");
+    goto reply;
+  }
+
+  /* Step-3: Ask agent to fetch the data. */
+
+  /* create callback URL */
+  cbURL = create_cb_url_for_agent(cfg->adminPort);
+
+  /* create URLs for agent to fetch the artifacts from */
+  if (strcmp(agent->method, WIMC_METHOD_CHUNK_STR)==0) {
+    create_hub_urls_for_agent(cfg->hubURL,
+			      artifactFormat->url, &url[0],
+			      artifactFormat->extraInfo, &extraURL[0]);
+  }
+
+  /* create request */
+  request = create_wimc_request(WREQ_FETCH, name, tag, cfg->hubURL, cbURL,
+				url, extraURL, artifactFormat->type,
+				DEFAULT_INTERVAL);
+
+  /* Send the request to agent */
+  resCode = communicate_with_agent(WREQ_FETCH, request, agent->url, cfg, &uuid);
 
   /* Step-4: setup client URL where they can monitor the status
    *         of the request. 
@@ -154,7 +230,7 @@ int callback_post_container(const struct _u_request *request,
     respType = WRESP_PROCESSING;
     goto reply;
   } else {
-    errStr = msprintf("No resource found. Error");
+    errStr = msprintf("No resource found. Internal error");
   }
 
 reply:
@@ -165,24 +241,23 @@ reply:
   } else {
     ulfius_set_string_body_response(response, resCode, "");
   }
-  
+
   if (respBody)
     free(respBody);
 
   if (errStr)
     free(errStr);
 
-  for (i=0; i<count; i++) {
-    if (urls[i]->method && urls[i]->url) {
-      free(urls[i]->method);
-      free(urls[i]->url);
-      free(urls[i]->iURL);
-      free(urls[i]->sURL);
-    }
-    free(urls[i]);
+  //cleanup_wimc_request(request);
+  if (cbURL) {
+    free(cbURL);
   }
 
-  free(urls);
+  free_artifact(artifact);
+  if (artifact) free(artifact);
+  if (request) {
+    cleanup_wimc_request(request);
+  }
 
   return U_CALLBACK_CONTINUE;
 }

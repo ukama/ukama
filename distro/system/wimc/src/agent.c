@@ -28,8 +28,6 @@ struct Response {
   size_t size;
 };
 
-static char *create_cb_url_for_agent(char *port);
-
 /*
  * register_agent -- register new agent
  */
@@ -182,34 +180,21 @@ int process_agent_update_request(WTasks **tasks, AgentReq *req, uuid_t *uuid,
 }
 
 /*
- * find_matching_agent -- return the Agent which matches the given
- *                        method (as returned from service provider). 
- *                        If there are multiple URL in the list, we always 
- *                        send the first match between the agent and provider.
- *                        We can be more intelligent in future.
+ * find_matching_agent -- return the Agent which can handle the request.
  */
-Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
-			   char **providerURL, char **indexURL,
-			   char **storeURL) {
+Agent *find_matching_agent(Agent *agents, char *method) {
 
-  int i, j;
+  int i;
   Agent *ptr = agents;
-  ServiceURL *urls = (ServiceURL *)vURLs;
 
   /* Sanity check. */
   if (agents == NULL)
     return NULL;
 
   for (i=0; i < MAX_AGENTS; i++) {
-
     if (uuid_is_null(ptr[i].uuid)==0) { /* have valid agent id. */
-      for (j=0; j < count; j++) {
-	if (strcasecmp(urls[i].method, ptr[i].method)==0) {
-	  *providerURL = urls[i].url;
-	  *indexURL    = urls[i].iURL;
-	  *storeURL    = urls[i].sURL;
+      if (strcmp(method, ptr[i].method)==0) {
 	  return ptr;
-	}
       }
     }
   }
@@ -222,7 +207,7 @@ Agent *find_matching_agent(Agent *agents, void *vURLs, int count,
  * cleanup_wimc_request --
  *
  */
-static void cleanup_wimc_request(WimcReq *request) {
+void cleanup_wimc_request(WimcReq *request) {
 
   if (request->type == (WReqType)WREQ_FETCH) {
     WFetch *fetch = request->fetch;
@@ -245,27 +230,6 @@ static void cleanup_wimc_request(WimcReq *request) {
   }
 
   free(request);
-}
-
-
-/*
- * create_cb_url_for_agent --
- *
- */
-static char *create_cb_url_for_agent(char *port) {
-
-  char *cbURL = NULL;
-
-  if (port==NULL) {
-    return NULL;
-  }
-
-  cbURL = (char *)malloc(WIMC_MAX_URL_LEN);
-  if (cbURL) {
-    sprintf(cbURL, "http://localhost:%s/%s", port, WIMC_EP_AGENT_UPDATE);
-  }
-
-  return cbURL;
 }
 
 /*
@@ -297,10 +261,10 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  *
  */
 
-static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
-				    char *providerURL, char *cbURL,
-				    char *iURL, char *sURL,
-				    char *method, int interval) {
+WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
+			     char *providerURL, char *cbURL,
+			     char *iURL, char *sURL,
+			     char *method, int interval) {
 
   WimcReq *request=NULL;
   WFetch  *fetch=NULL;
@@ -317,6 +281,8 @@ static WimcReq *create_wimc_request(WReqType reqType, char *name, char *tag,
     content = (WContent *)malloc(sizeof(WContent));
 
     if (!fetch && !content) {
+      log_error("Error allocating memory: %d %s",
+		sizeof(WFetch), sizeof(WContent));
       goto done;
     }
 
@@ -430,54 +396,20 @@ static long send_request_to_agent(WReqType reqType, char *agentURL,
 }
 
 /*
- * communicate_with_agent -- Function WIMC.d uses to communicate with Agent(s).
+ * communicate_with_agent --
  *
  */
-long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
-				char *providerURL, char *indexURL,
-				char *storeURL, Agent *agent, WimcCfg *cfg,
-				uuid_t *uuid) {
-
-  /* steps are:
-   * 0. Generate unique ID for the content request and CB url.
-   * 1. create wimc request for agent.
-   * 2. serialize the request as JSON object.
-   * 3. send the request to the Agent using provided URL.
-   * 4. Update the UUID and return HTTP status code.
-   */
+long communicate_with_agent(WReqType reqType, WimcReq *request, char *url,
+			    WimcCfg *cfg, uuid_t *uuid) {
 
   int ret=FALSE;
   long code=0;
-  char *cbURL=NULL;
-  WimcReq *request=NULL;
   json_t *json=NULL;
   int agentRetCode=0;
 
   /* Some sanity check. */
-  if (!agent && !cfg) {
+  if (!request && !url) {
     return code;
-  }
-
-  if (reqType == (WReqType)WREQ_FETCH) {
-    if (!indexURL && !storeURL && !providerURL) {
-      return code;
-    }
-
-    if (!name && !tag) {
-      return code;
-    }
-  }
-
-  cbURL = create_cb_url_for_agent(cfg->adminPort);
-  if (!cbURL) {
-    goto done;
-  }
-
-  request = create_wimc_request(reqType, name, tag, providerURL, cbURL,
-				indexURL, storeURL, agent->method,
-				DEFAULT_INTERVAL);
-  if (!request) {
-    goto done;
   }
 
   ret = serialize_wimc_request(request, &json);
@@ -488,7 +420,7 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
   add_to_tasks(cfg->tasks, request);
   uuid_copy(*uuid, request->fetch->uuid);
 
-  code = send_request_to_agent(reqType, agent->url, json, &agentRetCode);
+  code = send_request_to_agent(reqType, url, json, &agentRetCode);
   if (code == 200) {
     log_debug("Agent command success. CURL return code: %d Agent code: %d",
 	      code, agentRetCode);
@@ -499,11 +431,6 @@ long communicate_with_the_agent(WReqType reqType, char *name, char *tag,
 
  done:
   json_decref(json);
-  cleanup_wimc_request(request);
-  if (cbURL) {
-    free(cbURL);
-  }
-
   return code;
 }
 
