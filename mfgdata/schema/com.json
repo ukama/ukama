@@ -1,0 +1,252 @@
+{
+  "header":	{
+    "version":	{
+      "major":	0,
+      "minor":	1
+    },
+    "indexTableOffset":	64,
+    "indexTupleSize":	24,
+    "indexTupleMaxCount":	50,
+    "indexCurrentTuple":	10,
+    "moduleCapability":	"AUTONOMOUS",
+    "moduleMode":	"MASTER",
+    "moduleDeviceOwner":	"OWNER"
+  },
+  "indexTable":	[{
+      "fieldId":	1,
+      "payloadOffset":	2560,
+      "payloadSize":	159,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	1
+      },
+      "payloadCRC":	1968601988,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	2,
+      "payloadOffset":	2752,
+      "payloadSize":	369,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	2
+      },
+      "payloadCRC":	3421000616,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	3,
+      "payloadOffset":	3776,
+      "payloadSize":	167,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	3
+      },
+      "payloadCRC":	3421000616,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	4,
+      "payloadOffset":	3968,
+      "payloadSize":	744,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	4
+      },
+      "payloadCRC":	1876718055,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	5,
+      "payloadOffset":	6400,
+      "payloadSize":	151,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	5
+      },
+      "payloadCRC":	1086213052,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	6,
+      "payloadOffset":	10496,
+      "payloadSize":	151,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	6
+      },
+      "payloadCRC":	1973727029,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	7,
+      "payloadOffset":	14592,
+      "payloadSize":	153,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	1
+      },
+      "payloadCRC":	4150665426,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	8,
+      "payloadOffset":	18688,
+      "payloadSize":	153,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	1
+      },
+      "payloadCRC":	3124760747,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	9,
+      "payloadOffset":	22784,
+      "payloadSize":	151,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	1
+      },
+      "payloadCRC":	334372334,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }, {
+      "fieldId":	10,
+      "payloadOffset":	26880,
+      "payloadSize":	154,
+      "payloadVersion":	{
+        "major":	0,
+        "minor":	1
+      },
+      "payloadCRC":	3702013338,
+      "state":	"ENABLED",
+      "valid":	"TRUE"
+    }],
+  "unitInfo":	{
+    "UUID":	"UK-0001-HNODE-SA03-1102",
+    "name":	"tNode",
+    "type":	2,
+    "partNumber":	"LTE-BAND-3-0XXXX",
+    "skew":	"UK_TNODE-LTE-0001",
+    "mac":	"10:20:30:20:50:60",
+    "swVersion":	{
+      "major":	0,
+      "minor":	1
+    },
+    "prodSwVersion":	{
+      "major":	1,
+      "minor":	1
+    },
+    "assemblyDate":	"30-07-2020",
+    "oemName":	"SANMINA",
+    "moduleCount":	3
+  },
+  "unitConfig":	[{
+      "UUID":	"UK-1001-COM-1102",
+      "name":	"COMv1",
+      "invtSysFsFile":	"/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
+      "invtDeviceInfo":	{
+        "bus":	0,
+        "address":	50
+      }
+    }, {
+      "UUID":	"UK-2001-LTE-1102",
+      "name":	"LTE",
+      "invtSysFsFile":	"/tmp/sys/bus/i2c/devices/i2c-1/1-0050/eeprom",
+      "invtDeviceInfo":	{
+        "bus":	1,
+        "address":	50
+      }
+    }, {
+      "UUID":	"UK-3001-MSK-1102",
+      "name":	"MASK",
+      "invtSysFsFile":	"/tmp/sys/bus/i2c/devices/i2c-1/1-0051/eeprom",
+      "invtDeviceInfo":	{
+        "bus":	1,
+        "address":	51
+      }
+    }],
+  "moduleInfo":	{
+    "UUID":	"UK-1001-COM-1102",
+    "name":	"COM-v1",
+    "type":	0,
+    "partNumber":	"COMv1-X86-0XXXX",
+    "hwVersion":	"REV-A",
+    "mac":	"10:20:30:20:50:60",
+    "swVersion":	{
+      "major":	0,
+      "minor":	1
+    },
+    "prodSwVersion":	{
+      "major":	1,
+      "minor":	1
+    },
+    "manufacturingDate":	"29-07-2020",
+    "manufacturerName":	"FOXCON",
+    "deviceCount":	6
+  },
+  "moduleConfig":	[{
+      "name":	"INA226",
+      "description":	"Pmic",
+      "type":	2,
+      "class":	2,
+      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/1/ina226_1/",
+      "devHwAttrs":	{
+        "bus":	0,
+        "address":	50
+      }
+    }, {
+      "name":	"TMP464",
+      "description":	"Pmic",
+      "type":	1,
+      "class":	2,
+      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/1/tmp464_1/",
+      "devHwAttrs":	{
+        "bus":	0,
+        "address":	48
+      }
+    }, {
+      "name":	"TMP464",
+      "description":	"DDR",
+      "type":	1,
+      "class":	2,
+      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/1/tmp464_2/",
+      "devHwAttrs":	{
+        "bus":	0,
+        "address":	49
+      }
+    }, {
+      "name":	"SE98",
+      "description":	"X86",
+      "type":	1,
+      "class":	2,
+      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/1/se98_1/",
+      "devHwAttrs":	{
+        "bus":	0,
+        "address":	18
+      }
+    }, {
+      "name":	"INA226",
+      "description":	"DDR",
+      "type":	2,
+      "class":	2,
+      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/1/ina226_2/",
+      "devHwAttrs":	{
+        "bus":	1,
+        "address":	72
+      }
+    }, {
+      "name":	"GPIO",
+      "description":	"PowerGood",
+      "type":	3,
+      "class":	1,
+      "devSysFsFile":	"/tmp/sys/class/gpio/gpio35/"
+    }],
+  "factoryConfig":	"mfgdata/schema/fact.cfg",
+  "userConfig":	"mfgdata/schema/user.cfg",
+  "factCalibaration":	"mfgdata/schema/fact.calib",
+  "userCalibration":	"mfgdata/schema/user.calib",
+  "bootstrapCerts":	"mfgdata/schema/bs.certs",
+  "cloudCerts":	"mfgdata/schema/cloud.certs"
+}

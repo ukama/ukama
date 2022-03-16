@@ -1,0 +1,78 @@
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
+ *
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
+ */
+
+#ifndef INC_MFG_H_
+#define INC_MFG_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "usys_types.h"
+
+typedef int (*MfgInitFxn)(void* data);
+typedef void (*MfgExitFxn)();
+typedef int (*MfgParseFxn)(void* data);
+typedef void* (*MfgReadHeaderFxn)(char* uuid, uint16_t* size);
+typedef void* (*MfgReadIndexFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadUnitInfoFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadUnitConfigFxn)( char* uuid, uint16_t* size, uint8_t count);
+typedef void* (*MfgReadModuleInfoFxn)( char* uuid, uint16_t* size, uint8_t idx);
+typedef void* (*MfgReadModuleInfoByUUUIDFxn)( char *uuid, uint16_t* size, uint8_t count);
+typedef void* (*MfgReadModuleConfigFxn)( char* uuid, uint16_t* size, uint8_t count);
+typedef void* (*MfgReadFactConfigFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadUserConfigFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadFactCalibFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadUserCalibFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadBsCertsFxn)( char* uuid, uint16_t* size);
+typedef void* (*MfgReadCloudCertsFxn)( char* uuid, uint16_t* size);
+
+/*basic read write operation to UKDB*/
+typedef struct  {
+  MfgInitFxn init;
+  MfgExitFxn  exit;
+  MfgReadHeaderFxn readHeader;
+  MfgReadIndexFxn readIndex;
+  MfgReadUnitInfoFxn readUnitInfo;
+  MfgReadUnitConfigFxn readUnitCfg;
+  MfgReadModuleInfoFxn readModuleInfo;
+  MfgReadModuleInfoByUUUIDFxn readModuleInfoByUuid;
+  MfgReadModuleConfigFxn readModuleCfg;
+  MfgReadFactConfigFxn readFactCfg;
+  MfgReadUserConfigFxn readUserCfg;
+  MfgReadFactCalibFxn readFactCalib;
+  MfgReadUserCalibFxn readUserCalib;
+  MfgReadBsCertsFxn readBsCerts;
+  MfgReadCloudCertsFxn readCloudCerts;
+} MfgOperations;
+
+int mfg_init(void* data);
+int mfg_fetch_bs_certs(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_cloud_certs(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_fact_calib(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_fact_cfg(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_header(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_index(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_module_info(void** data, char* uuid, uint16_t* size, uint8_t idx);
+int mfg_fetch_module_info_by_uuid(void** data, char* uuid, uint16_t* size, uint8_t count);
+int mfg_fetch_module_cfg(void** data, char* uuid, uint16_t* size, uint8_t count);
+int mfg_fetch_payload_from_mfg_data(void** data, char* uuid, uint16_t* size, uint16_t id);
+int mfg_fetch_unit_info(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_unit_cfg(void** data, char* uuid, uint16_t* size, uint8_t count);
+int mfg_fetch_user_calib(void** data, char* uuid, uint16_t* size);
+int mfg_fetch_user_cfg(void** data, char* uuid, uint16_t* size);
+int mfg_parse(void* data);
+
+void mfg_exit();
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* INC_MFG_H_ */

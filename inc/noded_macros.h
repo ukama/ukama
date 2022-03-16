@@ -7,11 +7,10 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "test.h"
+#ifndef INC_NODED_MACROS_H_
+#define INC_NODED_MACROS_H_
 
-#include "unity.h"
+#define MAX_NAME_LENGTH             (64)
+#define MAX_PATH_LENGTH             (64)
 
-int main() {
-  return 0;
-}
-
+#endif /* INC_NODED_MACROS_H_ */

@@ -53,9 +53,11 @@ endif
 # Libraries
 LIBS+=-lpthread
 LIBS+=-lrt
+LIBS+=-l$(PLATFORM_LIB)
 
 # Compiler flags
 CFLAGS+=-g
+CFLAGS+=-O0
 CFLAGS+=-Wall
 CFLAGS+=-Wno-unused-variable
 CFLAGS+=-fPIC
@@ -99,7 +101,7 @@ $(info INC :: $(INC_FILES))
 .PHONY: $(TARGET) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
 
 # Main target for building
-all: $(TARGET) $(UTEST)
+all: $(TARGET)
 	@echo Done.
 
 # CLANG FORMAT
@@ -156,8 +158,8 @@ checkcodestyle:
 
 # Build Target
 $(TARGET): $(OBJFILES)
-	@echo "Building dynamic lib" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS) -shared
+	@echo "Building $(TARGET)" 
+	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGET)
