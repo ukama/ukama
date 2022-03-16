@@ -7,9 +7,10 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "store.h"
+#include "../../inc/store.h"
 
 #include "errorcode.h"
+#include "eeprom_wrapper.h"
 #include "schema.h"
 #include "noded_macros.h"
 
@@ -21,16 +22,16 @@
 static ListInfo modList;
 static int modListFlag = 0;
 
-const StoreOperations eepromOps = { .init = eeprom_init,
-                .readBlock = eeprom_read,
-                .writeBlock = eeprom_write,
-                .readNumber = eeprom_read_number,
-                .writeNumber = eeprom_write_number,
-                .eraseBlock = eeprom_erase,
-                .writeProtect = eeprom_protect,
-                .rename = eeprom_rename,
-                .cleanup = eeprom_cleanup,
-                .remove = eeprom_remove };
+const StoreOperations eepromOps = { .init = eeprom_wrapper_init,
+                .readBlock = eeprom_wrapper_read,
+                .writeBlock = eeprom_wrapper_write,
+                .readNumber = eeprom_wrapper_read_number,
+                .writeNumber = eeprom_wrapper_write_number,
+                .eraseBlock = eeprom_wrapper_erase,
+                .writeProtect = eeprom_wrapper_protect,
+                .rename = eeprom_wrapper_rename,
+                .cleanup = eeprom_wrapper_cleanup,
+                .remove = eeprom_wrapper_remove };
 
 const StoreOperations fileOps = { .init = usys_file_init,
                 .readBlock = usys_file_read,
@@ -53,7 +54,7 @@ static void free_module_list(void *ip) {
     }
 }
 
-int compare_module_list(void *ipt, void *sd) {
+static int compare_module_list(void *ipt, void *sd) {
     ModuleMap *ip = (ModuleMap *)ipt;
     ModuleMap *op = (ModuleMap *)sd;
     int ret = 0;
@@ -428,6 +429,7 @@ int store_erase_block(char *p_uuid, off_t offset, uint16_t size) {
     }
     return ret;
 }
+
 int store_read_number(char *p_uuid, void *val, off_t offset, uint16_t count,
                 uint8_t size) {
     int ret = -1;

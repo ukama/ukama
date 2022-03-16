@@ -11,8 +11,11 @@
 
 #include "inventory.h"
 #include "ledger.h"
+#include "store.h"
+
 #include "usys_log.h"
-#include "usys_types.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 
 RegisterDeviceCB registerDeviceCB;
 

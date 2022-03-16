@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 #include "device.h"
+#include "ledger.h"
 #include "schema.h"
 
 int invt_create_db(char *pUuid);;
@@ -81,11 +82,11 @@ int invt_read_user_calib(char *pUuid, void *data, uint16_t *size);
 
 int invt_read_user_config(char *pUuid, void *data, uint16_t *size);
 
-int invt_register_devices(char *pUuid);
+int invt_register_devices(char *pUuid, RegisterDeviceCB registerDev);
 
 int invt_register_module(UnitCfg *cfg);
 
-int invt_register_modules(char *pUuid);
+int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev);
 
 int invt_remove_db(char *puuid);
 
