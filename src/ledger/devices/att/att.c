@@ -14,7 +14,9 @@
 #include "errorcode.h"
 #include "devices/bsp_dat31r5a.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
+#include "usys_string.h"
 
 
 static ListInfo attLdgr;
@@ -41,15 +43,15 @@ DevOpsMap att_dev_map[MAX_ATT_SENSOR_TYPE] = {
     { .name = "DAT-31R5A-PP", .opsTable = &dat31r5aOps }
 };
 
-const DevOps *get_dev_att_fxn_tbl(char *name) {
-    const DevOps *fxn_tbl = NULL;
+const DevOps *get_dev_att_opsTbl(char *name) {
+    const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_ATT_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, att_dev_map[iter].name)) {
-            fxn_tbl = att_dev_map[iter].opsTable;
+            opsTbl = att_dev_map[iter].opsTable;
             break;
         }
     }
-    return fxn_tbl;
+    return opsTbl;
 }
 
 static void free_att_dev(void *ip) {
@@ -66,10 +68,10 @@ int compare_att_dev(void *ipt, void *sd) {
     Device *ip = (Device *)ipt;
     Device *op = (Device *)sd;
     int ret = 0;
-    /* If module if  and device name, disc, type matches it means devices is same.*/
+    /* If module if  and device name, desc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -78,9 +80,9 @@ int compare_att_dev(void *ipt, void *sd) {
 ListInfo *get_dev_att_db() {
     /* Initialize DB for the first time we try to access it.*/
     if (attLdgrflag == 0) {
-        list_new(&attLdgr, sizeof(Device), free_att_dev, compare_att_dev, NULL);
+        usys_list_new(&attLdgr, sizeof(Device), free_att_dev, compare_att_dev, NULL);
         attLdgrflag = 1;
-        usys_log_trace("ATT:: Attenuation DB initialized.");
+        usys_log_trace("ATT:: Attenuation ledger initialized.");
     }
     return &attLdgr;
 }

@@ -14,8 +14,9 @@
 #include "errorcode.h"
 #include "devices/bsp_ina226.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
-
+#include "usys_string.h"
 
 static ListInfo pwrLdgr;
 static int pwrLdgrflag = 0;
@@ -41,15 +42,15 @@ DevOpsMap pwr_dev_map[MAX_PWR_SENSOR_TYPE] = {
     { .name = "INA226", .opsTable = &ina226Ops }
 };
 
-const DevOps *get_dev_pwr_fxn_tbl(char *name) {
-    const DevOps *fxn_tbl = NULL;
+const DevOps *get_dev_pwr_opsTbl(char *name) {
+    const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_PWR_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, pwr_dev_map[iter].name)) {
-            fxn_tbl = pwr_dev_map[iter].opsTable;
+            opsTbl = pwr_dev_map[iter].opsTable;
             break;
         }
     }
-    return fxn_tbl;
+    return opsTbl;
 }
 
 static void free_pwr_dev(void *ip) {
@@ -69,18 +70,18 @@ int compare_pwr_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
 }
 
 ListInfo *get_dev_pwr_db() {
-    /* Initialize DB for the first time we try to access it.*/
+    /* Initialize ledger for the first time we try to access it.*/
     if (pwrLdgrflag == 0) {
-        list_new(&pwrLdgr, sizeof(Device), free_pwr_dev, compare_pwr_dev, NULL);
+        usys_list_new(&pwrLdgr, sizeof(Device), free_pwr_dev, compare_pwr_dev, NULL);
         pwrLdgrflag = 1;
-        log_trace("PWR:: PWR DB initialized.");
+        usys_log_trace("PWR:: PWR ledger initialized.");
     }
     return &pwrLdgr;
 }

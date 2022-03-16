@@ -12,13 +12,13 @@
 #include "device.h"
 #include "device_ops.h"
 #include "errorcode.h"
+#include "devices/bsp_adt7481.h"
+#include "devices/bsp_se98.h"
+#include "devices/bsp_tmp464.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
-
-#include "../../../../inc/devices/bsp_adt7481.h"
-#include "../../../../inc/devices/bsp_se98.h"
-#include "../../../../inc/devices/bsp_tmp464.h"
-
+#include "usys_string.h"
 
 static ListInfo tmpLdgr;
 static int tmpLdgrflag = 0;
@@ -94,9 +94,9 @@ static void free_tmp_dev(void *ip) {
     ListNode *node = (ListNode *)ip;
     if (node) {
         if (node->data) {
-            free(node->data);
+            usys_free(node->data);
         }
-        free(node);
+        usys_free(node);
     }
 }
 
@@ -107,7 +107,7 @@ int compare_tmp_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -115,9 +115,9 @@ int compare_tmp_dev(void *ipt, void *sd) {
 
 ListInfo *get_tmp_dev_ldgr() {
     if (tmpLdgrflag == 0) {
-        list_new(&tmpLdgr, sizeof(Device), free_tmp_dev, compare_tmp_dev, NULL);
+        usys_list_new(&tmpLdgr, sizeof(Device), free_tmp_dev, compare_tmp_dev, NULL);
         tmpLdgrflag = 1;
-        usys_log_trace("TMP:: TEMP DB initialized.");
+        usys_log_trace("TMP:: TEMP ledger initialized.");
     }
     return &tmpLdgr;
 }

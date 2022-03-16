@@ -7,14 +7,15 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "devdb/gpio/gpio.h"
+#include "devices/bsp_gpio.h"
 
-#include "headers/errorcode.h"
-#include "headers/ubsp/property.h"
-#include "inc/devhelper.h"
-#include "headers/utils/log.h"
-#include "devdb/gpio/drvrgpio.h"
-#include "devdb/sysfs/drvrsysfs.h"
+#include "devhelper.h"
+#include "errorcode.h"
+#include "property.h"
+#include "drivers/gpio_wrapper.h"
+#include "drivers/sysfs_wrapper.h"
+
+#include "usys_log.h"
 
 const DrvrOps drvr_gpio_fxn_table = { .init = gpio_wrapper_init,
                                             .configure = gpio_wrapper_configure,

@@ -14,7 +14,9 @@
 #include "errorcode.h"
 #include "devices/bsp_ads1015.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
+#include "usys_string.h"
 
 static ListInfo adcLdgr;
 static int adcLdgrflag = 0;
@@ -41,14 +43,14 @@ DevOpsMap adc_dev_map[MAX_ADC_SENSOR_TYPE] = {
 };
 
 const DevOps *get_adc_dev_ops(char *name) {
-    const DevOps *fxn_tbl = NULL;
+    const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_ADC_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, adc_dev_map[iter].name)) {
-            fxn_tbl = adc_dev_map[iter].opsTable;
+            opsTbl = adc_dev_map[iter].opsTable;
             break;
         }
     }
-    return fxn_tbl;
+    return opsTbl;
 }
 
 static void free_adc_dev(void *ip) {
@@ -68,7 +70,7 @@ int compare_adc_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -77,9 +79,9 @@ int compare_adc_dev(void *ipt, void *sd) {
 ListInfo *get_adc_dev_ldgr() {
     /* Initialize DB for the first time we try to access it.*/
     if (adcLdgrflag == 0) {
-        list_new(&adcLdgr, sizeof(Device), free_adc_dev, compare_adc_dev, NULL);
+        usys_list_new(&adcLdgr, sizeof(Device), free_adc_dev, compare_adc_dev, NULL);
         adcLdgrflag = 1;
-        usys_log_trace("ADC:: ADC DB initialized.");
+        usys_log_trace("ADC:: ADC Ledger initialized.");
     }
     return &adcLdgr;
 }

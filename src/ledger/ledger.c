@@ -9,16 +9,19 @@
 
 #include "ledger.h"
 
-#include "../../inc/devices/gpio_type.h"
-#include "../../inc/drivers/eeprom_wrapper.h"
-
 #include "errorcode.h"
 #include "irqdb.h"
 #include "devices/adc.h"
 #include "devices/att.h"
+#include "devices/gpio_type.h"
 #include "devices/led.h"
 #include "devices/pwr.h"
 #include "devices/tmp.h"
+
+#include "usys_list.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 
 static const DevOps* get_dev_ops(DevObj *dobj) {
     const DevOps *devOps = NULL;
@@ -86,7 +89,7 @@ static ListInfo *get_dev_ldgr(DeviceType type) {
     return devLdgr;
 }
 
-static void devdb_usys_free(Device *dev) {
+static void ldgr_usys_free(Device *dev) {
     if (dev) {
         if (dev->hwAttr) {
             usys_free(dev->hwAttr);
@@ -98,52 +101,61 @@ int compare_dev_node(void *ipt, void *sd) {
     Device *ip = (Device *)ipt;
     Device *op = (Device *)sd;
     int ret = 0;
+
     /* If module if  and device name, disc, type matches it
      * means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) &&
+        !usys_strcmp(ip->obj.desc, op->obj.desc) &&
         (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
+
     return ret;
 }
 
 /* Searching device in the device list*/
 static Device *search_device_object(DevObj *dev_obj) {
     Device *fdev = NULL;
+
     Device *sdev = usys_zmalloc(sizeof(Device));
     if (sdev) {
         usys_memcpy(&sdev->obj, dev_obj, sizeof(DevObj));
-        /*Search return 1 for found.*/
-        fdev = list_search(get_dev_db(dev_obj->type), sdev);
+
+        /* Search return 1 for found.*/
+        fdev = list_search(get_dev_ldgr(dev_obj->type), sdev);
         if (fdev) {
             usys_log_trace("Ledger:: Device Name %s, Disc: %s "
                             "Module UUID: %s found.",
-                      dev_obj->name, dev_obj->disc, dev_obj->modUuid);
+                            dev_obj->name, dev_obj->desc, dev_obj->modUuid);
         } else {
+
             if (fdev) {
                 usys_free(fdev);
                 fdev = NULL;
             }
-           usys_log_debug(
-                "Ledger:: Device Name %s, Disc: %s "
-                "Module UUID: %s not found.",
-                dev_obj->name, dev_obj->disc, dev_obj->modUuid);
+
+            usys_log_debug(
+                            "Ledger:: Device Name %s, Disc: %s "
+                            "Module UUID: %s not found.",
+                            dev_obj->name, dev_obj->desc, dev_obj->modUuid);
         }
 
         if (sdev) {
             usys_free(sdev);
             sdev = NULL;
         }
+
     }
+
     return fdev;
 }
 
-static void devdb_destory() {
+static void ldgr_destory() {
     DeviceType type = DEV_TYPE_TMP;
+
     for (; type < DEV_TYPE_MAX; type++) {
-        list_destroy(get_dev_db(type));
+        list_destroy(get_dev_ldgr(type));
         log_warn("Ledger:: Removing DB for 0x%d device type.", type);
     }
 }
@@ -152,19 +164,21 @@ static void devdb_destory() {
 static int update_device_db(Device *dev) {
     int ret = 0;
     if (dev) {
+
         /*Return 0 for update.*/
-        ret = list_update(get_dev_db(dev->obj.type), dev);
+        ret = list_update(get_dev_ldgr(dev->obj.type), dev);
         if (ret) {
            usys_log_error(
                 "Ledger:: Device Name %s, Disc: %s "
                 "Module UUID: %s update failed.",
-                dev->obj.name, dev->obj.disc, dev->obj.modUuid);
+                dev->obj.name, dev->obj.desc, dev->obj.modUuid);
         }
+
     }
     return ret;
 }
 
-void devdb_irq_callback(void *pcfg) {
+void ldgr_irq_callback(void *pcfg) {
     IRQCfg *cfg = pcfg;
     if (!cfg) {
         return;
@@ -173,129 +187,150 @@ void devdb_irq_callback(void *pcfg) {
     /*search device in device list*/
     Device *dev = search_device_object(obj);
     if (dev) {
+
         /* if callback id registered */
         if (dev->devCb) {
-            /* if fxn table is initialized.*/
+
+            /* if Operation available for device.*/
             if (dev->devOps) {
-                const DevOps *devOps = get_fxn_tbl(&(dev->obj));
-                /* if fxn is assigned.*/
+
+                const DevOps *devOps = get_dev_ops(&(dev->obj));
                 if (devOps->confirmIrq) {
                     AlertCallBackData *acbdata = NULL;
                     int acount = 0;
                     char fName[64] = { '\0' };
                     usys_strcpy(fName, cfg->fName);
                     devOps->confirmIrq(dev, &acbdata, fName, &acount);
+
                     if (acount > 0) {
                        usys_log_debug(
                             "Ledger:: Calling callback fxn for device name %s,"
                             "disc %s and module UIID %s with %d alerts.",
-                            obj->name, obj->disc, obj->modUuid, acount);
+                            obj->name, obj->desc, obj->modUuid, acount);
                         dev->devCb(obj, &acbdata, &acount);
                     }
+
                 }
+
             }
+
         } else {
            usys_log_debug(
                 "Ledger:: No Alert callback registered for device name %s, "
                 "disc %s and module UIID %s.",
-                obj->name, obj->disc, obj->modUuid);
+                obj->name, obj->desc, obj->modUuid);
         }
     }
+
     if (dev) {
         usys_free(dev);
         dev = NULL;
     }
+
 }
 
-static int devdb_registration(Device *pDev) {
+static int ldgr_registration(Device *pDev) {
     int ret = 0;
     uint8_t idx = 0;
+
     /* Search in list if device already exist.*/
-    ret = list_if_element_found(get_dev_db(pDev->obj.type), pDev);
-    if (!ret) {
-        if (!pDev->devOps) {
-            const DevOps *devOps = get_fxn_tbl(&(pDev->obj));
-            if (devOps) {
-                /* Updating fxn table for TMP */
-                pDev->devOps = devOps;
-                if (devOps->init) {
-                    ret = devOps->init(pDev);
-                    if (!ret) {
-                        if (devOps->registerCb) {
-                            ret = devOps->registerCb(pDev,
-                                                       &devdb_irq_callback);
-                        }
-                    }
-                } else {
-                    ret = ERR_NODED_DEV_DRVR_MISSING;
-                }
-            } else {
-                ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
-            }
-        } else {
-            /* Should not come here*/
-            const DevOps *devOps = pDev->devOps;
+    ret = list_if_element_found(get_dev_ldgr(pDev->obj.type), pDev);
+    if (ret) {
+        ret = 0;
+        usys_log_debug(
+                        "Ledger:: Device Name: %s, Disc: %s, Type: %d, "
+                        "Module Id %s is already in DB.",
+                        pDev->obj.name, pDev->obj.desc, pDev->obj.type,
+                        pDev->obj.modUuid);
+        return 0;
+    }
+
+    /* If element not found. It means new device.*/
+    if (!pDev->devOps) {
+
+        const DevOps *devOps = get_dev_ops(&(pDev->obj));
+        if (devOps) {
+
+            /* Initializing device and registering callback for IRQ's */
+            pDev->devOps = devOps;
             if (devOps->init) {
                 ret = devOps->init(pDev);
-            } else {
-                ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
-            }
-        }
+                if (!ret) {
+                    if (devOps->registerCb) {
+                        ret = devOps->registerCb(pDev,
+                                        &ldgr_irq_callback);
+                    }
+                }
 
-        if (!ret) {
-            /* if doesn't exist add to list.*/
-            list_append(get_dev_db(pDev->obj.type), pDev);
-           usys_log_debug(
-                "Ledger:: Device Name: %s, Disc: %s, Type: %d,"
-                " Module Id %s is added to DB.",
-                pDev->obj.name, pDev->obj.disc, pDev->obj.type,
-                pDev->obj.modUuid);
+            } else {
+                ret = ERR_NODED_DEV_DRVR_MISSING;
+            }
+
         } else {
-           usys_log_debug(
-                "Err(%d): Dev:: Device Name: %s, Disc: %s, Type: %d,"
-                " Module Id %s is not added to DB.",
-                ret, pDev->obj.name, pDev->obj.disc, pDev->obj.type,
-                pDev->obj.modUuid);
+            ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
         }
 
     } else {
-        ret = 0;
-       usys_log_debug(
-            "Ledger:: Device Name: %s, Disc: %s, Type: %d, "
-            "Module Id %s is already in DB.",
-            pDev->obj.name, pDev->obj.disc, pDev->obj.type,
-            pDev->obj.modUuid);
+
+        /* Should not come here*/
+        const DevOps *devOps = pDev->devOps;
+        if (devOps->init) {
+            ret = devOps->init(pDev);
+        } else {
+            ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
+        }
     }
+
+    /* Add device to ledger */
+    if (!ret) {
+        list_append(get_dev_ldgr(pDev->obj.type), pDev);
+        usys_log_debug(
+                        "Ledger:: Device Name: %s, Disc: %s, Type: %d,"
+                        " Module Id %s is added to DB.",
+                        pDev->obj.name, pDev->obj.desc, pDev->obj.type,
+                        pDev->obj.modUuid);
+    } else {
+        usys_log_debug(
+                        "Err(%d): Dev:: Device Name: %s, Disc: %s, Type: %d,"
+                        " Module Id %s is not added to DB.",
+                        ret, pDev->obj.name, pDev->obj.desc, pDev->obj.type,
+                        pDev->obj.modUuid);
+    }
+
     return ret;
+
 }
 
-static Device *devdb_create_device(char *p_uuid, ModuleCfg *p_mcfg) {
+
+static Device *ldgr_create_device(char *pUuid, ModuleCfg *pModCfg) {
     Device *dev = usys_zmalloc(sizeof(Device));
     if (dev) {
-        dev->obj.type = p_mcfg->devType;
+        dev->obj.type = pModCfg->devType;
         usys_memset(dev->obj.modUuid, '\0', 24);
-        usys_memcpy(dev->obj.modUuid, p_uuid, strlen(p_uuid));
+        usys_memcpy(dev->obj.modUuid, pUuid, strlen(pUuid));
         usys_memset(dev->obj.name, '\0', 24);
-        usys_memcpy(dev->obj.name, p_mcfg->devName, strlen(p_mcfg->devName));
-        usys_memset(dev->obj.disc, '\0', 24);
-        usys_memcpy(dev->obj.disc, p_mcfg->devDesc, strlen(p_mcfg->devDesc));
+        usys_memcpy(dev->obj.name, pModCfg->devName, strlen(pModCfg->devName));
+        usys_memset(dev->obj.desc, '\0', 24);
+        usys_memcpy(dev->obj.desc, pModCfg->devDesc, strlen(pModCfg->devDesc));
         usys_memset(dev->sysFile, '\0', 64);
-        usys_memcpy(dev->sysFile, p_mcfg->sysFile, strlen(p_mcfg->sysFile));
+        usys_memcpy(dev->sysFile, pModCfg->sysFile, strlen(pModCfg->sysFile));
         dev->devOps = NULL;
-        uint16_t dev_cfg_size = 0;
-        SIZE_OF_DEVICE_CFG(dev_cfg_size, p_mcfg->devType);
-        dev->hwAttr = usys_malloc(dev_cfg_size);
+
+        uint16_t devCfgSize = 0;
+        SIZE_OF_DEVICE_CFG(devCfgSize, pModCfg->devType);
+        dev->hwAttr = usys_malloc(devCfgSize);
         if (dev->hwAttr) {
-            usys_memset(dev->hwAttr, '\0', dev_cfg_size);
-            usys_memcpy(dev->hwAttr, &p_mcfg->cfg, dev_cfg_size);
+            usys_memset(dev->hwAttr, '\0', devCfgSize);
+            usys_memcpy(dev->hwAttr, &pModCfg->cfg, devCfgSize);
         }
+
         dev->devCb = NULL;
     }
     return dev;
 }
 
 /* Init function for device db*/
-int devdb_init(void *data) {
+int ldgr_init(void *data) {
     int ret = 0;
 
     /*IRQDB Init*/
@@ -308,55 +343,61 @@ int devdb_init(void *data) {
     return ret;
 }
 
-void devdb_exit() {
+void ldgr_exit() {
     int ret = 0;
     irqdb_exit();
     parser_property_exit();
-    devdb_destory();
+    ldgr_destory();
    usys_log_debug("Ledger:: Cleaning process  completed for device DB.");
 }
 /* Registering devices to device db. */
 //TODO: make sure ModuleCfg -> cfg is same to Device->deviceCfg
-int devdb_register(char *p_uuid, char *name, uint8_t count, ModuleCfg *p_mcfg) {
+int ldgr_register(char *pUuid, char *name, uint8_t count, ModuleCfg *pModCfg) {
     int ret = 0;
     for (uint8_t iter = 0; iter < count; iter++) {
-        Device *dev = devdb_create_device(p_uuid, &p_mcfg[iter]);
+
+        Device *dev = ldgr_create_device(pUuid, &pModCfg[iter]);
         if (dev) {
-            ret = devdb_registration(dev);
+
+            ret = ldgr_registration(dev);
             if (ret) {
                usys_log_debug(
                     "Err(%d): Ledger:: Failed to register Device Name: %s,"
                     " Disc: %s, Type: %d, Module Id %s is not added to DB.",
-                    ret, dev->obj.name, dev->obj.disc, dev->obj.type,
+                    ret, dev->obj.name, dev->obj.desc, dev->obj.type,
                     dev->obj.modUuid);
             }
+
         }
-        devdb_usys_free(dev);
+
+        ldgr_usys_free(dev);
     }
     return ret;
 }
 
-int devdb_read_reg_dev_count(DeviceType type, uint16_t *count) {
+int ldgr_read_reg_dev_count(DeviceType type, uint16_t *count) {
     int ret = 0;
-    *count = list_size(get_dev_db(type));
+    *count = list_size(get_dev_ldgr(type));
     return ret;
 }
 
-int devdb_read_reg_dev(DeviceType type, Device *pDev) {
+int ldgr_read_reg_dev(DeviceType type, Device *pDev) {
     int ret = 0;
     if (pDev) {
-        list_copy(get_dev_db(type), pDev);
+        list_copy(get_dev_ldgr(type), pDev);
     } else {
         ret = ERR_NODED_INVALID_POINTER;
     }
     return ret;
 }
 
-int devdb_read_prop_count(DevObj *obj, uint16_t *count) {
+int ldgr_read_prop_count(DevObj *obj, uint16_t *count) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->readPropCount) {
@@ -364,24 +405,30 @@ int devdb_read_prop_count(DevObj *obj, uint16_t *count) {
             } else {
                 ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
             }
+
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
-int devdb_read_prop(DevObj *obj, void *prop) {
+int ldgr_read_prop(DevObj *obj, void *prop) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->readProp) {
@@ -392,22 +439,27 @@ int devdb_read_prop(DevObj *obj, void *prop) {
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
 /* TODO: Check if this is really required */
-int devdb_configure(DevObj *obj, void *prop, void *data) {
+int ldgr_configure(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->configure) {
@@ -418,21 +470,26 @@ int devdb_configure(DevObj *obj, void *prop, void *data) {
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
-int devdb_read(DevObj *obj, void *prop, void *data) {
+int ldgr_read(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->read) {
@@ -443,17 +500,20 @@ int devdb_read(DevObj *obj, void *prop, void *data) {
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
-int devdb_write(DevObj *obj, void *prop, void *data) {
+int ldgr_write(DevObj *obj, void *prop, void *data) {
     int ret = 0;
     /*search device in device list*/
     Device *dev = search_device_object(obj);
@@ -478,9 +538,9 @@ int devdb_write(DevObj *obj, void *prop, void *data) {
     return ret;
 }
 
-int devdb_enable(DevObj *obj, void *prop, void *data) {
+int ldgr_enable(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
         if (dev->devOps) {
@@ -503,11 +563,13 @@ int devdb_enable(DevObj *obj, void *prop, void *data) {
     return ret;
 }
 
-int devdb_disable(DevObj *obj, void *prop, void *data) {
+int ldgr_disable(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->disable) {
@@ -518,70 +580,88 @@ int devdb_disable(DevObj *obj, void *prop, void *data) {
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
 //TODO: remove prop
 /* Register the callback provided by user app. */
-int devdb_reg_app_cb(DevObj *obj, void *prop, CallBackFxn fun) {
+int ldgr_reg_app_cb(DevObj *obj, void *prop, CallBackFxn fun) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (fun) {
             dev->devCb = fun;
             ret = update_device_db(dev);
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
+
         ret = ERR_NODED_DEV_MISSING;
-       usys_log_debug(
-            "Err(%d):: TMP callback for device name %s, device disc %s and"
-            " module UIID %s failed.",
-            ret, obj->name, obj->disc, obj->modUuid);
+        usys_log_debug(
+                        "Err(%d):: TMP callback for device name %s, "
+                        "device disc %s and module UIID %s failed.",
+                        ret, obj->name, obj->desc, obj->modUuid);
+
     }
+
     return ret;
 }
 //TODO: remove prop
 /* Unregister the callback provided by user app. */
-int devdb_dereg_app_cb(DevObj *obj, void *prop, CallBackFxn fun) {
+int ldgr_dereg_app_cb(DevObj *obj, void *prop, CallBackFxn fun) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
         if (fun) {
             dev->devCb = NULL;
             ret = update_device_db(dev);
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
+
         ret = ERR_NODED_DEV_MISSING;
        usys_log_debug(
             "Err(%d):: Registering callback for device name %s, device disc %s "
             "and module UIID %s failed.",
-            ret, obj->name, obj->disc, obj->modUuid);
+            ret, obj->name, obj->desc, obj->modUuid);
+
     }
+
     return ret;
 }
 
-int devdb_enable_irq(DevObj *obj, void *prop, void *data) {
+int ldgr_enable_irq(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
+
         if (dev->devOps) {
             const DevOps *devOps = dev->devOps;
             if (devOps->enableIrq) {
@@ -592,28 +672,34 @@ int devdb_enable_irq(DevObj *obj, void *prop, void *data) {
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
+
         if (dev) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 
-int devdb_disable_irq(DevObj *obj, void *prop, void *data) {
+int ldgr_disable_irq(DevObj *obj, void *prop, void *data) {
     int ret = 0;
-    /*search device in device list*/
+
+    /* Search device in device list */
     Device *dev = search_device_object(obj);
     if (dev) {
         if (dev->devOps) {
+
             const DevOps *devOps = dev->devOps;
             if (devOps->disableIrq) {
                 ret = devOps->disableIrq(dev, prop, data);
             } else {
                 ret = ERR_NODED_DEV_API_NOT_SUPPORTED;
             }
+
         } else {
             ret = ERR_NODED_DEV_DRVR_MISSING;
         }
@@ -622,9 +708,11 @@ int devdb_disable_irq(DevObj *obj, void *prop, void *data) {
             usys_free(dev);
             dev = NULL;
         }
+
     } else {
         ret = ERR_NODED_DEV_MISSING;
     }
+
     return ret;
 }
 

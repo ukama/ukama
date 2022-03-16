@@ -15,8 +15,9 @@
 #include "errorcode.h"
 #include "devices/bsp_ledtricol.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
-
+#include "usys_string.h"
 
 static ListInfo ledLdgr;
 static int ledLdgrflag = 0;
@@ -43,15 +44,15 @@ DevOpsMap led_dev_map[MAX_LED_SENSOR_TYPE] = {
     { .name = "LED-TRICOLOR", .opsTable = &ledTriColOps }
 };
 
-const DevOps *get_dev_led_fxn_tbl(char *name) {
-    const DevOps *fxn_tbl = NULL;
+const DevOps *get_dev_led_opsTbl(char *name) {
+    const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_LED_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, led_dev_map[iter].name)) {
-            fxn_tbl = led_dev_map[iter].opsTable;
+            opsTbl = led_dev_map[iter].opsTable;
             break;
         }
     }
-    return fxn_tbl;
+    return opsTbl;
 }
 
 static void free_led_dev(void *ip) {
@@ -71,18 +72,18 @@ int compare_led_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
 }
 
 ListInfo *get_dev_led_db() {
-    /* Initialize DB for the first time we try to access it.*/
+    /* Initialize ledger for the first time we try to access it.*/
     if (ledLdgrflag == 0) {
-        list_new(&ledLdgr, sizeof(Device), free_led_dev, compare_led_dev, NULL);
+        usys_list_new(&ledLdgr, sizeof(Device), free_led_dev, compare_led_dev, NULL);
         ledLdgrflag = 1;
-        usys_log_trace("LED:: led DB initialized.");
+        usys_log_trace("LED:: led ledger initialized.");
     }
     return &ledLdgr;
 }

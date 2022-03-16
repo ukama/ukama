@@ -14,7 +14,9 @@
 #include "errorcode.h"
 #include "devices/bsp_gpio.h"
 
+#include "usys_list.h"
 #include "usys_log.h"
+#include "usys_string.h"
 
 static ListInfo gpioLdgr;
 static int gpioLdgrflag = 0;
@@ -39,15 +41,15 @@ DevOpsMap gpio_dev_map[MAX_GPIO_SENSOR_TYPE] = {
     { .name = "GPIO", .opsTable = &gpioOps }
 };
 
-const DevOps *get_dev_gpio_type_fxn_tbl(char *name) {
-    const DevOps *fxn_tbl = NULL;
+const DevOps *get_dev_gpio_type_opsTbl(char *name) {
+    const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_GPIO_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, gpio_dev_map[iter].name)) {
-            fxn_tbl = gpio_dev_map[iter].opsTable;
+            opsTbl = gpio_dev_map[iter].opsTable;
             break;
         }
     }
-    return fxn_tbl;
+    return opsTbl;
 }
 
 static void free_gpio_type_dev(void *ip) {
@@ -67,19 +69,19 @@ int compare_gpio_type_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.disc, op->obj.disc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
 }
 
 ListInfo *get_gpio_type_dev_ldgr() {
-    /* Initialize DB for the first time we try to access it.*/
+    /* Initialize ledger for the first time we try to access it.*/
     if (gpioLdgrflag == 0) {
-        list_new(&gpioLdgr, sizeof(Device), free_gpio_type_dev, compare_gpio_type_dev,
+        usys_list_new(&gpioLdgr, sizeof(Device), free_gpio_type_dev, compare_gpio_type_dev,
                  NULL);
         gpioLdgrflag = 1;
-        usys_log_trace("GPIO:: GPIO DB initialized.");
+        usys_log_trace("GPIO:: GPIO ledger initialized.");
     }
     return &gpioLdgr;
 }
