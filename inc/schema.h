@@ -14,14 +14,16 @@
 extern "C" {
 #endif
 
+#include "noded_macros.h"
+
 #include "usys_types.h"
 
 #define SCH_START_OFFSET               0x0000
 #define SCH_END_OFFSET                 0xFFFF
 
-#define SCH_MAGIC_WORD_OFFSET           0x0000
-#define SCH_MAGIC_WORD_SIZE             0x0004
-#define SCH_MAGIC_WORD                  0xDEADBEEF
+#define SCH_MAGIC_WORD_OFFSET          0x0000
+#define SCH_MAGIC_WORD_SIZE            0x0004
+#define SCH_MAGIC_WORD                 0xDEADBEEF
 #define SCH_DEFVAL                     0xFFFF
 
 #define SCH_HEADER_OFFSET              0x0010
@@ -144,14 +146,6 @@ extern "C" {
 #define VALIDATE_INDEX_COUNT(count)             ( ( (count >= 0) && (count < SCH_IDX_MAX_TPL_COUNT) )?1:0 )
 #define VALIDATE_MODULE_COUNT(count)            ( ( (count >= 0) && (count < MAX_NUMBER_MODULES_PER_UNIT) )?1:0 )
 #define VALIDATE_DEVICE_COUNT(count)            ( ( (count >= 0) && (count < MAX_NUMBER_DEVICES_PER_MODULE) )?1:0 )
-
-/* Length */
-#define UUID_LENGTH                         32
-#define NAME_LENGTH                         24
-#define PATH_LENGTH                         64
-#define DATE_LENGTH                         12
-#define MAC_LENGTH                          18
-#define DESC_LENGTH                         24
 
 typedef enum {
     UNIT_TNODESDR = 1,

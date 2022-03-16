@@ -10,7 +10,15 @@
 #ifndef INC_NODED_MACROS_H_
 #define INC_NODED_MACROS_H_
 
-#define MAX_NAME_LENGTH             (64)
-#define MAX_PATH_LENGTH             (64)
+#define MAX_NAME_LENGTH                    (24)
+#define MAX_PATH_LENGTH                    (64)
+
+/* Length */
+#define UUID_LENGTH                         32
+#define NAME_LENGTH                         MAX_NAME_LENGTH
+#define PATH_LENGTH                         MAX_PATH_LENGTH
+#define DATE_LENGTH                         12
+#define MAC_LENGTH                          18
+#define DESC_LENGTH                         24
 
 #endif /* INC_NODED_MACROS_H_ */
