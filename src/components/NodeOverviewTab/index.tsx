@@ -153,53 +153,60 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 1 && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6">Node Health</Typography>
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][0].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={tempTrxMetric}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][0].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][1].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={tempComMetric}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][1].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][2].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={uptimeMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][2].name
-                                }
-                            />
-                        )}
+                        <Stack spacing={2}>
+                            <Typography variant="h6">Node Health</Typography>
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][0].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={tempTrxMetric}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][0].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][1].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={tempComMetric}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][1].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][2].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={uptimeMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][2].name
+                                    }
+                                />
+                            )}
+                        </Stack>
                     </Paper>
                 )}
                 {selected === 2 && selectedNode?.type !== "AMPLIFIER" && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6">Subscribers</Typography>
-                        <LineChart hasData={true} title={"Attached"} />
-                        <LineChart hasData={true} title={"Active"} />
+                        <Stack spacing={2}>
+                            <Typography variant="h6">Subscribers</Typography>
+                            <LineChart hasData={true} title={"Attached"} />
+                            <LineChart hasData={true} title={"Active"} />
+                        </Stack>
                     </Paper>
                 )}
             </Grid>

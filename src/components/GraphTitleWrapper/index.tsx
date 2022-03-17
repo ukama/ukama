@@ -24,9 +24,9 @@ const GraphTitleWrapper = ({
     handleFilterChange,
 }: IGraphTitleWrapper) => {
     return (
-        <Grid item container spacing={2} my={1} width="100%">
+        <Grid item container width="100%">
             {(title || showFilter) && (
-                <Grid item container width="100%">
+                <Grid item container width="100%" mb={2}>
                     {title && (
                         <Grid item xs={6}>
                             <Typography variant={variant} fontWeight={500}>
@@ -34,7 +34,7 @@ const GraphTitleWrapper = ({
                             </Typography>
                         </Grid>
                     )}
-                    {showFilter && (
+                    {hasData && showFilter && (
                         <Grid
                             item
                             xs={6}

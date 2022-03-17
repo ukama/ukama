@@ -75,13 +75,13 @@ const NodeCard = ({
             isLoading={loading}
             variant="rectangular"
             width={218}
-            height={206}
+            height={210}
         >
             <Card
                 variant="outlined"
                 sx={{
                     width: "218px",
-                    height: "206px",
+                    height: "210px",
                     borderRadius: "10px",
                     justifyContent: "center",
                     padding: "15px 18px 8px 18px",

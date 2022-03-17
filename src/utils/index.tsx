@@ -166,6 +166,13 @@ const isContainNodeUpdate = (list: NodeDto[] = []): boolean => {
     return isUpdate;
 };
 
+const getDefaultMetricList = (name: string) => {
+    return {
+        name: name,
+        data: [],
+    };
+};
+
 export {
     hexToRGB,
     isMetricData,
@@ -176,6 +183,7 @@ export {
     getTitleFromPath,
     uniqueObjectsArray,
     isContainNodeUpdate,
+    getDefaultMetricList,
     getGraphFilterByType,
     parseObjectInNameValue,
 };

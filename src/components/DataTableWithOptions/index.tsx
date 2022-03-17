@@ -65,13 +65,13 @@ const DataTableWithOptions = ({
             mt={2}
             sx={{
                 height: "100%",
-                minHeight: 230,
+                minHeight: 234,
                 display: "flex",
                 alignItems: "center",
             }}
         >
             {dataset?.length > 0 ? (
-                <TableContainer sx={{ maxHeight: 230 }}>
+                <TableContainer sx={{ maxHeight: 234 }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>

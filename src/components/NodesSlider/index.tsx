@@ -40,7 +40,7 @@ const NodeSlider = ({
             indicators={false}
             cycleNavigation={false}
             navButtonsAlwaysVisible
-            sx={{ width: "100%", minHeight: "246px", py: "20px" }}
+            sx={{ width: "100%", minHeight: "250px", py: "20px" }}
             navButtonsProps={{
                 style: {
                     margin: 0,

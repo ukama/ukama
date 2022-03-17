@@ -78,7 +78,7 @@ const Nodes = () => {
             name: string;
             data: MetricDto[];
         }[]
-    >(getDefaultList(["UPTIME (For demo)"]));
+    >(getDefaultList(["UPTIME"]));
     const [cpuTrxMetric, setCpuTrxMetric] = useState<
         {
             name: string;
