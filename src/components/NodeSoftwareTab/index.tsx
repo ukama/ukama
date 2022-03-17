@@ -45,11 +45,11 @@ const NodeSoftwareTab = ({
                 <Typography variant="h6" sx={{ mb: 4 }}>
                     Node Apps
                 </Typography>
-                <Grid container spacing={3} sx={{ p: 0 }}>
+                <Grid container spacing={3}>
                     {nodeApps?.map(
                         ({ id, nodeAppName, cpu, memory, version }: any) => (
-                            <Grid item md xs key={id} spacing={2}>
-                                <Card sx={{ minWidth: 275 }} variant="outlined">
+                            <Grid item xs={12} md={6} lg={3} key={id}>
+                                <Card variant="outlined">
                                     <CardContent>
                                         <Stack
                                             direction="row"

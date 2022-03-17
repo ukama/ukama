@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NodeDto } from "../../generated";
-import { Paper, Grid, Typography } from "@mui/material";
+import { Paper, Grid } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
@@ -140,8 +140,7 @@ const NodeResourcesTab = ({
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
-                    <Typography variant="h6">Resources</Typography>
+                <Paper sx={{ padding: "4px 18px 0px 30px", width: "100%" }}>
                     {NodeResourcesTabConfigure[
                         (selectedNode?.type as string) || ""
                     ][0].show && (

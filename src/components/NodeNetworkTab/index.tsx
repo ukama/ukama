@@ -1,5 +1,5 @@
 import { TooltipsText } from "../../constants";
-import { Paper, Grid, Typography } from "@mui/material";
+import { Paper, Grid } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem } from "..";
 import { useState } from "react";
 import ApexLineChartIntegration from "../ApexLineChart";
@@ -67,9 +67,7 @@ const NodeNetworkTab = ({
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 8} md xs>
-                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
-                    <Typography variant="h6">Network</Typography>
-
+                <Paper sx={{ padding: "4px 18px 0px 30px", width: "100%" }}>
                     <ApexLineChartIntegration
                         hasData={true}
                         data={throughpuULMetric}
