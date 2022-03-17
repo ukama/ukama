@@ -18,6 +18,8 @@ import {
     getUserByID,
     getNodeDetails,
     getNodeNetwork,
+    getSoftwareLogs,
+    getNodeApps,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
@@ -40,4 +42,6 @@ export const mockServer = (app: Express): void => {
     app.get("/user/get_user", getUserByID);
     app.get("/node/node_details", getNodeDetails);
     app.get("/node/get_network", getNodeNetwork);
+    app.get("/software_logs", getSoftwareLogs);
+    app.get("/node_apps", getNodeApps);
 };

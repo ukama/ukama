@@ -312,3 +312,17 @@ export const getNodeNetwork = (req: Request, res: Response): void => {
         data: casual._nodeNetwork(),
     });
 };
+
+export const getSoftwareLogs = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._softwareLogs(),
+    });
+};
+
+export const getNodeApps = (req: Request, res: Response): void => {
+    res.send({
+        status: "success",
+        data: casual._nodeApps(),
+    });
+};

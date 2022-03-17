@@ -53,6 +53,7 @@
     "express-graphql": "^0.12.0",
     "express-winston": "^4.1.0",
     "graphql": "^15.5.0",
+    "lorem-ipsum": "^2.0.4",
     "nock": "^13.2.0",
     "node-schedule": "^2.1.0",
     "reflect-metadata": "^0.1.13",

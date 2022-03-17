@@ -7,14 +7,17 @@ import {
     NETWORK_STATUS,
     NODE_TYPE,
 } from "../../constants";
+import { LoremIpsum } from "lorem-ipsum";
 import { AlertDto } from "../../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
 import { DataBillDto, DataUsageDto } from "../../modules/data/types";
 import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
+    NodeAppResponse,
     NodeDetailDto,
     NodeDto,
+    NodeAppsVersionLogsResponse,
     UpdateNodeResponse,
 } from "../../modules/node/types";
 
@@ -227,6 +230,33 @@ const nodeNetwork = (): NetworkDto => {
         description: "21 days 5 hours 1 minute",
     };
 };
+const softwareLogs = (): NodeAppsVersionLogsResponse[] => {
+    const lorem = new LoremIpsum();
+    const logs: NodeAppsVersionLogsResponse[] = [];
+    const start = Date.now() - 100000;
+    for (let i = 5; i > 0; i--) {
+        logs.push({
+            version: `0.${i}`,
+            notes: lorem.generateParagraphs(3),
+            date: Date.now() - start * i,
+        });
+    }
+    return logs;
+};
+const nodeApps = (): NodeAppResponse[] => {
+    const lorem = new LoremIpsum();
+    const logs: NodeAppResponse[] = [];
+    for (let i = 5; i > 0; i--) {
+        logs.push({
+            id: defaultCasual._uuid(),
+            title: lorem.generateWords(1),
+            version: `0.${i}`,
+            cpu: `${defaultCasual.double(0.1, 100)}`,
+            memory: `${defaultCasual.double(0.1, 1024)}`,
+        });
+    }
+    return logs;
+};
 
 interface Generators extends Casual.Generators {
     _randomArray: <T>(
@@ -261,6 +291,8 @@ interface Generators extends Casual.Generators {
     _deleteRes: (id: string) => DeactivateResponse;
     _nodeDetail: () => NodeDetailDto;
     _nodeNetwork: () => NetworkDto;
+    _softwareLogs: () => [NodeAppsVersionLogsResponse];
+    _nodeApps: () => [NodeAppResponse];
     functions(): Functions;
 }
 interface Functions extends Casual.functions {
@@ -295,6 +327,8 @@ interface Functions extends Casual.functions {
     deleteRes: (id: string) => DeactivateResponse;
     nodeDetail: () => NodeDetailDto;
     nodeNetwork: () => NetworkDto;
+    softwareLogs: () => [NodeAppsVersionLogsResponse];
+    nodeApps: () => [NodeAppResponse];
 }
 
 defaultCasual.define("randomArray", randomArray);
@@ -313,6 +347,8 @@ defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteRes", deleteRes);
 defaultCasual.define("nodeDetail", nodeDetail);
 defaultCasual.define("nodeNetwork", nodeNetwork);
+defaultCasual.define("softwareLogs", softwareLogs);
+defaultCasual.define("nodeApps", nodeApps);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
 
 export default casual;
