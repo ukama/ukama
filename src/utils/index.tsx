@@ -156,8 +156,8 @@ const isMetricData = (metric: any) => {
 
 const isContainNodeUpdate = (list: NodeDto[] = []): boolean => {
     let isUpdate = false;
-    for (let i = 0; i < list.length; i++) {
-        if (list[i].isUpdateAvailable) {
+    for (const ele of list) {
+        if (ele.isUpdateAvailable) {
             isUpdate = true;
             break;
         }

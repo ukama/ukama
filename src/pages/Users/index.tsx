@@ -46,9 +46,9 @@ const User = () => {
 
     const handleSimDialogClose = () => setShowSimDialog(false);
 
-    const onViewMoreClick = (user: GetUserDto) => {
+    const onViewMoreClick = (_user: GetUserDto) => {
         setShowSimDialog(true);
-        setSelectedUser(user);
+        setSelectedUser(_user);
     };
 
     const handleSimInstallation = () => {
@@ -59,8 +59,8 @@ const User = () => {
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
             setUsers(
-                users.filter(user =>
-                    user.name.toLocaleLowerCase().includes(search)
+                users.filter((_user: GetUserDto) =>
+                    _user.name.toLocaleLowerCase().includes(search)
                 )
             );
         } else {

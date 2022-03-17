@@ -21,8 +21,8 @@ const NodeSlider = ({
 
     useEffect(() => {
         const slides = [];
-        const chunk = medium ? 3 : small ? 2 : 1;
-        chunk;
+        const isSmall = small ? 2 : 1;
+        const chunk = medium ? 3 : isSmall;
         for (let i = 0; i < items.length; i += chunk) {
             slides.push({
                 cid: `chunk-${i}`,
