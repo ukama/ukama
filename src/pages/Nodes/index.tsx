@@ -226,7 +226,7 @@ const Nodes = () => {
         skip: selectedTab !== 1,
         onSubscriptionData: res => {
             setDiskTrxMatrics(
-                cpuComMetrics.map(item => {
+                diskTrxMatrics.map(item => {
                     return {
                         name: item.name,
                         data: [
@@ -515,6 +515,27 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricTempTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricTempCom({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+        } else if (selectedTab === 1) {
+            getMetricsERAB({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricThroughtpuUl({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
             getMetricsCpuCOM({
                 variables: {
                     ...getFirstMetricCallPayload(),
@@ -536,27 +557,6 @@ const Nodes = () => {
                 },
             });
             getMetricsMemoryCOM({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricTempTrx({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricTempCom({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricsERAB({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-        } else if (selectedTab === 1) {
-            getMetricThroughtpuUl({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },

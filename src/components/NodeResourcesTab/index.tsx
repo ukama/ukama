@@ -162,7 +162,7 @@ const NodeResourcesTab = ({
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
-                                ][0].name
+                                ][1].name
                             }
                             data={memoryComMetrics}
                         />
