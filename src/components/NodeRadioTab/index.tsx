@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Typography, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
-import { useState } from "react";
 interface INodeRadioTab {
     loading: boolean;
 }

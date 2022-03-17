@@ -1,12 +1,12 @@
+import {
+    NodeStatItem,
+    StackedAreaChart,
+    NodeStatsContainer,
+    ApexStackAreaChart,
+} from "..";
 import { useState } from "react";
 import { NodeDto } from "../../generated";
 import { Paper, Grid, Typography, Stack } from "@mui/material";
-import {
-    NodeStatsContainer,
-    NodeStatItem,
-    StackedAreaChart,
-    ApexStackAreaChart,
-} from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
     loading: boolean;

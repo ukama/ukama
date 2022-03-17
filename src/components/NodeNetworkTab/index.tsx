@@ -1,8 +1,8 @@
+import { useState } from "react";
 import { TooltipsText } from "../../constants";
+import ApexLineChartIntegration from "../ApexLineChart";
 import { Paper, Grid, Typography, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, LineChart } from "..";
-import { useState } from "react";
-import ApexLineChartIntegration from "../ApexLineChart";
 interface INodeOverviewTab {
     loading: boolean;
     throughpuULMetric: any;
