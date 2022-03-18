@@ -12,9 +12,11 @@
 #include "device.h"
 #include "errorcode.h"
 
+#include "usys_api.h"
 #include "usys_file.h"
 #include "usys_log.h"
 #include "usys_mem.h"
+#include "usys_string.h"
 #include "usys_types.h"
 
 StoreSchema *mfgStoreSchema[MAX_JSON_SCHEMA] = { '\0' };
@@ -85,113 +87,6 @@ void parser_free_mfg_data(StoreSchema **sschema) {
     }
 }
 
-/* Parser to read integer value from JSON object */
-bool parser_read_integer_value(const JsonObj *obj, int *ivalue) {
-    bool ret = USYS_FALSE;
-
-    /* Check if object is number */
-    if (json_is_number(obj)) {
-        *ivalue = json_integer_value(obj) ;
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read integer value from JSON object */
-bool parser_read_integer_object(const JsonObj *obj, const char* key,
-                int *ivalue) {
-    bool ret = USYS_FALSE;
-
-    /* Integer Json Object */
-    const JsonObj *jIntObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (jIntObj && json_is_number(obj)) {
-        *ivalue = json_integer_value(obj) ;
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
-
-/* Parser to read string value from JSON object */
-bool parser_read_string_value(const JsonObj *obj, char *svalue) {
-    bool ret = USYS_FALSE;
-    int len = 0;
-
-    /* Check if object is string */
-    if (json_is_string(obj)) {
-        len = json_string_length(obj);
-
-        svalue = usys_malloc(sizeof(char) * len);
-        if (svalue) {
-            usys_memset(svalue, '\0', sizeof(char) * len);
-            char *str = json_string_value(obj);
-            usys_strcpy(svalue, str);
-            json_decref(obj);
-            ret = USYS_TRUE;
-        }
-
-    }
-
-    return ret;
-}
-
-/* Parser to read string value from JSON object */
-bool parser_read_string_object(const JsonObj *obj, const char* key,
-                char **svalue) {
-    bool ret = USYS_FALSE;
-
-    /* String Json Object */
-    const JsonObj *jStrObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (jStrObj && json_is_string(obj)) {
-        int length = json_string_length(obj);
-
-        *svalue = usys_malloc(sizeof(char) * length);
-        if (*svalue) {
-            usys_memset(*svalue, '\0', sizeof(char) * length);
-            char *str = json_string_value(obj);
-            usys_strcpy(*svalue, str);
-            json_decref(obj);
-            ret = USYS_TRUE;
-        }
-    }
-
-    return ret;
-}
-
-/* Wrapper on top of parse_read_string */
-bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
-                char* str) {
-    bool ret = USYS_FALSE;
-    char *tstr;
-    if (parser_read_string_object(obj, key, &tstr)) {
-        usys_strcpy(str, tstr);
-        usys_free(tstr);
-    }
-
-    return ret;
-}
-
-/* Parser to read boolean value from JSON object */
-bool parser_read_boolean_object(const JsonObj *obj, const char* key,
-                bool *bvalue) {
-    bool ret = USYS_FALSE;
-
-    /* Integer Json Object */
-    const JsonObj *jBoolObj = json_object_get(obj, key);
-
-    /* Check if object is number */
-    if (jBoolObj && json_is_boolean(obj)) {
-        *bvalue = json_boolean_value(obj) ;
-        ret = USYS_TRUE;
-    }
-
-    return ret;
-}
 
 /* Parse version */
 Version *parse_version(const JsonObj *jVersion) {
@@ -587,7 +482,7 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
         if (pUnitInfo) {
 
             /* UUID */
-            if (!parse_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
                             &pUnitInfo->uuid)) {
                 goto cleanup;
             }
@@ -702,7 +597,7 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
 
             json_array_foreach(jUnitCfgs, iter, jUnitCfg) {
                 /* UUID */
-                if (!parse_read_string_object_wrapper(jUnitCfg, JTAG_UUID,
+                if (!parser_read_string_object_wrapper(jUnitCfg, JTAG_UUID,
                                 &pUnitCfg[iter].modUuid)) {
                     goto cleanup;
                 }
@@ -776,7 +671,7 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
         if (pModuleInfo) {
 
             /* UUID */
-            if (!parse_read_string_object_wrapper(jModuleInfo, JTAG_UUID,
+            if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_UUID,
                             &pModuleInfo->uuid)) {
                 goto cleanup;
             }
@@ -904,7 +799,7 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
             }
 
             /* Description */
-            if (!parse_read_string_object_wrapper(jModCfg, JTAG_DESCRIPTION,
+            if (!parser_read_string_object_wrapper(jModCfg, JTAG_DESCRIPTION,
                             &pModCfg[iter].devDesc)) {
                 goto cleanup;
             }
@@ -1264,7 +1159,7 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
         jIdxTable = json_object_get(jSchema, "index_table");
         if (jIdxTable) {
 
-            SchemaIdxTuple *pIndexTable = parse_schema_index_table(
+            SchemaIdxTuple *pIndexTable = parse_schema_idx_table(
                             jIdxTable, storeSchema->header.idxCurTpl);
             if (pIndexTable) {
                 /* Free me once done*/

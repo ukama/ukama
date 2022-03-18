@@ -69,7 +69,7 @@ static Property gpio_property[MAXGPIOPROP] = {
 
 static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
-        return drvr_sysfs_get_fxn_tbl();
+        return sysfs_wrapper_get_ops();
     } else {
         return &drvrGpioWrapperOps;
     }

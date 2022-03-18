@@ -110,13 +110,13 @@ static const DrvrOps* get_fxn_tbl(Device *pDev) {
     }
 }
 
-int bsp_drvr_ads1015_read_prop_count(Device *pDev, uint16_t *count) {
+int bsp_ads1015_read_prop_count(Device *pDev, uint16_t *count) {
     int ret = 0;
     *count = gPropertyCount;
     return 0;
 }
 
-int bsp_drvr_ads1015_read_properties(Device *pDev, void *prop) {
+int bsp_ads1015_read_properties(Device *pDev, void *prop) {
     int ret = 0;
     if (prop) {
         usys_memset(prop, '\0', sizeof(Property) * gPropertyCount);
@@ -132,7 +132,7 @@ void bsp_drvr_ads1015_irq_callback(DevObj *obj, void *prop, void *data) {
     //ads1015_read(void* pDev, void* prop, void* data );
 }
 
-int bsp_drvr_ads1015_init(Device *pDev) {
+int bsp_ads1015_init(Device *pDev) {
     int ret = 0;
     ret = dhelper_init_property_from_parser(pDev, &gProperty,
                                             &gPropertyCount);
@@ -152,7 +152,7 @@ int bsp_drvr_ads1015_init(Device *pDev) {
     return ret;
 }
 
-int bsp_drvr_ads1015_registration(Device *pDev) {
+int bsp_ads1015_registration(Device *pDev) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
@@ -163,7 +163,7 @@ int bsp_drvr_ads1015_registration(Device *pDev) {
     return ret;
 }
 
-int bsp_drvr_ads1015_configure(void *pDev, void *prop, void *data) {
+int bsp_ads1015_configure(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
@@ -174,7 +174,7 @@ int bsp_drvr_ads1015_configure(void *pDev, void *prop, void *data) {
     return ret;
 }
 
-int bsp_drvr_ads1015_read(void *pDev, void *prop, void *data) {
+int bsp_ads1015_read(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
@@ -185,7 +185,7 @@ int bsp_drvr_ads1015_read(void *pDev, void *prop, void *data) {
     return ret;
 }
 
-int bsp_drvr_ads1015_write(void *pDev, void *prop, void *data) {
+int bsp_ads1015_write(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
@@ -196,7 +196,7 @@ int bsp_drvr_ads1015_write(void *pDev, void *prop, void *data) {
     return ret;
 }
 
-int bsp_drvr_ads1015_enable(void *pDev, void *prop, void *data) {
+int bsp_ads1015_enable(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
@@ -207,7 +207,7 @@ int bsp_drvr_ads1015_enable(void *pDev, void *prop, void *data) {
     return ret;
 }
 
-int bsp_drvr_ads1015_disable(void *pDev, void *prop, void *data) {
+int bsp_ads1015_disable(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {

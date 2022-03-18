@@ -10,12 +10,14 @@
 #include "inventory.h"
 
 #include "errorcode.h"
+#include "jdata.h"
 #include "ledger.h"
 #include "schema.h"
 #include "store.h"
 
 #include "usys_error.h"
 #include "usys_file.h"
+#include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
@@ -431,7 +433,7 @@ int invt_erase_idx(char *pUuid) {
 
     /* Update Index count. */
     idxCount--;
-    if (store_update_current_idx_count(pUuid, &idxCount)) {
+    if (invt_update_current_idx_count(pUuid, &idxCount)) {
         ret = ERR_NODED_WR_FAIL;
     }
     usys_log_debug("Index deleted from index id 0x%x at offset 0x%x.",
@@ -475,7 +477,7 @@ int invt_search_field_id(char *pUuid, SchemaIdxTuple **idxData, uint16_t *idx,
     SchemaIdxTuple *index = (SchemaIdxTuple *)usys_zmalloc(sizeof(SchemaIdxTuple));
     if (index) {
         for (; iter < idxCount; iter++) {
-            invt_read_index(pUuid, index, iter);
+            invt_read_idx(pUuid, index, iter);
 
             /* Only the fieldId and valid state matters */
             if ((index->fieldId == fieldId)) {
@@ -757,7 +759,7 @@ int invt_write_unit_cfg_data(char *pUuid, SchemaIdxTuple *index,
             if (invt_write_payload(pUuid, payload, index->payloadOffset,
                             size)) {
                 /* Need to revert back index */
-                invt_erase_index(pUuid);
+                invt_erase_idx(pUuid);
                 ret = ERR_NODED_WR_FAIL;
                 goto cleanup;
             }
@@ -946,7 +948,7 @@ int invt_write_module_cfg_data(char *pUuid, ModuleInfo *minfo,
         if (invt_write_module_payload(pUuid, payload, cfgIndex->payloadOffset,
                         size)) {
             /* Need to revert back index */
-            invt_erase_index(pUuid);
+            invt_erase_idx(pUuid);
             ret = ERR_NODED_WR_FAIL;
             goto cleanup;
         }
@@ -992,58 +994,59 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
     int ret = 0;
     ModuleInfo *minfo;
     uint16_t size = 0;
-    ret = jdata_fetch_module_info_by_uuid((void *)&minfo, pUuid, &size, *mcount);
-    if (!ret) {
-        /* Unit Info */
-        if (minfo) {
-            /*Write payload for Index table entries*/
-            if (invt_write_module_payload(pUuid, minfo,
-                            infoIndex->payloadOffset,
-                            infoIndex->payloadSize)) {
-                /* Need to revert back index */
-                invt_erase_index(pUuid);
-                ret = ERR_NODED_WR_FAIL;
-                goto cleanmid;
-            }
-            usys_log_debug(
-                            "Inventory Added Module Info for module Id %s"
-                            " with %d devices.",
-                            pUuid, minfo->devCount);
+    minfo = jdata_fetch_module_info_by_uuid(pUuid, &size, *mcount);
+    if (!minfo) {
+        usys_log_error("Failed to read Unit info from Mfg data.");
+        return (-1);
+    }
 
-            uint32_t crcVal = crc_32((const unsigned char *)minfo,
-                                            infoIndex->payloadSize);
-            infoIndex->payloadCrc = crcVal;
-            usys_log_debug("Inventory Calculated CRC32 for Module %s is 0x%x",
-                            pUuid,
-                            crcVal);
+    /* Unit Info */
+    if (minfo) {
+        /*Write payload for Index table entries*/
+        if (invt_write_module_payload(pUuid, minfo,
+                        infoIndex->payloadOffset,
+                        infoIndex->payloadSize)) {
+            /* Need to revert back index */
+            invt_erase_idx(pUuid);
+            ret = ERR_NODED_WR_FAIL;
+            goto cleanmid;
+        }
+        usys_log_debug(
+                        "Inventory Added Module Info for module Id %s"
+                        " with %d devices.",
+                        pUuid, minfo->devCount);
 
-            /* Write Index table entries */
-            if (invt_write_idx(pUuid, infoIndex)) {
-                ret = ERR_NODED_WR_FAIL;
-                goto cleanmid;
-            }
+        uint32_t crcVal = crc_32((const unsigned char *)minfo,
+                        infoIndex->payloadSize);
+        infoIndex->payloadCrc = crcVal;
+        usys_log_debug("Inventory Calculated CRC32 for Module %s is 0x%x",
+                        pUuid,
+                        crcVal);
 
-            //Updating write index count.
-            (*idx)++;
-            usys_log_debug(
-                            "Inventory Index added to the Index table for "
-                            "field Id 0x%x module Id %s",
-                            infoIndex->fieldId, pUuid);
-
-            usys_log_debug("Inventory Adding Module Config now for"
-                            " module Id %s",
-                            pUuid);
-
-            /* Write Module Cfg as well Module info contains the info
-             *  for Module cfg also.*/
-            //TODO : lot better option will ope after invt_create is complete.
-            ret = invt_write_module_cfg_data(pUuid, minfo, cfgIndex);
+        /* Write Index table entries */
+        if (invt_write_idx(pUuid, infoIndex)) {
+            ret = ERR_NODED_WR_FAIL;
+            goto cleanmid;
         }
 
-    } else {
-        usys_log_error("Failed to read Unit info from Mfg data.Error Code: %d",
-                        ret);
+        //Updating write index count.
+        (*idx)++;
+        usys_log_debug(
+                        "Inventory Index added to the Index table for "
+                        "field Id 0x%x module Id %s",
+                        infoIndex->fieldId, pUuid);
+
+        usys_log_debug("Inventory Adding Module Config now for"
+                        " module Id %s",
+                        pUuid);
+
+        /* Write Module Cfg as well Module info contains the info
+         *  for Module cfg also.*/
+        //TODO : lot better option will ope after invt_create is complete.
+        ret = invt_write_module_cfg_data(pUuid, minfo, cfgIndex);
     }
+
+
 
     cleanmid:
     usys_free(minfo);
@@ -1091,7 +1094,7 @@ int invt_write_generic_data(SchemaIdxTuple *index, char *pUuid, uint16_t fid) {
         if (invt_write_payload(pUuid, payload, index->payloadOffset,
                         index->payloadSize)) {
             /* Need to revert back index */
-            invt_erase_index(pUuid);
+            invt_erase_idx(pUuid);
             ret = ERR_NODED_WR_FAIL;
             goto cleanpayload;
         }
@@ -1202,9 +1205,9 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                                             ucfg[iter].modUuid);
                             if (ret) {
                                 usys_log_warn(
-                                  "Inventory No valid database found for module"
-                                 " UUID %s Name %s. Moving on to next module.",
-                                        ucfg[iter].modUuid, ucfg[iter].modName);
+                                                "Inventory No valid database found for module"
+                                                " UUID %s Name %s. Moving on to next module.",
+                                                ucfg[iter].modUuid, ucfg[iter].modName);
                                 //Un-register module
                                 //ret =
                                 //   invt_unregister_module(ucfg[iter].modUuid);
@@ -1250,7 +1253,8 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     invt_free_unit_cfg(ucfg, modCount);
 
     cleanunitinfo:
-    UBSP_FREE(uInfo);
+    usys_free(uInfo);
+    uInfo = NULL;
     return ret;
 }
 
@@ -1323,7 +1327,8 @@ int invt_register_devices(char *pUuid, RegisterDeviceCB registerDev) {
     invt_free_module_cfg(mcfg, count);
 
     cleanminfo:
-    UBSP_FREE(minfo);
+    usys_free(minfo);
+    minfo = NULL;
 
     return ret;
 }
@@ -1416,7 +1421,7 @@ int invt_create_db(char *pUuid) {
         usys_log_warn("Inventory database is present in device. Re-writing it again.");
     } else {
         /* Write Magic Word */
-        if (ukdb_write_magic_word(pUuid)) {
+        if (invt_write_magic_word(pUuid)) {
             usys_log_error("Inventory database creation failed.");
             return ERR_NODED_WR_FAIL;
         }
@@ -1424,13 +1429,14 @@ int invt_create_db(char *pUuid) {
 
     /* Update header info. */
     SchemaHeader *header;
-    ret = jdata_fetch_header((void *)&header, pUuid, &size);
-    if (ret) {
+    header = jdata_fetch_header(pUuid, &size);
+    if (!header) {
+        usys_log_error("Failed to read header.");
         usys_free(header);
         header = NULL;
-        return ret;
+        return (-1);
     } else {
-        if (ukdb_write_header(pUuid, header)) {
+        if (invt_write_header(pUuid, header)) {
             usys_log_error("Write to Inventory database header failed.");
             usys_free(header);
             header = NULL;
@@ -1442,9 +1448,10 @@ int invt_create_db(char *pUuid) {
 
     /* Populate Index list from the MFG data.*/
     SchemaIdxTuple *index;
-    ret = jdata_fetch_index((void *)&index, pUuid, &size);
-    if (ret) {
-        return ret;
+    index = jdata_fetch_idx(pUuid, &size);
+    if (!index) {
+        usys_log_error("Failed to read index.");
+        return -1;
     }
     uint8_t idxCount = size / sizeof(SchemaIdxTuple);
     invt_print_index_table(index, idxCount);
@@ -1542,7 +1549,7 @@ int invt_create_db(char *pUuid) {
                             index[idxIter].fieldId, pUuid);
 
             ret = invt_write_generic_data(&index[idxIter],
-                                            pUuid, genfield_id);
+                            pUuid, genfield_id);
             if (!ret) {
                 idx++;
                 usys_log_debug("Inventory Wrote data for field Id 0x%x "
@@ -1559,7 +1566,8 @@ int invt_create_db(char *pUuid) {
     usys_log_debug("Inventory UKDB created with total of %d entries.", idx);
 
     cleanindex:
-    UBSP_FREE(index);
+    usys_free(index);
+    index = NULL;
     return ret;
 }
 
@@ -1829,44 +1837,44 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
             break;
         }
         case FIELD_ID_MODULE_INFO: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_MODULE_INFO, size);
             break;
         }
         case FIELD_ID_MODULE_CFG: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_MODULE_CFG, size);
             break;
         }
         case FIELD_ID_FACT_CFG: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_FACT_CFG, size);
             break;
         }
         case FIELD_ID_USER_CFG: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_USER_CFG, size);
             break;
         }
 
         case FIELD_ID_FACT_CALIB: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_FACT_CALIB, size);
             break;
         }
 
         case FIELD_ID_USER_CALIB: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_USER_CALIB, size);
             break;
         }
         case FIELD_ID_BS_CERTS: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_BS_CERTS, size);
             break;
         }
         case FIELD_ID_CLOUD_CERTS: {
-            ret = invt_read_payload_for_fieldId(pUuid, pData,
+            ret = invt_read_payload_for_field_id(pUuid, pData,
                             FIELD_ID_CLOUD_CERTS, size);
             break;
         }
@@ -1906,7 +1914,8 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
         if (ret) {
             usys_log_error("Err(%d): Payload read failure for the field id 0x%x.",
                             ret, unit_fid);
-            UBSP_FREE(idxData);
+            usys_free(idxData);
+            idxData = NULL;
         }
         //p_info = info;
         *size = idxData->payloadSize;
@@ -1917,7 +1926,8 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
     if (ret) {
         usys_log_error("Err(%d): CRC failure for the field id 0x%x.", ret, unit_fid);
     }
-    UBSP_FREE(idxData);
+    usys_free(idxData);
+    idxData = NULL;
     return ret;
 }
 
@@ -2144,7 +2154,7 @@ int invt_read_module_cfg(char *pUuid, ModuleCfg *pCfg, uint8_t count,
     ret = invt_search_field_id(pUuid, &idxData, &idx, fid);
     if (ret) {
         usys_log_error("Inventory search error for field id 0x%x."
-                                "Error Code: %d", fid, ret);
+                        "Error Code: %d", fid, ret);
         ret = ERR_NODED_DB_MISSING_MODULE_CFG;
         return ret;
     }
@@ -2258,7 +2268,7 @@ int invt_read_module(char *pUuid, ModuleInfo *p_minfo) {
 int invt_read_fact_config(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
 
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_FACT_CFG, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_FACT_CFG, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_FACT_CFG, ret);
@@ -2273,7 +2283,7 @@ int invt_read_fact_config(char *pUuid, void *data, uint16_t *size) {
 /* Read user config. */
 int invt_read_user_config(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_USER_CFG, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_USER_CFG, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_USER_CFG, ret);
@@ -2287,7 +2297,7 @@ int invt_read_user_config(char *pUuid, void *data, uint16_t *size) {
 /* Read fact calib. */
 int invt_read_fact_calib(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_FACT_CALIB, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_FACT_CALIB, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_FACT_CALIB);
@@ -2302,7 +2312,7 @@ int invt_read_fact_calib(char *pUuid, void *data, uint16_t *size) {
 /* Read user calib. */
 int invt_read_user_calib(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_USER_CALIB, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_USER_CALIB, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_USER_CALIB, ret);
@@ -2317,7 +2327,7 @@ int invt_read_user_calib(char *pUuid, void *data, uint16_t *size) {
 /* Read bootstrap certs. */
 int invt_read_bs_certs(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_BS_CERTS, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_BS_CERTS, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_BS_CERTS, ret);
@@ -2332,7 +2342,7 @@ int invt_read_bs_certs(char *pUuid, void *data, uint16_t *size) {
 /* Read cloud certs. */
 int invt_read_cloud_certs(char *pUuid, void *data, uint16_t *size) {
     int ret = 0;
-    ret = invt_read_payload_from_ukdb(pUuid, data, FIELD_ID_CLOUD_CERTS, size);
+    ret = invt_read_payload_from_store(pUuid, data, FIELD_ID_CLOUD_CERTS, size);
     if (ret) {
         usys_log_error("Inventory failed to read info on 0x%x.Error Code: %d",
                         FIELD_ID_CLOUD_CERTS, ret);

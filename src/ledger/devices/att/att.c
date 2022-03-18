@@ -44,7 +44,7 @@ DevOpsMap att_dev_map[MAX_ATT_SENSOR_TYPE] = {
     { .name = "DAT-31R5A-PP", .opsTable = &dat31r5aOps }
 };
 
-const DevOps *get_dev_att_opsTbl(char *name) {
+const DevOps *get_att_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_ATT_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, att_dev_map[iter].name)) {
@@ -78,7 +78,7 @@ int compare_att_dev(void *ipt, void *sd) {
     return ret;
 }
 
-ListInfo *get_dev_att_db() {
+ListInfo *get_att_dev_ldgr() {
     /* Initialize DB for the first time we try to access it.*/
     if (attLdgrflag == 0) {
         usys_list_new(&attLdgr, sizeof(Device), free_att_dev, compare_att_dev, NULL);

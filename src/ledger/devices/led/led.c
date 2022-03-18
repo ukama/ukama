@@ -45,7 +45,7 @@ DevOpsMap led_dev_map[MAX_LED_SENSOR_TYPE] = {
     { .name = "LED-TRICOLOR", .opsTable = &ledTriColOps }
 };
 
-const DevOps *get_dev_led_opsTbl(char *name) {
+const DevOps *get_led_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_LED_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, led_dev_map[iter].name)) {
@@ -79,7 +79,7 @@ int compare_led_dev(void *ipt, void *sd) {
     return ret;
 }
 
-ListInfo *get_dev_led_db() {
+ListInfo *get_led_dev_ldgr() {
     /* Initialize ledger for the first time we try to access it.*/
     if (ledLdgrflag == 0) {
         usys_list_new(&ledLdgr, sizeof(Device), free_led_dev, compare_led_dev, NULL);

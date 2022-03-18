@@ -266,7 +266,7 @@ int sysfs_write_block(char *name, void *buff, uint16_t size) {
 }
 
 /* Formatted read for numbers to sysfs file.*/
-int sysfs_usys_read(char *name, void *data, DataType type) {
+int sysfs_read(char *name, void *data, DataType type) {
     int ret = 0;
 
     /* Considering max number to be of 32 character long .*/
@@ -285,7 +285,7 @@ int sysfs_usys_read(char *name, void *data, DataType type) {
 }
 
 /* Formatted write for numbers to sysfs file.*/
-int sysfs_usys_write(char *name, void *data, DataType type) {
+int sysfs_write(char *name, void *data, DataType type) {
     int ret = 0;
     uint16_t idx = 0;
     char val[SYS_FILE_MAX_LENGTH] = { '\0' };

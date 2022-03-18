@@ -29,10 +29,16 @@ PLATFORM_HEADERS_DIRS+=$(PLATFORM_DIR)/log/inc
 PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
 PLATFORM_LIB:=usys 
 
+# JSON lib
+JSON_LIB:=jansson
+
 # Source paths
 SRC_DIRS=src 
-SRC_DIRS+=utils
-INC_DIRS=inc  
+SRC_DIRS+=utils/src
+SRC_DIRS+=src/ledger
+SRC_DIRS+=src/ledger
+INC_DIRS=inc 
+INC_DIRS+=utils
 INC_DIRS+=$(UNITY_ROOT)/src
 INC_DIRS+=$(PLATFORM_HEADERS_DIRS)
 INC_DIRS+=$(VENDOR_HEADERS_DIR)
@@ -54,7 +60,10 @@ endif
 # Libraries
 LIBS+=-lpthread
 LIBS+=-lrt
+LIBS+=-lm
 LIBS+=-l$(PLATFORM_LIB)
+LIBS+=-l$(JSON_LIB)
+
 
 # Compiler flags
 CFLAGS+=-g
@@ -66,6 +75,7 @@ CFLAGS+=-DHAVE_SYS_TIME_H
 
 LDFLAGS+=$(LDPATH)
 LDFLAGS+=-L$(PLATFORM_LIB_DIR) 
+LDFLAGS+=-L$(VENDOR_LIBS_DIR)
 
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
@@ -82,7 +92,8 @@ SRC_EXTS := c
 HDR_EXTS := h 
 
 # List of all recognized files found in the specified directories for test
-CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
+#CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
+CFILES := $(shell find $(SOURCEDIR) -name '*.c')
 OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(CFILES))))
 INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
 

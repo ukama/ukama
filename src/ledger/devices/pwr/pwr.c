@@ -43,7 +43,7 @@ DevOpsMap pwr_dev_map[MAX_PWR_SENSOR_TYPE] = {
     { .name = "INA226", .opsTable = &ina226Ops }
 };
 
-const DevOps *get_dev_pwr_opsTbl(char *name) {
+const DevOps *get_pwr_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_PWR_SENSOR_TYPE; iter++) {
         if (!usys_strcmp(name, pwr_dev_map[iter].name)) {
@@ -77,7 +77,7 @@ int compare_pwr_dev(void *ipt, void *sd) {
     return ret;
 }
 
-ListInfo *get_dev_pwr_db() {
+ListInfo *get_pwr_dev_ldgr() {
     /* Initialize ledger for the first time we try to access it.*/
     if (pwrLdgrflag == 0) {
         usys_list_new(&pwrLdgr, sizeof(Device), free_pwr_dev, compare_pwr_dev, NULL);

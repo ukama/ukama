@@ -10,6 +10,7 @@
 #include "vnodealert.h"
 
 #include "usys_log.h"
+#include "usys_string.h"
 #include "usys_types.h"
 
 int file_watch_fd(const char *filename) {

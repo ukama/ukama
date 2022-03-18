@@ -57,7 +57,7 @@ static IRQCfg *search_device_object(IRQCfg *sdev) {
     IRQCfg *fcfg = NULL;
 
     /* TODO::Check if it returns proper data.*/
-    fcfg = list_search(&irqdb, sdev);
+    fcfg = usys_list_search(&irqdb, sdev);
     if (fcfg) {
         usys_log_debug(
             "IRQDB:: IRQ %lu for Device Name %s, Disc: %s "
@@ -140,7 +140,7 @@ void *threaded_irq_handler(void *args) {
 #endif
     }
     pthread_cleanup_pop(0);
-    usys_pthread_exit(NULL);
+    usys_thread_exit(NULL);
 }
 
 /* Search interrupt for device.*/
@@ -168,10 +168,10 @@ int irqdb_register_for_device_irq(IRQSrcInfo *rsrc, SensorCallbackFxn cb,
     usys_memset(scfg.fName, '\0', 64);
     usys_memcpy(&scfg.fName, rsrc->src.sysFsName, usys_strlen(rsrc->src.sysFsName));
 
-    ret = list_if_element_found(&irqdb, &scfg);
+    ret = usys_list_if_element_found(&irqdb, &scfg);
     if (!ret) {
         /* if no IRQ exist for device object create and add one to list.*/
-        list_append(&irqdb, &scfg);
+        usys_list_append(&irqdb, &scfg);
     } else {
         /*This will print the info of the IRQ config.*/
         IRQCfg *cfg = search_device_object(&scfg);
@@ -192,7 +192,7 @@ int irqdb_register_for_device_irq(IRQSrcInfo *rsrc, SensorCallbackFxn cb,
     if (usys_thread_create(&(tcfg->pthread), NULL,
                     threaded_irq_handler, args)) {
         /* Remove from list */
-        if (list_remove(&irqdb, &rsrc->obj)) {
+        if (usys_list_remove(&irqdb, &rsrc->obj)) {
             ret = ERR_NODED_LIST_DEL_FAILED;
         }
         ret = ERR_NODED_THREAD_CREATE_FAIL;
@@ -245,7 +245,7 @@ int irqdb_deregister_for_device_irq(IRQSrcInfo *rsrc,
             ret = 0;
 
             /* Remove from list */
-            if (list_remove(&irqdb, cfg)) {
+            if (usys_list_remove(&irqdb, cfg)) {
                 ret = ERR_NODED_LIST_DEL_FAILED;
             }
 
@@ -278,15 +278,15 @@ int irqdb_deregister_for_device_irq(IRQSrcInfo *rsrc,
 
 /* IRDB init. */
 void irqdb_init() {
-    list_new(&irqdb, sizeof(IRQCfg), remove_irq, compare_dev, NULL);
+    usys_list_new(&irqdb, sizeof(IRQCfg), remove_irq, compare_dev, NULL);
     usys_log_trace("IRQDB:: IRQDB initialized.");
 }
 
 void irqdb_exit() {
     usys_log_trace("IRQDB:: Current IRQDB list.");
     irqdb_print_list();
-    list_for_each(&irqdb, irqdb_unregister_irq);
-    list_destroy(&irqdb);
+    usys_list_for_each(&irqdb, irqdb_unregister_irq);
+    usys_list_destroy(&irqdb);
     usys_log_trace("IRQDB:: Removing IRQDB.");
 }
 
@@ -326,7 +326,7 @@ void irqdb_print_list() {
         usys_log_trace("Tail is at                           %p.", irqdb.tail);
         usys_log_trace(
             "****************************************************************");
-        list_for_each(&irqdb, irqdb_print_irq);
+        usys_list_for_each(&irqdb, irqdb_print_irq);
         usys_log_trace(
             "****************************************************************");
 

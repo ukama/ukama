@@ -18,6 +18,6 @@
 #define MAX_LED_SENSOR_TYPE		1
 
 const DevOps* get_led_dev_ops(char *name);
-ListInfo* get_led_dev_ledgr();
+ListInfo* get_led_dev_ldgr();
 
 #endif /* DEVDB_LED_LED_H_ */

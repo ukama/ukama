@@ -9,33 +9,33 @@
 
 #include "drivers/gpio_wrapper.h"
 
-int drvr_gpio_wrapper_init() {
+int gpio_wrapper_init() {
     return 0;
 }
 
-int drvr_gpio_wrapper_registration(Device *p_dev) {
+int gpio_wrapper_registration(Device *p_dev) {
     return 0;
 }
 
-int drvr_gpio_wrapper_read_properties(DevObj *obj, void *prop, uint16_t *count) {
+int gpio_wrapper_read_properties(DevObj *obj, void *prop, uint16_t *count) {
     return 0;
 }
 
-int drvr_gpio_wrapper_configure(void *p_dev, void *prop, void *data) {
+int gpio_wrapper_configure(void *p_dev, void *prop, void *data) {
     return 0;
 }
 
-int drvr_gpio_wrapper_read(void *p_dev, void *prop, void *data) {
+int gpio_wrapper_read(void *p_dev, void *prop, void *data) {
     return 0;
 }
 
-int drvr_gpio_wrapper_write(void *p_dev, void *prop, void *data) {
+int gpio_wrapper_write(void *p_dev, void *prop, void *data) {
     return 0;
 }
-int drvr_gpio_wrapper_enable(void *p_dev, void *prop, void *data) {
+int gpio_wrapper_enable(void *p_dev, void *prop, void *data) {
     return 0;
 }
 
-int drvr_gpio_wrapper_disable(void *p_dev, void *prop, void *data) {
+int gpio_wrapper_disable(void *p_dev, void *prop, void *data) {
     return 0;
 }

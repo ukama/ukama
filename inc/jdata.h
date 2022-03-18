@@ -19,7 +19,7 @@ void *jdata_fetch_cloud_certs(char *puuid, uint16_t *size);
 void *jdata_fetch_fact_calib(char *puuid, uint16_t *size);
 void *jdata_fetch_fact_cfg(char *puuid, uint16_t *size);
 void *jdata_fetch_header(char *puuid, uint16_t *size);
-void *jdata_fetch_index(char* puuid, uint16_t *size);
+void *jdata_fetch_idx(char* puuid, uint16_t *size);
 void *jdata_fetch_module_cfg(char *puuid, uint16_t *size, uint8_t count);
 void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size, uint8_t count);
 void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count);

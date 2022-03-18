@@ -20,7 +20,7 @@ const MfgOperations *mfgOps;
 const MfgOperations *mfgOps = &(MfgOperations){ .init = jdata_init,
     .exit = jdata_exit,
     .readHeader = jdata_fetch_header,
-    .readIndex = jdata_fetch_index,
+    .readIndex = jdata_fetch_idx,
     .readUnitInfo = jdata_fetch_unit_info,
     .readUnitCfg = jdata_fetch_unit_cfg,
     .readModuleInfoByUuid =
@@ -166,7 +166,7 @@ int mfg_fetch_bs_certs(void **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_lwm2m_certs(void **data, char *uuid, uint16_t *size) {
+int mfg_fetch_cloud_certs(void **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readCloudCerts(uuid, size);
     if (!data) {

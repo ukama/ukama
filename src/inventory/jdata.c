@@ -14,6 +14,7 @@
 
 #include "usys_api.h"
 #include "usys_error.h"
+#include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
@@ -232,7 +233,8 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size,
                     "UUID %s failed. Error: %s",
                     *size, puuid, usys_error(errno));
 
-                UBSP_FREE(info);
+                usys_free(info);
+                info = NULL;
             }
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
