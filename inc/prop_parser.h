@@ -24,7 +24,7 @@
 typedef struct __attribute__((__packed__)) {
     char name[PROP_NAME_LENGTH];
     Version ver;
-    uint16_t prop_count;
+    uint16_t propCount;
     Property* prop;
 } PropertyMap;
 

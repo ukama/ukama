@@ -113,8 +113,8 @@ static Property ina226_property[MAXINAPROP] = {
                                    .sysFname = "in0_lcrit_alarm",
                                    .depProp =
                                        &(DepProperty){
-                                           .curr_idx = SHUNTVOLTAGE,
-                                           .lmt_idx = CRITLOWSHUNTVOLTAGE,
+                                           .currIdx = SHUNTVOLTAGE,
+                                           .lmtIdx = CRITLOWSHUNTVOLTAGE,
                                            .cond = LESSTHENEQUALTO } },
     [SHUNTVOLTAGECRITHIGHALARM] = { .name = "SHUNT VOLTAGE CRIT HIGH ALARM",
                                     .dataType = TYPE_BOOL,
@@ -125,8 +125,8 @@ static Property ina226_property[MAXINAPROP] = {
                                     .sysFname = "in0_crit_alarm",
                                     .depProp =
                                         &(DepProperty){
-                                            .curr_idx = SHUNTVOLTAGE,
-                                            .lmt_idx = CRITHIGHSHUNTVOLTAGE,
+                                            .currIdx = SHUNTVOLTAGE,
+                                            .lmtIdx = CRITHIGHSHUNTVOLTAGE,
                                             .cond = GREATERTHENEQUALTO } },
     [CRITLOWBUSVOLTAGE] = { .name = "LOW VOLTAGE LIMIT",
                             .dataType = TYPE_INT32,
@@ -152,8 +152,8 @@ static Property ina226_property[MAXINAPROP] = {
                                  .units = "NA",
                                  .sysFname = "in1_lcrit_alarm",
                                  .depProp = &(
-                                     DepProperty){ .curr_idx = BUSVOLTAGE,
-                                                   .lmt_idx = CRITLOWBUSVOLTAGE,
+                                     DepProperty){ .currIdx = BUSVOLTAGE,
+                                                   .lmtIdx = CRITLOWBUSVOLTAGE,
                                                    .cond = LESSTHENEQUALTO } },
     [BUSVOLTAGECRITHIGHALARM] = { .name = "BUS VOLTAGE CRIT HIGH ALARM",
                                   .dataType = TYPE_BOOL,
@@ -164,8 +164,8 @@ static Property ina226_property[MAXINAPROP] = {
                                   .sysFname = "in1_crit_alarm",
                                   .depProp =
                                       &(DepProperty){
-                                          .curr_idx = BUSVOLTAGE,
-                                          .lmt_idx = CRITHIGHBUSVOLTAGE,
+                                          .currIdx = BUSVOLTAGE,
+                                          .lmtIdx = CRITHIGHBUSVOLTAGE,
                                           .cond = GREATERTHENEQUALTO } },
     [CRITHIGHPWR] = { .name = "CRITICAL HIGH POWER LIMIT",
                       .dataType = TYPE_INT32,
@@ -183,8 +183,8 @@ static Property ina226_property[MAXINAPROP] = {
                            .units = "NA",
                            .sysFname = "power1_crit_alarm",
                            .depProp =
-                               &(DepProperty){ .curr_idx = POWER,
-                                               .lmt_idx = CRITHIGHPWR,
+                               &(DepProperty){ .currIdx = POWER,
+                                               .lmtIdx = CRITHIGHPWR,
                                                .cond = GREATERTHENEQUALTO } },
     [UPDATEINTERVAL] = { .name = "DATA CONVERSION TIME",
                          .dataType = TYPE_INT32,

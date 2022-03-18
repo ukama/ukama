@@ -144,7 +144,7 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
 
 /* Read Master inventory data uses raw read.
  *  As store will be init after this */
-static int get_master_db_info(UnitCfg *pcfg, char *invtLnkDb) {
+ int get_master_db_info(UnitCfg *pcfg, char *invtLnkDb) {
     int ret = 0;
     if (!invtLnkDb) {
         return -1;

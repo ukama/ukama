@@ -8,6 +8,7 @@
  */
 
 #include "property.h"
+#include "prop_parser.h"
 
 #include "usys_log.h"
 #include "usys_string.h"
@@ -148,7 +149,7 @@ int get_prop_perm(char *perm) {
     return ret;
 }
 
-int get_propType(char *type) {
+int get_prop_type(char *type) {
     int ret = -1;
     if (type) {
         if (!usys_strcmp(type, "PROP_TYPE_CONFIG")) {
@@ -176,7 +177,7 @@ int get_prop_avail(char *avail) {
     return ret;
 }
 
-int get_prop_datatype(char *type) {
+int get_prop_data_type(char *type) {
     int ret = -1;
     if (type) {
         if (!usys_strcmp(type, "TYPE_NULL")) {
@@ -213,11 +214,11 @@ int get_prop_datatype(char *type) {
 }
 
 int get_property_count(char *dev) {
-    return parser_get_property_count(dev);
+    return prop_parser_get_count(dev);
 }
 
 Property *get_property_table(char *dev) {
-    return parser_get_property_table(dev);
+    return prop_parser_get_table(dev);
 }
 
 /* Need to extract last part of file name from path /tmp/sys/class/hwmon/hwmon0/5/se98_1/temp1_min_alarm
@@ -254,12 +255,12 @@ void print_properties(Property *prop, uint16_t count) {
         log_trace("* Units                     : %s", prop[iter].units);
         log_trace("* Sysfs                     : %s", prop[iter].sysFname);
         if (prop[iter].depProp) {
-            int cur_idx = prop[iter].depProp->curr_idx;
-            int lmt_idx = prop[iter].depProp->lmt_idx;
+            int cur_idx = prop[iter].depProp->currIdx;
+            int lmtIdx = prop[iter].depProp->lmtIdx;
             log_trace("* Current value Index        : %d", cur_idx);
             log_trace("* Current value Name         : %s", prop[cur_idx].name);
-            log_trace("* Limit value Index          : %d", lmt_idx);
-            log_trace("* Limit value Name           : %s", prop[lmt_idx].name);
+            log_trace("* Limit value Index          : %d", lmtIdx);
+            log_trace("* Limit value Name           : %s", prop[lmtIdx].name);
             log_trace("* Alert Condition           :  0x%x",
                       prop[iter].depProp->cond);
         }

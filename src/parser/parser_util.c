@@ -8,8 +8,11 @@
  */
 
 #include "json_types.h"
+#include "schema.h"
+
 #include "usys_types.h"
 #include "usys_mem.h"
+#include "usys_string.h"
 
 /* Parser to read integer value from JSON object */
 bool parser_read_integer_value(const JsonObj *obj, int *ivalue) {
@@ -117,5 +120,31 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
     }
 
     return ret;
+}
+
+/* Parse version */
+Version *parse_version(const JsonObj *jVersion) {
+    const JsonObj *jMajor = NULL;
+    const JsonObj *jMinor = NULL;
+
+    Version *pversion = usys_zmalloc(sizeof(Version));
+    if (pversion) {
+
+        /* Major version */
+        if (!parser_read_integer_object(jVersion, JTAG_MAJOR_VERSION,
+                        &pversion->major)) {
+            usys_free(pversion);
+            return NULL;
+        }
+
+        /* Minor version */
+        if (!parser_read_integer_object(jVersion, JTAG_MINOR_VERSION,
+                        &pversion->minor)) {
+            usys_free(pversion);
+            return NULL;
+        }
+
+    }
+    return pversion;
 }
 

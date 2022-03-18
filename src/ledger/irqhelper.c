@@ -26,7 +26,7 @@ static int irqhelper_validate_irq(const DrvrOps *drvrOps,
     int valid = -1;
     void *hwattr;
     char sysf[64] = { '\0' };
-    int cuprop = prop[iter].depProp->curr_idx;
+    int cuprop = prop[iter].depProp->currIdx;
     usys_memset(sysf, '\0', 64);
     usys_memcpy(sysf, dev->sysFile, usys_strlen(dev->sysFile));
     usys_strcat(sysf, prop[cuprop].sysFname);
@@ -48,8 +48,8 @@ static int irqhelper_validate_irq(const DrvrOps *drvrOps,
 
     /* TODO: Compare the value to limit set.*/
     /*if true increment the alert count otherwise continue.*/
-    if (prop[iter].depProp->lmt_idx >= 0) {
-        int lmtprop = prop[iter].depProp->lmt_idx;
+    if (prop[iter].depProp->lmtIdx >= 0) {
+        int lmtprop = prop[iter].depProp->lmtIdx;
         double lmtvalue = 0;
         usys_memset(sysf, '\0', 64);
         usys_memcpy(sysf, dev->sysFile, usys_strlen(dev->sysFile));
@@ -161,7 +161,7 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
                 /* Just to check further compare value with thresholds of a sensor */
                 int lmtcheck = 0;
                 if (prop[iter].depProp) {
-                    if (prop[iter].depProp[0].curr_idx >= 0) {
+                    if (prop[iter].depProp[0].currIdx >= 0) {
                         lmtcheck = irqhelper_validate_irq(drvrOps, dev,
                                                           prop, iter, &value);
                         prop_idx = iter;

@@ -10,6 +10,10 @@
 #ifndef INC_JSON_TYPES_H_
 #define INC_JSON_TYPES_H_
 
+#include "schema.h"
+
+#include "usys_types.h"
+
 #include "jansson.h"
 
 typedef  json_t  JsonObj;
@@ -84,7 +88,20 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_GPIO_DIRECTION_OUT         "OUTPUT"
 #define JTAG_UART                       "uartNumber"
 #define JTAG_CHIP_SELECT                "chipSelect"
-
+#define JTAG_DEVICE                     "device"
+#define JTAG_VERSION                    "version"
+#define JTAG_PROPERTY_TABLE             "propertyTable"
+#define JTAG_ID                         "id"
+#define JTAG_DATA_TYPE                  "dataType"
+#define JTAG_PERMISSION                 "perm"
+#define JTAG_AVAILABILITY               "available"
+#define JTAG_PROPERTY_TYPE              "propType"
+#define JTAG_UNITS                      "units"
+#define JTAG_SYS_FS_FILE                "sysFsFile"
+#define JTAG_DEPENDENT                  "dependent"
+#define JTAG_CURR_PROP_ID               "currentValPropertyId"
+#define JTAG_LIMIT_PROP_ID              "limitValPropertyId"
+#define JTAG_ALERT_COND                 "alertCondition"
 
 
 bool parser_read_boolean_object(const JsonObj *obj, const char* key,
@@ -97,4 +114,6 @@ bool parser_read_string_object(const JsonObj *obj, const char* key,
 bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
                 char* str);
 bool parser_read_string_value(const JsonObj *obj, char *svalue);
+
+Version *parse_version(const JsonObj *jVersion);
 #endif /* INC_JSON_TYPES_H_ */

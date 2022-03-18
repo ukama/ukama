@@ -88,31 +88,6 @@ void parser_free_mfg_data(StoreSchema **sschema) {
 }
 
 
-/* Parse version */
-Version *parse_version(const JsonObj *jVersion) {
-    const JsonObj *jMajor = NULL;
-    const JsonObj *jMinor = NULL;
-
-    Version *pversion = usys_zmalloc(sizeof(Version));
-    if (pversion) {
-
-        /* Major version */
-        if (!parser_read_integer_object(jVersion, JTAG_MAJOR_VERSION,
-                        &pversion->major)) {
-            usys_free(pversion);
-            return NULL;
-        }
-
-        /* Minor version */
-        if (!parser_read_integer_object(jVersion, JTAG_MINOR_VERSION,
-                        &pversion->minor)) {
-            usys_free(pversion);
-            return NULL;
-        }
-
-    }
-    return pversion;
-}
 
 /* Parse schema header */
 SchemaHeader *parse_schema_header(const JsonObj *jHeader) {

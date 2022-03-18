@@ -157,8 +157,8 @@ typedef enum {
 
 /* If any property is depending on other properties it needs to hold this structure.*/
 typedef struct  __attribute__((__packed__)) {
-    int curr_idx;
-    int lmt_idx;
+    int currIdx;
+    int lmtIdx;
     AlertCondition cond;
 } DepProperty;
 

@@ -19,7 +19,7 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-PropertyMap *g_pmap[MAX_JSON_DEVICE] = { '\0' };
+PropertyMap *gPropMap[MAX_JSON_DEVICE] = { '\0' };
 
 static int read_mfg_data(char *fname, char *buff, off_t size) {
     int read_bytes = 0;
@@ -56,256 +56,157 @@ void parser_free_prop(Property *prop, uint16_t count) {
     prop = NULL;
 }
 
-void parser_free_pmap(PropertyMap **pmap) {
-    if (*pmap) {
-        if ((*pmap)->prop) {
-            parser_free_prop((*pmap)->prop, (*pmap)->prop_count);
+void parser_free_pMap(PropertyMap **pMap) {
+    if (*pMap) {
+        if ((*pMap)->prop) {
+            parser_free_prop((*pMap)->prop, (*pMap)->propCount);
         }
-        usys_free(*pmap);
-        *pmap = NULL;
+        usys_free(*pMap);
+        *pMap = NULL;
     }
 }
 
-Version *parse_dev_prop_version(const JsonObj *version) {
-    const JsonObj *major = NULL;
-    const JsonObj *minor = NULL;
-    int ret = 0;
-    Version *pversion = usys_zmalloc(sizeof(Version));
-    if (pversion) {
-        /* Major */
-        major = cJSON_GetObjectItemCaseSensitive(version, "major");
-        if (cJSON_IsNumber(major)) {
-            pversion->major = version->valueint;
-        } else {
-            ret = ERR_NODED_INVALID_JSON_OBJECT;
-            log_error("Err(%d):PARSER:: Parsing failed for Version.major.",
-                      ret);
-        }
-
-        /* Minor */
-        minor = cJSON_GetObjectItemCaseSensitive(version, "minor");
-        if (cJSON_IsNumber(minor)) {
-            pversion->minor = version->valueint;
-        } else {
-            ret = ERR_NODED_INVALID_JSON_OBJECT;
-            log_error("Err(%d):PARSER:: Parsing failed for Version.minor.",
-                      ret);
-        }
-
-    } else {
-        ret = ERR_NODED_MEMORY_EXHAUSTED;
-        log_error("Err(%d):PARSER: Memory exhausted while parsing Version.",
-                  ret);
-        goto cleanup;
-    }
-
-cleanup:
-    if (ret) {
-        UBSP_FREE(pversion);
-    }
-    return pversion;
-}
-
-DepProperty *parser_depproperty(const JsonObj *jdprop) {
+DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
     const JsonObj *jval_prop = NULL;
     const JsonObj *jlimit_id = NULL;
     const JsonObj *jalert_cond = NULL;
     int ret = 0;
-    DepProperty *dprop = usys_zmalloc(sizeof(DepProperty));
-    if (dprop) {
-        usys_memset(dprop, 0, sizeof(DepProperty));
-        /* Current Value*/
-        jval_prop =
-            cJSON_GetObjectItemCaseSensitive(jdprop, "current_val_property");
-        if (cJSON_IsNumber(jval_prop)) {
-            dprop->curr_idx = jval_prop->valueint;
-        } else {
-            ret = ERR_NODED_INVALID_JSON_OBJECT;
-            log_error(
-                "Err(%d):PARSER:: Parsing failed for DepProperty.curr_idx.",
-                ret);
+    DepProperty *dProp = usys_zmalloc(sizeof(DepProperty));
+    if (dProp) {
+        usys_memset(dProp, 0, sizeof(DepProperty));
+
+        /* Current Value */
+        if (!parser_read_integer_object(jDepProp, JTAG_CURR_PROP_ID,
+                        &dProp->currIdx)) {
             goto cleanup;
         }
 
-        /* Limit value*/
-        jlimit_id =
-            cJSON_GetObjectItemCaseSensitive(jdprop, "limit_val_property");
-        if (cJSON_IsNumber(jlimit_id)) {
-            dprop->lmt_idx = jlimit_id->valueint;
-        } else {
-            ret = ERR_NODED_INVALID_JSON_OBJECT;
-            log_error(
-                "Err(%d):PARSER:: Parsing failed for DepProperty.lmt_idx.",
-                ret);
+        /* Limit value */
+        if (!parser_read_integer_object(jDepProp, JTAG_LIMIT_PROP_ID,
+                        &dProp->lmtIdx)) {
             goto cleanup;
         }
 
         /* Alert Condition */
-        jalert_cond =
-            cJSON_GetObjectItemCaseSensitive(jdprop, "alert_condition");
-        if (cJSON_IsString(jalert_cond)) {
-            dprop->cond = get_alert_cond(jalert_cond->valuestring);
-        } else {
-            ret = ERR_NODED_INVALID_JSON_OBJECT;
-            log_error(
-                "Err(%d):PARSER:: Parsing failed for DepProperty.AlertCondition.",
-                ret);
+        char* alertCond;
+        if (!parser_read_string_object(jDepProp, JTAG_ALERT_COND,
+                        &alertCond)) {
             goto cleanup;
+        } else {
+            dProp->cond = get_alert_cond(alertCond);
+            usys_free(alertCond);
         }
 
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
-        log_error("Err(%d):PARSER: Memory exhausted while parsing DepProperty.",
+        usys_log_error("Err(%d):PARSER: Memory exhausted while parsing DepProperty.",
                   ret);
         goto cleanup;
     }
 
 cleanup:
     if (ret) {
-        UBSP_FREE(dprop);
+        usys_free(dProp);
+        dProp = NULL;
     }
-    return (dprop);
+    return (dProp);
 }
 
-int prop_parse_table(const JsonObj *jprop_table, PropertyMap **pmap) {
-    const JsonObj *jprop = NULL;
-    const JsonObj *jid = NULL;
-    const JsonObj *jname = NULL;
-    const JsonObj *jdataType = NULL;
-    const JsonObj *jperm = NULL;
-    const JsonObj *javailable = NULL;
-    const JsonObj *jpropType = NULL;
-    const JsonObj *junits = NULL;
-    const JsonObj *jsysfile = NULL;
-    const JsonObj *jdependent = NULL;
+int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
+    const JsonObj *jProp = NULL;
+    const JsonObj *jDependent = NULL;
     int ret = 0;
     uint16_t iter = 0;
     Property *prop = NULL;
-    uint16_t prop_count = cJSON_GetArraySize(jprop_table);
-    if (prop_count <= 0) {
+
+    uint16_t propCount = json_array_size(jPropTable);
+    if (propCount <= 0) {
         goto cleanup;
     }
-    prop = usys_zmalloc(sizeof(Property) * prop_count);
+    prop = usys_zmalloc(sizeof(Property) * propCount);
     if (prop) {
-        usys_memset(prop, '\0', sizeof(Property) * prop_count);
-        cJSON_ArrayForEach(jprop, jprop_table) {
+        usys_memset(prop, '\0', sizeof(Property) * propCount);
+
+        json_array_foreach(jProp, iter, jPropTable) {
+
             /* ID */
-            jid = cJSON_GetObjectItemCaseSensitive(jprop, "id");
-            if (cJSON_IsNumber(jid)) {
-                prop[iter].id = jid->valueint;
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].id for"
-                    " %s device",
-                    ret, iter, (*pmap)->name);
+            if (!parser_read_integer_object(jProp, JTAG_ID,
+                            &prop[iter].id)) {
                 goto cleanup;
             }
 
             /* Name */
-            jname = cJSON_GetObjectItemCaseSensitive(jprop, "name");
-            if (cJSON_IsString(jname)) {
-                strcpy(prop[iter].name, jname->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].name for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            if (!parser_read_string_object_wrapper(jProp, JTAG_NAME,
+                            &prop[iter].name)) {
                 goto cleanup;
             }
 
-            /*Data Type*/
-            jdataType = cJSON_GetObjectItemCaseSensitive(jprop, "dataType");
-            if (cJSON_IsString(jdataType)) {
-                prop[iter].dataType =
-                    get_prop_datatype(jdataType->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].dataType for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            /* Data Type */
+            char* dataType;
+            if (!parser_read_string_object(jProp, JTAG_DATA_TYPE,
+                            &dataType)) {
                 goto cleanup;
+            } else {
+                prop[iter].perm = get_prop_data_type(dataType);
+                usys_free(dataType);
             }
 
             /* Permission */
-            jperm = cJSON_GetObjectItemCaseSensitive(jprop, "perm");
-            if (cJSON_IsString(jname)) {
-                prop[iter].perm = get_prop_perm(jperm->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].perm for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            char* perm;
+            if (!parser_read_string_object(jProp, JTAG_PERMISSION,
+                            &perm)) {
                 goto cleanup;
+            } else {
+                prop[iter].perm = get_prop_perm(perm);
+                usys_free(perm);
             }
 
             /* Availability */
-            javailable = cJSON_GetObjectItemCaseSensitive(jprop, "available");
-            if (cJSON_IsString(javailable)) {
-                prop[iter].available = get_prop_avail(javailable->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].available for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            char* avail;
+            if (!parser_read_string_object(jProp, JTAG_AVAILABILITY,
+                            &avail)) {
                 goto cleanup;
+            } else {
+                prop[iter].perm = get_prop_avail(avail);
+                usys_free(avail);
             }
 
             /* Property Type */
-            jpropType = cJSON_GetObjectItemCaseSensitive(jprop, "propType");
-            if (cJSON_IsString(jpropType)) {
-                prop[iter].propType = get_propType(jpropType->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].propType for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            char* propType;
+            if (!parser_read_string_object(jProp, JTAG_AVAILABILITY,
+                            &propType)) {
                 goto cleanup;
+            } else {
+                prop[iter].perm = get_prop_type(propType);
+                usys_free(propType);
             }
 
             /* Units */
-            junits = cJSON_GetObjectItemCaseSensitive(jprop, "units");
-            if (cJSON_IsString(junits)) {
-                strcpy(prop[iter].units, junits->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].units for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            if (!parser_read_string_object_wrapper(jProp, JTAG_UNITS,
+                            &prop[iter].units)) {
                 goto cleanup;
             }
 
+
             /* Sysfile */
-            jsysfile = cJSON_GetObjectItemCaseSensitive(jprop, "sysfsfile");
-            if (cJSON_IsString(jsysfile)) {
-                strcpy(prop[iter].sysFname, jsysfile->valuestring);
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property[%d].sysfsfile for"
-                    " %s device",
-                    iter, (*pmap)->name);
+            /* SysFs */
+            if (!parser_read_string_object_wrapper(jProp,
+                            JTAG_SYS_FS_FILE,  &prop[iter].sysFname)) {
                 goto cleanup;
             }
 
             /* Dependent Property */
-            jdependent = cJSON_GetObjectItemCaseSensitive(jprop, "dependent");
-            if (cJSON_IsObject(jdependent)) {
-                DepProperty *dprop = parser_depproperty(jdependent);
-                if (dprop) {
-                    prop[iter].depProp = dprop;
+            jDependent = json_object_get(jProp, JTAG_DEPENDENT);
+            if (json_is_object(jDependent)) {
+                DepProperty *dProp = prop_parser_get_dependents(jDependent);
+                if (dProp) {
+                    prop[iter].depProp = dProp;
                 } else {
                     prop[iter].depProp = NULL;
-                    log_error(
+                    usys_log_error(
                         "Err(%d): PARSER:: Failed to parse Property[%d].depProp for"
                         " %s device",
-                        iter, (*pmap)->name);
+                        iter, (*pMap)->name);
                 }
             } else {
                 prop[iter].depProp = NULL;
@@ -313,15 +214,15 @@ int prop_parse_table(const JsonObj *jprop_table, PropertyMap **pmap) {
 
             iter++;
         }
-        (*pmap)->prop_count = iter;
-        (*pmap)->prop = prop;
-        log_trace("PARSER:: %d property for device %s found in json.", iter,
-                  (*pmap)->name);
+        (*pMap)->propCount = iter;
+        (*pMap)->prop = prop;
+        usys_log_trace("PARSER:: %d property for device %s found in json.", iter,
+                  (*pMap)->name);
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
-        log_error(
+        usys_log_error(
             "Err(%d):PARSER:: Memory exhausted while parsing property table for %s device.",
-            ret, (*pmap)->name);
+            ret, (*pMap)->name);
         goto cleanup;
     }
 
@@ -332,67 +233,56 @@ cleanup:
     return ret;
 }
 
-int prop_parse_dev_prop(const JsonObj *jdev_prop) {
-    const JsonObj *jdev = NULL;
-    const JsonObj *jdev_name = NULL;
-    const JsonObj *jdev_version = NULL;
-    const JsonObj *jdev_prop_table = NULL;
-    PropertyMap *pmap = NULL;
+int prop_parse_dev(const JsonObj *jDevices) {
+    const JsonObj *jDev = NULL;
+    const JsonObj *jDevName = NULL;
+    const JsonObj *jDevVersion = NULL;
+    const JsonObj *jDevTable = NULL;
+    PropertyMap *pMap = NULL;
+    int iter = 0;
     int ret = 0;
     int count = 0;
 
-    cJSON_ArrayForEach(jdev, jdev_prop) {
-        if (count >= MAX_JSON_DEVICE) {
-            log_error(
-                "Err(%d): PARSER:: More than expected devices(%d) found in property json.",
-                MAX_JSON_DEVICE);
-        }
+    json_array_foreach(jDev, iter, jDevices) {
 
-        pmap = usys_zmalloc(sizeof(PropertyMap));
-        if (pmap) {
-            g_pmap[count] = pmap;
-            usys_memset(pmap, 0, sizeof(PropertyMap));
-            /* name */
-            jdev_name = cJSON_GetObjectItemCaseSensitive(jdev, "name");
-            if (cJSON_IsString(jdev_name)) {
-                usys_memcpy(pmap->name, jdev_name->valuestring,
-                       usys_strlen(jdev_name->valuestring));
-            } else {
-                ret = ERR_NODED_INVALID_JSON_OBJECT;
-                log_error(
-                    "Err(%d): PARSER:: Failed to parse Property Device name.",
-                    ret);
+        pMap = usys_zmalloc(sizeof(PropertyMap));
+        if (pMap) {
+            gPropMap[count] = pMap;
+
+            /* Name */
+            if (!parser_read_string_object_wrapper(jDev, JTAG_NAME,
+                            &pMap->name)) {
                 goto cleanup;
             }
 
             /* Version */
-            jdev_version = cJSON_GetObjectItemCaseSensitive(jdev, "version");
-            Version *pversion = parse_dev_prop_version(jdev_version);
-            if (pversion) {
-                log_info(
+            jDevVersion = json_object_get(jDev, JTAG_VERSION);
+            Version *pVersion = parse_version(jDevVersion);
+            if (pVersion) {
+                usys_log_info(
                     "Parser:: Device %s is using json property version %d.%d.",
-                    pmap->name, pversion->major, pversion->minor);
-                usys_memcpy(&pmap->ver, pversion, sizeof(Version));
-                UBSP_FREE(pversion);
+                    pMap->name, pVersion->major, pVersion->minor);
+                usys_memcpy(&pMap->ver, pVersion, sizeof(Version));
+                usys_free(pVersion);
             } else {
-                log_error(
+                usys_log_error(
                     "Err(%d): PARSER:: Failed to parse Device  %s property version.",
-                    ret, pmap->name);
+                    ret, pMap->name);
                 goto cleanup;
             }
 
             /* Property Table */
-            jdev_prop_table =
-                cJSON_GetObjectItemCaseSensitive(jdev, "property_table");
-            ret = parse_table(jdev_prop_table, &pmap);
+            jDevTable =
+                            json_object_get(jDev, JTAG_PROPERTY_TABLE);
+            ret = prop_parse_table(jDevTable, &pMap);
             if (!ret) {
-                log_trace(
+                usys_log_trace(
                     "Parser:: Device %s json property table parsing completed.",
-                    pmap->name);
+                    pMap->name);
             } else {
-                log_error(
+                usys_log_error(
                     "Err(%d): Parser:: Device %s json property table parsing failed.",
-                    pmap->name);
+                    pMap->name);
                 goto cleanup;
             }
 
@@ -400,76 +290,73 @@ int prop_parse_dev_prop(const JsonObj *jdev_prop) {
 
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
-            log_error(
+            usys_log_error(
                 "Err(%d):PARSER:: Memory exhausted while parsing Device table.",
                 ret);
             goto cleanup;
         }
-        log_trace("PARSER:: %d device read from json.", count);
+        usys_log_trace("PARSER:: %d device read from json.", count);
     }
 
 cleanup:
     if (ret) {
-        parser_free_pmap(&pmap);
+        parser_free_pMap(&pMap);
     }
     return ret;
 }
 
-int prop_parse_json(char *prop_buff) {
+int prop_parse_json(char *propBuff) {
     int ret = 0;
-    cJSON *jprop = NULL;
-    const JsonObj *jname = NULL;
-    const JsonObj *jdevice = NULL;
-    Property *pprop = NULL;
+    JsonObj *jProp = NULL;
+    JsonErrObj *jErr;
+    const JsonObj *jName = NULL;
+    const JsonObj *jDevice = NULL;
+    Property *pProp = NULL;
     char name[PROP_NAME_LENGTH] = { '\0' };
-    jprop = cJSON_Parse(prop_buff);
-    if (jprop == NULL) {
-        const char *error_ptr = cJSON_GetErrorPtr();
-        if (error_ptr != NULL) {
-            log_error("Err: PARSER:: Error before: %s\n", error_ptr);
-        }
+
+    jProp = json_loads(propBuff, JSON_DECODE_ANY, jErr);
+    if (!jProp) {
+        parser_error(jErr, "Failed to parse property data");
         ret = ERR_NODED_JSON_PARSER;
         goto cleanup;
     }
 
+
     /* name */
-    jname = cJSON_GetObjectItemCaseSensitive(jprop, "name");
-    if (cJSON_IsString(jname)) {
-        usys_memcpy(name, jname->valuestring, usys_strlen(jname->valuestring));
-    } else {
-        ret = ERR_NODED_INVALID_JSON_OBJECT;
-        log_error("Err(%d): PARSER:: Failed to parse Property Json name.", ret);
-        goto cleanup;
-    }
+    if (!parser_read_string_object_wrapper(jProp,
+                       JTAG_NAME, &name)) {
+           goto cleanup;
+       }
+
 
     /* Devices */
-    jdevice = cJSON_GetObjectItemCaseSensitive(jprop, "device");
-    if (cJSON_IsArray(jdevice)) {
-        ret = parse_dev_prop(jdevice);
+    jDevice = json_object_get(jProp, JTAG_DEVICE);
+    if (json_is_array(jDevice)) {
+        ret = prop_parse_dev(jDevice);
         if (!ret) {
-            log_trace("PARSER: Property table parsed for Device %s.", name);
+            usys_log_trace("PARSER: Property table parsed for Device %s.", name);
         } else {
-            log_error(
+            usys_log_error(
                 "Err(%d): PARSER: Property table not parsed for Device %s.",
                 ret, name);
             goto cleanup;
         }
     } else {
         ret = ERR_NODED_INVALID_JSON_OBJECT;
-        log_error("Err(%d): PARSER: %s not parsed from JSON.", ret, name);
+        usys_log_error("Err(%d): PARSER: %s not parsed from JSON.", ret, name);
     }
 
 cleanup:
-    cJSON_Delete(jprop);
+    json_decref(jProp);
     return ret;
 }
 
-int parser_get_count(char *name) {
+int prop_parser_get_count(char *name) {
     int count = -1;
     for (uint8_t iter = 0; iter < MAX_JSON_DEVICE; iter++) {
-        if (g_pmap[iter]) {
-            if (!usys_strcmp(name, g_pmap[iter]->name)) {
-                count = g_pmap[iter]->prop_count;
+        if (gPropMap[iter]) {
+            if (!usys_strcmp(name, gPropMap[iter]->name)) {
+                count = gPropMap[iter]->propCount;
                 break;
             }
         }
@@ -480,9 +367,9 @@ int parser_get_count(char *name) {
 Version *prop_parser_get_table_version(char *name) {
     Version *ver = NULL;
     for (uint8_t iter = 0; iter < MAX_JSON_DEVICE; iter++) {
-        if (g_pmap[iter]) {
-            if (!usys_strcmp(name, g_pmap[iter]->name)) {
-                ver = &g_pmap[iter]->ver;
+        if (gPropMap[iter]) {
+            if (!usys_strcmp(name, gPropMap[iter]->name)) {
+                ver = &gPropMap[iter]->ver;
                 break;
             }
         }
@@ -493,9 +380,9 @@ Version *prop_parser_get_table_version(char *name) {
 Property *prop_parser_get_table(char *name) {
     Property *table = NULL;
     for (uint8_t iter = 0; iter < MAX_JSON_DEVICE; iter++) {
-        if (g_pmap[iter]) {
-            if (!usys_strcmp(name, g_pmap[iter]->name)) {
-                table = g_pmap[iter]->prop;
+        if (gPropMap[iter]) {
+            if (!usys_strcmp(name, gPropMap[iter]->name)) {
+                table = gPropMap[iter]->prop;
                 break;
             }
         }
@@ -508,26 +395,27 @@ int prop_parser_init(char *ip) {
     char *fname = NULL;
     if (ip) {
         fname = ip;
-        log_trace("PARSER:: Starting the parsing of %s.", fname);
+        usys_log_trace("PARSER:: Starting the parsing of %s.", fname);
         off_t size = read_mfg_data_size(fname);
         char *schemabuff = usys_zmalloc((sizeof(char) * size) + 1);
         if (schemabuff) {
             usys_memset(schemabuff, '\0', (sizeof(char) * size) + 1);
             ret = read_mfg_data(fname, schemabuff, size);
             if (ret == size) {
-                log_trace(
+                usys_log_trace(
                     "PARSER:: File %s read manufacturing data of %d bytes.",
                     fname, size);
-                ret = parse_json(schemabuff);
+                ret = prop_parse_json(schemabuff);
                 if (ret) {
-                    log_error("Err(%d): PARSER:: Parsing failed for %s.", ret,
+                    usys_log_error("Err(%d): PARSER:: Parsing failed for %s.", ret,
                               fname);
                 } else {
-                    log_trace("PARSER: Parsing completed for %s.", fname);
+                    usys_log_trace("PARSER: Parsing completed for %s.", fname);
                 }
             }
         }
-        UBSP_FREE(schemabuff);
+        usys_free(schemabuff);
+        schemabuff = NULL;
     }
 
     return ret;
@@ -535,8 +423,8 @@ int prop_parser_init(char *ip) {
 
 void prop_parser_exit() {
     for (int iter = 0; iter < MAX_JSON_DEVICE; iter++) {
-        if (g_pmap[iter]) {
-            parser_free_pmap(&g_pmap[iter]);
+        if (gPropMap[iter]) {
+            parser_free_pMap(&gPropMap[iter]);
         }
     }
 }

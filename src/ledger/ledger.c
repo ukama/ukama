@@ -12,12 +12,15 @@
 #include "device_ops.h"
 #include "errorcode.h"
 #include "irqdb.h"
+#include "prop_parser.h"
+
 #include "devices/adc.h"
 #include "devices/att.h"
 #include "devices/gpio_type.h"
 #include "devices/led.h"
 #include "devices/pwr.h"
 #include "devices/tmp.h"
+
 
 #include "usys_list.h"
 #include "usys_log.h"
@@ -338,7 +341,7 @@ int ldgr_init(void *data) {
     irqdb_init();
 
     /* Property parser */
-    ret = parser_property_init(data);
+    ret = prop_parser_init(data);
 
     usys_log_debug("Ledger:: Initializing device DB.");
     return ret;
@@ -347,7 +350,7 @@ int ldgr_init(void *data) {
 void ldgr_exit() {
     int ret = 0;
     irqdb_exit();
-    parser_property_exit();
+    prop_parser_exit();
     ldgr_destory();
     usys_log_debug("Ledger:: Cleaning process  completed for device DB.");
 }

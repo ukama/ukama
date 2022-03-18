@@ -34,9 +34,7 @@ JSON_LIB:=jansson
 
 # Source paths
 SRC_DIRS=src 
-SRC_DIRS+=utils/src
-SRC_DIRS+=src/ledger
-SRC_DIRS+=src/ledger
+SRC_DIRS+=utils 
 INC_DIRS=inc 
 INC_DIRS+=utils
 INC_DIRS+=$(UNITY_ROOT)/src
@@ -93,7 +91,7 @@ HDR_EXTS := h
 
 # List of all recognized files found in the specified directories for test
 #CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-CFILES := $(shell find $(SOURCEDIR) -name '*.c')
+CFILES := $(shell find $(SRC_DIRS) -name '*.c')
 OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(CFILES))))
 INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
 
