@@ -109,11 +109,20 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
 bool parser_read_integer_object(const JsonObj *obj, const char* key,
                 int *ivalue);
 bool parser_read_integer_value(const JsonObj *obj, int *ivalue);
+
 bool parser_read_string_object(const JsonObj *obj, const char* key,
                 char **svalue);
 bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
                 char* str);
-bool parser_read_string_value(const JsonObj *obj, char *svalue);
+bool parser_read_string_value(JsonObj *obj, char *svalue);
+
+bool parser_read_uint16_object(const JsonObj *obj, const char* key,
+                uint16_t *ivalue);
+
+bool parser_read_uint8_object(const JsonObj *obj, const char* key,
+                uint8_t *ivalue);
+
+void parser_error(JsonErrObj *jErr, char* msg);
 
 Version *parse_version(const JsonObj *jVersion);
 #endif /* INC_JSON_TYPES_H_ */

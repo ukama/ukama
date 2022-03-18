@@ -11,6 +11,7 @@
 
 #include "device.h"
 #include "errorcode.h"
+#include "mfg_parser.h"
 
 #include "usys_api.h"
 #include "usys_error.h"
@@ -41,8 +42,9 @@ void jdata_exit() {
 }
 
 void *jdata_fetch_header(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     SchemaHeader *header = NULL;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No Mfg data found for %s module.", puuid);
@@ -61,18 +63,17 @@ void *jdata_fetch_header(char *puuid, uint16_t *size) {
 
     } else {
 
-        ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(
-            "Reading Mfg Data Header with %d bytes for Module UUID %s failed."
+            "Reading Mfg Data Header for Module UUID %s failed."
             "Error: %s",
-            *size, puuid, usys_error(errno));
+            puuid, usys_error(errno));
 
     }
     return header;
 }
 
 void *jdata_fetch_idx(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No Mfg data found for %s module.", puuid);
@@ -80,6 +81,7 @@ void *jdata_fetch_idx(char *puuid, uint16_t *size) {
     }
 
     int sz = sizeof(SchemaIdxTuple) * sschema->header.idxCurTpl;
+
     SchemaIdxTuple *idx = usys_zmalloc(sz);
     if (idx) {
 
@@ -91,18 +93,18 @@ void *jdata_fetch_idx(char *puuid, uint16_t *size) {
 
     } else {
 
-        ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(
-            "Reading Mfg data Index table with %d bytes for Module UUID %s "
-            "failed.Error %s",
-            *size, puuid, usys_error(errno));
+            "Reading Mfg data Index table for Module UUID %s "
+            "failed.ErrorCode: %s",
+            puuid, usys_error(errno));
 
     }
+
     return idx;
 }
 
 void *jdata_fetch_unit_info(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -120,17 +122,18 @@ void *jdata_fetch_unit_info(char *puuid, uint16_t *size) {
             *size, puuid);
 
     } else {
-        ret = ERR_NODED_MEMORY_EXHAUSTED;
+
         usys_log_error(
-            "Reading Mfg data Unit Info with %d bytes for Module UUID %s "
+            "Reading Mfg data Unit Info for Module UUID %s "
             "failed.Error: %s",
-            ret, *size, puuid, usys_error(errno));
+             puuid, usys_error(errno));
+
     }
     return info;
 }
 
 void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -155,18 +158,22 @@ void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count) {
             "Reading Mfg data Unit Config with %d bytes for Module UUID %s.",
             *size, puuid);
     } else {
-        ret = ERR_NODED_MEMORY_EXHAUSTED;
+
         usys_log_error(
-            "Reading Mfg data Unit Config with %d bytes for Module UUID %s "
+            "Reading Mfg data Unit Config for Module UUID %s "
             "failed.Error: %s",
-            *size, puuid, usys_error(errno));
+            puuid, usys_error(errno));
+
+
     }
+
     return cfg;
 }
 
 void *jdata_fetch_module_device_cfg(DeviceClass class, void *hwAttr) {
     uint16_t size = 0;
     SIZE_OF_DEVICE_CFG(size, class);
+
     void *devCfg = usys_zmalloc(size);
     if (devCfg) {
         if (hwAttr) {
@@ -175,12 +182,13 @@ void *jdata_fetch_module_device_cfg(DeviceClass class, void *hwAttr) {
     } else {
         devCfg = NULL;
     }
+
     return devCfg;
 }
 
 void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size,
                 uint8_t count) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -190,12 +198,14 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size,
     uint8_t iter = 0;
     ModuleInfo *info;
     int res = -1;
-    /* This is done for case for unit module info.*/
+
+    /* This is done for unit module info.*/
     if (usys_strcmp(puuid, "") == 0) {
         res = 0;
     } else {
         res = usys_strcmp(sschema->modInfo.uuid, puuid);
     }
+
     if (!res) {
         /* Fetching Module Info from MFG data*/
         uint16_t sz = sizeof(ModuleInfo);
@@ -227,35 +237,37 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size,
 
             } else {
 
-                ret = ERR_NODED_MEMORY_EXHAUSTED;
+
                 usys_log_debug(
-                    "Reading Mfg data Module Config with %d bytes for Module "
+                    "Reading Mfg data Module Config for Module "
                     "UUID %s failed. Error: %s",
-                    *size, puuid, usys_error(errno));
+                    puuid, usys_error(errno));
 
                 usys_free(info);
                 info = NULL;
             }
         } else {
-            ret = ERR_NODED_MEMORY_EXHAUSTED;
+
             usys_log_debug(
-                "Reading Mfg data Module Info with %d bytes for Module UUID %s"
+                "Reading Mfg data Module Info for Module UUID %s"
                 " failed. Error: %s",
-                *size, puuid, usys_error(errno));
+                puuid, usys_error(errno));
+
         }
         *size = sz;
         usys_log_debug(
             "Reading Mfg data Module info with %d bytes for Module UUID %s.",
             *size, puuid);
     }
+
     return info;
 }
 
 /* Reads module config only */
 void *jdata_fetch_module_cfg(char *puuid, uint16_t *size, uint8_t count) {
-    int ret = 0;
-    StoreSchema *db = parser_get_mfg_data_by_uuid(puuid);
-    if (!db) {
+
+    StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
+    if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
         return NULL;
     }
@@ -264,37 +276,41 @@ void *jdata_fetch_module_cfg(char *puuid, uint16_t *size, uint8_t count) {
     uint8_t iter = 0;
     ModuleCfg *mcfg;
     for (iter = 0; iter <= count; iter++) {
-        int res = usys_strcmp(db->modInfo.uuid, puuid);
+        int res = usys_strcmp(sschema->modInfo.uuid, puuid);
         if (!res) {
+
             /* Fetching Module Config from MFG data*/
-            uint16_t csz = sizeof(ModuleCfg) * (db->modInfo.devCount);
+            uint16_t csz = sizeof(ModuleCfg) * (sschema->modInfo.devCount);
             mcfg = (ModuleCfg *)usys_zmalloc(csz);
             if (mcfg) {
-                usys_memcpy(mcfg, db->modCfg, csz);
+                usys_memcpy(mcfg, sschema->modCfg, csz);
                 *size = sz;
                 usys_log_debug(
                     "Reading Mfg data Module config with %d bytes for Module"
                     "UUID %s.",
                     *size, puuid);
             } else {
-                ret = ERR_NODED_MEMORY_EXHAUSTED;
+
                usys_log_error(
-                    "Reading Mfg data Module config with %d bytes for Module"
+                    "Reading Mfg data Module config for Module"
                     "UUID %s. Error %s",
-                    *size, puuid, usys_error(errno));
+                    puuid, usys_error(errno));
+
             }
         }
+
         usys_log_debug(
             "Reading Module Config with %d bytes for uuid %s from Mfg data"
             " completed.",
             *size, puuid);
         break;
     }
+
     return mcfg;
 }
 
 void *jdata_fetch_fact_cfg(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -310,11 +326,12 @@ void *jdata_fetch_fact_cfg(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 
 void *jdata_fetch_user_cfg(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -330,11 +347,12 @@ void *jdata_fetch_user_cfg(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 
 void *jdata_fetch_fact_calib(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -350,11 +368,12 @@ void *jdata_fetch_fact_calib(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 
 void *jdata_fetch_user_calib(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -370,11 +389,12 @@ void *jdata_fetch_user_calib(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 
 void *jdata_fetch_bs_certs(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -390,11 +410,12 @@ void *jdata_fetch_bs_certs(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 
 void *jdata_fetch_cloud_certs(char *puuid, uint16_t *size) {
-    int ret = 0;
+
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);
@@ -411,6 +432,7 @@ void *jdata_fetch_cloud_certs(char *puuid, uint16_t *size) {
             *size, puuid);
         print_mfg_data(info, *size);
     }
+
     return info;
 }
 

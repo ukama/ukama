@@ -13,7 +13,9 @@
 #include "json_types.h"
 
 int parser_schema_init(JSONInput* json_ip);
+
 void parser_schema_exit();
-StoreSchema* parser_get_mfg_data_by_uuid(char* puuid);
+
+StoreSchema *parser_get_mfg_data_by_uuid(char *puuid);
 
 #endif /* INC_MFG_PARSER_H_ */

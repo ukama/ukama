@@ -16,7 +16,7 @@
 #define IF_SYSFS_SUPPORT(file) 		((!strcmp(file, "") && !strcmp(file, " "))?0:1)
 
 //TODO: void* hwAttrs check if this is still required.
-const DrvrOps* sysfs_wrapper_get_fxn_tbl();
+const DrvrOps* sysfs_wrapper_get_ops();
 int sysfs_wrapper_init ();
 int sysfs_wrapper_registration(Device* dev);
 int sysfs_wrapper_configure(void* hwAttrs, void* prop , void* data);

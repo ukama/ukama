@@ -12,8 +12,10 @@
 #include "errorcode.h"
 #include "jdata.h"
 #include "ledger.h"
+#include "mfg.h"
 #include "schema.h"
 #include "store.h"
+#include "inc/crc32.h"
 
 #include "usys_error.h"
 #include "usys_file.h"
@@ -144,7 +146,7 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
 
 /* Read Master inventory data uses raw read.
  *  As store will be init after this */
- int get_master_db_info(UnitCfg *pcfg, char *invtLnkDb) {
+int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
     int ret = 0;
     if (!invtLnkDb) {
         return -1;
@@ -523,7 +525,7 @@ int invt_update_index_for_field_id(char *pUuid, void *pData,
         usys_log_error(
                         "Index write failed for index id 0x%x field id 0x%x at "
                         "offset 0x%x.Error Code: %d",
-                        idx, idxData->fieldId, idx * SCH_IDX_COUNT_SIZE), ret;
+                        idx, idxData->fieldId, idx * SCH_IDX_COUNT_SIZE, ret);
 
     }
 
@@ -1086,7 +1088,7 @@ int invt_write_generic_data(SchemaIdxTuple *index, char *pUuid, uint16_t fid) {
     int ret = 0;
     uint16_t size = index->payloadSize;
     char *payload;
-    ret = jdata_fetch_payload_from_mfgdata((void *)&payload, pUuid,
+    ret = mfg_fetch_payload_from_mfg_data((void *)&payload, pUuid,
                     &size, fid);
     if (payload) {
 
@@ -2054,11 +2056,12 @@ int invt_read_module_info(char *pUuid, ModuleInfo *p_info, uint16_t *size) {
 void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
                 int *size) {
     void *dev = NULL;
+    const char* cfgData =  payload + offset;
     switch (class) {
         case DEV_CLASS_GPIO: {
             DevGpioCfg *cfg = usys_zmalloc(sizeof(DevGpioCfg));
             if (cfg) {
-                usys_memcpy(cfg, payload + offset, sizeof(DevGpioCfg));
+                usys_memcpy(cfg, cfgData, sizeof(DevGpioCfg));
             } else {
                 cfg = NULL;
             }
@@ -2069,7 +2072,7 @@ void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
         case DEV_CLASS_I2C: {
             DevI2cCfg *cfg = usys_zmalloc(sizeof(DevI2cCfg));
             if (cfg) {
-                usys_memcpy(cfg, payload + offset, sizeof(DevI2cCfg));
+                usys_memcpy(cfg, cfgData, sizeof(DevI2cCfg));
             } else {
                 cfg = NULL;
             }
@@ -2080,7 +2083,7 @@ void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
         case DEV_CLASS_SPI: {
             DevSpiCfg *cfg = usys_zmalloc(sizeof(DevSpiCfg));
             if (cfg) {
-                usys_memcpy(cfg, payload + offset, sizeof(DevSpiCfg));
+                usys_memcpy(cfg, cfgData, sizeof(DevSpiCfg));
             } else {
                 cfg = NULL;
             }
@@ -2091,7 +2094,7 @@ void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
         case DEV_CLASS_UART: {
             DevUartCfg *cfg = usys_zmalloc(sizeof(DevUartCfg));
             if (cfg) {
-                usys_memcpy(cfg, payload + offset, sizeof(DevUartCfg));
+                usys_memcpy(cfg, cfgData, sizeof(DevUartCfg));
             } else {
                 cfg = NULL;
             }

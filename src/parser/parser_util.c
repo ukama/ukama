@@ -11,6 +11,7 @@
 #include "schema.h"
 
 #include "usys_types.h"
+#include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
@@ -44,8 +45,37 @@ bool parser_read_integer_object(const JsonObj *obj, const char* key,
     return ret;
 }
 
+/* Parser to read uint16_t value from JSON object */
+bool parser_read_uint16_object(const JsonObj *obj, const char* key,
+                uint16_t *ivalue) {
+    bool ret = USYS_FALSE;
+    int value = 0;
+
+    ret = parser_read_integer_object(obj, key, &value);
+    if (ret) {
+        *ivalue = (uint16_t) value;
+    }
+
+    return ret;
+}
+
+/* Parser to read uint8_t value from JSON object */
+bool parser_read_uint8_object(const JsonObj *obj, const char* key,
+                uint8_t *ivalue) {
+    bool ret = USYS_FALSE;
+    int value = 0;
+
+    ret = parser_read_integer_object(obj, key, &value);
+    if (ret) {
+        *ivalue = (uint8_t)value;
+    }
+
+    return ret;
+}
+
+
 /* Parser to read string value from JSON object */
-bool parser_read_string_value(const JsonObj *obj, char *svalue) {
+bool parser_read_string_value(JsonObj *obj, char *svalue) {
     bool ret = USYS_FALSE;
     int len = 0;
 
@@ -56,7 +86,7 @@ bool parser_read_string_value(const JsonObj *obj, char *svalue) {
         svalue = usys_malloc(sizeof(char) * len);
         if (svalue) {
             usys_memset(svalue, '\0', sizeof(char) * len);
-            char *str = json_string_value(obj);
+            const char *str = json_string_value(obj);
             usys_strcpy(svalue, str);
             json_decref(obj);
             ret = USYS_TRUE;
@@ -73,18 +103,18 @@ bool parser_read_string_object(const JsonObj *obj, const char* key,
     bool ret = USYS_FALSE;
 
     /* String Json Object */
-    const JsonObj *jStrObj = json_object_get(obj, key);
+    JsonObj *jStrObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jStrObj && json_is_string(obj)) {
-        int length = json_string_length(obj);
+    if (jStrObj && json_is_string(jStrObj)) {
+        int length = json_string_length(jStrObj);
 
         *svalue = usys_malloc(sizeof(char) * length);
         if (*svalue) {
             usys_memset(*svalue, '\0', sizeof(char) * length);
-            char *str = json_string_value(obj);
+            const char *str = json_string_value(jStrObj);
             usys_strcpy(*svalue, str);
-            json_decref(obj);
+            json_decref(jStrObj);
             ret = USYS_TRUE;
         }
     }
@@ -122,6 +152,15 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
     return ret;
 }
 
+/* Parser Error */
+void parser_error(JsonErrObj *jErr, char* msg) {
+    if (jErr) {
+        usys_log_error("%s. Error: %s ", msg, jErr->text);
+    } else {
+        usys_log_error("%s. No error info available", msg);
+    }
+}
+
 /* Parse version */
 Version *parse_version(const JsonObj *jVersion) {
     const JsonObj *jMajor = NULL;
@@ -131,20 +170,27 @@ Version *parse_version(const JsonObj *jVersion) {
     if (pversion) {
 
         /* Major version */
+        int major = 0;
         if (!parser_read_integer_object(jVersion, JTAG_MAJOR_VERSION,
-                        &pversion->major)) {
+                        &major)) {
             usys_free(pversion);
             return NULL;
+        } else {
+            pversion->major = (uint8_t) major;
         }
 
         /* Minor version */
+        int minor = 0;
         if (!parser_read_integer_object(jVersion, JTAG_MINOR_VERSION,
-                        &pversion->minor)) {
+                        &minor)) {
             usys_free(pversion);
             return NULL;
+        } else {
+            pversion->minor = (uint8_t) minor;
         }
 
     }
+
     return pversion;
 }
 

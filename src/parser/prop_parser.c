@@ -76,15 +76,21 @@ DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
         usys_memset(dProp, 0, sizeof(DepProperty));
 
         /* Current Value */
+        int currIdx = 0;
         if (!parser_read_integer_object(jDepProp, JTAG_CURR_PROP_ID,
-                        &dProp->currIdx)) {
+                        &currIdx)) {
             goto cleanup;
+        } else {
+            dProp->currIdx = currIdx;
         }
 
         /* Limit value */
+        int lmtIdx = 0;
         if (!parser_read_integer_object(jDepProp, JTAG_LIMIT_PROP_ID,
-                        &dProp->lmtIdx)) {
+                        &lmtIdx)) {
             goto cleanup;
+        } else {
+            dProp->lmtIdx = lmtIdx;
         }
 
         /* Alert Condition */
@@ -130,14 +136,17 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
         json_array_foreach(jProp, iter, jPropTable) {
 
             /* ID */
+            int id  = 0;
             if (!parser_read_integer_object(jProp, JTAG_ID,
-                            &prop[iter].id)) {
+                            &id)) {
                 goto cleanup;
+            } else {
+                prop[iter].id = (uint16_t) id;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jProp, JTAG_NAME,
-                            &prop[iter].name)) {
+                            prop[iter].name)) {
                 goto cleanup;
             }
 
@@ -183,7 +192,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
 
             /* Units */
             if (!parser_read_string_object_wrapper(jProp, JTAG_UNITS,
-                            &prop[iter].units)) {
+                            prop[iter].units)) {
                 goto cleanup;
             }
 
@@ -191,7 +200,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             /* Sysfile */
             /* SysFs */
             if (!parser_read_string_object_wrapper(jProp,
-                            JTAG_SYS_FS_FILE,  &prop[iter].sysFname)) {
+                            JTAG_SYS_FS_FILE,  prop[iter].sysFname)) {
                 goto cleanup;
             }
 
@@ -251,7 +260,7 @@ int prop_parse_dev(const JsonObj *jDevices) {
 
             /* Name */
             if (!parser_read_string_object_wrapper(jDev, JTAG_NAME,
-                            &pMap->name)) {
+                            pMap->name)) {
                 goto cleanup;
             }
 
@@ -308,7 +317,7 @@ cleanup:
 int prop_parse_json(char *propBuff) {
     int ret = 0;
     JsonObj *jProp = NULL;
-    JsonErrObj *jErr;
+    JsonErrObj *jErr = NULL;
     const JsonObj *jName = NULL;
     const JsonObj *jDevice = NULL;
     Property *pProp = NULL;
@@ -324,7 +333,7 @@ int prop_parse_json(char *propBuff) {
 
     /* name */
     if (!parser_read_string_object_wrapper(jProp,
-                       JTAG_NAME, &name)) {
+                       JTAG_NAME, name)) {
            goto cleanup;
        }
 

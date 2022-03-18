@@ -35,6 +35,8 @@ int invt_erase_payload(char *pUuid, uint16_t fieldId);
 int invt_get_fieldid_index(SchemaIdxTuple *index, uint16_t fid, uint8_t idxCount,
                       uint8_t *idxIter);
 
+int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb);
+
 int invt_idb_init(void *data);
 
 int invt_pre_create_db_setup(char *puuid);

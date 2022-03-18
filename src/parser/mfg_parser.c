@@ -98,7 +98,7 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
 
         jVersion = json_object_get(jHeader, JTAG_VERSION);
 
-        /* Version infor for schema */
+        /* Version info for schema */
         Version *pversion = parse_version(jVersion);
         if (pversion) {
             usys_memcpy(&pHeader->version, pversion, sizeof(Version));
@@ -110,27 +110,39 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
         /* Header info for schema */
 
         /* Index table offset */
-        if (!parser_read_integer_object(jHeader, JTAG_IDX_TABLE_OFFSET,
-                        &pHeader->idxTblOffset)) {
+        uint16_t idxTblOffset = 0;
+        if (!parser_read_uint16_object(jHeader, JTAG_IDX_TABLE_OFFSET,
+                        &idxTblOffset)) {
             goto cleanup;
+        } else {
+            pHeader->idxTblOffset =  idxTblOffset;
         }
 
         /* Index tuple size  */
-        if (!parser_read_integer_object(jHeader, JTAG_IDX_TUPLE_SIZE,
-                        &pHeader->idxTplSize)) {
+        uint16_t idxTplSize = 0;
+        if (!parser_read_uint16_object(jHeader, JTAG_IDX_TUPLE_SIZE,
+                        &idxTplSize)) {
             goto cleanup;
+        } else {
+            pHeader->idxTplSize = idxTplSize;
         }
 
         /* Index Tuple Max Count */
-        if (!parser_read_integer_object(jHeader, JTAG_IDX_TUPLE_MAX_COUNT,
-                        &pHeader->idxTplMaxCount)) {
+        uint16_t idxTplMaxCount = 0;
+        if (!parser_read_uint16_object(jHeader, JTAG_IDX_TUPLE_MAX_COUNT,
+                        &idxTplMaxCount)) {
             goto cleanup;
+        } else {
+            pHeader->idxTplMaxCount = idxTplMaxCount;
         }
 
         /* Index Current Tuple */
-        if (!parser_read_integer_object(jHeader, JTAG_IDX_CURR_TUPLE,
-                        &pHeader->idxCurTpl)) {
+        uint16_t idxCurTpl = 0;
+        if (!parser_read_uint16_object(jHeader, JTAG_IDX_CURR_TUPLE,
+                        &idxCurTpl)) {
             goto cleanup;
+        } else {
+            pHeader->idxCurTpl = idxCurTpl;
         }
 
         /* Module Capability */
@@ -187,6 +199,8 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
 /* Parse Index Table */
 SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
     const JsonObj *jIndexTpl = NULL;
+    const JsonObj *jPayloadVersion = NULL;
+
     int iter = 0;
     if (!count) {
         goto cleanup;
@@ -197,33 +211,50 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
         json_array_foreach(jIdxTab, iter, jIndexTpl) {
 
             /* Field Id */
-            if (!parser_read_integer_object(jIndexTpl, JTAG_FIELD_ID,
-                            &pIndexTable[iter].fieldId)) {
+            uint16_t fieldId = 0;
+            if (!parser_read_uint16_object(jIndexTpl, JTAG_FIELD_ID,
+                            &fieldId)) {
                 goto cleanup;
+            } else {
+                pIndexTable[iter].fieldId = fieldId;
             }
 
             /* Payload offset */
-            if (!parser_read_integer_object(jIndexTpl, JTAG_PAYLOAD_OFFSET,
-                            &pIndexTable[iter].payloadOffset)) {
+            uint16_t payloadOffset = 0;
+            if (!parser_read_uint16_object(jIndexTpl, JTAG_PAYLOAD_OFFSET,
+                            &payloadOffset)) {
                 goto cleanup;
+            } else {
+                pIndexTable[iter].payloadOffset = payloadOffset;
             }
 
             /* Payload size */
-            if (!parser_read_integer_object(jIndexTpl, JTAG_PAYLOAD_SIZE,
-                            &pIndexTable[iter].payloadSize)) {
+            uint16_t payloadSize = 0;
+            if (!parser_read_uint16_object(jIndexTpl, JTAG_PAYLOAD_SIZE,
+                            &payloadSize)) {
                 goto cleanup;
+            } else {
+                pIndexTable[iter].payloadSize = payloadSize;
             }
 
             /* Payload version */
-            if (!parser_read_integer_object(jIndexTpl, JTAG_PAYLOAD_VERSION,
-                            &pIndexTable[iter].payloadVer)) {
+            jPayloadVersion = json_object_get(jIndexTpl, JTAG_PAYLOAD_VERSION);
+            Version *sVersion = parse_version(jPayloadVersion);
+            if (sVersion) {
+                usys_memcpy(&(pIndexTable[iter].payloadVer), sVersion, sizeof(Version));
+                usys_free(sVersion);
+            } else {
+                usys_log_error("Failed to parse Payload[%d].Version.", iter);
                 goto cleanup;
             }
 
             /* Payload CRC */
+            int payloadCrc = 0;
             if (!parser_read_integer_object(jIndexTpl, JTAG_PAYLOAD_CRC,
-                            &pIndexTable[iter].payloadCrc)) {
+                            &payloadCrc)) {
                 goto cleanup;
+            } else {
+                pIndexTable[iter].payloadCrc = payloadCrc;
             }
 
             /* State */
@@ -294,9 +325,12 @@ DevGpioCfg *parse_schema_dev_gpio(const JsonObj *jDevSchema) {
         }
 
         /* Number */
+        int gpioNum = 0;
         if (!parser_read_integer_object(jDevSchema, JTAG_GPIO_NUMBER,
-                        &pDevCfg->gpioNum)) {
+                        &gpioNum)) {
             goto cleanup;
+        } else {
+            pDevCfg->gpioNum = gpioNum;
         }
 
     } else {
@@ -324,15 +358,21 @@ DevI2cCfg *parse_schema_dev_i2c(const JsonObj *jDevSchema) {
     if (pDevCfg) {
 
         /* Bus */
-        if (!parser_read_integer_object(jDevSchema, JTAG_BUS,
-                        &pDevCfg->bus)) {
+        uint8_t bus = 0;
+        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS,
+                        &bus)) {
             goto cleanup;
+        } else {
+            pDevCfg->bus = bus;
         }
 
         /* Address */
-        if (!parser_read_integer_object(jDevSchema, JTAG_ADDRESS,
-                        &pDevCfg->add)) {
+        uint16_t add = 0;
+        if (!parser_read_uint16_object(jDevSchema, JTAG_ADDRESS,
+                        &add)) {
             goto cleanup;
+        } else {
+            pDevCfg->add = add;
         }
 
     } else {
@@ -374,9 +414,12 @@ DevSpiCfg *parse_schema_dev_spi(const JsonObj *jDevSchema) {
         }
 
         /* Bus */
-        if (!parser_read_integer_object(jDevSchema, JTAG_BUS,
-                        &pDevCfg->bus)) {
+        uint8_t bus = 0;
+        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS,
+                        &bus)) {
             goto cleanup;
+        } else {
+            pDevCfg->bus = bus;
         }
 
     } else {
@@ -400,9 +443,12 @@ DevUartCfg *parse_schema_dev_uart(const JsonObj *jDevSchema) {
     if (pDevCfg) {
 
         /* UART Number */
-        if (!parser_read_integer_object(jDevSchema, JTAG_UART,
-                        &pDevCfg->uartNo)) {
+        uint16_t uartNo = 0;
+        if (!parser_read_uint16_object(jDevSchema, JTAG_UART,
+                        &uartNo)) {
             goto cleanup;
+        } else {
+            pDevCfg->uartNo = uartNo;
         }
 
     } else {
@@ -458,37 +504,40 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
 
             /* UUID */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
-                            &pUnitInfo->uuid)) {
+                            pUnitInfo->uuid)) {
                 goto cleanup;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_NAME,
-                            &pUnitInfo->name)) {
+                            pUnitInfo->name)) {
                 goto cleanup;
             }
 
              /* Type */
+             int uType = 0;
              if (!parser_read_integer_object(jUnitInfo, JTAG_TYPE,
-                             &pUnitInfo->unit)) {
+                             &uType)) {
                  goto cleanup;
+             } else {
+                 pUnitInfo->unit = (UnitType)uType;
              }
 
              /* Part Number */
              if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_PART_NUMBER,
-                             &pUnitInfo->partNo)) {
+                             pUnitInfo->partNo)) {
                  goto cleanup;
              }
 
              /* Skew */
              if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_SKEW,
-                             &pUnitInfo->skew)) {
+                             pUnitInfo->skew)) {
                  goto cleanup;
              }
 
              /* MAC */
              if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_MAC,
-                             &pUnitInfo->mac)) {
+                             pUnitInfo->mac)) {
                  goto cleanup;
              }
 
@@ -516,20 +565,23 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
 
              /* Assembly Date */
              if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_ASM_DATE,
-                             &pUnitInfo->assmDate)) {
+                             pUnitInfo->assmDate)) {
                  goto cleanup;
              }
 
              /* OEM Name */
              if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_OEM_NAME,
-                             &pUnitInfo->oemName)) {
+                             pUnitInfo->oemName)) {
                  goto cleanup;
              }
 
              /* Module Count */
-             if (!parser_read_integer_object(jUnitInfo, JTAG_MODULE_COUNT,
-                             &pUnitInfo->modCount)) {
+             uint8_t modCount = 0;
+             if (!parser_read_uint8_object(jUnitInfo, JTAG_MODULE_COUNT,
+                             &modCount)) {
                  goto cleanup;
+             } else {
+                 pUnitInfo->modCount = modCount;
              }
 
         } else {
@@ -573,19 +625,19 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
             json_array_foreach(jUnitCfgs, iter, jUnitCfg) {
                 /* UUID */
                 if (!parser_read_string_object_wrapper(jUnitCfg, JTAG_UUID,
-                                &pUnitCfg[iter].modUuid)) {
+                                pUnitCfg[iter].modUuid)) {
                     goto cleanup;
                 }
 
                 /* Name */
                 if (!parser_read_string_object_wrapper(jUnitCfg, JTAG_NAME,
-                                &pUnitCfg[iter].modName)) {
+                                pUnitCfg[iter].modName)) {
                     goto cleanup;
                 }
 
                 /* SysFs */
                 if (!parser_read_string_object_wrapper(jUnitCfg,
-                                JTAG_INVT_SYSFS_FILE, &pUnitCfg[iter].sysFs)) {
+                                JTAG_INVT_SYSFS_FILE, pUnitCfg[iter].sysFs)) {
                     goto cleanup;
                 }
 
@@ -647,37 +699,40 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
 
             /* UUID */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_UUID,
-                            &pModuleInfo->uuid)) {
+                            pModuleInfo->uuid)) {
                 goto cleanup;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_NAME,
-                            &pModuleInfo->name)) {
+                            pModuleInfo->name)) {
                 goto cleanup;
             }
 
             /* Type */
+            int modType = 0;
             if (!parser_read_integer_object(jModuleInfo, JTAG_TYPE,
-                            &pModuleInfo->module)) {
+                            &modType)) {
                 goto cleanup;
+            } else {
+                pModuleInfo->module = (ModuleType) modType;
             }
 
             /* Part Number */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_PART_NUMBER,
-                            &pModuleInfo->partNo)) {
+                            pModuleInfo->partNo)) {
                 goto cleanup;
             }
 
             /* HW Version */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_HW_VERSION,
-                            &pModuleInfo->hwVer)) {
+                            pModuleInfo->hwVer)) {
                 goto cleanup;
             }
 
             /* MAC */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MAC,
-                            &pModuleInfo->mac)) {
+                            pModuleInfo->mac)) {
                 goto cleanup;
             }
 
@@ -705,20 +760,23 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
 
             /* Manufacturing Date  */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MFG_DATE,
-                            &pModuleInfo->mfgDate)) {
+                            pModuleInfo->mfgDate)) {
                 goto cleanup;
             }
 
             /* Manufacturer Name */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MFG_NAME,
-                            &pModuleInfo->mfgName)) {
+                            pModuleInfo->mfgName)) {
                 goto cleanup;
             }
 
             /* Device Count */
-            if (!parser_read_integer_object(jModuleInfo, JTAG_DEVICE_COUNT,
-                            &pModuleInfo->devCount)) {
+            uint8_t devCount = 0;
+            if (!parser_read_uint8_object(jModuleInfo, JTAG_DEVICE_COUNT,
+                            &devCount)) {
                 goto cleanup;
+            } else {
+                pModuleInfo->devCount = devCount;
             }
 
         } else {
@@ -769,32 +827,38 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
 
             /* Name */
             if (!parser_read_string_object_wrapper(jModCfg, JTAG_NAME,
-                            &pModCfg[iter].devName)) {
+                            pModCfg[iter].devName)) {
                 goto cleanup;
             }
 
             /* Description */
             if (!parser_read_string_object_wrapper(jModCfg, JTAG_DESCRIPTION,
-                            &pModCfg[iter].devDesc)) {
+                            pModCfg[iter].devDesc)) {
                 goto cleanup;
             }
 
             /* SysFs */
             if (!parser_read_string_object_wrapper(jModCfg,
-                            JTAG_DEV_SYSFS_FILE, &pModCfg[iter].sysFile)) {
+                            JTAG_DEV_SYSFS_FILE, pModCfg[iter].sysFile)) {
                 goto cleanup;
             }
 
             /* Device Class */
-            if (!parser_read_integer_object(jModCfg, JTAG_CLASS,
-                            &pModCfg[iter].devClass)) {
+            uint16_t devClass = 0;
+            if (!parser_read_uint16_object(jModCfg, JTAG_CLASS,
+                            &devClass)) {
                 goto cleanup;
+            } else {
+                pModCfg[iter].devClass = devClass;
             }
 
             /* Device Type */
-            if (!parser_read_integer_object(jModCfg, JTAG_TYPE,
-                            &pModCfg[iter].devType)) {
+            uint16_t devType = 0;
+            if (!parser_read_uint16_object(jModCfg, JTAG_TYPE,
+                            &devType)) {
                 goto cleanup;
+            } else {
+                pModCfg[iter].devType = devType;
             }
 
             /* Device HW attributes */
@@ -852,7 +916,7 @@ void *parse_schema_generic_file_data(const JsonObj *jSchema, uint16_t *size,
 
         /* Read file name */
         if (!parser_read_string_object_wrapper(jSchema,
-                        name_key, &genFileName)) {
+                        name_key, genFileName)) {
             goto cleanup;
         }
 
@@ -905,7 +969,7 @@ void *parse_schema_generic_file_data(const JsonObj *jSchema, uint16_t *size,
 void *parse_schema_generic_file_data_wrapper(const JsonObj *jSchema, int iter,
                 int* payloadSize, char *name_key, bool* status) {
     *status = USYS_FALSE;
-    int size = 0;
+    uint16_t size = 0;
     char *factCfg =
                     parse_schema_generic_file_data(jSchema, &size,
                                     JTAG_FACTORY_CONFIG);
@@ -946,7 +1010,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
         }
         case FIELD_ID_UNIT_CFG: {
             uint16_t modCount = (*schema)->unitInfo.modCount;
-            UnitCfg *pUnitCfg = parse_schema_unit_config(schema, modCount);
+            UnitCfg *pUnitCfg = parse_schema_unit_config(jSchema, modCount);
             if (pUnitCfg) {
                 (*schema)->unitCfg = pUnitCfg;
             } else {
@@ -981,10 +1045,11 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
             break;
         }
         case FIELD_ID_FACT_CFG: {
+            int payloadSize = 0;
             (*schema)->factCfg =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_FACTORY_CONFIG,
                                        &status);
 
@@ -992,14 +1057,16 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
         case FIELD_ID_USER_CFG: {
+            int payloadSize = 0;
             (*schema)->userCfg =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_USER_CONFIG,
                                        &status);
 
@@ -1007,14 +1074,16 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
         case FIELD_ID_FACT_CALIB: {
+            int payloadSize = 0;
             (*schema)->factCalib =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_FACTORY_CALIB,
                                        &status);
 
@@ -1022,14 +1091,16 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
         case FIELD_ID_USER_CALIB: {
+            int payloadSize = 0;
             (*schema)->userCalib =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_USER_CALIB,
                                        &status);
 
@@ -1037,14 +1108,16 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
         case FIELD_ID_BS_CERTS: {
+            int payloadSize = 0;
             (*schema)->bsCerts =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_BOOTSTRAP_CERTS,
                                        &status);
 
@@ -1052,14 +1125,16 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
         case FIELD_ID_CLOUD_CERTS: {
+            int payloadSize = 0;
             (*schema)->cloudCerts =
                             parse_schema_generic_file_data_wrapper(jSchema,
                                        iter,
-                                       &(*schema)->indexTable[iter].payloadSize,
+                                       &payloadSize,
                                        JTAG_CLOUD_CERTS,
                                        &status);
 
@@ -1067,6 +1142,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
                 ret = -1;
                 goto cleanup;
             }
+            (*schema)->indexTable[iter].payloadSize = payloadSize;
 
             break;
         }
@@ -1080,18 +1156,10 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     return ret;
 }
 
-void parser_error(JsonErrObj *jErr, char* msg) {
-    if (jErr) {
-        usys_log_error("%s. Error: %s ", msg, jErr->text);
-    } else {
-        usys_log_error("%s. No error info available", msg);
-    }
-}
-
 int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
     int ret = 0;
     JsonObj *jSchema = NULL;
-    JsonErrObj *jErr;
+    JsonErrObj *jErr = NULL;
     const JsonObj *jHeader = NULL;
     const JsonObj *jIdxTable = NULL;
     const JsonObj *jUnitInfo = NULL;
@@ -1177,7 +1245,6 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
 }
 
 StoreSchema *parser_get_mfg_data_by_uuid(char *puuid) {
-    int ret = 0;
     StoreSchema *sschema = NULL;
 
     /*Default section*/

@@ -141,6 +141,8 @@ void *threaded_irq_handler(void *args) {
     }
     pthread_cleanup_pop(0);
     usys_thread_exit(NULL);
+
+    return NULL;
 }
 
 /* Search interrupt for device.*/

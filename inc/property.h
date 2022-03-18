@@ -186,7 +186,7 @@ int get_alert_cond(char* cond);
 int get_prop_perm(char* perm);
 int get_prop_type(char* type);
 int get_prop_avail(char* avail);
-int get_prop_datatype(char *type);
+int get_prop_data_type(char *type);
 int get_property_count(char* dev);
 int validate_irq_limits(double cur, double lmt, int cond);
 void print_properties(Property* prop, uint16_t count);

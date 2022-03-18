@@ -32,7 +32,7 @@ int service_at_bootup(char *pinvtDb) {
     ret = store_init();
     UnitCfg *cfg = usys_zmalloc(sizeof(UnitCfg));
     if (cfg) {
-        ret = get_master_db_info(cfg, pinvtDb);
+        ret = invt_get_master_unit_cfg(cfg, pinvtDb);
         if (ret) {
             usys_free(cfg);
             cfg = NULL;

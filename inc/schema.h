@@ -163,18 +163,18 @@ typedef enum {
     MOD_MASK
 } ModuleType;
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__, aligned(1))){
     uint32_t magicWord;
     uint16_t resv1;
     uint16_t resv2;
 } SchemaMagicWord;
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__, aligned(1))){
     uint8_t major;
     uint8_t minor;
 } Version;
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__, aligned(1))){
     Version  version;
     uint16_t idxTblOffset;
     uint16_t idxTplSize;
@@ -191,7 +191,7 @@ typedef struct __attribute__((__packed__)){
     uint16_t resv6;
 } SchemaHeader;
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__, aligned(1))){
     uint16_t fieldId;
     uint16_t payloadOffset;
     uint16_t payloadSize;
@@ -208,12 +208,12 @@ typedef struct __attribute__((__packed__)){
 
 
 /* TODO: TMP: As almost all the devices are I2C this is good start.*/
-typedef struct  __attribute__((__packed__)) {
+typedef struct __attribute__((__packed__, aligned(1))) {
     uint8_t bus;
     uint16_t add;
 } DeviceCfg;
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__((__packed__, aligned(1))) {
     char devName[NAME_LENGTH]; //TODO: Check if this could be replaces by device object.
     char devDesc[DESC_LENGTH];
     uint16_t devType;
@@ -222,14 +222,14 @@ typedef struct __attribute__((__packed__)) {
     void* cfg; // TODO: Try union of the DevXXXXCfg
 } ModuleCfg; //#124
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__((__packed__, aligned(1))) {
     char modUuid[UUID_LENGTH];
     char modName[NAME_LENGTH];
     char sysFs[64];
     void* eepromCfg;
 } UnitCfg; //#120
 
-typedef struct __attribute__((__packed__)){
+typedef struct __attribute__((__packed__, aligned(1))){
     char uuid[UUID_LENGTH];
     char name[NAME_LENGTH];
     UnitType unit;
@@ -243,7 +243,7 @@ typedef struct __attribute__((__packed__)){
     uint8_t modCount;
 } UnitInfo; //159
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__((__packed__, aligned(1))){
     char uuid[UUID_LENGTH];
     char name[NAME_LENGTH];
     ModuleType module;
@@ -258,7 +258,7 @@ typedef struct __attribute__((__packed__)) {
     ModuleCfg* modCfg;
 } ModuleInfo; //167
 
-typedef struct __attribute__((__packed__)) {
+typedef struct __attribute__((__packed__, aligned(1))){
     SchemaMagicWord magicWord;
     SchemaHeader header;
     SchemaIdxTuple *indexTable;
