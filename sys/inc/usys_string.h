@@ -172,7 +172,7 @@ static inline void *usys_memset(void *ptr, int value, size_t num) {
  * @param  num
  * @return dest
  */
-static inline char *usys_memcpy(void *dest, void *src, size_t num) {
+static inline char *usys_memcpy(void *dest, const void *src, size_t num) {
     return memcpy(dest, src, num);
 }
 
