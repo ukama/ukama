@@ -132,9 +132,12 @@ const Home = () => {
             refetch: metricUptimeRefetch,
             loading: metricUptimeLoading,
         },
-    ] = useGetMetricsUptimeLazyQuery();
+    ] = useGetMetricsUptimeLazyQuery({
+        fetchPolicy: "network-only",
+    });
 
     useGetMetricsUptimeSSubscription({
+        fetchPolicy: "network-only",
         onSubscriptionData: res => {
             if (uptimeMetric.data.length > 0)
                 setUptimeMetrics({
@@ -152,7 +155,7 @@ const Home = () => {
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
             regPolling: false,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -160,7 +163,7 @@ const Home = () => {
         getMetricPayload({
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
-            from: from + 1,
+            from: from,
         });
 
     useEffect(() => {

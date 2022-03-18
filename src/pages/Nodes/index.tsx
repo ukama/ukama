@@ -130,7 +130,7 @@ const Nodes = () => {
             nodeId: selectedNode?.id,
             orgId: orgId,
             regPolling: false,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
