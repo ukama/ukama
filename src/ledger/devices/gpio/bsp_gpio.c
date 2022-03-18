@@ -16,52 +16,54 @@
 #include "drivers/sysfs_wrapper.h"
 
 #include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 
-const DrvrOps drvr_gpio_fxn_table = { .init = gpio_wrapper_init,
+const DrvrOps drvrGpioWrapperOps = { .init = gpio_wrapper_init,
                                             .configure = gpio_wrapper_configure,
                                             .read = gpio_wrapper_read,
                                             .write = gpio_wrapper_write,
                                             .enable = gpio_wrapper_enable,
                                             .disable = gpio_wrapper_disable,
-                                            .register_cb = NULL,
-                                            .dregister_cb = NULL,
-                                            .enable_irq = NULL,
-                                            .disable_irq = NULL };
+                                            .registerCb = NULL,
+                                            .dregisterCb = NULL,
+                                            .enableIrq = NULL,
+                                            .disableIrq = NULL };
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
 static Property gpio_property[MAXGPIOPROP] = {
     [DIRECTION] = { .name = "GPIO DIRECTION",
-                    .data_type = TYPE_UINT8,
+                    .dataType = TYPE_UINT8,
                     .perm = PERM_RD | PERM_WR,
                     .available = PROP_AVAIL,
                     .propType = PROP_TYPE_CONFIG,
                     .units = "NA",
-                    .sysfname = "direction",
+                    .sysFname = "direction",
                     .depProp = NULL },
     [VALUE] = { .name = "GPIO VALUE",
-                .data_type = TYPE_UINT8,
+                .dataType = TYPE_UINT8,
                 .perm = PERM_RD | PERM_WR,
                 .available = PROP_AVAIL,
                 .propType = PROP_TYPE_CONFIG,
                 .units = "NA",
-                .sysfname = "value",
+                .sysFname = "value",
                 .depProp = NULL },
     [EDGE] = { .name = "GPIO EDGE",
-               .data_type = TYPE_UINT8,
+               .dataType = TYPE_UINT8,
                .perm = PERM_RD | PERM_WR,
                .available = PROP_AVAIL,
                .propType = PROP_TYPE_CONFIG,
                .units = "NA",
-               .sysfname = "edge",
+               .sysFname = "edge",
                .depProp = NULL },
     [POLARITY] = { .name = "GPIO POLARITY",
-                   .data_type = TYPE_UINT8,
+                   .dataType = TYPE_UINT8,
                    .perm = PERM_RD | PERM_WR,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_CONFIG,
                    .units = "NA",
-                   .sysfname = "active_low",
+                   .sysFname = "active_low",
                    .depProp = NULL }
 };
 
@@ -69,7 +71,7 @@ static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return drvr_sysfs_get_fxn_tbl();
     } else {
-        return &drvr_gpio_fxn_table;
+        return &drvrGpioWrapperOps;
     }
 }
 

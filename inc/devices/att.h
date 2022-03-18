@@ -10,6 +10,9 @@
 #ifndef ATT_H_
 #define ATT_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_ATT_SENSOR_TYPE		1

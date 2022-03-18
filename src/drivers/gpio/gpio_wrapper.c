@@ -7,9 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "devdb/gpio/drvrgpio.h"
-
-
+#include "drivers/gpio_wrapper.h"
 
 int drvr_gpio_wrapper_init() {
     return 0;

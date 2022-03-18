@@ -10,6 +10,9 @@
 #ifndef ADC_H_
 #define ADC_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_ADC_SENSOR_TYPE		1

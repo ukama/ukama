@@ -7,14 +7,18 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include "inventory.h"
+
 #include "errorcode.h"
 #include "ledger.h"
 #include "schema.h"
+#include "store.h"
+
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_mem.h"
 #include "usys_string.h"
-#include "../../inc/store.h"
+
 
 static int validate_unit_type(UnitType unit) {
     int ret = 0;

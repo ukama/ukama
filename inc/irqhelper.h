@@ -10,12 +10,13 @@
 #ifndef UTILS_IRQHELPER_H_
 #define UTILS_IRQHELPER_H_
 
-#include "headers/errorcode.h"
-#include "inc/driverfxn.h"
-#include "utils/irqdb.h"
-#include "headers/ubsp/property.h"
+#include "errorcode.h"
+#include "device_ops.h"
+#include "driver_ops.h"
+#include "irqdb.h"
+#include "property.h"
 
-int irqhelper_confirm_irq(const DrvDBFxnTable *drvr_db_fx_tbl, Device *p_dev, AlertCallBackData** acbdata, Property* prop,
+int irqhelper_confirm_irq(const DrvrOps *drveOps, Device *p_dev, AlertCallBackData** acbdata, Property* prop,
                         int max_prop, char* fpath, int* evt);
 
 #endif /* UTILS_IRQHELPER_H_ */

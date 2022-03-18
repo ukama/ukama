@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "../../../inc/drivers/ads1015_wrapper.h"
+#include "drivers/ads1015_wrapper.h"
 
 int ads1015_wrapper_init() {
     return 0;

@@ -7,9 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "drvrdat31r5a.h"
-
-#include "headers/utils/log.h"
+#include "drivers/dat31r5a_wrapper.h"
 
 int dat31r5a_wrapper_init() {
     return 0;

@@ -7,15 +7,19 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-//TODO: Use either of the file file.c or sysfs.c.
-//Decision pending will be decided after having a look
-//and type of operations we will be doing on the sys file.
-
 #include "drivers/sysfs.h"
 #include "errorcode.h"
 
 #include "usys_api.h"
+#include "usys_mem.h"
 #include "usys_log.h"
+#include "usys_string.h"
+
+/*
+ * TODO: Use either of the file file.c or sysfs.c.
+ * Decision pending will be decided after having a look
+ * and type of operations we will be doing on the sys file.
+ */
 
 int sysfs_init(char *name, void *data) {
     return 0;

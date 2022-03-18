@@ -17,21 +17,22 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 static ListInfo ledLdgr;
 static int ledLdgrflag = 0;
 
 const DevOps ledTriColOps = {
-    .init =bsp_led_tricol_init,
-    .registration =bsp_led_tricol_registration,
-    .read_prop_count =bsp_led_tricol_read_prop_count,
-    .read_prop =bsp_led_tricol_read_properties,
-    .configure =bsp_led_tricol_configure,
-    .read =bsp_led_tricol_read,
-    .write =bsp_led_tricol_write,
-    .enable =bsp_led_tricol_enable,
-    .disable =bsp_led_tricol_disable,
+    .init = bsp_led_tricol_init,
+    .registration = bsp_led_tricol_registration,
+    .readPropCount = bsp_led_tricol_read_prop_count,
+    .readProp = bsp_led_tricol_read_properties,
+    .configure = bsp_led_tricol_configure,
+    .read = bsp_led_tricol_read,
+    .write = bsp_led_tricol_write,
+    .enable = bsp_led_tricol_enable,
+    .disable = bsp_led_tricol_disable,
     .registerCb = NULL,
     .dregisterCb = NULL,
     .enableIrq = NULL,

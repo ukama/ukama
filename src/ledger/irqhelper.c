@@ -13,6 +13,11 @@
 #include "devices/bsp_adt7481.h"
 #include "drivers/sysfs_wrapper.h"
 
+#include "usys_list.h"
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
+
 /* Return 1 for active, 0 for inactive and -ve for error.*/
 static int irqhelper_validate_irq(const DrvrOps *drvrOps,
                                   Device *dev, Property *prop, int iter,

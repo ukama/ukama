@@ -10,6 +10,9 @@
 #ifndef TMP_H_
 #define TMP_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_TEMP_SENSOR_TYPE 			3

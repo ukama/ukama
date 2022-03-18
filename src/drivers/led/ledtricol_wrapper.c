@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "devdb/led/drvrledtricol.h"
+#include "drivers/ledtricol_wrapper.h"
 
 
 int led_tricol_wrapper_init() {

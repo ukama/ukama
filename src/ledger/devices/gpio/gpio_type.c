@@ -16,6 +16,7 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 static ListInfo gpioLdgr;
@@ -23,8 +24,8 @@ static int gpioLdgrflag = 0;
 
 const DevOps gpioOps = { .init = bsp_gpio_init,
                                      .registration = bsp_gpio_registration,
-                                     .read_prop_count = bsp_gpio_read_prop_count,
-                                     .read_prop = bsp_gpio_read_properties,
+                                     .readPropCount = bsp_gpio_read_prop_count,
+                                     .readProp = bsp_gpio_read_properties,
                                      .configure = bsp_gpio_configure,
                                      .read = bsp_gpio_read,
                                      .write = bsp_gpio_write,

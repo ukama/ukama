@@ -10,6 +10,9 @@
 #ifndef DEVDB_LED_LED_H_
 #define DEVDB__LED_LED_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_LED_SENSOR_TYPE		1

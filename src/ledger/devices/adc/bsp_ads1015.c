@@ -16,6 +16,8 @@
 #include "drivers/sysfs_wrapper.h"
 
 #include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 
 const DrvrOps ads1015WrapperOps = { .init = ads1015_wrapper_init,
                                                .configure =
@@ -24,78 +26,78 @@ const DrvrOps ads1015WrapperOps = { .init = ads1015_wrapper_init,
                                                .write = ads1015_wrapper_write,
                                                .enable = ads1015_wrapper_enable,
                                                .disable = ads1015_wrapper_disable,
-                                               .register_cb = NULL,
-                                               .dregister_cb = NULL,
-                                               .enable_irq = NULL,
-                                               .disable_irq = NULL };
+                                               .registerCb = NULL,
+                                               .dregisterCb = NULL,
+                                               .enableIrq = NULL,
+                                               .disableIrq = NULL };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
 static Property ads1015_property[MAXADCPROP] = {
     [VAIN0AIN1] = { .name = "VOLT OVER AIN0 AND AIN1",
-                    .data_type = TYPE_INT32,
+                    .dataType = TYPE_INT32,
                     .perm = PERM_RD,
                     .available = PROP_AVAIL,
                     .propType = PROP_TYPE_STATUS,
                     .units = "NA",
-                    .sysfname = "in0_input",
+                    .sysFname = "in0_input",
                     .depProp = NULL },
     [VAIN0AIN3] = { .name = "VOLT OVER AIN0 AND AIN3",
-                    .data_type = TYPE_INT32,
+                    .dataType = TYPE_INT32,
                     .perm = PERM_RD,
                     .available = PROP_AVAIL,
                     .propType = PROP_TYPE_STATUS,
                     .units = "NA",
-                    .sysfname = "in1_input",
+                    .sysFname = "in1_input",
                     .depProp = NULL },
     [VAIN1AIN3] = { .name = "VOLT OVER AIN1 AND AIN3",
-                    .data_type = TYPE_INT32,
+                    .dataType = TYPE_INT32,
                     .perm = PERM_RD,
                     .available = PROP_AVAIL,
                     .propType = PROP_TYPE_STATUS,
                     .units = "NA",
-                    .sysfname = "in2_input",
+                    .sysFname = "in2_input",
                     .depProp = NULL },
     [VAIN2AIN3] = { .name = "VOLT OVER AIN2 AND AIN3",
-                    .data_type = TYPE_INT32,
+                    .dataType = TYPE_INT32,
                     .perm = PERM_RD,
                     .available = PROP_AVAIL,
                     .propType = PROP_TYPE_STATUS,
                     .units = "NA",
-                    .sysfname = "in3_input",
+                    .sysFname = "in3_input",
                     .depProp = NULL },
     [VAIN0GND] = { .name = "VOLT OVER AIN0 AND GND",
-                   .data_type = TYPE_INT32,
+                   .dataType = TYPE_INT32,
                    .perm = PERM_RD,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_STATUS,
                    .units = "NA",
-                   .sysfname = "in4_input",
+                   .sysFname = "in4_input",
                    .depProp = NULL },
     [VAIN1GND] = { .name = "VOLT OVER AIN1 AND GND",
-                   .data_type = TYPE_INT32,
+                   .dataType = TYPE_INT32,
                    .perm = PERM_RD,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_STATUS,
                    .units = "NA",
-                   .sysfname = "in5_input",
+                   .sysFname = "in5_input",
                    .depProp = NULL },
     [VAIN2GND] = { .name = "VOLT OVER AIN2 AND GND",
-                   .data_type = TYPE_INT32,
+                   .dataType = TYPE_INT32,
                    .perm = PERM_RD,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_STATUS,
                    .units = "NA",
-                   .sysfname = "in6_input",
+                   .sysFname = "in6_input",
                    .depProp = NULL },
     [VAIN3GND] = { .name = "VOLT OVER AIN3 AND GND",
-                   .data_type = TYPE_INT32,
+                   .dataType = TYPE_INT32,
                    .perm = PERM_RD,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_STATUS,
                    .units = "NA",
-                   .sysfname = "in7_input",
+                   .sysFname = "in7_input",
                    .depProp = NULL }
 
 };
@@ -104,7 +106,7 @@ static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
-        return ads1015WrapperOps;
+        return &ads1015WrapperOps;
     }
 }
 

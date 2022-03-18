@@ -14,6 +14,7 @@
 #include "irqhelper.h"
 #include "noded_macros.h"
 #include "property.h"
+#include "drivers/sysfs_wrapper.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"

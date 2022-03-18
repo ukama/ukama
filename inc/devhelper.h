@@ -20,7 +20,7 @@ int dhelper_registration(const DrvrOps *drvr, Device *p_dev);
 void dhelper_irq_callback(DevObj *obj, void *prop, void *data);
 int dhelper_validate_property(Property* prop, int pidx);
 int dhelper_init_property_from_parser(Device *p_dev, Property** prop,
-    void* count);
+    int* count);
 int dhelper_init_driver(const DrvrOps *drvr, Device *dev);
 int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
     int pidx, void *data);

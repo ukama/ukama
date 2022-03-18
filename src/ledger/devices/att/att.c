@@ -16,6 +16,7 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 
@@ -24,9 +25,9 @@ static int attLdgrflag = 0;
 
 const DevOps dat31r5aOps = { .init = bsp_dat31r5a_init,
                                          .registration = bsp_dat31r5a_registration,
-                                         .read_prop_count =
+                                         .readPropCount =
                                              bsp_dat31r5a_read_prop_count,
-                                         .read_prop = bsp_dat31r5a_read_properties,
+                                         .readProp = bsp_dat31r5a_read_properties,
                                          .configure = bsp_dat31r5a_configure,
                                          .read = bsp_dat31r5a_read,
                                          .write = bsp_dat31r5a_write,

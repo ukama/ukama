@@ -7,9 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "devdb/pwr/drvrina226.h"
-
-#include "headers/utils/log.h"
+#include "drivers/ina226_wrapper.h"
 
 int ina226_wrapper_init() {
     return 0;

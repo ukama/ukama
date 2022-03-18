@@ -14,7 +14,8 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
-
+#include "usys_mem.h"
+#include "usys_string.h"
 ListInfo irqdb;
 
 /* Remove IRQ Config from the irqdb */

@@ -16,6 +16,7 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 static ListInfo adcLdgr;
@@ -23,9 +24,9 @@ static int adcLdgrflag = 0;
 
 const DevOps ads1015Ops = { .init = bsp_ads1015_init,
                                         .registration = bsp_ads1015_registration,
-                                        .read_prop_count =
+                                        .readPropCount =
                                             bsp_ads1015_read_prop_count,
-                                        .read_prop = bsp_ads1015_read_properties,
+                                        .readProp = bsp_ads1015_read_properties,
                                         .configure = bsp_ads1015_configure,
                                         .read = bsp_ads1015_read,
                                         .write = bsp_ads1015_write,

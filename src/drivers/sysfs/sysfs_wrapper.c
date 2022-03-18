@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "sysfs_wrapper.h"
+#include "drivers/sysfs_wrapper.h"
 
 #include "errorcode.h"
 #include "property.h"

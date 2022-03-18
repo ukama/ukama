@@ -18,32 +18,33 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 static ListInfo tmpLdgr;
 static int tmpLdgrflag = 0;
 
 const DevOps tmp464Ops = { .init =bsp_tmp464_init,
-                                       .registration =bsp_tmp464_registration,
-                                       .read_prop_count =
+                                       .registration = bsp_tmp464_registration,
+                                       .readPropCount =
                                           bsp_tmp464_read_prop_count,
-                                       .read_prop =bsp_tmp464_read_properties,
-                                       .configure =bsp_tmp464_configure,
-                                       .read =bsp_tmp464_read,
-                                       .write =bsp_tmp464_write,
-                                       .enable =bsp_tmp464_enable,
-                                       .disable =bsp_tmp464_disable,
-                                       .registerCb =bsp_tmp464_reg_cb,
-                                       .dregisterCb =bsp_tmp464_dreg_cb,
-                                       .enableIrq =bsp_tmp464_enable_irq,
-                                       .disableIrq =bsp_tmp464_disable_irq,
-                                       .confirmIrq =bsp_tmp464_confirm_irq,
-                                       .irqType =bsp_tmp464_get_irq_type };
+                                       .readProp = bsp_tmp464_read_properties,
+                                       .configure = bsp_tmp464_configure,
+                                       .read = bsp_tmp464_read,
+                                       .write = bsp_tmp464_write,
+                                       .enable = bsp_tmp464_enable,
+                                       .disable = bsp_tmp464_disable,
+                                       .registerCb = bsp_tmp464_reg_cb,
+                                       .dregisterCb = bsp_tmp464_dreg_cb,
+                                       .enableIrq = bsp_tmp464_enable_irq,
+                                       .disableIrq = bsp_tmp464_disable_irq,
+                                       .confirmIrq = bsp_tmp464_confirm_irq,
+                                       .irqType = bsp_tmp464_get_irq_type };
 
 const DevOps se98Ops = { .init = bsp_se98_init,
                                      .registration = bsp_se98_registration,
-                                     .read_prop_count = bsp_se98_read_prop_count,
-                                     .read_prop = bsp_se98_read_properties,
+                                     .readPropCount = bsp_se98_read_prop_count,
+                                     .readProp = bsp_se98_read_properties,
                                      .configure = bsp_se98_configure,
                                      .read = bsp_se98_read,
                                      .write = bsp_se98_write,
@@ -58,9 +59,9 @@ const DevOps se98Ops = { .init = bsp_se98_init,
 
 const DevOps adt7481Ops = { .init = bsp_adt7481_init,
                                         .registration = bsp_adt7481_registration,
-                                        .read_prop_count =
+                                        .readPropCount =
                                             bsp_adt7481_read_prop_count,
-                                        .read_prop = bsp_adt7481_read_properties,
+                                        .readProp = bsp_adt7481_read_properties,
                                         .configure = bsp_adt7481_configure,
                                         .read = bsp_adt7481_read,
                                         .write = bsp_adt7481_write,
@@ -74,9 +75,9 @@ const DevOps adt7481Ops = { .init = bsp_adt7481_init,
                                         .irqType = bsp_adt7481_get_irq_type };
 
 DevOpsMap tmp_dev_map[MAX_TEMP_SENSOR_TYPE] = {
-    { .name = "TMP464", .dev_ops = &tmp464Ops },
-    { .name = "ADT7481", .dev_ops = &adt7481Ops },
-    { .name = "SE98", .dev_ops = &se98Ops }
+    { .name = "TMP464", .opsTable = &tmp464Ops },
+    { .name = "ADT7481", .opsTable = &adt7481Ops },
+    { .name = "SE98", .opsTable = &se98Ops }
 };
 
 const DevOps *get_tmp_dev_ops(char *name) {

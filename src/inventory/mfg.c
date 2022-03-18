@@ -9,6 +9,7 @@
 
 #include "mfg.h"
 
+#include "errorcode.h"
 #include "jdata.h"
 #include "schema.h"
 

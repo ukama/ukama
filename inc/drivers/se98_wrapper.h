@@ -12,18 +12,18 @@
 
 #include "device.h"
 
-int se98_wrapperinit ();
-int se98_wrapperregistration(Device* p_dev);
-int se98_wrapperread_properties(DevObj* obj, void* prop, uint16_t* count);
-int se98_wrapperconfigure(void* p_dev, void* prop, void* data );
-int se98_wrapperread(void* p_dev, void* prop, void* data);
-int se98_wrapperwrite(void* p_dev, void* prop, void* data);
-int se98_wrapperenable(void* p_dev, void* prop, void* data);
-int se98_wrapperdisable(void* p_dev, void* prop, void* data);
-int se98_wrapperreg_cb(void* p_dev, SensorCallbackFxn fun);
-int se98_wrapperdreg_cb(void* p_dev, SensorCallbackFxn fun);
-int se98_wrapperenable_irq(void* p_dev, void* prop, void* data);
-int se98_wrapperdisable_irq(void* p_dev, void* prop, void* data);
+int se98_wrapper_init ();
+int se98_wrapper_registration(Device* p_dev);
+int se98_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
+int se98_wrapper_configure(void* p_dev, void* prop, void* data );
+int se98_wrapper_read(void* p_dev, void* prop, void* data);
+int se98_wrapper_write(void* p_dev, void* prop, void* data);
+int se98_wrapper_enable(void* p_dev, void* prop, void* data);
+int se98_wrapper_disable(void* p_dev, void* prop, void* data);
+int se98_wrapper_reg_cb(void* p_dev, SensorCallbackFxn fun);
+int se98_wrapper_dreg_cb(void* p_dev, SensorCallbackFxn fun);
+int se98_wrapper_enable_irq(void* p_dev, void* prop, void* data);
+int se98_wrapper_disable_irq(void* p_dev, void* prop, void* data);
 
 
 #endif /* DRIVERS_SE98_WRAPPER_H_ */

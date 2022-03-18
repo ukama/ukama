@@ -7,13 +7,15 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "../../inc/store.h"
+#include "store.h"
 
+#include "device.h"
 #include "errorcode.h"
-#include "eeprom_wrapper.h"
 #include "schema.h"
 #include "noded_macros.h"
+#include "drivers/eeprom_wrapper.h"
 
+#include "usys_file.h"
 #include "usys_list.h"
 #include "usys_log.h"
 #include "usys_mem.h"

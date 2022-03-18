@@ -10,6 +10,7 @@
 #include "mfg_parser.h"
 
 #include "device.h"
+#include "errorcode.h"
 
 #include "usys_file.h"
 #include "usys_log.h"
@@ -623,10 +624,10 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
 
              /* SW Version */
              jSWVer = json_object_get(jUnitInfo, JTAG_SW_VERISION);
-             Version *pVersion = parse_version(jSWVer);
-             if (pVersion) {
-                 usys_memcpy(&pUnitInfo->swVer, pVersion, sizeof(Version));
-                 usys_free(pVersion);
+             Version *sVersion = parse_version(jSWVer);
+             if (sVersion) {
+                 usys_memcpy(&pUnitInfo->swVer, sVersion, sizeof(Version));
+                 usys_free(sVersion);
              } else {
                  usys_log_error("Failed to parse UnitInfo.swVersion.");
                  goto cleanup;
@@ -812,10 +813,10 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
 
             /* SW Version */
             jSWVer = json_object_get(jModuleInfo, JTAG_SW_VERISION);
-            Version *pVersion = parse_version(jSWVer);
-            if (pVersion) {
-                usys_memcpy(&pModuleInfo->swVer, pVersion, sizeof(Version));
-                usys_free(pVersion);
+            Version *sVersion = parse_version(jSWVer);
+            if (sVersion) {
+                usys_memcpy(&pModuleInfo->swVer, sVersion, sizeof(Version));
+                usys_free(sVersion);
             } else {
                 usys_log_error("Failed to parse UnitInfo.swVersion.");
                 goto cleanup;
@@ -1238,7 +1239,7 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
         storeSchema = mfgStoreSchema[idx];
         jSchema = json_loads(mfgdata, JSON_DECODE_ANY, jErr);
         if (!jSchema) {
-            parser_error(jErr);
+            parser_error(jErr, "Failed to parse schema");
             ret = ERR_NODED_JSON_PARSER;
             goto cleanup;
         }

@@ -10,6 +10,9 @@
 #ifndef PWR_H_
 #define PWR_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_PWR_SENSOR_TYPE		1

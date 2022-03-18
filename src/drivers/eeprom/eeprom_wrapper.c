@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "ukdb/db/eeprom.h"
+#include "drivers/eeprom_wrapper.h"
 
 int eeprom_wrapper_open(int mode) {
     return 0;

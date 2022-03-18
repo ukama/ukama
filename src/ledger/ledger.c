@@ -9,6 +9,7 @@
 
 #include "ledger.h"
 
+#include "device_ops.h"
 #include "errorcode.h"
 #include "irqdb.h"
 #include "devices/adc.h"

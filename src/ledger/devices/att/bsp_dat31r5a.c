@@ -15,6 +15,9 @@
 #include "drivers/dat31r5a_wrapper.h"
 #include "drivers/sysfs_wrapper.h"
 
+#include "usys_log.h"
+#include "usys_mem.h"
+#include "usys_string.h"
 
 const DrvrOps dat31r5aWrapperOps = { .init = dat31r5a_wrapper_init,
                                                 .configure =
@@ -24,31 +27,31 @@ const DrvrOps dat31r5aWrapperOps = { .init = dat31r5a_wrapper_init,
                                                 .enable = dat31r5a_wrapper_enable,
                                                 .disable =
                                                     dat31r5a_wrapper_disable,
-                                                .register_cb = NULL,
-                                                .dregister_cb = NULL,
-                                                .enable_irq = NULL,
-                                                .disable_irq = NULL };
+                                                .registerCb = NULL,
+                                                .dregisterCb = NULL,
+                                                .enableIrq = NULL,
+                                                .disableIrq = NULL };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
 static Property dat31r5a_property[MAXATTPROP] = {
     [ATTVALUE] = { .name = "ATTENUATION VALUE",
-                   .data_type = TYPE_INT32,
+                   .dataType = TYPE_INT32,
                    .perm = PERM_RD | PERM_WR,
                    .available = PROP_AVAIL,
                    .propType = PROP_TYPE_CONFIG,
                    .units = "dB",
-                   .sysfname = "in0_attvalue",
-                   .dep_prop = NULL },
+                   .sysFname = "in0_attvalue",
+                   .depProp = NULL },
     [LATCHENABLE] = { .name = "LATCH FOR ATTENUATION",
-                      .data_type = TYPE_INT32,
+                      .dataType = TYPE_INT32,
                       .perm = PERM_RD | PERM_WR,
                       .available = PROP_AVAIL,
                       .propType = PROP_TYPE_CONFIG,
                       .units = "NA",
-                      .sysfname = "in0_latch",
-                      .dep_prop = NULL },
+                      .sysFname = "in0_latch",
+                      .depProp = NULL },
 };
 
 static const DrvrOps* get_fxn_tbl(Device *pDev) {

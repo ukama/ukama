@@ -7,7 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "devdb/tmp/drvradt7481.h"
+#include "drivers/adt7481_wrapper.h"
 
 
 

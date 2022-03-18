@@ -16,6 +16,7 @@
 
 #include "usys_list.h"
 #include "usys_log.h"
+#include "usys_mem.h"
 #include "usys_string.h"
 
 static ListInfo pwrLdgr;
@@ -23,9 +24,9 @@ static int pwrLdgrflag = 0;
 
 const DevOps ina226Ops = { .init = bsp_ina226_init,
                                        .registration = bsp_ina226_registration,
-                                       .read_prop_count =
+                                       .readPropCount =
                                            bsp_ina226_read_prop_count,
-                                       .read_prop = bsp_ina226_read_properties,
+                                       .readProp = bsp_ina226_read_properties,
                                        .configure = bsp_ina226_configure,
                                        .read = bsp_ina226_read,
                                        .write = bsp_ina226_write,

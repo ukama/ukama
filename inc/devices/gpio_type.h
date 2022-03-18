@@ -10,6 +10,9 @@
 #ifndef GPIOTYPE_H_
 #define GPIOTYPE_H_
 
+#include "device.h"
+#include "device_ops.h"
+
 #include "usys_list.h"
 
 #define MAX_GPIO_SENSOR_TYPE		1

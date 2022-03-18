@@ -9,6 +9,9 @@
 
 #include "jdata.h"
 
+#include "device.h"
+#include "errorcode.h"
+
 #include "usys_api.h"
 #include "usys_error.h"
 #include "usys_mem.h"
@@ -414,6 +417,9 @@ void *jdata_fetch_cloud_certs(char *puuid, uint16_t *size) {
 int jdata_fetch_payload_from_mfgdata(void **data, char *uuid, uint16_t *size,
                                    uint16_t id) {
     int ret = -1;
+// TODO check
+    #if 0
+
     switch (id) {
     case FIELD_ID_FACT_CFG: {
         ret = jdata_fetch_fact_config(data, uuid, size);
@@ -454,5 +460,6 @@ int jdata_fetch_payload_from_mfgdata(void **data, char *uuid, uint16_t *size,
         log_error("JSON parser failed to read info on 0x%x."
                         "Error Code: %d", id, ret);
     }
+#endif
     return ret;
 }
