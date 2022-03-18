@@ -8,6 +8,8 @@ import {
     UpdateNodeDto,
     UpdateNodeResponse,
     MetricDto,
+    NodeAppsVersionLogsResponse,
+    NodeAppResponse,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -109,5 +111,19 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) throw new Error(res.message);
         return NodeMapper.dtoToMetricDto(res.data?.result);
+    };
+    getSoftwareLogs = async (): Promise<NodeAppsVersionLogsResponse[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_SOFTWARE_LOGS,
+        });
+        return res.data;
+    };
+    getNodeApps = async (): Promise<NodeAppResponse[]> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: SERVER.GET_NODE_APPS,
+        });
+        return res.data;
     };
 }

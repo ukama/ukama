@@ -20,6 +20,8 @@ export const SERVER = {
     POST_DELETE_NODE: `${BASE_URL}/node/delete_node`,
     GET_USER: `${BASE_URL}/user/get_user`,
     ORG: `${DEV_URL}/orgs`,
+    GET_SOFTWARE_LOGS: `${BASE_URL}/software_logs`,
+    GET_NODE_APPS: `${BASE_URL}/node_apps`,
     GET_NODE_DETAIL: `${BASE_URL}/node/node_details`,
     GET_NODE_META_DATA: `${BASE_URL}/node/meta_data`,
     GET_NODE_PHYSICAL_HEALTH: `${BASE_URL}/node/physical_health`,

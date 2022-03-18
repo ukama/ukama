@@ -222,3 +222,31 @@ export class OrgMetricValueDto {
     @Field()
     y: string;
 }
+@ObjectType()
+export class NodeAppsVersionLogsResponse {
+    @Field()
+    version: string;
+
+    @Field()
+    date: number;
+
+    @Field()
+    notes: string;
+}
+@ObjectType()
+export class NodeAppResponse {
+    @Field()
+    id: string;
+
+    @Field()
+    title: string;
+
+    @Field()
+    version: string;
+
+    @Field()
+    cpu: string;
+
+    @Field()
+    memory: string;
+}
