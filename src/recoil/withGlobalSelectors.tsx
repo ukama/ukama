@@ -3,8 +3,9 @@ import {
     pageName,
     isDarkmode,
     isFirstVisit,
-    organizationId,
     isSkeltonLoading,
+    snackbarMessage,
+    user,
 } from "./atom";
 
 const withIsSkeltonLoading = selector({
@@ -17,11 +18,6 @@ const withPageName = selector({
     get: ({ get }) => get(pageName),
 });
 
-const withOrganizationId = selector({
-    key: "withOrganizationId",
-    get: ({ get }) => get(organizationId),
-});
-
 const withIsFirstVisit = selector({
     key: "withIsFirstVisit",
     get: ({ get }) => get(isFirstVisit),
@@ -32,10 +28,20 @@ const withIsDarkMod = selector({
     get: ({ get }) => get(isDarkmode),
 });
 
+const withSnackbarMessage = selector({
+    key: "withSnackbarMessage",
+    get: ({ get }) => get(snackbarMessage),
+});
+const withUser = selector({
+    key: "withUser",
+    get: ({ get }) => get(user),
+});
+
 export {
+    withUser,
     withPageName,
     withIsDarkMod,
     withIsFirstVisit,
-    withOrganizationId,
+    withSnackbarMessage,
     withIsSkeltonLoading,
 };

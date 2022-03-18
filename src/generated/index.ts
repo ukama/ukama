@@ -404,10 +404,14 @@ export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
     id: Scalars["String"];
+    isUpdateAvailable: Scalars["Boolean"];
     status: Org_Node_State;
     title: Scalars["String"];
     totalUser: Scalars["Float"];
     type: Scalars["String"];
+    updateDescription: Scalars["String"];
+    updateShortNote: Scalars["String"];
+    updateVersion: Scalars["String"];
 };
 
 export type NodeResponse = {
@@ -894,6 +898,10 @@ export type GetNodesByOrgQuery = {
             type: string;
             description: string;
             totalUser: number;
+            isUpdateAvailable: boolean;
+            updateVersion: string;
+            updateShortNote: string;
+            updateDescription: string;
         }>;
     };
 };
@@ -1700,6 +1708,10 @@ export const GetNodesByOrgDocument = gql`
                 type
                 description
                 totalUser
+                isUpdateAvailable
+                updateVersion
+                updateShortNote
+                updateDescription
             }
             activeNodes
             totalNodes

@@ -22,12 +22,6 @@ import {
     CardContent,
 } from "@mui/material";
 import {
-    pageName,
-    isDarkmode,
-    isSkeltonLoading,
-    organizationId,
-} from "../../recoil";
-import {
     useRecoilState,
     useRecoilValue,
     useResetRecoilState,
@@ -39,6 +33,7 @@ import { useHistory } from "react-router-dom";
 import { SettingsMenuTypes } from "../../types";
 import React, { useEffect, useState } from "react";
 import { APP_VERSION, COPY_RIGHTS, SETTING_MENU } from "../../constants";
+import { user, pageName, isDarkmode, isSkeltonLoading } from "../../recoil";
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -111,7 +106,7 @@ const Settings = () => {
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
-    const resetData = useResetRecoilState(organizationId);
+    const resetData = useResetRecoilState(user);
     const [skeltonLoading, setSkeltonLoading] =
         useRecoilState(isSkeltonLoading);
 

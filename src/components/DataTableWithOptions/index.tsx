@@ -62,10 +62,16 @@ const DataTableWithOptions = ({
     return (
         <Box
             component="div"
-            sx={{ minHeight: "208px", display: "flex", alignItems: "center" }}
+            mt={2}
+            sx={{
+                height: "100%",
+                minHeight: 234,
+                display: "flex",
+                alignItems: "center",
+            }}
         >
-            {dataset?.length > 1 ? (
-                <TableContainer sx={{ maxHeight: 200 }}>
+            {dataset?.length > 0 ? (
+                <TableContainer sx={{ maxHeight: 234 }}>
                     <Table stickyHeader>
                         <TableHead>
                             <TableRow>
@@ -86,11 +92,7 @@ const DataTableWithOptions = ({
                         </TableHead>
                         <TableBody>
                             {dataset?.map((row: any) => (
-                                <TableRow
-                                    role="row"
-                                    tabIndex={-1}
-                                    key={row.name}
-                                >
+                                <TableRow role="row" tabIndex={-1} key={row.id}>
                                     {columns.map(
                                         (
                                             column: ColumnsWithOptions,
