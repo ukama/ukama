@@ -1162,15 +1162,6 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
     JsonErrObj *jErr = NULL;
     const JsonObj *jHeader = NULL;
     const JsonObj *jIdxTable = NULL;
-    const JsonObj *jUnitInfo = NULL;
-    const JsonObj *jUnitCfg = NULL;
-    const JsonObj *jModCfg = NULL;
-    const JsonObj *jFactConfig = NULL;
-    const JsonObj *jUserCfg = NULL;
-    const JsonObj *jFactCalib = NULL;
-    const JsonObj *jUserCalib = NULL;
-    const JsonObj *jBootstrapCerts = NULL;
-    const JsonObj *jCloudCerts = NULL;
     StoreSchema *storeSchema = NULL;
     mfgStoreSchema[idx] = usys_zmalloc(sizeof(storeSchema));
     if (mfgStoreSchema[idx]) {
