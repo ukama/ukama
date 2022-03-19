@@ -102,6 +102,13 @@ query getNodeDetails {
         description
     }
 }
+query getNodeAppsVersionLogs {
+    getNodeAppsVersionLogs {
+        version
+        date
+        notes
+    }
+}
 query getUsersByOrg($orgId: String!) {
     getUsersByOrg(orgId: $orgId) {
         orgName

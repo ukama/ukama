@@ -16,7 +16,7 @@ import { NodeAppsColumns } from "../../constants/tableColumns";
 interface INodeRadioTab {
     loading: boolean;
     nodeApps: any[];
-    NodeLogs: any[];
+    NodeLogs: any;
     getNodeAppDetails: Function;
 }
 

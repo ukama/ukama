@@ -387,6 +387,22 @@ export type NetworkResponse = {
     status: Scalars["String"];
 };
 
+export type NodeAppResponse = {
+    __typename?: "NodeAppResponse";
+    cpu: Scalars["String"];
+    id: Scalars["String"];
+    memory: Scalars["String"];
+    title: Scalars["String"];
+    version: Scalars["String"];
+};
+
+export type NodeAppsVersionLogsResponse = {
+    __typename?: "NodeAppsVersionLogsResponse";
+    date: Scalars["Float"];
+    notes: Scalars["String"];
+    version: Scalars["String"];
+};
+
 export type NodeDetailDto = {
     __typename?: "NodeDetailDto";
     description: Scalars["String"];
@@ -540,6 +556,8 @@ export type Query = {
     getMetricsTxPower: Array<MetricDto>;
     getMetricsUptime: Array<MetricDto>;
     getNetwork: NetworkDto;
+    getNodeApps: Array<NodeAppResponse>;
+    getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
     getNodeDetails: NodeDetailDto;
     getNodeNetwork: NetworkDto;
     getNodes: NodesResponse;
@@ -922,6 +940,20 @@ export type GetNodeDetailsQuery = {
         hardware: number;
         description: string;
     };
+};
+
+export type GetNodeAppsVersionLogsQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetNodeAppsVersionLogsQuery = {
+    __typename?: "Query";
+    getNodeAppsVersionLogs: Array<{
+        __typename?: "NodeAppsVersionLogsResponse";
+        version: string;
+        date: number;
+        notes: string;
+    }>;
 };
 
 export type GetUsersByOrgQueryVariables = Exact<{
@@ -1833,6 +1865,65 @@ export type GetNodeDetailsLazyQueryHookResult = ReturnType<
 export type GetNodeDetailsQueryResult = Apollo.QueryResult<
     GetNodeDetailsQuery,
     GetNodeDetailsQueryVariables
+>;
+export const GetNodeAppsVersionLogsDocument = gql`
+    query getNodeAppsVersionLogs {
+        getNodeAppsVersionLogs {
+            version
+            date
+            notes
+        }
+    }
+`;
+
+/**
+ * __useGetNodeAppsVersionLogsQuery__
+ *
+ * To run a query within a React component, call `useGetNodeAppsVersionLogsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeAppsVersionLogsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeAppsVersionLogsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodeAppsVersionLogsQuery(
+    baseOptions?: Apollo.QueryHookOptions<
+        GetNodeAppsVersionLogsQuery,
+        GetNodeAppsVersionLogsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetNodeAppsVersionLogsQuery,
+        GetNodeAppsVersionLogsQueryVariables
+    >(GetNodeAppsVersionLogsDocument, options);
+}
+export function useGetNodeAppsVersionLogsLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeAppsVersionLogsQuery,
+        GetNodeAppsVersionLogsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetNodeAppsVersionLogsQuery,
+        GetNodeAppsVersionLogsQueryVariables
+    >(GetNodeAppsVersionLogsDocument, options);
+}
+export type GetNodeAppsVersionLogsQueryHookResult = ReturnType<
+    typeof useGetNodeAppsVersionLogsQuery
+>;
+export type GetNodeAppsVersionLogsLazyQueryHookResult = ReturnType<
+    typeof useGetNodeAppsVersionLogsLazyQuery
+>;
+export type GetNodeAppsVersionLogsQueryResult = Apollo.QueryResult<
+    GetNodeAppsVersionLogsQuery,
+    GetNodeAppsVersionLogsQueryVariables
 >;
 export const GetUsersByOrgDocument = gql`
     query getUsersByOrg($orgId: String!) {

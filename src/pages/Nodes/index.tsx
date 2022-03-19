@@ -11,12 +11,7 @@ import {
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
 } from "../../components";
-import {
-    NodeApps,
-    NodeAppLogs,
-    NodePageTabs,
-    NODE_ACTIONS,
-} from "../../constants";
+import { NodeApps, NodePageTabs, NODE_ACTIONS } from "../../constants";
 import {
     NodeDto,
     MetricDto,
@@ -31,6 +26,7 @@ import {
     useGetMetricsUptimeSSubscription,
     useGetMetricsMemoryTrxsSubscription,
     useGetMetricsCpuTrxsSubscription,
+    useGetNodeAppsVersionLogsQuery,
     useGetMetricsPowerLazyQuery,
     useGetMetricsPowerSSubscription,
     useGetMetricsTempTrxLazyQuery,
@@ -151,7 +147,8 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
-
+    const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
+        useGetNodeAppsVersionLogsQuery();
     const [
         getMetricThroughtpuUl,
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
@@ -778,9 +775,15 @@ const Nodes = () => {
                             index={4}
                         >
                             <NodeSoftwareTab
-                                loading={isLoading || nodeDetailLoading}
+                                loading={
+                                    isLoading ||
+                                    nodeDetailLoading ||
+                                    nodeAppsLogsLoading
+                                }
                                 nodeApps={NodeApps}
-                                NodeLogs={NodeAppLogs}
+                                NodeLogs={
+                                    nodeAppsLogsRes?.getNodeAppsVersionLogs
+                                }
                                 getNodeAppDetails={getNodeDetails}
                             />
                         </TabPanel>
