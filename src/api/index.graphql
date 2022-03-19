@@ -80,6 +80,10 @@ query getNodesByOrg($orgId: String!) {
             type
             description
             totalUser
+            isUpdateAvailable
+            updateVersion
+            updateShortNote
+            updateDescription
         }
         activeNodes
         totalNodes

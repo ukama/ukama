@@ -2,8 +2,7 @@ import React from "react";
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import { ContainerJustifySpaceBtw } from "../../styles";
-import { IconButton, Paper, Typography } from "@mui/material";
+import { IconButton, Paper, Stack, Typography } from "@mui/material";
 interface INodeStatsContainer {
     index: number;
     title: string;
@@ -59,15 +58,21 @@ const NodeStatsContainer = ({
                     isClickable && handleAction && handleAction(index)
                 }
             >
-                <ContainerJustifySpaceBtw>
+                <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    spacing={2}
+                    sx={{ mb: 1 }}
+                >
                     {!isCollapse && (
                         <Typography variant="h6">{title}</Typography>
                     )}
                     {isCollapsable && (
                         <IconButton
                             sx={{
-                                p: 0,
-
+                                position: isCollapse ? "relative" : null,
+                                right: isCollapse ? 10 : null,
                                 transform: isCollapse
                                     ? "rotate(180deg)"
                                     : "none",
@@ -77,7 +82,7 @@ const NodeStatsContainer = ({
                             <MenuOpenIcon fontSize="medium" />
                         </IconButton>
                     )}
-                </ContainerJustifySpaceBtw>
+                </Stack>
                 {!isCollapse && children}
             </Paper>
         </LoadingWrapper>

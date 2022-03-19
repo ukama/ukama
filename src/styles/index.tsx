@@ -75,6 +75,7 @@ const MessageContainer = styled(Box)({
 const ContainerJustifySpaceBtw = styled(Box)({
     width: "100%",
     display: "flex",
+    paddingBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     textAlign: "center",
@@ -104,17 +105,6 @@ const FullscreenContainer = styled(Box)(() => ({
     height: "100%",
 }));
 
-const CardContainer = styled(Box)(props => ({
-    display: "flex",
-    width: "inherit",
-    height: "inherit",
-    alignItems: "center",
-    borderRadius: "10px",
-    justifyContent: "center",
-    padding: "15px 18px 8px 18px",
-    border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.3)}`,
-}));
-
 const SimpleCardWithBorder = styled(Box)(props => ({
     borderRadius: "4px",
     border: `1px solid ${hexToRGB(props.theme.palette.text.primary, 0.1)}`,
@@ -122,7 +112,6 @@ const SimpleCardWithBorder = styled(Box)(props => ({
 export {
     LinkStyle,
     RoundedCard,
-    CardContainer,
     globalUseStyles,
     CenterContainer,
     MessageContainer,
