@@ -23,6 +23,8 @@ import {
     useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
     useGetMetricsThroughputUlLazyQuery,
+    useGetMetricsSubAttachedLazyQuery,
+    useGetMetricsSubAttachedsSubscription,
     useGetMetricsThroughputDlLazyQuery,
     useGetMetricsThroughputUlsSubscription,
     useGetMetricsThroughputDlsSubscription,
@@ -38,6 +40,8 @@ import {
     useGetMetricsTempTrxsSubscription,
     useGetMetricsTempComLazyQuery,
     useGetMetricsTempComsSubscription,
+    useGetMetricsSubActiveLazyQuery,
+    useGetMetricsSubActivesSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, organizationId } from "../../recoil";
@@ -73,6 +77,18 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["CPU (TRX)"]));
+    const [attachedSubcriberMetrics, setAttachedSubcriberMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Attached"]));
+    const [activeSubcriberMetrics, setActiveSubcriberMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Active"]));
     const [memoryTrxMetric, setMemoryTrxMetric] = useState<
         {
             name: string;
@@ -142,6 +158,56 @@ const Nodes = () => {
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
 
+    const [
+        getMetricsSubAttached,
+        {
+            data: subscriberAttachedmetricRes,
+            refetch: subscriberAttachedmetricRefetch,
+        },
+    ] = useGetMetricsSubAttachedLazyQuery();
+
+    useGetMetricsSubAttachedsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setAttachedSubcriberMetrics(
+                attachedSubcriberMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsSubAttached || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsSubActive,
+        {
+            data: subscriberActiveMetricRes,
+            refetch: subscriberActiveMetricRefetch,
+        },
+    ] = useGetMetricsSubActiveLazyQuery();
+
+    useGetMetricsSubActivesSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setActiveSubcriberMetrics(
+                activeSubcriberMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsSubActive || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const [
         getMetricThroughtpuUl,
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
@@ -353,6 +419,16 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsSubAttached({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsSubActive({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         } else if (selectedTab === 2) {
             getMetricCpuTrx({
                 variables: {
@@ -518,7 +594,65 @@ const Nodes = () => {
             });
         }
     }, [metricThroughtputDlRes]);
-
+    useEffect(() => {
+        if (
+            selectedTab === 1 &&
+            subscriberAttachedmetricRes &&
+            subscriberAttachedmetricRes.getMetricsSubAttached.length > 0
+        ) {
+            if (!isMetricData(attachedSubcriberMetrics)) {
+                setAttachedSubcriberMetrics(
+                    attachedSubcriberMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(subscriberAttachedmetricRes.getMetricsSubAttached ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            subscriberAttachedmetricRefetch({
+                ...getMetricPollingCallPayload(
+                    subscriberAttachedmetricRes.getMetricsSubAttached[
+                        subscriberAttachedmetricRes.getMetricsSubAttached
+                            .length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [subscriberAttachedmetricRes]);
+    useEffect(() => {
+        if (
+            selectedTab === 1 &&
+            subscriberActiveMetricRes &&
+            subscriberActiveMetricRes.getMetricsSubActive.length > 0
+        ) {
+            if (!isMetricData(activeSubcriberMetrics)) {
+                setActiveSubcriberMetrics(
+                    attachedSubcriberMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(subscriberActiveMetricRes.getMetricsSubActive ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            subscriberActiveMetricRefetch({
+                ...getMetricPollingCallPayload(
+                    subscriberActiveMetricRes.getMetricsSubActive[
+                        subscriberActiveMetricRes.getMetricsSubActive.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [subscriberActiveMetricRes]);
     useEffect(() => {
         if (
             selectedTab === 2 &&
@@ -710,6 +844,10 @@ const Nodes = () => {
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 uptimeMetrics={uptimeMetric}
+                                attachedSubcriberMetrics={
+                                    attachedSubcriberMetrics
+                                }
+                                activeSubcriberMetrics={activeSubcriberMetrics}
                                 tempTrxMetric={tempTrxMetric}
                                 tempComMetric={tempComMetric}
                                 handleUpdateNode={handleUpdateNode}

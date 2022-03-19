@@ -1449,11 +1449,14 @@ const NodeResourcesTabConfigure: any = {
         { name: "POWER", show: true },
     ],
 };
+
 const HealtChartsConfigure: any = {
     HOME: [
         { name: "Temp. (TRX)", show: true },
         { name: "Temp. (RFE)", show: true },
         { name: "none", show: false },
+        { name: "Attached ", show: true },
+        { name: "Active ", show: true },
     ],
     AMPLIFIER: [
         { name: "Temp. (CTL)", show: true },
@@ -1464,6 +1467,8 @@ const HealtChartsConfigure: any = {
         { name: "Temp. (TRX)", show: true },
         { name: "Temp. (COM)", show: true },
         { name: "Uptime", show: true },
+        { name: "Attached ", show: true },
+        { name: "Active ", show: true },
     ],
 };
 
