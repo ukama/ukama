@@ -18,9 +18,8 @@ const useStyles = makeStyles<Theme, StyleProps>(() => ({
     cardStyle: {
         marginBottom: 16,
         cursor: "pointer",
-        padding: "13px 18px",
-        border: ({ isSelected }) =>
-            isSelected ? `2px solid ${colors.primaryMain}` : "none",
+        padding: "6px 10px",
+        border: `1px solid ${colors.darkGradient}`,
     },
 }));
 
@@ -46,7 +45,8 @@ const SimCardDesign = ({
         <Card className={classes.cardStyle} onClick={() => handleItemClick(id)}>
             <Stack
                 direction="row"
-                spacing={2}
+                spacing={6}
+                justifyContent="space-between"
                 sx={{ alignItems: "center", width: "100%" }}
             >
                 <Stack
@@ -67,21 +67,15 @@ const SimCardDesign = ({
                     </Typography>
                     <Typography variant="body1">{serial}</Typography>
                 </Stack>
-                <Stack
-                    direction="row"
-                    spacing={2}
-                    justifyContent="flex-end"
-                    alignItems="center"
-                >
-                    {isActivate && (
-                        <Button sx={{ color: colors.black70 }}>
-                            AWAITING ACTIVATION
-                        </Button>
-                    )}
-                    <IconButton>
-                        <ShareIcon sx={{ color: colors.black70 }} />
-                    </IconButton>
-                </Stack>
+
+                {isActivate && (
+                    <Button sx={{ color: colors.black70 }}>
+                        AWAITING ACTIVATION
+                    </Button>
+                )}
+                <IconButton>
+                    <ShareIcon sx={{ color: colors.black70 }} />
+                </IconButton>
             </Stack>
         </Card>
     );

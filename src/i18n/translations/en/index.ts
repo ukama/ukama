@@ -4,6 +4,8 @@ export const TRANSLATIONS_EN = {
         NodeSerialNumberLabel: "SERIAL NUMBER",
     },
     DIALOG_MESSAGE: {
+        SimActivationDialogTitle: "Welcome to Ukama!",
+        SimActivationDialogContent: `If you haven’t already, install Ukama eSIMs on all desired devices. For remote installation, you can share digial instructions here, and you can always complete this step later.`,
         SuccessTitle: "Password Changed Successfully",
         SuccessContent: `Your password has been changed successfully!`,
     },

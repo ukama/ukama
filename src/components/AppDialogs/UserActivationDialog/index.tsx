@@ -55,16 +55,16 @@ const UserActivationDialog = ({
     const handleSimCardClick = (id: number) => setSelectedSim(id);
 
     return (
-        <Dialog open={isOpen} onClose={handleClose}>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
             <Box
                 component="div"
                 sx={{
-                    width: { xs: "100%", md: "600px" },
+                    width: { xs: "100%", md: "900px" },
                     padding: "16px 24px",
                 }}
             >
                 <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h6">{dialogTitle}</Typography>
+                    <Typography variant="h4">{dialogTitle}</Typography>
 
                     <IconButton
                         onClick={handleClose}
