@@ -13,7 +13,7 @@
  * This tool would take JSON file and new  digits of serial number (LAST FOUR digit XXXX ) as command line arguments.
  *
  * Example usage is:
- * schema -i 1101 --f mfgdata/schema/com.json --f mfgdata/schema/lte.json --f mfgdata/schema/mask.json
+ * genSchema --n ComV1 --u UK-7001-HNODE-SA03-1102 --m UK-7001-COM-1102 --f mfgdata/schema/com.json --m UK-7001-LTE-1102 --n LTE --f mfgdata/schema/lte.json --n MASK --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
  * schema -i 1101 --f mfgdata/schema/rfctrl.json --f mfgdata/schema/rffe.json
  *
  */
@@ -51,9 +51,9 @@ typedef struct {
 
 /* JSON TAGS */
 static char* jsonKeyTag[MAX_JSON_TAGS] = {
-                "unit_info",
-                "unit_config",
-                "module_info"
+                JTAG_UNIT_INFO,
+                JTAG_UNIT_CONFIG,
+                JTAG_MODULE_INFO
 };
 
 UnitSchema unitSchema[MAX_BOARDS] = {'\0'};
@@ -153,7 +153,7 @@ JsonObj* dofile(char *filename) {
 
 
 /* Modify UUID field in JSON */
-int modify_uuid(const JsonObj * jObj, char* value) {
+int modify_uuid( JsonObj * jObj, char* value) {
     int ret = -1;
 
     /* Get UUID value */
@@ -162,19 +162,15 @@ int modify_uuid(const JsonObj * jObj, char* value) {
         usys_log_error("Schema:: Error:: UUID tag not found.");
         ret = -1;
     } else {
-        JsonObj *jStrObj = json_object_get(jObj, JTAG_UUID);
-        if (jStrObj && json_is_string(jStrObj)) {
-            if(json_object_set_new(jStrObj, JTAG_UUID, json_string(value))) {
-                usys_log_error("Schema:: Error:: Setting UUID to %s failed.", value);
-                ret = -1;
-            } else {
-                log_debug("Schema:: UUID %s is updated to %s.", uuid, value);
-                usys_free(uuid);
-                ret = 0;
-            }
-        } else {
-            usys_log_error("Schema:: Error:: UUID tag not found in schema.");
+        /* Updating new value */
+        ret = json_object_set_new(jObj, JTAG_UUID, json_string(value));
+        if(ret) {
+            usys_log_error("Schema:: Error:: Setting UUID to %s failed.", value);
             ret = -1;
+        } else {
+            log_debug("Schema:: UUID %s is updated to %s.", uuid, value);
+            usys_free(uuid);
+            ret = 0;
         }
     }
 
@@ -192,7 +188,7 @@ char* read_uuid_for_module_name(const char* name) {
 }
 
 /* Update Unit config */
-int  update_unit_config(const JsonObj **obj) {
+int  update_unit_config( JsonObj **obj) {
     int ret = -1;
    const JsonObj *unitCfgObj = *obj;
 
@@ -242,7 +238,7 @@ int modify_json(unsigned short idx)
     }
 
     /* Debug Info */
-    out = json_dumps(root, (JSON_MAX_INDENT|JSON_COMPACT|JSON_ENCODE_ANY) );
+    out = json_dumps(root, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
     if (out) {
         usys_log_trace("Before modification file %s is::\n %s\n", unitSchema[idx].fileName, out);
         usys_free(out);
@@ -286,7 +282,7 @@ int modify_json(unsigned short idx)
     }
 
     /* Debug Info */
-    out = json_dumps(root, (JSON_MAX_INDENT|JSON_COMPACT|JSON_ENCODE_ANY) );
+    out = json_dumps(root, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
     usys_log_trace("After modification file %s is::\n %s\n",unitSchema[idx].fileName, out);
 
     /* Update the JSON file */

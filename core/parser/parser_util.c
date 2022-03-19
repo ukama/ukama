@@ -114,7 +114,6 @@ bool parser_read_string_object(const JsonObj *obj, const char* key,
             usys_memset(*svalue, '\0', sizeof(char) * length);
             const char *str = json_string_value(jStrObj);
             usys_strcpy(*svalue, str);
-            json_decref(jStrObj);
             ret = USYS_TRUE;
         }
     }
