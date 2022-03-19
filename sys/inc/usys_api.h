@@ -111,6 +111,34 @@ static inline int usys_fseek(FILE *stream, long int offset, int origin) {
 }
 
 /**
+ * @fn     int usys_ftell(FILE*)
+ * @brief  This function returns the current file position of the stream stream.
+ *
+ * @param  stream
+ * @return On success, the current value of the position indicator is returned.
+ *         On failure, -1L is returned.
+ */
+static inline int usys_ftell(FILE *stream) {
+    return ftell(stream);
+}
+
+/**
+ * @fn     int usys_fputs(char*, FILE*)
+ * @brief  The function fputs writes the string s to the stream stream.
+ *         The terminating null character is not written.This function does not
+ *         add a newline character, either.
+ *         It outputs only the characters in the string.
+ *
+ * @param  str
+ * @param  stream
+ * @return On success , returns a non-negative value.
+ *         On failure, it returns EOF.
+ */
+static inline int usys_fputs(char* str, FILE *stream) {
+    return fputs(str, stream);
+}
+
+/**
  * @fn     int usys_rename(const char*, const char*)
  * @brief  renames a file.
  *
