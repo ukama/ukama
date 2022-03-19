@@ -288,7 +288,7 @@ const Nodes = () => {
     ] = useGetMetricsErabLazyQuery();
 
     useGetMetricsEraBsSubscription({
-        skip: selectedTab !== 1,
+        skip: selectedTab !== 0,
         onSubscriptionData: res => {
             setErabDropRateMetrix(
                 erabDropRateMetrix.map(item => {
@@ -525,13 +525,7 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-        } else if (selectedTab === 1) {
             getMetricsERAB({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricThroughtpuUl({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -557,6 +551,12 @@ const Nodes = () => {
                 },
             });
             getMetricsMemoryCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+        } else if (selectedTab === 1) {
+            getMetricThroughtpuUl({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
