@@ -31,8 +31,7 @@
  * calculate a 32 bit CRC value of a sequence of bytes.
  */
 
-#include "inc/crc32.h"
-
+#include <utils/crc32.h>
 #include "usys_types.h"
 
 /*

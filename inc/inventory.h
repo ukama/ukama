@@ -37,7 +37,9 @@ int invt_get_fieldid_index(SchemaIdxTuple *index, uint16_t fid, uint8_t idxCount
 
 int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb);
 
-int invt_idb_init(void *data);
+int invt_init(char *invtDb, RegisterDeviceCB regCb);
+
+int invt_mfg_init(void *data);
 
 int invt_pre_create_db_setup(char *puuid);
 
@@ -146,6 +148,8 @@ void invt_free_module_cfg(ModuleCfg *cfg, uint8_t count);
 void invt_free_unit_cfg(UnitCfg *cfg, uint8_t count);
 
 void invt_idb_exit();
+
+void invt_mfg_exit();
 
 void invt_print_dev(void *dev, DeviceClass devClass);
 

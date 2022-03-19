@@ -7,6 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
+#include <utils/crc32.h>
 #include "inventory.h"
 
 #include "errorcode.h"
@@ -15,8 +16,6 @@
 #include "mfg.h"
 #include "schema.h"
 #include "store.h"
-#include "inc/crc32.h"
-
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_log.h"
@@ -159,7 +158,7 @@ int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
         ret = ERR_NODED_DB_LNK_MISSING;
         usys_log_error(
                         "Symbolic link for the inventory Db is not available."
-                        "Error %d",
+                        "ErrorCode: %d",
                         ret);
         return ret;
     }
@@ -1077,9 +1076,9 @@ int get_field_id_index(SchemaIdxTuple *index, uint16_t fid, uint8_t idxCount,
 }
 
 /* Set up environment for DB creation process.*/
-int invt_idb_init(void *data) {
+int invt_mfg_init(void *data) {
     int ret = 0;
-    ret = jdata_init(data);
+    ret = mfg_init(data);
     return ret;
 }
 
@@ -1298,8 +1297,10 @@ int invt_register_devices(char *pUuid, RegisterDeviceCB registerDev) {
                 if (!ret) {
                     invt_print_module_cfg(mcfg, count);
 
-                    /* Register devices in devicedb */
-                    ret = registerDev(pUuid, name, count, mcfg);
+                    if (registerDev) {
+                        /* Register devices in devicedb */
+                        ret = registerDev(pUuid, name, count, mcfg);
+                    }
 
                 } else {
                     usys_log_debug("Read Module Config for %s failed."
@@ -1378,9 +1379,57 @@ void invt_exit() {
 
 /* exit mfg module */
 void invt_mfg_exit() {
-    jdata_exit();
+    mfg_exit();
 }
 
+/* Inventory Init */
+int invt_init(char *invtDb, RegisterDeviceCB regCb) {
+    int ret = 0;
+    uint8_t count = 1;
+
+    /* Initialize Store*/
+    ret = store_init();
+    UnitCfg *cfg = usys_zmalloc(sizeof(UnitCfg));
+    if (cfg) {
+        ret = invt_get_master_unit_cfg(cfg, invtDb);
+        if (ret) {
+            usys_free(cfg);
+            cfg = NULL;
+            return ret;
+        }
+    }
+
+    invt_print_unit_cfg(cfg, count);
+
+    /* Register master module first so that unit info and cfg can be accessed.*/
+    ret = invt_register_module(cfg);
+    /* After registering master module.
+     * Access remaining module if any using unit cfg and register those.*/
+    if (!ret) {
+
+        /* Check if the database exist or not.*/
+        ret = invt_validating_magic_word(cfg->modUuid);
+        if (ret) {
+            usys_log_warn("Inventory No Database found for module UUID %s "
+                            "Name %s.",
+                            cfg->modUuid, cfg->modName);
+        } else {
+            /* Register other modules if any.*/
+            /* Caution:: If Module is registering itself it may not have more
+             * modules to register.*/
+            ret = invt_register_modules(cfg->modUuid, regCb);
+        }
+    }
+
+    if (cfg) {
+        usys_free(cfg->eepromCfg);
+        cfg->eepromCfg = NULL;
+        usys_free(cfg);
+        cfg = NULL;
+    }
+
+    return ret;
+}
 
 /* removed the database for the module */
 int invt_remove_db(char *puuid) {

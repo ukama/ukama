@@ -9,6 +9,8 @@ include ../../../config.mk
 
 # Targets
 TARGET:=noded
+INVENTORY:=genInventory
+SCHEMA:=genSchema
 UTEST:=nodeTest
 
 
@@ -33,10 +35,17 @@ PLATFORM_LIB:=usys
 JSON_LIB:=jansson
 
 # Source paths
-SRC_DIRS=src 
-SRC_DIRS+=utils 
+CORE_DIRS=core utils
+SVC_DIRS=service
+INVT_DIRS=mfg/inventory mfg/common
+SCH_DIR=mfg/schema mfg/common
+
+SVC_SRC_DIRS:=$(CORE_DIRS) $(SVC_DIRS)
+IVNT_SRC_DIRS:=$(CORE_DIRS) $(INVT_DIRS)
+SCH_SRC_DIRS:=$(CORE_DIRS) $(SCH_DIR)
+
+# Includes
 INC_DIRS=inc 
-INC_DIRS+=utils
 INC_DIRS+=$(UNITY_ROOT)/src
 INC_DIRS+=$(PLATFORM_HEADERS_DIRS)
 INC_DIRS+=$(VENDOR_HEADERS_DIR)
@@ -89,11 +98,23 @@ SRC_EXTS := c
 # Header extensions
 HDR_EXTS := h 
 
+# Includes
+INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
+
 # List of all recognized files found in the specified directories for test
 #CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-CFILES := $(shell find $(SRC_DIRS) -name '*.c')
-OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(CFILES))))
-INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
+
+# Noded Service source files 
+SVC_CFILES := $(shell find $(SVC_SRC_DIRS) -name '*.c')
+SVC_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(SVC_CFILES))))
+
+# Inventory source files
+INVT_CFILES := $(shell find $(IVNT_SRC_DIRS) -name '*.c')
+INVT_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(INVT_CFILES))))
+
+# Schema Source files
+SCH_CFILES := $(shell find $(SCH_SRC_DIRS) -name '*.c')
+SCH_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(SCH_CFILES))))
 
 # Unit Test 
 TEST_CFILES := $(foreach dir, $(TEST_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
@@ -104,14 +125,14 @@ INC_FILES := $(INC_DIRS:%=-I%)
 $(info CC:: $(CC))
 $(info LDFLAGS :: $(LDFLAGS))
 
-$(info CFILES :: $(CFILES))
-$(info OBJFILES :: $(OBJFILES))
+$(info CFILES :: $(SVC_CFILES))
+$(info OBJFILES :: $(SVC_OBJFILES))
 $(info INC :: $(INC_FILES))
 
 .PHONY: $(TARGET) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
 
 # Main target for building
-all: $(TARGET)
+all: $(TARGET) $(INVENTORY) $(SCHEMA)
 	@echo Done.
 
 # CLANG FORMAT
@@ -167,10 +188,20 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 # Build Target
-$(TARGET): $(OBJFILES)
+$(TARGET): $(SVC_OBJFILES)
 	@echo "Building $(TARGET)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
+# Build Registry utility
+$(INVENTORY): $(INVT_OBJFILES)
+	@echo "Building $(INVENTORY)" 
+	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+
+#Build Schema utility
+$(SCHEMA): $(SCH_OBJFILES)
+	@echo "Building $(SCHEMA)" 
+	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	
 # Build Unit test binary
 $(UTEST):$(TEST_OBJFILES) $(TARGET)
 	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)

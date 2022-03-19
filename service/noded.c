@@ -29,7 +29,7 @@ void noded_service() {
 /* Startup for NodeD.*/
 int noded_startup(char *invDb, char *pCfg) {
     int ret = 0;
-    ret = service_init();
+    ret = service_init(invDb);
     return ret;
 }
 
