@@ -11,11 +11,12 @@ import {
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
 } from "../../components";
-import { NodeApps, NodePageTabs, NODE_ACTIONS } from "../../constants";
+import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import {
     NodeDto,
     MetricDto,
     useGetNodeDetailsQuery,
+    useGetNodeAppsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
     useGetMetricsThroughputUlsSubscription,
@@ -56,6 +57,7 @@ const Nodes = () => {
     const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [nodeAppDetails, setNodeAppDetails] = useState<any>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         type: "",
@@ -147,6 +149,8 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+    const { data: nodeAppsRes, loading: nodeAppsLoading } =
+        useGetNodeAppsQuery();
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
     const [
@@ -642,9 +646,12 @@ const Nodes = () => {
         // TODO: Handle Update node Action
     };
 
-    const getNodeDetails = () => {
+    const getNodeAppDetails = (id: any) => {
         //TODO:Handle nodeDetails
         setShowNodeAppDialog(true);
+        nodeAppsRes?.getNodeApps
+            .filter(person => person.id == id)
+            .map(filteredPerson => setNodeAppDetails(filteredPerson));
     };
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
@@ -778,13 +785,14 @@ const Nodes = () => {
                                 loading={
                                     isLoading ||
                                     nodeDetailLoading ||
-                                    nodeAppsLogsLoading
+                                    nodeAppsLogsLoading ||
+                                    nodeAppsLoading
                                 }
-                                nodeApps={NodeApps}
+                                nodeApps={nodeAppsRes?.getNodeApps}
                                 NodeLogs={
                                     nodeAppsLogsRes?.getNodeAppsVersionLogs
                                 }
-                                getNodeAppDetails={getNodeDetails}
+                                getNodeAppDetails={getNodeAppDetails}
                             />
                         </TabPanel>
                         <TabPanel
@@ -808,6 +816,7 @@ const Nodes = () => {
             <NodeAppDetailsDialog
                 closeBtnLabel="close"
                 isOpen={showNodeAppDialog}
+                nodeData={nodeAppDetails}
                 handleClose={handleNodAppDetailsDialog}
             />
             <NodeSoftwareInfosDialog

@@ -956,6 +956,20 @@ export type GetNodeAppsVersionLogsQuery = {
     }>;
 };
 
+export type GetNodeAppsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetNodeAppsQuery = {
+    __typename?: "Query";
+    getNodeApps: Array<{
+        __typename?: "NodeAppResponse";
+        id: string;
+        title: string;
+        version: string;
+        cpu: string;
+        memory: string;
+    }>;
+};
+
 export type GetUsersByOrgQueryVariables = Exact<{
     orgId: Scalars["String"];
 }>;
@@ -1924,6 +1938,65 @@ export type GetNodeAppsVersionLogsLazyQueryHookResult = ReturnType<
 export type GetNodeAppsVersionLogsQueryResult = Apollo.QueryResult<
     GetNodeAppsVersionLogsQuery,
     GetNodeAppsVersionLogsQueryVariables
+>;
+export const GetNodeAppsDocument = gql`
+    query getNodeApps {
+        getNodeApps {
+            id
+            title
+            version
+            cpu
+            memory
+        }
+    }
+`;
+
+/**
+ * __useGetNodeAppsQuery__
+ *
+ * To run a query within a React component, call `useGetNodeAppsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeAppsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeAppsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetNodeAppsQuery(
+    baseOptions?: Apollo.QueryHookOptions<
+        GetNodeAppsQuery,
+        GetNodeAppsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(
+        GetNodeAppsDocument,
+        options
+    );
+}
+export function useGetNodeAppsLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeAppsQuery,
+        GetNodeAppsQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodeAppsQuery, GetNodeAppsQueryVariables>(
+        GetNodeAppsDocument,
+        options
+    );
+}
+export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
+export type GetNodeAppsLazyQueryHookResult = ReturnType<
+    typeof useGetNodeAppsLazyQuery
+>;
+export type GetNodeAppsQueryResult = Apollo.QueryResult<
+    GetNodeAppsQuery,
+    GetNodeAppsQueryVariables
 >;
 export const GetUsersByOrgDocument = gql`
     query getUsersByOrg($orgId: String!) {

@@ -13,9 +13,10 @@ import { SimpleDataTable } from "../../components";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { colors } from "../../theme";
 import { NodeAppsColumns } from "../../constants/tableColumns";
+import { NodeAppResponse } from "../../generated";
 interface INodeRadioTab {
     loading: boolean;
-    nodeApps: any[];
+    nodeApps: NodeAppResponse[] | undefined;
     NodeLogs: any;
     getNodeAppDetails: Function;
 }
@@ -47,7 +48,13 @@ const NodeSoftwareTab = ({
                 </Typography>
                 <Grid container spacing={3}>
                     {nodeApps?.map(
-                        ({ id, nodeAppName, cpu, memory, version }: any) => (
+                        ({
+                            id,
+                            title,
+                            cpu,
+                            memory,
+                            version,
+                        }: NodeAppResponse) => (
                             <Grid item xs={12} md={6} lg={3} key={id}>
                                 <Card variant="outlined">
                                     <CardContent>
@@ -65,7 +72,7 @@ const NodeSoftwareTab = ({
                                                 }}
                                             />
                                             <Typography variant="h5">
-                                                {nodeAppName}
+                                                {title}
                                             </Typography>
                                         </Stack>
                                         <Typography
@@ -83,7 +90,7 @@ const NodeSoftwareTab = ({
                                                 variant="body2"
                                                 sx={{ color: colors.darkBlue }}
                                             >
-                                                {cpu}%
+                                                {cpu} %
                                             </Typography>
                                         </Stack>
                                         <Stack direction="row" spacing={1 / 2}>
