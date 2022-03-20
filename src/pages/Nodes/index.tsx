@@ -20,7 +20,6 @@ import {
 import {
     NodeDto,
     MetricDto,
-    useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
@@ -50,9 +49,11 @@ import {
     useGetMetricsRrcLazyQuery,
     useGetMetricsDiskTrXsSubscription,
     useGetMetricsDiskTrxLazyQuery,
+    useGetNodesByOrgLazyQuery,
+    Org_Node_State,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { isSkeltonLoading, user } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import {
     getMetricPayload,
@@ -68,10 +69,21 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    const _organizationId = useRecoilValue(organizationId) || "";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
-    const [selectedNode, setSelectedNode] = useState<NodeDto>();
+    const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
+        id: "",
+        type: "",
+        title: "",
+        totalUser: 0,
+        description: "",
+        updateVersion: "",
+        updateShortNote: "",
+        updateDescription: "",
+        isUpdateAvailable: false,
+        status: Org_Node_State.Undefined,
+    });
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
     const [rrcCnxSuccessMetrix, setRrcCnxSuccessMetrix] = useState<
         {
@@ -115,7 +127,7 @@ const Nodes = () => {
             name: string;
             data: MetricDto[];
         }[]
-    >(getDefaultList(["UPTIME (For demo)"]));
+    >(getDefaultList(["UPTIME"]));
     const [cpuTrxMetric, setCpuTrxMetric] = useState<
         {
             name: string;
@@ -170,7 +182,7 @@ const Nodes = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             regPolling: false,
             to: Math.floor(Date.now() / 1000) - 20,
             from: Math.floor(Date.now() / 1000) - 180,
@@ -179,19 +191,17 @@ const Nodes = () => {
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             from: from + 1,
         });
 
-    const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: _organizationId,
-        },
-        onCompleted: res => {
-            res?.getNodesByOrg?.nodes.length > 0 &&
-                setSelectedNode(res?.getNodesByOrg?.nodes[0]);
-        },
-    });
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            onCompleted: res => {
+                res?.getNodesByOrg?.nodes.length > 0 &&
+                    setSelectedNode(res?.getNodesByOrg?.nodes[0]);
+            },
+        });
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
@@ -507,6 +517,10 @@ const Nodes = () => {
             );
         },
     });
+
+    useEffect(() => {
+        getNodesByOrg({ variables: { orgId: orgId } });
+    }, []);
 
     useEffect(() => {
         if (selectedTab === 0) {
@@ -1038,12 +1052,13 @@ const Nodes = () => {
                 pb: 2,
             }}
         >
-            {nodesRes || isLoading ? (
+            {(nodesRes && nodesRes?.getNodesByOrg?.nodes.length > 0) ||
+            isLoading ? (
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
                         <NodeStatus
                             onAddNode={onAddNode}
-                            loading={nodesLoading}
+                            loading={isLoading || nodesLoading}
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
                             onNodeActionItemSelected={

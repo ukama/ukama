@@ -12,19 +12,20 @@ import {
 import {
     TIME_FILTER,
     MONTH_FILTER,
-    STATS_OPTIONS,
     UserActivation,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 } from "../../constants";
 import "../../i18n/i18n";
 import {
+    MetricDto,
     Time_Filter,
     Network_Type,
     Data_Bill_Filter,
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
+    useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
@@ -32,27 +33,28 @@ import {
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
     GetLatestNetworkSubscription,
+    useGetMetricsUptimeLazyQuery,
     GetLatestDataBillSubscription,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
+    useGetMetricsUptimeSSubscription,
     GetLatestConnectedUsersSubscription,
-    useGetUsersByOrgQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
-import React, { useEffect, useState } from "react";
-import { Box, Grid, useMediaQuery } from "@mui/material";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { useEffect, useState } from "react";
+import { isSkeltonLoading, user } from "../../recoil";
+import { Box, Grid } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+import {
+    getDefaultMetricList,
+    getMetricPayload,
+    isContainNodeUpdate,
+} from "../../utils";
 
 const Home = () => {
-    const isSliderLarge = useMediaQuery("(min-width:1410px)");
-    const isSliderMedium = useMediaQuery("(min-width:1160px)") ? 2 : 1;
-    const slidesToShow = isSliderLarge ? 3 : isSliderMedium;
-    const [selectedBtn, setSelectedBtn] = useState("DAY");
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const orgId = useRecoilValue(organizationId) || "";
-    const [statOptionValue, setstatOptionValue] = useState(3);
+    const { id: orgId = "" } = useRecoilValue(user);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -60,6 +62,10 @@ const Home = () => {
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
+    const [uptimeMetric, setUptimeMetrics] = useState<{
+        name: string;
+        data: MetricDto[];
+    }>(getDefaultMetricList("UPTIME"));
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
@@ -78,6 +84,7 @@ const Home = () => {
         loading: dataBillingloading,
         subscribeToMore: subscribeToLatestDataBill,
     } = useGetDataBillQuery({
+        skip: true,
         variables: {
             filter: billingStatusFilter,
         },
@@ -117,6 +124,81 @@ const Home = () => {
             filter: Network_Type.Public,
         },
     });
+
+    const [
+        getMetricUptime,
+        {
+            data: metricUptimeRes,
+            refetch: metricUptimeRefetch,
+            loading: metricUptimeLoading,
+        },
+    ] = useGetMetricsUptimeLazyQuery();
+
+    useGetMetricsUptimeSSubscription({
+        onSubscriptionData: res => {
+            if (uptimeMetric.data.length > 0)
+                setUptimeMetrics({
+                    name: uptimeMetric.name,
+                    data: [
+                        ...uptimeMetric.data,
+                        ...(res.subscriptionData.data?.getMetricsUptime || []),
+                    ],
+                });
+        },
+    });
+
+    const getFirstMetricCallPayload = () =>
+        getMetricPayload({
+            nodeId: "uk-sa2209-comv1-a1-ee58",
+            orgId: orgId,
+            regPolling: false,
+            to: Math.floor(Date.now() / 1000) - 20,
+            from: Math.floor(Date.now() / 1000) - 180,
+        });
+
+    const getMetricPollingCallPayload = (from: number) =>
+        getMetricPayload({
+            nodeId: "uk-sa2209-comv1-a1-ee58",
+            orgId: orgId,
+            from: from + 1,
+        });
+
+    useEffect(() => {
+        if (nodeRes && nodeRes.getNodesByOrg.nodes.length > 0) {
+            getMetricUptime({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+        }
+    }, [nodeRes]);
+
+    useEffect(() => {
+        if (metricUptimeRes && metricUptimeRes.getMetricsUptime.length > 0) {
+            if (
+                uptimeMetric.data.length === 0 &&
+                metricUptimeRes.getMetricsUptime.length > 0
+            ) {
+                setUptimeMetrics({
+                    name: uptimeMetric.name,
+                    data: [
+                        ...uptimeMetric.data,
+                        ...(metricUptimeRes.getMetricsUptime || []),
+                    ],
+                });
+            }
+            metricUptimeRefetch({
+                ...getMetricPollingCallPayload(
+                    metricUptimeRes.getMetricsUptime[
+                        metricUptimeRes.getMetricsUptime.length - 1
+                    ].x
+                ),
+            });
+            return () => {
+                /*UNMOUNT*/
+            };
+        }
+    }, [metricUptimeRes]);
 
     const subToConnectedUser = () =>
         subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
@@ -192,19 +274,6 @@ const Home = () => {
         }
     }, [networkStatusRes]);
 
-    const handleSelectedButtonChange = (
-        event: React.MouseEvent<HTMLElement>,
-        newSelected: string
-    ) => {
-        setSelectedBtn(newSelected);
-    };
-
-    const handleStatsChange = (event: {
-        target: { value: React.SetStateAction<number> };
-    }) => {
-        setstatOptionValue(event.target.value);
-    };
-
     const handleSatusChange = (key: string, value: string) => {
         switch (key) {
             case "statusUser":
@@ -256,6 +325,11 @@ const Home = () => {
         /* Handle submit activation action */
     };
     const onActivateUser = () => setIsUserActivateOpen(() => true);
+
+    // eslint-disable-next-line no-unused-vars
+    const handleNodeUpdateActin = (id: string) => {
+        /* Handle node update  action */
+    };
 
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
@@ -327,31 +401,33 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} item>
                     <StatsCard
-                        loading={isSkeltonLoad}
-                        options={STATS_OPTIONS}
-                        selectedButton={selectedBtn}
-                        selectOption={statOptionValue}
-                        handleSelect={handleStatsChange}
-                        handleSelectedButton={handleSelectedButtonChange}
+                        hasMetricData={uptimeMetric.data.length > 0}
+                        metricData={uptimeMetric}
+                        loading={
+                            nodeLoading || isSkeltonLoad || metricUptimeLoading
+                        }
                     />
                 </Grid>
                 <Grid xs={12} lg={8} item>
                     <LoadingWrapper
-                        height={312}
+                        height={318}
                         isLoading={nodeLoading || isSkeltonLoad}
                     >
                         <RoundedCard>
                             <ContainerHeader
                                 title="My Nodes"
-                                showButton={false}
+                                showButton={isContainNodeUpdate(
+                                    nodeRes?.getNodesByOrg.nodes
+                                )}
+                                buttonSize={"small"}
+                                buttonTitle={"Update All"}
                                 stats={`${
                                     nodeRes?.getNodesByOrg.activeNodes || "0"
                                 }/${nodeRes?.getNodesByOrg.totalNodes || "-"}`}
                             />
                             <NodeContainer
-                                slidesToShow={slidesToShow}
-                                items={nodeRes?.getNodesByOrg.nodes}
-                                count={nodeRes?.getNodesByOrg.nodes.length}
+                                handleNodeUpdate={handleNodeUpdateActin}
+                                items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
                         </RoundedCard>
@@ -359,7 +435,7 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} lg={4} item>
                     <LoadingWrapper
-                        height={312}
+                        height={318}
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||

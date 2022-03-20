@@ -14,7 +14,7 @@ import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { isSkeltonLoading, user } from "../../recoil";
 
 const userInit = {
     id: "",
@@ -30,7 +30,7 @@ const userInit = {
 };
 
 const User = () => {
-    const orgId = useRecoilValue(organizationId) || "";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [users, setUsers] = useState<GetUserDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
@@ -46,9 +46,9 @@ const User = () => {
 
     const handleSimDialogClose = () => setShowSimDialog(false);
 
-    const onViewMoreClick = (user: GetUserDto) => {
+    const onViewMoreClick = (_user: GetUserDto) => {
         setShowSimDialog(true);
-        setSelectedUser(user);
+        setSelectedUser(_user);
     };
 
     const handleSimInstallation = () => {
@@ -59,8 +59,8 @@ const User = () => {
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
             setUsers(
-                users.filter(user =>
-                    user.name.toLocaleLowerCase().includes(search)
+                users.filter((_user: GetUserDto) =>
+                    _user.name.toLocaleLowerCase().includes(search)
                 )
             );
         } else {
@@ -90,7 +90,7 @@ const User = () => {
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />
-                        <Grid container spacing={2} mt={2}>
+                        <Grid container spacing={2} mt={4}>
                             {users.map((item: GetUserDto) => (
                                 <Grid key={item.id} item xs={12} md={6} lg={3}>
                                     <Card

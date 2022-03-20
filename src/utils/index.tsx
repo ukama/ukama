@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Alert_Type } from "../generated";
+import { Alert_Type, NodeDto } from "../generated";
 import { TObject } from "../types";
 
 const getTitleFromPath = (path: string) => {
@@ -154,6 +154,25 @@ const isMetricData = (metric: any) => {
     return isData;
 };
 
+const isContainNodeUpdate = (list: NodeDto[] = []): boolean => {
+    let isUpdate = false;
+    for (const ele of list) {
+        if (ele.isUpdateAvailable) {
+            isUpdate = true;
+            break;
+        }
+    }
+
+    return isUpdate;
+};
+
+const getDefaultMetricList = (name: string) => {
+    return {
+        name: name,
+        data: [],
+    };
+};
+
 export {
     hexToRGB,
     isMetricData,
@@ -163,6 +182,8 @@ export {
     getMetricPayload,
     getTitleFromPath,
     uniqueObjectsArray,
+    isContainNodeUpdate,
+    getDefaultMetricList,
     getGraphFilterByType,
     parseObjectInNameValue,
 };

@@ -8,11 +8,12 @@ import { useState, useEffect } from "react";
 type ContainerHeaderProps = {
     title?: string;
     stats?: string;
+    buttonSize?: "small" | "medium" | "large";
     buttonTitle?: string;
-    handleButtonAction?: Function;
+    showButton?: boolean;
     showSearchBox?: boolean;
     handleSearchChange?: Function;
-    showButton?: boolean;
+    handleButtonAction?: Function;
 };
 
 const StyledInputBase = styled(InputBase)(() => ({
@@ -25,9 +26,10 @@ const StyledInputBase = styled(InputBase)(() => ({
 const ContainerHeader = ({
     title,
     stats,
-    showButton = false,
-    showSearchBox = false,
     buttonTitle,
+    showButton = false,
+    buttonSize = "large",
+    showSearchBox = false,
     handleSearchChange = () => {
         /* Default empty function */
     },
@@ -42,12 +44,7 @@ const ContainerHeader = ({
     }, [currentSearchValue]);
 
     return (
-        <Grid
-            container
-            spacing={2}
-            sx={{ mb: 2 }}
-            justifyContent="space-between"
-        >
+        <Grid container spacing={2} justifyContent="space-between">
             <Grid item xs={12} md={4}>
                 <Stack
                     spacing={2}
@@ -67,7 +64,16 @@ const ContainerHeader = ({
                 </Stack>
             </Grid>
 
-            <Grid container item xs={12} md={8} lg={5} spacing={3}>
+            <Grid
+                item
+                md={8}
+                lg={5}
+                xs={12}
+                container
+                spacing={3}
+                alignItems="center"
+                justifyContent="flex-end"
+            >
                 {showSearchBox && (
                     <Grid item xs={12} sm={7}>
                         <StyledInputBase
@@ -99,8 +105,8 @@ const ContainerHeader = ({
                     >
                         <Button
                             fullWidth
+                            size={buttonSize}
                             variant="contained"
-                            size="large"
                             onClick={() => handleButtonAction()}
                         >
                             {buttonTitle}
