@@ -647,11 +647,10 @@ const Nodes = () => {
     };
 
     const getNodeAppDetails = (id: any) => {
-        //TODO:Handle nodeDetails
         setShowNodeAppDialog(true);
         nodeAppsRes?.getNodeApps
-            .filter(person => person.id == id)
-            .map(filteredPerson => setNodeAppDetails(filteredPerson));
+            .filter(nodeApp => nodeApp.id == id)
+            .map(filteredNodeApp => setNodeAppDetails(filteredNodeApp));
     };
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
