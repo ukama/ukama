@@ -1,5 +1,5 @@
 import { styled } from "@mui/styles";
-import { NodeDto } from "../../generated";
+import { NodeDto, Org_Node_State } from "../../generated";
 import { Button, Stack } from "@mui/material";
 import { HorizontalContainerJustify } from "../../styles";
 import { LoadingWrapper, NodeDropDown, SplitButton } from "..";
@@ -24,7 +24,18 @@ const NodeStatus = ({
     nodes,
     onAddNode,
     loading = false,
-    selectedNode,
+    selectedNode = {
+        id: "1",
+        title: "",
+        type: "HOME",
+        totalUser: 4,
+        status: Org_Node_State.Undefined,
+        description: "Node 1 description",
+        isUpdateAvailable: false,
+        updateDescription: "",
+        updateShortNote: "",
+        updateVersion: "",
+    },
     onNodeSelected,
     onUpdateNodeClick,
     onNodeActionItemSelected,
