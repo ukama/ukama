@@ -93,26 +93,7 @@ const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
 
 const UserActivation = {
     title: "Invite Users to Install eSIMs",
-    subTitle: `Install Ukama eSIMs on all desired devices to start using the network. For remote installation, you can share digital instructions below.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        `,
+    subTitle: `Install Ukama eSIMs on all desired devices to start using the network. For remote installation, you can share digital instructions below.`,
 };
 
 const BillingTabs = [
@@ -1484,7 +1465,6 @@ const HealtChartsConfigure: any = {
         { name: "Uptime", show: true },
     ],
 };
-
 export {
     NodeApps,
     NodeAppLogs,
