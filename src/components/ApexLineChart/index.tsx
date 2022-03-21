@@ -84,7 +84,7 @@ const ApexLineChart = (props: any) => {
 
         yaxis: {
             labels: {
-                formatter: (val: any) => val.toFixed(2),
+                formatter: (val: any) => val.toFixed(4),
             },
             // min: 0,
             // max: 100,

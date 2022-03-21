@@ -11,6 +11,9 @@ const wsLink = new WebSocketLink({
     uri: process.env.REACT_APP_API_SOCKET || "ws:localhost",
     options: {
         reconnect: true,
+        connectionParams: {
+            credentials: "include",
+        },
     },
 });
 
