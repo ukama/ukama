@@ -9,19 +9,23 @@ import { theme } from "./theme";
 import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
-import { BasicDialog } from "./components";
+import { BasicDialog, UserActivationDialog } from "./components";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
 import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 const SNACKBAR_TIMEOUT = 5000;
 
 const App = () => {
+    const { t } = useTranslation();
     const { response } = useWhoami();
+    const [showSimActivationDialog, setShowSimActivationDialog] =
+        useState(false);
     const setPage = useSetRecoilState(pageName);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const [_snackbarMessage, setSnackbarMessage] =
@@ -30,7 +34,9 @@ const App = () => {
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const [showValidationError, setShowValidationError] =
         useState<boolean>(false);
-
+    const handleSimActivateClose = () => {
+        setShowSimActivationDialog(false);
+    };
     useEffect(() => {
         setSkeltonLoading(true);
     }, []);
@@ -49,6 +55,7 @@ const App = () => {
                 if (_isFirstVisit) {
                     _setIsFirstVisit(false);
                 }
+                setShowSimActivationDialog(true);
                 setSkeltonLoading(false);
             }
         }
@@ -77,6 +84,12 @@ const App = () => {
                     content={
                         "Your session is not valid or has expired. Please re-login."
                     }
+                />
+                <UserActivationDialog
+                    isOpen={showSimActivationDialog}
+                    dialogTitle={t("DIALOG_MESSAGE.SimActivationDialogTitle")}
+                    subTitle={t("DIALOG_MESSAGE.SimActivationDialogContent")}
+                    handleClose={handleSimActivateClose}
                 />
                 <Snackbar
                     open={_snackbarMessage.show}

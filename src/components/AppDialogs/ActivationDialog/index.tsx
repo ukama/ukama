@@ -1,18 +1,16 @@
 import {
-    Box,
-    Grid,
     Button,
     Dialog,
     TextField,
-    IconButton,
     Typography,
     DialogActions,
+    DialogContentText,
+    DialogTitle,
     DialogContent,
     Stack,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import { globalUseStyles } from "../../../styles";
-import CloseIcon from "@mui/icons-material/Close";
 import { ChangeEventHandler, useState } from "react";
 import { UserActivateFormType } from "../../../types";
 import { colors } from "../../../theme";
@@ -52,70 +50,37 @@ type FormContainerProps = {
 const FormFlowOne = ({ values, handleChange }: FormContainerProps) => {
     const classes = globalUseStyles();
     return (
-        <Box component="div" sx={{ p: "8px 0px" }}>
-            <Grid item container spacing={3}>
-                <Grid item container xs={12} spacing={1}>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            id="nodeName"
-                            name="nodeName"
-                            label={"NODE NAME"}
-                            onChange={handleChange}
-                            value={values.nodeName}
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputFieldStyle,
-                                },
-                            }}
-                        />
-                    </Grid>
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            id="serialNumber"
-                            name="serialNumber"
-                            label={"SERIAL NUMBER"}
-                            onChange={handleChange}
-                            value={values.serialNumber}
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                                classes: {
-                                    input: classes.inputFieldStyle,
-                                },
-                            }}
-                        />
-                    </Grid>
-                </Grid>
-            </Grid>
-        </Box>
-    );
-};
+        <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+            <TextField
+                fullWidth
+                id="nodeName"
+                name="nodeName"
+                label={"NODE NAME"}
+                onChange={handleChange}
+                value={values.nodeName}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                    classes: {
+                        input: classes.inputFieldStyle,
+                    },
+                }}
+            />
 
-const FormFlowTwo = ({ values, handleChange }: FormContainerProps) => {
-    const classes = globalUseStyles();
-    return (
-        <Box component="div" sx={{ p: "8px 0px" }}>
-            <Grid item container spacing={3}>
-                <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        id="securityCode"
-                        name="securityCode"
-                        label={"SECURITY CODE"}
-                        value={values.securityCode}
-                        onChange={handleChange}
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{
-                            classes: {
-                                input: classes.inputFieldStyle,
-                            },
-                        }}
-                    />
-                </Grid>
-            </Grid>
-        </Box>
+            <TextField
+                fullWidth
+                id="serialNumber"
+                name="serialNumber"
+                label={"SERIAL NUMBER"}
+                onChange={handleChange}
+                value={values.serialNumber}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{
+                    classes: {
+                        input: classes.inputFieldStyle,
+                    },
+                }}
+            />
+        </Stack>
     );
 };
 
@@ -123,7 +88,7 @@ type ActivationDialogProps = {
     isOpen: boolean;
     subTitle: string;
     handleClose: any;
-    subTitle2: string;
+    subTitle2?: string;
     dialogTitle: string;
     handleActivationSubmit: Function;
 };
@@ -131,22 +96,18 @@ type ActivationDialogProps = {
 const ActivationDialog = ({
     isOpen,
     subTitle,
-    subTitle2,
     dialogTitle,
     handleClose,
     handleActivationSubmit,
 }: ActivationDialogProps) => {
     const classes = useStyles();
-    const [flowScreen, setFlowScreen] = useState(1);
     const [userActivateForm, setUserActivateForm] =
         useState<UserActivateFormType>(initialActivationFormValue);
 
-    const handleNext = () => {
-        if (flowScreen === 1) setFlowScreen(2);
-        if (flowScreen === 2) handleActivationSubmit(userActivateForm);
+    const handleRegisterNode = () => {
+        handleActivationSubmit(userActivateForm);
     };
 
-    const handleBack = () => setFlowScreen(1);
     const handleChange = (e: any) => {
         setUserActivateForm({
             ...userActivateForm,
@@ -154,84 +115,36 @@ const ActivationDialog = ({
         });
     };
 
-    const handleSubmitDisableBehaviour = () =>
-        flowScreen === 1
-            ? false
-            : userActivateForm.nodeName && userActivateForm.serialNumber
-            ? false
-            : true;
-
     return (
         <Dialog open={isOpen} onClose={handleClose}>
-            <Box
-                component="div"
-                sx={{
-                    width: { xs: "100%", md: "560px" },
-                    padding: "16px 24px",
-                }}
-            >
-                <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h6">
-                        {flowScreen === 1
-                            ? dialogTitle
-                            : `${dialogTitle} [Serial Number]`}
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogContent>
+                <DialogContentText>
+                    <Typography variant="body1" sx={{ color: colors.black }}>
+                        {subTitle}
                     </Typography>
-
-                    <IconButton
-                        onClick={handleClose}
-                        sx={{ ml: "24px", p: "0px" }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-
-                <DialogContent sx={{ p: "1px" }}>
-                    {flowScreen === 1 ? (
-                        <Stack spacing={2}>
-                            <Typography variant="body1">{subTitle}</Typography>
-                            <FormFlowOne
-                                handleChange={handleChange}
-                                values={userActivateForm}
-                            />
-                        </Stack>
-                    ) : (
-                        <Stack spacing={2}>
-                            <Typography variant="body1">{subTitle2}</Typography>
-                            <FormFlowTwo
-                                handleChange={handleChange}
-                                values={userActivateForm}
-                            />
-                        </Stack>
-                    )}
-                </DialogContent>
-                <DialogActions className={classes.actionContainer}>
-                    <Button
-                        onClick={handleBack}
-                        sx={{
-                            visibility: flowScreen === 2 ? "visible" : "hidden",
-                        }}
-                    >
-                        Back
-                    </Button>
-                    <div>
-                        <Button
-                            variant="text"
-                            sx={{ mr: "20px" }}
-                            onClick={handleClose}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleNext}
-                            className={classes.stepButtonStyle}
-                            disabled={handleSubmitDisableBehaviour()}
-                        >
-                            {flowScreen === 2 ? "Add node" : "Next"}
-                        </Button>
-                    </div>
-                </DialogActions>
-            </Box>
+                </DialogContentText>
+                <FormFlowOne
+                    handleChange={handleChange}
+                    values={userActivateForm}
+                />
+            </DialogContent>
+            <DialogActions sx={{ mr: 2, paddingBottom: 3 }}>
+                <Button
+                    sx={{ color: colors.primaryMain, mr: 2 }}
+                    onClick={handleClose}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    variant="contained"
+                    type="submit"
+                    onClick={handleRegisterNode}
+                    className={classes.stepButtonStyle}
+                >
+                    REGISTER NODE
+                </Button>
+            </DialogActions>
         </Dialog>
     );
 };

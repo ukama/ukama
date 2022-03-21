@@ -492,14 +492,11 @@ const Home = () => {
             {isAddNode && (
                 <ActivationDialog
                     isOpen={isAddNode}
-                    dialogTitle={"Add Node"}
-                    subTitle2={
-                        "To confirm this node is yours, we have emailed you a security code that  expires in 15 minutes."
-                    }
+                    dialogTitle={"Register Node"}
                     handleClose={handleAddNodeClose}
                     handleActivationSubmit={handleActivationSubmit}
                     subTitle={
-                        "Add more nodes to expand your network coverage. Enter the serial number found in your purchase confirmation email, and it will be automatically configured."
+                        "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                     }
                 />
             )}
