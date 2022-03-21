@@ -298,7 +298,7 @@ const Nodes = () => {
     ] = useGetMetricsErabLazyQuery();
 
     useGetMetricsEraBsSubscription({
-        skip: selectedTab !== 0,
+        skip: selectedTab !== 1,
         onSubscriptionData: res => {
             setErabDropRateMetrix(
                 erabDropRateMetrix.map(item => {

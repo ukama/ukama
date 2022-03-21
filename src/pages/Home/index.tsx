@@ -9,6 +9,7 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
 } from "../../components";
+import { useTranslation } from "react-i18next";
 import {
     TIME_FILTER,
     MONTH_FILTER,
@@ -53,8 +54,11 @@ import {
 } from "../../utils";
 
 const Home = () => {
+    const { t } = useTranslation();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
+    const [showSimActivationDialog, setShowSimActivationDialog] =
+        useState<boolean>(true);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -250,7 +254,9 @@ const Home = () => {
             unsub && unsub();
         };
     }, [dataUsageRes]);
-
+    const handleSimActivateClose = () => {
+        setShowSimActivationDialog(false);
+    };
     useEffect(() => {
         let unsub = subToDataBill();
         return () => {
@@ -457,7 +463,12 @@ const Home = () => {
                     </LoadingWrapper>
                 </Grid>
             </Grid>
-
+            <UserActivationDialog
+                isOpen={showSimActivationDialog}
+                dialogTitle={t("DIALOG_MESSAGE.SimActivationDialogTitle")}
+                subTitle={t("DIALOG_MESSAGE.SimActivationDialogContent")}
+                handleClose={handleSimActivateClose}
+            />
             {isUserActivateOpen && (
                 <UserActivationDialog
                     isOpen={isUserActivateOpen}
