@@ -328,7 +328,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "T1 TEMPERATURE",
       "dataType" : "TYPE_DOUBLE",
@@ -650,7 +650,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "T1 TEMPERATURE",
       "dataType" : "TYPE_DOUBLE",
@@ -762,7 +762,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "SHUNT VOLTAGE",
       "dataType" : "TYPE_DOUBLE",
@@ -938,7 +938,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "RED LED BRIGHTNESS",
       "dataType" : "TYPE_UINT8",
@@ -1026,7 +1026,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "GPIO DIRECTION",
       "dataType" : "TYPE_STRING",
@@ -1069,7 +1069,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "ATTENUATION VALUE",
       "dataType" : "TYPE_INT32",
@@ -1094,7 +1094,7 @@
       "major" : 0,
       "minor" : 1
     },
-    "property_table" : [ {
+    "propertyTable" : [ {
       "id" : 0,
       "name" : "VOLT OVER AIN0 AND AIN1",
       "dataType" : "TYPE_DOUBLE",

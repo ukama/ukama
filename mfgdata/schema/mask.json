@@ -1,80 +1,87 @@
 {
-  "header":	{
-    "version":	{
-      "major":	0,
-      "minor":	1
+    "header":{
+        "version":{
+            "major":0,
+            "minor":1
+        },
+        "indexTableOffset":64,
+        "indexTupleSize":24,
+        "indexTupleMaxCount":50,
+        "indexCurrentTuple":2,
+        "moduleCapability":"DEPENDENT",
+        "moduleMode":"SLAVE",
+        "moduleDeviceOwner":"DEVICE_SLAVE"
     },
-    "indexTableOffset":	64,
-    "indexTupleSize":	24,
-    "indexTupleMaxCount":	50,
-    "indexCurrentTuple":	2,
-    "moduleCapability":	"DEPENDENT",
-    "moduleMode":	"SLAVE",
-    "moduleDeviceOwner":	"DEVICE_SLAVE"
-  },
-  "indexTable":	[{
-      "fieldId":	3,
-      "payloadOffset":	3776,
-      "payloadSize":	167,
-      "payloadVersion":	{
-        "major":	3,
-        "minor":	3
-      },
-      "payloadCrc":	3421000616,
-      "state":	"ENABLED",
-      "valid":	"TRUE"
-    }, {
-      "fieldId":	4,
-      "payloadOffset":	3968,
-      "payloadSize":	372,
-      "payloadVersion":	{
-        "major":	3,
-        "minor":	4
-      },
-      "payloadCrc":	1876718055,
-      "state":	"ENABLED",
-      "valid":	"TRUE"
-    }],
-  "moduleInfo":	{
-    "UUID":	"UK-3001-MSK-1102",
-    "name":	"MASK",
-    "type":	6,
-    "partNumber":	"MASK-WIFI-0XXXX",
-    "hwVersion":	"REV-A",
-    "mac":	"",
-    "swVersion":	{
-      "major":	3,
-      "minor":	1
+    "indexTable":[
+        {
+            "fieldId":3,
+            "payloadOffset":3776,
+            "payloadSize":167,
+            "payloadVersion":{
+                "major":3,
+                "minor":3
+            },
+            "payloadCRC":3421000616,
+            "state":"ENABLED",
+            "valid":true
+        },
+        {
+            "fieldId":4,
+            "payloadOffset":3968,
+            "payloadSize":372,
+            "payloadVersion":{
+                "major":3,
+                "minor":4
+            },
+            "payloadCRC":1876718055,
+            "state":"ENABLED",
+            "valid":true
+        }
+    ],
+    "moduleInfo":{
+        "UUID":"UK-8001-MSK-1102",
+        "name":"MASK",
+        "type":6,
+        "partNumber":"MASK-WIFI-0XXXX",
+        "hwVersion":"REV-A",
+        "mac":"",
+        "swVersion":{
+            "major":3,
+            "minor":1
+        },
+        "prodSwVersion":{
+            "major":3,
+            "minor":1
+        },
+        "manufacturingDate":"31-07-2020",
+        "manufacturerName":"UBQ",
+        "deviceCount":3
     },
-    "prodSwVersion":	{
-      "major":	3,
-      "minor":	1
-    },
-    "manufacturingDate":	"31-07-2020",
-    "manufacturerName":	"UBQ",
-    "deviceCount":	3
-  },
-  "module_config":	[{
-      "name":	"ADT7481",
-      "description":	"Wifi Controller",
-      "type":	1,
-      "class":	2,
-      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/3/adt7481_1/",
-      "devHwAttrs":	{
-        "bus":	0,
-        "address":	72
-      }
-    }, {
-      "name":	"INA226",
-      "description":	"PCI",
-      "type":	2,
-      "class":	2,
-      "devSysFsFile":	"/tmp/sys/class/hwmon/hwmon0/3/ina226_1/"
-    }, {
-      "name":	"GPIO",
-      "description":	"MASK DISABLE",
-      "type":	3,
-      "class":	1,
-      "devSysFsFile":	"/tmp/sys/class/gpio/gpio40/"
-    }]
+    "moduleConfig":[
+        {
+            "name":"ADT7481",
+            "description":"Wifi Controller",
+            "type":1,
+            "class":2,
+            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/3/adt7481_1/",
+            "devHwAttrs":{
+                "bus":0,
+                "address":72
+            }
+        },
+        {
+            "name":"INA226",
+            "description":"PCI",
+            "type":2,
+            "class":2,
+            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/3/ina226_1/"
+        },
+        {
+            "name":"GPIO",
+            "description":"MASK DISABLE",
+            "type":3,
+            "class":1,
+            "devSysFsFile":"/tmp/sys/class/gpio/gpio40/"
+        }
+    ]
 }

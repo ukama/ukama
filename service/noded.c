@@ -15,7 +15,7 @@
 #include "usys_log.h"
 #include "usys_types.h"
 
-#define DEV_PROPERTY_JSON "lib/ubsp/mfgdata/property/property.json"
+#define DEV_PROPERTY_JSON "mfgdata/property/property.json"
 #define INVENTORY_DB "/tmp/sys/cnode_inevetory_db"
 #define DEF_LOG_LEVEL "TRACE"
 
@@ -29,7 +29,7 @@ void noded_service() {
 /* Startup for NodeD.*/
 int noded_startup(char *invDb, char *pCfg) {
     int ret = 0;
-    ret = service_init(invDb);
+    ret = service_init(invDb, pCfg);
     return ret;
 }
 

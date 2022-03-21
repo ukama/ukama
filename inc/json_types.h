@@ -43,7 +43,7 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_FIELD_ID                   "fieldId"
 #define JTAG_PAYLOAD_OFFSET             "payloadOffset"
 #define JTAG_PAYLOAD_SIZE               "payloadSize"
-#define JTAG_PAYLOAD_CRC                "payloadCrc"
+#define JTAG_PAYLOAD_CRC                "payloadCRC"
 #define JTAG_PAYLOAD_VERSION            "payloadVersion"
 #define JTAG_STATE                      "state"
 #define JTAG_STATE_ENABLED              "ENABLED"
@@ -118,6 +118,9 @@ bool parser_read_string_value(JsonObj *obj, char *svalue);
 
 bool parser_read_uint16_object(const JsonObj *obj, const char* key,
                 uint16_t *ivalue);
+
+bool parser_read_uint32_object(const JsonObj *obj, const char* key,
+                uint32_t *ivalue);
 
 bool parser_read_uint8_object(const JsonObj *obj, const char* key,
                 uint8_t *ivalue);

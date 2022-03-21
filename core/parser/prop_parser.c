@@ -133,7 +133,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
     if (prop) {
         usys_memset(prop, '\0', sizeof(Property) * propCount);
 
-        json_array_foreach(jProp, iter, jPropTable) {
+        json_array_foreach(jPropTable, iter, jProp) {
 
             /* ID */
             int id  = 0;
@@ -220,8 +220,6 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             } else {
                 prop[iter].depProp = NULL;
             }
-
-            iter++;
         }
         (*pMap)->propCount = iter;
         (*pMap)->prop = prop;
@@ -252,7 +250,7 @@ int prop_parse_dev(const JsonObj *jDevices) {
     int ret = 0;
     int count = 0;
 
-    json_array_foreach(jDev, iter, jDevices) {
+    json_array_foreach(jDevices, iter, jDev) {
 
         pMap = usys_zmalloc(sizeof(PropertyMap));
         if (pMap) {
@@ -286,8 +284,9 @@ int prop_parse_dev(const JsonObj *jDevices) {
             ret = prop_parse_table(jDevTable, &pMap);
             if (!ret) {
                 usys_log_trace(
-                    "Parser:: Device %s json property table parsing completed.",
-                    pMap->name);
+                    "Parser:: Device %s json property table parsing completed "
+                    "with %d properties.",
+                    pMap->name, pMap->propCount);
             } else {
                 usys_log_error(
                     "Err(%d): Parser:: Device %s json property table parsing failed.",

@@ -37,13 +37,31 @@ bool parser_read_integer_object(const JsonObj *obj, const char* key,
     const JsonObj *jIntObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jIntObj && json_is_number(obj)) {
-        *ivalue = json_integer_value(obj) ;
+    if (jIntObj && json_is_number(jIntObj)) {
+        *ivalue = json_integer_value(jIntObj) ;
         ret = USYS_TRUE;
     }
 
     return ret;
 }
+
+/* Parser to read integer value from JSON object */
+bool parser_read_uint32_object(const JsonObj *obj, const char* key,
+                uint32_t *ivalue) {
+    bool ret = USYS_FALSE;
+
+    /* Integer Json Object */
+    const JsonObj *jIntObj = json_object_get(obj, key);
+
+    /* Check if object is number */
+    if (jIntObj && json_is_number(jIntObj)) {
+        *ivalue = json_integer_value(jIntObj) ;
+        ret = USYS_TRUE;
+    }
+
+    return ret;
+}
+
 
 /* Parser to read uint16_t value from JSON object */
 bool parser_read_uint16_object(const JsonObj *obj, const char* key,
@@ -88,7 +106,6 @@ bool parser_read_string_value(JsonObj *obj, char *svalue) {
             usys_memset(svalue, '\0', sizeof(char) * len);
             const char *str = json_string_value(obj);
             usys_strcpy(svalue, str);
-            json_decref(obj);
             ret = USYS_TRUE;
         }
 
@@ -129,6 +146,8 @@ bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
     if (parser_read_string_object(obj, key, &tstr)) {
         usys_strcpy(str, tstr);
         usys_free(tstr);
+        tstr = NULL;
+        ret = USYS_TRUE;
     }
 
     return ret;
@@ -143,8 +162,8 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
     const JsonObj *jBoolObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jBoolObj && json_is_boolean(obj)) {
-        *bvalue = json_boolean_value(obj) ;
+    if (jBoolObj && json_is_boolean(jBoolObj)) {
+        *bvalue = json_boolean_value(jBoolObj) ;
         ret = USYS_TRUE;
     }
 
@@ -169,8 +188,8 @@ Version *parse_version(const JsonObj *jVersion) {
     if (pversion) {
 
         /* Major version */
-        int major = 0;
-        if (!parser_read_integer_object(jVersion, JTAG_MAJOR_VERSION,
+        uint8_t major = 0;
+        if (!parser_read_uint8_object(jVersion, JTAG_MAJOR_VERSION,
                         &major)) {
             usys_free(pversion);
             return NULL;
@@ -179,8 +198,8 @@ Version *parse_version(const JsonObj *jVersion) {
         }
 
         /* Minor version */
-        int minor = 0;
-        if (!parser_read_integer_object(jVersion, JTAG_MINOR_VERSION,
+        uint8_t minor = 0;
+        if (!parser_read_uint8_object(jVersion, JTAG_MINOR_VERSION,
                         &minor)) {
             usys_free(pversion);
             return NULL;

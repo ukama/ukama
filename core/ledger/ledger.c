@@ -343,7 +343,7 @@ int ldgr_init(void *data) {
     /* Property parser */
     ret = prop_parser_init(data);
 
-    usys_log_debug("Ledger:: Initializing device DB.");
+    usys_log_debug("Ledger:: Initialized device DB.");
     return ret;
 }
 

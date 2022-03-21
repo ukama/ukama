@@ -43,13 +43,13 @@ typedef struct  {
 } StoreOperations;
 
 typedef union  __attribute__((__packed__)) {
-    char sysFs[MAX_PATH_LENGTH];
+    char sysFs[PATH_LENGTH];
     void* eepromCfg;
 } StoreAttr;
 
 typedef struct {
-     char modUuid[MAX_NAME_LENGTH];
-     char modName[MAX_NAME_LENGTH];
+     char modUuid[UUID_LENGTH];
+     char modName[NAME_LENGTH];
      void* storeAttr;
      const StoreOperations* storeOps;
  } ModuleMap;

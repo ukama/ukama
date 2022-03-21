@@ -51,8 +51,11 @@ static void free_module_list(void *ip) {
     if (node) {
         ModuleMap *map = node->data;
         usys_free(map->storeAttr);
+        map->storeAttr = NULL;
         usys_free(map);
+        map = NULL;
         usys_free(node);
+        node = NULL;
     }
 }
 
@@ -90,7 +93,6 @@ static ModuleMap *search_module_in_list(char *puuid) {
 
         smap = usys_zmalloc(sizeof(ModuleMap));
         if (smap) {
-            usys_memset(smap->modUuid, '\0', MAX_NAME_LENGTH);
             usys_memcpy(smap->modUuid, puuid, usys_strlen(puuid));
 
             /*Search return 1 for found.*/
@@ -100,9 +102,11 @@ static ModuleMap *search_module_in_list(char *puuid) {
                 usys_log_trace("DB::Module UUID: %s found.", smap->modUuid);
             } else {
                 usys_free(fmap);
+                fmap = NULL;
                 usys_log_warn("Module UUID: %s not found.", puuid);
             }
             usys_free(smap);
+            smap = NULL;
         }
 
     }
@@ -178,7 +182,7 @@ int store_register_module(UnitCfg *pcfg) {
                 /* If the eeprom data is exposed as sysfs files */
                 if ((pcfg->sysFs != NULL) || (!usys_strcmp(pcfg->sysFs, ""))) {
 
-                    fname = usys_zmalloc(sizeof(char) * MAX_PATH_LENGTH);
+                    fname = usys_zmalloc(sizeof(char) * PATH_LENGTH);
                     if (fname) {
                         usys_memcpy(fname, pcfg->sysFs,
                                         usys_strlen(pcfg->sysFs));
@@ -215,7 +219,7 @@ int store_register_module(UnitCfg *pcfg) {
                 usys_list_append(&modList, pmap);
                 /* Calling Module init.*/
                 ret = pmap->storeOps->init(pmap->storeAttr);
-                if (ret) {
+                if (!ret) {
                     usys_log_debug("Module %s registration success.",
                                     pcfg->modUuid);
                 }
@@ -229,6 +233,7 @@ int store_register_module(UnitCfg *pcfg) {
             }
         }
         usys_free(pmap);
+        pmap = NULL;
     }
 
     if (ret) {

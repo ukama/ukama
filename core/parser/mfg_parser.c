@@ -193,6 +193,7 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
 
     cleanup:
     usys_free(pHeader);
+    pHeader = NULL;
     return pHeader;
 }
 
@@ -249,8 +250,8 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
             }
 
             /* Payload CRC */
-            int payloadCrc = 0;
-            if (!parser_read_integer_object(jIndexTpl, JTAG_PAYLOAD_CRC,
+            uint32_t payloadCrc = 0;
+            if (!parser_read_uint32_object(jIndexTpl, JTAG_PAYLOAD_CRC,
                             &payloadCrc)) {
                 goto cleanup;
             } else {
@@ -282,11 +283,13 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
         /* Verify if all tuples are parsed */
         if (iter == count) {
             usys_log_debug(
-                            "All %d tuples read from the manufacturing data.",
+                            "All %d Index tuples read from the manufacturing "
+                            "data.",
                             count);
         } else {
             usys_log_error(
-                            "Error: Only %d tuples read from the manufacturing data expected were %d.",
+                            "Error: Only %d Index tuples read from the "
+                            "manufacturing data expected were %d.",
                             (count - iter), count);
         }
 
@@ -501,7 +504,6 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
 
         pUnitInfo = usys_zmalloc(sizeof(UnitInfo));
         if (pUnitInfo) {
-
             /* UUID */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
                             pUnitInfo->uuid)) {
@@ -583,7 +585,6 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
              } else {
                  pUnitInfo->modCount = modCount;
              }
-
         } else {
             usys_log_error(
                             "Memory exhausted while parsing Unit Info. Error: %s",
@@ -617,7 +618,7 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
     }
 
     jUnitCfgs = json_object_get(jSchema, JTAG_UNIT_CONFIG);
-    if (json_is_object(jUnitCfgs)) {
+    if (json_is_array(jUnitCfgs)) {
 
         pUnitCfg = usys_zmalloc(sizeof(UnitCfg) * count);
         if (pUnitCfg) {
@@ -652,7 +653,7 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
                                     iter);
                     goto cleanup;
                 }
-                iter++;
+
             }
 
             /* Verify count of device read */
@@ -691,7 +692,7 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
     ModuleInfo *pModuleInfo = NULL;
     int ret = 0;
     /* Module Info */
-    jModuleInfo = json_object_get(jSchema, "jModuleInfo");
+    jModuleInfo = json_object_get(jSchema, JTAG_MODULE_INFO);
     if (json_is_object(jModuleInfo)) {
 
         pModuleInfo = usys_zmalloc(sizeof(ModuleInfo));
@@ -863,18 +864,19 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
 
             /* Device HW attributes */
             jDevice = json_object_get(jModCfg, JTAG_DEV_HW_ATTRS);
-            DevI2cCfg *pDev = parse_schema_devices(jDevice,
-                            pModCfg[iter].devClass);
-            if (pDev) {
-                pModCfg[iter].cfg = pDev;
-            } else {
-                usys_log_error(
-                                "Failed to parse UnitCfg[%d].cfg",
-                                iter);
-                goto cleanup;
+            if (jDevice) {
+                DevI2cCfg *pDev = parse_schema_devices(jDevice,
+                                pModCfg[iter].devClass);
+                if (pDev) {
+                    pModCfg[iter].cfg = pDev;
+                } else {
+                    usys_log_error(
+                                    "Failed to parse UnitCfg[%d].cfg",
+                                    iter);
+                    goto cleanup;
+                }
             }
 
-            iter++;
         }
 
         /* Verify count of devices parsed */
@@ -978,7 +980,7 @@ void *parse_schema_generic_file_data_wrapper(const JsonObj *jSchema, int iter,
             usys_log_warn(
                             "Size read for Field id 0x%x is %d bytes "
                             "and size mentioned in index table [%d] is 0x%d bytes.",
-                            size, iter, *payloadSize, size);
+                            iter, size, *payloadSize, size);
             usys_log_debug(
                             "Updating index table [%d] size to %d bytes.",
                             iter, size);
@@ -1163,7 +1165,7 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
     const JsonObj *jHeader = NULL;
     const JsonObj *jIdxTable = NULL;
     StoreSchema *storeSchema = NULL;
-    mfgStoreSchema[idx] = usys_zmalloc(sizeof(storeSchema));
+    mfgStoreSchema[idx] = usys_zmalloc(sizeof(StoreSchema));
     if (mfgStoreSchema[idx]) {
         storeSchema = mfgStoreSchema[idx];
         jSchema = json_loads(mfgdata, JSON_DECODE_ANY, jErr);
@@ -1171,6 +1173,14 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
             parser_error(jErr, "Failed to parse schema");
             ret = ERR_NODED_JSON_PARSER;
             goto cleanup;
+        }
+
+        /* Debug Info */
+        char*  out = json_dumps(jSchema, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
+        if (out) {
+            usys_log_trace("Schema at Idx %d is ::\n %s\n",  idx, out);
+            usys_free(out);
+            out = NULL;
         }
 
         /* Header */
@@ -1181,16 +1191,18 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
                 usys_memcpy(&storeSchema->header, pHeader,
                                 sizeof(SchemaHeader));
                 usys_free(pHeader);
+                pHeader = NULL;
             } else {
                 ret = ERR_NODED_INVALID_JSON_OBJECT;
                 goto cleanup;
             }
         } else {
-            ret = -1;
+            ret = ERR_NODED_INVALID_JSON_OBJECT;
+            goto cleanup;
         }
 
         /* Index Table */
-        jIdxTable = json_object_get(jSchema, "index_table");
+        jIdxTable = json_object_get(jSchema, JTAG_INDEX_TABLE);
         if (jIdxTable) {
 
             SchemaIdxTuple *pIndexTable = parse_schema_idx_table(
@@ -1204,7 +1216,8 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
             }
 
         } else {
-            ret = -1;
+            ret = ERR_NODED_INVALID_JSON_OBJECT;
+            goto cleanup;
         }
 
         for (int iter = 0; iter < storeSchema->header.idxCurTpl; iter++) {
@@ -1228,7 +1241,10 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
     }
 
     cleanup:
-    json_decref(jSchema);
+    if (jSchema) {
+        json_decref(jSchema);
+        jSchema = NULL;
+    }
     if (ret) {
         parser_free_mfg_data(&storeSchema);
     }

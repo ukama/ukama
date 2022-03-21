@@ -153,12 +153,12 @@ JsonObj* dofile(char *filename) {
 
 
 /* Modify UUID field in JSON */
-int modify_uuid( JsonObj * jObj, char* value) {
+int modify_uuid(JsonObj * jObj, char* value) {
     int ret = -1;
 
     /* Get UUID value */
     char *uuid = NULL;
-    if(!parser_read_string_object(jObj, JTAG_UUID, &uuid)) {
+    if(!parser_read_string_object((const JsonObj*)jObj, JTAG_UUID, &uuid)) {
         usys_log_error("Schema:: Error:: UUID tag not found.");
         ret = -1;
     } else {
@@ -188,13 +188,13 @@ char* read_uuid_for_module_name(const char* name) {
 }
 
 /* Update Unit config */
-int  update_unit_config( JsonObj **obj) {
+int  update_unit_config( const JsonObj **obj) {
     int ret = -1;
    const JsonObj *unitCfgObj = *obj;
 
     /* unit config is supposed to be an array of modules */
     if (json_is_array(unitCfgObj)) {
-        const JsonObj *module = NULL;
+        JsonObj *module = NULL;
         int iter = 0;
         json_array_foreach(unitCfgObj, iter, module) {
             ret = -1;
@@ -228,7 +228,7 @@ int modify_json(unsigned short idx)
 {
     int ret = 0;
     JsonObj *root = NULL;
-    const JsonObj *obj = NULL;
+    JsonObj *obj = NULL;
     char *out;
     char* value = NULL;
     /* Parse the JSON file */
@@ -254,7 +254,7 @@ int modify_json(unsigned short idx)
             if ( unitSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_UNIT_CONFIG))) {
 
                 /* Update Unit Config */
-                ret  = update_unit_config(&obj);
+                ret  = update_unit_config((const JsonObj**)&obj);
                 if (ret) {
                     usys_log_error("Schema:: Failed to update unit config for %s file.", unitSchema[idx].fileName);
                     return ret;

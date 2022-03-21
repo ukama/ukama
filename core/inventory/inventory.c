@@ -765,7 +765,7 @@ int invt_write_unit_cfg_data(char *pUuid, SchemaIdxTuple *index,
                 goto cleanup;
             }
 
-            /*Update payload size */
+            /* Update payload size */
             index->payloadSize = size;
 
             /* Add CRC */
@@ -825,7 +825,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index,
 
             /*Write payload for Index table entries*/
             if (invt_write_payload(p1Uuid, uInfo, index->payloadOffset,
-                            index->payloadSize)) {
+                            sizeof(UnitInfo))) {
                 /* Need to revert back index */
                 invt_erase_idx(p1Uuid);
                 ret = ERR_NODED_WR_FAIL;
@@ -837,7 +837,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index,
             /* CRC*/
             uint32_t crcVal =
                             crc_32((const unsigned char *)uInfo,
-                                            index->payloadSize);
+                                            sizeof(UnitInfo));
             usys_log_debug("Inventory Calculated crc for unit id %s is 0x%x",
                             uInfo->uuid, crcVal);
             index->payloadCrc = crcVal;
@@ -905,12 +905,14 @@ char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
 
     /* Calculate memory required for HW attributes  */
     for (int iter = 0; iter < count; iter++) {
-        uint16_t cfg_size = 0;
-        SIZE_OF_DEVICE_CFG(cfg_size, mcfg[iter].devClass);
-        psize = psize + cfg_size;
+        uint16_t cfgSize = 0;
+        SIZE_OF_DEVICE_CFG(cfgSize, mcfg[iter].devClass);
+        psize += cfgSize;
     }
 
-    /* Allocate memory for Module config */
+    /* Allocate memory for Module config
+     * Sizeof Module config = sizeof(Module Config for each module)
+     *                       + sizeof(HWATTR for each module config)*/
     psize = (sizeof(ModuleCfg) * count) + psize;
     data = usys_zmalloc(psize);
     if (data) {
@@ -958,7 +960,7 @@ int invt_write_module_cfg_data(char *pUuid, ModuleInfo *minfo,
         usys_log_debug("Inventory Module Config added for module Id %s",
                         minfo->uuid);
         uint32_t crcVal = crc_32((const unsigned char *)payload,
-                        cfgIndex->payloadSize);
+                        size);
         cfgIndex->payloadCrc = crcVal;
         usys_log_debug("Inventory Calculated CRC for module Id %s is 0x%x"
                         , minfo->uuid,
@@ -1006,7 +1008,7 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
         /*Write payload for Index table entries*/
         if (invt_write_module_payload(pUuid, minfo,
                         infoIndex->payloadOffset,
-                        infoIndex->payloadSize)) {
+                        sizeof(ModuleInfo))) {
             /* Need to revert back index */
             invt_erase_idx(pUuid);
             ret = ERR_NODED_WR_FAIL;
@@ -1018,7 +1020,7 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
                         pUuid, minfo->devCount);
 
         uint32_t crcVal = crc_32((const unsigned char *)minfo,
-                        infoIndex->payloadSize);
+                        sizeof(ModuleInfo));
         infoIndex->payloadCrc = crcVal;
         usys_log_debug("Inventory Calculated CRC32 for Module %s is 0x%x",
                         pUuid,
@@ -1043,7 +1045,7 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
 
         /* Write Module Cfg as well Module info contains the info
          *  for Module cfg also.*/
-        //TODO : lot better option will ope after invt_create is complete.
+        //TODO : lot better option will open after invt_create is complete.
         ret = invt_write_module_cfg_data(pUuid, minfo, cfgIndex);
     }
 
@@ -1961,7 +1963,7 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
 
     if (p_info) {
         ret = invt_read_payload(pUuid, p_info, idxData->payloadOffset,
-                        idxData->payloadSize);
+                        sizeof(UnitInfo));
         if (ret) {
             usys_log_error("Err(%d): Payload read failure for the field id 0x%x.",
                             ret, unit_fid);
@@ -1969,7 +1971,7 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
             idxData = NULL;
         }
         //p_info = info;
-        *size = idxData->payloadSize;
+        *size = sizeof(UnitInfo);
     }
 
     /* validate index */
@@ -2081,14 +2083,14 @@ int invt_read_module_info(char *pUuid, ModuleInfo *p_info, uint16_t *size) {
 
     if (p_info) {
         ret = invt_read_payload(pUuid, p_info, idxData->payloadOffset,
-                        idxData->payloadSize);
+                        sizeof(ModuleInfo));
         if (ret) {
             usys_log_error("Payload read failure for the field id 0x%x.",
                             "Error Code: %d", fid, ret);
             usys_free(idxData);
             idxData = NULL;
         }
-        *size = idxData->payloadSize;
+        *size = sizeof(ModuleInfo);
     }
 
     /* validate index */
