@@ -247,9 +247,21 @@ query getMetricsThroughputUL($data: MetricsInputDTO!) {
         x
     }
 }
+query getMetricsDiskCOM($data: MetricsInputDTO!) {
+    getMetricsDiskCOM(data: $data) {
+        y
+        x
+    }
+}
 
 subscription getMetricsThroughputULS {
     getMetricsThroughputUL {
+        y
+        x
+    }
+}
+subscription getMetricsDiskCOMs {
+    getMetricsDiskCOM {
         y
         x
     }

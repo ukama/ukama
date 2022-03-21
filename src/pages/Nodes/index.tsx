@@ -28,6 +28,8 @@ import {
     useGetMetricsCpuComLazyQuery,
     useGetMetricsErabLazyQuery,
     useGetMetricsRrCsSubscription,
+    useGetMetricsDiskCoMsSubscription,
+    useGetMetricsDiskComLazyQuery,
     useGetMetricsRlcLazyQuery,
     useGetMetricsMemoryComsSubscription,
     useGetMetricsMemoryComLazyQuery,
@@ -66,8 +68,7 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    // const { id: orgId = "" } = useRecoilValue(user);
-    let orgId = "a32485e4-d842-45da-bf3e-798889c68ad0";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
@@ -428,6 +429,28 @@ const Nodes = () => {
             );
         },
     });
+    const [
+        getMetricsDiskCOM,
+        { data: metricsDiskComRes, refetch: metricsDiskComRefetch },
+    ] = useGetMetricsDiskComLazyQuery();
+
+    useGetMetricsDiskCoMsSubscription({
+        skip: selectedTab !== 2,
+        onSubscriptionData: res => {
+            setDiskComMetrics(
+                diskComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsDiskCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
 
     const [
         getMetricUptime,
@@ -542,12 +565,13 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-            getMetricsERAB({
+        } else if (selectedTab === 1) {
+            getMetricThroughtpuUl({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
             });
-            getMetricsCpuCOM({
+            getMetricsERAB({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -557,7 +581,7 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-            getMetricsDiskTRX({
+            getMetricThroughtpuDl({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -567,24 +591,18 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-            getMetricsMemoryCOM({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-        } else if (selectedTab === 1) {
-            getMetricThroughtpuUl({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricThroughtpuDl({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
         } else if (selectedTab === 2) {
             getMetricCpuTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsDiskCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsDiskTRX({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -599,11 +617,22 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsCpuCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+
+            getMetricsMemoryCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         }
     }, [selectedTab, selectedNode]);
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab == 2 &&
             diskTrxMetricsRes &&
             diskTrxMetricsRes.getMetricsDiskTRX.length > 0
         ) {
@@ -631,7 +660,7 @@ const Nodes = () => {
     }, [diskTrxMetricsRes]);
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab == 1 &&
             metricsERABres &&
             metricsERABres.getMetricsERAB.length > 0
         ) {
@@ -659,7 +688,35 @@ const Nodes = () => {
     }, [metricsERABres]);
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab == 2 &&
+            metricsDiskComRes &&
+            metricsDiskComRes.getMetricsDiskCOM.length > 0
+        ) {
+            if (!isMetricData(cpuComMetrics)) {
+                setDiskComMetrics(
+                    diskComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsDiskComRes.getMetricsDiskCOM || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsDiskComRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsDiskComRes.getMetricsDiskCOM[
+                        metricsDiskComRes.getMetricsDiskCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsDiskComRes]);
+    useEffect(() => {
+        if (
+            selectedTab !== 2 &&
             cpuComMetricsRes &&
             cpuComMetricsRes.getMetricsCpuCOM.length > 0
         ) {
@@ -715,7 +772,7 @@ const Nodes = () => {
     }, [metricUptimeTrxRes]);
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab !== 2 &&
             metricsMemoryComres &&
             metricsMemoryComres.getMetricsMemoryCOM.length > 0
         ) {
@@ -773,7 +830,7 @@ const Nodes = () => {
 
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab == 1 &&
             metricsRLCres &&
             metricsRLCres.getMetricsRLC.length > 0
         ) {
@@ -978,7 +1035,7 @@ const Nodes = () => {
 
     useEffect(() => {
         if (
-            selectedTab === 0 &&
+            selectedTab == 1 &&
             metricsRRCRes &&
             metricsRRCRes.getMetricsRRC.length > 0
         ) {
