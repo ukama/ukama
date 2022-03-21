@@ -9,11 +9,10 @@ import {
     DialogContent,
     Stack,
 } from "@mui/material";
+import { useState } from "react";
+import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { globalUseStyles } from "../../../styles";
-import { ChangeEventHandler, useState } from "react";
-import { UserActivateFormType } from "../../../types";
-import { colors } from "../../../theme";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -36,54 +35,6 @@ const useStyles = makeStyles(() => ({
     },
 }));
 
-const initialActivationFormValue = {
-    nodeName: "",
-    serialNumber: "",
-    securityCode: "",
-};
-
-type FormContainerProps = {
-    values: any;
-    handleChange: ChangeEventHandler<HTMLInputElement>;
-};
-
-const FormFlowOne = ({ values, handleChange }: FormContainerProps) => {
-    const classes = globalUseStyles();
-    return (
-        <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
-            <TextField
-                fullWidth
-                id="nodeName"
-                name="nodeName"
-                label={"NODE NAME"}
-                onChange={handleChange}
-                value={values.nodeName}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                    classes: {
-                        input: classes.inputFieldStyle,
-                    },
-                }}
-            />
-
-            <TextField
-                fullWidth
-                id="serialNumber"
-                name="serialNumber"
-                label={"SERIAL NUMBER"}
-                onChange={handleChange}
-                value={values.serialNumber}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                    classes: {
-                        input: classes.inputFieldStyle,
-                    },
-                }}
-            />
-        </Stack>
-    );
-};
-
 type ActivationDialogProps = {
     isOpen: boolean;
     subTitle: string;
@@ -101,19 +52,12 @@ const ActivationDialog = ({
     handleActivationSubmit,
 }: ActivationDialogProps) => {
     const classes = useStyles();
-    const [userActivateForm, setUserActivateForm] =
-        useState<UserActivateFormType>(initialActivationFormValue);
+    const gclasses = globalUseStyles();
+    const [nodeName, setNodeName] = useState("");
+    const [nodeSerial, setNodeSerial] = useState("");
 
-    const handleRegisterNode = () => {
-        handleActivationSubmit(userActivateForm);
-    };
-
-    const handleChange = (e: any) => {
-        setUserActivateForm({
-            ...userActivateForm,
-            [e.target.id]: e.target.value,
-        });
-    };
+    const handleRegisterNode = () =>
+        handleActivationSubmit({ name: nodeName, serial: nodeSerial });
 
     return (
         <Dialog open={isOpen} onClose={handleClose}>
@@ -124,10 +68,33 @@ const ActivationDialog = ({
                         {subTitle}
                     </Typography>
                 </DialogContentText>
-                <FormFlowOne
-                    handleChange={handleChange}
-                    values={userActivateForm}
-                />
+                <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+                    <TextField
+                        fullWidth
+                        value={nodeName}
+                        label={"NODE NAME"}
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            classes: {
+                                input: gclasses.inputFieldStyle,
+                            },
+                        }}
+                        onChange={(e: any) => setNodeName(e.target.value)}
+                    />
+
+                    <TextField
+                        fullWidth
+                        value={nodeSerial}
+                        label={"SERIAL NUMBER"}
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{
+                            classes: {
+                                input: gclasses.inputFieldStyle,
+                            },
+                        }}
+                        onChange={(e: any) => setNodeSerial(e.target.value)}
+                    />
+                </Stack>
             </DialogContent>
             <DialogActions sx={{ mr: 2, paddingBottom: 3 }}>
                 <Button
