@@ -11,16 +11,12 @@ import {
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
 } from "../../components";
-import {
-    NodeApps,
-    NodeAppLogs,
-    NodePageTabs,
-    NODE_ACTIONS,
-} from "../../constants";
+import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import {
     NodeDto,
     MetricDto,
     useGetNodeDetailsQuery,
+    useGetNodeAppsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsThroughputDlLazyQuery,
     useGetMetricsThroughputUlsSubscription,
@@ -40,6 +36,7 @@ import {
     useGetMetricsUptimeSSubscription,
     useGetMetricsMemoryTrxsSubscription,
     useGetMetricsCpuTrxsSubscription,
+    useGetNodeAppsVersionLogsQuery,
     useGetMetricsPowerLazyQuery,
     useGetMetricsPowerSSubscription,
     useGetMetricsTempTrxLazyQuery,
@@ -69,9 +66,11 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    const { id: orgId = "" } = useRecoilValue(user);
+    // const { id: orgId = "" } = useRecoilValue(user);
+    let orgId = "a32485e4-d842-45da-bf3e-798889c68ad0";
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
+    const [nodeAppDetails, setNodeAppDetails] = useState<any>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         type: "",
@@ -335,6 +334,10 @@ const Nodes = () => {
             );
         },
     });
+    const { data: nodeAppsRes, loading: nodeAppsLoading } =
+        useGetNodeAppsQuery();
+    const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
+        useGetNodeAppsVersionLogsQuery();
     const [
         getMetricThroughtpuUl,
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
@@ -1025,9 +1028,11 @@ const Nodes = () => {
         // TODO: Handle Update node Action
     };
 
-    const getNodeDetails = () => {
-        //TODO:Handle nodeDetails
+    const getNodeAppDetails = (id: any) => {
         setShowNodeAppDialog(true);
+        nodeAppsRes?.getNodeApps
+            .filter(nodeApp => nodeApp.id == id)
+            .map(filteredNodeApp => setNodeAppDetails(filteredNodeApp));
     };
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
@@ -1166,10 +1171,17 @@ const Nodes = () => {
                             index={4}
                         >
                             <NodeSoftwareTab
-                                loading={isLoading || nodeDetailLoading}
-                                nodeApps={NodeApps}
-                                NodeLogs={NodeAppLogs}
-                                getNodeAppDetails={getNodeDetails}
+                                loading={
+                                    isLoading ||
+                                    nodeDetailLoading ||
+                                    nodeAppsLogsLoading ||
+                                    nodeAppsLoading
+                                }
+                                nodeApps={nodeAppsRes?.getNodeApps}
+                                NodeLogs={
+                                    nodeAppsLogsRes?.getNodeAppsVersionLogs
+                                }
+                                getNodeAppDetails={getNodeAppDetails}
                             />
                         </TabPanel>
                         <TabPanel
@@ -1193,6 +1205,7 @@ const Nodes = () => {
             <NodeAppDetailsDialog
                 closeBtnLabel="close"
                 isOpen={showNodeAppDialog}
+                nodeData={nodeAppDetails}
                 handleClose={handleNodAppDetailsDialog}
             />
             <NodeSoftwareInfosDialog

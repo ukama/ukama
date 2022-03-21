@@ -5,6 +5,9 @@ import { ApolloClient, InMemoryCache, split, HttpLink } from "@apollo/client";
 const httpLink = new HttpLink({
     uri: process.env.REACT_APP_API,
     credentials: "include",
+    headers: {
+        Authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
+    },
 });
 
 const wsLink = new WebSocketLink({
