@@ -1,9 +1,15 @@
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
-import { LinkStyle } from "../../styles";
-import { Typography, Card, Grid, Theme } from "@mui/material";
-import SimCardOutlinedIcon from "@mui/icons-material/SimCardOutlined";
-
+import ShareIcon from "@mui/icons-material/Share";
+import {
+    Typography,
+    Button,
+    IconButton,
+    Divider,
+    Stack,
+    Card,
+    Theme,
+} from "@mui/material";
 type StyleProps = {
     isSelected?: boolean;
 };
@@ -12,9 +18,8 @@ const useStyles = makeStyles<Theme, StyleProps>(() => ({
     cardStyle: {
         marginBottom: 16,
         cursor: "pointer",
-        padding: "13px 18px",
-        border: ({ isSelected }) =>
-            isSelected ? `2px solid ${colors.primaryMain}` : "none",
+        padding: "6px 10px",
+        border: `1px solid ${colors.darkGradient}`,
     },
 }));
 
@@ -38,29 +43,40 @@ const SimCardDesign = ({
     const classes = useStyles({ isSelected });
     return (
         <Card className={classes.cardStyle} onClick={() => handleItemClick(id)}>
-            <Grid spacing={1} item container>
-                <Grid item xs={1}>
-                    <SimCardOutlinedIcon />
-                </Grid>
-                <Grid item xs={2}>
-                    <LinkStyle underline="hover" sx={{ fontSize: "14px" }}>
+            <Stack
+                direction="row"
+                spacing={6}
+                justifyContent="space-between"
+                sx={{ alignItems: "center", width: "100%" }}
+            >
+                <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{ alignItems: "center" }}
+                    divider={<Divider orientation="vertical" flexItem />}
+                >
+                    <Typography
+                        variant="body1"
+                        sx={{
+                            fontSize: "14px",
+                            color: colors.black,
+                            fontWeight: "bold",
+                        }}
+                    >
                         {title}
-                    </LinkStyle>
-                </Grid>
-                <Grid item xs={7}>
+                    </Typography>
                     <Typography variant="body1">{serial}</Typography>
-                </Grid>
-                <Grid item xs={2}>
-                    {isActivate && (
-                        <Typography
-                            variant="body1"
-                            sx={{ color: colors.primaryMain }}
-                        >
-                            Activated
-                        </Typography>
-                    )}
-                </Grid>
-            </Grid>
+                </Stack>
+
+                {isActivate && (
+                    <Button sx={{ color: colors.black70 }}>
+                        AWAITING ACTIVATION
+                    </Button>
+                )}
+                <IconButton>
+                    <ShareIcon sx={{ color: colors.black70 }} />
+                </IconButton>
+            </Stack>
         </Card>
     );
 };

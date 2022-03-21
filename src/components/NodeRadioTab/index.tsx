@@ -1,7 +1,7 @@
-import { TooltipsText } from "../../constants";
-import { Paper, Grid } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
 import { useState } from "react";
+import { TooltipsText } from "../../constants";
+import { Paper, Grid, Typography, Stack } from "@mui/material";
+import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
 interface INodeRadioTab {
     loading: boolean;
 }
@@ -41,10 +41,13 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ padding: "4px 18px 0px 30px", width: "100%" }}>
-                    <StackedAreaChart hasData={true} title={"TX Power"} />
-                    <StackedAreaChart hasData={true} title={"RX Power "} />
-                    <StackedAreaChart hasData={true} title={"PA Power "} />
+                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
+                    <Stack spacing={1}>
+                        <Typography variant="h6">Radio</Typography>
+                        <StackedAreaChart hasData={true} title={"TX Power"} />
+                        <StackedAreaChart hasData={true} title={"RX Power "} />
+                        <StackedAreaChart hasData={true} title={"PA Power "} />
+                    </Stack>
                 </Paper>
             </Grid>
         </Grid>

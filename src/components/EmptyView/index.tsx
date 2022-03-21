@@ -11,6 +11,7 @@ const EmptyView = ({ title, icon: Icon, size = "medium" }: IEmptyView) => {
         <Stack
             spacing={1}
             sx={{
+                height: "100%",
                 width: "100%",
                 alignItems: "center",
             }}

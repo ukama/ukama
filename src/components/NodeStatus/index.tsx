@@ -1,7 +1,7 @@
 import { styled } from "@mui/styles";
+import { NodeDto, Org_Node_State } from "../../generated";
 import { Button, Stack } from "@mui/material";
 import { HorizontalContainerJustify } from "../../styles";
-import { NodeDto, Org_Node_State } from "../../generated";
 import { LoadingWrapper, NodeDropDown, SplitButton } from "..";
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",
@@ -44,7 +44,7 @@ const NodeStatus = ({
 }: INodeStatus) => {
     const handleUpdateNode = () =>
         onUpdateNodeClick(
-            nodes.find((item: NodeDto) => item.id === selectedNode.id)
+            nodes.find((item: NodeDto) => item.id === selectedNode?.id)
         );
 
     return (

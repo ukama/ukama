@@ -59,11 +59,16 @@ const NodeOverviewTab = ({
                             )} Node`}
                             name={"Model type"}
                         />
-                        <NodeStatItem value={"11111111111"} name={"Serial #"} />
                         <NodeStatItem
-                            value={"Amplifier Node 1"}
-                            name={"Node Group"}
+                            value={selectedNode?.id || "-"}
+                            name={"Serial #"}
                         />
+                        {selectedNode?.type === "TOWER" && (
+                            <NodeStatItem
+                                value={"Amplifier Node 1"}
+                                name={"Node Group"}
+                            />
+                        )}
                     </NodeStatsContainer>
                     <NodeStatsContainer
                         index={1}
@@ -152,46 +157,51 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 1 && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6">Node Health</Typography>
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][0].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={tempTrxMetric}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][0].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][1].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={tempComMetric}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][1].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][2].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={uptimeMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][2].name
-                                }
-                            />
-                        )}
+                        <Stack spacing={2}>
+                            <Typography variant="h6">Node Health</Typography>
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][0].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={tempTrxMetric}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][0].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][1].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={tempComMetric}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][1].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][2].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={uptimeMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][2].name
+                                    }
+                                />
+                            )}
+                        </Stack>
                     </Paper>
                 )}
                 {selected === 2 && selectedNode?.type !== "AMPLIFIER" && (

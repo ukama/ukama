@@ -39,8 +39,8 @@ const NodeAppsColumns = [
         label: "Date",
     },
     {
-        id: "note",
-        label: "Note",
+        id: "notes",
+        label: "Notes",
     },
 ];
 

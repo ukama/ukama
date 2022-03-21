@@ -11,17 +11,12 @@ import {
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
 } from "../../components";
-import {
-    NodeApps,
-    NodeAppLogs,
-    NodePageTabs,
-    NODE_ACTIONS,
-} from "../../constants";
+import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import {
     NodeDto,
     MetricDto,
-    useGetNodesByOrgQuery,
     useGetNodeDetailsQuery,
+    useGetNodeAppsQuery,
     useGetMetricsThroughputUlLazyQuery,
     useGetMetricsSubAttachedLazyQuery,
     useGetMetricsSubAttachedsSubscription,
@@ -34,6 +29,7 @@ import {
     useGetMetricsUptimeSSubscription,
     useGetMetricsMemoryTrxsSubscription,
     useGetMetricsCpuTrxsSubscription,
+    useGetNodeAppsVersionLogsQuery,
     useGetMetricsPowerLazyQuery,
     useGetMetricsPowerSSubscription,
     useGetMetricsTempTrxLazyQuery,
@@ -42,9 +38,11 @@ import {
     useGetMetricsTempComsSubscription,
     useGetMetricsSubActiveLazyQuery,
     useGetMetricsSubActivesSubscription,
+    useGetNodesByOrgLazyQuery,
+    Org_Node_State,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
-import { isSkeltonLoading, organizationId } from "../../recoil";
+import { isSkeltonLoading, user } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import {
     getMetricPayload,
@@ -60,17 +58,29 @@ const getDefaultList = (names: string[]) =>
     }));
 
 const Nodes = () => {
-    const _organizationId = useRecoilValue(organizationId) || "";
+    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
-    const [selectedNode, setSelectedNode] = useState<NodeDto>();
+    const [nodeAppDetails, setNodeAppDetails] = useState<any>();
+    const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
+        id: "",
+        type: "",
+        title: "",
+        totalUser: 0,
+        description: "",
+        updateVersion: "",
+        updateShortNote: "",
+        updateDescription: "",
+        isUpdateAvailable: false,
+        status: Org_Node_State.Undefined,
+    });
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
     const [uptimeMetric, setUptimeMetrics] = useState<
         {
             name: string;
             data: MetricDto[];
         }[]
-    >(getDefaultList(["UPTIME (For demo)"]));
+    >(getDefaultList(["UPTIME"]));
     const [cpuTrxMetric, setCpuTrxMetric] = useState<
         {
             name: string;
@@ -132,7 +142,7 @@ const Nodes = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             regPolling: false,
             to: Math.floor(Date.now() / 1000) - 20,
             from: Math.floor(Date.now() / 1000) - 180,
@@ -141,23 +151,24 @@ const Nodes = () => {
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: _organizationId,
+            orgId: orgId,
             from: from + 1,
         });
 
-    const { data: nodesRes, loading: nodesLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: _organizationId,
-        },
-        onCompleted: res => {
-            res?.getNodesByOrg?.nodes.length > 0 &&
-                setSelectedNode(res?.getNodesByOrg?.nodes[0]);
-        },
-    });
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            onCompleted: res => {
+                res?.getNodesByOrg?.nodes.length > 0 &&
+                    setSelectedNode(res?.getNodesByOrg?.nodes[0]);
+            },
+        });
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
-
+    const { data: nodeAppsRes, loading: nodeAppsLoading } =
+        useGetNodeAppsQuery();
+    const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
+        useGetNodeAppsVersionLogsQuery();
     const [
         getMetricsSubAttached,
         {
@@ -167,7 +178,7 @@ const Nodes = () => {
     ] = useGetMetricsSubAttachedLazyQuery();
 
     useGetMetricsSubAttachedsSubscription({
-        skip: selectedTab !== 1,
+        skip: selectedTab !== 0,
         onSubscriptionData: res => {
             setAttachedSubcriberMetrics(
                 attachedSubcriberMetrics.map(item => {
@@ -192,7 +203,7 @@ const Nodes = () => {
     ] = useGetMetricsSubActiveLazyQuery();
 
     useGetMetricsSubActivesSubscription({
-        skip: selectedTab !== 1,
+        skip: selectedTab !== 0,
         onSubscriptionData: res => {
             setActiveSubcriberMetrics(
                 activeSubcriberMetrics.map(item => {
@@ -392,6 +403,10 @@ const Nodes = () => {
     });
 
     useEffect(() => {
+        getNodesByOrg({ variables: { orgId: orgId } });
+    }, []);
+
+    useEffect(() => {
         if (selectedTab === 0) {
             getMetricUptime({
                 variables: {
@@ -408,6 +423,16 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsSubAttached({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsSubActive({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         } else if (selectedTab === 1) {
             getMetricThroughtpuUl({
                 variables: {
@@ -415,16 +440,6 @@ const Nodes = () => {
                 },
             });
             getMetricThroughtpuDl({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricsSubAttached({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-            getMetricsSubActive({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -596,7 +611,7 @@ const Nodes = () => {
     }, [metricThroughtputDlRes]);
     useEffect(() => {
         if (
-            selectedTab === 1 &&
+            selectedTab === 0 &&
             subscriberAttachedmetricRes &&
             subscriberAttachedmetricRes.getMetricsSubAttached.length > 0
         ) {
@@ -626,7 +641,7 @@ const Nodes = () => {
     }, [subscriberAttachedmetricRes]);
     useEffect(() => {
         if (
-            selectedTab === 1 &&
+            selectedTab === 0 &&
             subscriberActiveMetricRes &&
             subscriberActiveMetricRes.getMetricsSubActive.length > 0
         ) {
@@ -765,9 +780,11 @@ const Nodes = () => {
         // TODO: Handle Update node Action
     };
 
-    const getNodeDetails = () => {
-        //TODO:Handle nodeDetails
+    const getNodeAppDetails = (id: any) => {
         setShowNodeAppDialog(true);
+        nodeAppsRes?.getNodeApps
+            .filter(nodeApp => nodeApp.id == id)
+            .map(filteredNodeApp => setNodeAppDetails(filteredNodeApp));
     };
     const handleNodAppDetailsDialog = () => {
         setShowNodeAppDialog(false);
@@ -792,12 +809,13 @@ const Nodes = () => {
                 pb: 2,
             }}
         >
-            {nodesRes || isLoading ? (
+            {(nodesRes && nodesRes?.getNodesByOrg?.nodes.length > 0) ||
+            isLoading ? (
                 <Grid container spacing={3}>
                     <Grid item xs={12}>
                         <NodeStatus
                             onAddNode={onAddNode}
-                            loading={nodesLoading}
+                            loading={isLoading || nodesLoading}
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
                             onNodeActionItemSelected={
@@ -901,10 +919,17 @@ const Nodes = () => {
                             index={4}
                         >
                             <NodeSoftwareTab
-                                loading={isLoading || nodeDetailLoading}
-                                nodeApps={NodeApps}
-                                NodeLogs={NodeAppLogs}
-                                getNodeAppDetails={getNodeDetails}
+                                loading={
+                                    isLoading ||
+                                    nodeDetailLoading ||
+                                    nodeAppsLogsLoading ||
+                                    nodeAppsLoading
+                                }
+                                nodeApps={nodeAppsRes?.getNodeApps}
+                                NodeLogs={
+                                    nodeAppsLogsRes?.getNodeAppsVersionLogs
+                                }
+                                getNodeAppDetails={getNodeAppDetails}
                             />
                         </TabPanel>
                         <TabPanel
@@ -928,6 +953,7 @@ const Nodes = () => {
             <NodeAppDetailsDialog
                 closeBtnLabel="close"
                 isOpen={showNodeAppDialog}
+                nodeData={nodeAppDetails}
                 handleClose={handleNodAppDetailsDialog}
             />
             <NodeSoftwareInfosDialog

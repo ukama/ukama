@@ -102,6 +102,22 @@ query getNodeDetails {
         description
     }
 }
+query getNodeAppsVersionLogs {
+    getNodeAppsVersionLogs {
+        version
+        date
+        notes
+    }
+}
+query getNodeApps {
+    getNodeApps {
+        id
+        title
+        version
+        cpu
+        memory
+    }
+}
 query getUsersByOrg($orgId: String!) {
     getUsersByOrg(orgId: $orgId) {
         orgName
