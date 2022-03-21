@@ -419,6 +419,12 @@ query getMetricsTempTRX($data: MetricsInputDTO!) {
         x
     }
 }
+query getMetricsSubActive($data: MetricsInputDTO!) {
+    getMetricsSubActive(data: $data) {
+        y
+        x
+    }
+}
 
 subscription getMetricsTempTRXS {
     getMetricsTempTRX {
@@ -426,7 +432,24 @@ subscription getMetricsTempTRXS {
         x
     }
 }
-
+subscription getMetricsSubActives {
+    getMetricsSubActive {
+        y
+        x
+    }
+}
+subscription getMetricsSubAttacheds {
+    getMetricsSubAttached {
+        y
+        x
+    }
+}
+query getMetricsSubAttached($data: MetricsInputDTO!) {
+    getMetricsSubAttached(data: $data) {
+        y
+        x
+    }
+}
 query getMetricsTempCOM($data: MetricsInputDTO!) {
     getMetricsTempCOM(data: $data) {
         y
