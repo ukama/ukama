@@ -33,14 +33,17 @@ const NodeAppsColumns = [
     {
         id: "version",
         label: "Version",
+        minWidth: 200,
     },
     {
         id: "date",
         label: "Date",
+        minWidth: 200,
     },
     {
         id: "notes",
         label: "Notes",
+        minWidth: 600,
     },
 ];
 

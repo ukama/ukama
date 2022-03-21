@@ -10,7 +10,7 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
         <Grid container spacing={3}>
-            <Grid item lg={!isCollapse ? 3 : 1} md xs>
+            <Grid item lg={!isCollapse ? 4 : 1} md xs>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
@@ -40,7 +40,7 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
                     />
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 9} md xs>
+            <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Stack spacing={1}>
                         <Typography variant="h6">Radio</Typography>

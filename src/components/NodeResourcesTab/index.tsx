@@ -24,7 +24,7 @@ const NodeResourcesTab = ({
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
         <Grid container spacing={3}>
-            <Grid item lg={!isCollapse ? 3 : 1} md xs>
+            <Grid item lg={!isCollapse ? 4 : 1} md xs>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
@@ -134,7 +134,7 @@ const NodeResourcesTab = ({
                     )}
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 9} md xs>
+            <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Stack spacing={2}>
                         <Typography variant="h6">Resources</Typography>

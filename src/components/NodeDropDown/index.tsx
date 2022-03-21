@@ -14,7 +14,6 @@ import { makeStyles } from "@mui/styles";
 import { CustomRadioButton, LoadingWrapper } from "..";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { NodeDto, Org_Node_State } from "../../generated";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { getStatusByType } from "../../utils";
 
@@ -115,13 +114,6 @@ const NodeDropDown = ({
                                 typography: "body1",
                                 textTransform: "none",
                             }}
-                            startIcon={
-                                <AddCircleIcon
-                                    sx={{
-                                        fill: colors.green,
-                                    }}
-                                />
-                            }
                         >
                             Add node
                         </Button>
