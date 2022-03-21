@@ -1,16 +1,22 @@
-import { useState } from "react";
 import { TooltipsText } from "../../constants";
+import { Paper, Grid } from "@mui/material";
+import { NodeStatsContainer, NodeStatItem } from "..";
+import { useState } from "react";
 import ApexLineChartIntegration from "../ApexLineChart";
-import { Paper, Grid, Typography, Stack } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, LineChart } from "..";
 interface INodeOverviewTab {
     loading: boolean;
     throughpuULMetric: any;
     throughpuDLMetric: any;
+    erabDropRateMetrix: any;
+    rrcCnxSuccessMetrix: any;
+    rlsDropRateMetrics: any;
 }
 const NodeNetworkTab = ({
     loading,
     throughpuULMetric,
+    rlsDropRateMetrics,
+    erabDropRateMetrix,
+    rrcCnxSuccessMetrix,
     throughpuDLMetric,
 }: INodeOverviewTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
@@ -61,26 +67,33 @@ const NodeNetworkTab = ({
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 8} md xs>
-                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
-                    <Stack spacing={2}>
-                        <Typography variant="h6">Network</Typography>
+                <Paper sx={{ padding: "4px 18px 0px 30px", width: "100%" }}>
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={throughpuULMetric}
+                        name={"Throughput (U/L)"}
+                    />
 
-                        <ApexLineChartIntegration
-                            hasData={true}
-                            data={throughpuULMetric}
-                            name={"Throughput (U/L)"}
-                        />
-
-                        <ApexLineChartIntegration
-                            hasData={true}
-                            data={throughpuDLMetric}
-                            name={"Throughput (D/L)"}
-                        />
-
-                        <LineChart hasData={true} title={"RRC CNX Success "} />
-                        <LineChart hasData={true} title={"ERAB Drop Rate"} />
-                        <LineChart hasData={true} title={"RLS  Drop Rate"} />
-                    </Stack>
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={throughpuDLMetric}
+                        name={"Throughput (D/L)"}
+                    />
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={rrcCnxSuccessMetrix}
+                        name={"RRC CNX Success"}
+                    />
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={erabDropRateMetrix}
+                        name={"ERAB Drop Rate"}
+                    />
+                    <ApexLineChartIntegration
+                        hasData={true}
+                        data={rlsDropRateMetrics}
+                        name={"RLS  Drop Rate"}
+                    />
                 </Paper>
             </Grid>
         </Grid>

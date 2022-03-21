@@ -247,6 +247,12 @@ query getMetricsThroughputUL($data: MetricsInputDTO!) {
         x
     }
 }
+query getMetricsDiskCOM($data: MetricsInputDTO!) {
+    getMetricsDiskCOM(data: $data) {
+        y
+        x
+    }
+}
 
 subscription getMetricsThroughputULS {
     getMetricsThroughputUL {
@@ -254,14 +260,110 @@ subscription getMetricsThroughputULS {
         x
     }
 }
+subscription getMetricsDiskCOMs {
+    getMetricsDiskCOM {
+        y
+        x
+    }
+}
+query getMetricsRLC($data: MetricsInputDTO!) {
+    getMetricsRLC(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsRLCs {
+    getMetricsRLC {
+        y
+        x
+    }
+}
 
+query getMetricsERAB($data: MetricsInputDTO!) {
+    getMetricsERAB(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsERABs {
+    getMetricsERAB {
+        y
+        x
+    }
+}
+query getMetricsRRC($data: MetricsInputDTO!) {
+    getMetricsRRC(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsRRCs {
+    getMetricsRRC {
+        y
+        x
+    }
+}
 query getMetricsThroughputDL($data: MetricsInputDTO!) {
     getMetricsThroughputDL(data: $data) {
         y
         x
     }
 }
+subscription getMetricsMemoryCOMS {
+    getMetricsMemoryCOM {
+        y
+        x
+    }
+}
+query getMetricsCpuCOM($data: MetricsInputDTO!) {
+    getMetricsCpuCOM(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsPowers {
+    getMetricsPower {
+        y
+        x
+    }
+}
+subscription getMetricsDiskCOMs {
+    getMetricsDiskCOM {
+        y
+        x
+    }
+}
+query getMetricsPower($data: MetricsInputDTO!) {
+    getMetricsPower(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsDiskTRXs {
+    getMetricsDiskTRX {
+        y
+        x
+    }
+}
 
+query getMetricsMemoryCOM($data: MetricsInputDTO!) {
+    getMetricsMemoryCOM(data: $data) {
+        y
+        x
+    }
+}
+query getMetricsDiskTRX($data: MetricsInputDTO!) {
+    getMetricsDiskTRX(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsCpuCOMs {
+    getMetricsCpuCOM {
+        y
+        x
+    }
+}
 subscription getMetricsThroughputDLS {
     getMetricsThroughputDL {
         y
