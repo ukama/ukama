@@ -241,7 +241,7 @@ static inline int usys_stat(const char *pathname, struct stat *statbuf) {
  *         On error, -1
  */
 static inline int usys_lstat(const char *pathname, struct stat *statbuf) {
-    return stat(pathname, statbuf);
+    return lstat(pathname, statbuf);
 }
 
 /**
