@@ -233,12 +233,11 @@ const nodeNetwork = (): NetworkDto => {
 const softwareLogs = (): NodeAppsVersionLogsResponse[] => {
     const lorem = new LoremIpsum();
     const logs: NodeAppsVersionLogsResponse[] = [];
-    const start = Date.now() - 100000;
     for (let i = 5; i > 0; i--) {
         logs.push({
             version: `0.${i}`,
-            notes: lorem.generateParagraphs(3),
-            date: Date.now() - start * i,
+            notes: lorem.generateParagraphs(1),
+            date: Math.floor(Date.now() / 1000 - 100000 * i),
         });
     }
     return logs;
