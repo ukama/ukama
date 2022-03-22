@@ -14,6 +14,8 @@
 #define CPU_SOURCE "cpu"
 #define CORE_SOURCE "cpu_core"
 
+static SysCPUMetrics pCpuStat;
+
 /* Lookup for KPI in stat cfg */
 KPIConfig *kpi_lookup(MetricsCatConfig *cpuCfg, char *name) {
 
@@ -151,24 +153,47 @@ int sys_cpu_get_kpi_value(KPIConfig *kpi, SysCPUMetrics *cpuStat,
   return ret;
 }
 
+
+
 /* Push cpu usage */
 int sys_read_and_push_cpu_usage(MetricsCatConfig *cpuCfg,
                                 SysCPUMetrics *cpuStat,
                                 metricAddFunc addFunc) {
   int ret = RETURN_OK;
 
-  double usage = 100 - ((double)(cpuStat->cpuIdle * 100) /
-                        (cpuStat->cpuUser + cpuStat->cpuGuestNice +
-                         cpuStat->cpuSys + cpuStat->cpuIdle +
-                         cpuStat->cpuIowait + cpuStat->cpuHardirq +
-                         cpuStat->cpuSoftirq + cpuStat->cpuSteal +
-                         cpuStat->cpuGuest + cpuStat->cpuGuestNice));
+  unsigned long long  idle = cpuStat->cpuIowait + cpuStat->cpuIdle;
+
+  unsigned long long  nonidle = (cpuStat->cpuUser + cpuStat->cpuNice +
+          cpuStat->cpuSys + cpuStat->cpuHardirq +
+          cpuStat->cpuSoftirq + cpuStat->cpuSteal +
+          cpuStat->cpuGuest + cpuStat->cpuGuestNice);
+
+  unsigned long long total = idle +nonidle;
+
+  /* Calculate real time cpu usage based on htop */
+  unsigned long long  old_idle =  pCpuStat.cpuIdle + pCpuStat.cpuIowait;
+
+  unsigned long long  old_nonidle =  (pCpuStat.cpuUser + pCpuStat.cpuNice +
+          pCpuStat.cpuSys + pCpuStat.cpuHardirq +
+          pCpuStat.cpuSoftirq + pCpuStat.cpuSteal +
+          pCpuStat.cpuGuest + pCpuStat.cpuGuestNice);
+
+  unsigned long long old_total = old_idle + old_nonidle;
+
+  unsigned long long dtotal = total - old_total;
+
+  unsigned long long didle = idle - old_idle;
+
+  double cpu_per = ((double)(dtotal - didle)/dtotal)*100;
+
+  memcpy(&pCpuStat,cpuStat, sizeof(SysCPUMetrics));
 
   KPIConfig *kpi = kpi_lookup(cpuCfg, "cpu_usage");
   if (kpi) {
-    addFunc(kpi, &usage);
+	  addFunc(kpi, &cpu_per);
   }
-  log_trace("Metrics: Pushed cpu usage %lf to metrics server.", usage);
+  log_trace("Metrics: Pushed realtime cpu usage %lf to metrics server.", cpu_per);
+
   return ret;
 }
 

@@ -33,6 +33,8 @@ ifdef XGCCPATH
 XCC := $(XGCCPATH)$(XGCC)
 XLD := $(XGCCPATH)$(XLD)
 $(info XCC: $(XCC) XLD: $(XLD))
+else
+XCC := gcc
 endif
 
 # List of all recognized files found in the specified directories for test
