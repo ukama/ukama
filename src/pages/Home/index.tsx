@@ -185,9 +185,9 @@ const Home = () => {
                 if (uptimeMetric.data.length > 0) {
                     metrics[0].x >
                         uptimeMetric.data[uptimeMetric.data.length - 1].x &&
-                        setUptimeMetrics(prev => ({
-                            name: prev.name,
-                            data: [...prev.data, ...metrics],
+                        setUptimeMetrics(_prev => ({
+                            name: _prev.name,
+                            data: [..._prev.data, ...metrics],
                         }));
                 }
 
