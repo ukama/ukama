@@ -181,8 +181,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     cleanup:
     invt_mfg_exit();
     ldgr_exit();
-    /* TODO: Need to fix */
-    //invt_exit();
+    invt_exit();
     return ret;
 }
 

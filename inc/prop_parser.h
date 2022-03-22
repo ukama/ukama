@@ -17,12 +17,8 @@
 #include "property.h"
 #include "schema.h"
 
-
-#define MAX_JSON_DEVICE         32
-#define PROP_NAME_LENGTH        NAME_LENGTH
-
 typedef struct __attribute__((__packed__)) {
-    char name[PROP_NAME_LENGTH];
+    char name[NAME_LENGTH];
     Version ver;
     uint16_t propCount;
     Property* prop;

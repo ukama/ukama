@@ -21,4 +21,6 @@
 #define MAC_LENGTH                          18
 #define DESC_LENGTH                         24
 
+#define MAX_JSON_DEVICE                     32
+
 #endif /* INC_NODED_MACROS_H_ */

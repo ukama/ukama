@@ -106,11 +106,11 @@ DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error("Err(%d):PARSER: Memory exhausted while parsing DepProperty.",
-                  ret);
+                        ret);
         goto cleanup;
     }
 
-cleanup:
+    cleanup:
     if (ret) {
         usys_free(dProp);
         dProp = NULL;
@@ -213,9 +213,9 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
                 } else {
                     prop[iter].depProp = NULL;
                     usys_log_error(
-                        "Err(%d): PARSER:: Failed to parse Property[%d].depProp for"
-                        " %s device",
-                        iter, (*pMap)->name);
+                                    "Err(%d): PARSER:: Failed to parse Property[%d].depProp for"
+                                    " %s device",
+                                    iter, (*pMap)->name);
                 }
             } else {
                 prop[iter].depProp = NULL;
@@ -224,16 +224,16 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
         (*pMap)->propCount = iter;
         (*pMap)->prop = prop;
         usys_log_trace("PARSER:: %d property for device %s found in json.", iter,
-                  (*pMap)->name);
+                        (*pMap)->name);
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(
-            "Err(%d):PARSER:: Memory exhausted while parsing property table for %s device.",
-            ret, (*pMap)->name);
+                        "Err(%d):PARSER:: Memory exhausted while parsing property table for %s device.",
+                        ret, (*pMap)->name);
         goto cleanup;
     }
 
-cleanup:
+    cleanup:
     if (ret) {
         parser_free_prop(prop, iter);
     }
@@ -267,14 +267,14 @@ int prop_parse_dev(const JsonObj *jDevices) {
             Version *pVersion = parse_version(jDevVersion);
             if (pVersion) {
                 usys_log_info(
-                    "Parser:: Device %s is using json property version %d.%d.",
-                    pMap->name, pVersion->major, pVersion->minor);
+                                "Parser:: Device %s is using json property version %d.%d.",
+                                pMap->name, pVersion->major, pVersion->minor);
                 usys_memcpy(&pMap->ver, pVersion, sizeof(Version));
                 usys_free(pVersion);
             } else {
                 usys_log_error(
-                    "Err(%d): PARSER:: Failed to parse Device  %s property version.",
-                    ret, pMap->name);
+                                "Err(%d): PARSER:: Failed to parse Device  %s property version.",
+                                ret, pMap->name);
                 goto cleanup;
             }
 
@@ -284,13 +284,13 @@ int prop_parse_dev(const JsonObj *jDevices) {
             ret = prop_parse_table(jDevTable, &pMap);
             if (!ret) {
                 usys_log_trace(
-                    "Parser:: Device %s json property table parsing completed "
-                    "with %d properties.",
-                    pMap->name, pMap->propCount);
+                                "Parser:: Device %s json property table parsing completed "
+                                "with %d properties.",
+                                pMap->name, pMap->propCount);
             } else {
                 usys_log_error(
-                    "Err(%d): Parser:: Device %s json property table parsing failed.",
-                    pMap->name);
+                                "Err(%d): Parser:: Device %s json property table parsing failed.",
+                                pMap->name);
                 goto cleanup;
             }
 
@@ -299,14 +299,14 @@ int prop_parse_dev(const JsonObj *jDevices) {
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
             usys_log_error(
-                "Err(%d):PARSER:: Memory exhausted while parsing Device table.",
-                ret);
+                            "Err(%d):PARSER:: Memory exhausted while parsing Device table.",
+                            ret);
             goto cleanup;
         }
         usys_log_trace("PARSER:: %d device read from json.", count);
     }
 
-cleanup:
+    cleanup:
     if (ret) {
         parser_free_pMap(&pMap);
     }
@@ -320,7 +320,7 @@ int prop_parse_json(char *propBuff) {
     const JsonObj *jName = NULL;
     const JsonObj *jDevice = NULL;
     Property *pProp = NULL;
-    char name[PROP_NAME_LENGTH] = { '\0' };
+    char name[NAME_LENGTH] = { '\0' };
 
     jProp = json_loads(propBuff, JSON_DECODE_ANY, jErr);
     if (!jProp) {
@@ -332,9 +332,9 @@ int prop_parse_json(char *propBuff) {
 
     /* name */
     if (!parser_read_string_object_wrapper(jProp,
-                       JTAG_NAME, name)) {
-           goto cleanup;
-       }
+                    JTAG_NAME, name)) {
+        goto cleanup;
+    }
 
 
     /* Devices */
@@ -345,8 +345,8 @@ int prop_parse_json(char *propBuff) {
             usys_log_trace("PARSER: Property table parsed for Device %s.", name);
         } else {
             usys_log_error(
-                "Err(%d): PARSER: Property table not parsed for Device %s.",
-                ret, name);
+                            "Err(%d): PARSER: Property table not parsed for Device %s.",
+                            ret, name);
             goto cleanup;
         }
     } else {
@@ -354,7 +354,7 @@ int prop_parse_json(char *propBuff) {
         usys_log_error("Err(%d): PARSER: %s not parsed from JSON.", ret, name);
     }
 
-cleanup:
+    cleanup:
     json_decref(jProp);
     return ret;
 }
@@ -407,16 +407,15 @@ int prop_parser_init(char *ip) {
         off_t size = read_mfg_data_size(fname);
         char *schemabuff = usys_zmalloc((sizeof(char) * size) + 1);
         if (schemabuff) {
-            usys_memset(schemabuff, '\0', (sizeof(char) * size) + 1);
             ret = read_mfg_data(fname, schemabuff, size);
             if (ret == size) {
                 usys_log_trace(
-                    "PARSER:: File %s read manufacturing data of %d bytes.",
-                    fname, size);
+                                "PARSER:: File %s read manufacturing data of %d bytes.",
+                                fname, size);
                 ret = prop_parse_json(schemabuff);
                 if (ret) {
                     usys_log_error("Err(%d): PARSER:: Parsing failed for %s.", ret,
-                              fname);
+                                    fname);
                 } else {
                     usys_log_trace("PARSER: Parsing completed for %s.", fname);
                 }

@@ -180,7 +180,7 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
                         &modDevOwn)) {
             goto cleanup;
         } else {
-            if (!usys_strcmp(modMode, JTAG_DEV_OWNER)) {
+            if (!usys_strcmp(modDevOwn, JTAG_DEV_OWNER)) {
                 pHeader->modDevOwn = MOD_DEV_OWNER;
             } else {
                 pHeader->modDevOwn = MOD_DEV_LENDER;
@@ -752,7 +752,7 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
             jProdSWVer = json_object_get(jModuleInfo, JTAG_PROD_SW_VERSION);
             Version *pVersion = parse_version(jProdSWVer);
             if (pVersion) {
-                usys_memcpy(&pModuleInfo->swVer, pVersion, sizeof(Version));
+                usys_memcpy(&pModuleInfo->pSwVer, pVersion, sizeof(Version));
                 usys_free(pVersion);
             } else {
                 usys_log_error("Failed to parse UnitInfo.prodSwVersion.");
@@ -1312,7 +1312,7 @@ int parser_schema_init(JSONInput *ip) {
                     /* Parse the mfg data to store schema */
                     ret = parse_mfg_schema(schemabuff, iter);
                     if (ret) {
-                        usys_log_error("Err(%d): PARSER:: Parsing failed for %s.",
+                        usys_log_error("Err(%d):PARSER: Parsing failed for %s.",
                                         ret, fname);
                     } else {
                         usys_log_debug("PARSER: Parsing completed for %s.",

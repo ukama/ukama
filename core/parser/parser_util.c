@@ -99,11 +99,10 @@ bool parser_read_string_value(JsonObj *obj, char *svalue) {
 
     /* Check if object is string */
     if (json_is_string(obj)) {
-        len = json_string_length(obj);
 
-        svalue = usys_malloc(sizeof(char) * len);
+        len = json_string_length(obj);
+        svalue = usys_zmalloc(sizeof(char) * (len+1));
         if (svalue) {
-            usys_memset(svalue, '\0', sizeof(char) * len);
             const char *str = json_string_value(obj);
             usys_strcpy(svalue, str);
             ret = USYS_TRUE;
@@ -124,15 +123,15 @@ bool parser_read_string_object(const JsonObj *obj, const char* key,
 
     /* Check if object is number */
     if (jStrObj && json_is_string(jStrObj)) {
-        int length = json_string_length(jStrObj);
 
-        *svalue = usys_malloc(sizeof(char) * length);
+        int length = json_string_length(jStrObj);
+        *svalue = usys_zmalloc(sizeof(char) * (length+1));
         if (*svalue) {
-            usys_memset(*svalue, '\0', sizeof(char) * length);
             const char *str = json_string_value(jStrObj);
             usys_strcpy(*svalue, str);
             ret = USYS_TRUE;
         }
+
     }
 
     return ret;
