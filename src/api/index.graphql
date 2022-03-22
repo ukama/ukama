@@ -41,6 +41,30 @@ subscription getLatestDataBill {
         billDue
     }
 }
+query getMetricsPaPower($data: MetricsInputDTO!) {
+    getMetricsPaPower(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsPaPowers {
+    getMetricsPaPower {
+        y
+        x
+    }
+}
+subscription getMetricsRxPowers {
+    getMetricsRxPower {
+        y
+        x
+    }
+}
+query getMetricsRxPower($data: MetricsInputDTO!) {
+    getMetricsRxPower(data: $data) {
+        y
+        x
+    }
+}
 
 query getAlerts($data: PaginationDto!) {
     getAlerts(data: $data) {

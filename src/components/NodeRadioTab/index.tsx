@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { TooltipsText } from "../../constants";
+import { NodeRadioTabConfigure, TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
 import ApexLineChartIntegration from "../ApexLineChart";
-import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
+import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
+import { NodeDto } from "../../generated";
 interface INodeRadioTab {
     loading: boolean;
-    txMetrics: any;
-    rxMetrics: any;
-    paMetrics: any;
+    txPowerMetrics: any;
+    rxPowerMetrics: any;
+    paPowerMetrics: any;
+    selectedNode: NodeDto | undefined;
 }
 const NodeRadioTab = ({
     loading,
-    rxMetrics,
-    paMetrics,
-    txMetrics,
+    rxPowerMetrics,
+    txPowerMetrics,
+    selectedNode,
+    paPowerMetrics,
 }: INodeRadioTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
@@ -52,21 +55,39 @@ const NodeRadioTab = ({
             <Grid item lg={isCollapse ? 11 : 9} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Stack spacing={1}>
-                        <ApexLineChartIntegration
+                        {/* <ApexLineChartIntegration
                             hasData={true}
-                            data={txMetrics}
+                            data={txPowerMetrics}
                             name={"TX Power"}
                         />
                         <ApexLineChartIntegration
                             hasData={true}
-                            data={rxMetrics}
+                            data={rxPowerMetrics}
                             name={"RX Power"}
-                        />
-                        <ApexLineChartIntegration
+                        /> */}
+                        {/* <ApexLineChartIntegration
                             hasData={true}
-                            data={paMetrics}
+                            data={paPowerMetrics}
                             name={"PA Power"}
-                        />
+                        /> */}
+                        {NodeRadioTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][1].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeRadioTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][1].name
+                                }
+                                data={paPowerMetrics}
+                            />
+                        )}
+                        {/* <ApexStackAreaChart
+                            hasData={true}
+                            name={paPowerMetrics}
+                            data={paPowerMetrics}
+                        /> */}
                         {/* <StackedAreaChart hasData={true} title={"TX Power"} />
                         <StackedAreaChart hasData={true} title={"RX Power "} />
                         <StackedAreaChart hasData={true} title={"PA Power "} /> */}

@@ -855,6 +855,58 @@ export type GetLatestDataBillSubscription = {
     };
 };
 
+export type GetMetricsPaPowerQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsPaPowerQuery = {
+    __typename?: "Query";
+    getMetricsPaPower: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsPaPowersSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsPaPowersSubscription = {
+    __typename?: "Subscription";
+    getMetricsPaPower: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsRxPowersSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsRxPowersSubscription = {
+    __typename?: "Subscription";
+    getMetricsRxPower: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsRxPowerQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsRxPowerQuery = {
+    __typename?: "Query";
+    getMetricsRxPower: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
 export type GetAlertsQueryVariables = Exact<{
     data: PaginationDto;
 }>;
@@ -1868,6 +1920,206 @@ export type GetLatestDataBillSubscriptionHookResult = ReturnType<
 >;
 export type GetLatestDataBillSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestDataBillSubscription>;
+export const GetMetricsPaPowerDocument = gql`
+    query getMetricsPaPower($data: MetricsInputDTO!) {
+        getMetricsPaPower(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsPaPowerQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsPaPowerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsPaPowerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsPaPowerQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsPaPowerQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsPaPowerQuery,
+        GetMetricsPaPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsPaPowerQuery,
+        GetMetricsPaPowerQueryVariables
+    >(GetMetricsPaPowerDocument, options);
+}
+export function useGetMetricsPaPowerLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsPaPowerQuery,
+        GetMetricsPaPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsPaPowerQuery,
+        GetMetricsPaPowerQueryVariables
+    >(GetMetricsPaPowerDocument, options);
+}
+export type GetMetricsPaPowerQueryHookResult = ReturnType<
+    typeof useGetMetricsPaPowerQuery
+>;
+export type GetMetricsPaPowerLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsPaPowerLazyQuery
+>;
+export type GetMetricsPaPowerQueryResult = Apollo.QueryResult<
+    GetMetricsPaPowerQuery,
+    GetMetricsPaPowerQueryVariables
+>;
+export const GetMetricsPaPowersDocument = gql`
+    subscription getMetricsPaPowers {
+        getMetricsPaPower {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsPaPowersSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsPaPowersSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsPaPowersSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsPaPowersSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsPaPowersSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsPaPowersSubscription,
+        GetMetricsPaPowersSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsPaPowersSubscription,
+        GetMetricsPaPowersSubscriptionVariables
+    >(GetMetricsPaPowersDocument, options);
+}
+export type GetMetricsPaPowersSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsPaPowersSubscription
+>;
+export type GetMetricsPaPowersSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsPaPowersSubscription>;
+export const GetMetricsRxPowersDocument = gql`
+    subscription getMetricsRxPowers {
+        getMetricsRxPower {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsRxPowersSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsRxPowersSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsRxPowersSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsRxPowersSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsRxPowersSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsRxPowersSubscription,
+        GetMetricsRxPowersSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsRxPowersSubscription,
+        GetMetricsRxPowersSubscriptionVariables
+    >(GetMetricsRxPowersDocument, options);
+}
+export type GetMetricsRxPowersSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsRxPowersSubscription
+>;
+export type GetMetricsRxPowersSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsRxPowersSubscription>;
+export const GetMetricsRxPowerDocument = gql`
+    query getMetricsRxPower($data: MetricsInputDTO!) {
+        getMetricsRxPower(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsRxPowerQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsRxPowerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsRxPowerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsRxPowerQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsRxPowerQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsRxPowerQuery,
+        GetMetricsRxPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsRxPowerQuery,
+        GetMetricsRxPowerQueryVariables
+    >(GetMetricsRxPowerDocument, options);
+}
+export function useGetMetricsRxPowerLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsRxPowerQuery,
+        GetMetricsRxPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsRxPowerQuery,
+        GetMetricsRxPowerQueryVariables
+    >(GetMetricsRxPowerDocument, options);
+}
+export type GetMetricsRxPowerQueryHookResult = ReturnType<
+    typeof useGetMetricsRxPowerQuery
+>;
+export type GetMetricsRxPowerLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsRxPowerLazyQuery
+>;
+export type GetMetricsRxPowerQueryResult = Apollo.QueryResult<
+    GetMetricsRxPowerQuery,
+    GetMetricsRxPowerQueryVariables
+>;
 export const GetAlertsDocument = gql`
     query getAlerts($data: PaginationDto!) {
         getAlerts(data: $data) {

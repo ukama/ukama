@@ -55,7 +55,11 @@ import {
     useGetNodesByOrgLazyQuery,
     useGetMetricsTxPowerLazyQuery,
     useGetMetricsTxPowersSubscription,
+    useGetMetricsPaPowerLazyQuery,
+    useGetMetricsRxPowersSubscription,
+    useGetMetricsPaPowersSubscription,
     Org_Node_State,
+    useGetMetricsRxPowerLazyQuery,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading, user } from "../../recoil";
@@ -103,6 +107,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["DISK-COM"]));
+    const [paPowerMetrics, setPaPowerMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["PA POWER"]));
     const [diskTrxMatrics, setDiskTrxMatrics] = useState<
         {
             name: string;
@@ -122,6 +132,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["CPU-COM"]));
+    const [rxPowerMetrics, setRxPowerMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RX POWER"]));
     const [rlsDropRateMetrics, setRlsDropRateMetrics] = useState<
         {
             name: string;
@@ -146,7 +162,7 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Attached"]));
-    const [txMetrics, setTxMetrics] = useState<
+    const [txPowerMetrics, setTxPowerMetrics] = useState<
         {
             name: string;
             data: MetricDto[];
@@ -244,6 +260,72 @@ const Nodes = () => {
                         data: [
                             ...item.data,
                             ...(res.subscriptionData.data?.getMetricsCpuCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsRxPower,
+        { data: rxPowerMetricsRes, refetch: rxPowerMetricsRefetch },
+    ] = useGetMetricsRxPowerLazyQuery();
+
+    useGetMetricsRxPowersSubscription({
+        skip: selectedTab !== 3,
+        onSubscriptionData: res => {
+            setRxPowerMetrics(
+                rxPowerMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsRxPower ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsPaPower,
+        { data: paPowerMetricsRes, refetch: paPowerMetricsRefetch },
+    ] = useGetMetricsPaPowerLazyQuery();
+
+    useGetMetricsPaPowersSubscription({
+        skip: selectedTab !== 3,
+        onSubscriptionData: res => {
+            setPaPowerMetrics(
+                paPowerMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsPaPower ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsTxPower,
+        { data: txPowerMetricsRes, refetch: txPowerMetricsRefetch },
+    ] = useGetMetricsTxPowerLazyQuery();
+
+    useGetMetricsTxPowersSubscription({
+        skip: selectedTab !== 3,
+        onSubscriptionData: res => {
+            setTxPowerMetrics(
+                txPowerMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsTxPower ||
                                 []),
                         ],
                     };
@@ -712,8 +794,109 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+        } else if (selectedTab === 3) {
+            getMetricsPaPower({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsTxPower({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsRxPower({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         }
     }, [selectedTab, selectedNode]);
+    useEffect(() => {
+        if (
+            selectedTab == 3 &&
+            paPowerMetricsRes &&
+            paPowerMetricsRes.getMetricsPaPower.length > 0
+        ) {
+            if (!isMetricData(paPowerMetrics)) {
+                setPaPowerMetrics(
+                    paPowerMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(paPowerMetricsRes.getMetricsPaPower || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            paPowerMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    paPowerMetricsRes.getMetricsPaPower[
+                        paPowerMetricsRes.getMetricsPaPower.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [paPowerMetricsRes]);
+    useEffect(() => {
+        if (
+            selectedTab == 2 &&
+            txPowerMetricsRes &&
+            txPowerMetricsRes.getMetricsTxPower.length > 0
+        ) {
+            if (!isMetricData(txPowerMetrics)) {
+                setTxPowerMetrics(
+                    txPowerMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(txPowerMetricsRes.getMetricsTxPower || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            txPowerMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    txPowerMetricsRes.getMetricsTxPower[
+                        txPowerMetricsRes.getMetricsTxPower.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [txPowerMetricsRes]);
+    useEffect(() => {
+        if (
+            selectedTab == 3 &&
+            rxPowerMetricsRes &&
+            rxPowerMetricsRes.getMetricsRxPower.length > 0
+        ) {
+            if (!isMetricData(rxPowerMetrics)) {
+                setRxPowerMetrics(
+                    rxPowerMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(rxPowerMetricsRes.getMetricsRxPower || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            rxPowerMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    rxPowerMetricsRes.getMetricsRxPower[
+                        rxPowerMetricsRes.getMetricsRxPower.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [rxPowerMetricsRes]);
+
     useEffect(() => {
         if (
             selectedTab == 2 &&
@@ -1365,10 +1548,11 @@ const Nodes = () => {
                             index={3}
                         >
                             <NodeRadioTab
+                                selectedNode={selectedNode}
                                 loading={isLoading || nodeDetailLoading}
-                                txMetrics={txMetrics}
-                                rxMetrics={powerMetric}
-                                paMetrics={powerMetric}
+                                txPowerMetrics={txPowerMetrics}
+                                rxPowerMetrics={rxPowerMetrics}
+                                paPowerMetrics={paPowerMetrics}
                             />
                         </TabPanel>
                         <TabPanel
