@@ -19,10 +19,23 @@ import {
     useGetNodeDetailsQuery,
     useGetNodeAppsQuery,
     useGetMetricsThroughputUlLazyQuery,
+    useGetMetricsSubAttachedLazyQuery,
+    useGetMetricsSubAttachedsSubscription,
     useGetMetricsThroughputDlLazyQuery,
     useGetMetricsThroughputUlsSubscription,
     useGetMetricsThroughputDlsSubscription,
     useGetMetricsCpuTrxLazyQuery,
+    useGetMetricsEraBsSubscription,
+    useGetMetricsRlCsSubscription,
+    useGetMetricsCpuCoMsSubscription,
+    useGetMetricsCpuComLazyQuery,
+    useGetMetricsErabLazyQuery,
+    useGetMetricsRrCsSubscription,
+    useGetMetricsDiskCoMsSubscription,
+    useGetMetricsDiskComLazyQuery,
+    useGetMetricsRlcLazyQuery,
+    useGetMetricsMemoryComsSubscription,
+    useGetMetricsMemoryComLazyQuery,
     useGetMetricsMemoryTrxLazyQuery,
     useGetMetricsUptimeLazyQuery,
     useGetMetricsUptimeSSubscription,
@@ -35,6 +48,11 @@ import {
     useGetMetricsTempTrxsSubscription,
     useGetMetricsTempComLazyQuery,
     useGetMetricsTempComsSubscription,
+    useGetMetricsRrcLazyQuery,
+    useGetMetricsDiskTrXsSubscription,
+    useGetMetricsDiskTrxLazyQuery,
+    useGetMetricsSubActiveLazyQuery,
+    useGetMetricsSubActivesSubscription,
     useGetNodesByOrgLazyQuery,
     Org_Node_State,
 } from "../../generated";
@@ -73,6 +91,43 @@ const Nodes = () => {
         status: Org_Node_State.Undefined,
     });
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
+    const [rrcCnxSuccessMetrix, setRrcCnxSuccessMetrix] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RRC CNX Success"]));
+    const [diskComMetrics, setDiskComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["DISK-COM"]));
+    const [diskTrxMatrics, setDiskTrxMatrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["DISK-COM"]));
+    const [erabDropRateMetrix, setErabDropRateMetrix] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["ERAB Drop Rate"]));
+
+    const [cpuComMetrics, setCpuComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["CPU-COM"]));
+    const [rlsDropRateMetrics, setRlsDropRateMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["RLS Drop Rate"]));
     const [uptimeMetric, setUptimeMetrics] = useState<
         {
             name: string;
@@ -85,6 +140,18 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["CPU (TRX)"]));
+    const [attachedSubcriberMetrics, setAttachedSubcriberMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Attached"]));
+    const [activeSubcriberMetrics, setActiveSubcriberMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["Active"]));
     const [memoryTrxMetric, setMemoryTrxMetric] = useState<
         {
             name: string;
@@ -121,7 +188,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Temp. (COM)"]));
-
+    const [memoryComMetrics, setMemoryComMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["MEMORY (COM)"]));
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
 
@@ -151,10 +223,190 @@ const Nodes = () => {
 
     const { data: nodeDetailRes, loading: nodeDetailLoading } =
         useGetNodeDetailsQuery();
+    const [
+        getMetricsCpuCOM,
+        { data: cpuComMetricsRes, refetch: cpuComMetricsRefetch },
+    ] = useGetMetricsCpuComLazyQuery();
+
+    useGetMetricsCpuCoMsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setCpuComMetrics(
+                cpuComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsCpuCOM ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsDiskTRX,
+        { data: diskTrxMetricsRes, refetch: diskTrxMetricsResRefetch },
+    ] = useGetMetricsDiskTrxLazyQuery();
+
+    useGetMetricsDiskTrXsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setDiskTrxMatrics(
+                diskTrxMatrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsDiskTRX ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsMemoryCOM,
+        { data: metricsMemoryComres, refetch: metricsMemoryComRefetch },
+    ] = useGetMetricsMemoryComLazyQuery();
+
+    useGetMetricsMemoryComsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setMemoryComMetrics(
+                memoryComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsMemoryCOM || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
+    const [getMetricsRLC, { data: metricsRLCres, refetch: metricsRlcRefetch }] =
+        useGetMetricsRlcLazyQuery();
+
+    useGetMetricsRlCsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setRlsDropRateMetrics(
+                rlsDropRateMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsRLC || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+
+    const [
+        getMetricsERAB,
+        { data: metricsERABres, refetch: metricsERABresRefetch },
+    ] = useGetMetricsErabLazyQuery();
+
+    useGetMetricsEraBsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setErabDropRateMetrix(
+                erabDropRateMetrix.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsERAB ||
+                                []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsRRC,
+        { data: metricsRRCRes, refetch: metricsRRCResRefetch },
+    ] = useGetMetricsRrcLazyQuery();
+
+    useGetMetricsRrCsSubscription({
+        skip: selectedTab !== 1,
+        onSubscriptionData: res => {
+            setRrcCnxSuccessMetrix(
+                rrcCnxSuccessMetrix.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsRRC || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const { data: nodeAppsRes, loading: nodeAppsLoading } =
         useGetNodeAppsQuery();
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
+    const [
+        getMetricsSubAttached,
+        {
+            data: subscriberAttachedmetricRes,
+            refetch: subscriberAttachedmetricRefetch,
+        },
+    ] = useGetMetricsSubAttachedLazyQuery();
+
+    useGetMetricsSubAttachedsSubscription({
+        skip: selectedTab !== 0,
+        onSubscriptionData: res => {
+            setAttachedSubcriberMetrics(
+                attachedSubcriberMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsSubAttached || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsSubActive,
+        {
+            data: subscriberActiveMetricRes,
+            refetch: subscriberActiveMetricRefetch,
+        },
+    ] = useGetMetricsSubActiveLazyQuery();
+
+    useGetMetricsSubActivesSubscription({
+        skip: selectedTab !== 0,
+        onSubscriptionData: res => {
+            setActiveSubcriberMetrics(
+                activeSubcriberMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data
+                                ?.getMetricsSubActive || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
     const [
         getMetricThroughtpuUl,
         { data: metricThroughtputUlRes, refetch: metricThroughtputUlRefetch },
@@ -239,6 +491,28 @@ const Nodes = () => {
                             ...item.data,
                             ...(res.subscriptionData.data
                                 ?.getMetricsMemoryTRX || []),
+                        ],
+                    };
+                })
+            );
+        },
+    });
+    const [
+        getMetricsDiskCOM,
+        { data: metricsDiskComRes, refetch: metricsDiskComRefetch },
+    ] = useGetMetricsDiskComLazyQuery();
+
+    useGetMetricsDiskCoMsSubscription({
+        skip: selectedTab !== 2,
+        onSubscriptionData: res => {
+            setDiskComMetrics(
+                diskComMetrics.map(item => {
+                    return {
+                        name: item.name,
+                        data: [
+                            ...item.data,
+                            ...(res.subscriptionData.data?.getMetricsDiskCOM ||
+                                []),
                         ],
                     };
                 })
@@ -359,8 +633,28 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsSubAttached({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsSubActive({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         } else if (selectedTab === 1) {
             getMetricThroughtpuUl({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsERAB({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsRLC({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -370,8 +664,23 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsRRC({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         } else if (selectedTab === 2) {
             getMetricCpuTrx({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsDiskCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+            getMetricsDiskTRX({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -386,9 +695,131 @@ const Nodes = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+            getMetricsCpuCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+
+            getMetricsMemoryCOM({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
         }
     }, [selectedTab, selectedNode]);
-
+    useEffect(() => {
+        if (
+            selectedTab == 2 &&
+            diskTrxMetricsRes &&
+            diskTrxMetricsRes.getMetricsDiskTRX.length > 0
+        ) {
+            if (!isMetricData(diskTrxMatrics)) {
+                setDiskTrxMatrics(
+                    diskTrxMatrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(diskTrxMetricsRes.getMetricsDiskTRX || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            diskTrxMetricsResRefetch({
+                ...getMetricPollingCallPayload(
+                    diskTrxMetricsRes.getMetricsDiskTRX[
+                        diskTrxMetricsRes.getMetricsDiskTRX.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [diskTrxMetricsRes]);
+    useEffect(() => {
+        if (
+            selectedTab == 1 &&
+            metricsERABres &&
+            metricsERABres.getMetricsERAB.length > 0
+        ) {
+            if (!isMetricData(uptimeMetric)) {
+                setErabDropRateMetrix(
+                    erabDropRateMetrix.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsERABres.getMetricsERAB || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsERABresRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsERABres.getMetricsERAB[
+                        metricsERABres.getMetricsERAB.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsERABres]);
+    useEffect(() => {
+        if (
+            selectedTab == 2 &&
+            metricsDiskComRes &&
+            metricsDiskComRes.getMetricsDiskCOM.length > 0
+        ) {
+            if (!isMetricData(cpuComMetrics)) {
+                setDiskComMetrics(
+                    diskComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsDiskComRes.getMetricsDiskCOM || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsDiskComRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsDiskComRes.getMetricsDiskCOM[
+                        metricsDiskComRes.getMetricsDiskCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsDiskComRes]);
+    useEffect(() => {
+        if (
+            selectedTab !== 2 &&
+            cpuComMetricsRes &&
+            cpuComMetricsRes.getMetricsCpuCOM.length > 0
+        ) {
+            if (!isMetricData(cpuComMetrics)) {
+                setCpuComMetrics(
+                    cpuComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(cpuComMetricsRes.getMetricsCpuCOM || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            cpuComMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    cpuComMetricsRes.getMetricsCpuCOM[
+                        cpuComMetricsRes.getMetricsCpuCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [cpuComMetricsRes]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -417,7 +848,35 @@ const Nodes = () => {
             });
         }
     }, [metricUptimeTrxRes]);
-
+    useEffect(() => {
+        if (
+            selectedTab !== 2 &&
+            metricsMemoryComres &&
+            metricsMemoryComres.getMetricsMemoryCOM.length > 0
+        ) {
+            if (!isMetricData(memoryComMetrics)) {
+                setMemoryComMetrics(
+                    memoryComMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsMemoryComres.getMetricsMemoryCOM ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsMemoryComRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsMemoryComres.getMetricsMemoryCOM[
+                        metricsMemoryComres.getMetricsMemoryCOM.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsMemoryComres]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -447,6 +906,34 @@ const Nodes = () => {
         }
     }, [metricTempTrxRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab == 1 &&
+            metricsRLCres &&
+            metricsRLCres.getMetricsRLC.length > 0
+        ) {
+            if (!isMetricData(rlsDropRateMetrics)) {
+                setRlsDropRateMetrics(
+                    rlsDropRateMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsRLCres.getMetricsRLC || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsRlcRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsRLCres.getMetricsRLC[
+                        metricsRLCres.getMetricsRLC.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsRLCres]);
     useEffect(() => {
         if (
             selectedTab === 0 &&
@@ -535,7 +1022,65 @@ const Nodes = () => {
             });
         }
     }, [metricThroughtputDlRes]);
-
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            subscriberAttachedmetricRes &&
+            subscriberAttachedmetricRes.getMetricsSubAttached.length > 0
+        ) {
+            if (!isMetricData(attachedSubcriberMetrics)) {
+                setAttachedSubcriberMetrics(
+                    attachedSubcriberMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(subscriberAttachedmetricRes.getMetricsSubAttached ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            subscriberAttachedmetricRefetch({
+                ...getMetricPollingCallPayload(
+                    subscriberAttachedmetricRes.getMetricsSubAttached[
+                        subscriberAttachedmetricRes.getMetricsSubAttached
+                            .length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [subscriberAttachedmetricRes]);
+    useEffect(() => {
+        if (
+            selectedTab === 0 &&
+            subscriberActiveMetricRes &&
+            subscriberActiveMetricRes.getMetricsSubActive.length > 0
+        ) {
+            if (!isMetricData(activeSubcriberMetrics)) {
+                setActiveSubcriberMetrics(
+                    attachedSubcriberMetrics.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(subscriberActiveMetricRes.getMetricsSubActive ||
+                                    []),
+                            ],
+                        };
+                    })
+                );
+            }
+            subscriberActiveMetricRefetch({
+                ...getMetricPollingCallPayload(
+                    subscriberActiveMetricRes.getMetricsSubActive[
+                        subscriberActiveMetricRes.getMetricsSubActive.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [subscriberActiveMetricRes]);
     useEffect(() => {
         if (
             selectedTab === 2 &&
@@ -624,6 +1169,34 @@ const Nodes = () => {
         }
     }, [metricPowerRes]);
 
+    useEffect(() => {
+        if (
+            selectedTab == 1 &&
+            metricsRRCRes &&
+            metricsRRCRes.getMetricsRRC.length > 0
+        ) {
+            if (!isMetricData(rrcCnxSuccessMetrix)) {
+                setRrcCnxSuccessMetrix(
+                    rrcCnxSuccessMetrix.map(item => {
+                        return {
+                            name: item.name,
+                            data: [
+                                ...item.data,
+                                ...(metricsRRCRes.getMetricsRRC || []),
+                            ],
+                        };
+                    })
+                );
+            }
+            metricsRRCResRefetch({
+                ...getMetricPollingCallPayload(
+                    metricsRRCRes.getMetricsRRC[
+                        metricsRRCRes.getMetricsRRC.length - 1
+                    ].x
+                ),
+            });
+        }
+    }, [metricsRRCRes]);
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
 
@@ -736,6 +1309,10 @@ const Nodes = () => {
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 uptimeMetrics={uptimeMetric}
+                                attachedSubcriberMetrics={
+                                    attachedSubcriberMetrics
+                                }
+                                activeSubcriberMetrics={activeSubcriberMetrics}
                                 tempTrxMetric={tempTrxMetric}
                                 tempComMetric={tempComMetric}
                                 handleUpdateNode={handleUpdateNode}
@@ -760,6 +1337,9 @@ const Nodes = () => {
                                 loading={isLoading || nodeDetailLoading}
                                 throughpuULMetric={throughputULMetric}
                                 throughpuDLMetric={throughputDLMetric}
+                                rrcCnxSuccessMetrix={rrcCnxSuccessMetrix}
+                                erabDropRateMetrix={erabDropRateMetrix}
+                                rlsDropRateMetrics={rlsDropRateMetrics}
                             />
                         </TabPanel>
                         <TabPanel
@@ -772,6 +1352,11 @@ const Nodes = () => {
                                 cpuTrxMetric={cpuTrxMetric}
                                 memoryTrxMetric={memoryTrxMetric}
                                 loading={isLoading || nodeDetailLoading}
+                                memoryComMetrics={memoryComMetrics}
+                                cpuComMetrics={cpuComMetrics}
+                                diskTrxMatrics={diskTrxMatrics}
+                                diskComMetrics={diskComMetrics}
+                                powerMetrics={powerMetric}
                             />
                         </TabPanel>
                         <TabPanel

@@ -59,7 +59,7 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
     const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(true);
+        useState<boolean>(!!orgId);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);

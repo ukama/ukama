@@ -33,9 +33,6 @@ const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
     credentials: "include",
-    headers: {
-        Authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-    },
 });
 
 export default client;

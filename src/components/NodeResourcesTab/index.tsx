@@ -1,22 +1,27 @@
-import {
-    NodeStatItem,
-    StackedAreaChart,
-    NodeStatsContainer,
-    ApexStackAreaChart,
-} from "..";
 import { useState } from "react";
 import { NodeDto } from "../../generated";
-import { Paper, Grid, Typography, Stack } from "@mui/material";
+import { Paper, Grid, Stack } from "@mui/material";
+import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
     loading: boolean;
     cpuTrxMetric: any;
     memoryTrxMetric: any;
+    diskTrxMatrics: any;
+    powerMetrics: any;
+    diskComMetrics: any;
+    memoryComMetrics: any;
+    cpuComMetrics: any;
     selectedNode: NodeDto | undefined;
 }
 const NodeResourcesTab = ({
     loading,
     selectedNode,
+    diskComMetrics = [],
+    diskTrxMatrics = [],
+    cpuComMetrics = [],
+    powerMetrics = [],
+    memoryComMetrics = [],
     cpuTrxMetric = [],
     memoryTrxMetric = [],
 }: INodeResourcesTab) => {
@@ -135,9 +140,8 @@ const NodeResourcesTab = ({
                 </NodeStatsContainer>
             </Grid>
             <Grid item lg={isCollapse ? 11 : 8} md xs>
-                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
-                    <Stack spacing={2}>
-                        <Typography variant="h6">Resources</Typography>
+                <Paper sx={{ p: 3, width: "100%" }}>
+                    <Stack spacing={4}>
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][0].show && (
@@ -154,13 +158,14 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][1].show && (
-                            <StackedAreaChart
+                            <ApexStackAreaChart
                                 hasData={true}
-                                title={
+                                name={
                                     NodeResourcesTabConfigure[
                                         (selectedNode?.type as string) || ""
                                     ][1].name
                                 }
+                                data={memoryComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
@@ -179,49 +184,53 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][3].show && (
-                            <StackedAreaChart
+                            <ApexStackAreaChart
                                 hasData={true}
-                                title={
+                                name={
                                     NodeResourcesTabConfigure[
                                         (selectedNode?.type as string) || ""
                                     ][3].name
                                 }
+                                data={cpuComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][4].show && (
-                            <StackedAreaChart
+                            <ApexStackAreaChart
                                 hasData={true}
-                                title={
+                                name={
                                     NodeResourcesTabConfigure[
                                         (selectedNode?.type as string) || ""
                                     ][4].name
                                 }
+                                data={diskTrxMatrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][5].show && (
-                            <StackedAreaChart
+                            <ApexStackAreaChart
                                 hasData={true}
-                                title={
+                                name={
                                     NodeResourcesTabConfigure[
                                         (selectedNode?.type as string) || ""
                                     ][5].name
                                 }
+                                data={diskComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][6].show && (
-                            <StackedAreaChart
+                            <ApexStackAreaChart
                                 hasData={true}
-                                title={
+                                name={
                                     NodeResourcesTabConfigure[
                                         (selectedNode?.type as string) || ""
                                     ][6].name
                                 }
+                                data={powerMetrics}
                             />
                         )}
                     </Stack>
