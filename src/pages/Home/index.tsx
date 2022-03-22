@@ -8,6 +8,7 @@ import {
     ActivationDialog,
     DataTableWithOptions,
     UserActivationDialog,
+    SoftwareUpdateModal,
 } from "../../components";
 import { useTranslation } from "react-i18next";
 import {
@@ -63,6 +64,7 @@ const Home = () => {
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
+    const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -299,6 +301,9 @@ const Home = () => {
                 return setBillingStatusFilter(value as Data_Bill_Filter);
         }
     };
+    const handleCloseSoftwareUpdate = () => {
+        setIsSoftwaUpdate(false);
+    };
 
     const getStatus = (key: string) => {
         switch (key) {
@@ -335,7 +340,9 @@ const Home = () => {
     const handleAddNode = (value: any) => {
         setIsAddNode(true);
     };
-
+    const onUpdateAllNodes = () => {
+        /* TODO: Handle Node Updates */
+    };
     const handleActivationSubmit = () => {
         /* Handle submit activation action */
     };
@@ -343,6 +350,7 @@ const Home = () => {
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
+        setIsSoftwaUpdate(true);
         /* Handle node update  action */
     };
 
@@ -477,6 +485,16 @@ const Home = () => {
                 dialogTitle={t("DIALOG_MESSAGE.SimActivationDialogTitle")}
                 subTitle={t("DIALOG_MESSAGE.SimActivationDialogContent")}
                 handleClose={handleSimActivateClose}
+            />
+            <SoftwareUpdateModal
+                submit={onUpdateAllNodes}
+                isOpen={isSoftwaUpdate}
+                handleClose={handleCloseSoftwareUpdate}
+                title={" Node Update all Confirmation"}
+                content={` The software updates for “Tryphena’s Node,” and
+                “Tryphena’s Node 2” will disrupt your network, and will
+                take approximately [insert time here]. Continue updating
+                all?`}
             />
             {isUserActivateOpen && (
                 <UserActivationDialog

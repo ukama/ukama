@@ -46,6 +46,7 @@ import {
     BasicDialog,
     NodeAppDetailsDialog,
     ActivationDialog,
+    SoftwareUpdateModal,
     NodeSoftwareInfosDialog,
     UserDetailsDialog,
     UserActivationDialog,
@@ -54,6 +55,7 @@ import {
 export {
     Alerts,
     NodeCard,
+    SoftwareUpdateModal,
     UserCard,
     TabPanel,
     LineChart,

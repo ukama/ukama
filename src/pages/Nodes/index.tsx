@@ -10,6 +10,7 @@ import {
     NodeResourcesTab,
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
+    SoftwareUpdateModal,
     ActivationDialog,
 } from "../../components";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
@@ -78,6 +79,10 @@ const Nodes = () => {
     const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
+    const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
+    const [isSwitchOffRF, setIsSwitchOffRF] = useState<boolean>(false);
+    const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
+    const [isNodeUpdate, setIsNodeUpdate] = useState<boolean>(false);
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         type: "",
@@ -1208,26 +1213,51 @@ const Nodes = () => {
     const onUpdateNodeClick = () => {
         //TODO: Handle NODE RESTART ACTION
     };
+    const onRestartNode = () => {
+        //TODO: Handle NODE RESTART ACTION
+    };
     const handleNodeActionItemSelected = () => {
         //Todo :Handle nodeAction Itemselected
     };
-
-    const handleNodeActioOptionClicked = () => {
-        //TODO: Handle NODE action button click
+    const onUpdateNode = () => {
+        //Todo :Handle nodeAction update
+    };
+    const onSwitchOffNode = () => {
+        //Todo :Handle nodeAction Itemselected
+    };
+    const handleCloseNodeUpdate = () => {
+        //Todo :Handle nodeAction udpdate submition
+    };
+    const handleNodeActioOptionClicked = (nodeAction: any) => {
+        if (nodeAction == "Turn node off") {
+            setIsSwitchOffNode(true);
+        } else if (nodeAction == "Turn RF off") {
+            setIsSwitchOffRF(true);
+        } else if (nodeAction == "Restart") {
+            setIsNodeRestart(true);
+        }
     };
     const onAddNode = () => {
         setIsAddNode(true);
     };
-    const handleUpdateNode = () => {
+    const onSwitchOffRF = () => {
         // TODO: Handle Update node Action
     };
-
+    const handleUpdateNode = () => {
+        // TODO: Handle Update node Action
+        setIsNodeUpdate(true);
+    };
+    const handleCloseTurnOffRF = () => {
+        setIsSwitchOffRF(false);
+    };
     const handleAddNodeClose = () => setIsAddNode(() => false);
 
     const handleActivationSubmit = () => {
         /* Handle submit activation action */
     };
-
+    const handleCloseNodeRestart = () => {
+        setIsNodeRestart(false);
+    };
     const getNodeAppDetails = (id: any) => {
         setShowNodeAppDialog(true);
         nodeAppsRes?.getNodeApps
@@ -1245,7 +1275,9 @@ const Nodes = () => {
     const handleSoftwareInfos = () => {
         setShowNodeSoftwareUpdatInfos(true);
     };
-
+    const handleCloseTurnOffNode = () => {
+        setIsSwitchOffNode(false);
+    };
     const isLoading = skeltonLoading || nodesLoading;
 
     return (
@@ -1412,6 +1444,38 @@ const Nodes = () => {
                 nodeData={nodeAppDetails}
                 handleClose={handleNodAppDetailsDialog}
             />
+            <SoftwareUpdateModal
+                submit={onSwitchOffNode}
+                isOpen={isSwitchOffNode}
+                handleClose={handleCloseTurnOffNode}
+                btnLabel={"TURN NODE OFF"}
+                title={"Continue Turning Node Off?"}
+                content={`Continue turning node off? You will lose Ukama coverage where this node is located, but will still be able to connect to the network through roaming. `}
+            />
+            <SoftwareUpdateModal
+                submit={onSwitchOffRF}
+                isOpen={isSwitchOffRF}
+                handleClose={handleCloseTurnOffRF}
+                btnLabel={"TURN RF OFF"}
+                title={"Continue Turning RF Off?"}
+                content={`Continue turning RF off? You will lose Ukama coverage for a few minutes while it restarts, but will still be able to connect to the network through roaming.`}
+            />
+            <SoftwareUpdateModal
+                submit={onRestartNode}
+                isOpen={isNodeRestart}
+                handleClose={handleCloseNodeRestart}
+                btnLabel={"RESTART NODE"}
+                title={"Continue Restarting Node?"}
+                content={`Continue restarting node? You will lose Ukama coverage for a few minutes while it restarts, but will still be able to connect to the network through roaming. `}
+            />
+            <SoftwareUpdateModal
+                submit={onUpdateNode}
+                isOpen={isNodeUpdate}
+                handleClose={handleCloseNodeUpdate}
+                title={"Node Update Confirmation"}
+                content={`The software update for “Tryphena’s Node” will disrupt your network, and will take approximately [insert time here]. Continue with update?`}
+            />
+
             <NodeSoftwareInfosDialog
                 closeBtnLabel="close"
                 isOpen={showNodeSoftwareUpdatInfos}
