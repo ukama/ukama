@@ -53,6 +53,8 @@ import {
     useGetMetricsSubActiveLazyQuery,
     useGetMetricsSubActivesSubscription,
     useGetNodesByOrgLazyQuery,
+    useGetMetricsTxPowerLazyQuery,
+    useGetMetricsTxPowersSubscription,
     Org_Node_State,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
@@ -144,6 +146,12 @@ const Nodes = () => {
             data: MetricDto[];
         }[]
     >(getDefaultList(["Attached"]));
+    const [txMetrics, setTxMetrics] = useState<
+        {
+            name: string;
+            data: MetricDto[];
+        }[]
+    >(getDefaultList(["TX Power"]));
     const [activeSubcriberMetrics, setActiveSubcriberMetrics] = useState<
         {
             name: string;
@@ -1358,6 +1366,9 @@ const Nodes = () => {
                         >
                             <NodeRadioTab
                                 loading={isLoading || nodeDetailLoading}
+                                txMetrics={txMetrics}
+                                rxMetrics={powerMetric}
+                                paMetrics={powerMetric}
                             />
                         </TabPanel>
                         <TabPanel

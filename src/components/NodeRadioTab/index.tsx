@@ -1,11 +1,20 @@
 import { useState } from "react";
 import { TooltipsText } from "../../constants";
-import { Paper, Grid, Typography, Stack } from "@mui/material";
+import { Paper, Grid, Stack } from "@mui/material";
+import ApexLineChartIntegration from "../ApexLineChart";
 import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
 interface INodeRadioTab {
     loading: boolean;
+    txMetrics: any;
+    rxMetrics: any;
+    paMetrics: any;
 }
-const NodeRadioTab = ({ loading }: INodeRadioTab) => {
+const NodeRadioTab = ({
+    loading,
+    rxMetrics,
+    paMetrics,
+    txMetrics,
+}: INodeRadioTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
@@ -43,10 +52,24 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
             <Grid item lg={isCollapse ? 11 : 9} md xs>
                 <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
                     <Stack spacing={1}>
-                        <Typography variant="h6">Radio</Typography>
-                        <StackedAreaChart hasData={true} title={"TX Power"} />
+                        <ApexLineChartIntegration
+                            hasData={true}
+                            data={txMetrics}
+                            name={"TX Power"}
+                        />
+                        <ApexLineChartIntegration
+                            hasData={true}
+                            data={rxMetrics}
+                            name={"RX Power"}
+                        />
+                        <ApexLineChartIntegration
+                            hasData={true}
+                            data={paMetrics}
+                            name={"PA Power"}
+                        />
+                        {/* <StackedAreaChart hasData={true} title={"TX Power"} />
                         <StackedAreaChart hasData={true} title={"RX Power "} />
-                        <StackedAreaChart hasData={true} title={"PA Power "} />
+                        <StackedAreaChart hasData={true} title={"PA Power "} /> */}
                     </Stack>
                 </Paper>
             </Grid>

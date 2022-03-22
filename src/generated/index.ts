@@ -1045,6 +1045,19 @@ export type GetResidentsQuery = {
     };
 };
 
+export type GetMetricsTxPowersSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+
+export type GetMetricsTxPowersSubscription = {
+    __typename?: "Subscription";
+    getMetricsTxPower: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
 export type GetNetworkQueryVariables = Exact<{
     filter: Network_Type;
 }>;
@@ -1185,6 +1198,19 @@ export type GetMetricsDiskComQueryVariables = Exact<{
 export type GetMetricsDiskComQuery = {
     __typename?: "Query";
     getMetricsDiskCOM: Array<{
+        __typename?: "MetricDto";
+        y: number;
+        x: number;
+    }>;
+};
+
+export type GetMetricsTxPowerQueryVariables = Exact<{
+    data: MetricsInputDto;
+}>;
+
+export type GetMetricsTxPowerQuery = {
+    __typename?: "Query";
+    getMetricsTxPower: Array<{
         __typename?: "MetricDto";
         y: number;
         x: number;
@@ -2411,6 +2437,47 @@ export type GetResidentsQueryResult = Apollo.QueryResult<
     GetResidentsQuery,
     GetResidentsQueryVariables
 >;
+export const GetMetricsTxPowersDocument = gql`
+    subscription getMetricsTxPowers {
+        getMetricsTxPower {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTxPowersSubscription__
+ *
+ * To run a query within a React component, call `useGetMetricsTxPowersSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTxPowersSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTxPowersSubscription({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetMetricsTxPowersSubscription(
+    baseOptions?: Apollo.SubscriptionHookOptions<
+        GetMetricsTxPowersSubscription,
+        GetMetricsTxPowersSubscriptionVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useSubscription<
+        GetMetricsTxPowersSubscription,
+        GetMetricsTxPowersSubscriptionVariables
+    >(GetMetricsTxPowersDocument, options);
+}
+export type GetMetricsTxPowersSubscriptionHookResult = ReturnType<
+    typeof useGetMetricsTxPowersSubscription
+>;
+export type GetMetricsTxPowersSubscriptionResult =
+    Apollo.SubscriptionResult<GetMetricsTxPowersSubscription>;
 export const GetNetworkDocument = gql`
     query getNetwork($filter: NETWORK_TYPE!) {
         getNetwork(filter: $filter) {
@@ -3035,6 +3102,65 @@ export type GetMetricsDiskComLazyQueryHookResult = ReturnType<
 export type GetMetricsDiskComQueryResult = Apollo.QueryResult<
     GetMetricsDiskComQuery,
     GetMetricsDiskComQueryVariables
+>;
+export const GetMetricsTxPowerDocument = gql`
+    query getMetricsTxPower($data: MetricsInputDTO!) {
+        getMetricsTxPower(data: $data) {
+            y
+            x
+        }
+    }
+`;
+
+/**
+ * __useGetMetricsTxPowerQuery__
+ *
+ * To run a query within a React component, call `useGetMetricsTxPowerQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMetricsTxPowerQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMetricsTxPowerQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetMetricsTxPowerQuery(
+    baseOptions: Apollo.QueryHookOptions<
+        GetMetricsTxPowerQuery,
+        GetMetricsTxPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<
+        GetMetricsTxPowerQuery,
+        GetMetricsTxPowerQueryVariables
+    >(GetMetricsTxPowerDocument, options);
+}
+export function useGetMetricsTxPowerLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetMetricsTxPowerQuery,
+        GetMetricsTxPowerQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<
+        GetMetricsTxPowerQuery,
+        GetMetricsTxPowerQueryVariables
+    >(GetMetricsTxPowerDocument, options);
+}
+export type GetMetricsTxPowerQueryHookResult = ReturnType<
+    typeof useGetMetricsTxPowerQuery
+>;
+export type GetMetricsTxPowerLazyQueryHookResult = ReturnType<
+    typeof useGetMetricsTxPowerLazyQuery
+>;
+export type GetMetricsTxPowerQueryResult = Apollo.QueryResult<
+    GetMetricsTxPowerQuery,
+    GetMetricsTxPowerQueryVariables
 >;
 export const GetMetricsThroughputUlsDocument = gql`
     subscription getMetricsThroughputULS {
