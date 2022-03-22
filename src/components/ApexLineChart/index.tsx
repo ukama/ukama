@@ -32,7 +32,7 @@ interface IApexLineChartIntegration {
     onFilterChange?: Function;
 }
 
-const ApexLineChart = (props: any) => {
+const LineChart = (props: any) => {
     const _isDarkMod = useRecoilValue(isDarkmode);
     const options: any = {
         stroke: {
@@ -69,12 +69,18 @@ const ApexLineChart = (props: any) => {
             borderColor: _isDarkMod ? colors.vulcan60 : colors.white60,
             opacity: 0.3,
         },
+        tooltip: {
+            theme: _isDarkMod ? "dark" : "light",
+            y: {
+                formatter: (val: any) => val.toFixed(8),
+            },
+        },
         xaxis: {
             type: "datetime",
             range: props.range,
             labels: {
                 formatter: (val: any) =>
-                    val ? format(new Date(val * 1000), "mm:ss") : "",
+                    val ? format(new Date(val * 1000), "hh:mm:ss") : "",
             },
             tooltip: {
                 enabled: false,
@@ -105,7 +111,7 @@ const ApexLineChart = (props: any) => {
     );
 };
 
-const ApexLineChartIntegration = ({
+const ApexLineChart = ({
     name,
     data = [],
     onRefreshData,
@@ -134,7 +140,7 @@ const ApexLineChartIntegration = ({
             handleFilterChange={onFilterChange}
         >
             <Box component="div" className={classes.chartStyle}>
-                <ApexLineChart
+                <LineChart
                     key={name}
                     name={name}
                     dataList={data}
@@ -145,4 +151,4 @@ const ApexLineChartIntegration = ({
     );
 };
 
-export default ApexLineChartIntegration;
+export default ApexLineChart;

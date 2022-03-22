@@ -21,6 +21,7 @@ import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
 import NetworkStatus from "./NetworkStatus";
 import DarkModToggle from "./DarkModToggle";
+import ApexLineChart from "./ApexLineChart";
 import NodeNetworkTab from "./NodeNetworkTab";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
@@ -72,6 +73,7 @@ export {
     NodeStatItem,
     NodeRadioTab,
     DarkModToggle,
+    ApexLineChart,
     AlertSettings,
     SimCardDesign,
     NetworkStatus,

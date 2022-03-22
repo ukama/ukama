@@ -23,7 +23,6 @@ const DeviceModalView = () => {
     return (
         <div style={{ height: "50vh" }}>
             <Canvas>
-                <color attach="background" args={["#ffffff"]} />
                 <pointLight position={[0, 0, 100]} />
                 <pointLight position={[0, 0, -100]} />
                 <Suspense fallback={null}>

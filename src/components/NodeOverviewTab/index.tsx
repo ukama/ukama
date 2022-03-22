@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
-import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
+import { NodeDetailsCard, NodeStatsContainer, ApexLineChart } from "..";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
-import ApexLineChartIntegration from "../ApexLineChart";
 
 interface INodeOverviewTab {
     loading: boolean;
@@ -162,7 +161,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][0].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={tempTrxMetric}
                                     name={
@@ -176,7 +175,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][1].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={tempComMetric}
                                     name={
@@ -190,7 +189,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][2].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={uptimeMetrics}
                                     name={
@@ -211,7 +210,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][3].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={attachedSubcriberMetrics}
                                     name={
@@ -225,7 +224,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][4].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={activeSubcriberMetrics}
                                     name={

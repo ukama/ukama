@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { NodeDto } from "../../generated";
+import ApexLineChart from "../ApexLineChart";
 import { Paper, Grid, Stack } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
+import { NodeStatsContainer, NodeStatItem } from "..";
 interface INodeResourcesTab {
     loading: boolean;
     cpuTrxMetric: any;
@@ -145,7 +146,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][0].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -158,7 +159,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][1].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -171,7 +172,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][2].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -184,7 +185,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][3].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -197,7 +198,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][4].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -210,7 +211,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][5].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[
@@ -223,7 +224,7 @@ const NodeResourcesTab = ({
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][6].show && (
-                            <ApexStackAreaChart
+                            <ApexLineChart
                                 hasData={true}
                                 name={
                                     NodeResourcesTabConfigure[

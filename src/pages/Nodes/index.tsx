@@ -708,6 +708,7 @@ const Nodes = () => {
             });
         }
     }, [selectedTab, selectedNode]);
+
     useEffect(() => {
         if (
             selectedTab == 2 &&

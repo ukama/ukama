@@ -39,8 +39,7 @@ import {
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
     GetLatestConnectedUsersSubscription,
-    GetMetricsUptimeSSubscription,
-    GetMetricsUptimeSDocument,
+    useGetMetricsUptimeSSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
@@ -136,7 +135,6 @@ const Home = () => {
             data: metricUptimeRes,
             loading: metricUptimeLoading,
             refetch: metricUptimeRefetch,
-            subscribeToMore: subscribeToMetricUptime,
         },
     ] = useGetMetricsUptimeLazyQuery({
         fetchPolicy: "network-only",
@@ -154,7 +152,23 @@ const Home = () => {
                 });
             }
         },
-        notifyOnNetworkStatusChange: true,
+    });
+
+    useGetMetricsUptimeSSubscription({
+        onSubscriptionData: res => {
+            if (res.subscriptionData.data && uptimeMetric.data.length > 0) {
+                res.subscriptionData?.data?.getMetricsUptime[0].x >
+                    uptimeMetric.data[uptimeMetric.data.length - 1].x &&
+                    setUptimeMetrics(_prev => ({
+                        name: _prev.name,
+                        data: [
+                            ..._prev.data,
+                            ...(res.subscriptionData.data?.getMetricsUptime ||
+                                []),
+                        ],
+                    }));
+            }
+        },
     });
 
     const getFirstMetricCallPayload = () =>
@@ -173,28 +187,6 @@ const Home = () => {
             from: from,
         });
 
-    const subToMetricUptime = () =>
-        subscribeToMetricUptime<GetMetricsUptimeSSubscription>({
-            document: GetMetricsUptimeSDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                if (!subscriptionData.data) return prev;
-                const metrics = subscriptionData.data.getMetricsUptime;
-                const spreadPrev =
-                    prev && prev.getMetricsUptime ? prev.getMetricsUptime : [];
-
-                if (uptimeMetric.data.length > 0) {
-                    metrics[0].x >
-                        uptimeMetric.data[uptimeMetric.data.length - 1].x &&
-                        setUptimeMetrics(_prev => ({
-                            name: _prev.name,
-                            data: [..._prev.data, ...metrics],
-                        }));
-                }
-
-                return { getMetricsUptime: [...spreadPrev, ...metrics] };
-            },
-        });
-
     useEffect(() => {
         if (nodeRes && nodeRes.getNodesByOrg.nodes.length > 0) {
             getMetricUptime({
@@ -206,7 +198,6 @@ const Home = () => {
     }, [nodeRes]);
 
     useEffect(() => {
-        let unsub = subToMetricUptime();
         if (
             metricUptimeRes &&
             metricUptimeRes.getMetricsUptime &&
@@ -220,9 +211,6 @@ const Home = () => {
                 ),
             });
         }
-        return () => {
-            unsub && unsub();
-        };
     }, [metricUptimeRes]);
 
     const subToConnectedUser = () =>
@@ -431,9 +419,7 @@ const Home = () => {
                         hasMetricData={uptimeMetric.data.length > 0}
                         metricData={uptimeMetric}
                         loading={
-                            nodeLoading ||
-                            isSkeltonLoad ||
-                            (metricUptimeLoading && !!metricUptimeRes)
+                            nodeLoading || isSkeltonLoad || metricUptimeLoading
                         }
                     />
                 </Grid>
