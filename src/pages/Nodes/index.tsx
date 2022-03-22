@@ -1548,7 +1548,6 @@ const Nodes = () => {
                             index={3}
                         >
                             <NodeRadioTab
-                                selectedNode={selectedNode}
                                 loading={isLoading || nodeDetailLoading}
                                 txPowerMetrics={txPowerMetrics}
                                 rxPowerMetrics={rxPowerMetrics}

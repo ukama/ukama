@@ -1448,27 +1448,6 @@ const NodeResourcesTabConfigure: any = {
         { name: "POWER", show: true },
     ],
 };
-
-const NodeRadioTabConfigure: any = {
-    HOME: [
-        { name: "TX-POWER", show: false },
-        { name: "RX-POWER", show: false },
-        { name: "PA-POWER", show: false },
-        { name: "none", show: false },
-    ],
-    AMPLIFIER: [
-        { name: "TX-POWER", show: true },
-        { name: "RX-POWER", show: true },
-        { name: "PA-POWER", show: true },
-        { name: "none", show: false },
-        { name: "none", show: false },
-    ],
-    TOWER: [
-        { name: "TX-POWER", show: true },
-        { name: "RX-POWER", show: true },
-        { name: "PA-POWER", show: true },
-    ],
-};
 const HealtChartsConfigure: any = {
     HOME: [
         { name: "Temp. (TRX)", show: true },
@@ -1501,7 +1480,6 @@ export {
     RF_NODES,
     TimeZones,
     COPY_RIGHTS,
-    NodeRadioTabConfigure,
     APP_VERSION,
     TIME_FILTER,
     BillingTabs,
