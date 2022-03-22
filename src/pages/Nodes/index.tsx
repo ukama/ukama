@@ -251,7 +251,7 @@ const Nodes = () => {
     ] = useGetMetricsDiskTrxLazyQuery();
 
     useGetMetricsDiskTrXsSubscription({
-        skip: selectedTab !== 1,
+        skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setDiskTrxMatrics(
                 diskTrxMatrics.map(item => {
