@@ -3,7 +3,6 @@ package config
 import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
-	"log"
 	"os"
 	"reflect"
 	"testing"
@@ -31,7 +30,7 @@ func Test_ConfigReader(t *testing.T) {
 	overrFromArgVal := "overrFromArgValue"
 
 	nc := &fullConfig{}
-	confReader := NewConfMgr("testdata/test_conf.yaml")
+	confReader := NewConfMgr("testdata/test_conf.yaml", os.Stdout, os.Stderr)
 	cmd := newTestRootCommand(confReader, nc)
 
 	cmd.SetArgs([]string{"get", "--" + bindedFlag, "10", "--verbose", "true", "--conf.overriddenByArg", overrFromArgVal})
@@ -69,11 +68,7 @@ func subCommand(confReader ConfigReader, actualConf *fullConfig) *cobra.Command 
 	getCmd := cobra.Command{
 		Use: "get",
 		Run: func(cmd *cobra.Command, args []string) {
-
-			err := confReader.ReadConfig("node", cmd.Flags(), actualConf)
-			if err != nil {
-				log.Fatalf("Failed to read config: %v", err)
-			}
+			confReader.ReadConfig("node", cmd.Flags(), actualConf)
 		},
 	}
 

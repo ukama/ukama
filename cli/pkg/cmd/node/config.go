@@ -3,6 +3,8 @@ package node
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/ukama/ukamaX/cli/pkg"
+	"github.com/ukama/ukamaX/cli/pkg/clients"
 	"github.com/ukama/ukamaX/cli/pkg/cmd/config"
 	"os"
 )
@@ -15,7 +17,7 @@ type nodeConfigConfig struct {
 
 type nodeConfig struct {
 	Ip       string `flag:"ip"`
-	Cert     string `flag:"cert"`
+	Cert     string `flag:"cert" validate:"file"`
 	ConfPath string `flag:"conf"`
 }
 
@@ -29,19 +31,33 @@ func configCommand(confReader config.ConfigReader) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 
 			nc := &nodeConfigConfig{}
-			err := confReader.ReadConfig("node", cmd.Flags(), nc)
-			if err != nil {
-				fmt.Fprintf(cmd.ErrOrStderr(), "Error reading config: '%+v'\n", err)
-				os.Exit(1)
+			confReader.ReadConfig("node", cmd.Flags(), nc)
+
+			if nc.Verbose {
+				fmt.Fprintf(cmd.OutOrStdout(), "Node Config: '%+v'\n", nc)
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Node Config: '%+v'\n", nc)
+			clt := clients.NewNodeClient(pkg.NewLogger(cmd.OutOrStdout(), cmd.ErrOrStderr(), nc.Verbose))
+			conf := cmd.InOrStdin()
+			if nc.Node.ConfPath != "" {
+				f, err := os.Open(nc.Node.ConfPath)
+				if err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "Failed to open config file: %s\n", err)
+					os.Exit(1)
+				}
+				conf = f
+			}
+			err := clt.SendFile(nc.Node.Ip, nc.Node.Cert, "", "", conf)
+			if err != nil {
+				fmt.Fprintf(cmd.ErrOrStderr(), "Failed to send config: %s\n", err)
+				os.Exit(1)
+			}
 		},
 	}
 
 	getCmd.Flags().StringP("ip", "i", "", "Node ip or hostname")
-	getCmd.Flags().StringP("cert", "cr", "", "Node certificate")
-	getCmd.Flags().StringP("conf", "c", "", "Path to config")
+	getCmd.Flags().StringP("cert", "c", "", "Node certificate")
+	getCmd.Flags().StringP("conf", "k", "", "Path to config")
 
 	return &getCmd
 }

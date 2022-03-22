@@ -2,12 +2,14 @@ package config
 
 import (
 	"fmt"
+	"github.com/go-playground/validator/v10"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/ukama/ukamaX/cli/pkg"
+	"io"
 	"os"
 	"reflect"
 	"strings"
@@ -36,23 +38,28 @@ nested:
   foo: bar
 */
 type ConfigReader interface {
-	ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{}) error
+	// ReadConfig reads config from config file, env vars or flags. In case of error fails with os.Exit(1)
+	ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{})
 	BindFlag(confKey string, flag *pflag.Flag)
 }
 
 type ConfMgr struct {
 	viper      *enviper.Enviper
 	configFile string
+	stdout     io.Writer
+	stderr     io.Writer
 }
 
-func NewConfMgr(configFile string) *ConfMgr {
+func NewConfMgr(configFile string, stdout io.Writer, stderr io.Writer) *ConfMgr {
 	return &ConfMgr{
 		viper:      enviper.New(viper.New()),
 		configFile: configFile,
+		stdout:     stdout,
+		stderr:     stderr,
 	}
 }
 
-func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{}) error {
+func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{}) {
 	c.lateFlagBinding(flags, rawVal)
 
 	if c.configFile != "" {
@@ -73,27 +80,36 @@ func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{
 
 	// If a config file is found, read it in.
 	if err := c.viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", c.viper.ConfigFileUsed())
+		fmt.Fprintln(c.stdout, "Using config file:", c.viper.ConfigFileUsed())
 	}
-
-	fmt.Printf("Binding flags\n")
-	flags.VisitAll(func(flag *pflag.Flag) {
-		fmt.Printf("Flag: %v, Val: %v\n", flag.Name, flag.Value)
-	})
 
 	err := c.viper.BindPFlags(flags)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error binding flags. Error: %v", err)
+		fmt.Fprintf(c.stderr, "Error binding flags. Error: %v", err)
 		os.Exit(1)
 	}
 
 	err = c.viper.Unmarshal(rawVal)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to decode into struct, %v", err)
+		fmt.Fprintf(c.stderr, "Unable to decode into struct, %v", err)
 		os.Exit(1)
 	}
 
-	return c.viper.UnmarshalKey(key, rawVal)
+	err = c.viper.UnmarshalKey(key, rawVal)
+	if err != nil {
+		fmt.Fprintf(c.stderr, "Error reading config: '%+v'\n", err)
+		os.Exit(1)
+	}
+
+	err = validator.New().Struct(rawVal)
+	if err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		if validationErrors != nil && len(validationErrors) > 0 {
+			fmt.Fprintf(c.stderr, "Error validating config: '%+v'\n", validationErrors)
+			os.Exit(1)
+		}
+		cobra.CheckErr(err)
+	}
 }
 
 func (c *ConfMgr) lateFlagBinding(flags *pflag.FlagSet, conf interface{}) {
@@ -128,7 +144,6 @@ func dumpStruct(t reflect.Type, path string, res map[string]string) {
 		panic("Interface not supported")
 
 	default:
-		fmt.Printf("Skipping field %v\n", t.Kind())
 	}
 
 }

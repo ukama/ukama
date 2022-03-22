@@ -19,9 +19,10 @@ func RootCommand() *cobra.Command {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "f", "", "config file (default is $HOME/.ukama.yaml)")
 	rootCmd.PersistentFlags().BoolP("verbose", "v", false, "Verbose mode")
 	rootCmd.Version = version.Version
-	cfMgr := config.NewConfMgr(cfgFile)
+	cfMgr := config.NewConfMgr(cfgFile, rootCmd.OutOrStdout(), rootCmd.ErrOrStderr())
 
 	// top level commands
+
 	rootCmd.AddCommand(node.NewNodeCommand(cfMgr))
 
 	return rootCmd
