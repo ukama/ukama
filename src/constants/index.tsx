@@ -1448,7 +1448,6 @@ const NodeResourcesTabConfigure: any = {
         { name: "POWER", show: true },
     ],
 };
-
 const HealtChartsConfigure: any = {
     HOME: [
         { name: "Temp. (TRX)", show: true },

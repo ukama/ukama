@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, StackedAreaChart } from "..";
+import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
 interface INodeRadioTab {
     loading: boolean;
+    txPowerMetrics: any;
+    rxPowerMetrics: any;
+    paPowerMetrics: any;
 }
-const NodeRadioTab = ({ loading }: INodeRadioTab) => {
+const NodeRadioTab = ({
+    loading,
+    rxPowerMetrics,
+    txPowerMetrics,
+    paPowerMetrics,
+}: INodeRadioTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
@@ -40,12 +48,24 @@ const NodeRadioTab = ({ loading }: INodeRadioTab) => {
                     />
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 8} md xs>
-                <Paper sx={{ p: 3, width: "100%" }}>
-                    <Stack spacing={4}>
-                        <StackedAreaChart hasData={true} title={"TX Power"} />
-                        <StackedAreaChart hasData={true} title={"RX Power "} />
-                        <StackedAreaChart hasData={true} title={"PA Power "} />
+            <Grid item lg={isCollapse ? 11 : 9} md xs>
+                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
+                    <Stack spacing={1}>
+                        <ApexStackAreaChart
+                            hasData={true}
+                            name={"PX Power"}
+                            data={txPowerMetrics}
+                        />
+                        <ApexStackAreaChart
+                            hasData={true}
+                            name={"PA POWER"}
+                            data={paPowerMetrics}
+                        />
+                        <ApexStackAreaChart
+                            hasData={true}
+                            name={"RX POWER"}
+                            data={rxPowerMetrics}
+                        />
                     </Stack>
                 </Paper>
             </Grid>

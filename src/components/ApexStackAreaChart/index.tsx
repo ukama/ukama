@@ -1,10 +1,11 @@
+import React from "react";
 import Chart from "react-apexcharts";
 import { format } from "date-fns";
 import { GraphTitleWrapper } from "..";
 
 const TIME_RANGE_IN_MILLISECONDS = 100;
 
-interface IApexStackAreaChart {
+interface IApexLineChartIntegration {
     data: any;
     name: string;
     filter?: string;
@@ -14,65 +15,54 @@ interface IApexStackAreaChart {
     onFilterChange?: Function;
 }
 
-const StackAreaChart = (props: any) => {
+const ApexLineChart = (props: any) => {
     const options: any = {
-        chart: {
-            type: "area",
-            height: 350,
-            stacked: true,
-            zoom: {
-                type: "x",
+        series: [
+            {
+                name: "series1",
+                data: [31, 40, 28, 51, 42, 109, 100],
+            },
+        ],
+        options: {
+            chart: {
+                height: 350,
+                type: "area",
+            },
+            dataLabels: {
                 enabled: false,
-                autoScaleYaxis: true,
             },
-        },
-        colors: ["#008FFB"],
-        plotOptions: {
-            area: {
-                fillTo: "end",
+            stroke: {
+                curve: "smooth",
             },
-        },
-        dataLabels: {
-            enabled: false,
-        },
-        stroke: {
-            curve: "smooth",
-        },
-        fill: {
-            type: "gradient",
-            gradient: {
-                opacityFrom: 0.6,
-                opacityTo: 0.8,
+            xaxis: {
+                type: "datetime",
+                range: props.range,
+                labels: {
+                    formatter: (val: any) =>
+                        val ? format(new Date(val * 1000), "mm:ss") : "",
+                },
+                tooltip: {
+                    enabled: false,
+                    offsetX: 0,
+                },
             },
-        },
-        xaxis: {
-            type: "datetime",
-            range: props.range,
-            labels: {
-                formatter: (val: any) =>
-                    val ? format(new Date(val * 1000), "hh:mm:ss") : "",
+            yaxis: {
+                labels: {
+                    formatter: (val: any) => val.toFixed(2),
+                },
+                // min: 0,
+                // max: 100,
+                // tooltip: {
+                //     enabled: true,
+                // },
+                tickAmount: 8,
             },
-            tooltip: {
-                enabled: false,
-                offsetX: 0,
-            },
-        },
-        yaxis: {
-            labels: {
-                formatter: (val: any) => val.toFixed(2),
-            },
-            // min: 0,
-            // max: 100,
-            // tooltip: {
-            //     enabled: true,
-            // },
-            tickAmount: 8,
         },
     };
 
     return (
         <Chart
-            type="line"
+            type="area"
             key={props.name}
             height={"300px"}
             options={options}
@@ -81,15 +71,25 @@ const StackAreaChart = (props: any) => {
     );
 };
 
-const ApexStackAreaChart = ({
+const ApexStackChartIntegration = ({
     name,
     data = [],
+    onRefreshData,
     filter = "LIVE",
     hasData = false,
+    refreshInterval = 10000,
     onFilterChange = () => {
         /*DEFAULT FUNCTION*/
     },
-}: IApexStackAreaChart) => {
+}: IApexLineChartIntegration) => {
+    React.useEffect(() => {
+        const interval = setInterval(() => {
+            onRefreshData && onRefreshData();
+        }, refreshInterval);
+
+        return () => clearInterval(interval);
+    });
+
     return (
         <GraphTitleWrapper
             key={name}
@@ -99,7 +99,7 @@ const ApexStackAreaChart = ({
             variant="subtitle1"
             handleFilterChange={onFilterChange}
         >
-            <StackAreaChart
+            <ApexLineChart
                 key={name}
                 name={name}
                 dataList={data}
@@ -109,4 +109,4 @@ const ApexStackAreaChart = ({
     );
 };
 
-export default ApexStackAreaChart;
+export default ApexStackChartIntegration;

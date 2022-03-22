@@ -41,6 +41,30 @@ subscription getLatestDataBill {
         billDue
     }
 }
+query getMetricsPaPower($data: MetricsInputDTO!) {
+    getMetricsPaPower(data: $data) {
+        y
+        x
+    }
+}
+subscription getMetricsPaPowers {
+    getMetricsPaPower {
+        y
+        x
+    }
+}
+subscription getMetricsRxPowers {
+    getMetricsRxPower {
+        y
+        x
+    }
+}
+query getMetricsRxPower($data: MetricsInputDTO!) {
+    getMetricsRxPower(data: $data) {
+        y
+        x
+    }
+}
 
 query getAlerts($data: PaginationDto!) {
     getAlerts(data: $data) {
@@ -169,7 +193,12 @@ query getResidents($data: PaginationDto!) {
         }
     }
 }
-
+subscription getMetricsTxPowers {
+    getMetricsTxPower {
+        y
+        x
+    }
+}
 query getNetwork($filter: NETWORK_TYPE!) {
     getNetwork(filter: $filter) {
         id
@@ -249,6 +278,12 @@ query getMetricsThroughputUL($data: MetricsInputDTO!) {
 }
 query getMetricsDiskCOM($data: MetricsInputDTO!) {
     getMetricsDiskCOM(data: $data) {
+        y
+        x
+    }
+}
+query getMetricsTxPower($data: MetricsInputDTO!) {
+    getMetricsTxPower(data: $data) {
         y
         x
     }
