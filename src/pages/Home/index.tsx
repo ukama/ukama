@@ -38,8 +38,9 @@ import {
     GetLatestDataBillSubscription,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
-    useGetMetricsUptimeSSubscription,
     GetLatestConnectedUsersSubscription,
+    GetMetricsUptimeSSubscription,
+    GetMetricsUptimeSDocument,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
@@ -58,7 +59,7 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
     const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(true);
+        useState<boolean>(!!orgId);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -133,22 +134,27 @@ const Home = () => {
         getMetricUptime,
         {
             data: metricUptimeRes,
-            refetch: metricUptimeRefetch,
             loading: metricUptimeLoading,
+            refetch: metricUptimeRefetch,
+            subscribeToMore: subscribeToMetricUptime,
         },
-    ] = useGetMetricsUptimeLazyQuery();
-
-    useGetMetricsUptimeSSubscription({
-        onSubscriptionData: res => {
-            if (uptimeMetric.data.length > 0)
+    ] = useGetMetricsUptimeLazyQuery({
+        fetchPolicy: "network-only",
+        onCompleted: res => {
+            if (
+                uptimeMetric.data.length === 0 &&
+                res.getMetricsUptime.length > 0
+            ) {
                 setUptimeMetrics({
                     name: uptimeMetric.name,
                     data: [
                         ...uptimeMetric.data,
-                        ...(res.subscriptionData.data?.getMetricsUptime || []),
+                        ...(res.getMetricsUptime || []),
                     ],
                 });
+            }
         },
+        notifyOnNetworkStatusChange: true,
     });
 
     const getFirstMetricCallPayload = () =>
@@ -156,7 +162,7 @@ const Home = () => {
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
             regPolling: false,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -164,7 +170,29 @@ const Home = () => {
         getMetricPayload({
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
-            from: from + 1,
+            from: from,
+        });
+
+    const subToMetricUptime = () =>
+        subscribeToMetricUptime<GetMetricsUptimeSSubscription>({
+            document: GetMetricsUptimeSDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                if (!subscriptionData.data) return prev;
+                const metrics = subscriptionData.data.getMetricsUptime;
+                const spreadPrev =
+                    prev && prev.getMetricsUptime ? prev.getMetricsUptime : [];
+
+                if (uptimeMetric.data.length > 0) {
+                    metrics[0].x >
+                        uptimeMetric.data[uptimeMetric.data.length - 1].x &&
+                        setUptimeMetrics(_prev => ({
+                            name: _prev.name,
+                            data: [..._prev.data, ...metrics],
+                        }));
+                }
+
+                return { getMetricsUptime: [...spreadPrev, ...metrics] };
+            },
         });
 
     useEffect(() => {
@@ -178,30 +206,23 @@ const Home = () => {
     }, [nodeRes]);
 
     useEffect(() => {
-        if (metricUptimeRes && metricUptimeRes.getMetricsUptime.length > 0) {
-            if (
-                uptimeMetric.data.length === 0 &&
-                metricUptimeRes.getMetricsUptime.length > 0
-            ) {
-                setUptimeMetrics({
-                    name: uptimeMetric.name,
-                    data: [
-                        ...uptimeMetric.data,
-                        ...(metricUptimeRes.getMetricsUptime || []),
-                    ],
-                });
-            }
+        let unsub = subToMetricUptime();
+        if (
+            metricUptimeRes &&
+            metricUptimeRes.getMetricsUptime &&
+            metricUptimeRes.getMetricsUptime.length > 0
+        ) {
             metricUptimeRefetch({
                 ...getMetricPollingCallPayload(
                     metricUptimeRes.getMetricsUptime[
                         metricUptimeRes.getMetricsUptime.length - 1
-                    ].x
+                    ].x + 1
                 ),
             });
-            return () => {
-                /*UNMOUNT*/
-            };
         }
+        return () => {
+            unsub && unsub();
+        };
     }, [metricUptimeRes]);
 
     const subToConnectedUser = () =>
@@ -410,7 +431,9 @@ const Home = () => {
                         hasMetricData={uptimeMetric.data.length > 0}
                         metricData={uptimeMetric}
                         loading={
-                            nodeLoading || isSkeltonLoad || metricUptimeLoading
+                            nodeLoading ||
+                            isSkeltonLoad ||
+                            (metricUptimeLoading && !!metricUptimeRes)
                         }
                     />
                 </Grid>

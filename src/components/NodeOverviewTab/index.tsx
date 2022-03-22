@@ -157,7 +157,7 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 1 && (
                     <Paper sx={{ p: 3 }}>
-                        <Stack spacing={2}>
+                        <Stack spacing={4}>
                             <Typography variant="h6">Node Health</Typography>
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
@@ -206,33 +206,37 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 2 && selectedNode?.type !== "AMPLIFIER" && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6">Subscribers</Typography>
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][3].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={attachedSubcriberMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][3].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][4].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={activeSubcriberMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][4].name
-                                }
-                            />
-                        )}
+                        <Stack spacing={4}>
+                            <Typography variant="h6">Subscribers</Typography>
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][3].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={attachedSubcriberMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][3].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][4].show && (
+                                <ApexLineChartIntegration
+                                    hasData={true}
+                                    data={activeSubcriberMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][4].name
+                                    }
+                                />
+                            )}
+                        </Stack>
                     </Paper>
                 )}
             </Grid>

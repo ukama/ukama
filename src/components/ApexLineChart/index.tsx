@@ -1,21 +1,39 @@
 import React from "react";
-import Chart from "react-apexcharts";
 import { format } from "date-fns";
+import Chart from "react-apexcharts";
+import { colors } from "../../theme";
 import { GraphTitleWrapper } from "..";
+import { useRecoilValue } from "recoil";
+import { makeStyles } from "@mui/styles";
+import { isDarkmode } from "../../recoil";
+import { Box, Theme } from "@mui/material";
+import { isMetricData } from "../../utils";
 
 const TIME_RANGE_IN_MILLISECONDS = 100;
+
+const useStyles = makeStyles<Theme>(theme => ({
+    chartStyle: {
+        "& .apexcharts-yaxis-label tspan": {
+            fill: theme.palette.text.primary,
+        },
+        "& .apexcharts-xaxis-label tspan": {
+            fill: theme.palette.text.primary,
+        },
+    },
+}));
 
 interface IApexLineChartIntegration {
     data: any;
     name: string;
     filter?: string;
-    hasData: boolean;
+    hasData?: boolean;
     refreshInterval?: number;
     onRefreshData?: Function;
     onFilterChange?: Function;
 }
 
 const ApexLineChart = (props: any) => {
+    const _isDarkMod = useRecoilValue(isDarkmode);
     const options: any = {
         stroke: {
             lineCap: "butt",
@@ -40,12 +58,16 @@ const ApexLineChart = (props: any) => {
             },
             dropShadow: {
                 enabled: true,
-                enabledSeries: [0],
-                top: -2,
-                left: 2,
-                blur: 5,
-                opacity: 0.06,
+                top: 1,
+                left: 1,
+                bottom: 1,
+                blur: 3,
+                opacity: 0.2,
             },
+        },
+        grid: {
+            borderColor: _isDarkMod ? colors.vulcan60 : colors.white60,
+            opacity: 0.3,
         },
         xaxis: {
             type: "datetime",
@@ -59,9 +81,10 @@ const ApexLineChart = (props: any) => {
                 offsetX: 0,
             },
         },
+
         yaxis: {
             labels: {
-                formatter: (val: any) => val.toFixed(2),
+                formatter: (val: any) => val.toFixed(4),
             },
             // min: 0,
             // max: 100,
@@ -75,8 +98,8 @@ const ApexLineChart = (props: any) => {
         <Chart
             type="line"
             key={props.name}
-            height={"300px"}
             options={options}
+            height={"300px"}
             series={props.dataList}
         />
     );
@@ -87,12 +110,12 @@ const ApexLineChartIntegration = ({
     data = [],
     onRefreshData,
     filter = "LIVE",
-    hasData = false,
     refreshInterval = 10000,
     onFilterChange = () => {
         /*DEFAULT FUNCTION*/
     },
 }: IApexLineChartIntegration) => {
+    const classes = useStyles();
     React.useEffect(() => {
         const interval = setInterval(() => {
             onRefreshData && onRefreshData();
@@ -106,16 +129,18 @@ const ApexLineChartIntegration = ({
             key={name}
             title={name}
             filter={filter}
-            hasData={hasData}
             variant="subtitle1"
+            hasData={isMetricData(data)}
             handleFilterChange={onFilterChange}
         >
-            <ApexLineChart
-                key={name}
-                name={name}
-                dataList={data}
-                range={TIME_RANGE_IN_MILLISECONDS}
-            />
+            <Box component="div" className={classes.chartStyle}>
+                <ApexLineChart
+                    key={name}
+                    name={name}
+                    dataList={data}
+                    range={TIME_RANGE_IN_MILLISECONDS}
+                />
+            </Box>
         </GraphTitleWrapper>
     );
 };

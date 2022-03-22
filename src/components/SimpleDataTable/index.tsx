@@ -8,6 +8,7 @@ import {
     Typography,
     TableContainer,
 } from "@mui/material";
+import { format } from "date-fns";
 import { useRecoilValue } from "recoil";
 import { isDarkmode } from "../../recoil";
 import { colors } from "../../theme";
@@ -15,6 +16,7 @@ import { ColumnsWithOptions } from "../../types";
 
 interface SimpleDataTableInterface {
     dataset: Object[];
+    maxHeight?: number;
     totalRows?: number;
     setSelectedRows?: any;
     selectedRows?: number[];
@@ -25,6 +27,7 @@ interface SimpleDataTableInterface {
 const SimpleDataTable = ({
     columns,
     dataset,
+    maxHeight,
     totalRows = 0,
     setSelectedRows,
     selectedRows = [],
@@ -41,7 +44,12 @@ const SimpleDataTable = ({
     };
 
     return (
-        <TableContainer sx={{ overflowX: "hidden", mt: "24px" }}>
+        <TableContainer
+            sx={{
+                mt: "24px",
+                maxHeight: maxHeight ? maxHeight : "100%",
+            }}
+        >
             <Table stickyHeader>
                 <TableHead>
                     <TableRow>
@@ -87,7 +95,7 @@ const SimpleDataTable = ({
                                 ":hover": {
                                     backgroundColor: _isDarkMode
                                         ? colors.nightGrey
-                                        : colors.solitude,
+                                        : colors.hoverColor08,
                                 },
                             }}
                             selected={selectedRows.includes(row.id)}
@@ -105,6 +113,7 @@ const SimpleDataTable = ({
                                     />
                                 </TableCell>
                             )}
+
                             {columns?.map(
                                 (column: ColumnsWithOptions, index: number) => (
                                     <TableCell
@@ -120,6 +129,11 @@ const SimpleDataTable = ({
                                         >
                                             {column.id === "name" ? (
                                                 <u>{row[column.id]}</u>
+                                            ) : column.id === "date" ? (
+                                                format(
+                                                    row[column.id],
+                                                    "dd MMM yyyy"
+                                                )
                                             ) : (
                                                 row[column.id]
                                             )}

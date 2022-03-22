@@ -11,6 +11,9 @@ const wsLink = new WebSocketLink({
     uri: process.env.REACT_APP_API_SOCKET || "ws:localhost",
     options: {
         reconnect: true,
+        connectionParams: {
+            credentials: "include",
+        },
     },
 });
 
@@ -30,9 +33,6 @@ const client = new ApolloClient({
     link: splitLink,
     cache: new InMemoryCache(),
     credentials: "include",
-    headers: {
-        Authorization: "Bearer ZCa3ktK4Q3KHBxBXmTGyqJj3QCfI2bI3",
-    },
 });
 
 export default client;

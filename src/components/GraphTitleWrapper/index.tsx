@@ -51,7 +51,7 @@ const GraphTitleWrapper = ({
                     )}
                 </Grid>
             )}
-            <Grid item width="100%">
+            <Grid item width="100%" height={"300px"}>
                 {hasData ? (
                     children
                 ) : (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NodeDto } from "../../generated";
-import { Paper, Grid } from "@mui/material";
+import { Paper, Grid, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 interface INodeResourcesTab {
@@ -29,7 +29,7 @@ const NodeResourcesTab = ({
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
         <Grid container spacing={3}>
-            <Grid item lg={!isCollapse ? 3 : 1} md xs>
+            <Grid item lg={!isCollapse ? 4 : 1} md xs>
                 <NodeStatsContainer
                     index={0}
                     selected={0}
@@ -139,99 +139,101 @@ const NodeResourcesTab = ({
                     )}
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ padding: "4px 18px 0px 30px", width: "100%" }}>
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][0].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][0].name
-                            }
-                            data={memoryTrxMetric}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][1].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][1].name
-                            }
-                            data={memoryComMetrics}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][2].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][2].name
-                            }
-                            data={cpuTrxMetric}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][3].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][3].name
-                            }
-                            data={cpuComMetrics}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][4].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][4].name
-                            }
-                            data={diskTrxMatrics}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][5].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][5].name
-                            }
-                            data={diskComMetrics}
-                        />
-                    )}
-                    {NodeResourcesTabConfigure[
-                        (selectedNode?.type as string) || ""
-                    ][6].show && (
-                        <ApexStackAreaChart
-                            hasData={true}
-                            name={
-                                NodeResourcesTabConfigure[
-                                    (selectedNode?.type as string) || ""
-                                ][6].name
-                            }
-                            data={powerMetrics}
-                        />
-                    )}
+            <Grid item lg={isCollapse ? 11 : 8} md xs>
+                <Paper sx={{ p: 3, width: "100%" }}>
+                    <Stack spacing={4}>
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][0].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][0].name
+                                }
+                                data={memoryTrxMetric}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][1].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][1].name
+                                }
+                                data={memoryComMetrics}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][2].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][2].name
+                                }
+                                data={cpuTrxMetric}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][3].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][3].name
+                                }
+                                data={cpuComMetrics}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][4].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][4].name
+                                }
+                                data={diskTrxMatrics}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][5].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][5].name
+                                }
+                                data={diskComMetrics}
+                            />
+                        )}
+                        {NodeResourcesTabConfigure[
+                            (selectedNode?.type as string) || ""
+                        ][6].show && (
+                            <ApexStackAreaChart
+                                hasData={true}
+                                name={
+                                    NodeResourcesTabConfigure[
+                                        (selectedNode?.type as string) || ""
+                                    ][6].name
+                                }
+                                data={powerMetrics}
+                            />
+                        )}
+                    </Stack>
                 </Paper>
             </Grid>
         </Grid>

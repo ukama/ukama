@@ -24,10 +24,15 @@ const DeviceModalView = () => {
         <div style={{ height: "50vh" }}>
             <Canvas>
                 <color attach="background" args={["#ffffff"]} />
-                <pointLight position={[-20, 10, 25]} />
+                <pointLight position={[0, 0, 100]} />
+                <pointLight position={[0, 0, -100]} />
                 <Suspense fallback={null}>
                     <Scene />
-                    <OrbitControls />
+                    <OrbitControls
+                        minDistance={1.5}
+                        maxDistance={10}
+                        maxPolarAngle={Math.PI / 2}
+                    />
                 </Suspense>
             </Canvas>
         </div>
