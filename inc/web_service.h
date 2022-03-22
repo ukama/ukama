@@ -43,6 +43,11 @@ extern "C" {
 #define SEND_ADD_SUBSCRIBER_REQ_FAILED  1
 
 #define WEB_SERVICE_PORT                8085
+
+#define METHOD_LENGTH                   7
+#define URL_EXT_LENGTH                  64
+#define MAX_END_POINTS                  64
+
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
@@ -52,10 +57,10 @@ typedef int (*HttpCb)(const URequest *request, // Input parameters (set by the f
                  UResponse* response,         // Output parameters (set by the user)
                 void * user_data);
 
-typedef enum {
-
-    HANDLE_WS_MAX
-} WebServiceHandlerId_t;
+typedef struct {
+   char method[METHOD_LENGTH];
+   char endPoint[URL_EXT_LENGTH];
+} WebServiceAPI;
 
 
 int web_service_init();

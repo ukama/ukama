@@ -23,7 +23,18 @@
 
 UInst serverInst;
 
+static uint16_t endPointCount = 0;
+WebServiceAPI gApi[MAX_END_POINTS] = {0};
 
+/**
+ * @fn int web_service_cb_ping(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_ping(const URequest * request, UResponse * response, void * epConfig) {
 
     int respCode = RESP_CODE_SUCCESS;
@@ -33,6 +44,15 @@ static int web_service_cb_ping(const URequest * request, UResponse * response, v
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_default(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_default(const URequest * request, UResponse * response, void * epConfig) {
 
     int respCode = RESP_CODE_SUCCESS;
@@ -42,6 +62,43 @@ static int web_service_cb_default(const URequest * request, UResponse * response
     asprintf(&msg,"URL endpoint %s not implemented.", request->http_url);
 
     ulfius_set_string_body_response(response, respCode, msg);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+/**
+ * @fn int web_service_cb_discover_api(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
+static int web_service_cb_discover_api(const URequest * request, UResponse * response, void * epConfig) {
+    JsonObj *json = NULL;
+    unsigned int respCode = RESP_CODE_SUCCESS;
+    int ret = STATUS_NOK;
+    uint16_t size = 0;
+    UnitCfg *uCfg = NULL;
+    usys_log_trace("NodeD:: Received a discover api request.");
+
+    ret = json_serialize_api_list(&json, gApi, endPointCount);
+    if (ret != JSON_ENCODING_OK) {
+
+        usys_log_error("Web Service Failed to serialize endpoint data."
+                        " Error Code %d",
+                        ret);
+        ret = json_serialize_error(&json, ret, "Failed to create a json data.");
+    }
+
+    /* Send response */
+    if (json) {
+        ulfius_set_json_body_response(response, respCode, json);
+    } else {
+        ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
+    }
+
 
     return U_CALLBACK_CONTINUE;
 }
@@ -71,19 +128,19 @@ static int web_service_cb_get_unit_cfg(const URequest * request, UResponse * res
         ret = invt_read_unit_info("", uInfo, &size);
         if (!ret) {
             uCfg = invt_alloc_unit_cfg(uInfo->modCount);
-             if(uCfg) {
-                 ret = invt_read_unit_cfg("", uCfg, uInfo->modCount, &size);
-                 if (!ret) {
-                     ret = json_serialize_unit_cfg(&json, uCfg, uInfo->modCount);
-                 } else {
-                     ret = json_serialize_error(&json, ret,
-                                     "Failed to fetch unit config.");
-                 }
-             }
+            if(uCfg) {
+                ret = invt_read_unit_cfg("", uCfg, uInfo->modCount, &size);
+                if (!ret) {
+                    ret = json_serialize_unit_cfg(&json, uCfg, uInfo->modCount);
+                } else {
+                    ret = json_serialize_error(&json, ret,
+                                    "Failed to fetch unit config.");
+                }
+            }
         } else {
             usys_log_error("Web Service Failed to read unit info."
                             " Error Code %d",
-                                    ret);
+                            ret);
             ret = json_serialize_error(&json, ret, "Failed to fetch unit info.");
         }
 
@@ -139,7 +196,7 @@ static int web_service_cb_get_unit_info(const URequest * request, UResponse * re
         } else {
             usys_log_error("Web Service Failed to read unit info."
                             " Error Code %d",
-                                    ret);
+                            ret);
             ret = json_serialize_error(&json, ret, "Failed to fetch unit info.");
         }
 
@@ -167,6 +224,15 @@ static int web_service_cb_get_unit_info(const URequest * request, UResponse * re
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_get_module_cfg(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_get_module_cfg(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -184,6 +250,15 @@ static int web_service_cb_get_module_cfg(const URequest * request, UResponse * r
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_get_module_info(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_get_module_info(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -201,6 +276,15 @@ static int web_service_cb_get_module_info(const URequest * request, UResponse * 
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_put_dev_property(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_put_dev_property(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -217,6 +301,15 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_get_dev_property(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_get_dev_property(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -233,6 +326,15 @@ static int web_service_cb_get_dev_property(const URequest * request, UResponse *
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_put_module_mfg(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_put_module_mfg(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -249,6 +351,15 @@ static int web_service_cb_put_module_mfg(const URequest * request, UResponse * r
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn int web_service_cb_get_module_mfg(const URequest*, UResponse*, void*)
+ * @brief
+ *
+ * @param request
+ * @param response
+ * @param epConfig
+ * @return
+ */
 static int web_service_cb_get_module_mfg(const URequest * request, UResponse * response, void * epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -264,171 +375,76 @@ static int web_service_cb_get_module_mfg(const URequest * request, UResponse * r
 
     return U_CALLBACK_CONTINUE;
 }
-#if 0
-static char* create_endpoint(DevObj *ep) {
-    char *epoint =  usys_zmalloc(usys_strlen(API_RES_EP)
-                    + usys_strlen(ep->modUuid)
-                    + usys_strlen(usys_itoa(ep->type))
-                    + usys_strlen(ep->name)
-                    + usys_strlen(ep->desc) + 5);
-    if (epoint) {
-        usys_memcpy(epoint, API_RES_EP, strlen(API_RES_EP));
-        usys_strcat(epoint, ep->modUuid);
-        usys_strcat(epoint, EP_PS);
-        usys_strcat(epoint, usys_itoa(ep->type));
-        usys_strcat(epoint, EP_PS);
-        usys_strcat(epoint, ep->name);
-        usys_strcat(epoint, EP_PS);
-        usys_strcat(epoint, ep->desc);
-    }
 
-    return epoint;
-}
-
-void char* create_new_end_point(int num, ...) {
-    va_list valist;
-    char *endPoint = NULL;
-    char *str = NULL;
-    int len = usys_strlen(usys_strlen(API_RES_EP));
-
-    char *endPoint = usys_zmalloc(len);
-    if (endPoint) {
-        /* initialize valist for num number of arguments */
-        va_start(valist, num);
-
-
-        /* access all the arguments assigned to valist */
-        for (int i = 0; i < num; i++) {
-            str = va_arg(valist, char*);
-            len += usys_strlen(str);
-            endPoint = usys_realloc(endPoint, len+2);
-            usys_strcat(endPoint, EP_PS"/0");
-            usys_strcat(endPoint, str);
-            endPoint[len] = '\0';
-        }
-
-        /* clean memory reserved for valist */
-        va_end(valist);
-    }
-    return endPoint;
-}
-#endif
-
-static void web_service_add_device_based_endpoint(int perm, void *config, DevObj* devEp) {
-    char *endPoint = API_RES_EP(":UUID/:devType/:devName/:devDesc");
-    //    char* endPoint[] = API_RES_EP(":UUID/:devType/:devName/:devDesc")
-    //    usys_strcat(epoint, ep->modUuid);
-    //    usys_strcat(epoint, EP_PS);
-    //    usys_strcat(epoint, usys_itoa(ep->type));
-    //    usys_strcat(epoint, EP_PS);
-    //    usys_strcat(epoint, ep->name);
-    //    usys_strcat(epoint, EP_PS);
-    //    usys_strcat(epoint, ep->desc);
-    //    if (endPoint) {
-
-    /* Write permissions */
-    if (perm & PERM_WR) {
-        ulfius_add_endpoint_by_val(&serverInst, "PUT", endPoint, config, 0, &web_service_cb_put_dev_property, config);
-        usys_log_trace("Added Method %s Endpoint: %s." "Put", endPoint);
-
-    }
-
-    /* Read permissions */
-    if (perm & PERM_RD) {
-        ulfius_add_endpoint_by_val(&serverInst, "GET", endPoint, config, 0, &web_service_cb_get_dev_property, config);
-        usys_log_trace("Added Method %s Endpoint: %s." "Get", endPoint);
-    }
-
-    //        usys_free(endPoint);
-    //    }
-}
-
-static void web_service_add_unit_info_endpoint() {
-    char *endPoint = API_RES_EP("unitinfo");
-    ulfius_add_endpoint_by_val(&serverInst, "GET", endPoint, NULL, 0, &web_service_cb_get_unit_info, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s.", "Get", endPoint);
-}
-
-static void web_service_add_unit_cfg_endpoint() {
-    char *endPoint = API_RES_EP("unitconfig");
-    ulfius_add_endpoint_by_val(&serverInst, "GET", endPoint, NULL, 0, &web_service_cb_get_unit_cfg, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s.", "Get", endPoint);
-}
-
-void web_service_add_unit_endpoints() {
-    web_service_add_unit_info_endpoint();
-    web_service_add_unit_cfg_endpoint();
-}
-
-static void web_service_add_module_info_endpoint() {
-    char *endPoint = API_RES_EP(":UUID/moduleinfo");
-    ulfius_add_endpoint_by_val(&serverInst, "GET", endPoint, NULL, 0, &web_service_cb_get_module_info, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s.", "Get", endPoint);
-
-}
-
-static void web_service_add_module_cfg_endpoint() {
-    char *endPoint = API_RES_EP(":UUID/moduleconfig");
-    ulfius_add_endpoint_by_val(&serverInst, "GET", endPoint, NULL, 0, &web_service_cb_get_module_cfg, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s.", "Get", endPoint);
-
-}
-
-void web_service_add_module_endpoints() {
-    web_service_add_module_info_endpoint();
-    web_service_add_module_cfg_endpoint();
-}
-
-static void web_service_add_module_mfg_endpoint(char* moduleId, char* fieldName, uint8_t* fieldId, void *config) {
-    //char *endPoint = create_new_endpoint(moduleId, fieldName);
-    char *endPoint = API_RES_EP(":UUID/:fieldName");
-    ulfius_add_endpoint_by_val(&serverInst, "GET", fieldId, NULL, 0, &web_service_cb_get_module_mfg, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s." "Get", endPoint);
-
-    ulfius_add_endpoint_by_val(&serverInst, "PUT", fieldId, NULL, 0, &web_service_cb_put_module_mfg, NULL);
-    usys_log_trace("Added Method %s Endpoint: %s." "PUT", endPoint);
-    usys_free(endPoint);
-}
-
-//static void web_service_add_module_based_endpoint(int perm, void *config, DevObj* devEp) {
-//    char *endPoint = create_endpoint(devEp);
-//    if (endPoint) {
-//
-//        /* Write permissions */
-//        if (perm & PERM_WR) {
-//            ulfius_add_endpoint_by_val(&serverInst, "PUT", endPoint, config, 0, &web_service_cb_put_dev_property, config);
-//            usys_log_trace("Added Method %s Endpoint: %s." "Put", endPoint);
-//
-//        }
-//
-//        /* Read permissions */
-//        if (perm & PERM_RD) {
-//            ulfius_add_endpoint_by_val(serverInst, "GET", config, NULL, 0, &web_service_cb_get_dev_property, config);
-//            usys_log_trace("Added Method %s Endpoint: %s." "Get", endPoint);
-//        }
-//
-//        usys_free(endPoint);
-//    }
-//}
-
-/*
- * setup_web_service_endpoints --
+/**
+ * @fn void web_service_add_end_point(char*, char*, void*, HttpCb)
+ * @brief
  *
+ * @param method
+ * @param endPoint
+ * @param config
+ * @param cb
+ */
+static void web_service_add_end_point(char* method, char* endPoint, void *config, HttpCb cb) {
+    ulfius_add_endpoint_by_val(&serverInst, method, endPoint, NULL, 0, cb, config);
+    usys_strcpy(gApi[endPointCount].method, method);
+    usys_strcpy(gApi[endPointCount].endPoint, endPoint);
+    usys_log_trace("Added api[%d] Method %s Endpoint: %s.", endPointCount, "Get", endPoint);
+    endPointCount++;
+}
+
+/**
+ * @fn void web_service_add_discover_endpoints()
+ * @brief
+ *
+ */
+static void web_service_add_discover_endpoints() {
+    web_service_add_end_point("GET", API_RES_EP("discover"), NULL, web_service_cb_discover_api);
+}
+
+/**
+ * @fn void web_service_add_unit_endpoints()
+ * @brief
+ *
+ */
+void web_service_add_unit_endpoints() {
+    web_service_add_end_point("GET", API_RES_EP("unitinfo"), NULL, web_service_cb_get_unit_info);
+    web_service_add_end_point("GET", API_RES_EP("unitconfig"), NULL, web_service_cb_get_unit_cfg);
+}
+
+/**
+ * @fn void web_service_add_module_endpoints()
+ * @brief
+ *
+ */
+void web_service_add_module_endpoints() {
+    web_service_add_end_point("GET", API_RES_EP("moduleinfo/:UUID"), NULL, web_service_cb_get_module_info);
+    web_service_add_end_point("GET", API_RES_EP("moduleconfig/:UUID"), NULL, web_service_cb_get_module_cfg);
+}
+
+/**
+ * @fn void setup_web_service_endpoints(UInst*, void*)
+ * @brief
+ *
+ * @param instance
+ * @param config
  */
 static void setup_web_service_endpoints(UInst *instance, void * config) {
 
-    /* Endpoint list declaration. */
-    ulfius_add_endpoint_by_val(instance, "GET", API_RES_EP("ping"), NULL, 0,
-            &web_service_cb_ping, config);
+    /* Ping */
+    web_service_add_end_point("GET", API_RES_EP("ping"), NULL, web_service_cb_ping);
 
     /* default endpoint. */
     ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
 
 }
 
-/*
- * start_framework --
+/**
+ * @fn int start_framework(UInst*)
+ * @brief
  *
+ * @param instance
+ * @return
  */
 static int start_framework(UInst *instance ) {
 
@@ -448,6 +464,14 @@ static int start_framework(UInst *instance ) {
     return STATUS_OK;
 }
 
+/**
+ * @fn int init_framework(UInst*, int)
+ * @brief
+ *
+ * @param inst
+ * @param port
+ * @return
+ */
 static int init_framework(UInst *inst, int port) {
 
     if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
@@ -462,9 +486,11 @@ static int init_framework(UInst *inst, int port) {
     return STATUS_OK;
 }
 
-/*
- * start_web_services -- start accepting REST clients on 127.0.0.1:port
+/**
+ * @fn int web_service_start()
+ * @brief
  *
+ * @return
  */
 int web_service_start() {
 
@@ -475,10 +501,12 @@ int web_service_start() {
 
     web_service_add_module_endpoints();
 
+    web_service_add_discover_endpoints();
+
     /* open connection for both admin and client web_services */
     if (start_framework(&serverInst)) {
         usys_log_error( "Failed to start web_services for cld_ctrl: %d",
-                WEB_SERVICE_PORT);
+                        WEB_SERVICE_PORT);
         return STATUS_NOK;
     }
 
@@ -487,6 +515,12 @@ int web_service_start() {
     return STATUS_OK;
 }
 
+/**
+ * @fn int web_service_init()
+ * @brief
+ *
+ * @return
+ */
 int web_service_init() {
     /* Initialize the admin and client web_services framework. */
     if (init_framework(&serverInst, WEB_SERVICE_PORT) != STATUS_OK){

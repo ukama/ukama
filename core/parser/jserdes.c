@@ -9,6 +9,7 @@
 
 #include "jserdes.h"
 
+#include "web_service.h"
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -252,6 +253,43 @@ int json_serialize_unit_info(JsonObj** json, UnitInfo* uInfo){
 
         json_object_set_new(jUInfo, JTAG_MODULE_COUNT,
                         json_integer(uInfo->modCount));
+
+    } else {
+        return JSON_CREATION_ERR;
+    }
+
+    return ret;
+}
+
+int json_serialize_api_list(JsonObj** json, WebServiceAPI* apiList, uint16_t count) {
+    int ret = JSON_ENCODING_OK;
+
+    *json = json_object();
+    if (!json) {
+        return JSON_CREATION_ERR;
+    }
+
+    if (!apiList) {
+        return JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_API_LIST, json_array());
+
+    JsonObj* jApiArr = json_object_get(*json, JTAG_API_LIST);
+    if (jApiArr) {
+
+        for(int iter = 0; iter < count; iter++) {
+            json_t* jApi = json_object();
+
+            json_object_set_new(jApi, JTAG_METHOD, json_string(apiList[iter].method));
+
+            json_object_set_new(jApi, JTAG_URL_EP, json_string(apiList[iter].endPoint));
+
+            /* Add element to array */
+            json_array_append(jApiArr, jApi);
+            json_decref(jApi);
+
+        }
 
     } else {
         return JSON_CREATION_ERR;

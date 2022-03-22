@@ -107,6 +107,10 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_ERROR_CODE                 "code"
 #define JTAG_ERROR_CSTRING              "string"
 
+#define JTAG_API_LIST                   "api"
+#define JTAG_METHOD                     "method"
+#define JTAG_URL_EP                     "endPoint"
+
 bool parser_read_boolean_object(const JsonObj *obj, const char* key,
                 bool *bvalue);
 bool parser_read_integer_object(const JsonObj *obj, const char* key,
