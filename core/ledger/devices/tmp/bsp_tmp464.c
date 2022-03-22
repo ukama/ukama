@@ -367,6 +367,7 @@ int bsp_tmp464_dreg_cb(void *pDev, SensorCallbackFxn fun) {
 
 int bsp_tmp464_init(Device *pDev) {
     int ret = 0;
+
     ret = dhelper_init_property_from_parser(pDev, &gProperty,
                                             &gPropertyCount);
     if (ret) {
@@ -382,6 +383,9 @@ int bsp_tmp464_init(Device *pDev) {
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;
     }
+
+    /* Register end points to https server */
+
     return ret;
 }
 

@@ -34,6 +34,9 @@ PLATFORM_LIB:=usys
 # JSON lib
 JSON_LIB:=jansson
 
+# HTTP server lib
+HTTP_SERVER_LIB:=ulfius
+
 # Source paths
 CORE_DIRS=core utils
 SVC_DIRS=service
@@ -70,6 +73,7 @@ LIBS+=-lrt
 LIBS+=-lm
 LIBS+=-l$(PLATFORM_LIB)
 LIBS+=-l$(JSON_LIB)
+LIBS+=-l$(HTTP_SERVER_LIB)
 
 
 # Compiler flags

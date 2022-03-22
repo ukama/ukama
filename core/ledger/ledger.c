@@ -372,6 +372,16 @@ int ldgr_register(char *pUuid, char *name, uint8_t count, ModuleCfg *pModCfg) {
                                 dev->obj.modUuid);
             }
 
+            /* register end point to http server */
+            ret = ldgr_register_dev_prop_to_server(dev);
+            if (ret) {
+                usys_log_debug(
+                                "Err(%d): Ledger:: Failed to register Device Name: %s,"
+                                " Disc: %s, Type: %d, Module Id %s to http server",
+                                ret, dev->obj.name, dev->obj.desc, dev->obj.type,
+                                dev->obj.modUuid);
+            }
+
         }
 
         ldgr_usys_free(dev);
@@ -715,6 +725,29 @@ int ldgr_disable_irq(DevObj *obj, void *prop, void *data) {
 
     } else {
         ret = ERR_NODED_DEV_MISSING;
+    }
+
+    return ret;
+}
+
+int ldgr_register_dev_prop_to_server(Device* dev) {
+    int ret = 0;
+    int count = 0;
+    Property *prop = NULL;
+#ifdef TODO
+    ret = ldgr_read_prop_count(dev->obj, &count);
+    if (ret) {
+        return ret;
+    }
+
+    ret = ldgr_read_prop_count(dev->obj, prop);
+    if (ret) {
+        return ret;
+    }
+#endif
+    /* For each property */
+    for (int iter = 0; iter < count; count++) {
+        //webservice_add_device_based_endpoint(prop[iter].perm, &prop[iter]);
     }
 
     return ret;

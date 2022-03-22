@@ -7,8 +7,7 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "service.h"
-
+#include <service.h>
 #include "usys_api.h"
 #include "usys_file.h"
 #include "usys_getopt.h"

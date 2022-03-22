@@ -237,7 +237,7 @@ typedef struct __attribute__((__packed__)){
     char skew[NAME_LENGTH];
     char mac[MAC_LENGTH];
     Version swVer;
-    Version pswVer;
+    Version pSwVer;
     char assmDate[DATE_LENGTH];
     char oemName[NAME_LENGTH];
     uint8_t modCount;

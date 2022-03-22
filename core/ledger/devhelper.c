@@ -273,3 +273,7 @@ int dhelper_confirm_irq(const DrvrOps *drvr, Device *dev, Property *prop,
     }
     return ret;
 }
+
+int dhelper_register_endpoints(Device* dev, Property *prop, int maxPCount) {
+
+}

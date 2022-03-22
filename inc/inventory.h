@@ -181,9 +181,9 @@ char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
 
 char *serialize_unitcfg_payload(UnitCfg *ucfg, uint8_t count, uint16_t *size);
 
-ModuleCfg *ukdb_alloc_module_cfg(uint8_t count);
+ModuleCfg *invt_alloc_module_cfg(uint8_t count);
 
-UnitCfg *ukdb_alloc_unit_cfg(uint8_t count);
+UnitCfg *invt_alloc_unit_cfg(uint8_t count);
 
 #ifdef __cplusplus
 }

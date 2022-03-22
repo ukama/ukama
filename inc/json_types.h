@@ -103,6 +103,9 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_LIMIT_PROP_ID              "limitValPropertyId"
 #define JTAG_ALERT_COND                 "alertCondition"
 
+#define JTAG_ERROR                      "error"
+#define JTAG_ERROR_CODE                 "code"
+#define JTAG_ERROR_CSTRING              "string"
 
 bool parser_read_boolean_object(const JsonObj *obj, const char* key,
                 bool *bvalue);

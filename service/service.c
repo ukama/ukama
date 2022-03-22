@@ -12,6 +12,7 @@
 #include "inventory.h"
 #include "ledger.h"
 #include "store.h"
+#include "web_service.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -184,6 +185,11 @@ int service_req_create_invt_database() {
 int service_at_bootup(char *invtDb, char* propCfg) {
     int ret = 0;
 
+    ret = web_service_init();
+    if (ret) {
+        return ret;
+    }
+
     ret = ldgr_init(propCfg);
     if (!ret) {
         invt_init(invtDb, &ldgr_register);
@@ -206,4 +212,5 @@ int service_init(char* invtDb, char* propCfg) {
 }
 
 void service() {
+    web_service_start();
 }
