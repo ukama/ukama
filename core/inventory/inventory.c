@@ -427,7 +427,7 @@ int invt_erase_idx(char *pUuid) {
         return ERR_NODED_R_FAIL;
     }
 
-    int offset = idxCount * SCH_IDX_COUNT_SIZE;
+    int offset = SCH_IDX_TABLE_OFFSET + (idxCount * SCH_IDX_TPL_SIZE);
     if (store_erase_block(pUuid, offset, SCH_IDX_TPL_SIZE) == SCH_IDX_TPL_SIZE) {
         return ERR_NODED_WR_FAIL;
     }
@@ -446,7 +446,7 @@ int invt_erase_idx(char *pUuid) {
 /* Update the index at particular location */
 int invt_update_index_at_id(char *pUuid, SchemaIdxTuple *pData, uint16_t idx) {
     int ret = 0;
-    int offset = idx * SCH_IDX_COUNT_SIZE;
+    int offset = SCH_IDX_TABLE_OFFSET + (idx * SCH_IDX_TPL_SIZE);
 
     if (store_write_block(pUuid, pData, offset, SCH_IDX_TPL_SIZE) !=
                     SCH_IDX_TPL_SIZE) {
@@ -652,7 +652,7 @@ int invt_write_module_payload(char *pUuid, void *pData, uint16_t offset,
 /* Update the payload data with the given field id. It also Update the index
  * in Index table for field Id. */
 int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
-                uint16_t size, uint8_t state, Version version) {
+                uint16_t size) {
     int ret = 0;
     /*Find index first.
         Compare the field id's from 0th index to last aailable index.
@@ -682,8 +682,6 @@ int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
     /* Update Index */
     idxData->payloadCrc = crc;
     idxData->payloadSize = size;
-    idxData->payloadVer = version;
-    idxData->state = state;
     idxData->valid = USYS_TRUE;
     if (invt_update_index_at_id(pUuid, idxData, idx)) {
         ret = ERR_NODED_WR_FAIL;
@@ -696,8 +694,9 @@ int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
 
     usys_log_debug(
                     "Inventory Payload updated for index id 0x%x field Id "
-                    "0x%x at offset 0x%x.",
-                    idx, idxData->fieldId, idxData->payloadOffset);
+                    "0x%x at offset 0x%x with crc %u for %d bytes.",
+                    idx, idxData->fieldId, idxData->payloadOffset,
+                    idxData->payloadCrc, idxData->payloadSize );
 
     return ret;
 }
@@ -1654,22 +1653,36 @@ int invt_read_payload(char *pUuid, void *pData, uint16_t offset,
 }
 
 /* Read payload for field id.*/
-int invt_read_payload_for_field_id(char *pUuid, void *p_payload, uint16_t fid,
+int invt_read_payload_for_field_id(char *pUuid, void **data, uint16_t fid,
                 uint16_t *size) {
     int ret = -1;
     uint16_t idx = 0;
-
+    void* payload =  *data;
     SchemaIdxTuple *idxData;
     ret = invt_search_field_id(pUuid, &idxData, &idx, fid);
     if (ret) {
-        usys_log_error("Err(%d): UKDB search error for field id 0x%x.",
+        usys_log_error("Err(%d): Inventory search error for field id 0x%x.",
                         ret, fid);
         return ret;
     }
 
-    if (p_payload) {
+    *size = idxData->payloadSize;
 
-        ret = invt_read_payload(pUuid, p_payload, idxData->payloadOffset,
+    /* Check if memory available */
+    if (!payload) {
+        payload = usys_zmalloc(*size);
+        if (payload) {
+            *data = payload;
+        } else {
+            usys_log_error("Inventory memory failure. Error %s.",
+                                   ret, usys_error(errno));
+            return  errno;
+        }
+    }
+
+    if (payload) {
+
+        ret = invt_read_payload(pUuid, payload, idxData->payloadOffset,
                         idxData->payloadSize);
         if (ret) {
             usys_log_error("Payload read failure for the "
@@ -1680,10 +1693,8 @@ int invt_read_payload_for_field_id(char *pUuid, void *p_payload, uint16_t fid,
 
     }
 
-    *size = idxData->payloadSize;
-
     /* validate index */
-    ret = invt_validate_payload(p_payload, idxData->payloadCrc, *size);
+    ret = invt_validate_payload(payload, idxData->payloadCrc, *size);
     if (ret) {
         usys_log_error("CRC failure for the field id 0x%x. Error Code: %d",
                         fid, ret);

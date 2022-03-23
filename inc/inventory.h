@@ -69,10 +69,10 @@ int invt_read_module_info(char *pUuid, ModuleInfo *p_info, uint16_t *size);
 int invt_read_payload(char *pUuid, void *p_data, uint16_t offset,
                       uint16_t size);
 
-int invt_read_payload_for_fieldid(char *pUuid, void *p_payload, uint16_t fid,
+int invt_read_payload_for_field_id(char *pUuid, void **data, uint16_t fid,
                                   uint16_t *size);
 
-int invt_read_payload_from_ukdb(char *pUuid, void *p_data, uint16_t id,
+int invt_read_payload_from_invt(char *pUuid, void *p_data, uint16_t id,
                                 uint16_t *size);
 
 int invt_read_unit(char *pUuid, UnitInfo *unitInfo, UnitCfg *unitCfg);
@@ -107,7 +107,7 @@ int invt_update_idx_for_field_id(char *pUuid, void *p_data,
                                   uint16_t fieldId);
 
 int invt_update_payload(char *pUuid, void *p_data, uint16_t fieldId,
-                        uint16_t size, uint8_t state, Version version);
+                        uint16_t size );
 
 int invt_unregister_module(char *puuid);
 

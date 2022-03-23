@@ -184,12 +184,12 @@ int json_serialize_unit_cfg(JsonObj** json, UnitCfg* uCfg, uint8_t count){
         for(int iter = 0; iter < count; iter++) {
             json_t* jUCfg = json_object();
 
-            json_object_set_new(jUCfg, JTAG_UUID, json_string(uCfg->modUuid));
+            json_object_set_new(jUCfg, JTAG_UUID, json_string(uCfg[iter].modUuid));
 
-            json_object_set_new(jUCfg, JTAG_NAME, json_string(uCfg->modName));
+            json_object_set_new(jUCfg, JTAG_NAME, json_string(uCfg[iter].modName));
 
             json_object_set_new(jUCfg, JTAG_INVT_SYSFS_FILE,
-                            json_string(uCfg->sysFs));
+                            json_string(uCfg[iter].sysFs));
 
             /* Add element to array */
             json_array_append(jUCfgArr, jUCfg);
@@ -616,33 +616,101 @@ int json_serialize_sensor_data( JsonObj** json, const char* name,
     return ret;
 }
 
-int json_deserialize_sensor_data( JsonObj* json, char* name, char* desc,  int type, void* data) {
+int json_deserialize_sensor_data( JsonObj* json, char** name, char** desc,
+                int* type, void** data) {
     int ret = JSON_DECODING_OK;
 
     if (!json) {
         return JSON_PARSER_ERR;
     }
 
-   if (!parser_read_string_object(json, JTAG_NAME, &name) ) {
+   char *tname = NULL;
+   if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
        return JSON_PARSER_ERR;
+   } else {
+       *name = tname;
    }
 
-   if (!parser_read_integer_object(json, JTAG_TYPE, &type) ) {
+   int ttype = 0;
+   if (!parser_read_integer_object(json, JTAG_TYPE, &ttype) ) {
        return JSON_PARSER_ERR;
+   } else {
+       *type = ttype;
    }
 
-   if (!parser_read_string_object(json, JTAG_DESCRIPTION, &desc) ) {
+   char* tdesc = NULL;
+   if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
        return JSON_PARSER_ERR;
+   } else {
+       *desc = tdesc;
    }
 
    JsonObj* jData = json_object_get(json, JTAG_VALUE);
-   data = json_decode_value(jData, type);
-   if(!data) {
+   *data = json_decode_value(jData, *type);
+   if(!(*data)) {
        return JSON_PARSER_ERR;
    }
 
    return ret;
 }
 
+int json_serialize_mfg_data( JsonObj** json, const char* name,
+                int fieldId, void* data) {
+    int ret = JSON_ENCODING_OK;
 
+    *json = json_object();
+    if (!json) {
+        return JSON_CREATION_ERR;
+    }
+
+    if (!data) {
+        return JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_NAME, json_string(name));
+
+    json_object_set_new(*json, JTAG_FIELD_ID, json_integer(fieldId));
+
+    json_object_set_new(*json, JTAG_TYPE, json_string((char*)data));
+
+    return ret;
+}
+
+int json_deserialize_mfg_data( JsonObj* json, char** name, char** desc,
+                int* type, void** data) {
+    int ret = JSON_DECODING_OK;
+
+    if (!json) {
+        return JSON_PARSER_ERR;
+    }
+
+   char *tname = NULL;
+   if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
+       return JSON_PARSER_ERR;
+   } else {
+       *name = tname;
+   }
+
+   int ttype = 0;
+   if (!parser_read_integer_object(json, JTAG_TYPE, &ttype) ) {
+       return JSON_PARSER_ERR;
+   } else {
+       *type = ttype;
+   }
+
+   char* tdesc = NULL;
+   if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
+       return JSON_PARSER_ERR;
+   } else {
+       *desc = tdesc;
+   }
+
+   JsonObj* jData = json_object_get(json, JTAG_VALUE);
+   *data = json_decode_value(jData, *type);
+   if(!(*data)) {
+       return JSON_PARSER_ERR;
+   }
+
+   return ret;
+}
 
