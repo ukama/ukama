@@ -48,9 +48,9 @@ const NodeRadioTab = ({
                     />
                 </NodeStatsContainer>
             </Grid>
-            <Grid item lg={isCollapse ? 11 : 9} md xs>
-                <Paper sx={{ padding: "22px 18px 0px 30px", width: "100%" }}>
-                    <Stack spacing={1}>
+            <Grid item lg={isCollapse ? 11 : 8} md xs>
+                <Paper sx={{ p: 3, width: "100%" }}>
+                    <Stack spacing={4}>
                         <ApexStackAreaChart
                             hasData={true}
                             name={"PX Power"}
