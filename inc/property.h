@@ -15,8 +15,7 @@ extern "C" {
 #endif
 
 #include "usys_types.h"
-
-#define PROP_MAX_STR_LENGTH	64
+#include "noded_macros.h"
 
 /* Permissions*/
 #define PERM_EX			0x01

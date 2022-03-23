@@ -15,13 +15,26 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-/* Parser to read integer value from JSON object */
-bool parser_read_integer_value(const JsonObj *obj, int *ivalue) {
+/* Parser to read real value from JSON object */
+bool parser_read_real_value(const JsonObj *jObj, double *ivalue) {
     bool ret = USYS_FALSE;
 
     /* Check if object is number */
-    if (json_is_number(obj)) {
-        *ivalue = json_integer_value(obj) ;
+    if (json_is_real(jObj)) {
+        *ivalue = json_real_value(jObj) ;
+        ret = USYS_TRUE;
+    }
+
+    return ret;
+}
+
+/* Parser to read integer value from JSON object */
+bool parser_read_integer_value(const JsonObj *jObj, int *ivalue) {
+    bool ret = USYS_FALSE;
+
+    /* Check if object is number */
+    if (json_is_integer(jObj)) {
+        *ivalue = json_integer_value(jObj) ;
         ret = USYS_TRUE;
     }
 
@@ -37,7 +50,7 @@ bool parser_read_integer_object(const JsonObj *obj, const char* key,
     const JsonObj *jIntObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jIntObj && json_is_number(jIntObj)) {
+    if (json_is_number(jIntObj)) {
         *ivalue = json_integer_value(jIntObj) ;
         ret = USYS_TRUE;
     }
@@ -54,7 +67,7 @@ bool parser_read_uint32_object(const JsonObj *obj, const char* key,
     const JsonObj *jIntObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jIntObj && json_is_number(jIntObj)) {
+    if (json_is_number(jIntObj)) {
         *ivalue = json_integer_value(jIntObj) ;
         ret = USYS_TRUE;
     }
@@ -93,7 +106,7 @@ bool parser_read_uint8_object(const JsonObj *obj, const char* key,
 
 
 /* Parser to read string value from JSON object */
-bool parser_read_string_value(JsonObj *obj, char *svalue) {
+bool parser_read_string_value(JsonObj *obj, char **svalue) {
     bool ret = USYS_FALSE;
     int len = 0;
 
@@ -104,7 +117,7 @@ bool parser_read_string_value(JsonObj *obj, char *svalue) {
         svalue = usys_zmalloc(sizeof(char) * (len+1));
         if (svalue) {
             const char *str = json_string_value(obj);
-            usys_strcpy(svalue, str);
+            usys_strcpy(*svalue, str);
             ret = USYS_TRUE;
         }
 
@@ -153,6 +166,20 @@ bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
 }
 
 /* Parser to read boolean value from JSON object */
+bool parser_read_boolean_value(const JsonObj *jBoolObj,
+                bool *bvalue) {
+    bool ret = USYS_FALSE;
+
+    /* Check if object is number */
+    if (json_is_boolean(jBoolObj)) {
+        *bvalue = json_boolean_value(jBoolObj) ;
+        ret = USYS_TRUE;
+    }
+
+    return ret;
+}
+
+/* Parser to read boolean value from JSON object */
 bool parser_read_boolean_object(const JsonObj *obj, const char* key,
                 bool *bvalue) {
     bool ret = USYS_FALSE;
@@ -161,7 +188,7 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
     const JsonObj *jBoolObj = json_object_get(obj, key);
 
     /* Check if object is number */
-    if (jBoolObj && json_is_boolean(jBoolObj)) {
+    if (json_is_boolean(jBoolObj)) {
         *bvalue = json_boolean_value(jBoolObj) ;
         ret = USYS_TRUE;
     }

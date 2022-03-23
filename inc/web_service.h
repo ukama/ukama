@@ -28,6 +28,11 @@ extern "C" {
 
 /* API End Points */
 #define UUID                            "uuid"
+#define DEVTYPE                         "type"
+#define DEVNAME                         "name"
+#define DEVDESC                         "desc"
+#define PROPNAME                        "prop"
+
 #define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
     REST_API_VERSION EP_BS RES
 
@@ -64,7 +69,7 @@ typedef struct {
 
 
 int web_service_init();
-int web_services_start();
+int web_service_start();
 
 void web_service_add_unit_endpoints();
 void web_service_add_module_endpoints();

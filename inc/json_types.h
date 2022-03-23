@@ -102,6 +102,7 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_CURR_PROP_ID               "currentValPropertyId"
 #define JTAG_LIMIT_PROP_ID              "limitValPropertyId"
 #define JTAG_ALERT_COND                 "alertCondition"
+#define JTAG_VALUE                       "alertCondition"
 
 #define JTAG_ERROR                      "error"
 #define JTAG_ERROR_CODE                 "code"
@@ -117,11 +118,13 @@ bool parser_read_integer_object(const JsonObj *obj, const char* key,
                 int *ivalue);
 bool parser_read_integer_value(const JsonObj *obj, int *ivalue);
 
+bool parser_read_real_value(const JsonObj *jObj, double *ivalue);
+
 bool parser_read_string_object(const JsonObj *obj, const char* key,
                 char **svalue);
 bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
                 char* str);
-bool parser_read_string_value(JsonObj *obj, char *svalue);
+bool parser_read_string_value(JsonObj *obj, char **svalue);
 
 bool parser_read_uint16_object(const JsonObj *obj, const char* key,
                 uint16_t *ivalue);
