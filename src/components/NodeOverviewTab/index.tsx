@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
-import { NodeDetailsCard, NodeStatsContainer } from "..";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
+import { NodeDetailsCard, NodeStatsContainer, ApexLineChart } from "..";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
-import ApexLineChartIntegration from "../ApexLineChart";
 
 interface INodeOverviewTab {
     loading: boolean;
@@ -157,12 +156,12 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 1 && (
                     <Paper sx={{ p: 3 }}>
-                        <Stack spacing={2}>
+                        <Stack spacing={4}>
                             <Typography variant="h6">Node Health</Typography>
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][0].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={tempTrxMetric}
                                     name={
@@ -176,7 +175,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][1].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={tempComMetric}
                                     name={
@@ -190,7 +189,7 @@ const NodeOverviewTab = ({
                             {HealtChartsConfigure[
                                 (selectedNode?.type as string) || "HOME"
                             ][2].show && (
-                                <ApexLineChartIntegration
+                                <ApexLineChart
                                     hasData={true}
                                     data={uptimeMetrics}
                                     name={
@@ -206,33 +205,37 @@ const NodeOverviewTab = ({
                 )}
                 {selected === 2 && selectedNode?.type !== "AMPLIFIER" && (
                     <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6">Subscribers</Typography>
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][3].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={attachedSubcriberMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][3].name
-                                }
-                            />
-                        )}
-                        {HealtChartsConfigure[
-                            (selectedNode?.type as string) || "HOME"
-                        ][4].show && (
-                            <ApexLineChartIntegration
-                                hasData={true}
-                                data={activeSubcriberMetrics}
-                                name={
-                                    HealtChartsConfigure[
-                                        (selectedNode?.type as string) || "HOME"
-                                    ][4].name
-                                }
-                            />
-                        )}
+                        <Stack spacing={4}>
+                            <Typography variant="h6">Subscribers</Typography>
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][3].show && (
+                                <ApexLineChart
+                                    hasData={true}
+                                    data={attachedSubcriberMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][3].name
+                                    }
+                                />
+                            )}
+                            {HealtChartsConfigure[
+                                (selectedNode?.type as string) || "HOME"
+                            ][4].show && (
+                                <ApexLineChart
+                                    hasData={true}
+                                    data={activeSubcriberMetrics}
+                                    name={
+                                        HealtChartsConfigure[
+                                            (selectedNode?.type as string) ||
+                                                "HOME"
+                                        ][4].name
+                                    }
+                                />
+                            )}
+                        </Stack>
                     </Paper>
                 )}
             </Grid>

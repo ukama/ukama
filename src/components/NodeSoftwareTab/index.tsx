@@ -40,7 +40,11 @@ const NodeSoftwareTab = ({
                 <Typography variant="h6" sx={{ marginBottom: 3 }}>
                     Change Logs
                 </Typography>
-                <SimpleDataTable columns={NodeAppsColumns} dataset={NodeLogs} />
+                <SimpleDataTable
+                    maxHeight={400}
+                    dataset={NodeLogs}
+                    columns={NodeAppsColumns}
+                />
             </Paper>
             <Paper sx={{ height: "100%", p: 3, borderRadius: "4px" }}>
                 <Typography variant="h6" sx={{ mb: 4 }}>
@@ -59,19 +63,18 @@ const NodeSoftwareTab = ({
                                 <Card variant="outlined">
                                     <CardContent>
                                         <Stack
+                                            spacing={1}
                                             direction="row"
                                             sx={{ alignItems: "center" }}
-                                            spacing={1}
                                         >
                                             <CheckCircleIcon
                                                 htmlColor={colors.green}
-                                                sx={{
-                                                    position: "relative",
-                                                    left: -3,
-                                                    fontSize: "23px",
-                                                }}
+                                                fontSize="medium"
                                             />
-                                            <Typography variant="h5">
+                                            <Typography
+                                                variant="h5"
+                                                textTransform={"capitalize"}
+                                            >
                                                 {title}
                                             </Typography>
                                         </Stack>
@@ -82,7 +85,11 @@ const NodeSoftwareTab = ({
                                         >
                                             Version: {version}
                                         </Typography>
-                                        <Stack direction="row" spacing={1 / 2}>
+                                        <Stack
+                                            direction="row"
+                                            spacing={1 / 2}
+                                            mt={"12px"}
+                                        >
                                             <Typography variant="body2">
                                                 CPU:
                                             </Typography>
@@ -90,7 +97,7 @@ const NodeSoftwareTab = ({
                                                 variant="body2"
                                                 sx={{ color: colors.darkBlue }}
                                             >
-                                                {cpu} %
+                                                {parseFloat(cpu).toFixed(2)} %
                                             </Typography>
                                         </Stack>
                                         <Stack direction="row" spacing={1 / 2}>
@@ -101,7 +108,8 @@ const NodeSoftwareTab = ({
                                                 variant="body2"
                                                 sx={{ color: colors.darkBlue }}
                                             >
-                                                {memory} KB
+                                                {parseFloat(memory).toFixed(2)}{" "}
+                                                KB
                                             </Typography>
                                         </Stack>
                                     </CardContent>

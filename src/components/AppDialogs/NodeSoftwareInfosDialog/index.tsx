@@ -58,10 +58,10 @@ const NodeSoftwareInfosDialog = ({
                         </IconButton>
                     )}
                 </Box>
-                <DialogContent sx={{ padding: 0, mb: 4 }}>
+                <DialogContent sx={{ p: 0, my: 2 }}>
                     <Typography variant="body1">Short introduction.</Typography>
 
-                    <Stack direction="column" sx={{ mb: 4 }}>
+                    <Stack direction="column" sx={{ my: 2 }}>
                         <Typography variant="body1">TL;DR</Typography>
                         <Typography variant="body1">*** NEW ***</Typography>
                         <Typography variant="body1">

@@ -18,7 +18,7 @@ const NodeRadioTab = ({
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
         <Grid container spacing={3}>
-            <Grid item lg={!isCollapse ? 3 : 1} md xs>
+            <Grid item lg={!isCollapse ? 4 : 1} md xs>
                 <NodeStatsContainer
                     index={0}
                     selected={0}

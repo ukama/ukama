@@ -10,6 +10,7 @@ import {
     NodeResourcesTab,
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
+    ActivationDialog,
 } from "../../components";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import {
@@ -80,6 +81,7 @@ const getDefaultList = (names: string[]) =>
 const Nodes = () => {
     const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
+    const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
@@ -224,7 +226,7 @@ const Nodes = () => {
             nodeId: selectedNode?.id,
             orgId: orgId,
             regPolling: false,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -339,7 +341,7 @@ const Nodes = () => {
     ] = useGetMetricsDiskTrxLazyQuery();
 
     useGetMetricsDiskTrXsSubscription({
-        skip: selectedTab !== 1,
+        skip: selectedTab !== 2,
         onSubscriptionData: res => {
             setDiskTrxMatrics(
                 diskTrxMatrics.map(item => {
@@ -812,6 +814,7 @@ const Nodes = () => {
             });
         }
     }, [selectedTab, selectedNode]);
+
     useEffect(() => {
         if (
             selectedTab == 3 &&
@@ -1401,13 +1404,19 @@ const Nodes = () => {
     };
 
     const handleNodeActioOptionClicked = () => {
-        //Todo :Handle nodeAction selected and clicked
+        //TODO: Handle NODE action button click
     };
     const onAddNode = () => {
-        //TODO: Handle NODE ADD ACTION
+        setIsAddNode(true);
     };
     const handleUpdateNode = () => {
         // TODO: Handle Update node Action
+    };
+
+    const handleAddNodeClose = () => setIsAddNode(() => false);
+
+    const handleActivationSubmit = () => {
+        /* Handle submit activation action */
     };
 
     const getNodeAppDetails = (id: any) => {
@@ -1601,6 +1610,15 @@ const Nodes = () => {
                 closeBtnLabel="close"
                 isOpen={showNodeSoftwareUpdatInfos}
                 handleClose={handleCloseNodeInfos}
+            />
+            <ActivationDialog
+                isOpen={isAddNode}
+                dialogTitle={"Register Node"}
+                handleClose={handleAddNodeClose}
+                handleActivationSubmit={handleActivationSubmit}
+                subTitle={
+                    "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
+                }
             />
         </Box>
     );

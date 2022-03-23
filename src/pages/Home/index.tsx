@@ -38,8 +38,8 @@ import {
     GetLatestDataBillSubscription,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
-    useGetMetricsUptimeSSubscription,
     GetLatestConnectedUsersSubscription,
+    useGetMetricsUptimeSSubscription,
 } from "../../generated";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
@@ -58,7 +58,7 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
     const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(true);
+        useState<boolean>(!!orgId);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -133,21 +133,41 @@ const Home = () => {
         getMetricUptime,
         {
             data: metricUptimeRes,
-            refetch: metricUptimeRefetch,
             loading: metricUptimeLoading,
+            refetch: metricUptimeRefetch,
         },
-    ] = useGetMetricsUptimeLazyQuery();
-
-    useGetMetricsUptimeSSubscription({
-        onSubscriptionData: res => {
-            if (uptimeMetric.data.length > 0)
+    ] = useGetMetricsUptimeLazyQuery({
+        fetchPolicy: "network-only",
+        onCompleted: res => {
+            if (
+                uptimeMetric.data.length === 0 &&
+                res.getMetricsUptime.length > 0
+            ) {
                 setUptimeMetrics({
                     name: uptimeMetric.name,
                     data: [
                         ...uptimeMetric.data,
-                        ...(res.subscriptionData.data?.getMetricsUptime || []),
+                        ...(res.getMetricsUptime || []),
                     ],
                 });
+            }
+        },
+    });
+
+    useGetMetricsUptimeSSubscription({
+        onSubscriptionData: res => {
+            if (res.subscriptionData.data && uptimeMetric.data.length > 0) {
+                res.subscriptionData?.data?.getMetricsUptime[0].x >
+                    uptimeMetric.data[uptimeMetric.data.length - 1].x &&
+                    setUptimeMetrics(_prev => ({
+                        name: _prev.name,
+                        data: [
+                            ..._prev.data,
+                            ...(res.subscriptionData.data?.getMetricsUptime ||
+                                []),
+                        ],
+                    }));
+            }
         },
     });
 
@@ -156,7 +176,7 @@ const Home = () => {
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
             regPolling: false,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -164,7 +184,7 @@ const Home = () => {
         getMetricPayload({
             nodeId: "uk-sa2209-comv1-a1-ee58",
             orgId: orgId,
-            from: from + 1,
+            from: from,
         });
 
     useEffect(() => {
@@ -178,29 +198,18 @@ const Home = () => {
     }, [nodeRes]);
 
     useEffect(() => {
-        if (metricUptimeRes && metricUptimeRes.getMetricsUptime.length > 0) {
-            if (
-                uptimeMetric.data.length === 0 &&
-                metricUptimeRes.getMetricsUptime.length > 0
-            ) {
-                setUptimeMetrics({
-                    name: uptimeMetric.name,
-                    data: [
-                        ...uptimeMetric.data,
-                        ...(metricUptimeRes.getMetricsUptime || []),
-                    ],
-                });
-            }
+        if (
+            metricUptimeRes &&
+            metricUptimeRes.getMetricsUptime &&
+            metricUptimeRes.getMetricsUptime.length > 0
+        ) {
             metricUptimeRefetch({
                 ...getMetricPollingCallPayload(
                     metricUptimeRes.getMetricsUptime[
                         metricUptimeRes.getMetricsUptime.length - 1
-                    ].x
+                    ].x + 1
                 ),
             });
-            return () => {
-                /*UNMOUNT*/
-            };
         }
     }, [metricUptimeRes]);
 

@@ -1,4 +1,4 @@
-import ApexLineChartIntegration from "../ApexLineChart";
+import ApexLineChart from "../ApexLineChart";
 import { RoundedCard, SkeletonRoundedCard } from "../../styles";
 
 type StatsCardProps = {
@@ -14,7 +14,7 @@ const StatsCard = ({ loading, metricData, hasMetricData }: StatsCardProps) => {
                 <SkeletonRoundedCard variant="rectangular" height={337} />
             ) : (
                 <RoundedCard sx={{ minHeight: 337, display: "flex" }}>
-                    <ApexLineChartIntegration
+                    <ApexLineChart
                         hasData={hasMetricData}
                         data={[metricData]}
                         name={metricData.name}
