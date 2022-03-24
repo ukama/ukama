@@ -250,3 +250,11 @@ export class NodeAppResponse {
     @Field()
     memory: string;
 }
+
+@ObjectType()
+export class MetricRes {
+    @Field()
+    title: string;
+    @Field(() => [MetricDto])
+    metricData: MetricDto[];
+}
