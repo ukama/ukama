@@ -2,7 +2,6 @@ import { LoadingWrapper } from "..";
 import colors from "../../theme/colors";
 import DeviceModalView from "../DeviceModalView";
 import { Chip, Paper, Stack, Typography, Link, Grid } from "@mui/material";
-import { HorizontalContainerJustify, LinkStyle } from "../../styles";
 
 interface INodeDetailsCard {
     loading: boolean;

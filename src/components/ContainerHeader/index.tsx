@@ -67,7 +67,6 @@ const ContainerHeader = ({
             <Grid
                 item
                 md={8}
-                lg={5}
                 xs={12}
                 container
                 spacing={3}
@@ -75,7 +74,7 @@ const ContainerHeader = ({
                 justifyContent="flex-end"
             >
                 {showSearchBox && (
-                    <Grid item xs={12} sm={7}>
+                    <Grid item>
                         <StyledInputBase
                             placeholder="Search…"
                             value={currentSearchValue}
@@ -83,9 +82,9 @@ const ContainerHeader = ({
                                 setCurrentSearchValue(e.target.value)
                             }
                             sx={{
-                                width: "100%",
                                 height: "42px",
                                 borderRadius: 2,
+                                minWidth: { xs: "100%", md: "300px" },
                                 border: `1px solid ${colors.silver}`,
                                 padding: "4px 8px 4px 12px !important",
                             }}
@@ -96,15 +95,12 @@ const ContainerHeader = ({
                     </Grid>
                 )}
                 {showButton && (
-                    <Grid
-                        item
-                        xs={12}
-                        sm={5}
-                        justifyContent="flex-end"
-                        display="flex"
-                    >
+                    <Grid item justifyContent="flex-end" display="flex">
                         <Button
-                            fullWidth
+                            sx={{
+                                px: 4,
+                                width: { xs: "100%", md: "fit-content" },
+                            }}
                             size={buttonSize}
                             variant="contained"
                             onClick={() => handleButtonAction()}
