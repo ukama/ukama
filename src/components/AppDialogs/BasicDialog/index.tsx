@@ -8,11 +8,11 @@ import {
     Typography,
     DialogActions,
     DialogContent,
+    Stack,
 } from "@mui/material";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -27,6 +27,7 @@ type BasicDialogProps = {
     btnLabel: string;
     handleClose: any;
     isClosable?: boolean;
+    btnVariant?: "text" | "outlined" | "contained";
 };
 
 const BasicDialog = ({
@@ -35,6 +36,7 @@ const BasicDialog = ({
     content,
     btnLabel,
     handleClose,
+    btnVariant = "text",
     isClosable = true,
 }: BasicDialogProps) => {
     const classes = useStyles();
@@ -46,8 +48,8 @@ const BasicDialog = ({
             aria-describedby="alert-dialog-description"
             onBackdropClick={() => isClosable && handleClose()}
         >
-            <Box
-                component="div"
+            <Stack
+                spacing={3}
                 sx={{
                     width: { xs: "100%", md: "500px" },
                     padding: "16px 8px 8px 24px",
@@ -64,13 +66,15 @@ const BasicDialog = ({
                         </IconButton>
                     )}
                 </Box>
-                <DialogContent sx={{ p: "18px 0px" }}>
+                <DialogContent sx={{ p: 0 }}>
                     <Typography variant="body1">{content}</Typography>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={handleClose}>{btnLabel}</Button>
+                    <Button variant={btnVariant} onClick={handleClose}>
+                        {btnLabel}
+                    </Button>
                 </DialogActions>
-            </Box>
+            </Stack>
         </Dialog>
     );
 };

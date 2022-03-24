@@ -26,12 +26,12 @@ const NodeDetailsCard = ({
         >
             <Paper sx={{ p: 3, gap: 1 }}>
                 <Stack spacing={3}>
-                    <Grid container spacing={1}>
-                        <Grid item xs={5}>
+                    <Grid container>
+                        <Grid item>
                             <Typography variant="h6">{nodeTitle}</Typography>
                         </Grid>
-                        <Grid item xs={7}>
-                            {isUpdateAvailable && (
+                        {isUpdateAvailable && (
+                            <Grid item pl={2}>
                                 <Chip
                                     variant="outlined"
                                     sx={{
@@ -41,6 +41,7 @@ const NodeDetailsCard = ({
                                     label={
                                         <>
                                             <Stack
+                                                spacing={"4px"}
                                                 direction="row"
                                                 alignItems="center"
                                             >
@@ -52,17 +53,9 @@ const NodeDetailsCard = ({
                                                     onClick={() =>
                                                         getNodeUpdateInfos()
                                                     }
-                                                    style={{
-                                                        fontSize: "14px",
-                                                        paddingLeft: "3px",
+                                                    sx={{
                                                         cursor: "pointer",
-                                                        fontStyle: "norma",
-                                                        fontWeight: 400,
-                                                        lineHeight: "16px",
-                                                        letterSpacing:
-                                                            "-0.02em",
-                                                        textDecoration:
-                                                            "underline",
+                                                        typography: "body2",
                                                         color: colors.primaryDark,
                                                     }}
                                                 >
@@ -72,8 +65,8 @@ const NodeDetailsCard = ({
                                         </>
                                     }
                                 />
-                            )}
-                        </Grid>
+                            </Grid>
+                        )}
                     </Grid>
 
                     <DeviceModalView />

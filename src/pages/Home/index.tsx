@@ -9,6 +9,7 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
     SoftwareUpdateModal,
+    BasicDialog,
 } from "../../components";
 import { useTranslation } from "react-i18next";
 import {
@@ -59,8 +60,9 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
     const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(!!orgId);
+        useState<boolean>(false);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
+    const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
@@ -155,6 +157,13 @@ const Home = () => {
             }
         },
     });
+
+    useEffect(() => {
+        if (orgId && !isSkeltonLoad) {
+            setShowSimActivationDialog(true);
+            setIsWelcomeDialog(true);
+        }
+    }, [orgId, isSkeltonLoad]);
 
     useGetMetricsUptimeSSubscription({
         onSubscriptionData: res => {
@@ -495,6 +504,17 @@ const Home = () => {
                 “Tryphena’s Node 2” will disrupt your network, and will
                 take approximately [insert time here]. Continue updating
                 all?`}
+            />
+            <BasicDialog
+                isClosable={false}
+                btnVariant="contained"
+                isOpen={isWelcomeDialog}
+                title={"Welcome to Ukama Console!"}
+                content={
+                    "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
+                }
+                btnLabel={"continue to console"}
+                handleClose={() => setIsWelcomeDialog(false)}
             />
             {isUserActivateOpen && (
                 <UserActivationDialog

@@ -1,37 +1,25 @@
 import * as THREE from "three";
 import { Suspense } from "react";
 import { DDSLoader } from "three-stdlib";
-import { Canvas, useLoader } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-// import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-// import { MTLLoader } from "three/examples/jsm/loaders/MTLLoader";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls, useFBX } from "@react-three/drei";
 
 THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const Scene = () => {
-    // const materials = useLoader(MTLLoader, "Poimandres.mtl");
-    const OBJLoader = require("three/examples/jsm/loaders/OBJLoader").OBJLoader;
-    const obj = useLoader(OBJLoader, "ukama_node.obj", () => {
-        // materials.preload();
-        // loader.setMaterials(materials);
-    });
-
-    return <primitive position={[0, -2, 0]} object={obj} scale={0.025} />;
+    const fbx = useFBX("node.fbx");
+    return <primitive position={[0, 1, 0]} scale={8} object={fbx} />;
 };
 
 const DeviceModalView = () => {
     return (
-        <div style={{ height: "50vh" }}>
+        <div style={{ height: "70vh" }}>
             <Canvas>
-                <pointLight position={[0, 0, 100]} />
-                <pointLight position={[0, 0, -100]} />
+                <pointLight position={[0, 50, 100]} intensity={0.5} />
+                <pointLight position={[0, -50, -100]} intensity={0.2} />
                 <Suspense fallback={null}>
                     <Scene />
-                    <OrbitControls
-                        minDistance={1.5}
-                        maxDistance={10}
-                        maxPolarAngle={Math.PI / 2}
-                    />
+                    <OrbitControls minDistance={1.5} maxDistance={10} />
                 </Suspense>
             </Canvas>
         </div>
