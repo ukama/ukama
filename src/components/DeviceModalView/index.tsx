@@ -8,15 +8,30 @@ THREE.DefaultLoadingManager.addHandler(/\.dds$/i, new DDSLoader());
 
 const Scene = () => {
     const fbx = useFBX("node.fbx");
-    return <primitive position={[0, 1, 0]} scale={8} object={fbx} />;
+    return (
+        <primitive
+            position={[0, -2, 0]}
+            scale={8}
+            object={fbx}
+            rotation={[Math.PI / 1, 0, 0]}
+        />
+    );
 };
 
 const DeviceModalView = () => {
     return (
         <div style={{ height: "70vh" }}>
             <Canvas>
-                <pointLight position={[0, 50, 100]} intensity={0.5} />
-                <pointLight position={[0, -50, -100]} intensity={0.2} />
+                <pointLight
+                    color="white"
+                    intensity={1}
+                    position={[10, 10, 10]}
+                />
+                <pointLight
+                    color="white"
+                    intensity={0.5}
+                    position={[10, -10, -10]}
+                />
                 <Suspense fallback={null}>
                     <Scene />
                     <OrbitControls minDistance={1.5} maxDistance={10} />
