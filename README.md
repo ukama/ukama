@@ -1,8 +1,8 @@
-#NodeD Service
+# NodeD Service
 
 NodeD service is to manage and support HW devices.
 
-##Architecture Diagram
+## Architecture Diagram
 NodeD is divded into few logical blocks based on thier operations.
 * Inventory
 
@@ -21,15 +21,15 @@ it's manufacturing dates etc. Apart from Harware information it also stores conf
 
 ![NodeD](docs/NodeD.jpg)
 
-##Building
+## Building
 
 ```
 make
 ```
 
-##Testing
+## Testing
 
-####Preparing setup
+#### Preparing setup
 
 **Mocking SysFileSystem**
 
