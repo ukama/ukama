@@ -27,11 +27,11 @@ const NodeDetailsCard = ({
             <Paper sx={{ p: 3, gap: 1 }}>
                 <Stack spacing={3}>
                     <Grid container>
-                        <Grid item>
+                        <Grid item xs={5}>
                             <Typography variant="h6">{nodeTitle}</Typography>
                         </Grid>
                         {isUpdateAvailable && (
-                            <Grid item pl={2}>
+                            <Grid item xs={7}>
                                 <Chip
                                     variant="outlined"
                                     sx={{

@@ -11,7 +11,6 @@ import {
     SoftwareUpdateModal,
     BasicDialog,
 } from "../../components";
-import { useTranslation } from "react-i18next";
 import {
     TIME_FILTER,
     MONTH_FILTER,
@@ -56,11 +55,8 @@ import {
 } from "../../utils";
 
 const Home = () => {
-    const { t } = useTranslation();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
-    const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(false);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
@@ -160,7 +156,6 @@ const Home = () => {
 
     useEffect(() => {
         if (orgId && !isSkeltonLoad) {
-            setShowSimActivationDialog(true);
             setIsWelcomeDialog(true);
         }
     }, [orgId, isSkeltonLoad]);
@@ -274,9 +269,7 @@ const Home = () => {
             unsub && unsub();
         };
     }, [dataUsageRes]);
-    const handleSimActivateClose = () => {
-        setShowSimActivationDialog(false);
-    };
+
     useEffect(() => {
         let unsub = subToDataBill();
         return () => {
@@ -489,12 +482,6 @@ const Home = () => {
                     </LoadingWrapper>
                 </Grid>
             </Grid>
-            <UserActivationDialog
-                isOpen={showSimActivationDialog}
-                dialogTitle={t("DIALOG_MESSAGE.SimActivationDialogTitle")}
-                subTitle={t("DIALOG_MESSAGE.SimActivationDialogContent")}
-                handleClose={handleSimActivateClose}
-            />
             <SoftwareUpdateModal
                 submit={onUpdateAllNodes}
                 isOpen={isSoftwaUpdate}
