@@ -227,7 +227,9 @@ const UserDetailsDialog = ({
                                 </Grid>
                             </Grid>
                             <Grid item container xs={12}>
-                                <ContainerJustifySpaceBtw>
+                                <ContainerJustifySpaceBtw
+                                    sx={{ alignItems: "center" }}
+                                >
                                     <Typography
                                         variant="caption"
                                         color="textSecondary"
