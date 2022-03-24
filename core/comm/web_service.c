@@ -484,7 +484,7 @@ static int web_service_cb_get_module_info(const URequest * request, UResponse * 
 }
 
 DevObj* prepare_object_for_request(UResponse * response, const char* devName,
-                const char* devDesc, const char* moduleId, uint16_t *propId,
+                const char* devDesc, const char* moduleId, int *propId,
                 const char* devType, const char* propName, void** dataMem, int* dataType) {
 
     /*  Identify device */
@@ -513,8 +513,14 @@ DevObj* prepare_object_for_request(UResponse * response, const char* devName,
 
     Property *prop = usys_zmalloc(sizeof(Property) * pCount);
     if (prop) {
+        int ret = ldgr_read_prop(obj, prop);
+        if (ret) {
+            usys_free(prop);
+            usys_free(obj);
+            return NULL;
+        }
         for (int iter = 0; iter < pCount; iter++) {
-            if(!usys_strcmp(prop[iter].name, propName)) {
+            if(!usys_strcasecmp(prop[iter].name, propName)) {
                 pIdx = iter;
                 *dataType =prop[iter].dataType;
                 break;
@@ -544,7 +550,7 @@ DevObj* prepare_object_for_request(UResponse * response, const char* devName,
         return obj;
     }
 
-    *propId = (uint16_t)pIdx;
+    *propId = pIdx;
     *dataMem = data;
     if (prop) {
         usys_free(prop);
@@ -589,7 +595,7 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         usys_log_trace("NodeD:: Received a get module manufacturing data request "
                         "for UUID %s .", moduleId);
 
-        if ((devType) && (devName) && (devDesc) && (propName)) {
+        if (!((devType) && (devName) && (devDesc) && (propName))) {
             report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                             RESP_CODE_INVALID_REQUEST, "missing info in request");
             goto completed;
@@ -640,7 +646,7 @@ static int web_service_cb_get_dev_property(const URequest * request,
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
     void* data = NULL;
-    uint16_t pIdx = 0;
+    int pIdx = 0;
     int dataType = 0;
     usys_log_trace("NodeD:: Received a read request to device property.");
 
@@ -661,7 +667,7 @@ static int web_service_cb_get_dev_property(const URequest * request,
     usys_log_trace("NodeD:: Received a get module manufacturing data request "
                     "for UUID %s .", moduleId);
 
-    if ((devType) && (devName) && (devDesc) && (propName)) {
+    if (!((devType) && (devName) && (devDesc) && (propName))) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST, "missing info in request");
         goto completed;

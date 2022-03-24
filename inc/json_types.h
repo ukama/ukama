@@ -102,7 +102,7 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_CURR_PROP_ID               "currentValPropertyId"
 #define JTAG_LIMIT_PROP_ID              "limitValPropertyId"
 #define JTAG_ALERT_COND                 "alertCondition"
-#define JTAG_VALUE                       "alertCondition"
+#define JTAG_VALUE                      "value"
 
 #define JTAG_ERROR                      "error"
 #define JTAG_ERROR_CODE                 "code"

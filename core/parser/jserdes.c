@@ -114,9 +114,9 @@ int json_serialize_module_info(JsonObj** json, ModuleInfo* mInfo){
         return JSON_NO_VAL_TO_ENCODE;
     }
 
-    json_object_set_new(*json, JTAG_UNIT_INFO, json_object());
+    json_object_set_new(*json, JTAG_MODULE_INFO, json_object());
 
-    JsonObj* jMInfo = json_object_get(*json, JTAG_UNIT_INFO);
+    JsonObj* jMInfo = json_object_get(*json, JTAG_MODULE_INFO);
     if (jMInfo) {
 
         json_object_set_new(jMInfo, JTAG_UUID, json_string(mInfo->uuid));
@@ -316,77 +316,76 @@ json_t* json_encode_value(int type, void* data) {
 
     switch (type) {
         case TYPE_NULL: {
-            json_object_set_new(json, JTAG_VALUE, json_null());
+           json = json_null();
             break;
         }
         case TYPE_CHAR: {
             char* value = (char*)data;
-            json_object_set_new(json, JTAG_VALUE, json_string(value));
+           json = json_string(value);
             break;
         }
         case TYPE_BOOL: {
             bool value = *(bool*)data;
-            json_object_set_new(json, JTAG_VALUE, json_boolean(value));
+           json = json_boolean(value);
             break;
         }
         case TYPE_UINT8: {
             uint8_t value = *(uint8_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+           json = json_integer(value);
             break;
         }
         case TYPE_INT8: {
             int8_t value = *(int8_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+           json = json_integer(value);
             break;
         }
         case TYPE_UINT16: {
             uint16_t value = *(uint16_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+           json = json_integer(value);
             break;
         }
         case TYPE_INT16: {
             int16_t value = *(int16_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
-            break;
+           json = json_integer(value);
             break;
         }
         case TYPE_UINT32: {
             uint32_t value = *(uint32_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+           json = json_integer(value);
             break;
         }
         case TYPE_INT32: {
             int32_t value = *(int32_t*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+            json = json_integer(value);
             break;
         }
         case TYPE_INT: {
             int value = *(int*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+            json = json_integer(value);
             break;
         }
         case TYPE_FLOAT: {
             float value = *(float*)data;
-            json_object_set_new(json, JTAG_VALUE, json_real(value));
+            json = json_real(value);
             break;
         }
         case TYPE_ENUM: {
             int value = *(int*)data;
-            json_object_set_new(json, JTAG_VALUE, json_integer(value));
+            json = json_integer(value);
             break;
         }
         case TYPE_DOUBLE: {
             double value = *(double*)data;
-            json_object_set_new(json, JTAG_VALUE, json_real(value));
+            json = json_real(value);
             break;
         }
         case TYPE_STRING: {
             char* value = (char*)data;
-            json_object_set_new(json, JTAG_VALUE, json_string(value));
+            json = json_string(value);
             break;
         }
         default: {
-            json_object_set_new(json, JTAG_VALUE, json_null());
+            json = json_null();
         }
     }
 

@@ -156,7 +156,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
                             &dataType)) {
                 goto cleanup;
             } else {
-                prop[iter].perm = get_prop_data_type(dataType);
+                prop[iter].dataType = get_prop_data_type(dataType);
                 usys_free(dataType);
             }
 
@@ -176,7 +176,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
                             &avail)) {
                 goto cleanup;
             } else {
-                prop[iter].perm = get_prop_avail(avail);
+                prop[iter].available = get_prop_avail(avail);
                 usys_free(avail);
             }
 
@@ -186,7 +186,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
                             &propType)) {
                 goto cleanup;
             } else {
-                prop[iter].perm = get_prop_type(propType);
+                prop[iter].propType = get_prop_type(propType);
                 usys_free(propType);
             }
 

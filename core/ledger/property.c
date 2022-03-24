@@ -118,13 +118,13 @@ int validate_irq_limits(double cur, double lmt, int cond) {
 int get_alert_cond(char *cond) {
     int ret = -1;
     if (cond) {
-        if (!usys_strcmp(cond, "STRICTLYLESSTHEN")) {
+        if (!usys_strcasecmp(cond, "STRICTLYLESSTHEN")) {
             ret = STRICTLYLESSTHEN;
-        } else if (!usys_strcmp(cond, "LESSTHENEQUALTO")) {
+        } else if (!usys_strcasecmp(cond, "LESSTHENEQUALTO")) {
             ret = LESSTHENEQUALTO;
-        } else if (!usys_strcmp(cond, "STRICTLYGREATERTHEN")) {
+        } else if (!usys_strcasecmp(cond, "STRICTLYGREATERTHEN")) {
             ret = STRICTLYGREATERTHEN;
-        } else if (!usys_strcmp(cond, "GREATERTHENEQUALTO")) {
+        } else if (!usys_strcasecmp(cond, "GREATERTHENEQUALTO")) {
             ret = GREATERTHENEQUALTO;
         }
     }
@@ -134,15 +134,15 @@ int get_alert_cond(char *cond) {
 int get_prop_perm(char *perm) {
     int ret = -1;
     if (perm) {
-        if (!usys_strcmp(perm, "PERM_EX")) {
+        if (!usys_strcasecmp(perm, "PERM_EX")) {
             ret = PERM_EX;
-        } else if (!usys_strcmp(perm, "PERM_RD")) {
+        } else if (!usys_strcasecmp(perm, "PERM_RD")) {
             ret = PERM_RD;
-        } else if (!usys_strcmp(perm, "PERM_WR")) {
+        } else if (!usys_strcasecmp(perm, "PERM_WR")) {
             ret = PERM_WR;
-        } else if (!usys_strcmp(perm, "PERM_RW")) {
+        } else if (!usys_strcasecmp(perm, "PERM_RW")) {
             ret = PERM_RW;
-        } else if (!usys_strcmp(perm, "PERM_RWE")) {
+        } else if (!usys_strcasecmp(perm, "PERM_RWE")) {
             ret = PERM_RWE;
         }
     }
@@ -152,13 +152,13 @@ int get_prop_perm(char *perm) {
 int get_prop_type(char *type) {
     int ret = -1;
     if (type) {
-        if (!usys_strcmp(type, "PROP_TYPE_CONFIG")) {
+        if (!usys_strcasecmp(type, "PROP_TYPE_CONFIG")) {
             ret = PROP_TYPE_CONFIG;
-        } else if (!usys_strcmp(type, "PROP_TYPE_STATUS")) {
+        } else if (!usys_strcasecmp(type, "PROP_TYPE_STATUS")) {
             ret = PROP_TYPE_STATUS;
-        } else if (!usys_strcmp(type, "PROP_TYPE_ALERT")) {
+        } else if (!usys_strcasecmp(type, "PROP_TYPE_ALERT")) {
             ret = PROP_TYPE_ALERT;
-        } else if (!usys_strcmp(type, "PROP_TYPE_EXEC")) {
+        } else if (!usys_strcasecmp(type, "PROP_TYPE_EXEC")) {
             ret = PROP_TYPE_EXEC;
         }
     }
@@ -168,9 +168,9 @@ int get_prop_type(char *type) {
 int get_prop_avail(char *avail) {
     int ret = -1;
     if (avail) {
-        if (!usys_strcmp(avail, "PROP_NOTAVAIL")) {
+        if (!usys_strcasecmp(avail, "PROP_NOTAVAIL")) {
             ret = PROP_NOTAVAIL;
-        } else if (!usys_strcmp(avail, "PROP_AVAIL")) {
+        } else if (!usys_strcasecmp(avail, "PROP_AVAIL")) {
             ret = PROP_AVAIL;
         }
     }
@@ -180,33 +180,33 @@ int get_prop_avail(char *avail) {
 int get_prop_data_type(char *type) {
     int ret = -1;
     if (type) {
-        if (!usys_strcmp(type, "TYPE_NULL")) {
+        if (!usys_strcasecmp(type, "TYPE_NULL")) {
             ret = TYPE_NULL;
-        } else if (!usys_strcmp(type, "TYPE_CHAR")) {
+        } else if (!usys_strcasecmp(type, "TYPE_CHAR")) {
             ret = TYPE_CHAR;
-        } else if (!usys_strcmp(type, "TYPE_BOOL")) {
+        } else if (!usys_strcasecmp(type, "TYPE_BOOL")) {
             ret = TYPE_BOOL;
-        } else if (!usys_strcmp(type, "TYPE_UINT8")) {
+        } else if (!usys_strcasecmp(type, "TYPE_UINT8")) {
             ret = TYPE_UINT8;
-        } else if (!usys_strcmp(type, "TYPE_UINT16")) {
+        } else if (!usys_strcasecmp(type, "TYPE_UINT16")) {
             ret = TYPE_UINT16;
-        } else if (!usys_strcmp(type, "TYPE_UINT32")) {
+        } else if (!usys_strcasecmp(type, "TYPE_UINT32")) {
             ret = TYPE_UINT32;
-        } else if (!usys_strcmp(type, "TYPE_INT8")) {
+        } else if (!usys_strcasecmp(type, "TYPE_INT8")) {
             ret = TYPE_INT8;
-        } else if (!usys_strcmp(type, "TYPE_INT16")) {
+        } else if (!usys_strcasecmp(type, "TYPE_INT16")) {
             ret = TYPE_INT16;
-        } else if (!usys_strcmp(type, "TYPE_INT32")) {
+        } else if (!usys_strcasecmp(type, "TYPE_INT32")) {
             ret = TYPE_INT32;
-        } else if (!usys_strcmp(type, "TYPE_INT")) {
+        } else if (!usys_strcasecmp(type, "TYPE_INT")) {
             ret = TYPE_INT;
-        } else if (!usys_strcmp(type, "TYPE_FLOAT")) {
+        } else if (!usys_strcasecmp(type, "TYPE_FLOAT")) {
             ret = TYPE_FLOAT;
-        } else if (!usys_strcmp(type, "TYPE_DOUBLE")) {
+        } else if (!usys_strcasecmp(type, "TYPE_DOUBLE")) {
             ret = TYPE_DOUBLE;
-        } else if (!usys_strcmp(type, "TYPE_ENUM")) {
+        } else if (!usys_strcasecmp(type, "TYPE_ENUM")) {
             ret = TYPE_ENUM;
-        } else if (!usys_strcmp(type, "TYPE_STRING")) {
+        } else if (!usys_strcasecmp(type, "TYPE_STRING")) {
             ret = TYPE_STRING;
         }
     }
