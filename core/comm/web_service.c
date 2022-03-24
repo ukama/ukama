@@ -38,7 +38,7 @@ WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
  * @param msg
  */
 static void report_failure_with_response_code(UResponse *response, int respcode,
-                                              int ret, char *msg) {
+                int ret, char *msg) {
     JsonObj *json = NULL;
     ret = json_serialize_error(&json, ret, msg);
     if (ret != JSON_ENCODING_OK) {
@@ -90,11 +90,11 @@ static void report_memory_failure(UResponse *response, int errnum) {
  * @return
  */
 static int web_service_cb_ping(const URequest *request, UResponse *response,
-                               void *epConfig) {
+                void *epConfig) {
     int respCode = RESP_CODE_SUCCESS;
 
     ulfius_set_string_body_response(response, respCode,
-                                    "NodeD Service: Hi, there..!!");
+                    "NodeD Service: Hi, there..!!");
 
     return U_CALLBACK_CONTINUE;
 }
@@ -109,7 +109,7 @@ static int web_service_cb_ping(const URequest *request, UResponse *response,
  * @return
  */
 static int web_service_cb_default(const URequest *request, UResponse *response,
-                                  void *epConfig) {
+                void *epConfig) {
     int respCode = RESP_CODE_SUCCESS;
 
     char *msg;
@@ -131,7 +131,7 @@ static int web_service_cb_default(const URequest *request, UResponse *response,
  * @return
  */
 static int web_service_cb_discover_api(const URequest *request,
-                                       UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
@@ -152,7 +152,7 @@ static int web_service_cb_discover_api(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     return U_CALLBACK_CONTINUE;
 }
 
@@ -167,7 +167,7 @@ completed:
  * @return
  */
 static int web_service_cb_get_unit_cfg(const URequest *request,
-                                       UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
     int ret = STATUS_NOK;
@@ -175,48 +175,49 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     UnitCfg *uCfg = NULL;
     usys_log_trace("NodeD:: Received a get unit config request.");
 
-    /* Reads unit info */
     UnitInfo *uInfo = usys_zmalloc(sizeof(UnitInfo));
     if (!uInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
-                       usys_error(errno));
+                        usys_error(errno));
         report_memory_failure(response, errno);
         goto completed;
     }
 
     /* Read Unit info */
     ret = invt_read_unit_info("", uInfo, &size);
-    if (!ret) {
-        uCfg = invt_alloc_unit_cfg(uInfo->modCount);
-        if (uCfg) {
-            /* read unit config */
-            ret = invt_read_unit_cfg("", uCfg, uInfo->modCount, &size);
-            if (!ret) {
-                /* serialize unit config */
-                ret = json_serialize_unit_cfg(&json, uCfg, uInfo->modCount);
-                if (ret != JSON_ENCODING_OK) {
-                    report_failure(response, ret,
-                                   "Failed serializing unit config.");
-                    goto completed;
-                }
+    if (ret) {
+        usys_log_error("Web Service Failed to read unit info prior to config."
+                        " Error Code %d",
+                        ret);
+        report_failure(response, ret,
+                        "Failed while fetching unit info prior to config.");
+        goto completed;
+    }
 
-            } else {
-                report_failure(response, ret,
-                               "Failed while fetching unit config.");
-                goto completed;
-            }
-        } else {
-            usys_log_error("Web Service Failed to allocate memory. Error %s",
-                           usys_error(errno));
-            report_memory_failure(response, errno);
+    /* Allocate memory for unit config */
+    uCfg = invt_alloc_unit_cfg(uInfo->modCount);
+    if (!uCfg) {
+        usys_log_error("Web Service Failed to allocate memory. Error %s",
+                        usys_error(errno));
+        report_memory_failure(response, errno);
+        goto completed;
+    }
+
+    /* read unit config */
+    ret = invt_read_unit_cfg("", uCfg, uInfo->modCount, &size);
+    if (!ret) {
+
+        /* serialize unit config */
+        ret = json_serialize_unit_cfg(&json, uCfg, uInfo->modCount);
+        if (ret != JSON_ENCODING_OK) {
+            report_failure(response, ret,
+                            "Failed serializing unit config.");
             goto completed;
         }
+
     } else {
-        usys_log_error("Web Service Failed to read unit info prior to config."
-                       " Error Code %d",
-                       ret);
         report_failure(response, ret,
-                       "Failed while fetching unit info prior to config.");
+                        "Failed while fetching unit config.");
         goto completed;
     }
 
@@ -227,7 +228,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     /* Free memory */
     if (uInfo) {
         invt_free_unit_cfg(uCfg, uInfo->modCount);
@@ -248,7 +249,7 @@ completed:
  * @return  U_CALLBACK_CONTINUE which is 0
  */
 static int web_service_cb_get_unit_info(const URequest *request,
-                                        UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
     int ret = STATUS_NOK;
@@ -259,7 +260,7 @@ static int web_service_cb_get_unit_info(const URequest *request,
     UnitInfo *uInfo = usys_zmalloc(sizeof(UnitInfo));
     if (!uInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
-                       usys_error(errno));
+                        usys_error(errno));
         report_memory_failure(response, errno);
         goto completed;
     }
@@ -275,8 +276,8 @@ static int web_service_cb_get_unit_info(const URequest *request,
         }
     } else {
         usys_log_error("Web Service Failed to read unit info."
-                       " Error Code %d",
-                       ret);
+                        " Error Code %d",
+                        ret);
         report_failure(response, ret, "Failed while fetching unit info.");
         goto completed;
     }
@@ -288,7 +289,7 @@ static int web_service_cb_get_unit_info(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     /* Free memory */
     if (uInfo) {
         usys_free(uInfo);
@@ -308,7 +309,7 @@ completed:
  * @return
  */
 static int web_service_cb_get_module_cfg(const URequest *request,
-                                         UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
@@ -319,62 +320,62 @@ static int web_service_cb_get_module_cfg(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get module config request for UUID %s.",
-                   moduleId);
+                    moduleId);
 
     /* Module Info */
     mInfo = usys_zmalloc(sizeof(ModuleInfo));
     if (!mInfo) {
         usys_log_error("Web Service Failed to allocate memory for module info."
-                       "Error %s",
-                       usys_error(errno));
+                        "Error %s",
+                        usys_error(errno));
         report_memory_failure(response, errno);
         goto completed;
     }
 
     /* read module info */
     ret = invt_read_module_info(moduleId, mInfo, &size);
-    if (!ret) {
-        /* Module config */
-        mCfg = invt_alloc_module_cfg(mInfo->devCount);
-        if (mCfg) {
-            ret = invt_read_module_cfg(moduleId, mCfg, mInfo->devCount, &size);
-            if (!ret) {
-                ret = json_serialize_module_cfg(&json, mCfg, mInfo->devCount);
-                if (ret != JSON_ENCODING_OK) {
-                    report_failure(response, ret,
-                                   "Failed serializing module config.");
-                    goto completed;
-                }
-            } else {
-                usys_log_error("Web Service Failed to read module config."
-                               " Error Code %d",
-                               ret);
+    if (ret) {
+        /* Module info failure */
+        usys_log_error("Web Service Failed to read module info for %s."
+                        " Error Code %d",
+                        moduleId, ret);
+        report_failure(response, ret,
+                        "Failed while fetching module info prior to"
+                        " module config.");
+        goto completed;
+    }
+
+    /* Allocate memory for module config */
+    mCfg = invt_alloc_module_cfg(mInfo->devCount);
+    if (mCfg) {
+        /*  Read Module config */
+        ret = invt_read_module_cfg(moduleId, mCfg, mInfo->devCount, &size);
+        if (!ret) {
+            ret = json_serialize_module_cfg(&json, mCfg, mInfo->devCount);
+            if (ret != JSON_ENCODING_OK) {
                 report_failure(response, ret,
-                               "Failed while fetching module config");
+                                "Failed serializing module config.");
                 goto completed;
             }
-
         } else {
-            usys_log_error("Web Service Failed to allocate memory for module"
-                           "config. Error %s",
-                           usys_error(errno));
-            report_memory_failure(response, errno);
+            usys_log_error("Web Service Failed to read module config."
+                            " Error Code %d",
+                            ret);
+            report_failure(response, ret,
+                            "Failed while fetching module config");
             goto completed;
         }
 
     } else {
-        /* Module info failure */
-        usys_log_error("Web Service Failed to read module info for %s."
-                       " Error Code %d",
-                       moduleId, ret);
-        report_failure(response, ret,
-                       "Failed while fetching module info prior to"
-                       " module config.");
+        usys_log_error("Web Service Failed to allocate memory for module"
+                        "config. Error %s",
+                        usys_error(errno));
+        report_memory_failure(response, errno);
         goto completed;
     }
 
@@ -385,7 +386,7 @@ static int web_service_cb_get_module_cfg(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     /* Free memory */
     if (mInfo) {
         invt_free_module_cfg(mCfg, mInfo->devCount);
@@ -407,7 +408,7 @@ completed:
  * @return
  */
 static int web_service_cb_get_module_info(const URequest *request,
-                                          UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     uint16_t size = 0;
     unsigned int respCode = RESP_CODE_SUCCESS;
@@ -416,18 +417,18 @@ static int web_service_cb_get_module_info(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get module info request for UUID %s.",
-                   moduleId);
+                    moduleId);
 
     ModuleInfo *mInfo = usys_zmalloc(sizeof(ModuleInfo));
     if (!mInfo) {
         usys_log_error("Web Service Failed to allocate memory for module info."
-                       "Error %s",
-                       usys_error(errno));
+                        "Error %s",
+                        usys_error(errno));
         report_memory_failure(response, errno);
         goto completed;
     }
@@ -442,8 +443,8 @@ static int web_service_cb_get_module_info(const URequest *request,
         }
     } else {
         usys_log_error("Web Service Failed to read module info for %s."
-                       " Error Code %d",
-                       moduleId, ret);
+                        " Error Code %d",
+                        moduleId, ret);
         report_failure(response, ret, "Failed while fetching module info");
         goto completed;
     }
@@ -455,7 +456,7 @@ static int web_service_cb_get_module_info(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     /* Free memory */
     if (mInfo) {
         usys_free(mInfo);
@@ -466,10 +467,10 @@ completed:
 }
 
 DevObj *prepare_object_for_request(UResponse *response, const char *devName,
-                                   const char *devDesc, const char *moduleId,
-                                   int *propId, const char *devType,
-                                   const char *propName, void **dataMem,
-                                   int *dataType, bool isGet) {
+                const char *devDesc, const char *moduleId,
+                int *propId, const char *devType,
+                const char *propName, void **dataMem,
+                int *dataType, bool isGetReq) {
     /*  Identify device */
     DevObj *obj = usys_zmalloc(sizeof(DevObj));
     if (obj) {
@@ -512,9 +513,9 @@ DevObj *prepare_object_for_request(UResponse *response, const char *devName,
 
         if (pIdx == -1) {
             report_failure_with_response_code(response,
-                                              RESP_CODE_RESOURCE_NOT_FOUND,
-                                              RESP_CODE_RESOURCE_NOT_FOUND,
-                                              "no such property found.");
+                            RESP_CODE_RESOURCE_NOT_FOUND,
+                            RESP_CODE_RESOURCE_NOT_FOUND,
+                            "no such property found.");
             usys_free(obj);
             usys_free(prop);
             obj = NULL;
@@ -522,7 +523,7 @@ DevObj *prepare_object_for_request(UResponse *response, const char *devName,
         }
     }
 
-    if (isGet) {
+    if (isGetReq) {
         /* Allocate memory based on type of property data
          * This is required in case of get request Only*/
         uint8_t dataSize = get_sizeof(*dataType);
@@ -555,8 +556,8 @@ DevObj *prepare_object_for_request(UResponse *response, const char *devName,
  * @return
  */
 static int web_service_cb_put_dev_property(const URequest *request,
-                                           UResponse *response,
-                                           void *epConfig) {
+                UResponse *response,
+                void *epConfig) {
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
     int ret = STATUS_NOK;
     void *data = NULL;
@@ -569,12 +570,12 @@ static int web_service_cb_put_dev_property(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get module info request for UUID %s.",
-                   moduleId);
+                    moduleId);
 
     const char *devType = u_map_get(request->map_url, DEVTYPE);
     const char *devName = u_map_get(request->map_url, DEVNAME);
@@ -582,30 +583,30 @@ static int web_service_cb_put_dev_property(const URequest *request,
     const char *propName = u_map_get(request->map_url, PROPNAME);
 
     usys_log_trace("NodeD:: Received a get device property data request "
-                   "for UUID %s .",
-                   moduleId);
+                    "for UUID %s .",
+                    moduleId);
 
     if (!((devType) && (devName) && (devDesc) && (propName))) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "missing info in request");
+                        RESP_CODE_INVALID_REQUEST,
+                        "missing info in request");
         goto completed;
     }
 
     /* Deserialize data */
     ret = json_deserialize_sensor_data(json, &devName, &devDesc, &dataType,
-                                       &data);
+                    &data);
     if (ret != JSON_DECODING_OK) {
         report_failure(response, ret, "failed to decode json request");
         goto completed;
     }
 
     DevObj *obj =
-        prepare_object_for_request(response, devName, devDesc, moduleId, &pIdx,
-                                   devType, propName, &data, &dataType, false);
+                    prepare_object_for_request(response, devName, devDesc, moduleId, &pIdx,
+                                    devType, propName, &data, &dataType, false);
     if (!obj) {
         report_failure(response, ret,
-                       "failed to prepare read request to ledger.");
+                        "failed to prepare read request to ledger.");
         goto completed;
     }
 
@@ -621,7 +622,7 @@ static int web_service_cb_put_dev_property(const URequest *request,
     /* Send response */
     ulfius_set_empty_body_response(response, respCode);
 
-completed:
+    completed:
     return U_CALLBACK_CONTINUE;
 }
 
@@ -635,8 +636,8 @@ completed:
  * @return
  */
 static int web_service_cb_get_dev_property(const URequest *request,
-                                           UResponse *response,
-                                           void *epConfig) {
+                UResponse *response,
+                void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
@@ -647,13 +648,13 @@ static int web_service_cb_get_dev_property(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get device property read request"
-                   " for UUID %s.",
-                   moduleId);
+                    " for UUID %s.",
+                    moduleId);
 
     const char *devType = u_map_get(request->map_url, DEVTYPE);
     const char *devName = u_map_get(request->map_url, DEVNAME);
@@ -661,22 +662,22 @@ static int web_service_cb_get_dev_property(const URequest *request,
     const char *propName = u_map_get(request->map_url, PROPNAME);
 
     usys_log_trace("NodeD:: Received a get module manufacturing data request "
-                   "for UUID %s .",
-                   moduleId);
+                    "for UUID %s .",
+                    moduleId);
 
     if (!((devType) && (devName) && (devDesc) && (propName))) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "missing info in request");
+                        RESP_CODE_INVALID_REQUEST,
+                        "missing info in request");
         goto completed;
     }
 
     DevObj *obj =
-        prepare_object_for_request(response, devName, devDesc, moduleId, &pIdx,
-                                   devType, propName, &data, &dataType, true);
+                    prepare_object_for_request(response, devName, devDesc, moduleId, &pIdx,
+                                    devType, propName, &data, &dataType, true);
     if (!obj) {
         report_failure(response, ret,
-                       "failed to prepare read request to ledger.");
+                        "failed to prepare read request to ledger.");
         goto completed;
     }
 
@@ -687,10 +688,10 @@ static int web_service_cb_get_dev_property(const URequest *request,
         goto completed;
     } else {
         ret =
-            json_serialize_sensor_data(&json, devName, devDesc, dataType, data);
+                        json_serialize_sensor_data(&json, devName, devDesc, dataType, data);
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret,
-                           "failed to serialize device property response.");
+                            "failed to serialize device property response.");
             goto completed;
         }
     }
@@ -702,7 +703,7 @@ static int web_service_cb_get_dev_property(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 
-completed:
+    completed:
     return U_CALLBACK_CONTINUE;
 }
 
@@ -759,7 +760,7 @@ int field_name_to_id(const char *fieldName, uint16_t *fieldId) {
  * @return
  */
 static int web_service_cb_get_module_mfg(const URequest *request,
-                                         UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     int ret = STATUS_NOK;
     uint16_t size = 0;
@@ -768,43 +769,43 @@ static int web_service_cb_get_module_mfg(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get module info request for UUID %s.",
-                   moduleId);
+                    moduleId);
 
     const char *fieldName = u_map_get(request->map_url, MFGDATA);
     if (!fieldName) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no mfg data name present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no mfg data name present");
         goto completed;
     }
     usys_log_trace("NodeD:: Manufacturing data info request for %s.",
-                   fieldName);
+                    fieldName);
 
     ret = field_name_to_id(fieldName, &fieldId);
     if (ret) {
         report_failure(response, ret,
-                       "data name provided is not matching "
-                       "to any field.");
+                        "data name provided is not matching "
+                        "to any field.");
         goto completed;
     }
 
     /* Read data from request */
     ret = invt_read_payload_for_field_id(moduleId, (void **)&data, fieldId,
-                                         &size);
+                    &size);
     if (ret) {
         report_failure(response, ret, "failed to read data.");
         goto completed;
     } else {
         ulfius_set_binary_body_response(response, RESP_CODE_SUCCESS, data,
-                                        size);
+                        size);
     }
 
-completed:
+    completed:
     if (data) {
         usys_free(data);
     }
@@ -821,7 +822,7 @@ completed:
  * @return
  */
 static int web_service_cb_put_module_mfg(const URequest *request,
-                                         UResponse *response, void *epConfig) {
+                UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
     int size = 0;
     char *data = NULL;
@@ -829,34 +830,34 @@ static int web_service_cb_put_module_mfg(const URequest *request,
     char *moduleId = u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no module UUID present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
         goto completed;
     }
     usys_log_trace("NodeD:: Received a get module info request for UUID %s.",
-                   moduleId);
+                    moduleId);
 
     const char *fieldName = u_map_get(request->map_url, MFGDATA);
     if (!fieldName) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
-                                          RESP_CODE_INVALID_REQUEST,
-                                          "no mfg data name present");
+                        RESP_CODE_INVALID_REQUEST,
+                        "no mfg data name present");
         goto completed;
     }
     usys_log_trace("NodeD:: Manufacturing data info request for %s.",
-                   fieldName);
+                    fieldName);
 
     ret = field_name_to_id(fieldName, &fieldId);
     if (ret) {
         report_failure(response, ret,
-                       "data name provided is not matching "
-                       "to any field.");
+                        "data name provided is not matching "
+                        "to any field.");
         goto completed;
     }
 
     /* Write data from request */
     ret = invt_update_payload(moduleId, request->binary_body, fieldId,
-                              request->binary_body_length);
+                    request->binary_body_length);
     if (ret) {
         report_failure(response, ret, "failed to update data.");
         goto completed;
@@ -864,7 +865,7 @@ static int web_service_cb_put_module_mfg(const URequest *request,
         ulfius_set_empty_body_response(response, RESP_CODE_SUCCESS);
     }
 
-completed:
+    completed:
     return U_CALLBACK_CONTINUE;
 }
 
@@ -878,13 +879,13 @@ completed:
  * @param cb
  */
 static void web_service_add_end_point(char *method, char *endPoint,
-                                      void *config, HttpCb cb) {
+                void *config, HttpCb cb) {
     ulfius_add_endpoint_by_val(&serverInst, method, endPoint, NULL, 0, cb,
-                               config);
+                    config);
     usys_strcpy(gApi[endPointCount].method, method);
     usys_strcpy(gApi[endPointCount].endPoint, endPoint);
     usys_log_trace("Added api[%d] Method %s Endpoint: %s.", endPointCount,
-                   "Get", endPoint);
+                    "Get", endPoint);
     endPointCount++;
 }
 
@@ -899,11 +900,11 @@ static void web_service_add_end_point(char *method, char *endPoint,
 static void web_service_add_device_based_endpoint() {
     /* Write permissions */
     web_service_add_end_point("PUT", API_RES_EP("deviceconfig"), NULL,
-                              web_service_cb_put_dev_property);
+                    web_service_cb_put_dev_property);
 
     /* Read permissions */
     web_service_add_end_point("GET", API_RES_EP("deviceconfig"), NULL,
-                              web_service_cb_get_dev_property);
+                    web_service_cb_get_dev_property);
 }
 /**
  * @fn void web_service_add_discover_endpoints()
@@ -912,7 +913,7 @@ static void web_service_add_device_based_endpoint() {
  */
 static void web_service_add_discover_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("discover"), NULL,
-                              web_service_cb_discover_api);
+                    web_service_cb_discover_api);
 }
 
 /**
@@ -922,9 +923,9 @@ static void web_service_add_discover_endpoints() {
  */
 void web_service_add_unit_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("unitinfo"), NULL,
-                              web_service_cb_get_unit_info);
+                    web_service_cb_get_unit_info);
     web_service_add_end_point("GET", API_RES_EP("unitconfig"), NULL,
-                              web_service_cb_get_unit_cfg);
+                    web_service_cb_get_unit_cfg);
 }
 
 /**
@@ -934,9 +935,9 @@ void web_service_add_unit_endpoints() {
  */
 void web_service_add_module_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("moduleinfo"), NULL,
-                              web_service_cb_get_module_info);
+                    web_service_cb_get_module_info);
     web_service_add_end_point("GET", API_RES_EP("moduleconfig"), NULL,
-                              web_service_cb_get_module_cfg);
+                    web_service_cb_get_module_cfg);
 }
 
 /**
@@ -946,9 +947,9 @@ void web_service_add_module_endpoints() {
  */
 void web_service_add_mfg_data_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("mfg"), NULL,
-                              web_service_cb_get_module_mfg);
+                    web_service_cb_get_module_mfg);
     web_service_add_end_point("PUT", API_RES_EP("mfg"), NULL,
-                              web_service_cb_put_module_mfg);
+                    web_service_cb_put_module_mfg);
 }
 
 /**
@@ -961,7 +962,7 @@ void web_service_add_mfg_data_endpoints() {
 static void setup_web_service_endpoints(UInst *instance, void *config) {
     /* Ping */
     web_service_add_end_point("GET", API_RES_EP("ping"), NULL,
-                              web_service_cb_ping);
+                    web_service_cb_ping);
 
     /* default endpoint. */
     ulfius_set_default_endpoint(instance, &web_service_cb_default, NULL);
@@ -1002,7 +1003,7 @@ static int start_framework(UInst *instance) {
 static int init_framework(UInst *inst, int port) {
     if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
         usys_log_error(
-            "Error initializing instance for websocket remote port %d", port);
+                        "Error initializing instance for websocket remote port %d", port);
         return STATUS_NOK;
     }
 
@@ -1032,10 +1033,10 @@ int web_service_start() {
 
     web_service_add_discover_endpoints();
 
-    /* open connection for both admin and client web_services */
+    /* open connection for web_services */
     if (start_framework(&serverInst)) {
         usys_log_error("Failed to start web_services for cld_ctrl: %d",
-                       WEB_SERVICE_PORT);
+                        WEB_SERVICE_PORT);
         return STATUS_NOK;
     }
 
@@ -1051,7 +1052,7 @@ int web_service_start() {
  * @return
  */
 int web_service_init() {
-    /* Initialize the admin and client web_services framework. */
+    /* Initialize the web_services framework. */
     if (init_framework(&serverInst, WEB_SERVICE_PORT) != STATUS_OK) {
         usys_log_error("Error initializing web_service framework");
         return STATUS_NOK;
