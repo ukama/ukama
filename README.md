@@ -1,8 +1,8 @@
-#NodeD Service
+# NodeD Service
 
 NodeD service is to manage and support HW devices.
 
-##Architecture Diagram
+## Architecture Diagram
 NodeD is divided into few logical blocks based on thier operations.
 * Inventory
 
@@ -21,15 +21,16 @@ it's manufacturing dates etc. Apart from Harware information it also stores conf
 
 ![NodeD](docs/NodeD.jpg)
 
-##Building
-Preffered build method is to use UkamaOS build.
+## Building
+Preferred build method is to use UkamaOS build.
+
 ```
 make
 ```
 
-##Testing
+## Testing
 
-####Preparing setup
+#### Preparing setup
 
 **Mocking SysFileSystem**
 
@@ -81,3 +82,4 @@ those can be provided in config files and supplied as argument to noded.
 ```
 ./build/noded
 ```
+
