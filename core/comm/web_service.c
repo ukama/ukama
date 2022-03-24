@@ -575,7 +575,8 @@ DevObj *prepare_object_for_request(UResponse *response, const char *devName,
 }
 
 /**
- * @fn      int web_service_cb_put_dev_property(const URequest*, UResponse*, void*)
+ * @fn      int web_service_cb_put_dev_property(const URequest*, UResponse*,
+ *           void*)
  * @brief   Writes the data provided in body to the appropriate  property of
  *          the device requested.
  *
@@ -631,7 +632,8 @@ static int web_service_cb_put_dev_property(const URequest *request,
     }
 
     DevObj *obj =
-                    prepare_object_for_request(response, devName, devDesc, moduleId, &pIdx,
+                    prepare_object_for_request(response, devName, devDesc,
+                                    moduleId, &pIdx,
                                     devType, propName, &data, &dataType, false);
     if (!obj) {
         report_failure(response, ret,
@@ -1041,7 +1043,8 @@ static int start_framework(UInst *instance) {
 static int init_framework(UInst *inst, int port) {
     if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
         usys_log_error(
-                        "Error initializing instance for websocket remote port %d", port);
+                        "Error initializing instance for websocket"
+                        " remote port %d", port);
         return STATUS_NOK;
     }
 

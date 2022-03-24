@@ -9,6 +9,7 @@
 
 #include "jserdes.h"
 
+#include "errorcode.h"
 #include "property.h"
 #include "web_service.h"
 
@@ -22,7 +23,7 @@ int json_serialize_error(JsonObj **json, int code, const char *str) {
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     json_object_set_new(*json, JTAG_ERROR, json_object());
@@ -34,7 +35,7 @@ int json_serialize_error(JsonObj **json, int code, const char *str) {
         json_object_set_new(jError, JTAG_ERROR_CSTRING, json_string(str));
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -51,7 +52,7 @@ int json_serialize_version(JsonObj **json, Version *ver) {
                             json_integer(ver->minor));
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -62,11 +63,11 @@ int json_serialize_module_cfg(JsonObj **json, ModuleCfg *mCfg, uint8_t count) {
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!mCfg) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_MODULE_CONFIG, json_array());
@@ -95,7 +96,7 @@ int json_serialize_module_cfg(JsonObj **json, ModuleCfg *mCfg, uint8_t count) {
             json_decref(jMCfg);
         }
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -106,11 +107,11 @@ int json_serialize_module_info(JsonObj **json, ModuleInfo *mInfo) {
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!mInfo) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_MODULE_INFO, json_object());
@@ -158,7 +159,7 @@ int json_serialize_module_info(JsonObj **json, ModuleInfo *mInfo) {
                             json_integer(mInfo->devCount));
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -169,11 +170,11 @@ int json_serialize_unit_cfg(JsonObj **json, UnitCfg *uCfg, uint8_t count) {
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!uCfg) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_UNIT_CONFIG, json_array());
@@ -198,7 +199,7 @@ int json_serialize_unit_cfg(JsonObj **json, UnitCfg *uCfg, uint8_t count) {
         }
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -209,11 +210,11 @@ int json_serialize_unit_info(JsonObj **json, UnitInfo *uInfo) {
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!uInfo) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_UNIT_INFO, json_object());
@@ -262,7 +263,7 @@ int json_serialize_unit_info(JsonObj **json, UnitInfo *uInfo) {
                             json_integer(uInfo->modCount));
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -274,11 +275,11 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!apiList) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_API_LIST, json_array());
@@ -300,7 +301,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
         }
 
     } else {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     return ret;
@@ -603,11 +604,11 @@ int json_serialize_sensor_data(JsonObj **json, const char *name,
 
     *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return ERR_NODED_JSON_CRETATION_ERR;
     }
 
     if (!data) {
-        return JSON_NO_VAL_TO_ENCODE;
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
     json_object_set_new(*json, JTAG_NAME, json_string(name));
@@ -627,26 +628,26 @@ int json_deserialize_sensor_data(JsonObj *json, const char **name,
     int ret = JSON_DECODING_OK;
 
     if (!json) {
-        return JSON_PARSER_ERR;
+        return ERR_NODED_JSON_PARSER;
     }
 
     char *tname = NULL;
     if (!parser_read_string_object(json, JTAG_NAME, &tname)) {
-        return JSON_PARSER_ERR;
+        return ERR_NODED_JSON_PARSER;
     } else {
         *name = tname;
     }
 
     int ttype = 0;
     if (!parser_read_integer_object(json, JTAG_DATA_TYPE, &ttype)) {
-        return JSON_PARSER_ERR;
+        return ERR_NODED_JSON_PARSER;
     } else {
         *dataType = ttype;
     }
 
     char *tdesc = NULL;
     if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc)) {
-        return JSON_PARSER_ERR;
+        return ERR_NODED_JSON_PARSER;
     } else {
         *desc = tdesc;
     }
@@ -654,67 +655,7 @@ int json_deserialize_sensor_data(JsonObj *json, const char **name,
     JsonObj *jData = json_object_get(json, JTAG_VALUE);
     *data = json_decode_value(jData, *dataType);
     if (!(*data)) {
-        return JSON_PARSER_ERR;
-    }
-
-    return ret;
-}
-
-int json_serialize_mfg_data(JsonObj **json, const char *name, int fieldId,
-                            void *data) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!json) {
-        return JSON_CREATION_ERR;
-    }
-
-    if (!data) {
-        return JSON_NO_VAL_TO_ENCODE;
-    }
-
-    json_object_set_new(*json, JTAG_NAME, json_string(name));
-
-    json_object_set_new(*json, JTAG_FIELD_ID, json_integer(fieldId));
-
-    json_object_set_new(*json, JTAG_TYPE, json_string((char *)data));
-
-    return ret;
-}
-
-int json_deserialize_mfg_data(JsonObj *json, char **name, char **desc,
-                              int *type, void **data) {
-    int ret = JSON_DECODING_OK;
-
-    if (!json) {
-        return JSON_PARSER_ERR;
-    }
-
-    char *tname = NULL;
-    if (!parser_read_string_object(json, JTAG_NAME, &tname)) {
-        return JSON_PARSER_ERR;
-    } else {
-        *name = tname;
-    }
-
-    int ttype = 0;
-    if (!parser_read_integer_object(json, JTAG_TYPE, &ttype)) {
-        return JSON_PARSER_ERR;
-    } else {
-        *type = ttype;
-    }
-
-    char *tdesc = NULL;
-    if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc)) {
-        return JSON_PARSER_ERR;
-    } else {
-        *desc = tdesc;
-    }
-
-    JsonObj *jData = json_object_get(json, JTAG_VALUE);
-    *data = json_decode_value(jData, *type);
-    if (!(*data)) {
-        return JSON_PARSER_ERR;
+        return ERR_NODED_JSON_PARSER;
     }
 
     return ret;
