@@ -3,7 +3,7 @@
 NodeD service is to manage and support HW devices.
 
 ##Architecture Diagram
-NodeD is divded into few logical blocks based on thier operations.
+NodeD is divided into few logical blocks based on thier operations.
 * Inventory
 
 > Handles the manufacturing data related operations like creating invenrory database for modules, storing and retriving data from inventory database.<br>
@@ -22,7 +22,7 @@ it's manufacturing dates etc. Apart from Harware information it also stores conf
 ![NodeD](docs/NodeD.jpg)
 
 ##Building
-
+Preffered build method is to use UkamaOS build.
 ```
 make
 ```
