@@ -114,6 +114,8 @@ typedef  json_error_t JsonErrObj;
 
 bool parser_read_boolean_object(const JsonObj *obj, const char* key,
                 bool *bvalue);
+bool parser_read_boolean_value(const JsonObj *jBoolObj,
+                bool *bvalue);
 bool parser_read_integer_object(const JsonObj *obj, const char* key,
                 int *ivalue);
 bool parser_read_integer_value(const JsonObj *obj, int *ivalue);

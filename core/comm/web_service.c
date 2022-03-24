@@ -485,7 +485,8 @@ static int web_service_cb_get_module_info(const URequest * request, UResponse * 
 
 DevObj* prepare_object_for_request(UResponse * response, const char* devName,
                 const char* devDesc, const char* moduleId, int *propId,
-                const char* devType, const char* propName, void** dataMem, int* dataType) {
+                const char* devType, const char* propName, void** dataMem,
+                int* dataType, bool isGet) {
 
     /*  Identify device */
     DevObj* obj = usys_zmalloc(sizeof(DevObj));
@@ -539,19 +540,22 @@ DevObj* prepare_object_for_request(UResponse * response, const char* devName,
         }
     }
 
-    /* Allocate memory based on type of property data */
-    uint8_t dataSize = get_sizeof(*dataType);
-    data = usys_zmalloc(dataSize);
-    if (!data){
-        report_memory_failure(response, errno);
-        usys_free(obj);
-        usys_free(prop);
-        obj =  NULL;
-        return obj;
+    if (isGet) {
+        /* Allocate memory based on type of property data
+         * This is required in case of get request Only*/
+        uint8_t dataSize = get_sizeof(*dataType);
+        data = usys_zmalloc(dataSize);
+        if (!data){
+            report_memory_failure(response, errno);
+            usys_free(obj);
+            usys_free(prop);
+            obj =  NULL;
+            return obj;
+        }
+        *dataMem = data;
     }
 
     *propId = pIdx;
-    *dataMem = data;
     if (prop) {
         usys_free(prop);
     }
@@ -592,7 +596,7 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         const char *devDesc = u_map_get(request->map_url, DEVDESC);
         const char *propName = u_map_get(request->map_url, PROPNAME);
 
-        usys_log_trace("NodeD:: Received a get module manufacturing data request "
+        usys_log_trace("NodeD:: Received a get device property data request "
                         "for UUID %s .", moduleId);
 
         if (!((devType) && (devName) && (devDesc) && (propName))) {
@@ -602,14 +606,16 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         }
 
         /* Deserialize data */
-       ret = json_deserialize_sensor_data( json, &devName, &devDesc, &devType, &data);
+       ret = json_deserialize_sensor_data( json, &devName, &devDesc, &devType,
+                       &dataType, &data);
        if (ret != JSON_DECODING_OK) {
            report_failure(response, ret, "failed to decode json request");
            goto completed;
        }
 
         DevObj* obj = prepare_object_for_request(response, devName, devDesc,
-                        moduleId, &pIdx, devType, propName, &data, &dataType);
+                        moduleId, &pIdx, devType, propName, &data,
+                        &dataType, false);
         if ( !obj) {
             report_failure(response, ret, "failed to prepare read request to ledger.");
             goto completed;
@@ -625,7 +631,7 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         }
 
         /* Send response */
-        ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
+        ulfius_set_empty_body_response(response, respCode);
 
         completed:
         return U_CALLBACK_CONTINUE;
@@ -648,7 +654,6 @@ static int web_service_cb_get_dev_property(const URequest * request,
     void* data = NULL;
     int pIdx = 0;
     int dataType = 0;
-    usys_log_trace("NodeD:: Received a read request to device property.");
 
     char *moduleId = u_map_get(request->map_url, UUID);
     if(!moduleId) {
@@ -656,7 +661,8 @@ static int web_service_cb_get_dev_property(const URequest * request,
                         RESP_CODE_INVALID_REQUEST, "no module UUID present");
         goto completed;
     }
-    usys_log_trace("NodeD:: Received a get module info request for UUID %s.",
+    usys_log_trace("NodeD:: Received a get device property read request"
+                    " for UUID %s.",
                     moduleId);
 
     const char *devType = u_map_get(request->map_url, DEVTYPE);
@@ -674,7 +680,7 @@ static int web_service_cb_get_dev_property(const URequest * request,
     }
 
     DevObj* obj = prepare_object_for_request(response, devName, devDesc,
-                    moduleId, &pIdx, devType, propName, &data, &dataType);
+                    moduleId, &pIdx, devType, propName, &data, &dataType, true);
     if ( !obj) {
         report_failure(response, ret, "failed to prepare read request to ledger.");
         goto completed;

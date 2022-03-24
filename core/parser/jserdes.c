@@ -316,42 +316,42 @@ json_t* json_encode_value(int type, void* data) {
 
     switch (type) {
         case TYPE_NULL: {
-           json = json_null();
+            json = json_null();
             break;
         }
         case TYPE_CHAR: {
             char* value = (char*)data;
-           json = json_string(value);
+            json = json_string(value);
             break;
         }
         case TYPE_BOOL: {
             bool value = *(bool*)data;
-           json = json_boolean(value);
+            json = json_boolean(value);
             break;
         }
         case TYPE_UINT8: {
             uint8_t value = *(uint8_t*)data;
-           json = json_integer(value);
+            json = json_integer(value);
             break;
         }
         case TYPE_INT8: {
             int8_t value = *(int8_t*)data;
-           json = json_integer(value);
+            json = json_integer(value);
             break;
         }
         case TYPE_UINT16: {
             uint16_t value = *(uint16_t*)data;
-           json = json_integer(value);
+            json = json_integer(value);
             break;
         }
         case TYPE_INT16: {
             int16_t value = *(int16_t*)data;
-           json = json_integer(value);
+            json = json_integer(value);
             break;
         }
         case TYPE_UINT32: {
             uint32_t value = *(uint32_t*)data;
-           json = json_integer(value);
+            json = json_integer(value);
             break;
         }
         case TYPE_INT32: {
@@ -407,22 +407,22 @@ void* json_decode_value(json_t* json, int type) {
         case TYPE_CHAR: {
             /* Allocating extar one byte beacuse of '/0' */
             char *value = usys_zmalloc(sizeof(char)+1);
-            if (!data){
-                data = NULL;
+            if (!value){
+                return NULL;
             }
 
             if (parser_read_string_value(json, &value)) {
                 data = value;
             } else {
-               usys_free(data);
-               data = NULL;
+                usys_free(value);
+                return NULL;
             }
             break;
         }
         case TYPE_BOOL: {
-            bool *data = usys_zmalloc(sizeof(bool));
+            data = usys_zmalloc(sizeof(bool));
             if (!data){
-                data = NULL;
+                return NULL;
             }
 
             if (!parser_read_boolean_value(json, data)) {
@@ -433,97 +433,103 @@ void* json_decode_value(json_t* json, int type) {
             break;
         }
         case TYPE_UINT8: {
-            uint8_t *data = usys_zmalloc(sizeof(uint8_t));
-            if (!data){
-                data = NULL;
+            int8_t* ndata = usys_zmalloc(sizeof(uint8_t));
+            if (!ndata){
+                return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (uint8_t)value;
+                *ndata = (uint8_t)value;
+                data = ndata;
             }
             break;
         }
         case TYPE_INT8: {
-            int8_t *data = usys_zmalloc(sizeof(int8_t));
-            if (!data){
-                data = NULL;
+            int8_t *ndata = usys_zmalloc(sizeof(int8_t));
+            if (!ndata){
+                return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (int8_t)value;
+                *ndata = (int8_t)value;
+                data = ndata;
             }
             break;
         }
         case TYPE_UINT16: {
-            uint16_t *data = usys_zmalloc(sizeof(uint16_t));
-            if (!data){
+            uint16_t *ndata = usys_zmalloc(sizeof(uint16_t));
+            if (!ndata){
                 return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (uint16_t)value;
+                *ndata = (uint16_t)value;
+                data = ndata;
             }
             break;
         }
         case TYPE_INT16: {
-            int16_t *data = usys_zmalloc(sizeof(int16_t));
-            if (!data){
+            int16_t *ndata = usys_zmalloc(sizeof(int16_t));
+            if (!ndata){
                 return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (int16_t)value;
+                *ndata = (int16_t)value;
+                data = ndata;
             }
             break;
         }
         case TYPE_UINT32: {
-            uint32_t *data = usys_zmalloc(sizeof(uint32_t));
-            if (!data){
+            uint32_t *ndata = usys_zmalloc(sizeof(uint32_t));
+            if (!ndata){
                 return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (uint32_t)value;
+                *ndata = (uint32_t)value;
+                data = ndata;
             }
             break;
         }
         case TYPE_INT32: {
-            int32_t *data = usys_zmalloc(sizeof(int32_t));
-            if (!data){
+            int32_t *ndata = usys_zmalloc(sizeof(int32_t));
+            if (!ndata){
                 return NULL;
             }
 
             int value = 0;
             if (!parser_read_integer_value(json, &value)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                data = (int32_t)value;
+                *ndata = (int32_t)value;
+                data = *ndata;
             }
             break;
         }
         case TYPE_INT: {
-            int *data = usys_zmalloc(sizeof(int));
+            data = usys_zmalloc(sizeof(int));
             if (!data){
                 return NULL;
             }
@@ -536,22 +542,23 @@ void* json_decode_value(json_t* json, int type) {
             break;
         }
         case TYPE_FLOAT: {
-            float *data = usys_zmalloc(sizeof(float));
-            if (!data){
+            float *ndata = usys_zmalloc(sizeof(float));
+            if (!ndata){
                 return NULL;
             }
 
             double val;
             if (!parser_read_real_value(json, &val)) {
-                usys_free(data);
-                data = NULL;
+                usys_free(ndata);
+                return NULL;
             } else {
-                *data = (float)val;
+                *ndata = (float)val;
+                data = ndata;
             }
             break;
         }
         case TYPE_ENUM: {
-            int *data = usys_zmalloc(sizeof(int));
+            data = usys_zmalloc(sizeof(int));
             if (!data){
                 return NULL;
             }
@@ -564,12 +571,11 @@ void* json_decode_value(json_t* json, int type) {
             break;
         }
         case TYPE_DOUBLE: {
-            double *data = usys_zmalloc(sizeof(double));
+            data = usys_zmalloc(sizeof(double));
             if (!data){
                 return NULL;
             }
-
-            if (!parser_read_real_value(json, &data)) {
+            if (!parser_read_real_value(json, data)) {
                 usys_free(data);
                 data = NULL;
             }
@@ -577,7 +583,7 @@ void* json_decode_value(json_t* json, int type) {
             break;
         }
         case TYPE_STRING: {
-            char* data = NULL;
+            data = NULL;
             if (!parser_read_string_value(json, &data)) {
                 data = NULL;
             }
@@ -606,9 +612,9 @@ int json_serialize_sensor_data( JsonObj** json, const char* name,
 
     json_object_set_new(*json, JTAG_NAME, json_string(name));
 
-    json_object_set_new(*json, JTAG_DESCRIPTION, json_string(name));
+    json_object_set_new(*json, JTAG_DESCRIPTION, json_string(desc));
 
-    json_object_set_new(*json, JTAG_TYPE, json_integer(type));
+    json_object_set_new(*json, JTAG_DATA_TYPE, json_integer(type));
 
     json_object_set_new(*json, JTAG_VALUE, json_encode_value(type, data));
 
@@ -616,41 +622,41 @@ int json_serialize_sensor_data( JsonObj** json, const char* name,
 }
 
 int json_deserialize_sensor_data( JsonObj* json, char** name, char** desc,
-                int* type, void** data) {
+                int* type, int* dataType, void** data) {
     int ret = JSON_DECODING_OK;
 
     if (!json) {
         return JSON_PARSER_ERR;
     }
 
-   char *tname = NULL;
-   if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *name = tname;
-   }
+    char *tname = NULL;
+    if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *name = tname;
+    }
 
-   int ttype = 0;
-   if (!parser_read_integer_object(json, JTAG_TYPE, &ttype) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *type = ttype;
-   }
+    int ttype = 0;
+    if (!parser_read_integer_object(json, JTAG_DATA_TYPE, &ttype) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *dataType = ttype;
+    }
 
-   char* tdesc = NULL;
-   if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *desc = tdesc;
-   }
+    char* tdesc = NULL;
+    if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *desc = tdesc;
+    }
 
-   JsonObj* jData = json_object_get(json, JTAG_VALUE);
-   *data = json_decode_value(jData, *type);
-   if(!(*data)) {
-       return JSON_PARSER_ERR;
-   }
+    JsonObj* jData = json_object_get(json, JTAG_VALUE);
+    *data = json_decode_value(jData, *dataType);
+    if(!(*data)) {
+        return JSON_PARSER_ERR;
+    }
 
-   return ret;
+    return ret;
 }
 
 int json_serialize_mfg_data( JsonObj** json, const char* name,
@@ -683,33 +689,33 @@ int json_deserialize_mfg_data( JsonObj* json, char** name, char** desc,
         return JSON_PARSER_ERR;
     }
 
-   char *tname = NULL;
-   if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *name = tname;
-   }
+    char *tname = NULL;
+    if (!parser_read_string_object(json, JTAG_NAME, &tname) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *name = tname;
+    }
 
-   int ttype = 0;
-   if (!parser_read_integer_object(json, JTAG_TYPE, &ttype) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *type = ttype;
-   }
+    int ttype = 0;
+    if (!parser_read_integer_object(json, JTAG_TYPE, &ttype) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *type = ttype;
+    }
 
-   char* tdesc = NULL;
-   if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
-       return JSON_PARSER_ERR;
-   } else {
-       *desc = tdesc;
-   }
+    char* tdesc = NULL;
+    if (!parser_read_string_object(json, JTAG_DESCRIPTION, &tdesc) ) {
+        return JSON_PARSER_ERR;
+    } else {
+        *desc = tdesc;
+    }
 
-   JsonObj* jData = json_object_get(json, JTAG_VALUE);
-   *data = json_decode_value(jData, *type);
-   if(!(*data)) {
-       return JSON_PARSER_ERR;
-   }
+    JsonObj* jData = json_object_get(json, JTAG_VALUE);
+    *data = json_decode_value(jData, *type);
+    if(!(*data)) {
+        return JSON_PARSER_ERR;
+    }
 
-   return ret;
+    return ret;
 }
 

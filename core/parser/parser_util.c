@@ -23,6 +23,9 @@ bool parser_read_real_value(const JsonObj *jObj, double *ivalue) {
     if (json_is_real(jObj)) {
         *ivalue = json_real_value(jObj) ;
         ret = USYS_TRUE;
+    } else if (json_is_integer(jObj)) {
+        *ivalue = json_integer_value(jObj) ;
+        ret = USYS_TRUE;
     }
 
     return ret;

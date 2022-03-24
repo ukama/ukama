@@ -31,7 +31,7 @@
 #define JSON_BAD_REQ                   -1003
 
 int json_deserialize_sensor_data( JsonObj* json, char** name, char** desc,
-                int* type, void** data);
+                int* type, int* dataType, void** data);
 int json_serialize_api_list(JsonObj** json, WebServiceAPI* apiList, uint16_t count);
 int json_serialize_error(JsonObj** obj, int code , const char* str );
 int json_serialize_module_cfg(JsonObj** obj, ModuleCfg* uCfg, uint8_t count);
