@@ -84,6 +84,34 @@ static inline int usys_strncmp(const char *s1, const char *s2, size_t n) {
 }
 
 /**
+ * @fn     int usys_strcasecmp(const char*, const char*)
+ * @brief  Compares two strings irrespective of the case of characters
+ *         by converting strings to lower case and then comparing them
+ *
+ * @param  s1
+ * @param  s2
+ * @return Returns an integral value indicating the difference in strings
+ */
+static inline int usys_strcasecmp(const char *s1, const char *s2) {
+    return strcasecmp(s1, s2);
+}
+
+/**
+ * @fn     int usys_strncasecmp(const char*, const char*, size_t)
+ * @brief  Compares first n bytes of two strings irrespective of the case of
+ *         characters by converting strings to lower case and
+ *         then comparing them
+ *
+ * @param  s1
+ * @param  s2
+ * @param  n
+ * @return
+ */
+static inline int usys_strncasecmp(const char *s1, const char *s2, size_t n) {
+    return strncasecmp(s1, s2, n);
+}
+
+/**
  * @fn     size_t usys_strlen(const char*)
  * @brief  The length of a C string is determined by the terminating
  *         null-character
