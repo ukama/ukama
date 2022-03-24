@@ -28,14 +28,15 @@ static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
 /**
- * @fn    void report_failure_with_response_code(UResponse*, int, int,
+ * @fn      void report_failure_with_response_code(UResponse*, int, int,
  *           char*)
- * @brief Reports the json serialization failure errors.
+ * @brief   Reports the failure to client using json object with HTTP repsonse
+ *          provided in respcode.
  *
- * @param response
- * @param responsecode
- * @param ret
- * @param msg
+ * @param   response
+ * @param   responsecode
+ * @param   ret
+ * @param   msg
  */
 static void report_failure_with_response_code(UResponse *response, int respcode,
                 int ret, char *msg) {
@@ -48,8 +49,9 @@ static void report_failure_with_response_code(UResponse *response, int respcode,
 }
 
 /**
- * @fn void report_failure(UResponse*, int, char*)
- * @brief
+ * @fn      void report_failure(UResponse*, int, char*)
+ * @brief   Reports a generic failure to the client using JSON
+ *          with HTTP response code 500.
  *
  * @param response
  * @param ret
@@ -65,11 +67,12 @@ static void report_failure(UResponse *response, int ret, char *msg) {
 }
 
 /**
- * @fn void report_memory_failure(UResponse*, int)
- * @brief
+ * @fn      void report_memory_failure(UResponse*, int)
+ * @brief   Report memory related failure to client using json.
+ *          with HTTP response code 500.
  *
- * @param response
- * @param errnum
+ * @param   response
+ * @param   errnum
  */
 static void report_memory_failure(UResponse *response, int errnum) {
     JsonObj *json = NULL;
@@ -81,12 +84,12 @@ static void report_memory_failure(UResponse *response, int errnum) {
 }
 
 /**
- * @fn int web_service_cb_ping(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_ping(const URequest*, UResponse*, void*)
+ * @brief   reports ping response to client
  *
- * @param request
- * @param response
- * @param epConfig
+ * @param   request
+ * @param   response
+ * @param   epConfig
  * @return
  */
 static int web_service_cb_ping(const URequest *request, UResponse *response,
@@ -100,13 +103,14 @@ static int web_service_cb_ping(const URequest *request, UResponse *response,
 }
 
 /**
- * @fn int web_service_cb_default(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_default(const URequest*, UResponse*, void*)
+ * @brief   default callback used by REST framework if valid endpoint is not
+ *          requested.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_default(const URequest *request, UResponse *response,
                 void *epConfig) {
@@ -122,13 +126,14 @@ static int web_service_cb_default(const URequest *request, UResponse *response,
 }
 
 /**
- * @fn int web_service_cb_discover_api(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_discover_api(const URequest*, UResponse*, void*)
+ * @brief   HTTP callback used by REST framework on discovery request.
+ *          This list all the available endpoints from the service.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_discover_api(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -164,7 +169,7 @@ static int web_service_cb_discover_api(const URequest *request,
  * @param   request
  * @param   response
  * @param   epConfig
- * @return
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_get_unit_cfg(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -300,13 +305,14 @@ static int web_service_cb_get_unit_info(const URequest *request,
 }
 
 /**
- * @fn int web_service_cb_get_module_cfg(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_get_module_cfg(const URequest*, UResponse*, void*)
+ * @brief    HTTP callback used by REST framework on module config request.
+ *          This function reads the module config from the inventory db.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_get_module_cfg(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -399,13 +405,15 @@ static int web_service_cb_get_module_cfg(const URequest *request,
 }
 
 /**
- * @fn int web_service_cb_get_module_info(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_get_module_info(const URequest*, UResponse*,
+ *          void*)
+ * @brief   HTTP callback used by REST framework on module info request.
+ *          This function reads the module information from the inventory db.
  *
  * @param request
  * @param response
  * @param epConfig
- * @return
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_get_module_info(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -466,6 +474,26 @@ static int web_service_cb_get_module_info(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * @fn      DevObj prepare_object_for_request*(UResponse*, const char*,
+ *          const char*, const char*, int*, const char*, const char*, void**,
+ *          int*, bool)
+ * @brief   This function creates a device object we need to access and set
+ *          the property index to appropriate value of property.
+ *
+ * @param   response
+ * @param   devName
+ * @param   devDesc
+ * @param   moduleId
+ * @param   propId
+ * @param   devType
+ * @param   propName
+ * @param   dataMem
+ * @param   dataType
+ * @param   isGetReq
+ * @return  On Success, return the DeviceObject we are trying to access.
+ *          On failure, NULL.
+ */
 DevObj *prepare_object_for_request(UResponse *response, const char *devName,
                 const char *devDesc, const char *moduleId,
                 int *propId, const char *devType,
@@ -547,13 +575,14 @@ DevObj *prepare_object_for_request(UResponse *response, const char *devName,
 }
 
 /**
- * @fn int web_service_cb_put_dev_property(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_put_dev_property(const URequest*, UResponse*, void*)
+ * @brief   Writes the data provided in body to the appropriate  property of
+ *          the device requested.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_put_dev_property(const URequest *request,
                 UResponse *response,
@@ -627,13 +656,14 @@ static int web_service_cb_put_dev_property(const URequest *request,
 }
 
 /**
- * @fn int web_service_cb_get_dev_property(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_get_dev_property(const URequest*, UResponse*, void*)
+ * @brief   Reads the appropriate property of the sensor requested by client.
+ *          Info related to the sensor is provided in the URL parameters.
  *
  * @param request
  * @param response
  * @param epConfig
- * @return
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_get_dev_property(const URequest *request,
                 UResponse *response,
@@ -708,11 +738,14 @@ static int web_service_cb_get_dev_property(const URequest *request,
 }
 
 /**
- * @fn int field_name_to_id(cahr*)
- * @brief
+ * @fn      int field_name_to_id(const char*, uint16_t*)
+ * @brief   Translates the URL parameter into the field Id
+ *          for inventory database.
  *
- * @param fieldName
- * @return
+ * @param   fieldName
+ * @param   fieldId
+ * @return  On success STATUS_OK
+ *          On failure STATUS_NOK
  */
 int field_name_to_id(const char *fieldName, uint16_t *fieldId) {
     int ret = STATUS_NOK;
@@ -751,13 +784,13 @@ int field_name_to_id(const char *fieldName, uint16_t *fieldId) {
 }
 
 /**
- * @fn int web_service_cb_get_module_mfg(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_get_module_mfg(const URequest*, UResponse*, void*)
+ * @brief   Read manufacturing data for the module.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_get_module_mfg(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -813,13 +846,13 @@ static int web_service_cb_get_module_mfg(const URequest *request,
 }
 
 /**
- * @fn int web_service_cb_put_module_mfg(const URequest*, UResponse*, void*)
- * @brief
+ * @fn      int web_service_cb_put_module_mfg(const URequest*, UResponse*, void*)
+ * @brief   Update module manufacturing data.
  *
- * @param request
- * @param response
- * @param epConfig
- * @return
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
 static int web_service_cb_put_module_mfg(const URequest *request,
                 UResponse *response, void *epConfig) {
@@ -870,13 +903,15 @@ static int web_service_cb_put_module_mfg(const URequest *request,
 }
 
 /**
- * @fn void web_service_add_end_point(char*, char*, void*, HttpCb)
- * @brief
+ * @fn      void web_service_add_end_point(char*, char*, void*, HttpCb)
+ * @brief   Wrapper function on adding endpoint to REST framework. This
+ *          also populates struct for endPoint discovery which can then
+ *          be used for listing endpoints in later stages.
  *
- * @param method
- * @param endPoint
- * @param config
- * @param cb
+ * @param   method
+ * @param   endPoint
+ * @param   config
+ * @param   cb
  */
 static void web_service_add_end_point(char *method, char *endPoint,
                 void *config, HttpCb cb) {
@@ -890,8 +925,8 @@ static void web_service_add_end_point(char *method, char *endPoint,
 }
 
 /**
- * @fn void web_service_add_device_based_endpoint(int, void*, DevObj*)
- * @brief
+ * @fn      void web_service_add_device_based_endpoint(int, void*, DevObj*)
+ * @brief   Add REST endpoints for device config reading and writing.
  *
  * @param perm
  * @param config
@@ -907,8 +942,8 @@ static void web_service_add_device_based_endpoint() {
                     web_service_cb_get_dev_property);
 }
 /**
- * @fn void web_service_add_discover_endpoints()
- * @brief
+ * @fn      void web_service_add_discover_endpoints()
+ * @brief   Add REST endpoints for endpoint discovery.
  *
  */
 static void web_service_add_discover_endpoints() {
@@ -917,8 +952,8 @@ static void web_service_add_discover_endpoints() {
 }
 
 /**
- * @fn void web_service_add_unit_endpoints()
- * @brief
+ * @fn      void web_service_add_unit_endpoints()
+ * @brief   Add REST endpoints for unit info reading.
  *
  */
 void web_service_add_unit_endpoints() {
@@ -929,8 +964,8 @@ void web_service_add_unit_endpoints() {
 }
 
 /**
- * @fn void web_service_add_module_endpoints()
- * @brief
+ * @fn      void web_service_add_module_endpoints()
+ * @brief   Add REST endpoints for module info reading.
  *
  */
 void web_service_add_module_endpoints() {
@@ -941,8 +976,8 @@ void web_service_add_module_endpoints() {
 }
 
 /**
- * @fn void web_service_add_mfg_data_endpoints()
- * @brief
+ * @fn      void web_service_add_mfg_data_endpoints()
+ * @brief   Add REST endpoints for manufacturing data read and write.
  *
  */
 void web_service_add_mfg_data_endpoints() {
@@ -953,13 +988,14 @@ void web_service_add_mfg_data_endpoints() {
 }
 
 /**
- * @fn void setup_web_service_endpoints(UInst*, void*)
- * @brief
+ * @fn      void setup_web_service_endpoints(UInst*, void*)
+ * @brief   Add default endpoint and endpont for ping
  *
- * @param instance
- * @param config
+ * @param   instance
+ * @param   config
  */
 static void setup_web_service_endpoints(UInst *instance, void *config) {
+
     /* Ping */
     web_service_add_end_point("GET", API_RES_EP("ping"), NULL,
                     web_service_cb_ping);
@@ -969,11 +1005,12 @@ static void setup_web_service_endpoints(UInst *instance, void *config) {
 }
 
 /**
- * @fn int start_framework(UInst*)
- * @brief
+ * @fn      int start_framework(UInst*)
+ * @brief   Initializes the REST server framework
  *
- * @param instance
- * @return
+ * @param   instance
+ * @return  On success STATUS_OK
+ *          On failure STATUS_NOK
  */
 static int start_framework(UInst *instance) {
     int ret;
@@ -993,12 +1030,13 @@ static int start_framework(UInst *instance) {
 }
 
 /**
- * @fn int init_framework(UInst*, int)
- * @brief
+ * @fn      int init_framework(UInst*, int)
+ * @brief   Initializes the REST server framework
  *
- * @param inst
- * @param port
- * @return
+ * @param   inst
+ * @param   port
+ * @return  On success STATUS_OK
+ *          On failure STATUS_NOK
  */
 static int init_framework(UInst *inst, int port) {
     if (ulfius_init_instance(inst, port, NULL, NULL) != U_OK) {
@@ -1014,10 +1052,11 @@ static int init_framework(UInst *inst, int port) {
 }
 
 /**
- * @fn int web_service_start()
- * @brief
+ * @fn      int web_service_start()
+ * @brief   Add API endpoints and start the REST HTTP server
  *
- * @return
+ * @return  On success STATUS_OK
+ *          On failure STATUS_NOK
  */
 int web_service_start() {
     /* setup endpoints and methods callback. */
@@ -1046,10 +1085,11 @@ int web_service_start() {
 }
 
 /**
- * @fn int web_service_init()
- * @brief
+ * @fn      int web_service_start()
+ * @brief   Initializes the ulfius framework for REST server.
  *
- * @return
+ * @return  On success STATUS_OK
+ *          On failure STATUS_NOK
  */
 int web_service_init() {
     /* Initialize the web_services framework. */

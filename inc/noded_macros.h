@@ -14,14 +14,17 @@
 #define MAX_PATH_LENGTH                    (64)
 
 /* Length */
-#define UUID_LENGTH                         32
+#define UUID_LENGTH                         (32)
 #define NAME_LENGTH                         MAX_NAME_LENGTH
 #define PATH_LENGTH                         MAX_PATH_LENGTH
-#define DATE_LENGTH                         12
-#define MAC_LENGTH                          18
-#define DESC_LENGTH                         24
+#define DATE_LENGTH                         (12)
+#define MAC_LENGTH                          (18)
+#define DESC_LENGTH                         (24)
 
-#define MAX_JSON_DEVICE                     32
-#define PROP_MAX_STR_LENGTH                 64
+#define MAX_JSON_DEVICE                     (32)
+#define PROP_MAX_STR_LENGTH                 (64)
+
+#define STATUS_OK                           (0)
+#define STATUS_NOK                          (-1)
 
 #endif /* INC_NODED_MACROS_H_ */
