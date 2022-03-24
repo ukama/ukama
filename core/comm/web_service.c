@@ -326,7 +326,7 @@ static int web_service_cb_get_module_cfg(const URequest * request, UResponse * r
     ModuleCfg *mCfg = NULL;
     ModuleInfo *mInfo = NULL;
 
-    const char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = u_map_get(request->map_url, UUID);
     if(!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST, "no module UUID present");
@@ -576,7 +576,7 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         unsigned int respCode = RESP_CODE_SERVER_FAILURE;
         int ret = STATUS_NOK;
         void* data = NULL;
-        uint16_t pIdx = 0;
+        int pIdx = 0;
         int dataType = 0;
         usys_log_trace("NodeD:: Received a read request to device property.");
 
@@ -606,7 +606,7 @@ static int web_service_cb_put_dev_property(const URequest * request, UResponse *
         }
 
         /* Deserialize data */
-       ret = json_deserialize_sensor_data( json, &devName, &devDesc, &devType,
+       ret = json_deserialize_sensor_data( json, &devName, &devDesc,
                        &dataType, &data);
        if (ret != JSON_DECODING_OK) {
            report_failure(response, ret, "failed to decode json request");
@@ -717,7 +717,7 @@ static int web_service_cb_get_dev_property(const URequest * request,
  * @param fieldName
  * @return
  */
-int field_name_to_id(const char *fieldName, int* fieldId) {
+int field_name_to_id(const char *fieldName, uint16_t* fieldId) {
     int ret = STATUS_NOK;
 
     if(!usys_strcmp("factorycalibration", fieldName)) {
@@ -794,7 +794,7 @@ static int web_service_cb_get_module_mfg(const URequest * request, UResponse * r
     }
 
     /* Read data from request */
-    ret = invt_read_payload_for_field_id(moduleId, &data, fieldId,
+    ret = invt_read_payload_for_field_id(moduleId, (void**)&data, fieldId,
                     &size);
     if (ret) {
         report_failure(response, ret, "failed to read data.");

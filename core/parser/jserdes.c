@@ -311,7 +311,7 @@ json_t* json_encode_value(int type, void* data) {
 
     JsonObj *json = json_object();
     if (!json) {
-        return JSON_CREATION_ERR;
+        return NULL;
     }
 
     switch (type) {
@@ -524,7 +524,7 @@ void* json_decode_value(json_t* json, int type) {
                 return NULL;
             } else {
                 *ndata = (int32_t)value;
-                data = *ndata;
+                data = ndata;
             }
             break;
         }
@@ -583,9 +583,11 @@ void* json_decode_value(json_t* json, int type) {
             break;
         }
         case TYPE_STRING: {
-            data = NULL;
-            if (!parser_read_string_value(json, &data)) {
+            char* ndata = NULL;
+            if (!parser_read_string_value(json, &ndata)) {
                 data = NULL;
+            } else {
+                data = ndata;
             }
             break;
         }
@@ -621,8 +623,8 @@ int json_serialize_sensor_data( JsonObj** json, const char* name,
     return ret;
 }
 
-int json_deserialize_sensor_data( JsonObj* json, char** name, char** desc,
-                int* type, int* dataType, void** data) {
+int json_deserialize_sensor_data( JsonObj* json, const char** name,
+                const char** desc, int* dataType, void** data) {
     int ret = JSON_DECODING_OK;
 
     if (!json) {
