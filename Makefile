@@ -165,7 +165,7 @@ formatcodestyle:
 checkcodestyle:
 	$(eval CWD = $(shell pwd))
 	echo $(CWD)
-	@for src in $(SOURCES) ; do \
+	@for src in $(SVC_CFILES) ; do \
 		echo "Checking format for $(CWD)/$$src"; \
 		dif=`clang-format-9 "$(CWD)/$$src" | diff "$(CWD)/$$src" - | wc -l`; \
 		if [ `echo $$dif` != `echo 0` ]; then \

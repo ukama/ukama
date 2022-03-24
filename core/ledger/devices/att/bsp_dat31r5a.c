@@ -33,7 +33,7 @@ const DrvrOps dat31r5aWrapperOps = { .init = dat31r5a_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property dat31r5a_property[MAXATTPROP] = {
+static Property dat31r5aProperty[MAXATTPROP] = {
     [ATTVALUE] = { .name = "ATTENUATION VALUE",
                    .dataType = TYPE_INT32,
                    .perm = PERM_RD | PERM_WR,
@@ -52,7 +52,7 @@ static Property dat31r5a_property[MAXATTPROP] = {
                       .depProp = NULL },
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -87,7 +87,7 @@ int bsp_dat31r5a_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXATTPROP;
-        gProperty = dat31r5a_property;
+        gProperty = dat31r5aProperty;
         log_debug("DAT31R5A: Using static property table with %d property.",
                   gPropertyCount);
     }

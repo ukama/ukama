@@ -33,7 +33,7 @@ const DrvrOps ledTricolWrapperOps = { .init = led_tricol_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property led_tricol_property[MAXLEDTRICOLPROP] = {
+static Property ledTricolProperty[MAXLEDTRICOLPROP] = {
     [RBRIGHTNESS] = { .name = "RED LED BRIGHTNESS",
                       .dataType = TYPE_UINT8,
                       .perm = PERM_RD | PERM_WR,
@@ -108,7 +108,7 @@ static Property led_tricol_property[MAXLEDTRICOLPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -142,7 +142,7 @@ int bsp_led_tricol_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXLEDTRICOLPROP;
-        gProperty = led_tricol_property;
+        gProperty = ledTricolProperty;
         log_debug("LEDTRICOL: Using static property table with %d property.",
                   gPropertyCount);
     }

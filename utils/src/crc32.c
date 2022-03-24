@@ -35,14 +35,14 @@
 #include "usys_types.h"
 
 /*
- * uint32_t crc_32( const unsigned char *input_str, size_t num_bytes );
+ * uint32_t crc_32( const unsigned char *inputStr, size_t numBytes );
  *
  * The function crc_32() calculates in one pass the common 32 bit CRC value for
  * a byte string that is passed to the function together with a parameter
  * indicating the length.
  */
 
-const uint32_t crc_tab32[256] = {
+const uint32_t crcTab32[256] = {
     0x00000000ul, 0x77073096ul, 0xEE0E612Cul, 0x990951BAul, 0x076DC419ul,
     0x706AF48Ful, 0xE963A535ul, 0x9E6495A3ul, 0x0EDB8832ul, 0x79DCB8A4ul,
     0xE0D5E91Eul, 0x97D2D988ul, 0x09B64C2Bul, 0x7EB17CBDul, 0xE7B82D07ul,
@@ -97,18 +97,18 @@ const uint32_t crc_tab32[256] = {
     0x2D02EF8Dul
 };
 
-uint32_t crc_32(const unsigned char *input_str, size_t num_bytes) {
+uint32_t crc_32(const unsigned char *inputStr, size_t numBytes) {
     uint32_t crc;
     const unsigned char *ptr;
     size_t a;
 
     crc = CRC_START_32;
-    ptr = input_str;
+    ptr = inputStr;
 
     if (ptr != NULL)
-        for (a = 0; a < num_bytes; a++) {
+        for (a = 0; a < numBytes; a++) {
             crc =
-                (crc >> 8) ^ crc_tab32[(crc ^ (uint32_t)*ptr++) & 0x000000FFul];
+                (crc >> 8) ^ crcTab32[(crc ^ (uint32_t)*ptr++) & 0x000000FFul];
         }
 
     return (crc ^ 0xFFFFFFFFul);
@@ -123,6 +123,6 @@ uint32_t crc_32(const unsigned char *input_str, size_t num_bytes) {
  */
 
 uint32_t update_crc_32(uint32_t crc, unsigned char c) {
-    return (crc >> 8) ^ crc_tab32[(crc ^ (uint32_t)c) & 0x000000FFul];
+    return (crc >> 8) ^ crcTab32[(crc ^ (uint32_t)c) & 0x000000FFul];
 
 } /* update_crc_32 */

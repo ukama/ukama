@@ -33,7 +33,7 @@ const DrvrOps ads1015WrapperOps = { .init = ads1015_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property ads1015_property[MAXADCPROP] = {
+static Property ads1015Property[MAXADCPROP] = {
     [VAIN0AIN1] = { .name = "VOLT OVER AIN0 AND AIN1",
                     .dataType = TYPE_INT32,
                     .perm = PERM_RD,
@@ -101,7 +101,7 @@ static Property ads1015_property[MAXADCPROP] = {
 
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -136,7 +136,7 @@ int bsp_ads1015_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXADCPROP;
-        gProperty = ads1015_property;
+        gProperty = ads1015Property;
         usys_log_debug("ADS1015: Using static property table with %d property.",
                        gPropertyCount);
     }

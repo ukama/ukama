@@ -21,7 +21,7 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-static SensorCallbackFxn sensor_cb;
+static SensorCallbackFxn sensorCb;
 
 const DrvrOps se98WrapperOps = { .init = se98_wrapper_init,
                                  .configure = se98_wrapper_configure,
@@ -126,7 +126,7 @@ static Property se98_property[MAXTEMPPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -172,7 +172,7 @@ void se98_irq_callback(DevObj *obj, void *prop, void *data) {
 int bsp_se98_reg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = fun;
+        sensorCb = fun;
     }
     return ret;
 }
@@ -180,7 +180,7 @@ int bsp_se98_reg_cb(void *pDev, SensorCallbackFxn fun) {
 int bsp_se98_dreg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = NULL;
+        sensorCb = NULL;
     }
     return ret;
 }
@@ -274,7 +274,7 @@ int bsp_se98_enable_irq(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
-        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty, *(int *)prop,
+        ret = dhelper_enable_irq(drvr, sensorCb, pDev, gProperty, *(int *)prop,
                                  data);
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;

@@ -447,12 +447,11 @@ static int web_service_cb_get_module_info(const URequest *request,
         report_failure(response, ret, "Failed while fetching module info");
         goto completed;
     }
-    ll
-        /* Send response */
-        if (json) {
+
+    /* Send response */
+    if (json) {
         ulfius_set_json_body_response(response, respCode, json);
-    }
-    else {
+    } else {
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
 

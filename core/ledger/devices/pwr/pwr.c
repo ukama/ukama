@@ -38,14 +38,14 @@ const DevOps ina226Ops = { .init = bsp_ina226_init,
                            .confirmIrq = bsp_ina226_confirm_irq,
                            .irqType = bsp_ina226_get_irq_type };
 
-DevOpsMap pwr_dev_map[MAX_PWR_SENSOR_TYPE] = { { .name = "INA226",
+DevOpsMap pwrDevMap[MAX_PWR_SENSOR_TYPE] = { { .name = "INA226",
                                                  .opsTable = &ina226Ops } };
 
 const DevOps *get_pwr_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_PWR_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, pwr_dev_map[iter].name)) {
-            opsTbl = pwr_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, pwrDevMap[iter].name)) {
+            opsTbl = pwrDevMap[iter].opsTable;
             break;
         }
     }

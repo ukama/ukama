@@ -21,9 +21,9 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-static SensorCallbackFxn sensor_cb;
+static SensorCallbackFxn sensor_Cb;
 
-const DrvrOps drvr_tmp464_fxn_table = { .init = tmp464_wrapper_init,
+const DrvrOps tmp464WrapperOps = { .init = tmp464_wrapper_init,
                                         .configure = tmp464_wrapper_configure,
                                         .read = tmp464_wrapper_read,
                                         .write = tmp464_wrapper_write,
@@ -38,7 +38,7 @@ const DrvrOps drvr_tmp464_fxn_table = { .init = tmp464_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property tmp464_property[MAXTEMPPROP] = {
+static Property tmp464Property[MAXTEMPPROP] = {
     [T1TEMPVALUE] = { .name = "T1 TEMPERATURE",
                       .dataType = TYPE_INT32,
                       .perm = PERM_RD,
@@ -299,11 +299,11 @@ static Property tmp464_property[MAXTEMPPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
-        return &drvr_tmp464_fxn_table;
+        return &tmp464WrapperOps;
     }
 }
 
@@ -348,7 +348,7 @@ void tmp464_irq_callback(DevObj *obj, void *prop, void *data) {
 int bsp_tmp464_reg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = fun;
+        sensor_Cb = fun;
     }
     return ret;
 }
@@ -356,7 +356,7 @@ int bsp_tmp464_reg_cb(void *pDev, SensorCallbackFxn fun) {
 int bsp_tmp464_dreg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = NULL;
+        sensor_Cb = NULL;
     }
     return ret;
 }
@@ -367,7 +367,7 @@ int bsp_tmp464_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXTEMPPROP;
-        gProperty = tmp464_property;
+        gProperty = tmp464Property;
         log_debug("TMP464: Using static property table with %d property.",
                   gPropertyCount);
     }
@@ -454,7 +454,7 @@ int bsp_tmp464_enable_irq(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
-        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty, *(int *)prop,
+        ret = dhelper_enable_irq(drvr, sensor_Cb, pDev, gProperty, *(int *)prop,
                                  data);
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;

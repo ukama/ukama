@@ -38,14 +38,14 @@ const DevOps dat31r5aOps = { .init = bsp_dat31r5a_init,
                              .confirmIrq = NULL,
                              .irqType = NULL };
 
-DevOpsMap att_dev_map[MAX_ATT_SENSOR_TYPE] = { { .name = "DAT-31R5A-PP",
+DevOpsMap attDevMap[MAX_ATT_SENSOR_TYPE] = { { .name = "DAT-31R5A-PP",
                                                  .opsTable = &dat31r5aOps } };
 
 const DevOps *get_att_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_ATT_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, att_dev_map[iter].name)) {
-            opsTbl = att_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, attDevMap[iter].name)) {
+            opsTbl = attDevMap[iter].opsTable;
             break;
         }
     }

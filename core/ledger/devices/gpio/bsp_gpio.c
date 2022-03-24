@@ -32,7 +32,7 @@ const DrvrOps drvrGpioWrapperOps = { .init = gpio_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property gpio_property[MAXGPIOPROP] = {
+static Property gpioProperty[MAXGPIOPROP] = {
     [DIRECTION] = { .name = "GPIO DIRECTION",
                     .dataType = TYPE_UINT8,
                     .perm = PERM_RD | PERM_WR,
@@ -67,7 +67,7 @@ static Property gpio_property[MAXGPIOPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -102,7 +102,7 @@ int bsp_gpio_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXGPIOPROP;
-        gProperty = gpio_property;
+        gProperty = gpioProperty;
         log_debug("GPIO: Using static property table with %d property.",
                   gPropertyCount);
     }

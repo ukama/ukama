@@ -38,14 +38,14 @@ const DevOps ads1015Ops = { .init = bsp_ads1015_init,
                             .confirmIrq = NULL,
                             .irqType = NULL };
 
-DevOpsMap adc_dev_map[MAX_ADC_SENSOR_TYPE] = { { .name = "ADS1015",
+DevOpsMap adcDevMap[MAX_ADC_SENSOR_TYPE] = { { .name = "ADS1015",
                                                  .opsTable = &ads1015Ops } };
 
 const DevOps *get_adc_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_ADC_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, adc_dev_map[iter].name)) {
-            opsTbl = adc_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, adcDevMap[iter].name)) {
+            opsTbl = adcDevMap[iter].opsTable;
             break;
         }
     }

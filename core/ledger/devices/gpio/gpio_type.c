@@ -38,14 +38,14 @@ const DevOps gpioOps = { .init = bsp_gpio_init,
                          .confirmIrq = NULL,
                          .irqType = NULL };
 
-DevOpsMap gpio_dev_map[MAX_GPIO_SENSOR_TYPE] = { { .name = "GPIO",
+DevOpsMap gpioDevMap[MAX_GPIO_SENSOR_TYPE] = { { .name = "GPIO",
                                                    .opsTable = &gpioOps } };
 
 const DevOps *get_gpio_type_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_GPIO_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, gpio_dev_map[iter].name)) {
-            opsTbl = gpio_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, gpioDevMap[iter].name)) {
+            opsTbl = gpioDevMap[iter].opsTable;
             break;
         }
     }

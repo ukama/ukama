@@ -62,12 +62,12 @@ int ready_inot(int inot) {
 
 int poll_file(IRQCfg *cfg) {
     int ret = 0;
-    int nfds, num_open_fds;
+    int nfds, numOpenFds;
     struct pollfd pfds[1];
-    num_open_fds = nfds = 1;
-    int fw_fd = file_watch_fd(cfg->fName);
-    if (fw_fd < 0) {
-        return fw_fd;
+    numOpenFds = nfds = 1;
+    int fwFd = file_watch_fd(cfg->fName);
+    if (fwFd < 0) {
+        return fwFd;
     }
     /* TODO: Better way to close the pfds*/
     usys_memset(&pfds, 0, sizeof(struct pollfd));
@@ -75,11 +75,11 @@ int poll_file(IRQCfg *cfg) {
     //if (pfds == NULL) {
     //    errExit("malloc");
     //}
-    pfds[0].fd = fw_fd;
+    pfds[0].fd = fwFd;
     pfds[0].events = POLLIN;
     /* Keep calling poll() as long as at least one file descriptor is open */
 
-    while (num_open_fds > 0) {
+    while (numOpenFds > 0) {
         int ready = 0;
         usys_log_trace("VNODEALERT:: Started poll() for %s.\n", cfg->fName);
         ready = poll(pfds, nfds, -1);
@@ -94,7 +94,7 @@ int poll_file(IRQCfg *cfg) {
                 usys_log_debug("VNODEALERT:: poll() fd %d got events: 0x%x",
                                pfds[j].fd, pfds[j].revents);
                 if (pfds[j].revents & POLLIN) {
-                    if (ready_inot(fw_fd)) {
+                    if (ready_inot(fwFd)) {
                         /* Callback to the registered cb */
                         cfg->cb(cfg);
                     }
@@ -103,7 +103,7 @@ int poll_file(IRQCfg *cfg) {
                                    pfds[j].fd);
                     if (close(pfds[j].fd) == -1)
                         ret = -1;
-                    num_open_fds--;
+                    numOpenFds--;
                 }
             }
         }

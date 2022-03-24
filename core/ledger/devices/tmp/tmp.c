@@ -72,7 +72,7 @@ const DevOps adt7481Ops = { .init = bsp_adt7481_init,
                             .confirmIrq = bsp_adt7481_confirm_irq,
                             .irqType = bsp_adt7481_get_irq_type };
 
-DevOpsMap tmp_dev_map[MAX_TEMP_SENSOR_TYPE] = {
+DevOpsMap tmpDevMap[MAX_TEMP_SENSOR_TYPE] = {
     { .name = "TMP464", .opsTable = &tmp464Ops },
     { .name = "ADT7481", .opsTable = &adt7481Ops },
     { .name = "SE98", .opsTable = &se98Ops }
@@ -81,8 +81,8 @@ DevOpsMap tmp_dev_map[MAX_TEMP_SENSOR_TYPE] = {
 const DevOps *get_tmp_dev_ops(char *name) {
     const DevOps *devOps = NULL;
     for (uint8_t iter = 0; iter < MAX_TEMP_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, tmp_dev_map[iter].name)) {
-            devOps = tmp_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, tmpDevMap[iter].name)) {
+            devOps = tmpDevMap[iter].opsTable;
             break;
         }
     }

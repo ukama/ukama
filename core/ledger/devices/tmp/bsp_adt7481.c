@@ -21,7 +21,7 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-static SensorCallbackFxn sensor_cb;
+static SensorCallbackFxn sensorCb;
 
 const DrvrOps adt7841WrapperOps = { .init = adt7841_wrapper_init,
                                     .configure = adt7841_wrapper_configure,
@@ -37,7 +37,7 @@ const DrvrOps adt7841WrapperOps = { .init = adt7841_wrapper_init,
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
 
-static Property adt7481_property[MAXTEMPPROP] = {
+static Property adt7481Property[MAXTEMPPROP] = {
     [T1TEMPVALUE] = { .name = "T1 TEMPERATURE",
                       .dataType = TYPE_INT32,
                       .perm = PERM_RD,
@@ -298,7 +298,7 @@ static Property adt7481_property[MAXTEMPPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps *get_fxn_tbl(Device *pDev) {
+static const DrvrOps* get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -347,7 +347,7 @@ void adt7481_irq_callback(DevObj *obj, void *prop, void *data) {
 int bsp_adt7481_reg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = fun;
+        sensorCb = fun;
     }
     return ret;
 }
@@ -355,7 +355,7 @@ int bsp_adt7481_reg_cb(void *pDev, SensorCallbackFxn fun) {
 int bsp_adt7481_dreg_cb(void *pDev, SensorCallbackFxn fun) {
     int ret = 0;
     if (fun) {
-        sensor_cb = NULL;
+        sensorCb = NULL;
     }
     return ret;
 }
@@ -365,7 +365,7 @@ int bsp_adt7481_init(Device *pDev) {
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXTEMPPROP;
-        gProperty = adt7481_property;
+        gProperty = adt7481Property;
         log_debug("ADT7481: Using static property table with %d property.",
                   gPropertyCount);
     }
@@ -449,7 +449,7 @@ int bsp_adt7481_enable_irq(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
-        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty, *(int *)prop,
+        ret = dhelper_enable_irq(drvr, sensorCb, pDev, gProperty, *(int *)prop,
                                  data);
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;

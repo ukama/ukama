@@ -129,10 +129,10 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
                           int max_prop, char *fpath, int *evt) {
     int ret = 0;
     int alertevt = 0;
-    int a_status = 0;
+    int aStatus = 0;
     uint8_t alertState = 0;
     double value = 0;
-    int prop_idx = -1;
+    int propIdx = -1;
     char *fname = get_sysfs_name(fpath);
     //fname = basename(fpath);
 
@@ -155,7 +155,7 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
 
                 /* Verifying if it's true alert by reading sysfs */
                 int valid = 0;
-                ret = drvrOps->read(hwattr, &prop[iter], &a_status);
+                ret = drvrOps->read(hwattr, &prop[iter], &aStatus);
 
                 /* Just to check further compare value with thresholds of a sensor */
                 int lmtcheck = 0;
@@ -163,15 +163,15 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
                     if (prop[iter].depProp[0].currIdx >= 0) {
                         lmtcheck = irqhelper_validate_irq(drvrOps, dev, prop,
                                                           iter, &value);
-                        prop_idx = iter;
+                        propIdx = iter;
                     }
                 }
 
                 /* Check which alert need to be raised */
                 if (lmtcheck) {
                     const DevOps *devOps = dev->devOps;
-                    ret = devOps->irqType(prop_idx, &alertState);
-                } else if (!a_status && !lmtcheck) {
+                    ret = devOps->irqType(propIdx, &alertState);
+                } else if (!aStatus && !lmtcheck) {
                     /* Clear alert */
                     alertState = ALARM_STATE_NO_ALARM_ACTIVE;
                 } else {
@@ -187,7 +187,7 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
 
     /* In case of true alert event prepared the callback data */
     if (alertevt) {
-        *acbdata = irqhelper_prepare_alertcb_data(alertState, prop_idx, &value,
+        *acbdata = irqhelper_prepare_alertcb_data(alertState, propIdx, &value,
                                                   sizeof(double));
     } else {
         log_trace("ALERTHELPER:: ** False Alert reported **.");

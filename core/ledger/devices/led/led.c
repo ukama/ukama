@@ -38,14 +38,14 @@ const DevOps ledTriColOps = { .init = bsp_led_tricol_init,
                               .confirmIrq = NULL,
                               .irqType = NULL };
 
-DevOpsMap led_dev_map[MAX_LED_SENSOR_TYPE] = { { .name = "LED-TRICOLOR",
+DevOpsMap ledDevMap[MAX_LED_SENSOR_TYPE] = { { .name = "LED-TRICOLOR",
                                                  .opsTable = &ledTriColOps } };
 
 const DevOps *get_led_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_LED_SENSOR_TYPE; iter++) {
-        if (!usys_strcasecmp(name, led_dev_map[iter].name)) {
-            opsTbl = led_dev_map[iter].opsTable;
+        if (!usys_strcasecmp(name, ledDevMap[iter].name)) {
+            opsTbl = ledDevMap[iter].opsTable;
             break;
         }
     }

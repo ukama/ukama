@@ -21,7 +21,7 @@
 PropertyMap *gPropMap[MAX_JSON_DEVICE] = { '\0' };
 
 static int read_mfg_data(char *fname, char *buff, off_t size) {
-    int read_bytes = 0;
+    int readBytes = 0;
     /* Create input file descriptor */
     int fd = usys_open(fname, O_RDONLY, 0644);
     if (fd == -1) {
@@ -29,12 +29,12 @@ static int read_mfg_data(char *fname, char *buff, off_t size) {
         return fd;
     }
     off_t off = usys_lseek(fd, 0, SEEK_SET);
-    read_bytes = usys_read(fd, buff, size);
-    return read_bytes;
+    readBytes = usys_read(fd, buff, size);
+    return readBytes;
 }
 
 static int read_mfg_data_size(char *fname) {
-    int read_bytes = 0;
+    int readBytes = 0;
     /* Create input file descriptor */
     int fd = usys_open(fname, O_RDONLY, 0644);
     if (fd == -1) {
@@ -55,7 +55,7 @@ void parser_free_prop(Property *prop, uint16_t count) {
     prop = NULL;
 }
 
-void parser_free_pMap(PropertyMap **pMap) {
+void parser_free_pmap(PropertyMap **pMap) {
     if (*pMap) {
         if ((*pMap)->prop) {
             parser_free_prop((*pMap)->prop, (*pMap)->propCount);
@@ -66,9 +66,7 @@ void parser_free_pMap(PropertyMap **pMap) {
 }
 
 DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
-    const JsonObj *jval_prop = NULL;
-    const JsonObj *jlimit_id = NULL;
-    const JsonObj *jalert_cond = NULL;
+    const JsonObj *jValProp = NULL;
     int ret = 0;
     DepProperty *dProp = usys_zmalloc(sizeof(DepProperty));
     if (dProp) {
@@ -298,7 +296,7 @@ int prop_parse_dev(const JsonObj *jDevices) {
 
 cleanup:
     if (ret) {
-        parser_free_pMap(&pMap);
+        parser_free_pmap(&pMap);
     }
     return ret;
 }
@@ -419,7 +417,7 @@ int prop_parser_init(char *ip) {
 void prop_parser_exit() {
     for (int iter = 0; iter < MAX_JSON_DEVICE; iter++) {
         if (gPropMap[iter]) {
-            parser_free_pMap(&gPropMap[iter]);
+            parser_free_pmap(&gPropMap[iter]);
         }
     }
 }
