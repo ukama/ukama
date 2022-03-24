@@ -41,9 +41,9 @@ int compare_dev(void *lip, void *sd) {
 
     /* If module if  and device name, desc, type matches
      * it means devices is same.*/
-    if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
-        !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.desc, op->obj.desc) &&
+    if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
+        !usys_strcasecmp(ip->obj.name, op->obj.name) &&
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
         (ip->obj.type == op->obj.type) &&
         !usys_strcmp(ip->fName, op->fName)) {
         ret = 1;

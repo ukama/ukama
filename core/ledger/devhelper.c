@@ -26,8 +26,8 @@
     {                                                         \
         if (IF_SYSFS_SUPPORT(dev->sysFile)) {                 \
             char sysf[MAX_PATH_LENGTH] = { '\0' };            \
-            usys_memcpy(sysf, dev->sysFile, strlen(dev->sysFile)); \
-            strcat(sysf, prop->sysFname);                     \
+            usys_memcpy(sysf, dev->sysFile, usys_strlen(dev->sysFile)); \
+            usys_strcat(sysf, prop->sysFname);                     \
             hwattr = sysf;                                    \
         } else {                                              \
             hwattr = dev->hwAttr;                            \

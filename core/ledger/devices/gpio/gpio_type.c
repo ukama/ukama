@@ -45,7 +45,7 @@ DevOpsMap gpio_dev_map[MAX_GPIO_SENSOR_TYPE] = {
 const DevOps *get_gpio_type_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
     for (uint8_t iter = 0; iter < MAX_GPIO_SENSOR_TYPE; iter++) {
-        if (!usys_strcmp(name, gpio_dev_map[iter].name)) {
+        if (!usys_strcasecmp(name, gpio_dev_map[iter].name)) {
             opsTbl = gpio_dev_map[iter].opsTable;
             break;
         }
@@ -68,9 +68,9 @@ int compare_gpio_type_dev(void *ipt, void *sd) {
     Device *op = (Device *)sd;
     int ret = 0;
     /* If module if  and device name, disc, type matches it means devices is same.*/
-    if (!usys_strcmp(ip->obj.modUuid, op->obj.modUuid) &&
-        !usys_strcmp(ip->obj.name, op->obj.name) &&
-        !usys_strcmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
+    if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
+        !usys_strcasecmp(ip->obj.name, op->obj.name) &&
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
