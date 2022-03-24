@@ -50,8 +50,8 @@
     "lint:fix": "eslint . --ext ts --ext tsx --ext js --fix",
     "pretty": "prettier --write --config .prettierrc './src/**'",
     "check-types": "tsc --project tsconfig.json --pretty --noEmit",
-    "pre-commit-lint": "eslint --rule no-console:error --fix-dry-run './src/**/*.{ts,tsx,js,jsx}'",
-    "test-all": "yarn pretty && yarn check-types && yarn lint:fix && yarn lint && yarn pre-commit-lint && yarn build"
+    "test-all": "yarn pretty && yarn check-types && yarn lint:fix && yarn lint && yarn pre-commit-lint && yarn build",
+    "pre-commit-lint": "eslint --rule no-unused-vars:error --rule no-console:error --fix-dry-run './src/**/*.{ts,tsx,js,jsx}'"
   },
   "browserslist": {
     "production": [

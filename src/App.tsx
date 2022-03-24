@@ -10,12 +10,13 @@ import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
 import { BasicDialog } from "./components";
+import { getTitleFromPath } from "./utils";
 import { useEffect, useState } from "react";
 import useWhoami from "./helpers/useWhoami";
-import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
+import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 const SNACKBAR_TIMEOUT = 5000;
@@ -49,7 +50,7 @@ const App = () => {
                 if (_isFirstVisit) {
                     _setIsFirstVisit(false);
                 }
-
+                setPage(getTitleFromPath(window.location.pathname));
                 setSkeltonLoading(false);
             }
         }

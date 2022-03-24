@@ -57,7 +57,7 @@ const CenterContainer = styled(Box)({
 });
 
 const LinkStyle = styled(Link)({
-    fontSize: "0.75rem",
+    fontSize: "14px",
     width: "fit-content",
     alignSelf: "flex-end",
     color: colors.primaryMain,

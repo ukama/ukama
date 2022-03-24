@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
-import { NodeStatsContainer, NodeStatItem, ApexStackAreaChart } from "..";
+import { NodeStatsContainer, NodeStatItem, ApexLineChart } from "..";
 interface INodeRadioTab {
     loading: boolean;
     txPowerMetrics: any;
@@ -51,17 +51,17 @@ const NodeRadioTab = ({
             <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ p: 3, width: "100%" }}>
                     <Stack spacing={4}>
-                        <ApexStackAreaChart
+                        <ApexLineChart
                             hasData={true}
                             name={"PX Power"}
                             data={txPowerMetrics}
                         />
-                        <ApexStackAreaChart
+                        <ApexLineChart
                             hasData={true}
                             name={"PA POWER"}
                             data={paPowerMetrics}
                         />
-                        <ApexStackAreaChart
+                        <ApexLineChart
                             hasData={true}
                             name={"RX POWER"}
                             data={rxPowerMetrics}

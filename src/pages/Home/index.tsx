@@ -9,8 +9,8 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
     SoftwareUpdateModal,
+    BasicDialog,
 } from "../../components";
-import { useTranslation } from "react-i18next";
 import {
     TIME_FILTER,
     MONTH_FILTER,
@@ -55,12 +55,10 @@ import {
 } from "../../utils";
 
 const Home = () => {
-    const { t } = useTranslation();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const { id: orgId = "" } = useRecoilValue(user);
-    const [showSimActivationDialog, setShowSimActivationDialog] =
-        useState<boolean>(!!orgId);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
+    const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
@@ -155,6 +153,12 @@ const Home = () => {
             }
         },
     });
+
+    useEffect(() => {
+        if (orgId && !isSkeltonLoad) {
+            setIsWelcomeDialog(true);
+        }
+    }, [orgId, isSkeltonLoad]);
 
     useGetMetricsUptimeSSubscription({
         onSubscriptionData: res => {
@@ -265,9 +269,7 @@ const Home = () => {
             unsub && unsub();
         };
     }, [dataUsageRes]);
-    const handleSimActivateClose = () => {
-        setShowSimActivationDialog(false);
-    };
+
     useEffect(() => {
         let unsub = subToDataBill();
         return () => {
@@ -480,12 +482,6 @@ const Home = () => {
                     </LoadingWrapper>
                 </Grid>
             </Grid>
-            <UserActivationDialog
-                isOpen={showSimActivationDialog}
-                dialogTitle={t("DIALOG_MESSAGE.SimActivationDialogTitle")}
-                subTitle={t("DIALOG_MESSAGE.SimActivationDialogContent")}
-                handleClose={handleSimActivateClose}
-            />
             <SoftwareUpdateModal
                 submit={onUpdateAllNodes}
                 isOpen={isSoftwaUpdate}
@@ -495,6 +491,17 @@ const Home = () => {
                 “Tryphena’s Node 2” will disrupt your network, and will
                 take approximately [insert time here]. Continue updating
                 all?`}
+            />
+            <BasicDialog
+                isClosable={false}
+                btnVariant="contained"
+                isOpen={isWelcomeDialog}
+                title={"Welcome to Ukama Console!"}
+                content={
+                    "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
+                }
+                btnLabel={"continue to console"}
+                handleClose={() => setIsWelcomeDialog(false)}
             />
             {isUserActivateOpen && (
                 <UserActivationDialog

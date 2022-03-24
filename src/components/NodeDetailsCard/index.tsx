@@ -1,8 +1,7 @@
 import { LoadingWrapper } from "..";
 import colors from "../../theme/colors";
 import DeviceModalView from "../DeviceModalView";
-import { Chip, Paper, Stack, Typography } from "@mui/material";
-import { HorizontalContainerJustify, LinkStyle } from "../../styles";
+import { Chip, Paper, Stack, Typography, Link, Grid } from "@mui/material";
 
 interface INodeDetailsCard {
     loading: boolean;
@@ -27,10 +26,12 @@ const NodeDetailsCard = ({
         >
             <Paper sx={{ p: 3, gap: 1 }}>
                 <Stack spacing={3}>
-                    <HorizontalContainerJustify>
-                        <Stack direction={"row"} spacing={2}>
+                    <Grid container>
+                        <Grid item xs={5}>
                             <Typography variant="h6">{nodeTitle}</Typography>
-                            {isUpdateAvailable && (
+                        </Grid>
+                        {isUpdateAvailable && (
+                            <Grid item xs={7}>
                                 <Chip
                                     variant="outlined"
                                     sx={{
@@ -40,6 +41,7 @@ const NodeDetailsCard = ({
                                     label={
                                         <>
                                             <Stack
+                                                spacing={"4px"}
                                                 direction="row"
                                                 alignItems="center"
                                             >
@@ -47,30 +49,26 @@ const NodeDetailsCard = ({
                                                     Software update available —
                                                     view
                                                 </Typography>
-
-                                                <LinkStyle
-                                                    underline="hover"
+                                                <Link
                                                     onClick={() =>
                                                         getNodeUpdateInfos()
                                                     }
                                                     sx={{
-                                                        fontSize: "14px",
-                                                        paddingLeft: 1,
                                                         cursor: "pointer",
-                                                        textDecoration:
-                                                            "underline",
+                                                        typography: "body2",
                                                         color: colors.primaryDark,
                                                     }}
                                                 >
                                                     notes
-                                                </LinkStyle>
+                                                </Link>
                                             </Stack>
                                         </>
                                     }
                                 />
-                            )}
-                        </Stack>
-                    </HorizontalContainerJustify>
+                            </Grid>
+                        )}
+                    </Grid>
+
                     <DeviceModalView />
                 </Stack>
             </Paper>

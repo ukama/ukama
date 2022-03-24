@@ -50,9 +50,9 @@ const OptionsPopover = ({
                 onClick={handlePopoverOpen}
                 aria-describedby={id}
                 style={style}
-                sx={{ px: 0 }}
+                sx={{ p: 0 }}
             >
-                <MenuDots />
+                <MenuDots fontSize="small" />
             </IconButton>
             <Popover
                 id={id}

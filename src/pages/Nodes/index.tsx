@@ -1403,6 +1403,7 @@ const Nodes = () => {
 
     const onUpdateNodeClick = () => {
         //TODO: Handle NODE RESTART ACTION
+        setIsNodeUpdate(true);
     };
     const onRestartNode = () => {
         //TODO: Handle NODE RESTART ACTION
@@ -1412,6 +1413,7 @@ const Nodes = () => {
     };
     const onUpdateNode = () => {
         //Todo :Handle nodeAction update
+        setIsNodeUpdate(true);
     };
     const onSwitchOffNode = () => {
         //Todo :Handle nodeAction Itemselected

@@ -7,8 +7,10 @@ import {
     DialogContentText,
     DialogTitle,
     DialogContent,
+    IconButton,
     Stack,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
@@ -61,7 +63,20 @@ const ActivationDialog = ({
 
     return (
         <Dialog open={isOpen} onClose={handleClose}>
-            <DialogTitle>{dialogTitle}</DialogTitle>
+            <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+            >
+                <DialogTitle>{dialogTitle}</DialogTitle>
+                <IconButton
+                    onClick={handleClose}
+                    sx={{ position: "relative", right: 8 }}
+                >
+                    <CloseIcon />
+                </IconButton>
+            </Stack>
+
             <DialogContent>
                 <DialogContentText>
                     <Typography variant="body1" sx={{ color: colors.black }}>

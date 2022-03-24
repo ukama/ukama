@@ -1,6 +1,5 @@
 import React from "react";
 import { LoadingWrapper } from "..";
-import { hexToRGB } from "../../utils";
 import OptionsPopover from "../OptionsPopover";
 import { BASIC_MENU_ACTIONS } from "../../constants";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
@@ -31,9 +30,9 @@ const ThermometerIcon = React.lazy(() =>
     }))
 );
 
-const Line = styled(Divider)(props => ({
+const Line = styled(Divider)(() => ({
     margin: "18px -18px 4px -18px",
-    background: hexToRGB(props.theme.palette.text.primary, 0.3),
+    background: "rgba(255, 255, 255, 0.12)",
 }));
 
 const IconStyle = {
@@ -87,40 +86,32 @@ const NodeCard = ({
                     padding: "15px 18px 8px 18px",
                 }}
             >
-                <Grid container spacing={0.8}>
+                <Grid container>
                     <Grid item xs={10}>
-                        <Grid textAlign="initial">
-                            <Typography
-                                variant="subtitle1"
-                                sx={{
-                                    height: "20px",
-                                    fontWeight: 500,
-                                    overflow: "hidden",
-                                    lineHeight: "19px",
-                                    display: "-webkit-box",
-                                    letterSpacing: "-0.02em",
-                                    textOverflow: "ellipsis",
-                                }}
-                            >
-                                {title}
-                            </Typography>
-                        </Grid>
-                        <Grid textAlign="initial">
-                            <Typography variant="caption">
-                                {subTitle}
-                            </Typography>
-                        </Grid>
+                        <Typography
+                            variant="subtitle1"
+                            sx={{
+                                height: "20px",
+                                fontWeight: 500,
+                                overflow: "hidden",
+                                lineHeight: "19px",
+                                display: "-webkit-box",
+                                letterSpacing: "-0.02em",
+                                textOverflow: "ellipsis",
+                            }}
+                        >
+                            {title}
+                        </Typography>
                     </Grid>
                     <Grid
                         item
                         xs={2}
-                        m="4px 0px"
                         display={"flex"}
-                        alignItems="flex-start"
+                        alignItems="center"
                         justifyContent={"flex-end"}
                     >
                         {isUpdateAvailable ? (
-                            <Tooltip title={updateShortNote}>
+                            <Tooltip title={updateShortNote} arrow>
                                 <IconButton
                                     sx={{ p: 0, cursor: "pointer" }}
                                     onClick={() => handleNodeUpdate(id)}
@@ -133,11 +124,7 @@ const NodeCard = ({
                             </Tooltip>
                         ) : (
                             <OptionsPopover
-                                style={{
-                                    cursor: "pointer",
-                                    position: "relative",
-                                    bottom: "13px",
-                                }}
+                                style={{ cursor: "pointer" }}
                                 cid={"node-card-options"}
                                 menuOptions={BASIC_MENU_ACTIONS}
                                 handleItemClick={(type: string) =>
@@ -146,7 +133,11 @@ const NodeCard = ({
                             />
                         )}
                     </Grid>
-                    <Grid item xs={12} sx={{ ...IconStyle }}>
+                    <Grid item xs={12} textAlign="initial">
+                        <Typography variant="caption">{subTitle}</Typography>
+                    </Grid>
+
+                    <Grid item xs={12} sx={{ ...IconStyle, py: 1 }}>
                         <img
                             src="https://ovalloqu.sirv.com/Images/node.png"
                             width="86"
@@ -154,7 +145,7 @@ const NodeCard = ({
                             alt="node-img"
                         />
                     </Grid>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} mb={0.8}>
                         <Line />
                     </Grid>
                     <Grid
