@@ -14,8 +14,6 @@
 #include "usys_string.h"
 #include "usys_types.h"
 
-
-
 uint16_t get_sizeof(DataType type) {
     uint16_t size = 0;
     switch (type) {

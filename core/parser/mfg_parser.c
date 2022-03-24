@@ -50,7 +50,6 @@ static int read_mfg_data_size(char *fname) {
 
 void parser_free_unit_cfg(UnitCfg **cfg, uint8_t count) {
     if (*cfg) {
-
         /* Device Cfgs */
         for (int iter = 0; iter < count; iter++) {
             usys_free((*cfg)->eepromCfg);
@@ -87,15 +86,12 @@ void parser_free_mfg_data(StoreSchema **sschema) {
     }
 }
 
-
-
 /* Parse schema header */
 SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
     const JsonObj *jVersion = NULL;
 
     SchemaHeader *pHeader = usys_zmalloc(sizeof(SchemaHeader));
     if (pHeader) {
-
         jVersion = json_object_get(jHeader, JTAG_VERSION);
 
         /* Version info for schema */
@@ -112,16 +108,16 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
         /* Index table offset */
         uint16_t idxTblOffset = 0;
         if (!parser_read_uint16_object(jHeader, JTAG_IDX_TABLE_OFFSET,
-                        &idxTblOffset)) {
+                                       &idxTblOffset)) {
             goto cleanup;
         } else {
-            pHeader->idxTblOffset =  idxTblOffset;
+            pHeader->idxTblOffset = idxTblOffset;
         }
 
         /* Index tuple size  */
         uint16_t idxTplSize = 0;
         if (!parser_read_uint16_object(jHeader, JTAG_IDX_TUPLE_SIZE,
-                        &idxTplSize)) {
+                                       &idxTplSize)) {
             goto cleanup;
         } else {
             pHeader->idxTplSize = idxTplSize;
@@ -130,7 +126,7 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
         /* Index Tuple Max Count */
         uint16_t idxTplMaxCount = 0;
         if (!parser_read_uint16_object(jHeader, JTAG_IDX_TUPLE_MAX_COUNT,
-                        &idxTplMaxCount)) {
+                                       &idxTplMaxCount)) {
             goto cleanup;
         } else {
             pHeader->idxTplMaxCount = idxTplMaxCount;
@@ -139,16 +135,16 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
         /* Index Current Tuple */
         uint16_t idxCurTpl = 0;
         if (!parser_read_uint16_object(jHeader, JTAG_IDX_CURR_TUPLE,
-                        &idxCurTpl)) {
+                                       &idxCurTpl)) {
             goto cleanup;
         } else {
             pHeader->idxCurTpl = idxCurTpl;
         }
 
         /* Module Capability */
-        char* modCap;
+        char *modCap;
         if (!parser_read_string_object(jHeader, JTAG_MODULE_CAPABILITY,
-                        &modCap)) {
+                                       &modCap)) {
             goto cleanup;
         } else {
             if (!usys_strcmp(modCap, "AUTONOMOUS")) {
@@ -160,9 +156,8 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
         }
 
         /* Module Mode */
-        char* modMode;
-        if (!parser_read_string_object(jHeader, JTAG_MODULE_MODE,
-                        &modMode)) {
+        char *modMode;
+        if (!parser_read_string_object(jHeader, JTAG_MODULE_MODE, &modMode)) {
             goto cleanup;
         } else {
             if (!usys_strcmp(modMode, JTAG_MODULE_MODE_MASTER)) {
@@ -173,11 +168,10 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
             usys_free(modMode);
         }
 
-
         /* Module Device Owner */
-        char* modDevOwn;
+        char *modDevOwn;
         if (!parser_read_string_object(jHeader, JTAG_MODULE_DEV_OWNER,
-                        &modDevOwn)) {
+                                       &modDevOwn)) {
             goto cleanup;
         } else {
             if (!usys_strcmp(modDevOwn, JTAG_DEV_OWNER)) {
@@ -187,11 +181,10 @@ SchemaHeader *parse_schema_header(const JsonObj *jHeader) {
             }
             usys_free(modDevOwn);
         }
-
     }
     return pHeader;
 
-    cleanup:
+cleanup:
     usys_free(pHeader);
     pHeader = NULL;
     return pHeader;
@@ -210,11 +203,10 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
     SchemaIdxTuple *pIndexTable = usys_zmalloc(sizeof(SchemaIdxTuple) * count);
     if (pIndexTable) {
         json_array_foreach(jIdxTab, iter, jIndexTpl) {
-
             /* Field Id */
             uint16_t fieldId = 0;
             if (!parser_read_uint16_object(jIndexTpl, JTAG_FIELD_ID,
-                            &fieldId)) {
+                                           &fieldId)) {
                 goto cleanup;
             } else {
                 pIndexTable[iter].fieldId = fieldId;
@@ -223,7 +215,7 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
             /* Payload offset */
             uint16_t payloadOffset = 0;
             if (!parser_read_uint16_object(jIndexTpl, JTAG_PAYLOAD_OFFSET,
-                            &payloadOffset)) {
+                                           &payloadOffset)) {
                 goto cleanup;
             } else {
                 pIndexTable[iter].payloadOffset = payloadOffset;
@@ -232,7 +224,7 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
             /* Payload size */
             uint16_t payloadSize = 0;
             if (!parser_read_uint16_object(jIndexTpl, JTAG_PAYLOAD_SIZE,
-                            &payloadSize)) {
+                                           &payloadSize)) {
                 goto cleanup;
             } else {
                 pIndexTable[iter].payloadSize = payloadSize;
@@ -242,7 +234,8 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
             jPayloadVersion = json_object_get(jIndexTpl, JTAG_PAYLOAD_VERSION);
             Version *sVersion = parse_version(jPayloadVersion);
             if (sVersion) {
-                usys_memcpy(&(pIndexTable[iter].payloadVer), sVersion, sizeof(Version));
+                usys_memcpy(&(pIndexTable[iter].payloadVer), sVersion,
+                            sizeof(Version));
                 usys_free(sVersion);
             } else {
                 usys_log_error("Failed to parse Payload[%d].Version.", iter);
@@ -252,16 +245,16 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
             /* Payload CRC */
             uint32_t payloadCrc = 0;
             if (!parser_read_uint32_object(jIndexTpl, JTAG_PAYLOAD_CRC,
-                            &payloadCrc)) {
+                                           &payloadCrc)) {
                 goto cleanup;
             } else {
                 pIndexTable[iter].payloadCrc = payloadCrc;
             }
 
             /* State */
-            char* payloadState;
+            char *payloadState;
             if (!parser_read_string_object(jIndexTpl, JTAG_STATE,
-                            &payloadState)) {
+                                           &payloadState)) {
                 goto cleanup;
             } else {
                 if (!usys_strcmp(payloadState, JTAG_STATE_ENABLED)) {
@@ -274,33 +267,29 @@ SchemaIdxTuple *parse_schema_idx_table(const JsonObj *jIdxTab, uint8_t count) {
 
             /* Valid */
             if (!parser_read_boolean_object(jIndexTpl, JTAG_VALID,
-                            &pIndexTable[iter].valid)) {
+                                            &pIndexTable[iter].valid)) {
                 goto cleanup;
             }
-
         }
 
         /* Verify if all tuples are parsed */
         if (iter == count) {
-            usys_log_debug(
-                            "All %d Index tuples read from the manufacturing "
-                            "data.",
-                            count);
+            usys_log_debug("All %d Index tuples read from the manufacturing "
+                           "data.",
+                           count);
         } else {
-            usys_log_error(
-                            "Error: Only %d Index tuples read from the "
-                            "manufacturing data expected were %d.",
-                            (count - iter), count);
+            usys_log_error("Error: Only %d Index tuples read from the "
+                           "manufacturing data expected were %d.",
+                           (count - iter), count);
         }
 
     } else {
-        usys_log_error("Memory exhausted. Error: %s",
-                        usys_error(errno));
+        usys_log_error("Memory exhausted. Error: %s", usys_error(errno));
     }
 
     return pIndexTable;
 
-    cleanup:
+cleanup:
     usys_free(pIndexTable);
     pIndexTable = NULL;
     return pIndexTable;
@@ -312,15 +301,14 @@ DevGpioCfg *parse_schema_dev_gpio(const JsonObj *jDevSchema) {
 
     DevGpioCfg *pDevCfg = usys_zmalloc(sizeof(DevGpioCfg));
     if (pDevCfg) {
-
         /* Direction */
         char *direct;
         if (!parser_read_string_object(jDevSchema, JTAG_GPIO_DIRECTION,
-                        &direct)) {
+                                       &direct)) {
             goto cleanup;
         } else {
             if (!usys_strcmp(direct, JTAG_GPIO_DIRECTION)) {
-                pDevCfg->direction= DEV_GPIO_INPUT;
+                pDevCfg->direction = DEV_GPIO_INPUT;
             } else {
                 pDevCfg->direction = DEV_GPIO_OUTPUT;
             }
@@ -330,7 +318,7 @@ DevGpioCfg *parse_schema_dev_gpio(const JsonObj *jDevSchema) {
         /* Number */
         int gpioNum = 0;
         if (!parser_read_integer_object(jDevSchema, JTAG_GPIO_NUMBER,
-                        &gpioNum)) {
+                                        &gpioNum)) {
             goto cleanup;
         } else {
             pDevCfg->gpioNum = gpioNum;
@@ -338,13 +326,13 @@ DevGpioCfg *parse_schema_dev_gpio(const JsonObj *jDevSchema) {
 
     } else {
         usys_log_error("Memory exhausted while parsing DevGpioCfg. Error: %s",
-                        usys_error(errno));
+                       usys_error(errno));
         goto cleanup;
     }
 
     return pDevCfg;
 
-    cleanup:
+cleanup:
     usys_free(pDevCfg);
     pDevCfg = NULL;
     return pDevCfg;
@@ -359,11 +347,9 @@ DevI2cCfg *parse_schema_dev_i2c(const JsonObj *jDevSchema) {
     DevI2cCfg *pDevCfg = NULL;
     pDevCfg = usys_zmalloc(sizeof(DevI2cCfg));
     if (pDevCfg) {
-
         /* Bus */
         uint8_t bus = 0;
-        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS,
-                        &bus)) {
+        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS, &bus)) {
             goto cleanup;
         } else {
             pDevCfg->bus = bus;
@@ -371,8 +357,7 @@ DevI2cCfg *parse_schema_dev_i2c(const JsonObj *jDevSchema) {
 
         /* Address */
         uint16_t add = 0;
-        if (!parser_read_uint16_object(jDevSchema, JTAG_ADDRESS,
-                        &add)) {
+        if (!parser_read_uint16_object(jDevSchema, JTAG_ADDRESS, &add)) {
             goto cleanup;
         } else {
             pDevCfg->add = add;
@@ -380,12 +365,12 @@ DevI2cCfg *parse_schema_dev_i2c(const JsonObj *jDevSchema) {
 
     } else {
         usys_log_error("Memory exhausted while parsing DevI2cCfg.Error: %s",
-                        usys_error(errno));
+                       usys_error(errno));
         goto cleanup;
     }
     return pDevCfg;
 
-    cleanup:
+cleanup:
     usys_free(pDevCfg);
     pDevCfg = NULL;
     return pDevCfg;
@@ -398,11 +383,9 @@ DevSpiCfg *parse_schema_dev_spi(const JsonObj *jDevSchema) {
 
     DevSpiCfg *pDevCfg = usys_zmalloc(sizeof(DevSpiCfg));
     if (pDevCfg) {
-
         /* Chip select */
         jCS = json_object_get(jDevSchema, JTAG_CHIP_SELECT);
         if (json_is_object(jCS)) {
-
             DevGpioCfg *pCS = parse_schema_dev_gpio(jCS);
             if (pCS) {
                 usys_memcpy(&pDevCfg->cs, pCS, sizeof(DevGpioCfg));
@@ -412,14 +395,14 @@ DevSpiCfg *parse_schema_dev_spi(const JsonObj *jDevSchema) {
             }
 
         } else {
-            usys_log_error("Failed to parse DevSpiCfg.cs.Error: Unexpected json tag");
+            usys_log_error(
+                "Failed to parse DevSpiCfg.cs.Error: Unexpected json tag");
             goto cleanup;
         }
 
         /* Bus */
         uint8_t bus = 0;
-        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS,
-                        &bus)) {
+        if (!parser_read_uint8_object(jDevSchema, JTAG_BUS, &bus)) {
             goto cleanup;
         } else {
             pDevCfg->bus = bus;
@@ -427,12 +410,12 @@ DevSpiCfg *parse_schema_dev_spi(const JsonObj *jDevSchema) {
 
     } else {
         usys_log_error("Memory exhausted while parsing DevSpiCfg.Error: %s",
-                        usys_error(errno));
+                       usys_error(errno));
         goto cleanup;
     }
     return pDevCfg;
 
-    cleanup:
+cleanup:
     usys_free(pDevCfg);
     pDevCfg = NULL;
     return pDevCfg;
@@ -444,11 +427,9 @@ DevUartCfg *parse_schema_dev_uart(const JsonObj *jDevSchema) {
 
     DevUartCfg *pDevCfg = usys_zmalloc(sizeof(DevUartCfg));
     if (pDevCfg) {
-
         /* UART Number */
         uint16_t uartNo = 0;
-        if (!parser_read_uint16_object(jDevSchema, JTAG_UART,
-                        &uartNo)) {
+        if (!parser_read_uint16_object(jDevSchema, JTAG_UART, &uartNo)) {
             goto cleanup;
         } else {
             pDevCfg->uartNo = uartNo;
@@ -456,36 +437,35 @@ DevUartCfg *parse_schema_dev_uart(const JsonObj *jDevSchema) {
 
     } else {
         usys_log_error("Memory exhausted while parsing DevUartCfg.Error %s",
-                        usys_error(errno));
+                       usys_error(errno));
         goto cleanup;
     }
     return pDevCfg;
 
-    cleanup:
+cleanup:
     usys_free(pDevCfg);
     return pDevCfg;
 }
-
 
 /* Parse device config */
 void *parse_schema_devices(const JsonObj *jSchema, uint16_t class) {
     void *dev = NULL;
     switch (class) {
-        case DEV_CLASS_GPIO:
-            dev = parse_schema_dev_gpio(jSchema);
-            break;
-        case DEV_CLASS_I2C:
-            dev = parse_schema_dev_i2c(jSchema);
-            break;
-        case DEV_CLASS_SPI:
-            dev = parse_schema_dev_spi(jSchema);
-            break;
-        case DEV_CLASS_UART:
-            dev = parse_schema_dev_uart(jSchema);
-            break;
-        default:
-            usys_log_error("Unkown device type failed to parse. Error %s",
-                            ERR_NODED_INVALID_DEVICE_CFG);
+    case DEV_CLASS_GPIO:
+        dev = parse_schema_dev_gpio(jSchema);
+        break;
+    case DEV_CLASS_I2C:
+        dev = parse_schema_dev_i2c(jSchema);
+        break;
+    case DEV_CLASS_SPI:
+        dev = parse_schema_dev_spi(jSchema);
+        break;
+    case DEV_CLASS_UART:
+        dev = parse_schema_dev_uart(jSchema);
+        break;
+    default:
+        usys_log_error("Unkown device type failed to parse. Error %s",
+                       ERR_NODED_INVALID_DEVICE_CFG);
     }
     return dev;
 }
@@ -501,105 +481,102 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
     /* Unit Info */
     jUnitInfo = json_object_get(jSchema, JTAG_UNIT_INFO);
     if (json_is_object(jUnitInfo)) {
-
         pUnitInfo = usys_zmalloc(sizeof(UnitInfo));
         if (pUnitInfo) {
             /* UUID */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
-                            pUnitInfo->uuid)) {
+                                                   pUnitInfo->uuid)) {
                 goto cleanup;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_NAME,
-                            pUnitInfo->name)) {
+                                                   pUnitInfo->name)) {
                 goto cleanup;
             }
 
-             /* Type */
-             int uType = 0;
-             if (!parser_read_integer_object(jUnitInfo, JTAG_TYPE,
-                             &uType)) {
-                 goto cleanup;
-             } else {
-                 pUnitInfo->unit = (UnitType)uType;
-             }
+            /* Type */
+            int uType = 0;
+            if (!parser_read_integer_object(jUnitInfo, JTAG_TYPE, &uType)) {
+                goto cleanup;
+            } else {
+                pUnitInfo->unit = (UnitType)uType;
+            }
 
-             /* Part Number */
-             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_PART_NUMBER,
-                             pUnitInfo->partNo)) {
-                 goto cleanup;
-             }
+            /* Part Number */
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_PART_NUMBER,
+                                                   pUnitInfo->partNo)) {
+                goto cleanup;
+            }
 
-             /* Skew */
-             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_SKEW,
-                             pUnitInfo->skew)) {
-                 goto cleanup;
-             }
+            /* Skew */
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_SKEW,
+                                                   pUnitInfo->skew)) {
+                goto cleanup;
+            }
 
-             /* MAC */
-             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_MAC,
-                             pUnitInfo->mac)) {
-                 goto cleanup;
-             }
+            /* MAC */
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_MAC,
+                                                   pUnitInfo->mac)) {
+                goto cleanup;
+            }
 
-             /* SW Version */
-             jSWVer = json_object_get(jUnitInfo, JTAG_SW_VERISION);
-             Version *sVersion = parse_version(jSWVer);
-             if (sVersion) {
-                 usys_memcpy(&pUnitInfo->swVer, sVersion, sizeof(Version));
-                 usys_free(sVersion);
-             } else {
-                 usys_log_error("Failed to parse UnitInfo.swVersion.");
-                 goto cleanup;
-             }
+            /* SW Version */
+            jSWVer = json_object_get(jUnitInfo, JTAG_SW_VERISION);
+            Version *sVersion = parse_version(jSWVer);
+            if (sVersion) {
+                usys_memcpy(&pUnitInfo->swVer, sVersion, sizeof(Version));
+                usys_free(sVersion);
+            } else {
+                usys_log_error("Failed to parse UnitInfo.swVersion.");
+                goto cleanup;
+            }
 
-             /* Production SW Version */
-             jProdSWVer = json_object_get(jUnitInfo, JTAG_PROD_SW_VERSION);
-             Version *pVersion = parse_version(jProdSWVer);
-             if (pVersion) {
-                 usys_memcpy(&pUnitInfo->swVer, pVersion, sizeof(Version));
-                 usys_free(pVersion);
-             } else {
-                 usys_log_error("Failed to parse UnitInfo.prodSwVersion.");
-                 goto cleanup;
-             }
+            /* Production SW Version */
+            jProdSWVer = json_object_get(jUnitInfo, JTAG_PROD_SW_VERSION);
+            Version *pVersion = parse_version(jProdSWVer);
+            if (pVersion) {
+                usys_memcpy(&pUnitInfo->swVer, pVersion, sizeof(Version));
+                usys_free(pVersion);
+            } else {
+                usys_log_error("Failed to parse UnitInfo.prodSwVersion.");
+                goto cleanup;
+            }
 
-             /* Assembly Date */
-             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_ASM_DATE,
-                             pUnitInfo->assmDate)) {
-                 goto cleanup;
-             }
+            /* Assembly Date */
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_ASM_DATE,
+                                                   pUnitInfo->assmDate)) {
+                goto cleanup;
+            }
 
-             /* OEM Name */
-             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_OEM_NAME,
-                             pUnitInfo->oemName)) {
-                 goto cleanup;
-             }
+            /* OEM Name */
+            if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_OEM_NAME,
+                                                   pUnitInfo->oemName)) {
+                goto cleanup;
+            }
 
-             /* Module Count */
-             uint8_t modCount = 0;
-             if (!parser_read_uint8_object(jUnitInfo, JTAG_MODULE_COUNT,
-                             &modCount)) {
-                 goto cleanup;
-             } else {
-                 pUnitInfo->modCount = modCount;
-             }
+            /* Module Count */
+            uint8_t modCount = 0;
+            if (!parser_read_uint8_object(jUnitInfo, JTAG_MODULE_COUNT,
+                                          &modCount)) {
+                goto cleanup;
+            } else {
+                pUnitInfo->modCount = modCount;
+            }
         } else {
             usys_log_error(
-                            "Memory exhausted while parsing Unit Info. Error: %s",
-                            usys_error(errno));
+                "Memory exhausted while parsing Unit Info. Error: %s",
+                usys_error(errno));
             goto cleanup;
         }
     } else {
-        usys_log_error(
-                        "Unexpected JSON object found instead of Unit Info.");
+        usys_log_error("Unexpected JSON object found instead of Unit Info.");
 
         goto cleanup;
     }
     return pUnitInfo;
 
-    cleanup:
+cleanup:
     usys_free(pUnitInfo);
     pUnitInfo = NULL;
     return pUnitInfo;
@@ -619,26 +596,24 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
 
     jUnitCfgs = json_object_get(jSchema, JTAG_UNIT_CONFIG);
     if (json_is_array(jUnitCfgs)) {
-
         pUnitCfg = usys_zmalloc(sizeof(UnitCfg) * count);
         if (pUnitCfg) {
-
             json_array_foreach(jUnitCfgs, iter, jUnitCfg) {
                 /* UUID */
-                if (!parser_read_string_object_wrapper(jUnitCfg, JTAG_UUID,
-                                pUnitCfg[iter].modUuid)) {
+                if (!parser_read_string_object_wrapper(
+                        jUnitCfg, JTAG_UUID, pUnitCfg[iter].modUuid)) {
                     goto cleanup;
                 }
 
                 /* Name */
-                if (!parser_read_string_object_wrapper(jUnitCfg, JTAG_NAME,
-                                pUnitCfg[iter].modName)) {
+                if (!parser_read_string_object_wrapper(
+                        jUnitCfg, JTAG_NAME, pUnitCfg[iter].modName)) {
                     goto cleanup;
                 }
 
                 /* SysFs */
-                if (!parser_read_string_object_wrapper(jUnitCfg,
-                                JTAG_INVT_SYSFS_FILE, pUnitCfg[iter].sysFs)) {
+                if (!parser_read_string_object_wrapper(
+                        jUnitCfg, JTAG_INVT_SYSFS_FILE, pUnitCfg[iter].sysFs)) {
                     goto cleanup;
                 }
 
@@ -648,37 +623,32 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
                 if (pDev) {
                     pUnitCfg[iter].eepromCfg = pDev;
                 } else {
-                    usys_log_error(
-                                    "Failed to parse UnitCfg[%d].eepromCfg",
-                                    iter);
+                    usys_log_error("Failed to parse UnitCfg[%d].eepromCfg",
+                                   iter);
                     goto cleanup;
                 }
-
             }
 
             /* Verify count of device read */
             if (iter == count) {
-                usys_log_debug(
-                                "All %d modules info read from the"
-                                "manufacturing data's unit config.",
-                                count);
+                usys_log_debug("All %d modules info read from the"
+                               "manufacturing data's unit config.",
+                               count);
             } else {
-                usys_log_error(
-                                "Only %d modules info read from the "
-                                "manufacturing data's unit config expected "
-                                "were %d.",
-                                iter, count);
+                usys_log_error("Only %d modules info read from the "
+                               "manufacturing data's unit config expected "
+                               "were %d.",
+                               iter, count);
             }
         }
     } else {
-        usys_log_error(
-                        "Unexpected JSON object found instead"
-                        "of Unit Config.");
+        usys_log_error("Unexpected JSON object found instead"
+                       "of Unit Config.");
         goto cleanup;
     }
     return pUnitCfg;
 
-    cleanup:
+cleanup:
     parser_free_unit_cfg(&pUnitCfg, count);
     return pUnitCfg;
 }
@@ -694,46 +664,43 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
     /* Module Info */
     jModuleInfo = json_object_get(jSchema, JTAG_MODULE_INFO);
     if (json_is_object(jModuleInfo)) {
-
         pModuleInfo = usys_zmalloc(sizeof(ModuleInfo));
         if (pModuleInfo) {
-
             /* UUID */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_UUID,
-                            pModuleInfo->uuid)) {
+                                                   pModuleInfo->uuid)) {
                 goto cleanup;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_NAME,
-                            pModuleInfo->name)) {
+                                                   pModuleInfo->name)) {
                 goto cleanup;
             }
 
             /* Type */
             int modType = 0;
-            if (!parser_read_integer_object(jModuleInfo, JTAG_TYPE,
-                            &modType)) {
+            if (!parser_read_integer_object(jModuleInfo, JTAG_TYPE, &modType)) {
                 goto cleanup;
             } else {
-                pModuleInfo->module = (ModuleType) modType;
+                pModuleInfo->module = (ModuleType)modType;
             }
 
             /* Part Number */
-            if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_PART_NUMBER,
-                            pModuleInfo->partNo)) {
+            if (!parser_read_string_object_wrapper(
+                    jModuleInfo, JTAG_PART_NUMBER, pModuleInfo->partNo)) {
                 goto cleanup;
             }
 
             /* HW Version */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_HW_VERSION,
-                            pModuleInfo->hwVer)) {
+                                                   pModuleInfo->hwVer)) {
                 goto cleanup;
             }
 
             /* MAC */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MAC,
-                            pModuleInfo->mac)) {
+                                                   pModuleInfo->mac)) {
                 goto cleanup;
             }
 
@@ -761,42 +728,40 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
 
             /* Manufacturing Date  */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MFG_DATE,
-                            pModuleInfo->mfgDate)) {
+                                                   pModuleInfo->mfgDate)) {
                 goto cleanup;
             }
 
             /* Manufacturer Name */
             if (!parser_read_string_object_wrapper(jModuleInfo, JTAG_MFG_NAME,
-                            pModuleInfo->mfgName)) {
+                                                   pModuleInfo->mfgName)) {
                 goto cleanup;
             }
 
             /* Device Count */
             uint8_t devCount = 0;
             if (!parser_read_uint8_object(jModuleInfo, JTAG_DEVICE_COUNT,
-                            &devCount)) {
+                                          &devCount)) {
                 goto cleanup;
             } else {
                 pModuleInfo->devCount = devCount;
             }
 
         } else {
-            usys_log_error(
-                            "Memory exhausted while parsing Module Info. "
-                            "Error %s",
-                            usys_error(errno));
+            usys_log_error("Memory exhausted while parsing Module Info. "
+                           "Error %s",
+                           usys_error(errno));
             goto cleanup;
         }
 
     } else {
-        usys_log_error(
-                        "Unexpected JSON object found instead"
-                        " of Module Info.");
+        usys_log_error("Unexpected JSON object found instead"
+                       " of Module Info.");
         goto cleanup;
     }
     return pModuleInfo;
 
-    cleanup:
+cleanup:
     usys_free(pModuleInfo);
     pModuleInfo = NULL;
     return pModuleInfo;
@@ -817,37 +782,34 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
     jModCfgs = json_object_get(jSchema, JTAG_MODULE_CONFIG);
     if (!json_is_array(jModCfgs)) {
         usys_log_error(
-                        "Unexpected JSON object found instead of Module Config.");
+            "Unexpected JSON object found instead of Module Config.");
         goto cleanup;
     }
 
     pModCfg = usys_zmalloc(sizeof(ModuleCfg) * count);
     if (pModCfg) {
-
         json_array_foreach(jModCfgs, iter, jModCfg) {
-
             /* Name */
             if (!parser_read_string_object_wrapper(jModCfg, JTAG_NAME,
-                            pModCfg[iter].devName)) {
+                                                   pModCfg[iter].devName)) {
                 goto cleanup;
             }
 
             /* Description */
             if (!parser_read_string_object_wrapper(jModCfg, JTAG_DESCRIPTION,
-                            pModCfg[iter].devDesc)) {
+                                                   pModCfg[iter].devDesc)) {
                 goto cleanup;
             }
 
             /* SysFs */
-            if (!parser_read_string_object_wrapper(jModCfg,
-                            JTAG_DEV_SYSFS_FILE, pModCfg[iter].sysFile)) {
+            if (!parser_read_string_object_wrapper(jModCfg, JTAG_DEV_SYSFS_FILE,
+                                                   pModCfg[iter].sysFile)) {
                 goto cleanup;
             }
 
             /* Device Class */
             uint16_t devClass = 0;
-            if (!parser_read_uint16_object(jModCfg, JTAG_CLASS,
-                            &devClass)) {
+            if (!parser_read_uint16_object(jModCfg, JTAG_CLASS, &devClass)) {
                 goto cleanup;
             } else {
                 pModCfg[iter].devClass = devClass;
@@ -855,8 +817,7 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
 
             /* Device Type */
             uint16_t devType = 0;
-            if (!parser_read_uint16_object(jModCfg, JTAG_TYPE,
-                            &devType)) {
+            if (!parser_read_uint16_object(jModCfg, JTAG_TYPE, &devType)) {
                 goto cleanup;
             } else {
                 pModCfg[iter].devType = devType;
@@ -865,41 +826,37 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
             /* Device HW attributes */
             jDevice = json_object_get(jModCfg, JTAG_DEV_HW_ATTRS);
             if (jDevice) {
-                DevI2cCfg *pDev = parse_schema_devices(jDevice,
-                                pModCfg[iter].devClass);
+                DevI2cCfg *pDev =
+                    parse_schema_devices(jDevice, pModCfg[iter].devClass);
                 if (pDev) {
                     pModCfg[iter].cfg = pDev;
                 } else {
-                    usys_log_error(
-                                    "Failed to parse UnitCfg[%d].cfg",
-                                    iter);
+                    usys_log_error("Failed to parse UnitCfg[%d].cfg", iter);
                     goto cleanup;
                 }
             }
-
         }
 
         /* Verify count of devices parsed */
         if (iter == count) {
             usys_log_debug(
-                            "PARSER:: All %d device info read from the manufacturing data's Module config.",
-                            count);
+                "PARSER:: All %d device info read from the manufacturing data's Module config.",
+                count);
         } else {
             usys_log_error(
-                            "PARSER::Only %d device info read from the manufacturing data's Module config expected were %d.",
-                            iter, count);
+                "PARSER::Only %d device info read from the manufacturing data's Module config expected were %d.",
+                iter, count);
         }
 
     } else {
-        usys_log_error(
-                        "Memory exhausted while parsing Module Config. "
-                        "Error %s",
-                        usys_error(errno));
+        usys_log_error("Memory exhausted while parsing Module Config. "
+                       "Error %s",
+                       usys_error(errno));
         goto cleanup;
     }
     return pModCfg;
 
-    cleanup:
+cleanup:
     usys_free(pModCfg);
     pModCfg = NULL;
     return pModCfg;
@@ -907,7 +864,7 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
 
 /* parse generic file data */
 void *parse_schema_generic_file_data(const JsonObj *jSchema, uint16_t *size,
-                char *name_key) {
+                                     char *name_key) {
     const JsonObj *jGenData = NULL;
     char *genFileName = NULL;
     char *genData = NULL;
@@ -915,75 +872,66 @@ void *parse_schema_generic_file_data(const JsonObj *jSchema, uint16_t *size,
 
     genFileName = usys_zmalloc(sizeof(char) * PATH_LENGTH);
     if (genFileName) {
-
         /* Read file name */
-        if (!parser_read_string_object_wrapper(jSchema,
-                        name_key, genFileName)) {
+        if (!parser_read_string_object_wrapper(jSchema, name_key,
+                                               genFileName)) {
             goto cleanup;
         }
 
         /* Read data size*/
         int rsize = read_mfg_data_size(genFileName);
         if (rsize <= 0) {
-            usys_log_error("Failed to read data.",
-                            genFileName);
+            usys_log_error("Failed to read data.", genFileName);
             goto cleanup;
         }
 
         /* Read data */
         genData = usys_zmalloc(sizeof(char) * rsize);
         if (genData) {
-
             ret = read_mfg_data(genFileName, genData, rsize);
             if (ret == rsize) {
-                usys_log_debug("File %s read data of %d bytes.",
-                                genFileName, rsize);
+                usys_log_debug("File %s read data of %d bytes.", genFileName,
+                               rsize);
             } else {
-                usys_log_error(
-                                "File %s read data of %d bytes "
-                                "expected %d bytes.",
-                                genFileName, ret, rsize);
+                usys_log_error("File %s read data of %d bytes "
+                               "expected %d bytes.",
+                               genFileName, ret, rsize);
             }
 
             *size = ret;
 
         } else {
-
-            usys_log_error(
-                            "Memory exhausted while reading data from file %s.",
-                            "Error: %s", genFileName, usys_error(errno));
+            usys_log_error("Memory exhausted while reading data from file %s.",
+                           "Error: %s", genFileName, usys_error(errno));
             goto cleanup;
-
         }
 
     } else {
-        usys_log_error(
-                        "Memory exhausted while reading data file name.",
-                        "Error: %s", usys_error(errno));
+        usys_log_error("Memory exhausted while reading data file name.",
+                       "Error: %s", usys_error(errno));
         goto cleanup;
     }
 
-    cleanup:
+cleanup:
     usys_free(genFileName);
     return genData;
 }
 
 void *parse_schema_generic_file_data_wrapper(const JsonObj *jSchema, int iter,
-                int* payloadSize, char *name_key, bool* status) {
+                                             int *payloadSize, char *name_key,
+                                             bool *status) {
     *status = USYS_FALSE;
     uint16_t size = 0;
     char *factCfg =
-                    parse_schema_generic_file_data(jSchema, &size,
-                                    JTAG_FACTORY_CONFIG);
+        parse_schema_generic_file_data(jSchema, &size, JTAG_FACTORY_CONFIG);
     if (factCfg) {
         if (size != *payloadSize) {
             usys_log_warn(
-                            "Size read for Field id 0x%x is %d bytes "
-                            "and size mentioned in index table [%d] is 0x%d bytes.",
-                            iter, size, *payloadSize, size);
-            usys_log_debug(
-                            "Updating index table [%d] size to %d bytes.",
-                            iter, size);
+                "Size read for Field id 0x%x is %d bytes "
+                "and size mentioned in index table [%d] is 0x%d bytes.",
+                iter, size, *payloadSize, size);
+            usys_log_debug("Updating index table [%d] size to %d bytes.", iter,
+                           size);
             *payloadSize = size;
         }
         *status = USYS_TRUE;
@@ -993,168 +941,142 @@ void *parse_schema_generic_file_data_wrapper(const JsonObj *jSchema, int iter,
 
 /* Parse payloads */
 int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
-                uint16_t id,
-                int iter) {
+                         uint16_t id, int iter) {
     int ret = 0;
     bool status = USYS_FALSE;
     switch (id) {
-        case FIELD_ID_UNIT_INFO: {
-            UnitInfo *pUnitInfo = parse_schema_unit_info(jSchema);
-            if (pUnitInfo) {
-                usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(UnitInfo));
-                usys_free(pUnitInfo);
-                pUnitInfo = NULL;
-            } else {
-                ret = -1;
-                goto cleanup;
-            }
-            break;
+    case FIELD_ID_UNIT_INFO: {
+        UnitInfo *pUnitInfo = parse_schema_unit_info(jSchema);
+        if (pUnitInfo) {
+            usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(UnitInfo));
+            usys_free(pUnitInfo);
+            pUnitInfo = NULL;
+        } else {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_UNIT_CFG: {
-            uint16_t modCount = (*schema)->unitInfo.modCount;
-            UnitCfg *pUnitCfg = parse_schema_unit_config(jSchema, modCount);
-            if (pUnitCfg) {
-                (*schema)->unitCfg = pUnitCfg;
-            } else {
-                ret = -1;
-                goto cleanup;
-            }
-            break;
+        break;
+    }
+    case FIELD_ID_UNIT_CFG: {
+        uint16_t modCount = (*schema)->unitInfo.modCount;
+        UnitCfg *pUnitCfg = parse_schema_unit_config(jSchema, modCount);
+        if (pUnitCfg) {
+            (*schema)->unitCfg = pUnitCfg;
+        } else {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_MODULE_INFO: {
-            ModuleInfo *pModuleInfo = parse_schema_module_info(jSchema);
-            if (pModuleInfo) {
-                usys_memcpy(&(*schema)->modInfo, pModuleInfo,
-                                sizeof(ModuleInfo));
-                usys_free(pModuleInfo);
-                pModuleInfo = NULL;
-            } else {
-                ret = -1;
-                goto cleanup;
-            }
-            break;
+        break;
+    }
+    case FIELD_ID_MODULE_INFO: {
+        ModuleInfo *pModuleInfo = parse_schema_module_info(jSchema);
+        if (pModuleInfo) {
+            usys_memcpy(&(*schema)->modInfo, pModuleInfo, sizeof(ModuleInfo));
+            usys_free(pModuleInfo);
+            pModuleInfo = NULL;
+        } else {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_MODULE_CFG: {
-            uint16_t devCount = (*schema)->modInfo.devCount;
-            ModuleCfg *pModuleCfg =
-                            parse_schema_module_config(jSchema, devCount);
-            if (pModuleCfg) {
-                (*schema)->modCfg = pModuleCfg;
-            } else {
-                ret = -1;
-                goto cleanup;
-            }
-            break;
+        break;
+    }
+    case FIELD_ID_MODULE_CFG: {
+        uint16_t devCount = (*schema)->modInfo.devCount;
+        ModuleCfg *pModuleCfg = parse_schema_module_config(jSchema, devCount);
+        if (pModuleCfg) {
+            (*schema)->modCfg = pModuleCfg;
+        } else {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_FACT_CFG: {
-            int payloadSize = 0;
-            (*schema)->factCfg =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_FACTORY_CONFIG,
-                                       &status);
+        break;
+    }
+    case FIELD_ID_FACT_CFG: {
+        int payloadSize = 0;
+        (*schema)->factCfg = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_FACTORY_CONFIG, &status);
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
-
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_USER_CFG: {
-            int payloadSize = 0;
-            (*schema)->userCfg =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_USER_CONFIG,
-                                       &status);
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
+        break;
+    }
+    case FIELD_ID_USER_CFG: {
+        int payloadSize = 0;
+        (*schema)->userCfg = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_USER_CONFIG, &status);
 
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_FACT_CALIB: {
-            int payloadSize = 0;
-            (*schema)->factCalib =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_FACTORY_CALIB,
-                                       &status);
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
+        break;
+    }
+    case FIELD_ID_FACT_CALIB: {
+        int payloadSize = 0;
+        (*schema)->factCalib = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_FACTORY_CALIB, &status);
 
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_USER_CALIB: {
-            int payloadSize = 0;
-            (*schema)->userCalib =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_USER_CALIB,
-                                       &status);
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
+        break;
+    }
+    case FIELD_ID_USER_CALIB: {
+        int payloadSize = 0;
+        (*schema)->userCalib = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_USER_CALIB, &status);
 
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_BS_CERTS: {
-            int payloadSize = 0;
-            (*schema)->bsCerts =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_BOOTSTRAP_CERTS,
-                                       &status);
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
+        break;
+    }
+    case FIELD_ID_BS_CERTS: {
+        int payloadSize = 0;
+        (*schema)->bsCerts = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_BOOTSTRAP_CERTS, &status);
 
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        case FIELD_ID_CLOUD_CERTS: {
-            int payloadSize = 0;
-            (*schema)->cloudCerts =
-                            parse_schema_generic_file_data_wrapper(jSchema,
-                                       iter,
-                                       &payloadSize,
-                                       JTAG_CLOUD_CERTS,
-                                       &status);
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
 
-            if (!status) {
-                ret = -1;
-                goto cleanup;
-            }
-            (*schema)->indexTable[iter].payloadSize = payloadSize;
+        break;
+    }
+    case FIELD_ID_CLOUD_CERTS: {
+        int payloadSize = 0;
+        (*schema)->cloudCerts = parse_schema_generic_file_data_wrapper(
+            jSchema, iter, &payloadSize, JTAG_CLOUD_CERTS, &status);
 
-            break;
+        if (!status) {
+            ret = -1;
+            goto cleanup;
         }
-        default: {
-            ret = ERR_NODED_INVALID_FIELD;
-            usys_log_error("Invalid Field id supplied by Index entry.Error %d", ret);
-        }
+        (*schema)->indexTable[iter].payloadSize = payloadSize;
+
+        break;
+    }
+    default: {
+        ret = ERR_NODED_INVALID_FIELD;
+        usys_log_error("Invalid Field id supplied by Index entry.Error %d",
+                       ret);
+    }
     }
 
-    cleanup:
+cleanup:
     return ret;
 }
 
@@ -1176,9 +1098,10 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
         }
 
         /* Debug Info */
-        char*  out = json_dumps(jSchema, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
+        char *out = json_dumps(jSchema, (JSON_INDENT(4) | JSON_COMPACT |
+                                         JSON_ENCODE_ANY));
         if (out) {
-            usys_log_trace("Schema at Idx %d is ::\n %s\n",  idx, out);
+            usys_log_trace("Schema at Idx %d is ::\n %s\n", idx, out);
             usys_free(out);
             out = NULL;
         }
@@ -1189,7 +1112,7 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
             SchemaHeader *pHeader = parse_schema_header(jHeader);
             if (pHeader) {
                 usys_memcpy(&storeSchema->header, pHeader,
-                                sizeof(SchemaHeader));
+                            sizeof(SchemaHeader));
                 usys_free(pHeader);
                 pHeader = NULL;
             } else {
@@ -1204,9 +1127,8 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
         /* Index Table */
         jIdxTable = json_object_get(jSchema, JTAG_INDEX_TABLE);
         if (jIdxTable) {
-
             SchemaIdxTuple *pIndexTable = parse_schema_idx_table(
-                            jIdxTable, storeSchema->header.idxCurTpl);
+                jIdxTable, storeSchema->header.idxCurTpl);
             if (pIndexTable) {
                 /* Free me once done*/
                 storeSchema->indexTable = pIndexTable;
@@ -1221,26 +1143,22 @@ int parse_mfg_schema(const char *mfgdata, uint8_t idx) {
         }
 
         for (int iter = 0; iter < storeSchema->header.idxCurTpl; iter++) {
-
             uint16_t id = storeSchema->indexTable[iter].fieldId;
             ret = parse_schema_payload(jSchema, &storeSchema, id, iter);
             if (ret) {
-                usys_log_error(
-                                "Failed parsing for Field Id 0x%x from mfg data"
-                                ".Error: %d",
-                                id, ret);
+                usys_log_error("Failed parsing for Field Id 0x%x from mfg data"
+                               ".Error: %d",
+                               id, ret);
                 goto cleanup;
             } else {
-                usys_log_debug(
-                                "Parsing for Field Id 0x%x from mfg data "
-                                "completed.",
-                                id);
+                usys_log_debug("Parsing for Field Id 0x%x from mfg data "
+                               "completed.",
+                               id);
             }
-
         }
     }
 
-    cleanup:
+cleanup:
     if (jSchema) {
         json_decref(jSchema);
         jSchema = NULL;
@@ -1257,26 +1175,21 @@ StoreSchema *parser_get_mfg_data_by_uuid(char *puuid) {
     /*Default section*/
     if ((!puuid) || !usys_strcmp(puuid, "")) {
         sschema = mfgStoreSchema[0];
-        usys_log_trace(
-                        "MFG Data set to the Module UUID %s with %d entries"
-                        " in Index Table.",
-                        sschema->modInfo.uuid, sschema->header.idxCurTpl);
+        usys_log_trace("MFG Data set to the Module UUID %s with %d entries"
+                       " in Index Table.",
+                       sschema->modInfo.uuid, sschema->header.idxCurTpl);
     } else {
-
         /* Searching for Module MFG data index.*/
         for (uint8_t iter = 0; iter < MAX_JSON_SCHEMA; iter++) {
-
             if (mfgStoreSchema[iter]) {
                 if (!usys_strcmp(puuid, mfgStoreSchema[iter]->modInfo.uuid)) {
                     sschema = mfgStoreSchema[iter];
-                    usys_log_trace(
-                                    "PARSER:: MFG Data set to the Module UUID"
-                                    "%s with %d entries in Index Table.",
-                                    sschema->modInfo.uuid,
-                                    sschema->header.idxCurTpl);
+                    usys_log_trace("PARSER:: MFG Data set to the Module UUID"
+                                   "%s with %d entries in Index Table.",
+                                   sschema->modInfo.uuid,
+                                   sschema->header.idxCurTpl);
                     break;
                 }
-
             }
         }
     }
@@ -1287,7 +1200,6 @@ int parser_schema_init(JSONInput *ip) {
     int ret = 0;
     char *fname = NULL;
     if ((ip->fname) && (ip->count > 0)) {
-
         for (uint8_t iter = 0; iter < ip->count; iter++) {
             if (!ip->fname[iter]) {
                 ret = -1;
@@ -1300,27 +1212,23 @@ int parser_schema_init(JSONInput *ip) {
 
             char *schemabuff = usys_zmalloc((sizeof(char) * size) + 1);
             if (schemabuff) {
-
                 /* Read mfg data from file */
                 ret = read_mfg_data(fname, schemabuff, size);
                 if (ret == size) {
-                    usys_log_debug(
-                                    "File %s read manufacturing data of %d"
-                                    " bytes.",
-                                    fname, size);
+                    usys_log_debug("File %s read manufacturing data of %d"
+                                   " bytes.",
+                                   fname, size);
 
                     /* Parse the mfg data to store schema */
                     ret = parse_mfg_schema(schemabuff, iter);
                     if (ret) {
                         usys_log_error("Err(%d):PARSER: Parsing failed for %s.",
-                                        ret, fname);
+                                       ret, fname);
                     } else {
                         usys_log_debug("PARSER: Parsing completed for %s.",
-                                        fname);
+                                       fname);
                     }
-
                 }
-
             }
 
             usys_free(schemabuff);
@@ -1331,10 +1239,8 @@ int parser_schema_init(JSONInput *ip) {
 
 void parser_schema_exit() {
     for (int iter = 0; iter < MAX_JSON_SCHEMA; iter++) {
-
         if (mfgStoreSchema[iter]) {
             parser_free_mfg_data(&mfgStoreSchema[iter]);
         }
-
     }
 }

@@ -9,8 +9,6 @@
 
 #include "drivers/adt7481_wrapper.h"
 
-
-
 int adt7841_wrapper_init() {
     return 0;
 }

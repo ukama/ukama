@@ -23,24 +23,23 @@ static ListInfo gpioLdgr;
 static int gpioLdgrflag = 0;
 
 const DevOps gpioOps = { .init = bsp_gpio_init,
-                                     .registration = bsp_gpio_registration,
-                                     .readPropCount = bsp_gpio_read_prop_count,
-                                     .readProp = bsp_gpio_read_properties,
-                                     .configure = bsp_gpio_configure,
-                                     .read = bsp_gpio_read,
-                                     .write = bsp_gpio_write,
-                                     .enable = bsp_gpio_enable,
-                                     .disable = bsp_gpio_disable,
-                                     .registerCb = NULL,
-                                     .dregisterCb = NULL,
-                                     .enableIrq = NULL,
-                                     .disableIrq = NULL,
-                                     .confirmIrq = NULL,
-                                     .irqType = NULL };
+                         .registration = bsp_gpio_registration,
+                         .readPropCount = bsp_gpio_read_prop_count,
+                         .readProp = bsp_gpio_read_properties,
+                         .configure = bsp_gpio_configure,
+                         .read = bsp_gpio_read,
+                         .write = bsp_gpio_write,
+                         .enable = bsp_gpio_enable,
+                         .disable = bsp_gpio_disable,
+                         .registerCb = NULL,
+                         .dregisterCb = NULL,
+                         .enableIrq = NULL,
+                         .disableIrq = NULL,
+                         .confirmIrq = NULL,
+                         .irqType = NULL };
 
-DevOpsMap gpio_dev_map[MAX_GPIO_SENSOR_TYPE] = {
-    { .name = "GPIO", .opsTable = &gpioOps }
-};
+DevOpsMap gpio_dev_map[MAX_GPIO_SENSOR_TYPE] = { { .name = "GPIO",
+                                                   .opsTable = &gpioOps } };
 
 const DevOps *get_gpio_type_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
@@ -70,7 +69,8 @@ int compare_gpio_type_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcasecmp(ip->obj.name, op->obj.name) &&
-        !usys_strcasecmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
+        (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -79,8 +79,8 @@ int compare_gpio_type_dev(void *ipt, void *sd) {
 ListInfo *get_gpio_type_dev_ldgr() {
     /* Initialize ledger for the first time we try to access it.*/
     if (gpioLdgrflag == 0) {
-        usys_list_new(&gpioLdgr, sizeof(Device), free_gpio_type_dev, compare_gpio_type_dev,
-                 NULL);
+        usys_list_new(&gpioLdgr, sizeof(Device), free_gpio_type_dev,
+                      compare_gpio_type_dev, NULL);
         gpioLdgrflag = 1;
         usys_log_trace("GPIO:: GPIO ledger initialized.");
     }

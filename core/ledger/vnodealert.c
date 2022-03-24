@@ -92,7 +92,7 @@ int poll_file(IRQCfg *cfg) {
         for (int j = 0; j < nfds; j++) {
             if (pfds[j].revents != 0) {
                 usys_log_debug("VNODEALERT:: poll() fd %d got events: 0x%x",
-                          pfds[j].fd, pfds[j].revents);
+                               pfds[j].fd, pfds[j].revents);
                 if (pfds[j].revents & POLLIN) {
                     if (ready_inot(fw_fd)) {
                         /* Callback to the registered cb */
@@ -100,7 +100,7 @@ int poll_file(IRQCfg *cfg) {
                     }
                 } else { /* POLLERR | POLLHUP */
                     usys_log_debug("VNODEALERT:: poll() closing fd %d\n",
-                              pfds[j].fd);
+                                   pfds[j].fd);
                     if (close(pfds[j].fd) == -1)
                         ret = -1;
                     num_open_fds--;

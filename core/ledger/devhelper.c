@@ -20,18 +20,17 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-
 /* dev ->hw_aatr type is still not known at this will can only be type casted by driver file.*/
-#define HWATTR_GET(hwattr, dev, prop)                         \
-    {                                                         \
-        if (IF_SYSFS_SUPPORT(dev->sysFile)) {                 \
-            char sysf[MAX_PATH_LENGTH] = { '\0' };            \
+#define HWATTR_GET(hwattr, dev, prop)                                   \
+    {                                                                   \
+        if (IF_SYSFS_SUPPORT(dev->sysFile)) {                           \
+            char sysf[MAX_PATH_LENGTH] = { '\0' };                      \
             usys_memcpy(sysf, dev->sysFile, usys_strlen(dev->sysFile)); \
-            usys_strcat(sysf, prop->sysFname);                     \
-            hwattr = sysf;                                    \
-        } else {                                              \
-            hwattr = dev->hwAttr;                            \
-        }                                                     \
+            usys_strcat(sysf, prop->sysFname);                          \
+            hwattr = sysf;                                              \
+        } else {                                                        \
+            hwattr = dev->hwAttr;                                       \
+        }                                                               \
     }
 
 int dhelper_validate_property(Property *prop, int pidx) {
@@ -49,8 +48,8 @@ int dhelper_init_property_from_parser(Device *p_dev, Property **prop,
     if (*count < 0) {
         ret = -1;
         usys_log_debug("DEVHELEPR: No json property found for device name %s "
-                  "desc %s module UUID %s.",
-                  p_dev->obj.name, p_dev->obj.desc, p_dev->obj.modUuid);
+                       "desc %s module UUID %s.",
+                       p_dev->obj.name, p_dev->obj.desc, p_dev->obj.modUuid);
     } else {
         *prop = get_property_table(p_dev->obj.name);
     }
@@ -98,8 +97,8 @@ int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
 }
 
 /* Performing read on device properties. */
-int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop,
-                 int pidx, void *data) {
+int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
+                 void *data) {
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
@@ -119,8 +118,8 @@ int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop,
 }
 
 /* Performing write to device properties. */
-int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop,
-                  int pidx, void *data) {
+int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
+                  void *data) {
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
@@ -140,8 +139,8 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop,
 }
 
 /* Enable device .*/
-int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop,
-                   int pidx, void *data) {
+int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
+                   void *data) {
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
@@ -161,8 +160,8 @@ int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop,
 }
 
 /* Disable device .*/
-int dhelper_disable(const DrvrOps *drvr, Device *dev, Property *prop,
-                    int pidx, void *data) {
+int dhelper_disable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
+                    void *data) {
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];

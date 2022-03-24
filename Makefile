@@ -158,7 +158,7 @@ endef
 
 # Format code to ukama style
 formatcodestyle:
-	$(foreach src, $(SOURCES), $(call clang-format,$(src)))	
+	$(foreach src, $(SVC_CFILES), $(call clang-format,$(src)))	
 	@echo "Source file Done."
 
 # Check ukama code style

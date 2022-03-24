@@ -23,18 +23,17 @@
 
 static SensorCallbackFxn sensor_cb;
 
-const DrvrOps drvr_tmp464_fxn_table = {
-    .init = tmp464_wrapper_init,
-    .configure = tmp464_wrapper_configure,
-    .read = tmp464_wrapper_read,
-    .write = tmp464_wrapper_write,
-    .enable = tmp464_wrapper_enable,
-    .disable = tmp464_wrapper_disable,
-    .registerCb = tmp464_wrapper_reg_cb,
-    .dregisterCb = tmp464_wrapper_dreg_cb,
-    .enableIrq = tmp464_wrapper_enable_irq,
-    .disableIrq = tmp464_wrapper_disable_irq
-};
+const DrvrOps drvr_tmp464_fxn_table = { .init = tmp464_wrapper_init,
+                                        .configure = tmp464_wrapper_configure,
+                                        .read = tmp464_wrapper_read,
+                                        .write = tmp464_wrapper_write,
+                                        .enable = tmp464_wrapper_enable,
+                                        .disable = tmp464_wrapper_disable,
+                                        .registerCb = tmp464_wrapper_reg_cb,
+                                        .dregisterCb = tmp464_wrapper_dreg_cb,
+                                        .enableIrq = tmp464_wrapper_enable_irq,
+                                        .disableIrq =
+                                            tmp464_wrapper_disable_irq };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
@@ -80,8 +79,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp1_min_alarm",
                      .depProp = &(DepProperty){ .currIdx = T1TEMPVALUE,
-                                                 .lmtIdx = T1MINLIMIT,
-                                                 .cond = LESSTHENEQUALTO } },
+                                                .lmtIdx = T1MINLIMIT,
+                                                .cond = LESSTHENEQUALTO } },
     [T1MAXALARM] = { .name = "T1 HIGH LIMIT ALERT",
                      .dataType = TYPE_BOOL,
                      .perm = PERM_RD,
@@ -90,8 +89,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp1_max_alarm",
                      .depProp = &(DepProperty){ .currIdx = T1TEMPVALUE,
-                                                 .lmtIdx = T1MAXLIMIT,
-                                                 .cond = GREATERTHENEQUALTO } },
+                                                .lmtIdx = T1MAXLIMIT,
+                                                .cond = GREATERTHENEQUALTO } },
     [T1CRITALARM] = { .name = "T1 CRITICAL LIMIT ALERT",
                       .dataType = TYPE_BOOL,
                       .perm = PERM_RD,
@@ -99,10 +98,9 @@ static Property tmp464_property[MAXTEMPPROP] = {
                       .propType = PROP_TYPE_ALERT,
                       .units = "NA",
                       .sysFname = "temp1_crit_alarm",
-                      .depProp =
-                          &(DepProperty){ .currIdx = T1TEMPVALUE,
-                                          .lmtIdx = T1CRITLIMIT,
-                                          .cond = GREATERTHENEQUALTO } },
+                      .depProp = &(DepProperty){ .currIdx = T1TEMPVALUE,
+                                                 .lmtIdx = T1CRITLIMIT,
+                                                 .cond = GREATERTHENEQUALTO } },
     [T1CRITHYST] = { .name = "T1 CRITICAL HYSTERESIS",
                      .dataType = TYPE_INT32,
                      .perm = PERM_RD | PERM_WR,
@@ -167,8 +165,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp2_min_alarm",
                      .depProp = &(DepProperty){ .currIdx = T2TEMPVALUE,
-                                                 .lmtIdx = T2MINLIMIT,
-                                                 .cond = LESSTHENEQUALTO } },
+                                                .lmtIdx = T2MINLIMIT,
+                                                .cond = LESSTHENEQUALTO } },
     [T2MAXALARM] = { .name = "T2 HIGH LIMIT ALERT",
                      .dataType = TYPE_BOOL,
                      .perm = PERM_RD,
@@ -177,8 +175,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp2_max_alarm",
                      .depProp = &(DepProperty){ .currIdx = T2TEMPVALUE,
-                                                 .lmtIdx = T2MAXLIMIT,
-                                                 .cond = GREATERTHENEQUALTO } },
+                                                .lmtIdx = T2MAXLIMIT,
+                                                .cond = GREATERTHENEQUALTO } },
     [T2CRITALARM] = { .name = "T2 CRITICAL LIMIT ALERT",
                       .dataType = TYPE_BOOL,
                       .perm = PERM_RD,
@@ -186,10 +184,9 @@ static Property tmp464_property[MAXTEMPPROP] = {
                       .propType = PROP_TYPE_ALERT,
                       .units = "NA",
                       .sysFname = "temp2_crit_alarm",
-                      .depProp =
-                          &(DepProperty){ .currIdx = T2TEMPVALUE,
-                                          .lmtIdx = T2CRITLIMIT,
-                                          .cond = GREATERTHENEQUALTO } },
+                      .depProp = &(DepProperty){ .currIdx = T2TEMPVALUE,
+                                                 .lmtIdx = T2CRITLIMIT,
+                                                 .cond = GREATERTHENEQUALTO } },
     [T2CRITHYST] = { .name = "T2 CRITICAL HYSTERESIS",
                      .dataType = TYPE_INT32,
                      .perm = PERM_RD | PERM_WR,
@@ -254,8 +251,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp3_min_alarm",
                      .depProp = &(DepProperty){ .currIdx = T3TEMPVALUE,
-                                                 .lmtIdx = T3MINLIMIT,
-                                                 .cond = LESSTHENEQUALTO } },
+                                                .lmtIdx = T3MINLIMIT,
+                                                .cond = LESSTHENEQUALTO } },
     [T3MAXALARM] = { .name = "T3 HIGH LIMIT ALERT",
                      .dataType = TYPE_BOOL,
                      .perm = PERM_RD,
@@ -264,8 +261,8 @@ static Property tmp464_property[MAXTEMPPROP] = {
                      .units = "NA",
                      .sysFname = "temp3_max_alarm",
                      .depProp = &(DepProperty){ .currIdx = T3TEMPVALUE,
-                                                 .lmtIdx = T3MAXLIMIT,
-                                                 .cond = GREATERTHENEQUALTO } },
+                                                .lmtIdx = T3MAXLIMIT,
+                                                .cond = GREATERTHENEQUALTO } },
     [T3CRITALARM] = { .name = "T3 CRITICAL LIMIT ALERT",
                       .dataType = TYPE_BOOL,
                       .perm = PERM_RD,
@@ -273,10 +270,9 @@ static Property tmp464_property[MAXTEMPPROP] = {
                       .propType = PROP_TYPE_ALERT,
                       .units = "NA",
                       .sysFname = "temp3_crit_alarm",
-                      .depProp =
-                          &(DepProperty){ .currIdx = T3TEMPVALUE,
-                                          .lmtIdx = T3CRITLIMIT,
-                                          .cond = GREATERTHENEQUALTO } },
+                      .depProp = &(DepProperty){ .currIdx = T3TEMPVALUE,
+                                                 .lmtIdx = T3CRITLIMIT,
+                                                 .cond = GREATERTHENEQUALTO } },
     [T3CRITHYST] = { .name = "T3 CRITICAL HYSTERESIS",
                      .dataType = TYPE_INT32,
                      .perm = PERM_RD | PERM_WR,
@@ -303,7 +299,7 @@ static Property tmp464_property[MAXTEMPPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps* get_fxn_tbl(Device *pDev) {
+static const DrvrOps *get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -368,8 +364,7 @@ int bsp_tmp464_dreg_cb(void *pDev, SensorCallbackFxn fun) {
 int bsp_tmp464_init(Device *pDev) {
     int ret = 0;
 
-    ret = dhelper_init_property_from_parser(pDev, &gProperty,
-                                            &gPropertyCount);
+    ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXTEMPPROP;
         gProperty = tmp464_property;
@@ -459,8 +454,8 @@ int bsp_tmp464_enable_irq(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
-        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty,
-                                 *(int *)prop, data);
+        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty, *(int *)prop,
+                                 data);
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;
     }
@@ -479,8 +474,8 @@ int bsp_tmp464_disable_irq(void *pDev, void *prop, void *data) {
 }
 
 /* Reading and confirming interrupts for TMP464 device */
-int bsp_tmp464_confirm_irq(Device *pDev, AlertCallBackData **acbdata, char *fpath,
-                       int *evt) {
+int bsp_tmp464_confirm_irq(Device *pDev, AlertCallBackData **acbdata,
+                           char *fpath, int *evt) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {

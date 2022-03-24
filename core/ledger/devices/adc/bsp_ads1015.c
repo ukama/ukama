@@ -20,16 +20,15 @@
 #include "usys_string.h"
 
 const DrvrOps ads1015WrapperOps = { .init = ads1015_wrapper_init,
-                                               .configure =
-                                                   ads1015_wrapper_configure,
-                                               .read = ads1015_wrapper_read,
-                                               .write = ads1015_wrapper_write,
-                                               .enable = ads1015_wrapper_enable,
-                                               .disable = ads1015_wrapper_disable,
-                                               .registerCb = NULL,
-                                               .dregisterCb = NULL,
-                                               .enableIrq = NULL,
-                                               .disableIrq = NULL };
+                                    .configure = ads1015_wrapper_configure,
+                                    .read = ads1015_wrapper_read,
+                                    .write = ads1015_wrapper_write,
+                                    .enable = ads1015_wrapper_enable,
+                                    .disable = ads1015_wrapper_disable,
+                                    .registerCb = NULL,
+                                    .dregisterCb = NULL,
+                                    .enableIrq = NULL,
+                                    .disableIrq = NULL };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
@@ -102,7 +101,7 @@ static Property ads1015_property[MAXADCPROP] = {
 
 };
 
-static const DrvrOps* get_fxn_tbl(Device *pDev) {
+static const DrvrOps *get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -134,13 +133,12 @@ void bsp_drvr_ads1015_irq_callback(DevObj *obj, void *prop, void *data) {
 
 int bsp_ads1015_init(Device *pDev) {
     int ret = 0;
-    ret = dhelper_init_property_from_parser(pDev, &gProperty,
-                                            &gPropertyCount);
+    ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXADCPROP;
         gProperty = ads1015_property;
         usys_log_debug("ADS1015: Using static property table with %d property.",
-                  gPropertyCount);
+                       gPropertyCount);
     }
 
     const DrvrOps *drvr = get_fxn_tbl(pDev);

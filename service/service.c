@@ -182,7 +182,7 @@ int service_req_create_invt_database() {
  * These databases may be exposed as files or had to be read from eeprom
  * using routines provided by store. Store abstract the access to the databases.
  */
-int service_at_bootup(char *invtDb, char* propCfg) {
+int service_at_bootup(char *invtDb, char *propCfg) {
     int ret = 0;
 
     ret = web_service_init();
@@ -205,7 +205,7 @@ int service_at_exit() {
     return ret;
 }
 
-int service_init(char* invtDb, char* propCfg) {
+int service_init(char *invtDb, char *propCfg) {
     int ret = USYS_OK;
     ret = service_at_bootup(invtDb, propCfg);
     return ret;

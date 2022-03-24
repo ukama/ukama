@@ -9,7 +9,6 @@
 
 #include "prop_parser.h"
 
-
 #include "errorcode.h"
 
 #include "usys_api.h"
@@ -78,7 +77,7 @@ DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
         /* Current Value */
         int currIdx = 0;
         if (!parser_read_integer_object(jDepProp, JTAG_CURR_PROP_ID,
-                        &currIdx)) {
+                                        &currIdx)) {
             goto cleanup;
         } else {
             dProp->currIdx = currIdx;
@@ -87,16 +86,15 @@ DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
         /* Limit value */
         int lmtIdx = 0;
         if (!parser_read_integer_object(jDepProp, JTAG_LIMIT_PROP_ID,
-                        &lmtIdx)) {
+                                        &lmtIdx)) {
             goto cleanup;
         } else {
             dProp->lmtIdx = lmtIdx;
         }
 
         /* Alert Condition */
-        char* alertCond;
-        if (!parser_read_string_object(jDepProp, JTAG_ALERT_COND,
-                        &alertCond)) {
+        char *alertCond;
+        if (!parser_read_string_object(jDepProp, JTAG_ALERT_COND, &alertCond)) {
             goto cleanup;
         } else {
             dProp->cond = get_alert_cond(alertCond);
@@ -105,12 +103,12 @@ DepProperty *prop_parser_get_dependents(const JsonObj *jDepProp) {
 
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
-        usys_log_error("Err(%d):PARSER: Memory exhausted while parsing DepProperty.",
-                        ret);
+        usys_log_error(
+            "Err(%d):PARSER: Memory exhausted while parsing DepProperty.", ret);
         goto cleanup;
     }
 
-    cleanup:
+cleanup:
     if (ret) {
         usys_free(dProp);
         dProp = NULL;
@@ -134,26 +132,23 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
         usys_memset(prop, '\0', sizeof(Property) * propCount);
 
         json_array_foreach(jPropTable, iter, jProp) {
-
             /* ID */
-            int id  = 0;
-            if (!parser_read_integer_object(jProp, JTAG_ID,
-                            &id)) {
+            int id = 0;
+            if (!parser_read_integer_object(jProp, JTAG_ID, &id)) {
                 goto cleanup;
             } else {
-                prop[iter].id = (uint16_t) id;
+                prop[iter].id = (uint16_t)id;
             }
 
             /* Name */
             if (!parser_read_string_object_wrapper(jProp, JTAG_NAME,
-                            prop[iter].name)) {
+                                                   prop[iter].name)) {
                 goto cleanup;
             }
 
             /* Data Type */
-            char* dataType;
-            if (!parser_read_string_object(jProp, JTAG_DATA_TYPE,
-                            &dataType)) {
+            char *dataType;
+            if (!parser_read_string_object(jProp, JTAG_DATA_TYPE, &dataType)) {
                 goto cleanup;
             } else {
                 prop[iter].dataType = get_prop_data_type(dataType);
@@ -161,9 +156,8 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Permission */
-            char* perm;
-            if (!parser_read_string_object(jProp, JTAG_PERMISSION,
-                            &perm)) {
+            char *perm;
+            if (!parser_read_string_object(jProp, JTAG_PERMISSION, &perm)) {
                 goto cleanup;
             } else {
                 prop[iter].perm = get_prop_perm(perm);
@@ -171,9 +165,8 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Availability */
-            char* avail;
-            if (!parser_read_string_object(jProp, JTAG_AVAILABILITY,
-                            &avail)) {
+            char *avail;
+            if (!parser_read_string_object(jProp, JTAG_AVAILABILITY, &avail)) {
                 goto cleanup;
             } else {
                 prop[iter].available = get_prop_avail(avail);
@@ -181,9 +174,9 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Property Type */
-            char* propType;
+            char *propType;
             if (!parser_read_string_object(jProp, JTAG_AVAILABILITY,
-                            &propType)) {
+                                           &propType)) {
                 goto cleanup;
             } else {
                 prop[iter].propType = get_prop_type(propType);
@@ -192,15 +185,14 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
 
             /* Units */
             if (!parser_read_string_object_wrapper(jProp, JTAG_UNITS,
-                            prop[iter].units)) {
+                                                   prop[iter].units)) {
                 goto cleanup;
             }
 
-
             /* Sysfile */
             /* SysFs */
-            if (!parser_read_string_object_wrapper(jProp,
-                            JTAG_SYS_FS_FILE,  prop[iter].sysFname)) {
+            if (!parser_read_string_object_wrapper(jProp, JTAG_SYS_FS_FILE,
+                                                   prop[iter].sysFname)) {
                 goto cleanup;
             }
 
@@ -213,9 +205,9 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
                 } else {
                     prop[iter].depProp = NULL;
                     usys_log_error(
-                                    "Err(%d): PARSER:: Failed to parse Property[%d].depProp for"
-                                    " %s device",
-                                    iter, (*pMap)->name);
+                        "Err(%d): PARSER:: Failed to parse Property[%d].depProp for"
+                        " %s device",
+                        iter, (*pMap)->name);
                 }
             } else {
                 prop[iter].depProp = NULL;
@@ -223,17 +215,17 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
         }
         (*pMap)->propCount = iter;
         (*pMap)->prop = prop;
-        usys_log_trace("PARSER:: %d property for device %s found in json.", iter,
-                        (*pMap)->name);
+        usys_log_trace("PARSER:: %d property for device %s found in json.",
+                       iter, (*pMap)->name);
     } else {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(
-                        "Err(%d):PARSER:: Memory exhausted while parsing property table for %s device.",
-                        ret, (*pMap)->name);
+            "Err(%d):PARSER:: Memory exhausted while parsing property table for %s device.",
+            ret, (*pMap)->name);
         goto cleanup;
     }
 
-    cleanup:
+cleanup:
     if (ret) {
         parser_free_prop(prop, iter);
     }
@@ -251,14 +243,13 @@ int prop_parse_dev(const JsonObj *jDevices) {
     int count = 0;
 
     json_array_foreach(jDevices, iter, jDev) {
-
         pMap = usys_zmalloc(sizeof(PropertyMap));
         if (pMap) {
             gPropMap[count] = pMap;
 
             /* Name */
             if (!parser_read_string_object_wrapper(jDev, JTAG_NAME,
-                            pMap->name)) {
+                                                   pMap->name)) {
                 goto cleanup;
             }
 
@@ -267,30 +258,29 @@ int prop_parse_dev(const JsonObj *jDevices) {
             Version *pVersion = parse_version(jDevVersion);
             if (pVersion) {
                 usys_log_info(
-                                "Parser:: Device %s is using json property version %d.%d.",
-                                pMap->name, pVersion->major, pVersion->minor);
+                    "Parser:: Device %s is using json property version %d.%d.",
+                    pMap->name, pVersion->major, pVersion->minor);
                 usys_memcpy(&pMap->ver, pVersion, sizeof(Version));
                 usys_free(pVersion);
             } else {
                 usys_log_error(
-                                "Err(%d): PARSER:: Failed to parse Device  %s property version.",
-                                ret, pMap->name);
+                    "Err(%d): PARSER:: Failed to parse Device  %s property version.",
+                    ret, pMap->name);
                 goto cleanup;
             }
 
             /* Property Table */
-            jDevTable =
-                            json_object_get(jDev, JTAG_PROPERTY_TABLE);
+            jDevTable = json_object_get(jDev, JTAG_PROPERTY_TABLE);
             ret = prop_parse_table(jDevTable, &pMap);
             if (!ret) {
                 usys_log_trace(
-                                "Parser:: Device %s json property table parsing completed "
-                                "with %d properties.",
-                                pMap->name, pMap->propCount);
+                    "Parser:: Device %s json property table parsing completed "
+                    "with %d properties.",
+                    pMap->name, pMap->propCount);
             } else {
                 usys_log_error(
-                                "Err(%d): Parser:: Device %s json property table parsing failed.",
-                                pMap->name);
+                    "Err(%d): Parser:: Device %s json property table parsing failed.",
+                    pMap->name);
                 goto cleanup;
             }
 
@@ -299,14 +289,14 @@ int prop_parse_dev(const JsonObj *jDevices) {
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
             usys_log_error(
-                            "Err(%d):PARSER:: Memory exhausted while parsing Device table.",
-                            ret);
+                "Err(%d):PARSER:: Memory exhausted while parsing Device table.",
+                ret);
             goto cleanup;
         }
         usys_log_trace("PARSER:: %d device read from json.", count);
     }
 
-    cleanup:
+cleanup:
     if (ret) {
         parser_free_pMap(&pMap);
     }
@@ -329,24 +319,22 @@ int prop_parse_json(char *propBuff) {
         goto cleanup;
     }
 
-
     /* name */
-    if (!parser_read_string_object_wrapper(jProp,
-                    JTAG_NAME, name)) {
+    if (!parser_read_string_object_wrapper(jProp, JTAG_NAME, name)) {
         goto cleanup;
     }
-
 
     /* Devices */
     jDevice = json_object_get(jProp, JTAG_DEVICE);
     if (json_is_array(jDevice)) {
         ret = prop_parse_dev(jDevice);
         if (!ret) {
-            usys_log_trace("PARSER: Property table parsed for Device %s.", name);
+            usys_log_trace("PARSER: Property table parsed for Device %s.",
+                           name);
         } else {
             usys_log_error(
-                            "Err(%d): PARSER: Property table not parsed for Device %s.",
-                            ret, name);
+                "Err(%d): PARSER: Property table not parsed for Device %s.",
+                ret, name);
             goto cleanup;
         }
     } else {
@@ -354,7 +342,7 @@ int prop_parse_json(char *propBuff) {
         usys_log_error("Err(%d): PARSER: %s not parsed from JSON.", ret, name);
     }
 
-    cleanup:
+cleanup:
     json_decref(jProp);
     return ret;
 }
@@ -410,12 +398,12 @@ int prop_parser_init(char *ip) {
             ret = read_mfg_data(fname, schemabuff, size);
             if (ret == size) {
                 usys_log_trace(
-                                "PARSER:: File %s read manufacturing data of %d bytes.",
-                                fname, size);
+                    "PARSER:: File %s read manufacturing data of %d bytes.",
+                    fname, size);
                 ret = prop_parse_json(schemabuff);
                 if (ret) {
-                    usys_log_error("Err(%d): PARSER:: Parsing failed for %s.", ret,
-                                    fname);
+                    usys_log_error("Err(%d): PARSER:: Parsing failed for %s.",
+                                   ret, fname);
                 } else {
                     usys_log_trace("PARSER: Parsing completed for %s.", fname);
                 }

@@ -245,7 +245,7 @@ int sysfs_read_block(char *name, void *buff, uint16_t size) {
         sysfs_close(fd);
     }
     usys_log_trace("SYSFS:: Read %d bytes from %s file from offset 0x%x.",
-              read_bytes, name, SYS_DEF_OFFSET);
+                   read_bytes, name, SYS_DEF_OFFSET);
     return read_bytes;
 }
 
@@ -261,7 +261,7 @@ int sysfs_write_block(char *name, void *buff, uint16_t size) {
         sysfs_close(fd);
     }
     usys_log_trace("SYSFS:: Written %d bytes to %s file at offset 0x%x.",
-              write_bytes, name, SYS_DEF_OFFSET);
+                   write_bytes, name, SYS_DEF_OFFSET);
     return write_bytes;
 }
 
@@ -278,7 +278,7 @@ int sysfs_read(char *name, void *data, DataType type) {
     } else {
         sysfs_strtotype(data, type, val);
         usys_log_trace("SYSFS:: Read file %s with String:: %s (Number:: 0x%x).",
-                  name, val, *(int64_t *)data);
+                       name, val, *(int64_t *)data);
     }
 
     return ret;
@@ -295,8 +295,9 @@ int sysfs_write(char *name, void *data, DataType type) {
     if (sysfs_write_block(name, val, dgt) < dgt) {
         ret = -1;
     } else {
-        usys_log_trace("SYSFS:: Wrote file %s with String:: %s (Number:: 0x%x).",
-                  name, val, *(int64_t *)data);
+        usys_log_trace(
+            "SYSFS:: Wrote file %s with String:: %s (Number:: 0x%x).", name,
+            val, *(int64_t *)data);
     }
     return ret;
 }

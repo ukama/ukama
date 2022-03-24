@@ -19,18 +19,16 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-const DrvrOps ledTricolWrapperOps = {
-    .init = led_tricol_wrapper_init,
-    .configure = led_tricol_wrapper_configure,
-    .read = led_tricol_wrapper_read,
-    .write = led_tricol_wrapper_write,
-    .enable = led_tricol_wrapper_enable,
-    .disable = led_tricol_wrapper_disable,
-    .registerCb = NULL,
-    .dregisterCb = NULL,
-    .enableIrq = NULL,
-    .disableIrq = NULL
-};
+const DrvrOps ledTricolWrapperOps = { .init = led_tricol_wrapper_init,
+                                      .configure = led_tricol_wrapper_configure,
+                                      .read = led_tricol_wrapper_read,
+                                      .write = led_tricol_wrapper_write,
+                                      .enable = led_tricol_wrapper_enable,
+                                      .disable = led_tricol_wrapper_disable,
+                                      .registerCb = NULL,
+                                      .dregisterCb = NULL,
+                                      .enableIrq = NULL,
+                                      .disableIrq = NULL };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
@@ -110,7 +108,7 @@ static Property led_tricol_property[MAXLEDTRICOLPROP] = {
                    .depProp = NULL }
 };
 
-static const DrvrOps* get_fxn_tbl(Device *pDev) {
+static const DrvrOps *get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -141,8 +139,7 @@ void led_tricol_irq_callback(DevObj *obj, void *prop, void *data) {
 }
 int bsp_led_tricol_init(Device *pDev) {
     int ret = 0;
-    ret = dhelper_init_property_from_parser(pDev, &gProperty,
-                                            &gPropertyCount);
+    ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXLEDTRICOLPROP;
         gProperty = led_tricol_property;

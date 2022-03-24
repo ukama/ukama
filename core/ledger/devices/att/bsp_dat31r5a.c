@@ -20,17 +20,15 @@
 #include "usys_string.h"
 
 const DrvrOps dat31r5aWrapperOps = { .init = dat31r5a_wrapper_init,
-                                                .configure =
-                                                    dat31r5a_wrapper_configure,
-                                                .read = dat31r5a_wrapper_read,
-                                                .write = dat31r5a_wrapper_write,
-                                                .enable = dat31r5a_wrapper_enable,
-                                                .disable =
-                                                    dat31r5a_wrapper_disable,
-                                                .registerCb = NULL,
-                                                .dregisterCb = NULL,
-                                                .enableIrq = NULL,
-                                                .disableIrq = NULL };
+                                     .configure = dat31r5a_wrapper_configure,
+                                     .read = dat31r5a_wrapper_read,
+                                     .write = dat31r5a_wrapper_write,
+                                     .enable = dat31r5a_wrapper_enable,
+                                     .disable = dat31r5a_wrapper_disable,
+                                     .registerCb = NULL,
+                                     .dregisterCb = NULL,
+                                     .enableIrq = NULL,
+                                     .disableIrq = NULL };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
@@ -54,7 +52,7 @@ static Property dat31r5a_property[MAXATTPROP] = {
                       .depProp = NULL },
 };
 
-static const DrvrOps* get_fxn_tbl(Device *pDev) {
+static const DrvrOps *get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -86,8 +84,7 @@ void dat31r5a_irq_callback(DevObj *obj, void *prop, void *data) {
 
 int bsp_dat31r5a_init(Device *pDev) {
     int ret = 0;
-    ret = dhelper_init_property_from_parser(pDev, &gProperty,
-                                            &gPropertyCount);
+    ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXATTPROP;
         gProperty = dat31r5a_property;

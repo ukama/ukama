@@ -23,18 +23,16 @@
 
 static SensorCallbackFxn sensor_cb;
 
-const DrvrOps ina226WrapperOps = {
-    .init = ina226_wrapper_init,
-    .configure = ina226_wrapper_configure,
-    .read = ina226_wrapper_read,
-    .write = ina226_wrapper_write,
-    .enable = ina226_wrapper_enable,
-    .disable = ina226_wrapper_disable,
-    .registerCb = ina226_wrapper_reg_cb,
-    .dregisterCb = ina226_wrapper_dreg_cb,
-    .enableIrq = ina226_wrapper_enable_irq,
-    .disableIrq = ina226_wrapper_disable_irq
-};
+const DrvrOps ina226WrapperOps = { .init = ina226_wrapper_init,
+                                   .configure = ina226_wrapper_configure,
+                                   .read = ina226_wrapper_read,
+                                   .write = ina226_wrapper_write,
+                                   .enable = ina226_wrapper_enable,
+                                   .disable = ina226_wrapper_disable,
+                                   .registerCb = ina226_wrapper_reg_cb,
+                                   .dregisterCb = ina226_wrapper_dreg_cb,
+                                   .enableIrq = ina226_wrapper_enable_irq,
+                                   .disableIrq = ina226_wrapper_disable_irq };
 
 static Property *gProperty = NULL;
 static int gPropertyCount = 0;
@@ -196,7 +194,7 @@ static Property ina226_property[MAXINAPROP] = {
                          .depProp = NULL }
 };
 
-static const DrvrOps* get_fxn_tbl(Device *pDev) {
+static const DrvrOps *get_fxn_tbl(Device *pDev) {
     if (IF_SYSFS_SUPPORT(pDev->sysFile)) {
         return sysfs_wrapper_get_ops();
     } else {
@@ -259,8 +257,7 @@ int bsp_ina226_dreg_cb(void *pDev, SensorCallbackFxn fun) {
 
 int bsp_ina226_init(Device *pDev) {
     int ret = 0;
-    ret = dhelper_init_property_from_parser(pDev, &gProperty,
-                                            &gPropertyCount);
+    ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);
     if (ret) {
         gPropertyCount = MAXINAPROP;
         gProperty = ina226_property;
@@ -348,8 +345,8 @@ int bsp_ina226_enable_irq(void *pDev, void *prop, void *data) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {
-        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty,
-                                 *(int *)prop, data);
+        ret = dhelper_enable_irq(drvr, sensor_cb, pDev, gProperty, *(int *)prop,
+                                 data);
     } else {
         ret = ERR_NODED_DEV_DRVR_MISSING;
     }
@@ -368,8 +365,8 @@ int bsp_ina226_disable_irq(void *pDev, void *prop, void *data) {
 }
 
 /* Reading and confirming interrupts for ADT7481 device */
-int bsp_ina226_confirm_irq(Device *pDev, AlertCallBackData **acbdata, char *fpath,
-                       int *evt) {
+int bsp_ina226_confirm_irq(Device *pDev, AlertCallBackData **acbdata,
+                           char *fpath, int *evt) {
     int ret = 0;
     const DrvrOps *drvr = get_fxn_tbl(pDev);
     if (drvr) {

@@ -9,7 +9,6 @@
 
 #include "drivers/ledtricol_wrapper.h"
 
-
 int led_tricol_wrapper_init() {
     return 0;
 }
@@ -18,7 +17,8 @@ int led_tricol_wrapper_registration(Device *p_dev) {
     return 0;
 }
 
-int led_tricol_wrapper_read_properties(DevObj *obj, void *prop, uint16_t *count) {
+int led_tricol_wrapper_read_properties(DevObj *obj, void *prop,
+                                       uint16_t *count) {
     return 0;
 }
 

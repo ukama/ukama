@@ -17,17 +17,15 @@
 SensorCallbackFxn sensorCb;
 
 const DrvrOps drvrSysFsOps = { .init = sysfs_wrapper_init,
-                                             .configure = sysfs_wrapper_configure,
-                                             .read = sysfs_wrapper_read,
-                                             .write = sysfs_wrapper_write,
-                                             .enable = sysfs_wrapper_enable,
-                                             .disable = sysfs_wrapper_disable,
-                                             .registerCb = sysfs_wrapper_reg_cb,
-                                             .dregisterCb = sysfs_wrapper_dreg_cb,
-                                             .enableIrq =
-                                                 sysfs_wrapper_enable_irq,
-                                             .disableIrq =
-                                                 sysfs_wrapper_disable_irq };
+                               .configure = sysfs_wrapper_configure,
+                               .read = sysfs_wrapper_read,
+                               .write = sysfs_wrapper_write,
+                               .enable = sysfs_wrapper_enable,
+                               .disable = sysfs_wrapper_disable,
+                               .registerCb = sysfs_wrapper_reg_cb,
+                               .dregisterCb = sysfs_wrapper_dreg_cb,
+                               .enableIrq = sysfs_wrapper_enable_irq,
+                               .disableIrq = sysfs_wrapper_disable_irq };
 
 const DrvrOps *sysfs_wrapper_get_ops() {
     return &drvrSysFsOps;

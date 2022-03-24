@@ -25,26 +25,26 @@ static ListInfo modList;
 static int modListFlag = 0;
 
 const StoreOperations eepromOps = { .init = eeprom_wrapper_init,
-                .readBlock = eeprom_wrapper_read,
-                .writeBlock = eeprom_wrapper_write,
-                .readNumber = eeprom_wrapper_read_number,
-                .writeNumber = eeprom_wrapper_write_number,
-                .eraseBlock = eeprom_wrapper_erase,
-                .writeProtect = eeprom_wrapper_protect,
-                .rename = eeprom_wrapper_rename,
-                .cleanup = eeprom_wrapper_cleanup,
-                .remove = eeprom_wrapper_remove };
+                                    .readBlock = eeprom_wrapper_read,
+                                    .writeBlock = eeprom_wrapper_write,
+                                    .readNumber = eeprom_wrapper_read_number,
+                                    .writeNumber = eeprom_wrapper_write_number,
+                                    .eraseBlock = eeprom_wrapper_erase,
+                                    .writeProtect = eeprom_wrapper_protect,
+                                    .rename = eeprom_wrapper_rename,
+                                    .cleanup = eeprom_wrapper_cleanup,
+                                    .remove = eeprom_wrapper_remove };
 
 const StoreOperations fileOps = { .init = usys_file_init,
-                .readBlock = usys_file_read,
-                .writeBlock = usys_file_write,
-                .readNumber = usys_file_read_number,
-                .writeNumber = usys_file_write_number,
-                .eraseBlock = usys_file_erase,
-                .writeProtect = usys_file_protect,
-                .rename = usys_file_rename,
-                .cleanup = usys_file_cleanup,
-                .remove = usys_file_remove };
+                                  .readBlock = usys_file_read,
+                                  .writeBlock = usys_file_write,
+                                  .readNumber = usys_file_read_number,
+                                  .writeNumber = usys_file_write_number,
+                                  .eraseBlock = usys_file_erase,
+                                  .writeProtect = usys_file_protect,
+                                  .rename = usys_file_rename,
+                                  .cleanup = usys_file_cleanup,
+                                  .remove = usys_file_remove };
 
 static void free_module_list(void *ip) {
     ListNode *node = (ListNode *)ip;
@@ -75,7 +75,6 @@ static ModuleMap *search_module_in_list(char *puuid) {
     ModuleMap *smap = NULL;
     ModuleMap *fmap = NULL;
     if (!usys_strcmp(puuid, "")) {
-
         /* If puuid is empty string. This means request for master module
          * This assumption is made because on-bootup ubsp wouldn't know
          * what's the master module uuid. Also it's made sure that first
@@ -85,12 +84,11 @@ static ModuleMap *search_module_in_list(char *puuid) {
         fmap = usys_list_head(&modList, 0);
         if (fmap) {
             usys_log_trace("Map found for master module UUID %s Name %s "
-                            "in Module map.",
-                            fmap->modUuid, fmap->modName);
+                           "in Module map.",
+                           fmap->modUuid, fmap->modName);
         }
 
     } else {
-
         smap = usys_zmalloc(sizeof(ModuleMap));
         if (smap) {
             usys_memcpy(smap->modUuid, puuid, usys_strlen(puuid));
@@ -108,7 +106,6 @@ static ModuleMap *search_module_in_list(char *puuid) {
             usys_free(smap);
             smap = NULL;
         }
-
     }
     return fmap;
 }
@@ -116,20 +113,16 @@ static ModuleMap *search_module_in_list(char *puuid) {
 static int update_module_list(ModuleMap *map) {
     int ret = 0;
     if (map) {
-
         ret = usys_list_update(&modList, map);
         if (ret) {
-            usys_log_error(
-                            "Module UUID %s and Name %s update "
-                            "to module list in store failed.",
-                            ret, map->modUuid, map->modName);
+            usys_log_error("Module UUID %s and Name %s update "
+                           "to module list in store failed.",
+                           ret, map->modUuid, map->modName);
         } else {
-            usys_log_trace(
-                            "Module UUID %s and Name %s update "
-                            "to module list in sore completed.",
-                            map->modUuid, map->modName);
+            usys_log_trace("Module UUID %s and Name %s update "
+                           "to module list in sore completed.",
+                           map->modUuid, map->modName);
         }
-
     }
     return ret;
 }
@@ -137,7 +130,7 @@ static int update_module_list(ModuleMap *map) {
 ListInfo *get_module_list() {
     if (modListFlag == 0) {
         usys_list_new(&modList, sizeof(ModuleMap), free_module_list,
-                        compare_module_list, NULL);
+                      compare_module_list, NULL);
         modListFlag = 1;
         usys_log_trace("New Module list initialized for store.");
     }
@@ -146,8 +139,8 @@ ListInfo *get_module_list() {
 
 int store_init() {
     int ret = 0;
-    usys_list_new(&modList, sizeof(ModuleMap), free_module_list, compare_module_list,
-                    NULL);
+    usys_list_new(&modList, sizeof(ModuleMap), free_module_list,
+                  compare_module_list, NULL);
     modListFlag = 1;
     usys_log_trace("Module list initialized for store.");
     return ret;
@@ -159,45 +152,39 @@ int store_register_module(UnitCfg *pcfg) {
     DevI2cCfg *icfg = NULL;
     char *fname = NULL;
     if (pcfg) {
-
         /* Check If module is already registered.*/
         pmap = search_module_in_list(pcfg->modUuid);
         if (pmap) {
             usys_log_warn("Map for Module %s is already existing.",
-                            pcfg->modUuid);
+                          pcfg->modUuid);
             ret = 0;
         } else {
-
             usys_log_debug("No map for Module %s found. Adding now.",
-                            pcfg->modUuid);
+                           pcfg->modUuid);
 
             pmap = usys_zmalloc(sizeof(ModuleMap));
             if (pmap) {
-
                 usys_memcpy(pmap->modUuid, pcfg->modUuid,
-                                usys_strlen(pcfg->modUuid));
+                            usys_strlen(pcfg->modUuid));
                 usys_memcpy(pmap->modName, pcfg->modName,
-                                usys_strlen(pcfg->modName));
+                            usys_strlen(pcfg->modName));
 
                 /* If the eeprom data is exposed as sysfs files */
                 if ((pcfg->sysFs != NULL) || (!usys_strcmp(pcfg->sysFs, ""))) {
-
                     fname = usys_zmalloc(sizeof(char) * PATH_LENGTH);
                     if (fname) {
                         usys_memcpy(fname, pcfg->sysFs,
-                                        usys_strlen(pcfg->sysFs));
+                                    usys_strlen(pcfg->sysFs));
                     } else {
                         ret = ERR_NODED_MEMORY_EXHAUSTED;
-                        usys_log_error(
-                                        "Memory allocation failed. Error: %s",
-                                        usys_error(errno));
+                        usys_log_error("Memory allocation failed. Error: %s",
+                                       usys_error(errno));
                         goto cleanup;
                     }
 
                     pmap->storeAttr = fname;
                     pmap->storeOps = &fileOps;
                 } else {
-
                     /* If the eeprom data has to be read using
                      * user space driver */
                     icfg = usys_zmalloc(sizeof(icfg));
@@ -205,15 +192,13 @@ int store_register_module(UnitCfg *pcfg) {
                         usys_memcpy(icfg, pcfg->eepromCfg, sizeof(DevI2cCfg));
                     } else {
                         ret = ERR_NODED_MEMORY_EXHAUSTED;
-                        usys_log_error(
-                                        "Memory exhausted while adding eeprom "
-                                        "cfg to module map in store. Error: %s",
-                                        usys_error(errno));
+                        usys_log_error("Memory exhausted while adding eeprom "
+                                       "cfg to module map in store. Error: %s",
+                                       usys_error(errno));
                         goto cleanup;
                     }
                     pmap->storeAttr = icfg;
                     pmap->storeOps = &eepromOps;
-
                 }
 
                 usys_list_append(&modList, pmap);
@@ -221,15 +206,14 @@ int store_register_module(UnitCfg *pcfg) {
                 ret = pmap->storeOps->init(pmap->storeAttr);
                 if (!ret) {
                     usys_log_debug("Module %s registration success.",
-                                    pcfg->modUuid);
+                                   pcfg->modUuid);
                 }
 
             } else {
                 ret = ERR_NODED_MEMORY_EXHAUSTED;
-                usys_log_error(
-                                "Map for Module %s is not added."
-                                "Memory exhausted. Error: %s",
-                                pcfg->modUuid, usys_error(errno));
+                usys_log_error("Map for Module %s is not added."
+                               "Memory exhausted. Error: %s",
+                               pcfg->modUuid, usys_error(errno));
             }
         }
         usys_free(pmap);
@@ -241,7 +225,7 @@ int store_register_module(UnitCfg *pcfg) {
     }
 
     return ret;
-    cleanup:
+cleanup:
     usys_free(fname);
     usys_free(icfg);
     usys_free(pmap);
@@ -287,11 +271,10 @@ int store_register_update_module(char *puuid, UnitCfg *pcfg, uint8_t count) {
         /* Check If module is already registered.*/
         pmap = search_module_in_list(puuid);
         if (pmap) {
-
             usys_log_trace("Map for Module %s found in module list .", puuid);
             usys_memset(pmap->modName, '\0', MAX_NAME_LENGTH);
             usys_memcpy(pmap->modName, pcfg->modName,
-                            usys_strlen(pcfg->modName));
+                        usys_strlen(pcfg->modName));
 
             /* Need to free the storeAttr as we don't know new one
              *  could be same or different.*/
@@ -304,38 +287,34 @@ int store_register_update_module(char *puuid, UnitCfg *pcfg, uint8_t count) {
                     pmap->storeAttr = fname;
                 } else {
                     ret = ERR_NODED_MEMORY_EXHAUSTED;
-                    usys_log_error(
-                                    "Memory exhausted while adding sys file "
-                                    "name to store. Error: %s",
-                                    usys_error(errno));
+                    usys_log_error("Memory exhausted while adding sys file "
+                                   "name to store. Error: %s",
+                                   usys_error(errno));
                     goto cleanuppmap;
                 }
                 pmap->storeOps = &fileOps;
 
             } else {
-
                 /* If the eeprom data needs a custom driver */
                 icfg = usys_zmalloc(sizeof(icfg));
                 if (icfg) {
                     usys_memcpy(icfg, pcfg->eepromCfg, sizeof(DevI2cCfg));
                 } else {
                     ret = ERR_NODED_MEMORY_EXHAUSTED;
-                    usys_log_error(
-                                    "Memory exhausted while adding eeprom cfg "
-                                    "to store. Error: %s",
-                                    usys_error(errno));
+                    usys_log_error("Memory exhausted while adding eeprom cfg "
+                                   "to store. Error: %s",
+                                   usys_error(errno));
                     goto cleanuppmap;
                 }
                 pmap->storeAttr = icfg;
                 pmap->storeOps = &eepromOps;
-
             }
 
             /* Update module list */
             ret = update_module_list(pmap);
             if (!ret) {
-                usys_log_error("Updating module UUID %s to store failed.",
-                                ret, puuid);
+                usys_log_error("Updating module UUID %s to store failed.", ret,
+                               puuid);
                 goto cleanup;
             } else {
                 usys_log_debug("Module %s update success.", pcfg->modUuid);
@@ -344,8 +323,8 @@ int store_register_update_module(char *puuid, UnitCfg *pcfg, uint8_t count) {
             /* Rename module name */
             ret = pmap->storeOps->rename(puuid, pcfg->modName);
             if (!ret) {
-                usys_log_error("Renaming store for module UUID %s failed.",
-                                ret, puuid);
+                usys_log_error("Renaming store for module UUID %s failed.", ret,
+                               puuid);
                 goto cleanup;
             } else {
                 usys_log_debug("Module %s update success.", pcfg->modUuid);
@@ -362,10 +341,10 @@ int store_register_update_module(char *puuid, UnitCfg *pcfg, uint8_t count) {
     }
     return ret;
 
-    cleanup:
+cleanup:
     usys_free(fname);
     usys_free(icfg);
-    cleanuppmap:
+cleanuppmap:
     usys_free(pmap);
     return ret;
 }
@@ -384,8 +363,7 @@ ModuleMap *store_choose_module(char *puuid) {
         }
 
     } else {
-        usys_log_warn("Module UUID is invalid",
-                        ERR_NODED_INVALID_POINTER);
+        usys_log_warn("Module UUID is invalid", ERR_NODED_INVALID_POINTER);
     }
     return pmap;
 }
@@ -406,7 +384,8 @@ int store_read_block(char *p_uuid, void *data, off_t offset, uint16_t size) {
     ModuleMap *pmap = store_choose_module(p_uuid);
     if (pmap) {
         if (pmap->storeOps) {
-            ret = pmap->storeOps->readBlock(pmap->storeAttr, data, offset, size);
+            ret =
+                pmap->storeOps->readBlock(pmap->storeAttr, data, offset, size);
         }
         usys_free(pmap);
     }
@@ -418,7 +397,8 @@ int store_write_block(char *p_uuid, void *data, off_t offset, uint16_t size) {
     ModuleMap *pmap = store_choose_module(p_uuid);
     if (pmap) {
         if (pmap->storeOps) {
-            ret = pmap->storeOps->writeBlock(pmap->storeAttr, data, offset, size);
+            ret =
+                pmap->storeOps->writeBlock(pmap->storeAttr, data, offset, size);
         }
         usys_free(pmap);
     }
@@ -438,13 +418,13 @@ int store_erase_block(char *p_uuid, off_t offset, uint16_t size) {
 }
 
 int store_read_number(char *p_uuid, void *val, off_t offset, uint16_t count,
-                uint8_t size) {
+                      uint8_t size) {
     int ret = -1;
     ModuleMap *pmap = store_choose_module(p_uuid);
     if (pmap) {
         if (pmap->storeOps) {
-            ret = pmap->storeOps->readNumber(pmap->storeAttr, val, offset, count,
-                            size);
+            ret = pmap->storeOps->readNumber(pmap->storeAttr, val, offset,
+                                             count, size);
         }
         usys_free(pmap);
     }
@@ -452,13 +432,13 @@ int store_read_number(char *p_uuid, void *val, off_t offset, uint16_t count,
 }
 
 int store_write_number(char *p_uuid, void *val, off_t offset, uint16_t count,
-                uint8_t size) {
+                       uint8_t size) {
     int ret = -1;
     ModuleMap *pmap = store_choose_module(p_uuid);
     if (pmap) {
         if (pmap->storeOps) {
-            ret = pmap->storeOps->writeNumber(pmap->storeAttr, val, offset, count,
-                            size);
+            ret = pmap->storeOps->writeNumber(pmap->storeAttr, val, offset,
+                                              count, size);
         }
         usys_free(pmap);
     }

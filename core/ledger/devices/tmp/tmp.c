@@ -24,55 +24,53 @@
 static ListInfo tmpLdgr;
 static int tmpLdgrflag = 0;
 
-const DevOps tmp464Ops = { .init =bsp_tmp464_init,
-                                       .registration = bsp_tmp464_registration,
-                                       .readPropCount =
-                                          bsp_tmp464_read_prop_count,
-                                       .readProp = bsp_tmp464_read_properties,
-                                       .configure = bsp_tmp464_configure,
-                                       .read = bsp_tmp464_read,
-                                       .write = bsp_tmp464_write,
-                                       .enable = bsp_tmp464_enable,
-                                       .disable = bsp_tmp464_disable,
-                                       .registerCb = bsp_tmp464_reg_cb,
-                                       .dregisterCb = bsp_tmp464_dreg_cb,
-                                       .enableIrq = bsp_tmp464_enable_irq,
-                                       .disableIrq = bsp_tmp464_disable_irq,
-                                       .confirmIrq = bsp_tmp464_confirm_irq,
-                                       .irqType = bsp_tmp464_get_irq_type };
+const DevOps tmp464Ops = { .init = bsp_tmp464_init,
+                           .registration = bsp_tmp464_registration,
+                           .readPropCount = bsp_tmp464_read_prop_count,
+                           .readProp = bsp_tmp464_read_properties,
+                           .configure = bsp_tmp464_configure,
+                           .read = bsp_tmp464_read,
+                           .write = bsp_tmp464_write,
+                           .enable = bsp_tmp464_enable,
+                           .disable = bsp_tmp464_disable,
+                           .registerCb = bsp_tmp464_reg_cb,
+                           .dregisterCb = bsp_tmp464_dreg_cb,
+                           .enableIrq = bsp_tmp464_enable_irq,
+                           .disableIrq = bsp_tmp464_disable_irq,
+                           .confirmIrq = bsp_tmp464_confirm_irq,
+                           .irqType = bsp_tmp464_get_irq_type };
 
 const DevOps se98Ops = { .init = bsp_se98_init,
-                                     .registration = bsp_se98_registration,
-                                     .readPropCount = bsp_se98_read_prop_count,
-                                     .readProp = bsp_se98_read_properties,
-                                     .configure = bsp_se98_configure,
-                                     .read = bsp_se98_read,
-                                     .write = bsp_se98_write,
-                                     .enable = bsp_se98_enable,
-                                     .disable = bsp_se98_disable,
-                                     .registerCb = bsp_se98_reg_cb,
-                                     .dregisterCb = bsp_se98_dreg_cb,
-                                     .enableIrq = bsp_se98_enable_irq,
-                                     .disableIrq = bsp_se98_disable_irq,
-                                     .confirmIrq = bsp_se98_confirm_irq,
-                                     .irqType = bsp_se98_get_irq_type };
+                         .registration = bsp_se98_registration,
+                         .readPropCount = bsp_se98_read_prop_count,
+                         .readProp = bsp_se98_read_properties,
+                         .configure = bsp_se98_configure,
+                         .read = bsp_se98_read,
+                         .write = bsp_se98_write,
+                         .enable = bsp_se98_enable,
+                         .disable = bsp_se98_disable,
+                         .registerCb = bsp_se98_reg_cb,
+                         .dregisterCb = bsp_se98_dreg_cb,
+                         .enableIrq = bsp_se98_enable_irq,
+                         .disableIrq = bsp_se98_disable_irq,
+                         .confirmIrq = bsp_se98_confirm_irq,
+                         .irqType = bsp_se98_get_irq_type };
 
 const DevOps adt7481Ops = { .init = bsp_adt7481_init,
-                                        .registration = bsp_adt7481_registration,
-                                        .readPropCount =
-                                            bsp_adt7481_read_prop_count,
-                                        .readProp = bsp_adt7481_read_properties,
-                                        .configure = bsp_adt7481_configure,
-                                        .read = bsp_adt7481_read,
-                                        .write = bsp_adt7481_write,
-                                        .enable = bsp_adt7481_enable,
-                                        .disable = bsp_adt7481_disable,
-                                        .registerCb = bsp_adt7481_reg_cb,
-                                        .dregisterCb = bsp_adt7481_dreg_cb,
-                                        .enableIrq = bsp_adt7481_enable_irq,
-                                        .disableIrq = bsp_adt7481_disable_irq,
-                                        .confirmIrq = bsp_adt7481_confirm_irq,
-                                        .irqType = bsp_adt7481_get_irq_type };
+                            .registration = bsp_adt7481_registration,
+                            .readPropCount = bsp_adt7481_read_prop_count,
+                            .readProp = bsp_adt7481_read_properties,
+                            .configure = bsp_adt7481_configure,
+                            .read = bsp_adt7481_read,
+                            .write = bsp_adt7481_write,
+                            .enable = bsp_adt7481_enable,
+                            .disable = bsp_adt7481_disable,
+                            .registerCb = bsp_adt7481_reg_cb,
+                            .dregisterCb = bsp_adt7481_dreg_cb,
+                            .enableIrq = bsp_adt7481_enable_irq,
+                            .disableIrq = bsp_adt7481_disable_irq,
+                            .confirmIrq = bsp_adt7481_confirm_irq,
+                            .irqType = bsp_adt7481_get_irq_type };
 
 DevOpsMap tmp_dev_map[MAX_TEMP_SENSOR_TYPE] = {
     { .name = "TMP464", .opsTable = &tmp464Ops },
@@ -108,7 +106,8 @@ int compare_tmp_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcasecmp(ip->obj.name, op->obj.name) &&
-        !usys_strcasecmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
+        (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -116,7 +115,8 @@ int compare_tmp_dev(void *ipt, void *sd) {
 
 ListInfo *get_tmp_dev_ldgr() {
     if (tmpLdgrflag == 0) {
-        usys_list_new(&tmpLdgr, sizeof(Device), free_tmp_dev, compare_tmp_dev, NULL);
+        usys_list_new(&tmpLdgr, sizeof(Device), free_tmp_dev, compare_tmp_dev,
+                      NULL);
         tmpLdgrflag = 1;
         usys_log_trace("TMP:: TEMP ledger initialized.");
     }

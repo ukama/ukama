@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-
 #include "devices/led.h"
 
 #include "device.h"
@@ -23,27 +22,24 @@
 static ListInfo ledLdgr;
 static int ledLdgrflag = 0;
 
-const DevOps ledTriColOps = {
-    .init = bsp_led_tricol_init,
-    .registration = bsp_led_tricol_registration,
-    .readPropCount = bsp_led_tricol_read_prop_count,
-    .readProp = bsp_led_tricol_read_properties,
-    .configure = bsp_led_tricol_configure,
-    .read = bsp_led_tricol_read,
-    .write = bsp_led_tricol_write,
-    .enable = bsp_led_tricol_enable,
-    .disable = bsp_led_tricol_disable,
-    .registerCb = NULL,
-    .dregisterCb = NULL,
-    .enableIrq = NULL,
-    .disableIrq = NULL,
-    .confirmIrq = NULL,
-    .irqType = NULL
-};
+const DevOps ledTriColOps = { .init = bsp_led_tricol_init,
+                              .registration = bsp_led_tricol_registration,
+                              .readPropCount = bsp_led_tricol_read_prop_count,
+                              .readProp = bsp_led_tricol_read_properties,
+                              .configure = bsp_led_tricol_configure,
+                              .read = bsp_led_tricol_read,
+                              .write = bsp_led_tricol_write,
+                              .enable = bsp_led_tricol_enable,
+                              .disable = bsp_led_tricol_disable,
+                              .registerCb = NULL,
+                              .dregisterCb = NULL,
+                              .enableIrq = NULL,
+                              .disableIrq = NULL,
+                              .confirmIrq = NULL,
+                              .irqType = NULL };
 
-DevOpsMap led_dev_map[MAX_LED_SENSOR_TYPE] = {
-    { .name = "LED-TRICOLOR", .opsTable = &ledTriColOps }
-};
+DevOpsMap led_dev_map[MAX_LED_SENSOR_TYPE] = { { .name = "LED-TRICOLOR",
+                                                 .opsTable = &ledTriColOps } };
 
 const DevOps *get_led_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
@@ -73,7 +69,8 @@ int compare_led_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcasecmp(ip->obj.name, op->obj.name) &&
-        !usys_strcasecmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
+        (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -82,7 +79,8 @@ int compare_led_dev(void *ipt, void *sd) {
 ListInfo *get_led_dev_ldgr() {
     /* Initialize ledger for the first time we try to access it.*/
     if (ledLdgrflag == 0) {
-        usys_list_new(&ledLdgr, sizeof(Device), free_led_dev, compare_led_dev, NULL);
+        usys_list_new(&ledLdgr, sizeof(Device), free_led_dev, compare_led_dev,
+                      NULL);
         ledLdgrflag = 1;
         usys_log_trace("LED:: led ledger initialized.");
     }

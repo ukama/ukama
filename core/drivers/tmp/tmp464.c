@@ -9,7 +9,6 @@
 
 #include "drivers/tmp464_wrapper.h"
 
-
 int tmp464_wrapper_init() {
     return 0;
 }

@@ -22,7 +22,6 @@ ListInfo irqdb;
 static void remove_irq(void *ptr) {
     ListNode *node = (ListNode *)ptr;
     if (node) {
-
         if (node->data) {
             usys_free(node->data);
             node->data = NULL;
@@ -44,8 +43,7 @@ int compare_dev(void *lip, void *sd) {
     if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcasecmp(ip->obj.name, op->obj.name) &&
         !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
-        (ip->obj.type == op->obj.type) &&
-        !usys_strcmp(ip->fName, op->fName)) {
+        (ip->obj.type == op->obj.type) && !usys_strcmp(ip->fName, op->fName)) {
         ret = 1;
     }
 
@@ -59,15 +57,15 @@ static IRQCfg *search_device_object(IRQCfg *sdev) {
     /* TODO::Check if it returns proper data.*/
     fcfg = usys_list_search(&irqdb, sdev);
     if (fcfg) {
-        usys_log_debug(
-            "IRQDB:: IRQ %lu for Device Name %s, Disc: %s "
-            "Module UUID: %s found in IRQDB.",
-            fcfg->pthread, fcfg->obj.name, fcfg->obj.desc, fcfg->obj.modUuid);
+        usys_log_debug("IRQDB:: IRQ %lu for Device Name %s, Disc: %s "
+                       "Module UUID: %s found in IRQDB.",
+                       fcfg->pthread, fcfg->obj.name, fcfg->obj.desc,
+                       fcfg->obj.modUuid);
     } else {
-        usys_log_debug(
-            "IRQDB:: IRQ %lu for Device Name %s, Disc: %s"
-            "Module UUID: %s not found in IRQDB.",
-            fcfg->pthread, fcfg->obj.name, fcfg->obj.desc, fcfg->obj.modUuid);
+        usys_log_debug("IRQDB:: IRQ %lu for Device Name %s, Disc: %s"
+                       "Module UUID: %s not found in IRQDB.",
+                       fcfg->pthread, fcfg->obj.name, fcfg->obj.desc,
+                       fcfg->obj.modUuid);
 
         if (fcfg) {
             usys_free(fcfg);
@@ -82,10 +80,10 @@ static IRQCfg *search_device_object(IRQCfg *sdev) {
 static int irqdb_unregister_irq(void *data) {
     int ret = 0;
     IRQCfg *cfg = (IRQCfg *)data;
-    usys_log_trace(
-        "IRQDB:: De-registering IRQ %lu for Device Name %s, Disc: %s"
-        " Module UUID: %s found.",
-        cfg->pthread, cfg->obj.name, cfg->obj.desc, cfg->obj.modUuid);
+    usys_log_trace("IRQDB:: De-registering IRQ %lu for Device Name %s, Disc: %s"
+                   " Module UUID: %s found.",
+                   cfg->pthread, cfg->obj.name, cfg->obj.desc,
+                   cfg->obj.modUuid);
 
     /* Cancel thread */
     ret = usys_thread_cancel(cfg->pthread);
@@ -110,16 +108,14 @@ void *threaded_irq_handler(void *args) {
 
     IRQCfg *cfg = (IRQCfg *)args;
     if (!cfg) {
-        usys_log_debug(
-            "IRQDB:::: No IRQ Config found. "
-            "Failed to start thread for IRQ handling.");
+        usys_log_debug("IRQDB:::: No IRQ Config found. "
+                       "Failed to start thread for IRQ handling.");
 
     } else {
-        usys_log_debug(
-            "IRQDB:: IRQ %lu for Device Name %s, Disc: %s "
-            "Module UUID: %s started thread %lu for IRQ handling.",
-            cfg->pthread, cfg->obj.name, cfg->obj.desc, cfg->obj.modUuid,
-            usys_thread_id());
+        usys_log_debug("IRQDB:: IRQ %lu for Device Name %s, Disc: %s "
+                       "Module UUID: %s started thread %lu for IRQ handling.",
+                       cfg->pthread, cfg->obj.name, cfg->obj.desc,
+                       cfg->obj.modUuid, usys_thread_id());
 
 #ifdef TARGET
         //TODO
@@ -156,7 +152,7 @@ IRQCfg *irqdb_search_for_device_irq(Device *dev) {
 
 /* Register IRQ for device */
 int irqdb_register_for_device_irq(IRQSrcInfo *rsrc, SensorCallbackFxn cb,
-                ThreadedIRQEnable IRQ_enable) {
+                                  ThreadedIRQEnable IRQ_enable) {
     int ret = 0;
     /* Search in list if IRQ is already created for device.*/
     /*TODO: Based on the alert sysfs:
@@ -168,7 +164,8 @@ int irqdb_register_for_device_irq(IRQSrcInfo *rsrc, SensorCallbackFxn cb,
     IRQCfg scfg = { .pthread = 0, .cb = cb };
     usys_memcpy(&scfg.obj, &rsrc->obj, sizeof(DevObj));
     usys_memset(scfg.fName, '\0', 64);
-    usys_memcpy(&scfg.fName, rsrc->src.sysFsName, usys_strlen(rsrc->src.sysFsName));
+    usys_memcpy(&scfg.fName, rsrc->src.sysFsName,
+                usys_strlen(rsrc->src.sysFsName));
 
     ret = usys_list_if_element_found(&irqdb, &scfg);
     if (!ret) {
@@ -183,26 +180,25 @@ int irqdb_register_for_device_irq(IRQSrcInfo *rsrc, SensorCallbackFxn cb,
         }
     }
 
-    usys_log_trace(
-        "IRQDB:: Registering IRQ for Device Name %s, Disc: %s"
-        " Module UUID: %s found.",
-        rsrc->obj.name, rsrc->obj.desc, rsrc->obj.modUuid);
+    usys_log_trace("IRQDB:: Registering IRQ for Device Name %s, Disc: %s"
+                   " Module UUID: %s found.",
+                   rsrc->obj.name, rsrc->obj.desc, rsrc->obj.modUuid);
 
     /* Create thread */
     void *args = irqdb.tail->data;
     IRQCfg *tcfg = (IRQCfg *)irqdb.tail->data;
-    if (usys_thread_create(&(tcfg->pthread), NULL,
-                    threaded_irq_handler, args)) {
+    if (usys_thread_create(&(tcfg->pthread), NULL, threaded_irq_handler,
+                           args)) {
         /* Remove from list */
         if (usys_list_remove(&irqdb, &rsrc->obj)) {
             ret = ERR_NODED_LIST_DEL_FAILED;
         }
         ret = ERR_NODED_THREAD_CREATE_FAIL;
     }
-    usys_log_trace(
-        "IRQDB:: Registered IRQ %lu for Device Name %s, Disc: %s "
-        "Module UUID: %s found.",
-        tcfg->pthread, rsrc->obj.name, rsrc->obj.desc, rsrc->obj.modUuid);
+    usys_log_trace("IRQDB:: Registered IRQ %lu for Device Name %s, Disc: %s "
+                   "Module UUID: %s found.",
+                   tcfg->pthread, rsrc->obj.name, rsrc->obj.desc,
+                   rsrc->obj.modUuid);
 
     irqdb_print_list();
 
@@ -235,12 +231,11 @@ int irqdb_deregister_for_device_irq(IRQSrcInfo *rsrc,
     usys_memcpy(&scfg.obj, &rsrc->obj, sizeof(DevObj));
     usys_memset(scfg.fName, '\0', 64);
     usys_memcpy(&scfg.fName, rsrc->src.sysFsName,
-                    usys_strlen(rsrc->src.sysFsName));
+                usys_strlen(rsrc->src.sysFsName));
 
     /*This will print the required info.*/
     IRQCfg *cfg = search_device_object(&scfg);
     if (cfg) {
-
         /* Return 1 if cancel is success */
         ret = irqdb_unregister_irq(cfg);
         if (ret) {
@@ -252,24 +247,20 @@ int irqdb_deregister_for_device_irq(IRQSrcInfo *rsrc,
             }
 
         } else {
-
             ret = ERR_NODED_THREAD_CANCEL_FAIL;
             log_error(
                 "IRQDB(%d):: Failed to cancel IRQ thread for Device Name %s, "
                 "Disc: %s Module UUID: %s found.",
                 ret, cfg->obj.name, cfg->obj.desc, cfg->obj.modUuid);
-
         }
         usys_free(cfg);
         cfg = NULL;
     } else {
-
         ret = ERR_NODED_DEV_IRQ_NOT_REG;
         log_error(
             "IRQDB(%d):: De-registering failed No IRQ for Device Name %s, "
             "Disc: %s Module UUID: %s found.",
             ret, rsrc->obj.name, rsrc->obj.desc, rsrc->obj.modUuid);
-
     }
 
     /* Just for confirmation */
@@ -321,9 +312,9 @@ void irqdb_print_list() {
 
     if (irqdb.logicalLength > 0) {
         usys_log_trace("Logical length is                    %d.",
-                  irqdb.logicalLength);
+                       irqdb.logicalLength);
         usys_log_trace("Element size is                      %d.",
-                  irqdb.elementSize);
+                       irqdb.elementSize);
         usys_log_trace("Head is at                           %p.", irqdb.head);
         usys_log_trace("Tail is at                           %p.", irqdb.tail);
         usys_log_trace(

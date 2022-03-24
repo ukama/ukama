@@ -19,9 +19,8 @@
 #include "usys_string.h"
 
 /* Return 1 for active, 0 for inactive and -ve for error.*/
-static int irqhelper_validate_irq(const DrvrOps *drvrOps,
-                                  Device *dev, Property *prop, int iter,
-                                  double *curr_val) {
+static int irqhelper_validate_irq(const DrvrOps *drvrOps, Device *dev,
+                                  Property *prop, int iter, double *curr_val) {
     int ret = 0;
     int valid = -1;
     void *hwattr;
@@ -162,8 +161,8 @@ int irqhelper_confirm_irq(const DrvrOps *drvrOps, Device *p_dev,
                 int lmtcheck = 0;
                 if (prop[iter].depProp) {
                     if (prop[iter].depProp[0].currIdx >= 0) {
-                        lmtcheck = irqhelper_validate_irq(drvrOps, dev,
-                                                          prop, iter, &value);
+                        lmtcheck = irqhelper_validate_irq(drvrOps, dev, prop,
+                                                          iter, &value);
                         prop_idx = iter;
                     }
                 }

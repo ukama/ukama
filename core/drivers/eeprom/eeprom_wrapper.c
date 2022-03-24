@@ -36,12 +36,12 @@ int eeprom_wrapper_read_int(int *value, off_t offset, uint16_t count) {
 int eeprom_wrapper_write_int(int *value, off_t offset, uint16_t count) {
     return 0;
 }
-int eeprom_wrapper_read_number(void *data, void *value, off_t offset, uint16_t count,
-                       uint8_t size) {
+int eeprom_wrapper_read_number(void *data, void *value, off_t offset,
+                               uint16_t count, uint8_t size) {
     return 0;
 }
-int eeprom_wrapper_write_number(void *data, void *value, off_t offset, uint16_t count,
-                        uint8_t size) {
+int eeprom_wrapper_write_number(void *data, void *value, off_t offset,
+                                uint16_t count, uint8_t size) {
     return 0;
 }
 int eeprom_wrapper_erase(void *data, off_t offset, uint16_t size) {

@@ -23,25 +23,23 @@ static ListInfo adcLdgr;
 static int adcLdgrflag = 0;
 
 const DevOps ads1015Ops = { .init = bsp_ads1015_init,
-                                        .registration = bsp_ads1015_registration,
-                                        .readPropCount =
-                                            bsp_ads1015_read_prop_count,
-                                        .readProp = bsp_ads1015_read_properties,
-                                        .configure = bsp_ads1015_configure,
-                                        .read = bsp_ads1015_read,
-                                        .write = bsp_ads1015_write,
-                                        .enable = bsp_ads1015_enable,
-                                        .disable = bsp_ads1015_disable,
-                                        .registerCb = NULL,
-                                        .dregisterCb = NULL,
-                                        .enableIrq = NULL,
-                                        .disableIrq = NULL,
-                                        .confirmIrq = NULL,
-                                        .irqType = NULL };
+                            .registration = bsp_ads1015_registration,
+                            .readPropCount = bsp_ads1015_read_prop_count,
+                            .readProp = bsp_ads1015_read_properties,
+                            .configure = bsp_ads1015_configure,
+                            .read = bsp_ads1015_read,
+                            .write = bsp_ads1015_write,
+                            .enable = bsp_ads1015_enable,
+                            .disable = bsp_ads1015_disable,
+                            .registerCb = NULL,
+                            .dregisterCb = NULL,
+                            .enableIrq = NULL,
+                            .disableIrq = NULL,
+                            .confirmIrq = NULL,
+                            .irqType = NULL };
 
-DevOpsMap adc_dev_map[MAX_ADC_SENSOR_TYPE] = {
-    { .name = "ADS1015", .opsTable = &ads1015Ops }
-};
+DevOpsMap adc_dev_map[MAX_ADC_SENSOR_TYPE] = { { .name = "ADS1015",
+                                                 .opsTable = &ads1015Ops } };
 
 const DevOps *get_adc_dev_ops(char *name) {
     const DevOps *opsTbl = NULL;
@@ -71,7 +69,8 @@ int compare_adc_dev(void *ipt, void *sd) {
     /* If module if  and device name, disc, type matches it means devices is same.*/
     if (!usys_strcasecmp(ip->obj.modUuid, op->obj.modUuid) &&
         !usys_strcasecmp(ip->obj.name, op->obj.name) &&
-        !usys_strcasecmp(ip->obj.desc, op->obj.desc) && (ip->obj.type == op->obj.type)) {
+        !usys_strcasecmp(ip->obj.desc, op->obj.desc) &&
+        (ip->obj.type == op->obj.type)) {
         ret = 1;
     }
     return ret;
@@ -80,7 +79,8 @@ int compare_adc_dev(void *ipt, void *sd) {
 ListInfo *get_adc_dev_ldgr() {
     /* Initialize DB for the first time we try to access it.*/
     if (adcLdgrflag == 0) {
-        usys_list_new(&adcLdgr, sizeof(Device), free_adc_dev, compare_adc_dev, NULL);
+        usys_list_new(&adcLdgr, sizeof(Device), free_adc_dev, compare_adc_dev,
+                      NULL);
         adcLdgrflag = 1;
         usys_log_trace("ADC:: ADC Ledger initialized.");
     }
