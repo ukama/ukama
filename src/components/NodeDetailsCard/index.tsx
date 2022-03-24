@@ -1,7 +1,7 @@
 import { LoadingWrapper } from "..";
 import colors from "../../theme/colors";
 import DeviceModalView from "../DeviceModalView";
-import { Chip, Paper, Stack, Typography } from "@mui/material";
+import { Chip, Paper, Stack, Typography, Link, Grid } from "@mui/material";
 import { HorizontalContainerJustify, LinkStyle } from "../../styles";
 
 interface INodeDetailsCard {
@@ -27,9 +27,11 @@ const NodeDetailsCard = ({
         >
             <Paper sx={{ p: 3, gap: 1 }}>
                 <Stack spacing={3}>
-                    <HorizontalContainerJustify>
-                        <Stack direction={"row"} spacing={2}>
+                    <Grid container spacing={1}>
+                        <Grid item xs={5}>
                             <Typography variant="h6">{nodeTitle}</Typography>
+                        </Grid>
+                        <Grid item xs={7}>
                             {isUpdateAvailable && (
                                 <Chip
                                     variant="outlined"
@@ -47,30 +49,34 @@ const NodeDetailsCard = ({
                                                     Software update available —
                                                     view
                                                 </Typography>
-
-                                                <LinkStyle
-                                                    underline="hover"
+                                                <Link
                                                     onClick={() =>
                                                         getNodeUpdateInfos()
                                                     }
-                                                    sx={{
+                                                    style={{
                                                         fontSize: "14px",
-                                                        paddingLeft: 1,
+                                                        paddingLeft: "3px",
                                                         cursor: "pointer",
+                                                        fontStyle: "norma",
+                                                        fontWeight: 400,
+                                                        lineHeight: "16px",
+                                                        letterSpacing:
+                                                            "-0.02em",
                                                         textDecoration:
                                                             "underline",
                                                         color: colors.primaryDark,
                                                     }}
                                                 >
                                                     notes
-                                                </LinkStyle>
+                                                </Link>
                                             </Stack>
                                         </>
                                     }
                                 />
                             )}
-                        </Stack>
-                    </HorizontalContainerJustify>
+                        </Grid>
+                    </Grid>
+
                     <DeviceModalView />
                 </Stack>
             </Paper>
