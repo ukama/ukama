@@ -1,8 +1,10 @@
-/*
- * common.c
+/**
+ * Copyright (c) 2021-present, Ukama Inc.
+ * All rights reserved.
  *
- *  Created on: Jun 25, 2021
- *      Author: vishal
+ * This source code is licensed under the XXX-style license found in the
+ * LICENSE file in the root directory of this source tree. An additional grant
+ * of patent rights can be found in the PATENTS file in the same directory.
  */
 
 #include "utils/mfg_helper.h"

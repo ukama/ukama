@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-
 #ifndef ADC_H_
 #define ADC_H_
 
