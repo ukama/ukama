@@ -70,7 +70,7 @@ const NetworkStatus = ({
                             sx={{ width: "144px", mr: "18px" }}
                             onClick={() => handleActivateUser()}
                         >
-                            INVITE USER
+                            ADD USER
                         </Button>
                         <Button
                             variant="contained"

@@ -98,7 +98,7 @@ const SoftwareUpdateModal = ({
                                 onChange={handleChange}
                             />
                         }
-                        label="DON'T SHOW AGAIN"
+                        label="Don't show again"
                     />
                     <div
                         style={{
@@ -109,8 +109,7 @@ const SoftwareUpdateModal = ({
                         onClick={handleClose}
                         sx={{
                             color: colors.primaryMain,
-                            position: "relative",
-                            right: 5,
+                            marginRight: 3,
                         }}
                     >
                         CANCEL
