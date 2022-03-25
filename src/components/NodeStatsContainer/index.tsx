@@ -71,6 +71,7 @@ const NodeStatsContainer = ({
                     {isCollapsable && (
                         <IconButton
                             sx={{
+                                p: 0,
                                 position: isCollapse ? "relative" : null,
                                 right: isCollapse ? 10 : null,
                                 transform: isCollapse

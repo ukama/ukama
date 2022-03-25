@@ -9,13 +9,13 @@ import {
     SelectChangeEvent,
     Typography,
 } from "@mui/material";
+import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
-import { CustomRadioButton, LoadingWrapper } from "..";
+import { getStatusByType, hexToRGB } from "../../utils";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { NodeDto, Org_Node_State } from "../../generated";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { getStatusByType } from "../../utils";
 
 const useStyles = makeStyles<Theme>(() => ({
     selectStyle: () => ({
@@ -94,11 +94,20 @@ const NodeDropDown = ({
                     renderValue={selected => selected}
                 >
                     {nodes.map(({ id, title }) => (
-                        <MenuItem key={id} value={title} sx={{ m: 0, p: 0 }}>
-                            <CustomRadioButton
-                                label={title}
-                                value={id === selectedNode?.id}
-                            />
+                        <MenuItem
+                            key={id}
+                            value={title}
+                            sx={{
+                                m: 0,
+                                p: "6px 16px",
+                                backgroundColor: `${
+                                    id === selectedNode?.id
+                                        ? hexToRGB(colors.secondaryLight, 0.25)
+                                        : colors.white
+                                } !important`,
+                            }}
+                        >
+                            <Typography variant="body1">{title}</Typography>
                         </MenuItem>
                     ))}
                     <Divider />
