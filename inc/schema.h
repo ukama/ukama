@@ -18,34 +18,35 @@ extern "C" {
 
 #include "usys_types.h"
 
+/* Schema */
 #define SCH_START_OFFSET               0x0000
 #define SCH_END_OFFSET                 0xFFFF
 
+/* Magic word */
 #define SCH_MAGIC_WORD_OFFSET          0x0000
 #define SCH_MAGIC_WORD_SIZE            0x0004
 #define SCH_MAGIC_WORD                 0xDEADBEEF
 #define SCH_DEFVAL                     0xFFFF
 
+/* Header */
 #define SCH_HEADER_OFFSET              0x0010
 #define SCH_HEADER_DBVER_OFFSET        0x0010
 #define SCH_HEADER_SIZE                0x0018
+
+/* version*/
 #define SCH_MAJOR_VER                  0
 #define SCH_MINOR_VER                  0
 
-
-
+/* Index table */
 #define SCH_IDX_TABLE_OFFSET           0x0040
 #define SCH_IDX_TPL_SIZE               0x0018
 #define SCH_IDX_MAX_TPL_COUNT          0x0032  /* Max Index table entries 50 */
 #define SCH_IDX_CUR_TPL_COUNT_OFFSET   0x0020
 #define SCH_IDX_COUNT_SIZE             0x0002
 
-
+/* Footer */
 #define SCH_FOOTER_OFFSET              0x09A0
 #define SCH_FOOTER_SIZE                0x0050
-
-/* MAX_PAYLOAD_SIZE */
-#define SCH_MAX_PAYLOAD_SIZE           0x1000
 
 /* Size */
 #define SCH_UNITINFO_PAYLOADSIZE       0x009F
@@ -59,28 +60,8 @@ extern "C" {
 #define SCH_BS_CERTS_SIZE              0x1000
 #define SCH_CLOUD_CERTS_SIZE           0x1000
 
-
-/* OFFSETS*/
-#define MAX_NUMBER_MODULES_PER_UNIT     0x0008
-#define MAX_NUMBER_DEVICES_PER_MODULE   0x0014
+/* PAYLOADS OFFSETS */
 #define SCH_PAYLAOD_OFFSET             0x0A00
-
-#define SCH_UNIT_INFO_OFFSET           0x0A00 //Offset: 2560 (64*40)       size = 192B     REQ  = 159B     MAX = 1 Entry
-#define SCH_UNIT_CONFIG_OFFSET         0x0AC0 //Offset: 2752 (64*43)       size = 1024B    REQ: = 115B     MAX = 8 Entry   NM 7
-#define SCH_MODULE_INFO_OFFSET         0x0EC0 //Offset: 3776 (64*59)       size = 192B     REQ  = 167B     MAX = 1 Entry
-#define SCH_MODULE_CONFIG_OFFSET       0x0F80 //Offset: 3968 (64*62)       size = 2432B    REQ  = 119B     MAX = 20 Entry  NM 15
-#define SCH_FACT_CONFIG_OFFSET         0x1900 //Offset: 6400 (64*100)      size = 5120B    REQ  = 159B     MAX = 1 Entry
-#define SCH_USER_CONFIG_OFFSET         0x2900 //Offset: 10496 (64*164)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_FACT_CALIB_OFFSET          0x3900 //Offset: 14592 (64*228)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_USER_CALIB_OFFSET          0x4900 //Offset: 18688 (64*292)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_BS_CERTS_OFFSET            0x5900 //Offset: 22784 (64*256)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_CLOUD_CERTS_OFFSET         0x6900 //Offset: 26880 (64*320)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-
-# if NEW_OFFSETS
-#define MAX_NUMBER_MODULES_PER_UNIT     0x0008
-#define MAX_NUMBER_DEVICES_PER_MODULE   0x0014
-#define SCH_PAYLAOD_OFFSET             0x0A00
-
 #define SCH_UNIT_INFO_OFFSET           0x0A00 //Offset: 2560 (64*40)       size = 192B     REQ/CFG  = 159B   (192)    MAX = 1 Entry
 #define SCH_UNIT_CONFIG_OFFSET         0x0AC0 //Offset: 2752 (64*43)       size = 1024B    REQ/CFG =  115B   (146)    MAX = 7 Entry
 #define SCH_MODULE_INFO_OFFSET         0x0EC0 //Offset: 3776 (64*59)       size = 192B     REQ/CFG  = 167B   (192)    MAX = 1 Entry
@@ -92,39 +73,9 @@ extern "C" {
 #define SCH_BS_CERTS_OFFSET            0x5900 //Offset: 22784 (64*256)     size = 4096B    REQ/CFG  = 159B   (192)    MAX = 1 Entry
 #define SCH_LWM2M_CERTS_OFFSET         0x6900 //Offset: 26880 (64*320)     size = 4096B    REQ/CFG  = 159B   (192)    MAX = 1 Entry
 
-#endif
-#if 0
-#define SCH_PAYLAOD_OFFSET             0x0A00
-#define SCH_UNIT_INFO_OFFSET           0x0A00 //Offset: 2560 (64*40)       size = 192B     REQ  = 159B     MAX = 1 Entry
-#define SCH_UNIT_CONFIG_OFFSET         0x0AC0 //Offset: 2752 (64*43)       size = 1024B    REQ: = 115B     MAX = 8 Entry
-#define SCH_MODULE_INFO_OFFSET         0x0EC0 //Offset: 3776 (64*59)       size = 192B     REQ  = 167B     MAX = 1 Entry
-#define SCH_MODULE_CONFIG_OFFSET       0x0F80 //Offset: 3968 (64*62)       size = 2432B    REQ  = 119B     MAX = 20 Entry
-#define SCH_FACT_CONFIG_OFFSET         0x1900 //Offset: 6400 (64*100)      size = 5120B    REQ  = 159B     MAX = 1 Entry
-#define SCH_USER_CONFIG_OFFSET         0x2900 //Offset: 10496 (64*164)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_FACT_CALIB_OFFSET          0x3900 //Offset: 14592 (64*228)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_USER_CALIB_OFFSET          0x4900 //Offset: 18688 (64*292)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_BS_CERTS_OFFSET            0x5900 //Offset: 22784 (64*256)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#define SCH_LWM2M_CERTS_OFFSET         0x6900 //Offset: 26880 (64*320)     size = 4096B    REQ  = 159B     MAX = 1 Entry
-#endif
+/* Enable disable features */
 #define SCH_FEAT_ENABLED               0x01
 #define SCH_FEAT_DISABLED              0x00
-
-
-
-
-/* Field Id */
-#define FIELD_ID_UNIT_INFO               0x0001
-#define FIELD_ID_UNIT_CFG                0x0002
-#define FIELD_ID_MODULE_INFO             0x0003
-#define FIELD_ID_MODULE_CFG              0x0004
-#define FIELD_ID_FACT_CFG                0x0005
-#define FIELD_ID_USER_CFG                0x0006
-#define FIELD_ID_FACT_CALIB              0x0007
-#define FIELD_ID_USER_CALIB              0x0008
-#define FIELD_ID_BS_CERTS                0x0009
-#define FIELD_ID_CLOUD_CERTS             0x000a
-
-
 
 /*Module Capability*/
 #define MOD_CAP_DEPENDENT               0x00  // Need power as well as instruction from the other module to bootup.
@@ -143,9 +94,12 @@ extern "C" {
 #define IDX_ENTRY_ENABLED               0x01
 
 /* Validation */
-#define VALIDATE_INDEX_COUNT(count)             ( ( (count >= 0) && (count < SCH_IDX_MAX_TPL_COUNT) )?1:0 )
-#define VALIDATE_MODULE_COUNT(count)            ( ( (count >= 0) && (count < MAX_NUMBER_MODULES_PER_UNIT) )?1:0 )
-#define VALIDATE_DEVICE_COUNT(count)            ( ( (count >= 0) && (count < MAX_NUMBER_DEVICES_PER_MODULE) )?1:0 )
+#define VALIDATE_INDEX_COUNT(count)     ( ( (count >= 0) && \
+                (count < SCH_IDX_MAX_TPL_COUNT) )?1:0 )
+#define VALIDATE_MODULE_COUNT(count)    ( ( (count >= 0) && \
+                (count < MAX_NUMBER_MODULES_PER_UNIT) )?1:0 )
+#define VALIDATE_DEVICE_COUNT(count)    ( ( (count >= 0) && \
+                (count < MAX_NUMBER_DEVICES_PER_MODULE) )?1:0 )
 
 typedef enum {
     UNIT_TNODESDR = 1,
