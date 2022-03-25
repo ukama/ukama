@@ -80,7 +80,7 @@ const NodeStatItem = ({
     showAlertInfo = false,
 }: INodeStatItem) => {
     return (
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
             <Grid item xs={variants(variant, "NG")}>
                 <TextWithToolTip
                     title={name}

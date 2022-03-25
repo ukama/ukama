@@ -42,10 +42,10 @@ import {
     GetLatestConnectedUsersSubscription,
     useGetMetricsUptimeSSubscription,
 } from "../../generated";
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
-import { isSkeltonLoading, user } from "../../recoil";
+import { isFirstVisit, isSkeltonLoading, user } from "../../recoil";
 import { Box, Grid } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 import {
@@ -56,6 +56,7 @@ import {
 
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
     const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
@@ -155,10 +156,10 @@ const Home = () => {
     });
 
     useEffect(() => {
-        if (orgId && !isSkeltonLoad) {
+        if (_isFirstVisit && orgId) {
             setIsWelcomeDialog(true);
         }
-    }, [orgId, isSkeltonLoad]);
+    }, [_isFirstVisit, orgId]);
 
     useGetMetricsUptimeSSubscription({
         onSubscriptionData: res => {
@@ -356,6 +357,13 @@ const Home = () => {
         /* Handle node update  action */
     };
 
+    const handleCloseWelcome = () => {
+        if (_isFirstVisit) {
+            _setIsFirstVisit(false);
+            setIsWelcomeDialog(false);
+        }
+    };
+
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
             <Grid container spacing={3}>
@@ -440,15 +448,13 @@ const Home = () => {
                     >
                         <RoundedCard>
                             <ContainerHeader
+                                stats={``}
                                 title="My Nodes"
                                 showButton={isContainNodeUpdate(
                                     nodeRes?.getNodesByOrg.nodes
                                 )}
                                 buttonSize={"small"}
                                 buttonTitle={"Update All"}
-                                stats={`${
-                                    nodeRes?.getNodesByOrg.activeNodes || "0"
-                                }/${nodeRes?.getNodesByOrg.totalNodes || "-"}`}
                             />
                             <NodeContainer
                                 handleNodeUpdate={handleNodeUpdateActin}
@@ -501,7 +507,7 @@ const Home = () => {
                     "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
                 }
                 btnLabel={"continue to console"}
-                handleClose={() => setIsWelcomeDialog(false)}
+                handleClose={handleCloseWelcome}
             />
             {isUserActivateOpen && (
                 <UserActivationDialog

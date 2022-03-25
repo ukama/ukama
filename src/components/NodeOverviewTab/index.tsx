@@ -41,7 +41,7 @@ const NodeOverviewTab = ({
     const handleOnSelected = (value: number) => setSelected(value);
 
     return (
-        <Grid container spacing={2}>
+        <Grid container spacing={3}>
             <Grid item xs={12} md={4}>
                 <Stack spacing={2}>
                     <NodeStatsContainer

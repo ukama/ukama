@@ -28,7 +28,7 @@ const App = () => {
     const [_snackbarMessage, setSnackbarMessage] =
         useRecoilState(snackbarMessage);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-    const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
+    const _isFirstVisit = useRecoilValue(isFirstVisit);
     const [showValidationError, setShowValidationError] =
         useState<boolean>(false);
 
@@ -47,9 +47,6 @@ const App = () => {
                     setShowValidationError(true);
                 }
             } else if (response?.isValid) {
-                if (_isFirstVisit) {
-                    _setIsFirstVisit(false);
-                }
                 setPage(getTitleFromPath(window.location.pathname));
                 setSkeltonLoading(false);
             }
