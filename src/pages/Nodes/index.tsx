@@ -1415,12 +1415,13 @@ const Nodes = () => {
         //Todo :Handle nodeAction update
         setIsNodeUpdate(true);
     };
+    const handleCloseUpdateAllNode = () => {
+        setIsNodeUpdate(false);
+    };
     const onSwitchOffNode = () => {
         //Todo :Handle nodeAction Itemselected
     };
-    const handleCloseNodeUpdate = () => {
-        //Todo :Handle nodeAction udpdate submition
-    };
+
     const handleNodeActioOptionClicked = (nodeAction: any) => {
         if (nodeAction == "Turn node off") {
             setIsSwitchOffNode(true);
@@ -1667,9 +1668,10 @@ const Nodes = () => {
             <SoftwareUpdateModal
                 submit={onUpdateNode}
                 isOpen={isNodeUpdate}
-                handleClose={handleCloseNodeUpdate}
-                title={"Node Update Confirmation"}
-                content={`The software update for “Tryphena’s Node” will disrupt your network, and will take approximately [insert time here]. Continue with update?`}
+                handleClose={handleCloseUpdateAllNode}
+                title={"Node Update all Confirmation"}
+                btnLabel="continue with update all"
+                content={`The software updates for “Tryphena’s Node,” and “Tryphena’s Node 2” will disrupt your network, and will take approximately [insert time here]. Continue updating all?`}
             />
 
             <NodeSoftwareInfosDialog
