@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include <utils/crc32.h>
 #include "inventory.h"
 
 #include "errorcode.h"
@@ -16,6 +15,8 @@
 #include "mfg.h"
 #include "schema.h"
 #include "store.h"
+#include "utils/crc32.h"
+
 #include "usys_error.h"
 #include "usys_file.h"
 #include "usys_log.h"
@@ -588,23 +589,6 @@ int invt_erase_payload(char *pUuid, uint16_t fieldId) {
     return ret;
 }
 
-/* Write payload to the UKDB */
-int invt_write_payload(char *pUuid, void *pData, uint16_t offset,
-                       uint16_t size) {
-    int ret = 0;
-
-    if (store_write_block(pUuid, pData, offset, size) != size) {
-        usys_log_error("Inventory Payload write failed at offset 0x%x of "
-                       "size 0x%x.",
-                       offset, size);
-        ret = ERR_NODED_WR_FAIL;
-    }
-
-    usys_log_trace("Inventory Wrote %d bytes of payload to 0x%x offset.", size,
-                   offset);
-    return ret;
-}
-
 /* Write module specific payload */
 /* TODO :: Each Module need to write info to specific device*/
 /* For now it might be just a simple file.*/
@@ -644,7 +628,7 @@ int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
     }
 
     /*Write payload for Index table entries*/
-    if (invt_write_payload(pUuid, pData, idxData->payloadOffset, size)) {
+    if (invt_write_module_payload(pUuid, pData, idxData->payloadOffset, size)) {
         ret = ERR_NODED_WR_FAIL;
         usys_log_error(
             "Inventory payload write failed for index id 0x%x fieldId 0x%x at"
@@ -729,7 +713,7 @@ int invt_write_unit_cfg_data(char *pUuid, SchemaIdxTuple *index,
         /*Write payload for Index table entries*/
         payload = serialize_unitcfg_payload(ucfg, count, &size);
         if (payload) {
-            if (invt_write_payload(pUuid, payload, index->payloadOffset,
+            if (invt_write_module_payload(pUuid, payload, index->payloadOffset,
                                    size)) {
                 /* Need to revert back index */
                 invt_erase_idx(pUuid);
@@ -792,7 +776,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
         /* Unit Info */
         if (uInfo) {
             /*Write payload for Index table entries*/
-            if (invt_write_payload(p1Uuid, uInfo, index->payloadOffset,
+            if (invt_write_module_payload(p1Uuid, uInfo, index->payloadOffset,
                                    sizeof(UnitInfo))) {
                 /* Need to revert back index */
                 invt_erase_idx(p1Uuid);
@@ -1013,7 +997,7 @@ cleanmid:
 }
 
 /* Search for the field Id in the Index Table read from MFG data.*/
-int get_field_id_index(SchemaIdxTuple *index, uint16_t fid, uint8_t idxCount,
+int invt_get_field_id_idx(SchemaIdxTuple *index, uint16_t fid, uint8_t idxCount,
                        uint8_t *idxIter) {
     int ret = -1;
     uint8_t iter = 0;
@@ -1045,7 +1029,7 @@ int invt_write_generic_data(SchemaIdxTuple *index, char *pUuid, uint16_t fid) {
     ret = mfg_fetch_payload_from_mfg_data((void *)&payload, pUuid, &size, fid);
     if (payload) {
         /*Write payload for Index table entries*/
-        if (invt_write_payload(pUuid, payload, index->payloadOffset,
+        if (invt_write_module_payload(pUuid, payload, index->payloadOffset,
                                index->payloadSize)) {
             /* Need to revert back index */
             invt_erase_idx(pUuid);
@@ -1449,7 +1433,7 @@ int invt_create_db(char *pUuid) {
      *  if not found skip to next.*/
     usys_log_trace("Starting Unit Info write for Module UUID %s.", pUuid);
 
-    ret = get_field_id_index(index, FIELD_ID_UNIT_INFO, idxCount, &idxIter);
+    ret = invt_get_field_id_idx(index, FIELD_ID_UNIT_INFO, idxCount, &idxIter);
     if (!ret) {
         ret =
             invt_write_unit_info_data(pUuid, &index[idxIter], pUuid, &modCount);
@@ -1477,7 +1461,7 @@ int invt_create_db(char *pUuid) {
                    "with %d modules.",
                    pUuid, modCount);
 
-    ret = get_field_id_index(index, FIELD_ID_UNIT_CFG, idxCount, &idxIter);
+    ret = invt_get_field_id_idx(index, FIELD_ID_UNIT_CFG, idxCount, &idxIter);
     if (!ret) {
         //TODO: Don't even need UnitCFg here. it can be removed.
         ret = invt_write_unit_cfg_data(pUuid, &index[idxIter], modCount);
@@ -1499,10 +1483,10 @@ int invt_create_db(char *pUuid) {
                    "Module UUID %s.",
                    pUuid);
 
-    ret = get_field_id_index(index, FIELD_ID_MODULE_INFO, idxCount, &idxIter);
+    ret = invt_get_field_id_idx(index, FIELD_ID_MODULE_INFO, idxCount, &idxIter);
     if (!ret) {
         uint8_t mcfg_iter = 0;
-        ret = get_field_id_index(index, FIELD_ID_MODULE_CFG, idxCount,
+        ret = invt_get_field_id_idx(index, FIELD_ID_MODULE_CFG, idxCount,
                                  &mcfg_iter);
         if (!ret) {
             /* Module config and Module info both are added here to DB.*/
@@ -1528,7 +1512,7 @@ int invt_create_db(char *pUuid) {
     uint16_t genfield_id = FIELD_ID_FACT_CFG;
     uint8_t temp_idx = idx;
     while (temp_idx < idxCount) {
-        ret = get_field_id_index(index, genfield_id, idxCount, &idxIter);
+        ret = invt_get_field_id_idx(index, genfield_id, idxCount, &idxIter);
         if (!ret) {
             usys_log_debug("Inventory Writing data for field Id 0x%x"
                            " Module UIID %s.",
@@ -1964,7 +1948,7 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
     return ret;
 }
 
-int deserialize_unit_cfg_data(UnitCfg **pUnitCfg, char *payload, uint8_t count,
+int invt_deserialize_unit_cfg_data(UnitCfg **pUnitCfg, char *payload, uint8_t count,
                               uint16_t *size) {
     /* || Unit Info 1 | EEPROM CFG  || Unit Info 2 | EEPROM CFG  || */
     int ret = 0;
@@ -2028,7 +2012,7 @@ int invt_read_unit_cfg(char *pUuid, UnitCfg *pUnitCfg, uint8_t count,
         }
 
         /* Deserialize to Unit Config.*/
-        ret = deserialize_unit_cfg_data(&pUnitCfg, payload, count, size);
+        ret = invt_deserialize_unit_cfg_data(&pUnitCfg, payload, count, size);
         if (ret) {
             ret = ERR_NODED_DESERIAL_FAIL;
             usys_log_error("Deserialize failure for Unit Config."
@@ -2144,7 +2128,7 @@ void *invt_deserialize_devices(const char *payload, int offset, uint16_t class,
     return dev;
 }
 
-int deserialize_module_cfg_data(ModuleCfg **p_mcfg, char *payload,
+int invt_deserialize_module_cfg_data(ModuleCfg **p_mcfg, char *payload,
                                 uint8_t count, uint16_t *size) {
     /* Layout
      *  || Unit Info 1 | EEPROM CFG  || Unit Info 2 | EEPROM CFG  ||
@@ -2216,7 +2200,7 @@ int invt_read_module_cfg(char *pUuid, ModuleCfg *pCfg, uint8_t count,
 
         if (pCfg) {
             /* Deserialize payload to Module Config */
-            ret = deserialize_module_cfg_data(&pCfg, payload, count, size);
+            ret = invt_deserialize_module_cfg_data(&pCfg, payload, count, size);
             if (!ret) {
                 usys_log_debug("Read Module Info %d bytes for Module %s "
                                "with device count %d.",
@@ -2247,53 +2231,6 @@ cleanup:
     payload = NULL;
     usys_free(idxData);
     idxData = NULL;
-    return ret;
-}
-
-/* Read both Unit info and it's config. */
-int invt_read_unit(char *pUuid, UnitInfo *pUnitInfo, UnitCfg *pUnitCfg) {
-    int ret = 0;
-    uint16_t size = 0;
-
-    /* Read unit info*/
-    ret = invt_read_unit_info(pUuid, pUnitInfo, &size);
-    if (ret) {
-        usys_log_error("Unit Info read failure.Error Code: %d", ret);
-        return ret;
-    }
-    invt_print_unit_info(pUnitInfo);
-
-    /* Read unit config */
-    ret = invt_read_unit_cfg(pUuid, pUnitCfg, pUnitInfo->modCount, &size);
-    if (ret) {
-        usys_log_error("Unit Config read failure.Error Code: %d", ret);
-    }
-    invt_print_unit_cfg(pUnitCfg, pUnitInfo->modCount);
-
-    return ret;
-}
-
-/* Reads Module info and it's config. */
-int invt_read_module(char *pUuid, ModuleInfo *p_minfo) {
-    int ret = 0;
-    uint16_t size = 0;
-
-    /* Read module info */
-    ret = invt_read_module_info(pUuid, p_minfo, &size);
-    if (ret) {
-        usys_log_error("Module Info read failure.Error Code: %d", ret);
-        return ret;
-    }
-    invt_print_module_info(p_minfo);
-
-    /* Read module config */
-    ret =
-        invt_read_module_cfg(pUuid, p_minfo->modCfg, p_minfo->devCount, &size);
-    if (ret) {
-        usys_log_error("Module Config read failure.Error Code: %d", ret);
-    }
-    invt_print_module_cfg(p_minfo->modCfg, p_minfo->devCount);
-
     return ret;
 }
 
