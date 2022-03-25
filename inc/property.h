@@ -180,20 +180,121 @@ typedef struct  __attribute__((__packed__)) {
     uint16_t size;
 } MapDataType;
 
-
+/**
+ * @fn      int get_alert_cond(char*)
+ * @brief   Converts string to AlertCondition
+ *
+ * @param   cond
+ * @return  On success, enum AlertCondition i.e Integer value 0 or greater
+ *          On failure, -1
+ */
 int get_alert_cond(char* cond);
+
+/**
+ * @fn      int get_prop_perm(char*)
+ * @brief   Converts string to Permission values
+ *
+ * @param   perm
+ * @return  On success, positive integer, one of permission macros values
+ *          On failure, -1
+ */
 int get_prop_perm(char* perm);
+
+/**
+ * @fn      int get_prop_type(char*)
+ * @brief   Converts string to property type values
+ *
+ * @param   type
+ * @return  On success, positive integer, one of property type values
+ *          On failure, -1
+ */
 int get_prop_type(char* type);
+
+/**
+ * @fn      int get_prop_avail(char*)
+ * @brief   Converts string to property available values
+ *
+ * @param   avail
+ * @return  On success, positive integer, one of property available values
+ *          On failure, -1
+ */
 int get_prop_avail(char* avail);
+
+/**
+ * @fn      int get_prop_data_type(char*)
+ * @brief   Converts string to DataType
+ *
+ * @param   type
+ * @return  On success, enum DataType i.e Integer value 0 or greater
+ *          On failure, -1
+ */
 int get_prop_data_type(char *type);
+
+/**
+ * @fn      int get_property_count(char*)
+ * @brief   Read the property count for sensor from parsed data.
+ *
+ * @param   dev
+ * @return  On success, 0
+ *          On failure, non zero value
+ */
 int get_property_count(char* dev);
+
+/**
+ * @fn      int validate_irq_limits(double, double, int)
+ * @brief   Compares the current sensor value cur to limits
+ *          using condition cond
+ *
+ * @param   cur
+ * @param   lmt
+ * @param   cond
+ * @return  On success, 1
+ *          On Invalid condition, -1
+ *          On failure, 0
+ */
 int validate_irq_limits(double cur, double lmt, int cond);
+
+/**
+ * @fn      void print_properties(Property*, uint16_t)
+ * @brief   list the sensor properties
+ *
+ * @param   prop
+ * @param   count
+ */
 void print_properties(Property* prop, uint16_t count);
+
+/**
+ * @fn      char get_sysfs_name*(char*)
+ * @brief   read the filename from the path.
+ *
+ * @param   fpath
+ * @return  On success, filename
+ *          On failure, NULL
+ */
 char* get_sysfs_name(char* fpath);
+
+/**
+ * @fn      uint16_t get_sizeof(DataType)
+ * @brief   return the size of the data type.
+ *
+ * @param   type
+ * @return  On success, size of the data type
+ *          On failure, zero value
+ */
 uint16_t get_sizeof(DataType type);
+
+/**
+ * @fn      Property get_property_table*(char*)
+ * @brief   Reads the property table for sensor dev from the parsed data.
+ *
+ * @param   dev
+ * @return  On success, property table
+ *          On failure, NULL
+ */
 Property* get_property_table(char* dev);
 
 #ifdef __cplusplus
 }
 #endif
+
 #endif /* INCLUDE_PROPERTY_H_ */

@@ -6,6 +6,7 @@
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  */
+
 #ifndef INC_MFG_PARSER_H_
 #define INC_MFG_PARSER_H_
 
