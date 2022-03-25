@@ -137,6 +137,7 @@ void led_tricol_irq_callback(DevObj *obj, void *prop, void *data) {
     /* Read and confirm the IRQ's for device.*/
     //led_tricol_read(void* pDev, void* prop, void* data );
 }
+
 int bsp_led_tricol_init(Device *pDev) {
     int ret = 0;
     ret = dhelper_init_property_from_parser(pDev, &gProperty, &gPropertyCount);

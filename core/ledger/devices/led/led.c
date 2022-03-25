@@ -62,7 +62,7 @@ static void free_led_dev(void *ip) {
     }
 }
 
-int compare_led_dev(void *ipt, void *sd) {
+static int compare_led_dev(void *ipt, void *sd) {
     Device *ip = (Device *)ipt;
     Device *op = (Device *)sd;
     int ret = 0;

@@ -10,7 +10,6 @@
 #ifndef INC_WEB_SERVICE_H_
 #define INC_WEB_SERVICE_H_
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -58,9 +57,16 @@ typedef int (*HttpCb)(const URequest *request, // Input parameters (set by the f
                  UResponse* response,         // Output parameters (set by the user)
                 void * user_data);
 
-/* Struct used by discover API
- * TODO: We could add the parameter info
- * and return status to this struct */
+/*
+ * * TODO: We could add the parameter info
+ * and return status to this struct
+ */
+
+/**
+ * @struct WebServiceAPI
+ * @brief  Struct used by discover API
+ *
+ */
 typedef struct {
    char method[METHOD_LENGTH];
    char endPoint[URL_EXT_LENGTH];

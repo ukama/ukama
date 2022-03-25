@@ -10,6 +10,10 @@
 #ifndef INC_JSERDES_H_
 #define INC_JSERDES_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "json_types.h"
 #include "web_service.h"
 
@@ -117,5 +121,9 @@ int json_serialize_unit_cfg(JsonObj** obj, UnitCfg* uCfg, uint8_t count);
  *          On Failure, NodeD JSON error code
  */
 int json_serialize_unit_info(JsonObj** obj, UnitInfo* uInfo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_JSERDES_H_ */
