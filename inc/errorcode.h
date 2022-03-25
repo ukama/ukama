@@ -16,6 +16,7 @@ extern "C" {
 
 #include "usys_error.h"
 
+/* Error codes returned by NodeD service */
 typedef enum {
     ERR_NODED_WR_FAIL    = (USYS_ERR_APP_BASE_CODE+1),
     ERR_NODED_R_FAIL,

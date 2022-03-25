@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-
 #ifndef BSP_ADT7841_H_
 #define BSP_ADT7841_H_
 

@@ -27,6 +27,7 @@ typedef int (*DrvrDregCB)( void* obj, SensorCallbackFxn fun);
 typedef int (*DrvrEnableIRQ)( void* obj, void* prop, void* data);
 typedef int (*DrvrDisableIRQ)( void* obj, void* prop, void* data);
 
+/* Driver operation supported */
 typedef struct  {
   DrvrInitFxn init;
   DrvrConfigFxn configure;

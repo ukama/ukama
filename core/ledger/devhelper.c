@@ -259,7 +259,7 @@ int dhelper_disable_irq(const DrvrOps *drvr, Device *dev, Property *prop,
     return ret;
 }
 
-/* Reading and confirming interrupts for ADT7481 device */
+/* Reading and confirming interrupts for device */
 int dhelper_confirm_irq(const DrvrOps *drvr, Device *dev, Property *prop,
                         AlertCallBackData **acbdata, char *fpath, int maxPCount,
                         int *evt) {

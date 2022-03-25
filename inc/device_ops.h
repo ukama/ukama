@@ -33,7 +33,7 @@ typedef int (*DevGetIRQType)( int pidx, uint8_t* irqtype);
 typedef int (*DevConfirmIRQ)( Device *dev, AlertCallBackData** acbdata,
     char* fpath, int* evt);
 
-/*basic read write operation to Temperature devices*/
+/* basic read write operation to any devices*/
 typedef struct  {
   DevInitFxn init;
   DevRegisterFxn registration;
