@@ -1,14 +1,18 @@
 /**
- * Copyright (c) 2020-present, Ukama.
+ * Copyright (c) 2021-present, Ukama Inc.
  * All rights reserved.
  *
- * This source code is licensed under the BSD-style license found in the
+ * This source code is licensed under the XXX-style license found in the
  * LICENSE file in the root directory of this source tree. An additional grant
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
 #ifndef UTILS_VNODEALERT_H_
 #define UTILS_VNODEALERT_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "irqdb.h"
 
@@ -32,7 +36,18 @@
 
 #define ERR					-1
 
+/**
+ * @fn      int poll_file(IRQCfg*)
+ * @brief   Wait for the Inotification event for the file.
+ *
+ * @param   cfg
+ * @return  On success, 0
+ *          On failure, -1
+ */
 int poll_file(IRQCfg* cfg);
-void clean_poll();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UTILS_VNODEALERT_H_ */
