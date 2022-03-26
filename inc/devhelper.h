@@ -206,6 +206,17 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop,
 int dhelper_validate_property(Property* prop, int pidx);
 
 /**
+ * @fn      int dhelper_validate_property_type_alert(Property*, int)
+ * @brief   validate if property type is alert or not.
+ *
+ * @param   prop
+ * @param   pidx
+ * @return  On success, 0
+ *          On failure, -1
+ */
+int dhelper_validate_property_type_alert(Property *prop, int pidx);
+
+/**
  * @fn      int dhelper_validate_permissions(Property*, int)
  * @brief   Validates if the property has required permissions or not.
  * @param   prop
