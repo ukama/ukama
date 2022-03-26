@@ -10,6 +10,7 @@
 #include "web_service.h"
 
 #include "device.h"
+#include "errorcode.h"
 #include "inventory.h"
 #include "jserdes.h"
 #include "ledger.h"
@@ -891,6 +892,14 @@ static int web_service_cb_put_module_mfg(const URequest *request,
         report_failure(response, ret,
                         "data name provided is not matching "
                         "to any field.");
+        goto completed;
+    }
+
+    /* Check the size limit */
+    if (request->binary_body_length > SCH_MAX_PAYLOAD_SIZE) {
+        report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
+                        ERR_NODED_EXCEED_MAX_SIZE,
+                        "Payload exceeds max payload length.");
         goto completed;
     }
 

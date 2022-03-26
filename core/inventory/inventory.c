@@ -1028,6 +1028,13 @@ int invt_write_generic_data(SchemaIdxTuple *index, char *pUuid, uint16_t fid) {
     char *payload;
     ret = mfg_fetch_payload_from_mfg_data((void *)&payload, pUuid, &size, fid);
     if (payload) {
+
+        /* size is greater than max size allowed */
+        if (size > SCH_MAX_PAYLOAD_SIZE) {
+            ret = ERR_NODED_EXCEED_MAX_SIZE;
+            goto cleanpayload;
+        }
+
         /*Write payload for Index table entries*/
         if (invt_write_module_payload(pUuid, payload, index->payloadOffset,
                                index->payloadSize)) {
@@ -1841,70 +1848,49 @@ void invt_print_module_cfg(ModuleCfg *p_mcfg, uint8_t count) {
     }
 }
 
-/* Read the payload from store for applications*/
+/* Read the generic payload from store for applications*/
 int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
-                                 uint16_t *size) {
+                uint16_t *size) {
     int ret = -1;
     switch (id) {
-    case FIELD_ID_UNIT_INFO: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_UNIT_INFO,
-                                             size);
-        break;
-    }
-    case FIELD_ID_UNIT_CFG: ///this won't work
-    {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_UNIT_CFG,
-                                             size);
-        break;
-    }
-    case FIELD_ID_MODULE_INFO: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_MODULE_INFO,
-                                             size);
-        break;
-    }
-    case FIELD_ID_MODULE_CFG: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_MODULE_CFG,
-                                             size);
-        break;
-    }
-    case FIELD_ID_FACT_CFG: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_FACT_CFG,
-                                             size);
-        break;
-    }
-    case FIELD_ID_USER_CFG: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_USER_CFG,
-                                             size);
-        break;
-    }
+        case FIELD_ID_FACT_CFG: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_FACT_CFG, size);
+            break;
+        }
+        case FIELD_ID_USER_CFG: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_USER_CFG, size);
+            break;
+        }
 
-    case FIELD_ID_FACT_CALIB: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_FACT_CALIB,
-                                             size);
-        break;
-    }
+        case FIELD_ID_FACT_CALIB: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_FACT_CALIB, size);
+            break;
+        }
 
-    case FIELD_ID_USER_CALIB: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_USER_CALIB,
-                                             size);
-        break;
-    }
-    case FIELD_ID_BS_CERTS: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_BS_CERTS,
-                                             size);
-        break;
-    }
-    case FIELD_ID_CLOUD_CERTS: {
-        ret = invt_read_payload_for_field_id(pUuid, pData, FIELD_ID_CLOUD_CERTS,
-                                             size);
-        break;
-    }
-    default: {
-        ret = ERR_NODED_DB_MISSING_FIELD;
-        usys_log_error("Invalid Field id supplied by Index entry."
-                       "Error Code %d",
-                       ret);
-    }
+        case FIELD_ID_USER_CALIB: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_USER_CALIB, size);
+            break;
+        }
+        case FIELD_ID_BS_CERTS: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_BS_CERTS, size);
+            break;
+        }
+        case FIELD_ID_CLOUD_CERTS: {
+            ret = invt_read_payload_for_field_id(pUuid, pData,
+                            FIELD_ID_CLOUD_CERTS, size);
+            break;
+        }
+        default: {
+            ret = ERR_NODED_DB_MISSING_FIELD;
+            usys_log_error("Invalid Field id supplied by Index entry."
+                            "Error Code %d",
+                            ret);
+        }
     }
 
     if (ret) {
