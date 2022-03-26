@@ -34,9 +34,18 @@
     }
 
 int dhelper_validate_property(Property *prop, int pidx) {
-    int ret = 0;
+    int ret = -1;
     if (prop[pidx].available == PROP_AVAIL) {
-        ret = 1;
+        ret = 0;
+    }
+    return ret;
+}
+
+
+int dhelper_validate_permissions(Property *prop, int pidx, uint16_t perm) {
+    int ret = -1;
+    if (prop[pidx].perm & perm) {
+        ret = 0;
     }
     return ret;
 }
@@ -81,7 +90,7 @@ int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         HWATTR_GET(hwattr, dev, pdata);
         if (hwattr) {
             if (drvr->configure) {
@@ -91,7 +100,7 @@ int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -102,7 +111,7 @@ int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         HWATTR_GET(hwattr, dev, pdata);
         if (hwattr) {
             if (drvr->read) {
@@ -112,7 +121,7 @@ int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -123,7 +132,11 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
+        /* check for write permissions */
+        if (dhelper_validate_permissions(prop, pidx, PERM_WR)) {
+            return ERR_NODED_DEV_PERMISSION_DENIED;
+        }
         HWATTR_GET(hwattr, dev, pdata);
         if (hwattr) {
             if (drvr->write) {
@@ -133,7 +146,7 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -144,7 +157,7 @@ int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         HWATTR_GET(hwattr, dev, pdata);
         if (hwattr) {
             if (drvr->enable) {
@@ -154,7 +167,7 @@ int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -165,7 +178,7 @@ int dhelper_disable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
     int ret = 0;
     void *hwattr = NULL;
     Property *pdata = &prop[pidx];
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         HWATTR_GET(hwattr, dev, pdata);
         if (hwattr) {
             if (drvr->disable) {
@@ -175,7 +188,7 @@ int dhelper_disable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -186,7 +199,7 @@ int dhelper_enable_irq(const DrvrOps *drvr, SensorCallbackFxn sensorCb,
     //TODO: check if IRQ has to enable and disabled here or in driver layer below it.
     int ret = 0;
     void *hwattr = NULL;
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         /* IRQSrc config for interrupts.*/
         IRQSrcInfo *irqSrc = usys_zmalloc(sizeof(IRQSrcInfo));
         if (irqSrc) {
@@ -215,7 +228,7 @@ int dhelper_enable_irq(const DrvrOps *drvr, SensorCallbackFxn sensorCb,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }
@@ -225,7 +238,7 @@ int dhelper_disable_irq(const DrvrOps *drvr, Device *dev, Property *prop,
                         int pidx, void *data) {
     int ret = 0;
     void *hwattr = NULL;
-    if (dhelper_validate_property(prop, pidx)) {
+    if (!(dhelper_validate_property(prop, pidx))) {
         /* IRQSrc config for interrupts.*/
         IRQSrcInfo *irqSrc = usys_zmalloc(sizeof(IRQSrcInfo));
         if (irqSrc) {
@@ -254,7 +267,7 @@ int dhelper_disable_irq(const DrvrOps *drvr, Device *dev, Property *prop,
             ret = ERR_NODED_DEV_HWATTR_MISSING;
         }
     } else {
-        ret = ERR_NODED_DEV_PROPERTY_MISSING;
+        ret = ERR_NODED_DEV_PROPERTY_MARKED_INVALID;
     }
     return ret;
 }

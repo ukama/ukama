@@ -201,10 +201,19 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop,
  * @param   prop
  * @param   pidx
  * @return  On success, 0
- *          On failure, non zero value
+ *          On failure, -1
  */
 int dhelper_validate_property(Property* prop, int pidx);
 
+/**
+ * @fn      int dhelper_validate_permissions(Property*, int)
+ * @brief   Validates if the property has required permissions or not.
+ * @param   prop
+ * @param   pidx
+ * @return  On success, 0
+ *          On failure, -1
+ */
+int dhelper_validate_permissions(Property *prop, int pidx, uint16_t perm);
 /**
  * @fn      void dhelper_irq_callback(DevObj*, void*, void*)
  * @brief   TBU intention is to set IRQ callback
