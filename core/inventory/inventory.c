@@ -10,7 +10,6 @@
 #include "inventory.h"
 
 #include "errorcode.h"
-#include "jdata.h"
 #include "ledger.h"
 #include "mfg.h"
 #include "schema.h"
@@ -708,7 +707,7 @@ int invt_write_unit_cfg_data(char *pUuid, SchemaIdxTuple *index,
     UnitCfg *ucfg;
     uint16_t size = 0;
     char *payload = NULL;
-    ret = mfg_fetch_unit_cfg((void *)&ucfg, pUuid, &size, count);
+    ret = mfg_fetch_unit_cfg(&ucfg, pUuid, &size, count);
     if (ucfg) {
         /*Write payload for Index table entries*/
         payload = serialize_unitcfg_payload(ucfg, count, &size);
@@ -771,7 +770,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
     int ret = 0;
     UnitInfo *uInfo;
     uint16_t size = 0;
-    ret = mfg_fetch_unit_info((void *)&uInfo, pUuid, &size);
+    ret = mfg_fetch_unit_info(&uInfo, pUuid, &size);
     if (!ret) {
         /* Unit Info */
         if (uInfo) {
@@ -941,8 +940,9 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
     int ret = 0;
     ModuleInfo *minfo;
     uint16_t size = 0;
-    minfo = jdata_fetch_module_info_by_uuid(pUuid, &size, *mcount);
-    if (!minfo) {
+
+    ret = mfg_fetch_module_info_by_uuid(&minfo, pUuid, &size, *mcount);
+    if (ret) {
         usys_log_error("Failed to read Unit info from Mfg data.");
         return (-1);
     }
@@ -1396,9 +1396,13 @@ int invt_create_db(char *pUuid) {
 
     /* Update header info. */
     SchemaHeader *header;
-    header = jdata_fetch_header(pUuid, &size);
-    if (!header) {
+    ret = mfg_fetch_header(&header, pUuid, &size);
+    if (ret) {
         usys_log_error("Failed to read header.");
+    }
+
+    if (!header) {
+        usys_log_error("Header read is NULL");
         usys_free(header);
         header = NULL;
         return (-1);
@@ -1415,9 +1419,12 @@ int invt_create_db(char *pUuid) {
 
     /* Populate Index list from the MFG data.*/
     SchemaIdxTuple *index;
-    index = jdata_fetch_idx(pUuid, &size);
-    if (!index) {
+    ret = mfg_fetch_idx(&index, pUuid, &size);
+    if (ret) {
         usys_log_error("Failed to read index.");
+    }
+    if (!index) {
+        usys_log_error("Index read is NULL");
         return -1;
     }
     uint8_t idxCount = size / sizeof(SchemaIdxTuple);

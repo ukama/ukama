@@ -11,7 +11,6 @@
 
 #include "errorcode.h"
 #include "jdata.h"
-#include "schema.h"
 
 #include "usys_log.h"
 
@@ -52,7 +51,7 @@ void mfg_exit() {
     }
 }
 
-int mfg_fetch_header(void **data, char *uuid, uint16_t *size) {
+int mfg_fetch_header(SchemaHeader **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readHeader(uuid, size);
     if (!data) {
@@ -61,7 +60,7 @@ int mfg_fetch_header(void **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_index(void **data, char *uuid, uint16_t *size) {
+int mfg_fetch_idx(SchemaIdxTuple **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readIndex(uuid, size);
     if (!data) {
@@ -70,7 +69,7 @@ int mfg_fetch_index(void **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_unit_info(void **data, char *uuid, uint16_t *size) {
+int mfg_fetch_unit_info(UnitInfo **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readUnitInfo(uuid, size);
     if (!data) {
@@ -79,7 +78,7 @@ int mfg_fetch_unit_info(void **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_unit_cfg(void **data, char *uuid, uint16_t *size, uint8_t count) {
+int mfg_fetch_unit_cfg(UnitCfg **data, char *uuid, uint16_t *size, uint8_t count) {
     int ret = 0;
     *data = mfgOps->readUnitCfg(uuid, size, count);
     if (!data) {
@@ -88,7 +87,7 @@ int mfg_fetch_unit_cfg(void **data, char *uuid, uint16_t *size, uint8_t count) {
     return ret;
 }
 
-int mfg_fetch_module_info(void **data, char *uuid, uint16_t *size,
+int mfg_fetch_module_info(ModuleInfo **data, char *uuid, uint16_t *size,
                           uint8_t idx) {
     int ret = 0;
     *data = mfgOps->readModuleInfo(uuid, size, idx);
@@ -98,7 +97,7 @@ int mfg_fetch_module_info(void **data, char *uuid, uint16_t *size,
     return ret;
 }
 
-int mfg_fetch_module_info_by_uuid(void **data, char *uuid, uint16_t *size,
+int mfg_fetch_module_info_by_uuid(ModuleInfo **data, char *uuid, uint16_t *size,
                                   uint8_t count) {
     int ret = 0;
     *data = mfgOps->readModuleInfoByUuid(uuid, size, count);
