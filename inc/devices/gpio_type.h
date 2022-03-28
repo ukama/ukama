@@ -7,7 +7,6 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-
 #ifndef GPIOTYPE_H_
 #define GPIOTYPE_H_
 

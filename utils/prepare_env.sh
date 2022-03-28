@@ -1,5 +1,5 @@
 #!/bin/bash
-#Copyright (c) 2020-present, Ukama.
+#Copyright (c) 2021-present, Ukama.
 
 SYSDIR=/tmp/sys
 SYSFSDIRHWMON=/tmp/sys/class/hwmon/hwmon0/
