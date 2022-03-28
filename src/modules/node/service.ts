@@ -149,20 +149,17 @@ export class NodeService implements INodeService {
                         step: data.step,
                     },
                 }).then(res => {
-                    const _res: any = {};
                     if (checkError(res)) {
                         throw new Error(res.message);
                     } else {
-                        _res["title"] = getMetricTitleByType(endpoint);
-                        if (res.data.result.length === 0) {
-                            _res["metricData"] = [];
-                        } else if (res.data.result.length > 0) {
-                            const values = res.data.result[0];
-                            _res["metricData"] = NodeMapper.dtoToMetricsDto(
-                                values.values
-                            );
-                        }
-                        return _res;
+                        const values = res.data.result[0];
+                        return {
+                            title: getMetricTitleByType(endpoint),
+                            metricData:
+                                res.data.result.length > 0
+                                    ? NodeMapper.dtoToMetricsDto(values.values)
+                                    : [],
+                        };
                     }
                 })
             )

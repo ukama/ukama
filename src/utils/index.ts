@@ -39,16 +39,16 @@ export const getMetricsByTab = (
 ): string[] => {
     switch (tabType) {
         case GRAPHS_TAB.OVERVIEW:
-            if (nodeType === NODE_TYPE.HOME) {
+            if (nodeType === NODE_TYPE.HOME)
                 return [
                     "temperaturetrx",
                     "temperaturerfe",
                     "subscribersactive",
                     "subscribersattached",
                 ];
-            } else if (nodeType === NODE_TYPE.AMPLIFIER) {
+            else if (nodeType === NODE_TYPE.AMPLIFIER)
                 return ["temperaturectl", "temperaturerfe"];
-            } else {
+            else
                 return [
                     "uptime",
                     "temperaturetrx",
@@ -56,9 +56,9 @@ export const getMetricsByTab = (
                     "subscribersactive",
                     "subscribersattached",
                 ];
-            }
+
         case GRAPHS_TAB.NETWORK:
-            if (nodeType === NODE_TYPE.HOME || nodeType === NODE_TYPE.TOWER) {
+            if (nodeType !== NODE_TYPE.AMPLIFIER)
                 return [
                     "rrc",
                     "rlc",
@@ -66,14 +66,14 @@ export const getMetricsByTab = (
                     "throughputuplink",
                     "throughputdownlink",
                 ];
-            } else return [];
+            else return [];
 
         case GRAPHS_TAB.RESOURCES:
-            if (nodeType === NODE_TYPE.HOME) {
+            if (nodeType === NODE_TYPE.HOME)
                 return ["cputrxusage", "memorytrxused", "disktrxused"];
-            } else if (nodeType === NODE_TYPE.AMPLIFIER) {
+            else if (nodeType === NODE_TYPE.AMPLIFIER)
                 return ["cpuctlused", "diskctlused", "memoryctlused"];
-            } else {
+            else
                 return [
                     "powerlevel",
                     "cputrxusage",
@@ -83,13 +83,9 @@ export const getMetricsByTab = (
                     "memorytrxused",
                     "memorycomused",
                 ];
-            }
 
         case GRAPHS_TAB.RADIO:
-            if (
-                nodeType === NODE_TYPE.AMPLIFIER ||
-                nodeType === NODE_TYPE.TOWER
-            )
+            if (nodeType !== NODE_TYPE.HOME)
                 return ["txpower", "rxpower", "papower"];
             else return [];
     }
