@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import { Field, InputType, ObjectType } from "type-graphql";
-import { API_METHOD_TYPE } from "../constants";
 import { Request } from "express";
 import { IsOptional } from "class-validator";
+import { Field, InputType, ObjectType } from "type-graphql";
+import { API_METHOD_TYPE, GRAPHS_TAB, NODE_TYPE } from "../constants";
 
 @InputType()
 export class PaginationDto {
@@ -100,4 +100,31 @@ export class MetricsInputDTO {
 
     @Field()
     step: number;
+}
+
+@InputType()
+export class MetricsByTabInputDTO {
+    @Field()
+    orgId: string;
+
+    @Field()
+    regPolling: boolean;
+
+    @Field()
+    nodeId: string;
+
+    @Field()
+    from: number;
+
+    @Field()
+    to: number;
+
+    @Field()
+    step: number;
+
+    @Field(() => GRAPHS_TAB)
+    tab: GRAPHS_TAB;
+
+    @Field(() => NODE_TYPE)
+    nodeType: NODE_TYPE;
 }

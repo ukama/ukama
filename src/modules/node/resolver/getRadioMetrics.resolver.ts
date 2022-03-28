@@ -63,10 +63,10 @@ export class GetRadioMetricsResolver {
         const metricRes: MetricRes[] = [];
 
         if (
-            data.regPolling &&
             rxMetric &&
             paMetric &&
             txMetric &&
+            data.regPolling &&
             rxMetric.length > 0 &&
             txMetric.length > 0 &&
             paMetric.length > 0
@@ -102,7 +102,6 @@ export class GetRadioMetricsResolver {
             title: METRICS_LIST[2].title,
             metricData: paMetric,
         });
-        console.log(metricRes);
         return metricRes;
     }
 }

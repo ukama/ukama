@@ -10,12 +10,18 @@ import {
     MetricDto,
     NodeAppsVersionLogsResponse,
     NodeAppResponse,
+    MetricRes,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
-import { HeaderType, MetricsInputDTO, PaginationDto } from "../../common/types";
+import {
+    HeaderType,
+    MetricsByTabInputDTO,
+    MetricsInputDTO,
+    PaginationDto,
+} from "../../common/types";
 import NodeMapper from "./mapper";
-import { getPaginatedOutput } from "../../utils";
+import { getMetricTitleByType, getPaginatedOutput } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
@@ -125,5 +131,43 @@ export class NodeService implements INodeService {
             path: SERVER.GET_NODE_APPS,
         });
         return res.data;
+    };
+    getMultipleMetrics = async (
+        data: MetricsByTabInputDTO,
+        header: HeaderType,
+        endpoints: string[]
+    ): Promise<MetricRes[]> => {
+        const responses = await Promise.all(
+            endpoints.map(endpoint =>
+                catchAsyncIOMethod({
+                    type: API_METHOD_TYPE.GET,
+                    headers: header,
+                    path: getMetricUri(data.orgId, data.nodeId, endpoint),
+                    params: {
+                        to: data.to,
+                        from: data.from,
+                        step: data.step,
+                    },
+                }).then(res => {
+                    const _res: any = {};
+                    if (checkError(res)) {
+                        throw new Error(res.message);
+                    } else {
+                        _res["title"] = getMetricTitleByType(endpoint);
+                        if (res.data.result.length === 0) {
+                            _res["metricData"] = [];
+                        } else if (res.data.result.length > 0) {
+                            const values = res.data.result[0];
+                            _res["metricData"] = NodeMapper.dtoToMetricsDto(
+                                values.values
+                            );
+                        }
+                        return _res;
+                    }
+                })
+            )
+        );
+
+        return responses;
     };
 }

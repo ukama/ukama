@@ -51,6 +51,6 @@ export const axiosErrorHandler = (error: any): ErrorType => {
 };
 
 export const checkError = (error: any): boolean => {
-    if (error.code && error.message) return true;
+    if (error.code || error.message) return true;
     return false;
 };
