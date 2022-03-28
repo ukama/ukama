@@ -83,3 +83,100 @@ those can be provided in config files and supplied as argument to noded.
 ./build/noded
 ```
 
+#### Availible REST API's
+
+Some of the API listed below requires paramters to be passed. Look at [examples](#Examples) for more details.
+
+```
+curl -X GET "http://localhost:8085/noded/v1/discover" | jq
+```
+
+**Output**
+
+```
+% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   501  100   501    0     0   489k      0 --:--:-- --:--:-- --:--:--  489k
+{
+  "api": [
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/ping"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/unitinfo"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/unitconfig"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/moduleinfo"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/moduleconfig"
+    },
+    {
+      "method": "PUT",
+      "endPoint": "/noded/v1/deviceconfig"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/deviceconfig"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/mfg"
+    },
+    {
+      "method": "PUT",
+      "endPoint": "/noded/v1/mfg"
+    },
+    {
+      "method": "GET",
+      "endPoint": "/noded/v1/discover"
+    }
+  ]
+}
+```
+
+#### Examples
+
+```
+Unit Info: curl --request GET   --url http://localhost:8085/noded/v1/unitinfo | jq
+Unit Config: curl --request GET   --url http://localhost:8085/noded/v1/unitconfig | jq
+Module Info: curl --request GET   --url 'http://localhost:8085/noded/v1/moduleinfo?uuid=UK-8001-LTE-1102' | jq
+Module Config: curl --request GET   --url 'http://localhost:8085/noded/v1/moduleconfig?uuid=UK-8001-LTE-1102' | jq
+
+Sensor Device Config:
+Read Config: curl --request GET   --url 'http://localhost:8085/noded/v1/deviceconfig?uuid=UK-8001-COM-1102&type=1&name=TMP464&desc=PMIC&prop=T1%20HIGH%20LIMIT' | jq
+Write Config: curl --request PUT   --url 'http://localhost:8085/noded/v1/deviceconfig?uuid=UK-8001-COM-1102&type=1&name=TMP464&desc=PMIC&prop=T1%20HIGH%20LIMIT'   --header 'content-type: application/json'   --data '{"name": "TMP464", "description": "PMIC", "dataType": 11, "value": 65000}'
+
+Factory Config
+Read Factory Config: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=factoryconfig'
+Write Factory Config: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=factoryconfig' --data-binary @test
+
+UserConfig
+Read User Config: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=userconfig'
+Write User Config: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=userconfig' --data-binary @test
+
+Factory Calibration
+Read Factory Calibration: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=factorycalibration'
+Write Factory Calibration: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=factorycalibration' --data-binary @test
+
+User Calibration
+Read User Calibration: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=usercalibration'
+Write User Calibration: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=usercalibration' --data-binary @test
+
+Bootstrap Certs:
+Read Bootstrap certs: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=bootstrapcerts'
+Write Bootstrap certs: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=bootstrapcerts' --data-binary @testT1%20HIGH%20LIMIT
+
+Cloud certs:
+Read Cloud certs: curl --request GET   --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=cloudcerts'
+Write Cloud certs: curl --request PUT  --header "Content-Type:application/octet-stream" --url 'http://localhost:8085/noded/v1/mfg?uuid=UK-8001-COM-1102&name=cloudcerts' --data-binary @test
+
+```
