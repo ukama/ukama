@@ -42,6 +42,11 @@ export const CurrentBillingData = [
         subTotal: 10,
     },
 ];
+export const SpecsDocsData = [
+    { id: 1, title: "PDF with Technical Specs", readingTime: "2 min read" },
+    { id: 2, title: "PDF with Technical Specs", readingTime: "6 min read" },
+    { id: 3, title: "PDF with Technical Specs", readingTime: "1 min read" },
+];
 export const NodeApps = [
     {
         id: 1,
