@@ -53,7 +53,7 @@ const NodeSchematicTab = ({
                 </LoadingWrapper>
                 <Paper sx={{ p: 2 }}>
                     <Grid container xs={12}>
-                        <Grid xs={12} container spacing={1}>
+                        <Grid xs={12} container spacing={2}>
                             <Grid item xs={12}>
                                 <ContainerHeader
                                     title="Resources"
@@ -64,7 +64,7 @@ const NodeSchematicTab = ({
                             </Grid>
                             {schematicsSpecsData.map(
                                 ({ id, title, readingTime }: any) => (
-                                    <Grid item xs={4} key={id}>
+                                    <Grid item key={id} xs md lg={4}>
                                         <Card
                                             variant="outlined"
                                             sx={{
