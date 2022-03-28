@@ -35,6 +35,7 @@ import ContainerHeader from "./ContainerHeader";
 import StackedAreaChart from "./StackedAreaChart";
 import NodeResourcesTab from "./NodeResourcesTab";
 import BillingDataTable from "./BillingDataTable";
+import NodeSchematicTab from "./NodeSchematicTab";
 import GraphTitleWrapper from "./GraphTitleWrapper";
 import CustomRadioButton from "./CustomRadioButton";
 import NodeStatsContainer from "./NodeStatsContainer";
@@ -55,6 +56,7 @@ import {
 export {
     Alerts,
     NodeCard,
+    NodeSchematicTab,
     SoftwareUpdateModal,
     UserCard,
     TabPanel,

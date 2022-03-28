@@ -12,8 +12,10 @@ import {
     NodeSoftwareInfosDialog,
     SoftwareUpdateModal,
     ActivationDialog,
+    NodeSchematicTab,
 } from "../../components";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import { SpecsDocsData } from "../../constants/stubData";
 import {
     NodeDto,
     MetricDto,
@@ -71,7 +73,7 @@ import {
     isMetricData,
     parseObjectInNameValue,
 } from "../../utils";
-import { Box, Grid, Paper, Tab, Tabs } from "@mui/material";
+import { Box, Grid, Tab, Tabs } from "@mui/material";
 
 const getDefaultList = (names: string[]) =>
     names.map(name => ({
@@ -1421,7 +1423,6 @@ const Nodes = () => {
     const onSwitchOffNode = () => {
         //Todo :Handle nodeAction Itemselected
     };
-
     const handleNodeActioOptionClicked = (nodeAction: any) => {
         if (nodeAction == "Turn node off") {
             setIsSwitchOffNode(true);
@@ -1433,6 +1434,9 @@ const Nodes = () => {
     };
     const onAddNode = () => {
         setIsAddNode(true);
+    };
+    const getSpecsSchematicSearch = () => {
+        //GetSpecs search
     };
     const onSwitchOffRF = () => {
         // TODO: Handle Update node Action
@@ -1622,7 +1626,11 @@ const Nodes = () => {
                             value={selectedTab}
                             index={5}
                         >
-                            <Paper>Schematic</Paper>
+                            <NodeSchematicTab
+                                getSearchValue={getSpecsSchematicSearch}
+                                schematicsSpecsData={SpecsDocsData}
+                                nodeTitle={selectedNode?.title}
+                            />
                         </TabPanel>
                     </Grid>
                 </Grid>
