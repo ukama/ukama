@@ -32,6 +32,24 @@ export class GetMetricsByTabResolver {
             getHeaders(ctx),
             metricsEndpoints
         );
+
+        if (data.regPolling) {
+            const length = data.to - data.from;
+            for (let i = 0; i < length; i++) {
+                const metric: MetricRes[] = [];
+                for (const element of response) {
+                    metric.push({
+                        title: element.title,
+                        metricData: element.metricData[i]
+                            ? [element.metricData[i]]
+                            : [],
+                    });
+                }
+                await oneSecSleep();
+                pubsub.publish("metricsByTab", metric);
+            }
+        }
+
         return response;
     }
 }
