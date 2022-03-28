@@ -1630,6 +1630,7 @@ const Nodes = () => {
                                 getSearchValue={getSpecsSchematicSearch}
                                 schematicsSpecsData={SpecsDocsData}
                                 nodeTitle={selectedNode?.title}
+                                loading={nodesLoading}
                             />
                         </TabPanel>
                     </Grid>
