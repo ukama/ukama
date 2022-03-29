@@ -9,12 +9,21 @@
 
 /*
  * Tool for modifying the JSON schema for the device.
- * This binary is only meant to create a dummy device config by reading a sample JSON's
- * This tool would take JSON file and new  digits of serial number (LAST FOUR digit XXXX ) as command line arguments.
+ * This binary is only meant to create a dummy device config by reading a
+ * sample JSON's
  *
  * Example usage is:
- * genSchema --n ComV1 --u UK-7001-HNODE-SA03-1102 --m UK-7001-COM-1102 --f mfgdata/schema/com.json --m UK-7001-LTE-1102 --n LTE --f mfgdata/schema/lte.json --n MASK --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
- * schema -i 1101 --f mfgdata/schema/rfctrl.json --f mfgdata/schema/rffe.json
+ *
+ * genSchema --u UK-7001-HNODE-SA03-1102 \
+ * --n ComV1 --m UK-7001-COM-1102  --f mfgdata/schema/com.json \
+ * --n LTE --m UK-7001-LTE-1102  --f mfgdata/schema/lte.json \
+ * --n MASK --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
+ *
+ * ANode
+ * genSchema --u UK-8001-ANODE-SA03-1102 \
+ * --n "RF CTRL BOARD" --m UK-8001-RFC-1102 --f mfgdata/schema/rfctrl.json \
+ * --n "RF BOARD" --m UK-8001-RFA-1102 --f mfgdata/schema/rffe.json
+ *
  *
  */
 
