@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"testing"
 	"time"
 
+	ory "github.com/ory/kratos-client-go"
 	"github.com/ukama/ukamaX/common/testing/kratos"
 
 	"github.com/go-resty/resty/v2"
@@ -18,29 +20,47 @@ import (
 )
 
 type TestConfig struct {
-	BaseDomain string
+	BaseDomain       string
+	DummyAuthMode    bool
+	TestAccountEmail string
+	TestAccountPass  string
 }
 
 var testConf *TestConfig
 
 func init() {
 	testConf = &TestConfig{
-		BaseDomain: "dev.ukama.com",
+		BaseDomain:       "dev.ukama.com",
+		DummyAuthMode:    false,
+		TestAccountEmail: "integration-test@ukama.com",
+		TestAccountPass:  "Pass2020!!",
 	}
 
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
-
 	config.LoadConfig("integration", testConf)
 	logrus.Infof("Config: %+v", testConf)
 }
 
 func Test_RegistryApi(t *testing.T) {
-	login, err := kratos.Login(getKratosUrl())
-	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
-	if err != nil {
-		assert.NoError(t, err, "Failed to login to Kratos")
-		return
+	var login *ory.SuccessfulSelfServiceLoginWithoutBrowser
+	var err error
+
+	if testConf.DummyAuthMode {
+		tkn := "dummy-token"
+		login = &ory.SuccessfulSelfServiceLoginWithoutBrowser{
+			SessionToken: &tkn,
+		}
+	} else {
+
+		login, err = kratos.Login(getKratosUrl(), testConf.TestAccountEmail, testConf.TestAccountPass)
+		if err != nil {
+			assert.NoError(t, err, "Failed to login to Kratos")
+			assert.FailNow(t, "Failed to login to Kratos")
+			return
+		}
 	}
+
+	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
 
 	client := resty.New()
 
@@ -86,6 +106,20 @@ func Test_RegistryApi(t *testing.T) {
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
 		fmt.Println("Response: ", resp.String())
 	})
+
+	t.Run("AddNode", func(tt *testing.T) {
+		resp, err := client.R().
+			EnableTrace().
+			SetHeader("authorization", "bearer "+login.GetSessionToken()).
+			//SetBody(fmt.Sprintf("{ 'name':'%s' } ", time.Now().Format(time.RFC3339)+"testNode")).
+			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + ukama.NewVirtualHomeNodeId().String())
+
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
+			fmt.Println("Response: ", resp.String())
+		}
+	})
+
 }
 
 func getApiUrl() string {

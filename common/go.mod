@@ -13,7 +13,7 @@ require (
 	github.com/lib/pq v1.3.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/ory/kratos-client-go v0.8.0-alpha.2
+	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/penglongli/gin-metrics v0.1.9
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1

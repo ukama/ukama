@@ -2,8 +2,8 @@ package db
 
 import (
 	"database/sql/driver"
+	uuid "github.com/google/uuid"
 	"github.com/jackc/pgtype"
-	uuid "github.com/satori/go.uuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -56,7 +56,8 @@ type Node struct {
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
-	OrgID     uint32
+	Name      string         `gorm:"type:string;uniqueIndex:node_name_org_idx"`
+	OrgID     uint32         `gorm:"uniqueIndex:node_name_org_idx"`
 	Org       *Org
 	NetworkID *uint32
 	SiteID    *uint32

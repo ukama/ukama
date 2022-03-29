@@ -55,7 +55,7 @@ func RandomCredentials() (email, password string) {
 }
 
 // CreateIdentityWithSession creates an identity and an Ory Session Token for it.
-func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.Session, string, error) {
+func CreateIdentityWithSession(c *ory.APIClient, email, password string) (error) {
 	ctx := context.Background()
 
 	if email == "" && password == "" {
@@ -65,7 +65,7 @@ func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.S
 	// Initialize a registration flow
 	flow, _, err := c.V0alpha2Api.InitializeSelfServiceRegistrationFlowWithoutBrowser(ctx).Execute()
 	if err != nil {
-		return nil, "", err
+		return err
 	}
 
 	// Submit the registration flow
@@ -80,12 +80,12 @@ func CreateIdentityWithSession(c *ory.APIClient, email, password string) (*ory.S
 	LogKratosSdkError(err, res)
 
 	if err != nil {
-		return nil, "", err
+		return err
 	}
 
 	if result.Session == nil {
 		log.Fatalf("The server is expected to create sessions for new registrations.")
 	}
 
-	return result.Session, *result.SessionToken, nil
+	return  nil
 }

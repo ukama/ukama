@@ -3,12 +3,15 @@ package server
 import (
 	"context"
 	"encoding/base64"
+	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
+	"time"
 
-	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
 
-	uuid2 "github.com/satori/go.uuid"
+	"github.com/goombaio/namegenerator"
+
+	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
 	"github.com/ukama/ukamaX/common/ukama"
@@ -18,18 +21,22 @@ import (
 
 type RegistryServer struct {
 	pb.UnimplementedRegistryServiceServer
-	orgRepo         db.OrgRepo
-	nodeRepo        db.NodeRepo
+	orgRepo         db2.OrgRepo
+	nodeRepo        db2.NodeRepo
 	bootstrapClient bootstrap.Client
 	deviceGatewayIp string
+	nameGenerator   namegenerator.Generator
 }
 
-func NewRegistryServer(orgRepo db.OrgRepo, nodeRepo db.NodeRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
+func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
+	seed := time.Now().UTC().UnixNano()
+
 	return &RegistryServer{
 		orgRepo:         orgRepo,
 		nodeRepo:        nodeRepo,
 		bootstrapClient: bootstrapClient,
-		deviceGatewayIp: deviceGatewayIp}
+		deviceGatewayIp: deviceGatewayIp,
+		nameGenerator:   namegenerator.NewNameGenerator(seed)}
 }
 
 func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
@@ -38,12 +45,12 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
 	}
 
-	owner, err := uuid2.FromString(request.Owner)
+	owner, err := uuid2.Parse(request.Owner)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error %s", err.Error())
 	}
 
-	org := &db.Org{
+	org := &db2.Org{
 		Name:        request.Name,
 		Owner:       owner,
 		Certificate: generateCertificate(),
@@ -109,15 +116,23 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "type is determined from nodeId and can not be set specifically")
 	}
 
-	node := &db.Node{
+	// Generate random node name if it's missing
+	if len(req.Node.Name) == 0 {
+		req.Node.Name = r.nameGenerator.Generate()
+	}
+
+	node := &db2.Node{
 		NodeID: req.Node.NodeId,
 		OrgID:  org.ID,
 		State:  pbNodeStateToDb(req.Node.State),
 		Type:   toDbNodeType(nId.GetNodeType()),
+		Name:   req.Node.Name,
 	}
 
+	// adding node to DB and bootstrap in transaction
+	// Rollback trans if bootstrap fails to add a node
 	err = r.nodeRepo.Add(node, func() error {
-		return r.bootstrapClient.AddDevice(org.Name, node.NodeID)
+		return r.bootstrapClient.AddNode(org.Name, node.NodeID)
 	})
 
 	if err != nil {
@@ -129,19 +144,21 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		return nil, status.Errorf(codes.Internal, "error adding the node")
 	}
 
-	return &pb.AddNodeResponse{}, nil
+	return &pb.AddNodeResponse{
+		Node: dbNodeToPbNode(node),
+	}, nil
 }
 
-func toDbNodeType(nodeType string) db.NodeType {
+func toDbNodeType(nodeType string) db2.NodeType {
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_AMPNODE:
-		return db.NodeTypeAmplifier
+		return db2.NodeTypeAmplifier
 	case ukama.NODE_ID_TYPE_COMPNODE:
-		return db.NodeTypeTower
+		return db2.NodeTypeTower
 	case ukama.NODE_ID_TYPE_HOMENODE:
-		return db.NodeTypeHome
+		return db2.NodeTypeHome
 	default:
-		return db.NodeTypeUnknown
+		return db2.NodeTypeUnknown
 	}
 }
 
@@ -214,7 +231,7 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	logrus.Infof("Get nodes for org %s", req.OrgName)
 
-	var nodes []db.Node
+	var nodes []db2.Node
 	var err error
 	if len(req.OrgName) != 0 {
 		nodes, err = r.nodeRepo.GetByOrg(req.OrgName)
@@ -223,45 +240,39 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 		logrus.Error(err.Error())
 		return nil, status.Errorf(codes.Internal, "error getting nodes")
 	}
-	orgToNodes := map[string][]*pb.Node{}
-	orgToNodes[req.OrgName] = make([]*pb.Node, 0)
+
+	pbNodes := make([]*pb.Node, 0)
 	for _, n := range nodes {
-		orgToNodes[n.Org.Name] = append(orgToNodes[n.Org.Name], dbNodeToPbNode(&n))
+		pbNodes = append(pbNodes, dbNodeToPbNode(&n))
 	}
 
 	resp := &pb.GetNodesResponse{
-		Orgs: []*pb.NodesList{},
-	}
-
-	for orgN := range orgToNodes {
-		resp.Orgs = append(resp.Orgs, &pb.NodesList{
-			Nodes:   orgToNodes[orgN],
-			OrgName: orgN,
-		})
+		Nodes:   pbNodes,
+		OrgName: req.OrgName,
 	}
 
 	return resp, nil
 }
 
-func pbNodeStateToDb(state pb.NodeState) db.NodeState {
-	var dbState db.NodeState
+func pbNodeStateToDb(state pb.NodeState) db2.NodeState {
+	var dbState db2.NodeState
 	switch state {
 	case pb.NodeState_ONBOARDED:
-		dbState = db.Onboarded
+		dbState = db2.Onboarded
 	case pb.NodeState_PENDING:
-		dbState = db.Pending
+		dbState = db2.Pending
 	default:
-		dbState = db.Undefined
+		dbState = db2.Undefined
 	}
 	return dbState
 }
 
-func dbNodeStateToPb(state db.NodeState) pb.NodeState {
+func dbNodeStateToPb(state db2.NodeState) pb.NodeState {
 	var pbState pb.NodeState
 	switch state {
-	case db.Onboarded:
+	case db2.Onboarded:
 		pbState = pb.NodeState_ONBOARDED
-	case db.Pending:
+	case db2.Pending:
 		pbState = pb.NodeState_PENDING
 	default:
 		pbState = pb.NodeState_UNDEFINED
@@ -270,22 +281,23 @@ func dbNodeStateToPb(state db.NodeState) pb.NodeState {
 	return pbState
 }
 
-func dbNodeToPbNode(n *db.Node) *pb.Node {
+func dbNodeToPbNode(dbn *db2.Node) *pb.Node {
 	return &pb.Node{
-		NodeId: n.NodeID,
-		State:  dbNodeStateToPb(n.State),
-		Type:   dbNodeTypeToPb(n.Type),
+		NodeId: dbn.NodeID,
+		State:  dbNodeStateToPb(dbn.State),
+		Type:   dbNodeTypeToPb(dbn.Type),
+		Name:   dbn.Name,
 	}
 }
 
-func dbNodeTypeToPb(nodeType db.NodeType) pb.NodeType {
+func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
 	var pbNodeType pb.NodeType
 	switch nodeType {
-	case db.NodeTypeAmplifier:
+	case db2.NodeTypeAmplifier:
 		pbNodeType = pb.NodeType_AMPLIFIER
-	case db.NodeTypeTower:
+	case db2.NodeTypeTower:
 		pbNodeType = pb.NodeType_TOWER
-	case db.NodeTypeHome:
+	case db2.NodeTypeHome:
 		pbNodeType = pb.NodeType_HOME
 	default:
 		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED

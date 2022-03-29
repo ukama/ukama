@@ -2,14 +2,13 @@ package server
 
 import (
 	"context"
+	"github.com/ukama/ukamaX/cloud/registry/pkg/db"
 	"testing"
 
 	mocks "github.com/ukama/ukamaX/cloud/registry/mocks"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 
-	"github.com/ukama/ukamaX/cloud/registry/internal/db"
-
-	uuid2 "github.com/satori/go.uuid"
+	uuid2 "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukamaX/common/ukama"
@@ -51,7 +50,7 @@ func TestRegistryServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 func TestRegistryServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
-	ownerId := uuid2.NewV1().String()
+	ownerId := uuid2.NewString()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	// trick to call nested bootstrap call
@@ -77,7 +76,7 @@ func TestRegistryServer_AddOrg(t *testing.T) {
 
 func TestRegistryServer_GetNode(t *testing.T) {
 	orgName := "node-1"
-	ownerId := uuid2.NewV1()
+	ownerId := uuid2.New()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
@@ -122,11 +121,11 @@ func TestRegistryServer_AddNode(t *testing.T) {
 		return f[0]()
 	}).Once()
 	bootstrapClient := &mocks.Client{}
-	bootstrapClient.On("AddDevice", orgName, nodeId).Return(nil)
+	bootstrapClient.On("AddNode", orgName, nodeId).Return(nil)
 	s := NewRegistryServer(orgRepo, nodeRepo, bootstrapClient, testDeviceGatewayHost)
 
 	// Act
-	_, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
 		Node: &pb.Node{
 			NodeId: nodeId,
 			State:  pb.NodeState_PENDING,
@@ -136,6 +135,7 @@ func TestRegistryServer_AddNode(t *testing.T) {
 
 	// Assert
 	assert.NoError(t, err)
+	assert.NotEmpty(t, actNode.Node.Name)
 	nodeRepo.AssertExpectations(t)
 	bootstrapClient.AssertExpectations(t)
 }
@@ -147,21 +147,22 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 
+	const NodeName0 = "NodeName0"
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
-		{NodeID: nodeUuid1.String(), State: db.Undefined, Org: &db.Org{Name: orgName}},
-		{NodeID: nodeUuid2.String(), State: db.Pending, Org: &db.Org{Name: orgName}},
+		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Org: &db.Org{Name: orgName}},
+		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Org: &db.Org{Name: orgName}},
 	}, nil).Once()
 	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
-	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
+	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
 		OrgName: orgName,
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(res.GetOrgs()))
-	assert.Equal(t, res.Orgs[0].GetNodes()[0].State, pb.NodeState_UNDEFINED)
-	assert.Equal(t, res.Orgs[0].OrgName, orgName)
-	assert.Equal(t, res.Orgs[0].GetNodes()[1].State, pb.NodeState_PENDING)
-	assert.Equal(t, res.Orgs[0].GetNodes()[1].NodeId, nodeUuid2.String())
+	assert.Equal(t, pb.NodeState_UNDEFINED, resp.Nodes[0].State)
+	assert.Equal(t, NodeName0, resp.Nodes[0].Name)
+	assert.Equal(t, resp.OrgName, orgName)
+	assert.Equal(t, resp.Nodes[1].State, pb.NodeState_PENDING)
+	assert.Equal(t, resp.Nodes[1].NodeId, nodeUuid2.String())
 	nodeRepo.AssertExpectations(t)
 }
 
@@ -179,9 +180,8 @@ func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {
 
 	// assert
 	assert.NoError(t, err)
-	assert.NotNil(t, res.Orgs)
-	assert.Equal(t, 1, len(res.Orgs))
-	assert.Equal(t, 0, len(res.Orgs[0].Nodes))
+	assert.NotNil(t, res.Nodes)
+	assert.Equal(t, 0, len(res.Nodes))
 }
 
 func Test_toDbNodeType(t *testing.T) {

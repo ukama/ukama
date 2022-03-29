@@ -1,6 +1,7 @@
 package main
 
 import (
+	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
 	"os"
 
 	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
@@ -10,7 +11,6 @@ import (
 
 	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 
-	"github.com/ukama/ukamaX/cloud/registry/internal/db"
 	"github.com/ukama/ukamaX/cloud/registry/pkg/server"
 
 	log "github.com/sirupsen/logrus"
@@ -36,12 +36,12 @@ func main() {
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	svcConf = pkg.NewConfig()
-	config.LoadConfig("", svcConf)
+	config.LoadConfig(ServiceName, svcConf)
 }
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.Org{}, &db.Network{}, &db.Site{}, &db.Node{}, &db.NodeIp{})
+	err := d.Init(&db2.Org{}, &db2.Network{}, &db2.Site{}, &db2.Node{}, &db2.NodeIp{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -49,14 +49,13 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
 	bootstrapCl := bootstrap.NewBootstrapClient(svcConf.BootstrapUrl, bootstrap.NewAuthenticator(svcConf.BootstrapAuth))
 	if svcConf.Debug.DisableBootstrap {
 		bootstrapCl = bootstrap.DummyBootstrapClient{}
 	}
 
-	regServer := server.NewRegistryServer(db.NewOrgRepo(gormdb),
-		db.NewNodeRepo(gormdb),
+	regServer := server.NewRegistryServer(db2.NewOrgRepo(gormdb),
+		db2.NewNodeRepo(gormdb),
 		bootstrapCl,
 		svcConf.DeviceGatewayHost)
 

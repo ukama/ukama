@@ -2,7 +2,6 @@ package db
 
 import (
 	sql2 "database/sql"
-	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukamaX/common/sql"
 	"github.com/ukama/ukamaX/common/ukama"
 	"gorm.io/gorm"
@@ -17,7 +16,6 @@ type NodeRepo interface {
 	GetByOrg(orgName string) ([]Node, error)
 	Delete(id ukama.NodeID, nestedFunc ...func() error) error
 	Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error
-	GetByUser(ownerId uuid.UUID) ([]Node, error)
 }
 
 type nodeRepo struct {
@@ -49,15 +47,14 @@ func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 }
 
 func (r *nodeRepo) GetByOrg(orgName string) ([]Node, error) {
-
 	db := r.Db.GetGormDb()
-	rows, err := db.Raw(`select * from nodes 
-									inner join orgs ON orgs.id = nodes.org_id
-									where orgs.name=? and nodes.deleted_at is null`, orgName).Rows()
+	rows, err := db.Raw(`select n.* from nodes n
+									inner join orgs o ON o.id = n.org_id
+								where o.name=? and n.deleted_at is null`, orgName).Rows()
 	if err != nil {
 		return nil, err
 	}
-	nodes, err := r.mapNodesToOrgs(rows, db)
+	nodes, err := r.mapNodes(rows, db)
 	if err != nil {
 		return nil, err
 	}
@@ -65,38 +62,19 @@ func (r *nodeRepo) GetByOrg(orgName string) ([]Node, error) {
 	return nodes, nil
 }
 
-func (r *nodeRepo) GetByUser(ownerId uuid.UUID) ([]Node, error) {
-	db := r.Db.GetGormDb()
-	rows, err := db.Raw(`select * from nodes 
-									inner join orgs ON orgs.id = nodes.org_id
-									where orgs.owner=?`, ownerId).Rows()
-	if err != nil {
-		return nil, err
-	}
-	nodes, err := r.mapNodesToOrgs(rows, db)
-	if err != nil {
-		return nil, err
-	}
-
-	return nodes, nil
-}
-
-func (r *nodeRepo) mapNodesToOrgs(rows *sql2.Rows, db *gorm.DB) ([]Node, error) {
+func (r *nodeRepo) mapNodes(rows *sql2.Rows, db *gorm.DB) ([]Node, error) {
 	var nodes []Node
 	defer rows.Close()
 
 	for rows.Next() {
 		var node Node
-		var org Org
+
+		// Node columns are mapped correctly
 		err := db.ScanRows(rows, &node)
 		if err != nil {
 			return nil, err
 		}
-		err = db.ScanRows(rows, &org)
-		if err != nil {
-			return nil, err
-		}
-		node.Org = &org
+
 		nodes = append(nodes, node)
 	}
 

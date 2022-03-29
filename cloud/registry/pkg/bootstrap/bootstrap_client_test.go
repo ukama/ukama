@@ -33,8 +33,8 @@ func Test_NoErrorFromServer(t *testing.T) {
 		assert.Contains(t, body, testDeviceGatewayHost)
 	})
 
-	t.Run("AddDevice", func(t *testing.T) {
-		err := bootstrap.AddDevice("org-1", "node_id")
+	t.Run("AddNode", func(t *testing.T) {
+		err := bootstrap.AddNode("org-1", "node_id")
 		assert.NoError(t, err)
 	})
 }
@@ -58,8 +58,8 @@ func Test_ErrorFromServer(t *testing.T) {
 		assert.Contains(t, err.Error(), notAuthorizedMessage)
 	})
 
-	t.Run("AddDevice", func(t *testing.T) {
-		err := bootstrap.AddDevice("org-1", "node_id")
+	t.Run("AddNode", func(t *testing.T) {
+		err := bootstrap.AddNode("org-1", "node_id")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), notAuthorizedMessage)
 	})

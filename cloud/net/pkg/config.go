@@ -1,15 +1,17 @@
 package pkg
 
 import (
-	"github.com/ukama/ukamaX/common/config"
 	"time"
+
+	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukamaX/common/rest"
 )
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	EtcdHost          string
 	Grpc              config.Grpc
-	Http              config.Http
+	Http              rest.HttpConfig
 	DialTimeoutSecond time.Duration
 	NodeMetricsPort   int
 	Dns               *DnsConfig
@@ -27,7 +29,7 @@ func NewConfig() *Config {
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
-		Http: config.Http{
+		Http: rest.HttpConfig{
 			Port: 8080,
 		},
 		NodeMetricsPort: 10250,

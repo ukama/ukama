@@ -10,7 +10,7 @@ import (
 
 type Client interface {
 	AddOrUpdateOrg(orgName string, cert string, deviceGatewayHost string) error
-	AddDevice(orgName string, nodeId string) error
+	AddNode(orgName string, nodeId string) error
 }
 
 type bootstrapClient struct {
@@ -53,7 +53,7 @@ func (b *bootstrapClient) AddOrUpdateOrg(orgName string, cert string, deviceGate
 	return nil
 }
 
-func (b *bootstrapClient) AddDevice(orgName string, nodeId string) error {
+func (b *bootstrapClient) AddNode(orgName string, nodeId string) error {
 	logrus.Infoln("Adding new node id: ", orgName, " ", nodeId)
 	client := resty.New()
 	errorResp := &rest.ErrorMessage{}

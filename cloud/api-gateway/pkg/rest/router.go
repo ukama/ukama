@@ -104,12 +104,13 @@ func (r *Router) init() {
 
 		authorized.GET(org, []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
 
-		// registry
-		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
-		nodes.GET("", nil, tonic.Handler(r.nodesHandler, http.StatusOK))
-
 		// metrics
 		metricsProxy := r.getMetricsProxyHandler()
+
+		// registry
+		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
+		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
+		nodes.PUT("/:node", nil, tonic.Handler(r.addNodeHandler, http.StatusCreated))
 
 		nodes.GET("/metrics/openapi.json", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
@@ -168,7 +169,7 @@ func (r *Router) orgHandler(c *gin.Context) (*pb.Organization, error) {
 	return r.clients.Registry.GetOrg(orgName)
 }
 
-func (r *Router) nodesHandler(c *gin.Context) (*NodesList, error) {
+func (r *Router) getNodesHandler(c *gin.Context) (*NodesList, error) {
 	orgName := r.getOrgNameFromRoute(c)
 	nl, err := r.clients.Registry.GetNodes(orgName)
 	if err != nil {
@@ -176,6 +177,11 @@ func (r *Router) nodesHandler(c *gin.Context) (*NodesList, error) {
 	}
 
 	return MapNodesList(nl), nil
+}
+
+func (r *Router) addNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {
+	node, err := r.clients.Registry.Add(req.OrgName, req.NodeId)
+	return node, err
 }
 
 func (r *Router) getUsersHandler(c *gin.Context) (*hsspb.ListUsersResponse, error) {

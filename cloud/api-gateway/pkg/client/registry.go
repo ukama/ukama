@@ -60,8 +60,18 @@ func (r *Registry) GetOrg(orgName string) (*pb.Organization, error) {
 	return res, nil
 }
 
+func (r *Registry) Add(orgName string, nodeId string) (*pb.Node, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+	resp, err := r.client.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{NodeId: nodeId}, OrgName: orgName})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Node, nil
+}
+
 // GetOrg returns list of nodes
-func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
+func (r *Registry) GetNodes(orgName string) (*pb.GetNodesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -73,15 +83,13 @@ func (r *Registry) GetNodes(orgName string) (*pb.NodesList, error) {
 	if grpcErr, ok := marshalError(err); ok {
 		return nil, grpcErr
 	}
-
-	// only one org should be allowed
-	if len(res.GetOrgs()) == 1 {
-		return res.GetOrgs()[0], nil
-	} else if len(res.GetOrgs()) > 1 {
-		return nil, &rest.HttpError{HttpCode: http.StatusInternalServerError, Message: "Unexpected number of orgs in response"}
+	if res.Nodes == nil {
+		// to keep 'nodes' as empty array in json response
+		return &pb.GetNodesResponse{Nodes: []*pb.Node{}, OrgName: orgName}, nil
 	}
 
-	return &pb.NodesList{Nodes: []*pb.Node{}}, nil
+	return res, nil
+
 }
 
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {

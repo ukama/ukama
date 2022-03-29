@@ -65,13 +65,9 @@ message GetNodesRequest{
     string orgName = 1 ;
 }
 
-message GetNodesResponse{    
-    repeated NodesList orgs = 2;
-}
-
-message NodesList {
-	string orgName = 1;
-	repeated Node nodes = 2;
+message GetNodesResponse{
+    string orgName = 1;
+    repeated Node nodes = 2;
 }
 
 message Organization {
@@ -96,4 +92,5 @@ message Node {
     string nodeId = 1;
     NodeState state = 4;
     NodeType type = 5;
+    string name = 6;
 }

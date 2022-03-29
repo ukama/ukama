@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	uuid2 "github.com/satori/go.uuid"
+	uuid2 "github.com/google/uuid"
 	"github.com/ukama/ukamaX/common/ukama"
 
 	"github.com/ukama/ukamaX/common/msgbus"
@@ -63,13 +63,13 @@ func Test_FullFlow(t *testing.T) {
 	c := pb.NewRegistryServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ownerId := uuid2.NewV1()
+	ownerId := uuid2.NewString()
 	node := ukama.NewVirtualNodeId("HomeNode")
 
 	var r interface{}
 
 	t.Run("AddOrg", func(tt *testing.T) {
-		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId.String()})
+		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId})
 		handleResponse(tt, err, r)
 	})
 
@@ -78,15 +78,19 @@ func Test_FullFlow(t *testing.T) {
 		handleResponse(tt, err, r)
 	})
 
-	t.Run("AddUpdateNode", func(tt *testing.T) {
-		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
+	t.Run("AddAndUpdateNode", func(tt *testing.T) {
+		nodeName := "HomeNodeX"
+		addResp, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: node.String(),
 				State:  pb.NodeState_UNDEFINED,
+				Name:   nodeName,
 			},
 			OrgName: orgName,
 		})
-		handleResponse(tt, err, r)
+		handleResponse(tt, err, addResp)
+		assert.NotNil(tt, addResp.Node)
+		assert.Equal(tt, nodeName, addResp.Node.Name)
 
 		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
 		handleResponse(tt, err, r)
@@ -114,8 +118,8 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("GetNodes", func(tt *testing.T) {
 		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 		handleResponse(t, err, nodesResp)
-		assert.Equal(tt, 1, len(nodesResp.Orgs[0].Nodes))
-		assert.Equal(tt, node.String(), nodesResp.Orgs[0].Nodes[0].NodeId)
+		assert.Equal(tt, 1, len(nodesResp.Nodes))
+		assert.Equal(tt, node.String(), nodesResp.Nodes[0].NodeId)
 	})
 }
 

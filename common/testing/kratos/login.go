@@ -2,21 +2,13 @@ package kratos
 
 import (
 	"context"
-
 	ory "github.com/ory/kratos-client-go"
 )
 
-func Login(kratosUrl string) (*ory.SuccessfulSelfServiceLoginWithoutBrowser, error) {
+func Login(kratosUrl string, email string, password string) (*ory.SuccessfulSelfServiceLoginWithoutBrowser, error) {
 	var client = NewSDKForSelfHosted(kratosUrl)
-
 	ctx := context.Background()
 
-	// Create a temporary user
-	email, password := RandomCredentials()
-	_, _, err := CreateIdentityWithSession(client, email, password)
-	if err != nil {
-		return nil, err
-	}
 	// Initialize the flow
 	flow, res, err := client.V0alpha2Api.InitializeSelfServiceLoginFlowWithoutBrowser(ctx).Execute()
 	LogKratosSdkError(err, res)
@@ -25,7 +17,6 @@ func Login(kratosUrl string) (*ory.SuccessfulSelfServiceLoginWithoutBrowser, err
 	}
 
 	// If you want, print the flow here:
-	//
 	PrintJSONPretty(flow)
 
 	// Submit the form
@@ -42,4 +33,14 @@ func Login(kratosUrl string) (*ory.SuccessfulSelfServiceLoginWithoutBrowser, err
 	}
 
 	return result, nil
+}
+
+func CreateTemporaryUser(client *ory.APIClient ) (email string, password string, err error){
+	// Create a temporary user
+	email, password = RandomCredentials()
+	err = CreateIdentityWithSession(client, email, password)
+	if err != nil{
+		return "", "", err
+	}
+	return email, password, nil
 }

@@ -125,13 +125,9 @@ func TestGetNodes(t *testing.T) {
 		m.On("GetNodes", mock.Anything, mock.MatchedBy(func(r *pb.GetNodesRequest) bool {
 			return r.OrgName == "test-org"
 		})).Return(&pb.GetNodesResponse{
-			Orgs: []*pb.NodesList{
-				{
-					Nodes: []*pb.Node{
-						{NodeId: nodeId.String()},
-					},
-				},
-			},
+			Nodes: []*pb.Node{
+				{NodeId: nodeId.String()}},
+			OrgName: "test-org",
 		}, nil)
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
@@ -151,7 +147,7 @@ func TestGetNodes(t *testing.T) {
 		w := httptest.NewRecorder()
 		m := &pbmocks.RegistryServiceClient{}
 		m.On("GetNodes", mock.Anything, mock.Anything).Return(&pb.GetNodesResponse{
-			Orgs: []*pb.NodesList{},
+			Nodes: []*pb.Node{},
 		}, nil)
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{

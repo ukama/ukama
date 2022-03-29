@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/google/uuid"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,7 +45,7 @@ func TestDeviceIncomingMessageHandler(t *testing.T) {
 func TestUserRegisteredMessageHandler(t *testing.T) {
 	// Arrange
 	reg := &pbmocks.RegistryServiceClient{}
-	userId := uuid.NewV4().String()
+	userId := uuid.NewString()
 
 	reg.On("AddOrg", mock.Anything, mock.MatchedBy(func(r *pb.AddOrgRequest) bool {
 		return r.Name == userId && r.Owner == userId

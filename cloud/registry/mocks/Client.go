@@ -9,8 +9,8 @@ type Client struct {
 	mock.Mock
 }
 
-// AddDevice provides a mock function with given fields: orgName, nodeId
-func (_m *Client) AddDevice(orgName string, nodeId string) error {
+// AddNode provides a mock function with given fields: orgName, nodeId
+func (_m *Client) AddNode(orgName string, nodeId string) error {
 	ret := _m.Called(orgName, nodeId)
 
 	var r0 error

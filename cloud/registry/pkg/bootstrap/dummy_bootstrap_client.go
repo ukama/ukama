@@ -10,7 +10,7 @@ func (d DummyBootstrapClient) AddOrUpdateOrg(orgName string, cert string, device
 	return nil
 }
 
-func (d DummyBootstrapClient) AddDevice(orgName string, nodeId string) error {
-	logrus.Infof("AddDevice called for org %s and node %s", orgName, nodeId)
+func (d DummyBootstrapClient) AddNode(orgName string, nodeId string) error {
+	logrus.Infof("AddNode called for org %s and node %s", orgName, nodeId)
 	return nil
 }

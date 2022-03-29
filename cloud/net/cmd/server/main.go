@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
 	"github.com/ukama/ukamaX/cloud/net/pkg/server"
-	"os"
 
 	"github.com/ukama/ukamaX/cloud/net/pkg"
 
@@ -26,7 +27,7 @@ func main() {
 
 	nnsClient := server.NewNns(serviceConfig)
 
-	metrics.StartMetricsServer(serviceConfig.Metrics)
+	metrics.StartMetricsServer(&serviceConfig.Metrics)
 	go func() {
 		srv := server.NewHttpServer(serviceConfig.Http, serviceConfig.Grpc, serviceConfig.NodeMetricsPort, nnsClient)
 		srv.RunHttpServer()

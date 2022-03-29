@@ -18,11 +18,12 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/loopfz/gadgeto v0.11.2
+	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukamaX/cloud/hss v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20210818102821-83b756ff1d75
-	github.com/ukama/ukamaX/common v0.0.0-20220203094303-0e086e04d2ff
+	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.43.0
 )
@@ -54,7 +55,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
-	github.com/ory/kratos-client-go v0.8.0-alpha.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/penglongli/gin-metrics v0.1.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
