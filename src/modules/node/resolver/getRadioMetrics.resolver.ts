@@ -74,16 +74,19 @@ export class GetRadioMetricsResolver {
             for (let i = 0; i < rxMetric.length; i++) {
                 const metric: MetricRes[] = [];
                 metric.push({
-                    title: METRICS_LIST[0].title,
-                    metricData: [txMetric[i]],
+                    type: "",
+                    name: METRICS_LIST[0].title,
+                    data: [txMetric[i]],
                 });
                 metric.push({
-                    title: METRICS_LIST[1].title,
-                    metricData: [rxMetric[i]],
+                    type: "",
+                    name: METRICS_LIST[1].title,
+                    data: [rxMetric[i]],
                 });
                 metric.push({
-                    title: METRICS_LIST[2].title,
-                    metricData: [paMetric[i]],
+                    type: "",
+                    name: METRICS_LIST[2].title,
+                    data: [paMetric[i]],
                 });
 
                 await oneSecSleep();
@@ -91,16 +94,19 @@ export class GetRadioMetricsResolver {
             }
         }
         metricRes.push({
-            title: METRICS_LIST[0].title,
-            metricData: txMetric,
+            type: "",
+            name: METRICS_LIST[0].title,
+            data: txMetric,
         });
         metricRes.push({
-            title: METRICS_LIST[1].title,
-            metricData: rxMetric,
+            type: "",
+            name: METRICS_LIST[1].title,
+            data: rxMetric,
         });
         metricRes.push({
-            title: METRICS_LIST[2].title,
-            metricData: paMetric,
+            type: "",
+            name: METRICS_LIST[2].title,
+            data: paMetric,
         });
         return metricRes;
     }

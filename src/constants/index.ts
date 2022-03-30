@@ -124,6 +124,7 @@ registerEnumType(NODE_TYPE, {
     name: "NODE_TYPE",
 });
 export enum GRAPHS_TAB {
+    HOME = "HOME",
     RADIO = "RADIO",
     NETWORK = "NETWORK",
     OVERVIEW = "OVERVIEW",

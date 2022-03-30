@@ -88,11 +88,16 @@ export const getMetricsByTab = (
             if (nodeType !== NODE_TYPE.HOME)
                 return ["txpower", "rxpower", "papower"];
             else return [];
+
+        case GRAPHS_TAB.HOME:
+            return ["uptime"];
     }
 };
 
 export const getMetricTitleByType = (type: string): string => {
     switch (type) {
+        case "uptime":
+            return "Uptime";
         case "temperaturetrx":
             return "Temp. (TRX)";
         case "temperaturerfe":

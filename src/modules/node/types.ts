@@ -254,7 +254,20 @@ export class NodeAppResponse {
 @ObjectType()
 export class MetricRes {
     @Field()
-    title: string;
+    type: string;
+
+    @Field()
+    name: string;
+
     @Field(() => [MetricDto])
-    metricData: MetricDto[];
+    data: MetricDto[];
+}
+
+@ObjectType()
+export class GetMetricsRes {
+    @Field()
+    to: number;
+
+    @Field(() => [MetricRes])
+    metrics: MetricRes[];
 }

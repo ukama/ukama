@@ -154,8 +154,9 @@ export class NodeService implements INodeService {
                     } else {
                         const values = res.data.result[0];
                         return {
-                            title: getMetricTitleByType(endpoint),
-                            metricData:
+                            type: endpoint,
+                            name: getMetricTitleByType(endpoint),
+                            data:
                                 res.data.result.length > 0
                                     ? NodeMapper.dtoToMetricsDto(values.values)
                                     : [],
