@@ -5,26 +5,14 @@ import { Paper, Grid, Stack } from "@mui/material";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 import { NodeStatsContainer, NodeStatItem } from "..";
 interface INodeResourcesTab {
+    metrics: any;
     loading: boolean;
-    cpuTrxMetric: any;
-    memoryTrxMetric: any;
-    diskTrxMatrics: any;
-    powerMetrics: any;
-    diskComMetrics: any;
-    memoryComMetrics: any;
-    cpuComMetrics: any;
     selectedNode: NodeDto | undefined;
 }
 const NodeResourcesTab = ({
+    metrics,
     loading,
     selectedNode,
-    diskComMetrics = [],
-    diskTrxMatrics = [],
-    cpuComMetrics = [],
-    powerMetrics = [],
-    memoryComMetrics = [],
-    cpuTrxMetric = [],
-    memoryTrxMetric = [],
 }: INodeResourcesTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
@@ -147,91 +135,91 @@ const NodeResourcesTab = ({
                             (selectedNode?.type as string) || ""
                         ][0].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][0].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][0].id
+                                    ]
                                 }
-                                data={memoryTrxMetric}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][1].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][1].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][1].id
+                                    ]
                                 }
-                                data={memoryComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][2].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][2].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][2].id
+                                    ]
                                 }
-                                data={cpuTrxMetric}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][3].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][3].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][3].id
+                                    ]
                                 }
-                                data={cpuComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][4].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][4].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][4].id
+                                    ]
                                 }
-                                data={diskTrxMatrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][5].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][5].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][5].id
+                                    ]
                                 }
-                                data={diskComMetrics}
                             />
                         )}
                         {NodeResourcesTabConfigure[
                             (selectedNode?.type as string) || ""
                         ][6].show && (
                             <ApexLineChart
-                                hasData={true}
-                                name={
-                                    NodeResourcesTabConfigure[
-                                        (selectedNode?.type as string) || ""
-                                    ][6].name
+                                data={
+                                    metrics[
+                                        NodeResourcesTabConfigure[
+                                            (selectedNode?.type as string) || ""
+                                        ][6].id
+                                    ]
                                 }
-                                data={powerMetrics}
                             />
                         )}
                     </Stack>

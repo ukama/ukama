@@ -20,7 +20,7 @@ import {
 } from "../../constants";
 import "../../i18n/i18n";
 import {
-    MetricDto,
+    Node_Type,
     Time_Filter,
     Network_Type,
     Data_Bill_Filter,
@@ -34,25 +34,26 @@ import {
     useGetConnectedUsersQuery,
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
+    useGetMetricsByTabLazyQuery,
     GetLatestNetworkSubscription,
-    useGetMetricsUptimeLazyQuery,
     GetLatestDataBillSubscription,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
+    useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
-    useGetMetricsUptimeSSubscription,
 } from "../../generated";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { TMetric } from "../../types";
+import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { isFirstVisit, isSkeltonLoading, user } from "../../recoil";
-import { Box, Grid } from "@mui/material";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
-import {
-    getDefaultMetricList,
-    getMetricPayload,
-    isContainNodeUpdate,
-} from "../../utils";
+import { getMetricPayload, isContainNodeUpdate } from "../../utils";
+
+const initMetricDto = {
+    uptime: null,
+};
 
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
@@ -64,13 +65,11 @@ const Home = () => {
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [isAddNode, setIsAddNode] = useState(false);
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
+    const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
-    const [uptimeMetric, setUptimeMetrics] = useState<{
-        name: string;
-        data: MetricDto[];
-    }>(getDefaultMetricList("UPTIME"));
+    const [uptimeMetric, setUptimeMetrics] = useState<TMetric>(initMetricDto);
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
@@ -131,26 +130,63 @@ const Home = () => {
     });
 
     const [
-        getMetricUptime,
+        getMetrics,
         {
-            data: metricUptimeRes,
-            loading: metricUptimeLoading,
-            refetch: metricUptimeRefetch,
+            data: getMetricsRes,
+            refetch: getMetricsRefetch,
+            loading: getMetricLoading,
         },
-    ] = useGetMetricsUptimeLazyQuery({
-        fetchPolicy: "network-only",
+    ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
+            if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
+                const _m: TMetric = initMetricDto;
+                for (const element of res.getMetricsByTab.metrics) {
+                    if (!uptimeMetric[element.type]) {
+                        _m[element.type] = {
+                            name: element.name,
+                            data: element.data,
+                        };
+                    }
+                }
+                setUptimeMetrics({ ..._m });
+                setIsMetricPolling(true);
+            }
+        },
+        fetchPolicy: "network-only",
+    });
+
+    useGetMetricsByTabSSubscription({
+        onSubscriptionData: res => {
             if (
-                uptimeMetric.data.length === 0 &&
-                res.getMetricsUptime.length > 0
+                isMetricPolling &&
+                res?.subscriptionData?.data?.getMetricsByTab &&
+                res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
-                setUptimeMetrics({
-                    name: uptimeMetric.name,
-                    data: [
-                        ...uptimeMetric.data,
-                        ...(res.getMetricsUptime || []),
-                    ],
-                });
+                const _m: TMetric = initMetricDto;
+                for (const element of res.subscriptionData.data
+                    .getMetricsByTab) {
+                    const metric = uptimeMetric[element.type];
+                    if (
+                        metric &&
+                        metric.data &&
+                        metric.data.length > 0 &&
+                        element.data[element.data.length - 1].x >
+                            metric.data[metric.data.length - 1].x
+                    ) {
+                        _m[element.type] = {
+                            name: element.name,
+                            data: [...(metric.data || []), ...element.data],
+                        };
+                    }
+                }
+                const filter = Object.fromEntries(
+                    Object.entries(_m).filter(([_, v]) => v !== null)
+                );
+
+                setUptimeMetrics((_prev: TMetric) => ({
+                    ..._prev,
+                    ...filter,
+                }));
             }
         },
     });
@@ -161,42 +197,30 @@ const Home = () => {
         }
     }, [_isFirstVisit, orgId]);
 
-    useGetMetricsUptimeSSubscription({
-        onSubscriptionData: res => {
-            if (res.subscriptionData.data && uptimeMetric.data.length > 0) {
-                res.subscriptionData?.data?.getMetricsUptime[0].x >
-                    uptimeMetric.data[uptimeMetric.data.length - 1].x &&
-                    setUptimeMetrics(_prev => ({
-                        name: _prev.name,
-                        data: [
-                            ..._prev.data,
-                            ...(res.subscriptionData.data?.getMetricsUptime ||
-                                []),
-                        ],
-                    }));
-            }
-        },
-    });
-
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
-            nodeId: "uk-sa2209-comv1-a1-ee58",
+            tab: 4,
             orgId: orgId,
             regPolling: false,
+            nodeType: Node_Type.Home,
+            nodeId: "uk-sa2209-comv1-a1-ee58",
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
-            nodeId: "uk-sa2209-comv1-a1-ee58",
-            orgId: orgId,
+            tab: 4,
             from: from,
+            orgId: orgId,
+            regPolling: true,
+            nodeType: Node_Type.Home,
+            nodeId: "uk-sa2209-comv1-a1-ee58",
         });
 
     useEffect(() => {
         if (nodeRes && nodeRes.getNodesByOrg.nodes.length > 0) {
-            getMetricUptime({
+            getMetrics({
                 variables: {
                     ...getFirstMetricCallPayload(),
                 },
@@ -206,19 +230,16 @@ const Home = () => {
 
     useEffect(() => {
         if (
-            metricUptimeRes &&
-            metricUptimeRes.getMetricsUptime &&
-            metricUptimeRes.getMetricsUptime.length > 0
+            getMetricsRes &&
+            getMetricsRes?.getMetricsByTab.metrics.length > 0
         ) {
-            metricUptimeRefetch({
+            getMetricsRefetch({
                 ...getMetricPollingCallPayload(
-                    metricUptimeRes.getMetricsUptime[
-                        metricUptimeRes.getMetricsUptime.length - 1
-                    ].x + 1
+                    getMetricsRes?.getMetricsByTab.to
                 ),
             });
         }
-    }, [metricUptimeRes]);
+    }, [getMetricsRes]);
 
     const subToConnectedUser = () =>
         subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
@@ -434,10 +455,9 @@ const Home = () => {
                 </Grid>
                 <Grid xs={12} item>
                     <StatsCard
-                        hasMetricData={uptimeMetric.data.length > 0}
                         metricData={uptimeMetric}
                         loading={
-                            nodeLoading || isSkeltonLoad || metricUptimeLoading
+                            nodeLoading || isSkeltonLoad || getMetricLoading
                         }
                     />
                 </Grid>

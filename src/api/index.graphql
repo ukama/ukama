@@ -41,30 +41,6 @@ subscription getLatestDataBill {
         billDue
     }
 }
-query getMetricsPaPower($data: MetricsInputDTO!) {
-    getMetricsPaPower(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsPaPowers {
-    getMetricsPaPower {
-        y
-        x
-    }
-}
-subscription getMetricsRxPowers {
-    getMetricsRxPower {
-        y
-        x
-    }
-}
-query getMetricsRxPower($data: MetricsInputDTO!) {
-    getMetricsRxPower(data: $data) {
-        y
-        x
-    }
-}
 
 query getAlerts($data: PaginationDto!) {
     getAlerts(data: $data) {
@@ -193,12 +169,7 @@ query getResidents($data: PaginationDto!) {
         }
     }
 }
-subscription getMetricsTxPowers {
-    getMetricsTxPower {
-        y
-        x
-    }
-}
+
 query getNetwork($filter: NETWORK_TYPE!) {
     getNetwork(filter: $filter) {
         id
@@ -256,245 +227,27 @@ mutation deleteNode($id: String!) {
     }
 }
 
-query getMetricsUptime($data: MetricsInputDTO!) {
-    getMetricsUptime(data: $data) {
-        y
-        x
+query getMetricsByTab($data: MetricsByTabInputDTO!) {
+    getMetricsByTab(data: $data) {
+        to
+        metrics {
+            type
+            name
+            data {
+                y
+                x
+            }
+        }
     }
 }
 
-subscription getMetricsUptimeS {
-    getMetricsUptime {
-        y
-        x
-    }
-}
-
-query getMetricsThroughputUL($data: MetricsInputDTO!) {
-    getMetricsThroughputUL(data: $data) {
-        y
-        x
-    }
-}
-query getMetricsDiskCOM($data: MetricsInputDTO!) {
-    getMetricsDiskCOM(data: $data) {
-        y
-        x
-    }
-}
-query getMetricsTxPower($data: MetricsInputDTO!) {
-    getMetricsTxPower(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsThroughputULS {
-    getMetricsThroughputUL {
-        y
-        x
-    }
-}
-subscription getMetricsDiskCOMs {
-    getMetricsDiskCOM {
-        y
-        x
-    }
-}
-query getMetricsRLC($data: MetricsInputDTO!) {
-    getMetricsRLC(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsRLCs {
-    getMetricsRLC {
-        y
-        x
-    }
-}
-
-query getMetricsERAB($data: MetricsInputDTO!) {
-    getMetricsERAB(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsERABs {
-    getMetricsERAB {
-        y
-        x
-    }
-}
-query getMetricsRRC($data: MetricsInputDTO!) {
-    getMetricsRRC(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsRRCs {
-    getMetricsRRC {
-        y
-        x
-    }
-}
-query getMetricsThroughputDL($data: MetricsInputDTO!) {
-    getMetricsThroughputDL(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsMemoryCOMS {
-    getMetricsMemoryCOM {
-        y
-        x
-    }
-}
-query getMetricsCpuCOM($data: MetricsInputDTO!) {
-    getMetricsCpuCOM(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsPowers {
-    getMetricsPower {
-        y
-        x
-    }
-}
-subscription getMetricsDiskCOMs {
-    getMetricsDiskCOM {
-        y
-        x
-    }
-}
-query getMetricsPower($data: MetricsInputDTO!) {
-    getMetricsPower(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsDiskTRXs {
-    getMetricsDiskTRX {
-        y
-        x
-    }
-}
-
-query getMetricsMemoryCOM($data: MetricsInputDTO!) {
-    getMetricsMemoryCOM(data: $data) {
-        y
-        x
-    }
-}
-query getMetricsDiskTRX($data: MetricsInputDTO!) {
-    getMetricsDiskTRX(data: $data) {
-        y
-        x
-    }
-}
-subscription getMetricsCpuCOMs {
-    getMetricsCpuCOM {
-        y
-        x
-    }
-}
-subscription getMetricsThroughputDLS {
-    getMetricsThroughputDL {
-        y
-        x
-    }
-}
-
-query getMetricsMemoryTRX($data: MetricsInputDTO!) {
-    getMetricsMemoryTRX(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsMemoryTRXS {
-    getMetricsMemoryTRX {
-        y
-        x
-    }
-}
-
-query getMetricsCpuTRX($data: MetricsInputDTO!) {
-    getMetricsCpuTRX(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsCpuTRXS {
-    getMetricsCpuTRX {
-        y
-        x
-    }
-}
-
-query getMetricsPower($data: MetricsInputDTO!) {
-    getMetricsPower(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsPowerS {
-    getMetricsPower {
-        y
-        x
-    }
-}
-
-query getMetricsTempTRX($data: MetricsInputDTO!) {
-    getMetricsTempTRX(data: $data) {
-        y
-        x
-    }
-}
-query getMetricsSubActive($data: MetricsInputDTO!) {
-    getMetricsSubActive(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsTempTRXS {
-    getMetricsTempTRX {
-        y
-        x
-    }
-}
-subscription getMetricsSubActives {
-    getMetricsSubActive {
-        y
-        x
-    }
-}
-subscription getMetricsSubAttacheds {
-    getMetricsSubAttached {
-        y
-        x
-    }
-}
-query getMetricsSubAttached($data: MetricsInputDTO!) {
-    getMetricsSubAttached(data: $data) {
-        y
-        x
-    }
-}
-query getMetricsTempCOM($data: MetricsInputDTO!) {
-    getMetricsTempCOM(data: $data) {
-        y
-        x
-    }
-}
-
-subscription getMetricsTempCOMS {
-    getMetricsTempCOM {
-        y
-        x
+subscription getMetricsByTabS {
+    getMetricsByTab {
+        type
+        name
+        data {
+            x
+            y
+        }
     }
 }

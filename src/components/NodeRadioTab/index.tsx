@@ -3,17 +3,10 @@ import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexLineChart } from "..";
 interface INodeRadioTab {
+    metrics: any;
     loading: boolean;
-    txPowerMetrics: any;
-    rxPowerMetrics: any;
-    paPowerMetrics: any;
 }
-const NodeRadioTab = ({
-    loading,
-    rxPowerMetrics,
-    txPowerMetrics,
-    paPowerMetrics,
-}: INodeRadioTab) => {
+const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
     return (
@@ -51,21 +44,9 @@ const NodeRadioTab = ({
             <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ p: 3, width: "100%" }}>
                     <Stack spacing={4}>
-                        <ApexLineChart
-                            hasData={true}
-                            name={"PX Power"}
-                            data={txPowerMetrics}
-                        />
-                        <ApexLineChart
-                            hasData={true}
-                            name={"PA POWER"}
-                            data={paPowerMetrics}
-                        />
-                        <ApexLineChart
-                            hasData={true}
-                            name={"RX POWER"}
-                            data={rxPowerMetrics}
-                        />
+                        <ApexLineChart data={metrics["txpower"]} />
+                        <ApexLineChart data={metrics["rxpower"]} />
+                        <ApexLineChart data={metrics["papower"]} />
                     </Stack>
                 </Paper>
             </Grid>

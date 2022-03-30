@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Alert_Type, NodeDto } from "../generated";
+import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from "../generated";
 import { TObject } from "../types";
 
 const getTitleFromPath = (path: string) => {
@@ -119,17 +119,38 @@ const getGraphFilterByType = (type: string) => {
     }
 };
 
+const getTabByIndex = (index: number) => {
+    switch (index) {
+        case 0:
+            return Graphs_Tab.Overview;
+        case 1:
+            return Graphs_Tab.Network;
+        case 2:
+            return Graphs_Tab.Resources;
+        case 3:
+            return Graphs_Tab.Radio;
+        case 4:
+            return Graphs_Tab.Home;
+        default:
+            return Graphs_Tab.Overview;
+    }
+};
+
 const getMetricPayload = ({
+    tab = 0,
     orgId = "",
     nodeId = "",
     regPolling = true,
+    nodeType = Node_Type.Home,
     to = Math.floor(Date.now() / 1000),
     from = Math.floor(Date.now() / 1000),
 }: {
     to?: number;
+    tab: number;
     from?: number;
-    nodeId?: string;
     orgId?: string;
+    nodeId?: string;
+    nodeType: string;
     regPolling?: boolean;
 }) => {
     return {
@@ -140,6 +161,8 @@ const getMetricPayload = ({
             regPolling: regPolling,
             to: to,
             from: from, //20sec
+            nodeType: nodeType as Node_Type,
+            tab: getTabByIndex(tab),
         },
     };
 };
