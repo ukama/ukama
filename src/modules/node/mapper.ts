@@ -7,7 +7,6 @@ import {
     OrgNodeResponseDto,
     NodeDto,
     MetricDto,
-    OrgMetricResponse,
     OrgMetricValueDto,
 } from "./types";
 import * as defaultCasual from "casual";

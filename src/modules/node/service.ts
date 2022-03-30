@@ -137,7 +137,7 @@ export class NodeService implements INodeService {
         header: HeaderType,
         endpoints: string[]
     ): Promise<MetricRes[]> => {
-        return await Promise.all(
+        return Promise.all(
             endpoints.map(endpoint =>
                 catchAsyncIOMethod({
                     type: API_METHOD_TYPE.GET,
