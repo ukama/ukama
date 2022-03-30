@@ -12,7 +12,6 @@ import {
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDetailDto,
-    OrgMetricResponse,
     MetricDto,
     OrgMetricValueDto,
 } from "./types";
@@ -33,6 +32,5 @@ export interface INodeService {
 export interface INodeMapper {
     dtoToDto(res: NodeResponse): NodeResponseDto;
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
-    dtoToMetricDto(res: OrgMetricResponse[]): MetricDto[];
     dtoToMetricsDto(res: OrgMetricValueDto[]): MetricDto[];
 }

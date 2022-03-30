@@ -116,7 +116,7 @@ export class NodeService implements INodeService {
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
-        return NodeMapper.dtoToMetricDto(res.data?.result);
+        return NodeMapper.dtoToMetricsDto(res.data?.result[0]);
     };
     getSoftwareLogs = async (): Promise<NodeAppsVersionLogsResponse[]> => {
         const res = await catchAsyncIOMethod({
@@ -137,7 +137,7 @@ export class NodeService implements INodeService {
         header: HeaderType,
         endpoints: string[]
     ): Promise<MetricRes[]> => {
-        const responses = await Promise.all(
+        return await Promise.all(
             endpoints.map(endpoint =>
                 catchAsyncIOMethod({
                     type: API_METHOD_TYPE.GET,
@@ -165,7 +165,5 @@ export class NodeService implements INodeService {
                 })
             )
         );
-
-        return responses;
     };
 }
