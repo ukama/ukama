@@ -8,7 +8,7 @@ import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 interface INodeOverviewTab {
     metrics: any;
     loading: boolean;
-
+    metricsLoading: boolean;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
@@ -19,6 +19,7 @@ const NodeOverviewTab = ({
     metrics,
     loading,
     selectedNode,
+    metricsLoading,
     handleUpdateNode,
     isUpdateAvailable,
     getNodeSoftwareUpdateInfos,
@@ -153,6 +154,7 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][0].show && (
                                 <ApexLineChart
+                                    loading={metricsLoading}
                                     data={
                                         metrics[
                                             HealtChartsConfigure[
@@ -167,6 +169,7 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][1].show && (
                                 <ApexLineChart
+                                    loading={metricsLoading}
                                     data={
                                         metrics[
                                             HealtChartsConfigure[
@@ -181,6 +184,7 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][2].show && (
                                 <ApexLineChart
+                                    loading={metricsLoading}
                                     data={
                                         metrics[
                                             HealtChartsConfigure[
@@ -202,6 +206,7 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][3].show && (
                                 <ApexLineChart
+                                    loading={metricsLoading}
                                     data={
                                         metrics[
                                             HealtChartsConfigure[
@@ -216,6 +221,7 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][4].show && (
                                 <ApexLineChart
+                                    loading={metricsLoading}
                                     data={
                                         metrics[
                                             HealtChartsConfigure[

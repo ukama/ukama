@@ -123,33 +123,37 @@ const Nodes = () => {
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
 
-    const [getMetrics, { data: getMetricsRes, refetch: getMetricsRefetch }] =
-        useGetMetricsByTabLazyQuery({
-            onCompleted: res => {
-                if (
-                    res?.getMetricsByTab?.metrics.length > 0 &&
-                    !isMetricPolling
-                ) {
-                    const _m: TMetric = initMetricDto;
-                    for (const element of res.getMetricsByTab.metrics) {
-                        if (!metrics[element.type]) {
-                            _m[element.type] = {
-                                name: element.name,
-                                data: element.data,
-                            };
-                        }
+    const [
+        getMetrics,
+        {
+            data: getMetricsRes,
+            refetch: getMetricsRefetch,
+            loading: metricsLoading,
+        },
+    ] = useGetMetricsByTabLazyQuery({
+        onCompleted: res => {
+            if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
+                const _m: TMetric = initMetricDto;
+                for (const element of res.getMetricsByTab.metrics) {
+                    if (!metrics[element.type]) {
+                        _m[element.type] = {
+                            name: element.name,
+                            data: element.data,
+                        };
                     }
-                    const filter = Object.fromEntries(
-                        Object.entries(_m).filter(([_, v]) => v !== null)
-                    );
-                    setMetrics((_prev: TMetric) => ({ ...filter }));
-                    setIsMetricPolling(true);
                 }
-            },
-            fetchPolicy: "network-only",
-        });
+                const filter = Object.fromEntries(
+                    Object.entries(_m).filter(([_, v]) => v !== null)
+                );
+                setMetrics((_prev: TMetric) => ({ ...filter }));
+                setIsMetricPolling(true);
+            }
+        },
+        fetchPolicy: "network-only",
+    });
 
     useGetMetricsByTabSSubscription({
+        fetchPolicy: "network-only",
         onSubscriptionData: res => {
             if (
                 isMetricPolling &&
@@ -191,9 +195,12 @@ const Nodes = () => {
 
     useEffect(() => {
         if (selectedNode && selectedNode.id) {
-            setIsMetricPolling(false);
+            let setAll = (obj: any, val: any) =>
+                Object.keys(obj).forEach(k => (obj[k] = val));
+            setAll(initMetricDto, null);
             setMetrics(initMetricDto);
             getMetrics({ variables: { ...getFirstMetricCallPayload() } });
+            setIsMetricPolling(false);
         }
     }, [selectedNode, selectedTab]);
 
@@ -354,6 +361,7 @@ const Nodes = () => {
                                 metrics={metrics}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
+                                metricsLoading={metricsLoading}
                                 handleUpdateNode={handleUpdateNode}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 loading={

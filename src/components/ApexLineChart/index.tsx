@@ -7,6 +7,8 @@ const TIME_RANGE_IN_MILLISECONDS = 100;
 
 const useStyles = makeStyles<Theme>(theme => ({
     chartStyle: {
+        width: "100%",
+        height: "100%",
         "& .apexcharts-yaxis-label tspan": {
             fill: theme.palette.text.primary,
         },
@@ -21,11 +23,13 @@ interface IApexLineChartIntegration {
     name?: string;
     filter?: string;
     hasData?: boolean;
+    loading?: boolean;
     onFilterChange?: Function;
 }
 
 const ApexLineChart = ({
-    data = { name: "-", data: [] },
+    data,
+    loading = false,
     filter = "LIVE",
     onFilterChange = () => {
         /*DEFAULT FUNCTION*/
@@ -35,6 +39,7 @@ const ApexLineChart = ({
     return (
         <GraphTitleWrapper
             filter={filter}
+            loading={loading || !data}
             variant="subtitle1"
             title={data?.name || ""}
             handleFilterChange={onFilterChange}
