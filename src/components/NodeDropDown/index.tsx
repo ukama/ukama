@@ -81,6 +81,7 @@ const NodeDropDown = ({
                         },
                     }}
                     MenuProps={{
+                        disablePortal: true,
                         anchorOrigin: {
                             vertical: "bottom",
                             horizontal: "left",
@@ -88,6 +89,13 @@ const NodeDropDown = ({
                         transformOrigin: {
                             vertical: "top",
                             horizontal: "left",
+                        },
+                        PaperProps: {
+                            sx: {
+                                boxShadow:
+                                    "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
+                                borderRadius: "4px",
+                            },
                         },
                     }}
                     className={classes.selectStyle}
@@ -100,11 +108,18 @@ const NodeDropDown = ({
                             sx={{
                                 m: 0,
                                 p: "6px 16px",
+
                                 backgroundColor: `${
                                     id === selectedNode?.id
                                         ? hexToRGB(colors.secondaryLight, 0.25)
-                                        : colors.white
+                                        : "inherit"
                                 } !important`,
+                                ":hover": {
+                                    backgroundColor: `${hexToRGB(
+                                        colors.secondaryLight,
+                                        0.25
+                                    )} !important`,
+                                },
                             }}
                         >
                             <Typography variant="body1">{title}</Typography>
