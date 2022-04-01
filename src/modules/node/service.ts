@@ -151,9 +151,10 @@ export class NodeService implements INodeService {
                         step: data.step,
                     },
                 }).then(res => {
+                    logger.info(JSON.stringify(res));
+                    logger.log("ERROR", res.message);
+                    logger.log("CONDITION", `${checkError(res)}`);
                     if (checkError(res)) {
-                        logger.error(JSON.stringify(res));
-                        logger.error(res.message);
                         throw new Error(res.message);
                     } else {
                         const values = res.data.result[0];
