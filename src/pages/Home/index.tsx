@@ -51,10 +51,6 @@ import { isFirstVisit, isSkeltonLoading, user } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
 
-const initMetricDto = {
-    uptime: null,
-};
-
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
@@ -69,7 +65,9 @@ const Home = () => {
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
-    const [uptimeMetric, setUptimeMetrics] = useState<TMetric>(initMetricDto);
+    const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
+        uptime: null,
+    });
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
@@ -139,7 +137,9 @@ const Home = () => {
     ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
-                const _m: TMetric = initMetricDto;
+                const _m: TMetric = {
+                    uptime: null,
+                };
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!uptimeMetric[element.type]) {
                         _m[element.type] = {
@@ -152,6 +152,11 @@ const Home = () => {
                 setIsMetricPolling(true);
             }
         },
+        onError: () => {
+            setUptimeMetrics(() => ({
+                uptime: null,
+            }));
+        },
         fetchPolicy: "network-only",
     });
 
@@ -162,7 +167,9 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab &&
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
-                const _m: TMetric = initMetricDto;
+                const _m: TMetric = {
+                    uptime: null,
+                };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
                     const metric = uptimeMetric[element.type];

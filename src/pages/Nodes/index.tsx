@@ -26,40 +26,16 @@ import {
 } from "../../generated";
 import { TMetric } from "../../types";
 import { useRecoilValue } from "recoil";
-import { getMetricPayload } from "../../utils";
+import {
+    getMetricObjectByKey,
+    getMetricPayload,
+    getMetricsInitObj,
+} from "../../utils";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { isSkeltonLoading, user } from "../../recoil";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
-
-const initMetricDto = {
-    temperaturetrx: null,
-    temperaturerfe: null,
-    subscribersactive: null,
-    subscribersattached: null,
-    temperaturectl: null,
-    temperaturecom: null,
-    rrc: null,
-    rlc: null,
-    erab: null,
-    throughputuplink: null,
-    throughputdownlink: null,
-    cputrxusage: null,
-    memorytrxused: null,
-    disktrxused: null,
-    cpuctlused: null,
-    diskctlused: null,
-    memoryctlused: null,
-    powerlevel: null,
-    cpucomusage: null,
-    diskcomused: null,
-    memorycomused: null,
-    txpower: null,
-    rxpower: null,
-    papower: null,
-    uptime: null,
-};
 
 const Nodes = () => {
     const { id: orgId = "" } = useRecoilValue(user);
@@ -85,7 +61,7 @@ const Nodes = () => {
     });
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState(false);
-    const [metrics, setMetrics] = useState<TMetric>(initMetricDto);
+    const [metrics, setMetrics] = useState<TMetric>(getMetricsInitObj());
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
 
@@ -133,7 +109,7 @@ const Nodes = () => {
     ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
-                const _m: TMetric = initMetricDto;
+                const _m: TMetric = getMetricsInitObj();
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!metrics[element.type]) {
                         _m[element.type] = {
@@ -149,6 +125,14 @@ const Nodes = () => {
                 setIsMetricPolling(true);
             }
         },
+        onError: () => {
+            const obj: TMetric = getMetricsInitObj();
+            Object.keys(obj).forEach(
+                (k: string) =>
+                    (obj[k as keyof TMetric] = getMetricObjectByKey(k))
+            );
+            setMetrics(() => ({ ...obj }));
+        },
         fetchPolicy: "network-only",
     });
 
@@ -160,7 +144,7 @@ const Nodes = () => {
                 res?.subscriptionData?.data?.getMetricsByTab &&
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
-                const _m: TMetric = initMetricDto;
+                const _m: TMetric = getMetricsInitObj();
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
                     const metric = metrics[element.type];
@@ -195,10 +179,10 @@ const Nodes = () => {
 
     useEffect(() => {
         if (selectedNode && selectedNode.id) {
-            let setAll = (obj: any, val: any) =>
-                Object.keys(obj).forEach(k => (obj[k] = val));
-            setAll(initMetricDto, null);
-            setMetrics(initMetricDto);
+            // let setAll = (obj: any, val: any) =>
+            //     Object.keys(obj).forEach(k => (obj[k] = val));
+            // setAll(initMetricDto, null);
+            setMetrics(getMetricsInitObj());
             getMetrics({ variables: { ...getFirstMetricCallPayload() } });
             setIsMetricPolling(false);
         }

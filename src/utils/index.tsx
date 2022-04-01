@@ -196,6 +196,97 @@ const getDefaultMetricList = (name: string) => {
     };
 };
 
+const getTitleByKey = (key: string) => {
+    switch (key) {
+        case "uptime":
+            return "Uptime";
+        case "temperaturetrx":
+            return "Temp. (TRX)";
+        case "temperaturerfe":
+            return "Temp. (RFE)";
+        case "subscribersactive":
+            return "Active";
+        case "subscribersattached":
+            return "Attached";
+        case "temperaturectl":
+            return "Temp. (CTL)";
+        case "temperaturecom":
+            return "Temp. (COM)";
+        case "rrc":
+            return "RRC CNX success";
+        case "rlc":
+            return "RLS  drop rate";
+        case "erab":
+            return "ERAB drop rate";
+        case "throughputuplink":
+            return "Throughput (U/L)";
+        case "throughputdownlink":
+            return "Throughput (D/L)";
+        case "cputrxusage":
+            return "CPU-TRX";
+        case "memorytrxused":
+            return "Memory-TRX";
+        case "disktrxused":
+            return "DISK-TRX";
+        case "cpuctlused":
+            return "CPU-CTL";
+        case "diskctlused":
+            return "DISK-CTL";
+        case "memoryctlused":
+            return "Memory-CTL";
+        case "powerlevel":
+            return "Power";
+        case "cpucomusage":
+            return "CPU-COM";
+        case "diskcomused":
+            return "DISK-COM";
+        case "memorycomused":
+            return "Memory-COM";
+        case "txpower":
+            return "TX Power";
+        case "rxpower":
+            return "RX Power";
+        case "papower":
+            return "PA Power";
+        default:
+            return "";
+    }
+};
+
+const getMetricsInitObj = () => {
+    return {
+        temperaturetrx: null,
+        temperaturerfe: null,
+        subscribersactive: null,
+        subscribersattached: null,
+        temperaturectl: null,
+        temperaturecom: null,
+        rrc: null,
+        rlc: null,
+        erab: null,
+        throughputuplink: null,
+        throughputdownlink: null,
+        cputrxusage: null,
+        memorytrxused: null,
+        disktrxused: null,
+        cpuctlused: null,
+        diskctlused: null,
+        memoryctlused: null,
+        powerlevel: null,
+        cpucomusage: null,
+        diskcomused: null,
+        memorycomused: null,
+        txpower: null,
+        rxpower: null,
+        papower: null,
+        uptime: null,
+    };
+};
+
+const getMetricObjectByKey = (key: string) => {
+    return { name: getTitleByKey(key), data: [] };
+};
+
 export {
     hexToRGB,
     isMetricData,
@@ -204,8 +295,10 @@ export {
     getStatusByType,
     getMetricPayload,
     getTitleFromPath,
+    getMetricsInitObj,
     uniqueObjectsArray,
     isContainNodeUpdate,
+    getMetricObjectByKey,
     getDefaultMetricList,
     getGraphFilterByType,
     parseObjectInNameValue,
