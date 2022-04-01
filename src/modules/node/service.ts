@@ -27,7 +27,9 @@ import { API_METHOD_TYPE } from "../../constants";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
 import { NetworkDto } from "../network/types";
+import setupLogger from "../../config/setupLogger";
 
+const logger = setupLogger("NodeServices");
 @Service()
 export class NodeService implements INodeService {
     getNodes = async (req: PaginationDto): Promise<NodesResponse> => {
@@ -150,7 +152,8 @@ export class NodeService implements INodeService {
                     },
                 }).then(res => {
                     if (checkError(res)) {
-                        console.error(res.message);
+                        logger.error(JSON.stringify(res));
+                        logger.error(res.message);
                         throw new Error(res.message);
                     } else {
                         const values = res.data.result[0];
