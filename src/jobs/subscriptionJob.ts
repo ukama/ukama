@@ -1,25 +1,15 @@
 import "reflect-metadata";
 import schedule from "node-schedule";
 import {
-    GET_USERS_ATTACHED_METRICS_QUERY,
     GET_ALERTS_QUERY,
     GET_CONNECTED_USERS_QUERY,
-    GET_CPU_USAGE_METRICS_QUERY,
     GET_DATA_BILL_QUERY,
     GET_DATA_USAGE_QUERY,
     GET_NETWORK_QUERY,
-    GET_NODE_META_DATA_QUERY,
-    GET_NODE_PHYSICAL_HEALTH_QUERY,
-    GET_NODE_RF_KPI_QUERY,
-    GET_TEMPERATURE_METRICS_QUERY,
-    GET_IO_METRICS_QUERY,
-    GET_THROUGHPUT_METRICS_QUERY,
-    GET_MEMORY_USAGE_METRICS_QUERY,
 } from "../common/graphql";
 
 import {
     DATA_BILL_FILTER,
-    GRAPH_FILTER,
     HEADER,
     NETWORK_TYPE,
     TIME_FILTER,
@@ -84,90 +74,6 @@ export const job = (schema: GraphQLSchema): void => {
             source: GET_ALERTS_QUERY,
             variableValues: {
                 input: meta,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_NODE_PHYSICAL_HEALTH_QUERY,
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_NODE_META_DATA_QUERY,
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_USERS_ATTACHED_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_CPU_USAGE_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_NODE_RF_KPI_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_TEMPERATURE_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_IO_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_THROUGHPUT_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
-            },
-            contextValue: {
-                req: HEADER,
-            },
-        });
-        await graphql({
-            schema,
-            source: GET_MEMORY_USAGE_METRICS_QUERY,
-            variableValues: {
-                filter: GRAPH_FILTER.DAY,
             },
             contextValue: {
                 req: HEADER,
