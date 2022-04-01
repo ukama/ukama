@@ -12,9 +12,9 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/ukama/ukamaX/cloud/net v0.0.0-20220128150430-55e44457630a
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20211209085225-8d6ae39819e5
-	github.com/ukama/ukamaX/common v0.0.0-20220117160119-eaad520d15ac
+	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wagslane/go-rabbitmq v0.7.0
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.45.0
 )
 
 replace github.com/ukama/ukamaX/common => ../../common
