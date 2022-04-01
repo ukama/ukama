@@ -13,6 +13,7 @@ import {
     AddUserDto,
     AddUserResponse,
     ActivateUserResponse,
+    GetUsersDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -119,7 +120,7 @@ export class UserService implements IUserService {
     getUsersByOrg = async (
         orgId: string,
         header: HeaderType
-    ): Promise<OrgUserResponseDto> => {
+    ): Promise<GetUsersDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/users`,

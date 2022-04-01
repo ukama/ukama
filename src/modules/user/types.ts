@@ -130,16 +130,16 @@ export class GetUserDto {
     id: string;
 
     @Field(() => GET_STATUS_TYPE)
-    status: GET_STATUS_TYPE;
+    status?: GET_STATUS_TYPE;
 
     @Field()
     name: string;
 
     @Field()
-    eSimNumber: string;
+    eSimNumber?: string;
 
     @Field()
-    iccid: string;
+    iccid?: string;
 
     @Field({ nullable: true })
     @IsEmail()
@@ -150,7 +150,30 @@ export class GetUserDto {
     phone?: string;
 
     @Field()
-    roaming: boolean;
+    roaming?: boolean;
+
+    @Field()
+    dataPlan: number;
+
+    @Field()
+    dataUsage: number;
+}
+
+@ObjectType()
+export class GetUsersDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field({ nullable: true })
+    @IsEmail()
+    email: string;
+
+    @Field({ nullable: true })
+    @IsPhoneNumber()
+    phone: string;
 
     @Field()
     dataPlan: number;
@@ -257,10 +280,10 @@ export class AddUserResponse {
 @ObjectType()
 export class OrgUserDto {
     @Field()
-    firstName: string;
+    name: string;
 
     @Field()
-    lastName: string;
+    phone: string;
 
     @Field()
     email: string;

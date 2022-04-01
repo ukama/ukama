@@ -1,6 +1,6 @@
 import { Resolver, Query, UseMiddleware, Ctx, Arg } from "type-graphql";
 import { Service } from "typedi";
-import { OrgUserResponseDto } from "../types";
+import { GetUsersDto } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
@@ -11,12 +11,12 @@ import { getHeaders } from "../../../common";
 export class GetUsersByOrgResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Query(() => OrgUserResponseDto)
+    @Query(() => [GetUsersDto])
     @UseMiddleware(Authentication)
     async getUsersByOrg(
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
-    ): Promise<OrgUserResponseDto> {
+    ): Promise<GetUsersDto[]> {
         return this.userService.getUsersByOrg(orgId, getHeaders(ctx));
     }
 }

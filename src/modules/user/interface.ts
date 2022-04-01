@@ -12,6 +12,7 @@ import {
     GetUserPaginationDto,
     GetUserResponse,
     GetUserResponseDto,
+    GetUsersDto,
     OrgUserResponse,
     OrgUserResponseDto,
     ResidentResponse,
@@ -28,10 +29,7 @@ export interface IUserService {
     getUser(id: string): Promise<GetUserDto>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
-    getUsersByOrg(
-        orgId: string,
-        header: HeaderType
-    ): Promise<OrgUserResponseDto>;
+    getUsersByOrg(orgId: string, header: HeaderType): Promise<GetUsersDto[]>;
     addUser(
         orgId: string,
         req: AddUserDto,
@@ -48,5 +46,5 @@ export interface IUserMapper {
     connectedUsersDtoToDto(res: ConnectedUserResponse): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
-    dtoToUsersDto(req: OrgUserResponse): OrgUserResponseDto;
+    dtoToUsersDto(req: OrgUserResponse): GetUsersDto[];
 }
