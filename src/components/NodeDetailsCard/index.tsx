@@ -31,7 +31,12 @@ const NodeDetailsCard = ({
                             <Typography variant="h6">{nodeTitle}</Typography>
                         </Grid>
                         {isUpdateAvailable && (
-                            <Grid item xs={7}>
+                            <Grid
+                                item
+                                container
+                                xs={7}
+                                justifyContent="flex-end"
+                            >
                                 <Chip
                                     variant="outlined"
                                     sx={{

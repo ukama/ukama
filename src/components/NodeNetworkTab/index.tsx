@@ -3,21 +3,10 @@ import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexLineChart } from "..";
 interface INodeOverviewTab {
+    metrics: any;
     loading: boolean;
-    throughpuULMetric: any;
-    throughpuDLMetric: any;
-    erabDropRateMetrix: any;
-    rrcCnxSuccessMetrix: any;
-    rlsDropRateMetrics: any;
 }
-const NodeNetworkTab = ({
-    loading,
-    throughpuULMetric,
-    rlsDropRateMetrics,
-    erabDropRateMetrix,
-    rrcCnxSuccessMetrix,
-    throughpuDLMetric,
-}: INodeOverviewTab) => {
+const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
     const [isCollapse, setIsCollapse] = useState<boolean>(false);
     const handleCollapse = () => setIsCollapse(prev => !prev);
 
@@ -68,32 +57,11 @@ const NodeNetworkTab = ({
             <Grid item lg={isCollapse ? 11 : 8} md xs>
                 <Paper sx={{ p: 3, width: "100%" }}>
                     <Stack spacing={4}>
-                        <ApexLineChart
-                            hasData={true}
-                            data={throughpuULMetric}
-                            name={"Throughput (U/L)"}
-                        />
-
-                        <ApexLineChart
-                            hasData={true}
-                            data={throughpuDLMetric}
-                            name={"Throughput (D/L)"}
-                        />
-                        <ApexLineChart
-                            hasData={true}
-                            data={rrcCnxSuccessMetrix}
-                            name={"RRC CNX Success"}
-                        />
-                        <ApexLineChart
-                            hasData={true}
-                            data={erabDropRateMetrix}
-                            name={"ERAB Drop Rate"}
-                        />
-                        <ApexLineChart
-                            hasData={true}
-                            data={rlsDropRateMetrics}
-                            name={"RLS  Drop Rate"}
-                        />
+                        <ApexLineChart data={metrics["throughputuplink"]} />
+                        <ApexLineChart data={metrics["throughputdownlink"]} />
+                        <ApexLineChart data={metrics["rrc"]} />
+                        <ApexLineChart data={metrics["erab"]} />
+                        <ApexLineChart data={metrics["rlc"]} />
                     </Stack>
                 </Paper>
             </Grid>

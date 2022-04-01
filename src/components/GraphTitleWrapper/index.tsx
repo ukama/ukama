@@ -1,5 +1,5 @@
 import React from "react";
-import { EmptyView, TimeFilter } from "..";
+import { EmptyView, GraphLoading, TimeFilter } from "..";
 import { Grid, Typography } from "@mui/material";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import { Variant } from "@mui/material/styles/createTypography";
@@ -8,6 +8,7 @@ interface IGraphTitleWrapper {
     title?: string;
     filter?: string;
     hasData?: boolean;
+    loading?: boolean;
     variant?: Variant;
     showFilter?: boolean;
     children: React.ReactNode;
@@ -19,6 +20,7 @@ const GraphTitleWrapper = ({
     title = "",
     filter = "LIVE",
     hasData = false,
+    loading = true,
     showFilter = true,
     variant = "subtitle1",
     handleFilterChange,
@@ -51,8 +53,16 @@ const GraphTitleWrapper = ({
                     )}
                 </Grid>
             )}
-            <Grid item width="100%" height={"300px"}>
-                {hasData ? (
+            <Grid
+                item
+                container
+                height={"300px"}
+                alignItems={"center"}
+                justifyContent="center"
+            >
+                {loading ? (
+                    <GraphLoading />
+                ) : hasData ? (
                     children
                 ) : (
                     <EmptyView

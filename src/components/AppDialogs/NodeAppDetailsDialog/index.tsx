@@ -1,7 +1,6 @@
 import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import colors from "../../../theme/colors";
-import { StackedAreaChart } from "../..";
 import {
     Box,
     Button,
@@ -12,6 +11,7 @@ import {
     DialogActions,
     DialogContent,
 } from "@mui/material";
+import ApexLineChart from "../../ApexLineChart";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
         padding: "0px 0px 10px 0px",
@@ -87,16 +87,8 @@ const NodeAppDetailsDialog = ({
                     </Stack>
 
                     <Stack spacing={6} pt={2}>
-                        <StackedAreaChart
-                            hasData={true}
-                            height={140}
-                            title={"CPU"}
-                        />
-                        <StackedAreaChart
-                            hasData={true}
-                            height={140}
-                            title={"MEMORY"}
-                        />
+                        <ApexLineChart data={{ name: "CPU", data: [] }} />
+                        <ApexLineChart data={{ name: "MEMORY", data: [] }} />
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ padding: 0 }}>

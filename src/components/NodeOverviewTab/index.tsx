@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { TObject } from "../../types";
 import { NodeDto } from "../../generated";
 import NodeStatItem from "../NodeStatItem";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
@@ -7,27 +6,20 @@ import { NodeDetailsCard, NodeStatsContainer, ApexLineChart } from "..";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 
 interface INodeOverviewTab {
+    metrics: any;
     loading: boolean;
-    uptimeMetrics: any;
-    tempTrxMetric: any;
-    tempComMetric: any;
-    nodeDetails: TObject[];
-    attachedSubcriberMetrics: any;
+    metricsLoading: boolean;
     isUpdateAvailable: boolean;
-    activeSubcriberMetrics: any;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
 }
 
 const NodeOverviewTab = ({
+    metrics,
     loading,
     selectedNode,
-    attachedSubcriberMetrics,
-    tempTrxMetric,
-    tempComMetric,
-    uptimeMetrics,
-    activeSubcriberMetrics,
+    metricsLoading,
     handleUpdateNode,
     isUpdateAvailable,
     getNodeSoftwareUpdateInfos,
@@ -162,13 +154,14 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][0].show && (
                                 <ApexLineChart
-                                    hasData={true}
-                                    data={tempTrxMetric}
-                                    name={
-                                        HealtChartsConfigure[
-                                            (selectedNode?.type as string) ||
-                                                "HOME"
-                                        ][0].name
+                                    loading={metricsLoading}
+                                    data={
+                                        metrics[
+                                            HealtChartsConfigure[
+                                                (selectedNode?.type as string) ||
+                                                    "HOME"
+                                            ][0].id
+                                        ]
                                     }
                                 />
                             )}
@@ -176,13 +169,14 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][1].show && (
                                 <ApexLineChart
-                                    hasData={true}
-                                    data={tempComMetric}
-                                    name={
-                                        HealtChartsConfigure[
-                                            (selectedNode?.type as string) ||
-                                                "HOME"
-                                        ][1].name
+                                    loading={metricsLoading}
+                                    data={
+                                        metrics[
+                                            HealtChartsConfigure[
+                                                (selectedNode?.type as string) ||
+                                                    "HOME"
+                                            ][1].id
+                                        ]
                                     }
                                 />
                             )}
@@ -190,13 +184,14 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][2].show && (
                                 <ApexLineChart
-                                    hasData={true}
-                                    data={uptimeMetrics}
-                                    name={
-                                        HealtChartsConfigure[
-                                            (selectedNode?.type as string) ||
-                                                "HOME"
-                                        ][2].name
+                                    loading={metricsLoading}
+                                    data={
+                                        metrics[
+                                            HealtChartsConfigure[
+                                                (selectedNode?.type as string) ||
+                                                    "HOME"
+                                            ][2].id
+                                        ]
                                     }
                                 />
                             )}
@@ -211,13 +206,14 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][3].show && (
                                 <ApexLineChart
-                                    hasData={true}
-                                    data={attachedSubcriberMetrics}
-                                    name={
-                                        HealtChartsConfigure[
-                                            (selectedNode?.type as string) ||
-                                                "HOME"
-                                        ][3].name
+                                    loading={metricsLoading}
+                                    data={
+                                        metrics[
+                                            HealtChartsConfigure[
+                                                (selectedNode?.type as string) ||
+                                                    "HOME"
+                                            ][3].id
+                                        ]
                                     }
                                 />
                             )}
@@ -225,13 +221,14 @@ const NodeOverviewTab = ({
                                 (selectedNode?.type as string) || "HOME"
                             ][4].show && (
                                 <ApexLineChart
-                                    hasData={true}
-                                    data={activeSubcriberMetrics}
-                                    name={
-                                        HealtChartsConfigure[
-                                            (selectedNode?.type as string) ||
-                                                "HOME"
-                                        ][4].name
+                                    loading={metricsLoading}
+                                    data={
+                                        metrics[
+                                            HealtChartsConfigure[
+                                                (selectedNode?.type as string) ||
+                                                    "HOME"
+                                            ][4].id
+                                        ]
                                     }
                                 />
                             )}

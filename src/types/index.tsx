@@ -1,3 +1,5 @@
+import { MetricDto } from "../generated";
+
 export type MenuItemType = {
     Icon: any;
     id: number;
@@ -101,3 +103,6 @@ export type ResponseProps = {
 export type TVariant = "small" | "medium" | "large";
 
 export type TObject = { [key: string]: boolean | string | number };
+export type TMetric = {
+    [key: string]: { name: string; data: MetricDto[] } | null;
+};
