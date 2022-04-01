@@ -83,15 +83,6 @@ export enum GET_USER_TYPE {
 registerEnumType(GET_USER_TYPE, {
     name: "GET_USER_TYPE",
 });
-
-export enum NODE_TYPE {
-    HOME = "Home",
-    WORK = "Work",
-}
-registerEnumType(NODE_TYPE, {
-    name: "NODE_TYPE",
-});
-
 export enum NETWORK_STATUS {
     ONLINE = "ONLINE",
     BEING_CONFIGURED = "BEING_CONFIGURED",
@@ -123,4 +114,22 @@ export enum GRAPH_FILTER {
 }
 registerEnumType(GRAPH_FILTER, {
     name: "GRAPH_FILTER",
+});
+export enum NODE_TYPE {
+    TOWER = "TOWER",
+    AMPLIFIER = "AMPLIFIER",
+    HOME = "HOME",
+}
+registerEnumType(NODE_TYPE, {
+    name: "NODE_TYPE",
+});
+export enum GRAPHS_TAB {
+    HOME = "HOME",
+    RADIO = "RADIO",
+    NETWORK = "NETWORK",
+    OVERVIEW = "OVERVIEW",
+    RESOURCES = "RESOURCES",
+}
+registerEnumType(GRAPHS_TAB, {
+    name: "GRAPHS_TAB",
 });
