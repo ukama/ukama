@@ -15,20 +15,43 @@ type UserServiceServer struct {
 }
 
 // Add provides a mock function with given fields: _a0, _a1
-func (_m *UserServiceServer) Add(_a0 context.Context, _a1 *gen.AddUserRequest) (*gen.AddUserResponse, error) {
+func (_m *UserServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.AddResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.AddUserResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddUserRequest) *gen.AddUserResponse); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.AddResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddUserResponse)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddUserRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AddInternal provides a mock function with given fields: _a0, _a1
+func (_m *UserServiceServer) AddInternal(_a0 context.Context, _a1 *gen.AddInternalRequest) (*gen.AddInternalResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.AddInternalResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInternalRequest) *gen.AddInternalResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddInternalResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddInternalRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -52,6 +75,52 @@ func (_m *UserServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteUserRequ
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteUserRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenerateSimToken provides a mock function with given fields: _a0, _a1
+func (_m *UserServiceServer) GenerateSimToken(_a0 context.Context, _a1 *gen.GenerateSimTokenRequest) (*gen.GenerateSimTokenResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GenerateSimTokenResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GenerateSimTokenRequest) *gen.GenerateSimTokenResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GenerateSimTokenResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GenerateSimTokenRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *UserServiceServer) Get(_a0 context.Context, _a1 *gen.GetUserRequest) (*gen.GetUserResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetUserResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetUserRequest) *gen.GetUserResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetUserResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetUserRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

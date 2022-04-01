@@ -16,7 +16,7 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/loopfz/gadgeto v0.11.2
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/sirupsen/logrus v1.8.1
@@ -25,7 +25,7 @@ require (
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20210818102821-83b756ff1d75
 	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wI2L/fizz v0.18.1
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.45.0
 )
 
 require (
@@ -74,12 +74,12 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce // indirect
-	golang.org/x/net v0.0.0-20211205041911-012df41ee64c // indirect
-	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

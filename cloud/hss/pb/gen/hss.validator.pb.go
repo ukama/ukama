@@ -9,7 +9,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "github.com/mwitkow/go-proto-validators"
-	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -108,83 +107,6 @@ func (this *DeleteImsiRequest) Validate() error {
 	return nil
 }
 func (this *DeleteImsiResponse) Validate() error {
-	return nil
-}
-func (this *AddUserRequest) Validate() error {
-	if this.Org == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
-	}
-	if !(len(this.Org) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Org))
-	}
-	if nil == this.User {
-		return github_com_mwitkow_go_proto_validators.FieldError("User", fmt.Errorf("message must exist"))
-	}
-	if this.User != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("User", err)
-		}
-	}
-	return nil
-}
-func (this *AddUserResponse) Validate() error {
-	if this.User != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.User); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("User", err)
-		}
-	}
-	return nil
-}
-
-var _regex_DeleteUserRequest_UserUuid = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *DeleteUserRequest) Validate() error {
-	if this.Org == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
-	}
-	if !(len(this.Org) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Org))
-	}
-	if !_regex_DeleteUserRequest_UserUuid.MatchString(this.UserUuid) {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserUuid))
-	}
-	if this.UserUuid == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("UserUuid", fmt.Errorf(`value '%v' must not be an empty string`, this.UserUuid))
-	}
-	return nil
-}
-func (this *DeleteUserResponse) Validate() error {
-	return nil
-}
-func (this *User) Validate() error {
-	if this.Imsi == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
-	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
-	}
-	return nil
-}
-func (this *ListUsersRequest) Validate() error {
-	if this.Org == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must not be an empty string`, this.Org))
-	}
-	if !(len(this.Org) > 1) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf(`value '%v' must have a length greater than '1'`, this.Org))
-	}
-	return nil
-}
-func (this *ListUsersResponse) Validate() error {
-	for _, item := range this.Users {
-		if item != nil {
-			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
-				return github_com_mwitkow_go_proto_validators.FieldError("Users", err)
-			}
-		}
-	}
 	return nil
 }
 func (this *AddGutiRequest) Validate() error {

@@ -136,6 +136,7 @@ func (r *Router) init() {
 		hss.GET("", nil, tonic.Handler(r.getUsersHandler, http.StatusOK))
 		hss.POST("", []fizz.OperationOption{}, tonic.Handler(r.postUsersHandler, http.StatusCreated))
 		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
+		hss.GET("/:user", nil, tonic.Handler(r.getUserHandler, http.StatusOK))
 
 	}
 }
@@ -189,18 +190,19 @@ func (r *Router) getUsersHandler(c *gin.Context) (*hsspb.ListUsersResponse, erro
 	return r.clients.Hss.GetUsers(orgName)
 }
 
-func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddUserResponse, error) {
+func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddResponse, error) {
 	return r.clients.Hss.AddUser(req.Org, &hsspb.User{
-		Imsi:      req.Imsi,
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Email:     req.Email,
-		Phone:     req.Phone,
-	})
+		Name:  req.Name,
+		Email: req.Email,
+		Phone: req.Phone,
+	},
+		req.SimToken)
 }
 
-func (r *Router) deleteUserHandler(c *gin.Context) error {
-	orgName := r.getOrgNameFromRoute(c)
-	userId := c.Param("user")
-	return r.clients.Hss.Delete(orgName, userId)
+func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
+	return r.clients.Hss.Delete(req.UserId)
+}
+
+func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*hsspb.GetUserResponse, error) {
+	return r.clients.Hss.Get(req.UserId)
 }

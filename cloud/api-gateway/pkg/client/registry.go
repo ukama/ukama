@@ -54,8 +54,8 @@ func (r *Registry) GetOrg(orgName string) (*pb.Organization, error) {
 	defer cancel()
 
 	res, err := r.client.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
-	if grpcErr, ok := marshalError(err); ok {
-		return nil, *grpcErr
+	if err != nil {
+		return nil, err
 	}
 	return res, nil
 }
@@ -80,8 +80,8 @@ func (r *Registry) GetNodes(orgName string) (*pb.GetNodesResponse, error) {
 	}
 
 	res, err := r.client.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
-	if grpcErr, ok := marshalError(err); ok {
-		return nil, grpcErr
+	if err != nil {
+		return nil, err
 	}
 	if res.Nodes == nil {
 		// to keep 'nodes' as empty array in json response

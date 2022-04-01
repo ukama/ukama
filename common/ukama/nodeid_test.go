@@ -56,17 +56,23 @@ func TestNegativeValidateCase2(t *testing.T) {
 
 func TestNodeType(t *testing.T) {
 
-	ntypes := []string{"HomeNode", "homenode", "HOMENODE",
-		"CompNode", "compnode", "COMPNODE",
-		"AmpNode", "ampnode", "AMPNODE"}
+	ntypes := map[string]string{
+		"HomeNode": NODE_ID_TYPE_HOMENODE,
+		"homenode": NODE_ID_TYPE_HOMENODE,
+		"HOMENODE": NODE_ID_TYPE_HOMENODE,
+		"CompNode": NODE_ID_TYPE_COMPNODE,
+		"compnode": NODE_ID_TYPE_COMPNODE,
+		"COMPNODE": NODE_ID_TYPE_COMPNODE,
+		"AmpNode":  NODE_ID_TYPE_AMPNODE,
+		"ampnode":  NODE_ID_TYPE_AMPNODE,
+		"AMPNODE":  NODE_ID_TYPE_AMPNODE}
 
-	for _, n := range ntypes {
-		nodeid := NewVirtualNodeId(n)
+	for k, v := range ntypes {
+		nodeid := NewVirtualNodeId(k)
 
 		res, err := ValidateNodeId(string(nodeid))
-		if err != nil {
-			t.Errorf("Expected Error nil; Got %s", err.Error())
+		if assert.NoError(t, err) {
+			assert.Equal(t, v, res.GetNodeType())
 		}
-		assert.Equal(t, strings.ToLower(GetNodeCodeForUnits(n)), res.GetNodeType())
 	}
 }

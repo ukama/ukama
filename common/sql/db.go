@@ -24,11 +24,14 @@ type db struct {
 	dbConfig  config.Database
 }
 
+// would be better to seaprate migration logic from actuall ORM 
 type Db interface {
 	GetGormDb() *gorm.DB
 	Init(model ...interface{}) error
 	Connect() error
 	ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) (err error)
+	// version 2 of execute in transaction to pass transaction object to nested functions
+	ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error)
 }
 
 func NewDb(dbConfig config.Database, debugMode bool) Db {
@@ -37,6 +40,15 @@ func NewDb(dbConfig config.Database, debugMode bool) Db {
 		DebugMode: debugMode,
 	}
 }
+
+ 
+func NewDbFromGorm(gormDb *gorm.DB, debugMode bool) Db {
+	return &db{
+		DebugMode: debugMode,
+		gorm:      gormDb,
+	}
+}
+
 
 func (d *db) GetGormDb() *gorm.DB {
 	return d.gorm
@@ -168,6 +180,32 @@ func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nested
 			for _, n := range nestedFuncs {
 				if n != nil {
 					nestErr := n()
+					if nestErr != nil {
+						return nestErr
+					}
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+// ExecuteInTransaction executes dbOperation in transaction with all nested functions
+// if any of nested function returns error then transaction is rolled back
+// all nested functions receive transaction as parameter
+func (d *db)  ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error){
+	return d.gorm.Transaction(func(tx *gorm.DB) error {
+		d := dbOperation(tx)
+
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if len(nestedFuncs) > 0 {
+			for _, n := range nestedFuncs {
+				if n != nil {
+					nestErr := n(tx)
 					if nestErr != nil {
 						return nestErr
 					}

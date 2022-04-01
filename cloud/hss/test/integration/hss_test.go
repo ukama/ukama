@@ -6,39 +6,45 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/ukama/ukamaX/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"testing"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"google.golang.org/grpc"
 )
 
 type TestConfig struct {
 	HssHost string
+	Iccid   string
 }
 
-type IntegrationTestSuite struct {
-	suite.Suite
-	config *TestConfig
+var testConf *TestConfig
+
+func init() {
+	testConf = &TestConfig{
+		HssHost: "localhost:9090",
+	}
+
+	config.LoadConfig("integration", testConf)
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
+	logrus.Infof("%+v", testConf)
+
 }
 
-func NewIntegrationTestSuite(config *TestConfig) *IntegrationTestSuite {
-	return &IntegrationTestSuite{config: config}
-}
-
-func (i *IntegrationTestSuite) Test_ImsiService() {
+func Test_ImsiService(t *testing.T) {
 	// connect to Grpc service
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", i.config.HssHost)
-	conn, err := grpc.DialContext(ctx, i.config.HssHost, grpc.WithInsecure(), grpc.WithBlock())
+	logrus.Infoln("Connecting to service ", testConf.HssHost)
+	conn, err := grpc.DialContext(ctx, testConf.HssHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		assert.NoError(i.T(), err, "did not connect: %v", err)
+		assert.NoError(t, err, "did not connect: %v", err)
 		return
 	}
 	defer conn.Close()
@@ -48,17 +54,17 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 	// Contact the server and print out its response.
 	testImsi := fmt.Sprintf("00000%010d", time.Now().Unix())
 	testOrg := fmt.Sprintf("integration-test-org-imsi-service-%s", time.Now().Format("20060102150405"))
-	i.Run("AddImis", func() {
+	t.Run("AddImis", func(t *testing.T) {
 		addResp, err := c.Add(ctx, &pb.AddImsiRequest{Org: testOrg, Imsi: &pb.ImsiRecord{Imsi: testImsi, Apn: &pb.Apn{Name: "test-apn-name"}}})
-		i.handleResponse(err, addResp)
+		handleResponse(t, err, addResp)
 	})
 
-	i.Run("GetImis", func() {
+	t.Run("GetImis", func(t *testing.T) {
 		getResp, err := c.Get(ctx, &pb.GetImsiRequest{Imsi: testImsi})
-		i.handleResponse(err, getResp)
+		handleResponse(t, err, getResp)
 	})
 
-	i.Run("AddGuti", func() {
+	t.Run("AddGuti", func(t *testing.T) {
 		delResp, err := c.AddGuti(ctx, &pb.AddGutiRequest{Guti: &pb.Guti{
 			PlmnId: "000001",
 			Mmegi:  1,
@@ -66,10 +72,10 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 			Mtmsi:  uint32(time.Now().Unix()),
 		}, Imsi: testImsi,
 			UpdatedAt: uint32(time.Now().Unix())})
-		i.handleResponse(err, delResp)
+		handleResponse(t, err, delResp)
 	})
 
-	i.Run("UpdateGutiAddedEarlier", func() {
+	t.Run("UpdateGutiAddedEarlier", func(t *testing.T) {
 		delResp, err := c.AddGuti(ctx, &pb.AddGutiRequest{Guti: &pb.Guti{
 			PlmnId: "000001",
 			Mmegi:  1,
@@ -77,44 +83,48 @@ func (i *IntegrationTestSuite) Test_ImsiService() {
 			Mtmsi:  uint32(time.Now().Unix()) + 1,
 		}, Imsi: testImsi,
 			UpdatedAt: uint32(time.Now().Unix() + 1)})
-		i.handleResponse(err, delResp)
+		handleResponse(t, err, delResp)
 	})
 
-	i.Run("AddTai", func() {
+	t.Run("AddTai", func(t *testing.T) {
 		resp, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
 			UpdatedAt: uint32(time.Now().Unix())})
-		i.handleResponse(err, resp)
+		handleResponse(t, err, resp)
 	})
 
-	i.Run("UpdateTaiAddedEarlier", func() {
+	t.Run("UpdateTaiAddedEarlier", func(t *testing.T) {
 		resp, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: testImsi, Tac: 4654, PlmnId: "000001",
 			UpdatedAt: uint32(time.Now().Unix() + 1)})
-		i.handleResponse(err, resp)
+		handleResponse(t, err, resp)
 	})
 
-	i.Run("DeleteImis", func() {
+	t.Run("DeleteImis", func(t *testing.T) {
 		delResp, err := c.Delete(ctx, &pb.DeleteImsiRequest{Imsi: testImsi, Org: testOrg})
-		i.handleResponse(err, delResp)
+		handleResponse(t, err, delResp)
 	})
 
-	i.Run("UpdateTaiValidationFailure", func() {
+	t.Run("UpdateTaiValidationFailure", func(t *testing.T) {
 		_, err := c.UpdateTai(ctx, &pb.UpdateTaiRequest{Imsi: "000001111111111", Tac: 4654, PlmnId: "000001",
 			UpdatedAt: uint32(time.Now().Unix())})
 		s, ok := status.FromError(err)
-		i.True(ok, "should be a grpc error")
-		i.Equal(codes.NotFound, s.Code(), "should fail with not found")
+		assert.True(t, ok, "should be a grpc error")
+		assert.Equal(t, codes.NotFound, s.Code(), "should fail with not found")
 	})
 }
 
-func (i *IntegrationTestSuite) Test_UserService() {
-	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+func Test_UserService(t *testing.T) {
+	if testConf.Iccid == "" {
+		assert.FailNow(t, "Missing ICCID")
+	}
+
+	// One timeout for whole test
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	logrus.Infoln("Connecting to service ", i.config.HssHost)
-	conn, err := grpc.DialContext(ctx, i.config.HssHost, grpc.WithInsecure(), grpc.WithBlock())
+	logrus.Infoln("Connecting to service ", testConf.HssHost)
+	conn, err := grpc.DialContext(ctx, testConf.HssHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		assert.NoError(i.T(), err, "did not connect: %v", err)
+		assert.NoError(t, err, "did not connect: %v", err)
 		return
 	}
 	defer conn.Close()
@@ -122,47 +132,74 @@ func (i *IntegrationTestSuite) Test_UserService() {
 	c := pb.NewUserServiceClient(conn)
 	testOrg := fmt.Sprintf("integration-test-org-user-service-%s", time.Now().Format("20060102150405"))
 
-	var addResp *pb.AddUserResponse
+	var addResp *pb.AddResponse
 
-	i.Run("Add", func() {
-		testImsi := fmt.Sprintf("00001%010d", time.Now().Unix())
+	testIccid := testConf.Iccid
 
-		addResp, err = c.Add(ctx, &pb.AddUserRequest{
-			User: &pb.User{
-				Email:     "test@example.com",
-				Imsi:      testImsi,
-				LastName:  "Joe",
-				FirstName: "Doe",
-			},
-			Org: testOrg})
-
-		i.handleResponse(err, addResp)
-		i.NotEmpty(addResp.User.Uuid)
+	simToken := ""
+	t.Run("GenerateSimToken", func(tt *testing.T) {
+		r, err := c.GenerateSimToken(ctx, &pb.GenerateSimTokenRequest{Iccid: testIccid, FromPool: false})
+		if !assert.NoError(tt, err) {
+			assert.FailNow(t, "Error creating sim token")
+		}
+		simToken = r.SimToken
 	})
-	i.Run("list", func() {
 
+	t.Run("AddWithCode", func(tt *testing.T) {
+		addResp, err = c.Add(ctx, &pb.AddRequest{
+			User: &pb.User{
+				Email: "test@example.com",
+				Name:  "Joe",
+			},
+			SimToken: simToken,
+			Org:      testOrg})
+
+		if handleResponse(tt, err, addResp) {
+			logrus.Info("Failed to add")
+			assert.NotEmpty(tt, addResp.User.Uuid)
+		} else {
+			t.FailNow()
+		}
+	})
+
+	// todo: test limit
+	t.Run("list", func(tt *testing.T) {
 		listResp, err := c.List(ctx, &pb.ListUsersRequest{
 			Org: testOrg,
 		})
 
-		i.handleResponse(err, addResp)
-		i.Equal(1, len(listResp.Users))
+		if handleResponse(tt, err, listResp) {
+			assert.Equal(tt, 1, len(listResp.Users))
+		}
 	})
 
-	i.Run("Delete", func() {
-		getResp, err := c.Delete(ctx, &pb.DeleteUserRequest{UserUuid: addResp.User.Uuid, Org: testOrg})
-		i.handleResponse(err, getResp)
+	t.Run("get", func(tt *testing.T) {
+		getResp, err := c.Get(ctx, &pb.GetUserRequest{Uuid: addResp.User.Uuid})
+		if handleResponse(tt, err, getResp) {
+			assert.NotNil(tt, getResp.Sim)
+			assert.NotEqual(tt, getResp.Sim.Carrier.Status, pb.SimStatus_UNKNOWN)
+		}
+	})
+
+	t.Run("Delete", func(tt *testing.T) {
+		getResp, err := c.Delete(ctx, &pb.DeleteUserRequest{Uuid: addResp.User.Uuid})
+
+		if !handleResponse(tt, err, getResp) {
+			assert.FailNow(tt, "")
+		}
 
 		// make sure that user is deleted
 		listResp, err := c.List(ctx, &pb.ListUsersRequest{
 			Org: testOrg,
 		})
-		i.handleResponse(err, addResp)
-		i.Equal(0, len(listResp.Users))
+		if handleResponse(tt, err, listResp) {
+			assert.Equal(tt, 0, len(listResp.Users))
+		}
 	})
 }
 
-func (i *IntegrationTestSuite) handleResponse(err error, r interface{}) {
+// return false if error is not nil
+func handleResponse(t *testing.T, err error, r interface{}) bool {
 	fmt.Printf("Response: %v\n", r)
-	i.Assert().NoErrorf(err, "Request failed: %v\n", err)
+	return assert.NoErrorf(t, err, "Request failed: %v\n", err)
 }

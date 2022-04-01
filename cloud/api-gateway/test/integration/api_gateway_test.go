@@ -74,7 +74,6 @@ func Test_RegistryApi(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(tt, http.StatusOK, resp.StatusCode())
-		//i.Assert().Contains(resp.String(), "Organization not found")
 	})
 
 	t.Run("GetOrgNotFound", func(tt *testing.T) {

@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/iamolegga/enviper v1.2.1
 	github.com/jackc/pgconn v1.8.1
 	github.com/lib/pq v1.3.0
@@ -23,9 +24,7 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
 	github.com/wI2L/fizz v0.18.1
-	golang.org/x/net v0.0.0-20211205041911-012df41ee64c // indirect
-	google.golang.org/genproto v0.0.0-20211203200212-54befc351ae9 // indirect
-	google.golang.org/grpc v1.42.0
+	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
 	gorm.io/driver/postgres v1.1.0
 	gorm.io/gorm v1.21.10

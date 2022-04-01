@@ -21,9 +21,12 @@ deps:
 
 
 gen:
-	protoc -I ./pb -I ./pb/google/api -I ../../common/pb  --go_out=. --go-grpc_out=. --govalidators_out=. \
- 			--go-grpc_opt=require_unimplemented_servers=true \
- 			hss.proto
+	protoc -I ./pb  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
+                            --go-grpc_opt=require_unimplemented_servers=true \
+                            hss.proto users.proto
+	protoc -I ./pb/client  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
+                        --go-grpc_opt=require_unimplemented_servers=true \
+                        sim_manager.proto
 	mockery --all --recursive --dir ./pkg
 	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
 

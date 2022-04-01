@@ -1,17 +1,20 @@
 package db
 
 import (
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 // declare interface so that we can mock it
 type UserRepo interface {
-	Add(user *User) (*User, error)
+	Add(user *User, orgName string, nestedFunc func(*User, *gorm.DB) error) (*User, error)
 	Get(uuid uuid.UUID) (*User, error)
 	Delete(uuid uuid.UUID) error
 	GetByOrg(orgName string) ([]User, error)
+	IsOverTheLimit(orgName string) (bool, error)
 }
 
 type userRepo struct {
@@ -24,9 +27,31 @@ func NewUserRepo(db sql.Db) *userRepo {
 	}
 }
 
-func (u *userRepo) Add(user *User) (*User, error) {
-	d := u.Db.GetGormDb().Create(user)
-	return user, d.Error
+func (r *userRepo) Add(user *User, orgName string, nestedFunc func(*User, *gorm.DB) error) (*User, error) {
+	org, err := makeUserOrgExist(r.Db.GetGormDb(), orgName)
+	if err != nil {
+		return nil, err
+	}
+	user.Org = org
+
+	err = r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		d := tx.Create(user)
+
+		if d.Error != nil {
+			return d.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(user, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return user, err
 }
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
@@ -59,4 +84,39 @@ func (u *userRepo) GetByOrg(orgName string) ([]User, error) {
 		return nil, result.Error
 	}
 	return users, nil
+}
+
+// check if number of users limit reached
+func (u *userRepo) IsOverTheLimit(org string) (bool, error) {
+	logrus.Debugf("Checking if user limit reached for org %s", org)
+	limit := []struct {
+		Limit *int `gorm:"column:limit"`
+	}{}
+
+	d := u.Db.GetGormDb().Raw(`select o.user_limit - count(s.*) as limit from orgs o
+										inner join users u on o.id = u.org_id
+										inner join simcards s on u.id = s.user_id
+									where o.name = ?
+									group by o.id`, org).Scan(&limit)
+
+	if d.Error != nil {
+		logrus.Debugf("Error checking user limit for org %s: %s", org, d.Error)
+		return false, d.Error
+	}
+
+	if len(limit) == 0 {
+		logrus.Debugf("No rows returned")
+		return false, nil
+	}
+
+	if limit[0].Limit != nil && *limit[0].Limit <= 0 {
+		logrus.Infoln("limit reached")
+		return true, nil
+	}
+
+	if limit[0].Limit != nil {
+		logrus.Infof("User places left : %v", limit[0].Limit)
+	}
+
+	return false, nil
 }

@@ -2,7 +2,10 @@ package rest
 
 import (
 	"fmt"
+	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc/status"
 	"net/http"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -48,6 +51,7 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	m.UseWithoutExposingEndpoint(g)
 
 	tonic.SetErrorHook(errorHook)
+	tonic.SetRenderHook(renderHook, jsonContentType[0])
 
 	f := fizz.NewFromEngine(g)
 	f.GET("/ping", nil, tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
@@ -68,17 +72,57 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 
 func errorHook(c *gin.Context, e error) (int, interface{}) {
 	if e == nil {
-		logrus.Errorf("This erro means that something is broken but it's no clear what. Usually something bad with serialization")
+		logrus.Errorf("This error means that something is broken but it's no clear what. Usually something bad with serialization")
 		return 0, nil
 	}
 	errcode, errpl := 500, e.Error()
-	if _, ok := e.(tonic.BindError); ok {
-		errcode = 400
+
+	switch et := e.(type) {
+	case HttpError:
+		errcode = et.HttpCode
+		errpl = et.Message
+
+	case tonic.BindError:
+		errcode = http.StatusBadRequest
 		errpl = e.Error()
-	} else if gErr, ok := e.(HttpError); ok {
-		errcode = gErr.HttpCode
-		errpl = gErr.Message
+
+	case *grpcGate.HTTPStatusError:
+		errcode = et.HTTPStatus
+		errpl = e.Error()
+	}
+
+	if stat, ok := status.FromError(e); ok {
+		errcode = grpcGate.HTTPStatusFromCode(stat.Code())
+		pb := stat.Proto()
+		// Get rid of extra info we have in message like code, grpc error etc
+		const desc = " desc = "
+		idx := strings.Index(pb.Message, desc)
+		if idx > 0 {
+			errpl = pb.Message[idx+len(desc):]
+		} else {
+			errpl = pb.GetMessage()
+		}
+
 	}
 
 	return errcode, gin.H{`error`: errpl}
+}
+
+// renderHook is identical to default renderHool except it renders filds that are ommited
+func renderHook(c *gin.Context, statusCode int, payload interface{}) {
+	var status int
+	if c.Writer.Written() {
+		status = c.Writer.Status()
+	} else {
+		status = statusCode
+	}
+	if payload != nil {
+		if gin.IsDebugging() {
+			c.Render(status, ExtJson{Data: payload, Indent: true})
+		} else {
+			c.Render(status, ExtJson{Data: payload})
+		}
+	} else {
+		c.String(status, "")
+	}
 }

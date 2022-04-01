@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"os/signal"
 	"syscall"
@@ -39,7 +40,7 @@ func NewQueueListener(registryGrpcHost string, connectionString string, grpcTime
 		return nil, err
 	}
 
-	registryConn, err := grpc.Dial(registryGrpcHost, grpc.WithInsecure(), grpc.WithBlock())
+	registryConn, err := grpc.Dial(registryGrpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}

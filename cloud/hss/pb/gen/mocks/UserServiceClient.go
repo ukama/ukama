@@ -17,7 +17,7 @@ type UserServiceClient struct {
 }
 
 // Add provides a mock function with given fields: ctx, in, opts
-func (_m *UserServiceClient) Add(ctx context.Context, in *gen.AddUserRequest, opts ...grpc.CallOption) (*gen.AddUserResponse, error) {
+func (_m *UserServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ...grpc.CallOption) (*gen.AddResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -27,17 +27,47 @@ func (_m *UserServiceClient) Add(ctx context.Context, in *gen.AddUserRequest, op
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.AddUserResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddUserRequest, ...grpc.CallOption) *gen.AddUserResponse); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) *gen.AddResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddUserResponse)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddUserRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AddInternal provides a mock function with given fields: ctx, in, opts
+func (_m *UserServiceClient) AddInternal(ctx context.Context, in *gen.AddInternalRequest, opts ...grpc.CallOption) (*gen.AddInternalResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.AddInternalResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddInternalRequest, ...grpc.CallOption) *gen.AddInternalResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.AddInternalResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddInternalRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -68,6 +98,66 @@ func (_m *UserServiceClient) Delete(ctx context.Context, in *gen.DeleteUserReque
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteUserRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GenerateSimToken provides a mock function with given fields: ctx, in, opts
+func (_m *UserServiceClient) GenerateSimToken(ctx context.Context, in *gen.GenerateSimTokenRequest, opts ...grpc.CallOption) (*gen.GenerateSimTokenResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GenerateSimTokenResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GenerateSimTokenRequest, ...grpc.CallOption) *gen.GenerateSimTokenResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GenerateSimTokenResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GenerateSimTokenRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Get provides a mock function with given fields: ctx, in, opts
+func (_m *UserServiceClient) Get(ctx context.Context, in *gen.GetUserRequest, opts ...grpc.CallOption) (*gen.GetUserResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetUserResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetUserRequest, ...grpc.CallOption) *gen.GetUserResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetUserResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetUserRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

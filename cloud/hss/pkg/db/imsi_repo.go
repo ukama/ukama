@@ -4,9 +4,8 @@ package db
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	uuid "github.com/satori/go.uuid"
-	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -21,8 +20,8 @@ type ImsiRepo interface {
 	GetByImsi(imsi string) (*Imsi, error)
 	GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error)
 	Update(imsi string, subscriber *Imsi) error
-	Delete(imsi string) error
-	DeleteByUserId(user uuid.UUID) error
+	Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error
+	DeleteByUserId(user uuid.UUID, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
 }
 
@@ -81,22 +80,17 @@ func (r *imsiRepo) GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error) {
 	return imsis, nil
 }
 
-func (r *imsiRepo) Delete(imsi string) error {
-	result := r.db.GetGormDb().Where(&Imsi{Imsi: imsi}).Delete(&Imsi{})
-	if result.Error != nil {
-		return result.Error
-	}
-
-	return nil
+func (r *imsiRepo) Delete(imsi string, nestedFunc ...func(*gorm.DB) error) error {
+	return r.db.ExecuteInTransaction2(func(tx *gorm.DB) *gorm.DB {
+		return tx.Where(&Imsi{Imsi: imsi}).Delete(&Imsi{})
+	}, nestedFunc...)
 }
 
-func (r *imsiRepo) DeleteByUserId(user uuid.UUID) error {
-	result := r.db.GetGormDb().Where(&Imsi{UserUuid: user}).Delete(&Imsi{})
-	if result.Error != nil {
-		return result.Error
-	}
-	logrus.Infof("Deleted %d imsis", result.RowsAffected)
-	return nil
+func (r *imsiRepo) DeleteByUserId(user uuid.UUID, nestedFunc ...func(*gorm.DB) error) error {
+	return r.db.ExecuteInTransaction2(func(tx *gorm.DB) *gorm.DB {
+		return tx.Where(&Imsi{UserUuid: user}).Delete(&Imsi{})
+	}, nestedFunc...)
+
 }
 
 // ReplaceTai removes all TAI record for IMSI and adds new ones

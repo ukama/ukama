@@ -3,12 +3,11 @@ package rest
 import pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 
 type UserRequest struct {
-	Org       string `path:"org" validate:"required"`
-	Imsi      string `json:"imsi" validate:"required"`
-	FirstName string `json:"firstName,omitempty" validate:"required"`
-	LastName  string `json:"lastName,omitempty"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone,omitempty"`
+	Org      string `path:"org" validate:"required"`
+	SimToken string `json:"simToken"`
+	Name     string `json:"name,omitempty" validate:"required"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone,omitempty"`
 }
 
 type NodesList struct {
@@ -21,6 +20,16 @@ type Node struct {
 	State  string `json:"state,omitempty"`
 	Type   string `json:"type,omitempty"`
 	Name   string `json:"name"`
+}
+
+type GetUserRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
+}
+
+type DeleteUserRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
 }
 
 type AddNodeRequest struct {

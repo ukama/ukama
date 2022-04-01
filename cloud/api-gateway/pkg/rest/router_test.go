@@ -171,14 +171,14 @@ func Test_HssMethods(t *testing.T) {
 	const orgName = "org-name"
 	const userUuid = "93fcb344-c752-411d-9506-e27417224920"
 	const firstName = "Joe"
-	const imsi = "0000010000000001"
+	const simToken = "0000010000000001"
 
 	m := hssmocks.UserServiceClient{}
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		Hss: client.NewTestHssFromClient(&m),
 	}, routerConfig).f.Engine()
 
-	body, err := json.Marshal(&hsspb.User{FirstName: firstName, Uuid: userUuid, Imsi: imsi})
+	body, err := json.Marshal(UserRequest{Name: firstName, SimToken: simToken})
 	if err != nil {
 		panic(err)
 	}
@@ -186,14 +186,14 @@ func Test_HssMethods(t *testing.T) {
 	// tests go here
 	t.Run("AddUser", func(t *testing.T) {
 		m = hssmocks.UserServiceClient{}
-		m.On("Add", mock.Anything, mock.MatchedBy(func(r *hsspb.AddUserRequest) bool {
-			return r.User.FirstName == firstName && r.User.Imsi == imsi
-		})).Return(&hsspb.AddUserResponse{
+		m.On("Add", mock.Anything, mock.MatchedBy(func(r *hsspb.AddRequest) bool {
+			return r.User.Name == firstName && r.SimToken == simToken
+		})).Return(&hsspb.AddResponse{
 			User: &hsspb.User{
-				FirstName: firstName,
-				Uuid:      userUuid,
-				Imsi:      imsi,
+				Name: firstName,
+				Uuid: userUuid,
 			},
+			Iccid: "0000000000000000001",
 		}, nil)
 
 		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
@@ -210,10 +210,26 @@ func Test_HssMethods(t *testing.T) {
 		m.AssertExpectations(t)
 	})
 
+	t.Run("AddUserReturnsError", func(t *testing.T) {
+		m = hssmocks.UserServiceClient{}
+		m.On("Add", mock.Anything, mock.Anything).Return(nil, status.Error(codes.PermissionDenied, "some err"))
+
+		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
+		req.Header.Set("token", "bearer 123")
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusForbidden, w.Code)
+		assert.Contains(t, w.Body.String(), "some err")
+	})
+
 	t.Run("DeleteUser", func(t *testing.T) {
 		m = hssmocks.UserServiceClient{}
 		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteUserRequest) bool {
-			return r.UserUuid == userUuid && r.Org == orgName
+			return r.Uuid == userUuid
 		})).Return(&hsspb.DeleteUserResponse{}, nil)
 		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
@@ -235,8 +251,8 @@ func Test_HssMethods(t *testing.T) {
 			Org: orgName,
 			Users: []*hsspb.User{
 				{
-					FirstName: firstName,
-					Imsi:      userUuid,
+					Name: firstName,
+					Uuid: userUuid,
 				},
 			},
 		}, nil)
