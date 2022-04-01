@@ -262,3 +262,13 @@ export const GET_NODE_DETAILS_QUERY = `
         }
     }
 `;
+
+export const GET_NODE_NETWORK = `
+    query getNodeNetwork {
+        getNodeNetwork { 
+            id
+            status
+            description
+        }
+    }
+`;
