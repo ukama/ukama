@@ -14,6 +14,7 @@ import (
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var svcConf = pkg.NewConfig()
@@ -25,7 +26,7 @@ func run() error {
 
 	grcpMux := runtime.NewServeMux()
 
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	opts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
 
 	// Register HSS gRPC server endpoint
 	err := gen.RegisterImsiServiceHandlerFromEndpoint(ctx, grcpMux, svcConf.Services.Hss, opts)

@@ -43,10 +43,5 @@ func (r registryClient) GetNodesList(orgName string) (nodes []*pb.Node, err erro
 		return nil, err
 	}
 
-	if len(resp.Orgs) == 0 {
-		log.Errorf("unexpected format of response")
-		return nil, err
-	}
-
-	return resp.Orgs[0].Nodes, nil
+	return resp.Nodes, nil
 }
