@@ -150,6 +150,7 @@ export class NodeService implements INodeService {
                     },
                 }).then(res => {
                     if (checkError(res)) {
+                        console.error(res.message);
                         throw new Error(res.message);
                     } else {
                         const values = res.data.result[0];
