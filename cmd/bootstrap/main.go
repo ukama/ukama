@@ -1,0 +1,77 @@
+package main
+
+import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/ukama/openIoR/services/common/metrics"
+
+	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
+	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/server"
+
+	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
+	ccmd "github.com/ukama/openIoR/services/common/cmd"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/openIoR/services/common/config"
+)
+
+var serviceConfig *pkg.Config
+
+func main() {
+	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+
+	/*Signal handler for SIGINT or SIGTERM to cancel a context in
+	order to clean up and shut down gracefully if Ctrl+C is hit. */
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	/* Signal Handling */
+	handleSigterm(func() {
+		logrus.Infof("Cleaning bootstrap service.")
+		/* Call anything required for clean exit */
+
+		cancel()
+	})
+
+	/* config parsig */
+	initConfig()
+
+	/* Log level */
+	logrus.SetLevel(logrus.DebugLevel)
+
+	/* Start the HTTP server. */
+	startBootstrapServer(ctx)
+}
+
+/* Start HTTP server for accepting bootstrap request */
+func startBootstrapServer(ctx context.Context) {
+	r := server.NewRouter(serviceConfig)
+	metrics.StartMetricsServer(&serviceConfig.Metrics)
+	r.Run()
+}
+
+/* initConfig reads in config file, ENV variables, and flags if set. */
+func initConfig() {
+	serviceConfig = pkg.NewConfig()
+	config.LoadConfig(pkg.ServiceName, serviceConfig)
+	pkg.IsDebugMode = serviceConfig.DebugMode
+}
+
+/* Handles Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting. */
+func handleSigterm(handleExit func()) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+
+	go func() {
+		<-c
+		handleExit()
+		logrus.Infof("Exiting bootstrap service.")
+		os.Exit(1)
+	}()
+
+}
