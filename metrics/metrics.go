@@ -2,14 +2,15 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/ukama/ukamaX/common/config"
 	"net/http"
+
+	"github.com/ukama/openIoR/services/common/config"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
-func StartMetricsServer(conf config.Metrics) {
+func StartMetricsServer(conf *config.Metrics) {
 	if conf.Enabled {
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())

@@ -2,8 +2,9 @@ package grpc
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/common/pb/gen/health"
+	pb "github.com/ukama/openIoR/services/common/pb/gen/health"
 )
 
 type HealthCheckerInterface interface {

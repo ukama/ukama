@@ -1,8 +1,9 @@
 package ukama
 
 import (
-"strings"
-"testing"
+	"github.com/stretchr/testify/assert"
+	"strings"
+	"testing"
 )
 
 func TestNew(t *testing.T) {
@@ -50,5 +51,28 @@ func TestNegativeValidateCase2(t *testing.T) {
 	_, err := ValidateNodeId(string(nodeid))
 	if err == nil {
 		t.Errorf("Expected Error ; Got nil")
+	}
+}
+
+func TestNodeType(t *testing.T) {
+
+	ntypes := map[string]string{
+		"HomeNode": NODE_ID_TYPE_HOMENODE,
+		"homenode": NODE_ID_TYPE_HOMENODE,
+		"HOMENODE": NODE_ID_TYPE_HOMENODE,
+		"CompNode": NODE_ID_TYPE_COMPNODE,
+		"compnode": NODE_ID_TYPE_COMPNODE,
+		"COMPNODE": NODE_ID_TYPE_COMPNODE,
+		"AmpNode":  NODE_ID_TYPE_AMPNODE,
+		"ampnode":  NODE_ID_TYPE_AMPNODE,
+		"AMPNODE":  NODE_ID_TYPE_AMPNODE}
+
+	for k, v := range ntypes {
+		nodeid := NewVirtualNodeId(k)
+
+		res, err := ValidateNodeId(string(nodeid))
+		if assert.NoError(t, err) {
+			assert.Equal(t, v, res.GetNodeType())
+		}
 	}
 }

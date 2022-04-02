@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/openIoR/services/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

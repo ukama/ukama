@@ -1,12 +1,13 @@
 package rest
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/openIoR/services/common/ukama"
 )
 
 func TestGetNodeIdFromPath(t *testing.T) {

@@ -9,8 +9,8 @@ import (
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/config"
-	pbhealth "github.com/ukama/ukamaX/common/pb/gen/health"
+	"github.com/ukama/openIoR/services/common/config"
+	pbhealth "github.com/ukama/openIoR/services/common/pb/gen/health"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

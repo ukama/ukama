@@ -2,8 +2,11 @@ package rest
 
 import (
 	"errors"
-	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
+
+	"net/http"
+
+	"github.com/ukama/openIoR/services/common/ukama"
 
 	"github.com/gin-gonic/gin"
 	uuid "github.com/satori/go.uuid"

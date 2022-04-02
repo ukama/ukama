@@ -20,9 +20,16 @@ const (
 )
 
 const (
-	NODE_ID_TYPE_HOMENODE = "HOMENODE"
-	NODE_ID_TYPE_COMPNODE = "COMPNODE"
-	NODE_ID_TYPE_AMPNODE  = "AMPNODE"
+	NODE_ID_TYPE_HOMENODE  = "HOMENODE"
+	NODE_ID_TYPE_COMPNODE  = "COMPNODE"
+	NODE_ID_TYPE_AMPNODE   = "AMPNODE"
+	NODE_ID_TYPE_UNDEFINED = "UNDEFINED"
+)
+
+const (
+	node_id_type_component_home      = "hnode"
+	node_id_type_component_tower     = "comv1"
+	node_id_type_component_amplifier = "anode"
 )
 
 type NodeID string
@@ -33,6 +40,22 @@ func (n NodeID) String() string {
 
 func (n NodeID) StringLowercase() string {
 	return strings.ToLower(n.String())
+}
+
+func (n NodeID) GetNodeType() string {
+	t := n.String()[CODE_IDX : CODE_IDX+strings.IndexRune(n.String()[CODE_IDX:], '-')]
+	switch strings.ToLower(t) {
+	case node_id_type_component_home:
+		return NODE_ID_TYPE_HOMENODE
+
+	case node_id_type_component_tower:
+		return NODE_ID_TYPE_COMPNODE
+
+	case node_id_type_component_amplifier:
+		return NODE_ID_TYPE_AMPNODE
+	default:
+		return NODE_ID_TYPE_UNDEFINED
+	}
 }
 
 func getRandCode(t time.Time) string {
@@ -66,7 +89,7 @@ func NewVirtualNodeId(ntype string) NodeID {
 	year, week := t.ISOWeek()
 	yearstr := strconv.Itoa(year)
 	yearcode := yearstr[len(yearstr)-2:]
-	weekstr := fmt.Sprintf("%02d",week)
+	weekstr := fmt.Sprintf("%02d", week)
 	code := GetNodeCodeForUnits(ntype)
 
 	/*2+1+6+1+5+1+2+1+4*/
@@ -82,7 +105,7 @@ func NewVirtualNodeId(ntype string) NodeID {
 }
 
 // Generate new node id for home node
-func NewVirtualHomeNodeId () NodeID{
+func NewVirtualHomeNodeId() NodeID {
 	return NewVirtualNodeId(NODE_ID_TYPE_HOMENODE)
 }
 
@@ -95,7 +118,9 @@ func ValidateNodeId(id string) (NodeID, error) {
 	}
 
 	/* Check for HW codes */
-	codes := [...]string{"ComV1", "comv1", "HNODE", "hnode", "ANODE", "anode"}
+	codes := [...]string{"ComV1", node_id_type_component_tower,
+		"HNODE", node_id_type_component_home,
+		"ANODE", node_id_type_component_amplifier}
 	match := false
 	for _, code := range codes {
 		if strings.Contains(id, code) {
