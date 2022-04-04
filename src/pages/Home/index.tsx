@@ -211,7 +211,7 @@ const Home = () => {
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
-            to: Math.floor(Date.now() / 1000) - 10,
+            to: Math.floor(Date.now() / 1000) - 20,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -238,6 +238,7 @@ const Home = () => {
     useEffect(() => {
         if (
             getMetricsRes &&
+            getMetricsRes.getMetricsByTab.next &&
             getMetricsRes?.getMetricsByTab.metrics.length > 0
         ) {
             getMetricsRefetch({

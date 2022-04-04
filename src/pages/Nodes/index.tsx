@@ -71,7 +71,7 @@ const Nodes = () => {
             tab: selectedTab,
             regPolling: false,
             nodeId: selectedNode?.id,
-            to: Math.floor(Date.now() / 1000) - 10,
+            to: Math.floor(Date.now() / 1000) - 20,
             from: Math.floor(Date.now() / 1000) - 180,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
@@ -179,9 +179,6 @@ const Nodes = () => {
 
     useEffect(() => {
         if (selectedNode && selectedNode.id) {
-            // let setAll = (obj: any, val: any) =>
-            //     Object.keys(obj).forEach(k => (obj[k] = val));
-            // setAll(initMetricDto, null);
             setMetrics(getMetricsInitObj());
             getMetrics({ variables: { ...getFirstMetricCallPayload() } });
             setIsMetricPolling(false);
@@ -191,6 +188,7 @@ const Nodes = () => {
     useEffect(() => {
         if (
             getMetricsRes &&
+            getMetricsRes.getMetricsByTab.next &&
             getMetricsRes?.getMetricsByTab.metrics.length > 0
         ) {
             getMetricsRefetch({

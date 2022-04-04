@@ -267,6 +267,7 @@ export enum Graphs_Tab {
 export type GetMetricsRes = {
     __typename?: "GetMetricsRes";
     metrics: Array<MetricRes>;
+    next: Scalars["Boolean"];
     to: Scalars["Float"];
 };
 
@@ -337,6 +338,7 @@ export type MetricRes = {
     __typename?: "MetricRes";
     data: Array<MetricDto>;
     name: Scalars["String"];
+    next: Scalars["Boolean"];
     type: Scalars["String"];
 };
 
@@ -1114,10 +1116,12 @@ export type GetMetricsByTabQuery = {
     getMetricsByTab: {
         __typename?: "GetMetricsRes";
         to: number;
+        next: boolean;
         metrics: Array<{
             __typename?: "MetricRes";
             type: string;
             name: string;
+            next: boolean;
             data: Array<{ __typename?: "MetricDto"; y: number; x: number }>;
         }>;
     };
@@ -1133,6 +1137,7 @@ export type GetMetricsByTabSSubscription = {
         __typename?: "MetricRes";
         type: string;
         name: string;
+        next: boolean;
         data: Array<{ __typename?: "MetricDto"; x: number; y: number }>;
     }>;
 };
@@ -2410,9 +2415,11 @@ export const GetMetricsByTabDocument = gql`
     query getMetricsByTab($data: MetricsByTabInputDTO!) {
         getMetricsByTab(data: $data) {
             to
+            next
             metrics {
                 type
                 name
+                next
                 data {
                     y
                     x
@@ -2477,6 +2484,7 @@ export const GetMetricsByTabSDocument = gql`
         getMetricsByTab {
             type
             name
+            next
             data {
                 x
                 y

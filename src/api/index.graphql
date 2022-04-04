@@ -223,9 +223,11 @@ mutation deleteNode($id: String!) {
 query getMetricsByTab($data: MetricsByTabInputDTO!) {
     getMetricsByTab(data: $data) {
         to
+        next
         metrics {
             type
             name
+            next
             data {
                 y
                 x
@@ -238,6 +240,7 @@ subscription getMetricsByTabS {
     getMetricsByTab {
         type
         name
+        next
         data {
             x
             y
