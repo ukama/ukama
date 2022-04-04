@@ -58,20 +58,15 @@ class UserMapper implements IUserMapper {
         return {
             id: user.uuid,
             name: user.name,
-            iccid: sim.iccid,
+            iccid: sim?.iccid || "",
             email: user.email,
             phone: user.phone,
-            status: sim.ukama?.status || GET_STATUS_TYPE.INACTIVE,
-            roaming: sim.carrier?.status || GET_STATUS_TYPE.INACTIVE,
+            eSimNumber: user.uuid,
+            status: sim?.ukama?.status || GET_STATUS_TYPE.INACTIVE,
+            roaming:
+                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
             dataPlan: 1024,
             dataUsage: defaultCasual.integer(1, 1024),
-            eSimNumber: `# ${defaultCasual.integer(
-                11111,
-                99999
-            )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
-                1111111,
-                9999999
-            )}`,
         };
     };
 }

@@ -149,8 +149,8 @@ export class GetUserDto {
     @IsPhoneNumber()
     phone: string;
 
-    @Field(() => GET_STATUS_TYPE)
-    roaming: GET_STATUS_TYPE;
+    @Field()
+    roaming: boolean;
 
     @Field()
     dataPlan: number;
