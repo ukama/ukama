@@ -231,18 +231,18 @@ export const DELETE_NODE_MUTATION = `
 `;
 
 export const GET_USER_BY_ID_QUERY = `
-    query getUser($input:String!) {
-        getUser(id:$input) {
+    query getUser($userInput: UserInput!) {
+        getUser(userInput: $userInput) {
             id
-            name
             status
+            name
             eSimNumber
             iccid
             email
             phone
+            roaming
             dataPlan
             dataUsage
-            roaming
         }
     }
 `;
