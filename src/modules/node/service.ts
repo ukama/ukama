@@ -149,10 +149,7 @@ export class NodeService implements INodeService {
                         step: data.step,
                     },
                 }).then(res => {
-                    logger.info(endpoint, JSON.stringify(res));
-                    logger.error(checkError(res));
                     if (checkError(res)) {
-                        // throw new Error(res.message);
                         return {
                             type: endpoint,
                             name: getMetricTitleByType(endpoint),
