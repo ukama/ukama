@@ -33,12 +33,15 @@ export class GetMetricsByTabResolver {
             metricsEndpoints
         );
 
+        let next = false;
         if (data.regPolling) {
             const length = data.to - data.from;
             for (let i = 0; i < length; i++) {
                 const metric: MetricRes[] = [];
                 for (const element of response) {
+                    if (!next && element.next) next = true;
                     metric.push({
+                        next: element.next,
                         type: element.type,
                         name: element.name,
                         data: element.data[i] ? [element.data[i]] : [],
@@ -47,8 +50,12 @@ export class GetMetricsByTabResolver {
                 await oneSecSleep();
                 pubsub.publish("metricsByTab", metric);
             }
+        } else {
+            for (const element of response) {
+                if (!next && element.next) next = true;
+            }
         }
 
-        return { to: data.to, metrics: response };
+        return { to: data.to, next: next, metrics: response };
     }
 }

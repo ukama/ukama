@@ -261,12 +261,18 @@ export class MetricRes {
 
     @Field(() => [MetricDto])
     data: MetricDto[];
+
+    @Field()
+    next: boolean;
 }
 
 @ObjectType()
 export class GetMetricsRes {
     @Field()
     to: number;
+
+    @Field()
+    next: boolean;
 
     @Field(() => [MetricRes])
     metrics: MetricRes[];

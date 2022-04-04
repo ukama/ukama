@@ -151,6 +151,7 @@ export class NodeService implements INodeService {
                 }).then(res => {
                     if (checkError(res)) {
                         return {
+                            next: false,
                             type: endpoint,
                             name: getMetricTitleByType(endpoint),
                             data: [],
@@ -159,6 +160,7 @@ export class NodeService implements INodeService {
                         const values = res.data.result[0];
                         return {
                             type: endpoint,
+                            next: res.data.result.length > 0,
                             name: getMetricTitleByType(endpoint),
                             data:
                                 res.data.result.length > 0
