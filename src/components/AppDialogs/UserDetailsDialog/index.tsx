@@ -44,6 +44,9 @@ type BasicDialogProps = {
     simDetailsTitle: string;
 };
 
+const getTitleByStatus = (status: string) =>
+    status === Get_User_Status_Type.Active ? "PAUSE SERVICE" : "RESUME SERVICE";
+
 const UserDetailsDialog = ({
     user,
     isOpen,
@@ -211,10 +214,7 @@ const UserDetailsDialog = ({
                                                     })
                                                 }
                                             >
-                                                {status ===
-                                                Get_User_Status_Type.Active
-                                                    ? "PAUSE SERVICE"
-                                                    : "RESUME SERVICE "}
+                                                {getTitleByStatus(status)}
                                             </Button>
                                         </ContainerJustifySpaceBtw>
                                     </Grid>
