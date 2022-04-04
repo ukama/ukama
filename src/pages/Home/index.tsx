@@ -507,7 +507,7 @@ const Home = () => {
                             />
                             <DataTableWithOptions
                                 columns={DataTableWithOptionColumns}
-                                dataset={residentsRes?.getUsersByOrg.users}
+                                dataset={residentsRes?.getUsersByOrg}
                                 menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                 onMenuItemClick={onResidentsTableMenuItem}
                             />

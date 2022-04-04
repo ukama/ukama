@@ -120,23 +120,16 @@ query getNodeApps {
 }
 query getUsersByOrg($orgId: String!) {
     getUsersByOrg(orgId: $orgId) {
-        orgName
-        users {
-            id
-            name
-            email
-            eSimNumber
-            dataPlan
-            dataUsage
-            phone
-            roaming
-            iccid
-            status
-        }
+        id
+        name
+        email
+        phone
+        dataPlan
+        dataUsage
     }
 }
-query getUser($id: String!) {
-    getUser(id: $id) {
+query getUser($userInput: UserInput!) {
+    getUser(userInput: $userInput) {
         id
         status
         name
