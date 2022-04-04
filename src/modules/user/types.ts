@@ -136,21 +136,44 @@ export class GetUserDto {
     name: string;
 
     @Field()
-    eSimNumber: string;
+    eSimNumber?: string;
 
     @Field()
     iccid: string;
 
     @Field({ nullable: true })
     @IsEmail()
-    email?: string;
+    email: string;
 
     @Field({ nullable: true })
     @IsPhoneNumber()
-    phone?: string;
+    phone: string;
 
     @Field()
     roaming: boolean;
+
+    @Field()
+    dataPlan: number;
+
+    @Field()
+    dataUsage: number;
+}
+
+@ObjectType()
+export class GetUsersDto {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field({ nullable: true })
+    @IsEmail()
+    email: string;
+
+    @Field({ nullable: true })
+    @IsPhoneNumber()
+    phone: string;
 
     @Field()
     dataPlan: number;
@@ -257,10 +280,10 @@ export class AddUserResponse {
 @ObjectType()
 export class OrgUserDto {
     @Field()
-    firstName: string;
+    name: string;
 
     @Field()
-    lastName: string;
+    phone: string;
 
     @Field()
     email: string;
@@ -270,10 +293,59 @@ export class OrgUserDto {
 }
 
 @ObjectType()
-export class OrgUserResponse {
+export class OrgUsersResponse {
     @Field()
     org: string;
 
     @Field(() => [OrgUserDto])
     users: OrgUserDto[];
+}
+
+@InputType()
+export class UserInput {
+    @Field()
+    orgId: string;
+
+    @Field()
+    userId: string;
+}
+
+@ObjectType()
+export class UserSimServices {
+    @Field()
+    voice: boolean;
+    @Field()
+    data: boolean;
+    @Field()
+    sms: boolean;
+}
+
+@ObjectType()
+export class UserSimUkamaDto {
+    @Field(() => GET_STATUS_TYPE)
+    status: GET_STATUS_TYPE;
+
+    @Field(() => UserSimServices)
+    services: UserSimServices;
+}
+
+@ObjectType()
+export class OrgUserSimDto {
+    @Field()
+    iccid: string;
+    @Field()
+    isPhysical: boolean;
+    @Field(() => UserSimUkamaDto)
+    ukama?: UserSimUkamaDto;
+    @Field(() => UserSimUkamaDto)
+    carrier?: UserSimUkamaDto;
+}
+
+@ObjectType()
+export class OrgUserResponse {
+    @Field(() => OrgUserSimDto)
+    sim: OrgUserSimDto;
+
+    @Field(() => OrgUserDto)
+    user: OrgUserDto;
 }

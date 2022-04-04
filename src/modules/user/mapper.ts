@@ -5,8 +5,9 @@ import {
     ConnectedUserResponse,
     GetUserDto,
     GetUserResponseDto,
+    GetUsersDto,
     OrgUserResponse,
-    OrgUserResponseDto,
+    OrgUsersResponse,
     ResidentResponse,
 } from "./types";
 import * as defaultCasual from "casual";
@@ -35,41 +36,37 @@ class UserMapper implements IUserMapper {
             totalResidents,
         };
     };
-    dtoToUsersDto = (req: OrgUserResponse): OrgUserResponseDto => {
-        const orgName = req.org;
+    dtoToUsersDto = (req: OrgUsersResponse): GetUsersDto[] => {
         const res = req.users;
-        const users: GetUserDto[] = [];
+        const users: GetUsersDto[] = [];
 
         res.forEach(user => {
             const userObj = {
                 id: user.uuid,
-                name: `${user.firstName} ${user.lastName}`,
+                name: user.name,
                 email: user.email,
-                status: defaultCasual.random_value(GET_STATUS_TYPE),
-                eSimNumber: `# ${defaultCasual.integer(
-                    11111,
-                    99999
-                )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
-                    1111111,
-                    9999999
-                )}`,
-                iccid: `${defaultCasual.integer(
-                    11111,
-                    99999
-                )}${defaultCasual.integer(11010, 99999)}${defaultCasual.integer(
-                    11010,
-                    99999
-                )}`,
+                phone: user.phone,
                 dataPlan: 1024,
                 dataUsage: defaultCasual.integer(1, 1024),
-                phone: "123456789",
-                roaming: defaultCasual.random_value([true, false]),
             };
             users.push(userObj);
         });
+        return users;
+    };
+    dtoToUserDto = (req: OrgUserResponse): GetUserDto => {
+        const { user, sim } = req;
         return {
-            orgName,
-            users,
+            id: user.uuid,
+            name: user.name,
+            iccid: sim?.iccid || "",
+            email: user.email,
+            phone: user.phone,
+            eSimNumber: user.uuid,
+            status: sim?.ukama?.status || GET_STATUS_TYPE.INACTIVE,
+            roaming:
+                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
+            dataPlan: 1024,
+            dataUsage: defaultCasual.integer(1, 1024),
         };
     };
 }
