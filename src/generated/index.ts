@@ -303,6 +303,16 @@ export type GetUserResponseDto = {
     status: Scalars["String"];
 };
 
+export type GetUsersDto = {
+    __typename?: "GetUsersDto";
+    dataPlan: Scalars["Float"];
+    dataUsage: Scalars["Float"];
+    email?: Maybe<Scalars["String"]>;
+    id: Scalars["String"];
+    name: Scalars["String"];
+    phone?: Maybe<Scalars["String"]>;
+};
+
 export type HeaderType = {
     __typename?: "HeaderType";
     Authorization: Scalars["String"];
@@ -537,21 +547,35 @@ export type OrgNodeResponseDto = {
 export type OrgUserDto = {
     __typename?: "OrgUserDto";
     email: Scalars["String"];
-    firstName: Scalars["String"];
-    lastName: Scalars["String"];
+    name: Scalars["String"];
+    phone: Scalars["String"];
     uuid: Scalars["String"];
 };
 
 export type OrgUserResponse = {
     __typename?: "OrgUserResponse";
-    org: Scalars["String"];
-    users: Array<OrgUserDto>;
+    sim: OrgUserSimDto;
+    user: OrgUserDto;
 };
 
 export type OrgUserResponseDto = {
     __typename?: "OrgUserResponseDto";
     orgName: Scalars["String"];
     users: Array<GetUserDto>;
+};
+
+export type OrgUserSimDto = {
+    __typename?: "OrgUserSimDto";
+    carrier: UserSimUkamaDto;
+    iccid: Scalars["String"];
+    isPhysical: Scalars["Boolean"];
+    ukama: UserSimUkamaDto;
+};
+
+export type OrgUsersResponse = {
+    __typename?: "OrgUsersResponse";
+    org: Scalars["String"];
+    users: Array<OrgUserDto>;
 };
 
 export type PaginationDto = {
@@ -574,26 +598,6 @@ export type Query = {
     getDataUsage: DataUsageDto;
     getEsims: Array<EsimDto>;
     getMetricsByTab: GetMetricsRes;
-    getMetricsCpuCOM: Array<MetricDto>;
-    getMetricsCpuTRX: Array<MetricDto>;
-    getMetricsDiskCOM: Array<MetricDto>;
-    getMetricsDiskTRX: Array<MetricDto>;
-    getMetricsERAB: Array<MetricDto>;
-    getMetricsMemoryCOM: Array<MetricDto>;
-    getMetricsMemoryTRX: Array<MetricDto>;
-    getMetricsPaPower: Array<MetricDto>;
-    getMetricsPower: Array<MetricDto>;
-    getMetricsRLC: Array<MetricDto>;
-    getMetricsRRC: Array<MetricDto>;
-    getMetricsRxPower: Array<MetricDto>;
-    getMetricsSubActive: Array<MetricDto>;
-    getMetricsSubAttached: Array<MetricDto>;
-    getMetricsTempCOM: Array<MetricDto>;
-    getMetricsTempTRX: Array<MetricDto>;
-    getMetricsThroughputDL: Array<MetricDto>;
-    getMetricsThroughputUL: Array<MetricDto>;
-    getMetricsTxPower: Array<MetricDto>;
-    getMetricsUptime: Array<MetricDto>;
     getNetwork: NetworkDto;
     getNodeApps: Array<NodeAppResponse>;
     getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
@@ -601,11 +605,10 @@ export type Query = {
     getNodeNetwork: NetworkDto;
     getNodes: NodesResponse;
     getNodesByOrg: OrgNodeResponseDto;
-    getRadioMetrics: Array<MetricRes>;
     getResidents: ResidentsResponse;
     getUser: GetUserDto;
     getUsers: GetUserResponse;
-    getUsersByOrg: OrgUserResponseDto;
+    getUsersByOrg: Array<GetUsersDto>;
 };
 
 export type QueryGetAlertsArgs = {
@@ -628,86 +631,6 @@ export type QueryGetMetricsByTabArgs = {
     data: MetricsByTabInputDto;
 };
 
-export type QueryGetMetricsCpuComArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsCpuTrxArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsDiskComArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsDiskTrxArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsErabArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsMemoryComArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsMemoryTrxArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsPaPowerArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsPowerArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsRlcArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsRrcArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsRxPowerArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsSubActiveArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsSubAttachedArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsTempComArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsTempTrxArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsThroughputDlArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsThroughputUlArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsTxPowerArgs = {
-    data: MetricsInputDto;
-};
-
-export type QueryGetMetricsUptimeArgs = {
-    data: MetricsInputDto;
-};
-
 export type QueryGetNetworkArgs = {
     filter: Network_Type;
 };
@@ -720,16 +643,12 @@ export type QueryGetNodesByOrgArgs = {
     orgId: Scalars["String"];
 };
 
-export type QueryGetRadioMetricsArgs = {
-    data: MetricsInputDto;
-};
-
 export type QueryGetResidentsArgs = {
     data: PaginationDto;
 };
 
 export type QueryGetUserArgs = {
-    id: Scalars["String"];
+    userInput: UserInput;
 };
 
 export type QueryGetUsersArgs = {
@@ -760,28 +679,7 @@ export type Subscription = {
     getDataBill: DataBillDto;
     getDataUsage: DataUsageDto;
     getMetricsByTab: Array<MetricRes>;
-    getMetricsCpuCOM: Array<MetricDto>;
-    getMetricsCpuTRX: Array<MetricDto>;
-    getMetricsDiskCOM: Array<MetricDto>;
-    getMetricsDiskTRX: Array<MetricDto>;
-    getMetricsERAB: Array<MetricDto>;
-    getMetricsMemoryCOM: Array<MetricDto>;
-    getMetricsMemoryTRX: Array<MetricDto>;
-    getMetricsPaPower: Array<MetricDto>;
-    getMetricsPower: Array<MetricDto>;
-    getMetricsRLC: Array<MetricDto>;
-    getMetricsRRC: Array<MetricDto>;
-    getMetricsRxPower: Array<MetricDto>;
-    getMetricsSubActive: Array<MetricDto>;
-    getMetricsSubAttached: Array<MetricDto>;
-    getMetricsTempCOM: Array<MetricDto>;
-    getMetricsTempTRX: Array<MetricDto>;
-    getMetricsThroughputDL: Array<MetricDto>;
-    getMetricsThroughputUL: Array<MetricDto>;
-    getMetricsTxPower: Array<MetricDto>;
-    getMetricsUptime: Array<MetricDto>;
     getNetwork: NetworkDto;
-    getRadioMetrics: Array<MetricRes>;
 };
 
 export enum Time_Filter {
@@ -822,6 +720,11 @@ export type UserDto = {
     type: Connected_User_Type;
 };
 
+export type UserInput = {
+    orgId: Scalars["String"];
+    userId: Scalars["String"];
+};
+
 export type UserResponse = {
     __typename?: "UserResponse";
     email: Scalars["String"];
@@ -829,6 +732,19 @@ export type UserResponse = {
     name: Scalars["String"];
     phone: Scalars["String"];
     sim: Scalars["String"];
+};
+
+export type UserSimServices = {
+    __typename?: "UserSimServices";
+    data: Scalars["Boolean"];
+    sms: Scalars["Boolean"];
+    voice: Scalars["Boolean"];
+};
+
+export type UserSimUkamaDto = {
+    __typename?: "UserSimUkamaDto";
+    services: UserSimServices;
+    status: Get_User_Status_Type;
 };
 
 export type GetDataUsageQueryVariables = Exact<{
@@ -1026,27 +942,19 @@ export type GetUsersByOrgQueryVariables = Exact<{
 
 export type GetUsersByOrgQuery = {
     __typename?: "Query";
-    getUsersByOrg: {
-        __typename?: "OrgUserResponseDto";
-        orgName: string;
-        users: Array<{
-            __typename?: "GetUserDto";
-            id: string;
-            name: string;
-            email?: string | null;
-            eSimNumber: string;
-            dataPlan: number;
-            dataUsage: number;
-            phone?: string | null;
-            roaming: boolean;
-            iccid: string;
-            status: Get_User_Status_Type;
-        }>;
-    };
+    getUsersByOrg: Array<{
+        __typename?: "GetUsersDto";
+        id: string;
+        name: string;
+        email?: string | null;
+        phone?: string | null;
+        dataPlan: number;
+        dataUsage: number;
+    }>;
 };
 
 export type GetUserQueryVariables = Exact<{
-    id: Scalars["String"];
+    userInput: UserInput;
 }>;
 
 export type GetUserQuery = {
@@ -1899,19 +1807,12 @@ export type GetNodeAppsQueryResult = Apollo.QueryResult<
 export const GetUsersByOrgDocument = gql`
     query getUsersByOrg($orgId: String!) {
         getUsersByOrg(orgId: $orgId) {
-            orgName
-            users {
-                id
-                name
-                email
-                eSimNumber
-                dataPlan
-                dataUsage
-                phone
-                roaming
-                iccid
-                status
-            }
+            id
+            name
+            email
+            phone
+            dataPlan
+            dataUsage
         }
     }
 `;
@@ -1967,8 +1868,8 @@ export type GetUsersByOrgQueryResult = Apollo.QueryResult<
     GetUsersByOrgQueryVariables
 >;
 export const GetUserDocument = gql`
-    query getUser($id: String!) {
-        getUser(id: $id) {
+    query getUser($userInput: UserInput!) {
+        getUser(userInput: $userInput) {
             id
             status
             name
@@ -1995,7 +1896,7 @@ export const GetUserDocument = gql`
  * @example
  * const { data, loading, error } = useGetUserQuery({
  *   variables: {
- *      id: // value for 'id'
+ *      userInput: // value for 'userInput'
  *   },
  * });
  */

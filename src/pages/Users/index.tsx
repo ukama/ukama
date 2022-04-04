@@ -7,7 +7,9 @@ import {
 } from "../../components";
 import {
     GetUserDto,
+    GetUsersDto,
     Get_User_Status_Type,
+    useGetUserLazyQuery,
     useGetUsersByOrgQuery,
 } from "../../generated";
 import { useState } from "react";
@@ -31,24 +33,32 @@ const userInit = {
 
 const User = () => {
     const { id: orgId = "" } = useRecoilValue(user);
-    const [users, setUsers] = useState<GetUserDto[]>([]);
+    const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
-    // eslint-disable-next-line no-unused-vars
-    const [userForm, setUserForm] = useState<GetUserDto>(userInit);
 
     const { data: usersRes, loading: usersByOrgLoading } =
         useGetUsersByOrgQuery({
             variables: { orgId: orgId },
-            onCompleted: res => setUsers(res.getUsersByOrg.users),
+            onCompleted: res => setUsers(res.getUsersByOrg),
         });
+
+    const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
+        onCompleted: res => {
+            if (res.getUser) setSelectedUser(res.getUser);
+        },
+    });
 
     const handleSimDialogClose = () => setShowSimDialog(false);
 
-    const onViewMoreClick = (_user: GetUserDto) => {
+    const onViewMoreClick = (_user: GetUsersDto) => {
         setShowSimDialog(true);
-        setSelectedUser(_user);
+        getUser({
+            variables: {
+                userInput: { orgId: orgId, userId: _user.id },
+            },
+        });
     };
 
     const handleSimInstallation = () => {
@@ -59,17 +69,17 @@ const User = () => {
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
             setUsers(
-                users.filter((_user: GetUserDto) =>
+                users.filter((_user: GetUsersDto) =>
                     _user.name.toLocaleLowerCase().includes(search)
                 )
             );
         } else {
-            setUsers(usersRes?.getUsersByOrg?.users || []);
+            setUsers(usersRes?.getUsersByOrg || []);
         }
     };
 
     const handleSave = () => {
-        /* TODO: CALL UPDATE USER API HERE */
+        setShowSimDialog(false);
     };
 
     return (
@@ -79,7 +89,7 @@ const User = () => {
                 height="inherit"
                 isLoading={isSkeltonLoad || usersByOrgLoading}
             >
-                {usersRes && usersRes?.getUsersByOrg?.users?.length > 0 ? (
+                {usersRes && usersRes?.getUsersByOrg?.length > 0 ? (
                     <RoundedCard sx={{ borderRadius: "4px", overflow: "auto" }}>
                         <ContainerHeader
                             title="My Users"
@@ -91,7 +101,7 @@ const User = () => {
                             stats={`${users.length}`}
                         />
                         <Grid container spacing={2} mt={4}>
-                            {users.map((item: GetUserDto) => (
+                            {users.map((item: GetUsersDto) => (
                                 <Grid key={item.id} item xs={12} md={6} lg={3}>
                                     <Card
                                         variant="outlined"
@@ -119,12 +129,14 @@ const User = () => {
                         description="No users on network. Install SIMs to get started."
                     />
                 )}
+
                 <UserDetailsDialog
                     user={selectedUser}
                     saveBtnLabel="save"
                     closeBtnLabel="close"
+                    loading={userLoading}
                     isOpen={showSimDialog}
-                    setUserForm={setUserForm}
+                    setUserForm={setSelectedUser}
                     simDetailsTitle="SIM Details"
                     handleSaveSimUser={handleSave}
                     userDetailsTitle="User Details"
