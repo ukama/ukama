@@ -1,8 +1,10 @@
-import { Resolver, Arg, Query, UseMiddleware } from "type-graphql";
+import { Resolver, Arg, Query, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
-import { GetUserDto } from "../types";
 import { UserService } from "../service";
+import { GetUserDto, UserInput } from "../types";
 import { Authentication } from "../../../common/Authentication";
+import { getHeaders } from "../../../common";
+import { Context } from "../../../common/types";
 
 @Service()
 @Resolver()
@@ -12,9 +14,9 @@ export class GetUserResolver {
     @Query(() => GetUserDto)
     @UseMiddleware(Authentication)
     async getUser(
-        @Arg("id")
-        id: string
+        @Arg("userInput") userInput: UserInput,
+        @Ctx() ctx: Context
     ): Promise<GetUserDto | null> {
-        return this.userService.getUser(id);
+        return this.userService.getUser(userInput, getHeaders(ctx));
     }
 }

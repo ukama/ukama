@@ -14,10 +14,11 @@ import {
     GetUserResponseDto,
     GetUsersDto,
     OrgUserResponse,
-    OrgUserResponseDto,
+    OrgUsersResponse,
     ResidentResponse,
     ResidentsResponse,
     UpdateUserDto,
+    UserInput,
     UserResponse,
 } from "./types";
 
@@ -26,7 +27,7 @@ export interface IUserService {
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(req: UpdateUserDto): Promise<UserResponse>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
-    getUser(id: string): Promise<GetUserDto>;
+    getUser(data: UserInput, header: HeaderType): Promise<GetUserDto>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
     getUsersByOrg(orgId: string, header: HeaderType): Promise<GetUsersDto[]>;
@@ -46,5 +47,6 @@ export interface IUserMapper {
     connectedUsersDtoToDto(res: ConnectedUserResponse): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
-    dtoToUsersDto(req: OrgUserResponse): GetUsersDto[];
+    dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];
+    dtoToUserDto(req: OrgUserResponse): GetUserDto;
 }

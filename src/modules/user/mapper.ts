@@ -7,7 +7,7 @@ import {
     GetUserResponseDto,
     GetUsersDto,
     OrgUserResponse,
-    OrgUserResponseDto,
+    OrgUsersResponse,
     ResidentResponse,
 } from "./types";
 import * as defaultCasual from "casual";
@@ -36,8 +36,7 @@ class UserMapper implements IUserMapper {
             totalResidents,
         };
     };
-    dtoToUsersDto = (req: OrgUserResponse): GetUsersDto[] => {
-        const orgName = req.org;
+    dtoToUsersDto = (req: OrgUsersResponse): GetUsersDto[] => {
         const res = req.users;
         const users: GetUsersDto[] = [];
 
@@ -53,6 +52,27 @@ class UserMapper implements IUserMapper {
             users.push(userObj);
         });
         return users;
+    };
+    dtoToUserDto = (req: OrgUserResponse): GetUserDto => {
+        const { user, sim } = req;
+        return {
+            id: user.uuid,
+            name: user.name,
+            iccid: sim.iccid,
+            email: user.email,
+            phone: user.phone,
+            status: sim.ukama?.status || GET_STATUS_TYPE.INACTIVE,
+            roaming: sim.carrier?.status || GET_STATUS_TYPE.INACTIVE,
+            dataPlan: 1024,
+            dataUsage: defaultCasual.integer(1, 1024),
+            eSimNumber: `# ${defaultCasual.integer(
+                11111,
+                99999
+            )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
+                1111111,
+                9999999
+            )}`,
+        };
     };
 }
 export default <IUserMapper>new UserMapper();

@@ -9,11 +9,11 @@ import {
     UpdateUserDto,
     UserResponse,
     GetUserDto,
-    OrgUserResponseDto,
     AddUserDto,
     AddUserResponse,
     ActivateUserResponse,
     GetUsersDto,
+    UserInput,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -74,14 +74,20 @@ export class UserService implements IUserService {
         if (checkError(res)) throw new Error(res.message);
         return res.data;
     };
-    getUser = async (id: string): Promise<GetUserDto> => {
+    getUser = async (
+        data: UserInput,
+        header: HeaderType
+    ): Promise<GetUserDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_USER,
-            params: { id },
+            path: `${SERVER.ORG}/${data.orgId}/users/${data.userId}`,
+            headers: header,
         });
+
         if (checkError(res)) throw new Error(res.message);
-        return res.data;
+        if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
+
+        return UserMapper.dtoToUserDto(res);
     };
 
     getUsers = async (req: GetUserPaginationDto): Promise<GetUserResponse> => {
