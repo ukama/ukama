@@ -9,9 +9,8 @@ import { theme } from "./theme";
 import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
-import { BasicDialog } from "./components";
 import { getTitleFromPath } from "./utils";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import useWhoami from "./helpers/useWhoami";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
@@ -29,13 +28,6 @@ const App = () => {
         useRecoilState(snackbarMessage);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const _isFirstVisit = useRecoilValue(isFirstVisit);
-    const [showValidationError, setShowValidationError] =
-        useState<boolean>(false);
-
-    useEffect(() => {
-        setSkeltonLoading(true);
-    }, []);
-
     useEffect(() => {
         if (response) {
             if (!response?.isValid) {
@@ -43,8 +35,7 @@ const App = () => {
                 if (_isFirstVisit) {
                     handleGoToLogin();
                 } else {
-                    setSkeltonLoading(true);
-                    setShowValidationError(true);
+                    handleGoToLogin();
                 }
             } else if (response?.isValid) {
                 setPage(getTitleFromPath(window.location.pathname));
@@ -67,16 +58,6 @@ const App = () => {
                 <BrowserRouter>
                     <Router routes={Object.values(routes)} />
                 </BrowserRouter>
-                <BasicDialog
-                    isClosable={false}
-                    btnLabel={"Log In"}
-                    isOpen={showValidationError}
-                    handleClose={handleGoToLogin}
-                    title={"Session validation failed"}
-                    content={
-                        "Your session is not valid or has expired. Please re-login."
-                    }
-                />
                 <Snackbar
                     open={_snackbarMessage.show}
                     autoHideDuration={SNACKBAR_TIMEOUT}
