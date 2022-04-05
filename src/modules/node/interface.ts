@@ -24,7 +24,7 @@ export interface INodeService {
         orgId: string,
         header: HeaderType
     ): Promise<OrgNodeResponseDto>;
-    addNode(req: AddNodeDto): Promise<AddNodeResponse>;
+    addNode(req: AddNodeDto, header: HeaderType): Promise<AddNodeResponse>;
     updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
     deleteNode(id: string): Promise<DeactivateResponse>;
 }

@@ -28,7 +28,7 @@ export const getHeaders = (ctx: Context): HeaderType => {
         };
     } else if (ctx.cookie) {
         header = {
-            cookie: ctx.cookie,
+            cookie: "ukama_session=MTY0OTE2ODMyMXxEdi1CQkFFQ180SUFBUkFCRUFBQVJfLUNBQUVHYzNSeWFXNW5EQThBRFhObGMzTnBiMjVmZEc5clpXNEdjM1J5YVc1bkRDSUFJRVZ5U214c1lXMXNiMGxhVUZWSVlWVmxNMFZzYlhoelZGWlhNSGt5VTFOUnwZ9AOA9IkvhZwhLy6unYlvQp4NbcBSOVhA66zC7RIk0A==",
         };
     }
     return header;

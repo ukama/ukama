@@ -49,11 +49,17 @@ export class NodeService implements INodeService {
         };
     };
 
-    addNode = async (req: AddNodeDto): Promise<AddNodeResponse> => {
+    addNode = async (
+        req: AddNodeDto,
+        header: HeaderType
+    ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_ADD_NODE,
-            body: req,
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
+            headers: header,
+            body: {
+                name: req.name,
+            },
         });
         if (checkError(res)) throw new Error(res.message);
         return res.data;
