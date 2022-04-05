@@ -56,7 +56,6 @@ func (r *Router) init() {
 }
 
 func (r *Router) bootstrapGetHandler(c *gin.Context, req *BootstrapRequest) error {
-	var err error = nil
 	logrus.Debugf("Handling bootstrap request %+v.", req)
 
 	/* Validate the Node ID from DMR
