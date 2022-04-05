@@ -197,7 +197,7 @@ func (r *Router) getNodesHandler(c *gin.Context) (*NodesList, error) {
 }
 
 func (r *Router) addNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {
-	node, err := r.clients.Registry.Add(req.OrgName, req.NodeId)
+	node, err := r.clients.Registry.Add(req.OrgName, req.NodeId, req.NodeName)
 	return node, err
 }
 

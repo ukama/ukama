@@ -60,10 +60,10 @@ func (r *Registry) GetOrg(orgName string) (*pb.Organization, error) {
 	return res, nil
 }
 
-func (r *Registry) Add(orgName string, nodeId string) (*pb.Node, error) {
+func (r *Registry) Add(orgName string, nodeId string, name string) (*pb.Node, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
-	resp, err := r.client.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{NodeId: nodeId}, OrgName: orgName})
+	resp, err := r.client.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{NodeId: nodeId, Name: name}, OrgName: orgName})
 	if err != nil {
 		return nil, err
 	}
