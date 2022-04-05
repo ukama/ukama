@@ -116,7 +116,7 @@ func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery 
 	}
 
 	log.Debugf("Updating node %+v", delivery)
-	nodeId, err := ukama.ValidateNodeId(link.GetUuid())
+	nodeId, err := ukama.ValidateNodeId(link.GetNodeId())
 	if err != nil {
 		log.Errorf("Invalid Node ID format. Error %v", err)
 		return

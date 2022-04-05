@@ -28,14 +28,7 @@ type Debug struct {
 
 func NewConfig() *Config {
 	return &Config{
-		DB: config.Database{
-			Host:       "localhost",
-			Password:   "Pass2020!",
-			DbName:     "registry",
-			Username:   "postgres",
-			Port:       5432,
-			SslEnabled: false,
-		},
+		DB: config.DefaultDatabase(),
 		Grpc: config.Grpc{
 			Port: 9090,
 		},

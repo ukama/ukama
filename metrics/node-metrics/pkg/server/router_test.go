@@ -66,9 +66,21 @@ func Test_GetMetrics(t *testing.T) {
 
 	r := NewRouter(defaultCongif, m).fizz.Engine()
 
-	t.Run("HappyPath", func(t *testing.T) {
+	t.Run("NodeMetrics", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/nodes/node-id/metrics/cpu?from=1643106506&to=1644936312&step=3600", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 200, w.Code)
+		assert.Contains(t, body, c.NodeMetrics.Metrics["cpu"].Metric)
+	})
+
+	t.Run("OrgMetrics", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/orgs/org-id/metrics/cpu?from=1643106506&to=1644936312&step=3600", nil)
 
 		// act
 		r.ServeHTTP(w, req)

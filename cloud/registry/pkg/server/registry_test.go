@@ -17,12 +17,18 @@ import (
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")
 var testDeviceGatewayHost = "1.1.1.1"
 
+const testOrgName = "org-1"
+const testNetName = "net-1"
+const testNetId = 98
+
 func TestRegistryServer_GetOrg(t *testing.T) {
 	orgName := "org-1"
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
 	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 	org, err := s.GetOrg(context.TODO(), &pb.GetOrgRequest{Name: orgName})
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, org.Name)
@@ -30,11 +36,11 @@ func TestRegistryServer_GetOrg(t *testing.T) {
 }
 
 func TestRegistryServer_AddOrg_fails_without_owner_id(t *testing.T) {
-	orgName := "org-1"
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
-	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName})
+	netRepo := createNetRepoMock()
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
+	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: testOrgName})
 	assert.Error(t, err)
 }
 
@@ -42,7 +48,8 @@ func TestRegistryServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	orgName := "org-1"
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+	netRepo := createNetRepoMock()
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName})
 	assert.Error(t, err)
 }
@@ -53,15 +60,19 @@ func TestRegistryServer_AddOrg(t *testing.T) {
 	ownerId := uuid2.NewString()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
+
 	// trick to call nested bootstrap call
 	orgRepo.On("Add", mock.Anything, mock.Anything).
 		Return(func(o *db.Org, f ...func() error) error {
 			return f[0]()
 		}).Once()
+
+	netRepo.On("Add", mock.Anything, mock.Anything).Return(&db.Network{}, nil).Once()
 	bootstrapClient := &mocks.Client{}
 	bootstrapClient.On("AddOrUpdateOrg", orgName, mock.Anything, testDeviceGatewayHost).Return(nil)
 
-	s := NewRegistryServer(orgRepo, nodeRepo, bootstrapClient, testDeviceGatewayHost)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, bootstrapClient, testDeviceGatewayHost)
 
 	// Act
 	res, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName, Owner: ownerId})
@@ -79,13 +90,17 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	ownerId := uuid2.New()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := createNetRepoMock()
 	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
 		State: db.Pending, Type: db.NodeTypeHome,
-		Org: &db.Org{
-			Name:  orgName,
-			Owner: ownerId,
+		Network: &db.Network{
+			Name: testNetName,
+			Org: &db.Org{
+				Name:  orgName,
+				Owner: ownerId,
+			},
 		}}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, node.Org.Name)
@@ -98,8 +113,9 @@ func TestRegistryServer_GetNode(t *testing.T) {
 func TestRegistryServer_UpdateNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
 	nodeRepo.On("Update", testNodeId, db.Onboarded).Return(nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
 		NodeId: testNodeId.String(),
 		State:  pb.NodeState_ONBOARDED,
@@ -110,19 +126,19 @@ func TestRegistryServer_UpdateNode(t *testing.T) {
 
 func TestRegistryServer_AddNode(t *testing.T) {
 	// Arrange
-	orgName := "node-1"
 	nodeId := testNodeId.String()
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{BaseModel: db.BaseModel{ID: 1}, Name: orgName}, nil).Once()
+	netRepo := createNetRepoMock()
+
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
-		return n.State == db.Pending && n.NodeID == nodeId && n.OrgID == 1
+		return n.State == db.Pending && n.NodeID == nodeId && n.NetworkID == testNetId
 	}), mock.Anything).Return(func(o *db.Node, f ...func() error) error {
 		return f[0]()
 	}).Once()
 	bootstrapClient := &mocks.Client{}
-	bootstrapClient.On("AddNode", orgName, nodeId).Return(nil)
-	s := NewRegistryServer(orgRepo, nodeRepo, bootstrapClient, testDeviceGatewayHost)
+	bootstrapClient.On("AddNode", testOrgName, nodeId).Return(nil)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, bootstrapClient, testDeviceGatewayHost)
 
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
@@ -130,7 +146,8 @@ func TestRegistryServer_AddNode(t *testing.T) {
 			NodeId: nodeId,
 			State:  pb.NodeState_PENDING,
 		},
-		OrgName: orgName,
+		OrgName: testOrgName,
+		Network: testNetName,
 	})
 
 	// Assert
@@ -140,19 +157,35 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	bootstrapClient.AssertExpectations(t)
 }
 
+func createNetRepoMock() *mocks.NetRepo {
+	netRepo := &mocks.NetRepo{}
+	netRepo.On("Get", testOrgName, testNetName).
+		Return(&db.Network{
+			BaseModel: db.BaseModel{ID: testNetId},
+			Name:      testNetName,
+			Org: &db.Org{
+				Name: testOrgName,
+				BaseModel: db.BaseModel{
+					ID: 101,
+				},
+			}}, nil).Once()
+	return netRepo
+}
+
 func TestRegistryServer_GetNodes(t *testing.T) {
 	orgName := "node-1"
 	nodeUuid1 := ukama.NewVirtualNodeId(ukama.OEMCODE)
 	nodeUuid2 := ukama.NewVirtualNodeId(ukama.OEMCODE)
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
 
 	const NodeName0 = "NodeName0"
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
-		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Org: &db.Org{Name: orgName}},
-		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Org: &db.Org{Name: orgName}},
+		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Network: &db.Network{Org: &db.Org{Name: orgName}}},
+		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Network: &db.Network{Org: &db.Org{Name: orgName}}},
 	}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
 		OrgName: orgName,
 	})
@@ -169,9 +202,10 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
 
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, &mocks.Client{}, testDeviceGatewayHost)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
 
 	// act
 	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{

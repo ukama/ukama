@@ -14,11 +14,11 @@ import (
 )
 
 type DnsServer struct {
-	nns    NnsReader
+	nns    pkg.NnsReader
 	config *pkg.DnsConfig
 }
 
-func NewDnsServer(nns NnsReader, config *pkg.DnsConfig) *DnsServer {
+func NewDnsServer(nns pkg.NnsReader, config *pkg.DnsConfig) *DnsServer {
 	return &DnsServer{
 		nns:    nns,
 		config: config,

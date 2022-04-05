@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ukama/ukamaX/cloud/net/pkg"
 	"net/http"
 	"time"
 
@@ -17,17 +18,20 @@ import (
 )
 
 type HttpServer struct {
-	nnsClient       NnsReader
+	nnsClient       pkg.NnsReader
 	httpConf        rest.HttpConfig
 	grpcConf        config.Grpc
 	nodeMetricsPort int
+	nodeOrgNetMap   *pkg.NodeOrgMap
 }
 
-func NewHttpServer(httpConf rest.HttpConfig, grpcConf config.Grpc, nodeMetricsPort int, nnsClient NnsReader) *HttpServer {
+func NewHttpServer(httpConf rest.HttpConfig, grpcConf config.Grpc, nodeMetricsPort int, nnsClient pkg.NnsReader, nodeOrgNetMap *pkg.NodeOrgMap) *HttpServer {
 	return &HttpServer{nnsClient: nnsClient,
 		httpConf:        httpConf,
 		grpcConf:        grpcConf,
-		nodeMetricsPort: nodeMetricsPort}
+		nodeMetricsPort: nodeMetricsPort,
+		nodeOrgNetMap:   nodeOrgNetMap,
+	}
 }
 
 func (h *HttpServer) RunHttpServer() {
@@ -72,13 +76,27 @@ func (h *HttpServer) prometheusHandler(w http.ResponseWriter, r *http.Request, p
 	ctx, cancel := context.WithTimeout(context.Background(), ETCD_TIMEOUT*time.Second)
 	defer cancel()
 
+	m := make(chan bool)
+	nodeToOrg := make(map[string]pkg.OrgNet)
+	go func() {
+		var errCh error
+		if nodeToOrg, errCh = h.nodeOrgNetMap.List(ctx); errCh != nil {
+			logrus.Error("Error getting node to org/network map. Error: ", errCh)
+		}
+		m <- true
+	}()
+
 	l, err := h.nnsClient.List(ctx)
 	if err != nil {
 		logrus.Error("Error getting list of namespaces. Error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	b, err := marshallTargets(l, h.nodeMetricsPort)
+
+	// wait for nodeToOrgNetwork mapping to finish
+	<-m
+
+	b, err := marshallTargets(l, nodeToOrg, h.nodeMetricsPort)
 	if err != nil {
 		logrus.Error("Error marshalling targets. Error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -98,15 +116,21 @@ type targets struct {
 	Labels  map[string]string `json:"labels"`
 }
 
-func marshallTargets(t map[string]string, nodeMetricsPort int) ([]byte, error) {
+func marshallTargets(t map[string]string, nodeToOrg map[string]pkg.OrgNet, nodeMetricsPort int) ([]byte, error) {
 	resp := make([]targets, 0, len(t))
 
 	for k, v := range t {
+		labels := map[string]string{
+			"nodeid": k,
+		}
+		if m, ok := nodeToOrg[k]; ok {
+			labels["org"] = m.Org
+			labels["network"] = m.Network
+		}
+
 		resp = append(resp, targets{
 			Targets: []string{fmt.Sprintf("%s:%d", v, nodeMetricsPort)},
-			Labels: map[string]string{
-				"nodeid": k,
-			},
+			Labels:  labels,
 		})
 	}
 

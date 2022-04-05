@@ -2,13 +2,12 @@ package rest
 
 import (
 	"fmt"
+	"github.com/ukama/ukamaX/common/rest"
 	"github.com/wI2L/fizz/openapi"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
-
-	"github.com/ukama/ukamaX/common/rest"
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
@@ -94,7 +93,6 @@ func (rt *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.ServiceName, version.Version, r.config.debugMode)
-
 	authorized := r.f.Group("/", "Authorization", "Requires authorization", r.authMiddleware.IsAuthenticated,
 		r.authMiddleware.IsAuthorized)
 
@@ -106,6 +104,13 @@ func (r *Router) init() {
 
 		// metrics
 		metricsProxy := r.getMetricsProxyHandler()
+
+		authorized.GET(org+"/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "For request format refer to nodes/metrics/openapi.json Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+				info.Summary = "Get metrics for a node"
+				info.ID = "GetMetrics"
+			}}, metricsProxy)
 
 		// registry
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
@@ -123,6 +128,7 @@ func (r *Router) init() {
 				info.Summary = "Get metrics for a node"
 				info.ID = "GetMetrics"
 			}}, metricsProxy)
+
 		nodes.GET("/metrics", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get list of metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
@@ -141,6 +147,7 @@ func (r *Router) init() {
 	}
 }
 
+//
 func (r *Router) getMetricsProxyHandler() gin.HandlerFunc {
 	nodeMetricsUrl, err := url.Parse(r.config.httpEndpoints.NodeMetrics)
 	if err != nil {
@@ -150,7 +157,9 @@ func (r *Router) getMetricsProxyHandler() gin.HandlerFunc {
 		logrus.Infof("Request %s proxied", req.URL.String())
 		req.URL.Scheme = nodeMetricsUrl.Scheme
 		req.URL.Host = nodeMetricsUrl.Host
-		req.URL.Path = req.URL.Path[strings.Index(req.URL.Path, "/node"):]
+
+		idx := max(strings.Index(req.URL.Path, "/node"), strings.Index(req.URL.Path, "/orgs"))
+		req.URL.Path = req.URL.Path[idx:]
 
 		if _, ok := req.Header["User-Agent"]; !ok {
 			// explicitly disable User-Agent so it's not set to default value
@@ -159,6 +168,13 @@ func (r *Router) getMetricsProxyHandler() gin.HandlerFunc {
 	}
 	proxy := &httputil.ReverseProxy{Director: director}
 	return gin.WrapH(proxy)
+}
+
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 func (r *Router) getOrgNameFromRoute(c *gin.Context) string {

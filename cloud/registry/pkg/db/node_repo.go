@@ -39,7 +39,7 @@ func (r *nodeRepo) Add(node *Node, nestedFunc ...func() error) error {
 
 func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
+	result := r.Db.GetGormDb().Preload("Network.Org").Preload(clause.Associations).First(&node, "node_id=?", id.StringLowercase())
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -49,8 +49,9 @@ func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 func (r *nodeRepo) GetByOrg(orgName string) ([]Node, error) {
 	db := r.Db.GetGormDb()
 	rows, err := db.Raw(`select n.* from nodes n
-									inner join orgs o ON o.id = n.org_id
-								where o.name=? and n.deleted_at is null`, orgName).Rows()
+									inner join networks nw on nw.id = n.network_id	
+									inner join orgs o ON o.id = nw.org_id
+								where o.name=? and n.deleted_at is null and nw.deleted_at is null`, orgName).Rows()
 	if err != nil {
 		return nil, err
 	}

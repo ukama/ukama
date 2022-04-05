@@ -16,6 +16,36 @@ type RegistryServiceClient struct {
 	mock.Mock
 }
 
+// AddNetwork provides a mock function with given fields: ctx, in, opts
+func (_m *RegistryServiceClient) AddNetwork(ctx context.Context, in *gen.AddNetworkRequest, opts ...grpc.CallOption) (*gen.NetworkResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.NetworkResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNetworkRequest, ...grpc.CallOption) *gen.NetworkResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.NetworkResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNetworkRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // AddNode provides a mock function with given fields: ctx, in, opts
 func (_m *RegistryServiceClient) AddNode(ctx context.Context, in *gen.AddNodeRequest, opts ...grpc.CallOption) (*gen.AddNodeResponse, error) {
 	_va := make([]interface{}, len(opts))

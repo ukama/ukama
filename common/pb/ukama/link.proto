@@ -12,6 +12,6 @@ syntax = "proto2";
 option go_package = "pb/gen/ukamaos/mesh";
 
 message Link {
-        required string uuid = 1; // UUID of the device.
+        required string nodeId = 1; // NodeID of the device.
         required string ip = 2; // IP address of the device.
 }

@@ -57,12 +57,19 @@ type Node struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
 	Name      string         `gorm:"type:string;uniqueIndex:node_name_org_idx"`
-	OrgID     uint32         `gorm:"uniqueIndex:node_name_org_idx"`
-	Org       *Org
-	NetworkID *uint32
+	NetworkID uint32
+	Network   *Network
 	SiteID    *uint32
 	State     NodeState `gorm:"type:uint;not null"`
 	Type      NodeType  `gorm:"type:uint;not null"`
+}
+
+type Network struct {
+	BaseModel
+	Nodes []Node
+	Name  string `gorm:"uniqueIndex:network_name_org_idx"`
+	OrgID uint32 `gorm:"uniqueIndex:network_name_org_idx"`
+	Org   *Org
 }
 
 type Org struct {
@@ -70,11 +77,6 @@ type Org struct {
 	Name        string    `gorm:"uniqueIndex"`
 	Owner       uuid.UUID `gorm:"type:uuid"`
 	Certificate string
-}
-
-type Network struct {
-	BaseModel
-	Nodes []Node
 }
 
 type Site struct {

@@ -8,13 +8,13 @@ package ukama.registry.v1;
 service RegistryService {
     rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
     rpc GetOrg(GetOrgRequest) returns (Organization);
+    rpc AddNetwork(AddNetworkRequest) returns (NetworkResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
 }
-
 
 message AddOrgRequest {
     string name = 1;
@@ -27,6 +27,7 @@ message AddOrgResponse{
 message AddNodeRequest{
     Node node = 1;
     string  orgName = 2;
+    string network = 3;
 }
 
 message AddNodeResponse{
@@ -50,6 +51,7 @@ message GetNodeRequest{
 message GetNodeResponse{
     Node node = 1;
     Organization org = 2;
+    Network network = 3;
 }
 
 message  UpdateNodeRequest{
@@ -58,7 +60,6 @@ message  UpdateNodeRequest{
 }
 
 message  UpdateNodeResponse{
-
 }
 
 message GetNodesRequest{    
@@ -70,9 +71,20 @@ message GetNodesResponse{
     repeated Node nodes = 2;
 }
 
+message AddNetworkRequest{
+    string name = 1;
+    string orgName = 2;
+}
+message NetworkResponse{
+    Network network = 1;
+}
+
+message Network {
+    string name = 1;
+}
+
 message Organization {
     string name = 1;
-    uint32 id = 2;
     string owner = 3;
 }
 

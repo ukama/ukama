@@ -167,7 +167,7 @@ func sendMessageToQueue(t *testing.T, nodeId string, ip string) error {
 		assert.FailNow(t, err.Error())
 	}
 
-	message, err := proto.Marshal(&commonpb.Link{Uuid: &nodeId, Ip: &ip})
+	message, err := proto.Marshal(&commonpb.Link{NodeId: &nodeId, Ip: &ip})
 	assert.NoError(t, err)
 	err = rabbit.Publish(message, "", msgbus.DeviceQ.Exchange, msgbus.DeviceConnectedRoutingKey, "topic")
 	assert.NoError(t, err)

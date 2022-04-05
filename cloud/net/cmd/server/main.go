@@ -25,14 +25,15 @@ func main() {
 
 	initConfig()
 
-	nnsClient := server.NewNns(serviceConfig)
+	nnsClient := pkg.NewNns(serviceConfig)
+	nodeOrgMapping := pkg.NewNodeToOrgMap(serviceConfig)
 
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 	go func() {
-		srv := server.NewHttpServer(serviceConfig.Http, serviceConfig.Grpc, serviceConfig.NodeMetricsPort, nnsClient)
+		srv := server.NewHttpServer(serviceConfig.Http, serviceConfig.Grpc, serviceConfig.NodeMetricsPort, nnsClient, nodeOrgMapping)
 		srv.RunHttpServer()
 	}()
-	runGrpcServer(nnsClient)
+	runGrpcServer(nnsClient, nodeOrgMapping)
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
@@ -42,10 +43,10 @@ func initConfig() {
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
 
-func runGrpcServer(nns *server.Nns) {
+func runGrpcServer(nns *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) {
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNnsServer(nns)
+		srv := server.NewNnsServer(nns, nodeOrgMapping)
 		pb.RegisterNnsServer(s, srv)
 
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))

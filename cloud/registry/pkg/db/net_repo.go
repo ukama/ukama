@@ -1,17 +1,15 @@
 package db
 
 import (
-	"github.com/jackc/pgtype"
-	"github.com/pkg/errors"
+	"fmt"
+	"github.com/ukama/ukamaX/cloud/registry/pkg/validation"
 	"github.com/ukama/ukamaX/common/sql"
-	"github.com/ukama/ukamaX/common/ukama"
-	"gorm.io/gorm/clause"
-	"net"
+	"gorm.io/gorm"
 )
 
 type NetRepo interface {
-	GetIP(nodeId ukama.NodeID) (*net.IP, error)
-	SetIp(id ukama.NodeID, ip *net.IP) error
+	Get(orgName string, network string) (*Network, error)
+	Add(orgId uint32, network string) (*Network, error)
 }
 
 type netRepo struct {
@@ -24,32 +22,53 @@ func NewNetRepo(db sql.Db) NetRepo {
 	}
 }
 
-func (n netRepo) GetIP(nodeId ukama.NodeID) (*net.IP, error) {
-	var node NodeIp
-	res := n.Db.GetGormDb().Where("node_id = ?", nodeId).First(&node)
-	if res.Error != nil {
-		return nil, res.Error
+func (n netRepo) Get(orgName string, network string) (*Network, error) {
+	db := n.Db.GetGormDb()
+
+	rows, err := db.Raw(`SELECT n.name,n.id, n.org_id, o.name  from networks n
+inner join orgs o on n.org_id = o.id
+where n.deleted_at IS NULL and o.deleted_at IS NULL and
+ n.name = ? and o.name = ?`, network, orgName).Rows()
+
+	if err != nil {
+		return nil, err
 	}
 
-	return &node.IP.IPNet.IP, nil
+	defer rows.Close()
+	nt := Network{
+		Org: &Org{},
+	}
+
+	exist := false
+	for rows.Next() {
+		exist = true
+
+		err = rows.Scan(&nt.Name, &nt.ID, &nt.OrgID, &nt.Org.Name)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !exist {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return &nt, nil
 }
 
-func (n netRepo) SetIp(nodeId ukama.NodeID, ip *net.IP) error {
-	node := NodeIp{
-		NodeId: nodeId.StringLowercase(),
-		IP:     pgtype.Inet{},
+func (n netRepo) Add(orgId uint32, network string) (*Network, error) {
+	db := n.Db.GetGormDb()
+	if !validation.IsValidDnsLabelName(network) {
+		return nil, fmt.Errorf("invalid name. must be less then 253 " +
+			"characters and consist of lowercase characters with a hyphen")
 	}
-	err := node.IP.Set(ip)
-	if err != nil {
-		return errors.Wrap(err, "error setting IP")
-	}
-	res := n.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "lower(node_id::text)", Raw: true}},
-		DoUpdates: clause.AssignmentColumns([]string{"ip"}),
-	}).Create(&node)
-	if res != nil {
-		return res.Error
+	netw := &Network{
+		OrgID: orgId,
+		Name:  network,
 	}
 
-	return nil
+	db = db.Create(netw)
+
+	return netw, db.Error
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
+	"github.com/ukama/ukamaX/common/grpc"
 	"time"
 
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
@@ -23,12 +24,13 @@ type RegistryServer struct {
 	pb.UnimplementedRegistryServiceServer
 	orgRepo         db2.OrgRepo
 	nodeRepo        db2.NodeRepo
+	netRepo         db2.NetRepo
 	bootstrapClient bootstrap.Client
 	deviceGatewayIp string
 	nameGenerator   namegenerator.Generator
 }
 
-func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
+func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &RegistryServer{
@@ -36,8 +38,11 @@ func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, bootstrapClie
 		nodeRepo:        nodeRepo,
 		bootstrapClient: bootstrapClient,
 		deviceGatewayIp: deviceGatewayIp,
+		netRepo:         netRepo,
 		nameGenerator:   namegenerator.NewNameGenerator(seed)}
 }
+
+const defaultNetworkName = "default"
 
 func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
 	logrus.Infof("Adding org %v", request)
@@ -59,15 +64,16 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 		return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
 	})
 	if err != nil {
-		if sql.IsDuplicateKeyError(err) {
-			return nil, status.Errorf(codes.AlreadyExists, "organization already exist")
-		}
-		logrus.Errorf("Error adding the org. Error: %+v", err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	_, err = r.netRepo.Add(org.BaseModel.ID, defaultNetworkName)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
 	return &pb.AddOrgResponse{
-		Org: &pb.Organization{Id: org.ID, Name: request.Name, Owner: org.Owner.String()},
+		Org: &pb.Organization{Name: request.Name, Owner: org.Owner.String()},
 	}, nil
 }
 
@@ -88,7 +94,7 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &pb.Organization{Id: org.ID, Name: org.Name, Owner: org.Owner.String()}, nil
+	return &pb.Organization{Name: org.Name, Owner: org.Owner.String()}, nil
 }
 
 func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
@@ -97,14 +103,15 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "organization name cannot be empty")
 	}
 
-	org, err := r.orgRepo.GetByName(req.OrgName)
-	if err != nil {
-		if sql.IsNotFoundError(err) {
-			return nil, status.Errorf(codes.NotFound, "Organization not found")
-		}
+	netName := req.Network
+	if len(req.Network) == 0 {
+		netName = defaultNetworkName
+	}
 
+	network, err := r.netRepo.Get(req.OrgName, netName)
+	if err != nil {
 		logrus.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
+		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
 	nId, err := ukama.ValidateNodeId(req.Node.NodeId)
@@ -122,17 +129,17 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	}
 
 	node := &db2.Node{
-		NodeID: req.Node.NodeId,
-		OrgID:  org.ID,
-		State:  pbNodeStateToDb(req.Node.State),
-		Type:   toDbNodeType(nId.GetNodeType()),
-		Name:   req.Node.Name,
+		NodeID:    req.Node.NodeId,
+		State:     pbNodeStateToDb(req.Node.State),
+		Type:      toDbNodeType(nId.GetNodeType()),
+		Name:      req.Node.Name,
+		NetworkID: network.ID,
 	}
 
 	// adding node to DB and bootstrap in transaction
 	// Rollback trans if bootstrap fails to add a node
 	err = r.nodeRepo.Add(node, func() error {
-		return r.bootstrapClient.AddNode(org.Name, node.NodeID)
+		return r.bootstrapClient.AddNode(network.Org.Name, node.NodeID)
 	})
 
 	if err != nil {
@@ -196,14 +203,24 @@ func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*
 		return nil, status.Errorf(codes.Internal, "error getting the node")
 	}
 
-	return &pb.GetNodeResponse{
+	resp := &pb.GetNodeResponse{
 		Node: dbNodeToPbNode(node),
 		Org: &pb.Organization{
-			Id:    node.OrgID,
-			Owner: node.Org.Owner.String(),
-			Name:  node.Org.Name,
+			Owner: node.Network.Org.Owner.String(),
+			Name:  node.Network.Org.Name,
 		},
-	}, nil
+	}
+	if node.Network != nil {
+		resp.Network = &pb.Network{
+			Name: node.Network.Name,
+		}
+	} else {
+		resp.Network = &pb.Network{
+			Name: "default",
+		}
+	}
+
+	return resp, nil
 }
 
 func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
@@ -237,8 +254,8 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 		nodes, err = r.nodeRepo.GetByOrg(req.OrgName)
 	}
 	if err != nil {
-		logrus.Error(err.Error())
-		return nil, status.Errorf(codes.Internal, "error getting nodes")
+		logrus.Error(err)
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	pbNodes := make([]*pb.Node, 0)

@@ -5,9 +5,9 @@ package gen
 
 import (
 	fmt "fmt"
-	math "math"
 	proto "github.com/golang/protobuf/proto"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -65,6 +65,11 @@ func (this *GetNodeResponse) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Org", err)
 		}
 	}
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+		}
+	}
 	return nil
 }
 func (this *UpdateNodeRequest) Validate() error {
@@ -84,6 +89,20 @@ func (this *GetNodesResponse) Validate() error {
 			}
 		}
 	}
+	return nil
+}
+func (this *AddNetworkRequest) Validate() error {
+	return nil
+}
+func (this *NetworkResponse) Validate() error {
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
+		}
+	}
+	return nil
+}
+func (this *Network) Validate() error {
 	return nil
 }
 func (this *Organization) Validate() error {

@@ -3,22 +3,26 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
+	"github.com/ukama/ukamaX/cloud/net/pkg"
 )
 
 type NnsServer struct {
 	pb.UnimplementedNnsServer
-	nnsClient *Nns
+	nns            *pkg.Nns
+	nodeOrgMapping *pkg.NodeOrgMap
 }
 
-func NewNnsServer(nnsClient *Nns) *NnsServer {
+func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) *NnsServer {
 	return &NnsServer{
-		nnsClient: nnsClient,
+		nns:            nnsClient,
+		nodeOrgMapping: nodeOrgMapping,
 	}
 }
 
 func (n *NnsServer) Get(c context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	ip, err := n.nnsClient.Get(c, req.GetNodeId())
+	ip, err := n.nns.Get(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
 	}
@@ -28,16 +32,24 @@ func (n *NnsServer) Get(c context.Context, req *pb.GetRequest) (*pb.GetResponse,
 }
 
 func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
-	err := n.nnsClient.Set(c, req.GetNodeId(), req.GetIp())
+
+	logrus.Infof("Seting Ip for: %s", req.GetNodeId())
+
+	err := n.nns.Set(c, req.GetNodeId(), req.GetIp())
 	if err != nil {
-		return nil, fmt.Errorf("failed to add record to db. Error: %v", err)
+		return nil, fmt.Errorf("failed to add node-ip record to db. Error: %v", err)
+	}
+
+	err = n.nodeOrgMapping.Add(c, req.GetNodeId(), req.OrgName, req.Network)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set org and network for node id %s. Error: %v", req.NodeId, err)
 	}
 
 	return &pb.SetResponse{}, nil
 }
 
 func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListResponse, error) {
-	nodes, err := n.nnsClient.List(ctx)
+	nodes, err := n.nns.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of nodes. Error: %v", err)
 	}
@@ -58,7 +70,7 @@ func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListRespo
 }
 
 func (n *NnsServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	err := n.nnsClient.Delete(ctx, in.NodeId)
+	err := n.nns.Delete(ctx, in.NodeId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete record from db. Error: %v", err)
 	}

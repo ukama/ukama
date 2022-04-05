@@ -56,6 +56,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	regServer := server.NewRegistryServer(db2.NewOrgRepo(gormdb),
 		db2.NewNodeRepo(gormdb),
+		db2.NewNetRepo(gormdb),
 		bootstrapCl,
 		svcConf.DeviceGatewayHost)
 

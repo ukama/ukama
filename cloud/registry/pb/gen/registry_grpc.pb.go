@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 type RegistryServiceClient interface {
 	AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error)
 	GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*Organization, error)
+	AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error)
 	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
@@ -51,6 +52,15 @@ func (c *registryServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, o
 func (c *registryServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*Organization, error) {
 	out := new(Organization)
 	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/GetOrg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *registryServiceClient) AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error) {
+	out := new(NetworkResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/AddNetwork", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,6 +118,7 @@ func (c *registryServiceClient) GetNodes(ctx context.Context, in *GetNodesReques
 type RegistryServiceServer interface {
 	AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error)
 	GetOrg(context.Context, *GetOrgRequest) (*Organization, error)
+	AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error)
 	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
@@ -125,6 +136,9 @@ func (UnimplementedRegistryServiceServer) AddOrg(context.Context, *AddOrgRequest
 }
 func (UnimplementedRegistryServiceServer) GetOrg(context.Context, *GetOrgRequest) (*Organization, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOrg not implemented")
+}
+func (UnimplementedRegistryServiceServer) AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddNetwork not implemented")
 }
 func (UnimplementedRegistryServiceServer) AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNode not implemented")
@@ -186,6 +200,24 @@ func _RegistryService_GetOrg_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(RegistryServiceServer).GetOrg(ctx, req.(*GetOrgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RegistryService_AddNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).AddNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.v1.RegistryService/AddNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).AddNetwork(ctx, req.(*AddNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -294,6 +326,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOrg",
 			Handler:    _RegistryService_GetOrg_Handler,
+		},
+		{
+			MethodName: "AddNetwork",
+			Handler:    _RegistryService_AddNetwork_Handler,
 		},
 		{
 			MethodName: "AddNode",

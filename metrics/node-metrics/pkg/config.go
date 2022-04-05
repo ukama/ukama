@@ -22,9 +22,9 @@ type NodeMetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":    Metric{true, "system_process_cpu_seconds_total", ""},
-	"memory": Metric{true, "system_process_virtual_memory_bytes", ""},
-	"users":  Metric{false, "epc_active_ue", ""},
+	"cpu":    Metric{false, "trx_soc_cpu_usage", ""},
+	"memory": Metric{false, "trx_memory_ddr_used", ""},
+	"users":  Metric{false, "trx_lte_core_active_ue", ""},
 }
 
 func NewConfig() *Config {

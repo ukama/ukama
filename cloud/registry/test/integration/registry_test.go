@@ -99,6 +99,7 @@ func Test_FullFlow(t *testing.T) {
 		handleResponse(tt, err, nodeResp)
 		assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.Node.State)
 		assert.Equal(tt, pb.NodeType_HOME, nodeResp.Node.Type)
+		assert.NotNil(tt, nodeResp.Network)
 	})
 
 	t.Run("DeleteNode", func(tt *testing.T) {
@@ -118,8 +119,10 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("GetNodes", func(tt *testing.T) {
 		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 		handleResponse(t, err, nodesResp)
-		assert.Equal(tt, 1, len(nodesResp.Nodes))
-		assert.Equal(tt, node.String(), nodesResp.Nodes[0].NodeId)
+		if assert.Equal(tt, 1, len(nodesResp.Nodes)) {
+			assert.Equal(tt, node.String(), nodesResp.Nodes[0].NodeId)
+		}
+
 	})
 }
 
@@ -197,7 +200,7 @@ func sendMessageToQueue(nodeId string) error {
 		return err
 	}
 
-	message, err := proto.Marshal(&commonpb.Link{Uuid: &nodeId, Ip: proto.String("1.1.1.1")})
+	message, err := proto.Marshal(&commonpb.Link{NodeId: &nodeId, Ip: proto.String("1.1.1.1")})
 	if err != nil {
 		return err
 	}

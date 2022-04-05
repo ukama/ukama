@@ -10,8 +10,8 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/config"
-	pbhealth "github.com/ukama/ukamaX/common/pb/gen/health"
 	"google.golang.org/grpc"
+	pbhealth "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 )
 
