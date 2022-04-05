@@ -3,6 +3,7 @@ module github.com/ukama/ukamaX/cloud/device-feeder
 go 1.16
 
 require (
+	github.com/coredns/coredns v1.8.7
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
