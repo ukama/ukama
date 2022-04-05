@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/client"
+	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 )
 
 type LookUp struct {
-	C *client.Client
+	S *rs.RouterServer
 }
 
 type OrgCredentialsResp struct {
@@ -20,10 +20,10 @@ type OrgCredentialsResp struct {
 	OrgCred []byte `json:"certs"`
 }
 
-func NewLookUp(c *client.Client) *LookUp {
+func NewLookUp(rs *rs.RouterServer) *LookUp {
 
 	return &LookUp{
-		C: c,
+		S: rs,
 	}
 }
 
@@ -31,7 +31,7 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCre
 	logrus.Tracef("Credential request for node %s", nodeid)
 	var credResp OrgCredentialsResp
 
-	resp, err := L.C.R.R().
+	resp, err := L.S.C.R().
 		SetQueryParams(map[string]string{
 			"nodeid":      nodeid,
 			"looking_for": OrgCredentials,

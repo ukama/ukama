@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/client"
+	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 )
 
 const (
@@ -12,20 +12,20 @@ const (
 )
 
 type Factory struct {
-	C *client.Client
+	S *rs.RouterServer
 }
 
-func NewFactory(c *client.Client) *Factory {
+func NewFactory(rs *rs.RouterServer) *Factory {
 
 	return &Factory{
-		C: c,
+		S: rs,
 	}
 }
 
 func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	logrus.Tracef("Validation request for node %s", nodeid)
 
-	resp, err := f.C.R.R().
+	resp, err := f.S.C.R().
 		SetQueryParams(map[string]string{
 			"nodeid":      nodeid,
 			"looking_for": BootstrapCredentials,

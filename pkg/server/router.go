@@ -11,9 +11,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/client"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/lookup"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/nmr"
+	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 	"github.com/ukama/openIoR/services/common/rest"
 	"github.com/wI2L/fizz"
 )
@@ -21,7 +21,6 @@ import (
 type Router struct {
 	fizz *fizz.Fizz
 	port int
-	rs   *client.Client
 	ls   *lookup.LookUp
 	fs   *nmr.Factory
 }
@@ -34,17 +33,16 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, c *client.Client) *Router {
+func NewRouter(config *pkg.Config, rs *rs.RouterServer) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
 
-	ls := lookup.NewLookUp(c)
+	ls := lookup.NewLookUp(rs)
 
-	fs := nmr.NewFactory(c)
+	fs := nmr.NewFactory(rs)
 
 	r := &Router{fizz: f,
 		port: config.Server.Port,
-		rs:   c,
 		ls:   ls,
 		fs:   fs,
 	}

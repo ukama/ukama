@@ -9,7 +9,7 @@ import (
 	"github.com/ukama/openIoR/services/common/metrics"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/client"
+	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/server"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
@@ -53,17 +53,17 @@ func startBootstrapServer(ctx context.Context) {
 
 	logrus.Tracef("Config is %+v", serviceConfig)
 
-	sr := client.NewClient(serviceConfig.RouterService)
+	rs := router.NewRouterServer(serviceConfig.RouterService)
 
 	/* Register service */
-	if err := sr.RegisterService(serviceConfig.ApiIf); err != nil {
+	if err := rs.RegisterService(serviceConfig.ApiIf); err != nil {
 		logrus.Errorf("Exiting the bootstarp service.")
 		//return
 	}
 
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 
-	r := server.NewRouter(serviceConfig, sr)
+	r := server.NewRouter(serviceConfig, rs)
 	r.Run()
 }
 
