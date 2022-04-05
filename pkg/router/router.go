@@ -26,7 +26,7 @@ func NewRouter(c *client.Client) *Router {
 	}
 }
 
-func (R *Router) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCredentialsResp, error) {
+func (L *Router) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCredentialsResp, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
 	var credResp OrgCredentialsResp
 

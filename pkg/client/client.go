@@ -76,7 +76,7 @@ func (c *Client) ValidateMustRoutesForClient(r QueryParams, mr pkg.Routes) bool 
 		valid = false
 		logrus.Tracef("Must required route for service: [%s] = %v\n", key, patt)
 		value, ok := r[key]
-		if ok == true {
+		if ok  {
 			logrus.Tracef("Route %s found in must Service pattern with value %+v", key, value)
 			valid = ComparePattern(value, patt)
 		} else {
@@ -98,7 +98,7 @@ func (c *Client) ValidateOptionalRoutesForClient(r QueryParams, or pkg.Routes) b
 		valid = false
 		logrus.Tracef("Provided Route for service: [%s] = %v\n", key, value)
 		patt, ok := or[key]
-		if ok == true {
+		if ok {
 			logrus.Tracef("Route %s found in optional Service pattern with value %+v", key, value)
 			valid = ComparePattern(value, patt)
 		} else {
@@ -140,7 +140,7 @@ func (c *Client) RequestServiceAcceptedPattern(p *pkg.Pattern) error {
 }
 
 /* Verify if all required parameters are there for service  */
-func (c *Client) ValidateAllrequiredParameters(svc string, q QueryParams) bool {
+func (c *Client) ValidateAllRequiredParameters(svc string, q QueryParams) bool {
 	var p pkg.Pattern
 
 	err := c.RequestServiceAcceptedPattern(&p)
