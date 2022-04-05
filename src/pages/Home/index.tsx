@@ -140,6 +140,7 @@ const Home = () => {
                 const _m: TMetric = {
                     uptime: null,
                 };
+                setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!uptimeMetric[element.type]) {
                         _m[element.type] = {
@@ -149,7 +150,6 @@ const Home = () => {
                     }
                 }
                 setUptimeMetrics({ ..._m });
-                setIsMetricPolling(true);
             }
         },
         onError: () => {
@@ -211,7 +211,7 @@ const Home = () => {
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 

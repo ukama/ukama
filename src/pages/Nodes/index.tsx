@@ -44,7 +44,7 @@ const Nodes = () => {
             tab: selectedTab,
             regPolling: false,
             nodeId: nodeId,
-            to: Math.floor(Date.now() / 1000) - 20,
+            to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
@@ -154,12 +154,18 @@ const Nodes = () => {
                         metric &&
                         metric.data &&
                         metric.data.length > 0 &&
+                        element.data.length > 0 &&
                         element.data[element.data.length - 1].x >
                             metric.data[metric.data.length - 1].x
                     ) {
                         _m[element.type] = {
                             name: element.name,
                             data: [...(metric.data || []), ...element.data],
+                        };
+                    } else {
+                        _m[element.type] = {
+                            name: element.name,
+                            data: [],
                         };
                     }
                 }
