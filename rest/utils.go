@@ -4,8 +4,6 @@ import (
 	"errors"
 	"net/http"
 
-	"net/http"
-
 	"github.com/ukama/openIoR/services/common/ukama"
 
 	"github.com/gin-gonic/gin"
