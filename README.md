@@ -3,7 +3,7 @@
 ## Architecture Diagram
 
 
-<img width="571" alt="ukama-dashboard-diagram" src="https://github.com/ukama/ukama-dashboard/blob/a8dfd067e0f74109e7294b737725b5ae089fbf1b/img/ukama-dashboard-architecture-diagram.png">
+<img width="571" alt="ukama-dashboard-diagram" src="https://github.com/ukama/ukama-dashboard/blob/develop/img/ukama-dashboard-architecture-diagram.png">
 
 
 ## How to try
