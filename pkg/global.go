@@ -1,5 +1,5 @@
 package pkg
 
-const ServiceName = "distributor"
+const ServiceName = "bootstrap"
 
 var IsDebugMode = false

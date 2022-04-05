@@ -9,6 +9,7 @@ import (
 	"github.com/ukama/openIoR/services/common/metrics"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
+	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/client"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/server"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
@@ -22,6 +23,9 @@ var serviceConfig *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+
+	/* Log level */
+	logrus.SetLevel(logrus.TraceLevel)
 
 	/*Signal handler for SIGINT or SIGTERM to cancel a context in
 	order to clean up and shut down gracefully if Ctrl+C is hit. */
@@ -40,23 +44,33 @@ func main() {
 	/* config parsig */
 	initConfig()
 
-	/* Log level */
-	logrus.SetLevel(logrus.DebugLevel)
-
 	/* Start the HTTP server. */
 	startBootstrapServer(ctx)
 }
 
 /* Start HTTP server for accepting bootstrap request */
 func startBootstrapServer(ctx context.Context) {
-	r := server.NewRouter(serviceConfig)
+
+	logrus.Tracef("Config is %+v", serviceConfig)
+
+	sr := client.NewClient(serviceConfig.RouterService)
+
+	/* Register service */
+	if err := sr.RegisterService(serviceConfig.ApiIf); err != nil {
+		logrus.Errorf("Exiting the bootstarp service.")
+		//return
+	}
+
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
+
+	r := server.NewRouter(serviceConfig, sr)
 	r.Run()
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */
 func initConfig() {
 	serviceConfig = pkg.NewConfig()
+	logrus.Tracef("Config is %+v", serviceConfig)
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
