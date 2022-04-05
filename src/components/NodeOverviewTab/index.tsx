@@ -79,7 +79,7 @@ const NodeOverviewTab = ({
                                         (selectedNode?.type as string) || "HOME"
                                     ][0].name
                                 }
-                                showAlertInfo={true}
+                                showAlertInfo={false}
                                 nameInfo={TooltipsText.TRX}
                                 valueInfo={TooltipsText.TRX_ALERT}
                             />

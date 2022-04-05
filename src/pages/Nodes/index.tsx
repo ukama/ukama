@@ -36,8 +36,28 @@ import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { isSkeltonLoading, user } from "../../recoil";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
-
+let abortController = new AbortController();
 const Nodes = () => {
+    const getFirstMetricCallPayload = (nodeId: string) =>
+        getMetricPayload({
+            orgId: orgId,
+            tab: selectedTab,
+            regPolling: false,
+            nodeId: nodeId,
+            to: Math.floor(Date.now() / 1000) - 20,
+            from: Math.floor(Date.now() / 1000) - 180,
+            nodeType: selectedNode?.type || Node_Type.Home,
+        });
+
+    const getMetricPollingCallPayload = (from: number) =>
+        getMetricPayload({
+            nodeId: selectedNode?.id,
+            orgId: orgId,
+            from: from + 1,
+            tab: selectedTab,
+            nodeType: selectedNode?.type || Node_Type.Home,
+        });
+
     const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const [isAddNode, setIsAddNode] = useState(false);
@@ -59,45 +79,22 @@ const Nodes = () => {
         isUpdateAvailable: false,
         status: Org_Node_State.Undefined,
     });
+
     const [showNodeAppDialog, setShowNodeAppDialog] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState(false);
     const [metrics, setMetrics] = useState<TMetric>(getMetricsInitObj());
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
-
-    const getFirstMetricCallPayload = () =>
-        getMetricPayload({
-            orgId: orgId,
-            tab: selectedTab,
-            regPolling: false,
-            nodeId: selectedNode?.id,
-            to: Math.floor(Date.now() / 1000) - 20,
-            from: Math.floor(Date.now() / 1000) - 180,
-            nodeType: selectedNode?.type || Node_Type.Home,
-        });
-
-    const getMetricPollingCallPayload = (from: number) =>
-        getMetricPayload({
-            nodeId: selectedNode?.id,
-            orgId: orgId,
-            from: from + 1,
-            tab: selectedTab,
-            nodeType: selectedNode?.type || Node_Type.Home,
-        });
-
-    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
-        useGetNodesByOrgLazyQuery({
-            onCompleted: res => {
-                res?.getNodesByOrg?.nodes.length > 0 &&
-                    setSelectedNode(res?.getNodesByOrg?.nodes[0]);
-            },
-        });
-
     const { data: nodeAppsRes, loading: nodeAppsLoading } =
         useGetNodeAppsQuery();
 
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
+
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            fetchPolicy: "cache-and-network",
+        });
 
     const [
         getMetrics,
@@ -107,9 +104,15 @@ const Nodes = () => {
             loading: metricsLoading,
         },
     ] = useGetMetricsByTabLazyQuery({
+        context: {
+            fetchOptions: {
+                signal: abortController.signal,
+            },
+        },
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = getMetricsInitObj();
+                setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!metrics[element.type]) {
                         _m[element.type] = {
@@ -122,7 +125,6 @@ const Nodes = () => {
                     Object.entries(_m).filter(([_, v]) => v !== null)
                 );
                 setMetrics((_prev: TMetric) => ({ ...filter }));
-                setIsMetricPolling(true);
             }
         },
         onError: () => {
@@ -178,15 +180,43 @@ const Nodes = () => {
     }, []);
 
     useEffect(() => {
-        if (selectedNode && selectedNode.id) {
+        if (
+            !!selectedNode &&
+            nodesRes?.getNodesByOrg &&
+            nodesRes.getNodesByOrg.nodes.length > 0 &&
+            !metricsLoading
+        ) {
+            setSelectedNode(nodesRes.getNodesByOrg.nodes[0]);
             setMetrics(getMetricsInitObj());
-            getMetrics({ variables: { ...getFirstMetricCallPayload() } });
-            setIsMetricPolling(false);
+            getMetrics({
+                variables: {
+                    ...getFirstMetricCallPayload(
+                        nodesRes.getNodesByOrg.nodes[0].id || ""
+                    ),
+                },
+            });
+        }
+    }, [nodesRes]);
+
+    useEffect(() => {
+        if (selectedNode && selectedNode.id && !metricsLoading) {
+            abortController.abort();
+            setTimeout(() => {
+                setIsMetricPolling(false);
+                abortController = new AbortController();
+                setMetrics(getMetricsInitObj());
+                getMetrics({
+                    variables: {
+                        ...getFirstMetricCallPayload(selectedNode?.id || ""),
+                    },
+                });
+            }, 500);
         }
     }, [selectedNode, selectedTab]);
 
     useEffect(() => {
         if (
+            isMetricPolling &&
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
             getMetricsRes?.getMetricsByTab.metrics.length > 0
@@ -197,7 +227,7 @@ const Nodes = () => {
                 ),
             });
         }
-    }, [getMetricsRes]);
+    }, [isMetricPolling, getMetricsRes]);
 
     const onTabSelected = (event: React.SyntheticEvent, value: any) =>
         setSelectedTab(value);
