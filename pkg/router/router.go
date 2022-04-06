@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
@@ -15,6 +16,7 @@ const (
 	PatternExt  = "/pattern"
 	ServicesExt = "/services"
 	APIExt      = "/api"
+	KeyPathExt  = "Path"
 )
 
 type QueryParams map[string]string
@@ -70,22 +72,44 @@ func (r *RouterServer) RegisterService(apiIf pkg.ServiceApiIf) error {
 }
 
 /* All the must routes are compared to the provided route for client*/
-func (r *RouterServer) ValidateMustRoutesForClient(q QueryParams, mr pkg.Routes) bool {
+func (r *RouterServer) ValidateMustRoutesForClient(q QueryParams, mr []pkg.Routes) bool {
 	valid := true
-	for key, patt := range mr {
-		valid = false
-		logrus.Tracef("Must required route for service: [%s] = %v\n", key, patt)
-		value, ok := q[key]
-		if ok {
-			logrus.Tracef("Route %s found in must Service pattern with value %+v", key, value)
-			valid = ComparePattern(value, patt)
-		} else {
-			logrus.Warnf("Route [%s]%s missing in the provided service routes", key, patt)
-		}
+	/* Iterate over the Routes from service router pattern */
+	for idx, mapR := range mr {
+		logrus.Tracef("At index %d map is %+v", idx, mapR)
 
-		if !valid {
-			logrus.Warnf("No pattern corresponding to route [%s]%s found for the client.", key, value)
-			break
+		/* Find  the keys from the service router pattern */
+		for key, patt := range mapR {
+			/*
+				It is absolutly neccessary for the each pattern to have all keys present
+				Valid value is set false in begining for every key.
+				If key is present in the q parameter then pattern is matched if pattern matches valid is set to true
+				and search moves to next key of pattern read from service router. if pattern doesn't match valid remain false
+				and search moves to next element of pattern read from service router. key "path" is ignored for the pattern.
+			*/
+			if strings.EqualFold(key, KeyPathExt) {
+				logrus.Tracef("Ignoring key %s.", key)
+				continue
+			}
+
+			valid = false
+			logrus.Tracef("Must required route for service: [%s] = %v\n", key, patt)
+			value, ok := q[key]
+			if ok {
+				logrus.Tracef("Route %s found in must Service pattern with value %+v", key, value)
+				valid = ComparePattern(value, patt)
+			} else {
+				logrus.Warnf("Route [%s]%s missing in the provided service routes", key, patt)
+			}
+
+			if !valid {
+				logrus.Warnf("No pattern corresponding to route [%s]%s found for the client.", key, value)
+				break
+			}
+		}
+		/* if it's a matche for a pattern element */
+		if valid {
+			logrus.Tracef("Route %v at index %d is match for the query parameters", mapR, idx)
 		}
 	}
 	return valid
@@ -149,15 +173,15 @@ func (r *RouterServer) ValidateAllRequiredParameters(svc string, q QueryParams) 
 		return false
 	}
 
-	if !r.ValidateMustRoutesForClient(q, p.MustRoutes) {
+	if !r.ValidateMustRoutesForClient(q, p.SRoutes) {
 		logrus.Errorf("Must match routes under tag all are not matching . Error %s", err.Error())
 		return false
 	}
 
-	if !r.ValidateOptionalRoutesForClient(q, p.OptionalRoutes) {
-		logrus.Errorf("Optional routes under tag any are not matching . Error %s", err.Error())
-		return false
-	}
+	// if !r.ValidateOptionalRoutesForClient(q, p.OptionalRoutes) {
+	// 	logrus.Errorf("Optional routes under tag any are not matching . Error %s", err.Error())
+	// 	return false
+	// }
 
 	return true
 }

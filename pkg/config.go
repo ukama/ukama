@@ -22,8 +22,7 @@ type Config struct {
 }
 
 type Pattern struct {
-	MustRoutes     Routes `json:"all"`
-	OptionalRoutes Routes `json:"any"`
+	SRoutes []Routes
 }
 
 type Forward struct {
@@ -39,14 +38,6 @@ type ServiceApiIf struct {
 
 func NewConfig() *Config {
 
-	optRoute := make(Routes)
-	optRoute["oabc"] = "oxyz"
-	optRoute["o123"] = "o789"
-
-	mustRoute := make(Routes)
-	mustRoute["mabc"] = "mxyz"
-	mustRoute["m123"] = "m789"
-
 	return &Config{
 		Server: rest.HttpConfig{
 			Port: 8085,
@@ -59,8 +50,11 @@ func NewConfig() *Config {
 		ApiIf: ServiceApiIf{
 			Name: "bootsrap",
 			P: Pattern{
-				MustRoutes:     nil,
-				OptionalRoutes: nil,
+				SRoutes: []Routes{
+					{
+						"node": "*", "looking_for": "validation", "Path": "/nodes",
+					},
+				},
 			},
 			F: Forward{
 				Ip:   "http://localhost",
