@@ -1,8 +1,9 @@
 import { GET_STATUS_TYPE } from "../../constants";
 import { IUserMapper } from "./interface";
 import {
+    AddUserResponse,
+    AddUserServiceRes,
     ConnectedUserDto,
-    ConnectedUserResponse,
     GetUserDto,
     GetUserResponseDto,
     GetUsersDto,
@@ -11,10 +12,15 @@ import {
     ResidentResponse,
 } from "./types";
 import * as defaultCasual from "casual";
+import { MetricServiceRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
-    connectedUsersDtoToDto = (res: ConnectedUserResponse): ConnectedUserDto => {
-        return res.data;
+    connectedUsersDtoToDto = (res: MetricServiceRes[]): ConnectedUserDto => {
+        if (res.length > 0) {
+            const value: any = res[0].value[1];
+            return { totalUser: value };
+        }
+        return { totalUser: "0" };
     };
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
         return res.data;
@@ -68,6 +74,18 @@ class UserMapper implements IUserMapper {
             dataPlan: 1024,
             dataUsage: defaultCasual.integer(1, 1024),
         };
+    };
+    dtoToAddUserDto = (req: AddUserServiceRes): AddUserResponse | null => {
+        if (req) {
+            return {
+                name: req.user.name,
+                email: req.user.email,
+                phone: req.user.phone,
+                uuid: req.user.uuid,
+                iccid: req.iccid,
+            };
+        }
+        return null;
     };
 }
 export default <IUserMapper>new UserMapper();

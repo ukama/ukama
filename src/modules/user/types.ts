@@ -10,7 +10,7 @@ import {
 @ObjectType()
 export class ConnectedUserDto {
     @Field()
-    totalUser: number;
+    totalUser: string;
 }
 
 @ObjectType()
@@ -253,21 +253,6 @@ export class AddUserDto {
 }
 
 @ObjectType()
-export class AddUserResponse {
-    @Field()
-    name: string;
-
-    @Field()
-    email: string;
-
-    @Field()
-    phone: string;
-
-    @Field()
-    uuid: string;
-}
-
-@ObjectType()
 export class OrgUserDto {
     @Field()
     name: string;
@@ -280,6 +265,24 @@ export class OrgUserDto {
 
     @Field()
     uuid: string;
+}
+
+@ObjectType()
+export class AddUserResponse {
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    phone: string;
+
+    @Field()
+    uuid: string;
+
+    @Field()
+    iccid: string;
 }
 
 @ObjectType()
@@ -338,4 +341,13 @@ export class OrgUserResponse {
 
     @Field(() => OrgUserDto)
     user: OrgUserDto;
+}
+
+@ObjectType()
+export class AddUserServiceRes {
+    @Field(() => OrgUserDto)
+    user: OrgUserDto;
+
+    @Field()
+    iccid: string;
 }

@@ -18,7 +18,7 @@ import {
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
 import UserMapper from "./mapper";
-import { API_METHOD_TYPE, TIME_FILTER } from "../../constants";
+import { API_METHOD_TYPE } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
@@ -27,15 +27,18 @@ import { HeaderType, PaginationDto } from "../../common/types";
 @Service()
 export class UserService implements IUserService {
     getConnectedUsers = async (
-        filter: TIME_FILTER
+        orgId: string,
+        header: HeaderType
     ): Promise<ConnectedUserDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_CONNECTED_USERS,
-            params: `${filter}`,
+            path: `${SERVER.ORG}/${orgId}/metrics/subscribersattached`,
+            headers: header,
         });
         if (checkError(res)) throw new Error(res.message);
-        const connectedUsers = UserMapper.connectedUsersDtoToDto(res);
+        const connectedUsers = UserMapper.connectedUsersDtoToDto(
+            res.data.result
+        );
 
         if (!connectedUsers) throw new HTTP404Error(Messages.USERS_NOT_FOUND);
 
@@ -142,15 +145,15 @@ export class UserService implements IUserService {
         orgId: string,
         req: AddUserDto,
         header: HeaderType
-    ): Promise<AddUserResponse> => {
+    ): Promise<AddUserResponse | null> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${orgId}/users`,
-            body: req,
+            body: { ...req, simToken: "I_DO_NOT_NEED_A_SIM" },
             headers: header,
         });
-        if (checkError(res)) throw new Error(res.message);
-        return res.user;
+        if (checkError(res)) throw new Error(res.description || res.message);
+        return UserMapper.dtoToAddUserDto(res);
     };
     deleteUser = async (
         orgId: string,

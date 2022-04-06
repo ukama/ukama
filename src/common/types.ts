@@ -128,3 +128,27 @@ export class MetricsByTabInputDTO {
     @Field(() => NODE_TYPE)
     nodeType: NODE_TYPE;
 }
+
+@ObjectType()
+export class MetricValues {
+    @Field()
+    x: number;
+
+    @Field()
+    y: string;
+}
+
+@ObjectType()
+export class MetricInfo {
+    @Field()
+    org: string;
+}
+
+@ObjectType()
+export class MetricServiceRes {
+    @Field(() => MetricInfo)
+    metric: MetricInfo;
+
+    @Field(() => [MetricValues])
+    value: MetricValues[];
+}
