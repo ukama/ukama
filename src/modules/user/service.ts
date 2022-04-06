@@ -150,7 +150,6 @@ export class UserService implements IUserService {
             headers: header,
         });
         if (checkError(res)) throw new Error(res.message);
-
         return res.user;
     };
     deleteUser = async (

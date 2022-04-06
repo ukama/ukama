@@ -244,15 +244,8 @@ export class OrgUserResponseDto {
 @InputType()
 export class AddUserDto {
     @Field()
-    imsi: string;
-
-    @Field()
     @Length(3, 255)
-    firstName: string;
-
-    @Field()
-    @Length(3, 255)
-    lastName: string;
+    name: string;
 
     @Field()
     @IsEmail()
@@ -262,16 +255,13 @@ export class AddUserDto {
 @ObjectType()
 export class AddUserResponse {
     @Field()
-    imsi: string;
-
-    @Field()
-    firstName: string;
-
-    @Field()
-    lastName: string;
+    name: string;
 
     @Field()
     email: string;
+
+    @Field()
+    phone: string;
 
     @Field()
     uuid: string;
