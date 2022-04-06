@@ -17,7 +17,8 @@ type LookUp struct {
 
 type OrgCredentialsResp struct {
 	Status  int    `json:"status"`
-	OrgCred []byte `json:"certs"`
+	Ip      string `json:"Ip"`
+	OrgCred []byte `json:"Certs"`
 }
 
 func NewLookUp(rs *rs.RouterServer) *LookUp {

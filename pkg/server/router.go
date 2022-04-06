@@ -1,9 +1,7 @@
 package server
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -103,17 +101,8 @@ func (r *Router) bootstrapGetHandler(c *gin.Context, req *BootstrapRequest) erro
 		}
 	}
 
-	_, err = io.Copy(c.Writer, bytes.NewReader(cred.OrgCred))
-	if err != nil {
-
-		return rest.HttpError{
-			HttpCode: http.StatusInternalServerError,
-			Message:  err.Error(),
-		}
-
-	}
-	c.Header("Content-Type", "application/octet-stream")
+	c.Header("Content-Type", "application/json")
+	c.IndentedJSON(http.StatusOK, cred.OrgCred)
 
 	return nil
-
 }
