@@ -47,7 +47,7 @@ const PagePlaceholder = ({
                     color={_isDarkmode ? colors.white38 : colors.silver}
                     color2={_isDarkmode ? colors.nightGrey12 : colors.white}
                 />
-                <Typography variant="body1">
+                <Typography variant="body1" textAlign={"center"}>
                     {`${description} `}
                     {hyperlink && (
                         <LinkStyle
