@@ -5,7 +5,7 @@ export const DEV_URL = process.env.API_URL;
 export const BASE_URL = `http://localhost:${PORT}`;
 export const HEADER = {
     headers: {
-        cookie: "ukama_session=test; csrf_token=test",
+        cookie: "ukama_session=test",
     },
 };
 

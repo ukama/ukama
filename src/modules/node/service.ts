@@ -62,7 +62,7 @@ export class NodeService implements INodeService {
             },
         });
         if (checkError(res)) throw new Error(res.message);
-        return res.data;
+        return res;
     };
     updateNode = async (req: UpdateNodeDto): Promise<UpdateNodeResponse> => {
         const res = await catchAsyncIOMethod({

@@ -6,7 +6,7 @@ import { HEADER, TIME_FILTER } from "../../../constants";
 const nockResponse = {
     status: "success",
     data: {
-        totalUser: 8,
+        totalUser: "8",
     },
 };
 
@@ -17,6 +17,7 @@ describe("Get Connected Users", () => {
             source: GET_CONNECTED_USERS_QUERY,
             variableValues: {
                 data: TIME_FILTER.WEEK,
+                orgId: "",
             },
             contextValue: {
                 req: HEADER,
