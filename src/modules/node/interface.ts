@@ -7,13 +7,12 @@ import {
     NodesResponse,
     AddNodeResponse,
     AddNodeDto,
-    UpdateNodeDto,
-    UpdateNodeResponse,
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDetailDto,
     MetricDto,
     OrgMetricValueDto,
+    OrgNodeDto,
 } from "./types";
 
 export interface INodeService {
@@ -25,7 +24,7 @@ export interface INodeService {
         header: HeaderType
     ): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto, header: HeaderType): Promise<AddNodeResponse>;
-    updateNode(req: UpdateNodeDto): Promise<UpdateNodeResponse>;
+    updateNode(req: AddNodeDto, header: HeaderType): Promise<OrgNodeDto>;
     deleteNode(id: string): Promise<DeactivateResponse>;
 }
 

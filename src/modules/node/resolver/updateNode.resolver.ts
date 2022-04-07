@@ -1,20 +1,23 @@
-import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { UpdateNodeDto, UpdateNodeResponse } from "../types";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
+import { OrgNodeDto, UpdateNodeDto } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { getHeaders } from "../../../common";
 
 @Service()
 @Resolver()
 export class UpdateNodeResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Mutation(() => UpdateNodeResponse)
+    @Mutation(() => OrgNodeDto)
     @UseMiddleware(Authentication)
     async updateNode(
         @Arg("data")
-        req: UpdateNodeDto
-    ): Promise<UpdateNodeResponse | null> {
-        return this.nodeService.updateNode(req);
+        req: UpdateNodeDto,
+        @Ctx() ctx: Context
+    ): Promise<OrgNodeDto | null> {
+        return this.nodeService.updateNode(req, getHeaders(ctx));
     }
 }

@@ -95,16 +95,13 @@ export class AddNodeDto {
 @InputType()
 export class UpdateNodeDto {
     @Field()
-    id: string;
+    orgId: string;
 
-    @Field({ nullable: true })
+    @Field()
+    nodeId: string;
+
+    @Field()
     name: string;
-
-    @Field({ nullable: true })
-    serialNo: string;
-
-    @Field({ nullable: true })
-    securityCode: string;
 }
 
 @ObjectType()
@@ -138,6 +135,9 @@ export class OrgNodeDto {
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
+
+    @Field()
+    name: string;
 }
 
 @ObjectType()
