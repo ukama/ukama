@@ -129,6 +129,9 @@ export class OrgNodeDto {
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
+
+    @Field()
+    name: string;
 }
 
 @ObjectType()

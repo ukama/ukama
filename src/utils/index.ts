@@ -90,7 +90,7 @@ export const getMetricsByTab = (
             else return [];
 
         case GRAPHS_TAB.HOME:
-            return ["uptime"];
+            return ["temperaturetrx"];
     }
 };
 
