@@ -72,6 +72,12 @@ func (this *GetNodeResponse) Validate() error {
 	}
 	return nil
 }
+func (this *UpdateNodeStateRequest) Validate() error {
+	return nil
+}
+func (this *UpdateNodeStateResponse) Validate() error {
+	return nil
+}
 func (this *UpdateNodeRequest) Validate() error {
 	return nil
 }

@@ -28,6 +28,7 @@ type RegistryServiceClient interface {
 	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
+	UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeStateResponse, error)
 	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
 	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 }
@@ -94,6 +95,15 @@ func (c *registryServiceClient) GetNode(ctx context.Context, in *GetNodeRequest,
 	return out, nil
 }
 
+func (c *registryServiceClient) UpdateNodeState(ctx context.Context, in *UpdateNodeStateRequest, opts ...grpc.CallOption) (*UpdateNodeStateResponse, error) {
+	out := new(UpdateNodeStateResponse)
+	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/UpdateNodeState", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *registryServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error) {
 	out := new(UpdateNodeResponse)
 	err := c.cc.Invoke(ctx, "/ukama.registry.v1.RegistryService/UpdateNode", in, out, opts...)
@@ -122,6 +132,7 @@ type RegistryServiceServer interface {
 	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
+	UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeStateResponse, error)
 	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
 	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	mustEmbedUnimplementedRegistryServiceServer()
@@ -148,6 +159,9 @@ func (UnimplementedRegistryServiceServer) DeleteNode(context.Context, *DeleteNod
 }
 func (UnimplementedRegistryServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
+}
+func (UnimplementedRegistryServiceServer) UpdateNodeState(context.Context, *UpdateNodeStateRequest) (*UpdateNodeStateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateNodeState not implemented")
 }
 func (UnimplementedRegistryServiceServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNode not implemented")
@@ -276,6 +290,24 @@ func _RegistryService_GetNode_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RegistryService_UpdateNodeState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateNodeStateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RegistryServiceServer).UpdateNodeState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.registry.v1.RegistryService/UpdateNodeState",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RegistryServiceServer).UpdateNodeState(ctx, req.(*UpdateNodeStateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RegistryService_UpdateNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateNodeRequest)
 	if err := dec(in); err != nil {
@@ -342,6 +374,10 @@ var RegistryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetNode",
 			Handler:    _RegistryService_GetNode_Handler,
+		},
+		{
+			MethodName: "UpdateNodeState",
+			Handler:    _RegistryService_UpdateNodeState_Handler,
 		},
 		{
 			MethodName: "UpdateNode",

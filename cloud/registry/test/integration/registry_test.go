@@ -92,7 +92,7 @@ func Test_FullFlow(t *testing.T) {
 		assert.NotNil(tt, addResp.Node)
 		assert.Equal(tt, nodeName, addResp.Node.Name)
 
-		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
+		r, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
 		handleResponse(tt, err, r)
 
 		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
@@ -162,7 +162,7 @@ func Test_Listener(t *testing.T) {
 		return
 	}
 
-	_, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
+	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
 	if err != nil {
 		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
 	}

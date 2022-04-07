@@ -3,9 +3,12 @@ package client
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/credentials/insecure"
 	"net/http"
 	"time"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukamaX/common/rest"
 
@@ -60,14 +63,28 @@ func (r *Registry) GetOrg(orgName string) (*pb.Organization, error) {
 	return res, nil
 }
 
-func (r *Registry) Add(orgName string, nodeId string, name string) (*pb.Node, error) {
+func (r *Registry) AddOrUpdate(orgName string, nodeId string, name string) (node *pb.Node, isCreated bool, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
-	resp, err := r.client.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{NodeId: nodeId, Name: name}, OrgName: orgName})
-	if err != nil {
-		return nil, err
+
+	getResp, err := r.client.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId})
+	if err != nil && status.Code(err) == codes.NotFound {
+		ar, err := r.client.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{NodeId: nodeId, Name: name}, OrgName: orgName})
+		if err != nil {
+			return nil, false, err
+		}
+		return ar.GetNode(), true, nil
+	} else if err != nil {
+		return nil, false, err
 	}
-	return resp.Node, nil
+
+	_, err = r.client.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: nodeId, Name: name})
+	if err != nil {
+		return nil, false, err
+	}
+	getResp.Node.Name = name
+
+	return getResp.Node, false, nil
 }
 
 // GetOrg returns list of nodes

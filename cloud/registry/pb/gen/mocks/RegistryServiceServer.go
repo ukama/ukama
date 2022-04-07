@@ -198,6 +198,29 @@ func (_m *RegistryServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.Update
 	return r0, r1
 }
 
+// UpdateNodeState provides a mock function with given fields: _a0, _a1
+func (_m *RegistryServiceServer) UpdateNodeState(_a0 context.Context, _a1 *gen.UpdateNodeStateRequest) (*gen.UpdateNodeStateResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateNodeStateResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) *gen.UpdateNodeStateResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateNodeStateResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeStateRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedRegistryServiceServer provides a mock function with given fields:
 func (_m *RegistryServiceServer) mustEmbedUnimplementedRegistryServiceServer() {
 	_m.Called()

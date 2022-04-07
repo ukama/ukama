@@ -223,8 +223,8 @@ func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*
 	return resp, nil
 }
 
-func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
-	logrus.Infof("Updating the node  %v", req.GetNodeId())
+func (r *RegistryServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeStateResponse, error) {
+	logrus.Infof("Updating node state  %v", req.GetNodeId())
 
 	dbState := pbNodeStateToDb(req.State)
 
@@ -233,13 +233,25 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
-	err = r.nodeRepo.Update(nodeId, dbState)
+	err = r.nodeRepo.Update(nodeId, &dbState, nil)
 	if err != nil {
-		if sql.IsNotFoundError(err) {
-			return nil, status.Errorf(codes.NotFound, "node not found")
-		}
-		logrus.Error("error updating the node" + err.Error())
-		return nil, status.Errorf(codes.Internal, "error updating the node")
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+
+	return &pb.UpdateNodeStateResponse{}, nil
+}
+
+func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+	logrus.Infof("Updating the node  %v", req.GetNodeId())
+
+	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	err = r.nodeRepo.Update(nodeId, nil, &req.Name)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	return &pb.UpdateNodeResponse{}, nil

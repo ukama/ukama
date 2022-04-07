@@ -35,7 +35,7 @@ type DeleteUserRequest struct {
 type AddNodeRequest struct {
 	OrgName  string `path:"org" validate:"required"`
 	NodeId   string `path:"node" validate:"required"`
-	NodeName string `json:"name"`
+	NodeName string `json:"name" validate:"max=255"`
 }
 
 func MapNodesList(pbList *pb.GetNodesResponse) *NodesList {

@@ -2,12 +2,13 @@ package rest
 
 import (
 	"fmt"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/wI2L/fizz/openapi"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"github.com/ukama/ukamaX/common/rest"
+	"github.com/wI2L/fizz/openapi"
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
@@ -115,7 +116,7 @@ func (r *Router) init() {
 		// registry
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
 		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
-		nodes.PUT("/:node", nil, tonic.Handler(r.addNodeHandler, http.StatusCreated))
+		nodes.PUT("/:node", nil, tonic.Handler(r.addOrUpdateNodeHandler, http.StatusOK))
 
 		nodes.GET("/metrics/openapi.json", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
@@ -196,8 +197,13 @@ func (r *Router) getNodesHandler(c *gin.Context) (*NodesList, error) {
 	return MapNodesList(nl), nil
 }
 
-func (r *Router) addNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {
-	node, err := r.clients.Registry.Add(req.OrgName, req.NodeId, req.NodeName)
+func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {
+	node, isCreated, err := r.clients.Registry.AddOrUpdate(req.OrgName, req.NodeId, req.NodeName)
+
+	if isCreated {
+		c.Status(http.StatusCreated)
+	}
+
 	return node, err
 }
 

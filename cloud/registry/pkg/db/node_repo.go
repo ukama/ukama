@@ -15,7 +15,7 @@ type NodeRepo interface {
 	Get(id ukama.NodeID) (*Node, error)
 	GetByOrg(orgName string) ([]Node, error)
 	Delete(id ukama.NodeID, nestedFunc ...func() error) error
-	Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error
+	Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error
 }
 
 type nodeRepo struct {
@@ -90,10 +90,19 @@ func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	return err
 }
 
-func (r *nodeRepo) Update(id ukama.NodeID, state NodeState, nestedFunc ...func() error) error {
+// Update updated node with `id`. Only fields that are not nil are updated
+func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error {
 	var rowsAffected int64
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		result := tx.Where("node_id=?", id.StringLowercase()).Updates(Node{State: state})
+		nd := Node{}
+		if state != nil {
+			nd.State = *state
+		}
+		if nodeName != nil {
+			nd.Name = *nodeName
+		}
+
+		result := tx.Where("node_id=?", id.StringLowercase()).Updates(nd)
 		rowsAffected = result.RowsAffected
 		return result
 	}, nestedFunc...)

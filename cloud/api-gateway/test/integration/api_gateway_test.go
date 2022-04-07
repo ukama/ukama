@@ -106,16 +106,34 @@ func Test_RegistryApi(t *testing.T) {
 		fmt.Println("Response: ", resp.String())
 	})
 
+	nodeId := ukama.NewVirtualHomeNodeId().String()
 	t.Run("AddNode", func(tt *testing.T) {
+		nodeName := time.Now().Format(time.RFC3339) + "testNode"
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			//SetBody(fmt.Sprintf("{ 'name':'%s' } ", time.Now().Format(time.RFC3339)+"testNode")).
-			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + ukama.NewVirtualHomeNodeId().String())
+			SetBody(fmt.Sprintf("{ 'name':'%s' } ", nodeName)).
+			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {
 			assert.Equal(tt, http.StatusCreated, resp.StatusCode())
+			assert.Contains(tt, resp.String(), nodeName)
 			fmt.Println("Response: ", resp.String())
+		}
+	})
+
+	t.Run("UpdateNode", func(tt *testing.T) {
+		nodeName := time.Now().Format(time.RFC3339) + "testNode"
+		resp, err := client.R().
+			EnableTrace().
+			SetHeader("authorization", "bearer "+login.GetSessionToken()).
+			SetBody(fmt.Sprintf("{ 'name':'updated-%s' } ", nodeName)).
+			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + nodeId)
+
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusOK, resp.StatusCode())
+			fmt.Println("Response: ", resp.String())
+			assert.Contains(tt, resp.String(), nodeName)
 		}
 	})
 

@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"github.com/ukama/ukamaX/common/rest"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
@@ -36,6 +38,10 @@ var routerConfig = &RouterConfig{
 	httpEndpoints: &pkg.HttpEndpoints{
 		NodeMetrics: "localhost:8080",
 	},
+}
+
+func init() {
+	gin.SetMode(gin.TestMode)
 }
 
 func TestPingRoute(t *testing.T) {
@@ -164,6 +170,58 @@ func TestGetNodes(t *testing.T) {
 		assert.Contains(t, body, "nodes")
 	})
 
+}
+
+func TestAddUpdateNode(t *testing.T) {
+	// arrange
+
+	tests := []struct {
+		name             string
+		isCreated        bool
+		expectedHttpCode int
+	}{
+		{
+			name:             "created",
+			isCreated:        true,
+			expectedHttpCode: http.StatusCreated,
+		},
+		{
+			name:             "updated",
+			isCreated:        false,
+			expectedHttpCode: http.StatusOK,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			nodeId := ukama.NewVirtualNodeId("homenode").String()
+			req, _ := http.NewRequest("PUT", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
+			req.Header.Set("token", "bearer 123")
+
+			w := httptest.NewRecorder()
+			m := &pbmocks.RegistryServiceClient{}
+
+			if test.isCreated {
+				m.On("GetNode", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, ""))
+				m.On("AddNode", mock.Anything, mock.Anything).Return(&pb.AddNodeResponse{}, nil)
+			} else {
+				m.On("GetNode", mock.Anything, mock.Anything).Return(&pb.GetNodeResponse{
+					Node: &pb.Node{NodeId: nodeId}}, nil)
+				m.On("UpdateNode", mock.Anything, mock.Anything).Return(&pb.UpdateNodeResponse{}, nil)
+			}
+
+			r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+				Registry: client.NewRegistryFromClient(m),
+			}, routerConfig).f.Engine()
+
+			// act
+			r.ServeHTTP(w, req)
+
+			// assert
+			assert.Equal(t, test.expectedHttpCode, w.Code)
+			m.AssertExpectations(t)
+		})
+	}
 }
 
 func Test_HssMethods(t *testing.T) {

@@ -102,20 +102,20 @@ func (_m *NodeRepo) GetByOrg(orgName string) ([]db.Node, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: id, state, nestedFunc
-func (_m *NodeRepo) Update(id ukama.NodeID, state db.NodeState, nestedFunc ...func() error) error {
+// Update provides a mock function with given fields: id, state, nodeName, nestedFunc
+func (_m *NodeRepo) Update(id ukama.NodeID, state *db.NodeState, nodeName *string, nestedFunc ...func() error) error {
 	_va := make([]interface{}, len(nestedFunc))
 	for _i := range nestedFunc {
 		_va[_i] = nestedFunc[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, id, state)
+	_ca = append(_ca, id, state, nodeName)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, db.NodeState, ...func() error) error); ok {
-		r0 = rf(id, state, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, *db.NodeState, *string, ...func() error) error); ok {
+		r0 = rf(id, state, nodeName, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}

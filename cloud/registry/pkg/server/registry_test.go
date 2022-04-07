@@ -2,8 +2,9 @@ package server
 
 import (
 	"context"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/db"
 	"testing"
+
+	"github.com/ukama/ukamaX/cloud/registry/pkg/db"
 
 	mocks "github.com/ukama/ukamaX/cloud/registry/mocks"
 	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
@@ -110,13 +111,16 @@ func TestRegistryServer_GetNode(t *testing.T) {
 	orgRepo.AssertExpectations(t)
 }
 
-func TestRegistryServer_UpdateNode(t *testing.T) {
+func TestRegistryServer_UpdateNodeState(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
-	nodeRepo.On("Update", testNodeId, db.Onboarded).Return(nil).Once()
+	netRepo := createNetRepoMock()
+
+	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeState) bool {
+		return *ns == db.Onboarded
+	}), (*string)(nil)).Return(nil).Once()
 	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost)
-	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
+	_, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
 		NodeId: testNodeId.String(),
 		State:  pb.NodeState_ONBOARDED,
 	})
