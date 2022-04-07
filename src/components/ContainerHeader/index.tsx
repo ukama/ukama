@@ -45,7 +45,7 @@ const ContainerHeader = ({
 
     return (
         <Grid container spacing={2} justifyContent="space-between">
-            <Grid item xs={12} md={4}>
+            <Grid item xs={4}>
                 <Stack
                     spacing={2}
                     direction="row"
@@ -66,8 +66,7 @@ const ContainerHeader = ({
 
             <Grid
                 item
-                md={8}
-                xs={12}
+                xs={8}
                 container
                 spacing={3}
                 alignItems="center"

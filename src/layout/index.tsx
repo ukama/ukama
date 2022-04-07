@@ -35,7 +35,7 @@ const Layout = (props: any) => {
             />
 
             <Stack
-                spacing={4}
+                spacing={{ xs: 2, md: 4 }}
                 sx={{
                     width: "100%",
                     pl: { xs: 2, md: 3, xl: 5 },

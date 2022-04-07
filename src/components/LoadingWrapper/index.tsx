@@ -30,7 +30,9 @@ const LoadingWrapper = ({
         );
 
     return (
-        <div style={{ height: "inherit", width: "inherit" }}>{children}</div>
+        <div style={{ height: "inherit", width: width ? width : "inherit" }}>
+            {children}
+        </div>
     );
 };
 

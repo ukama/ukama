@@ -67,7 +67,7 @@ const StatusCard = ({
                             direction="row"
                             alignItems="center"
                         >
-                            <Grid item xs={7}>
+                            <Grid item xs={7} mb={{ xs: 1, sm: 0 }}>
                                 <Typography variant="subtitle2">
                                     {title}
                                 </Typography>
@@ -106,40 +106,26 @@ const StatusCard = ({
                                 </Select>
                             </Grid>
                         </Grid>
-                        <Grid item sm container>
-                            <Grid item xs={12} container alignItems="flex-end">
-                                <Typography
-                                    variant="h5"
-                                    paddingRight="6px"
-                                    sx={{
-                                        position: "relative",
-                                        bottom: "2px",
-                                    }}
-                                >
+                        <Grid item container alignItems="baseline">
+                            <Grid item>
+                                <Typography variant="h5" paddingRight="6px">
                                     {subtitle1}
                                 </Typography>
-                                {title === "Data Usage" && (
+                            </Grid>
+                            {title === "Data Usage" && (
+                                <Grid item>
                                     <Typography
                                         variant="body1"
                                         paddingRight="4px"
-                                        sx={{
-                                            position: "relative",
-                                            bottom: "5px",
-                                        }}
                                     >
                                         GB
                                     </Typography>
-                                )}
-
+                                </Grid>
+                            )}
+                            <Grid item>
                                 <Typography
                                     variant="body1"
                                     color="textSecondary"
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "center",
-                                        position: "relative",
-                                        bottom: "6px",
-                                    }}
                                 >
                                     {subtitle2}
                                 </Typography>

@@ -40,7 +40,7 @@ const NodeSlider = ({
             indicators={false}
             cycleNavigation={false}
             navButtonsAlwaysVisible
-            sx={{ width: "100%", minHeight: "250px", py: "20px" }}
+            sx={{ width: "100%", minHeight: "240px", pt: 3, pb: 0 }}
             navButtonsProps={{
                 style: {
                     margin: 0,
@@ -52,7 +52,12 @@ const NodeSlider = ({
                     key={cid}
                     spacing={2}
                     direction={"row"}
-                    justifyContent={items.length > 2 ? "center" : "flex-start"}
+                    sx={{
+                        justifyContent: {
+                            xs: "center",
+                            md: items.length > 1 ? "center" : "flex-start",
+                        },
+                    }}
                 >
                     {item.map(
                         (

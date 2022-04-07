@@ -42,6 +42,12 @@ const LineChart = ({ name, dataList, range }: ILineChart) => {
                 blur: 3,
                 opacity: 0.2,
             },
+            toolbar: {
+                show: false,
+                tools: {
+                    download: false,
+                },
+            },
         },
         grid: {
             borderColor: _isDarkMod ? colors.vulcan60 : colors.white60,

@@ -36,7 +36,7 @@ const getColorByType = (type: Alert_Type) => {
 
 const getStatusByType = (status: string) => {
     if (status === "PENDING" || status === "BEING_CONFIGURED")
-        return "Your network is being configured";
+        return "Your network is being configured.";
     else if (status === "ONBOARDED" || status === "ONLINE")
         return "Your network is online and well for ";
     else return "Something went wrong.";
