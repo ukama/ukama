@@ -63,6 +63,7 @@ const NodeSlider = ({
                         (
                             {
                                 id,
+                                type,
                                 title,
                                 description,
                                 updateShortNote,
@@ -74,6 +75,7 @@ const NodeSlider = ({
                                 key={i}
                                 id={id}
                                 users={3}
+                                type={type}
                                 title={title}
                                 loading={false}
                                 subTitle={description}
