@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/rest"
 	"github.com/ukama/openIoR/services/common/sql"
+	"github.com/ukama/openIoR/services/common/ukama"
 	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
 	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
@@ -63,10 +64,22 @@ func (r *Router) init() {
 	module.GET("/", nil, tonic.Handler(r.GetModuleHandler, http.StatusOK))
 }
 
-func (r *Router) GetNodeHandler(c *gin.Context, req *ReqGetNode) error {
+func (r *Router) GetNodeHandler(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
 	logrus.Debugf("Handling NMR get request %+v.", req)
 
-	return nil
+	node, err := r.nodeRepo.GetNode(ukama.NodeID(req.NodeID))
+	if err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  err.Error(),
+		}
+	}
+
+	rnode := &RespGetNode{
+		Node: node,
+	}
+
+	return rnode, nil
 }
 
 func (r *Router) GetModuleHandler(c *gin.Context, req *ReqGetNode) error {
