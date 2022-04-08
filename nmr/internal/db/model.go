@@ -18,7 +18,7 @@ type Node struct {
 	PSwVersion     string
 	AssmDate       string
 	OemName        string
-	Modules        []Module
+	Modules        []ukama.NodeID `gorm:"type:string;foreignkey;"`
 	ProdTestStatus string
 	ProdReport     pgtype.Bytea /* Report for production test */
 	Status         string

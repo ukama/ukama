@@ -63,7 +63,7 @@ func NewConfig() *Config {
 			Username:   "postgres",
 			DbName:     ServiceName,
 			SslEnabled: false,
-			Port:       30989,
+			Port:       5432,
 		},
 	}
 }

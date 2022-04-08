@@ -54,7 +54,7 @@ func main() {
 func initDb() sql.Db {
 	logrus.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Node{}, &db.NodeStatus{}, &db.Module{}, &db.ModuleData{})
+	err := d.Init(&db.Node{}, &db.Module{})
 	if err != nil {
 		logrus.Fatalf("Database initialization failed. Error: %v", err)
 	}

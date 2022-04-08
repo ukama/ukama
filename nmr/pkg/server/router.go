@@ -16,6 +16,11 @@ import (
 	"github.com/wI2L/fizz"
 )
 
+const (
+	NodePath   = "/node"
+	ModulePath = "/module"
+)
+
 type Router struct {
 	fizz       *fizz.Fizz
 	port       int
@@ -51,10 +56,20 @@ func NewRouter(config *pkg.Config, rs *rs.RouterServer, d sql.Db) *Router {
 }
 
 func (r *Router) init() {
-	r.fizz.GET("/", nil, tonic.Handler(r.nmrGetHandler, http.StatusOK))
+	node := r.fizz.Group(NodePath, "Node", "Node related operations")
+	node.GET("/", nil, tonic.Handler(r.GetNodeHandler, http.StatusOK))
+
+	module := r.fizz.Group(ModulePath, "Module", "Module related operations")
+	module.GET("/", nil, tonic.Handler(r.GetModuleHandler, http.StatusOK))
 }
 
-func (r *Router) nmrGetHandler(c *gin.Context, req *BootstrapRequest) error {
+func (r *Router) GetNodeHandler(c *gin.Context, req *ReqGetNode) error {
+	logrus.Debugf("Handling NMR get request %+v.", req)
+
+	return nil
+}
+
+func (r *Router) GetModuleHandler(c *gin.Context, req *ReqGetNode) error {
 	logrus.Debugf("Handling NMR get request %+v.", req)
 
 	return nil
