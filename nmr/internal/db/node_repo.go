@@ -11,6 +11,9 @@ type NodeRepo interface {
 	GetNode(nodeId ukama.NodeID) (*Node, error)
 	DeleteNode(nodeId ukama.NodeID) error
 	ListNodes() (*[]Node, error)
+	GetNodeStatus(nodeId ukama.NodeID) (*Node, error)
+	UpdateNodeProdStatus(node *Node) error
+	UpdateNodeStatus(node *Node) error
 }
 
 type nodeRepo struct {
@@ -26,7 +29,7 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 func (r *nodeRepo) AddOrUpdateNode(node *Node) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "node_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "modules"}),
+		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "modules", "prod_test_status", "prod_report", "status"}),
 	}).Create(node)
 	return d.Error
 }
@@ -63,4 +66,31 @@ func (r *nodeRepo) ListNodes() (*[]Node, error) {
 	} else {
 		return &nodes, nil
 	}
+}
+
+func (r *nodeRepo) GetNodeStatus(nodeId ukama.NodeID) (*Node, error) {
+	var node Node
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &node, nil
+}
+
+/* Update Production status */
+func (r *nodeRepo) UpdateNodeProdStatus(node *Node) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "node_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"prod_test_status", "prod_report", "status"}),
+	}).Create(node)
+	return d.Error
+}
+
+/* Update Node status */
+func (r *nodeRepo) UpdateNodeStatus(node *Node) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "node_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"status"}),
+	}).Create(node)
+	return d.Error
 }

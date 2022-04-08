@@ -17,13 +17,11 @@ import (
 )
 
 type Router struct {
-	fizz           *fizz.Fizz
-	port           int
-	R              *rs.RouterServer
-	nodeRepo       db.NodeRepo
-	nodeStatusRepo db.NodeStatusRepo
-	moduleRepo     db.ModuleRepo
-	moduleDataRepo db.ModuleDataRepo
+	fizz       *fizz.Fizz
+	port       int
+	R          *rs.RouterServer
+	nodeRepo   db.NodeRepo
+	moduleRepo db.ModuleRepo
 }
 
 func (r *Router) Run() {
@@ -38,17 +36,14 @@ func NewRouter(config *pkg.Config, rs *rs.RouterServer, d sql.Db) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
 	nodeRepo := db.NewNodeRepo(d)
-	nodeStatusRepo := db.NewNodeStatusRepo(d)
+
 	moduleRepo := db.NewModuleRepo(d)
-	moduleDataRepo := db.NewModuleDataRepo(d)
 
 	r := &Router{fizz: f,
-		port:           config.Server.Port,
-		R:              rs,
-		nodeRepo:       nodeRepo,
-		nodeStatusRepo: nodeStatusRepo,
-		moduleRepo:     moduleRepo,
-		moduleDataRepo: moduleDataRepo,
+		port:       config.Server.Port,
+		R:          rs,
+		nodeRepo:   nodeRepo,
+		moduleRepo: moduleRepo,
 	}
 
 	r.init()

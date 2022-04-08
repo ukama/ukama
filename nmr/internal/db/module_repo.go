@@ -11,6 +11,12 @@ type ModuleRepo interface {
 	GetModule(moduleId ukama.NodeID) (*Module, error)
 	DeleteModule(moduleId ukama.NodeID) error
 	ListModules() (*[]Module, error)
+	UpdateModuleProdStatusData(module *Module) error
+	UpdateModuleBootstrapCert(modulmoduleeData *Module) error
+	UpdateModuleUserConfig(module *Module) error
+	UpdateModuleFactoryConfig(module *Module) error
+	UpdateModuleUserCalib(module *Module) error
+	UpdateModuleFactoryCalib(module *Module) error
 }
 
 type moduleRepo struct {
@@ -26,7 +32,7 @@ func NewModuleRepo(db sql.Db) *moduleRepo {
 func (r *moduleRepo) AddOrUpdateModule(Module *Module) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"prod_test_status", "prod_report", "bootstrap_cert", "user_calib", "factory_calib", "user_config", "factory_config", "inventory_data"}),
+		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_cert", "user_calib", "factory_calib", "user_config", "factory_config", "inventory_data"}),
 	}).Create(Module)
 	return d.Error
 }
@@ -63,4 +69,67 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 	} else {
 		return &Modules, nil
 	}
+}
+
+/* Update Production Status  Data */
+func (r *moduleRepo) UpdateModuleProdStatusData(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"prod_test_status", "prod_report"}),
+	}).Create(moduleData)
+	return d.Error
+}
+
+/* Update Production Bootstrap Cert*/
+func (r *moduleRepo) UpdateModuleBootstrapCert(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"boostrap_cert"}),
+	}).Create(moduleData)
+	return d.Error
+}
+
+/* Update Production Bootstrap Cert*/
+func (r *moduleRepo) DeleteBootstrapCert(ModuleId *ukama.NodeID) error {
+	result := r.Db.GetGormDb().Where("module_id = ?", ModuleId).UpdateColumn("boostrap_cert", nil)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+/* Update Production user config  Data */
+func (r *moduleRepo) UpdateModuleUserConfig(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"user_config"}),
+	}).Create(moduleData)
+	return d.Error
+}
+
+/* Update Production factory config Data */
+func (r *moduleRepo) UpdateModuleFactoryConfig(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"factory_config"}),
+	}).Create(moduleData)
+	return d.Error
+}
+
+/* Update Production user calib Data */
+func (r *moduleRepo) UpdateModuleUserCalib(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"user_calib"}),
+	}).Create(moduleData)
+	return d.Error
+}
+
+/* Update Production factory calib Data */
+func (r *moduleRepo) UpdateModuleFactoryCalib(moduleData *Module) error {
+	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "module_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"factory_calib"}),
+	}).Create(moduleData)
+	return d.Error
 }
