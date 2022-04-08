@@ -6,11 +6,6 @@ import (
 	"github.com/ukama/openIoR/services/common/rest"
 )
 
-// type Route {
-// 	key string
-// 	value interface{}
-// }
-
 type Routes map[string]string
 
 type Config struct {
@@ -19,6 +14,7 @@ type Config struct {
 	Server            rest.HttpConfig
 	ApiIf             ServiceApiIf
 	RouterService     string
+	DB                config.Database
 }
 
 type Pattern struct {
@@ -60,6 +56,14 @@ func NewConfig() *Config {
 				Ip:   "http://localhost",
 				Port: 8095,
 			},
+		},
+		DB: config.Database{
+			Host:       "localhost",
+			Password:   "Pass2020!",
+			Username:   "postgres",
+			DbName:     ServiceName,
+			SslEnabled: false,
+			Port:       30989,
 		},
 	}
 }

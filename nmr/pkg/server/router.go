@@ -8,16 +8,22 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/rest"
+	"github.com/ukama/openIoR/services/common/sql"
 	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
+	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
 	rs "github.com/ukama/openIoR/services/factory/nmr/pkg/router"
 	"github.com/wI2L/fizz"
 )
 
 type Router struct {
-	fizz *fizz.Fizz
-	port int
-	R    *rs.RouterServer
+	fizz           *fizz.Fizz
+	port           int
+	R              *rs.RouterServer
+	nodeRepo       db.NodeRepo
+	nodeStatusRepo db.NodeStatusRepo
+	moduleRepo     db.ModuleRepo
+	moduleDataRepo db.ModuleDataRepo
 }
 
 func (r *Router) Run() {
@@ -28,13 +34,21 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, rs *rs.RouterServer) *Router {
+func NewRouter(config *pkg.Config, rs *rs.RouterServer, d sql.Db) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
+	nodeRepo := db.NewNodeRepo(d)
+	nodeStatusRepo := db.NewNodeStatusRepo(d)
+	moduleRepo := db.NewModuleRepo(d)
+	moduleDataRepo := db.NewModuleDataRepo(d)
 
 	r := &Router{fizz: f,
-		port: config.Server.Port,
-		R:    rs,
+		port:           config.Server.Port,
+		R:              rs,
+		nodeRepo:       nodeRepo,
+		nodeStatusRepo: nodeStatusRepo,
+		moduleRepo:     moduleRepo,
+		moduleDataRepo: moduleDataRepo,
 	}
 
 	r.init()

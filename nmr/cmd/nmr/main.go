@@ -7,13 +7,14 @@ import (
 	"syscall"
 
 	"github.com/ukama/openIoR/services/common/metrics"
-
+	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg/router"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg/server"
 
-	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
 	ccmd "github.com/ukama/openIoR/services/common/cmd"
+	"github.com/ukama/openIoR/services/common/sql"
+	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/config"
@@ -44,12 +45,24 @@ func main() {
 	/* config parsig */
 	initConfig()
 
+	d := initDb()
+
 	/* Start the HTTP server. */
-	startBootstrapServer(ctx)
+	startBootstrapServer(ctx, d)
+}
+
+func initDb() sql.Db {
+	logrus.Infof("Initializing Database")
+	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
+	err := d.Init(&db.Node{}, &db.NodeStatus{}, &db.Module{}, &db.ModuleData{})
+	if err != nil {
+		logrus.Fatalf("Database initialization failed. Error: %v", err)
+	}
+	return d
 }
 
 /* Start HTTP server for accepting bootstrap request */
-func startBootstrapServer(ctx context.Context) {
+func startBootstrapServer(ctx context.Context, d sql.Db) {
 
 	logrus.Tracef("Config is %+v", serviceConfig)
 
@@ -63,7 +76,7 @@ func startBootstrapServer(ctx context.Context) {
 
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 
-	r := server.NewRouter(serviceConfig, rs)
+	r := server.NewRouter(serviceConfig, rs, d)
 	r.Run()
 }
 
