@@ -44,11 +44,44 @@ func NewConfig() *Config {
 
 		RouterService: "http://localhost:8090",
 		ApiIf: ServiceApiIf{
-			Name: "bootsrap",
+			Name: "nmr",
 			P: Pattern{
 				SRoutes: []Routes{
 					{
-						"node": "*", "looking_for": "validation", "Path": "/nodes",
+						"node": "*", "looking_for": "node_info", "Path": "/node",
+					},
+					{
+						"node": "*", "looking_to": "node_info", "Path": "/node",
+					},
+					{
+						"node": "*", "looking_for": "node_status", "Path": "/node",
+					},
+					{
+						"node": "*", "looking_to": "node_status", "Path": "/node",
+					},
+					{
+						"node": "*", "looking_for": "node_list", "Path": "/node/all",
+					},
+					{
+						"module": "*", "looking_for": "module_info", "Path": "/module",
+					},
+					{
+						"module": "*", "looking_to": "module_info", "Path": "/module",
+					},
+					{
+						"module": "*", "looking_for": "module_status", "Path": "/module",
+					},
+					{
+						"module": "*", "looking_to": "module_status", "Path": "/module",
+					},
+					{
+						"module": "*", "looking_for": "module_list", "Path": "/module/all",
+					},
+					{
+						"module": "*", "looking_to": "module_data", "Path": "/module/data",
+					},
+					{
+						"module": "*", "looking_for": "module_data", "Path": "/module/data",
 					},
 				},
 			},
