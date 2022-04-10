@@ -19,7 +19,7 @@ create_sysfs_for_eeprom() {
 	#touch eeprom
 	echo "Acting master is ${ACTINGMASTER}"
 	if [ "${ACTINGMASTER}" -eq 1 ] ; then
-		ln -s ${EPATH}eeprom /tmp/sys/${UNITINFO}-systemdb
+		ln -s ${EPATH}eeprom /tmp/sys/${UNITINFO}_inventory_db
 	fi
 }
 
