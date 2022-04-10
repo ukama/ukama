@@ -41,6 +41,24 @@ int json_deserialize_sensor_data( JsonObj* json, const char** name,
                 const char** desc, int* dataType, void** data);
 
 /**
+ * @fn      int json_serialize_alert_data(JsonObj**, const char*, const char*, const char*, const char*, int, void*, char*)
+ * @brief    Serialize alert info into the JSON body.
+ *
+ * @param   json
+ * @param   modUuid
+ * @param   devName
+ * @param   devDesc
+ * @param   propName
+ * @param   type
+ * @param   data
+ * @param   units
+ * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
+ *          On Failure, NodeD JSON error code
+ */
+int json_serialize_alert_data(JsonObj **json, const char* modUuid,
+                const char *devName, const char *devDesc, const char *propName,
+                int type, void *data, char* units);
+/**
  * @fn      int json_serialize_api_list(JsonObj**, WebServiceAPI*, uint16_t)
  * @brief   Serialize API list into the JSON body.
  *

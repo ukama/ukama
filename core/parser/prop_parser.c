@@ -145,7 +145,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Data Type */
-            char *dataType;
+            char *dataType = NULL;
             if (!parser_read_string_object(jProp, JTAG_DATA_TYPE, &dataType)) {
                 goto cleanup;
             } else {
@@ -154,7 +154,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Permission */
-            char *perm;
+            char *perm= NULL;
             if (!parser_read_string_object(jProp, JTAG_PERMISSION, &perm)) {
                 goto cleanup;
             } else {
@@ -163,7 +163,7 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Availability */
-            char *avail;
+            char *avail= NULL;
             if (!parser_read_string_object(jProp, JTAG_AVAILABILITY, &avail)) {
                 goto cleanup;
             } else {
@@ -172,8 +172,8 @@ int prop_parse_table(const JsonObj *jPropTable, PropertyMap **pMap) {
             }
 
             /* Property Type */
-            char *propType;
-            if (!parser_read_string_object(jProp, JTAG_AVAILABILITY,
+            char *propType= NULL;
+            if (!parser_read_string_object(jProp, JTAG_PROPERTY_TYPE,
                                            &propType)) {
                 goto cleanup;
             } else {

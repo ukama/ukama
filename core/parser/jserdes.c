@@ -660,3 +660,35 @@ int json_deserialize_sensor_data(JsonObj *json, const char **name,
 
     return ret;
 }
+
+int json_serialize_alert_data(JsonObj **json, const char* modUuid,
+                const char *devName, const char *devDesc, const char *propName,
+                int type, void *data, char* units) {
+    int ret = JSON_ENCODING_OK;
+
+    *json = json_object();
+    if (!json) {
+        return ERR_NODED_JSON_CRETATION_ERR;
+    }
+
+    if (!data) {
+        return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_UUID, json_string(modUuid));
+
+    json_object_set_new(*json, JTAG_NAME, json_string(devName));
+
+    json_object_set_new(*json, JTAG_DESCRIPTION, json_string(devDesc));
+
+    json_object_set_new(*json, JTAG_PROPERTY_NAME, json_string(propName));
+
+    json_object_set_new(*json, JTAG_DATA_TYPE, json_integer(type));
+
+    json_object_set_new(*json, JTAG_VALUE, json_encode_value(type, data));
+
+    json_object_set_new(*json, JTAG_UNITS, json_string(units));
+
+
+    return ret;
+}

@@ -29,6 +29,149 @@ static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
 /**
+ * @fn      int alert_details(DevObj*, Property*, uint16_t*)
+ * @brief   Read the property table for the requested device object
+ *
+ * @param   obj
+ * @param   prop
+ * @param   pCount
+ * @return  On Success STATUS_OK
+ *          On failure STATUS_NOTOK
+ */
+int device_object_property_table(DevObj* obj, Property **prop, uint16_t* pCount) {
+    int ret = STATUS_OK;
+
+    /* read property count */
+    ret = ldgr_read_prop_count(obj, pCount);
+    if (ret != STATUS_OK) {
+        return STATUS_NOK;
+    }
+
+    if (pCount == 0)  {
+        return STATUS_NOK;
+    }
+
+    *prop = usys_zmalloc(sizeof(Property) * (*pCount));
+    if (*prop) {
+        /* read properties */
+        int ret = ldgr_read_prop(obj, *prop);
+        if (ret) {
+            usys_free(*prop);
+            *prop = NULL;
+            ret = STATUS_NOK;
+        }
+    } else {
+
+        usys_log_error("Web Service Failed to allocate memory for property "
+                        "table. Error %s",
+                              usys_error(errno));
+        ret =  STATUS_NOK;
+    }
+
+    return ret;
+}
+
+/**
+ * @fn      void web_service_alert_cb(DevObj*, AlertCallBackData**, int*)
+ * @brief   This is called from the ISR context should be released as soon as
+ *          possible to start monitor again. In this ISR context  we print alert
+ *          info which is for demo purpose only. We have to add web client here
+ *          to pass it to notification service
+ *
+ * @param   obj
+ * @param   alertCbData
+ * @param   count
+ */
+void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *count) {
+    if (*alertCbData) {
+        Property* prop = NULL;
+        uint16_t pCount = 0;
+        JsonObj *json = NULL;
+        URequest alertNotification;
+        UResponse alertNotificationResp;
+        AlertCallBackData *adata = *alertCbData;
+        usys_log_debug(
+            "Web service alert callback function for Device name %s Disc: %s "
+            "Module UUID %s called with %d alerts.",
+            obj->name, obj->desc, obj->modUuid, *count);
+
+        int ret = device_object_property_table(obj, &prop, &pCount);
+        if (ret != STATUS_OK) {
+            usys_log_error("Web Service Failed to get  alert property details "
+                            "from property table.");
+            goto cleanup;
+        }
+
+        if (!prop) {
+            goto cleanup;
+        }
+
+        int pidx = adata->pidx;
+        int didx = prop[pidx].depProp->currIdx;
+        uint8_t alertstate = adata->alertState;
+
+        /* Considered double but need to be read based on type in
+         * g_prop[pidx].data_type
+         * int size = get_sizeof(prop[dep_idx].data_type);
+         *  */
+        double value = *(double *)adata->sValue;
+
+        usys_log_debug("Alert %d received for Property[%d], Name: %s ,"
+                        " Value %lf %s.",
+                        alertstate, pidx, prop[pidx].name,
+                        value, prop[didx].units);
+
+        /* Report alert */
+        ret = json_serialize_alert_data(&json, obj->modUuid, obj->name,
+                        obj->desc, prop[pidx].name, prop[pidx].dataType,
+                        adata->sValue, prop[didx].units);
+        if (ret != JSON_ENCODING_OK) {
+            usys_log_error( "Web service alert callback function for "
+                            "Device name %s Disc: %s Module UUID %s called "
+                            "with %d alerts failed to serialize alert",
+                            obj->name, obj->desc, obj->modUuid, *count);
+            goto cleanup;
+        } else {
+            ulfius_init_request(&alertNotification);
+            ulfius_init_response(&alertNotificationResp);
+            ulfius_set_request_properties(&alertNotification,
+                            U_OPT_HTTP_VERB, "PUT",
+                            U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                            U_OPT_HTTP_URL_APPEND, "alert",
+                            U_OPT_TIMEOUT, 20,
+                            U_OPT_JSON_BODY, json,
+                            U_OPT_NONE);
+            ret = ulfius_send_http_request(&alertNotification,
+                            &alertNotificationResp);
+            if (ret != STATUS_OK) {
+                usys_log_error( "Web service alert callback function not able "
+                                "to notify notification service.");
+            } else {
+                usys_log_debug( "Web service alert callback function"
+                                " notification  response is %d.",
+                                alertNotificationResp.status);
+            }
+            json_decref(json);
+            ulfius_clean_request(&alertNotification);
+        }
+
+        usys_free(prop);
+
+        cleanup:
+        usys_free(adata->sValue);
+        usys_free(adata);
+
+    } else {
+
+        usys_log_error( "Web service alert callback function for Device name %s"
+                        " Disc: %s Module UUID %s called with %d alerts but with"
+                        "any alert details.",
+                        obj->name, obj->desc, obj->modUuid, *count);
+
+    }
+}
+
+/**
  * @fn      void report_failure_with_response_code(UResponse*, int, int,
  *           char*)
  * @brief   Reports the failure to client using json object with HTTP repsonse
@@ -325,7 +468,7 @@ static int web_service_cb_get_module_cfg(const URequest *request,
     ModuleCfg *mCfg = NULL;
     ModuleInfo *mInfo = NULL;
 
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*)u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -424,7 +567,7 @@ static int web_service_cb_get_module_info(const URequest *request,
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
 
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -599,7 +742,7 @@ static int web_service_cb_put_dev_property(const URequest *request,
 
     JsonObj *json = ulfius_get_json_body_request(request, NULL);
 
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -681,7 +824,7 @@ static int web_service_cb_get_dev_property(const URequest *request,
     int pIdx = 0;
     int dataType = 0;
     DevObj *obj = NULL;
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -737,6 +880,160 @@ static int web_service_cb_get_dev_property(const URequest *request,
     } else {
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
+
+    completed:
+    usys_free(obj);
+    usys_free(data);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+
+/**
+ * @fn      int web_service_enable_alert(UResponse*, int, DevObj*)
+ * @brief   Register callback and enable alerts on device property
+ *
+ * @param   response
+ * @param   pIdx
+ * @param   obj
+ * @return  On success 0
+ *          On failure -1
+ */
+static int  web_service_enable_alert(UResponse *response, int pIdx,
+                DevObj* obj) {
+    int ret = 0;
+
+    /* Register callback */
+    ret = ldgr_reg_app_cb(obj, &pIdx, &web_service_alert_cb);
+    if (ret) {
+        report_failure(response, ret, "failed to register alert callback.");
+        ret = -1;
+    }
+
+    /* Enable alert */
+    ret = ldgr_enable_irq(obj, &pIdx, NULL);
+    if (ret) {
+        report_failure(response, ret, "failed to enable alert on "
+                        "device property.");
+        ret = -1;
+    }
+
+    return ret;
+}
+
+/**
+ * @fn      int web_service_disable_alert(UResponse*, int, DevObj*)
+ * @brief   de-register callback and enable alerts on device property
+ *
+ * @param   response
+ * @param   pIdx
+ * @param   obj
+ * @return  On success 0
+ *          On failure -1
+ */
+static int web_service_disable_alert(UResponse *response, int pIdx, DevObj* obj) {
+    int ret = 0;
+
+    /* De-register callback */
+    ret = ldgr_dereg_app_cb(obj, &pIdx, &web_service_alert_cb);
+    if (ret) {
+        report_failure(response, ret, "failed to register alert callback.");
+        ret = -1;
+    }
+
+    /* Disable alert */
+    ret = ldgr_disable_irq(obj, &pIdx, NULL);
+    if (ret) {
+        report_failure(response, ret, "failed to enable alert on "
+                        "device property.");
+        ret = -1;
+    }
+
+    return ret;
+}
+
+/**
+ * @fn      int web_service_cb_put_dev_alert_state(const URequest*,
+ *          UResponse*, void*)
+ * @brief   Enable/Disable alert for the device for the property mentioned
+ *          in query.
+ *
+ * @param   request
+ * @param   response
+ * @param   epConfig
+ * @return  U_CALLBACK_CONTINUE is returned to REST framework.
+ */
+static int web_service_cb_put_dev_alert_state(const URequest *request,
+                UResponse *response,
+                void *epConfig) {
+    unsigned int respCode = RESP_CODE_SERVER_FAILURE;
+    int ret = STATUS_NOK;
+    void *data = NULL;
+    int pIdx = 0;
+    int dataType = 0;
+    DevObj *obj = NULL;
+    usys_log_trace("NodeD:: Received a enable/disable alert request.");
+
+    JsonObj *json = ulfius_get_json_body_request(request, NULL);
+
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
+    if (!moduleId) {
+        report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
+                        RESP_CODE_INVALID_REQUEST,
+                        "no module UUID present");
+        goto completed;
+    }
+    usys_log_trace("NodeD:: Received a enable/disable alert request for UUID %s.",
+                    moduleId);
+
+    const char *devType = u_map_get(request->map_url, DEVTYPE);
+    const char *devName = u_map_get(request->map_url, DEVNAME);
+    const char *devDesc = u_map_get(request->map_url, DEVDESC);
+    const char *propName = u_map_get(request->map_url, PROPNAME);
+    const char *state = u_map_get(request->map_url, ALERTSTATE);
+
+    usys_log_trace("NodeD:: Received a get device property data request "
+                    "for UUID %s .",
+                    moduleId);
+
+    if (!((devType) && (devName) && (devDesc) && (propName) && (state))) {
+        report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
+                        RESP_CODE_INVALID_REQUEST,
+                        "missing info in request");
+        goto completed;
+    }
+
+//    /* Deserialize data */
+//    ret = json_deserialize_sensor_data(json, &devName, &devDesc, &dataType,
+//                    &data);
+//    if (ret != JSON_DECODING_OK) {
+//        report_failure(response, ret, "failed to decode json request");
+//        goto completed;
+//    }
+
+    obj = prepare_object_for_request(response, devName, devDesc,
+                    moduleId, &pIdx,
+                    devType, propName, &data, &dataType, false);
+    if (!obj) {
+        report_failure(response, ret,
+                        "failed to prepare read request to ledger.");
+        goto completed;
+    }
+
+    if (usys_strcasecmp(state, ENABLE)==0) {
+        ret = web_service_enable_alert(response, pIdx, obj);
+    } else {
+        ret = web_service_disable_alert(response, pIdx, obj);
+    }
+
+    if (ret) {
+        goto completed;
+    } else {
+        respCode = RESP_CODE_SUCCESS;
+    }
+
+    /* Send response */
+    ulfius_set_empty_body_response(response, respCode);
 
     completed:
     usys_free(obj);
@@ -807,7 +1104,7 @@ static int web_service_cb_get_module_mfg(const URequest *request,
     uint16_t size = 0;
     uint16_t fieldId = 0;
     char *data = NULL;
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -867,7 +1164,7 @@ static int web_service_cb_put_module_mfg(const URequest *request,
     int size = 0;
     char *data = NULL;
     uint16_t fieldId = 0;
-    char *moduleId = u_map_get(request->map_url, UUID);
+    char *moduleId = (char*) u_map_get(request->map_url, UUID);
     if (!moduleId) {
         report_failure_with_response_code(response, RESP_CODE_INVALID_REQUEST,
                         RESP_CODE_INVALID_REQUEST,
@@ -955,6 +1252,11 @@ static void web_service_add_device_based_endpoint() {
     /* Read permissions */
     web_service_add_end_point("GET", API_RES_EP("deviceconfig"), NULL,
                     web_service_cb_get_dev_property);
+
+    /* Enable alerts */
+    web_service_add_end_point("PUT", API_RES_EP("alertstate"), NULL,
+                    web_service_cb_put_dev_alert_state);
+
 }
 /**
  * @fn      void web_service_add_discover_endpoints()

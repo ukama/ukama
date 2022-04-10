@@ -100,6 +100,8 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_DATA_TYPE                  "dataType"
 #define JTAG_PERMISSION                 "perm"
 #define JTAG_AVAILABILITY               "available"
+#define JTAG_PROPERTY_NAME              "propName"
+#define JTAG_PROPERTY_DESC              "propDesc"
 #define JTAG_PROPERTY_TYPE              "propType"
 #define JTAG_UNITS                      "units"
 #define JTAG_SYS_FS_FILE                "sysFsFile"

@@ -64,8 +64,8 @@ static IRQCfg *search_device_object(IRQCfg *sdev) {
     } else {
         usys_log_debug("IRQDB:: IRQ %lu for Device Name %s, Disc: %s"
                        "Module UUID: %s not found in IRQDB.",
-                       fcfg->pthread, fcfg->obj.name, fcfg->obj.desc,
-                       fcfg->obj.modUuid);
+                       sdev->pthread, sdev->obj.name, sdev->obj.desc,
+                       sdev->obj.modUuid);
 
         if (fcfg) {
             usys_free(fcfg);
@@ -78,7 +78,7 @@ static IRQCfg *search_device_object(IRQCfg *sdev) {
 
 /* Cancels IRQ thread and return 1 as a success. */
 static int irqdb_unregister_irq(void *data) {
-    int ret = 0;
+    int ret = 1;
     IRQCfg *cfg = (IRQCfg *)data;
     usys_log_trace("IRQDB:: De-registering IRQ %lu for Device Name %s, Disc: %s"
                    " Module UUID: %s found.",
@@ -88,9 +88,9 @@ static int irqdb_unregister_irq(void *data) {
     /* Cancel thread */
     ret = usys_thread_cancel(cfg->pthread);
     if (ret) {
+        usys_thread_join(cfg->pthread, NULL);
         ret = 0;
     } else {
-        usys_thread_join(cfg->pthread, NULL);
         ret = 1;
     }
 

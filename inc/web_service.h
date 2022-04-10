@@ -33,9 +33,14 @@ extern "C" {
 #define DEVDESC                         "desc"
 #define PROPNAME                        "prop"
 #define MFGDATA                         "name"
+#define ALERTSTATE                      "state"
+#define ENABLE                          "enable"
+#define DISABLE                         "disable"
 
 #define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
     REST_API_VERSION EP_BS RES
+
+#define SERVER_URL_PREFIX "http://localhost:8090/"
 
 /* RESPONSE CODE */
 #define RESP_CODE_SUCCESS               200

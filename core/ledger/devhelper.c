@@ -268,7 +268,7 @@ int dhelper_disable_irq(const DrvrOps *drvr, Device *dev, Property *prop,
             ret = irqdb_deregister_for_device_irq(irqSrc, NULL);
             if (ret) {
                 log_error(
-                    "DEVHELPER(%d):: Failed to register IRQ for Device name: %s desc: %s module UUID %s",
+                    "DEVHELPER(%d):: Failed to deregister IRQ for Device name: %s desc: %s module UUID %s",
                     ret, dev->obj.name, dev->obj.desc, dev->obj.modUuid);
             }
 
