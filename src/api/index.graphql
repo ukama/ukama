@@ -14,8 +14,8 @@ subscription getLatestDataUsage {
     }
 }
 
-query getConnectedUsers($filter: TIME_FILTER!) {
-    getConnectedUsers(filter: $filter) {
+query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
+    getConnectedUsers(filter: $filter, orgId: $orgId) {
         totalUser
     }
 }
@@ -72,11 +72,11 @@ subscription getLatestAlerts {
 
 query getNodesByOrg($orgId: String!) {
     getNodesByOrg(orgId: $orgId) {
-        orgName
+        orgId
         nodes {
             id
             status
-            title
+            name
             type
             description
             totalUser
@@ -201,16 +201,18 @@ mutation activateUser($data: ActivateUserDto!) {
 }
 mutation updateNode($data: UpdateNodeDto!) {
     updateNode(data: $data) {
-        id
+        nodeId
         name
-        serialNo
-        __typename
+        state
+        type
     }
 }
 mutation addNode($data: AddNodeDto!) {
     addNode(data: $data) {
-        success
-        __typename
+        nodeId
+        name
+        state
+        type
     }
 }
 mutation deleteNode($id: String!) {

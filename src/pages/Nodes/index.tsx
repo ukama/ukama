@@ -70,7 +70,7 @@ const Nodes = () => {
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         type: "",
-        title: "",
+        name: "",
         totalUser: 0,
         description: "",
         updateVersion: "",
@@ -444,7 +444,7 @@ const Nodes = () => {
                             <NodeSchematicTab
                                 getSearchValue={getSpecsSchematicSearch}
                                 schematicsSpecsData={SpecsDocsData}
-                                nodeTitle={selectedNode?.title}
+                                nodeTitle={selectedNode?.name}
                                 loading={nodesLoading}
                             />
                         </TabPanel>

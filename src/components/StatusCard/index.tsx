@@ -54,10 +54,10 @@ const StatusCard = ({
                     direction="row"
                     justifyContent="center"
                 >
-                    <Grid item display="flex" alignItems="center">
+                    <Grid item xs={2} display="flex" alignItems="center">
                         <Icon />
                     </Grid>
-                    <Grid xs={12} item sm container direction="column">
+                    <Grid xs={10} item sm container direction="column">
                         <Grid
                             sm
                             item
@@ -67,7 +67,7 @@ const StatusCard = ({
                             direction="row"
                             alignItems="center"
                         >
-                            <Grid item xs={7} mb={{ xs: 1, sm: 0 }}>
+                            <Grid item xs={12} mb={{ xs: 0.6, sm: 0 }}>
                                 <Typography variant="subtitle2">
                                     {title}
                                 </Typography>
@@ -75,7 +75,7 @@ const StatusCard = ({
                             <Grid
                                 item
                                 xs={5}
-                                display="flex"
+                                display="none"
                                 justifyContent="flex-end"
                             >
                                 <Select

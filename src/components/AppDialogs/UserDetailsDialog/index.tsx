@@ -108,13 +108,15 @@ const UserDetailsDialog = ({
                         {isClosable && (
                             <IconButton
                                 onClick={() => handleClose()}
-                                sx={{ ml: "24px", p: "8px" }}
+                                sx={{ ml: "24px", p: 0 }}
                             >
                                 <CloseIcon />
                             </IconButton>
                         )}
                     </Box>
-                    <DialogContent sx={{ padding: 0, mb: 4 }}>
+                    <DialogContent
+                        sx={{ padding: 0, mb: 4, overflowX: "hidden" }}
+                    >
                         <Grid>
                             <Grid container>
                                 <Grid item xs={12}>
@@ -138,7 +140,7 @@ const UserDetailsDialog = ({
                                         </Typography>
                                     </Stack>
                                 </Grid>
-                                <Grid item xs={9}>
+                                <Grid item xs={12}>
                                     <EditableTextField
                                         value={name || "-"}
                                         label={"NAME"}
@@ -150,7 +152,7 @@ const UserDetailsDialog = ({
                                         }
                                     />
                                 </Grid>
-                                <Grid item xs={9}>
+                                <Grid item xs={12}>
                                     <EditableTextField
                                         value={email || "-"}
                                         label={"EMAIL"}
@@ -162,7 +164,7 @@ const UserDetailsDialog = ({
                                         }
                                     />
                                 </Grid>
-                                <Grid item xs={9}>
+                                <Grid item xs={12}>
                                     <EditableTextField
                                         value={phone || "-"}
                                         label={"PHONE"}

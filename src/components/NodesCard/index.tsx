@@ -175,9 +175,14 @@ const NodeCard = ({
                             display="flex"
                             alignSelf="end"
                             pt="0px !important"
+                            alignItems={"flex-end"}
                         >
                             <UsersIcon sx={{ width: "16px", height: "16px" }} />
-                            <Typography variant="caption" pl="8px">
+                            <Typography
+                                pl="8px"
+                                variant="caption"
+                                lineHeight={"14px"}
+                            >
                                 {users}
                             </Typography>
                         </Grid>

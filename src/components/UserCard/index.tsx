@@ -10,7 +10,7 @@ type UserCardProps = {
 
 const UserCard = ({ user, handleMoreUserdetails }: UserCardProps) => {
     return (
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 1.5, md: 2 }}>
             <Grid item xs={12}>
                 <Typography variant="body2" color="textSecondary">
                     {user.id}

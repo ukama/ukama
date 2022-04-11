@@ -29,7 +29,7 @@ const EditableTextField = ({
             value={value}
             variant="standard"
             disabled={!iseditable}
-            sx={{ width: "440px" }}
+            sx={{ width: { xs: "100%", md: "440px" } }}
             InputLabelProps={{
                 shrink: true,
             }}

@@ -78,6 +78,7 @@ const Home = () => {
         subscribeToMore: subscribeToLatestConnectedUsers,
     } = useGetConnectedUsersQuery({
         variables: {
+            orgId: orgId,
             filter: userStatusFilter,
         },
     });

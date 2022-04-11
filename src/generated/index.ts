@@ -60,13 +60,16 @@ export type ActiveUserResponseDto = {
 
 export type AddNodeDto = {
     name: Scalars["String"];
-    securityCode: Scalars["String"];
-    serialNo: Scalars["String"];
+    nodeId: Scalars["String"];
+    orgId: Scalars["String"];
 };
 
 export type AddNodeResponse = {
     __typename?: "AddNodeResponse";
-    success: Scalars["Boolean"];
+    name: Scalars["String"];
+    nodeId: Scalars["String"];
+    state: Org_Node_State;
+    type: Node_Type;
 };
 
 export type AddNodeResponseDto = {
@@ -77,18 +80,22 @@ export type AddNodeResponseDto = {
 
 export type AddUserDto = {
     email: Scalars["String"];
-    firstName: Scalars["String"];
-    imsi: Scalars["String"];
-    lastName: Scalars["String"];
+    name: Scalars["String"];
 };
 
 export type AddUserResponse = {
     __typename?: "AddUserResponse";
     email: Scalars["String"];
-    firstName: Scalars["String"];
-    imsi: Scalars["String"];
-    lastName: Scalars["String"];
+    iccid: Scalars["String"];
+    name: Scalars["String"];
+    phone: Scalars["String"];
     uuid: Scalars["String"];
+};
+
+export type AddUserServiceRes = {
+    __typename?: "AddUserServiceRes";
+    iccid: Scalars["String"];
+    user: OrgUserDto;
 };
 
 export type AlertDto = {
@@ -152,7 +159,7 @@ export enum Connected_User_Type {
 
 export type ConnectedUserDto = {
     __typename?: "ConnectedUserDto";
-    totalUser: Scalars["Float"];
+    totalUser: Scalars["String"];
 };
 
 export type ConnectedUserResponse = {
@@ -334,12 +341,29 @@ export type MetricDto = {
     y: Scalars["Float"];
 };
 
+export type MetricInfo = {
+    __typename?: "MetricInfo";
+    org: Scalars["String"];
+};
+
 export type MetricRes = {
     __typename?: "MetricRes";
     data: Array<MetricDto>;
     name: Scalars["String"];
     next: Scalars["Boolean"];
     type: Scalars["String"];
+};
+
+export type MetricServiceRes = {
+    __typename?: "MetricServiceRes";
+    metric: MetricInfo;
+    value: Array<MetricValues>;
+};
+
+export type MetricValues = {
+    __typename?: "MetricValues";
+    x: Scalars["Float"];
+    y: Scalars["String"];
 };
 
 export type MetricsByTabInputDto = {
@@ -370,7 +394,7 @@ export type Mutation = {
     deactivateUser: DeactivateResponse;
     deleteNode: DeactivateResponse;
     deleteUser: ActivateUserResponse;
-    updateNode: UpdateNodeResponse;
+    updateNode: OrgNodeDto;
     updateUser: UserResponse;
 };
 
@@ -471,8 +495,8 @@ export type NodeDto = {
     description: Scalars["String"];
     id: Scalars["String"];
     isUpdateAvailable: Scalars["Boolean"];
+    name: Scalars["String"];
     status: Org_Node_State;
-    title: Scalars["String"];
     totalUser: Scalars["Float"];
     type: Scalars["String"];
     updateDescription: Scalars["String"];
@@ -527,6 +551,7 @@ export type OrgMetricValueDto = {
 
 export type OrgNodeDto = {
     __typename?: "OrgNodeDto";
+    name: Scalars["String"];
     nodeId: Scalars["String"];
     state: Org_Node_State;
     type: Scalars["String"];
@@ -542,7 +567,7 @@ export type OrgNodeResponseDto = {
     __typename?: "OrgNodeResponseDto";
     activeNodes: Scalars["Float"];
     nodes: Array<NodeDto>;
-    orgName: Scalars["String"];
+    orgId: Scalars["String"];
     totalNodes: Scalars["Float"];
 };
 
@@ -619,6 +644,7 @@ export type QueryGetAlertsArgs = {
 
 export type QueryGetConnectedUsersArgs = {
     filter: Time_Filter;
+    orgId: Scalars["String"];
 };
 
 export type QueryGetDataBillArgs = {
@@ -692,10 +718,9 @@ export enum Time_Filter {
 }
 
 export type UpdateNodeDto = {
-    id: Scalars["String"];
-    name?: InputMaybe<Scalars["String"]>;
-    securityCode?: InputMaybe<Scalars["String"]>;
-    serialNo?: InputMaybe<Scalars["String"]>;
+    name: Scalars["String"];
+    nodeId: Scalars["String"];
+    orgId: Scalars["String"];
 };
 
 export type UpdateNodeResponse = {
@@ -779,11 +804,12 @@ export type GetLatestDataUsageSubscription = {
 
 export type GetConnectedUsersQueryVariables = Exact<{
     filter: Time_Filter;
+    orgId: Scalars["String"];
 }>;
 
 export type GetConnectedUsersQuery = {
     __typename?: "Query";
-    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: number };
+    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: string };
 };
 
 export type GetLatestConnectedUsersSubscriptionVariables = Exact<{
@@ -792,7 +818,7 @@ export type GetLatestConnectedUsersSubscriptionVariables = Exact<{
 
 export type GetLatestConnectedUsersSubscription = {
     __typename?: "Subscription";
-    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: number };
+    getConnectedUsers: { __typename?: "ConnectedUserDto"; totalUser: string };
 };
 
 export type GetDataBillQueryVariables = Exact<{
@@ -873,14 +899,14 @@ export type GetNodesByOrgQuery = {
     __typename?: "Query";
     getNodesByOrg: {
         __typename?: "OrgNodeResponseDto";
-        orgName: string;
+        orgId: string;
         activeNodes: number;
         totalNodes: number;
         nodes: Array<{
             __typename?: "NodeDto";
             id: string;
             status: Org_Node_State;
-            title: string;
+            name: string;
             type: string;
             description: string;
             totalUser: number;
@@ -1078,10 +1104,11 @@ export type UpdateNodeMutationVariables = Exact<{
 export type UpdateNodeMutation = {
     __typename?: "Mutation";
     updateNode: {
-        __typename: "UpdateNodeResponse";
-        id: string;
+        __typename?: "OrgNodeDto";
+        nodeId: string;
         name: string;
-        serialNo: string;
+        state: Org_Node_State;
+        type: string;
     };
 };
 
@@ -1091,7 +1118,13 @@ export type AddNodeMutationVariables = Exact<{
 
 export type AddNodeMutation = {
     __typename?: "Mutation";
-    addNode: { __typename: "AddNodeResponse"; success: boolean };
+    addNode: {
+        __typename?: "AddNodeResponse";
+        nodeId: string;
+        name: string;
+        state: Org_Node_State;
+        type: Node_Type;
+    };
 };
 
 export type DeleteNodeMutationVariables = Exact<{
@@ -1245,8 +1278,8 @@ export type GetLatestDataUsageSubscriptionHookResult = ReturnType<
 export type GetLatestDataUsageSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestDataUsageSubscription>;
 export const GetConnectedUsersDocument = gql`
-    query getConnectedUsers($filter: TIME_FILTER!) {
-        getConnectedUsers(filter: $filter) {
+    query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
+        getConnectedUsers(filter: $filter, orgId: $orgId) {
             totalUser
         }
     }
@@ -1265,6 +1298,7 @@ export const GetConnectedUsersDocument = gql`
  * const { data, loading, error } = useGetConnectedUsersQuery({
  *   variables: {
  *      filter: // value for 'filter'
+ *      orgId: // value for 'orgId'
  *   },
  * });
  */
@@ -1557,11 +1591,11 @@ export type GetLatestAlertsSubscriptionResult =
 export const GetNodesByOrgDocument = gql`
     query getNodesByOrg($orgId: String!) {
         getNodesByOrg(orgId: $orgId) {
-            orgName
+            orgId
             nodes {
                 id
                 status
-                title
+                name
                 type
                 description
                 totalUser
@@ -2262,10 +2296,10 @@ export type ActivateUserMutationOptions = Apollo.BaseMutationOptions<
 export const UpdateNodeDocument = gql`
     mutation updateNode($data: UpdateNodeDto!) {
         updateNode(data: $data) {
-            id
+            nodeId
             name
-            serialNo
-            __typename
+            state
+            type
         }
     }
 `;
@@ -2315,8 +2349,10 @@ export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<
 export const AddNodeDocument = gql`
     mutation addNode($data: AddNodeDto!) {
         addNode(data: $data) {
-            success
-            __typename
+            nodeId
+            name
+            state
+            type
         }
     }
 `;
