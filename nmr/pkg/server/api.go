@@ -113,6 +113,16 @@ type RespGetModuleList struct {
 	Modules []db.Module `json:"modules"`
 }
 
+type ReqGetModuleProdStatusData struct {
+	ModuleID  string `query:"module" validate:"required"`
+	LookingTo string `query:"looking_for" validate:"required"`
+}
+
+type RespGetModuleProdStatusData struct {
+	ProdTestStatus string `form:"prodTestStatus" json:"prodTestStatus"`
+	ProdReport     []byte `form:"prodReport" json:"prodReport"` /* Report for production test */
+}
+
 type ReqGetModuleStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
 	LookingTo string `query:"looking_for" validate:"required"`
@@ -132,6 +142,7 @@ type RespUpdateModuleStatusData struct {
 type ReqUpdateModuleStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
 	LookingTo string `query:"looking_for" validate:"required"`
+	Status    string `query:"status" validate:"required"`
 }
 
 type ReqUpdateModuleData struct {
