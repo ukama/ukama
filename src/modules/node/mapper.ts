@@ -38,19 +38,16 @@ class NodeMapper implements INodeMapper {
                 if (node.state === ORG_NODE_STATE.ONBOARDED) {
                     activeNodes++;
                 }
-                const nodeObj = this.getNode(
-                    node.nodeId,
-                    node.state,
-                    node.type
-                );
+                const nodeObj = this.getNode({
+                    id: node.nodeId,
+                    status: node.state,
+                    type: node.type as NODE_TYPE,
+                    title: node.name,
+                });
                 nodes.push(nodeObj);
             });
         } else {
-            nodesObj = this.getNode(
-                defaultCasual._uuid(),
-                defaultCasual.random_value(ORG_NODE_STATE),
-                "TOWER"
-            );
+            nodesObj = this.getNode({});
             nodes.push(nodesObj);
         }
         const totalNodes = nodes.length;
@@ -69,17 +66,23 @@ class NodeMapper implements INodeMapper {
         return metrics;
     };
 
-    private getNode = (
-        id: string,
-        status: ORG_NODE_STATE,
-        type: string
-    ): NodeDto => {
+    private getNode = ({
+        id = defaultCasual._uuid(),
+        title = defaultCasual._title(),
+        status = defaultCasual.random_value(ORG_NODE_STATE),
+        type = NODE_TYPE.TOWER,
+    }: {
+        id?: string;
+        title?: string;
+        status?: ORG_NODE_STATE;
+        type?: NODE_TYPE;
+    }): NodeDto => {
         return {
             id: id,
             type: type,
             status: status,
-            title: defaultCasual._title(),
-            description: `${defaultCasual.random_value(NODE_TYPE)} node`,
+            title: title ? title : defaultCasual._title(),
+            description: `${type} node`,
             totalUser: defaultCasual.integer(1, 99),
             isUpdateAvailable: Math.random() < 0.7,
             updateShortNote:
