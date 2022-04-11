@@ -40,8 +40,6 @@ extern "C" {
 #define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
     REST_API_VERSION EP_BS RES
 
-#define SERVER_URL_PREFIX "http://localhost:8090/"
-
 /* RESPONSE CODE */
 #define RESP_CODE_SUCCESS               200
 #define RESP_CODE_INVALID_REQUEST       400
@@ -81,10 +79,11 @@ typedef struct {
  * @fn      int web_service_start()
  * @brief   Initializes the ulfius framework for REST server.
  *
+ * @param   notifServer
  * @return  On success STATUS_OK
  *          On failure STATUS_NOK
  */
-int web_service_init();
+int web_service_init(char* notifServer);
 
 /**
  * @fn      int web_service_start()

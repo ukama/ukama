@@ -24,7 +24,7 @@
 #include "usys_string.h"
 
 UInst serverInst;
-
+static char gNotifServer[128] = { 0 };
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
@@ -136,7 +136,7 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
             ulfius_init_response(&alertNotificationResp);
             ulfius_set_request_properties(&alertNotification,
                             U_OPT_HTTP_VERB, "PUT",
-                            U_OPT_HTTP_URL, SERVER_URL_PREFIX,
+                            U_OPT_HTTP_URL, gNotifServer,
                             U_OPT_HTTP_URL_APPEND, "alert",
                             U_OPT_TIMEOUT, 20,
                             U_OPT_JSON_BODY, json,
@@ -1409,7 +1409,11 @@ int web_service_start() {
  * @return  On success STATUS_OK
  *          On failure STATUS_NOK
  */
-int web_service_init() {
+int web_service_init(char *notifServer) {
+    /* Notification server */
+    usys_strcpy(gNotifServer, notifServer);
+    usys_log_info("Added notification server  %s", gNotifServer);
+
     /* Initialize the web_services framework. */
     if (init_framework(&serverInst, WEB_SERVICE_PORT) != STATUS_OK) {
         usys_log_error("Error initializing web_service framework");

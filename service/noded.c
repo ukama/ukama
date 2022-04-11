@@ -16,28 +16,51 @@
 
 #define DEV_PROPERTY_JSON "mfgdata/property/property.json"
 #define INVENTORY_DB "/tmp/sys/cnode_inventory_db"
+#define NOTIF_SERVER_URL "http://localhost:8090/"
 #define DEF_LOG_LEVEL "TRACE"
 
 #define NODED_VERSION "0.0.0"
 
-/* Starting NodeD service */
+/**
+ * @fn      void noded_service()
+ * @brief   Start Noded web service (REST server)
+ *
+ */
 void noded_service() {
     service();
 }
 
-/* Startup for NodeD.*/
-int noded_startup(char *invDb, char *pCfg) {
+/**
+ * @fn      int noded_startup(char*, char*, char*)
+ * @brief   Do service initialization. Parse the required configs and
+ *          initialize web frameworks.
+ *
+ * @param   invDb
+ * @param   pCfg
+ * @param   notifServer
+ * @return  On success 0,
+ *          On failure -1
+ */
+int noded_startup(char *invDb, char *pCfg, char* notifServer) {
     int ret = 0;
-    ret = service_init(invDb, pCfg);
+    ret = service_init(invDb, pCfg, notifServer);
     return ret;
 }
 
-/* NodeD service exit */
+/**
+ * @fn      void noded_exit()
+ * @brief   Service exit procedure. Release the data structure used.
+ */
 void noded_exit() {
     service_at_exit();
 }
 
-/* Terminate signal handler for ukamaEDR */
+/**
+ * @fn      void handle_sigint(int)
+ * @brief   Handle terminate signal for Noded
+ *
+ * @param   signum
+ */
 void handle_sigint(int signum) {
     usys_log_debug("Caught terminate signal.\n");
 
@@ -49,15 +72,21 @@ void handle_sigint(int signum) {
 }
 
 static UsysOption longOptions[] = {
-    { "INVENTORY_DB", required_argument, 0, 's' },
+    { "inventoryDb", required_argument, 0, 'i' },
     { "propertyConfig", required_argument, 0, 'p' },
+    { "notifyServer", required_argument, 0, 'n' },
     { "logs", required_argument, 0, 'l' },
     { "help", no_argument, 0, 'h' },
     { "version", no_argument, 0, 'v' },
     { 0, 0, 0, 0 }
 };
 
-/* Set the verbosity level for logs. */
+/**
+ * @fn      void set_log_level(char*)
+ * @brief   Set the verbosity level for logs.
+ *
+ * @param   slevel
+ */
 void set_log_level(char *slevel) {
     int ilevel = USYS_LOG_TRACE;
     if (!strcmp(slevel, "TRACE")) {
@@ -70,7 +99,14 @@ void set_log_level(char *slevel) {
     usys_log_set_level(ilevel);
 }
 
-/* Check if args supplied config file exist and have read permissions. */
+
+
+/**
+ * @fn      void verify_file(char*)
+ * @brief   Check if args supplied config file exist and have read permissions.
+ *
+ * @param   file
+ */
 void verify_file(char *file) {
     if (!usys_file_exist(file)) {
         usys_log_error("NodeD: File %s is missing.", file);
@@ -78,33 +114,53 @@ void verify_file(char *file) {
     }
 }
 
-/* Usage options for the ukamaEDR */
+
+/**
+ * @fn      void usage()
+ * @brief   Usage options for the ukamaEDR
+ *
+ */
 void usage() {
     usys_puts("Usage: noded [options] \n");
     usys_puts("Options:\n");
-    usys_puts("--h, --help                       Help menu.\n");
+    usys_puts(
+        "--h, --help                             Help menu.\n");
     usys_puts(
         "--l, --logs <TRACE> <DEBUG> <INFO>      Log level for the process.\n");
-    usys_puts("--p, --propertyConfig <path>            Property config for the "
+    usys_puts(
+        "--p, --propertyConfig <path>            Property config for the "
               "System.\n");
     usys_puts(
-        "--s, --INVENTORY_DB <path>              System database or EEPROM DB for"
-        " the System.\n");
-    usys_puts("--v, --version                    Software Version.\n");
+        "--i, --inventoryDb <path>               Inventory database or EEPROM DB"
+        " for the System.\n");
+    usys_puts(
+        "--n, --notifyServer <url>               Notification server for "
+        "alerts\n");
+    usys_puts(
+        "--v, --version                          Software Version.\n");
 }
 
+/**
+ * @fn      int main(int, char**)
+ * @brief
+ *
+ * @param   argc
+ * @param   argv
+ * @return  Should stay in main function entire time.
+ */
 int main(int argc, char **argv) {
     int ret = USYS_OK;
     char *pCfg = DEV_PROPERTY_JSON;
     char *invDb = INVENTORY_DB;
     char *debug = DEF_LOG_LEVEL;
+    char *notifServer = NOTIF_SERVER_URL;
 
     /* Parsing command line args. */
     while (true) {
         int opt = 0;
         int opdIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "s:p:l:", longOptions, &opdIdx);
+        opt = usys_getopt_long(argc, argv, "h:i:p:l:v:n:", longOptions, &opdIdx);
         if (opt == -1) {
             break;
         }
@@ -117,9 +173,10 @@ int main(int argc, char **argv) {
 
         case 'v':
             usys_puts(NODED_VERSION);
+            usys_exit(0);
             break;
 
-        case 's':
+        case 'i':
             invDb = optarg;
             verify_file(invDb);
             break;
@@ -132,6 +189,10 @@ int main(int argc, char **argv) {
         case 'l':
             debug = optarg;
             set_log_level(debug);
+            break;
+
+        case 'n':
+            notifServer = optarg;
             break;
 
         default:
@@ -147,7 +208,7 @@ int main(int argc, char **argv) {
     signal(SIGINT, handle_sigint);
 
     /* NodeD startup routine. */
-    ret = noded_startup(invDb, pCfg);
+    ret = noded_startup(invDb, pCfg, notifServer);
     if (!ret) {
         /* NodeD Service started.*/
         noded_service();
