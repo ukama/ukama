@@ -1,12 +1,15 @@
-import { HeaderType, PaginationDto } from "../../common/types";
-import { TIME_FILTER } from "../../constants";
+import {
+    HeaderType,
+    PaginationDto,
+    MetricServiceRes,
+} from "../../common/types";
 import {
     ActivateUserDto,
     ActivateUserResponse,
     AddUserDto,
     AddUserResponse,
+    AddUserServiceRes,
     ConnectedUserDto,
-    ConnectedUserResponse,
     DeactivateResponse,
     GetUserDto,
     GetUserPaginationDto,
@@ -23,7 +26,10 @@ import {
 } from "./types";
 
 export interface IUserService {
-    getConnectedUsers(filter: TIME_FILTER): Promise<ConnectedUserDto>;
+    getConnectedUsers(
+        orgId: string,
+        header: HeaderType
+    ): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(req: UpdateUserDto): Promise<UserResponse>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
@@ -35,7 +41,7 @@ export interface IUserService {
         orgId: string,
         req: AddUserDto,
         header: HeaderType
-    ): Promise<AddUserResponse>;
+    ): Promise<AddUserResponse | null>;
     deleteUser(
         orgId: string,
         userId: string,
@@ -44,7 +50,8 @@ export interface IUserService {
 }
 
 export interface IUserMapper {
-    connectedUsersDtoToDto(res: ConnectedUserResponse): ConnectedUserDto;
+    dtoToAddUserDto(res: AddUserServiceRes): AddUserResponse | null;
+    connectedUsersDtoToDto(res: MetricServiceRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];

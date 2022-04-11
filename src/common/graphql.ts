@@ -1,8 +1,8 @@
 import "reflect-metadata";
 
 export const GET_CONNECTED_USERS_QUERY = `
-    query getUsers($data:TIME_FILTER!) {
-        getConnectedUsers(filter:$data) {
+    query getUsers($orgId: String!, $data: TIME_FILTER!) {
+        getConnectedUsers(filter: $data, orgId: $orgId) {
             totalUser
         }
     }

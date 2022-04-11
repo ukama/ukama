@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from "type-graphql";
 import { PaginationResponse } from "../../common/types";
-import { ORG_NODE_STATE } from "../../constants";
+import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 
 @ObjectType()
 export class NodeDto {
@@ -8,7 +8,7 @@ export class NodeDto {
     id: string;
 
     @Field()
-    title: string;
+    name: string;
 
     @Field()
     type: string;
@@ -68,7 +68,16 @@ export class NodeResponse {
 @ObjectType()
 export class AddNodeResponse {
     @Field()
-    success: boolean;
+    nodeId: string;
+
+    @Field()
+    name: string;
+
+    @Field(() => ORG_NODE_STATE)
+    state: ORG_NODE_STATE;
+
+    @Field(() => NODE_TYPE)
+    type: NODE_TYPE;
 }
 
 @InputType()
@@ -77,25 +86,22 @@ export class AddNodeDto {
     name: string;
 
     @Field()
-    serialNo: string;
+    nodeId: string;
 
     @Field()
-    securityCode: string;
+    orgId: string;
 }
 
 @InputType()
 export class UpdateNodeDto {
     @Field()
-    id: string;
+    orgId: string;
 
-    @Field({ nullable: true })
+    @Field()
+    nodeId: string;
+
+    @Field()
     name: string;
-
-    @Field({ nullable: true })
-    serialNo: string;
-
-    @Field({ nullable: true })
-    securityCode: string;
 }
 
 @ObjectType()
@@ -146,7 +152,7 @@ export class OrgNodeResponse {
 @ObjectType()
 export class OrgNodeResponseDto {
     @Field()
-    orgName: string;
+    orgId: string;
 
     @Field(() => [NodeDto])
     nodes: NodeDto[];

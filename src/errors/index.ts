@@ -20,16 +20,16 @@ export const axiosErrorHandler = (error: any): ErrorType => {
     if (error.response) {
         // The request was made and the server responded with a status code
         if (error.response.data) {
-            res = {
-                code: error.response.status,
-                message: error.response.data.details
-                    ? error.response.data.details
-                    : error.response.data.message,
-            };
-        } else {
-            res = {
+            return {
                 code: error.response.status,
                 message: error.response.statusText,
+                description: error.response.data.error,
+            };
+        } else {
+            return {
+                code: error.response.status,
+                message: error.response.statusText,
+                description: "",
             };
         }
     } else if (error.request) {
@@ -51,6 +51,6 @@ export const axiosErrorHandler = (error: any): ErrorType => {
 };
 
 export const checkError = (error: any): boolean => {
-    if (error.code || error.message) return true;
+    if (error.code || error.message || error.description) return true;
     return false;
 };

@@ -1,8 +1,10 @@
-import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
 import { AddNodeDto, AddNodeResponse } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { getHeaders } from "../../../common";
 
 @Service()
 @Resolver()
@@ -13,8 +15,9 @@ export class AddNodeResolver {
     @UseMiddleware(Authentication)
     async addNode(
         @Arg("data")
-        req: AddNodeDto
+        req: AddNodeDto,
+        @Ctx() ctx: Context
     ): Promise<AddNodeResponse | null> {
-        return this.nodeService.addNode(req);
+        return this.nodeService.addNode(req, getHeaders(ctx));
     }
 }

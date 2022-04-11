@@ -6,11 +6,11 @@ import {
     NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
-    UpdateNodeResponse,
     MetricDto,
     NodeAppsVersionLogsResponse,
     NodeAppResponse,
     MetricRes,
+    OrgNodeDto,
 } from "./types";
 import { INodeService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -49,23 +49,35 @@ export class NodeService implements INodeService {
         };
     };
 
-    addNode = async (req: AddNodeDto): Promise<AddNodeResponse> => {
+    addNode = async (
+        req: AddNodeDto,
+        header: HeaderType
+    ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_ADD_NODE,
-            body: req,
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
+            headers: header,
+            body: {
+                name: req.name,
+            },
         });
         if (checkError(res)) throw new Error(res.message);
-        return res.data;
+        return res;
     };
-    updateNode = async (req: UpdateNodeDto): Promise<UpdateNodeResponse> => {
+    updateNode = async (
+        req: UpdateNodeDto,
+        header: HeaderType
+    ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_UPDATE_NODE,
-            body: req,
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
+            headers: header,
+            body: {
+                name: req.name,
+            },
         });
         if (checkError(res)) throw new Error(res.message);
-        return res.data;
+        return res;
     };
     deleteNode = async (id: string): Promise<DeactivateResponse> => {
         const res = await catchAsyncIOMethod({

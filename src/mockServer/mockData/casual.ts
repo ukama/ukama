@@ -78,7 +78,7 @@ const node = (): NodeDto => {
     return {
         type: "TOWER",
         id: defaultCasual._uuid(),
-        title: defaultCasual._title(),
+        name: defaultCasual._title(),
         description: `${defaultCasual.random_value(NODE_TYPE)} node`,
         status: defaultCasual.random_value(ORG_NODE_STATE),
         totalUser: defaultCasual.integer(1, 99),

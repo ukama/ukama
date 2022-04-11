@@ -27,7 +27,6 @@ class NodeMapper implements INodeMapper {
         orgId: string,
         req: OrgNodeResponse
     ): OrgNodeResponseDto => {
-        const orgName = req.orgName ? req.orgName : orgId;
         let nodesObj;
         let activeNodes = 0;
         const nodes: NodeDto[] = [];
@@ -42,7 +41,7 @@ class NodeMapper implements INodeMapper {
                     id: node.nodeId,
                     status: node.state,
                     type: node.type as NODE_TYPE,
-                    title: node.name,
+                    name: node.name,
                 });
                 nodes.push(nodeObj);
             });
@@ -51,7 +50,7 @@ class NodeMapper implements INodeMapper {
             nodes.push(nodesObj);
         }
         const totalNodes = nodes.length;
-        return { orgName, nodes, activeNodes, totalNodes };
+        return { orgId, nodes, activeNodes, totalNodes };
     };
 
     dtoToMetricsDto = (res: OrgMetricValueDto[]): MetricDto[] => {
@@ -68,12 +67,12 @@ class NodeMapper implements INodeMapper {
 
     private getNode = ({
         id = defaultCasual._uuid(),
-        title = defaultCasual._title(),
+        name = defaultCasual._title(),
         status = defaultCasual.random_value(ORG_NODE_STATE),
         type = NODE_TYPE.TOWER,
     }: {
         id?: string;
-        title?: string;
+        name?: string;
         status?: ORG_NODE_STATE;
         type?: NODE_TYPE;
     }): NodeDto => {
@@ -81,7 +80,7 @@ class NodeMapper implements INodeMapper {
             id: id,
             type: type,
             status: status,
-            title: title ? title : defaultCasual._title(),
+            name: name ? name : defaultCasual._title(),
             description: `${type} node`,
             totalUser: defaultCasual.integer(1, 99),
             isUpdateAvailable: Math.random() < 0.7,
