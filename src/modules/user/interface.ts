@@ -1,7 +1,7 @@
 import {
     HeaderType,
-    MetricServiceRes,
     PaginationDto,
+    MetricServiceRes,
 } from "../../common/types";
 import {
     ActivateUserDto,
