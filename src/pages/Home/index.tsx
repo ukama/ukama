@@ -66,7 +66,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        uptime: null,
+        temperaturetrx: null,
     });
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
@@ -78,6 +78,7 @@ const Home = () => {
         subscribeToMore: subscribeToLatestConnectedUsers,
     } = useGetConnectedUsersQuery({
         variables: {
+            orgId: orgId,
             filter: userStatusFilter,
         },
     });
@@ -138,7 +139,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -154,7 +155,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                uptime: null,
+                temperaturetrx: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -168,7 +169,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -395,7 +396,7 @@ const Home = () => {
 
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 3 }}>
                 <Grid xs={12} item>
                     <NetworkStatus
                         handleAddNode={handleAddNode}

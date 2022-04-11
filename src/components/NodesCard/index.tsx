@@ -13,6 +13,7 @@ import {
     Tooltip,
 } from "@mui/material";
 import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
+import { Node_Type } from "../../generated";
 
 const CpuIcon = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -35,6 +36,12 @@ const Line = styled(Divider)(() => ({
     background: "rgba(255, 255, 255, 0.12)",
 }));
 
+const NODE_IMAGES = {
+    TOWER: "https://i.ibb.co/qRRFz9j/tower-node.png",
+    AMPLIFIER: "https://i.ibb.co/NKtrHzG/amplifier-node.png",
+    HOME: "https://i.ibb.co/G0gqqb5/home-node.png",
+};
+
 const IconStyle = {
     display: "flex",
     alignItems: "center",
@@ -43,6 +50,7 @@ const IconStyle = {
 
 type NodeCardProps = {
     id: string;
+    type: Node_Type;
     title: string;
     users?: number;
     loading?: boolean;
@@ -56,6 +64,7 @@ type NodeCardProps = {
 
 const NodeCard = ({
     id,
+    type,
     title,
     users,
     subTitle,
@@ -74,13 +83,13 @@ const NodeCard = ({
             isLoading={loading}
             variant="rectangular"
             width={218}
-            height={210}
+            height={216}
         >
             <Card
                 variant="outlined"
                 sx={{
                     width: "218px",
-                    height: "210px",
+                    height: "216px",
                     borderRadius: "10px",
                     justifyContent: "center",
                     padding: "15px 18px 8px 18px",
@@ -137,12 +146,16 @@ const NodeCard = ({
                         <Typography variant="caption">{subTitle}</Typography>
                     </Grid>
 
-                    <Grid item xs={12} sx={{ ...IconStyle, py: 1 }}>
+                    <Grid
+                        item
+                        xs={12}
+                        minHeight={"92px"}
+                        sx={{ ...IconStyle, py: 1 }}
+                    >
                         <img
-                            src="https://ovalloqu.sirv.com/Images/node.png"
-                            width="86"
-                            height="76"
+                            src={NODE_IMAGES[type]}
                             alt="node-img"
+                            style={{ maxWidth: "180px", maxHeight: "78px" }}
                         />
                     </Grid>
                     <Grid item xs={12} mb={0.8}>
@@ -162,9 +175,14 @@ const NodeCard = ({
                             display="flex"
                             alignSelf="end"
                             pt="0px !important"
+                            alignItems={"flex-end"}
                         >
                             <UsersIcon sx={{ width: "16px", height: "16px" }} />
-                            <Typography variant="caption" pl="8px">
+                            <Typography
+                                pl="8px"
+                                variant="caption"
+                                lineHeight={"14px"}
+                            >
                                 {users}
                             </Typography>
                         </Grid>

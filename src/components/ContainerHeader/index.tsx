@@ -44,12 +44,16 @@ const ContainerHeader = ({
     }, [currentSearchValue]);
 
     return (
-        <Grid container spacing={2} justifyContent="space-between">
-            <Grid item xs={12} md={4}>
+        <Grid
+            container
+            spacing={{ xs: 2, md: 0 }}
+            justifyContent="space-between"
+        >
+            <Grid item xs={6} md={showSearchBox ? 7 : 9}>
                 <Stack
-                    spacing={2}
                     direction="row"
-                    sx={{ alignItems: "baseline" }}
+                    alignItems="center"
+                    spacing={{ xs: 1, md: 2 }}
                 >
                     <Typography variant="h6">{title}</Typography>
                     {stats && (
@@ -66,12 +70,81 @@ const ContainerHeader = ({
 
             <Grid
                 item
-                md={8}
+                xs={6}
+                md={0}
+                justifyContent="flex-end"
+                display={{
+                    xs: showButton ? "flex" : "none",
+                    md: "none",
+                }}
+            >
+                <Button
+                    sx={{
+                        px: { xs: 2, md: 4 },
+                        width: { xs: "100%", md: "fit-content" },
+                    }}
+                    size={buttonSize}
+                    variant="contained"
+                    onClick={() => handleButtonAction()}
+                >
+                    {buttonTitle}
+                </Button>
+            </Grid>
+
+            <Grid
+                item
                 xs={12}
+                md={3.2}
+                justifyContent={"flex-end"}
+                display={showSearchBox ? "flex" : "none"}
+            >
+                <StyledInputBase
+                    placeholder="Search…"
+                    value={currentSearchValue}
+                    onChange={(e: any) => setCurrentSearchValue(e.target.value)}
+                    sx={{
+                        height: "42px",
+                        borderRadius: 2,
+                        minWidth: { xs: "100%", md: "300px" },
+                        border: `1px solid ${colors.silver}`,
+                        padding: "4px 8px 4px 12px !important",
+                    }}
+                    endAdornment={
+                        <SearchIcon fontSize="small" color="primary" />
+                    }
+                />
+            </Grid>
+
+            <Grid
+                item
+                xs={0}
+                md={showSearchBox ? 1.8 : 3}
+                justifyContent="flex-end"
+                display={{
+                    xs: "none",
+                    md: showButton ? "flex" : "none",
+                }}
+            >
+                <Button
+                    sx={{
+                        px: { xs: 2, md: 4 },
+                        width: { xs: "100%", md: "fit-content" },
+                    }}
+                    size={buttonSize}
+                    variant="contained"
+                    onClick={() => handleButtonAction()}
+                >
+                    {buttonTitle}
+                </Button>
+            </Grid>
+
+            {/* <Grid
+                item
                 container
                 spacing={3}
                 alignItems="center"
                 justifyContent="flex-end"
+                xs={showSearchBox ? 12 : 8}
             >
                 {showSearchBox && (
                     <Grid item>
@@ -109,7 +182,7 @@ const ContainerHeader = ({
                         </Button>
                     </Grid>
                 )}
-            </Grid>
+            </Grid> */}
         </Grid>
     );
 };

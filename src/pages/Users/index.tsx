@@ -95,12 +95,13 @@ const User = () => {
                             title="My Users"
                             showButton={true}
                             showSearchBox={true}
+                            buttonSize="medium"
                             buttonTitle="INSTALL SIMS"
                             handleSearchChange={getSearchValue}
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />
-                        <Grid container spacing={2} mt={4}>
+                        <Grid container spacing={2} mt={{ xs: 2, md: 4 }}>
                             {users.map((item: GetUsersDto) => (
                                 <Grid key={item.id} item xs={12} md={6} lg={3}>
                                     <Card

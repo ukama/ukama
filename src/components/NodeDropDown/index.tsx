@@ -54,11 +54,11 @@ const NodeDropDown = ({
         const { target } = e;
         target.value &&
             onNodeSelected(
-                nodes.find((item: NodeDto) => item.title === target.value)
+                nodes.find((item: NodeDto) => item.name === target.value)
             );
     };
     return (
-        <LoadingWrapper isLoading={loading} height={40} width={"30%"}>
+        <LoadingWrapper isLoading={loading} height={40}>
             <Stack direction={"row"} spacing={1}>
                 {selectedNode && (
                     <Box component="div" display={"flex"} alignItems={"center"}>
@@ -69,7 +69,7 @@ const NodeDropDown = ({
                     disableUnderline
                     variant="standard"
                     onChange={handleChange}
-                    value={selectedNode?.title}
+                    value={selectedNode?.name}
                     SelectDisplayProps={{
                         style: {
                             fontWeight: 600,
@@ -101,10 +101,10 @@ const NodeDropDown = ({
                     className={classes.selectStyle}
                     renderValue={selected => selected}
                 >
-                    {nodes.map(({ id, title }) => (
+                    {nodes.map(({ id, name }) => (
                         <MenuItem
                             key={id}
-                            value={title}
+                            value={name}
                             sx={{
                                 m: 0,
                                 p: "6px 16px",
@@ -122,7 +122,7 @@ const NodeDropDown = ({
                                 },
                             }}
                         >
-                            <Typography variant="body1">{title}</Typography>
+                            <Typography variant="body1">{name}</Typography>
                         </MenuItem>
                     ))}
                     <Divider />

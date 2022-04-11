@@ -16,7 +16,11 @@ const NodeContainer = ({
     return (
         <Box
             component="div"
-            sx={{ display: "flex", minHeight: "246px", alignItems: "center" }}
+            sx={{
+                display: "flex",
+                minHeight: "246px",
+                alignItems: "center",
+            }}
         >
             {items.length > 0 ? (
                 <NodeSlider

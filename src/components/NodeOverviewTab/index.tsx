@@ -141,7 +141,7 @@ const NodeOverviewTab = ({
                     <NodeDetailsCard
                         getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
-                        nodeTitle={selectedNode?.title || "HOME"}
+                        nodeTitle={selectedNode?.name || "HOME"}
                         handleUpdateNode={handleUpdateNode}
                         isUpdateAvailable={isUpdateAvailable}
                     />
