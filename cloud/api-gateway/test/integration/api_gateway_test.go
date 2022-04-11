@@ -112,7 +112,7 @@ func Test_RegistryApi(t *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			SetBody(fmt.Sprintf("{ 'name':'%s' } ", nodeName)).
+			SetBody(map[string]string{"name": nodeName}).
 			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {
@@ -123,11 +123,11 @@ func Test_RegistryApi(t *testing.T) {
 	})
 
 	t.Run("UpdateNode", func(tt *testing.T) {
-		nodeName := time.Now().Format(time.RFC3339) + "testNode"
+		nodeName := "updated-testNode"
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
-			SetBody(fmt.Sprintf("{ 'name':'updated-%s' } ", nodeName)).
+			SetBody(map[string]string{"name": nodeName}).
 			Put(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + nodeId)
 
 		if assert.NoError(t, err) {

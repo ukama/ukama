@@ -15,6 +15,9 @@ type UserRepo interface {
 	Delete(uuid uuid.UUID) error
 	GetByOrg(orgName string) ([]User, error)
 	IsOverTheLimit(orgName string) (bool, error)
+	// Update user modifiable fields
+	// user ID here is used as identifier of a user that should be updated
+	Update(user *User) (*User, error)
 }
 
 type userRepo struct {
@@ -119,4 +122,12 @@ func (u *userRepo) IsOverTheLimit(org string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (u *userRepo) Update(user *User) (*User, error) {
+	d := u.Db.GetGormDb().Where("uuid = ?", user.Uuid).UpdateColumns(user)
+	if d.Error != nil {
+		return nil, d.Error
+	}
+	return user, nil
 }

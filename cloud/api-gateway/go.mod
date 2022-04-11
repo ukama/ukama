@@ -21,7 +21,7 @@ require (
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/cloud/hss v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukamaX/cloud/hss v0.0.0-20220407150637-6988f3e0f2e5
 	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220405175331-d5edd9f340a6
 	github.com/ukama/ukamaX/common v0.0.0-20220405175331-d5edd9f340a6
 	github.com/wI2L/fizz v0.18.1
@@ -80,7 +80,8 @@ require (
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect

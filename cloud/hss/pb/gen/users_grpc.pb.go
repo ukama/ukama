@@ -27,11 +27,13 @@ type UserServiceClient interface {
 	// adds new user with ICCID. Designed for internal use only.
 	AddInternal(ctx context.Context, in *AddInternalRequest, opts ...grpc.CallOption) (*AddInternalResponse, error)
 	// deletes user and IMSI that is assigend to him
-	Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 	// lists all users for organization
-	List(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error)
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	// Get user info
-	Get(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	// Get user info
+	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	// Generate sim token from ICCID
 	GenerateSimToken(ctx context.Context, in *GenerateSimTokenRequest, opts ...grpc.CallOption) (*GenerateSimTokenResponse, error)
 }
@@ -62,8 +64,8 @@ func (c *userServiceClient) AddInternal(ctx context.Context, in *AddInternalRequ
 	return out, nil
 }
 
-func (c *userServiceClient) Delete(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
-	out := new(DeleteUserResponse)
+func (c *userServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
 	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -71,8 +73,8 @@ func (c *userServiceClient) Delete(ctx context.Context, in *DeleteUserRequest, o
 	return out, nil
 }
 
-func (c *userServiceClient) List(ctx context.Context, in *ListUsersRequest, opts ...grpc.CallOption) (*ListUsersResponse, error) {
-	out := new(ListUsersResponse)
+func (c *userServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	out := new(ListResponse)
 	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/List", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -80,9 +82,18 @@ func (c *userServiceClient) List(ctx context.Context, in *ListUsersRequest, opts
 	return out, nil
 }
 
-func (c *userServiceClient) Get(ctx context.Context, in *GetUserRequest, opts ...grpc.CallOption) (*GetUserResponse, error) {
-	out := new(GetUserResponse)
+func (c *userServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
 	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/Get", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userServiceClient) Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error) {
+	out := new(UpdateResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/Update", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +118,13 @@ type UserServiceServer interface {
 	// adds new user with ICCID. Designed for internal use only.
 	AddInternal(context.Context, *AddInternalRequest) (*AddInternalResponse, error)
 	// deletes user and IMSI that is assigend to him
-	Delete(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	// lists all users for organization
-	List(context.Context, *ListUsersRequest) (*ListUsersResponse, error)
+	List(context.Context, *ListRequest) (*ListResponse, error)
 	// Get user info
-	Get(context.Context, *GetUserRequest) (*GetUserResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	// Get user info
+	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	// Generate sim token from ICCID
 	GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
@@ -127,14 +140,17 @@ func (UnimplementedUserServiceServer) Add(context.Context, *AddRequest) (*AddRes
 func (UnimplementedUserServiceServer) AddInternal(context.Context, *AddInternalRequest) (*AddInternalResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddInternal not implemented")
 }
-func (UnimplementedUserServiceServer) Delete(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+func (UnimplementedUserServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
-func (UnimplementedUserServiceServer) List(context.Context, *ListUsersRequest) (*ListUsersResponse, error) {
+func (UnimplementedUserServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
 }
-func (UnimplementedUserServiceServer) Get(context.Context, *GetUserRequest) (*GetUserResponse, error) {
+func (UnimplementedUserServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
+}
+func (UnimplementedUserServiceServer) Update(context.Context, *UpdateRequest) (*UpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedUserServiceServer) GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateSimToken not implemented")
@@ -189,7 +205,7 @@ func _UserService_AddInternal_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteUserRequest)
+	in := new(DeleteRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -201,13 +217,13 @@ func _UserService_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: "/ukama.hss.v1.UserService/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).Delete(ctx, req.(*DeleteUserRequest))
+		return srv.(UserServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListUsersRequest)
+	in := new(ListRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -219,13 +235,13 @@ func _UserService_List_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/ukama.hss.v1.UserService/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).List(ctx, req.(*ListUsersRequest))
+		return srv.(UserServiceServer).List(ctx, req.(*ListRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserRequest)
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -237,7 +253,25 @@ func _UserService_Get_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/ukama.hss.v1.UserService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).Get(ctx, req.(*GetUserRequest))
+		return srv.(UserServiceServer).Get(ctx, req.(*GetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.hss.v1.UserService/Update",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).Update(ctx, req.(*UpdateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -286,6 +320,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Get",
 			Handler:    _UserService_Get_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _UserService_Update_Handler,
 		},
 		{
 			MethodName: "GenerateSimToken",

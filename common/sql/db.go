@@ -51,6 +51,9 @@ func NewDbFromGorm(gormDb *gorm.DB, debugMode bool) Db {
 
 
 func (d *db) GetGormDb() *gorm.DB {
+	if d.gorm == nil{
+		panic("Database is not connected. Make sure you call Connect() first")
+	}
 	return d.gorm
 }
 

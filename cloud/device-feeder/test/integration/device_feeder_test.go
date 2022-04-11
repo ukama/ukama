@@ -126,6 +126,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 	if err != nil {
 		log.Warning("error adding org: ", err)
 	}
+	logrus.Infoln("Added org ", orgName)
 
 	nodes := []string{}
 	for i := 0; i < testConf.DevicesCount; i++ {

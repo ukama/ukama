@@ -103,11 +103,12 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("Delete", func(tt *testing.T) {
 		_, err := c.Delete(ctx, &pb.DeleteRequest{NodeId: nodeId})
-		assert.NoError(t, err)
-		_, err = c.Get(ctx, &pb.GetRequest{NodeId: nodeId})
-		e, ok := status.FromError(err)
-		assert.True(tt, ok)
-		assert.Equal(tt, codes.NotFound, e.Code())
+		if assert.NoError(t, err) {
+			_, err := c.Get(ctx, &pb.GetRequest{NodeId: nodeId})
+			e, ok := status.FromError(err)
+			assert.True(tt, ok)
+			assert.Equal(tt, codes.NotFound.String(), e.Code().String())
+		}
 	})
 }
 

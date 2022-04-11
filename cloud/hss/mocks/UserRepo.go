@@ -119,3 +119,26 @@ func (_m *UserRepo) IsOverTheLimit(orgName string) (bool, error) {
 
 	return r0, r1
 }
+
+// Update provides a mock function with given fields: user
+func (_m *UserRepo) Update(user *db.User) (*db.User, error) {
+	ret := _m.Called(user)
+
+	var r0 *db.User
+	if rf, ok := ret.Get(0).(func(*db.User) *db.User); ok {
+		r0 = rf(user)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.User)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(*db.User) error); ok {
+		r1 = rf(user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

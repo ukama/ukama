@@ -61,20 +61,20 @@ func (_m *UserServiceServer) AddInternal(_a0 context.Context, _a1 *gen.AddIntern
 }
 
 // Delete provides a mock function with given fields: _a0, _a1
-func (_m *UserServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteUserRequest) (*gen.DeleteUserResponse, error) {
+func (_m *UserServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.DeleteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.DeleteUserResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteUserRequest) *gen.DeleteUserResponse); ok {
+	var r0 *gen.DeleteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) *gen.DeleteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteUserResponse)
+			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteUserRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -107,20 +107,20 @@ func (_m *UserServiceServer) GenerateSimToken(_a0 context.Context, _a1 *gen.Gene
 }
 
 // Get provides a mock function with given fields: _a0, _a1
-func (_m *UserServiceServer) Get(_a0 context.Context, _a1 *gen.GetUserRequest) (*gen.GetUserResponse, error) {
+func (_m *UserServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetUserResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetUserRequest) *gen.GetUserResponse); ok {
+	var r0 *gen.GetResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.GetResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetUserResponse)
+			r0 = ret.Get(0).(*gen.GetResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetUserRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -130,20 +130,43 @@ func (_m *UserServiceServer) Get(_a0 context.Context, _a1 *gen.GetUserRequest) (
 }
 
 // List provides a mock function with given fields: _a0, _a1
-func (_m *UserServiceServer) List(_a0 context.Context, _a1 *gen.ListUsersRequest) (*gen.ListUsersResponse, error) {
+func (_m *UserServiceServer) List(_a0 context.Context, _a1 *gen.ListRequest) (*gen.ListResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.ListUsersResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListUsersRequest) *gen.ListUsersResponse); ok {
+	var r0 *gen.ListResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ListUsersResponse)
+			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListUsersRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *UserServiceServer) Update(_a0 context.Context, _a1 *gen.UpdateRequest) (*gen.UpdateResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.UpdateResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateRequest) *gen.UpdateResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

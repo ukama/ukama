@@ -69,6 +69,7 @@ func (n *Nns) Get(c context.Context, nodeId string) (ip string, err error) {
 }
 
 func (n *Nns) getFromEtcd(c context.Context, nodeId string) (string, error) {
+	logrus.Infof("Getting ip from etcd for nodeId: %s", nodeId)
 	val, err := n.etcd.Get(c, nodeId)
 	if err != nil {
 		return "", fmt.Errorf("failed to get record from db. Error: %v", err)
@@ -127,12 +128,13 @@ func (n *Nns) Delete(ctx context.Context, nodeId string) error {
 		return err
 	}
 
-	_, err = n.etcd.Delete(ctx, nd.StringLowercase())
+	delete(n.cache, formatNodeIdKey(nodeId))
+
+	_, err = n.etcd.Delete(ctx, formatNodeIdKey(nd.StringLowercase()))
 	if err != nil {
 		return fmt.Errorf("failed to delete record from db. Error: %v", err)
 	}
 
-	delete(n.cache, nodeId)
 	return nil
 }
 

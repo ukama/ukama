@@ -14,8 +14,9 @@ type Config struct {
 }
 
 type SimManager struct {
-	Host string
-	Name string
+	Host     string
+	Name     string
+	Disabled bool
 }
 
 func NewConfig() *Config {
@@ -35,8 +36,9 @@ func NewConfig() *Config {
 			Port: 9090,
 		},
 		SimManager: SimManager{
-			Host: "localhost:9090",
-			Name: "SimManager",
+			Host:     "localhost:9090",
+			Name:     "SimManager",
+			Disabled: false,
 		},
 		SimTokenKey: "11111111111111111111111111111111",
 	}

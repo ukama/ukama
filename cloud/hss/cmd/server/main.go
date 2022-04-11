@@ -21,6 +21,7 @@ import (
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	ugrpc "github.com/ukama/ukamaX/common/grpc"
+
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc"
 )
@@ -81,6 +82,11 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func newSimManagerClient() (client pbclient.SimManagerServiceClient, connection io.Closer) {
+	var conn *grpc.ClientConn
+	if serviceConfig.SimManager.Disabled {
+		return &pkg.SimManagerStub{}, &pkg.CloserStub{}
+	}
+
 	// connect to Grpc service
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()

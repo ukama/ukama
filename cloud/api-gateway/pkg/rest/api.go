@@ -10,6 +10,14 @@ type UserRequest struct {
 	Phone    string `json:"phone,omitempty"`
 }
 
+type UpdateUserRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
+	Name    string `json:"name,omitempty"`
+	Email   string `json:"email,omitempty"`
+	Phone   string `json:"phone,omitempty"`
+}
+
 type NodesList struct {
 	OrgName string  `json:"orgName"`
 	Nodes   []*Node `json:"nodes"`

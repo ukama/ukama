@@ -17,6 +17,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const uuidParsingError = "Error parsing UUID"
+
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 	userRepo       db.UserRepo
@@ -140,10 +142,10 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 	return user, nil
 }
 
-func (u *UserService) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	uuid, err := uuid2.Parse(req.Uuid)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Error parsing UUID")
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
 	err = u.imsiRepo.DeleteByUserId(uuid, func(tx *gorm.DB) error {
@@ -163,16 +165,16 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteUserRequest) (*p
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
-	return &pb.DeleteUserResponse{}, nil
+	return &pb.DeleteResponse{}, nil
 }
 
-func (u *UserService) List(ctx context.Context, req *pb.ListUsersRequest) (*pb.ListUsersResponse, error) {
+func (u *UserService) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	users, err := u.userRepo.GetByOrg(req.Org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
-	resp := &pb.ListUsersResponse{
+	resp := &pb.ListResponse{
 		Org:   req.Org,
 		Users: dbusersToPbUsers(users),
 	}
@@ -207,10 +209,10 @@ func (u *UserService) GenerateSimToken(ctx context.Context, in *pb.GenerateSimTo
 
 }
 
-func (u *UserService) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	uuid, err := uuid2.Parse(req.Uuid)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Error parsing UUID")
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 	user, err := u.userRepo.Get(uuid)
 	if err != nil {
@@ -222,9 +224,31 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 	if simCard != nil {
 		u.pullSimCardStatuses(ctx, simCard)
 	}
-	return &pb.GetUserResponse{
+	return &pb.GetResponse{
 		User: dbUsersToPbUsers(user),
 		Sim:  simCard,
+	}, nil
+}
+
+func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
+	uuid, err := uuid2.Parse(req.Uuid)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	node, err := u.userRepo.Update(&db.User{
+		Uuid:  uuid,
+		Name:  req.User.Name,
+		Email: req.User.Email,
+		Phone: req.User.Phone,
+	})
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	return &pb.UpdateResponse{
+		User: dbUsersToPbUsers(node),
 	}, nil
 }
 

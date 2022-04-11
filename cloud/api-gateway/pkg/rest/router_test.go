@@ -286,9 +286,9 @@ func Test_HssMethods(t *testing.T) {
 
 	t.Run("DeleteUser", func(t *testing.T) {
 		m = hssmocks.UserServiceClient{}
-		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteUserRequest) bool {
+		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteRequest) bool {
 			return r.Uuid == userUuid
-		})).Return(&hsspb.DeleteUserResponse{}, nil)
+		})).Return(&hsspb.DeleteResponse{}, nil)
 		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
@@ -303,9 +303,9 @@ func Test_HssMethods(t *testing.T) {
 
 	t.Run("ListUser", func(t *testing.T) {
 		m = hssmocks.UserServiceClient{}
-		m.On("List", mock.Anything, mock.MatchedBy(func(r *hsspb.ListUsersRequest) bool {
+		m.On("List", mock.Anything, mock.MatchedBy(func(r *hsspb.ListRequest) bool {
 			return r.Org == orgName
-		})).Return(&hsspb.ListUsersResponse{
+		})).Return(&hsspb.ListResponse{
 			Org: orgName,
 			Users: []*hsspb.User{
 				{

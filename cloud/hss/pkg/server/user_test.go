@@ -120,7 +120,7 @@ func Test_Add(t *testing.T) {
 		}
 	})
 
-	t.Run("WutDebugSimToken", func(tt *testing.T) {
+	t.Run("WithDebugSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		srv := NewUserService(userRepo, imsiRepo, simRepo, simProvider, simManager, "simManager")
 		// Act
@@ -137,4 +137,115 @@ func Test_Add(t *testing.T) {
 			simProvider.AssertExpectations(tt)
 		}
 	})
+}
+
+func Test_Validation(t *testing.T) {
+	const name = "nn"
+	tests := []struct {
+		name        string
+		user        *pb.User
+		expectErr   bool
+		errContains string
+	}{
+		{name: "emptyName",
+			user:        &pb.User{},
+			expectErr:   true,
+			errContains: "Name",
+		},
+		{name: "email",
+			user:        &pb.User{Email: "test_example.com", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+		{name: "emailNoTopLevelDomain",
+			user:        &pb.User{Email: "test@example", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+		{name: "emailNotRequired",
+			user:      &pb.User{Name: name},
+			expectErr: false,
+		},
+		{name: "emailIsEmpty",
+			user:        &pb.User{Email: "@example.com", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+
+		{name: "phone1",
+			user:      &pb.User{Phone: "(+351) 282 43 50 50", Name: name},
+			expectErr: false,
+		},
+		{name: "phone2",
+			user:      &pb.User{Phone: "90191919908", Name: name},
+			expectErr: false,
+		},
+
+		{name: "phone3",
+			user:      &pb.User{Phone: "555-8909", Name: name},
+			expectErr: false,
+		},
+		{name: "phone4",
+			user:      &pb.User{Phone: "001 6867684", Name: name},
+			expectErr: false,
+		},
+		{name: "phone5",
+			user:      &pb.User{Phone: "1 (234) 567-8901", Name: name},
+			expectErr: false,
+		},
+		{name: "phone6",
+			user:      &pb.User{Phone: "+1 34 567-8901", Name: name},
+			expectErr: false,
+		},
+		{name: "phoneEmpty",
+			user:      &pb.User{Name: name},
+			expectErr: false,
+		},
+
+		{name: "phoneErr",
+			user:        &pb.User{Phone: "sdfewr", Name: name},
+			expectErr:   true,
+			errContains: "phone number",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run("addRequest_"+test.name, func(tt *testing.T) {
+
+			// test add requeset
+			r := &pb.AddRequest{
+				Org:  testOrg,
+				User: test.user,
+			}
+			err := r.Validate()
+			assertValidationErr(tt, err, test.expectErr, test.errContains)
+		})
+	}
+
+	for _, test := range tests {
+		t.Run("updateRequest_"+test.name, func(tt *testing.T) {
+			// test update request
+			ru := &pb.UpdateRequest{
+				Uuid: uuid.NewString(),
+				User: &pb.UserAttributes{
+					Phone: test.user.Phone,
+					Email: test.user.Email,
+					Name:  test.user.Name,
+				},
+			}
+			err := ru.Validate()
+			assertValidationErr(tt, err, test.expectErr, test.errContains)
+		})
+	}
+
+}
+
+func assertValidationErr(t *testing.T, err error, expectErr bool, errContains string) {
+	if expectErr {
+		if assert.Error(t, err) {
+			assert.Contains(t, err.Error(), errContains)
+		}
+	} else {
+		assert.NoError(t, err)
+	}
 }

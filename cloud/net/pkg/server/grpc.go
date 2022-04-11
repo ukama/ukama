@@ -22,6 +22,7 @@ func NewNnsServer(nnsClient *pkg.Nns, nodeOrgMapping *pkg.NodeOrgMap) *NnsServer
 }
 
 func (n *NnsServer) Get(c context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	logrus.Infof("Getting ip for node %s", req.NodeId)
 	ip, err := n.nns.Get(c, req.GetNodeId())
 	if err != nil {
 		return nil, err
@@ -32,7 +33,6 @@ func (n *NnsServer) Get(c context.Context, req *pb.GetRequest) (*pb.GetResponse,
 }
 
 func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {
-
 	logrus.Infof("Seting Ip for: %s", req.GetNodeId())
 
 	err := n.nns.Set(c, req.GetNodeId(), req.GetIp())
@@ -49,6 +49,7 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 }
 
 func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListResponse, error) {
+	logrus.Infof("Listing all nodes")
 	nodes, err := n.nns.List(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get list of nodes. Error: %v", err)
@@ -70,6 +71,7 @@ func (n *NnsServer) List(ctx context.Context, in *pb.ListRequest) (*pb.ListRespo
 }
 
 func (n *NnsServer) Delete(ctx context.Context, in *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	logrus.Infof("Deleting Ip for: %s", in.GetNodeId())
 	err := n.nns.Delete(ctx, in.NodeId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to delete record from db. Error: %v", err)

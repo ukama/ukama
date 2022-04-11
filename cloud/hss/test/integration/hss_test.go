@@ -114,7 +114,7 @@ func Test_ImsiService(t *testing.T) {
 
 func Test_UserService(t *testing.T) {
 	if testConf.Iccid == "" {
-		assert.FailNow(t, "Missing ICCID")
+		assert.FailNow(t, "Missing ICCID. Set ICCID env var")
 	}
 
 	// One timeout for whole test
@@ -164,7 +164,7 @@ func Test_UserService(t *testing.T) {
 
 	// todo: test limit
 	t.Run("list", func(tt *testing.T) {
-		listResp, err := c.List(ctx, &pb.ListUsersRequest{
+		listResp, err := c.List(ctx, &pb.ListRequest{
 			Org: testOrg,
 		})
 
@@ -174,22 +174,44 @@ func Test_UserService(t *testing.T) {
 	})
 
 	t.Run("get", func(tt *testing.T) {
-		getResp, err := c.Get(ctx, &pb.GetUserRequest{Uuid: addResp.User.Uuid})
+		getResp, err := c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
 		if handleResponse(tt, err, getResp) {
 			assert.NotNil(tt, getResp.Sim)
 			assert.NotEqual(tt, getResp.Sim.Carrier.Status, pb.SimStatus_UNKNOWN)
 		}
 	})
 
+	t.Run("update ", func(tt *testing.T) {
+		_, err := c.Update(ctx, &pb.UpdateRequest{
+			Uuid: addResp.User.Uuid,
+			User: &pb.UserAttributes{
+				Name:  "changed",
+				Email: "changed@example.com",
+				Phone: "1231223132",
+			},
+		})
+		if !assert.NoError(tt, err) {
+			assert.FailNow(tt, "update test failed")
+			return
+		}
+
+		getResp, err := c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
+		if handleResponse(tt, err, getResp) {
+			assert.Equal(tt, "changed", getResp.User.Name)
+			assert.Equal(tt, "1231223132", getResp.User.Phone)
+			assert.Equal(tt, "changed@example.com", getResp.User.Email)
+		}
+	})
+
 	t.Run("Delete", func(tt *testing.T) {
-		getResp, err := c.Delete(ctx, &pb.DeleteUserRequest{Uuid: addResp.User.Uuid})
+		getResp, err := c.Delete(ctx, &pb.DeleteRequest{Uuid: addResp.User.Uuid})
 
 		if !handleResponse(tt, err, getResp) {
 			assert.FailNow(tt, "")
 		}
 
 		// make sure that user is deleted
-		listResp, err := c.List(ctx, &pb.ListUsersRequest{
+		listResp, err := c.List(ctx, &pb.ListRequest{
 			Org: testOrg,
 		})
 		if handleResponse(tt, err, listResp) {
