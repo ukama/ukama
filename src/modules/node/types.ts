@@ -8,7 +8,7 @@ export class NodeDto {
     id: string;
 
     @Field()
-    title: string;
+    name: string;
 
     @Field()
     type: string;
@@ -152,7 +152,7 @@ export class OrgNodeResponse {
 @ObjectType()
 export class OrgNodeResponseDto {
     @Field()
-    orgName: string;
+    orgId: string;
 
     @Field(() => [NodeDto])
     nodes: NodeDto[];
