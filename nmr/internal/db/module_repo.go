@@ -3,20 +3,21 @@ package db
 import (
 	"fmt"
 
-	"github.com/ukama/openIoR/services/common/ukama"
 	"github.com/ukama/ukamaX/common/sql"
 	"gorm.io/gorm/clause"
 )
 
 type ModuleRepo interface {
-	AddOrUpdateModule(module *Module) error
-	GetModule(moduleId ukama.NodeID) (*Module, error)
-	DeleteModule(moduleId ukama.NodeID) error
+	AddModule(module *Module) error
+	UpsertModule(Module *Module) error
+	UpdateNodeId(moduleId string, nodeId string) error
+	GetModule(moduleId string) (*Module, error)
+	DeleteModule(moduleId string) error
 	ListModules() (*[]Module, error)
-	UpdateModuleProdStatus(moduleId ukama.NodeID, status string, data []byte) error
-	UpdateModuleData(moduleId ukama.NodeID, field string, data []byte) error
-	GetModuleData(moduleId ukama.NodeID, field string) ([]byte, error)
-	DeleteBootstrapCert(ModuleId *ukama.NodeID) error
+	UpdateModuleProdStatus(moduleId string, status string, data []byte) error
+	UpdateModuleData(moduleId string, field string, data []byte) error
+	GetModuleData(moduleId string, field string) ([]byte, error)
+	DeleteBootstrapCert(ModuleId *string) error
 }
 
 type moduleRepo struct {
@@ -52,26 +53,48 @@ func NewModuleRepo(db sql.Db) *moduleRepo {
 	}
 }
 
-func (r *moduleRepo) AddOrUpdateModule(Module *Module) error {
+/* Only done when in mfg line when node Id is yet to be decided.
+TODO: Get better solutuion */
+func (r *moduleRepo) AddModule(module *Module) error {
+
+	//result := r.Db.GetGormDb().Select("module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data", "unit_id").Create(module)
+	result := r.Db.GetGormDb().Create(module)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
+/* Upsert is used when we know the node id */
+func (r *moduleRepo) UpsertModule(Module *Module) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_cert", "user_calib", "factory_calib", "user_config", "factory_config", "inventory_data"}),
+		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data"}),
 	}).Create(Module)
 	return d.Error
 }
 
-func (r *moduleRepo) GetModule(ModuleId ukama.NodeID) (*Module, error) {
+func (r *moduleRepo) GetModule(ModuleId string) (*Module, error) {
 	var Module Module
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Module, "module_id = ?", ModuleId.StringLowercase())
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Module, "module_id = ?", ModuleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &Module, nil
 }
 
+func (r *moduleRepo) UpdateNodeId(moduleId string, nodeId string) error {
+	module := Module{}
+	result := r.Db.GetGormDb().Model(&module).Where("module_id = ?", moduleId).UpdateColumn("unit_id", nodeId)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}
+
 /* Delete Module  */
-func (r *moduleRepo) DeleteModule(ModuleId ukama.NodeID) error {
-	result := r.Db.GetGormDb().Where("module_id = ?", ModuleId).Delete(&Module{})
+func (r *moduleRepo) DeleteModule(moduleId string) error {
+	result := r.Db.GetGormDb().Where("module_id = ?", moduleId).Delete(&Module{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -82,7 +105,7 @@ func (r *moduleRepo) DeleteModule(ModuleId ukama.NodeID) error {
 func (r *moduleRepo) ListModules() (*[]Module, error) {
 	var Modules []Module
 
-	result := r.Db.GetGormDb().Find(&Modules)
+	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&Modules)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -95,7 +118,7 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 }
 
 /* Update Production Status  Data */
-func (r *moduleRepo) UpdateModuleProdStatus(moduleId ukama.NodeID, status string, data []byte) error {
+func (r *moduleRepo) UpdateModuleProdStatus(moduleId string, status string, data []byte) error {
 	module := Module{
 		ModuleID:       moduleId,
 		ProdTestStatus: status,
@@ -109,7 +132,7 @@ func (r *moduleRepo) UpdateModuleProdStatus(moduleId ukama.NodeID, status string
 }
 
 /* Update module data */
-func (r *moduleRepo) UpdateModuleData(moduleId ukama.NodeID, field string, data []byte) error {
+func (r *moduleRepo) UpdateModuleData(moduleId string, field string, data []byte) error {
 
 	columnName, err := GetModuleDataFieldName(field)
 	if err != nil {
@@ -124,7 +147,7 @@ func (r *moduleRepo) UpdateModuleData(moduleId ukama.NodeID, field string, data 
 }
 
 /* Get Module data */
-func (r *moduleRepo) GetModuleData(moduleId ukama.NodeID, field string) ([]byte, error) {
+func (r *moduleRepo) GetModuleData(moduleId string, field string) ([]byte, error) {
 	var data []byte
 
 	columnName, err := GetModuleDataFieldName(field)
@@ -132,7 +155,7 @@ func (r *moduleRepo) GetModuleData(moduleId ukama.NodeID, field string) ([]byte,
 		return nil, err
 	}
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).Select(*columnName).First(data, "module_id = ?", moduleId.StringLowercase())
+	result := r.Db.GetGormDb().Preload(clause.Associations).Select(*columnName).First(data, "module_id = ?", moduleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -149,7 +172,7 @@ func (r *moduleRepo) UpdateModuleBootstrapCert(moduleData *Module) error {
 }
 
 /* Update Production Bootstrap Cert*/
-func (r *moduleRepo) DeleteBootstrapCert(ModuleId *ukama.NodeID) error {
+func (r *moduleRepo) DeleteBootstrapCert(ModuleId *string) error {
 	result := r.Db.GetGormDb().Where("module_id = ?", ModuleId).UpdateColumn("boostrap_cert", nil)
 	if result.Error != nil {
 		return result.Error

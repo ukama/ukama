@@ -71,24 +71,25 @@ type ReqUpdateNodeProdStatus struct {
 
 /* Modules */
 type ReqAddOrUpdateModule struct {
-	ModuleID           string `query:"module" validate:"required"`
-	LookingTo          string `query:"looking_to" validate:"required"`
-	Type               string `form:"type" json:"type"`
-	PartNumber         string `form:"partNumber" json:"partNumber"`
-	HwVersion          string `form:"hwVersion" json:"hwVersion"`
-	Mac                string `form:"mac" json:"mac"`
-	SwVersion          string `form:"swVersion" json:"swVersion"`
-	PSwVersion         string `form:"pSwVersion" json:"prodSwVersion"`
-	MfgDate            string `form:"mfgDate" json:"mfgDate"`
-	MfgName            string `form:"mfgName" json:"mfgName"`
-	ProdTestStatus     string `form:"prodTestStatus" json:"prodTestStatus"`
-	ProdReport         []byte `form:"prodTeport" json:"prodReport"` /* Report for production test */
-	BootstrapCerts     []byte `form:"bootstrapCerts" json:"bootstrapCerts"`
-	UserCalibrartion   []byte `form:"userCalibration" json:"userCalibration"`
-	FactoryCalibration []byte `form:"factoryCalibration" json:"factoryCalibration"`
-	UserConfig         []byte `form:"userConfig" json:"userConfig"`
-	FactoryConfig      []byte `form:"factoryConfig" json:"factoryConfig"`
-	InventoryData      []byte `form:"inventoryData" json:"inventoryData"`
+	ModuleID           string    `query:"module" validate:"required"`
+	LookingTo          string    `query:"looking_to" validate:"required"`
+	Type               string    `form:"type" json:"type"`
+	PartNumber         string    `form:"partNumber" json:"partNumber"`
+	HwVersion          string    `form:"hwVersion" json:"hwVersion"`
+	Mac                string    `form:"mac" json:"mac"`
+	SwVersion          string    `form:"swVersion" json:"swVersion"`
+	PSwVersion         string    `form:"pSwVersion" json:"prodSwVersion"`
+	MfgDate            time.Time `form:"mfgDate" json:"mfgDate"`
+	MfgName            string    `form:"mfgName" json:"mfgName"`
+	ProdTestStatus     string    `form:"prodTestStatus" json:"prodTestStatus"`
+	ProdReport         []byte    `form:"prodTeport" json:"prodReport"` /* Report for production test */
+	BootstrapCerts     []byte    `form:"bootstrapCerts" json:"bootstrapCerts"`
+	UserCalibration    []byte    `form:"userCalibration" json:"userCalibration"`
+	FactoryCalibration []byte    `form:"factoryCalibration" json:"factoryCalibration"`
+	UserConfig         []byte    `form:"userConfig" json:"userConfig"`
+	FactoryConfig      []byte    `form:"factoryConfig" json:"factoryConfig"`
+	InventoryData      []byte    `form:"inventoryData" json:"inventoryData"`
+	UnitID             string    `form:"nodeID" json:"nodeID,omitempty"`
 }
 
 type ReqGetModule struct {
@@ -101,8 +102,8 @@ type RespGetModule struct {
 }
 
 type ReqDeleteModule struct {
-	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	ModuleID  string `query:"module" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"required"`
 }
 
 type ReqGetModuleList struct {
@@ -132,7 +133,7 @@ type RespUpdateModuleStatusData struct {
 	ProdTestStatus     string `form:"prodTestStatus" json:"prodTestStatus"`
 	ProdReport         []byte `form:"prodReport" json:"prodReport"` /* Report for production test */
 	BootstrapCerts     []byte `form:"bootstrapCerts" json:"bootstrapCerts"`
-	UserCalibrartion   []byte `form:"userCalibration" json:"userCalibration"`
+	UserCalibration    []byte `form:"userCalibration" json:"userCalibration"`
 	FactoryCalibration []byte `form:"factoryCalibration" json:"factoryCalibration"`
 	UserConfig         []byte `form:"userConfig" json:"userConfig"`
 	FactoryConfig      []byte `form:"factoryConfig" json:"factoryConfig"`
@@ -154,6 +155,12 @@ type ReqUpdateModuleData struct {
 type RespUpdateModuleData struct {
 	Field string `json:"field"`
 	Data  []byte `json:"data"`
+}
+
+type ReqAssignModuleToNode struct {
+	NodeID    string `query:"node" validate:"required"`
+	ModuleID  string `query:"module" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"required"`
 }
 
 type ReqUpdateModuleBootStrapCerts struct {

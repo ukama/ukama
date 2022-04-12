@@ -2,18 +2,17 @@ package db
 
 import (
 	"github.com/ukama/openIoR/services/common/sql"
-	"github.com/ukama/openIoR/services/common/ukama"
 	"gorm.io/gorm/clause"
 )
 
 type NodeRepo interface {
 	AddOrUpdateNode(node *Node) error
-	GetNode(nodeId ukama.NodeID) (*Node, error)
-	DeleteNode(nodeId ukama.NodeID) error
+	GetNode(nodeId string) (*Node, error)
+	DeleteNode(nodeId string) error
 	ListNodes() (*[]Node, error)
-	GetNodeStatus(nodeId ukama.NodeID) (*string, error)
+	GetNodeStatus(nodeId string) (*string, error)
 	UpdateNodeProdStatus(node *Node) error
-	UpdateNodeStatus(nodeId ukama.NodeID, status string) error
+	UpdateNodeStatus(nodeId string, status string) error
 }
 
 type nodeRepo struct {
@@ -29,14 +28,14 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 func (r *nodeRepo) AddOrUpdateNode(node *Node) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "node_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "prod_test_status", "prod_report", "status"}),
+		UpdateAll: true,
 	}).Create(node)
 	return d.Error
 }
 
-func (r *nodeRepo) GetNode(nodeId ukama.NodeID) (*Node, error) {
+func (r *nodeRepo) GetNode(nodeId string) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -44,7 +43,7 @@ func (r *nodeRepo) GetNode(nodeId ukama.NodeID) (*Node, error) {
 }
 
 /* Delete Node  */
-func (r *nodeRepo) DeleteNode(nodeId ukama.NodeID) error {
+func (r *nodeRepo) DeleteNode(nodeId string) error {
 	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).Delete(&Node{})
 	if result.Error != nil {
 		return result.Error
@@ -56,7 +55,7 @@ func (r *nodeRepo) DeleteNode(nodeId ukama.NodeID) error {
 func (r *nodeRepo) ListNodes() (*[]Node, error) {
 	var nodes []Node
 
-	result := r.Db.GetGormDb().Find(&nodes)
+	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&nodes)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -68,9 +67,9 @@ func (r *nodeRepo) ListNodes() (*[]Node, error) {
 	}
 }
 
-func (r *nodeRepo) GetNodeStatus(nodeId ukama.NodeID) (*string, error) {
+func (r *nodeRepo) GetNodeStatus(nodeId string) (*string, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -87,7 +86,7 @@ func (r *nodeRepo) UpdateNodeProdStatus(node *Node) error {
 }
 
 /* Update Node status */
-func (r *nodeRepo) UpdateNodeStatus(nodeId ukama.NodeID, status string) error {
+func (r *nodeRepo) UpdateNodeStatus(nodeId string, status string) error {
 	node := Node{
 		NodeID: nodeId,
 		Status: status,
