@@ -364,6 +364,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
                             "Failed serializing unit config.");
             goto completed;
         }
+        respCode = RESP_CODE_SUCCESS;
 
     } else {
         report_failure(response, ret,
@@ -418,12 +419,15 @@ static int web_service_cb_get_unit_info(const URequest *request,
     /* Reads unit info */
     ret = invt_read_unit_info("", uInfo, &size);
     if (!ret) {
+
         ret = json_serialize_unit_info(&json, uInfo);
         /* if every thing id ok set code to success */
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret, "Failed serializing unit info.");
             goto completed;
         }
+        respCode = RESP_CODE_SUCCESS;
+
     } else {
         usys_log_error("Web Service Failed to read unit info."
                         " Error Code %d",
