@@ -1,0 +1,251 @@
+query getDataUsage($filter: TIME_FILTER!) {
+    getDataUsage(filter: $filter) {
+        id
+        dataConsumed
+        dataPackage
+    }
+}
+
+subscription getLatestDataUsage {
+    getDataUsage {
+        id
+        dataConsumed
+        dataPackage
+    }
+}
+
+query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
+    getConnectedUsers(filter: $filter, orgId: $orgId) {
+        totalUser
+    }
+}
+
+subscription getLatestConnectedUsers {
+    getConnectedUsers {
+        totalUser
+    }
+}
+
+query getDataBill($filter: DATA_BILL_FILTER!) {
+    getDataBill(filter: $filter) {
+        id
+        dataBill
+        billDue
+    }
+}
+
+subscription getLatestDataBill {
+    getDataBill {
+        id
+        dataBill
+        billDue
+    }
+}
+
+query getAlerts($data: PaginationDto!) {
+    getAlerts(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        alerts {
+            id
+            type
+            title
+            description
+            alertDate
+        }
+    }
+}
+
+subscription getLatestAlerts {
+    getAlerts {
+        id
+        type
+        title
+        description
+        alertDate
+    }
+}
+
+query getNodesByOrg($orgId: String!) {
+    getNodesByOrg(orgId: $orgId) {
+        orgId
+        nodes {
+            id
+            status
+            name
+            type
+            description
+            totalUser
+            isUpdateAvailable
+            updateVersion
+            updateShortNote
+            updateDescription
+        }
+        activeNodes
+        totalNodes
+    }
+}
+query getNodeDetails {
+    getNodeDetails {
+        id
+        modelType
+        serial
+        macAddress
+        osVersion
+        manufacturing
+        ukamaOS
+        hardware
+        description
+    }
+}
+query getNodeAppsVersionLogs {
+    getNodeAppsVersionLogs {
+        version
+        date
+        notes
+    }
+}
+query getNodeApps {
+    getNodeApps {
+        id
+        title
+        version
+        cpu
+        memory
+    }
+}
+query getUsersByOrg($orgId: String!) {
+    getUsersByOrg(orgId: $orgId) {
+        id
+        name
+        email
+        phone
+        dataPlan
+        dataUsage
+    }
+}
+query getUser($userInput: UserInput!) {
+    getUser(userInput: $userInput) {
+        id
+        status
+        name
+        eSimNumber
+        iccid
+        email
+        phone
+        roaming
+        dataPlan
+        dataUsage
+    }
+}
+
+query getResidents($data: PaginationDto!) {
+    getResidents(data: $data) {
+        meta {
+            count
+            page
+            size
+            pages
+        }
+        residents {
+            residents {
+                id
+                name
+                dataUsage
+            }
+            activeResidents
+            totalResidents
+        }
+    }
+}
+
+query getNetwork($filter: NETWORK_TYPE!) {
+    getNetwork(filter: $filter) {
+        id
+        status
+        description
+    }
+}
+
+subscription getLatestNetwork {
+    getNetwork {
+        id
+        status
+        description
+    }
+}
+
+mutation deactivateUser($id: String!) {
+    deactivateUser(id: $id) {
+        id
+        success
+    }
+}
+mutation updateUser($data: UpdateUserDto!) {
+    updateUser(data: $data) {
+        id
+        name
+        sim
+        email
+        phone
+    }
+}
+mutation activateUser($data: ActivateUserDto!) {
+    activateUser(data: $data) {
+        success
+    }
+}
+mutation updateNode($data: UpdateNodeDto!) {
+    updateNode(data: $data) {
+        nodeId
+        name
+        state
+        type
+    }
+}
+mutation addNode($data: AddNodeDto!) {
+    addNode(data: $data) {
+        nodeId
+        name
+        state
+        type
+    }
+}
+mutation deleteNode($id: String!) {
+    deleteNode(id: $id) {
+        id
+        success
+    }
+}
+
+query getMetricsByTab($data: MetricsByTabInputDTO!) {
+    getMetricsByTab(data: $data) {
+        to
+        next
+        metrics {
+            type
+            name
+            next
+            data {
+                y
+                x
+            }
+        }
+    }
+}
+
+subscription getMetricsByTabS {
+    getMetricsByTab {
+        type
+        name
+        next
+        data {
+            x
+            y
+        }
+    }
+}
