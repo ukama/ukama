@@ -1,3 +1,0 @@
-* linguist-vendored
-*.c linguist-vendored=false
-*.c linguist-detectable=true

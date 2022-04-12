@@ -1,0 +1,19 @@
+*** uniwidth.in.h.orig	2007-10-07 17:24:38.000000000 +0200
+--- uniwidth.in.h	2009-04-10 22:39:46.000000000 +0200
+***************
+*** 23,29 ****
+  #include <stddef.h>
+  
+  /* Get locale_charset() declaration.  */
+! #include "localcharset.h"
+  
+  #ifdef __cplusplus
+  extern "C" {
+--- 23,29 ----
+  #include <stddef.h>
+  
+  /* Get locale_charset() declaration.  */
+! #include <unistring/localcharset.h>
+  
+  #ifdef __cplusplus
+  extern "C" {

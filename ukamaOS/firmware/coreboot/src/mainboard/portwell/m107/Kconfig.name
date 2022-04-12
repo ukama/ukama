@@ -1,2 +1,0 @@
-config BOARD_PORTWELL_M107
-	bool "PQ7-M107"
