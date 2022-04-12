@@ -1,5 +1,0 @@
-((nil . ((indent-tabs-mode . t)
-              (tab-width . 8)
-              (fill-column . 80)))
-      (c-mode . ((c-file-style . "Linux")))
-      (java-mode . ((c-file-style . "Linux"))))

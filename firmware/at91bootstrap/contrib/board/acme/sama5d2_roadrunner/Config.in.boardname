@@ -1,2 +1,0 @@
-config BOARDNAME
-	default "sama5d2_roadrunner"	if SAMA5D2_ROADRUNNER

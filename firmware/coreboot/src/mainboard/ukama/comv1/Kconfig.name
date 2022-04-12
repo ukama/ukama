@@ -1,7 +1,0 @@
-config BOARD_UKAMA_COMV1
-	bool "Ukama ComV1 (X86 Compute)"
-	select BOARD_UKAMA_BASEBOARD_COMV1
-
-config BOARD_UKAMA_SUPABRCKV1
-	bool "Ukama Supabrck V1 (BRCK)"
-	select BOARD_UKAMA_BASEBOARD_COMV1

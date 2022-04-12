@@ -1,7 +1,0 @@
-[BootstrapServer]
-    address = "127.0.0.1"
-    port = 5685
-
-[FileStore]
-	certs = "/etc/certs/certs.pem"
-	ip = "/etc/ip/addr.cfg"

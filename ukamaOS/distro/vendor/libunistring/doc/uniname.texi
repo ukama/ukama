@@ -1,0 +1,33 @@
+@node uniname.h
+@chapter Names of Unicode characters @code{<uniname.h>}
+
+@cindex Unicode character, name
+This include file implements the association between a Unicode character and
+its name.
+
+The name of a Unicode character allows to distinguish it from other, similar
+looking characters.  For example, the character @samp{x} has the name
+@code{"LATIN SMALL LETTER X"} and is therefore different from the character
+named @code{"MULTIPLICATION SIGN"}.
+
+@deftypevr Macro {unsigned int} UNINAME_MAX
+This macro expands to a constant that is the required size of buffer for a
+Unicode character name.
+@end deftypevr
+
+@deftypefun {char *} unicode_character_name (ucs4_t @var{uc}, char *@var{buf})
+Looks up the name of a Unicode character, in uppercase ASCII.
+@var{buf} must point to a buffer, at least @code{UNINAME_MAX} bytes in size.
+Returns the filled @var{buf}, or NULL if the character does not have a name.
+@end deftypefun
+
+@deftypefun ucs4_t unicode_name_character (const char *@var{name})
+Looks up the Unicode character with a given name, in upper- or lowercase
+ASCII.  @var{NAME} can also be an alias name of a character.
+Returns the character if found, or @code{UNINAME_INVALID} if not found.
+@end deftypefun
+
+@deftypevr Macro ucs4_t UNINAME_INVALID
+This macro expands to a constant that is a special return value of the
+@code{unicode_name_character} function.
+@end deftypevr

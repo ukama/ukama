@@ -1,4 +1,0 @@
-# Soft dependencies extracted from modules themselves.
-softdep btrfs pre: crc32c
-softdep ohci_pci pre: ehci_pci
-softdep uhci_hcd pre: ehci_pci
