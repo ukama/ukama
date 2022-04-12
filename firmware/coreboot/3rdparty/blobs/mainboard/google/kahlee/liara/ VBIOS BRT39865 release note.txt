@@ -1,0 +1,6 @@
+=========================== Liara Chromebook Stoney VBIOS BRT39865 release  ======================================
+Liara Chromebook Stoney VBIOS BRT39865
+BRT39865.001 12/05/18,01:13:54 CL#1716128 @ 15.49.0.18 ATOMBuild#436504
+
+Major Changes included:
+1. First Stoney VBIOS released to Liara update eDP power up sequence.

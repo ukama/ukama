@@ -1,0 +1,12 @@
+#
+# Config.in.board for the contributed board configuration
+#
+source "contrib/board/l+g/vinco/Config.in.board"
+source "contrib/board/acme/at91sam9x5_aria/Config.in.board"
+source "contrib/board/acme/at91sam9x5_arietta/Config.in.board"
+source "contrib/board/acme/sama5d3_acqua/Config.in.board"
+source "contrib/board/acme/sama5d2_roadrunner/Config.in.board"
+source "contrib/board/corewind/core9g25/Config.in.board"
+source "contrib/board/axentia/sama5d3_linea/Config.in.board"
+source "contrib/board/mini-box/pico_sam9g45/Config.in.board"
+source "contrib/board/stephan/sama5d3_stephan/Config.in.board"

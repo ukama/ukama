@@ -1,0 +1,15 @@
+config SAMA7G5EK
+	bool "sama7g5ek"
+	select SAMA7G5
+	select CPU_V7
+	select UMCTL2
+	select PUBL
+	select FLEXCOM
+	select ALLOW_SDCARD
+	select ALLOW_CPU_CLK_600MHZ
+	select ALLOW_CPU_CLK_800MHZ
+	select ALLOW_CPU_CLK_1000MHZ
+	select ALLOW_CRYSTAL_24_000MHZ
+	select SUPPORT_BUS_SPEED_200MHZ
+	help
+	  Use the SAMA7G5 Evaluation kit board

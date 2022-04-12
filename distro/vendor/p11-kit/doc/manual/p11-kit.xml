@@ -1,0 +1,152 @@
+<?xml version='1.0'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+	"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+
+<refentry id="p11-kit">
+
+<refentryinfo>
+	<title>p11-kit</title>
+	<productname>p11-kit</productname>
+	<authorgroup>
+		<author>
+			<contrib>Maintainer</contrib>
+			<firstname>Stef</firstname>
+			<surname>Walter</surname>
+			<email>stef@thewalter.net</email>
+		</author>
+	</authorgroup>
+</refentryinfo>
+
+<refmeta>
+	<refentrytitle>p11-kit</refentrytitle>
+	<manvolnum>8</manvolnum>
+	<refmiscinfo class="manual">System Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+	<refname>p11-kit</refname>
+	<refpurpose>Tool for operating on configured PKCS#11 modules</refpurpose>
+</refnamediv>
+
+<refsynopsisdiv>
+	<cmdsynopsis>
+		<command>p11-kit list-modules</command>
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>p11-kit extract</command> ...
+	</cmdsynopsis>
+	<cmdsynopsis>
+		<command>p11-kit server</command> ...
+	</cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id="p11-kit-description">
+	<title>Description</title>
+	<para><command>p11-kit</command> is a command line tool that
+	can be used to perform operations on PKCS#11 modules configured on the
+	system.</para>
+
+	<para>See the various sub commands below. The following global options
+	can be used:</para>
+
+	<variablelist>
+		<varlistentry>
+			<term><option>-v, --verbose</option></term>
+			<listitem><para>Run in verbose mode with debug
+			output.</para></listitem>
+		</varlistentry>
+		<varlistentry>
+			<term><option>-q, --quiet</option></term>
+			<listitem><para>Run in quiet mode without warning or
+			failure messages.</para></listitem>
+		</varlistentry>
+	</variablelist>
+
+</refsect1>
+
+<refsect1 id="p11-kit-list-modules">
+	<title>List Modules</title>
+
+	<para>List system configured PKCS#11 modules.</para>
+
+<programlisting>
+$ p11-kit list-modules
+</programlisting>
+
+	<para>The modules, information about them and the tokens present in
+	the PKCS#11 modules will be displayed.</para>
+
+</refsect1>
+
+<refsect1 id="p11-kit-extract">
+	<title>Extract</title>
+
+	<para>Extract certificates from configured PKCS#11 modules.</para>
+
+	<para>This operation has been moved to a separate command <command>trust extract</command>.
+	See <member><citerefentry><refentrytitle>trust</refentrytitle><manvolnum>1</manvolnum></citerefentry></member>
+	for more information</para>
+</refsect1>
+
+<refsect1 id="p11-kit-server">
+	<title>Server</title>
+
+	<para>Run a server process that exposes PKCS#11 module remotely.</para>
+
+<programlisting>
+$ p11-kit server pkcs11:token1 pkcs11:token2 ...
+$ p11-kit server --provider /path/to/pkcs11-module.so pkcs11:token1 pkcs11:token2 ...
+</programlisting>
+
+	<para>This launches a server that exposes the given PKCS#11 tokens on a local socket. The tokens must belong to the same module. To access the socket, use <literal>p11-kit-client.so</literal> module. The server address and PID are printed as a shell-script snippet which sets the appropriate environment variable: <literal>P11_KIT_SERVER_ADDRESS</literal> and <literal>P11_KIT_SERVER_PID</literal>.</para>
+
+</refsect1>
+
+<refsect1 id="p11-kit-extract-trust">
+	<title>Extract Trust</title>
+
+	<para>Extract standard trust information files.</para>
+
+	<para>This operation has been moved to a separate command <command>trust extract-compat</command>.
+	See <citerefentry><refentrytitle>trust</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+	for more information</para>
+</refsect1>
+
+<refsect1 id="p11-kit-remote">
+	<title>Remote</title>
+
+	<para>Run a PKCS#11 module remotely.</para>
+
+<programlisting>
+$ p11-kit remote /path/to/pkcs11-module.so
+$ p11-kit remote pkcs11:token1 pkcs11:token2 ...
+</programlisting>
+
+	<para>This is not meant to be run directly from a terminal. But rather in a
+	<option>remote</option> option in a
+	<citerefentry><refentrytitle>pkcs11.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+	file.</para>
+	<para>This exposes the given PKCS#11 module or tokens over standard input and output. Those two forms, whether to expose a module or tokens, are mutually exclusive and if the second form is used, the tokens must belong to the same module.</para>
+</refsect1>
+
+<refsect1 id="p11-kit-bugs">
+  <title>Bugs</title>
+  <para>
+    Please send bug reports to either the distribution bug tracker
+    or the upstream bug tracker at
+    <ulink url="https://github.com/p11-glue/p11-kit/issues/">https://github.com/p11-glue/p11-kit/issues/</ulink>.
+  </para>
+</refsect1>
+
+<refsect1 id="p11-kit-see-also">
+  <title>See also</title>
+    <simplelist type="inline">
+        <member><citerefentry><refentrytitle>pkcs11.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></member>
+    </simplelist>
+    <para>
+    Further details available in the p11-kit online documentation at
+    <ulink url="https://p11-glue.github.io/p11-glue/p11-kit/manual/">https://p11-glue.github.io/p11-glue/p11-kit/manual/</ulink>.
+  </para>
+</refsect1>
+
+</refentry>

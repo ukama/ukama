@@ -1,0 +1,323 @@
+<?xml version="1.0"?>
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+	"http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd">
+
+<chapter xml:id="devel">
+	<title>Building, Packaging, and Contributing to p11-kit</title>
+
+	<section id="devel-links">
+		<title>Helpful Resources</title>
+
+		<para>Use the following to find more information about
+		contributing to p11-kit beyond what's in this manual:</para>
+
+		<itemizedlist>
+			<listitem><para><ulink url="https://p11-glue.github.io/p11-glue/p11-kit.html">Website</ulink></para></listitem>
+			<listitem><para><ulink url="mail:p11-glue@lists.freedesktop.org">Mailing list</ulink></para></listitem>
+			<listitem><para><ulink url="https://github.com/p11-glue/p11-kit/issues/">Issue tracker</ulink></para></listitem>
+		</itemizedlist>
+	</section>
+
+	<section id="devel-paths">
+		<title>Packaging PKCS#11 module configs</title>
+
+		<para>Developers or packagers of PKCS#11 modules need to install various
+		files into specific locations so that p11-kit will recognize and load the
+		module correctly.</para>
+
+		<para>You should use <literal>pkg-config</literal> as described below
+		to determine configuration paths. p11-kit installs a
+		<literal>pkg-config</literal> file called <literal>p11-kit-1.pc</literal>.
+		This file contains all the information about the various paths that p11-kit
+		looks for files at.</para>
+
+		<section id="devel-paths-config">
+			<title>Path to place module configuration</title>
+
+			<para>As described in the <link linkend="config-module">module configuration</link>
+			documentation, each PKCS#11 module should install a config file describing
+			that module. These config files should be installed to a specific directory which
+			can be determined by running:</para>
+
+			<programlisting>
+$ <command>pkg-config p11-kit-1 --variable p11_module_configs</command>
+/usr/share/p11-kit/modules</programlisting>
+		</section>
+
+		<section id="devel-paths-modules">
+			<title>Default path for modules with relative paths</title>
+
+			<para>If a <link linkend="config-module">module configuration</link>
+			contains a relative path in its <literal>module:</literal> setting,
+			then that module will be loaded from the default module path. This
+			path can be determined by running:</para>
+
+			<programlisting>
+$ <command>pkg-config p11-kit-1 --variable p11_module_path</command>
+/usr/lib64/pkcs11</programlisting>
+		</section>
+
+	</section>
+
+	<section id="devel-commands">
+		<title>Customizing installed commands</title>
+
+		<para>The <literal>p11-kit</literal> tool provides a
+		<literal>extract-trust</literal> command which extracts trust
+		policy information such as certificate anchors and so on
+		into files for use with libraries that cannot read this trust
+		information directly.</para>
+
+		<para>In order to be useful the <literal>extract-trust</literal>
+		command needs to be customized per distribution or site. You can
+		find this file in at <literal>tools/p11-kit-trust-extract.in</literal>
+		in the p11-kit source code.</para>
+
+		<para>The command is implemented as a simple script which
+		performs the various <literal>p11-kit extract</literal> commands
+		necessary to extract the information.</para>
+
+		<para>Using this script as a standard way to extract this
+		information allows for consistency between distributions and ease
+		of system administration.</para>
+	</section>
+
+	<section id="devel-building">
+		<title>Compiling p11-kit from Source</title>
+		<para>This describes how to compiling the p11-kit package from
+		source code. This is normally only necessary for those wishing to
+		contribute to the project or package p11-kit.</para>
+
+		<para>You can download
+		<ulink url="https://github.com/p11-glue/p11-kit/releases">tarballs
+		of the releases</ulink> of p11-kit or
+		<ulink url="https://github.com/p11-glue/p11-kit/">check
+		out the source code from git</ulink>. This documentation will not
+		go into all the details of how to get your development environment
+		set up and instead focus on the what's unique to compiling p11-kit.</para>
+
+		<section id="devel-building-unix">
+			<title>Building on UNIX</title>
+			<para>p11-kit uses the standard GNU build system, using autoconf for package
+			configuration and resolving portability issues, automake for building makefiles
+			that comply with the GNU Coding Standards, and libtool for building shared
+			libraries on multiple platforms. The normal sequence for compiling and
+			installing the p11-kit library is thus:</para>
+
+<programlisting>
+$ ./configure --prefix=/path/to/prefix ...
+$ make
+$ make install
+</programlisting>
+
+			<para>If you've checked out the source code from git, then the
+			<command>configure</command> script does not yet exist. So use
+			the following instead:</para>
+
+<programlisting>
+$ ./autogen.sh --prefix=/path/to/prefix ...
+$ make
+$ make install
+</programlisting>
+
+			<para>The standard options provided by GNU autoconf may be passed to the configure
+			script. Please see the autoconf documentation or run <literal>./configure --help</literal>
+			for information about the standard options. In particular you probably want to adjust
+			the <literal>--prefix=/xxx</literal> argument depending on your system and development
+			environment.</para>
+		</section>
+
+		<section id="devel-building-dependencies">
+			<title>Optional Dependencies</title>
+
+			<para>On a modern GNU Linux system, p11-kit has no required dependencies other
+			than the standard C library. However on older UNIX systems, some of the following
+			may be required.</para>
+
+			<itemizedlist>
+				<listitem><para><command>gettext</command> is required if your system doesn't
+				have the <literal>gettext()</literal> functionality for handling message
+				translation databases. This can be provided by the libintl library from
+				the <ulink url="http://www.gnu.org/software/gettext">GNU gettext
+				package</ulink>.</para></listitem>
+				<listitem><para><command>pthread</command> is required if your (ancient) system
+				doesn't have this included in the base system. How this is provided is platform
+				specific.</para></listitem>
+			</itemizedlist>
+
+			<para>In addition p11-kit has several optional dependencies. If these are not available
+			during the build, then certain features will be disabled.</para>
+
+			<itemizedlist>
+				<listitem><para><command>libffi</command> for sharing of PKCS#11 modules
+				between multiple callers in the same process. It is highly recommended that
+				this dependency be treated as a required dependency.</para></listitem>
+				<listitem><para><command>gtk-doc</command> is required to build the reference
+				manual. Use <literal>--enable-doc</literal> to control this
+				dependency.</para></listitem>
+				<listitem><para><command>xsltproc</command> is required to build the command
+				manual pages. Use <literal>--enable-doc</literal> to control this
+				dependency.</para></listitem>
+				<listitem><para><command>libtasn1</command> is required to build the trust
+				module and code that interacts with certificates.</para></listitem>
+				<listitem><para><command>freebl3</command> (developed as part of the NSS
+				code base) is an optional dependency that may be used to meet policy
+				requirements of system builders. Enabling this dependency provides no other
+				advantage.</para></listitem>
+			</itemizedlist>
+
+		</section>
+
+		<section id="devel-building-configure">
+			<title>Extra Configuration Options</title>
+
+			<para>In addition to the normal options, the configure script in the p11-kit library
+			supports these additional arguments:</para>
+
+			<variablelist>
+				<varlistentry>
+					<term><option>--disable-trust-module</option></term>
+					<listitem><para>Disables building of the trust policy module.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--disable-debug</option>, <option>--enable-debug</option></term>
+					<listitem><para>By default p11-kit is built with debug symbols assertions and
+					and precondition checks. Enabling the debug option configures even more
+					detailed debug build, including disabling optimization. Disabling the debug
+					option is not recommended, as it disables all assertions, preconditions and
+					internal consistency checks, although it may result it a slightly faster
+					library.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--enable-doc</option></term>
+					<listitem><para>Enables building of the documentation and command line manual.
+					The documentation is built in the <literal>doc/html/</literal> directory of
+					the build. Requires the <literal>gtk-doc</literal> and <literal>xsltproc</literal>
+					dependencies.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--enable-strict</option></term>
+					<listitem><para>Enables strict checks during building of p11-kit. All
+					compiler warnings become errors.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-hash-impl=freebl</option></term>
+					<listitem><para>Instead of using internal hash code, link to the freebl3
+					library and use its hash implementations. The only advantage this brings is to
+					meet the policy requirements of system builders.</para>
+					</listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-libtasn1</option>, <option>--without-libtasn1</option></term>
+					<listitem><para>Build with a dependency on the libtasn1 library. This dependency
+					allows the trust policy module to be built as well as other code that interacts with
+					certificates.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-module-path</option></term>
+					<listitem><para>Specify the path to look for PKCS#11 modules which were
+					listed in a module config file with a relative path.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-trust-paths</option></term>
+					<listitem><para>Specify the files or directories to look for certificate
+					anchors and blocklists. Multiple files and/or directories are specified with
+					a <literal>:</literal> in between them. The first path has the highest
+					priority when searching for certificates.</para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-system-config</option></term>
+					<listitem><para>Specify the path to look for p11-kit config files. This
+					usually defaults to something like <literal>/etc/pkcs11</literal></para></listitem>
+				</varlistentry>
+				<varlistentry>
+					<term><option>--with-user-config</option></term>
+					<listitem><para>Specify the path to look for user specific p11-kit config files. If 
+					specify a path that begins with <literal>~/</literal> then this is expanded to the
+					home directory of the user running p11-kit. If you specify a path that begins with
+					<literal>~/.config/</literal> then this is expanded to the $XDG_CONFIG_HOME directory,
+					as outlined in the
+					<ulink url="http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables">XDG Base Dir specification</ulink>.
+					This option defaults to <literal>~/.pkcs11</literal></para></listitem>
+				</varlistentry>
+			</variablelist>
+			<para></para>
+		</section>
+	</section>
+
+	<section id="devel-building-style">
+		<title>Coding Style</title>
+
+		<para>We use a code style similar to the linux kernel. Use tabs
+		to indent and spaces to align/wrap beyond the indentation level.</para>
+
+		<para>We don't try to guarantee completely robust and problem free
+		behavior in cases where the caller or system isn't behaving. We
+		consider these to be outside of our control:</para>
+
+		<itemizedlist>
+			<listitem><para>Broken input from callers. We use preconditions
+			to check input and immediately return. We don't try to provide
+			error codes for all the various ways callers can screw
+			around.</para></listitem>
+
+			<listitem>
+			<para>Out of memory. It is pretty much impossible to handle out
+			of memory errors correctly. Handling them alongside other errors
+			is naive and broken. We don't try to guarantee library state
+			(such as locks or memory leaks) when memory allocation fails.</para>
+			<para>We do check the results from all memory allocations, but
+			treat them as unexpected conditions. As a nod to the behavior
+			of callers of this library, we don't abort on memory allocation
+			failures. We use preconditions with somewhat sane results.</para>
+			<para>Exception: when reading files or allocating potentially
+			unbounded amounts of memory, we should respond robustly to memory
+			allocation failures.</para>
+			</listitem>
+		</itemizedlist>
+
+		<para>These unexpected conditions indicate a bug either in p11-kit or
+		in the system. All bets are off once this occurs.</para>
+
+		<para>Use the <literal>return_val_xxx()</literal> precondition macros to
+		check for unexpected conditions.</para>
+	</section>
+
+	<section id="devel-testing">
+		<title>Testing and Code Coverage</title>
+
+		<para>As a general rule changes to p11-kit should have a tests exercising
+		that change. Use the <literal>make check</literal> command to run all
+		the tests. If you run it from a subdirectory only the tests in that
+		directory will be run.</para>
+
+		<para>To check for memory errors or memory leaks, run <literal>make memcheck</literal>
+		or <literal>make leakcheck</literal> respectively. This requires valgrind
+		be installed.</para>
+
+		<para>Build p11-kit with the <option>--enable-coverage</option> configure
+		option to build code coverage support.</para>
+
+		<para>Once you've done that you can either use <literal>make coverage</literal>
+		to build code coverage information. Alternatively (and this is usually
+		easier) you can use
+		<ulink url="http://stef.thewalter.net/2012/12/git-coverage-useful-code-coverage.html">
+			<literal>git coverage</literal></ulink> to easily check whether
+		you've tested the lines changed by a patch.</para>
+
+		<para>A code coverage report is
+			<ulink url="https://coveralls.io/github/p11-glue/p11-kit">available online</ulink></para>.
+	</section>
+
+	<section id="devel-debugging">
+		<title>Debugging Tips</title>
+
+		<para>Unexpected conditions will produce critical warnings by p11-kit.
+		These are often failed internal preconditions, and usually indicate a
+		bug either in p11-kit or the software calling it.</para>
+
+		<para>You can use the environment variable <literal>P11_KIT_STRICT=yes</literal>
+		to make p11-kit do an <literal>abort()</literal> (and core dump depending on
+		your configuration) when a critical warning occurs.</para>
+	</section>
+</chapter>

@@ -1,0 +1,19 @@
+*** unicase.in.h.orig	2009-04-05 19:30:26.000000000 +0200
+--- unicase.in.h	2009-04-10 16:21:23.000000000 +0200
+***************
+*** 20,26 ****
+  #include "unitypes.h"
+  
+  /* Get bool.  */
+! #include <stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>
+--- 20,26 ----
+  #include "unitypes.h"
+  
+  /* Get bool.  */
+! #include <unistring/stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>

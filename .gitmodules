@@ -1,0 +1,48 @@
+[submodule "distro/vendor/orcania"]
+	path = distro/vendor/orcania
+	url = https://github.com/babelouest/orcania.git
+[submodule "distro/vendor/openssl"]
+	path = distro/vendor/openssl
+	url = https://github.com/openssl/openssl.git
+[submodule "distro/vendor/tomlc"]
+	path = distro/vendor/tomlc
+	url = https://github.com/cktan/tomlc99.git
+[submodule "distro/vendor/libmicrohttpd"]
+	path = distro/vendor/libmicrohttpd
+	url = https://github.com/markhor/libmicrohttpd.git
+[submodule "distro/vendor/zlib"]
+	path = distro/vendor/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "distro/vendor/yder"]
+	path = distro/vendor/yder
+	url = https://github.com/babelouest/yder.git
+[submodule "distro/vendor/jansson"]
+	path = distro/vendor/jansson
+	url = https://github.com/akheron/jansson.git
+[submodule "distro/vendor/curl"]
+	path = distro/vendor/curl
+	url = https://github.com/curl/curl.git
+[submodule "distro/vendor/mbedtls"]
+	path = distro/vendor/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "distro/vendor/amqp"]
+	path = distro/vendor/amqp
+	url = https://github.com/alanxz/rabbitmq-c
+[submodule "distro/vendor/Unity"]
+	path = distro/vendor/Unity
+	url = https://github.com/ThrowTheSwitch/Unity
+[submodule "distro/vendor/protobuf-c"]
+	path = distro/vendor/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c
+[submodule "distro/vendor/protobuf"]
+	path = distro/vendor/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "distro/vendor/dhcpcd"]
+	path = distro/vendor/dhcpcd
+	url = https://github.com/NetworkConfiguration/dhcpcd.git
+[submodule "distro/vendor/iproute2"]
+	path = distro/vendor/iproute2
+	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+[submodule "distro/tools/unity"]
+	path = distro/tools/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
