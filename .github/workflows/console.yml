@@ -4,9 +4,10 @@ on:
 
 jobs:
   build:
-
     name: build and test
     runs-on: ubuntu-latest
+    env:
+      working-directory: interfaces/console
     steps:
       - uses: actions/checkout@v2
         # init vars required for tag generation
