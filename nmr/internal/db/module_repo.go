@@ -197,7 +197,7 @@ func (r *moduleRepo) UpdateModuleBootstrapCert(moduleData *Module) error {
 
 /* Update Production Bootstrap Cert*/
 func (r *moduleRepo) DeleteBootstrapCert(moduleId string) error {
-	result := r.Db.GetGormDb().Where("module_id = ?", moduleId).UpdateColumn("boostrap_cert", nil)
+	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumn("bootstrap_certs", nil)
 	if result.Error != nil {
 		return result.Error
 	}
