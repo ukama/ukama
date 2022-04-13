@@ -1,4 +1,4 @@
-name: build-bff
+name: bff
 on:
     push:
 
@@ -48,7 +48,7 @@ jobs:
 
             - name: OCI build and push
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/ukama/bff
               run: |
                   buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -67,14 +67,14 @@ jobs:
                   git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
             - name: Make test build
-              working-directory: "bff_integration/test/integration"
+              working-directory: "services/bff/bff_integration/test/integration"
               run: |
                   env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
 
             - name: OCI Push bff-api test
-              working-directory: "bff_integration"
+              working-directory: "services/bff/bff_integration"
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/ukama/bff
                   UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
               run: |
@@ -99,6 +99,8 @@ jobs:
     lint:
         name: lint
         runs-on: ubuntu-latest
+        env:
+          working-directory: services/bff
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v2
@@ -120,6 +122,8 @@ jobs:
         needs: build
         if: github.ref == 'refs/heads/master'
         runs-on: ubuntu-latest
+        env:
+          working-directory: services/bff
         steps:
             # init vars required for tag generation
             - uses: actions/checkout@v2
@@ -132,7 +136,7 @@ jobs:
               uses: denispalnitsky/gitops-release@v7
               with:
                   filename: "releases/ukamax-helmfile.yaml"
-                  key: "bffImageTag"
+                  key: "consoleBffImageTag"
                   value: ${{ steps.vars_step.outputs.sha_short }}
                   github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
                   github-org-and-repo: "ukama/infra-as-code"
