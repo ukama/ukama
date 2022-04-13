@@ -54,7 +54,7 @@ jobs:
                           
       - name: OCI build and push        
         env:
-          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/ukama/console
+          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/app
         run: |                        
               buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                   -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -119,7 +119,7 @@ jobs:
         uses: denispalnitsky/gitops-release@v7
         with:
           filename: 'releases/ukamax-helmfile.yaml'
-          key: 'consoleImageTag'
+          key: 'consoleAppImageTag'
           value: ${{ steps.vars_step.outputs.sha_short }}
           github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           github-org-and-repo: 'ukama/infra-as-code'

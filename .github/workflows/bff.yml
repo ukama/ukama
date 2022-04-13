@@ -52,7 +52,7 @@ jobs:
 
             - name: OCI build and push
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/ukama/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
               run: |
                   buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -79,7 +79,7 @@ jobs:
             - name: OCI Push bff-api test
               working-directory: "services/bff/bff_integration"
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/ukama/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
                   UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
               run: |
