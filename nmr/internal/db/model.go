@@ -29,22 +29,23 @@ type Node struct {
 /* Module Information */
 type Module struct {
 	gorm.Model
-	ModuleID           string         `gorm:"unique;type:string;size:23;expression:lower(module_id);size:32;not null" json:"moduleID" `
-	Type               string         `gorm:"size:32;not null" json:"type"`
-	PartNumber         string         `gorm:"size:32;not null" json:"partNumber"`
-	HwVersion          string         `gorm:"size:32;not null" json:"hwVersion"`
-	Mac                string         `gorm:"size:32;not null" json:"mac"`
-	SwVersion          string         `gorm:"size:32;not null" json:"swVersion"`
-	PSwVersion         string         `gorm:"size:32;not null" json:"mfgSwVersion"`
-	MfgDate            time.Time      `gorm:"type:time; size:32;not null" json:"mfgDate"`
-	MfgName            string         `gorm:"size:32;not null" json:"mfgName"`
-	MfgTestStatus      string         `gorm:"size:32;not null" json:"mfgTestStatus"`
-	MfgReport          []byte         `gorm:"type:bytes;" json:"mfgReport"` /* Report for production test */
-	BootstrapCerts     []byte         `gorm:"type:bytes;" json:"bootstrapCerts"`
-	UserCalibration    []byte         `gorm:"type:bytes;" json:"userCalibration"`
-	FactoryCalibration []byte         `gorm:"type:bytes;" json:"factoryCalibration"`
-	UserConfig         []byte         `gorm:"type:bytes;" json:"userConfig"`
-	FactoryConfig      []byte         `gorm:"type:bytes;" json:"factoryConfig"`
-	InventoryData      []byte         `gorm:"type:bytes;" json:"inventoryData"`
-	UnitID             sql.NullString `gorm:"column:unit_id;type:string;default:null;" json:"nodeId"`
+	ModuleID           string    `gorm:"unique;type:string;size:23;expression:lower(module_id);size:32;not null" json:"moduleID" `
+	Type               string    `gorm:"size:32;not null" json:"type"`
+	PartNumber         string    `gorm:"size:32;not null" json:"partNumber"`
+	HwVersion          string    `gorm:"size:32;not null" json:"hwVersion"`
+	Mac                string    `gorm:"size:32;not null" json:"mac"`
+	SwVersion          string    `gorm:"size:32;not null" json:"swVersion"`
+	PSwVersion         string    `gorm:"size:32;not null" json:"mfgSwVersion"`
+	MfgDate            time.Time `gorm:"type:time; size:32;not null" json:"mfgDate"`
+	MfgName            string    `gorm:"size:32;not null" json:"mfgName"`
+	MfgTestStatus      string    `gorm:"size:32;not null" json:"mfgTestStatus"`
+	MfgReport          *[]byte   `gorm:"type:bytes;" json:"mfgReport,omitempty"` /* Report for production test */
+	BootstrapCerts     *[]byte   `gorm:"type:bytes;" json:"bootstrapCerts,omitempty"`
+	UserCalibration    *[]byte   `gorm:"type:bytes;" json:"userCalibration,omitempty"`
+	FactoryCalibration *[]byte   `gorm:"type:bytes;" json:"factoryCalibration,omitempty"`
+	UserConfig         *[]byte   `gorm:"type:bytes;" json:"userConfig,omitempty"`
+	FactoryConfig      *[]byte   `gorm:"type:bytes;" json:"factoryConfig,omitempty"`
+	InventoryData      *[]byte   `gorm:"type:bytes;" json:"inventoryData,omitempty"`
+	//	CloudCerts         *[]byte        `gorm:"type:bytes;" json:"cloudCerts"`
+	UnitID sql.NullString `gorm:"column:unit_id;type:string;default:null;" json:"nodeId"`
 }

@@ -81,25 +81,18 @@ type ReqUpdateNodeMfgStatus struct {
 
 /* Modules */
 type ReqAddOrUpdateModule struct {
-	ModuleID           string    `query:"module" validate:"required"`
-	LookingTo          string    `query:"looking_to" validate:"required"`
-	Type               string    `form:"type" json:"type"`
-	PartNumber         string    `form:"partNumber" json:"partNumber"`
-	HwVersion          string    `form:"hwVersion" json:"hwVersion"`
-	Mac                string    `form:"mac" json:"mac"`
-	SwVersion          string    `form:"swVersion" json:"swVersion"`
-	PSwVersion         string    `form:"pSwVersion" json:"mfgSwVersion"`
-	MfgDate            time.Time `form:"mfgDate" json:"mfgDate"`
-	MfgName            string    `form:"mfgName" json:"mfgName"`
-	MfgTestStatus      string    `form:"mfgTestStatus" json:"mfgTestStatus"`
-	MfgReport          []byte    `form:"mfgTeport" json:"mfgReport"` /* Report for mfguction test */
-	BootstrapCerts     []byte    `form:"bootstrapCerts" json:"bootstrapCerts"`
-	UserCalibration    []byte    `form:"userCalibration" json:"userCalibration"`
-	FactoryCalibration []byte    `form:"factoryCalibration" json:"factoryCalibration"`
-	UserConfig         []byte    `form:"userConfig" json:"userConfig"`
-	FactoryConfig      []byte    `form:"factoryConfig" json:"factoryConfig"`
-	InventoryData      []byte    `form:"inventoryData" json:"inventoryData"`
-	UnitID             string    `form:"nodeID" json:"nodeID,omitempty"`
+	ModuleID      string    `query:"module" validate:"required"`
+	LookingTo     string    `query:"looking_to" validate:"required"`
+	Type          string    `form:"type" json:"type"`
+	PartNumber    string    `form:"partNumber" json:"partNumber"`
+	HwVersion     string    `form:"hwVersion" json:"hwVersion"`
+	Mac           string    `form:"mac" json:"mac"`
+	SwVersion     string    `form:"swVersion" json:"swVersion"`
+	PSwVersion    string    `form:"pSwVersion" json:"mfgSwVersion"`
+	MfgDate       time.Time `form:"mfgDate" json:"mfgDate"`
+	MfgName       string    `form:"mfgName" json:"mfgName"`
+	MfgTestStatus string    `form:"mfgTestStatus" json:"mfgTestStatus"`
+	UnitID        string    `form:"nodeID" json:"nodeID,omitempty"`
 }
 
 type ReqGetModule struct {
@@ -125,46 +118,57 @@ type RespGetModuleList struct {
 }
 
 type ReqGetModuleMfgStatusData struct {
-	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_for" validate:"required"`
+	ModuleID   string `query:"module" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"required"`
 }
 
 type RespGetModuleMfgStatusData struct {
-	MfgTestStatus string `form:"mfgTestStatus" json:"mfgTestStatus"`
-	MfgReport     []byte `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
+	MfgTestStatus string `form:"status" json:"status"`
 }
 
-type ReqGetModuleStatusData struct {
-	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_for" validate:"required"`
+type ReqUpdateModuleMfgStatusData struct {
+	ModuleID      string `query:"module" validate:"required"`
+	LookingTo     string `query:"looking_to" validate:"required"`
+	MfgTestStatus string `query:"status" json:"status"`
 }
 
-type RespUpdateModuleStatusData struct {
-	ProdTestStatus     string `form:"mfgTestStatus" json:"mfgTestStatus"`
-	ProdReport         []byte `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
-	BootstrapCerts     []byte `form:"bootstrapCerts" json:"bootstrapCerts"`
-	UserCalibration    []byte `form:"userCalibration" json:"userCalibration"`
-	FactoryCalibration []byte `form:"factoryCalibration" json:"factoryCalibration"`
-	UserConfig         []byte `form:"userConfig" json:"userConfig"`
-	FactoryConfig      []byte `form:"factoryConfig" json:"factoryConfig"`
-	InventoryData      []byte `form:"inventoryData" json:"inventoryData"`
+type ReqGetModuleMfgData struct {
+	ModuleID   string `query:"module" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"required"`
 }
 
-type ReqUpdateModuleStatusData struct {
-	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_for" validate:"required"`
-	Status    string `query:"status" validate:"required"`
+type RespGetModuleMfgData struct {
+	MfgTestStatus      string          `form:"mfgTestStatus" json:"mfgTestStatus"`
+	MfgReport          json.RawMessage `form:"mfgReport" json:"mfgReport,omitempty"` /* Report for mfguction test */
+	BootstrapCerts     json.RawMessage `form:"bootstrapCerts" json:"bootstrapCerts,omitempty"`
+	UserCalibration    json.RawMessage `form:"userCalibration" json:"userCalibration,omitempty"`
+	FactoryCalibration json.RawMessage `form:"factoryCalibration" json:"factoryCalibration,omitempty"`
+	UserConfig         json.RawMessage `form:"userConfig" json:"userConfig,omitempty"`
+	FactoryConfig      json.RawMessage `form:"factoryConfig" json:"factoryConfig,omitempty"`
+	InventoryData      json.RawMessage `form:"inventoryData" json:"inventoryData,omitempty"`
 }
 
-type ReqUpdateModuleData struct {
-	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
-	Field     string `query:"field" validate:"required"`
+// type ReqUpdateModuleStatusData struct {
+// 	ModuleID  string `query:"module" validate:"required"`
+// 	LookingTo string `query:"looking_for" validate:"required"`
+// 	Status    string `query:"status" validate:"required"`
+// }
+
+type ReqGetModuleMfgField struct {
+	ModuleID   string `query:"module" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"required"`
+	Field      string `query:"field" validate:"required"`
 }
 
-type RespUpdateModuleData struct {
+type RespGetModuleMfgField struct {
 	Field string `json:"field"`
 	Data  []byte `json:"data"`
+}
+
+type ReqUpdateModuleMfgField struct {
+	ModuleID  string `form:"module" query:"module" json:"module" validate:"required"`
+	LookingTo string `form:"looking_to" query:"looking_to" json:"looking_to" validate:"required"`
+	Field     string `form:"field" query:"field" json:"field" validate:"required"`
 }
 
 type ReqAssignModuleToNode struct {
@@ -174,26 +178,6 @@ type ReqAssignModuleToNode struct {
 }
 
 type ReqUpdateModuleBootStrapCerts struct {
-	NodeID    string `query:"nodeid" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
-}
-
-type ReqUpdateModuleUserConfig struct {
-	NodeID    string `query:"nodeid" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
-}
-
-type ReqUpdateModuleFactoryConfig struct {
-	NodeID    string `query:"nodeid" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
-}
-
-type ReqUpdateModuleUserCalibration struct {
-	NodeID    string `query:"nodeid" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
-}
-
-type ReqUpdateModuleFactoryCalibration struct {
-	NodeID    string `query:"nodeid" validate:"required"`
+	ModuleID  string `query:"module" validate:"required"`
 	LookingTo string `query:"looking_to" validate:"required"`
 }

@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/common/sql"
 	"gorm.io/gorm/clause"
 )
@@ -14,10 +15,12 @@ type ModuleRepo interface {
 	GetModule(moduleId string) (*Module, error)
 	DeleteModule(moduleId string) error
 	ListModules() (*[]Module, error)
-	UpdateModuleProdStatus(moduleId string, status string, data []byte) error
-	UpdateModuleData(moduleId string, field string, data []byte) error
-	GetModuleData(moduleId string, field string) ([]byte, error)
-	DeleteBootstrapCert(ModuleId *string) error
+	GetModuleMfgStatus(moduleId string) (*string, *[]byte, error)
+	UpdateModuleMfgStatus(moduleId string, status string, data []byte) error
+	GetModuleMfgData(moduleId string) (*Module, error)
+	GetModuleMfgField(moduleId string, field string) (*Module, error)
+	UpdateModuleMfgField(moduleId string, field string, module Module) error
+	DeleteBootstrapCert(ModuleId string) error
 }
 
 type moduleRepo struct {
@@ -27,8 +30,8 @@ type moduleRepo struct {
 func GetModuleDataFieldName(field string) (*string, error) {
 	var columnName string
 	switch field {
-	case "boostrap_cert":
-		columnName = "boostrap_cert"
+	case "bootstrap_cert":
+		columnName = "bootstrap_certs"
 	case "user_config":
 		columnName = "user_config"
 	case "factory_config":
@@ -87,6 +90,7 @@ func (r *moduleRepo) UpdateNodeId(moduleId string, nodeId string) error {
 	module := Module{}
 	result := r.Db.GetGormDb().Model(&module).Where("module_id = ?", moduleId).UpdateColumn("unit_id", nodeId)
 	if result.Error != nil {
+		logrus.Errorf("This error ss %+v", result)
 		return result.Error
 	}
 	return nil
@@ -117,49 +121,69 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 	}
 }
 
-/* Update Production Status  Data */
-func (r *moduleRepo) UpdateModuleProdStatus(moduleId string, status string, data []byte) error {
+/* Read module mfg status */
+func (r *moduleRepo) GetModuleMfgStatus(moduleId string) (*string, *[]byte, error) {
+	var module Module
+	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report").First(&module, "module_id = ?", moduleId)
+	if result.Error != nil {
+		return nil, nil, result.Error
+	}
+	return &module.MfgTestStatus, module.MfgReport, nil
+}
+
+/* Update Mfg Status  Data */
+func (r *moduleRepo) UpdateModuleMfgStatus(moduleId string, status string, data []byte) error {
 	module := Module{
 		ModuleID:      moduleId,
 		MfgTestStatus: status,
-		MfgReport:     data,
 	}
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"mfg_test_status", "mfg_report"}),
-	}).Create(module)
-	return d.Error
+
+	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumns(module)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	logrus.Tracef("Updated module mfg status for %s with %v. result %+v", moduleId, module, result)
+	return nil
 }
 
-/* Update module data */
-func (r *moduleRepo) UpdateModuleData(moduleId string, field string, data []byte) error {
-
-	columnName, err := GetModuleDataFieldName(field)
-	if err != nil {
-		return err
-	}
-
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{*columnName}),
-	}).Create(data)
-	return d.Error
-}
-
-/* Get Module data */
-func (r *moduleRepo) GetModuleData(moduleId string, field string) ([]byte, error) {
-	var data []byte
-
-	columnName, err := GetModuleDataFieldName(field)
-	if err != nil {
-		return nil, err
-	}
-
-	result := r.Db.GetGormDb().Preload(clause.Associations).Select(*columnName).First(data, "module_id = ?", moduleId)
+/* Read module mfg data */
+func (r *moduleRepo) GetModuleMfgData(moduleId string) (*Module, error) {
+	var module Module
+	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data").First(&module, "module_id = ?", moduleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return data, nil
+	return &module, nil
+}
+
+/* Get Module Mfg field */
+func (r *moduleRepo) GetModuleMfgField(moduleId string, columnName string) (*Module, error) {
+	var module Module
+
+	// columnName, err := GetModuleDataFieldName(field)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	//result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).Pluck(*columnName, &data)
+	result := r.Db.GetGormDb().Select(columnName).First(&module, "module_id = ?", moduleId)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	logrus.Tracef("Read module mfg field  for %s with %v. result %+v", moduleId, module, result)
+	return &module, nil
+}
+
+/* Update Module Mfg field data */
+func (r *moduleRepo) UpdateModuleMfgField(moduleId string, field string, module Module) error {
+
+	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumns(&module)
+	if result.Error != nil {
+		return result.Error
+	}
+	logrus.Tracef("Updated module mfg field  for %s with %v. result %+v", moduleId, module, result)
+	return nil
 }
 
 /* Update Production Bootstrap Cert*/
@@ -172,46 +196,10 @@ func (r *moduleRepo) UpdateModuleBootstrapCert(moduleData *Module) error {
 }
 
 /* Update Production Bootstrap Cert*/
-func (r *moduleRepo) DeleteBootstrapCert(ModuleId *string) error {
-	result := r.Db.GetGormDb().Where("module_id = ?", ModuleId).UpdateColumn("boostrap_cert", nil)
+func (r *moduleRepo) DeleteBootstrapCert(moduleId string) error {
+	result := r.Db.GetGormDb().Where("module_id = ?", moduleId).UpdateColumn("boostrap_cert", nil)
 	if result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
-
-// /* Update Production user config  Data */
-// func (r *moduleRepo) UpdateModuleUserConfig(moduleData *Module) error {
-// 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-// 		Columns:   []clause.Column{{Name: "module_id"}},
-// 		DoUpdates: clause.AssignmentColumns([]string{"user_config"}),
-// 	}).Create(moduleData)
-// 	return d.Error
-// }
-//
-// /* Update Production factory config Data */
-// func (r *moduleRepo) UpdateModuleFactoryConfig(moduleData *Module) error {
-// 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-// 		Columns:   []clause.Column{{Name: "module_id"}},
-// 		DoUpdates: clause.AssignmentColumns([]string{"factory_config"}),
-// 	}).Create(moduleData)
-// 	return d.Error
-// }
-
-// /* Update Production user calib Data */
-// func (r *moduleRepo) UpdateModuleUserCalib(moduleData *Module) error {
-// 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-// 		Columns:   []clause.Column{{Name: "module_id"}},
-// 		DoUpdates: clause.AssignmentColumns([]string{"user_calib"}),
-// 	}).Create(moduleData)
-// 	return d.Error
-// }
-
-// /* Update Production factory calib Data */
-// func (r *moduleRepo) UpdateModuleFactoryCalib(moduleData *Module) error {
-// 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-// 		Columns:   []clause.Column{{Name: "module_id"}},
-// 		DoUpdates: clause.AssignmentColumns([]string{"factory_calib"}),
-// 	}).Create(moduleData)
-// 	return d.Error
-// }
