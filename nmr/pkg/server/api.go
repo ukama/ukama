@@ -1,32 +1,32 @@
 package server
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 )
 
 type ReqAddOrUpdateNode struct {
-	NodeID         string    `query:"node" validate:"required"`
-	LookingTo      string    `query:"looking_to" validate:"required"`
-	Type           string    `form:"type" json:"type"`
-	PartNumber     string    `form:"part_number" json:"partNumber"`
-	Skew           string    `form:"skew" json:"skew"`
-	Mac            string    `form:"mac" json:"mac"`
-	SwVersion      string    `form:"sw_version" json:"swVersion"`
-	PSwVersion     string    `form:"p_sw_version" json:"prodSwVersion"`
-	AssemblyDate   time.Time `form:"assembly_date" json:"assemblyDate"`
-	OemName        string    `form:"oem_name" json:"oemName"`
-	Modules        []string  `form:"modules" json:"modules"`
-	ProdTestStatus string    `form:"prod_test_status" json:"prodTestStatus"`
-	ProdReport     []byte    `form:"prod_report" json:"prodReport"` /* Report for production test */
-	Status         string    `form:"status" json:"status"`
+	NodeID        string    `query:"node" validate:"required"`
+	LookingTo     string    `query:"looking_to" validate:"required"`
+	Type          string    `form:"type" json:"type"`
+	PartNumber    string    `form:"part_number" json:"partNumber"`
+	Skew          string    `form:"skew" json:"skew"`
+	Mac           string    `form:"mac" json:"mac"`
+	SwVersion     string    `form:"sw_version" json:"swVersion"`
+	PSwVersion    string    `form:"p_sw_version" json:"mfgSwVersion"`
+	AssemblyDate  time.Time `form:"assembly_date" json:"assemblyDate"`
+	OemName       string    `form:"oem_name" json:"oemName"`
+	Modules       []string  `form:"modules" json:"modules"`
+	MfgTestStatus string    `form:"mfg_test_status" json:"mfgTestStatus"`
+	Status        string    `form:"status" json:"status"`
 }
 
 type ReqUpdateNodeStatus struct {
 	NodeID    string `query:"node" validate:"required"`
 	LookingTo string `query:"looking_to" validate:"required"`
-	Status    string `form:"status"`
+	Status    string `query:"status"`
 }
 
 type ReqDeleteNode struct {
@@ -61,12 +61,22 @@ type RespGetNodeStatus struct {
 	Status string `json:"node_status"`
 }
 
-type ReqUpdateNodeProdStatus struct {
-	NodeID         string `query:"node" validate:"required"`
-	LookingTo      string `query:"looking_to" validate:"required"`
-	ProdTestStatus string `form:"prodTestStatus" json:"prodTestStatus"`
-	ProdReport     []byte `form:"prodReport" json:"prodReport"` /* Report for production test */
-	Status         string `form:"status" json:"status"`
+type ReqGetNodeMfgStatus struct {
+	NodeID     string `query:"node" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"required"`
+}
+
+type RespGetNodeMfgStatus struct {
+	Status     string           `json:"node_status"`
+	ProdReport *json.RawMessage `form:"mfgReport" json:"mfgReport"`
+}
+
+type ReqUpdateNodeMfgStatus struct {
+	NodeID        string           `query:"node" validate:"required"`
+	LookingTo     string           `query:"looking_to" validate:"required"`
+	MfgTestStatus string           `form:"mfgTestStatus" json:"mfgTestStatus"`
+	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
+	Status        string           `form:"status" json:"status"`
 }
 
 /* Modules */
@@ -78,11 +88,11 @@ type ReqAddOrUpdateModule struct {
 	HwVersion          string    `form:"hwVersion" json:"hwVersion"`
 	Mac                string    `form:"mac" json:"mac"`
 	SwVersion          string    `form:"swVersion" json:"swVersion"`
-	PSwVersion         string    `form:"pSwVersion" json:"prodSwVersion"`
+	PSwVersion         string    `form:"pSwVersion" json:"mfgSwVersion"`
 	MfgDate            time.Time `form:"mfgDate" json:"mfgDate"`
 	MfgName            string    `form:"mfgName" json:"mfgName"`
-	ProdTestStatus     string    `form:"prodTestStatus" json:"prodTestStatus"`
-	ProdReport         []byte    `form:"prodTeport" json:"prodReport"` /* Report for production test */
+	MfgTestStatus      string    `form:"mfgTestStatus" json:"mfgTestStatus"`
+	MfgReport          []byte    `form:"mfgTeport" json:"mfgReport"` /* Report for mfguction test */
 	BootstrapCerts     []byte    `form:"bootstrapCerts" json:"bootstrapCerts"`
 	UserCalibration    []byte    `form:"userCalibration" json:"userCalibration"`
 	FactoryCalibration []byte    `form:"factoryCalibration" json:"factoryCalibration"`
@@ -114,14 +124,14 @@ type RespGetModuleList struct {
 	Modules []db.Module `json:"modules"`
 }
 
-type ReqGetModuleProdStatusData struct {
+type ReqGetModuleMfgStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
 	LookingTo string `query:"looking_for" validate:"required"`
 }
 
-type RespGetModuleProdStatusData struct {
-	ProdTestStatus string `form:"prodTestStatus" json:"prodTestStatus"`
-	ProdReport     []byte `form:"prodReport" json:"prodReport"` /* Report for production test */
+type RespGetModuleMfgStatusData struct {
+	MfgTestStatus string `form:"mfgTestStatus" json:"mfgTestStatus"`
+	MfgReport     []byte `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
 }
 
 type ReqGetModuleStatusData struct {
@@ -130,8 +140,8 @@ type ReqGetModuleStatusData struct {
 }
 
 type RespUpdateModuleStatusData struct {
-	ProdTestStatus     string `form:"prodTestStatus" json:"prodTestStatus"`
-	ProdReport         []byte `form:"prodReport" json:"prodReport"` /* Report for production test */
+	ProdTestStatus     string `form:"mfgTestStatus" json:"mfgTestStatus"`
+	ProdReport         []byte `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
 	BootstrapCerts     []byte `form:"bootstrapCerts" json:"bootstrapCerts"`
 	UserCalibration    []byte `form:"userCalibration" json:"userCalibration"`
 	FactoryCalibration []byte `form:"factoryCalibration" json:"factoryCalibration"`

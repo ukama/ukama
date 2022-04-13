@@ -1,6 +1,7 @@
 package db
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/sql"
 	"gorm.io/gorm/clause"
 )
@@ -11,7 +12,8 @@ type NodeRepo interface {
 	DeleteNode(nodeId string) error
 	ListNodes() (*[]Node, error)
 	GetNodeStatus(nodeId string) (*string, error)
-	UpdateNodeProdStatus(node *Node) error
+	GetNodeMfgStatus(nodeId string) (*string, *[]byte, error)
+	UpdateNodeMfgStatus(node *Node) error
 	UpdateNodeStatus(nodeId string, status string) error
 }
 
@@ -39,12 +41,13 @@ func (r *nodeRepo) GetNode(nodeId string) (*Node, error) {
 	if result.Error != nil {
 		return nil, result.Error
 	}
+	logrus.Tracef("Read node info for %s with %v. result %+v", node.NodeID, node, result)
 	return &node, nil
 }
 
 /* Delete Node  */
 func (r *nodeRepo) DeleteNode(nodeId string) error {
-	result := r.Db.GetGormDb().Where("node_id = ?", nodeId).Delete(&Node{})
+	result := r.Db.GetGormDb().Unscoped().Where("node_id = ?", nodeId).Delete(&Node{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -69,32 +72,45 @@ func (r *nodeRepo) ListNodes() (*[]Node, error) {
 
 func (r *nodeRepo) GetNodeStatus(nodeId string) (*string, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().Select("status").First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &node.Status, nil
 }
 
+func (r *nodeRepo) GetNodeMfgStatus(nodeId string) (*string, *[]byte, error) {
+	var node Node
+	result := r.Db.GetGormDb().Select("status", "mfg_report").First(&node, "node_id = ?", nodeId)
+	if result.Error != nil {
+		return nil, nil, result.Error
+	}
+	return &node.Status, node.MfgReport, nil
+}
+
 /* Update Production status */
-func (r *nodeRepo) UpdateNodeProdStatus(node *Node) error {
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "node_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"prod_test_status", "prod_report", "status"}),
-	}).Create(node)
-	return d.Error
+func (r *nodeRepo) UpdateNodeMfgStatus(node *Node) error {
+
+	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", node.NodeID).UpdateColumns(node)
+	if result.Error != nil {
+		return result.Error
+	}
+	logrus.Tracef("Updated node mfg status for %s with %v. result %+v", node.NodeID, node, result)
+	return nil
+
+	// d := r.Db.GetGormDb().Clauses(clause.OnConflict{
+	// 	Columns:   []clause.Column{{Name: "node_id"}},
+	// 	DoUpdates: clause.AssignmentColumns([]string{"mfg_test_status", "mfg_report", "status"}),
+	// }).Create(node)
+	// return d.Error
 }
 
 /* Update Node status */
 func (r *nodeRepo) UpdateNodeStatus(nodeId string, status string) error {
-	node := Node{
-		NodeID: nodeId,
-		Status: status,
+	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", nodeId).UpdateColumn("status", status)
+	if result.Error != nil {
+		return result.Error
 	}
-
-	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "node_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"status"}),
-	}).Create(node)
-	return d.Error
+	logrus.Tracef("Updated node status for %s with %s. result %+v", nodeId, status, result)
+	return nil
 }

@@ -57,7 +57,7 @@ func NewModuleRepo(db sql.Db) *moduleRepo {
 TODO: Get better solutuion */
 func (r *moduleRepo) AddModule(module *Module) error {
 
-	//result := r.Db.GetGormDb().Select("module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data", "unit_id").Create(module)
+	//result := r.Db.GetGormDb().Select("module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "mfg_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data", "unit_id").Create(module)
 	result := r.Db.GetGormDb().Create(module)
 	if result.Error != nil {
 		return result.Error
@@ -69,7 +69,7 @@ func (r *moduleRepo) AddModule(module *Module) error {
 func (r *moduleRepo) UpsertModule(Module *Module) error {
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "prod_test_status", "prod_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data"}),
+		UpdateAll: true,
 	}).Create(Module)
 	return d.Error
 }
@@ -92,9 +92,9 @@ func (r *moduleRepo) UpdateNodeId(moduleId string, nodeId string) error {
 	return nil
 }
 
-/* Delete Module  */
+/* Delete Module with module Ip permanently  */
 func (r *moduleRepo) DeleteModule(moduleId string) error {
-	result := r.Db.GetGormDb().Where("module_id = ?", moduleId).Delete(&Module{})
+	result := r.Db.GetGormDb().Unscoped().Where("module_id = ?", moduleId).Delete(&Module{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -120,13 +120,13 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 /* Update Production Status  Data */
 func (r *moduleRepo) UpdateModuleProdStatus(moduleId string, status string, data []byte) error {
 	module := Module{
-		ModuleID:       moduleId,
-		ProdTestStatus: status,
-		ProdReport:     data,
+		ModuleID:      moduleId,
+		MfgTestStatus: status,
+		MfgReport:     data,
 	}
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "module_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"prod_test_status", "prod_report"}),
+		DoUpdates: clause.AssignmentColumns([]string{"mfg_test_status", "mfg_report"}),
 	}).Create(module)
 	return d.Error
 }
