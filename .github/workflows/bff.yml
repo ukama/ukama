@@ -29,9 +29,11 @@ jobs:
 
             - name: Build bff
               run: make build
+              working-directory: ${{ env.working-directory }}
 
             - name: Test
               run: make test
+              working-directory: ${{ env.working-directory }}
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
@@ -58,6 +60,7 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
+              working-directory: ${{ env.working-directory }}
 
             - name: Set up Go
               uses: actions/setup-go@v2

@@ -7,7 +7,7 @@ jobs:
     name: build and test
     runs-on: ubuntu-latest
     env:
-      working-directory: interfaces/console
+       working-directory: interfaces/console
     steps:
       - uses: actions/checkout@v2
         # init vars required for tag generation
@@ -31,9 +31,11 @@ jobs:
 
       - name: Build console
         run: make build
+        working-directory: ${{ env.working-directory }}
 
       - name: Test
         run: make test
+        working-directory: ${{ env.working-directory }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -59,7 +61,8 @@ jobs:
                   -t $REGISTRY\:latest .  && \
               buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
               buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
-              buildah push $REGISTRY\:latest 
+              buildah push $REGISTRY\:latest
+        working-directory: ${{ env.working-directory }} 
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v1.6
