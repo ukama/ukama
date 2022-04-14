@@ -15,7 +15,8 @@
 #include "log.h"
 
 static void log_json(json_t *json);
-static int add_key_value_to_pattern(Pattern **pattern, const char *key,
+static void free_service(Service **service);
+static int add_key_value_to_pattern(Service **service, const char *key,
 				    json_t *jValue);
 
 /*
@@ -69,10 +70,8 @@ int deserialize_post_route_request(Service **service, json_t *json) {
   }
 
   uuid_clear((*service)->uuid);
-  (*service)->pattern = (Pattern *)calloc(1, sizeof(Pattern));
   (*service)->forward = (Forward *)calloc(1, sizeof(Forward));
-
-  if ((*service)->pattern == NULL || (*service)->forward == NULL) {
+  if ((*service)->forward == NULL) {
     log_error("Error allocating memory of size: %ls or %lu",
 	      sizeof(Pattern), sizeof(Forward));
     goto failure;
@@ -85,7 +84,7 @@ int deserialize_post_route_request(Service **service, json_t *json) {
     key   = json_object_iter_key(iter);
     value = json_object_iter_value(iter);
 
-    add_key_value_to_pattern(&((*service)->pattern), key, value);
+    add_key_value_to_pattern(service, key, value);
 
     /* iterate to next one */
     iter = json_object_iter_next(jPattern, iter);
@@ -98,8 +97,7 @@ int deserialize_post_route_request(Service **service, json_t *json) {
 
  failure:
   if (*service) {
-    if ((*service)->pattern) free((*service)->pattern);
-    if ((*service)->forward) free((*service)->forward);
+    free_service(service);
     free(*service);
     *service=NULL;
   }
@@ -145,28 +143,30 @@ int serialize_post_route_response(json_t **json, int respCode, uuid_t uuid,
  * add_key_value_to_pattern --
  *
  */
-static int add_key_value_to_pattern(Pattern **pattern, const char *key,
+static int add_key_value_to_pattern(Service **service, const char *key,
 				    json_t *jValue) {
 
-  Pattern *ptr=NULL;
+  Pattern **ptr=NULL;
+  Pattern *tmp=NULL;
 
-  if (jValue == NULL) return FALSE;
+  if (*service == NULL || jValue == NULL) return FALSE;
 
-  if (*pattern == NULL) {
-    ptr = *pattern;
+  if (!(*service)->pattern) {
+    ptr = &((*service)->pattern);
   } else {
-    for (ptr=*pattern; ptr->next; ptr=ptr->next);
+    for (tmp=(*service)->pattern; tmp->next; tmp=tmp->next);
+    ptr = &(tmp->next);
   }
 
-  ptr = (Pattern *)calloc(1, sizeof(Pattern));
-  if (ptr == NULL) {
+  *ptr = (Pattern *)calloc(1, sizeof(Pattern));
+  if (*ptr == NULL) {
     log_error("Error allocating memory of size: %lu", sizeof(Pattern));
     return FALSE;
   }
 
-  ptr->key   = strdup(key);
-  ptr->value = strdup(json_string_value(jValue));
-  ptr->next  = NULL;
+  (*ptr)->key   = strdup(key);
+  (*ptr)->value = strdup(json_string_value(jValue));
+  (*ptr)->next  = NULL;
 
   return TRUE;
 }
@@ -183,5 +183,35 @@ static void log_json(json_t *json) {
   if (str) {
     log_debug("json str: %s", str);
     free(str);
+  }
+}
+
+/*
+ * free_service --
+ *
+ */
+
+static void free_service(Service **service) {
+
+  Pattern *pattern, *tmp;
+  Forward *forward;
+
+  if (*service == NULL) return;
+
+  pattern = (*service)->pattern;
+  forward = (*service)->forward;
+
+  while(pattern) {
+    if (pattern->key)   free(pattern->key);
+    if (pattern->value) free(pattern->value);
+
+    tmp = pattern->next;
+    free(pattern);
+    pattern = tmp;
+  }
+
+  if (forward) {
+    if (forward->ip)   free(forward->ip);
+    if (forward->port) free(forward->port);
   }
 }
