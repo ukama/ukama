@@ -350,7 +350,7 @@ func (r *Router) DeleteModuleHandler(c *gin.Context, req *ReqDeleteModule) error
 func (r *Router) GetModuleMfgStatusHandler(c *gin.Context, req *ReqGetModuleMfgStatusData) (*RespGetModuleMfgStatusData, error) {
 	logrus.Debugf("Handling NMR get module mfg status request %+v.", req)
 
-	module, err := r.moduleRepo.GetModule(string(req.ModuleID))
+	status, err := r.moduleRepo.GetModuleMfgStatus(string(req.ModuleID))
 	if err != nil {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -358,8 +358,10 @@ func (r *Router) GetModuleMfgStatusHandler(c *gin.Context, req *ReqGetModuleMfgS
 		}
 	}
 
-	resp := &RespGetModuleMfgStatusData{
-		MfgTestStatus: module.MfgTestStatus,
+	resp := &RespGetModuleMfgStatusData{}
+
+	if status != nil {
+		resp.MfgTestStatus = *status
 	}
 
 	return resp, nil
@@ -368,9 +370,8 @@ func (r *Router) GetModuleMfgStatusHandler(c *gin.Context, req *ReqGetModuleMfgS
 /* Update module mfg status */
 func (r *Router) PutModuleMfgStatusHandler(c *gin.Context, req *ReqUpdateModuleMfgStatusData) error {
 	logrus.Debugf("Handling NMR update Module Mfg Status Data request %+v.", req)
-	var data []byte
 
-	err := r.moduleRepo.UpdateModuleMfgStatus(req.ModuleID, req.MfgTestStatus, data)
+	err := r.moduleRepo.UpdateModuleMfgStatus(req.ModuleID, req.MfgTestStatus)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,

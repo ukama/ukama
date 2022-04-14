@@ -37,7 +37,7 @@ func (r *nodeRepo) AddOrUpdateNode(node *Node) error {
 
 func (r *nodeRepo) GetNode(nodeId string) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -58,7 +58,7 @@ func (r *nodeRepo) DeleteNode(nodeId string) error {
 func (r *nodeRepo) ListNodes() (*[]Node, error) {
 	var nodes []Node
 
-	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&nodes)
+	result := r.Db.GetGormDb().Find(&nodes)
 	if result.Error != nil {
 		return nil, result.Error
 	}

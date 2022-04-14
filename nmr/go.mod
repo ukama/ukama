@@ -30,6 +30,7 @@ require (
 	github.com/jackc/pgx/v4 v4.12.1-0.20210724153913-640aa07df17c // indirect
 	github.com/lib/pq v1.10.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 

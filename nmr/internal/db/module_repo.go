@@ -15,8 +15,8 @@ type ModuleRepo interface {
 	GetModule(moduleId string) (*Module, error)
 	DeleteModule(moduleId string) error
 	ListModules() (*[]Module, error)
-	GetModuleMfgStatus(moduleId string) (*string, *[]byte, error)
-	UpdateModuleMfgStatus(moduleId string, status string, data []byte) error
+	GetModuleMfgStatus(moduleId string) (*string, error)
+	UpdateModuleMfgStatus(moduleId string, status string) error
 	GetModuleMfgData(moduleId string) (*Module, error)
 	GetModuleMfgField(moduleId string, field string) (*Module, error)
 	UpdateModuleMfgField(moduleId string, field string, module Module) error
@@ -122,19 +122,18 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 }
 
 /* Read module mfg status */
-func (r *moduleRepo) GetModuleMfgStatus(moduleId string) (*string, *[]byte, error) {
+func (r *moduleRepo) GetModuleMfgStatus(moduleId string) (*string, error) {
 	var module Module
-	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report").First(&module, "module_id = ?", moduleId)
+	result := r.Db.GetGormDb().Select("mfg_test_status").First(&module, "module_id = ?", moduleId)
 	if result.Error != nil {
-		return nil, nil, result.Error
+		return nil, result.Error
 	}
-	return &module.MfgTestStatus, module.MfgReport, nil
+	return &module.MfgTestStatus, nil
 }
 
 /* Update Mfg Status  Data */
-func (r *moduleRepo) UpdateModuleMfgStatus(moduleId string, status string, data []byte) error {
+func (r *moduleRepo) UpdateModuleMfgStatus(moduleId string, status string) error {
 	module := Module{
-		ModuleID:      moduleId,
 		MfgTestStatus: status,
 	}
 
