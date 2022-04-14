@@ -2,7 +2,14 @@ import { makeStyles } from "@mui/styles";
 import { RoundedCard } from "../../styles";
 import { SelectItemType } from "../../types";
 import LoadingWrapper from "../LoadingWrapper";
-import { Grid, MenuItem, Select, Theme, Typography } from "@mui/material";
+import {
+    Grid,
+    MenuItem,
+    Select,
+    Theme,
+    Typography,
+    useMediaQuery,
+} from "@mui/material";
 
 const useStyles = makeStyles<Theme>(theme => ({
     selectStyle: {
@@ -21,6 +28,7 @@ const useStyles = makeStyles<Theme>(theme => ({
             paddingBottom: "0px",
         },
     },
+    containerStyle,
 }));
 
 type StatusCardProps = {
@@ -45,95 +53,108 @@ const StatusCard = ({
     handleSelect,
 }: StatusCardProps) => {
     const classes = useStyles();
+    const isSmall = useMediaQuery((theme: Theme) =>
+        theme.breakpoints.down("md")
+    );
+
     return (
         <LoadingWrapper height={100} isLoading={loading}>
-            <RoundedCard>
-                <Grid
-                    spacing={2}
-                    container
-                    direction="row"
-                    justifyContent="center"
-                >
-                    <Grid item xs={2} display="flex" alignItems="center">
-                        <Icon />
-                    </Grid>
-                    <Grid xs={10} item sm container direction="column">
-                        <Grid
-                            sm
-                            item
-                            container
-                            spacing={2}
-                            display="flex"
-                            direction="row"
-                            alignItems="center"
-                        >
-                            <Grid item xs={12} mb={{ xs: 0.6, sm: 0 }}>
-                                <Typography variant="subtitle2">
-                                    {title}
-                                </Typography>
-                            </Grid>
-                            <Grid
-                                item
-                                xs={5}
-                                display="none"
-                                justifyContent="flex-end"
-                            >
-                                <Select
-                                    value={option}
-                                    disableUnderline
-                                    variant="standard"
-                                    className={classes.selectStyle}
-                                    MenuProps={{
-                                        sx: {
-                                            maxHeight: "194px",
-                                        },
-                                    }}
-                                    onChange={e => handleSelect(e.target.value)}
-                                >
-                                    {options.map(
-                                        ({
-                                            id,
-                                            label,
-                                            value,
-                                        }: SelectItemType) => (
-                                            <MenuItem key={id} value={value}>
-                                                <Typography variant="body1">
-                                                    {label}
-                                                </Typography>
-                                            </MenuItem>
-                                        )
-                                    )}
-                                </Select>
-                            </Grid>
+            {isSmall ? (
+                <div>sadas</div>
+            ) : (
+                <RoundedCard>
+                    <Grid
+                        spacing={2}
+                        container
+                        direction="row"
+                        justifyContent="center"
+                    >
+                        <Grid item xs={2} display="flex" alignItems="center">
+                            <Icon />
                         </Grid>
-                        <Grid item container alignItems="baseline">
-                            <Grid item>
-                                <Typography variant="h5" paddingRight="6px">
-                                    {subtitle1}
-                                </Typography>
+                        <Grid xs={10} item sm container direction="column">
+                            <Grid
+                                sm
+                                item
+                                container
+                                spacing={2}
+                                display="flex"
+                                direction="row"
+                                alignItems="center"
+                            >
+                                <Grid item xs={12} mb={{ xs: 0.6, sm: 0 }}>
+                                    <Typography variant="subtitle2">
+                                        {title}
+                                    </Typography>
+                                </Grid>
+                                <Grid
+                                    item
+                                    xs={5}
+                                    display="none"
+                                    justifyContent="flex-end"
+                                >
+                                    <Select
+                                        value={option}
+                                        disableUnderline
+                                        variant="standard"
+                                        className={classes.selectStyle}
+                                        MenuProps={{
+                                            sx: {
+                                                maxHeight: "194px",
+                                            },
+                                        }}
+                                        onChange={e =>
+                                            handleSelect(e.target.value)
+                                        }
+                                    >
+                                        {options.map(
+                                            ({
+                                                id,
+                                                label,
+                                                value,
+                                            }: SelectItemType) => (
+                                                <MenuItem
+                                                    key={id}
+                                                    value={value}
+                                                >
+                                                    <Typography variant="body1">
+                                                        {label}
+                                                    </Typography>
+                                                </MenuItem>
+                                            )
+                                        )}
+                                    </Select>
+                                </Grid>
                             </Grid>
-                            {title === "Data Usage" && (
+                            <Grid item container alignItems="baseline">
+                                <Grid item>
+                                    <Typography variant="h5" paddingRight="6px">
+                                        {subtitle1}
+                                    </Typography>
+                                </Grid>
+                                {title === "Data Usage" && (
+                                    <Grid item>
+                                        <Typography
+                                            variant="body1"
+                                            paddingRight="4px"
+                                        >
+                                            GB
+                                        </Typography>
+                                    </Grid>
+                                )}
                                 <Grid item>
                                     <Typography
                                         variant="body1"
-                                        paddingRight="4px"
+                                        color="textSecondary"
                                     >
-                                        GB
+                                        {subtitle2}
                                     </Typography>
                                 </Grid>
-                            )}
-                            <Grid item>
-                                <Typography
-                                    variant="body1"
-                                    color="textSecondary"
-                                >
-                                    {subtitle2}
-                                </Typography>
                             </Grid>
                         </Grid>
                     </Grid>
-                </Grid>
-            </RoundedCard>
+                </RoundedCard>
+            )}
         </LoadingWrapper>
     );
 };
