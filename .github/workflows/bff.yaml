@@ -133,7 +133,7 @@ jobs:
     release:
         name: release
         needs: build
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         env:
           working-directory: services/bff
