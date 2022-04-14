@@ -11,6 +11,7 @@ export const TRANSLATIONS_EN = {
     },
     ALERT: {
         Title: "Alerts",
+        AddNodeSuccess: "Your node has been registered successfully!",
     },
     HOME: {
         FormDialogContent:

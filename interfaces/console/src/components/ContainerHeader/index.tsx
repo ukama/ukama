@@ -137,52 +137,6 @@ const ContainerHeader = ({
                     {buttonTitle}
                 </Button>
             </Grid>
-
-            {/* <Grid
-                item
-                container
-                spacing={3}
-                alignItems="center"
-                justifyContent="flex-end"
-                xs={showSearchBox ? 12 : 8}
-            >
-                {showSearchBox && (
-                    <Grid item>
-                        <StyledInputBase
-                            placeholder="Search…"
-                            value={currentSearchValue}
-                            onChange={(e: any) =>
-                                setCurrentSearchValue(e.target.value)
-                            }
-                            sx={{
-                                height: "42px",
-                                borderRadius: 2,
-                                minWidth: { xs: "100%", md: "300px" },
-                                border: `1px solid ${colors.silver}`,
-                                padding: "4px 8px 4px 12px !important",
-                            }}
-                            endAdornment={
-                                <SearchIcon fontSize="small" color="primary" />
-                            }
-                        />
-                    </Grid>
-                )}
-                {showButton && (
-                    <Grid item justifyContent="flex-end" display="flex">
-                        <Button
-                            sx={{
-                                px: 4,
-                                width: { xs: "100%", md: "fit-content" },
-                            }}
-                            size={buttonSize}
-                            variant="contained"
-                            onClick={() => handleButtonAction()}
-                        >
-                            {buttonTitle}
-                        </Button>
-                    </Grid>
-                )}
-            </Grid> */}
         </Grid>
     );
 };

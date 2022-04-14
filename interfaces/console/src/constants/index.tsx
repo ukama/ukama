@@ -15,7 +15,7 @@ const SETTING_MENU = [
     { id: 1, title: "Account Settings" },
     { id: 2, title: "Network Settings" },
     { id: 3, title: "Alerts" },
-    { id: 4, title: "Node Settings" },
+    { id: 4, title: "Console Settings" },
 ];
 const NODE_ACTIONS = ["Turn node off", "Restart", "Turn RF off"];
 const TABLE_EXPORT_OPTIONS = [
@@ -1469,6 +1469,12 @@ const HealtChartsConfigure: any = {
         { name: "Active ", show: true, id: "subscribersactive" },
     ],
 };
+
+const MASK_BY_TYPE = {
+    HOME: "{uk- }000000{ -hnode- }00{ - }0000",
+    AMPLIFIER: "{uk- }000000{ -\\anode- }00{ - }0000",
+    TOWER: "{uk- }000000{ -tnode- }00{ - }0000",
+};
 export {
     NodeApps,
     NodeAppLogs,
@@ -1486,6 +1492,7 @@ export {
     TooltipsText,
     SETTING_MENU,
     DRAWER_WIDTH,
+    MASK_BY_TYPE,
     MONTH_FILTER,
     SIDEBAR_MENU1,
     SIDEBAR_MENU2,

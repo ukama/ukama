@@ -83,15 +83,6 @@ export type AddUserDto = {
     name: Scalars["String"];
 };
 
-export type AddUserResponse = {
-    __typename?: "AddUserResponse";
-    email: Scalars["String"];
-    iccid: Scalars["String"];
-    name: Scalars["String"];
-    phone: Scalars["String"];
-    uuid: Scalars["String"];
-};
-
 export type AddUserServiceRes = {
     __typename?: "AddUserServiceRes";
     iccid: Scalars["String"];
@@ -390,12 +381,12 @@ export type Mutation = {
     __typename?: "Mutation";
     activateUser: ActivateUserResponse;
     addNode: AddNodeResponse;
-    addUser: AddUserResponse;
+    addUser: UserResDto;
     deactivateUser: DeactivateResponse;
     deleteNode: DeactivateResponse;
     deleteUser: ActivateUserResponse;
     updateNode: OrgNodeDto;
-    updateUser: UserResponse;
+    updateUser: UserResDto;
 };
 
 export type MutationActivateUserArgs = {
@@ -430,6 +421,7 @@ export type MutationUpdateNodeArgs = {
 
 export type MutationUpdateUserArgs = {
     data: UpdateUserDto;
+    orgId: Scalars["String"];
 };
 
 export enum Network_Status {
@@ -731,12 +723,10 @@ export type UpdateNodeResponse = {
 };
 
 export type UpdateUserDto = {
-    eSimNumber?: InputMaybe<Scalars["String"]>;
-    email?: InputMaybe<Scalars["String"]>;
-    firstName?: InputMaybe<Scalars["String"]>;
+    email: Scalars["String"];
     id: Scalars["String"];
-    lastName?: InputMaybe<Scalars["String"]>;
-    phone?: InputMaybe<Scalars["String"]>;
+    name: Scalars["String"];
+    phone: Scalars["String"];
 };
 
 export type UserDto = {
@@ -752,13 +742,13 @@ export type UserInput = {
     userId: Scalars["String"];
 };
 
-export type UserResponse = {
-    __typename?: "UserResponse";
+export type UserResDto = {
+    __typename?: "UserResDto";
     email: Scalars["String"];
+    iccid?: Maybe<Scalars["String"]>;
     id: Scalars["String"];
     name: Scalars["String"];
     phone: Scalars["String"];
-    sim: Scalars["String"];
 };
 
 export type UserSimServices = {
@@ -803,8 +793,8 @@ export type GetLatestDataUsageSubscription = {
 };
 
 export type GetConnectedUsersQueryVariables = Exact<{
-    filter: Time_Filter;
     orgId: Scalars["String"];
+    filter: Time_Filter;
 }>;
 
 export type GetConnectedUsersQuery = {
@@ -1072,22 +1062,6 @@ export type DeactivateUserMutation = {
     };
 };
 
-export type UpdateUserMutationVariables = Exact<{
-    data: UpdateUserDto;
-}>;
-
-export type UpdateUserMutation = {
-    __typename?: "Mutation";
-    updateUser: {
-        __typename?: "UserResponse";
-        id: string;
-        name: string;
-        sim: string;
-        email: string;
-        phone: string;
-    };
-};
-
 export type ActivateUserMutationVariables = Exact<{
     data: ActivateUserDto;
 }>;
@@ -1097,33 +1071,37 @@ export type ActivateUserMutation = {
     activateUser: { __typename?: "ActivateUserResponse"; success: boolean };
 };
 
-export type UpdateNodeMutationVariables = Exact<{
-    data: UpdateNodeDto;
+export type AddUserMutationVariables = Exact<{
+    data: AddUserDto;
+    orgId: Scalars["String"];
 }>;
 
-export type UpdateNodeMutation = {
+export type AddUserMutation = {
     __typename?: "Mutation";
-    updateNode: {
-        __typename?: "OrgNodeDto";
-        nodeId: string;
+    addUser: {
+        __typename?: "UserResDto";
         name: string;
-        state: Org_Node_State;
-        type: string;
+        email: string;
+        iccid?: string | null;
+        phone: string;
+        id: string;
     };
 };
 
-export type AddNodeMutationVariables = Exact<{
-    data: AddNodeDto;
+export type UpdateUserMutationVariables = Exact<{
+    data: UpdateUserDto;
+    orgId: Scalars["String"];
 }>;
 
-export type AddNodeMutation = {
+export type UpdateUserMutation = {
     __typename?: "Mutation";
-    addNode: {
-        __typename?: "AddNodeResponse";
-        nodeId: string;
+    updateUser: {
+        __typename?: "UserResDto";
         name: string;
-        state: Org_Node_State;
-        type: Node_Type;
+        email: string;
+        iccid?: string | null;
+        phone: string;
+        id: string;
     };
 };
 
@@ -1137,6 +1115,36 @@ export type DeleteNodeMutation = {
         __typename?: "DeactivateResponse";
         id: string;
         success: boolean;
+    };
+};
+
+export type AddNodeMutationVariables = Exact<{
+    data: AddNodeDto;
+}>;
+
+export type AddNodeMutation = {
+    __typename?: "Mutation";
+    addNode: {
+        __typename?: "AddNodeResponse";
+        nodeId: string;
+        state: Org_Node_State;
+        type: Node_Type;
+        name: string;
+    };
+};
+
+export type UpdateNodeMutationVariables = Exact<{
+    data: UpdateNodeDto;
+}>;
+
+export type UpdateNodeMutation = {
+    __typename?: "Mutation";
+    updateNode: {
+        __typename?: "OrgNodeDto";
+        nodeId: string;
+        state: Org_Node_State;
+        type: string;
+        name: string;
     };
 };
 
@@ -1278,7 +1286,7 @@ export type GetLatestDataUsageSubscriptionHookResult = ReturnType<
 export type GetLatestDataUsageSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestDataUsageSubscription>;
 export const GetConnectedUsersDocument = gql`
-    query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
+    query getConnectedUsers($orgId: String!, $filter: TIME_FILTER!) {
         getConnectedUsers(filter: $filter, orgId: $orgId) {
             totalUser
         }
@@ -1297,8 +1305,8 @@ export const GetConnectedUsersDocument = gql`
  * @example
  * const { data, loading, error } = useGetConnectedUsersQuery({
  *   variables: {
- *      filter: // value for 'filter'
  *      orgId: // value for 'orgId'
+ *      filter: // value for 'filter'
  *   },
  * });
  */
@@ -2189,60 +2197,6 @@ export type DeactivateUserMutationOptions = Apollo.BaseMutationOptions<
     DeactivateUserMutation,
     DeactivateUserMutationVariables
 >;
-export const UpdateUserDocument = gql`
-    mutation updateUser($data: UpdateUserDto!) {
-        updateUser(data: $data) {
-            id
-            name
-            sim
-            email
-            phone
-        }
-    }
-`;
-export type UpdateUserMutationFn = Apollo.MutationFunction<
-    UpdateUserMutation,
-    UpdateUserMutationVariables
->;
-
-/**
- * __useUpdateUserMutation__
- *
- * To run a mutation, you first call `useUpdateUserMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateUserMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateUserMutation, { data, loading, error }] = useUpdateUserMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useUpdateUserMutation(
-    baseOptions?: Apollo.MutationHookOptions<
-        UpdateUserMutation,
-        UpdateUserMutationVariables
-    >
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useMutation<UpdateUserMutation, UpdateUserMutationVariables>(
-        UpdateUserDocument,
-        options
-    );
-}
-export type UpdateUserMutationHookResult = ReturnType<
-    typeof useUpdateUserMutation
->;
-export type UpdateUserMutationResult =
-    Apollo.MutationResult<UpdateUserMutation>;
-export type UpdateUserMutationOptions = Apollo.BaseMutationOptions<
-    UpdateUserMutation,
-    UpdateUserMutationVariables
->;
 export const ActivateUserDocument = gql`
     mutation activateUser($data: ActivateUserDto!) {
         activateUser(data: $data) {
@@ -2293,108 +2247,112 @@ export type ActivateUserMutationOptions = Apollo.BaseMutationOptions<
     ActivateUserMutation,
     ActivateUserMutationVariables
 >;
-export const UpdateNodeDocument = gql`
-    mutation updateNode($data: UpdateNodeDto!) {
-        updateNode(data: $data) {
-            nodeId
+export const AddUserDocument = gql`
+    mutation addUser($data: AddUserDto!, $orgId: String!) {
+        addUser(data: $data, orgId: $orgId) {
             name
-            state
-            type
+            email
+            iccid
+            phone
+            id
         }
     }
 `;
-export type UpdateNodeMutationFn = Apollo.MutationFunction<
-    UpdateNodeMutation,
-    UpdateNodeMutationVariables
+export type AddUserMutationFn = Apollo.MutationFunction<
+    AddUserMutation,
+    AddUserMutationVariables
 >;
 
 /**
- * __useUpdateNodeMutation__
+ * __useAddUserMutation__
  *
- * To run a mutation, you first call `useUpdateNodeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateNodeMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useAddUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddUserMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateNodeMutation, { data, loading, error }] = useUpdateNodeMutation({
+ * const [addUserMutation, { data, loading, error }] = useAddUserMutation({
  *   variables: {
  *      data: // value for 'data'
+ *      orgId: // value for 'orgId'
  *   },
  * });
  */
-export function useUpdateNodeMutation(
+export function useAddUserMutation(
     baseOptions?: Apollo.MutationHookOptions<
-        UpdateNodeMutation,
-        UpdateNodeMutationVariables
+        AddUserMutation,
+        AddUserMutationVariables
     >
 ) {
     const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useMutation<UpdateNodeMutation, UpdateNodeMutationVariables>(
-        UpdateNodeDocument,
+    return Apollo.useMutation<AddUserMutation, AddUserMutationVariables>(
+        AddUserDocument,
         options
     );
 }
-export type UpdateNodeMutationHookResult = ReturnType<
-    typeof useUpdateNodeMutation
+export type AddUserMutationHookResult = ReturnType<typeof useAddUserMutation>;
+export type AddUserMutationResult = Apollo.MutationResult<AddUserMutation>;
+export type AddUserMutationOptions = Apollo.BaseMutationOptions<
+    AddUserMutation,
+    AddUserMutationVariables
 >;
-export type UpdateNodeMutationResult =
-    Apollo.MutationResult<UpdateNodeMutation>;
-export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<
-    UpdateNodeMutation,
-    UpdateNodeMutationVariables
->;
-export const AddNodeDocument = gql`
-    mutation addNode($data: AddNodeDto!) {
-        addNode(data: $data) {
-            nodeId
+export const UpdateUserDocument = gql`
+    mutation updateUser($data: UpdateUserDto!, $orgId: String!) {
+        updateUser(data: $data, orgId: $orgId) {
             name
-            state
-            type
+            email
+            iccid
+            phone
+            id
         }
     }
 `;
-export type AddNodeMutationFn = Apollo.MutationFunction<
-    AddNodeMutation,
-    AddNodeMutationVariables
+export type UpdateUserMutationFn = Apollo.MutationFunction<
+    UpdateUserMutation,
+    UpdateUserMutationVariables
 >;
 
 /**
- * __useAddNodeMutation__
+ * __useUpdateUserMutation__
  *
- * To run a mutation, you first call `useAddNodeMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useAddNodeMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateUserMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [addNodeMutation, { data, loading, error }] = useAddNodeMutation({
+ * const [updateUserMutation, { data, loading, error }] = useUpdateUserMutation({
  *   variables: {
  *      data: // value for 'data'
+ *      orgId: // value for 'orgId'
  *   },
  * });
  */
-export function useAddNodeMutation(
+export function useUpdateUserMutation(
     baseOptions?: Apollo.MutationHookOptions<
-        AddNodeMutation,
-        AddNodeMutationVariables
+        UpdateUserMutation,
+        UpdateUserMutationVariables
     >
 ) {
     const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useMutation<AddNodeMutation, AddNodeMutationVariables>(
-        AddNodeDocument,
+    return Apollo.useMutation<UpdateUserMutation, UpdateUserMutationVariables>(
+        UpdateUserDocument,
         options
     );
 }
-export type AddNodeMutationHookResult = ReturnType<typeof useAddNodeMutation>;
-export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
-export type AddNodeMutationOptions = Apollo.BaseMutationOptions<
-    AddNodeMutation,
-    AddNodeMutationVariables
+export type UpdateUserMutationHookResult = ReturnType<
+    typeof useUpdateUserMutation
+>;
+export type UpdateUserMutationResult =
+    Apollo.MutationResult<UpdateUserMutation>;
+export type UpdateUserMutationOptions = Apollo.BaseMutationOptions<
+    UpdateUserMutation,
+    UpdateUserMutationVariables
 >;
 export const DeleteNodeDocument = gql`
     mutation deleteNode($id: String!) {
@@ -2446,6 +2404,109 @@ export type DeleteNodeMutationResult =
 export type DeleteNodeMutationOptions = Apollo.BaseMutationOptions<
     DeleteNodeMutation,
     DeleteNodeMutationVariables
+>;
+export const AddNodeDocument = gql`
+    mutation addNode($data: AddNodeDto!) {
+        addNode(data: $data) {
+            nodeId
+            state
+            type
+            name
+        }
+    }
+`;
+export type AddNodeMutationFn = Apollo.MutationFunction<
+    AddNodeMutation,
+    AddNodeMutationVariables
+>;
+
+/**
+ * __useAddNodeMutation__
+ *
+ * To run a mutation, you first call `useAddNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAddNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [addNodeMutation, { data, loading, error }] = useAddNodeMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useAddNodeMutation(
+    baseOptions?: Apollo.MutationHookOptions<
+        AddNodeMutation,
+        AddNodeMutationVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useMutation<AddNodeMutation, AddNodeMutationVariables>(
+        AddNodeDocument,
+        options
+    );
+}
+export type AddNodeMutationHookResult = ReturnType<typeof useAddNodeMutation>;
+export type AddNodeMutationResult = Apollo.MutationResult<AddNodeMutation>;
+export type AddNodeMutationOptions = Apollo.BaseMutationOptions<
+    AddNodeMutation,
+    AddNodeMutationVariables
+>;
+export const UpdateNodeDocument = gql`
+    mutation updateNode($data: UpdateNodeDto!) {
+        updateNode(data: $data) {
+            nodeId
+            state
+            type
+            name
+        }
+    }
+`;
+export type UpdateNodeMutationFn = Apollo.MutationFunction<
+    UpdateNodeMutation,
+    UpdateNodeMutationVariables
+>;
+
+/**
+ * __useUpdateNodeMutation__
+ *
+ * To run a mutation, you first call `useUpdateNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateNodeMutation, { data, loading, error }] = useUpdateNodeMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateNodeMutation(
+    baseOptions?: Apollo.MutationHookOptions<
+        UpdateNodeMutation,
+        UpdateNodeMutationVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useMutation<UpdateNodeMutation, UpdateNodeMutationVariables>(
+        UpdateNodeDocument,
+        options
+    );
+}
+export type UpdateNodeMutationHookResult = ReturnType<
+    typeof useUpdateNodeMutation
+>;
+export type UpdateNodeMutationResult =
+    Apollo.MutationResult<UpdateNodeMutation>;
+export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<
+    UpdateNodeMutation,
+    UpdateNodeMutationVariables
 >;
 export const GetMetricsByTabDocument = gql`
     query getMetricsByTab($data: MetricsByTabInputDTO!) {

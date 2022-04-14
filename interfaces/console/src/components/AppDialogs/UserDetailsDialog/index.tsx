@@ -40,6 +40,7 @@ type BasicDialogProps = {
     closeBtnLabel?: string;
     saveBtnLabel?: string;
     handleSaveSimUser?: any;
+    handleUpdateUser?: Function;
     userDetailsTitle: string;
     simDetailsTitle: string;
 };
@@ -54,6 +55,7 @@ const UserDetailsDialog = ({
     handleClose,
     saveBtnLabel,
     closeBtnLabel,
+    handleUpdateUser,
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
@@ -75,7 +77,6 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
-
     return (
         <Dialog
             key={id}
@@ -142,31 +143,31 @@ const UserDetailsDialog = ({
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField
-                                        value={name || "-"}
+                                        value={name}
                                         label={"NAME"}
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                name: value,
+                                                name: value || "",
                                             })
                                         }
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField
-                                        value={email || "-"}
+                                        value={email}
                                         label={"EMAIL"}
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                email: value,
+                                                email: value || "",
                                             })
                                         }
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField
-                                        value={phone || "-"}
+                                        value={phone}
                                         label={"PHONE"}
                                         handleOnChange={(value: string) =>
                                             setUserForm({
@@ -294,7 +295,12 @@ const UserDetailsDialog = ({
                         >
                             {closeBtnLabel}
                         </Button>
-                        <Button onClick={handleSaveSimUser} variant="contained">
+                        <Button
+                            onClick={
+                                user.id ? handleUpdateUser : handleSaveSimUser
+                            }
+                            variant="contained"
+                        >
                             {saveBtnLabel}
                         </Button>
                     </DialogActions>
