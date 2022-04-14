@@ -99,10 +99,13 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
               with:
+                  projectBaseDir:  ${{ env.working-directory }}
                   args: >
                       -Dsonar.organization=ukama
                       -Dsonar.projectKey=ukama_ukama_console_bff
                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                      -Dsonar.test.exclusions=tests/**
+                      -Dsonar.verbose=false
                       -Dsonar.sources=.
     lint:
         name: lint
