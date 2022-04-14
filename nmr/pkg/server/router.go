@@ -14,7 +14,6 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/rest"
-	"github.com/ukama/openIoR/services/common/sql"
 	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
 	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
@@ -43,12 +42,9 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, rs *rs.RouterServer, d sql.Db) *Router {
+func NewRouter(config *pkg.Config, rs *rs.RouterServer, nodeRepo db.NodeRepo, moduleRepo db.ModuleRepo) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
-	nodeRepo := db.NewNodeRepo(d)
-
-	moduleRepo := db.NewModuleRepo(d)
 
 	r := &Router{fizz: f,
 		port:       config.Server.Port,

@@ -122,7 +122,7 @@ func (_m *ModuleRepo) GetModuleMfgField(moduleId string, field string) (*db.Modu
 }
 
 // GetModuleMfgStatus provides a mock function with given fields: moduleId
-func (_m *ModuleRepo) GetModuleMfgStatus(moduleId string) (*string, *[]byte, error) {
+func (_m *ModuleRepo) GetModuleMfgStatus(moduleId string) (*string, error) {
 	ret := _m.Called(moduleId)
 
 	var r0 *string
@@ -134,23 +134,14 @@ func (_m *ModuleRepo) GetModuleMfgStatus(moduleId string) (*string, *[]byte, err
 		}
 	}
 
-	var r1 *[]byte
-	if rf, ok := ret.Get(1).(func(string) *[]byte); ok {
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(moduleId)
 	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*[]byte)
-		}
+		r1 = ret.Error(1)
 	}
 
-	var r2 error
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(moduleId)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // ListModules provides a mock function with given fields:
@@ -190,13 +181,13 @@ func (_m *ModuleRepo) UpdateModuleMfgField(moduleId string, field string, module
 	return r0
 }
 
-// UpdateModuleMfgStatus provides a mock function with given fields: moduleId, status, data
-func (_m *ModuleRepo) UpdateModuleMfgStatus(moduleId string, status string, data []byte) error {
-	ret := _m.Called(moduleId, status, data)
+// UpdateModuleMfgStatus provides a mock function with given fields: moduleId, status
+func (_m *ModuleRepo) UpdateModuleMfgStatus(moduleId string, status string) error {
+	ret := _m.Called(moduleId, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, []byte) error); ok {
-		r0 = rf(moduleId, status, data)
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(moduleId, status)
 	} else {
 		r0 = ret.Error(0)
 	}

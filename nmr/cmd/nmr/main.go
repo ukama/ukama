@@ -76,7 +76,7 @@ func startBootstrapServer(ctx context.Context, d sql.Db) {
 
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 
-	r := server.NewRouter(serviceConfig, rs, d)
+	r := server.NewRouter(serviceConfig, rs, db.NewNodeRepo(d), db.NewModuleRepo(d))
 	r.Run()
 }
 
