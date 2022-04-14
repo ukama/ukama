@@ -4,10 +4,14 @@ import (
 	sql2 "database/sql"
 	"github.com/ukama/ukamaX/common/sql"
 	"github.com/ukama/ukamaX/common/ukama"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"strings"
 )
+
+const MaxAttachedNodes = 2
 
 // NodeID must be lowercase
 type NodeRepo interface {
@@ -16,6 +20,8 @@ type NodeRepo interface {
 	GetByOrg(orgName string) ([]Node, error)
 	Delete(id ukama.NodeID, nestedFunc ...func() error) error
 	Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error
+	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
+	DetachNode(detachNodeId ukama.NodeID) error
 }
 
 type nodeRepo struct {
@@ -111,4 +117,45 @@ func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, n
 		return gorm.ErrRecordNotFound
 	}
 	return err
+}
+
+func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
+	parentNode, err := r.Get(nodeId)
+	if err != nil {
+		return err
+	}
+
+	if parentNode.Type != NodeTypeTower {
+		return status.Errorf(codes.InvalidArgument, "node type must be a towernode")
+	}
+
+	if parentNode.Attached == nil {
+		parentNode.Attached = make([]*Node, 0)
+	}
+
+	if len(attachedNodeId)+len(parentNode.Attached) > MaxAttachedNodes {
+		return status.Errorf(codes.InvalidArgument, "max number of attached nodes is %d", MaxAttachedNodes)
+	}
+
+	for _, n := range attachedNodeId {
+		an, err := r.Get(n)
+		if err != nil {
+			return err
+		}
+
+		if an.Type != NodeTypeAmplifier {
+			return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
+		}
+
+		parentNode.Attached = append(parentNode.Attached, an)
+	}
+
+	db := r.Db.GetGormDb().Save(parentNode)
+	return db.Error
+}
+
+// DetachNode removes node from parent node
+func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
+	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=?", detachNodeId.StringLowercase())
+	return db.Error
 }

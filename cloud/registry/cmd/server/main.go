@@ -38,10 +38,11 @@ func initConfig() {
 	svcConf = pkg.NewConfig()
 	config.LoadConfig(ServiceName, svcConf)
 }
+
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db2.Org{}, &db2.Network{}, &db2.Site{}, &db2.Node{}, &db2.NodeIp{})
+	err := d.Init(&db2.Org{}, &db2.Network{}, &db2.Site{}, &db2.Node{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}

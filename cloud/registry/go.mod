@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/goombaio/namegenerator v0.0.0-20181006234301-989e774b106e
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
+	github.com/jackc/pgconn v1.8.1 // indirect
 	github.com/jackc/pgtype v1.7.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/pkg/errors v0.9.1

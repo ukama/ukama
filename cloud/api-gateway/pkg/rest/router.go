@@ -117,6 +117,7 @@ func (r *Router) init() {
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
 		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
 		nodes.PUT("/:node", nil, tonic.Handler(r.addOrUpdateNodeHandler, http.StatusOK))
+		nodes.GET("/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
 
 		nodes.GET("/metrics/openapi.json", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
@@ -145,7 +146,6 @@ func (r *Router) init() {
 		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
 		hss.GET("/:user", nil, tonic.Handler(r.getUserHandler, http.StatusOK))
 		hss.PUT("/:user", nil, tonic.Handler(r.updateUserHandler, http.StatusOK))
-
 	}
 }
 
@@ -196,6 +196,15 @@ func (r *Router) getNodesHandler(c *gin.Context) (*NodesList, error) {
 	}
 
 	return MapNodesList(nl), nil
+}
+
+func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*NodeExtended, error) {
+	nodeName := c.Param("node")
+	resp, err := r.clients.Registry.GetNode(nodeName)
+	if err != nil {
+		return nil, err
+	}
+	return mapExtendeNode(resp.Node), nil
 }
 
 func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {

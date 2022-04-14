@@ -22,7 +22,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukamaX/cloud/hss v0.0.0-20220407150637-6988f3e0f2e5
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220405175331-d5edd9f340a6
+	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
 	github.com/ukama/ukamaX/common v0.0.0-20220405175331-d5edd9f340a6
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.45.0

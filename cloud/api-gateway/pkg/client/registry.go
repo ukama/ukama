@@ -106,9 +106,20 @@ func (r *Registry) GetNodes(orgName string) (*pb.GetNodesResponse, error) {
 	}
 
 	return res, nil
-
 }
 
+func (r *Registry) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	res, err := r.client.GetNode(ctx, &pb.GetNodeRequest{
+		NodeId: nodeId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {

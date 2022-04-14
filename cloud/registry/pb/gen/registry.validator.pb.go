@@ -108,6 +108,18 @@ func (this *NetworkResponse) Validate() error {
 	}
 	return nil
 }
+func (this *AttachNodesRequest) Validate() error {
+	return nil
+}
+func (this *AttachNodesResponse) Validate() error {
+	return nil
+}
+func (this *DetachNodeRequest) Validate() error {
+	return nil
+}
+func (this *DetachNodeResponse) Validate() error {
+	return nil
+}
 func (this *Network) Validate() error {
 	return nil
 }
@@ -115,5 +127,12 @@ func (this *Organization) Validate() error {
 	return nil
 }
 func (this *Node) Validate() error {
+	for _, item := range this.Attached {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Attached", err)
+			}
+		}
+	}
 	return nil
 }

@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"encoding/base64"
+	"errors"
+	"github.com/jackc/pgconn"
 	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
 	"github.com/ukama/ukamaX/common/grpc"
 	"time"
@@ -143,8 +145,13 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	})
 
 	if err != nil {
-		if sql.IsDuplicateKeyError(err) {
-			return nil, status.Errorf(codes.AlreadyExists, "node already exist")
+		var pge *pgconn.PgError
+		if errors.As(err, &pge) {
+			if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
+				return nil, status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", node.Name)
+			} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
+				return nil, status.Errorf(codes.AlreadyExists, "node with node id %s already exist", node.NodeID)
+			}
 		}
 
 		logrus.Error("Error adding the node. " + err.Error())
@@ -283,6 +290,40 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	return resp, nil
 }
 
+func (r *RegistryServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
+	nodeId, err := ukama.ValidateNodeId(req.GetParentNodeId())
+	if err != nil {
+		return nil, invalidNodeIdError(req.GetParentNodeId(), err)
+	}
+
+	nds := make([]ukama.NodeID, 0)
+	for _, n := range req.GetAttachedNodeIds() {
+		nd, err := ukama.ValidateNodeId(n)
+		if err != nil {
+			return nil, invalidNodeIdError(n, err)
+		}
+		nds = append(nds, nd)
+	}
+	err = r.nodeRepo.AttachNodes(nodeId, nds)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+	return &pb.AttachNodesResponse{}, nil
+}
+
+func (r *RegistryServer) DetachNodes(ctx context.Context, req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
+	nodeId, err := ukama.ValidateNodeId(req.DetachedNodeId)
+	if err != nil {
+		return nil, invalidNodeIdError(req.DetachedNodeId, err)
+	}
+
+	err = r.nodeRepo.DetachNode(nodeId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+	return &pb.DetachNodeResponse{}, nil
+}
+
 func pbNodeStateToDb(state pb.NodeState) db2.NodeState {
 	var dbState db2.NodeState
 	switch state {
@@ -311,12 +352,21 @@ func dbNodeStateToPb(state db2.NodeState) pb.NodeState {
 }
 
 func dbNodeToPbNode(dbn *db2.Node) *pb.Node {
-	return &pb.Node{
+	n := &pb.Node{
 		NodeId: dbn.NodeID,
 		State:  dbNodeStateToPb(dbn.State),
 		Type:   dbNodeTypeToPb(dbn.Type),
 		Name:   dbn.Name,
 	}
+
+	if len(dbn.Attached) > 0 {
+		n.Attached = make([]*pb.Node, 0)
+	}
+
+	for _, nd := range dbn.Attached {
+		n.Attached = append(n.Attached, dbNodeToPbNode(nd))
+	}
+	return n
 }
 
 func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
@@ -332,4 +382,8 @@ func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
 		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
 	}
 	return pbNodeType
+}
+
+func invalidNodeIdError(nodeId string, err error) error {
+	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }

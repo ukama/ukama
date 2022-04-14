@@ -14,9 +14,9 @@ import (
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
-	"strings"
 	"time"
 )
+const PGERROR_CODE_UNIQUE_VIOLATION = "23505"
 
 type db struct {
 	gorm      *gorm.DB
@@ -165,8 +165,12 @@ func IsNotFoundError(err error) bool {
 	return errors.Is(err, gorm.ErrRecordNotFound)
 }
 
-func IsDuplicateKeyError(err error) bool {
-	return strings.Contains(err.Error(), "duplicate key value")
+func IsDuplicateKeyError(err error) (bool) {
+	var pge *pgconn.PgError
+	if errors.As(err, &pge) {
+		return pge.Code == PGERROR_CODE_UNIQUE_VIOLATION
+	}
+	return false
 }
 
 // ExecuteInTransaction executes dbOperation in transaction with all nested functions

@@ -50,7 +50,7 @@ type TestConfig struct {
 }
 
 func Test_FullFlow(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
@@ -102,6 +102,47 @@ func Test_FullFlow(t *testing.T) {
 		assert.NotNil(tt, nodeResp.Network)
 	})
 
+	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
+		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_COMPNODE)
+		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
+			Node: &pb.Node{
+				NodeId: tNodeId.String(),
+				State:  pb.NodeState_UNDEFINED,
+			},
+			OrgName: orgName,
+		})
+		if err != nil {
+			assert.FailNow(tt, "AddNode failed", err.Error())
+		}
+
+		aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
+		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
+			Node: &pb.Node{
+				NodeId: aNodeId.String(),
+				State:  pb.NodeState_UNDEFINED,
+			},
+			OrgName: orgName,
+		})
+		if err != nil {
+			assert.FailNow(tt, "AddNode failed", err.Error())
+		}
+
+		_, err = c.AttachNodes(ctx, &pb.AttachNodesRequest{
+			ParentNodeId:    tNodeId.String(),
+			AttachedNodeIds: []string{aNodeId.String()},
+		})
+		if err != nil {
+			assert.FailNow(tt, "AttachNodes failed", err.Error())
+		}
+
+		resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeId.String()})
+		if assert.NoError(tt, err, "GetNode failed") {
+			assert.NotNil(tt, resp.Node.Attached)
+			assert.Equal(tt, 1, len(resp.Node.Attached))
+			assert.Equal(tt, aNodeId.StringLowercase(), resp.Node.Attached[0].NodeId)
+		}
+	})
+
 	t.Run("DeleteNode", func(tt *testing.T) {
 		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: node.String()})
 		handleResponse(tt, err, r)
@@ -119,8 +160,15 @@ func Test_FullFlow(t *testing.T) {
 	t.Run("GetNodes", func(tt *testing.T) {
 		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 		handleResponse(t, err, nodesResp)
-		if assert.Equal(tt, 1, len(nodesResp.Nodes)) {
-			assert.Equal(tt, node.String(), nodesResp.Nodes[0].NodeId)
+		if assert.Equal(tt, 3, len(nodesResp.Nodes)) {
+			cont := false
+			for _, n := range nodesResp.Nodes {
+				if node.String() == n.NodeId {
+					cont = true
+					break
+				}
+			}
+			assert.True(tt, cont, "Can't find added node %s", node.String())
 		}
 
 	})

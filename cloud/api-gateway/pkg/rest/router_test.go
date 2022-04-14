@@ -125,7 +125,7 @@ func TestGetNodes(t *testing.T) {
 	req.Header.Set("token", "bearer 123")
 	nodeId := ukama.NewVirtualNodeId("homenode")
 
-	t.Run("HappyPath", func(t *testing.T) {
+	t.Run("GetNodesSucceeded", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		m := &pbmocks.RegistryServiceClient{}
 		m.On("GetNodes", mock.Anything, mock.MatchedBy(func(r *pb.GetNodesRequest) bool {
@@ -169,6 +169,46 @@ func TestGetNodes(t *testing.T) {
 		body := w.Body.String()
 		assert.Contains(t, body, "nodes")
 	})
+
+}
+
+func TestGetNode(t *testing.T) {
+
+	const attachedNodeId = "nodeId1"
+
+	// arrange
+	nodeId := ukama.NewVirtualNodeId("homenode")
+	req, _ := http.NewRequest("GET", "/orgs/test-org/nodes/"+nodeId.String(), nil)
+	req.Header.Set("token", "bearer 123")
+
+	w := httptest.NewRecorder()
+	m := &pbmocks.RegistryServiceClient{}
+	m.On("GetNode", mock.Anything, mock.Anything).Return(&pb.GetNodeResponse{
+		Node: &pb.Node{
+			NodeId: nodeId.String(),
+			Attached: []*pb.Node{
+				{NodeId: attachedNodeId},
+				{NodeId: "nodeId2"},
+			}},
+	}, nil)
+
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+		Registry: client.NewRegistryFromClient(m),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, http.StatusOK, w.Code)
+	m.AssertExpectations(t)
+	node := NodeExtended{}
+	err := json.Unmarshal(w.Body.Bytes(), &node)
+	if assert.NoError(t, err) {
+		assert.Equal(t, nodeId.StringLowercase(), node.NodeId)
+		assert.Equal(t, 2, len(node.Attached))
+		assert.Equal(t, attachedNodeId, node.Attached[0].NodeId)
+	}
 
 }
 

@@ -15,6 +15,8 @@ service RegistryService {
     rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeStateResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
+    rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
 }
 
 message AddOrgRequest {
@@ -92,6 +94,23 @@ message NetworkResponse{
     Network network = 1;
 }
 
+message AttachNodesRequest {
+    string parentNodeId = 1;
+    repeated string  attachedNodeIds = 2;
+}
+
+message AttachNodesResponse {
+
+}
+
+message DetachNodeRequest{
+    string detachedNodeId = 2;
+}
+
+message DetachNodeResponse {
+
+}
+
 message Network {
     string name = 1;
 }
@@ -119,4 +138,5 @@ message Node {
     NodeState state = 4;
     NodeType type = 5;
     string name = 6;
+    repeated Node attached = 7;
 }

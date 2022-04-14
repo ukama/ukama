@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql/driver"
 	uuid "github.com/google/uuid"
-	"github.com/jackc/pgtype"
 	"gorm.io/gorm"
 	"time"
 )
@@ -56,12 +55,15 @@ type Node struct {
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
-	Name      string         `gorm:"type:string;uniqueIndex:node_name_org_idx"`
-	NetworkID uint32
+	Name      string         `gorm:"type:string;uniqueIndex:node_name_network_idx"`
+	NetworkID uint32         `gorm:"uniqueIndex:node_name_network_idx"`
 	Network   *Network
 	SiteID    *uint32
 	State     NodeState `gorm:"type:uint;not null"`
 	Type      NodeType  `gorm:"type:uint;not null"`
+
+	// TODO: add unique key on attached nodes to make sure that node could be attached only once
+	Attached []*Node `gorm:"many2many:attached_nodes"`
 }
 
 type Network struct {
@@ -82,9 +84,4 @@ type Org struct {
 type Site struct {
 	BaseModel
 	Nodes []Node
-}
-
-type NodeIp struct {
-	NodeId string      `gorm:"type:string;uniqueIndex:ip_node_id_idx_case_insensetive,expression:lower(node_id);size:23;"`
-	IP     pgtype.Inet `gorm:"type:inet"`
 }
