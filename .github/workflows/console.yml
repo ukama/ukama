@@ -72,8 +72,7 @@ jobs:
         with:
           args: >
             -Dsonar.organization=ukama
-            -Dsonar.projectKey=ukama_ukama-dashboard
-            -Dsonar.projectName=ukama-dashboard                                                          
+            -Dsonar.projectKey=ukama_ukama_console_app
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
             -Dsonar.sources=. 
 
@@ -118,7 +117,7 @@ jobs:
       - name: update gitops
         uses: denispalnitsky/gitops-release@v7
         with:
-          filename: 'releases/ukamax-helmfile.yaml'
+          filename: 'releases/console-helmfile.yaml'
           key: 'consoleAppImageTag'
           value: ${{ steps.vars_step.outputs.sha_short }}
           github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
