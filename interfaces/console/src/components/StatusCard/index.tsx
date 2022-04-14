@@ -45,6 +45,7 @@ const StatusCard = ({
     handleSelect,
 }: StatusCardProps) => {
     const classes = useStyles();
+
     return (
         <LoadingWrapper height={100} isLoading={loading}>
             <RoundedCard>

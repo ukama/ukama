@@ -1,11 +1,17 @@
-name: build-bff
+name: bff
 on:
-    push:
+  push:
+    paths:
+        - "services/bff/**"
+        - ".github/workflows/bff.yaml"
+  workflow_dispatch:
 
 jobs:
     build:
         name: build and test
         runs-on: ubuntu-latest
+        env:
+          working-directory: services/bff
         steps:
             - uses: actions/checkout@v2
               # init vars required for tag generation
@@ -27,9 +33,11 @@ jobs:
 
             - name: Build bff
               run: make build
+              working-directory: ${{ env.working-directory }}
 
             - name: Test
               run: make test
+              working-directory: ${{ env.working-directory }}
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
@@ -48,7 +56,7 @@ jobs:
 
             - name: OCI build and push
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
               run: |
                   buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -56,6 +64,7 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
                   buildah push $REGISTRY\:latest
+              working-directory: ${{ env.working-directory }}
 
             - name: Set up Go
               uses: actions/setup-go@v2
@@ -67,14 +76,14 @@ jobs:
                   git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
             - name: Make test build
-              working-directory: "bff_integration/test/integration"
+              working-directory: "services/bff/bff_integration/test/integration"
               run: |
                   env CGO_ENABLED=0 go test . -tags integration -v -c -o bin/integration
 
             - name: OCI Push bff-api test
-              working-directory: "bff_integration"
+              working-directory: "services/bff/bff_integration"
               env:
-                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/frontend/bff
+                  REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
                   UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
               run: |
@@ -84,21 +93,25 @@ jobs:
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
                   buildah push $REGISTRY\:latest-test
-    #             - name: SonarCloud Scan
-    #               uses: sonarsource/sonarcloud-github-action@v1.6
-    #               env:
-    #                   GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-    #                   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-    #               with:
-    #                   args: >
-    #                       -Dsonar.organization=ukama
-    #                       -Dsonar.projectKey=ukama_frontend_bff
-    #                       -Dsonar.projectName=ukama-bff
-    #                       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-    #                       -Dsonar.sources=.
+            - name: SonarCloud Scan
+              uses: sonarsource/sonarcloud-github-action@v1.6
+              env:
+                  GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+              with:
+                  projectBaseDir:  ${{ env.working-directory }}
+                  args: >
+                      -Dsonar.organization=ukama
+                      -Dsonar.projectKey=ukama_ukama_console_bff
+                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+                      -Dsonar.test.exclusions=tests/**
+                      -Dsonar.verbose=false
+                      -Dsonar.sources=.
     lint:
         name: lint
         runs-on: ubuntu-latest
+        env:
+          working-directory: services/bff
         steps:
             - name: Check out Git repository
               uses: actions/checkout@v2
@@ -111,15 +124,19 @@ jobs:
             # ESLint and Prettier must be in `package.json`
             - name: Install Node.js dependencies
               run: yarn install
+              working-directory: ${{ env.working-directory }} 
 
             - name: Run linters
               run: yarn lint
+              working-directory: ${{ env.working-directory }} 
 
     release:
         name: release
         needs: build
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
+        env:
+          working-directory: services/bff
         steps:
             # init vars required for tag generation
             - uses: actions/checkout@v2
@@ -131,8 +148,8 @@ jobs:
             - name: update gitops
               uses: denispalnitsky/gitops-release@v7
               with:
-                  filename: "releases/ukamax-helmfile.yaml"
-                  key: "bffImageTag"
+                  filename: "releases/console-helmfile.yaml"
+                  key: "consoleBffImageTag"
                   value: ${{ steps.vars_step.outputs.sha_short }}
                   github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
                   github-org-and-repo: "ukama/infra-as-code"

@@ -1,12 +1,17 @@
-name: build-web
+name: console
 on:
   push:
+    paths:
+        - "interfaces/console/**"
+        - ".github/workflows/console.yaml"
+  workflow_dispatch:
 
 jobs:
   build:
-
     name: build and test
     runs-on: ubuntu-latest
+    env:
+       working-directory: interfaces/console
     steps:
       - uses: actions/checkout@v2
         # init vars required for tag generation
@@ -28,11 +33,13 @@ jobs:
           restore-keys: ${{ runner.os }}-yarn-
 
 
-      - name: Build web
+      - name: Build console
         run: make build
+        working-directory: ${{ env.working-directory }}
 
       - name: Test
         run: make test
+        working-directory: ${{ env.working-directory }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -51,14 +58,15 @@ jobs:
                           
       - name: OCI build and push        
         env:
-          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/web
+          REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/app
         run: |                        
               buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                   -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                   -t $REGISTRY\:latest .  && \
               buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
               buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
-              buildah push $REGISTRY\:latest 
+              buildah push $REGISTRY\:latest
+        working-directory: ${{ env.working-directory }} 
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v1.6
@@ -66,18 +74,20 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
+          projectBaseDir:  ${{ env.working-directory }}
           args: >
             -Dsonar.organization=ukama
-            -Dsonar.projectKey=ukama_ukama-dashboard
-            -Dsonar.projectName=ukama-dashboard                                                          
+            -Dsonar.projectKey=ukama_ukama_console_app
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.sources=. 
+            -Dsonar.test.exclusions=tests/**
+            -Dsonar.verbose=false
+            -Dsonar.sources=.
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env:
-      working-directory: web
+      working-directory: interfaces/console
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
@@ -90,17 +100,19 @@ jobs:
       # ESLint and Prettier must be in `package.json`
       - name: Install Node.js dependencies
         run: yarn install
+        working-directory: ${{ env.working-directory }} 
 
       - name: Run linters
         run: yarn lint
+        working-directory: ${{ env.working-directory }} 
 
   release:
     name: release
     needs: build
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     env:
-      working-directory: web
+      working-directory: interfaces/console
     steps:
       # init vars required for tag generation
       - uses: actions/checkout@v2
@@ -112,8 +124,8 @@ jobs:
       - name: update gitops
         uses: denispalnitsky/gitops-release@v7
         with:
-          filename: 'releases/ukamax-helmfile.yaml'
-          key: 'webImageTag'
+          filename: 'releases/console-helmfile.yaml'
+          key: 'consoleAppImageTag'
           value: ${{ steps.vars_step.outputs.sha_short }}
           github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           github-org-and-repo: 'ukama/infra-as-code'
