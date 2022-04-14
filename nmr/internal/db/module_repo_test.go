@@ -122,64 +122,6 @@ func Test_moduleRepo_UpdateModuleMfgStatus(t *testing.T) {
 
 }
 
-func Test_moduleRepo_AddModule(t *testing.T) {
-
-	t.Run("AddModule", func(t *testing.T) {
-
-		module := intDb.Module{
-			ModuleID:      "1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "test",
-		}
-
-		var db *extsql.DB
-		var err error
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		// rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status"}).
-		// 	AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus)
-
-		mock.ExpectQuery("^INSERT INTO").
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus, nil, nil, nil, nil, nil, nil, nil, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := intDb.NewModuleRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		err = r.AddModule(&module)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
-}
-
 func Test_moduleRepo_GetModule(t *testing.T) {
 
 	t.Run("GetModule", func(t *testing.T) {

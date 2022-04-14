@@ -1,6 +1,7 @@
 package db_test
 
 import (
+	"database/sql"
 	extsql "database/sql"
 	"fmt"
 	"regexp"
@@ -90,14 +91,19 @@ func Test_nodeRepo_GetNodeStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		nodeStatus, err := r.GetNode(node.NodeID)
+		nodeStatus, err := r.GetNodeStatus(node.NodeID)
 
 		// Assert
 		assert.NoError(t, err)
 
-		err = mock.ExpectationsWereMet()
+		if err := mock.ExpectationsWereMet(); err != nil {
+			t.Errorf("there were unfulfilled expections: %s", err)
+		}
 		assert.NoError(t, err)
-		assert.NotNil(t, nodeStatus)
+
+		if assert.NotNil(t, nodeStatus) {
+			assert.Equal(t, node.Status, *nodeStatus)
+		}
 	})
 
 }
@@ -120,6 +126,20 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 			Status:        "Assembly",
 		}
 
+		module := intDb.Module{
+			ModuleID:      "M1001",
+			Type:          "TRX",
+			PartNumber:    "a1",
+			HwVersion:     "h1",
+			Mac:           "00:01:02:03:04:05",
+			SwVersion:     "1.1",
+			PSwVersion:    "0.1",
+			MfgDate:       time.Now(),
+			MfgName:       "ukama",
+			MfgTestStatus: "",
+			UnitID:        sql.NullString{String: node.NodeID, Valid: true},
+		}
+
 		var db *extsql.DB
 		var err error
 
@@ -129,9 +149,16 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"node_id", "type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "mfg_test_status", "status"}).
 			AddRow(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status)
 
+		mrows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "unit_id"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus, module.UnitID)
+
 		mock.ExpectQuery(`SELECT`).
 			WithArgs(node.NodeID).
 			WillReturnRows(rows)
+
+		mock.ExpectQuery(`^SELECT.*modules.*`).
+			WithArgs(sqlmock.AnyArg()).
+			WillReturnRows(mrows)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -155,71 +182,14 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, nodeData)
-	})
-
-}
-
-func Test_nodeRepo_AddorUpdateNode(t *testing.T) {
-
-	t.Run("NewNode", func(t *testing.T) {
-
-		var db *extsql.DB
-		var err error
-
-		node := intDb.Node{
-			NodeID:        "1001",
-			Type:          "hnode",
-			PartNumber:    "a1",
-			Skew:          "s1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			AssemblyDate:  time.Now(),
-			OemName:       "ukama",
-			MfgTestStatus: "",
-			Status:        "Assembly",
-		}
-
-		db, mock, err := sqlmock.New() // mock sql.DB
-		assert.NoError(t, err)
-
-		//prep := mock.ExpectPrepare("^INSERT INTO articles*")
-		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO *`)).
-			WithArgs(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-
-		dialector := postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		})
-
-		gdb, err := gorm.Open(dialector, &gorm.Config{})
-		assert.NoError(t, err)
-
-		r := intDb.NewNodeRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		assert.NoError(t, err)
-
-		// Act
-		err = r.AddOrUpdateNode(&node)
-
-		// Assert
-		assert.Error(t, err)
-
-		if err = mock.ExpectationsWereMet(); err != nil {
+		if err := mock.ExpectationsWereMet(); err != nil {
 			t.Errorf("there were unfulfilled expections: %s", err)
 		}
 		assert.NoError(t, err)
 
+		if assert.NotNil(t, nodeData) {
+			assert.Equal(t, node.NodeID, nodeData.NodeID)
+		}
 	})
 
 }
@@ -333,6 +303,23 @@ func Test_nodeRepo_GetNodeList(t *testing.T) {
 			Status:        "Assembly",
 		}
 
+		module := intDb.Module{
+			ModuleID:      "M1001",
+			Type:          "TRX",
+			PartNumber:    "a1",
+			HwVersion:     "h1",
+			Mac:           "00:01:02:03:04:05",
+			SwVersion:     "1.1",
+			PSwVersion:    "0.1",
+			MfgDate:       time.Now(),
+			MfgName:       "ukama",
+			MfgTestStatus: "",
+			UnitID:        sql.NullString{String: node.NodeID, Valid: true},
+		}
+
+		// nodeID2 := "1002"
+		// unitID2 := sql.NullString{String: nodeId2, Valid: true}
+
 		var db *extsql.DB
 		var err error
 
@@ -343,8 +330,15 @@ func Test_nodeRepo_GetNodeList(t *testing.T) {
 			AddRow(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status).
 			AddRow("1002", node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status)
 
+		mrow := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "unit_id"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus, module.UnitID)
+
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WillReturnRows(rows)
+
+		mock.ExpectQuery(`^SELECT.*modules.*`).
+			WithArgs(sqlmock.AnyArg(),sqlmock.AnyArg()).
+			WillReturnRows(mrow)
 
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
