@@ -1,6 +1,10 @@
 name: console
 on:
   push:
+    paths:
+        - "interfaces/console/**"
+        - ".github/workflows/console.yaml"
+  workflow_dispatch:
 
 jobs:
   build:
