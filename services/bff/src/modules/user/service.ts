@@ -7,13 +7,12 @@ import {
     GetUserResponse,
     ResidentsResponse,
     UpdateUserDto,
-    UserResponse,
     GetUserDto,
     AddUserDto,
-    AddUserResponse,
     ActivateUserResponse,
     GetUsersDto,
     UserInput,
+    UserResDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -58,15 +57,20 @@ export class UserService implements IUserService {
         return res.data;
     };
 
-    updateUser = async (req: UpdateUserDto): Promise<UserResponse> => {
+    updateUser = async (
+        orgId: string,
+        req: UpdateUserDto,
+        header: HeaderType
+    ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_UPDATE_USER,
-            body: req,
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${orgId}/users/${req.id}`,
+            headers: header,
+            body: { name: req.name, email: req.email, phone: req.phone },
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
+        return UserMapper.dtoToUserResDto(res);
     };
     deactivateUser = async (id: string): Promise<DeactivateResponse> => {
         const res = await catchAsyncIOMethod({
@@ -145,7 +149,7 @@ export class UserService implements IUserService {
         orgId: string,
         req: AddUserDto,
         header: HeaderType
-    ): Promise<AddUserResponse | null> => {
+    ): Promise<UserResDto | null> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${orgId}/users`,

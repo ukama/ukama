@@ -41,7 +41,7 @@
     "eject": "react-scripts eject",
     "build": "react-scripts build",
     "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
-    "start": "husky install && react-scripts start",
+    "start": " react-scripts start",
     "codegen": "graphql-codegen --config codegen.yml",
     "lint:fix": "eslint . --ext ts --ext tsx --ext js --fix",
     "pretty": "prettier --write --config .prettierrc './src/**'",
