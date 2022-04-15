@@ -1,6 +1,8 @@
 package rest
 
-import pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+import (
+	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+)
 
 type UserRequest struct {
 	Org      string `path:"org" validate:"required"`
@@ -16,6 +18,20 @@ type UpdateUserRequest struct {
 	Name    string `json:"name,omitempty"`
 	Email   string `json:"email,omitempty"`
 	Phone   string `json:"phone,omitempty"`
+}
+
+type SetSimStatusRequest struct {
+	OrgName string       `path:"org" validate:"required"`
+	UserId  string       `path:"user" validate:"required"`
+	Iccid   string       `path:"iccid" validate:"required"`
+	Carrier *SimServices `json:"carrier,omitempty"`
+	Ukama   *SimServices `json:"ukama,omitempty"`
+}
+
+type SimServices struct {
+	Voice *bool `json:"voice,omitempty"`
+	Sms   *bool `json:"sms,omitempty"`
+	Data  *bool `json:"data,omitempty"`
 }
 
 type NodesList struct {

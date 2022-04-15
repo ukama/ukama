@@ -6,15 +6,17 @@ package ukama.hss.v1;
 
 
 import "validator.proto";
-
+import "google/protobuf/wrappers.proto";
 
 service UserService {
     // adds new user with ICCID. Designed for internal use only.
     rpc Add (AddRequest) returns (AddResponse);
     // adds new user with ICCID. Designed for internal use only.
     rpc AddInternal (AddInternalRequest) returns (AddInternalResponse);
+
     // deletes user and IMSI that is assigend to him
     rpc Delete (DeleteRequest) returns (DeleteResponse);
+    
     // lists all users for organization
     rpc List(ListRequest) returns (ListResponse);
     // Get user info
@@ -23,6 +25,9 @@ service UserService {
     rpc Update(UpdateRequest) returns (UpdateResponse);
     // Generate sim token from ICCID
     rpc GenerateSimToken(GenerateSimTokenRequest) returns (GenerateSimTokenResponse);
+
+    // Set status of sim
+    rpc SetSimStatus (SetSimStatusRequest) returns (SetSimStatusResponse);
 }
 
 message AddInternalRequest{
@@ -136,4 +141,25 @@ message Services {
     bool voice = 1;
     bool data = 2;
     bool sms = 3;
+}
+
+message SetSimStatusRequest {
+    string iccid = 1 [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+
+    message SetServices {
+        google.protobuf.BoolValue voice = 1;
+        google.protobuf.BoolValue data = 2;
+        google.protobuf.BoolValue sms = 3;
+    }
+
+    // Status of sim card inside of Ukama Network
+    SetServices ukama = 2;
+
+    // Status of sim card in a Sim manager.
+    // If status is IDLE or ACTIVE then sim card can be used outside of Ukama Network
+    SetServices carrier = 3;
+}
+
+message SetSimStatusResponse{
+
 }

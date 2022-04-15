@@ -88,3 +88,11 @@ func (r *Hss) Get(userId string) (*pb.GetResponse, error) {
 
 	return r.client.Get(ctx, &pb.GetRequest{Uuid: userId})
 }
+
+func (r *Hss) SetSimStatus(req *pb.SetSimStatusRequest) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	_, err := r.client.SetSimStatus(ctx, req)
+	return err
+}

@@ -5,11 +5,12 @@ package gen
 
 import (
 	fmt "fmt"
+	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
-	math "math"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -233,5 +234,45 @@ func (this *SimStatus) Validate() error {
 	return nil
 }
 func (this *Services) Validate() error {
+	return nil
+}
+
+var _regex_SetSimStatusRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *SetSimStatusRequest) Validate() error {
+	if !_regex_SetSimStatusRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	if this.Ukama != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Ukama); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Ukama", err)
+		}
+	}
+	if this.Carrier != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Carrier); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Carrier", err)
+		}
+	}
+	return nil
+}
+func (this *SetSimStatusRequest_SetServices) Validate() error {
+	if this.Voice != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Voice); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Voice", err)
+		}
+	}
+	if this.Data != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Data); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Data", err)
+		}
+	}
+	if this.Sms != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sms); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sms", err)
+		}
+	}
+	return nil
+}
+func (this *SetSimStatusResponse) Validate() error {
 	return nil
 }

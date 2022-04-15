@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -146,6 +147,8 @@ func (r *Router) init() {
 		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
 		hss.GET("/:user", nil, tonic.Handler(r.getUserHandler, http.StatusOK))
 		hss.PUT("/:user", nil, tonic.Handler(r.updateUserHandler, http.StatusOK))
+		hss.PUT("/:user/sims/:iccid/services", nil, tonic.Handler(r.setSimStatusHandler, http.StatusOK))
+
 	}
 }
 
@@ -249,4 +252,31 @@ func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*hsspb.GetResponse, error) {
 	return r.clients.Hss.Get(req.UserId)
+}
+
+func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) error {
+	return r.clients.Hss.SetSimStatus(&hsspb.SetSimStatusRequest{
+		Iccid:   req.Iccid,
+		Carrier: simServicesToPbService(req.Carrier),
+		Ukama:   simServicesToPbService(req.Ukama),
+	})
+}
+
+func boolToPbBool(data *bool) *wrapperspb.BoolValue {
+	if data == nil {
+		return nil
+	}
+	return &wrapperspb.BoolValue{Value: *data}
+}
+
+func simServicesToPbService(data *SimServices) *hsspb.SetSimStatusRequest_SetServices {
+	if data == nil {
+		return nil
+	}
+
+	return &hsspb.SetSimStatusRequest_SetServices{
+		Data:  boolToPbBool(data.Data),
+		Voice: boolToPbBool(data.Voice),
+		Sms:   boolToPbBool(data.Sms),
+	}
 }

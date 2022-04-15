@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"github.com/ukama/ukamaX/cloud/hss/pb/client/gen"
+	gen "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )
@@ -19,6 +19,10 @@ func (s *SimManagerStub) GetSimStatus(ctx context.Context, in *gen.GetSimStatusR
 
 func (s *SimManagerStub) GetSimInfo(ctx context.Context, in *gen.GetSimInfoRequest, opts ...grpc.CallOption) (*gen.GetSimInfoResponse, error) {
 	return &gen.GetSimInfoResponse{}, nil
+}
+
+func (s *SimManagerStub) SetServiceStatus(ctx context.Context, in *gen.SetServiceStatusRequest, opts ...grpc.CallOption) (*gen.SetServiceStatusResponse, error) {
+	return &gen.SetServiceStatusResponse{}, nil
 }
 
 type CloserStub struct {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/client/gen"
 	"github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/server"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/sims"
 	"google.golang.org/grpc/credentials/insecure"

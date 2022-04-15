@@ -9,6 +9,7 @@ import (
 	"github.com/ukama/ukamaX/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"testing"
 	"time"
 
@@ -173,6 +174,7 @@ func Test_UserService(t *testing.T) {
 		}
 	})
 
+	getResp := &pb.GetResponse{}
 	t.Run("get", func(tt *testing.T) {
 		getResp, err := c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
 		if handleResponse(tt, err, getResp) {
@@ -200,6 +202,22 @@ func Test_UserService(t *testing.T) {
 			assert.Equal(tt, "changed", getResp.User.Name)
 			assert.Equal(tt, "1231223132", getResp.User.Phone)
 			assert.Equal(tt, "changed@example.com", getResp.User.Email)
+		}
+	})
+
+	t.Run("setCarrierServiceStatuses", func(tt *testing.T) {
+		targetData := getResp.Sim.Carrier.Services.Data
+		setResp, err := c.SetSimStatus(ctx, &pb.SetSimStatusRequest{
+			Iccid: getResp.Sim.Iccid,
+			Carrier: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(targetData),
+			},
+		})
+
+		if handleResponse(tt, err, setResp) {
+			getResp, err = c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
+			assert.NoError(tt, err)
+			assert.Equal(tt, targetData, getResp.Sim.Carrier.Services.Data)
 		}
 	})
 

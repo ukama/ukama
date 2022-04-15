@@ -36,6 +36,8 @@ type UserServiceClient interface {
 	Update(ctx context.Context, in *UpdateRequest, opts ...grpc.CallOption) (*UpdateResponse, error)
 	// Generate sim token from ICCID
 	GenerateSimToken(ctx context.Context, in *GenerateSimTokenRequest, opts ...grpc.CallOption) (*GenerateSimTokenResponse, error)
+	// Set status of sim
+	SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error)
 }
 
 type userServiceClient struct {
@@ -109,6 +111,15 @@ func (c *userServiceClient) GenerateSimToken(ctx context.Context, in *GenerateSi
 	return out, nil
 }
 
+func (c *userServiceClient) SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error) {
+	out := new(SetSimStatusResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/SetSimStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -127,6 +138,8 @@ type UserServiceServer interface {
 	Update(context.Context, *UpdateRequest) (*UpdateResponse, error)
 	// Generate sim token from ICCID
 	GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error)
+	// Set status of sim
+	SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -154,6 +167,9 @@ func (UnimplementedUserServiceServer) Update(context.Context, *UpdateRequest) (*
 }
 func (UnimplementedUserServiceServer) GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GenerateSimToken not implemented")
+}
+func (UnimplementedUserServiceServer) SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetSimStatus not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -294,6 +310,24 @@ func _UserService_GenerateSimToken_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_SetSimStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetSimStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).SetSimStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.hss.v1.UserService/SetSimStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).SetSimStatus(ctx, req.(*SetSimStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -328,6 +362,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GenerateSimToken",
 			Handler:    _UserService_GenerateSimToken_Handler,
+		},
+		{
+			MethodName: "SetSimStatus",
+			Handler:    _UserService_SetSimStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

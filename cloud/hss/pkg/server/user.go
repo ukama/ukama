@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+
 	uuid2 "github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/client/gen"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
 	"github.com/ukama/ukamaX/cloud/hss/pkg"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/sims"
@@ -14,6 +15,7 @@ import (
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
 )
 
@@ -252,6 +254,36 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 	}, nil
 }
 
+func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequest) (*pb.SetSimStatusResponse, error) {
+	if req.Carrier.Sms != nil && req.Carrier.Sms.Value {
+		return nil, status.Errorf(codes.InvalidArgument, "enabling SMS service is not supported")
+	}
+
+	if req.Carrier.Voice != nil && req.Carrier.Voice.Value {
+		return nil, status.Errorf(codes.InvalidArgument, "enabling VOICE service is not supported")
+	}
+
+	if req.Carrier != nil {
+		_, err := u.simManager.SetServiceStatus(ctx, &pbclient.SetServiceStatusRequest{
+			Iccid: req.Iccid,
+			Services: &pbclient.Services{
+				Sms:   req.Carrier.Sms,
+				Data:  req.Carrier.Data,
+				Voice: req.Carrier.Voice,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if req.Ukama != nil {
+		return nil, status.Errorf(codes.Unimplemented, "Configuring status in ukama network is not yet implemented")
+	}
+
+	return &pb.SetSimStatusResponse{}, nil
+}
+
 func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card status for %s", simCard.Iccid)
 	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
@@ -274,9 +306,9 @@ func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) 
 		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
 	}
 	simCard.Carrier.Services = &pb.Services{
-		Sms:   r.Services.Sms,
-		Data:  r.Services.Data,
-		Voice: r.Services.Voice,
+		Sms:   getBoolVal(r.Services.Sms),
+		Data:  getBoolVal(r.Services.Data),
+		Voice: getBoolVal(r.Services.Voice),
 	}
 
 	simCard.Ukama = &pb.SimStatus{
@@ -288,6 +320,13 @@ func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) 
 			Voice: false,
 		},
 	}
+}
+
+func getBoolVal(val *wrapperspb.BoolValue) bool {
+	if val == nil {
+		return false
+	}
+	return val.Value
 }
 
 func dbSimcardsToPbSimcards(simcards []db.Simcard) (res *pb.Sim) {

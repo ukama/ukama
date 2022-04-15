@@ -3,16 +3,17 @@
 
 syntax = "proto3";
 
-option go_package = "pb/client/gen";
+option go_package = "pb/gen/simmgr";
 
 package sim_manager.v1;
 
 import "validator.proto";
+import "google/protobuf/wrappers.proto";
 
 
 
 service SimManagerService {
-    rpc ActivateSim(ActivateSimRequest) returns (ActivateSimResponse);
+    rpc SetServiceStatus(SetServiceStatusRequest) returns (SetServiceStatusResponse);
     rpc GetSimStatus(GetSimStatusRequest) returns (GetSimStatusResponse);
     rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
 }
@@ -39,9 +40,9 @@ message GetSimStatusResponse {
 }
 
 message Services {
-    bool voice = 1;
-    bool data = 2;
-    bool sms = 3;
+    google.protobuf.BoolValue voice = 1;
+    google.protobuf.BoolValue data = 2;
+    google.protobuf.BoolValue sms = 3;
 }
 
 message GetSimInfoRequest {
@@ -51,4 +52,13 @@ message GetSimInfoRequest {
 message GetSimInfoResponse {
     string iccid = 1;
     string imsi = 2;
+}
+
+message SetServiceStatusRequest {
+    string iccid = 1;
+    Services services = 2 [(validator.field) =  {msg_exists : true}] ;
+}
+
+message SetServiceStatusResponse{
+
 }
