@@ -558,17 +558,6 @@ func (r *Router) GetModuleMfgFieldHandler(c *gin.Context, req *ReqGetModuleMfgFi
 		}
 		data = module.FactoryCalibration
 
-	// case "cloud_certs":
-	// 	columnName = "cloud_certs"
-	// 	module, err = r.moduleRepo.GetModuleMfgField(req.ModuleID, req.Field)
-	// 	if err != nil {
-	// 		return nil, rest.HttpError{
-	// 			HttpCode: http.StatusNotFound,
-	// 			Message:  err.Error(),
-	// 		}
-	// 	}
-	// 	data = module.CloudCerts
-
 	case "inventory_data":
 		columnName = "inventory_data"
 		module, err = r.moduleRepo.GetModuleMfgField(req.ModuleID, columnName)
