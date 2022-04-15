@@ -249,3 +249,9 @@ subscription getMetricsByTabS {
         }
     }
 }
+
+mutation updateUserService($data: UpdateUserServiceInput!) {
+    updateUserStatus(data: $data) {
+        success
+    }
+}

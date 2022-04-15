@@ -129,8 +129,8 @@ export class GetUserDto {
     @Field()
     id: string;
 
-    @Field(() => GET_STATUS_TYPE)
-    status: GET_STATUS_TYPE;
+    @Field()
+    status: boolean;
 
     @Field()
     name: string;
@@ -350,4 +350,24 @@ export class AddUserServiceRes {
 
     @Field()
     iccid: string;
+}
+
+@InputType()
+export class UpdateUserServiceInput {
+    @Field()
+    orgId: string;
+
+    @Field()
+    simId: string;
+
+    @Field()
+    userId: string;
+
+    @Field()
+    status: boolean;
+}
+@ObjectType()
+export class UpdateUserServiceRes {
+    @Field()
+    success: boolean;
 }

@@ -14,6 +14,8 @@ import {
     ActivateUserResponse,
     GetUsersDto,
     UserInput,
+    UpdateUserServiceInput,
+    UpdateUserServiceRes,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -165,6 +167,28 @@ export class UserService implements IUserService {
             path: `${SERVER.ORG}/${orgId}/users/${userId}`,
             headers: header,
         });
+        if (checkError(res)) throw new Error(res.message);
+        return {
+            success: true,
+        };
+    };
+    updateUserStatus = async (
+        data: UpdateUserServiceInput,
+        header: HeaderType
+    ): Promise<UpdateUserServiceRes> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${data.orgId}/users/${data.userId}/sims/${data.simId}/services`,
+            headers: header,
+            body: {
+                carrier: {
+                    sms: false,
+                    voice: false,
+                    data: data.status,
+                },
+            },
+        });
+
         if (checkError(res)) throw new Error(res.message);
         return {
             success: true,
