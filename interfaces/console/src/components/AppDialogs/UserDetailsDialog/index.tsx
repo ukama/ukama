@@ -62,10 +62,7 @@ const UserDetailsDialog = ({
     handleSaveSimUser = () => {
         /* Default empty function */
     },
-    // eslint-disable-next-line no-unused-vars
-    handleServiceAction = (id: string, iccid: string, status: boolean) => {
-        /* Default empty function */
-    },
+    handleServiceAction,
 }: BasicDialogProps) => {
     const classes = useStyles();
     const {
@@ -80,7 +77,8 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
-
+    const statusText = status ? "ACTIVE" : "INACTIVE";
+    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
     return (
         <Dialog
             key={id}
@@ -204,7 +202,7 @@ const UserDetailsDialog = ({
                                             sx={{ pb: "0px !important" }}
                                         >
                                             <Typography variant="body2">
-                                                {status ? "ACTIVE" : "INACTIVE"}
+                                                {statusText}
                                             </Typography>
                                             <LoadingWrapper
                                                 height={34}
@@ -223,9 +221,7 @@ const UserDetailsDialog = ({
                                                         )
                                                     }
                                                 >
-                                                    {status
-                                                        ? "PAUSE SERVICE"
-                                                        : "RESUME SERVICE"}
+                                                    {statusAction}
                                                 </Button>
                                             </LoadingWrapper>
                                         </ContainerJustifySpaceBtw>
