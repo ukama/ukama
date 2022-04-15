@@ -1,5 +1,5 @@
 import {
-    HeaderType,
+    ParsedCookie,
     PaginationDto,
     MetricServiceRes,
 } from "../../common/types";
@@ -12,8 +12,6 @@ import {
     ConnectedUserDto,
     DeactivateResponse,
     GetUserDto,
-    GetUserPaginationDto,
-    GetUserResponse,
     GetUserResponseDto,
     GetUsersDto,
     OrgUserResponse,
@@ -21,31 +19,24 @@ import {
     ResidentResponse,
     ResidentsResponse,
     UpdateUserDto,
-    UserInput,
     UserResponse,
 } from "./types";
 
 export interface IUserService {
-    getConnectedUsers(
-        orgId: string,
-        header: HeaderType
-    ): Promise<ConnectedUserDto>;
+    getConnectedUsers(cookie: ParsedCookie): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(req: UpdateUserDto): Promise<UserResponse>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
-    getUser(data: UserInput, header: HeaderType): Promise<GetUserDto>;
-    getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
+    getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
-    getUsersByOrg(orgId: string, header: HeaderType): Promise<GetUsersDto[]>;
+    getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;
     addUser(
-        orgId: string,
         req: AddUserDto,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<AddUserResponse | null>;
     deleteUser(
-        orgId: string,
         userId: string,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<ActivateUserResponse>;
 }
 

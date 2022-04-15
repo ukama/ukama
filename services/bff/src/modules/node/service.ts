@@ -12,21 +12,21 @@ import {
     MetricRes,
     OrgNodeDto,
 } from "./types";
-import { INodeService } from "./interface";
-import { checkError, HTTP404Error, Messages } from "../../errors";
 import {
-    HeaderType,
+    ParsedCookie,
     MetricsByTabInputDTO,
     MetricsInputDTO,
     PaginationDto,
 } from "../../common/types";
 import NodeMapper from "./mapper";
-import { getMetricTitleByType, getPaginatedOutput } from "../../utils";
+import { INodeService } from "./interface";
+import { NetworkDto } from "../network/types";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
-import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
-import { NetworkDto } from "../network/types";
+import { getMetricUri, SERVER } from "../../constants/endpoints";
+import { checkError, HTTP404Error, Messages } from "../../errors";
+import { getMetricTitleByType, getPaginatedOutput } from "../../utils";
 
 @Service()
 export class NodeService implements INodeService {
@@ -51,12 +51,12 @@ export class NodeService implements INodeService {
 
     addNode = async (
         req: AddNodeDto,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
-            headers: header,
+            headers: cookie.header,
             body: {
                 name: req.name,
             },
@@ -66,12 +66,12 @@ export class NodeService implements INodeService {
     };
     updateNode = async (
         req: UpdateNodeDto,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
-            headers: header,
+            headers: cookie.header,
             body: {
                 name: req.name,
             },
@@ -91,12 +91,12 @@ export class NodeService implements INodeService {
     };
     getNodesByOrg = async (
         orgId: string,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${orgId}/nodes`,
-            headers: header,
+            headers: cookie.header,
         });
         return NodeMapper.dtoToNodesDto(orgId, res);
     };
@@ -118,12 +118,12 @@ export class NodeService implements INodeService {
     };
     getSingleMetric = async (
         data: MetricsInputDTO,
-        header: HeaderType,
+        cookie: ParsedCookie,
         endpoint: string
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            headers: header,
+            headers: cookie.header,
             path: getMetricUri(data.orgId, data.nodeId, endpoint),
             params: { from: data.from, to: data.to, step: data.step },
         });
@@ -146,14 +146,14 @@ export class NodeService implements INodeService {
     };
     getMultipleMetrics = async (
         data: MetricsByTabInputDTO,
-        header: HeaderType,
+        cookie: ParsedCookie,
         endpoints: string[]
     ): Promise<MetricRes[]> => {
         return Promise.all(
             endpoints.map(endpoint =>
                 catchAsyncIOMethod({
                     type: API_METHOD_TYPE.GET,
-                    headers: header,
+                    headers: cookie.header,
                     path: getMetricUri(data.orgId, data.nodeId, endpoint),
                     params: {
                         to: data.to,

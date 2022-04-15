@@ -1,7 +1,6 @@
 import * as defaultCasual from "casual";
 import {
     ALERT_TYPE,
-    CONNECTED_USER_TYPE,
     ORG_NODE_STATE,
     GET_STATUS_TYPE,
     NETWORK_STATUS,
@@ -18,13 +17,10 @@ import {
     NodeDetailDto,
     NodeDto,
     NodeAppsVersionLogsResponse,
-    UpdateNodeResponse,
 } from "../../modules/node/types";
-
 import {
     DeactivateResponse,
     GetUserDto,
-    UserDto,
     UserResponse,
 } from "../../modules/user/types";
 
@@ -40,14 +36,6 @@ function randomArray<T>(
     }
     return result;
 }
-const user = (): UserDto => {
-    return {
-        id: defaultCasual._uuid(),
-        name: defaultCasual._name(),
-        email: defaultCasual._email(),
-        type: defaultCasual.random_value(CONNECTED_USER_TYPE),
-    };
-};
 const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
@@ -88,17 +76,6 @@ const node = (): NodeDto => {
         updateDescription:
             "Short introduction.\n\n TL;DR\n\n*** NEW ***\nPoint 1\nPoint 2\nPoint 3\n\n*** IMPROVEMENTS ***\nPoint 1\nPoint 2\nPoint 3\n\n*** FIXES ***\nPoint 1\nPoint 2\nPoint 3\n\nWe would love to hear your feedback -- if you have anything to share, please xyz.",
         updateVersion: "12.4",
-    };
-};
-const updateNode = (
-    id: string,
-    name: string,
-    serialNo: string
-): UpdateNodeResponse => {
-    return {
-        id: id,
-        name: name ?? defaultCasual._name(),
-        serialNo: serialNo ?? `#${defaultCasual.integer(1111111, 9999999)}`,
     };
 };
 
@@ -264,7 +241,6 @@ interface Generators extends Casual.Generators {
         elementGenerator: (index?: number) => T
     ) => Array<T>;
 
-    _user: () => UserDto;
     _dataUsage: () => DataUsageDto;
     _dataBill: () => DataBillDto;
     _alert: () => AlertDto;
@@ -274,11 +250,6 @@ interface Generators extends Casual.Generators {
     _currentBill: () => CurrentBillDto;
     _billHistory: () => BillHistoryDto;
     _network: () => NetworkDto;
-    _updateNode: (
-        id: string,
-        name: string,
-        serialNo: string
-    ) => UpdateNodeResponse;
     _updateUser: (
         id: string,
         firstName: string,
@@ -300,7 +271,6 @@ interface Functions extends Casual.functions {
         maxLength: number,
         elementGenerator: (index?: number) => T
     ) => Array<T>;
-    user: () => UserDto;
     dataUsage: () => DataUsageDto;
     dataBill: () => DataBillDto;
     alert: () => AlertDto;
@@ -310,11 +280,6 @@ interface Functions extends Casual.functions {
     currentBill: () => CurrentBillDto;
     billHistory: () => BillHistoryDto;
     network: () => NetworkDto;
-    updateNode: (
-        id: string,
-        name: string,
-        serialNo: string
-    ) => UpdateNodeResponse;
     updateUser: (
         id: string,
         firstName: string,
@@ -331,7 +296,6 @@ interface Functions extends Casual.functions {
 }
 
 defaultCasual.define("randomArray", randomArray);
-defaultCasual.define("user", user);
 defaultCasual.define("dataUsage", dataUsage);
 defaultCasual.define("dataBill", dataBill);
 defaultCasual.define("alert", alert);
@@ -341,7 +305,6 @@ defaultCasual.define("getUser", getUser);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
-defaultCasual.define("updateNode", updateNode);
 defaultCasual.define("updateUser", updateUser);
 defaultCasual.define("deleteRes", deleteRes);
 defaultCasual.define("nodeDetail", nodeDetail);

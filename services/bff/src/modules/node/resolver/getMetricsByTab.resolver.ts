@@ -10,7 +10,7 @@ import {
 import { Service } from "typedi";
 import { GetMetricsRes, MetricRes } from "../types";
 import { NodeService } from "../service";
-import { getHeaders } from "../../../common";
+import { parseCookie } from "../../../common";
 import { getMetricsByTab, oneSecSleep } from "../../../utils";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsByTabInputDTO } from "../../../common/types";
@@ -29,7 +29,7 @@ export class GetMetricsByTabResolver {
         const metricsEndpoints = getMetricsByTab(data.nodeType, data.tab);
         const response = await this.nodeService.getMultipleMetrics(
             data,
-            getHeaders(ctx),
+            parseCookie(ctx),
             metricsEndpoints
         );
 

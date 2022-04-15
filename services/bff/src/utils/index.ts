@@ -150,3 +150,18 @@ export const getMetricTitleByType = (type: string): string => {
             return "";
     }
 };
+
+export const converCookieToObj = (cookie: string) => {
+    if (cookie) {
+        return cookie.split(";").reduce((res, c) => {
+            const [key] = c.trim().split("=").map(decodeURIComponent);
+            const val = c.slice(c.indexOf("=") + 1);
+            try {
+                return Object.assign(res, { [key]: JSON.parse(val) });
+            } catch (e) {
+                return Object.assign(res, { [key]: val });
+            }
+        }, {});
+    }
+    return null;
+};

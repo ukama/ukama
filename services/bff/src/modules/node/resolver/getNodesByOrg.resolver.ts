@@ -4,7 +4,7 @@ import { OrgNodeResponseDto } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { getHeaders } from "../../../common";
+import { parseCookie } from "../../../common";
 
 @Service()
 @Resolver()
@@ -17,6 +17,6 @@ export class GetNodesByOrgResolver {
         @Arg("orgId") orgId: string,
         @Ctx() ctx: Context
     ): Promise<OrgNodeResponseDto> {
-        return this.nodeService.getNodesByOrg(orgId, getHeaders(ctx));
+        return this.nodeService.getNodesByOrg(orgId, parseCookie(ctx));
     }
 }

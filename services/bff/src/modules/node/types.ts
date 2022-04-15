@@ -105,27 +105,6 @@ export class UpdateNodeDto {
 }
 
 @ObjectType()
-export class AddNodeResponseDto {
-    @Field()
-    status: string;
-
-    @Field()
-    data: AddNodeResponse;
-}
-
-@ObjectType()
-export class UpdateNodeResponse {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field()
-    serialNo: string;
-}
-
-@ObjectType()
 export class OrgNodeDto {
     @Field()
     nodeId: string;
@@ -200,27 +179,6 @@ export class MetricDto {
 
     @Field()
     x: number;
-}
-
-@ObjectType()
-export class OrgMetricResponse {
-    @Field(() => OrgMetricDto)
-    metric: OrgMetricDto;
-
-    @Field(() => [OrgMetricValueDto])
-    values: OrgMetricValueDto[];
-}
-
-@ObjectType()
-export class OrgMetricDto {
-    @Field()
-    nodeId: string;
-
-    @Field()
-    receive: string;
-
-    @Field()
-    tenant_id: string;
 }
 
 @ObjectType()

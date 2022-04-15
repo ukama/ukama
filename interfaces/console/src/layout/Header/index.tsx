@@ -34,6 +34,7 @@ import ExitToAppOutlined from "@mui/icons-material/ExitToAppOutlined";
 import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, user, pageName } from "../../recoil";
+import { useCookies } from "react-cookie";
 
 type HeaderProps = {
     pageName: string;
@@ -55,6 +56,7 @@ const Header = ({
     const _user = useRecoilValue(user);
     const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(user);
+    const [, , removeCookie] = useCookies(["orgId"]);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const isMenuOpen = Boolean(anchorEl);
@@ -126,6 +128,7 @@ const Header = ({
     }, [alertsInfoRes]);
 
     const handleLogout = () => {
+        removeCookie("orgId");
         handleUserClose();
         resetData();
         resetPageName();

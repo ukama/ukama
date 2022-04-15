@@ -1,40 +1,12 @@
 import { IsEmail, IsPhoneNumber, Length } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationDto, PaginationResponse } from "../../common/types";
-import {
-    CONNECTED_USER_TYPE,
-    GET_STATUS_TYPE,
-    GET_USER_TYPE,
-} from "../../constants";
+import { PaginationResponse } from "../../common/types";
+import { GET_STATUS_TYPE } from "../../constants";
 
 @ObjectType()
 export class ConnectedUserDto {
     @Field()
     totalUser: string;
-}
-
-@ObjectType()
-export class UserDto {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field(() => CONNECTED_USER_TYPE)
-    type: CONNECTED_USER_TYPE;
-
-    @Field()
-    email: string;
-}
-
-@ObjectType()
-export class ConnectedUserResponse {
-    @Field()
-    data: ConnectedUserDto;
-
-    @Field()
-    status: string;
 }
 
 @InputType()
@@ -116,15 +88,6 @@ export class ActivateUserResponse {
 }
 
 @ObjectType()
-export class ActiveUserResponseDto {
-    @Field()
-    status: string;
-
-    @Field()
-    data: ActivateUserResponse;
-}
-
-@ObjectType()
 export class GetUserDto {
     @Field()
     id: string;
@@ -194,18 +157,6 @@ export class GetUserResponseDto {
     length: number;
 }
 
-@InputType()
-export class GetUserPaginationDto extends PaginationDto {
-    @Field(() => GET_USER_TYPE)
-    type: GET_USER_TYPE;
-}
-
-@ObjectType()
-export class GetUserResponse extends PaginationResponse {
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
-}
-
 @ObjectType()
 export class ResidentResponse {
     @Field(() => [GetUserDto])
@@ -230,15 +181,6 @@ export class DeactivateResponse {
 
     @Field()
     success: boolean;
-}
-
-@ObjectType()
-export class OrgUserResponseDto {
-    @Field()
-    orgName: string;
-
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
 }
 
 @InputType()
@@ -294,15 +236,6 @@ export class OrgUsersResponse {
     users: OrgUserDto[];
 }
 
-@InputType()
-export class UserInput {
-    @Field()
-    orgId: string;
-
-    @Field()
-    userId: string;
-}
-
 @ObjectType()
 export class UserSimServices {
     @Field()
@@ -354,9 +287,6 @@ export class AddUserServiceRes {
 
 @InputType()
 export class UpdateUserServiceInput {
-    @Field()
-    orgId: string;
-
     @Field()
     simId: string;
 
