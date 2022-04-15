@@ -89,12 +89,12 @@ func (r *nodeRepo) GetNodeStatus(nodeId string) (*MfgStatus, error) {
 
 func (r *nodeRepo) GetNodeMfgTestStatus(nodeId string) (*MfgTestStatus, *[]byte, error) {
 	var node Node
-	result := r.Db.GetGormDb().Select("status", "mfg_report").First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report").First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, nil, result.Error
 	}
 
-	status, err := MfgTestState(node.Status)
+	status, err := MfgTestState(node.MfgTestStatus)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -111,16 +111,11 @@ func (r *nodeRepo) UpdateNodeMfgTestStatus(node *Node) error {
 	}
 	logrus.Tracef("Updated node mfg status for %s with %v. result %+v", node.NodeID, node, result)
 	return nil
-
-	// d := r.Db.GetGormDb().Clauses(clause.OnConflict{
-	// 	Columns:   []clause.Column{{Name: "node_id"}},
-	// 	DoUpdates: clause.AssignmentColumns([]string{"mfg_test_status", "mfg_report", "status"}),
-	// }).Create(node)
-	// return d.Error
 }
 
 /* Update Node status */
 func (r *nodeRepo) UpdateNodeStatus(nodeId string, status MfgStatus) error {
+
 	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", nodeId).UpdateColumn("status", status)
 	if result.Error != nil {
 		return result.Error

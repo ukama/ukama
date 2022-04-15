@@ -59,8 +59,8 @@ func NewNode(id string) *db.Node {
 		Mac:           "00:01:02:03:04:05",
 		SwVersion:     "1.1",
 		OemName:       "ukama",
-		MfgTestStatus: "",
-		Status:        "Assembly",
+		MfgTestStatus: "MfgTestStatusPending",
+		Status:        "StatusLabelGenrated",
 	}
 }
 
@@ -223,7 +223,7 @@ func Test_PutNodeMfgTestStatus(t *testing.T) {
 	// Arrange
 	nodeId := "1001"
 
-	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"MfgTestStatusUnderTest\" }"
+	jReq := "{ \"mfgTestStatus\" : \"MfgTestStatusUnderTest\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleTest\" }"
 
 	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
 	w := httptest.NewRecorder()
@@ -249,7 +249,7 @@ func Test_PutNodeMfgTestStatusFail(t *testing.T) {
 	// Arrange
 	nodeId := "1001"
 
-	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"MfgTestStatusUnknown\" }"
+	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleTest\" }"
 
 	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
 	w := httptest.NewRecorder()
@@ -269,6 +269,33 @@ func Test_PutNodeMfgTestStatusFail(t *testing.T) {
 	// assert
 	assert.Equal(t, 400, w.Code)
 	assert.Contains(t, w.Body.String(), "is invalid mfg test status")
+
+}
+
+func Test_PutNodeMfgTestStatusFail2(t *testing.T) {
+	// Arrange
+	nodeId := "1001"
+
+	jReq := "{ \"mfgTestStatus\" : \"MfgTestStatusPending\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleUnkown\" }"
+
+	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", url, strings.NewReader(jReq))
+
+	nodeRepo := mocks.NodeRepo{}
+	moduleRepo := mocks.ModuleRepo{}
+	rs := router.RouterServer{}
+
+	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
+
+	nodeRepo.On("UpdateNodeMfgTestStatus", mock.Anything).Return(nil)
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, 400, w.Code)
+	assert.Contains(t, w.Body.String(), "is invalid mfg status")
 
 }
 

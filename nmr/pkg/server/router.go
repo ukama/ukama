@@ -104,6 +104,22 @@ func (r *Router) GetNodeHandler(c *gin.Context, req *ReqGetNode) (*RespGetNode, 
 func (r *Router) PutNodeHandler(c *gin.Context, req *ReqAddOrUpdateNode) error {
 	logrus.Debugf("Handling NMR adding node request %+v.", req)
 
+	_, err := db.MfgState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+
+	_, err = db.MfgTestState(req.MfgTestStatus)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+
 	node := &db.Node{
 		NodeID:        req.NodeID,
 		Type:          req.Type,
@@ -118,7 +134,7 @@ func (r *Router) PutNodeHandler(c *gin.Context, req *ReqAddOrUpdateNode) error {
 		MfgTestStatus: req.MfgTestStatus,
 	}
 
-	err := r.nodeRepo.AddOrUpdateNode(node)
+	err = r.nodeRepo.AddOrUpdateNode(node)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -188,7 +204,15 @@ func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) 
 func (r *Router) PutNodeMfgTestStatusHandler(c *gin.Context, req *ReqUpdateNodeMfgStatus) error {
 	logrus.Debugf("Handling NMR update node request %+v.", req)
 
-	_, err := db.MfgTestState(req.Status)
+	_, err := db.MfgState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+
+	_, err = db.MfgTestState(req.MfgTestStatus)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusBadRequest,
@@ -198,6 +222,7 @@ func (r *Router) PutNodeMfgTestStatusHandler(c *gin.Context, req *ReqUpdateNodeM
 
 	node := &db.Node{
 		NodeID:        req.NodeID,
+		Status:        req.Status,
 		MfgTestStatus: req.MfgTestStatus,
 		MfgReport:     (*[]byte)(req.MfgReport),
 	}
@@ -286,6 +311,14 @@ func (r *Router) PutModuleHandler(c *gin.Context, req *ReqAddOrUpdateModule) err
 		sqlUnitId.Valid = false
 	}
 
+	_, err := db.MfgState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+
 	module := &db.Module{
 		ModuleID:   req.ModuleID,
 		Type:       req.Type,
@@ -299,7 +332,7 @@ func (r *Router) PutModuleHandler(c *gin.Context, req *ReqAddOrUpdateModule) err
 		UnitID:     sqlUnitId,
 	}
 
-	err := r.moduleRepo.UpsertModule(module)
+	err = r.moduleRepo.UpsertModule(module)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
