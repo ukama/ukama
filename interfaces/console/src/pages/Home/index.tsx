@@ -78,7 +78,6 @@ const Home = () => {
         subscribeToMore: subscribeToLatestConnectedUsers,
     } = useGetConnectedUsersQuery({
         variables: {
-            orgId: orgId,
             filter: userStatusFilter,
         },
     });
@@ -106,17 +105,9 @@ const Home = () => {
         data: residentsRes,
         loading: residentsloading,
         refetch: refetchUser,
-    } = useGetUsersByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-    });
+    } = useGetUsersByOrgQuery();
 
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-    });
+    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery();
 
     const {
         data: networkStatusRes,
@@ -208,7 +199,6 @@ const Home = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             tab: 4,
-            orgId: orgId,
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
@@ -220,7 +210,6 @@ const Home = () => {
         getMetricPayload({
             tab: 4,
             from: from,
-            orgId: orgId,
             regPolling: true,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",

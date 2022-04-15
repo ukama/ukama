@@ -55,7 +55,7 @@ export class NodeService implements INodeService {
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {
                 name: req.name,
@@ -70,7 +70,7 @@ export class NodeService implements INodeService {
     ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {
                 name: req.name,
@@ -90,15 +90,14 @@ export class NodeService implements INodeService {
         return res.data;
     };
     getNodesByOrg = async (
-        orgId: string,
         cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${orgId}/nodes`,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
             headers: cookie.header,
         });
-        return NodeMapper.dtoToNodesDto(orgId, res);
+        return NodeMapper.dtoToNodesDto(cookie.orgId, res);
     };
     getNodeDetials = async (): Promise<NodeDetailDto> => {
         const res = await catchAsyncIOMethod({
@@ -124,7 +123,7 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             headers: cookie.header,
-            path: getMetricUri(data.orgId, data.nodeId, endpoint),
+            path: getMetricUri(cookie.orgId, data.nodeId, endpoint),
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
@@ -154,7 +153,7 @@ export class NodeService implements INodeService {
                 catchAsyncIOMethod({
                     type: API_METHOD_TYPE.GET,
                     headers: cookie.header,
-                    path: getMetricUri(data.orgId, data.nodeId, endpoint),
+                    path: getMetricUri(cookie.orgId, data.nodeId, endpoint),
                     params: {
                         to: data.to,
                         from: data.from,

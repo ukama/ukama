@@ -18,7 +18,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
-import { GetUserDto, Get_User_Status_Type } from "../../../generated";
+import { GetUserDto } from "../../../generated";
+import LoadingWrapper from "../../LoadingWrapper";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -42,10 +43,9 @@ type BasicDialogProps = {
     handleSaveSimUser?: any;
     userDetailsTitle: string;
     simDetailsTitle: string;
+    userStatusLoading: boolean;
+    handleServiceAction: Function;
 };
-
-const getTitleByStatus = (status: string) =>
-    status === Get_User_Status_Type.Active ? "PAUSE SERVICE" : "RESUME SERVICE";
 
 const UserDetailsDialog = ({
     user,
@@ -58,7 +58,12 @@ const UserDetailsDialog = ({
     simDetailsTitle,
     userDetailsTitle,
     isClosable = true,
+    userStatusLoading,
     handleSaveSimUser = () => {
+        /* Default empty function */
+    },
+    // eslint-disable-next-line no-unused-vars
+    handleServiceAction = (id: string, iccid: string, status: boolean) => {
         /* Default empty function */
     },
 }: BasicDialogProps) => {
@@ -199,25 +204,30 @@ const UserDetailsDialog = ({
                                             sx={{ pb: "0px !important" }}
                                         >
                                             <Typography variant="body2">
-                                                {status}
+                                                {status ? "ACTIVE" : "INACTIVE"}
                                             </Typography>
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                variant="outlined"
-                                                onClick={() =>
-                                                    setUserForm({
-                                                        ...user,
-                                                        status:
-                                                            status ===
-                                                            Get_User_Status_Type.Active
-                                                                ? Get_User_Status_Type.Inactive
-                                                                : Get_User_Status_Type.Active,
-                                                    })
-                                                }
+                                            <LoadingWrapper
+                                                height={34}
+                                                width={148}
+                                                isLoading={userStatusLoading}
                                             >
-                                                {getTitleByStatus(status)}
-                                            </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+                                                    onClick={() =>
+                                                        handleServiceAction(
+                                                            id,
+                                                            iccid,
+                                                            !status
+                                                        )
+                                                    }
+                                                >
+                                                    {status
+                                                        ? "PAUSE SERVICE"
+                                                        : "RESUME SERVICE"}
+                                                </Button>
+                                            </LoadingWrapper>
                                         </ContainerJustifySpaceBtw>
                                     </Grid>
                                 </Grid>

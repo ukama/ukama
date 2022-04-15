@@ -8,15 +8,15 @@ import {
 import {
     GetUserDto,
     GetUsersDto,
-    Get_User_Status_Type,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
+    useUpdateUserStatusMutation,
 } from "../../generated";
 import { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
-import { isSkeltonLoading, user } from "../../recoil";
+import { isSkeltonLoading } from "../../recoil";
 
 const userInit = {
     id: "",
@@ -28,11 +28,10 @@ const userInit = {
     dataUsage: 0,
     roaming: true,
     eSimNumber: "",
-    status: Get_User_Status_Type.Active,
+    status: false,
 };
 
 const User = () => {
-    const { id: orgId = "" } = useRecoilValue(user);
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
@@ -40,7 +39,6 @@ const User = () => {
 
     const { data: usersRes, loading: usersByOrgLoading } =
         useGetUsersByOrgQuery({
-            variables: { orgId: orgId },
             onCompleted: res => setUsers(res.getUsersByOrg),
         });
 
@@ -50,13 +48,16 @@ const User = () => {
         },
     });
 
+    const [updateUserStatus, { loading: updateUserLoading }] =
+        useUpdateUserStatusMutation();
+
     const handleSimDialogClose = () => setShowSimDialog(false);
 
     const onViewMoreClick = (_user: GetUsersDto) => {
         setShowSimDialog(true);
         getUser({
             variables: {
-                userInput: { orgId: orgId, userId: _user.id },
+                userId: _user.id,
             },
         });
     };
@@ -76,6 +77,22 @@ const User = () => {
         } else {
             setUsers(usersRes?.getUsersByOrg || []);
         }
+    };
+
+    const handleUpdateUserStatus = (
+        id: string,
+        iccid: string,
+        status: boolean
+    ) => {
+        updateUserStatus({
+            variables: {
+                data: {
+                    userId: id,
+                    simId: iccid,
+                    status: status,
+                },
+            },
+        });
     };
 
     const handleSave = () => {
@@ -142,6 +159,8 @@ const User = () => {
                     handleSaveSimUser={handleSave}
                     userDetailsTitle="User Details"
                     handleClose={handleSimDialogClose}
+                    userStatusLoading={updateUserLoading}
+                    handleServiceAction={handleUpdateUserStatus}
                 />
             </LoadingWrapper>
         </Box>

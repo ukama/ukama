@@ -46,16 +46,9 @@ export type ActivateUserResponse = {
   success: Scalars['Boolean'];
 };
 
-export type ActiveUserResponseDto = {
-  __typename?: 'ActiveUserResponseDto';
-  data: ActivateUserResponse;
-  status: Scalars['String'];
-};
-
 export type AddNodeDto = {
   name: Scalars['String'];
   nodeId: Scalars['String'];
-  orgId: Scalars['String'];
 };
 
 export type AddNodeResponse = {
@@ -64,12 +57,6 @@ export type AddNodeResponse = {
   nodeId: Scalars['String'];
   state: Org_Node_State;
   type: Node_Type;
-};
-
-export type AddNodeResponseDto = {
-  __typename?: 'AddNodeResponseDto';
-  data: AddNodeResponse;
-  status: Scalars['String'];
 };
 
 export type AddUserDto = {
@@ -146,20 +133,9 @@ export type BillResponse = {
   total: Scalars['Float'];
 };
 
-export enum Connected_User_Type {
-  Guests = 'GUESTS',
-  Residents = 'RESIDENTS'
-}
-
 export type ConnectedUserDto = {
   __typename?: 'ConnectedUserDto';
   totalUser: Scalars['String'];
-};
-
-export type ConnectedUserResponse = {
-  __typename?: 'ConnectedUserResponse';
-  data: ConnectedUserDto;
-  status: Scalars['String'];
 };
 
 export type CurrentBillDto = {
@@ -249,14 +225,6 @@ export enum Get_User_Status_Type {
   Inactive = 'INACTIVE'
 }
 
-export enum Get_User_Type {
-  All = 'ALL',
-  Guest = 'GUEST',
-  Home = 'HOME',
-  Resident = 'RESIDENT',
-  Visitor = 'VISITOR'
-}
-
 export enum Graphs_Tab {
   Home = 'HOME',
   Network = 'NETWORK',
@@ -283,19 +251,7 @@ export type GetUserDto = {
   name: Scalars['String'];
   phone?: Maybe<Scalars['String']>;
   roaming: Scalars['Boolean'];
-  status: Get_User_Status_Type;
-};
-
-export type GetUserPaginationDto = {
-  pageNo: Scalars['Float'];
-  pageSize: Scalars['Float'];
-  type: Get_User_Type;
-};
-
-export type GetUserResponse = {
-  __typename?: 'GetUserResponse';
-  meta: Meta;
-  users: Array<GetUserDto>;
+  status: Scalars['Boolean'];
 };
 
 export type GetUserResponseDto = {
@@ -364,7 +320,6 @@ export type MetricsByTabInputDto = {
   from: Scalars['Float'];
   nodeId: Scalars['String'];
   nodeType: Node_Type;
-  orgId: Scalars['String'];
   regPolling: Scalars['Boolean'];
   step: Scalars['Float'];
   tab: Graphs_Tab;
@@ -406,7 +361,6 @@ export type MutationAddNodeArgs = {
 
 export type MutationAddUserArgs = {
   data: AddUserDto;
-  orgId: Scalars['String'];
 };
 
 
@@ -421,7 +375,6 @@ export type MutationDeleteNodeArgs = {
 
 
 export type MutationDeleteUserArgs = {
-  orgId: Scalars['String'];
   userId: Scalars['String'];
 };
 
@@ -538,19 +491,6 @@ export enum Org_Node_State {
   Undefined = 'UNDEFINED'
 }
 
-export type OrgMetricDto = {
-  __typename?: 'OrgMetricDto';
-  nodeId: Scalars['String'];
-  receive: Scalars['String'];
-  tenant_id: Scalars['String'];
-};
-
-export type OrgMetricResponse = {
-  __typename?: 'OrgMetricResponse';
-  metric: OrgMetricDto;
-  values: Array<OrgMetricValueDto>;
-};
-
 export type OrgMetricValueDto = {
   __typename?: 'OrgMetricValueDto';
   x: Scalars['Float'];
@@ -593,12 +533,6 @@ export type OrgUserResponse = {
   user: OrgUserDto;
 };
 
-export type OrgUserResponseDto = {
-  __typename?: 'OrgUserResponseDto';
-  orgName: Scalars['String'];
-  users: Array<GetUserDto>;
-};
-
 export type OrgUserSimDto = {
   __typename?: 'OrgUserSimDto';
   carrier: UserSimUkamaDto;
@@ -623,6 +557,12 @@ export type PaginationResponse = {
   meta: Meta;
 };
 
+export type ParsedCookie = {
+  __typename?: 'ParsedCookie';
+  header: HeaderType;
+  orgId: Scalars['String'];
+};
+
 export type Query = {
   __typename?: 'Query';
   getAlerts: AlertsResponse;
@@ -642,7 +582,6 @@ export type Query = {
   getNodesByOrg: OrgNodeResponseDto;
   getResidents: ResidentsResponse;
   getUser: GetUserDto;
-  getUsers: GetUserResponse;
   getUsersByOrg: Array<GetUsersDto>;
 };
 
@@ -654,7 +593,6 @@ export type QueryGetAlertsArgs = {
 
 export type QueryGetConnectedUsersArgs = {
   filter: Time_Filter;
-  orgId: Scalars['String'];
 };
 
 
@@ -683,28 +621,13 @@ export type QueryGetNodesArgs = {
 };
 
 
-export type QueryGetNodesByOrgArgs = {
-  orgId: Scalars['String'];
-};
-
-
 export type QueryGetResidentsArgs = {
   data: PaginationDto;
 };
 
 
 export type QueryGetUserArgs = {
-  userInput: UserInput;
-};
-
-
-export type QueryGetUsersArgs = {
-  data: GetUserPaginationDto;
-};
-
-
-export type QueryGetUsersByOrgArgs = {
-  orgId: Scalars['String'];
+  userId: Scalars['String'];
 };
 
 export type ResidentResponse = {
@@ -740,14 +663,6 @@ export enum Time_Filter {
 export type UpdateNodeDto = {
   name: Scalars['String'];
   nodeId: Scalars['String'];
-  orgId: Scalars['String'];
-};
-
-export type UpdateNodeResponse = {
-  __typename?: 'UpdateNodeResponse';
-  id: Scalars['String'];
-  name: Scalars['String'];
-  serialNo: Scalars['String'];
 };
 
 export type UpdateUserDto = {
@@ -760,7 +675,6 @@ export type UpdateUserDto = {
 };
 
 export type UpdateUserServiceInput = {
-  orgId: Scalars['String'];
   simId: Scalars['String'];
   status: Scalars['Boolean'];
   userId: Scalars['String'];
@@ -769,19 +683,6 @@ export type UpdateUserServiceInput = {
 export type UpdateUserServiceRes = {
   __typename?: 'UpdateUserServiceRes';
   success: Scalars['Boolean'];
-};
-
-export type UserDto = {
-  __typename?: 'UserDto';
-  email: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  type: Connected_User_Type;
-};
-
-export type UserInput = {
-  orgId: Scalars['String'];
-  userId: Scalars['String'];
 };
 
 export type UserResponse = {
@@ -820,7 +721,6 @@ export type GetLatestDataUsageSubscription = { __typename?: 'Subscription', getD
 
 export type GetConnectedUsersQueryVariables = Exact<{
   filter: Time_Filter;
-  orgId: Scalars['String'];
 }>;
 
 
@@ -855,9 +755,7 @@ export type GetLatestAlertsSubscriptionVariables = Exact<{ [key: string]: never;
 
 export type GetLatestAlertsSubscription = { __typename?: 'Subscription', getAlerts: { __typename?: 'AlertDto', id?: string | null, type: Alert_Type, title?: string | null, description?: string | null, alertDate?: any | null } };
 
-export type GetNodesByOrgQueryVariables = Exact<{
-  orgId: Scalars['String'];
-}>;
+export type GetNodesByOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetNodesByOrgQuery = { __typename?: 'Query', getNodesByOrg: { __typename?: 'OrgNodeResponseDto', orgId: string, activeNodes: number, totalNodes: number, nodes: Array<{ __typename?: 'NodeDto', id: string, status: Org_Node_State, name: string, type: string, description: string, totalUser: number, isUpdateAvailable: boolean, updateVersion: string, updateShortNote: string, updateDescription: string }> } };
@@ -877,19 +775,17 @@ export type GetNodeAppsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: Array<{ __typename?: 'NodeAppResponse', id: string, title: string, version: string, cpu: string, memory: string }> };
 
-export type GetUsersByOrgQueryVariables = Exact<{
-  orgId: Scalars['String'];
-}>;
+export type GetUsersByOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetUsersByOrgQuery = { __typename?: 'Query', getUsersByOrg: Array<{ __typename?: 'GetUsersDto', id: string, name: string, email?: string | null, phone?: string | null, dataPlan: number, dataUsage: number }> };
 
 export type GetUserQueryVariables = Exact<{
-  userInput: UserInput;
+  userId: Scalars['String'];
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: Get_User_Status_Type, name: string, eSimNumber: string, iccid: string, email?: string | null, phone?: string | null, roaming: boolean, dataPlan: number, dataUsage: number } };
+export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email?: string | null, phone?: string | null, roaming: boolean, dataPlan: number, dataUsage: number } };
 
 export type GetResidentsQueryVariables = Exact<{
   data: PaginationDto;
@@ -964,12 +860,12 @@ export type GetMetricsByTabSSubscriptionVariables = Exact<{ [key: string]: never
 
 export type GetMetricsByTabSSubscription = { __typename?: 'Subscription', getMetricsByTab: Array<{ __typename?: 'MetricRes', type: string, name: string, next: boolean, data: Array<{ __typename?: 'MetricDto', x: number, y: number }> }> };
 
-export type UpdateUserServiceMutationVariables = Exact<{
+export type UpdateUserStatusMutationVariables = Exact<{
   data: UpdateUserServiceInput;
 }>;
 
 
-export type UpdateUserServiceMutation = { __typename?: 'Mutation', updateUserStatus: { __typename?: 'UpdateUserServiceRes', success: boolean } };
+export type UpdateUserStatusMutation = { __typename?: 'Mutation', updateUserStatus: { __typename?: 'UpdateUserServiceRes', success: boolean } };
 
 
 export const GetDataUsageDocument = gql`
@@ -1041,8 +937,8 @@ export function useGetLatestDataUsageSubscription(baseOptions?: Apollo.Subscript
 export type GetLatestDataUsageSubscriptionHookResult = ReturnType<typeof useGetLatestDataUsageSubscription>;
 export type GetLatestDataUsageSubscriptionResult = Apollo.SubscriptionResult<GetLatestDataUsageSubscription>;
 export const GetConnectedUsersDocument = gql`
-    query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
-  getConnectedUsers(filter: $filter, orgId: $orgId) {
+    query getConnectedUsers($filter: TIME_FILTER!) {
+  getConnectedUsers(filter: $filter) {
     totalUser
   }
 }
@@ -1061,7 +957,6 @@ export const GetConnectedUsersDocument = gql`
  * const { data, loading, error } = useGetConnectedUsersQuery({
  *   variables: {
  *      filter: // value for 'filter'
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
@@ -1254,8 +1149,8 @@ export function useGetLatestAlertsSubscription(baseOptions?: Apollo.Subscription
 export type GetLatestAlertsSubscriptionHookResult = ReturnType<typeof useGetLatestAlertsSubscription>;
 export type GetLatestAlertsSubscriptionResult = Apollo.SubscriptionResult<GetLatestAlertsSubscription>;
 export const GetNodesByOrgDocument = gql`
-    query getNodesByOrg($orgId: String!) {
-  getNodesByOrg(orgId: $orgId) {
+    query getNodesByOrg {
+  getNodesByOrg {
     orgId
     nodes {
       id
@@ -1287,11 +1182,10 @@ export const GetNodesByOrgDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesByOrgQuery({
  *   variables: {
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
-export function useGetNodesByOrgQuery(baseOptions: Apollo.QueryHookOptions<GetNodesByOrgQuery, GetNodesByOrgQueryVariables>) {
+export function useGetNodesByOrgQuery(baseOptions?: Apollo.QueryHookOptions<GetNodesByOrgQuery, GetNodesByOrgQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodesByOrgQuery, GetNodesByOrgQueryVariables>(GetNodesByOrgDocument, options);
       }
@@ -1419,8 +1313,8 @@ export type GetNodeAppsQueryHookResult = ReturnType<typeof useGetNodeAppsQuery>;
 export type GetNodeAppsLazyQueryHookResult = ReturnType<typeof useGetNodeAppsLazyQuery>;
 export type GetNodeAppsQueryResult = Apollo.QueryResult<GetNodeAppsQuery, GetNodeAppsQueryVariables>;
 export const GetUsersByOrgDocument = gql`
-    query getUsersByOrg($orgId: String!) {
-  getUsersByOrg(orgId: $orgId) {
+    query getUsersByOrg {
+  getUsersByOrg {
     id
     name
     email
@@ -1443,11 +1337,10 @@ export const GetUsersByOrgDocument = gql`
  * @example
  * const { data, loading, error } = useGetUsersByOrgQuery({
  *   variables: {
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
-export function useGetUsersByOrgQuery(baseOptions: Apollo.QueryHookOptions<GetUsersByOrgQuery, GetUsersByOrgQueryVariables>) {
+export function useGetUsersByOrgQuery(baseOptions?: Apollo.QueryHookOptions<GetUsersByOrgQuery, GetUsersByOrgQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetUsersByOrgQuery, GetUsersByOrgQueryVariables>(GetUsersByOrgDocument, options);
       }
@@ -1459,8 +1352,8 @@ export type GetUsersByOrgQueryHookResult = ReturnType<typeof useGetUsersByOrgQue
 export type GetUsersByOrgLazyQueryHookResult = ReturnType<typeof useGetUsersByOrgLazyQuery>;
 export type GetUsersByOrgQueryResult = Apollo.QueryResult<GetUsersByOrgQuery, GetUsersByOrgQueryVariables>;
 export const GetUserDocument = gql`
-    query getUser($userInput: UserInput!) {
-  getUser(userInput: $userInput) {
+    query getUser($userId: String!) {
+  getUser(userId: $userId) {
     id
     status
     name
@@ -1487,7 +1380,7 @@ export const GetUserDocument = gql`
  * @example
  * const { data, loading, error } = useGetUserQuery({
  *   variables: {
- *      userInput: // value for 'userInput'
+ *      userId: // value for 'userId'
  *   },
  * });
  */
@@ -1909,36 +1802,36 @@ export function useGetMetricsByTabSSubscription(baseOptions?: Apollo.Subscriptio
       }
 export type GetMetricsByTabSSubscriptionHookResult = ReturnType<typeof useGetMetricsByTabSSubscription>;
 export type GetMetricsByTabSSubscriptionResult = Apollo.SubscriptionResult<GetMetricsByTabSSubscription>;
-export const UpdateUserServiceDocument = gql`
-    mutation updateUserService($data: UpdateUserServiceInput!) {
+export const UpdateUserStatusDocument = gql`
+    mutation updateUserStatus($data: UpdateUserServiceInput!) {
   updateUserStatus(data: $data) {
     success
   }
 }
     `;
-export type UpdateUserServiceMutationFn = Apollo.MutationFunction<UpdateUserServiceMutation, UpdateUserServiceMutationVariables>;
+export type UpdateUserStatusMutationFn = Apollo.MutationFunction<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>;
 
 /**
- * __useUpdateUserServiceMutation__
+ * __useUpdateUserStatusMutation__
  *
- * To run a mutation, you first call `useUpdateUserServiceMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateUserServiceMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useUpdateUserStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserStatusMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [updateUserServiceMutation, { data, loading, error }] = useUpdateUserServiceMutation({
+ * const [updateUserStatusMutation, { data, loading, error }] = useUpdateUserStatusMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useUpdateUserServiceMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserServiceMutation, UpdateUserServiceMutationVariables>) {
+export function useUpdateUserStatusMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateUserServiceMutation, UpdateUserServiceMutationVariables>(UpdateUserServiceDocument, options);
+        return Apollo.useMutation<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>(UpdateUserStatusDocument, options);
       }
-export type UpdateUserServiceMutationHookResult = ReturnType<typeof useUpdateUserServiceMutation>;
-export type UpdateUserServiceMutationResult = Apollo.MutationResult<UpdateUserServiceMutation>;
-export type UpdateUserServiceMutationOptions = Apollo.BaseMutationOptions<UpdateUserServiceMutation, UpdateUserServiceMutationVariables>;
+export type UpdateUserStatusMutationHookResult = ReturnType<typeof useUpdateUserStatusMutation>;
+export type UpdateUserStatusMutationResult = Apollo.MutationResult<UpdateUserStatusMutation>;
+export type UpdateUserStatusMutationOptions = Apollo.BaseMutationOptions<UpdateUserStatusMutation, UpdateUserStatusMutationVariables>;

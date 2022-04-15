@@ -114,9 +114,6 @@ export class MetricsInputDTO {
 @InputType()
 export class MetricsByTabInputDTO {
     @Field()
-    orgId: string;
-
-    @Field()
     regPolling: boolean;
 
     @Field()

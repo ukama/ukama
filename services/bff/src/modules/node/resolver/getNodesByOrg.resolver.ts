@@ -13,10 +13,7 @@ export class GetNodesByOrgResolver {
 
     @Query(() => OrgNodeResponseDto)
     @UseMiddleware(Authentication)
-    async getNodesByOrg(
-        @Arg("orgId") orgId: string,
-        @Ctx() ctx: Context
-    ): Promise<OrgNodeResponseDto> {
-        return this.nodeService.getNodesByOrg(orgId, parseCookie(ctx));
+    async getNodesByOrg(@Ctx() ctx: Context): Promise<OrgNodeResponseDto> {
+        return this.nodeService.getNodesByOrg(parseCookie(ctx));
     }
 }

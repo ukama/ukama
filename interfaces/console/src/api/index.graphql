@@ -14,8 +14,8 @@ subscription getLatestDataUsage {
     }
 }
 
-query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
-    getConnectedUsers(filter: $filter, orgId: $orgId) {
+query getConnectedUsers($filter: TIME_FILTER!) {
+    getConnectedUsers(filter: $filter) {
         totalUser
     }
 }
@@ -70,8 +70,8 @@ subscription getLatestAlerts {
     }
 }
 
-query getNodesByOrg($orgId: String!) {
-    getNodesByOrg(orgId: $orgId) {
+query getNodesByOrg {
+    getNodesByOrg {
         orgId
         nodes {
             id
@@ -118,8 +118,8 @@ query getNodeApps {
         memory
     }
 }
-query getUsersByOrg($orgId: String!) {
-    getUsersByOrg(orgId: $orgId) {
+query getUsersByOrg {
+    getUsersByOrg {
         id
         name
         email
@@ -128,8 +128,8 @@ query getUsersByOrg($orgId: String!) {
         dataUsage
     }
 }
-query getUser($userInput: UserInput!) {
-    getUser(userInput: $userInput) {
+query getUser($userId: String!) {
+    getUser(userId: $userId) {
         id
         status
         name
@@ -250,7 +250,7 @@ subscription getMetricsByTabS {
     }
 }
 
-mutation updateUserService($data: UpdateUserServiceInput!) {
+mutation updateUserStatus($data: UpdateUserServiceInput!) {
     updateUserStatus(data: $data) {
         success
     }

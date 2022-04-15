@@ -87,16 +87,10 @@ export class AddNodeDto {
 
     @Field()
     nodeId: string;
-
-    @Field()
-    orgId: string;
 }
 
 @InputType()
 export class UpdateNodeDto {
-    @Field()
-    orgId: string;
-
     @Field()
     nodeId: string;
 
