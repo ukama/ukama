@@ -580,7 +580,6 @@ export type Query = {
   getNodeNetwork: NetworkDto;
   getNodes: NodesResponse;
   getNodesByOrg: OrgNodeResponseDto;
-  getResidents: ResidentsResponse;
   getUser: GetUserDto;
   getUsersByOrg: Array<GetUsersDto>;
 };
@@ -621,11 +620,6 @@ export type QueryGetNodesArgs = {
 };
 
 
-export type QueryGetResidentsArgs = {
-  data: PaginationDto;
-};
-
-
 export type QueryGetUserArgs = {
   userId: Scalars['String'];
 };
@@ -635,12 +629,6 @@ export type ResidentResponse = {
   activeResidents: Scalars['Float'];
   residents: Array<GetUserDto>;
   totalResidents: Scalars['Float'];
-};
-
-export type ResidentsResponse = {
-  __typename?: 'ResidentsResponse';
-  meta: Meta;
-  residents: ResidentResponse;
 };
 
 export type Subscription = {
@@ -786,13 +774,6 @@ export type GetUserQueryVariables = Exact<{
 
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email?: string | null, phone?: string | null, roaming: boolean, dataPlan: number, dataUsage: number } };
-
-export type GetResidentsQueryVariables = Exact<{
-  data: PaginationDto;
-}>;
-
-
-export type GetResidentsQuery = { __typename?: 'Query', getResidents: { __typename?: 'ResidentsResponse', meta: { __typename?: 'Meta', count: number, page: number, size: number, pages: number }, residents: { __typename?: 'ResidentResponse', activeResidents: number, totalResidents: number, residents: Array<{ __typename?: 'GetUserDto', id: string, name: string, dataUsage: number }> } } };
 
 export type GetNetworkQueryVariables = Exact<{
   filter: Network_Type;
@@ -1395,55 +1376,6 @@ export function useGetUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
 export type GetUserQueryHookResult = ReturnType<typeof useGetUserQuery>;
 export type GetUserLazyQueryHookResult = ReturnType<typeof useGetUserLazyQuery>;
 export type GetUserQueryResult = Apollo.QueryResult<GetUserQuery, GetUserQueryVariables>;
-export const GetResidentsDocument = gql`
-    query getResidents($data: PaginationDto!) {
-  getResidents(data: $data) {
-    meta {
-      count
-      page
-      size
-      pages
-    }
-    residents {
-      residents {
-        id
-        name
-        dataUsage
-      }
-      activeResidents
-      totalResidents
-    }
-  }
-}
-    `;
-
-/**
- * __useGetResidentsQuery__
- *
- * To run a query within a React component, call `useGetResidentsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetResidentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetResidentsQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetResidentsQuery(baseOptions: Apollo.QueryHookOptions<GetResidentsQuery, GetResidentsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetResidentsQuery, GetResidentsQueryVariables>(GetResidentsDocument, options);
-      }
-export function useGetResidentsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetResidentsQuery, GetResidentsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetResidentsQuery, GetResidentsQueryVariables>(GetResidentsDocument, options);
-        }
-export type GetResidentsQueryHookResult = ReturnType<typeof useGetResidentsQuery>;
-export type GetResidentsLazyQueryHookResult = ReturnType<typeof useGetResidentsLazyQuery>;
-export type GetResidentsQueryResult = Apollo.QueryResult<GetResidentsQuery, GetResidentsQueryVariables>;
 export const GetNetworkDocument = gql`
     query getNetwork($filter: NETWORK_TYPE!) {
   getNetwork(filter: $filter) {
