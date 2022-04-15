@@ -61,16 +61,16 @@ func (_m *NodeRepo) GetNode(nodeId string) (*db.Node, error) {
 	return r0, r1
 }
 
-// GetNodeMfgStatus provides a mock function with given fields: nodeId
-func (_m *NodeRepo) GetNodeMfgStatus(nodeId string) (*string, *[]byte, error) {
+// GetNodeMfgTestStatus provides a mock function with given fields: nodeId
+func (_m *NodeRepo) GetNodeMfgTestStatus(nodeId string) (*db.MfgTestStatus, *[]byte, error) {
 	ret := _m.Called(nodeId)
 
-	var r0 *string
-	if rf, ok := ret.Get(0).(func(string) *string); ok {
+	var r0 *db.MfgTestStatus
+	if rf, ok := ret.Get(0).(func(string) *db.MfgTestStatus); ok {
 		r0 = rf(nodeId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*string)
+			r0 = ret.Get(0).(*db.MfgTestStatus)
 		}
 	}
 
@@ -94,15 +94,15 @@ func (_m *NodeRepo) GetNodeMfgStatus(nodeId string) (*string, *[]byte, error) {
 }
 
 // GetNodeStatus provides a mock function with given fields: nodeId
-func (_m *NodeRepo) GetNodeStatus(nodeId string) (*string, error) {
+func (_m *NodeRepo) GetNodeStatus(nodeId string) (*db.MfgStatus, error) {
 	ret := _m.Called(nodeId)
 
-	var r0 *string
-	if rf, ok := ret.Get(0).(func(string) *string); ok {
+	var r0 *db.MfgStatus
+	if rf, ok := ret.Get(0).(func(string) *db.MfgStatus); ok {
 		r0 = rf(nodeId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*string)
+			r0 = ret.Get(0).(*db.MfgStatus)
 		}
 	}
 
@@ -139,8 +139,8 @@ func (_m *NodeRepo) ListNodes() (*[]db.Node, error) {
 	return r0, r1
 }
 
-// UpdateNodeMfgStatus provides a mock function with given fields: node
-func (_m *NodeRepo) UpdateNodeMfgStatus(node *db.Node) error {
+// UpdateNodeMfgTestStatus provides a mock function with given fields: node
+func (_m *NodeRepo) UpdateNodeMfgTestStatus(node *db.Node) error {
 	ret := _m.Called(node)
 
 	var r0 error
@@ -154,11 +154,11 @@ func (_m *NodeRepo) UpdateNodeMfgStatus(node *db.Node) error {
 }
 
 // UpdateNodeStatus provides a mock function with given fields: nodeId, status
-func (_m *NodeRepo) UpdateNodeStatus(nodeId string, status string) error {
+func (_m *NodeRepo) UpdateNodeStatus(nodeId string, status db.MfgStatus) error {
 	ret := _m.Called(nodeId, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+	if rf, ok := ret.Get(0).(func(string, db.MfgStatus) error); ok {
 		r0 = rf(nodeId, status)
 	} else {
 		r0 = ret.Error(0)

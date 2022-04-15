@@ -144,7 +144,7 @@ func MfgState(s string) (*MfgStatus, error) {
 
 	_, ok := mfgStatus[status]
 	if !ok {
-		return nil, fmt.Errorf("%s is invalid mfg test status", s)
+		return nil, fmt.Errorf("%s is invalid mfg status", s)
 	}
 
 	return &status, nil

@@ -122,15 +122,15 @@ func (_m *ModuleRepo) GetModuleMfgField(moduleId string, field string) (*db.Modu
 }
 
 // GetModuleMfgStatus provides a mock function with given fields: moduleId
-func (_m *ModuleRepo) GetModuleMfgStatus(moduleId string) (*string, error) {
+func (_m *ModuleRepo) GetModuleMfgStatus(moduleId string) (*db.MfgStatus, error) {
 	ret := _m.Called(moduleId)
 
-	var r0 *string
-	if rf, ok := ret.Get(0).(func(string) *string); ok {
+	var r0 *db.MfgStatus
+	if rf, ok := ret.Get(0).(func(string) *db.MfgStatus); ok {
 		r0 = rf(moduleId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*string)
+			r0 = ret.Get(0).(*db.MfgStatus)
 		}
 	}
 
@@ -182,11 +182,11 @@ func (_m *ModuleRepo) UpdateModuleMfgField(moduleId string, field string, module
 }
 
 // UpdateModuleMfgStatus provides a mock function with given fields: moduleId, status
-func (_m *ModuleRepo) UpdateModuleMfgStatus(moduleId string, status string) error {
+func (_m *ModuleRepo) UpdateModuleMfgStatus(moduleId string, status db.MfgStatus) error {
 	ret := _m.Called(moduleId, status)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+	if rf, ok := ret.Get(0).(func(string, db.MfgStatus) error); ok {
 		r0 = rf(moduleId, status)
 	} else {
 		r0 = ret.Error(0)

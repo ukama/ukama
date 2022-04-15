@@ -66,14 +66,14 @@ func NewNode(id string) *db.Node {
 
 func NewModule(id string) *db.Module {
 	return &db.Module{
-		ModuleID:      id,
-		Type:          "TRX",
-		PartNumber:    "a1",
-		HwVersion:     "s1",
-		Mac:           "00:01:02:03:04:05",
-		SwVersion:     "1.1",
-		MfgName:       "ukama",
-		MfgTestStatus: "UnderTest",
+		ModuleID:   id,
+		Type:       "TRX",
+		PartNumber: "a1",
+		HwVersion:  "s1",
+		Mac:        "00:01:02:03:04:05",
+		SwVersion:  "1.1",
+		MfgName:    "ukama",
+		Status:     "StatusLabelGenrated",
 	}
 }
 
@@ -162,7 +162,7 @@ func Test_DeleteNode(t *testing.T) {
 func Test_PutNodeStatus(t *testing.T) {
 	// Arrange
 	nodeId := "1001"
-	status := "testing"
+	status := "StatusLabelGenrated"
 
 	url := "/node/status?node=" + nodeId + "&looking_to=update&status=" + status
 	w := httptest.NewRecorder()
@@ -174,7 +174,10 @@ func Test_PutNodeStatus(t *testing.T) {
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
-	nodeRepo.On("UpdateNodeStatus", nodeId, status).Return(nil)
+	mfgStatus, err := db.MfgState(status)
+	assert.NoError(t, err, nil)
+
+	nodeRepo.On("UpdateNodeStatus", nodeId, *mfgStatus).Return(nil)
 
 	// act
 	r.ServeHTTP(w, req)
@@ -188,7 +191,7 @@ func Test_GetNodeStatus(t *testing.T) {
 	t.Run("Read node status", func(t *testing.T) {
 		// Arrange
 		nodeId := "1001"
-		status := "testing"
+		status := db.StatusLabelGenrated
 
 		url := "/node/status?node=" + nodeId + "&looking_for=*"
 
@@ -210,17 +213,17 @@ func Test_GetNodeStatus(t *testing.T) {
 
 		// assert
 		assert.Equal(t, 200, w.Code)
-		assert.Contains(t, w.Body.String(), "testing")
+		assert.Contains(t, w.Body.String(), status)
 
 	})
 
 }
 
-func Test_PutNodeMfgStatus(t *testing.T) {
+func Test_PutNodeMfgTestStatus(t *testing.T) {
 	// Arrange
 	nodeId := "1001"
 
-	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"Warehouse\" }"
+	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"MfgTestStatusUnderTest\" }"
 
 	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
 	w := httptest.NewRecorder()
@@ -232,7 +235,7 @@ func Test_PutNodeMfgStatus(t *testing.T) {
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
-	nodeRepo.On("UpdateNodeMfgStatus", mock.Anything).Return(nil)
+	nodeRepo.On("UpdateNodeMfgTestStatus", mock.Anything).Return(nil)
 
 	// act
 	r.ServeHTTP(w, req)
@@ -242,11 +245,39 @@ func Test_PutNodeMfgStatus(t *testing.T) {
 
 }
 
-func Test_GetNodeMfgStatus(t *testing.T) {
+func Test_PutNodeMfgTestStatusFail(t *testing.T) {
+	// Arrange
+	nodeId := "1001"
+
+	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"MfgTestStatusUnknown\" }"
+
+	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", url, strings.NewReader(jReq))
+
+	nodeRepo := mocks.NodeRepo{}
+	moduleRepo := mocks.ModuleRepo{}
+	rs := router.RouterServer{}
+
+	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
+
+	nodeRepo.On("UpdateNodeMfgTestStatus", mock.Anything).Return(nil)
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, 400, w.Code)
+	assert.Contains(t, w.Body.String(), "is invalid mfg test status")
+
+}
+
+func Test_GetNodeMfgTestStatus(t *testing.T) {
 	t.Run("Read node mfg status", func(t *testing.T) {
 		// Arrange
 		nodeId := "1001"
-		status := "Tested"
+		status := db.MfgTestStatusPass
+
 		mfg := []byte("\"report: passed\"")
 
 		url := "/node/mfgstatus?node=" + nodeId + "&looking_for=*"
@@ -262,14 +293,14 @@ func Test_GetNodeMfgStatus(t *testing.T) {
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
-		nodeRepo.On("GetNodeMfgStatus", nodeId).Return(&status, &mfg, nil)
+		nodeRepo.On("GetNodeMfgTestStatus", nodeId).Return(&status, &mfg, nil)
 
 		// act
 		r.ServeHTTP(w, req)
 
 		// assert
 		assert.Equal(t, 200, w.Code)
-		assert.Contains(t, w.Body.String(), "Tested")
+		assert.Contains(t, w.Body.String(), status.String())
 
 	})
 
@@ -279,15 +310,15 @@ func Test_PutModule(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
 	module := ReqAddOrUpdateModule{
-		ModuleID:      moduleId,
-		Type:          "TRX",
-		PartNumber:    "a1",
-		HwVersion:     "s1",
-		Mac:           "00:01:02:03:04:05",
-		SwVersion:     "1.1",
-		MfgName:       "ukama",
-		MfgTestStatus: "UnderTest",
-		UnitID:        "0001",
+		ModuleID:   moduleId,
+		Type:       "TRX",
+		PartNumber: "a1",
+		HwVersion:  "s1",
+		Mac:        "00:01:02:03:04:05",
+		SwVersion:  "1.1",
+		MfgName:    "ukama",
+		Status:     "StatusLabelGenrated",
+		UnitID:     "0001",
 	}
 	url := "/module/?module=" + moduleId + "&looking_to=update"
 	body, _ := json.Marshal(module)
@@ -393,7 +424,7 @@ func Test_PutAssignModule(t *testing.T) {
 func Test_PutModuleMfgStatus(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
-	status := "undertest"
+	status := "StatusLabelGenrated"
 
 	url := "/module/status?module=" + moduleId + "&looking_to=update&status=" + status
 
@@ -406,7 +437,10 @@ func Test_PutModuleMfgStatus(t *testing.T) {
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
-	moduleRepo.On("UpdateModuleMfgStatus", moduleId, status).Return(nil)
+	mfgtestStatus, err := db.MfgState(status)
+	assert.NoError(t, err, nil)
+
+	moduleRepo.On("UpdateModuleMfgStatus", moduleId, *mfgtestStatus).Return(nil)
 
 	// act
 	r.ServeHTTP(w, req)
@@ -416,10 +450,37 @@ func Test_PutModuleMfgStatus(t *testing.T) {
 
 }
 
-func Test_GetModuleMfgStatusHandler(t *testing.T) {
+func Test_PutModuleMfgStatusFail(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
-	var status string
+	status := "StatusLabelUnkown"
+
+	url := "/module/status?module=" + moduleId + "&looking_to=update&status=" + status
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("PUT", url, nil)
+
+	nodeRepo := mocks.NodeRepo{}
+	moduleRepo := mocks.ModuleRepo{}
+	rs := router.RouterServer{}
+
+	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
+
+	moduleRepo.On("UpdateModuleMfgStatus", moduleId, mock.Anything).Return(nil)
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	assert.Equal(t, 400, w.Code)
+	assert.Contains(t, w.Body.String(), "is invalid mfg status")
+
+}
+
+func Test_GetModuleMfgStatus(t *testing.T) {
+	// Arrange
+	moduleId := "1001"
+	var status db.MfgStatus
 	url := "/module/status?module=" + moduleId + "&looking_for=*"
 
 	w := httptest.NewRecorder()
