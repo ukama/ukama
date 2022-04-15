@@ -64,8 +64,8 @@ func (r *Router) init() {
 	node.DELETE("/", nil, tonic.Handler(r.DeleteNodeHandler, http.StatusOK))
 	node.GET("/status", nil, tonic.Handler(r.GetNodeStatusHandler, http.StatusOK))
 	node.PUT("/status", nil, tonic.Handler(r.PutNodeStatusHandler, http.StatusOK))
-	node.PUT("/mfgstatus", nil, tonic.Handler(r.PutNodeMfgStatusHandler, http.StatusOK))
-	node.GET("/mfgstatus", nil, tonic.Handler(r.GetNodeMfgStatusHandler, http.StatusOK))
+	node.PUT("/mfgstatus", nil, tonic.Handler(r.PutNodeMfgTestStatusHandler, http.StatusOK))
+	node.GET("/mfgstatus", nil, tonic.Handler(r.GetNodeMfgTestStatusHandler, http.StatusOK))
 	node.GET("/all", nil, tonic.Handler(r.GetNodeListHandler, http.StatusOK))
 
 	module := r.fizz.Group(ModulePath, "Module", "Module related operations")
@@ -157,7 +157,7 @@ func (r *Router) GetNodeStatusHandler(c *gin.Context, req *ReqGetNodeStatus) (*R
 	resp := &RespGetNodeStatus{}
 
 	if status != nil {
-		resp.Status = *status
+		resp.Status = string(*status)
 	}
 
 	return resp, nil
@@ -166,7 +166,15 @@ func (r *Router) GetNodeStatusHandler(c *gin.Context, req *ReqGetNodeStatus) (*R
 func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) error {
 	logrus.Debugf("Handling NMR update node request %+v.", req)
 
-	err := r.nodeRepo.UpdateNodeStatus(req.NodeID, req.Status)
+	status, err := db.MfgState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+
+	err = r.nodeRepo.UpdateNodeStatus(req.NodeID, *status)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -177,8 +185,16 @@ func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) 
 	return nil
 }
 
-func (r *Router) PutNodeMfgStatusHandler(c *gin.Context, req *ReqUpdateNodeMfgStatus) error {
+func (r *Router) PutNodeMfgTestStatusHandler(c *gin.Context, req *ReqUpdateNodeMfgStatus) error {
 	logrus.Debugf("Handling NMR update node request %+v.", req)
+
+	_, err := db.MfgTestState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
 
 	node := &db.Node{
 		NodeID:        req.NodeID,
@@ -186,7 +202,7 @@ func (r *Router) PutNodeMfgStatusHandler(c *gin.Context, req *ReqUpdateNodeMfgSt
 		MfgReport:     (*[]byte)(req.MfgReport),
 	}
 
-	err := r.nodeRepo.UpdateNodeMfgStatus(node)
+	err = r.nodeRepo.UpdateNodeMfgTestStatus(node)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -197,10 +213,10 @@ func (r *Router) PutNodeMfgStatusHandler(c *gin.Context, req *ReqUpdateNodeMfgSt
 	return nil
 }
 
-func (r *Router) GetNodeMfgStatusHandler(c *gin.Context, req *ReqGetNodeMfgStatus) (*RespGetNodeMfgStatus, error) {
+func (r *Router) GetNodeMfgTestStatusHandler(c *gin.Context, req *ReqGetNodeMfgStatus) (*RespGetNodeMfgStatus, error) {
 	logrus.Debugf("Handling NMR get node status request %+v.", req)
 
-	status, mfg, err := r.nodeRepo.GetNodeMfgStatus(req.NodeID)
+	status, mfg, err := r.nodeRepo.GetNodeMfgTestStatus(req.NodeID)
 	if err != nil {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -211,7 +227,7 @@ func (r *Router) GetNodeMfgStatusHandler(c *gin.Context, req *ReqGetNodeMfgStatu
 	resp := &RespGetNodeMfgStatus{}
 
 	if status != nil {
-		resp.Status = *status
+		resp.Status = string(*status)
 	}
 
 	if mfg != nil {
@@ -271,16 +287,16 @@ func (r *Router) PutModuleHandler(c *gin.Context, req *ReqAddOrUpdateModule) err
 	}
 
 	module := &db.Module{
-		ModuleID:      req.ModuleID,
-		Type:          req.Type,
-		PartNumber:    req.PartNumber,
-		SwVersion:     req.SwVersion,
-		PSwVersion:    req.PSwVersion,
-		Mac:           req.Mac,
-		MfgDate:       req.MfgDate,
-		MfgName:       req.MfgName,
-		MfgTestStatus: req.MfgTestStatus,
-		UnitID:        sqlUnitId,
+		ModuleID:   req.ModuleID,
+		Type:       req.Type,
+		PartNumber: req.PartNumber,
+		SwVersion:  req.SwVersion,
+		PSwVersion: req.PSwVersion,
+		Mac:        req.Mac,
+		MfgDate:    req.MfgDate,
+		MfgName:    req.MfgName,
+		Status:     req.Status,
+		UnitID:     sqlUnitId,
 	}
 
 	err := r.moduleRepo.UpsertModule(module)
@@ -357,7 +373,7 @@ func (r *Router) GetModuleMfgStatusHandler(c *gin.Context, req *ReqGetModuleMfgS
 	resp := &RespGetModuleMfgStatusData{}
 
 	if status != nil {
-		resp.MfgTestStatus = *status
+		resp.Status = string(*status)
 	}
 
 	return resp, nil
@@ -367,7 +383,14 @@ func (r *Router) GetModuleMfgStatusHandler(c *gin.Context, req *ReqGetModuleMfgS
 func (r *Router) PutModuleMfgStatusHandler(c *gin.Context, req *ReqUpdateModuleMfgStatusData) error {
 	logrus.Debugf("Handling NMR update Module Mfg Status Data request %+v.", req)
 
-	err := r.moduleRepo.UpdateModuleMfgStatus(req.ModuleID, req.MfgTestStatus)
+	status, err := db.MfgState(req.Status)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  err.Error(),
+		}
+	}
+	err = r.moduleRepo.UpdateModuleMfgStatus(req.ModuleID, *status)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusNotFound,
@@ -406,8 +429,15 @@ func (r *Router) GetModuleMfgDataHandler(c *gin.Context, req *ReqGetModuleMfgDat
 		}
 	}
 
+	if _, err := db.MfgState(module.Status); err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
+
 	resp := &RespGetModuleMfgData{
-		MfgTestStatus:      module.MfgTestStatus,
+		MfgTestStatus:      module.Status,
 		MfgReport:          bytesToJsonCompatibleRawMsg(module.MfgReport),
 		BootstrapCerts:     bytesToJsonCompatibleRawMsg(module.BootstrapCerts),
 		UserCalibration:    bytesToJsonCompatibleRawMsg(module.UserCalibration),

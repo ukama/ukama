@@ -9,6 +9,8 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	intDb "github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,16 +21,16 @@ func Test_moduleRepo_GetModuleMfgStatus(t *testing.T) {
 	t.Run("ModuleMfgStatus", func(t *testing.T) {
 
 		module := intDb.Module{
-			ModuleID:      "1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "",
+			ModuleID:   "1001",
+			Type:       "TRX",
+			PartNumber: "a1",
+			HwVersion:  "h1",
+			Mac:        "00:01:02:03:04:05",
+			SwVersion:  "1.1",
+			PSwVersion: "0.1",
+			MfgDate:    time.Now(),
+			MfgName:    "ukama",
+			Status:     "StatusLabelGenrated",
 		}
 
 		var db *extsql.DB
@@ -37,8 +39,8 @@ func Test_moduleRepo_GetModuleMfgStatus(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status"}).
-			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus)
+		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "status"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status)
 
 		mock.ExpectQuery(`^SELECT.*modules.*`).
 			WithArgs(module.ModuleID).
@@ -69,7 +71,7 @@ func Test_moduleRepo_GetModuleMfgStatus(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 		if assert.NotNil(t, modStatus) {
-			assert.Equal(t, module.MfgTestStatus, *modStatus)
+			assert.Equal(t, module.Status, (*modStatus).String())
 		}
 	})
 
@@ -79,7 +81,7 @@ func Test_moduleRepo_UpdateModuleMfgStatus(t *testing.T) {
 
 	t.Run("UpdateModuleMfgStatus", func(t *testing.T) {
 
-		status := "Tested"
+		status := db.MfgStatus("ModuleTest")
 		moduleId := "1001"
 
 		var db *extsql.DB
@@ -127,16 +129,16 @@ func Test_moduleRepo_GetModule(t *testing.T) {
 	t.Run("GetModule", func(t *testing.T) {
 
 		module := intDb.Module{
-			ModuleID:      "1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "",
+			ModuleID:   "1001",
+			Type:       "TRX",
+			PartNumber: "a1",
+			HwVersion:  "h1",
+			Mac:        "00:01:02:03:04:05",
+			SwVersion:  "1.1",
+			PSwVersion: "0.1",
+			MfgDate:    time.Now(),
+			MfgName:    "ukama",
+			Status:     "StatusLabelGenrated",
 		}
 
 		var db *extsql.DB
@@ -145,8 +147,8 @@ func Test_moduleRepo_GetModule(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status"}).
-			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus)
+		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "status"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status)
 
 		mock.ExpectQuery(`^SELECT.*modules.*`).
 			WithArgs(module.ModuleID).
@@ -280,16 +282,16 @@ func Test_moduleRepo_GetModuleList(t *testing.T) {
 	t.Run("ModuleList", func(t *testing.T) {
 
 		module := intDb.Module{
-			ModuleID:      "1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "",
+			ModuleID:   "1001",
+			Type:       "TRX",
+			PartNumber: "a1",
+			HwVersion:  "h1",
+			Mac:        "00:01:02:03:04:05",
+			SwVersion:  "1.1",
+			PSwVersion: "0.1",
+			MfgDate:    time.Now(),
+			MfgName:    "ukama",
+			Status:     "LabelGenrated",
 		}
 
 		var db *extsql.DB
@@ -298,9 +300,9 @@ func Test_moduleRepo_GetModuleList(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status"}).
-			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus).
-			AddRow("1002", module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus)
+		rows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "status"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status).
+			AddRow("1002", module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status)
 
 		mock.ExpectQuery(`^SELECT.*modules.*`).
 			WillReturnRows(rows)

@@ -57,8 +57,8 @@ func Test_nodeRepo_GetNodeStatus(t *testing.T) {
 			PSwVersion:    "0.1",
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
-			MfgTestStatus: "",
-			Status:        "Assembly",
+			MfgTestStatus: "Pending",
+			Status:        "StatusLabelGenrated",
 		}
 
 		var db *extsql.DB
@@ -102,7 +102,7 @@ func Test_nodeRepo_GetNodeStatus(t *testing.T) {
 		assert.NoError(t, err)
 
 		if assert.NotNil(t, nodeStatus) {
-			assert.Equal(t, node.Status, *nodeStatus)
+			assert.Equal(t, node.Status, (*nodeStatus).String())
 		}
 	})
 
@@ -122,22 +122,22 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 			PSwVersion:    "0.1",
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
-			MfgTestStatus: "",
-			Status:        "Assembly",
+			MfgTestStatus: "MfgTestStatusPending",
+			Status:        "StatusLabelGenrated",
 		}
 
 		module := intDb.Module{
-			ModuleID:      "M1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "",
-			UnitID:        sql.NullString{String: node.NodeID, Valid: true},
+			ModuleID:   "M1001",
+			Type:       "TRX",
+			PartNumber: "a1",
+			HwVersion:  "h1",
+			Mac:        "00:01:02:03:04:05",
+			SwVersion:  "1.1",
+			PSwVersion: "0.1",
+			MfgDate:    time.Now(),
+			MfgName:    "ukama",
+			Status:     "StatusLabelGenrated",
+			UnitID:     sql.NullString{String: node.NodeID, Valid: true},
 		}
 
 		var db *extsql.DB
@@ -149,8 +149,8 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 		rows := sqlmock.NewRows([]string{"node_id", "type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "mfg_test_status", "status"}).
 			AddRow(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status)
 
-		mrows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "unit_id"}).
-			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus, module.UnitID)
+		mrows := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "status", "unit_id"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status, module.UnitID)
 
 		mock.ExpectQuery(`SELECT`).
 			WithArgs(node.NodeID).
@@ -299,22 +299,22 @@ func Test_nodeRepo_GetNodeList(t *testing.T) {
 			PSwVersion:    "0.1",
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
-			MfgTestStatus: "",
-			Status:        "Assembly",
+			MfgTestStatus: "MfgTestStatusPending",
+			Status:        "StatusLabelGenrated",
 		}
 
 		module := intDb.Module{
-			ModuleID:      "M1001",
-			Type:          "TRX",
-			PartNumber:    "a1",
-			HwVersion:     "h1",
-			Mac:           "00:01:02:03:04:05",
-			SwVersion:     "1.1",
-			PSwVersion:    "0.1",
-			MfgDate:       time.Now(),
-			MfgName:       "ukama",
-			MfgTestStatus: "",
-			UnitID:        sql.NullString{String: node.NodeID, Valid: true},
+			ModuleID:   "M1001",
+			Type:       "TRX",
+			PartNumber: "a1",
+			HwVersion:  "h1",
+			Mac:        "00:01:02:03:04:05",
+			SwVersion:  "1.1",
+			PSwVersion: "0.1",
+			MfgDate:    time.Now(),
+			MfgName:    "ukama",
+			Status:     "StatusLabelGenrated",
+			UnitID:     sql.NullString{String: node.NodeID, Valid: true},
 		}
 
 		// nodeID2 := "1002"
@@ -326,18 +326,18 @@ func Test_nodeRepo_GetNodeList(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"node_id", "type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "mfg_test_status", "status"}).
-			AddRow(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status).
-			AddRow("1002", node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.MfgTestStatus, node.Status)
+		rows := sqlmock.NewRows([]string{"node_id", "type", "part_number", "skew", "mac", "sw_version", "p_sw_version", "assembly_date", "oem_name", "status", "status"}).
+			AddRow(node.NodeID, node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.Status, node.Status).
+			AddRow("1002", node.Type, node.PartNumber, node.Skew, node.Mac, node.SwVersion, node.PSwVersion, node.AssemblyDate, node.OemName, node.Status, node.Status)
 
-		mrow := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "unit_id"}).
-			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.MfgTestStatus, module.UnitID)
+		mrow := sqlmock.NewRows([]string{"module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "status", "unit_id"}).
+			AddRow(module.ModuleID, module.Type, module.PartNumber, module.HwVersion, module.Mac, module.SwVersion, module.PSwVersion, module.MfgDate, module.MfgName, module.Status, module.UnitID)
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WillReturnRows(rows)
 
 		mock.ExpectQuery(`^SELECT.*modules.*`).
-			WithArgs(sqlmock.AnyArg(),sqlmock.AnyArg()).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnRows(mrow)
 
 		dialector := postgres.New(postgres.Config{

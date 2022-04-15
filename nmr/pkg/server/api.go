@@ -81,18 +81,18 @@ type ReqUpdateNodeMfgStatus struct {
 
 /* Modules */
 type ReqAddOrUpdateModule struct {
-	ModuleID      string    `query:"module" validate:"required"`
-	LookingTo     string    `query:"looking_to" validate:"required"`
-	Type          string    `form:"type" json:"type"`
-	PartNumber    string    `form:"partNumber" json:"partNumber"`
-	HwVersion     string    `form:"hwVersion" json:"hwVersion"`
-	Mac           string    `form:"mac" json:"mac"`
-	SwVersion     string    `form:"swVersion" json:"swVersion"`
-	PSwVersion    string    `form:"pSwVersion" json:"mfgSwVersion"`
-	MfgDate       time.Time `form:"mfgDate" json:"mfgDate"`
-	MfgName       string    `form:"mfgName" json:"mfgName"`
-	MfgTestStatus string    `form:"mfgTestStatus" json:"mfgTestStatus"`
-	UnitID        string    `form:"nodeID" json:"nodeID,omitempty"`
+	ModuleID   string    `query:"module" validate:"required"`
+	LookingTo  string    `query:"looking_to" validate:"required"`
+	Type       string    `form:"type" json:"type"`
+	PartNumber string    `form:"partNumber" json:"partNumber"`
+	HwVersion  string    `form:"hwVersion" json:"hwVersion"`
+	Mac        string    `form:"mac" json:"mac"`
+	SwVersion  string    `form:"swVersion" json:"swVersion"`
+	PSwVersion string    `form:"pSwVersion" json:"mfgSwVersion"`
+	MfgDate    time.Time `form:"mfgDate" json:"mfgDate"`
+	MfgName    string    `form:"mfgName" json:"mfgName"`
+	Status     string    `form:"mfgTestStatus" json:"mfgTestStatus"`
+	UnitID     string    `form:"nodeID" json:"nodeID,omitempty"`
 }
 
 type ReqGetModule struct {
@@ -123,13 +123,13 @@ type ReqGetModuleMfgStatusData struct {
 }
 
 type RespGetModuleMfgStatusData struct {
-	MfgTestStatus string `form:"status" json:"status"`
+	Status string `form:"status" json:"status"`
 }
 
 type ReqUpdateModuleMfgStatusData struct {
-	ModuleID      string `query:"module" validate:"required"`
-	LookingTo     string `query:"looking_to" validate:"required"`
-	MfgTestStatus string `query:"status" json:"status"`
+	ModuleID  string `query:"module" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"required"`
+	Status    string `query:"status" json:"status"`
 }
 
 type ReqGetModuleMfgData struct {

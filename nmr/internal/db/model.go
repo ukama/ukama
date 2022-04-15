@@ -2,9 +2,46 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
+)
+
+type MfgStatus string
+
+const (
+	StatusUnkown                      MfgStatus = ""
+	StatusLabelGenrated               MfgStatus = "StatusLabelGenrated"
+	StatusModuleTest                  MfgStatus = "StatusModuleTest"
+	StatusModuleTestPass              MfgStatus = "StatusModuleTestPass"
+	StatusModuleTestFailure           MfgStatus = "StatusModuleTestFailure"
+	StatusModuleNeedAssistance        MfgStatus = "StatusModuleNeedAssistance"
+	StatusModuleWaitngForShipment     MfgStatus = "StatusModuleWaitngForShipment"
+	StatusModuleInTransit             MfgStatus = "StatusModuleInTransit"
+	StatusModuleReadyForAssembly      MfgStatus = "StatusModuleReadyForAssembly"
+	StatusPendingAssembly             MfgStatus = "StatusPendingAssembly"
+	StatusUnderAssembly               MfgStatus = "StatusUnderAssembly"
+	StatusAssemblyCompleted           MfgStatus = "StatusAssemblyCompleted"
+	StatusPendingProductionTest       MfgStatus = "StatusPendingProductionTest"
+	StatusProductionTest              MfgStatus = "StatusProductionTest"
+	StatusProductionTestPass          MfgStatus = "StatusProductionTestPass"
+	StatusProductionTestFail          MfgStatus = "StatusProductionTestFail"
+	StatusProductionTestNeedAssitance MfgStatus = "StatusProductionTestNeedAssitance"
+	StatusProductionTestCompleted     MfgStatus = "StatusProductionTestCompleted"
+	StatusIntransitToWareHouse        MfgStatus = "StatusIntransitToWareHouse"
+	StatusNodeAllocated               MfgStatus = "StatusNodeAllocated"
+	StatusNodeWaitngForShipment       MfgStatus = "StatusNodeWaitngForShipment"
+	StatusNodeIntransit               MfgStatus = "StateNodeIntransit"
+)
+
+type MfgTestStatus string
+
+const (
+	MfgTestStatusPending   MfgTestStatus = "MfgTestStatusPending"
+	MfgTestStatusUnderTest MfgTestStatus = "MfgTestStatusUnderTest"
+	MfgTestStatusPass      MfgTestStatus = "MfgTestStatusPass"
+	MfgTestStatusFail      MfgTestStatus = "MfgTestStatusFail"
 )
 
 /* Node Information */
@@ -38,7 +75,7 @@ type Module struct {
 	PSwVersion         string    `gorm:"size:32;not null" json:"mfgSwVersion"`
 	MfgDate            time.Time `gorm:"type:time; size:32;not null" json:"mfgDate"`
 	MfgName            string    `gorm:"size:32;not null" json:"mfgName"`
-	MfgTestStatus      string    `gorm:"size:32;not null" json:"mfgTestStatus"`
+	Status             string    `gorm:"size:32;not null" json:"Status"`
 	MfgReport          *[]byte   `gorm:"type:bytes;" json:"mfgReport,omitempty"` /* Report for production test */
 	BootstrapCerts     *[]byte   `gorm:"type:bytes;" json:"bootstrapCerts,omitempty"`
 	UserCalibration    *[]byte   `gorm:"type:bytes;" json:"userCalibration,omitempty"`
@@ -48,4 +85,67 @@ type Module struct {
 	InventoryData      *[]byte   `gorm:"type:bytes;" json:"inventoryData,omitempty"`
 	//	CloudCerts         *[]byte        `gorm:"type:bytes;" json:"cloudCerts"`
 	UnitID sql.NullString `gorm:"column:unit_id;type:string;default:null;" json:"nodeId"`
+}
+
+func (m MfgTestStatus) String() string {
+	return string(m)
+}
+
+func (s MfgStatus) String() string {
+	return string(s)
+}
+
+func MfgTestState(s string) (*MfgTestStatus, error) {
+	mfgTestStatus := map[MfgTestStatus]struct{}{
+		MfgTestStatusPending:   {},
+		MfgTestStatusUnderTest: {},
+		MfgTestStatusPass:      {},
+		MfgTestStatusFail:      {},
+	}
+
+	status := MfgTestStatus(s)
+
+	_, ok := mfgTestStatus[status]
+	if !ok {
+		return nil, fmt.Errorf("%s is invalid mfg test status", s)
+	}
+
+	return &status, nil
+
+}
+
+func MfgState(s string) (*MfgStatus, error) {
+
+	mfgStatus := map[MfgStatus]struct{}{
+		StatusLabelGenrated:               {},
+		StatusModuleTest:                  {},
+		StatusModuleTestPass:              {},
+		StatusModuleTestFailure:           {},
+		StatusModuleNeedAssistance:        {},
+		StatusModuleWaitngForShipment:     {},
+		StatusModuleInTransit:             {},
+		StatusModuleReadyForAssembly:      {},
+		StatusPendingAssembly:             {},
+		StatusUnderAssembly:               {},
+		StatusAssemblyCompleted:           {},
+		StatusPendingProductionTest:       {},
+		StatusProductionTest:              {},
+		StatusProductionTestPass:          {},
+		StatusProductionTestFail:          {},
+		StatusProductionTestNeedAssitance: {},
+		StatusProductionTestCompleted:     {},
+		StatusIntransitToWareHouse:        {},
+		StatusNodeAllocated:               {},
+		StatusNodeWaitngForShipment:       {},
+		StatusNodeIntransit:               {},
+	}
+
+	status := MfgStatus(s)
+
+	_, ok := mfgStatus[status]
+	if !ok {
+		return nil, fmt.Errorf("%s is invalid mfg test status", s)
+	}
+
+	return &status, nil
 }

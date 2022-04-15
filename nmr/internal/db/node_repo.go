@@ -11,10 +11,10 @@ type NodeRepo interface {
 	GetNode(nodeId string) (*Node, error)
 	DeleteNode(nodeId string) error
 	ListNodes() (*[]Node, error)
-	GetNodeStatus(nodeId string) (*string, error)
-	GetNodeMfgStatus(nodeId string) (*string, *[]byte, error)
-	UpdateNodeMfgStatus(node *Node) error
-	UpdateNodeStatus(nodeId string, status string) error
+	GetNodeStatus(nodeId string) (*MfgStatus, error)
+	UpdateNodeStatus(nodeId string, status MfgStatus) error
+	GetNodeMfgTestStatus(nodeId string) (*MfgTestStatus, *[]byte, error)
+	UpdateNodeMfgTestStatus(node *Node) error
 }
 
 type nodeRepo struct {
@@ -70,26 +70,40 @@ func (r *nodeRepo) ListNodes() (*[]Node, error) {
 	}
 }
 
-func (r *nodeRepo) GetNodeStatus(nodeId string) (*string, error) {
+func (r *nodeRepo) GetNodeStatus(nodeId string) (*MfgStatus, error) {
 	var node Node
+
 	result := r.Db.GetGormDb().Select("status").First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return &node.Status, nil
+
+	status, err := MfgState(node.Status)
+	if err != nil {
+		logrus.Errorf("%s not a valid status", node.Status)
+		return nil, err
+	}
+
+	return status, nil
 }
 
-func (r *nodeRepo) GetNodeMfgStatus(nodeId string) (*string, *[]byte, error) {
+func (r *nodeRepo) GetNodeMfgTestStatus(nodeId string) (*MfgTestStatus, *[]byte, error) {
 	var node Node
 	result := r.Db.GetGormDb().Select("status", "mfg_report").First(&node, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, nil, result.Error
 	}
-	return &node.Status, node.MfgReport, nil
+
+	status, err := MfgTestState(node.Status)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return status, node.MfgReport, nil
 }
 
 /* Update Production status */
-func (r *nodeRepo) UpdateNodeMfgStatus(node *Node) error {
+func (r *nodeRepo) UpdateNodeMfgTestStatus(node *Node) error {
 
 	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", node.NodeID).UpdateColumns(node)
 	if result.Error != nil {
@@ -106,7 +120,7 @@ func (r *nodeRepo) UpdateNodeMfgStatus(node *Node) error {
 }
 
 /* Update Node status */
-func (r *nodeRepo) UpdateNodeStatus(nodeId string, status string) error {
+func (r *nodeRepo) UpdateNodeStatus(nodeId string, status MfgStatus) error {
 	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", nodeId).UpdateColumn("status", status)
 	if result.Error != nil {
 		return result.Error
