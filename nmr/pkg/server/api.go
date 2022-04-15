@@ -75,7 +75,7 @@ type ReqUpdateNodeMfgStatus struct {
 	NodeID        string           `query:"node" validate:"required"`
 	LookingTo     string           `query:"looking_to" validate:"required"`
 	MfgTestStatus string           `form:"mfgTestStatus" json:"mfgTestStatus"`
-	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfguction test */
+	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfg function test */
 	Status        string           `form:"status" json:"status"`
 }
 
