@@ -470,7 +470,7 @@ func (r *Router) GetModuleMfgDataHandler(c *gin.Context, req *ReqGetModuleMfgDat
 	}
 
 	resp := &RespGetModuleMfgData{
-		MfgTestStatus:      module.Status,
+		Status:             module.Status,
 		MfgReport:          bytesToJsonCompatibleRawMsg(module.MfgReport),
 		BootstrapCerts:     bytesToJsonCompatibleRawMsg(module.BootstrapCerts),
 		UserCalibration:    bytesToJsonCompatibleRawMsg(module.UserCalibration),

@@ -91,7 +91,7 @@ type ReqAddOrUpdateModule struct {
 	PSwVersion string    `form:"pSwVersion" json:"mfgSwVersion"`
 	MfgDate    time.Time `form:"mfgDate" json:"mfgDate"`
 	MfgName    string    `form:"mfgName" json:"mfgName"`
-	Status     string    `form:"mfgTestStatus" json:"mfgTestStatus"`
+	Status     string    `form:"status" json:"status"`
 	UnitID     string    `form:"nodeID" json:"nodeID,omitempty"`
 }
 
@@ -138,7 +138,7 @@ type ReqGetModuleMfgData struct {
 }
 
 type RespGetModuleMfgData struct {
-	MfgTestStatus      string          `form:"mfgTestStatus" json:"mfgTestStatus"`
+	Status             string          `form:"status" json:"status"`
 	MfgReport          json.RawMessage `form:"mfgReport" json:"mfgReport,omitempty"` /* Report for mfguction test */
 	BootstrapCerts     json.RawMessage `form:"bootstrapCerts" json:"bootstrapCerts,omitempty"`
 	UserCalibration    json.RawMessage `form:"userCalibration" json:"userCalibration,omitempty"`
