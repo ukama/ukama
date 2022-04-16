@@ -50,12 +50,13 @@ If we just need to replicate these with updated serial numbers we could use usti
 Example:
 
 ```
-./build/genSchema --n ComV1 --u UK-7001-HNODE-SA03-1102 --f mfgdata/schema/com.json --m UK-7001-COM-1102 --f mfgdata/schema/lte.json --f mfgdata/schema/mask.json
+./build/genSchema --u UK-7001-HNODE-SA03-1103 --n ComV1 --m UK-7001-COM-1103  --f mfgdata/schema/com.json --n LTE --m UK-7001-LTE-1103  --f mfgdata/schema/lte.json --n MASK --m UK-7001-MSK-1103 --f mfgdata/schema/mask.json
 ```
+
 Could use this for more information
 
 ```
-/build/genSchema --help
+./build/genSchema --help
 ```
 
 **Generate Inventory Database**

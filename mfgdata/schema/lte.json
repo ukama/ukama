@@ -111,8 +111,8 @@
         }
     ],
     "moduleInfo":{
-        "UUID":"UK-8001-LTE-1102",
-        "name":"LTE",
+        "UUID":"UK-9001-TRX-1103",
+        "name":"TRX",
         "type":4,
         "partNumber":"LTE-CNX-0XXXX",
         "hwVersion":"REV-A",

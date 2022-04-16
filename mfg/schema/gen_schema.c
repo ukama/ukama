@@ -16,7 +16,7 @@
  *
  * genSchema --u UK-7001-HNODE-SA03-1102 \
  * --n ComV1 --m UK-7001-COM-1102  --f mfgdata/schema/com.json \
- * --n LTE --m UK-7001-LTE-1102  --f mfgdata/schema/lte.json \
+ * --n LTE --m UK-7001-TRX-1102  --f mfgdata/schema/lte.json \
  * --n MASK --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
  *
  * ANode

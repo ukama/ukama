@@ -14,8 +14,8 @@
 
 /* Board Name */
 static char* boardname[MODULE_TYPE_MAX] = {
-    "ComV1",
-    "LTE",
+    "COM",
+    "TRX",
     "MASK",
     "RF CTRL BOARD",
     "RF BOARD"
