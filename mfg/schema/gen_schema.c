@@ -197,7 +197,7 @@ char* read_uuid_for_module_name(const char* name) {
 }
 
 /* Update Unit config */
-int  update_unit_config( const JsonObj **obj) {
+int  update_node_config( const JsonObj **obj) {
     int ret = -1;
    const JsonObj *nodeCfgObj = *obj;
 
@@ -227,7 +227,7 @@ int  update_unit_config( const JsonObj **obj) {
         }
 
     } else {
-        usys_log_error("Schema:: Expected unit_config array but unknown JSON tag found.");
+        usys_log_error("Schema:: Expected node_config array but unknown JSON tag found.");
     }
     return ret;
 }
@@ -263,7 +263,7 @@ int modify_json(unsigned short idx)
             if ( nodeSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_CONFIG))) {
 
                 /* Update Unit Config */
-                ret  = update_unit_config((const JsonObj**)&obj);
+                ret  = update_node_config((const JsonObj**)&obj);
                 if (ret) {
                     usys_log_error("Schema:: Failed to update node config for %s file.", nodeSchema[idx].fileName);
                     return ret;

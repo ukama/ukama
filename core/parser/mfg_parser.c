@@ -583,7 +583,7 @@ cleanup:
 }
 
 /* Parse Unit Config */
-void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
+void *parse_schema_node_config(const JsonObj *jSchema, uint16_t count) {
     const JsonObj *jNodeCfgs = NULL;
     const JsonObj *jNodeCfg = NULL;
     const JsonObj *jDevice = NULL;
@@ -959,7 +959,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     }
     case FIELD_ID_NODE_CFG: {
         uint16_t modCount = (*schema)->nodeInfo.modCount;
-        NodeCfg *pNodeCfg = parse_schema_unit_config(jSchema, modCount);
+        NodeCfg *pNodeCfg = parse_schema_node_config(jSchema, modCount);
         if (pNodeCfg) {
             (*schema)->nodeCfg = pNodeCfg;
         } else {

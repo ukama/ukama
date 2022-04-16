@@ -1104,7 +1104,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     uint16_t size = 0;
     uint8_t modCount = 0;
     NodeCfg *ucfg;
-    char unitUuid[UUID_LENGTH] = { '\0' };
+    char nodeUuid[UUID_LENGTH] = { '\0' };
     usys_log_debug("Inventory read Unit Info from module %s for module "
                    "registration process.",
                    pUuid);
@@ -1114,7 +1114,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
         ret = invt_read_node_info(pUuid, nodeInfo, &size);
         if (!ret) {
             invt_print_node_info(nodeInfo);
-            usys_memcpy(unitUuid, nodeInfo->uuid, usys_strlen(nodeInfo->uuid));
+            usys_memcpy(nodeUuid, nodeInfo->uuid, usys_strlen(nodeInfo->uuid));
             modCount = nodeInfo->modCount;
             if (nodeInfo) {
                 usys_free(nodeInfo);
@@ -1122,7 +1122,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
             }
             usys_log_debug("Inventory read Unit Config for %s for "
                            "registration process.",
-                           unitUuid);
+                           nodeUuid);
 
             ucfg = (NodeCfg *)invt_alloc_node_cfg(modCount);
             if (ucfg) {
@@ -1132,7 +1132,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                     invt_print_node_cfg(ucfg, modCount);
                     usys_log_debug("Inventory Registering %d module "
                                    "for Unit %s.",
-                                   modCount, unitUuid);
+                                   modCount, nodeUuid);
                     for (uint8_t iter = 0; iter < modCount; iter++) {
                         /* Register module*/
                         ret = invt_register_module(&ucfg[iter]);
@@ -1162,27 +1162,27 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                 } else {
                     usys_log_debug("Read Unit Config fail for %s."
                                    "Error Code: %d",
-                                   unitUuid, ret);
+                                   nodeUuid, ret);
                     goto cleannodecfg;
                 }
             } else {
                 ret = ERR_NODED_MEMORY_EXHAUSTED;
                 usys_log_debug("Memory error while reading node config for %s."
                                "Error Code: %d",
-                               unitUuid, ret);
-                goto cleanunitinfo;
+                               nodeUuid, ret);
+                goto cleannodeinfo;
             }
         } else {
             usys_log_debug("Read Unit Info fail for %s. Error Code: %d", pUuid,
                            ret);
-            goto cleanunitinfo;
+            goto cleannodeinfo;
         }
     }
 
 cleannodecfg:
     invt_free_node_cfg(ucfg, modCount);
 
-cleanunitinfo:
+cleannodeinfo:
     usys_free(nodeInfo);
     nodeInfo = NULL;
     return ret;
@@ -1904,14 +1904,14 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
 /* This will read node info and size of the info.*/
 int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     int ret = -1;
-    uint16_t unit_fid = FIELD_ID_NODE_INFO;
+    uint16_t node_fid = FIELD_ID_NODE_INFO;
     uint16_t idx = 0;
 
     SchemaIdxTuple *idxData;
-    ret = invt_search_field_id(pUuid, &idxData, &idx, unit_fid);
+    ret = invt_search_field_id(pUuid, &idxData, &idx, node_fid);
     if (ret) {
         usys_log_error("Err(%d): UKDB search error for field id 0x%x.", ret,
-                       unit_fid);
+                       node_fid);
         ret = ERR_NODED_DB_MISSING_NODE_INFO;
         return ret;
     }
@@ -1922,7 +1922,7 @@ int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
         if (ret) {
             usys_log_error(
                 "Err(%d): Payload read failure for the field id 0x%x.", ret,
-                unit_fid);
+                node_fid);
             usys_free(idxData);
             idxData = NULL;
         }
@@ -1934,7 +1934,7 @@ int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     ret = invt_validate_payload(p_info, idxData->payloadCrc, *size);
     if (ret) {
         usys_log_error("Err(%d): CRC failure for the field id 0x%x.", ret,
-                       unit_fid);
+                       node_fid);
     }
     usys_free(idxData);
     idxData = NULL;
