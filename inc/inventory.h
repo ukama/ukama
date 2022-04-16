@@ -330,7 +330,7 @@ int invt_read_payload_from_store(char *pUuid, void *p_data, uint16_t id,
 int invt_read_unit_cfg(char *pUuid, UnitCfg *p_ucfg, uint8_t count,
                        uint16_t *size);
 /**
- * @fn      int invt_read_unit_info(char*, UnitInfo*, uint16_t*)
+ * @fn      int invt_read_unit_info(char*, NodeInfo*, uint16_t*)
  * @brief   reads the unit info from the store.
  *
  * @param   pUuid
@@ -339,7 +339,7 @@ int invt_read_unit_cfg(char *pUuid, UnitCfg *p_ucfg, uint8_t count,
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_read_unit_info(char *pUuid, UnitInfo *unitInfo, uint16_t *size);
+int invt_read_unit_info(char *pUuid, NodeInfo *unitInfo, uint16_t *size);
 
 /**
  * @fn      int invt_read_user_calib(char*, void*, uint16_t*)
@@ -757,12 +757,12 @@ void invt_print_module_info(ModuleInfo *modInfo);
 void invt_print_unit_cfg(UnitCfg *p_ucfg, uint8_t count);
 
 /**
- * @fn      void invt_print_unit_info(UnitInfo*)
+ * @fn      void invt_print_unit_info(NodeInfo*)
  * @brief   Logs the unit info
  *
  * @param   unitInfo
  */
-void invt_print_unit_info(UnitInfo *unitInfo);
+void invt_print_unit_info(NodeInfo *unitInfo);
 
 /**
  * @fn      void invt_deserialize_devices*(const char*, int, DeviceClass, int*)

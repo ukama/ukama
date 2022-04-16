@@ -203,7 +203,7 @@ int mfg_fetch_payload_from_mfg_data(void** data, char* uuid, uint16_t* size, uin
  * @return  On success, 0
  *          On failure, non zero value
  */
-int mfg_fetch_unit_info(UnitInfo** data, char* uuid, uint16_t* size);
+int mfg_fetch_unit_info(NodeInfo** data, char* uuid, uint16_t* size);
 
 /**
  * @fn      int mfg_fetch_unit_cfg(void**, char*, uint16_t*, uint8_t)

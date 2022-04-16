@@ -325,7 +325,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     usys_log_trace("NodeD:: Received a get unit config request.");
 
     /* Allocate memory for unit info */
-    UnitInfo *uInfo = usys_zmalloc(sizeof(UnitInfo));
+    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
     if (!uInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));
@@ -408,7 +408,7 @@ static int web_service_cb_get_unit_info(const URequest *request,
     usys_log_trace("NodeD:: Received a get unit info request.");
 
     /* Allocate memory */
-    UnitInfo *uInfo = usys_zmalloc(sizeof(UnitInfo));
+    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
     if (!uInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));

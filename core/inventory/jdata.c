@@ -100,8 +100,8 @@ void *jdata_fetch_unit_info(char *puuid, uint16_t *size) {
         return NULL;
     }
 
-    uint16_t sz = sizeof(UnitInfo);
-    UnitInfo *info = usys_zmalloc(sz);
+    uint16_t sz = sizeof(NodeInfo);
+    NodeInfo *info = usys_zmalloc(sz);
     if (info) {
         usys_memcpy(info, &sschema->unitInfo, sz);
         *size = sz;

@@ -54,7 +54,7 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_STATE_ENABLED              "ENABLED"
 #define JTAG_STATE_DISABLED             "DISABLED"
 #define JTAG_VALID                      "valid"
-#define JTAG_UNIT_INFO                  "unitInfo"
+#define JTAG_NODE_INFO                  "nodeInfo"
 #define JTAG_UUID                       "UUID"
 #define JTAG_NAME                       "name"
 #define JTAG_TYPE                       "type"

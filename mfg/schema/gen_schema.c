@@ -60,7 +60,7 @@ typedef struct {
 
 /* JSON TAGS */
 static char* jsonKeyTag[MAX_JSON_TAGS] = {
-                JTAG_UNIT_INFO,
+                JTAG_NODE_INFO,
                 JTAG_UNIT_CONFIG,
                 JTAG_MODULE_INFO
 };
@@ -275,7 +275,7 @@ int modify_json(unsigned short idx)
                     /* Module Info */
                     value = unitSchema[idx].muuid;
 
-                } else if (unitSchema[idx].uuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_UNIT_INFO))) {
+                } else if (unitSchema[idx].uuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_INFO))) {
                     /* Unit Info */
                     value = unitSchema[idx].uuid;
                 }

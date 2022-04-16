@@ -205,7 +205,7 @@ int json_serialize_unit_cfg(JsonObj **json, UnitCfg *uCfg, uint8_t count) {
     return ret;
 }
 
-int json_serialize_unit_info(JsonObj **json, UnitInfo *uInfo) {
+int json_serialize_unit_info(JsonObj **json, NodeInfo *uInfo) {
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();
@@ -217,9 +217,9 @@ int json_serialize_unit_info(JsonObj **json, UnitInfo *uInfo) {
         return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
-    json_object_set_new(*json, JTAG_UNIT_INFO, json_object());
+    json_object_set_new(*json, JTAG_NODE_INFO, json_object());
 
-    JsonObj *jUInfo = json_object_get(*json, JTAG_UNIT_INFO);
+    JsonObj *jUInfo = json_object_get(*json, JTAG_NODE_INFO);
     if (jUInfo) {
         json_object_set_new(jUInfo, JTAG_UUID, json_string(uInfo->uuid));
 

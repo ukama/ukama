@@ -195,7 +195,7 @@ typedef struct __attribute__((__packed__)){
     char assmDate[DATE_LENGTH];
     char oemName[NAME_LENGTH];
     uint8_t modCount;
-} UnitInfo; //167
+} NodeInfo; //167
 
 typedef struct __attribute__((__packed__)){
     char uuid[UUID_LENGTH];
@@ -216,7 +216,7 @@ typedef struct __attribute__((__packed__)){
     SchemaMagicWord magicWord;
     SchemaHeader header;
     SchemaIdxTuple *indexTable;
-    UnitInfo unitInfo;
+    NodeInfo unitInfo;
     UnitCfg* unitCfg;  //Contain list of modules lTE -1 /54
     ModuleInfo modInfo;
     ModuleCfg* modCfg; //Contains list of devices.

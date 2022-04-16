@@ -69,7 +69,7 @@ int mfg_fetch_idx(SchemaIdxTuple **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_unit_info(UnitInfo **data, char *uuid, uint16_t *size) {
+int mfg_fetch_unit_info(NodeInfo **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readUnitInfo(uuid, size);
     if (!data) {

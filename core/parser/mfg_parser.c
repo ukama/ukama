@@ -475,13 +475,13 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
     const JsonObj *jUnitInfo = NULL;
     const JsonObj *jSWVer = NULL;
     const JsonObj *jProdSWVer = NULL;
-    UnitInfo *pUnitInfo = NULL;
+    NodeInfo *pUnitInfo = NULL;
     int ret = 0;
 
     /* Unit Info */
-    jUnitInfo = json_object_get(jSchema, JTAG_UNIT_INFO);
+    jUnitInfo = json_object_get(jSchema, JTAG_NODE_INFO);
     if (json_is_object(jUnitInfo)) {
-        pUnitInfo = usys_zmalloc(sizeof(UnitInfo));
+        pUnitInfo = usys_zmalloc(sizeof(NodeInfo));
         if (pUnitInfo) {
             /* UUID */
             if (!parser_read_string_object_wrapper(jUnitInfo, JTAG_UUID,
@@ -528,7 +528,7 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
                 usys_memcpy(&pUnitInfo->swVer, sVersion, sizeof(Version));
                 usys_free(sVersion);
             } else {
-                usys_log_error("Failed to parse UnitInfo.swVersion.");
+                usys_log_error("Failed to parse NodeInfo.swVersion.");
                 goto cleanup;
             }
 
@@ -539,7 +539,7 @@ void *parse_schema_unit_info(const JsonObj *jSchema) {
                 usys_memcpy(&pUnitInfo->swVer, pVersion, sizeof(Version));
                 usys_free(pVersion);
             } else {
-                usys_log_error("Failed to parse UnitInfo.prodSwVersion.");
+                usys_log_error("Failed to parse NodeInfo.prodSwVersion.");
                 goto cleanup;
             }
 
@@ -711,7 +711,7 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
                 usys_memcpy(&pModuleInfo->swVer, sVersion, sizeof(Version));
                 usys_free(sVersion);
             } else {
-                usys_log_error("Failed to parse UnitInfo.swVersion.");
+                usys_log_error("Failed to parse NodeInfo.swVersion.");
                 goto cleanup;
             }
 
@@ -722,7 +722,7 @@ void *parse_schema_module_info(const JsonObj *jSchema) {
                 usys_memcpy(&pModuleInfo->pSwVer, pVersion, sizeof(Version));
                 usys_free(pVersion);
             } else {
-                usys_log_error("Failed to parse UnitInfo.prodSwVersion.");
+                usys_log_error("Failed to parse NodeInfo.prodSwVersion.");
                 goto cleanup;
             }
 
@@ -946,9 +946,9 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     bool status = USYS_FALSE;
     switch (id) {
     case FIELD_ID_UNIT_INFO: {
-        UnitInfo *pUnitInfo = parse_schema_unit_info(jSchema);
+        NodeInfo *pUnitInfo = parse_schema_unit_info(jSchema);
         if (pUnitInfo) {
-            usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(UnitInfo));
+            usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(NodeInfo));
             usys_free(pUnitInfo);
             pUnitInfo = NULL;
         } else {

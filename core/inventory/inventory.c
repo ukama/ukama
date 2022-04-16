@@ -39,7 +39,7 @@ static int validate_unit_type(UnitType unit) {
     return ret;
 }
 
-static int validate_unit_info(UnitInfo *uInfo) {
+static int validate_unit_info(NodeInfo *uInfo) {
     /* TODO: Need to put some logic here bsed on our UUID */
     int ret = 1;
     if (usys_strncmp(uInfo->uuid, "UK", 2)) {
@@ -163,7 +163,7 @@ int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
         return ret;
     }
 
-    UnitInfo *uInfo = usys_zmalloc(sizeof(UnitInfo));
+    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
     if (!uInfo) {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(" Memory allocation failed. Error %s",
@@ -174,7 +174,7 @@ int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
 
     /* Read Unit Info */
     if (usys_file_raw_read(invtDb, uInfo, SCH_UNIT_INFO_OFFSET,
-                           sizeof(UnitInfo)) == sizeof(UnitInfo)) {
+                           sizeof(NodeInfo)) == sizeof(NodeInfo)) {
         /* Validate Unit Info */
         if (validate_unit_info(uInfo)) {
             usys_log_debug("Unit UIID %s Name %s detected.", uInfo->uuid,
@@ -768,7 +768,7 @@ cleanup:
 int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
                               uint8_t *count) {
     int ret = 0;
-    UnitInfo *uInfo;
+    NodeInfo *uInfo;
     uint16_t size = 0;
     ret = mfg_fetch_unit_info(&uInfo, pUuid, &size);
     if (!ret) {
@@ -776,7 +776,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
         if (uInfo) {
             /*Write payload for Index table entries*/
             if (invt_write_module_payload(p1Uuid, uInfo, index->payloadOffset,
-                                   sizeof(UnitInfo))) {
+                                   sizeof(NodeInfo))) {
                 /* Need to revert back index */
                 invt_erase_idx(p1Uuid);
                 ret = ERR_NODED_WR_FAIL;
@@ -787,7 +787,7 @@ int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
 
             /* CRC*/
             uint32_t crcVal =
-                crc_32((const unsigned char *)uInfo, sizeof(UnitInfo));
+                crc_32((const unsigned char *)uInfo, sizeof(NodeInfo));
             usys_log_debug("Inventory Calculated crc for unit id %s is 0x%x",
                            uInfo->uuid, crcVal);
             index->payloadCrc = crcVal;
@@ -1108,7 +1108,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     usys_log_debug("Inventory read Unit Info from module %s for module "
                    "registration process.",
                    pUuid);
-    UnitInfo *uInfo = (UnitInfo *)usys_zmalloc(sizeof(UnitInfo));
+    NodeInfo *uInfo = (NodeInfo *)usys_zmalloc(sizeof(NodeInfo));
     if (uInfo) {
         /* Read unit info */
         ret = invt_read_unit_info(pUuid, uInfo, &size);
@@ -1695,7 +1695,7 @@ void invt_print_index_table(SchemaIdxTuple *idx_tbl, uint8_t count) {
         "*************************************************************");
 }
 
-void invt_print_unit_info(UnitInfo *pUnitInfo) {
+void invt_print_unit_info(NodeInfo *pUnitInfo) {
     usys_log_trace(
         "*************************************************************");
     usys_log_trace(
@@ -1902,7 +1902,7 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
 }
 
 /* This will read unit info and size of the info.*/
-int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
+int invt_read_unit_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     int ret = -1;
     uint16_t unit_fid = FIELD_ID_UNIT_INFO;
     uint16_t idx = 0;
@@ -1918,7 +1918,7 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
 
     if (p_info) {
         ret = invt_read_payload(pUuid, p_info, idxData->payloadOffset,
-                                sizeof(UnitInfo));
+                                sizeof(NodeInfo));
         if (ret) {
             usys_log_error(
                 "Err(%d): Payload read failure for the field id 0x%x.", ret,
@@ -1927,7 +1927,7 @@ int invt_read_unit_info(char *pUuid, UnitInfo *p_info, uint16_t *size) {
             idxData = NULL;
         }
         //p_info = info;
-        *size = sizeof(UnitInfo);
+        *size = sizeof(NodeInfo);
     }
 
     /* validate index */
