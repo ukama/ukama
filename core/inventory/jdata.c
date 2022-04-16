@@ -117,7 +117,7 @@ void *jdata_fetch_node_info(char *puuid, uint16_t *size) {
     return info;
 }
 
-void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count) {
+void *jdata_fetch_node_cfg(char *puuid, uint16_t *size, uint8_t count) {
     StoreSchema *sschema = parser_get_mfg_data_by_uuid(puuid);
     if (!sschema) {
         usys_log_error("No StoreSchema found for %s module.", puuid);

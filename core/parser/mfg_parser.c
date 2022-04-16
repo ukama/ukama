@@ -48,7 +48,7 @@ static int read_mfg_data_size(char *fname) {
     return off;
 }
 
-void parser_free_unit_cfg(NodeCfg **cfg, uint8_t count) {
+void parser_free_node_cfg(NodeCfg **cfg, uint8_t count) {
     if (*cfg) {
         /* Device Cfgs */
         for (int iter = 0; iter < count; iter++) {
@@ -649,7 +649,7 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
     return pNodeCfg;
 
 cleanup:
-    parser_free_unit_cfg(&pNodeCfg, count);
+    parser_free_node_cfg(&pNodeCfg, count);
     return pNodeCfg;
 }
 

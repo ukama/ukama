@@ -306,7 +306,7 @@ static int web_service_cb_discover_api(const URequest *request,
 }
 
 /**
- * @fn      int web_service_cb_get_unit_cfg(const URequest*, UResponse*, void*)
+ * @fn      int web_service_cb_get_node_cfg(const URequest*, UResponse*, void*)
  * @brief   Callback function for reading unit config.It reads unit info and
  *          creates a json body for response.
  *
@@ -315,7 +315,7 @@ static int web_service_cb_discover_api(const URequest *request,
  * @param   epConfig
  * @return  U_CALLBACK_CONTINUE is returned to REST framework.
  */
-static int web_service_cb_get_unit_cfg(const URequest *request,
+static int web_service_cb_get_node_cfg(const URequest *request,
                 UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
@@ -345,7 +345,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     }
 
     /* Allocate memory for unit config */
-    uCfg = invt_alloc_unit_cfg(uInfo->modCount);
+    uCfg = invt_alloc_node_cfg(uInfo->modCount);
     if (!uCfg) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));
@@ -354,11 +354,11 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     }
 
     /* Read unit config */
-    ret = invt_read_unit_cfg("", uCfg, uInfo->modCount, &size);
+    ret = invt_read_node_cfg("", uCfg, uInfo->modCount, &size);
     if (!ret) {
 
         /* serialize unit config */
-        ret = json_serialize_unit_cfg(&json, uCfg, uInfo->modCount);
+        ret = json_serialize_node_cfg(&json, uCfg, uInfo->modCount);
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret,
                             "Failed serializing unit config.");
@@ -382,7 +382,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     completed:
     /* Free memory */
     if (uInfo) {
-        invt_free_unit_cfg(uCfg, uInfo->modCount);
+        invt_free_node_cfg(uCfg, uInfo->modCount);
         usys_free(uInfo);
         uInfo = NULL;
     }
@@ -1281,7 +1281,7 @@ void web_service_add_unit_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("unitinfo"), NULL,
                     web_service_cb_get_node_info);
     web_service_add_end_point("GET", API_RES_EP("unitconfig"), NULL,
-                    web_service_cb_get_unit_cfg);
+                    web_service_cb_get_node_cfg);
 }
 
 /**

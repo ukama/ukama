@@ -130,7 +130,7 @@ void *jdata_fetch_module_cfg(char *puuid, uint16_t *size, uint8_t count);
 void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size, uint8_t count);
 
 /**
- * @fn      void jdata_fetch_unit_cfg*(char*, uint16_t*, uint8_t)
+ * @fn      void jdata_fetch_node_cfg*(char*, uint16_t*, uint8_t)
  * @brief   reads the unit configuration from the schema parser for the module
  *          specified by UUID.
  *
@@ -140,7 +140,7 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size, uint8_t count
  * @return  On success, Information read
  *          On failure, NULL
  */
-void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count);
+void *jdata_fetch_node_cfg(char *puuid, uint16_t *size, uint8_t count);
 
 /**
  * @fn      void jdata_fetch_node_info*(char*, uint16_t*)

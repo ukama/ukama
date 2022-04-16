@@ -118,7 +118,7 @@ int json_serialize_module_info(JsonObj** obj, ModuleInfo* uInfo);
 int json_serialize_sensor_data(JsonObj** json, const char* name,
                 const char* desc, int type, void* data);
 /**
- * @fn      int json_serialize_unit_cfg(JsonObj**, NodeCfg*, uint8_t)
+ * @fn      int json_serialize_node_cfg(JsonObj**, NodeCfg*, uint8_t)
  * @brief   Serialize the unit configuration into JSON body.
  *
  * @param   obj
@@ -127,7 +127,7 @@ int json_serialize_sensor_data(JsonObj** json, const char* name,
  * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
  *          On Failure, NodeD JSON error code
  */
-int json_serialize_unit_cfg(JsonObj** obj, NodeCfg* uCfg, uint8_t count);
+int json_serialize_node_cfg(JsonObj** obj, NodeCfg* uCfg, uint8_t count);
 
 /**
  * @fn      int json_serialize_node_info(JsonObj**, NodeInfo*)
