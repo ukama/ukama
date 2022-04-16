@@ -37,7 +37,7 @@
 /*
  * Field Id These are used to identify configuration in the index tables
  */
-#define FIELD_ID_UNIT_INFO                  0x0001
+#define FIELD_ID_NODE_INFO                  0x0001
 #define FIELD_ID_NODE_CFG                   0x0002
 #define FIELD_ID_MODULE_INFO                0x0003
 #define FIELD_ID_MODULE_CFG                 0x0004

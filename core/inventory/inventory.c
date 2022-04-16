@@ -62,13 +62,13 @@ static int validate_node_cfg(NodeCfg *cfg, char *fname) {
 
 /* Based on the module id it returns the NodeCfg */
 static NodeCfg *override_master_db_info(char *puuid, uint8_t *count) {
-    typedef struct UnitData {
+    typedef struct NodeData {
         char id[24];
         uint8_t count;
         NodeCfg *cfg;
-    } UnitData;
+    } NodeData;
 
-    UnitData *udata = (UnitData[]){
+    NodeData *udata = (NodeData[]){
         { .id = "UK-1001-COM-1101",
           .count = 3,
           .cfg =
@@ -173,7 +173,7 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
     }
 
     /* Read Unit Info */
-    if (usys_file_raw_read(invtDb, nodeInfo, SCH_UNIT_INFO_OFFSET,
+    if (usys_file_raw_read(invtDb, nodeInfo, SCH_NODE_INFO_OFFSET,
                            sizeof(NodeInfo)) == sizeof(NodeInfo)) {
         /* Validate Unit Info */
         if (validate_node_info(nodeInfo)) {
@@ -212,12 +212,12 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
                 usys_free(cfg);
             }
         } else {
-            ret = ERR_NODED_INVALID_UNIT_INFO;
+            ret = ERR_NODED_INVALID_NODE_INFO;
             usys_log_error("Invalid Unit Info. Error Code: %d.", ret);
         }
 
     } else {
-        ret = ERR_NODED_READ_UNIT_INFO;
+        ret = ERR_NODED_READ_NODE_INFO;
         usys_log_error("Unable to read Unit Info. Error Code: %d.", ret);
     }
 
@@ -1447,7 +1447,7 @@ int invt_create_db(char *pUuid) {
      *  if not found skip to next.*/
     usys_log_trace("Starting Unit Info write for Module UUID %s.", pUuid);
 
-    ret = invt_get_field_id_idx(index, FIELD_ID_UNIT_INFO, idxCount, &idxIter);
+    ret = invt_get_field_id_idx(index, FIELD_ID_NODE_INFO, idxCount, &idxIter);
     if (!ret) {
         ret =
             invt_write_node_info_data(pUuid, &index[idxIter], pUuid, &modCount);
@@ -1904,7 +1904,7 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
 /* This will read unit info and size of the info.*/
 int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     int ret = -1;
-    uint16_t unit_fid = FIELD_ID_UNIT_INFO;
+    uint16_t unit_fid = FIELD_ID_NODE_INFO;
     uint16_t idx = 0;
 
     SchemaIdxTuple *idxData;
@@ -1912,7 +1912,7 @@ int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     if (ret) {
         usys_log_error("Err(%d): UKDB search error for field id 0x%x.", ret,
                        unit_fid);
-        ret = ERR_NODED_DB_MISSING_UNIT_INFO;
+        ret = ERR_NODED_DB_MISSING_NODE_INFO;
         return ret;
     }
 

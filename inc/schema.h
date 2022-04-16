@@ -62,7 +62,7 @@ extern "C" {
 
 /* PAYLOADS OFFSETS */
 #define SCH_PAYLAOD_OFFSET             0x0A00
-#define SCH_UNIT_INFO_OFFSET           0x0A00 //Offset: 2560 (64*40)       size = 192B     REQ/CFG  = 159B   (192)    MAX = 1 Entry
+#define SCH_NODE_INFO_OFFSET           0x0A00 //Offset: 2560 (64*40)       size = 192B     REQ/CFG  = 159B   (192)    MAX = 1 Entry
 #define SCH_UNIT_CONFIG_OFFSET         0x0AC0 //Offset: 2752 (64*43)       size = 1024B    REQ/CFG =  115B   (146)    MAX = 7 Entry
 #define SCH_MODULE_INFO_OFFSET         0x0EC0 //Offset: 3776 (64*59)       size = 192B     REQ/CFG  = 167B   (192)    MAX = 1 Entry
 #define SCH_MODULE_CONFIG_OFFSET       0x0F80 //Offset: 3968 (64*62)       size = 2432B    REQ/CFG  = 119B   (152)    MAX = 16 Entry

@@ -945,7 +945,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     int ret = 0;
     bool status = USYS_FALSE;
     switch (id) {
-    case FIELD_ID_UNIT_INFO: {
+    case FIELD_ID_NODE_INFO: {
         NodeInfo *pUnitInfo = parse_schema_node_info(jSchema);
         if (pUnitInfo) {
             usys_memcpy(&(*schema)->nodeInfo, pUnitInfo, sizeof(NodeInfo));
