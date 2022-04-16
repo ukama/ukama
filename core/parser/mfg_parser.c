@@ -63,7 +63,7 @@ void parser_free_mfg_data(StoreSchema **sschema) {
     if (*sschema) {
         usys_free((*sschema)->indexTable);
 
-        /* Unit Cfgs */
+        /* Node Cfgs */
         for (int iter = 0; iter < (*sschema)->nodeInfo.modCount; iter++) {
             usys_free((*sschema)->nodeCfg[iter].eepromCfg);
         }
