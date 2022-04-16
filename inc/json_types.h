@@ -66,7 +66,7 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_ASM_DATE                   "assemblyDate"
 #define JTAG_OEM_NAME                   "oemName"
 #define JTAG_MODULE_COUNT               "moduleCount"
-#define JTAG_UNIT_CONFIG                "unitConfig"
+#define JTAG_NODE_CONFIG                "nodeConfig"
 #define JTAG_INVT_SYSFS_FILE            "invtSysFsFile"
 #define JTAG_INVT_DEV_INFO              "invtDeviceInfo"
 #define JTAG_BUS                        "bus"

@@ -177,9 +177,9 @@ int json_serialize_node_cfg(JsonObj **json, NodeCfg *uCfg, uint8_t count) {
         return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
-    json_object_set_new(*json, JTAG_UNIT_CONFIG, json_array());
+    json_object_set_new(*json, JTAG_NODE_CONFIG, json_array());
 
-    JsonObj *jUCfgArr = json_object_get(*json, JTAG_UNIT_CONFIG);
+    JsonObj *jUCfgArr = json_object_get(*json, JTAG_NODE_CONFIG);
     if (jUCfgArr) {
         for (int iter = 0; iter < count; iter++) {
             json_t *jUCfg = json_object();

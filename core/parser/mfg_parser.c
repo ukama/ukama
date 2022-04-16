@@ -594,7 +594,7 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
         goto cleanup;
     }
 
-    jNodeCfgs = json_object_get(jSchema, JTAG_UNIT_CONFIG);
+    jNodeCfgs = json_object_get(jSchema, JTAG_NODE_CONFIG);
     if (json_is_array(jNodeCfgs)) {
         pNodeCfg = usys_zmalloc(sizeof(NodeCfg) * count);
         if (pNodeCfg) {

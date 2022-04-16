@@ -185,7 +185,7 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
             void *cfg = usys_zmalloc(sz);
             if (cfg) {
                 /* Read Unit Config */
-                if (usys_file_raw_read(invtDb, cfg, SCH_UNIT_CONFIG_OFFSET,
+                if (usys_file_raw_read(invtDb, cfg, SCH_NODE_CONFIG_OFFSET,
                                        sz) == sz) {
                     if (validate_node_cfg(cfg, invtDb)) {
                         usys_memcpy(pcfg, cfg, sizeof(NodeCfg));
