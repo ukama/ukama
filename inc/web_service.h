@@ -95,11 +95,11 @@ int web_service_init(char* notifServer);
 int web_service_start();
 
 /**
- * @fn      void web_service_add_unit_endpoints()
+ * @fn      void web_service_add_node_endpoints()
  * @brief   Add REST API end points to REST framework.
  *
  */
-void web_service_add_unit_endpoints();
+void web_service_add_node_endpoints();
 
 
 #ifdef __cplusplus

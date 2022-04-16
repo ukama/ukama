@@ -333,7 +333,7 @@ static int web_service_cb_get_node_cfg(const URequest *request,
         goto completed;
     }
 
-    /* Read Unit info */
+    /* Read Node info */
     ret = invt_read_node_info("", nodeInfo, &size);
     if (ret) {
         usys_log_error("Web Service Failed to read node info prior to config."
@@ -1273,14 +1273,14 @@ static void web_service_add_discover_endpoints() {
 }
 
 /**
- * @fn      void web_service_add_unit_endpoints()
+ * @fn      void web_service_add_node_endpoints()
  * @brief   Add REST endpoints for node info reading.
  *
  */
-void web_service_add_unit_endpoints() {
-    web_service_add_end_point("GET", API_RES_EP("unitinfo"), NULL,
+void web_service_add_node_endpoints() {
+    web_service_add_end_point("GET", API_RES_EP("nodeinfo"), NULL,
                     web_service_cb_get_node_info);
-    web_service_add_end_point("GET", API_RES_EP("unitconfig"), NULL,
+    web_service_add_end_point("GET", API_RES_EP("nodeconfig"), NULL,
                     web_service_cb_get_node_cfg);
 }
 
@@ -1384,7 +1384,7 @@ int web_service_start() {
     /* setup endpoints and methods callback. */
     setup_web_service_endpoints(&serverInst, NULL);
 
-    web_service_add_unit_endpoints();
+    web_service_add_node_endpoints();
 
     web_service_add_module_endpoints();
 

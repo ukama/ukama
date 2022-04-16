@@ -276,11 +276,11 @@ int modify_json(unsigned short idx)
                     value = nodeSchema[idx].muuid;
 
                 } else if (nodeSchema[idx].uuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_INFO))) {
-                    /* Unit Info */
+                    /* Node Info */
                     value = nodeSchema[idx].uuid;
                 }
 
-                /* For Unit Info and Module info  */
+                /* For Node Info and Module info  */
                 if (modify_uuid(obj, value )) {
                     usys_log_error("Schema copying uuid failed for Unit/Module Info.");
                     return -1;

@@ -106,11 +106,11 @@ void *jdata_fetch_node_info(char *puuid, uint16_t *size) {
         usys_memcpy(info, &sschema->nodeInfo, sz);
         *size = sz;
         usys_log_debug(
-            "Reading Mfg data Unit Info with %d bytes for Module UUID %s.",
+            "Reading Mfg data Node Info with %d bytes for Module UUID %s.",
             *size, puuid);
 
     } else {
-        usys_log_error("Reading Mfg data Unit Info for Module UUID %s "
+        usys_log_error("Reading Mfg data Node Info for Module UUID %s "
                        "failed.Error: %s",
                        puuid, usys_error(errno));
     }

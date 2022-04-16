@@ -470,7 +470,7 @@ void *parse_schema_devices(const JsonObj *jSchema, uint16_t class) {
     return dev;
 }
 
-/* Parse Unit Info */
+/* Parse Node Info */
 void *parse_schema_node_info(const JsonObj *jSchema) {
     const JsonObj *jUnitInfo = NULL;
     const JsonObj *jSWVer = NULL;
@@ -478,7 +478,7 @@ void *parse_schema_node_info(const JsonObj *jSchema) {
     NodeInfo *pUnitInfo = NULL;
     int ret = 0;
 
-    /* Unit Info */
+    /* Node Info */
     jUnitInfo = json_object_get(jSchema, JTAG_NODE_INFO);
     if (json_is_object(jUnitInfo)) {
         pUnitInfo = usys_zmalloc(sizeof(NodeInfo));
