@@ -196,7 +196,7 @@ char* read_uuid_for_module_name(const char* name) {
     return NULL;
 }
 
-/* Update Unit config */
+/* Update Node Config */
 int  update_node_config( const JsonObj **obj) {
     int ret = -1;
    const JsonObj *nodeCfgObj = *obj;
@@ -259,10 +259,10 @@ int modify_json(unsigned short idx)
         obj = json_object_get(root, jsonKeyTag[tag]);
         if (obj) {
 
-            /* For Unit Config which is array */
+            /* For  Node Config which is array */
             if ( nodeSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_CONFIG))) {
 
-                /* Update Unit Config */
+                /* Update  Node Config */
                 ret  = update_node_config((const JsonObj**)&obj);
                 if (ret) {
                     usys_log_error("Schema:: Failed to update node config for %s file.", nodeSchema[idx].fileName);
@@ -432,12 +432,12 @@ int main(int argc, char** argv) {
 
     /* Verify UUID */
     if (verify_uuid(uuid)) {
-        usys_log_error("Schema:: Error:: Check the Unit UUID %s", uuid);
+        usys_log_error("Schema:: Error:: Check the Node UUID %s", uuid);
         usage();
         exit(0);
     }
 
-    /* Update Unit Schema */
+    /* Update Node Schema */
     for(int idx = 0; idx < fidx;idx++) {
         usys_log_trace("Files[%d] = %s Module UUID %s\n", idx, file[idx], mid[idx]);
 

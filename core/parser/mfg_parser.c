@@ -565,12 +565,12 @@ void *parse_schema_node_info(const JsonObj *jSchema) {
             }
         } else {
             usys_log_error(
-                "Memory exhausted while parsing Unit Info. Error: %s",
+                "Memory exhausted while parsing Node Info. Error: %s",
                 usys_error(errno));
             goto cleanup;
         }
     } else {
-        usys_log_error("Unexpected JSON object found instead of Unit Info.");
+        usys_log_error("Unexpected JSON object found instead of Node Info.");
 
         goto cleanup;
     }
@@ -582,7 +582,7 @@ cleanup:
     return pUnitInfo;
 }
 
-/* Parse Unit Config */
+/* Parse  Node Config */
 void *parse_schema_node_config(const JsonObj *jSchema, uint16_t count) {
     const JsonObj *jNodeCfgs = NULL;
     const JsonObj *jNodeCfg = NULL;
@@ -643,7 +643,7 @@ void *parse_schema_node_config(const JsonObj *jSchema, uint16_t count) {
         }
     } else {
         usys_log_error("Unexpected JSON object found instead"
-                       "of Unit Config.");
+                       "of  Node Config.");
         goto cleanup;
     }
     return pNodeCfg;

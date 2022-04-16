@@ -139,10 +139,10 @@ void *jdata_fetch_node_cfg(char *puuid, uint16_t *size, uint8_t count) {
         }
         *size = sz;
         usys_log_debug(
-            "Reading Mfg data Unit Config with %d bytes for Module UUID %s.",
+            "Reading Mfg data  Node Config with %d bytes for Module UUID %s.",
             *size, puuid);
     } else {
-        usys_log_error("Reading Mfg data Unit Config for Module UUID %s "
+        usys_log_error("Reading Mfg data  Node Config for Module UUID %s "
                        "failed.Error: %s",
                        puuid, usys_error(errno));
     }

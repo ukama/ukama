@@ -32,7 +32,7 @@ int invt_create_db(char *pUuid);;
 /**
  * @fn      int invt_deserialize_node_cfg_data(NodeCfg**, char*,
  *          uint8_t, uint16_t*)
- * @brief   Creates the Unit config from the block of data read from the
+ * @brief   Creates the Node Config from the block of data read from the
  *          inventory database. Count specifies numbers of module present.
  *
  * @param   nodeCfg
@@ -613,7 +613,7 @@ int invt_write_module_payload(char *pUuid, void *data, uint16_t offset,
 
 /**
  * @fn      int invt_write_node_cfg_data(char*, SchemaIdxTuple*, uint8_t)
- * @brief   Write Unit Config and update the index to index table of the
+ * @brief   Write  Node Config and update the index to index table of the
  *          inventory data base.
  *
  * @param   pUuid
@@ -627,7 +627,7 @@ int invt_write_node_cfg_data(char *pUuid, SchemaIdxTuple *index, uint8_t count);
 /**
  * @fn      int invt_write_node_info_data(char*, SchemaIdxTuple*,
  *          char*, uint8_t*)
- * @brief   Write Unit info and update the index to index table of the
+ * @brief   Write Node Info and update the index to index table of the
  *          inventory data base.
  *
  * @param   p1_uuid

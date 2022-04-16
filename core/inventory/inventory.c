@@ -177,14 +177,14 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
                            sizeof(NodeInfo)) == sizeof(NodeInfo)) {
         /* Validate Node Info */
         if (validate_node_info(nodeInfo)) {
-            usys_log_debug("Unit UIID %s Name %s detected.", nodeInfo->uuid,
+            usys_log_debug("Node UIID %s Name %s detected.", nodeInfo->uuid,
                            nodeInfo->name);
 
             /* Read first cfg which belong to master */
             int sz = sizeof(NodeCfg) + sizeof(DevI2cCfg);
             void *cfg = usys_zmalloc(sz);
             if (cfg) {
-                /* Read Unit Config */
+                /* Read  Node Config */
                 if (usys_file_raw_read(invtDb, cfg, SCH_NODE_CONFIG_OFFSET,
                                        sz) == sz) {
                     if (validate_node_cfg(cfg, invtDb)) {
@@ -201,24 +201,24 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
 
                     } else {
                         ret = ERR_NODED_INVALID_NODE_CFG;
-                        usys_log_error("Err(%d): UKDB:: Invalid Unit Config.",
+                        usys_log_error("Err(%d): UKDB:: Invalid  Node Config.",
                                        ret);
                     }
                 } else {
                     ret = ERR_NODED_READ_NODE_CFG;
-                    usys_log_error("Unable to read Unit Config. Error Code: %d",
+                    usys_log_error("Unable to read  Node Config. Error Code: %d",
                                    ret);
                 }
                 usys_free(cfg);
             }
         } else {
             ret = ERR_NODED_INVALID_NODE_INFO;
-            usys_log_error("Invalid Unit Info. Error Code: %d.", ret);
+            usys_log_error("Invalid Node Info. Error Code: %d.", ret);
         }
 
     } else {
         ret = ERR_NODED_READ_NODE_INFO;
-        usys_log_error("Unable to read Unit Info. Error Code: %d.", ret);
+        usys_log_error("Unable to read Node Info. Error Code: %d.", ret);
     }
 
     usys_free(nodeInfo);
@@ -699,11 +699,11 @@ char *serialize_node_cfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size) {
     return data;
 }
 
-/* Write Unit Config and update the index to index table of the DB */
+/* Write  Node Config and update the index to index table of the DB */
 int invt_write_node_cfg_data(char *pUuid, SchemaIdxTuple *index,
                              uint8_t count) {
     int ret = 0;
-    /* Unit Config */
+    /*  Node Config */
     NodeCfg *ucfg;
     uint16_t size = 0;
     char *payload = NULL;
@@ -736,7 +736,7 @@ int invt_write_node_cfg_data(char *pUuid, SchemaIdxTuple *index,
 
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
-            usys_log_error("Error while allocating memory for Unit Cfg."
+            usys_log_error("Error while allocating memory for Node Cfg."
                            " Error: %s",
                            usys_error(errno));
             goto cleanup;
@@ -752,7 +752,7 @@ int invt_write_node_cfg_data(char *pUuid, SchemaIdxTuple *index,
                        "field Id 0x%x",
                        index->fieldId);
     } else {
-        usys_log_error("Failed to read Unit config from Mfg data. "
+        usys_log_error("Failed to read Node Config from Mfg data. "
                        "Error code: %d",
                        ret);
     }
@@ -808,11 +808,11 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
             }
 
             usys_log_debug("Inventory Index added to the Index table for "
-                           "field Id 0x%x and Unit Id %s.",
+                           "field Id 0x%x and Node Id %s.",
                            index->fieldId, nodeInfo->uuid);
         }
     } else {
-        usys_log_error("Failed to read Unit info from Mfg data."
+        usys_log_error("Failed to read Node Info from Mfg data."
                        "Error Code: %d",
                        ret);
     }
@@ -943,7 +943,7 @@ int invt_write_module_info_data(char *pUuid, SchemaIdxTuple *infoIndex,
 
     ret = mfg_fetch_module_info_by_uuid(&minfo, pUuid, &size, *mcount);
     if (ret) {
-        usys_log_error("Failed to read Unit info from Mfg data.");
+        usys_log_error("Failed to read Node Info from Mfg data.");
         return (-1);
     }
 
@@ -1120,7 +1120,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                 usys_free(nodeInfo);
                 nodeInfo = NULL;
             }
-            usys_log_debug("Inventory read Unit Config for %s for "
+            usys_log_debug("Inventory read  Node Config for %s for "
                            "registration process.",
                            nodeUuid);
 
@@ -1131,7 +1131,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                 if (!ret) {
                     invt_print_node_cfg(ucfg, modCount);
                     usys_log_debug("Inventory Registering %d module "
-                                   "for Unit %s.",
+                                   "for Node %s.",
                                    modCount, nodeUuid);
                     for (uint8_t iter = 0; iter < modCount; iter++) {
                         /* Register module*/
@@ -1160,7 +1160,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                         }
                     }
                 } else {
-                    usys_log_debug("Read Unit Config fail for %s."
+                    usys_log_debug("Read  Node Config fail for %s."
                                    "Error Code: %d",
                                    nodeUuid, ret);
                     goto cleannodecfg;
@@ -1289,7 +1289,7 @@ int invt_pre_create_store_setup(char *puuid) {
 
     } else {
         usys_log_error(
-            "Err(%d): Failed to get Unit Config for %s from test config.", ret,
+            "Err(%d): Failed to get  Node Config for %s from test config.", ret,
             puuid);
     }
     usys_free(cfg);
@@ -1442,7 +1442,7 @@ int invt_create_db(char *pUuid) {
     uint8_t modCount = 0;
     uint8_t idxIter = 0;
 
-    /* Write Unit info first.*/
+    /* Write Node Info first.*/
     /* Find where does field id sits in the index list read from MFG data.
      *  if not found skip to next.*/
     usys_log_trace("Starting Node Info write for Module UUID %s.", pUuid);
@@ -1461,7 +1461,7 @@ int invt_create_db(char *pUuid) {
                        pUuid);
     } else {
         /* This id will use if the Module DB is getting created.
-         * In this case we might not have any Unit info but surely we would have
+         * In this case we might not have any Node Info but surely we would have
          * a module info and module config to write.
          */
         modCount = 1;
@@ -1471,7 +1471,7 @@ int invt_create_db(char *pUuid) {
     }
 
     /*Write node Config. */
-    usys_log_trace("Inventory Starting Unit Config write for UUID %s "
+    usys_log_trace("Inventory Starting  Node Config write for UUID %s "
                    "with %d modules.",
                    pUuid, modCount);
 
@@ -1483,11 +1483,11 @@ int invt_create_db(char *pUuid) {
             goto cleanindex;
         }
         idx++;
-        usys_log_trace("Inventory Completed Unit Config write for "
+        usys_log_trace("Inventory Completed  Node Config write for "
                        "Module UUID %s with %d modules.",
                        pUuid, modCount);
     } else {
-        usys_log_trace("Inventory Unit Config field for Module UUID %s "
+        usys_log_trace("Inventory  Node Config field for Module UUID %s "
                        "not found.",
                        pUuid);
     }
@@ -1695,29 +1695,29 @@ void invt_print_index_table(SchemaIdxTuple *idx_tbl, uint8_t count) {
         "*************************************************************");
 }
 
-void invt_print_node_info(NodeInfo *pUnitInfo) {
+void invt_print_node_info(NodeInfo *pNodeInfo) {
     usys_log_trace(
         "*************************************************************");
     usys_log_trace(
-        "*********************Unit Info*******************************");
+        "*********************Node Info*******************************");
     usys_log_trace(
         "*************************************************************");
-    usys_log_trace("  *	 Unit UUID:                    %s", pUnitInfo->uuid);
-    usys_log_trace("  *	 Unit Name:                    %s", pUnitInfo->name);
-    usys_log_trace("  *	 Unit Type:                    0x%01x",
-                   pUnitInfo->node);
-    usys_log_trace("  *	 Unit Part No.:                %s", pUnitInfo->partNo);
-    usys_log_trace("  *	 Unit Skew:                    %s", pUnitInfo->skew);
-    usys_log_trace("  *	 Unit MAC:                     %s", pUnitInfo->mac);
-    usys_log_trace("  *	 Unit SWVer:                   v%d.%d",
-                   pUnitInfo->swVer.major, pUnitInfo->swVer.minor);
-    usys_log_trace("  *	 Unit PSWVer:                  v%d.%d",
-                   pUnitInfo->swVer.major, pUnitInfo->swVer.minor);
-    usys_log_trace("  *	 Unit Assm_Date:               %s",
-                   pUnitInfo->assmDate);
-    usys_log_trace("  *	 Unit OEM_Name:                %s", pUnitInfo->oemName);
-    usys_log_trace("  *	 Unit Module Count:            %d",
-                   pUnitInfo->modCount);
+    usys_log_trace("  *	 Node UUID:                    %s", pNodeInfo->uuid);
+    usys_log_trace("  *	 Node Name:                    %s", pNodeInfo->name);
+    usys_log_trace("  *	 Node Type:                    0x%01x",
+                   pNodeInfo->node);
+    usys_log_trace("  *	 Node Part No.:                %s", pNodeInfo->partNo);
+    usys_log_trace("  *	 Node Skew:                    %s", pNodeInfo->skew);
+    usys_log_trace("  *	 Node MAC:                     %s", pNodeInfo->mac);
+    usys_log_trace("  *	 Node SWVer:                   v%d.%d",
+                   pNodeInfo->swVer.major, pNodeInfo->swVer.minor);
+    usys_log_trace("  *	 Node PSWVer:                  v%d.%d",
+                   pNodeInfo->swVer.major, pNodeInfo->swVer.minor);
+    usys_log_trace("  *	 Node Assm_Date:               %s",
+                   pNodeInfo->assmDate);
+    usys_log_trace("  *	 Node OEM_Name:                %s", pNodeInfo->oemName);
+    usys_log_trace("  *	 Node Module Count:            %d",
+                   pNodeInfo->modCount);
     usys_log_trace(
         "*************************************************************");
     usys_log_trace(
@@ -1807,7 +1807,7 @@ void invt_print_node_cfg(NodeCfg *pNodeCfg, uint8_t count) {
     usys_log_trace(
         "*************************************************************");
     usys_log_trace(
-        "*******************Unit Config*******************************");
+        "******************* Node Config*******************************");
     for (; iter < count; iter++) {
         usys_log_trace(
             "*************************************************************");
@@ -1947,11 +1947,11 @@ int invt_deserialize_node_cfg_data(NodeCfg **pNodeCfg, char *payload, uint8_t co
     int ret = 0;
     int offset = 0;
     for (int iter = 0; iter < count; iter++) {
-        /* Copy Unit Cfg first*/
+        /* Copy Node Cfg first*/
         usys_memcpy(&(*pNodeCfg)[iter], payload + offset, sizeof(NodeCfg));
         /* Create a eeprom cfg and assign reference to eeprom_cfg in NodeCfg */
         offset = offset + sizeof(NodeCfg);
-        /* Our Unit config assumes all eeprom are on I2C bus*/
+        /* Our Node Config assumes all eeprom are on I2C bus*/
         DevI2cCfg *icfg = usys_zmalloc(sizeof(DevI2cCfg));
         if (icfg) {
             usys_memcpy(icfg, payload + offset, sizeof(DevI2cCfg));
@@ -1960,7 +1960,7 @@ int invt_deserialize_node_cfg_data(NodeCfg **pNodeCfg, char *payload, uint8_t co
             ret = ERR_NODED_MEMORY_EXHAUSTED;
         }
         offset = offset + sizeof(DevI2cCfg);
-        /* Size returned to reader of Unit config.*/
+        /* Size returned to reader of Node Config.*/
         *size = *size + sizeof(NodeCfg);
     }
     return ret;
@@ -2004,11 +2004,11 @@ int invt_read_node_cfg(char *pUuid, NodeCfg *pNodeCfg, uint8_t count,
             goto cleanup;
         }
 
-        /* Deserialize to Unit Config.*/
+        /* Deserialize to  Node Config.*/
         ret = invt_deserialize_node_cfg_data(&pNodeCfg, payload, count, size);
         if (ret) {
             ret = ERR_NODED_DESERIAL_FAIL;
-            usys_log_error("Deserialize failure for Unit Config."
+            usys_log_error("Deserialize failure for  Node Config."
                            "Error Code: %d",
                            ret);
             goto cleanup;
@@ -2147,7 +2147,7 @@ int invt_deserialize_module_cfg_data(ModuleCfg **p_mcfg, char *payload,
         }
 
         offset = offset + cfg_size;
-        /* Size returned to reader of Unit config.*/
+        /* Size returned to reader of Node Config.*/
         *size = *size + sizeof(ModuleCfg);
     }
 

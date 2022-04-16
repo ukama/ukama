@@ -118,7 +118,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 
                 pcfg = usys_zmalloc(sizeof(NodeCfg));
                 if (pcfg) {
-                    /* Copy Unit config */
+                    /* Copy Node Config */
                     usys_memcpy(pcfg, &udata[iter], sizeof(NodeCfg));
 
                     if (udata[iter].eepromCfg) {
