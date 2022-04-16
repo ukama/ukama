@@ -97,11 +97,11 @@ int json_serialize_module_cfg(JsonObj** obj, ModuleCfg* uCfg, uint8_t count);
  * @brief   Serialize the module information into JSON body.
  *
  * @param   obj
- * @param   uInfo
+ * @param   nodeInfo
  * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
  *          On Failure, NodeD JSON error code
  */
-int json_serialize_module_info(JsonObj** obj, ModuleInfo* uInfo);
+int json_serialize_module_info(JsonObj** obj, ModuleInfo* nodeInfo);
 /**
  * @fn      int json_serialize_sensor_data(JsonObj**, const char*, const char*,
  *          int, void*)
@@ -134,11 +134,11 @@ int json_serialize_node_cfg(JsonObj** obj, NodeCfg* uCfg, uint8_t count);
  * @brief   Serialize the unit information into JSON body.
  *
  * @param   obj
- * @param   uInfo
+ * @param   nodeInfo
  * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
  *          On Failure, NodeD JSON error code
  */
-int json_serialize_node_info(JsonObj** obj, NodeInfo* uInfo);
+int json_serialize_node_info(JsonObj** obj, NodeInfo* nodeInfo);
 
 #ifdef __cplusplus
 }

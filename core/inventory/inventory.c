@@ -39,14 +39,14 @@ static int validate_unit_type(NodeType unit) {
     return ret;
 }
 
-static int validate_node_info(NodeInfo *uInfo) {
+static int validate_node_info(NodeInfo *nodeInfo) {
     /* TODO: Need to put some logic here bsed on our UUID */
     int ret = 1;
-    if (usys_strncmp(uInfo->uuid, "UK", 2)) {
+    if (usys_strncmp(nodeInfo->uuid, "UK", 2)) {
         ret &= 1;
     }
 
-    if (validate_unit_type(uInfo->unit)) {
+    if (validate_unit_type(nodeInfo->unit)) {
         ret &= 1;
     }
     return ret;
@@ -163,8 +163,8 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
         return ret;
     }
 
-    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
-    if (!uInfo) {
+    NodeInfo *nodeInfo = usys_zmalloc(sizeof(NodeInfo));
+    if (!nodeInfo) {
         ret = ERR_NODED_MEMORY_EXHAUSTED;
         usys_log_error(" Memory allocation failed. Error %s",
                        usys_error(errno));
@@ -173,12 +173,12 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
     }
 
     /* Read Unit Info */
-    if (usys_file_raw_read(invtDb, uInfo, SCH_UNIT_INFO_OFFSET,
+    if (usys_file_raw_read(invtDb, nodeInfo, SCH_UNIT_INFO_OFFSET,
                            sizeof(NodeInfo)) == sizeof(NodeInfo)) {
         /* Validate Unit Info */
-        if (validate_node_info(uInfo)) {
-            usys_log_debug("Unit UIID %s Name %s detected.", uInfo->uuid,
-                           uInfo->name);
+        if (validate_node_info(nodeInfo)) {
+            usys_log_debug("Unit UIID %s Name %s detected.", nodeInfo->uuid,
+                           nodeInfo->name);
 
             /* Read first cfg which belong to master */
             int sz = sizeof(NodeCfg) + sizeof(DevI2cCfg);
@@ -200,12 +200,12 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
                         pcfg->eepromCfg = icfg;
 
                     } else {
-                        ret = ERR_NODED_INVALID_UNIT_CFG;
+                        ret = ERR_NODED_INVALID_NODE_CFG;
                         usys_log_error("Err(%d): UKDB:: Invalid Unit Config.",
                                        ret);
                     }
                 } else {
-                    ret = ERR_NODED_READ_UNIT_CFG;
+                    ret = ERR_NODED_READ_NODE_CFG;
                     usys_log_error("Unable to read Unit Config. Error Code: %d",
                                    ret);
                 }
@@ -221,7 +221,7 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb) {
         usys_log_error("Unable to read Unit Info. Error Code: %d.", ret);
     }
 
-    usys_free(uInfo);
+    usys_free(nodeInfo);
     usys_free(invtDb);
     return ret;
 }
@@ -768,14 +768,14 @@ cleanup:
 int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
                               uint8_t *count) {
     int ret = 0;
-    NodeInfo *uInfo;
+    NodeInfo *nodeInfo;
     uint16_t size = 0;
-    ret = mfg_fetch_node_info(&uInfo, pUuid, &size);
+    ret = mfg_fetch_node_info(&nodeInfo, pUuid, &size);
     if (!ret) {
         /* Unit Info */
-        if (uInfo) {
+        if (nodeInfo) {
             /*Write payload for Index table entries*/
-            if (invt_write_module_payload(p1Uuid, uInfo, index->payloadOffset,
+            if (invt_write_module_payload(p1Uuid, nodeInfo, index->payloadOffset,
                                    sizeof(NodeInfo))) {
                 /* Need to revert back index */
                 invt_erase_idx(p1Uuid);
@@ -783,13 +783,13 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
                 goto cleanup;
             }
             usys_log_debug("Inventory Unit Info added for unit Id %s.",
-                           uInfo->uuid);
+                           nodeInfo->uuid);
 
             /* CRC*/
             uint32_t crcVal =
-                crc_32((const unsigned char *)uInfo, sizeof(NodeInfo));
+                crc_32((const unsigned char *)nodeInfo, sizeof(NodeInfo));
             usys_log_debug("Inventory Calculated crc for unit id %s is 0x%x",
-                           uInfo->uuid, crcVal);
+                           nodeInfo->uuid, crcVal);
             index->payloadCrc = crcVal;
 
             /* Write Index table entries */
@@ -799,7 +799,7 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
             }
 
             /*Assign module count.*/
-            *count = uInfo->modCount;
+            *count = nodeInfo->modCount;
             if (!VALIDATE_MODULE_COUNT(*count)) {
                 ret = ERR_NODED_VALIDATION_FAILURE;
                 usys_log_error("Inventory Validation for module %d failed.",
@@ -809,7 +809,7 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
 
             usys_log_debug("Inventory Index added to the Index table for "
                            "field Id 0x%x and Unit Id %s.",
-                           index->fieldId, uInfo->uuid);
+                           index->fieldId, nodeInfo->uuid);
         }
     } else {
         usys_log_error("Failed to read Unit info from Mfg data."
@@ -818,8 +818,8 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
     }
 
 cleanup:
-    usys_free(uInfo);
-    uInfo = NULL;
+    usys_free(nodeInfo);
+    nodeInfo = NULL;
     return ret;
 }
 
@@ -1108,17 +1108,17 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     usys_log_debug("Inventory read Unit Info from module %s for module "
                    "registration process.",
                    pUuid);
-    NodeInfo *uInfo = (NodeInfo *)usys_zmalloc(sizeof(NodeInfo));
-    if (uInfo) {
+    NodeInfo *nodeInfo = (NodeInfo *)usys_zmalloc(sizeof(NodeInfo));
+    if (nodeInfo) {
         /* Read unit info */
-        ret = invt_read_node_info(pUuid, uInfo, &size);
+        ret = invt_read_node_info(pUuid, nodeInfo, &size);
         if (!ret) {
-            invt_print_node_info(uInfo);
-            usys_memcpy(unitUuid, uInfo->uuid, usys_strlen(uInfo->uuid));
-            modCount = uInfo->modCount;
-            if (uInfo) {
-                usys_free(uInfo);
-                uInfo = NULL;
+            invt_print_node_info(nodeInfo);
+            usys_memcpy(unitUuid, nodeInfo->uuid, usys_strlen(nodeInfo->uuid));
+            modCount = nodeInfo->modCount;
+            if (nodeInfo) {
+                usys_free(nodeInfo);
+                nodeInfo = NULL;
             }
             usys_log_debug("Inventory read Unit Config for %s for "
                            "registration process.",
@@ -1183,8 +1183,8 @@ cleanunitcfg:
     invt_free_node_cfg(ucfg, modCount);
 
 cleanunitinfo:
-    usys_free(uInfo);
-    uInfo = NULL;
+    usys_free(nodeInfo);
+    nodeInfo = NULL;
     return ret;
 }
 
@@ -1475,7 +1475,7 @@ int invt_create_db(char *pUuid) {
                    "with %d modules.",
                    pUuid, modCount);
 
-    ret = invt_get_field_id_idx(index, FIELD_ID_UNIT_CFG, idxCount, &idxIter);
+    ret = invt_get_field_id_idx(index, FIELD_ID_NODE_CFG, idxCount, &idxIter);
     if (!ret) {
         //TODO: Don't even need UnitCFg here. it can be removed.
         ret = invt_write_node_cfg_data(pUuid, &index[idxIter], modCount);
@@ -1969,7 +1969,7 @@ int invt_deserialize_node_cfg_data(NodeCfg **pNodeCfg, char *payload, uint8_t co
 int invt_read_node_cfg(char *pUuid, NodeCfg *pNodeCfg, uint8_t count,
                        uint16_t *size) {
     int ret = -1;
-    uint16_t fid = FIELD_ID_UNIT_CFG;
+    uint16_t fid = FIELD_ID_NODE_CFG;
     uint16_t idx = 0;
     char *payload = NULL;
     SchemaIdxTuple *idxData;
@@ -1980,7 +1980,7 @@ int invt_read_node_cfg(char *pUuid, NodeCfg *pNodeCfg, uint8_t count,
         usys_log_error("Inventory search error for field id 0x%x."
                        "Error Code: %d",
                        fid, ret);
-        ret = ERR_NODED_DB_MISSING_UNIT_CFG;
+        ret = ERR_NODED_DB_MISSING_NODE_CFG;
         return ret;
     }
 

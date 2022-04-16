@@ -205,7 +205,7 @@ int json_serialize_node_cfg(JsonObj **json, NodeCfg *uCfg, uint8_t count) {
     return ret;
 }
 
-int json_serialize_node_info(JsonObj **json, NodeInfo *uInfo) {
+int json_serialize_node_info(JsonObj **json, NodeInfo *nodeInfo) {
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();
@@ -213,7 +213,7 @@ int json_serialize_node_info(JsonObj **json, NodeInfo *uInfo) {
         return ERR_NODED_JSON_CRETATION_ERR;
     }
 
-    if (!uInfo) {
+    if (!nodeInfo) {
         return ERR_NODED_JSON_NO_VAL_TO_ENCODE;
     }
 
@@ -221,24 +221,24 @@ int json_serialize_node_info(JsonObj **json, NodeInfo *uInfo) {
 
     JsonObj *jUInfo = json_object_get(*json, JTAG_NODE_INFO);
     if (jUInfo) {
-        json_object_set_new(jUInfo, JTAG_UUID, json_string(uInfo->uuid));
+        json_object_set_new(jUInfo, JTAG_UUID, json_string(nodeInfo->uuid));
 
-        json_object_set_new(jUInfo, JTAG_NAME, json_string(uInfo->name));
+        json_object_set_new(jUInfo, JTAG_NAME, json_string(nodeInfo->name));
 
-        json_object_set_new(jUInfo, JTAG_TYPE, json_integer(uInfo->unit));
+        json_object_set_new(jUInfo, JTAG_TYPE, json_integer(nodeInfo->unit));
 
         json_object_set_new(jUInfo, JTAG_PART_NUMBER,
-                            json_string(uInfo->partNo));
+                            json_string(nodeInfo->partNo));
 
-        json_object_set_new(jUInfo, JTAG_SKEW, json_string(uInfo->skew));
+        json_object_set_new(jUInfo, JTAG_SKEW, json_string(nodeInfo->skew));
 
-        json_object_set_new(jUInfo, JTAG_MAC, json_string(uInfo->mac));
+        json_object_set_new(jUInfo, JTAG_MAC, json_string(nodeInfo->mac));
 
         json_object_set_new(jUInfo, JTAG_PROD_SW_VERSION, json_object());
 
         JsonObj *jPVer = json_object_get(jUInfo, JTAG_PROD_SW_VERSION);
         if (jPVer) {
-            ret = json_serialize_version(&jPVer, &uInfo->swVer);
+            ret = json_serialize_version(&jPVer, &nodeInfo->swVer);
             if (ret != JSON_ENCODING_OK) {
                 return ret;
             }
@@ -248,19 +248,19 @@ int json_serialize_node_info(JsonObj **json, NodeInfo *uInfo) {
 
         JsonObj *jSVer = json_object_get(jUInfo, JTAG_SW_VERISION);
         if (jSVer) {
-            ret = json_serialize_version(&jSVer, &uInfo->pSwVer);
+            ret = json_serialize_version(&jSVer, &nodeInfo->pSwVer);
             if (ret != JSON_ENCODING_OK) {
                 return ret;
             }
         }
 
         json_object_set_new(jUInfo, JTAG_ASM_DATE,
-                            json_string(uInfo->assmDate));
+                            json_string(nodeInfo->assmDate));
 
-        json_object_set_new(jUInfo, JTAG_OEM_NAME, json_string(uInfo->oemName));
+        json_object_set_new(jUInfo, JTAG_OEM_NAME, json_string(nodeInfo->oemName));
 
         json_object_set_new(jUInfo, JTAG_MODULE_COUNT,
-                            json_integer(uInfo->modCount));
+                            json_integer(nodeInfo->modCount));
 
     } else {
         return ERR_NODED_JSON_CRETATION_ERR;

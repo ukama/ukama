@@ -325,8 +325,8 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     usys_log_trace("NodeD:: Received a get unit config request.");
 
     /* Allocate memory for unit info */
-    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
-    if (!uInfo) {
+    NodeInfo *nodeInfo = usys_zmalloc(sizeof(NodeInfo));
+    if (!nodeInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));
         report_memory_failure(response, errno);
@@ -334,7 +334,7 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     }
 
     /* Read Unit info */
-    ret = invt_read_node_info("", uInfo, &size);
+    ret = invt_read_node_info("", nodeInfo, &size);
     if (ret) {
         usys_log_error("Web Service Failed to read unit info prior to config."
                         " Error Code %d",
@@ -345,7 +345,7 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     }
 
     /* Allocate memory for unit config */
-    uCfg = invt_alloc_node_cfg(uInfo->modCount);
+    uCfg = invt_alloc_node_cfg(nodeInfo->modCount);
     if (!uCfg) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));
@@ -354,11 +354,11 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     }
 
     /* Read unit config */
-    ret = invt_read_node_cfg("", uCfg, uInfo->modCount, &size);
+    ret = invt_read_node_cfg("", uCfg, nodeInfo->modCount, &size);
     if (!ret) {
 
         /* serialize unit config */
-        ret = json_serialize_node_cfg(&json, uCfg, uInfo->modCount);
+        ret = json_serialize_node_cfg(&json, uCfg, nodeInfo->modCount);
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret,
                             "Failed serializing unit config.");
@@ -381,10 +381,10 @@ static int web_service_cb_get_node_cfg(const URequest *request,
 
     completed:
     /* Free memory */
-    if (uInfo) {
-        invt_free_node_cfg(uCfg, uInfo->modCount);
-        usys_free(uInfo);
-        uInfo = NULL;
+    if (nodeInfo) {
+        invt_free_node_cfg(uCfg, nodeInfo->modCount);
+        usys_free(nodeInfo);
+        nodeInfo = NULL;
     }
     return U_CALLBACK_CONTINUE;
 }
@@ -408,8 +408,8 @@ static int web_service_cb_get_node_info(const URequest *request,
     usys_log_trace("NodeD:: Received a get unit info request.");
 
     /* Allocate memory */
-    NodeInfo *uInfo = usys_zmalloc(sizeof(NodeInfo));
-    if (!uInfo) {
+    NodeInfo *nodeInfo = usys_zmalloc(sizeof(NodeInfo));
+    if (!nodeInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
                         usys_error(errno));
         report_memory_failure(response, errno);
@@ -417,10 +417,10 @@ static int web_service_cb_get_node_info(const URequest *request,
     }
 
     /* Reads unit info */
-    ret = invt_read_node_info("", uInfo, &size);
+    ret = invt_read_node_info("", nodeInfo, &size);
     if (!ret) {
 
-        ret = json_serialize_node_info(&json, uInfo);
+        ret = json_serialize_node_info(&json, nodeInfo);
         /* if every thing id ok set code to success */
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret, "Failed serializing unit info.");
@@ -445,9 +445,9 @@ static int web_service_cb_get_node_info(const URequest *request,
 
     completed:
     /* Free memory */
-    if (uInfo) {
-        usys_free(uInfo);
-        uInfo = NULL;
+    if (nodeInfo) {
+        usys_free(nodeInfo);
+        nodeInfo = NULL;
     }
 
     return U_CALLBACK_CONTINUE;

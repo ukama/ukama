@@ -957,7 +957,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
         }
         break;
     }
-    case FIELD_ID_UNIT_CFG: {
+    case FIELD_ID_NODE_CFG: {
         uint16_t modCount = (*schema)->nodeInfo.modCount;
         NodeCfg *pNodeCfg = parse_schema_unit_config(jSchema, modCount);
         if (pNodeCfg) {
