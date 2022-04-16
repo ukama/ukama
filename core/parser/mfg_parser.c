@@ -632,11 +632,11 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
             /* Verify count of device read */
             if (iter == count) {
                 usys_log_debug("All %d modules info read from the"
-                               "manufacturing data's unit config.",
+                               "manufacturing data's node config.",
                                count);
             } else {
                 usys_log_error("Only %d modules info read from the "
-                               "manufacturing data's unit config expected "
+                               "manufacturing data's node config expected "
                                "were %d.",
                                iter, count);
             }

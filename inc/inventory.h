@@ -109,7 +109,7 @@ int invt_get_field_id_idx(SchemaIdxTuple *index, uint16_t fid,
                 uint8_t idxCount, uint8_t *idxIter);
 /**
  * @fn      int invt_get_master_node_cfg(NodeCfg*, char*)
- * @brief   Read the unit config pointed by the invtLnkDb soft link.
+ * @brief   Read the node config pointed by the invtLnkDb soft link.
  *
  * @param   pcfg
  * @param   invtLnkDb
@@ -120,7 +120,7 @@ int invt_get_master_node_cfg(NodeCfg *pcfg, char *invtLnkDb);
 
 /**
  * @fn      int invt_init(char*, RegisterDeviceCB)
- * @brief   Reads the master unit config and then register the module to store
+ * @brief   Reads the master node config and then register the module to store
  *          so that its inventory database can be accessed.
  *
  * @param   invtDb
@@ -144,7 +144,7 @@ int invt_mfg_init(void *data);
 /**
  * @fn      int invt_pre_create_store_setup(char*)
  * @brief   This function is meant for testing function like creating new
- *          inventory database. It provide dummy values for the unit configs.
+ *          inventory database. It provide dummy values for the node configs.
  *          needs to be removed at some point.
  *
  * @param   puuid
@@ -318,7 +318,7 @@ int invt_read_payload_from_store(char *pUuid, void *p_data, uint16_t id,
 
 /**
  * @fn      int invt_read_node_cfg(char*, NodeCfg*, uint8_t, uint16_t*)
- * @brief   reads the count amount of unit configs from the store.
+ * @brief   reads the count amount of node configs from the store.
  *
  * @param   pUuid
  * @param   p_ucfg
@@ -331,7 +331,7 @@ int invt_read_node_cfg(char *pUuid, NodeCfg *p_ucfg, uint8_t count,
                        uint16_t *size);
 /**
  * @fn      int invt_read_node_info(char*, NodeInfo*, uint16_t*)
- * @brief   reads the unit info from the store.
+ * @brief   reads the node info from the store.
  *
  * @param   pUuid
  * @param   nodeInfo
@@ -379,7 +379,7 @@ int invt_register_devices(char *pUuid, RegisterDeviceCB registerDev);
 
 /**
  * @fn      int invt_register_module(NodeCfg*)
- * @brief   register modules pointed by unit config to the store.
+ * @brief   register modules pointed by node config to the store.
  *
  * @param   cfg
  * @return  On success, 0
@@ -389,7 +389,7 @@ int invt_register_module(NodeCfg *cfg);
 
 /**
  * @fn      int invt_register_modules(char*, RegisterDeviceCB)
- * @brief   register the modules present in the master module unit config to
+ * @brief   register the modules present in the master module node config to
  *          store and the sensor devices present under these modules to ledger.
  *
  * @param   pUuid
@@ -657,7 +657,7 @@ void invt_free_module_cfg(ModuleCfg *cfg, uint8_t count);
 
 /**
  * @fn      void invt_free_node_cfg(NodeCfg*, uint8_t)
- * @brief   free the memory allocated for the unit config.
+ * @brief   free the memory allocated for the node config.
  *
  * @param   cfg
  * @param   count
@@ -749,7 +749,7 @@ void invt_print_module_info(ModuleInfo *modInfo);
 
 /**
  * @fn      void invt_print_node_cfg(NodeCfg*, uint8_t)
- * @brief   Logs the unit config
+ * @brief   Logs the node config
  *
  * @param   p_ucfg
  * @param   count
@@ -758,7 +758,7 @@ void invt_print_node_cfg(NodeCfg *p_ucfg, uint8_t count);
 
 /**
  * @fn      void invt_print_node_info(NodeInfo*)
- * @brief   Logs the unit info
+ * @brief   Logs the node info
  *
  * @param   nodeInfo
  */
@@ -793,7 +793,7 @@ char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
                                    uint16_t *size);
 /**
  * @fn      char serialize_unitcfg_payload*(NodeCfg*, uint8_t, uint16_t*)
- * @brief   serialize the unit config into the block of data bytes which
+ * @brief   serialize the node config into the block of data bytes which
  *          can then be written to inventory database.
  *
  * @param   ucfg
@@ -817,7 +817,7 @@ ModuleCfg *invt_alloc_module_cfg(uint8_t count);
 
 /**
  * @fn      NodeCfg invt_alloc_node_cfg*(uint8_t)
- * @brief   Allocate the memory for the unit config with count number of
+ * @brief   Allocate the memory for the node config with count number of
  *          modules.
  *
  * @param   count

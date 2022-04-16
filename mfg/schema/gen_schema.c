@@ -201,7 +201,7 @@ int  update_unit_config( const JsonObj **obj) {
     int ret = -1;
    const JsonObj *nodeCfgObj = *obj;
 
-    /* unit config is supposed to be an array of modules */
+    /* node config is supposed to be an array of modules */
     if (json_is_array(nodeCfgObj)) {
         JsonObj *module = NULL;
         int iter = 0;
@@ -265,7 +265,7 @@ int modify_json(unsigned short idx)
                 /* Update Unit Config */
                 ret  = update_unit_config((const JsonObj**)&obj);
                 if (ret) {
-                    usys_log_error("Schema:: Failed to update unit config for %s file.", unitSchema[idx].fileName);
+                    usys_log_error("Schema:: Failed to update node config for %s file.", unitSchema[idx].fileName);
                     return ret;
                 }
 

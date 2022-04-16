@@ -80,7 +80,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
                         idx, puuid[idx], idx, name[idx], idx, jip.fname[idx]);
 
         /*
-         * Assumption Module Name in argument should match to get unit config
+         * Assumption Module Name in argument should match to get node config
          * for the module. UUID is just a place holder. Its updated by the
          * value supplied in argument.
          */

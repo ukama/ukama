@@ -119,7 +119,7 @@ int json_serialize_sensor_data(JsonObj** json, const char* name,
                 const char* desc, int type, void* data);
 /**
  * @fn      int json_serialize_node_cfg(JsonObj**, NodeCfg*, uint8_t)
- * @brief   Serialize the unit configuration into JSON body.
+ * @brief   Serialize the node configuration into JSON body.
  *
  * @param   obj
  * @param   uCfg
@@ -131,7 +131,7 @@ int json_serialize_node_cfg(JsonObj** obj, NodeCfg* uCfg, uint8_t count);
 
 /**
  * @fn      int json_serialize_node_info(JsonObj**, NodeInfo*)
- * @brief   Serialize the unit information into JSON body.
+ * @brief   Serialize the node information into JSON body.
  *
  * @param   obj
  * @param   nodeInfo

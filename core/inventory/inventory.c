@@ -128,7 +128,7 @@ static NodeCfg *override_master_db_info(char *puuid, uint8_t *count) {
 
             } else {
                 usys_log_error(
-                    "Memory exhausted while getting unit config from Testdata.",
+                    "Memory exhausted while getting node config from Testdata.",
                     usys_error(errno));
             }
         }
@@ -660,13 +660,13 @@ int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
     return ret;
 }
 
-/* Allocate memory for unit config */
+/* Allocate memory for node config */
 NodeCfg *invt_alloc_node_cfg(uint8_t count) {
     NodeCfg *cfg = usys_zmalloc(sizeof(NodeCfg) * count);
     return cfg;
 }
 
-/* Free allocated memory for unit config */
+/* Free allocated memory for node config */
 void invt_free_node_cfg(NodeCfg *cfg, uint8_t count) {
     if (cfg) {
         for (int iter = 0; iter < count; iter++) {
@@ -678,7 +678,7 @@ void invt_free_node_cfg(NodeCfg *cfg, uint8_t count) {
     }
 }
 
-/* Serialize unit config */
+/* Serialize node config */
 char *serialize_unitcfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size) {
     int offset = 0;
     char *data = NULL;
@@ -1110,7 +1110,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                    pUuid);
     NodeInfo *nodeInfo = (NodeInfo *)usys_zmalloc(sizeof(NodeInfo));
     if (nodeInfo) {
-        /* Read unit info */
+        /* Read node info */
         ret = invt_read_node_info(pUuid, nodeInfo, &size);
         if (!ret) {
             invt_print_node_info(nodeInfo);
@@ -1126,7 +1126,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
 
             ucfg = (NodeCfg *)invt_alloc_node_cfg(modCount);
             if (ucfg) {
-                /* Read unit config */
+                /* Read node config */
                 ret = invt_read_node_cfg(pUuid, ucfg, modCount, &size);
                 if (!ret) {
                     invt_print_node_cfg(ucfg, modCount);
@@ -1167,7 +1167,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                 }
             } else {
                 ret = ERR_NODED_MEMORY_EXHAUSTED;
-                usys_log_debug("Memory error while reading unit config for %s."
+                usys_log_debug("Memory error while reading node config for %s."
                                "Error Code: %d",
                                unitUuid, ret);
                 goto cleanunitinfo;
@@ -1273,7 +1273,7 @@ int invt_pre_create_store_setup(char *puuid) {
     cfg = override_master_db_info(puuid, &count);
     if (cfg) {
         invt_print_node_cfg(cfg, count);
-        /* Register modules so that unit info and other cfg can be accessed.*/
+        /* Register modules so that node info and other cfg can be accessed.*/
         for (int iter = 0; iter < count; iter++) {
             ret = invt_register_module(&cfg[iter]);
             if (ret) {
@@ -1326,7 +1326,7 @@ int invt_init(char *invtDb, RegisterDeviceCB regCb) {
 
     invt_print_node_cfg(cfg, count);
 
-    /* Register master module first so that unit info and cfg can be accessed.*/
+    /* Register master module first so that node info and cfg can be accessed.*/
     ret = invt_register_module(cfg);
     /* After registering master module.
      * Access remaining module if any using unit cfg and register those.*/
@@ -1901,7 +1901,7 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
     return ret;
 }
 
-/* This will read unit info and size of the info.*/
+/* This will read node info and size of the info.*/
 int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     int ret = -1;
     uint16_t unit_fid = FIELD_ID_NODE_INFO;

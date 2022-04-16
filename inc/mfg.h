@@ -195,7 +195,7 @@ int mfg_fetch_payload_from_mfg_data(void** data, char* uuid, uint16_t* size, uin
 
 /**
  * @fn      int mfg_fetch_node_info(void**, char*, uint16_t*)
- * @brief   Abstracts fetching of unit info
+ * @brief   Abstracts fetching of node info
  *
  * @param   data
  * @param   uuid
@@ -207,7 +207,7 @@ int mfg_fetch_node_info(NodeInfo** data, char* uuid, uint16_t* size);
 
 /**
  * @fn      int mfg_fetch_node_cfg(void**, char*, uint16_t*, uint8_t)
- * @brief   Abstracts fetching of unit config
+ * @brief   Abstracts fetching of node config
  *
  * @param   data
  * @param   uuid

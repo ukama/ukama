@@ -307,7 +307,7 @@ static int web_service_cb_discover_api(const URequest *request,
 
 /**
  * @fn      int web_service_cb_get_node_cfg(const URequest*, UResponse*, void*)
- * @brief   Callback function for reading unit config.It reads unit info and
+ * @brief   Callback function for reading node config.It reads node info and
  *          creates a json body for response.
  *
  * @param   request
@@ -322,9 +322,9 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     int ret = STATUS_NOK;
     uint16_t size = 0;
     NodeCfg *uCfg = NULL;
-    usys_log_trace("NodeD:: Received a get unit config request.");
+    usys_log_trace("NodeD:: Received a get node config request.");
 
-    /* Allocate memory for unit info */
+    /* Allocate memory for node info */
     NodeInfo *nodeInfo = usys_zmalloc(sizeof(NodeInfo));
     if (!nodeInfo) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
@@ -336,15 +336,15 @@ static int web_service_cb_get_node_cfg(const URequest *request,
     /* Read Unit info */
     ret = invt_read_node_info("", nodeInfo, &size);
     if (ret) {
-        usys_log_error("Web Service Failed to read unit info prior to config."
+        usys_log_error("Web Service Failed to read node info prior to config."
                         " Error Code %d",
                         ret);
         report_failure(response, ret,
-                        "Failed while fetching unit info prior to config.");
+                        "Failed while fetching node info prior to config.");
         goto completed;
     }
 
-    /* Allocate memory for unit config */
+    /* Allocate memory for node config */
     uCfg = invt_alloc_node_cfg(nodeInfo->modCount);
     if (!uCfg) {
         usys_log_error("Web Service Failed to allocate memory. Error %s",
@@ -353,22 +353,22 @@ static int web_service_cb_get_node_cfg(const URequest *request,
         goto completed;
     }
 
-    /* Read unit config */
+    /* Read node config */
     ret = invt_read_node_cfg("", uCfg, nodeInfo->modCount, &size);
     if (!ret) {
 
-        /* serialize unit config */
+        /* serialize node config */
         ret = json_serialize_node_cfg(&json, uCfg, nodeInfo->modCount);
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret,
-                            "Failed serializing unit config.");
+                            "Failed serializing node config.");
             goto completed;
         }
         respCode = RESP_CODE_SUCCESS;
 
     } else {
         report_failure(response, ret,
-                        "Failed while fetching unit config.");
+                        "Failed while fetching node config.");
         goto completed;
     }
 
@@ -391,7 +391,7 @@ static int web_service_cb_get_node_cfg(const URequest *request,
 
 /**
  * @fn      int web_service_cb_get_node_info(const URequest*, UResponse*, void*)
- * @brief   Callback function for reading unit info.It reads unit info and
+ * @brief   Callback function for reading node info.It reads node info and
  *          creates a json body for response.
  *
  * @param   request
@@ -405,7 +405,7 @@ static int web_service_cb_get_node_info(const URequest *request,
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
     int ret = STATUS_NOK;
     uint16_t size = 0;
-    usys_log_trace("NodeD:: Received a get unit info request.");
+    usys_log_trace("NodeD:: Received a get node info request.");
 
     /* Allocate memory */
     NodeInfo *nodeInfo = usys_zmalloc(sizeof(NodeInfo));
@@ -416,23 +416,23 @@ static int web_service_cb_get_node_info(const URequest *request,
         goto completed;
     }
 
-    /* Reads unit info */
+    /* Reads node info */
     ret = invt_read_node_info("", nodeInfo, &size);
     if (!ret) {
 
         ret = json_serialize_node_info(&json, nodeInfo);
         /* if every thing id ok set code to success */
         if (ret != JSON_ENCODING_OK) {
-            report_failure(response, ret, "Failed serializing unit info.");
+            report_failure(response, ret, "Failed serializing node info.");
             goto completed;
         }
         respCode = RESP_CODE_SUCCESS;
 
     } else {
-        usys_log_error("Web Service Failed to read unit info."
+        usys_log_error("Web Service Failed to read node info."
                         " Error Code %d",
                         ret);
-        report_failure(response, ret, "Failed while fetching unit info.");
+        report_failure(response, ret, "Failed while fetching node info.");
         goto completed;
     }
 
@@ -1274,7 +1274,7 @@ static void web_service_add_discover_endpoints() {
 
 /**
  * @fn      void web_service_add_unit_endpoints()
- * @brief   Add REST endpoints for unit info reading.
+ * @brief   Add REST endpoints for node info reading.
  *
  */
 void web_service_add_unit_endpoints() {
