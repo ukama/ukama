@@ -143,7 +143,7 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size, uint8_t count
 void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count);
 
 /**
- * @fn      void jdata_fetch_unit_info*(char*, uint16_t*)
+ * @fn      void jdata_fetch_node_info*(char*, uint16_t*)
  * @brief   reads the unit info from the schema parser for the module
  *          specified by UUID.
  *
@@ -152,7 +152,7 @@ void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count);
  * @return  On success, Information read
  *          On failure, NULL
  */
-void *jdata_fetch_unit_info(char *puuid, uint16_t *size);
+void *jdata_fetch_node_info(char *puuid, uint16_t *size);
 
 /**
  * @fn      void jdata_fetch_user_calib*(char*, uint16_t*)

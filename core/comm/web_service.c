@@ -334,7 +334,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     }
 
     /* Read Unit info */
-    ret = invt_read_unit_info("", uInfo, &size);
+    ret = invt_read_node_info("", uInfo, &size);
     if (ret) {
         usys_log_error("Web Service Failed to read unit info prior to config."
                         " Error Code %d",
@@ -390,7 +390,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
 }
 
 /**
- * @fn      int web_service_cb_get_unit_info(const URequest*, UResponse*, void*)
+ * @fn      int web_service_cb_get_node_info(const URequest*, UResponse*, void*)
  * @brief   Callback function for reading unit info.It reads unit info and
  *          creates a json body for response.
  *
@@ -399,7 +399,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
  * @param   epConfig
  * @return  U_CALLBACK_CONTINUE which is 0
  */
-static int web_service_cb_get_unit_info(const URequest *request,
+static int web_service_cb_get_node_info(const URequest *request,
                 UResponse *response, void *epConfig) {
     JsonObj *json = NULL;
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
@@ -417,10 +417,10 @@ static int web_service_cb_get_unit_info(const URequest *request,
     }
 
     /* Reads unit info */
-    ret = invt_read_unit_info("", uInfo, &size);
+    ret = invt_read_node_info("", uInfo, &size);
     if (!ret) {
 
-        ret = json_serialize_unit_info(&json, uInfo);
+        ret = json_serialize_node_info(&json, uInfo);
         /* if every thing id ok set code to success */
         if (ret != JSON_ENCODING_OK) {
             report_failure(response, ret, "Failed serializing unit info.");
@@ -1279,7 +1279,7 @@ static void web_service_add_discover_endpoints() {
  */
 void web_service_add_unit_endpoints() {
     web_service_add_end_point("GET", API_RES_EP("unitinfo"), NULL,
-                    web_service_cb_get_unit_info);
+                    web_service_cb_get_node_info);
     web_service_add_end_point("GET", API_RES_EP("unitconfig"), NULL,
                     web_service_cb_get_unit_cfg);
 }

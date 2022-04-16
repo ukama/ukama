@@ -471,7 +471,7 @@ void *parse_schema_devices(const JsonObj *jSchema, uint16_t class) {
 }
 
 /* Parse Unit Info */
-void *parse_schema_unit_info(const JsonObj *jSchema) {
+void *parse_schema_node_info(const JsonObj *jSchema) {
     const JsonObj *jUnitInfo = NULL;
     const JsonObj *jSWVer = NULL;
     const JsonObj *jProdSWVer = NULL;
@@ -946,7 +946,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     bool status = USYS_FALSE;
     switch (id) {
     case FIELD_ID_UNIT_INFO: {
-        NodeInfo *pUnitInfo = parse_schema_unit_info(jSchema);
+        NodeInfo *pUnitInfo = parse_schema_node_info(jSchema);
         if (pUnitInfo) {
             usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(NodeInfo));
             usys_free(pUnitInfo);

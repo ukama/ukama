@@ -205,7 +205,7 @@ int json_serialize_unit_cfg(JsonObj **json, UnitCfg *uCfg, uint8_t count) {
     return ret;
 }
 
-int json_serialize_unit_info(JsonObj **json, NodeInfo *uInfo) {
+int json_serialize_node_info(JsonObj **json, NodeInfo *uInfo) {
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();

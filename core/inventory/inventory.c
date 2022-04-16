@@ -39,7 +39,7 @@ static int validate_unit_type(UnitType unit) {
     return ret;
 }
 
-static int validate_unit_info(NodeInfo *uInfo) {
+static int validate_node_info(NodeInfo *uInfo) {
     /* TODO: Need to put some logic here bsed on our UUID */
     int ret = 1;
     if (usys_strncmp(uInfo->uuid, "UK", 2)) {
@@ -176,7 +176,7 @@ int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
     if (usys_file_raw_read(invtDb, uInfo, SCH_UNIT_INFO_OFFSET,
                            sizeof(NodeInfo)) == sizeof(NodeInfo)) {
         /* Validate Unit Info */
-        if (validate_unit_info(uInfo)) {
+        if (validate_node_info(uInfo)) {
             usys_log_debug("Unit UIID %s Name %s detected.", uInfo->uuid,
                            uInfo->name);
 
@@ -765,12 +765,12 @@ cleanup:
 }
 
 /* Write Unit Info and update the index to index table of the DB */
-int invt_write_unit_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
+int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
                               uint8_t *count) {
     int ret = 0;
     NodeInfo *uInfo;
     uint16_t size = 0;
-    ret = mfg_fetch_unit_info(&uInfo, pUuid, &size);
+    ret = mfg_fetch_node_info(&uInfo, pUuid, &size);
     if (!ret) {
         /* Unit Info */
         if (uInfo) {
@@ -1111,9 +1111,9 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     NodeInfo *uInfo = (NodeInfo *)usys_zmalloc(sizeof(NodeInfo));
     if (uInfo) {
         /* Read unit info */
-        ret = invt_read_unit_info(pUuid, uInfo, &size);
+        ret = invt_read_node_info(pUuid, uInfo, &size);
         if (!ret) {
-            invt_print_unit_info(uInfo);
+            invt_print_node_info(uInfo);
             usys_memcpy(unitUuid, uInfo->uuid, usys_strlen(uInfo->uuid));
             modCount = uInfo->modCount;
             if (uInfo) {
@@ -1450,7 +1450,7 @@ int invt_create_db(char *pUuid) {
     ret = invt_get_field_id_idx(index, FIELD_ID_UNIT_INFO, idxCount, &idxIter);
     if (!ret) {
         ret =
-            invt_write_unit_info_data(pUuid, &index[idxIter], pUuid, &modCount);
+            invt_write_node_info_data(pUuid, &index[idxIter], pUuid, &modCount);
         if (!ret) {
             idx++;
         } else {
@@ -1695,7 +1695,7 @@ void invt_print_index_table(SchemaIdxTuple *idx_tbl, uint8_t count) {
         "*************************************************************");
 }
 
-void invt_print_unit_info(NodeInfo *pUnitInfo) {
+void invt_print_node_info(NodeInfo *pUnitInfo) {
     usys_log_trace(
         "*************************************************************");
     usys_log_trace(
@@ -1902,7 +1902,7 @@ int invt_read_payload_from_store(char *pUuid, void *pData, uint16_t id,
 }
 
 /* This will read unit info and size of the info.*/
-int invt_read_unit_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
+int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     int ret = -1;
     uint16_t unit_fid = FIELD_ID_UNIT_INFO;
     uint16_t idx = 0;

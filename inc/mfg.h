@@ -194,7 +194,7 @@ int mfg_fetch_module_cfg(void** data, char* uuid, uint16_t* size, uint8_t count)
 int mfg_fetch_payload_from_mfg_data(void** data, char* uuid, uint16_t* size, uint16_t id);
 
 /**
- * @fn      int mfg_fetch_unit_info(void**, char*, uint16_t*)
+ * @fn      int mfg_fetch_node_info(void**, char*, uint16_t*)
  * @brief   Abstracts fetching of unit info
  *
  * @param   data
@@ -203,7 +203,7 @@ int mfg_fetch_payload_from_mfg_data(void** data, char* uuid, uint16_t* size, uin
  * @return  On success, 0
  *          On failure, non zero value
  */
-int mfg_fetch_unit_info(NodeInfo** data, char* uuid, uint16_t* size);
+int mfg_fetch_node_info(NodeInfo** data, char* uuid, uint16_t* size);
 
 /**
  * @fn      int mfg_fetch_unit_cfg(void**, char*, uint16_t*, uint8_t)

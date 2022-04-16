@@ -130,7 +130,7 @@ int json_serialize_sensor_data(JsonObj** json, const char* name,
 int json_serialize_unit_cfg(JsonObj** obj, UnitCfg* uCfg, uint8_t count);
 
 /**
- * @fn      int json_serialize_unit_info(JsonObj**, NodeInfo*)
+ * @fn      int json_serialize_node_info(JsonObj**, NodeInfo*)
  * @brief   Serialize the unit information into JSON body.
  *
  * @param   obj
@@ -138,7 +138,7 @@ int json_serialize_unit_cfg(JsonObj** obj, UnitCfg* uCfg, uint8_t count);
  * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
  *          On Failure, NodeD JSON error code
  */
-int json_serialize_unit_info(JsonObj** obj, NodeInfo* uInfo);
+int json_serialize_node_info(JsonObj** obj, NodeInfo* uInfo);
 
 #ifdef __cplusplus
 }

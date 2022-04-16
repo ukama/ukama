@@ -21,7 +21,7 @@ const MfgOperations *mfgOps =
                       .exit = jdata_exit,
                       .readHeader = jdata_fetch_header,
                       .readIndex = jdata_fetch_idx,
-                      .readUnitInfo = jdata_fetch_unit_info,
+                      .readUnitInfo = jdata_fetch_node_info,
                       .readUnitCfg = jdata_fetch_unit_cfg,
                       .readModuleInfoByUuid = jdata_fetch_module_info_by_uuid,
                       .readModuleCfg = jdata_fetch_module_cfg,
@@ -69,7 +69,7 @@ int mfg_fetch_idx(SchemaIdxTuple **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_unit_info(NodeInfo **data, char *uuid, uint16_t *size) {
+int mfg_fetch_node_info(NodeInfo **data, char *uuid, uint16_t *size) {
     int ret = 0;
     *data = mfgOps->readUnitInfo(uuid, size);
     if (!data) {
