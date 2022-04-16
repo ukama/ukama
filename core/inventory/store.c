@@ -146,7 +146,7 @@ int store_init() {
     return ret;
 }
 
-int store_register_module(UnitCfg *pcfg) {
+int store_register_module(NodeCfg *pcfg) {
     int ret = -1;
     ModuleMap *pmap = NULL;
     DevI2cCfg *icfg = NULL;
@@ -253,12 +253,12 @@ int store_deregister_module(char *puuid) {
             usys_log_debug("No map for Module %s found.", puuid);
         }
     } else {
-        usys_log_warn("UnitCfg is invalid for deregistrating module.");
+        usys_log_warn("NodeCfg is invalid for deregistrating module.");
     }
     return ret;
 }
 
-int store_register_update_module(char *puuid, UnitCfg *pcfg, uint8_t count) {
+int store_register_update_module(char *puuid, NodeCfg *pcfg, uint8_t count) {
     int ret = -1;
     DevI2cCfg *icfg = NULL;
     char *fname = NULL;

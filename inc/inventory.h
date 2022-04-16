@@ -30,7 +30,7 @@ extern "C" {
 int invt_create_db(char *pUuid);;
 
 /**
- * @fn      int invt_deserialize_unit_cfg_data(UnitCfg**, char*,
+ * @fn      int invt_deserialize_unit_cfg_data(NodeCfg**, char*,
  *          uint8_t, uint16_t*)
  * @brief   Creates the Unit config from the block of data read from the
  *          inventory database. Count specifies numbers of module present.
@@ -42,7 +42,7 @@ int invt_create_db(char *pUuid);;
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_deserialize_unit_cfg_data(UnitCfg **unitCfg, char *payload,
+int invt_deserialize_unit_cfg_data(NodeCfg **unitCfg, char *payload,
                 uint8_t count, uint16_t *size);
 
 /**
@@ -108,7 +108,7 @@ int invt_erase_payload(char *pUuid, uint16_t fieldId);
 int invt_get_field_id_idx(SchemaIdxTuple *index, uint16_t fid,
                 uint8_t idxCount, uint8_t *idxIter);
 /**
- * @fn      int invt_get_master_unit_cfg(UnitCfg*, char*)
+ * @fn      int invt_get_master_unit_cfg(NodeCfg*, char*)
  * @brief   Read the unit config pointed by the invtLnkDb soft link.
  *
  * @param   pcfg
@@ -116,7 +116,7 @@ int invt_get_field_id_idx(SchemaIdxTuple *index, uint16_t fid,
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb);
+int invt_get_master_unit_cfg(NodeCfg *pcfg, char *invtLnkDb);
 
 /**
  * @fn      int invt_init(char*, RegisterDeviceCB)
@@ -317,7 +317,7 @@ int invt_read_payload_from_store(char *pUuid, void *p_data, uint16_t id,
                                 uint16_t *size);
 
 /**
- * @fn      int invt_read_unit_cfg(char*, UnitCfg*, uint8_t, uint16_t*)
+ * @fn      int invt_read_unit_cfg(char*, NodeCfg*, uint8_t, uint16_t*)
  * @brief   reads the count amount of unit configs from the store.
  *
  * @param   pUuid
@@ -327,7 +327,7 @@ int invt_read_payload_from_store(char *pUuid, void *p_data, uint16_t id,
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_read_unit_cfg(char *pUuid, UnitCfg *p_ucfg, uint8_t count,
+int invt_read_unit_cfg(char *pUuid, NodeCfg *p_ucfg, uint8_t count,
                        uint16_t *size);
 /**
  * @fn      int invt_read_node_info(char*, NodeInfo*, uint16_t*)
@@ -378,14 +378,14 @@ int invt_read_user_config(char *pUuid, void *data, uint16_t *size);
 int invt_register_devices(char *pUuid, RegisterDeviceCB registerDev);
 
 /**
- * @fn      int invt_register_module(UnitCfg*)
+ * @fn      int invt_register_module(NodeCfg*)
  * @brief   register modules pointed by unit config to the store.
  *
  * @param   cfg
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_register_module(UnitCfg *cfg);
+int invt_register_module(NodeCfg *cfg);
 
 /**
  * @fn      int invt_register_modules(char*, RegisterDeviceCB)
@@ -656,13 +656,13 @@ void invt_exit();
 void invt_free_module_cfg(ModuleCfg *cfg, uint8_t count);
 
 /**
- * @fn      void invt_free_unit_cfg(UnitCfg*, uint8_t)
+ * @fn      void invt_free_unit_cfg(NodeCfg*, uint8_t)
  * @brief   free the memory allocated for the unit config.
  *
  * @param   cfg
  * @param   count
  */
-void invt_free_unit_cfg(UnitCfg *cfg, uint8_t count);
+void invt_free_unit_cfg(NodeCfg *cfg, uint8_t count);
 
 /**
  * @fn      void invt_mfg_exit()
@@ -748,13 +748,13 @@ void invt_print_module_cfg(ModuleCfg *modCfg, uint8_t count);
 void invt_print_module_info(ModuleInfo *modInfo);
 
 /**
- * @fn      void invt_print_unit_cfg(UnitCfg*, uint8_t)
+ * @fn      void invt_print_unit_cfg(NodeCfg*, uint8_t)
  * @brief   Logs the unit config
  *
  * @param   p_ucfg
  * @param   count
  */
-void invt_print_unit_cfg(UnitCfg *p_ucfg, uint8_t count);
+void invt_print_unit_cfg(NodeCfg *p_ucfg, uint8_t count);
 
 /**
  * @fn      void invt_print_node_info(NodeInfo*)
@@ -792,7 +792,7 @@ void *invt_deserialize_devices(const char *payload, int offset, DeviceClass devC
 char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
                                    uint16_t *size);
 /**
- * @fn      char serialize_unitcfg_payload*(UnitCfg*, uint8_t, uint16_t*)
+ * @fn      char serialize_unitcfg_payload*(NodeCfg*, uint8_t, uint16_t*)
  * @brief   serialize the unit config into the block of data bytes which
  *          can then be written to inventory database.
  *
@@ -802,7 +802,7 @@ char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
  * @return  On success, pointer to block of data bytes
  *          On failure, NULL
  */
-char *serialize_unitcfg_payload(UnitCfg *ucfg, uint8_t count, uint16_t *size);
+char *serialize_unitcfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size);
 
 /**
  * @fn      ModuleCfg invt_alloc_module_cfg*(uint8_t)
@@ -816,7 +816,7 @@ char *serialize_unitcfg_payload(UnitCfg *ucfg, uint8_t count, uint16_t *size);
 ModuleCfg *invt_alloc_module_cfg(uint8_t count);
 
 /**
- * @fn      UnitCfg invt_alloc_unit_cfg*(uint8_t)
+ * @fn      NodeCfg invt_alloc_unit_cfg*(uint8_t)
  * @brief   Allocate the memory for the unit config with count number of
  *          modules.
  *
@@ -824,7 +824,7 @@ ModuleCfg *invt_alloc_module_cfg(uint8_t count);
  * @return  On success, 0
  *          On failure, non zero value
  */
-UnitCfg *invt_alloc_unit_cfg(uint8_t count);
+NodeCfg *invt_alloc_unit_cfg(uint8_t count);
 
 #ifdef __cplusplus
 }

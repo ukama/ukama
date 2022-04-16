@@ -48,7 +48,7 @@ static int read_mfg_data_size(char *fname) {
     return off;
 }
 
-void parser_free_unit_cfg(UnitCfg **cfg, uint8_t count) {
+void parser_free_unit_cfg(NodeCfg **cfg, uint8_t count) {
     if (*cfg) {
         /* Device Cfgs */
         for (int iter = 0; iter < count; iter++) {
@@ -584,46 +584,46 @@ cleanup:
 
 /* Parse Unit Config */
 void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
-    const JsonObj *jUnitCfgs = NULL;
-    const JsonObj *jUnitCfg = NULL;
+    const JsonObj *jNodeCfgs = NULL;
+    const JsonObj *jNodeCfg = NULL;
     const JsonObj *jDevice = NULL;
-    UnitCfg *pUnitCfg = NULL;
+    NodeCfg *pNodeCfg = NULL;
     int iter = 0;
 
     if (!count) {
         goto cleanup;
     }
 
-    jUnitCfgs = json_object_get(jSchema, JTAG_UNIT_CONFIG);
-    if (json_is_array(jUnitCfgs)) {
-        pUnitCfg = usys_zmalloc(sizeof(UnitCfg) * count);
-        if (pUnitCfg) {
-            json_array_foreach(jUnitCfgs, iter, jUnitCfg) {
+    jNodeCfgs = json_object_get(jSchema, JTAG_UNIT_CONFIG);
+    if (json_is_array(jNodeCfgs)) {
+        pNodeCfg = usys_zmalloc(sizeof(NodeCfg) * count);
+        if (pNodeCfg) {
+            json_array_foreach(jNodeCfgs, iter, jNodeCfg) {
                 /* UUID */
                 if (!parser_read_string_object_wrapper(
-                        jUnitCfg, JTAG_UUID, pUnitCfg[iter].modUuid)) {
+                        jNodeCfg, JTAG_UUID, pNodeCfg[iter].modUuid)) {
                     goto cleanup;
                 }
 
                 /* Name */
                 if (!parser_read_string_object_wrapper(
-                        jUnitCfg, JTAG_NAME, pUnitCfg[iter].modName)) {
+                        jNodeCfg, JTAG_NAME, pNodeCfg[iter].modName)) {
                     goto cleanup;
                 }
 
                 /* SysFs */
                 if (!parser_read_string_object_wrapper(
-                        jUnitCfg, JTAG_INVT_SYSFS_FILE, pUnitCfg[iter].sysFs)) {
+                        jNodeCfg, JTAG_INVT_SYSFS_FILE, pNodeCfg[iter].sysFs)) {
                     goto cleanup;
                 }
 
                 /* EEPROM */
-                jDevice = json_object_get(jUnitCfg, JTAG_INVT_DEV_INFO);
+                jDevice = json_object_get(jNodeCfg, JTAG_INVT_DEV_INFO);
                 DevI2cCfg *pDev = parse_schema_devices(jDevice, DEV_CLASS_I2C);
                 if (pDev) {
-                    pUnitCfg[iter].eepromCfg = pDev;
+                    pNodeCfg[iter].eepromCfg = pDev;
                 } else {
-                    usys_log_error("Failed to parse UnitCfg[%d].eepromCfg",
+                    usys_log_error("Failed to parse NodeCfg[%d].eepromCfg",
                                    iter);
                     goto cleanup;
                 }
@@ -646,11 +646,11 @@ void *parse_schema_unit_config(const JsonObj *jSchema, uint16_t count) {
                        "of Unit Config.");
         goto cleanup;
     }
-    return pUnitCfg;
+    return pNodeCfg;
 
 cleanup:
-    parser_free_unit_cfg(&pUnitCfg, count);
-    return pUnitCfg;
+    parser_free_unit_cfg(&pNodeCfg, count);
+    return pNodeCfg;
 }
 
 /* Parse Module Info */
@@ -831,7 +831,7 @@ void *parse_schema_module_config(const JsonObj *jSchema, uint16_t count) {
                 if (pDev) {
                     pModCfg[iter].cfg = pDev;
                 } else {
-                    usys_log_error("Failed to parse UnitCfg[%d].cfg", iter);
+                    usys_log_error("Failed to parse NodeCfg[%d].cfg", iter);
                     goto cleanup;
                 }
             }
@@ -959,9 +959,9 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     }
     case FIELD_ID_UNIT_CFG: {
         uint16_t modCount = (*schema)->unitInfo.modCount;
-        UnitCfg *pUnitCfg = parse_schema_unit_config(jSchema, modCount);
-        if (pUnitCfg) {
-            (*schema)->unitCfg = pUnitCfg;
+        NodeCfg *pNodeCfg = parse_schema_unit_config(jSchema, modCount);
+        if (pNodeCfg) {
+            (*schema)->unitCfg = pNodeCfg;
         } else {
             ret = -1;
             goto cleanup;

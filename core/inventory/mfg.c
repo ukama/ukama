@@ -22,7 +22,7 @@ const MfgOperations *mfgOps =
                       .readHeader = jdata_fetch_header,
                       .readIndex = jdata_fetch_idx,
                       .readUnitInfo = jdata_fetch_node_info,
-                      .readUnitCfg = jdata_fetch_unit_cfg,
+                      .readNodeCfg = jdata_fetch_unit_cfg,
                       .readModuleInfoByUuid = jdata_fetch_module_info_by_uuid,
                       .readModuleCfg = jdata_fetch_module_cfg,
                       .readFactCfg = jdata_fetch_fact_cfg,
@@ -78,9 +78,9 @@ int mfg_fetch_node_info(NodeInfo **data, char *uuid, uint16_t *size) {
     return ret;
 }
 
-int mfg_fetch_unit_cfg(UnitCfg **data, char *uuid, uint16_t *size, uint8_t count) {
+int mfg_fetch_unit_cfg(NodeCfg **data, char *uuid, uint16_t *size, uint8_t count) {
     int ret = 0;
-    *data = mfgOps->readUnitCfg(uuid, size, count);
+    *data = mfgOps->readNodeCfg(uuid, size, count);
     if (!data) {
         ret = -1;
     }

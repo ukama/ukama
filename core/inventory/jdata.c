@@ -124,8 +124,8 @@ void *jdata_fetch_unit_cfg(char *puuid, uint16_t *size, uint8_t count) {
         return NULL;
     }
 
-    int sz = sizeof(UnitCfg) * count;
-    UnitCfg *cfg = usys_zmalloc(sz);
+    int sz = sizeof(NodeCfg) * count;
+    NodeCfg *cfg = usys_zmalloc(sz);
     if (cfg) {
         usys_memcpy(cfg, &sschema->unitCfg[0], sz);
         /* Overwrite EEPROM CFG for each Module */

@@ -116,17 +116,17 @@ int store_read_block(char* uuid, void* data, off_t offset , uint16_t size);
 int store_read_number(char* uuid, void* val, off_t offset, uint16_t count,
                 uint8_t size);
 /**
- * @fn      int store_register_module(UnitCfg*)
+ * @fn      int store_register_module(NodeCfg*)
  * @brief   Register a module to store by adding its detail to the store list.
  *
  * @param   pCfg
  * @return  On success, 0
  *          On failure, non zero value
  */
-int store_register_module(UnitCfg* pCfg);
+int store_register_module(NodeCfg* pCfg);
 
 /**
- * @fn      int store_register_update_module(char*, UnitCfg*, uint8_t)
+ * @fn      int store_register_update_module(char*, NodeCfg*, uint8_t)
  * @brief   Update the registered module in store list.
  *
  * @param   uuid
@@ -135,7 +135,7 @@ int store_register_module(UnitCfg* pCfg);
  * @return  On success, 0
  *          On failure, non zero value
  */
-int store_register_update_module(char* uuid, UnitCfg *uCfg, uint8_t count);
+int store_register_update_module(char* uuid, NodeCfg *uCfg, uint8_t count);
 
 /**
  * @fn      int store_remove(char*)

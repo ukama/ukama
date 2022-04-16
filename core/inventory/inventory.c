@@ -52,7 +52,7 @@ static int validate_node_info(NodeInfo *uInfo) {
     return ret;
 }
 
-static int validate_unit_cfg(UnitCfg *cfg, char *fname) {
+static int validate_unit_cfg(NodeCfg *cfg, char *fname) {
     int ret = 0;
     if (!usys_strcmp(cfg->sysFs, fname)) {
         ret = 1;
@@ -60,19 +60,19 @@ static int validate_unit_cfg(UnitCfg *cfg, char *fname) {
     return ret;
 }
 
-/* Based on the module id it returns the UnitCfg */
-static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
+/* Based on the module id it returns the NodeCfg */
+static NodeCfg *override_master_db_info(char *puuid, uint8_t *count) {
     typedef struct UnitData {
         char id[24];
         uint8_t count;
-        UnitCfg *cfg;
+        NodeCfg *cfg;
     } UnitData;
 
     UnitData *udata = (UnitData[]){
         { .id = "UK-1001-COM-1101",
           .count = 3,
           .cfg =
-              (UnitCfg[]){
+              (NodeCfg[]){
                   { .modUuid = "UK-1001-COM-1101",
                     .modName = "COMv1",
                     .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
@@ -89,7 +89,7 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
         { .id = "UK-5001-RFC-1101",
           .count = 2,
           .cfg =
-              (UnitCfg[]){
+              (NodeCfg[]){
                   { .modUuid = "UK-5001-RFC-1101",
                     .modName = "RF CTRL BOARD",
                     .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
@@ -101,15 +101,15 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
               } }
     };
 
-    UnitCfg *pcfg = NULL;
+    NodeCfg *pcfg = NULL;
     DevI2cCfg *i2cCfg = NULL;
     for (int iter = 0; iter < 2; iter++) {
         if (!usys_strcmp(puuid, udata[iter].id)) {
             *count = udata[iter].count;
-            pcfg = usys_zmalloc(sizeof(UnitCfg) * (*count));
+            pcfg = usys_zmalloc(sizeof(NodeCfg) * (*count));
             if (pcfg) {
                 usys_memcpy(&pcfg[0], &udata[iter].cfg[0],
-                            sizeof(UnitCfg) * (*count));
+                            sizeof(NodeCfg) * (*count));
 
                 for (int iiter = 0; iiter < *count; iiter++) {
                     if (udata[iter].cfg[iiter].eepromCfg) {
@@ -138,7 +138,7 @@ static UnitCfg *override_master_db_info(char *puuid, uint8_t *count) {
 
 /* Read Master inventory data uses raw read.
  *  As store will be init after this */
-int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
+int invt_get_master_unit_cfg(NodeCfg *pcfg, char *invtLnkDb) {
     int ret = 0;
     if (!invtLnkDb) {
         return -1;
@@ -181,18 +181,18 @@ int invt_get_master_unit_cfg(UnitCfg *pcfg, char *invtLnkDb) {
                            uInfo->name);
 
             /* Read first cfg which belong to master */
-            int sz = sizeof(UnitCfg) + sizeof(DevI2cCfg);
+            int sz = sizeof(NodeCfg) + sizeof(DevI2cCfg);
             void *cfg = usys_zmalloc(sz);
             if (cfg) {
                 /* Read Unit Config */
                 if (usys_file_raw_read(invtDb, cfg, SCH_UNIT_CONFIG_OFFSET,
                                        sz) == sz) {
                     if (validate_unit_cfg(cfg, invtDb)) {
-                        usys_memcpy(pcfg, cfg, sizeof(UnitCfg));
+                        usys_memcpy(pcfg, cfg, sizeof(NodeCfg));
                         /* Read EEPROM (Inventory DB) config for Module */
                         DevI2cCfg *icfg = usys_zmalloc(sizeof(DevI2cCfg));
                         if (icfg) {
-                            usys_memcpy(icfg, (cfg + sizeof(UnitCfg)),
+                            usys_memcpy(icfg, (cfg + sizeof(NodeCfg)),
                                         sizeof(DevI2cCfg));
                         } else {
                             icfg = NULL;
@@ -661,13 +661,13 @@ int invt_update_payload(char *pUuid, void *pData, uint16_t fieldId,
 }
 
 /* Allocate memory for unit config */
-UnitCfg *invt_alloc_unit_cfg(uint8_t count) {
-    UnitCfg *cfg = usys_zmalloc(sizeof(UnitCfg) * count);
+NodeCfg *invt_alloc_unit_cfg(uint8_t count) {
+    NodeCfg *cfg = usys_zmalloc(sizeof(NodeCfg) * count);
     return cfg;
 }
 
 /* Free allocated memory for unit config */
-void invt_free_unit_cfg(UnitCfg *cfg, uint8_t count) {
+void invt_free_unit_cfg(NodeCfg *cfg, uint8_t count) {
     if (cfg) {
         for (int iter = 0; iter < count; iter++) {
             usys_free(cfg[iter].eepromCfg);
@@ -679,16 +679,16 @@ void invt_free_unit_cfg(UnitCfg *cfg, uint8_t count) {
 }
 
 /* Serialize unit config */
-char *serialize_unitcfg_payload(UnitCfg *ucfg, uint8_t count, uint16_t *size) {
+char *serialize_unitcfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size) {
     int offset = 0;
     char *data = NULL;
-    *size = (sizeof(UnitCfg) + sizeof(DevI2cCfg)) * count;
+    *size = (sizeof(NodeCfg) + sizeof(DevI2cCfg)) * count;
 
     data = usys_zmalloc(*size);
     if (data) {
         for (int iter = 0; iter < count; iter++) {
-            usys_memcpy(data + offset, &ucfg[iter], sizeof(UnitCfg));
-            offset = offset + sizeof(UnitCfg);
+            usys_memcpy(data + offset, &ucfg[iter], sizeof(NodeCfg));
+            offset = offset + sizeof(NodeCfg);
             usys_memcpy(data + offset, ucfg[iter].eepromCfg, sizeof(DevI2cCfg));
             offset = offset + sizeof(DevI2cCfg);
         }
@@ -704,7 +704,7 @@ int invt_write_unit_cfg_data(char *pUuid, SchemaIdxTuple *index,
                              uint8_t count) {
     int ret = 0;
     /* Unit Config */
-    UnitCfg *ucfg;
+    NodeCfg *ucfg;
     uint16_t size = 0;
     char *payload = NULL;
     ret = mfg_fetch_unit_cfg(&ucfg, pUuid, &size, count);
@@ -1075,7 +1075,7 @@ cleanpayload:
 }
 
 /* Registering  modules in store */
-int invt_register_module(UnitCfg *cfg) {
+int invt_register_module(NodeCfg *cfg) {
     int ret = 0;
 
     ret = store_register_module(cfg);
@@ -1103,7 +1103,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
     int ret = 0;
     uint16_t size = 0;
     uint8_t modCount = 0;
-    UnitCfg *ucfg;
+    NodeCfg *ucfg;
     char unitUuid[UUID_LENGTH] = { '\0' };
     usys_log_debug("Inventory read Unit Info from module %s for module "
                    "registration process.",
@@ -1124,7 +1124,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                            "registration process.",
                            unitUuid);
 
-            ucfg = (UnitCfg *)invt_alloc_unit_cfg(modCount);
+            ucfg = (NodeCfg *)invt_alloc_unit_cfg(modCount);
             if (ucfg) {
                 /* Read unit config */
                 ret = invt_read_unit_cfg(pUuid, ucfg, modCount, &size);
@@ -1267,7 +1267,7 @@ cleanminfo:
 int invt_pre_create_store_setup(char *puuid) {
     int ret = -1;
     uint8_t count = 0;
-    UnitCfg *cfg = NULL;
+    NodeCfg *cfg = NULL;
     usys_log_debug("Caution !! Only meant for test setup to create DB.");
 
     cfg = override_master_db_info(puuid, &count);
@@ -1314,7 +1314,7 @@ int invt_init(char *invtDb, RegisterDeviceCB regCb) {
 
     /* Initialize Store*/
     ret = store_init();
-    UnitCfg *cfg = usys_zmalloc(sizeof(UnitCfg));
+    NodeCfg *cfg = usys_zmalloc(sizeof(NodeCfg));
     if (cfg) {
         ret = invt_get_master_unit_cfg(cfg, invtDb);
         if (ret) {
@@ -1802,7 +1802,7 @@ void invt_print_dev(void *dev, DeviceClass class) {
     }
 }
 
-void invt_print_unit_cfg(UnitCfg *pUnitCfg, uint8_t count) {
+void invt_print_unit_cfg(NodeCfg *pNodeCfg, uint8_t count) {
     uint8_t iter = 0;
     usys_log_trace(
         "*************************************************************");
@@ -1812,12 +1812,12 @@ void invt_print_unit_cfg(UnitCfg *pUnitCfg, uint8_t count) {
         usys_log_trace(
             "*************************************************************");
         usys_log_trace("  *	  Module UUID:           %s",
-                       pUnitCfg[iter].modUuid);
+                       pNodeCfg[iter].modUuid);
         usys_log_trace("  *	  Module Name:           %s",
-                       pUnitCfg[iter].modName);
+                       pNodeCfg[iter].modName);
         usys_log_trace("  *    EEPROM SysFS Name:     %s",
-                       pUnitCfg[iter].sysFs);
-        invt_print_dev_i2c_cfg(pUnitCfg[iter].eepromCfg);
+                       pNodeCfg[iter].sysFs);
+        invt_print_dev_i2c_cfg(pNodeCfg[iter].eepromCfg);
         usys_log_trace(
             "*************************************************************");
     }
@@ -1941,32 +1941,32 @@ int invt_read_node_info(char *pUuid, NodeInfo *p_info, uint16_t *size) {
     return ret;
 }
 
-int invt_deserialize_unit_cfg_data(UnitCfg **pUnitCfg, char *payload, uint8_t count,
+int invt_deserialize_unit_cfg_data(NodeCfg **pNodeCfg, char *payload, uint8_t count,
                               uint16_t *size) {
     /* || Unit Info 1 | EEPROM CFG  || Unit Info 2 | EEPROM CFG  || */
     int ret = 0;
     int offset = 0;
     for (int iter = 0; iter < count; iter++) {
         /* Copy Unit Cfg first*/
-        usys_memcpy(&(*pUnitCfg)[iter], payload + offset, sizeof(UnitCfg));
-        /* Create a eeprom cfg and assign reference to eeprom_cfg in UnitCfg */
-        offset = offset + sizeof(UnitCfg);
+        usys_memcpy(&(*pNodeCfg)[iter], payload + offset, sizeof(NodeCfg));
+        /* Create a eeprom cfg and assign reference to eeprom_cfg in NodeCfg */
+        offset = offset + sizeof(NodeCfg);
         /* Our Unit config assumes all eeprom are on I2C bus*/
         DevI2cCfg *icfg = usys_zmalloc(sizeof(DevI2cCfg));
         if (icfg) {
             usys_memcpy(icfg, payload + offset, sizeof(DevI2cCfg));
-            (*pUnitCfg)[iter].eepromCfg = icfg;
+            (*pNodeCfg)[iter].eepromCfg = icfg;
         } else {
             ret = ERR_NODED_MEMORY_EXHAUSTED;
         }
         offset = offset + sizeof(DevI2cCfg);
         /* Size returned to reader of Unit config.*/
-        *size = *size + sizeof(UnitCfg);
+        *size = *size + sizeof(NodeCfg);
     }
     return ret;
 }
 
-int invt_read_unit_cfg(char *pUuid, UnitCfg *pUnitCfg, uint8_t count,
+int invt_read_unit_cfg(char *pUuid, NodeCfg *pNodeCfg, uint8_t count,
                        uint16_t *size) {
     int ret = -1;
     uint16_t fid = FIELD_ID_UNIT_CFG;
@@ -2000,12 +2000,12 @@ int invt_read_unit_cfg(char *pUuid, UnitCfg *pUnitCfg, uint8_t count,
         ret = invt_validate_payload(payload, idxData->payloadCrc,
                                     idxData->payloadSize);
         if (ret) {
-            usys_log_error("CRC failure for the field id 0x%x.", ret, pUnitCfg);
+            usys_log_error("CRC failure for the field id 0x%x.", ret, pNodeCfg);
             goto cleanup;
         }
 
         /* Deserialize to Unit Config.*/
-        ret = invt_deserialize_unit_cfg_data(&pUnitCfg, payload, count, size);
+        ret = invt_deserialize_unit_cfg_data(&pNodeCfg, payload, count, size);
         if (ret) {
             ret = ERR_NODED_DESERIAL_FAIL;
             usys_log_error("Deserialize failure for Unit Config."

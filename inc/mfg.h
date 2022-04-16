@@ -47,7 +47,7 @@ typedef struct  {
   MfgReadHeaderFxn readHeader;
   MfgReadIndexFxn readIndex;
   MfgReadUnitInfoFxn readUnitInfo;
-  MfgReadUnitConfigFxn readUnitCfg;
+  MfgReadUnitConfigFxn readNodeCfg;
   MfgReadModuleInfoFxn readModuleInfo;
   MfgReadModuleInfoByUUUIDFxn readModuleInfoByUuid;
   MfgReadModuleConfigFxn readModuleCfg;
@@ -216,7 +216,7 @@ int mfg_fetch_node_info(NodeInfo** data, char* uuid, uint16_t* size);
  * @return  On success, 0
  *          On failure, non zero value
  */
-int mfg_fetch_unit_cfg(UnitCfg** data, char* uuid, uint16_t* size, uint8_t count);
+int mfg_fetch_unit_cfg(NodeCfg** data, char* uuid, uint16_t* size, uint8_t count);
 
 /**
  * @fn      int mfg_fetch_user_calib(void**, char*, uint16_t*)

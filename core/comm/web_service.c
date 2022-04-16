@@ -285,7 +285,7 @@ static int web_service_cb_discover_api(const URequest *request,
     unsigned int respCode = RESP_CODE_SUCCESS;
     int ret = STATUS_NOK;
     uint16_t size = 0;
-    UnitCfg *uCfg = NULL;
+    NodeCfg *uCfg = NULL;
     usys_log_trace("NodeD:: Received a discover api request.");
 
     ret = json_serialize_api_list(&json, gApi, endPointCount);
@@ -321,7 +321,7 @@ static int web_service_cb_get_unit_cfg(const URequest *request,
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
     int ret = STATUS_NOK;
     uint16_t size = 0;
-    UnitCfg *uCfg = NULL;
+    NodeCfg *uCfg = NULL;
     usys_log_trace("NodeD:: Received a get unit config request.");
 
     /* Allocate memory for unit info */

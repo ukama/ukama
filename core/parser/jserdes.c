@@ -165,7 +165,7 @@ int json_serialize_module_info(JsonObj **json, ModuleInfo *mInfo) {
     return ret;
 }
 
-int json_serialize_unit_cfg(JsonObj **json, UnitCfg *uCfg, uint8_t count) {
+int json_serialize_unit_cfg(JsonObj **json, NodeCfg *uCfg, uint8_t count) {
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();

@@ -181,7 +181,7 @@ typedef struct __attribute__((__packed__)) {
     char modName[NAME_LENGTH];
     char sysFs[PATH_LENGTH];
     void* eepromCfg;
-} UnitCfg; //#128
+} NodeCfg; //#128
 
 typedef struct __attribute__((__packed__)){
     char uuid[UUID_LENGTH];
@@ -217,7 +217,7 @@ typedef struct __attribute__((__packed__)){
     SchemaHeader header;
     SchemaIdxTuple *indexTable;
     NodeInfo unitInfo;
-    UnitCfg* unitCfg;  //Contain list of modules lTE -1 /54
+    NodeCfg* unitCfg;  //Contain list of modules lTE -1 /54
     ModuleInfo modInfo;
     ModuleCfg* modCfg; //Contains list of devices.
     void* factCfg;

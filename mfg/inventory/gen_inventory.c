@@ -46,7 +46,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
     jip.count = count;
     jip.pname = PROPERTY_JSON;
 
-    UnitCfg *pcfg = NULL;
+    NodeCfg *pcfg = NULL;
     DevI2cCfg *i2cCfg = NULL;
 
 
@@ -84,7 +84,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
          * for the module. UUID is just a place holder. Its updated by the
          * value supplied in argument.
          */
-        UnitCfg *udata = (UnitCfg[]){
+        NodeCfg *udata = (NodeCfg[]){
             {   .modUuid = "UK-8001-RFC-1102",
                 .modName = "RF CTRL BOARD",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
@@ -112,14 +112,14 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
             },
         };
 
-        /* Find and Read unitCfg of the module from above UnitCfg struct */
+        /* Find and Read unitCfg of the module from above NodeCfg struct */
         for (int iter = 0; iter < MAX_BOARDS; iter++) {
             if (!usys_strcmp(name[idx], udata[iter].modName)) {
 
-                pcfg = usys_zmalloc(sizeof(UnitCfg));
+                pcfg = usys_zmalloc(sizeof(NodeCfg));
                 if (pcfg) {
                     /* Copy Unit config */
-                    usys_memcpy(pcfg, &udata[iter], sizeof(UnitCfg));
+                    usys_memcpy(pcfg, &udata[iter], sizeof(NodeCfg));
 
                     if (udata[iter].eepromCfg) {
                         /* Copy EEPROM config */
