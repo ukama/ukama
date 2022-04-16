@@ -96,12 +96,12 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
                  .eepromCfg = &(DevI2cCfg){ .bus = 2, .add = 0x50ul }
             },
             {   .modUuid = "UK-8001-COM-1102",
-                .modName = "ComV1",
+                .modName = "COM",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 0, .add = 0x50ul }
             },
-            {   .modUuid = "UK-8001-LTE-1102",
-                .modName = "LTE",
+            {   .modUuid = "UK-8001-TRX-1102",
+                .modName = "TRX",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0050/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul }
             },
@@ -148,6 +148,10 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
             }
         }
 
+        if (!pcfg) {
+            log_debug("No module with name %s found.", name[idx]);
+            continue;
+        }
         /* Register Module */
         ret = invt_register_module(pcfg);
         if (!ret) {
