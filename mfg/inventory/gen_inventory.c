@@ -10,7 +10,7 @@
 /*
  * Tool for creating EEPROM database for device.
  * This binary is only meant to create a dummy device database by reading a JSON configs.
- * This tool would take JSON files, unit name and  serial number as command line arguments.
+ * This tool would take JSON files, node name and  serial number as command line arguments.
  *
  * Example usage is:
  * mfgutil --n ComV1 --m UK-8001-COM-1102 --s mfgdata/schema/com.json -n LTE --m UK-8001-LTE-1102 --s mfgdata/schema/lte.json --n MASK -m UK-8001-MSK-1102 --s mfgdata/schema/mask.json
@@ -139,7 +139,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 
                 } else {
 
-                    log_error("MFGUTIL:: Err(%d): Memory exhausted while getting unit"
+                    log_error("MFGUTIL:: Err(%d): Memory exhausted while getting node"
                                     " config from Test data.",
                                     ERR_NODED_MEMORY_EXHAUSTED);
                     goto cleanup;

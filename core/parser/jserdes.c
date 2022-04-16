@@ -225,7 +225,7 @@ int json_serialize_node_info(JsonObj **json, NodeInfo *nodeInfo) {
 
         json_object_set_new(jUInfo, JTAG_NAME, json_string(nodeInfo->name));
 
-        json_object_set_new(jUInfo, JTAG_TYPE, json_integer(nodeInfo->unit));
+        json_object_set_new(jUInfo, JTAG_TYPE, json_integer(nodeInfo->node));
 
         json_object_set_new(jUInfo, JTAG_PART_NUMBER,
                             json_string(nodeInfo->partNo));

@@ -500,7 +500,7 @@ void *parse_schema_node_info(const JsonObj *jSchema) {
             if (!parser_read_integer_object(jUnitInfo, JTAG_TYPE, &uType)) {
                 goto cleanup;
             } else {
-                pUnitInfo->unit = (NodeType)uType;
+                pUnitInfo->node = (NodeType)uType;
             }
 
             /* Part Number */

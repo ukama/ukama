@@ -178,7 +178,7 @@ void *jdata_fetch_module_info_by_uuid(char *puuid, uint16_t *size,
     ModuleInfo *info;
     int res = -1;
 
-    /* This is done for unit module info.*/
+    /* This is done for node module info.*/
     if (usys_strcmp(puuid, "") == 0) {
         res = 0;
     } else {

@@ -135,7 +135,7 @@ typedef struct __attribute__((__packed__)){
     uint16_t idxTplMaxCount;
     uint16_t idxCurTpl;
     uint8_t  modCap; // Self sustainable or not.
-    uint8_t  modMode; // Like master or slave in unit.
+    uint8_t  modMode; // Like master or slave in node.
     uint8_t  modDevOwn; //Does module own the devices in it's schema or controlled by secondary module.
     uint8_t  resv1;
     uint16_t resv2;
@@ -186,7 +186,7 @@ typedef struct __attribute__((__packed__)) {
 typedef struct __attribute__((__packed__)){
     char uuid[UUID_LENGTH];
     char name[NAME_LENGTH];
-    NodeType unit;
+    NodeType node;
     char partNo[NAME_LENGTH];
     char skew[NAME_LENGTH];
     char mac[MAC_LENGTH];

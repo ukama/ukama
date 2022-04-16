@@ -56,7 +56,7 @@ typedef struct {
     char *uuid;
     char *muuid;
     char *fileName;
-} UnitSchema;
+} NodeSchema;
 
 /* JSON TAGS */
 static char* jsonKeyTag[MAX_JSON_TAGS] = {
@@ -65,7 +65,7 @@ static char* jsonKeyTag[MAX_JSON_TAGS] = {
                 JTAG_MODULE_INFO
 };
 
-UnitSchema unitSchema[MAX_BOARDS] = {'\0'};
+NodeSchema nodeSchema[MAX_BOARDS] = {'\0'};
 
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
@@ -186,11 +186,11 @@ int modify_uuid(JsonObj * jObj, char* value) {
     return ret;
 }
 
-/* Search unit name and return the UUID for it */
+/* Search node name and return the UUID for it */
 char* read_uuid_for_module_name(const char* name) {
     for(unsigned short int idx = 0; idx < MAX_BOARDS; idx++) {
-        if ( (unitSchema[idx].name) && (!strcasecmp(name, unitSchema[idx].name))) {
-            return unitSchema[idx].muuid;
+        if ( (nodeSchema[idx].name) && (!strcasecmp(name, nodeSchema[idx].name))) {
+            return nodeSchema[idx].muuid;
         }
     }
     return NULL;
@@ -241,7 +241,7 @@ int modify_json(unsigned short idx)
     char *out;
     char* value = NULL;
     /* Parse the JSON file */
-    root = dofile(unitSchema[idx].fileName);
+    root = dofile(nodeSchema[idx].fileName);
     if (!root) {
         return -1;
     }
@@ -249,7 +249,7 @@ int modify_json(unsigned short idx)
     /* Debug Info */
     out = json_dumps(root, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
     if (out) {
-        usys_log_trace("Before modification file %s is::\n %s\n", unitSchema[idx].fileName, out);
+        usys_log_trace("Before modification file %s is::\n %s\n", nodeSchema[idx].fileName, out);
         usys_free(out);
     }
 
@@ -260,24 +260,24 @@ int modify_json(unsigned short idx)
         if (obj) {
 
             /* For Unit Config which is array */
-            if ( unitSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_CONFIG))) {
+            if ( nodeSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_CONFIG))) {
 
                 /* Update Unit Config */
                 ret  = update_unit_config((const JsonObj**)&obj);
                 if (ret) {
-                    usys_log_error("Schema:: Failed to update node config for %s file.", unitSchema[idx].fileName);
+                    usys_log_error("Schema:: Failed to update node config for %s file.", nodeSchema[idx].fileName);
                     return ret;
                 }
 
             } else {
 
-                if (unitSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_MODULE_INFO))) {
+                if (nodeSchema[idx].muuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_MODULE_INFO))) {
                     /* Module Info */
-                    value = unitSchema[idx].muuid;
+                    value = nodeSchema[idx].muuid;
 
-                } else if (unitSchema[idx].uuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_INFO))) {
+                } else if (nodeSchema[idx].uuid && (!usys_strcmp(jsonKeyTag[tag], JTAG_NODE_INFO))) {
                     /* Unit Info */
-                    value = unitSchema[idx].uuid;
+                    value = nodeSchema[idx].uuid;
                 }
 
                 /* For Unit Info and Module info  */
@@ -292,14 +292,14 @@ int modify_json(unsigned short idx)
 
     /* Debug Info */
     out = json_dumps(root, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY) );
-    usys_log_trace("After modification file %s is::\n %s\n",unitSchema[idx].fileName, out);
+    usys_log_trace("After modification file %s is::\n %s\n",nodeSchema[idx].fileName, out);
 
     /* Update the JSON file */
-    if(write_file(unitSchema[idx].fileName,out) > 0 ) {
-        usys_log_info("File %s updated successfully.", unitSchema[idx].fileName );
+    if(write_file(nodeSchema[idx].fileName,out) > 0 ) {
+        usys_log_info("File %s updated successfully.", nodeSchema[idx].fileName );
         usys_free(out);
     } else {
-        usys_log_error("Write to file %s failed.", unitSchema[idx].fileName );
+        usys_log_error("Write to file %s failed.", nodeSchema[idx].fileName );
     }
 
     /* Clean the cJSON root  */
@@ -447,14 +447,14 @@ int main(int argc, char** argv) {
             exit(0);
         }
 
-        unitSchema[idx].name = name[idx];
+        nodeSchema[idx].name = name[idx];
         if (idx==0) {
-            unitSchema[idx].uuid = uuid;
+            nodeSchema[idx].uuid = uuid;
         } else {
-            unitSchema[idx].uuid = NULL;
+            nodeSchema[idx].uuid = NULL;
         }
-        unitSchema[idx].muuid = mid[idx];
-        unitSchema[idx].fileName = file[idx];
+        nodeSchema[idx].muuid = mid[idx];
+        nodeSchema[idx].fileName = file[idx];
     }
 
     /* Modify every file provided in input.*/

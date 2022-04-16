@@ -56,7 +56,7 @@ typedef struct {
 
  /**
  * @fn      int store_init()
- * @brief   Creates a store list to hold modules present in unit.
+ * @brief   Creates a store list to hold modules present in node.
  *
  * @return  On success, 0
  *          On failure, non zero value

@@ -792,7 +792,7 @@ void *invt_deserialize_devices(const char *payload, int offset, DeviceClass devC
 char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
                                    uint16_t *size);
 /**
- * @fn      char serialize_unitcfg_payload*(NodeCfg*, uint8_t, uint16_t*)
+ * @fn      char serialize_node_cfg_payload*(NodeCfg*, uint8_t, uint16_t*)
  * @brief   serialize the node config into the block of data bytes which
  *          can then be written to inventory database.
  *
@@ -802,7 +802,7 @@ char *serialize_module_config_data(ModuleCfg *mcfg, uint8_t count,
  * @return  On success, pointer to block of data bytes
  *          On failure, NULL
  */
-char *serialize_unitcfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size);
+char *serialize_node_cfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size);
 
 /**
  * @fn      ModuleCfg invt_alloc_module_cfg*(uint8_t)

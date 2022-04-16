@@ -22,9 +22,9 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-static int validate_unit_type(NodeType unit) {
+static int validate_node_type(NodeType node) {
     int ret = 0;
-    switch (unit) {
+    switch (node) {
     case UNIT_TNODESDR:
     case UNIT_TNODELTE:
     case UNIT_HNODE:
@@ -46,7 +46,7 @@ static int validate_node_info(NodeInfo *nodeInfo) {
         ret &= 1;
     }
 
-    if (validate_unit_type(nodeInfo->unit)) {
+    if (validate_node_type(nodeInfo->node)) {
         ret &= 1;
     }
     return ret;
@@ -679,7 +679,7 @@ void invt_free_node_cfg(NodeCfg *cfg, uint8_t count) {
 }
 
 /* Serialize node config */
-char *serialize_unitcfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size) {
+char *serialize_node_cfg_payload(NodeCfg *ucfg, uint8_t count, uint16_t *size) {
     int offset = 0;
     char *data = NULL;
     *size = (sizeof(NodeCfg) + sizeof(DevI2cCfg)) * count;
@@ -710,7 +710,7 @@ int invt_write_node_cfg_data(char *pUuid, SchemaIdxTuple *index,
     ret = mfg_fetch_node_cfg(&ucfg, pUuid, &size, count);
     if (ucfg) {
         /*Write payload for Index table entries*/
-        payload = serialize_unitcfg_payload(ucfg, count, &size);
+        payload = serialize_node_cfg_payload(ucfg, count, &size);
         if (payload) {
             if (invt_write_module_payload(pUuid, payload, index->payloadOffset,
                                    size)) {
@@ -782,13 +782,13 @@ int invt_write_node_info_data(char *p1Uuid, SchemaIdxTuple *index, char *pUuid,
                 ret = ERR_NODED_WR_FAIL;
                 goto cleanup;
             }
-            usys_log_debug("Inventory Unit Info added for unit Id %s.",
+            usys_log_debug("Inventory Unit Info added for node Id %s.",
                            nodeInfo->uuid);
 
             /* CRC*/
             uint32_t crcVal =
                 crc_32((const unsigned char *)nodeInfo, sizeof(NodeInfo));
-            usys_log_debug("Inventory Calculated crc for unit id %s is 0x%x",
+            usys_log_debug("Inventory Calculated crc for node id %s is 0x%x",
                            nodeInfo->uuid, crcVal);
             index->payloadCrc = crcVal;
 
@@ -1156,14 +1156,14 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
                             }
 
                         } else {
-                            goto cleanunitcfg;
+                            goto cleannodecfg;
                         }
                     }
                 } else {
                     usys_log_debug("Read Unit Config fail for %s."
                                    "Error Code: %d",
                                    unitUuid, ret);
-                    goto cleanunitcfg;
+                    goto cleannodecfg;
                 }
             } else {
                 ret = ERR_NODED_MEMORY_EXHAUSTED;
@@ -1179,7 +1179,7 @@ int invt_register_modules(char *pUuid, RegisterDeviceCB registerDev) {
         }
     }
 
-cleanunitcfg:
+cleannodecfg:
     invt_free_node_cfg(ucfg, modCount);
 
 cleanunitinfo:
@@ -1329,7 +1329,7 @@ int invt_init(char *invtDb, RegisterDeviceCB regCb) {
     /* Register master module first so that node info and cfg can be accessed.*/
     ret = invt_register_module(cfg);
     /* After registering master module.
-     * Access remaining module if any using unit cfg and register those.*/
+     * Access remaining module if any using node cfg and register those.*/
     if (!ret) {
         /* Check if the database exist or not.*/
         ret = invt_validating_magic_word(cfg->modUuid);
@@ -1470,7 +1470,7 @@ int invt_create_db(char *pUuid) {
                        pUuid);
     }
 
-    /*Write unit Config. */
+    /*Write node Config. */
     usys_log_trace("Inventory Starting Unit Config write for UUID %s "
                    "with %d modules.",
                    pUuid, modCount);
@@ -1705,7 +1705,7 @@ void invt_print_node_info(NodeInfo *pUnitInfo) {
     usys_log_trace("  *	 Unit UUID:                    %s", pUnitInfo->uuid);
     usys_log_trace("  *	 Unit Name:                    %s", pUnitInfo->name);
     usys_log_trace("  *	 Unit Type:                    0x%01x",
-                   pUnitInfo->unit);
+                   pUnitInfo->node);
     usys_log_trace("  *	 Unit Part No.:                %s", pUnitInfo->partNo);
     usys_log_trace("  *	 Unit Skew:                    %s", pUnitInfo->skew);
     usys_log_trace("  *	 Unit MAC:                     %s", pUnitInfo->mac);
