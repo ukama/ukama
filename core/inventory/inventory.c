@@ -22,7 +22,7 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-static int validate_unit_type(UnitType unit) {
+static int validate_unit_type(NodeType unit) {
     int ret = 0;
     switch (unit) {
     case UNIT_TNODESDR:

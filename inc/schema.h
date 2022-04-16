@@ -107,7 +107,7 @@ typedef enum {
     UNIT_HNODE    = 3,
     UNIT_ANODE    = 4,
     UNIT_PSNODE   = 5
-} UnitType;
+} NodeType;
 
 typedef enum {
     MOD_COMV1  = 0,
@@ -186,7 +186,7 @@ typedef struct __attribute__((__packed__)) {
 typedef struct __attribute__((__packed__)){
     char uuid[UUID_LENGTH];
     char name[NAME_LENGTH];
-    UnitType unit;
+    NodeType unit;
     char partNo[NAME_LENGTH];
     char skew[NAME_LENGTH];
     char mac[MAC_LENGTH];
