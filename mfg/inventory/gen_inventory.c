@@ -112,7 +112,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
             },
         };
 
-        /* Find and Read unitCfg of the module from above NodeCfg struct */
+        /* Find and Read nodeCfg of the module from above NodeCfg struct */
         for (int iter = 0; iter < MAX_BOARDS; iter++) {
             if (!usys_strcmp(name[idx], udata[iter].modName)) {
 

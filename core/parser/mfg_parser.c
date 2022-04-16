@@ -64,11 +64,11 @@ void parser_free_mfg_data(StoreSchema **sschema) {
         usys_free((*sschema)->indexTable);
 
         /* Unit Cfgs */
-        for (int iter = 0; iter < (*sschema)->unitInfo.modCount; iter++) {
-            usys_free((*sschema)->unitCfg[iter].eepromCfg);
+        for (int iter = 0; iter < (*sschema)->nodeInfo.modCount; iter++) {
+            usys_free((*sschema)->nodeCfg[iter].eepromCfg);
         }
 
-        usys_free((*sschema)->unitCfg);
+        usys_free((*sschema)->nodeCfg);
 
         /* Module Cfgs */
         for (int iter = 0; iter < (*sschema)->modInfo.devCount; iter++) {
@@ -948,7 +948,7 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
     case FIELD_ID_UNIT_INFO: {
         NodeInfo *pUnitInfo = parse_schema_node_info(jSchema);
         if (pUnitInfo) {
-            usys_memcpy(&(*schema)->unitInfo, pUnitInfo, sizeof(NodeInfo));
+            usys_memcpy(&(*schema)->nodeInfo, pUnitInfo, sizeof(NodeInfo));
             usys_free(pUnitInfo);
             pUnitInfo = NULL;
         } else {
@@ -958,10 +958,10 @@ int parse_schema_payload(const JsonObj *jSchema, StoreSchema **schema,
         break;
     }
     case FIELD_ID_UNIT_CFG: {
-        uint16_t modCount = (*schema)->unitInfo.modCount;
+        uint16_t modCount = (*schema)->nodeInfo.modCount;
         NodeCfg *pNodeCfg = parse_schema_unit_config(jSchema, modCount);
         if (pNodeCfg) {
-            (*schema)->unitCfg = pNodeCfg;
+            (*schema)->nodeCfg = pNodeCfg;
         } else {
             ret = -1;
             goto cleanup;

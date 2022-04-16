@@ -216,8 +216,8 @@ typedef struct __attribute__((__packed__)){
     SchemaMagicWord magicWord;
     SchemaHeader header;
     SchemaIdxTuple *indexTable;
-    NodeInfo unitInfo;
-    NodeCfg* unitCfg;  //Contain list of modules lTE -1 /54
+    NodeInfo nodeInfo;
+    NodeCfg* nodeCfg;  //Contain list of modules lTE -1 /54
     ModuleInfo modInfo;
     ModuleCfg* modCfg; //Contains list of devices.
     void* factCfg;

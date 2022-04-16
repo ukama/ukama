@@ -35,14 +35,14 @@ int invt_create_db(char *pUuid);;
  * @brief   Creates the Unit config from the block of data read from the
  *          inventory database. Count specifies numbers of module present.
  *
- * @param   unitCfg
+ * @param   nodeCfg
  * @param   payload
  * @param   count
  * @param   size
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_deserialize_node_cfg_data(NodeCfg **unitCfg, char *payload,
+int invt_deserialize_node_cfg_data(NodeCfg **nodeCfg, char *payload,
                 uint8_t count, uint16_t *size);
 
 /**
@@ -334,12 +334,12 @@ int invt_read_node_cfg(char *pUuid, NodeCfg *p_ucfg, uint8_t count,
  * @brief   reads the unit info from the store.
  *
  * @param   pUuid
- * @param   unitInfo
+ * @param   nodeInfo
  * @param   size
  * @return  On success, 0
  *          On failure, non zero value
  */
-int invt_read_node_info(char *pUuid, NodeInfo *unitInfo, uint16_t *size);
+int invt_read_node_info(char *pUuid, NodeInfo *nodeInfo, uint16_t *size);
 
 /**
  * @fn      int invt_read_user_calib(char*, void*, uint16_t*)
@@ -760,9 +760,9 @@ void invt_print_node_cfg(NodeCfg *p_ucfg, uint8_t count);
  * @fn      void invt_print_node_info(NodeInfo*)
  * @brief   Logs the unit info
  *
- * @param   unitInfo
+ * @param   nodeInfo
  */
-void invt_print_node_info(NodeInfo *unitInfo);
+void invt_print_node_info(NodeInfo *nodeInfo);
 
 /**
  * @fn      void invt_deserialize_devices*(const char*, int, DeviceClass, int*)

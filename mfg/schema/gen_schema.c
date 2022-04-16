@@ -199,13 +199,13 @@ char* read_uuid_for_module_name(const char* name) {
 /* Update Unit config */
 int  update_unit_config( const JsonObj **obj) {
     int ret = -1;
-   const JsonObj *unitCfgObj = *obj;
+   const JsonObj *nodeCfgObj = *obj;
 
     /* unit config is supposed to be an array of modules */
-    if (json_is_array(unitCfgObj)) {
+    if (json_is_array(nodeCfgObj)) {
         JsonObj *module = NULL;
         int iter = 0;
-        json_array_foreach(unitCfgObj, iter, module) {
+        json_array_foreach(nodeCfgObj, iter, module) {
             ret = -1;
             JsonObj *jName = json_object_get(module, JTAG_NAME);
             if (jName) {

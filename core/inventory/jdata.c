@@ -103,7 +103,7 @@ void *jdata_fetch_node_info(char *puuid, uint16_t *size) {
     uint16_t sz = sizeof(NodeInfo);
     NodeInfo *info = usys_zmalloc(sz);
     if (info) {
-        usys_memcpy(info, &sschema->unitInfo, sz);
+        usys_memcpy(info, &sschema->nodeInfo, sz);
         *size = sz;
         usys_log_debug(
             "Reading Mfg data Unit Info with %d bytes for Module UUID %s.",
@@ -127,12 +127,12 @@ void *jdata_fetch_node_cfg(char *puuid, uint16_t *size, uint8_t count) {
     int sz = sizeof(NodeCfg) * count;
     NodeCfg *cfg = usys_zmalloc(sz);
     if (cfg) {
-        usys_memcpy(cfg, &sschema->unitCfg[0], sz);
+        usys_memcpy(cfg, &sschema->nodeCfg[0], sz);
         /* Overwrite EEPROM CFG for each Module */
         for (int iter = 0; iter < count; iter++) {
             DevI2cCfg *iCfg = usys_zmalloc(sizeof(DevI2cCfg));
             if (iCfg) {
-                usys_memcpy(iCfg, sschema->unitCfg[iter].eepromCfg,
+                usys_memcpy(iCfg, sschema->nodeCfg[iter].eepromCfg,
                             sizeof(DevI2cCfg));
             }
             cfg[iter].eepromCfg = iCfg;
