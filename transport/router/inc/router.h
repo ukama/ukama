@@ -11,16 +11,25 @@
 #define ROUTER_H
 
 #include <uuid/uuid.h>
+#include <ulfius.h>
 
-#include "router.h"
+#define EP_ROUTE   "/route"
+#define EP_STATS   "/stats"
+#define EP_SERVICE "/service"
 
-#define EP_ROUTE "/route"
-#define EP_STATS "/stats"
+#define FALSE   0
+#define TRUE    1
+#define UUID    2
+#define ERROR   3
 
-#define FALSE 0
-#define TRUE  1
-#define UUID  2
-#define ERROR 3
+#define MAX_LEN 1024
+
+#define UKAMA_ERROR_NONE           1
+#define UKAMA_ERROR_INVALID_DEST   2
+#define UKAMA_ERROR_BAD_DEST       3
+
+typedef struct _u_request  req_t;
+typedef struct _u_response resp_t;
 
 typedef struct {
 

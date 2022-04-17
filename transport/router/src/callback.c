@@ -137,6 +137,13 @@ int callback_post_route(const struct _u_request *request,
     deserialize_post_route_request(&service, jreq);
   }
 
+  /* Steps are:
+   * 1. Add to internal structure
+   * 2. Create service connection thread
+   * 3. Connect with the service at the 'forward' ip:port
+   * 4. reply back with uuid.
+   */
+
   if (service) {
     add_service_entry(&router, service);
     serialize_post_route_response(&jResp, UUID, (void *)&service->uuid, NULL);
@@ -170,6 +177,74 @@ int callback_get_stats(const struct _u_request *request,
   ulfius_set_string_body_response(response, 200, response_body);
   o_free(response_body);
   o_free(post_params);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+/*
+ * callback_post_service --
+ *
+ */
+int callback_post_service(const struct _u_request *request,
+			  struct _u_response *response,
+			  void *user_data) {
+
+  int retCode=400, serviceResp;
+  char *params=NULL;
+  Router *router=NULL;
+  Pattern *requestPattern = NULL;
+  Forward *requestForward = NULL;
+  struct _u_request  *fRequest;
+
+  router = (Router *)user_data;
+
+  log_request(request);
+
+  /* Steps are:
+   * 1. parse the header for requested param
+   * 2. pattern matches against the existing registered services
+   * 3. setup request to forward
+   * 4. open connection to the service, forward request and recv respone
+   * 5. forward service response to client
+   */
+
+  /* Step-1: Parse the requested pattern from the header */
+  if (!parse_request_params(request->map_url, &requestPattern)) {
+
+  }
+
+  /* Step-2: Pattern match to a service (if any)*/
+  if (!find_matching_service(router, requestPattern, &requestForward)) {
+    params = print_map(request->map_url);
+    log_error("No matching service found for pattern: %s", params);
+
+  }
+
+  /* Quick test connection */
+  if (!valid_forward_route(requestForward->ip, requestForward->port)) {
+
+  }
+
+  /* Step-3: setup request to forward */
+  fRequest = create_forward_request(requestForward, requestPattern, request);
+  if (fRequest == NULL) {
+    log_error("Internal error. Unable to create forward request");
+    retCode=500;
+
+  }
+
+  /* Step-4: setup connection to the service */
+  ulfius_init_response(response);
+  serviceResp = ulfius_send_http_request(fRequest, response);
+  if (serviceResp != U_OK) {
+    log_error("Service response error: %d", serviceResp);
+
+  }
+
+  /* Step-5: forward response to the client */
+  ulfius_set_binary_body_response(response, response->status,
+				  (void *)response->binary_body,
+				  response->binary_body_length);
 
   return U_CALLBACK_CONTINUE;
 }
