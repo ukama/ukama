@@ -20,6 +20,9 @@
 #include "callback.h"
 #include "jserdes.h"
 #include "log.h"
+#include "httpStatus.h"
+#include "pattern.h"
+#include "forward.h"
 
 /*
  * decode a u_map into a string
@@ -94,6 +97,70 @@ static int add_service_entry(Router **router, Service *service) {
   ptr->next    = NULL;
 
   return TRUE;
+}
+
+/*
+ * parse_request_params --
+ *
+ */
+static int parse_request_params(struct _u_map * map, Pattern **pattern) {
+
+  const char **keys, *value;
+  int count, i;
+  Pattern *ptr=NULL;
+
+  if (map == NULL) return FALSE;
+
+  count = u_map_count(map);
+
+  if (count == 0) {
+    log_error("No key-value pair in the header");
+    return FALSE;
+  }
+
+  if (*pattern == NULL) {
+    *pattern = (Pattern *)calloc(1, sizeof(Pattern));
+    if (*pattern == NULL) {
+      log_error("Error allocating memory of size: %d", sizeof(Pattern));
+      return FALSE;
+    }
+  }
+
+  ptr = *pattern;
+
+  keys = u_map_enum_keys(map);
+  for (i=0; keys[i] != NULL; i++) {
+    value = u_map_get(map, keys[i]);
+
+    if (ptr == NULL) {
+      ptr = (Pattern *)calloc(1, sizeof(Pattern));
+      if (ptr == NULL) {
+	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	goto failure;
+      }
+    }
+
+    ptr->key   = strdup(keys[i]);
+    ptr->value = strdup(value);
+
+    ptr = ptr->next;
+  }
+
+  return TRUE;
+
+ failure:
+  ptr = *pattern;
+  while (ptr) {
+    if (ptr->key)   free(ptr->key);
+    if (ptr->value) free(ptr->value);
+
+    ptr = ptr->next;
+  }
+
+  if (*pattern) free(*pattern);
+  *pattern = NULL;
+
+  return FALSE;
 }
 
 /*
@@ -189,11 +256,11 @@ int callback_post_service(const struct _u_request *request,
 			  struct _u_response *response,
 			  void *user_data) {
 
-  int retCode=400, serviceResp;
-  char *params=NULL;
+  int retCode, serviceResp;
+  const char *statusStr=NULL;
   Router *router=NULL;
-  Pattern *requestPattern = NULL;
-  Forward *requestForward = NULL;
+  Pattern *requestPattern=NULL;
+  Forward *requestForward=NULL;
   struct _u_request  *fRequest;
 
   router = (Router *)user_data;
@@ -210,41 +277,58 @@ int callback_post_service(const struct _u_request *request,
 
   /* Step-1: Parse the requested pattern from the header */
   if (!parse_request_params(request->map_url, &requestPattern)) {
-
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
   }
 
   /* Step-2: Pattern match to a service (if any)*/
   if (!find_matching_service(router, requestPattern, &requestForward)) {
-    params = print_map(request->map_url);
-    log_error("No matching service found for pattern: %s", params);
-
+    retCode   = HttpStatus_ServiceUnavailable;
+    statusStr = HttpStatusStr(retCode);
+    log_error("No matching forward service found. %d: %s", retCode, statusStr);
+    goto reply;
   }
 
   /* Quick test connection */
   if (!valid_forward_route(requestForward->ip, requestForward->port)) {
-
+    retCode   = HttpStatus_ServiceUnavailable;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Matching forward service unavailable. %d: %s", retCode,
+	      statusStr);
+    goto reply;
   }
 
   /* Step-3: setup request to forward */
   fRequest = create_forward_request(requestForward, requestPattern, request);
   if (fRequest == NULL) {
-    log_error("Internal error. Unable to create forward request");
-    retCode=500;
-
+    retCode   = HttpStatus_InternalServerError;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Internal routing error. %d: %s", retCode, statusStr);
+    goto reply;
   }
 
   /* Step-4: setup connection to the service */
   ulfius_init_response(response);
   serviceResp = ulfius_send_http_request(fRequest, response);
   if (serviceResp != U_OK) {
-    log_error("Service response error: %d", serviceResp);
-
+    retCode   = response->status;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Service response error: %d retCode: %d", retCode, statusStr);
   }
 
-  /* Step-5: forward response to the client */
-  ulfius_set_binary_body_response(response, response->status,
+  retCode = response->status;
+
+ reply:
+  /* Step-5: response back to client */
+  if (statusStr) {
+    ulfius_set_string_body_response(response, retCode, statusStr);
+  } else {
+    ulfius_set_binary_body_response(response, retCode,
 				  (void *)response->binary_body,
 				  response->binary_body_length);
+  }
 
   return U_CALLBACK_CONTINUE;
 }
