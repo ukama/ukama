@@ -179,6 +179,37 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
 }
 
 /*
+ * free_service --
+ *
+ */
+static void free_service(Service *service) {
+
+  Pattern *ptr=NULL, *tmp=NULL;
+  Forward *fPtr=NULL;
+
+  if (service == NULL) return;
+
+  ptr  = service->pattern;
+  fPtr = service->forward;
+
+  if (fPtr) {
+    if (fPtr->ip)   free(fPtr->ip);
+    if (fPtr->port) free(fPtr->port);
+    free(fPtr);
+  }
+
+  while (ptr) {
+    if (ptr->key)   free(ptr->key);
+    if (ptr->value) free(ptr->value);
+    tmp = ptr->next;
+    free(ptr);
+    ptr = tmp;
+  }
+
+  free(service);
+}
+
+/*
  * callback_get_route --
  *
  */
@@ -199,13 +230,14 @@ int callback_post_route(const struct _u_request *request,
 			struct _u_response *response,
 			void *user_data) {
 
-  int retCode=400;
+  int retCode;
   json_t *jreq=NULL;
   json_error_t jerr;
   Service *service=NULL;
   Router *router=NULL;
   json_t *jResp=NULL;
   char *jRespStr=NULL;
+  const char *statusStr=NULL;
 
   router = (Router *)user_data;
 
@@ -215,36 +247,54 @@ int callback_post_route(const struct _u_request *request,
   jreq = ulfius_get_json_body_request(request, &jerr);
   if (!jreq) {
     log_error("json error for POST %s: %s", EP_ROUTE, jerr.text);
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
   } else {
     deserialize_post_route_request(&service, jreq);
   }
 
   log_json_params(jreq, "request");
 
-  /* Steps are:
-   * 1. Add to internal structure
-   * 2. Create service connection thread
-   * 3. Connect with the service at the 'forward' ip:port
-   * 4. reply back with uuid.
-   */
-
-  if (service) {
-    add_service_entry(&router, service);
-    serialize_post_route_response(&jResp, UUID, (void *)&service->uuid, NULL);
-    retCode=200;
-  } else {
-    serialize_post_route_response(&jResp, ERROR, NULL, "Invalid request");
-    retCode=400;
+  if (!service) {
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    goto reply;
   }
 
-  /* response back */
-  jRespStr = json_dumps(jResp, 0);
-  ulfius_set_string_body_response(response, retCode, jRespStr);
+  /* Validate the connection with forward service */
+  if (valid_forward_route(service->forward->ip,
+			  service->forward->port) != TRUE) {
+    retCode   = HttpStatus_ServiceUnavailable;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Matching forward service unavailable. %d: %s", retCode,
+	      statusStr);
+    goto reply;
+  }
 
-  if (jRespStr) free(jRespStr);
+  /* Add to internal structure. UUID is assigned. */
+  add_service_entry(&router, service);
+
+  /* Reply back with uuid */
+  serialize_post_route_response(&jResp, UUID, (void *)&(service->uuid), NULL);
+  retCode   = HttpStatus_OK;
+  jRespStr  = json_dumps(jResp, 0);
+  statusStr = jRespStr;
+
+ reply:
+  ulfius_set_string_body_response(response, retCode, statusStr);
+
+  log_debug("Registration response: %d %s", retCode, statusStr);
+
+  if (retCode == HttpStatus_OK) free(jRespStr);
+
+  if (retCode != HttpStatus_OK) {
+    free_service(service);
+  }
+
   json_decref(jResp);
-
-  log_json_params(jResp, "response");
+  json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -311,7 +361,7 @@ int callback_post_service(const struct _u_request *request,
   }
 
   /* Quick test connection */
-  if (!valid_forward_route(requestForward->ip, requestForward->port)) {
+  if (valid_forward_route(requestForward->ip, requestForward->port) != TRUE) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("Matching forward service unavailable. %d: %s", retCode,
