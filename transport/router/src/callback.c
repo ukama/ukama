@@ -72,6 +72,21 @@ static void log_request(const struct _u_request *request) {
 }
 
 /*
+ * log_json_params --
+ *
+ */
+static void log_json_params(json_t *json, char *type) {
+
+  char *str = NULL;
+
+  str = json_dumps(json, 0);
+  if (str) {
+    log_debug("JSON %s str: %s", type, str);
+    free(str);
+  }
+}
+
+/*
  * add_service_entry --
  *
  */
@@ -204,6 +219,8 @@ int callback_post_route(const struct _u_request *request,
     deserialize_post_route_request(&service, jreq);
   }
 
+  log_json_params(jreq, "request");
+
   /* Steps are:
    * 1. Add to internal structure
    * 2. Create service connection thread
@@ -226,6 +243,8 @@ int callback_post_route(const struct _u_request *request,
 
   if (jRespStr) free(jRespStr);
   json_decref(jResp);
+
+  log_json_params(jResp, "response");
 
   return U_CALLBACK_CONTINUE;
 }
