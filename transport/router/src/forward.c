@@ -23,8 +23,8 @@
  * create_forward_request --
  *
  */
-
-req_t *init_forward_request(char *host, char *port, char *method, char *ep) {
+static req_t *init_forward_request(char *host, char *port, char *method,
+				   char *ep) {
 
   req_t* req = NULL;
   char url[MAX_LEN] = {0};
@@ -62,7 +62,7 @@ req_t *init_forward_request(char *host, char *port, char *method, char *ep) {
  * add_url_parameters --
  *
  */
-int add_url_parameters(req_t *req, Pattern *reqPattern) {
+static int add_url_parameters(req_t *req, Pattern *reqPattern) {
 
   Pattern *ptr=NULL;
 
