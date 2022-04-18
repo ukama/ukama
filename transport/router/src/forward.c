@@ -132,6 +132,7 @@ int valid_forward_route(char *host, char *port) {
     sprintf(url, "http://%s:%s", host, port);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L); /* 2 second timeout */
 
     response = curl_easy_perform(curl);
 
