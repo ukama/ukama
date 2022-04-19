@@ -71,7 +71,7 @@ const Home = () => {
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
-    const [node, setNode] = useState<any>();
+    // const [node, setNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -383,13 +383,13 @@ const Home = () => {
     const handleNodeActions = (id: string, type: string) => {
         if (type == "edit") {
             setIsEditNode(true);
-            nodeRes?.getNodesByOrg.nodes
-                .filter(node => node.id == id)
-                .map(filteredNode => {
-                    if (filteredNode) {
-                        setNode({ ...filteredNode, orgId });
-                    }
-                });
+            // nodeRes?.getNodesByOrg.nodes
+            //     .filter(node => node.id == id)
+            //     .map(filteredNode => {
+            //         if (filteredNode) {
+            //             setNode({ ...filteredNode, orgId });
+            //         }
+            //     });
         }
     };
     const handleAddNode = () => {

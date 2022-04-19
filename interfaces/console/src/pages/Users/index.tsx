@@ -8,6 +8,7 @@ import {
 import {
     GetUserDto,
     GetUsersDto,
+    useAddUserMutation,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
     useUpdateUserMutation,
@@ -61,8 +62,7 @@ const User = () => {
         },
     });
 
-    const [updateUserStatus, { loading: useUpdateUserLoading }] =
-        useUpdateUserStatusMutation();
+    const [updateUserStatus] = useUpdateUserStatusMutation();
 
     const handleSimDialogClose = () => setShowSimDialog(false);
 
@@ -129,7 +129,7 @@ const User = () => {
                 variables: {
                     data: {
                         email: selectedUser?.email || "",
-                        // name: selectedUser?.name,
+                        name: selectedUser?.name,
                         phone: selectedUser?.phone || "",
                         id: selectedUser?.id,
                     },
@@ -253,6 +253,3 @@ const User = () => {
 };
 
 export default User;
-function useAddUserMutation(): [any, { loading: any; data: any; error: any }] {
-    throw new Error("Function not implemented.");
-}
