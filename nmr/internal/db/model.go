@@ -12,7 +12,7 @@ type MfgStatus string
 
 const (
 	StatusUnkown                      MfgStatus = ""
-	StatusLabelGenrated               MfgStatus = "StatusLabelGenrated"
+	StatusLabelGenerated              MfgStatus = "StatusLabelGenerated"
 	StatusModuleTest                  MfgStatus = "StatusModuleTest"
 	StatusModuleTestPass              MfgStatus = "StatusModuleTestPass"
 	StatusModuleTestFailure           MfgStatus = "StatusModuleTestFailure"
@@ -32,7 +32,7 @@ const (
 	StatusIntransitToWareHouse        MfgStatus = "StatusIntransitToWareHouse"
 	StatusNodeAllocated               MfgStatus = "StatusNodeAllocated"
 	StatusNodeWaitngForShipment       MfgStatus = "StatusNodeWaitngForShipment"
-	StatusNodeIntransit               MfgStatus = "StateNodeIntransit"
+	StatusNodeIntransit               MfgStatus = "StatusNodeIntransit"
 )
 
 type MfgTestStatus string
@@ -117,7 +117,7 @@ func MfgTestState(s string) (*MfgTestStatus, error) {
 func MfgState(s string) (*MfgStatus, error) {
 
 	mfgStatus := map[MfgStatus]struct{}{
-		StatusLabelGenrated:               {},
+		StatusLabelGenerated:              {},
 		StatusModuleTest:                  {},
 		StatusModuleTestPass:              {},
 		StatusModuleTestFailure:           {},
