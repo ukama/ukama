@@ -80,10 +80,9 @@ int callback_post(const req_t *request, resp_t *response, void *user_data) {
   char *str;
 
   print_request(request);
-  str = strdup("{ \"test\":\"Server_Response_OK!\"}");
+  str = (char *)user_data;
 
   ulfius_set_string_body_response(response, 200, str);
-  free(str);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -129,6 +128,8 @@ int service_register(char *rIP, char *rPort, char *ip, char *port,
     fprintf(stderr, "error buffer: %s \n", errBuffer);
     fprintf(stderr, "curl error: %s \n", curl_easy_strerror(res));
     goto cleanup;
+  } else {
+    fprintf(stdout, "\nRegistration success. Status: %d \n", res);
   }
 
   ret = TRUE;
@@ -142,24 +143,26 @@ int service_register(char *rIP, char *rPort, char *ip, char *port,
 
 int callback_default(const req_t *request, resp_t *response, void *user_data) {
 
+  print_request(request);
+
   ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
   return U_CALLBACK_CONTINUE;
 }
 
 /*
  * Usage example:
- * ./mock_service 127.0.0.1 4444 4445 /service "{ \"key1\" : \"value1\", \"key2\" : \"value2\"}"
+ * ./mock_service 127.0.0.1 4444 4445 "hello" "{ \"key1\" : \"value1\", \"key2\" : \"value2\"}"
  *
  */
 int main(int argc, char **argv) {
 
-  char *kvPattern, *path;
+  char *kvPattern, *reply;
   char *rHost;
   char *port, *rPort;
   struct _u_instance inst;
 
   if (argc<6) {
-    fprintf(stderr, "USAGE: %s router_host router_port port path kv_pattern\n",
+    fprintf(stderr, "USAGE: %s router_host router_port port reply kv_pattern\n",
 	    argv[0]);
     return 0;
   }
@@ -168,7 +171,7 @@ int main(int argc, char **argv) {
   rHost     = strdup(argv[1]);
   rPort     = strdup(argv[2]);
   port      = strdup(argv[3]);
-  path      = strdup(argv[4]);
+  reply     = strdup(argv[4]);
   kvPattern = strdup(argv[5]);
 
   /* Initialize ulfius framework. */
@@ -178,26 +181,26 @@ int main(int argc, char **argv) {
   }
 
   /* Endpoint list declaration for service. */
-  ulfius_add_endpoint_by_val(&inst, "POST", path, NULL, 0,
-                             &callback_post, NULL);
+  ulfius_add_endpoint_by_val(&inst, "POST", "/service", NULL, 0,
+                             &callback_post, (void *)reply);
 
   /* setup default. */
   ulfius_set_default_endpoint(&inst, &callback_default, NULL);
 
-  /* register the service to the router */
-  service_register(rHost, rPort, "127.0.0.1", port, kvPattern);
-
   /* Start the framework */
   if (ulfius_start_framework(&inst) == U_OK) {
     fprintf(stdout, "Web service started on port %d\n", inst.port);
-    fprintf(stdout, "Press any key to exit ... \n");
-    getchar();
-  }
-  else {
-    fprintf(stderr, "Error starting framework\n");
+  } else {
+    fprintf(stderr, "Error starting web framework\n");
   }
 
-  fprintf(stdout, "End framework\n");
+  /* register the service to the router */
+  service_register(rHost, rPort, "127.0.0.1", port, kvPattern);
+
+  fprintf(stdout, "Press any key to exit ... \n");
+  getchar();
+
+  fprintf(stdout, "End service\n");
 
   ulfius_stop_framework(&inst);
   ulfius_clean_instance(&inst);

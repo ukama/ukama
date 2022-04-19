@@ -26,7 +26,7 @@
 static req_t *init_forward_request(char *host, char *port, char *method,
 				   char *ep) {
 
-  req_t* req = NULL;
+  req_t *req = NULL;
   char url[MAX_LEN] = {0};
 
   req = (req_t *)calloc(1, sizeof(req_t));
@@ -35,20 +35,17 @@ static req_t *init_forward_request(char *host, char *port, char *method,
     return NULL;
   }
 
-  sprintf(url, "http://%s:%s/", host, port);
+  sprintf(url, "http://%s:%s/%s", host, port, EP_SERVICE);
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;
   }
 
-  if (ulfius_set_request_properties(req,
-				    U_OPT_HTTP_VERB, method,
-				    U_OPT_HTTP_URL, url,
-				    U_OPT_HTTP_URL_APPEND, ep,
-				    U_OPT_TIMEOUT, 20) != U_OK) {
-    goto failure;
-  }
-
+  ulfius_set_request_properties(req,
+				U_OPT_HTTP_VERB, method,
+				U_OPT_HTTP_URL, url,
+				U_OPT_HTTP_URL_APPEND, ep,
+				U_OPT_TIMEOUT, 20);
   return req;
 
  failure:
@@ -62,19 +59,15 @@ static req_t *init_forward_request(char *host, char *port, char *method,
  * add_url_parameters --
  *
  */
-static int add_url_parameters(req_t *req, Pattern *reqPattern) {
+static void add_url_parameters(req_t *req, Pattern *reqPattern) {
 
   Pattern *ptr=NULL;
 
   for (ptr=reqPattern; ptr; ptr=ptr->next) {
-    if (ulfius_set_request_properties(req,
-				      U_OPT_URL_PARAMETER,
-				      ptr->key, ptr->value) != U_OK) {
-      return FALSE;
-    }
+    ulfius_set_request_properties(req,
+				  U_OPT_URL_PARAMETER,
+				  ptr->key, ptr->value);
   }
-
-  return TRUE;
 }
 
 /*
@@ -82,24 +75,20 @@ static int add_url_parameters(req_t *req, Pattern *reqPattern) {
  *
  */
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      req_t *request) {
+			      const req_t *request) {
 
   req_t *fRequest=NULL;
 
   /* Initialize the forward request */
   fRequest = init_forward_request(forward->ip, forward->port,
 				  request->http_verb, EP_SERVICE);
-  if (fRequest) {
+  if (!fRequest) {
     log_error("Error init forward request");
     return NULL;
   }
 
   /* Add any parameter (key/value) to URL header */
-  if (add_url_parameters(fRequest, reqPattern) == FALSE) {
-    log_error("Error adding key-value parameters to forward request header");
-    ulfius_clean_request(fRequest);
-    return NULL;
-  }
+  add_url_parameters(fRequest, reqPattern);
 
   /* Add any JSON data etc. */
 

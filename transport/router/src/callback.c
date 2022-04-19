@@ -95,18 +95,25 @@ static int add_service_entry(Router **router, Service *service) {
   Service *ptr=NULL;
 
   if ((*router)->services == NULL) {
+    (*router)->services = (Service *)calloc(1, sizeof(Service));
+    if ((*router)->services == NULL) {
+      log_error("Error allocating memory of size: %lu", sizeof(Service));
+      return FALSE;
+    }
     ptr = (*router)->services;
   } else {
     for (ptr=(*router)->services; ptr->next; ptr=ptr->next);
+    ptr->next = (Service *)calloc(1, sizeof(Service));
+    if (ptr->next == NULL) {
+      log_error("Error allocating memory of size: %lu", sizeof(Service));
+      return FALSE;
+    }
+    ptr = ptr->next;
   }
 
-  ptr = (Service *)calloc(1, sizeof(Service));
-  if (ptr == NULL) {
-    log_error("Error allocating memory of size: %lu", sizeof(Service));
-    return FALSE;
-  }
+  uuid_generate(service->uuid);
 
-  uuid_generate(ptr->uuid);
+  uuid_copy(ptr->uuid, service->uuid);
   ptr->pattern = service->pattern;
   ptr->forward = service->forward;
   ptr->next    = NULL;
@@ -330,7 +337,8 @@ int callback_post_service(const struct _u_request *request,
   Router *router=NULL;
   Pattern *requestPattern=NULL;
   Forward *requestForward=NULL;
-  struct _u_request  *fRequest;
+  struct _u_request  *fRequest=NULL;
+  struct _u_response *fResponse=NULL;
 
   router = (Router *)user_data;
 
@@ -350,6 +358,8 @@ int callback_post_service(const struct _u_request *request,
     statusStr = HttpStatusStr(retCode);
     log_error("%d: %s", retCode, statusStr);
     goto reply;
+  } else {
+    log_debug("Recevied forward request: %s", print_map(request->map_url));
   }
 
   /* Step-2: Pattern match to a service (if any)*/
@@ -358,6 +368,9 @@ int callback_post_service(const struct _u_request *request,
     statusStr = HttpStatusStr(retCode);
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
     goto reply;
+  } else {
+    log_debug("Matching service found at IP: %s port: %s",
+	      requestForward->ip, requestForward->port);
   }
 
   /* Quick test connection */
@@ -367,6 +380,9 @@ int callback_post_service(const struct _u_request *request,
     log_error("Matching forward service unavailable. %d: %s", retCode,
 	      statusStr);
     goto reply;
+  } else {
+    log_debug("Connection Test OK. Service available at ip: %s port: %s",
+	      requestForward->ip, requestForward->port);
   }
 
   /* Step-3: setup request to forward */
@@ -376,18 +392,23 @@ int callback_post_service(const struct _u_request *request,
     statusStr = HttpStatusStr(retCode);
     log_error("Internal routing error. %d: %s", retCode, statusStr);
     goto reply;
+  } else {
+    log_debug("Forward request sucessfully created");
   }
 
   /* Step-4: setup connection to the service */
-  ulfius_init_response(response);
-  serviceResp = ulfius_send_http_request(fRequest, response);
+  fResponse = (struct _u_response *)malloc(sizeof(struct _u_response));
+  ulfius_init_response(fResponse);
+  serviceResp = ulfius_send_http_request(fRequest, fResponse);
   if (serviceResp != U_OK) {
-    retCode   = response->status;
+    retCode   = fResponse->status;
     statusStr = HttpStatusStr(retCode);
     log_error("Service response error: %d retCode: %d", retCode, statusStr);
+  } else {
+    log_debug("Request Forward to the service");
   }
 
-  retCode = response->status;
+  retCode = fResponse->status;
 
  reply:
   /* Step-5: response back to client */
@@ -395,9 +416,12 @@ int callback_post_service(const struct _u_request *request,
     ulfius_set_string_body_response(response, retCode, statusStr);
   } else {
     ulfius_set_binary_body_response(response, retCode,
-				  (void *)response->binary_body,
-				  response->binary_body_length);
+				  (void *)fResponse->binary_body,
+				  fResponse->binary_body_length);
   }
+
+  ulfius_clean_response(fResponse);
+  free(fResponse);
 
   return U_CALLBACK_CONTINUE;
 }
