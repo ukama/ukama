@@ -31,6 +31,7 @@ import {
     useGetNodesByOrgQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
+    useAddNodeMutation,
     useGetConnectedUsersQuery,
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
@@ -41,13 +42,19 @@ import {
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
+    useUpdateNodeMutation,
 } from "../../generated";
 import { TMetric } from "../../types";
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { isFirstVisit, isSkeltonLoading, user } from "../../recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import {
+    isFirstVisit,
+    isSkeltonLoading,
+    user,
+    snackbarMessage,
+} from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
 
@@ -59,19 +66,41 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
-    const [isAddNode, setIsAddNode] = useState(false);
+    const [isAddNode, setIsAddNode] = useState<boolean>(false);
+    const [isEditNode, setIsEditNode] = useState<boolean>(false);
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
+    const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
+    const [node, setNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        temperaturetrx: null,
+        uptime: null,
     });
-
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
-    const handleAddNodeClose = () => setIsAddNode(() => false);
+    const [
+        registerNode,
+        {
+            loading: registerNodeLoading,
+            data: registerNodeRes,
+            error: addNodError,
+        },
+    ] = useAddNodeMutation();
+    const [
+        updateNode,
+        {
+            loading: updateNodeLoading,
+            data: updateNodeRes,
+            error: updateNodError,
+        },
+    ] = useUpdateNodeMutation();
+
+    const handleAddNodeClose = () => {
+        setIsEditNode(() => false);
+        setIsAddNode(() => false);
+    };
     const {
         data: connectedUserRes,
         loading: connectedUserloading,
@@ -102,15 +131,12 @@ const Home = () => {
         },
     });
 
-    const {
-        data: residentsRes,
-        loading: residentsloading,
-        refetch: refetchUser,
-    } = useGetUsersByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-    });
+    const { data: residentsRes, loading: residentsloading } =
+        useGetUsersByOrgQuery({
+            variables: {
+                orgId: orgId,
+            },
+        });
 
     const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
         variables: {
@@ -139,7 +165,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    uptime: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -155,7 +181,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                temperaturetrx: null,
+                uptime: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -169,7 +195,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    uptime: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -351,7 +377,10 @@ const Home = () => {
         }
     };
 
-    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
+    const handleUserActivateClose = () => {
+        setIsUserActivateOpen(() => false);
+        setIsEditNode(() => false);
+    };
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
             deactivateUser({
@@ -359,32 +388,97 @@ const Home = () => {
                     id,
                 },
             });
-
-            refetchUser();
         }
     };
 
-    // eslint-disable-next-line no-unused-vars
     const handleNodeActions = (id: string, type: string) => {
-        /* TODO: Handle Node Action */
+        if (type == "edit") {
+            setIsEditNode(true);
+            nodeRes?.getNodesByOrg.nodes
+                .filter(node => node.id == id)
+                .map(filteredNode => {
+                    if (filteredNode) {
+                        setNode({ ...filteredNode, orgId });
+                    }
+                });
+        }
     };
-
-    // eslint-disable-next-line no-unused-vars
-    const handleAddNode = (value: any) => {
+    const handleAddNode = () => {
         setIsAddNode(true);
     };
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-    const handleActivationSubmit = () => {
-        /* Handle submit activation action */
+    const handleActivationSubmit = (registerNodeData: any) => {
+        let data = {
+            ...registerNodeData,
+            orgId: orgId,
+        };
+        if (registerNodeData.length > 0) {
+            registerNode({
+                variables: {
+                    data,
+                },
+            });
+            setIsAddNode(() => registerNodeLoading);
+        }
     };
+    useEffect(() => {
+        if (registerNodeRes) {
+            setRegisterNodeNotification({
+                id: "addNodeNotification",
+                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [registerNodeRes]);
+    useEffect(() => {
+        if (updateNodeRes) {
+            setRegisterNodeNotification({
+                id: "UpdateNodeNotification",
+                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [updateNodeRes]);
+    useEffect(() => {
+        if (updateNodError) {
+            setRegisterNodeNotification({
+                id: "UpdateNodeErrorNotification",
+                message: `${updateNodError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [updateNodError]);
+    useEffect(() => {
+        if (addNodError) {
+            setRegisterNodeNotification({
+                id: "AddNodeErrorNotification",
+                message: `${addNodError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [addNodError]);
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
+    };
+    const handleEditNodeUpdate = (data: any) => {
+        if (data.length > 0) {
+            updateNode({
+                variables: {
+                    data,
+                },
+            });
+            setIsEditNode(() => updateNodeLoading);
+        }
     };
 
     const handleCloseWelcome = () => {
@@ -393,10 +487,9 @@ const Home = () => {
             setIsWelcomeDialog(false);
         }
     };
-
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
-            <Grid container spacing={{ xs: 3 }}>
+            <Grid container spacing={3}>
                 <Grid xs={12} item>
                     <NetworkStatus
                         handleAddNode={handleAddNode}
@@ -413,9 +506,10 @@ const Home = () => {
                         Icon={UsersWithBG}
                         title={"Connected Users"}
                         options={TIME_FILTER}
-                        subtitle1={`${
-                            connectedUserRes?.getConnectedUsers?.totalUser || 0
-                        }`}
+                        subtitle1={
+                            connectedUserRes?.getConnectedUsers?.totalUser ||
+                            "0"
+                        }
                         subtitle2={""}
                         option={getStatus("statusUser")}
                         loading={connectedUserloading || isSkeltonLoad}
@@ -546,6 +640,7 @@ const Home = () => {
                     handleClose={handleUserActivateClose}
                 />
             )}
+
             {isAddNode && (
                 <ActivationDialog
                     isOpen={isAddNode}
@@ -555,6 +650,17 @@ const Home = () => {
                     subTitle={
                         "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                     }
+                />
+            )}
+            {isEditNode && (
+                <ActivationDialog
+                    action={"editNode"}
+                    nodeData={node}
+                    isOpen={isEditNode}
+                    dialogTitle={"Edit Node"}
+                    handleClose={handleUserActivateClose}
+                    handleActivationSubmit={handleEditNodeUpdate}
+                    subTitle={""}
                 />
             )}
         </Box>

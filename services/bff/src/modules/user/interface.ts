@@ -7,7 +7,7 @@ import {
     ActivateUserDto,
     ActivateUserResponse,
     AddUserDto,
-    AddUserResponse,
+    UserResDto,
     AddUserServiceRes,
     ConnectedUserDto,
     DeactivateResponse,
@@ -16,13 +16,13 @@ import {
     GetUserResponse,
     GetUserResponseDto,
     GetUsersDto,
+    OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
     ResidentResponse,
     ResidentsResponse,
     UpdateUserDto,
     UserInput,
-    UserResponse,
 } from "./types";
 
 export interface IUserService {
@@ -31,7 +31,11 @@ export interface IUserService {
         header: HeaderType
     ): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
-    updateUser(req: UpdateUserDto): Promise<UserResponse>;
+    updateUser(
+        orgId: string,
+        req: UpdateUserDto,
+        header: HeaderType
+    ): Promise<UpdateUserDto>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
     getUser(data: UserInput, header: HeaderType): Promise<GetUserDto>;
     getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
@@ -41,7 +45,7 @@ export interface IUserService {
         orgId: string,
         req: AddUserDto,
         header: HeaderType
-    ): Promise<AddUserResponse | null>;
+    ): Promise<UserResDto | null>;
     deleteUser(
         orgId: string,
         userId: string,
@@ -50,10 +54,11 @@ export interface IUserService {
 }
 
 export interface IUserMapper {
-    dtoToAddUserDto(res: AddUserServiceRes): AddUserResponse | null;
+    dtoToAddUserDto(res: AddUserServiceRes): UserResDto | null;
     connectedUsersDtoToDto(res: MetricServiceRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];
     dtoToUserDto(req: OrgUserResponse): GetUserDto;
+    dtoToUserResDto(req: OrgUserDto): UserResDto;
 }

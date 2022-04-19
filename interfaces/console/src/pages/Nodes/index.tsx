@@ -162,11 +162,6 @@ const Nodes = () => {
                             name: element.name,
                             data: [...(metric.data || []), ...element.data],
                         };
-                    } else {
-                        _m[element.type] = {
-                            name: element.name,
-                            data: [],
-                        };
                     }
                 }
                 const filter = Object.fromEntries(
