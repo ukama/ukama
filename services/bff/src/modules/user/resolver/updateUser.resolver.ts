@@ -1,6 +1,6 @@
 import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
-import { UpdateUserDto, UserResDto } from "../types";
+import { UserInputDto, UserResDto } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
@@ -14,9 +14,10 @@ export class UpdateUserResolver {
     @Mutation(() => UserResDto)
     @UseMiddleware(Authentication)
     async updateUser(
-        @Arg("data") data: UpdateUserDto,
+        @Arg("userId") userId: string,
+        @Arg("data") data: UserInputDto,
         @Ctx() ctx: Context
     ): Promise<UserResDto | null> {
-        return this.userService.updateUser(data, parseCookie(ctx));
+        return this.userService.updateUser(userId, data, parseCookie(ctx));
     }
 }

@@ -59,11 +59,6 @@ export type AddNodeResponse = {
   type: Node_Type;
 };
 
-export type AddUserDto = {
-  email: Scalars['String'];
-  name: Scalars['String'];
-};
-
 export type AddUserServiceRes = {
   __typename?: 'AddUserServiceRes';
   iccid: Scalars['String'];
@@ -236,11 +231,11 @@ export type GetUserDto = {
   dataPlan: Scalars['Float'];
   dataUsage: Scalars['Float'];
   eSimNumber: Scalars['String'];
-  email?: Maybe<Scalars['String']>;
+  email: Scalars['String'];
   iccid: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
-  phone?: Maybe<Scalars['String']>;
+  phone: Scalars['String'];
   roaming: Scalars['Boolean'];
   status: Scalars['Boolean'];
 };
@@ -351,7 +346,7 @@ export type MutationAddNodeArgs = {
 
 
 export type MutationAddUserArgs = {
-  data: AddUserDto;
+  data: UserInputDto;
 };
 
 
@@ -376,7 +371,8 @@ export type MutationUpdateNodeArgs = {
 
 
 export type MutationUpdateUserArgs = {
-  data: UpdateUserDto;
+  data: UserInputDto;
+  userId: Scalars['String'];
 };
 
 
@@ -656,13 +652,6 @@ export type UpdateNodeDto = {
   nodeId: Scalars['String'];
 };
 
-export type UpdateUserDto = {
-  email: Scalars['String'];
-  id: Scalars['String'];
-  name: Scalars['String'];
-  phone: Scalars['String'];
-};
-
 export type UpdateUserServiceInput = {
   simId: Scalars['String'];
   status: Scalars['Boolean'];
@@ -672,6 +661,12 @@ export type UpdateUserServiceInput = {
 export type UpdateUserServiceRes = {
   __typename?: 'UpdateUserServiceRes';
   success: Scalars['Boolean'];
+};
+
+export type UserInputDto = {
+  email: Scalars['String'];
+  name: Scalars['String'];
+  phone: Scalars['String'];
 };
 
 export type UserResDto = {
@@ -774,7 +769,7 @@ export type GetUserQueryVariables = Exact<{
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email?: string | null, phone?: string | null, roaming: boolean, dataPlan: number, dataUsage: number } };
+export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, phone: string, roaming: boolean, dataPlan: number, dataUsage: number } };
 
 export type GetNetworkQueryVariables = Exact<{
   filter: Network_Type;
@@ -803,14 +798,15 @@ export type ActivateUserMutationVariables = Exact<{
 export type ActivateUserMutation = { __typename?: 'Mutation', activateUser: { __typename?: 'ActivateUserResponse', success: boolean } };
 
 export type AddUserMutationVariables = Exact<{
-  data: AddUserDto;
+  data: UserInputDto;
 }>;
 
 
 export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, phone: string, id: string } };
 
 export type UpdateUserMutationVariables = Exact<{
-  data: UpdateUserDto;
+  userId: Scalars['String'];
+  data: UserInputDto;
 }>;
 
 
@@ -1520,7 +1516,7 @@ export type ActivateUserMutationHookResult = ReturnType<typeof useActivateUserMu
 export type ActivateUserMutationResult = Apollo.MutationResult<ActivateUserMutation>;
 export type ActivateUserMutationOptions = Apollo.BaseMutationOptions<ActivateUserMutation, ActivateUserMutationVariables>;
 export const AddUserDocument = gql`
-    mutation addUser($data: AddUserDto!) {
+    mutation addUser($data: UserInputDto!) {
   addUser(data: $data) {
     name
     email
@@ -1557,8 +1553,8 @@ export type AddUserMutationHookResult = ReturnType<typeof useAddUserMutation>;
 export type AddUserMutationResult = Apollo.MutationResult<AddUserMutation>;
 export type AddUserMutationOptions = Apollo.BaseMutationOptions<AddUserMutation, AddUserMutationVariables>;
 export const UpdateUserDocument = gql`
-    mutation updateUser($data: UpdateUserDto!) {
-  updateUser(data: $data) {
+    mutation updateUser($userId: String!, $data: UserInputDto!) {
+  updateUser(data: $data, userId: $userId) {
     name
     email
     iccid
@@ -1582,6 +1578,7 @@ export type UpdateUserMutationFn = Apollo.MutationFunction<UpdateUserMutation, U
  * @example
  * const [updateUserMutation, { data, loading, error }] = useUpdateUserMutation({
  *   variables: {
+ *      userId: // value for 'userId'
  *      data: // value for 'data'
  *   },
  * });

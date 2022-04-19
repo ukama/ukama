@@ -6,7 +6,6 @@ import {
 import {
     ActivateUserDto,
     ActivateUserResponse,
-    AddUserDto,
     UserResDto,
     AddUserServiceRes,
     ConnectedUserDto,
@@ -19,18 +18,25 @@ import {
     OrgUsersResponse,
     ResidentResponse,
     ResidentsResponse,
-    UpdateUserDto,
+    UserInputDto,
 } from "./types";
 
 export interface IUserService {
     getConnectedUsers(cookie: ParsedCookie): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
-    updateUser(req: UpdateUserDto, cookie: ParsedCookie): Promise<UserResDto>;
+    updateUser(
+        userId: string,
+        req: UserInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserResDto>;
     deactivateUser(id: string): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
     getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;
-    addUser(req: AddUserDto, cookie: ParsedCookie): Promise<UserResDto | null>;
+    addUser(
+        req: UserInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserResDto | null>;
     deleteUser(
         userId: string,
         cookie: ParsedCookie

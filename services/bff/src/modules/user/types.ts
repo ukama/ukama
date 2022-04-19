@@ -40,16 +40,11 @@ export class ActivateUserDto {
 }
 
 @InputType()
-export class UpdateUserDto {
+export class UserInputDto {
     @Field()
-    id: string;
-
-    @Field()
-    @Length(3, 255)
     name: string;
 
     @Field()
-    @IsEmail()
     email: string;
 
     @Field()
@@ -79,11 +74,11 @@ export class GetUserDto {
     @Field()
     iccid: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsPhoneNumber()
     phone: string;
 
@@ -156,17 +151,6 @@ export class DeactivateResponse {
 
     @Field()
     success: boolean;
-}
-
-@InputType()
-export class AddUserDto {
-    @Field()
-    @Length(3, 255)
-    name: string;
-
-    @Field()
-    @IsEmail()
-    email: string;
 }
 
 @ObjectType()

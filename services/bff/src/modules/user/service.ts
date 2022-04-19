@@ -4,9 +4,8 @@ import {
     ConnectedUserDto,
     DeactivateResponse,
     ResidentsResponse,
-    UpdateUserDto,
+    UserInputDto,
     GetUserDto,
-    AddUserDto,
     ActivateUserResponse,
     GetUsersDto,
     UpdateUserServiceInput,
@@ -56,12 +55,13 @@ export class UserService implements IUserService {
     };
 
     updateUser = async (
-        req: UpdateUserDto,
+        userId: string,
+        req: UserInputDto,
         cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${cookie.orgId}/users/${req.id}`,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
             headers: cookie.header,
             body: { name: req.name, email: req.email, phone: req.phone },
         });
@@ -122,7 +122,7 @@ export class UserService implements IUserService {
         return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
-        req: AddUserDto,
+        req: UserInputDto,
         cookie: ParsedCookie
     ): Promise<UserResDto | null> => {
         const res = await catchAsyncIOMethod({

@@ -171,7 +171,7 @@ mutation activateUser($data: ActivateUserDto!) {
         success
     }
 }
-mutation addUser($data: AddUserDto!) {
+mutation addUser($data: UserInputDto!) {
     addUser(data: $data) {
         name
         email
@@ -180,8 +180,8 @@ mutation addUser($data: AddUserDto!) {
         id
     }
 }
-mutation updateUser($data: UpdateUserDto!) {
-    updateUser(data: $data) {
+mutation updateUser($userId: String!, $data: UserInputDto!) {
+    updateUser(data: $data, userId: $userId) {
         name
         email
         iccid

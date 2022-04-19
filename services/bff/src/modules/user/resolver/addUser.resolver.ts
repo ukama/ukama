@@ -1,6 +1,6 @@
 import { Resolver, Arg, Ctx, Mutation, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
-import { AddUserDto, UserResDto } from "../types";
+import { UserInputDto, UserResDto } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
@@ -14,7 +14,7 @@ export class AddUserResolver {
     @Mutation(() => UserResDto)
     @UseMiddleware(Authentication)
     async addUser(
-        @Arg("data") data: AddUserDto,
+        @Arg("data") data: UserInputDto,
         @Ctx() ctx: Context
     ): Promise<UserResDto | null> {
         return this.userService.addUser(data, parseCookie(ctx));

@@ -36,7 +36,10 @@ const userInit = {
 const User = () => {
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const [showSimDialog, setShowSimDialog] = useState(false);
+    const [simDialog, setSimDialog] = useState({
+        isShow: false,
+        type: "add",
+    });
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
     const [
@@ -64,10 +67,55 @@ const User = () => {
 
     const [updateUserStatus] = useUpdateUserStatusMutation();
 
-    const handleSimDialogClose = () => setShowSimDialog(false);
+    useEffect(() => {
+        if (addUserRes) {
+            setUserNotification({
+                id: "addUserNotification",
+                message: `The user has been added successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [addUserRes]);
+
+    useEffect(() => {
+        if (updateUserRes) {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `The user has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [updateUserRes]);
+
+    useEffect(() => {
+        if (addUserError) {
+            setUserNotification({
+                id: "addUserNotification",
+                message: `${addUserError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [addUserError]);
+
+    useEffect(() => {
+        if (updateUserError) {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `${updateUserError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [updateUserError]);
+
+    const handleSimDialogClose = () =>
+        setSimDialog({ ...simDialog, isShow: false });
 
     const onViewMoreClick = (_user: GetUsersDto) => {
-        setShowSimDialog(true);
+        setSimDialog({ isShow: true, type: "edit" });
         getUser({
             variables: {
                 userId: _user.id,
@@ -77,7 +125,7 @@ const User = () => {
 
     const handleSimInstallation = () => {
         setSelectedUser(userInit);
-        setShowSimDialog(true);
+        setSimDialog({ isShow: true, type: "add" });
     };
 
     const getSearchValue = (search: string) => {
@@ -108,75 +156,31 @@ const User = () => {
         });
     };
 
-    const handleSaveUser = () => {
-        setShowSimDialog(false);
-        if (selectedUser.id) {
+    const handleUserSubmitAction = () => {
+        handleSimDialogClose();
+        if (simDialog.type === "add") {
             addUser({
                 variables: {
                     data: {
-                        email: selectedUser?.email || "",
-                        name: selectedUser?.name,
+                        email: selectedUser.email,
+                        name: selectedUser.name,
+                        phone: selectedUser.phone,
                     },
                 },
             });
-        }
-    };
-
-    const handleUpdateUser = () => {
-        setShowSimDialog(false);
-        if (selectedUser.id) {
+        } else if (simDialog.type === "edit" && selectedUser.id) {
             updateUser({
                 variables: {
+                    userId: selectedUser.id,
                     data: {
-                        email: selectedUser?.email || "",
-                        name: selectedUser?.name,
-                        phone: selectedUser?.phone || "",
-                        id: selectedUser?.id,
+                        email: selectedUser.email,
+                        name: selectedUser.name,
+                        phone: selectedUser.phone,
                     },
                 },
             });
         }
     };
-    useEffect(() => {
-        if (addUserRes) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `The user has been added successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [addUserRes]);
-    useEffect(() => {
-        if (updateUserRes) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `The user has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [updateUserRes]);
-    useEffect(() => {
-        if (addUserError) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `${addUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [addUserError]);
-    useEffect(() => {
-        if (updateUserError) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `${updateUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [updateUserError]);
 
     return (
         <Box component="div" sx={{ height: "calc(100% - 3%)" }}>
@@ -227,26 +231,30 @@ const User = () => {
                         hyperlink=""
                         showActionButton={true}
                         buttonTitle="Install sims"
-                        handleAction={() => setShowSimDialog(true)}
+                        handleAction={() =>
+                            setSimDialog({ isShow: true, type: "add" })
+                        }
                         description="No users on network. Install SIMs to get started."
                     />
                 )}
 
-                <UserDetailsDialog
-                    user={selectedUser}
-                    saveBtnLabel={"Save"}
-                    closeBtnLabel="close"
-                    loading={userLoading}
-                    isOpen={showSimDialog}
-                    handleUpdateUser={handleUpdateUser}
-                    setUserForm={setSelectedUser}
-                    simDetailsTitle="SIM Details"
-                    handleSaveSimUser={handleSaveUser}
-                    userDetailsTitle="User Details"
-                    handleClose={handleSimDialogClose}
-                    userStatusLoading={updateUserLoading}
-                    handleServiceAction={handleUpdateUserStatus}
-                />
+                {simDialog.isShow && (
+                    <UserDetailsDialog
+                        type={simDialog.type}
+                        user={selectedUser}
+                        saveBtnLabel={"Save"}
+                        closeBtnLabel="close"
+                        loading={userLoading}
+                        isOpen={simDialog.isShow}
+                        setUserForm={setSelectedUser}
+                        simDetailsTitle="SIM Details"
+                        userDetailsTitle="User Details"
+                        handleClose={handleSimDialogClose}
+                        userStatusLoading={updateUserLoading}
+                        handleServiceAction={handleUpdateUserStatus}
+                        handleSubmitAction={handleUserSubmitAction}
+                    />
+                )}
             </LoadingWrapper>
         </Box>
     );

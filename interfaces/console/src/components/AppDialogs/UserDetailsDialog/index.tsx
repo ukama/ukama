@@ -32,6 +32,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 type BasicDialogProps = {
+    type: string;
     user: GetUserDto;
     isOpen: boolean;
     setUserForm: any;
@@ -40,30 +41,27 @@ type BasicDialogProps = {
     handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
-    handleSaveSimUser?: any;
-    handleUpdateUser?: Function;
     userDetailsTitle: string;
     simDetailsTitle: string;
     userStatusLoading: boolean;
+    handleSubmitAction: Function;
     handleServiceAction: Function;
 };
 
 const UserDetailsDialog = ({
+    type,
     user,
     isOpen,
     setUserForm,
     handleClose,
     saveBtnLabel,
     closeBtnLabel,
-    handleUpdateUser,
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
     isClosable = true,
     userStatusLoading,
-    handleSaveSimUser = () => {
-        /* Default empty function */
-    },
+    handleSubmitAction,
     handleServiceAction,
 }: BasicDialogProps) => {
     const classes = useStyles();
@@ -108,7 +106,9 @@ const UserDetailsDialog = ({
                             sx={{ alignItems: "center" }}
                             spacing={1}
                         >
-                            <Typography variant="h5">{name}</Typography>
+                            <Typography variant="h5">
+                                {type === "add" ? "Add User" : "Edit User"}
+                            </Typography>
                         </Stack>
                         {isClosable && (
                             <IconButton
@@ -152,26 +152,26 @@ const UserDetailsDialog = ({
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                name: value || "",
+                                                name: value,
                                             })
                                         }
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField
-                                        value={email || ""}
+                                        value={email}
                                         label={"EMAIL"}
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                email: value || "",
+                                                email: value?.toLowerCase(),
                                             })
                                         }
                                     />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField
-                                        value={phone || ""}
+                                        value={phone}
                                         label={"PHONE"}
                                         handleOnChange={(value: string) =>
                                             setUserForm({
@@ -215,13 +215,14 @@ const UserDetailsDialog = ({
                                                     size="small"
                                                     color="error"
                                                     variant="outlined"
-                                                    onClick={() =>
-                                                        handleServiceAction(
-                                                            id,
-                                                            iccid,
-                                                            !status
-                                                        )
-                                                    }
+                                                    onClick={() => {
+                                                        if (id && iccid)
+                                                            handleServiceAction(
+                                                                id,
+                                                                iccid,
+                                                                !status
+                                                            );
+                                                    }}
                                                 >
                                                     {statusAction}
                                                 </Button>
@@ -303,9 +304,7 @@ const UserDetailsDialog = ({
                             {closeBtnLabel}
                         </Button>
                         <Button
-                            onClick={
-                                user.id ? handleUpdateUser : handleSaveSimUser
-                            }
+                            onClick={() => handleSubmitAction()}
                             variant="contained"
                         >
                             {saveBtnLabel}
