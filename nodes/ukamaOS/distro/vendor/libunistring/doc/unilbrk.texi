@@ -1,0 +1,88 @@
+@node unilbrk.h
+@chapter Line breaking @code{<unilbrk.h>}
+
+@cindex line breaks
+@cindex breaks, line
+@cindex wrapping
+This include file declares functions for determining where in a string
+line breaks could or should be introduced, in order to make the displayed
+string fit into a column of given width.
+
+These functions are locale dependent.  The @var{encoding} argument identifies
+the encoding (e.g@. @code{"ISO-8859-2"} for Polish).
+
+The following enumerated values indicate whether, at a given position, a line
+break is possible or not.  Given an string @var{s} as an array
+@code{@var{s}[0..@var{n}-1]} and a position @var{i}, the values have the
+following meanings:
+
+@deftypevr Constant int UC_BREAK_MANDATORY
+This value indicates that @code{@var{s}[@var{i}]} is a line break character.
+@end deftypevr
+
+@deftypevr Constant int UC_BREAK_POSSIBLE
+This value indicates that a line break may be inserted between
+@code{@var{s}[@var{i}-1]} and @code{@var{s}[@var{i}]}.
+@end deftypevr
+
+@deftypevr Constant int UC_BREAK_HYPHENATION
+This value indicates that a hyphen and a line break may be inserted between
+@code{@var{s}[@var{i}-1]} and @code{@var{s}[@var{i}]}.  But beware of language
+dependent hyphenation rules.
+@end deftypevr
+
+@deftypevr Constant int UC_BREAK_PROHIBITED
+This value indicates that @code{@var{s}[@var{i}-1]} and @code{@var{s}[@var{i}]}
+must not be separated.
+@end deftypevr
+
+@deftypevr Constant int UC_BREAK_UNDEFINED
+This value is not used as a return value; rather, in the overriding argument of
+the @code{u*_width_linebreaks} functions, it indicates the absence of an
+override.
+@end deftypevr
+
+The following functions determine the positions at which line breaks are
+possible.
+
+@deftypefun void u8_possible_linebreaks (const uint8_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
+@deftypefunx void u16_possible_linebreaks (const uint16_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
+@deftypefunx void u32_possible_linebreaks (const uint32_t *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
+@deftypefunx void ulc_possible_linebreaks (const char *@var{s}, size_t @var{n}, const char *@var{encoding}, char *@var{p})
+Determines the line break points in @var{s}, and stores the result at
+@code{@var{p}[0..@var{n}-1]}.  Every @code{@var{p}[@var{i}]} is assigned one of
+the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_POSSIBLE},
+@code{UC_BREAK_HYPHENATION}, @code{UC_BREAK_PROHIBITED}.
+@end deftypefun
+
+The following functions determine where line breaks should be inserted so that
+each line fits in a given width, when output to a device that uses
+non-proportional fonts.
+
+@deftypefun int u8_width_linebreaks (const uint8_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
+@deftypefunx int u16_width_linebreaks (const uint16_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
+@deftypefunx int u32_width_linebreaks (const uint32_t *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
+@deftypefunx int ulc_width_linebreaks (const char *@var{s}, size_t @var{n}, int @var{width}, int @var{start_column}, int @var{at_end_columns}, const char *@var{override}, const char *@var{encoding}, char *@var{p})
+Chooses the best line breaks, assuming that every character occupies a width
+given by the @code{uc_width} function (see @ref{uniwidth.h}).
+
+The string is @code{@var{s}[0..@var{n}-1]}.
+
+The maximum number of columns per line is given as @var{width}.
+The starting column of the string is given as @var{start_column}.
+If the algorithm shall keep room after the last piece, this amount of room can
+be given as @var{at_end_columns}.
+
+@var{override} is an optional override; if
+@code{@var{override}[@var{i}] != UC_BREAK_UNDEFINED},
+@code{@var{override}[@var{i}]} takes precedence over @code{@var{p}[@var{i}]}
+as returned by the @code{u*_possible_linebreaks} function.
+
+The given @var{encoding} is used for disambiguating widths in @code{uc_width}.
+
+Returns the column after the end of the string, and stores the result at
+@code{@var{p}[0..@var{n}-1]}.  Every @code{@var{p}[@var{i}]} is assigned one of
+the values @code{UC_BREAK_MANDATORY}, @code{UC_BREAK_POSSIBLE},
+@code{UC_BREAK_HYPHENATION}, @code{UC_BREAK_PROHIBITED}.  Here the value
+@code{UC_BREAK_POSSIBLE} indicates that a line break @emph{should} be inserted.
+@end deftypefun

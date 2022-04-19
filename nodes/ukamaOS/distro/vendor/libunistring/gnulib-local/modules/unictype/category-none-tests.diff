@@ -1,0 +1,14 @@
+*** category-none-tests.orig	2007-11-12 00:55:16.000000000 +0100
+--- category-none-tests	2009-04-20 00:09:17.000000000 +0200
+***************
+*** 7,13 ****
+--- 7,15 ----
+  configure.ac:
+  
+  Makefile.am:
++ if !WOE32DLL
+  TESTS += test-categ_none
+  check_PROGRAMS += test-categ_none
+  test_categ_none_SOURCES = unictype/test-categ_none.c
+  test_categ_none_LDADD = $(LDADD) $(LIBUNISTRING)
++ endif

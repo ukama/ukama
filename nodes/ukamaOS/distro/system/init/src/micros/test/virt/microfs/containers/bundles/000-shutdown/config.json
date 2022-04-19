@@ -1,0 +1,90 @@
+{
+    "ociVersion": "1.0.1",
+    "process": {
+        "user": {
+            "uid": 0,
+            "gid": 0
+        },
+        "args": [
+            "/bin/echo",
+            "so long and thanks for all the fish"
+        ],
+        "env": [
+            "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        ],
+        "cwd": "/",
+        "capabilities": {}
+    },
+    "root": {
+        "path": "rootfs"
+    },
+    "mounts": [
+        {
+            "destination": "/dev",
+            "type": "tmpfs",
+            "source": "tmpfs",
+            "options": [
+                "nosuid",
+                "strictatime",
+                "mode=755",
+                "size=65536k"
+            ]
+        },
+        {
+            "destination": "/dev/pts",
+            "type": "devpts",
+            "source": "devpts",
+            "options": [
+                "nosuid",
+                "noexec",
+                "newinstance",
+                "ptmxmode=0666",
+                "mode=0620"
+            ]
+        },
+        {
+            "destination": "/proc",
+            "type": "proc",
+            "source": "proc",
+            "options": [
+                "nosuid",
+                "nodev",
+                "noexec",
+                "relatime"
+            ]
+        },
+        {
+            "destination": "/sys",
+            "type": "sysfs",
+            "source": "sysfs",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev"
+            ]
+        },
+        {
+            "destination": "/sys/fs/cgroup",
+            "type": "cgroup",
+            "source": "cgroup",
+            "options": [
+                "nosuid",
+                "noexec",
+                "nodev",
+                "relatime",
+                "ro"
+            ]
+        }
+    ],
+    "linux": {
+        "resources": {},
+        "namespaces": [
+            {
+                "type": "pid"
+            },
+            {
+                "type": "mount"
+            }
+        ]
+    }
+}

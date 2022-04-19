@@ -1,0 +1,12 @@
+  -h, --help                Print help and exit
+  -V, --version             Print version and exit
+  -d, --decode              Decode (punycode) domain name
+  -l, --lookup              Lookup domain name (default)
+  -r, --register            Register label
+  -T, --tr46t               Enable TR46 transitional processing
+  -N, --tr46nt              Enable TR46 non-transitional processing
+      --no-tr46             Disable TR46 processing
+      --usestd3asciirules   Enable STD3 ASCII rules
+      --no-alabelroundtrip  Disable A-label roundtrip for lookups
+      --debug               Print debugging information
+      --quiet               Silent operation

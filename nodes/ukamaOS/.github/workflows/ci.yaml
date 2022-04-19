@@ -1,0 +1,47 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build
+on:  [push]
+jobs:
+  build:
+    name: build and test
+    strategy:
+      matrix:
+        target:
+          - board: anode
+            arch: armv7
+          - board: cnode
+            arch: x86_64
+          - board: linux
+            arch: x86_64   
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Checkout submodules
+      run: git submodule update --init --recursive    
+  
+    - name: Dependencies
+      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf -y
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Crosscompiler for Rust
+      run: |
+        rustup target add armv7-unknown-linux-musleabihf
+        rustup target add x86_64-unknown-linux-musl
+        
+
+    - name: Build ukamaOS
+      run: |
+        sudo make TARGET=${{ matrix.target.board }}
+        
+    - name: Build UkamOS FileSystem
+      working-directory: ./distro/scripts
+      run: |
+        sudo ./buildOS.sh -t local
+      if: matrix.target.board == 'linux'
+       

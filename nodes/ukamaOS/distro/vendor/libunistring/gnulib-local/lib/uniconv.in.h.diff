@@ -1,0 +1,28 @@
+*** uniconv.in.h.orig	2009-04-10 23:40:31.000000000 +0200
+--- uniconv.in.h	2009-04-10 23:41:19.000000000 +0200
+***************
+*** 23,35 ****
+  #include "unitypes.h"
+  
+  /* Get enum iconv_ilseq_handler.  */
+! #include "iconveh.h"
+! 
+! /* Get uniconv_register_autodetect() declaration.  */
+! #include "striconveha.h"
+  
+  /* Get locale_charset() declaration.  */
+! #include "localcharset.h"
+  
+  
+  #ifdef __cplusplus
+--- 23,32 ----
+  #include "unitypes.h"
+  
+  /* Get enum iconv_ilseq_handler.  */
+! #include <unistring/iconveh.h>
+  
+  /* Get locale_charset() declaration.  */
+! #include <unistring/localcharset.h>
+  
+  
+  #ifdef __cplusplus

@@ -1,0 +1,26 @@
+{
+	"version": "0.1",
+	"serial": "abcd-ef-ghi-009910-xyz",
+	"target": "serial",
+
+	"ukama-cApp": [
+               {
+                        "name": "mesh",
+                        "tag": "latest",
+                        "restart": "no",
+                        "contained": "boot"
+                }
+
+	],
+
+	"namespaces": [{
+			"type": "pid"
+		},
+		{
+			"type": "user"
+		},
+		{
+			"type": "mount"
+		}
+	]
+}

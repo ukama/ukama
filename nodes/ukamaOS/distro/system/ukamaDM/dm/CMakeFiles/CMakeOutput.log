@@ -1,0 +1,3539 @@
+The system is: Linux - 5.4.0-48-generic - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/bin/cc 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/virtualNode/device-management/CMakeFiles/3.10.2/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/bin/c++ 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/virtualNode/device-management/CMakeFiles/3.10.2/CompilerIdCXX/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_69e61/fast"
+/usr/bin/make -f CMakeFiles/cmTC_69e61.dir/build.make CMakeFiles/cmTC_69e61.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_69e61.dir/testCCompiler.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_69e61.dir/testCCompiler.c.o   -c /virtualNode/device-management/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTC_69e61
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_69e61.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_69e61.dir/testCCompiler.c.o  -o cmTC_69e61 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_cb380/fast"
+/usr/bin/make -f CMakeFiles/cmTC_cb380.dir/build.make CMakeFiles/cmTC_cb380.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o
+/usr/bin/cc    -o CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.10/Modules/CMakeCCompilerABI.c
+Linking C executable cmTC_cb380
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cb380.dir/link.txt --verbose=1
+/usr/bin/cc     -v -rdynamic CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o  -o cmTC_cb380 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/cc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cb380' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/cc9g8UHx.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_cb380 /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cb380' '-mtune=generic' '-march=x86-64'
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:"/usr/bin/make" "cmTC_cb380/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTC_cb380.dir/build.make CMakeFiles/cmTC_cb380.dir/build]
+  ignore line: [make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp']
+  ignore line: [Building C object CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/cc    -o CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-3.10/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTC_cb380]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cb380.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/cc     -v -rdynamic CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o  -o cmTC_cb380 ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/cc]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_cb380' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/cc9g8UHx.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_cb380 /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cc9g8UHx.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_cb380] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o] ==> ignore
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..]
+    arg [CMakeFiles/cmTC_cb380.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7] ==> [/usr/lib/gcc/x86_64-linux-gnu/7]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> [/usr/lib]
+  implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/7;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+
+
+Detecting C [-std=c11] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_57bf5/fast"
+/usr/bin/make -f CMakeFiles/cmTC_57bf5.dir/build.make CMakeFiles/cmTC_57bf5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_57bf5.dir/feature_tests.c.o
+/usr/bin/cc   -std=c11 -o CMakeFiles/cmTC_57bf5.dir/feature_tests.c.o   -c /virtualNode/device-management/CMakeFiles/feature_tests.c
+Linking C executable cmTC_57bf5
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_57bf5.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_57bf5.dir/feature_tests.c.o  -o cmTC_57bf5 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:1c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c99] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_936d8/fast"
+/usr/bin/make -f CMakeFiles/cmTC_936d8.dir/build.make CMakeFiles/cmTC_936d8.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_936d8.dir/feature_tests.c.o
+/usr/bin/cc   -std=c99 -o CMakeFiles/cmTC_936d8.dir/feature_tests.c.o   -c /virtualNode/device-management/CMakeFiles/feature_tests.c
+Linking C executable cmTC_936d8
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_936d8.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_936d8.dir/feature_tests.c.o  -o cmTC_936d8 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:1c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:1c_variadic_macros
+
+
+Detecting C [-std=c90] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_3e49c/fast"
+/usr/bin/make -f CMakeFiles/cmTC_3e49c.dir/build.make CMakeFiles/cmTC_3e49c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3e49c.dir/feature_tests.c.o
+/usr/bin/cc   -std=c90 -o CMakeFiles/cmTC_3e49c.dir/feature_tests.c.o   -c /virtualNode/device-management/CMakeFiles/feature_tests.c
+Linking C executable cmTC_3e49c
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3e49c.dir/link.txt --verbose=1
+/usr/bin/cc      -rdynamic CMakeFiles/cmTC_3e49c.dir/feature_tests.c.o  -o cmTC_3e49c 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: C_FEATURE:1c_function_prototypes
+    Feature record: C_FEATURE:0c_restrict
+    Feature record: C_FEATURE:0c_static_assert
+    Feature record: C_FEATURE:0c_variadic_macros
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_098ad/fast"
+/usr/bin/make -f CMakeFiles/cmTC_098ad.dir/build.make CMakeFiles/cmTC_098ad.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_098ad.dir/testCXXCompiler.cxx.o
+/usr/bin/c++     -o CMakeFiles/cmTC_098ad.dir/testCXXCompiler.cxx.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTC_098ad
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_098ad.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_098ad.dir/testCXXCompiler.cxx.o  -o cmTC_098ad 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9d75f/fast"
+/usr/bin/make -f CMakeFiles/cmTC_9d75f.dir/build.make CMakeFiles/cmTC_9d75f.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++     -o CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.10/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTC_9d75f
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d75f.dir/link.txt --verbose=1
+/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_9d75f 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_9d75f' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/cc7IJTDV.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_9d75f /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_9d75f' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:"/usr/bin/make" "cmTC_9d75f/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTC_9d75f.dir/build.make CMakeFiles/cmTC_9d75f.dir/build]
+  ignore line: [make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++     -o CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.10/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTC_9d75f]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d75f.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++      -v -rdynamic CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o  -o cmTC_9d75f ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_9d75f' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/cc7IJTDV.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_9d75f /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/cc7IJTDV.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_9d75f] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o] ==> ignore
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..]
+    arg [CMakeFiles/cmTC_9d75f.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7] ==> [/usr/lib/gcc/x86_64-linux-gnu/7]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> [/usr/lib]
+  implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/7;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+
+
+Detecting CXX [-std=c++1z] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_75b7e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_75b7e.dir/build.make CMakeFiles/cmTC_75b7e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_75b7e.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++1z -o CMakeFiles/cmTC_75b7e.dir/feature_tests.cxx.o -c /virtualNode/device-management/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_75b7e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_75b7e.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_75b7e.dir/feature_tests.cxx.o  -o cmTC_75b7e 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++14] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_780e7/fast"
+/usr/bin/make -f CMakeFiles/cmTC_780e7.dir/build.make CMakeFiles/cmTC_780e7.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_780e7.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++14 -o CMakeFiles/cmTC_780e7.dir/feature_tests.cxx.o -c /virtualNode/device-management/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_780e7
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_780e7.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_780e7.dir/feature_tests.cxx.o  -o cmTC_780e7 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:1cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:1cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:1cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:1cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:1cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:1cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:1cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:1cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:1cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:1cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:1cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++11] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_be71d/fast"
+/usr/bin/make -f CMakeFiles/cmTC_be71d.dir/build.make CMakeFiles/cmTC_be71d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_be71d.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++11 -o CMakeFiles/cmTC_be71d.dir/feature_tests.cxx.o -c /virtualNode/device-management/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_be71d
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_be71d.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_be71d.dir/feature_tests.cxx.o  -o cmTC_be71d 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:1cxx_alias_templates
+    Feature record: CXX_FEATURE:1cxx_alignas
+    Feature record: CXX_FEATURE:1cxx_alignof
+    Feature record: CXX_FEATURE:1cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:1cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:1cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:1cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:1cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:1cxx_default_function_template_args
+    Feature record: CXX_FEATURE:1cxx_defaulted_functions
+    Feature record: CXX_FEATURE:1cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:1cxx_delegating_constructors
+    Feature record: CXX_FEATURE:1cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:1cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:1cxx_explicit_conversions
+    Feature record: CXX_FEATURE:1cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:1cxx_extern_templates
+    Feature record: CXX_FEATURE:1cxx_final
+    Feature record: CXX_FEATURE:1cxx_func_identifier
+    Feature record: CXX_FEATURE:1cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:1cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:1cxx_inline_namespaces
+    Feature record: CXX_FEATURE:1cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:1cxx_local_type_template_args
+    Feature record: CXX_FEATURE:1cxx_long_long_type
+    Feature record: CXX_FEATURE:1cxx_noexcept
+    Feature record: CXX_FEATURE:1cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:1cxx_nullptr
+    Feature record: CXX_FEATURE:1cxx_override
+    Feature record: CXX_FEATURE:1cxx_range_for
+    Feature record: CXX_FEATURE:1cxx_raw_string_literals
+    Feature record: CXX_FEATURE:1cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:1cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:1cxx_rvalue_references
+    Feature record: CXX_FEATURE:1cxx_sizeof_member
+    Feature record: CXX_FEATURE:1cxx_static_assert
+    Feature record: CXX_FEATURE:1cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:1cxx_thread_local
+    Feature record: CXX_FEATURE:1cxx_trailing_return_types
+    Feature record: CXX_FEATURE:1cxx_unicode_literals
+    Feature record: CXX_FEATURE:1cxx_uniform_initialization
+    Feature record: CXX_FEATURE:1cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:1cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:1cxx_variadic_macros
+    Feature record: CXX_FEATURE:1cxx_variadic_templates
+
+
+Detecting CXX [-std=c++98] compiler features compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/make" "cmTC_9158e/fast"
+/usr/bin/make -f CMakeFiles/cmTC_9158e.dir/build.make CMakeFiles/cmTC_9158e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_9158e.dir/feature_tests.cxx.o
+/usr/bin/c++    -std=c++98 -o CMakeFiles/cmTC_9158e.dir/feature_tests.cxx.o -c /virtualNode/device-management/CMakeFiles/feature_tests.cxx
+Linking CXX executable cmTC_9158e
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9158e.dir/link.txt --verbose=1
+/usr/bin/c++       -rdynamic CMakeFiles/cmTC_9158e.dir/feature_tests.cxx.o  -o cmTC_9158e 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+    Feature record: CXX_FEATURE:0cxx_aggregate_default_initializers
+    Feature record: CXX_FEATURE:0cxx_alias_templates
+    Feature record: CXX_FEATURE:0cxx_alignas
+    Feature record: CXX_FEATURE:0cxx_alignof
+    Feature record: CXX_FEATURE:0cxx_attributes
+    Feature record: CXX_FEATURE:0cxx_attribute_deprecated
+    Feature record: CXX_FEATURE:0cxx_auto_type
+    Feature record: CXX_FEATURE:0cxx_binary_literals
+    Feature record: CXX_FEATURE:0cxx_constexpr
+    Feature record: CXX_FEATURE:0cxx_contextual_conversions
+    Feature record: CXX_FEATURE:0cxx_decltype
+    Feature record: CXX_FEATURE:0cxx_decltype_auto
+    Feature record: CXX_FEATURE:0cxx_decltype_incomplete_return_types
+    Feature record: CXX_FEATURE:0cxx_default_function_template_args
+    Feature record: CXX_FEATURE:0cxx_defaulted_functions
+    Feature record: CXX_FEATURE:0cxx_defaulted_move_initializers
+    Feature record: CXX_FEATURE:0cxx_delegating_constructors
+    Feature record: CXX_FEATURE:0cxx_deleted_functions
+    Feature record: CXX_FEATURE:0cxx_digit_separators
+    Feature record: CXX_FEATURE:0cxx_enum_forward_declarations
+    Feature record: CXX_FEATURE:0cxx_explicit_conversions
+    Feature record: CXX_FEATURE:0cxx_extended_friend_declarations
+    Feature record: CXX_FEATURE:0cxx_extern_templates
+    Feature record: CXX_FEATURE:0cxx_final
+    Feature record: CXX_FEATURE:0cxx_func_identifier
+    Feature record: CXX_FEATURE:0cxx_generalized_initializers
+    Feature record: CXX_FEATURE:0cxx_generic_lambdas
+    Feature record: CXX_FEATURE:0cxx_inheriting_constructors
+    Feature record: CXX_FEATURE:0cxx_inline_namespaces
+    Feature record: CXX_FEATURE:0cxx_lambdas
+    Feature record: CXX_FEATURE:0cxx_lambda_init_captures
+    Feature record: CXX_FEATURE:0cxx_local_type_template_args
+    Feature record: CXX_FEATURE:0cxx_long_long_type
+    Feature record: CXX_FEATURE:0cxx_noexcept
+    Feature record: CXX_FEATURE:0cxx_nonstatic_member_init
+    Feature record: CXX_FEATURE:0cxx_nullptr
+    Feature record: CXX_FEATURE:0cxx_override
+    Feature record: CXX_FEATURE:0cxx_range_for
+    Feature record: CXX_FEATURE:0cxx_raw_string_literals
+    Feature record: CXX_FEATURE:0cxx_reference_qualified_functions
+    Feature record: CXX_FEATURE:0cxx_relaxed_constexpr
+    Feature record: CXX_FEATURE:0cxx_return_type_deduction
+    Feature record: CXX_FEATURE:0cxx_right_angle_brackets
+    Feature record: CXX_FEATURE:0cxx_rvalue_references
+    Feature record: CXX_FEATURE:0cxx_sizeof_member
+    Feature record: CXX_FEATURE:0cxx_static_assert
+    Feature record: CXX_FEATURE:0cxx_strong_enums
+    Feature record: CXX_FEATURE:1cxx_template_template_parameters
+    Feature record: CXX_FEATURE:0cxx_thread_local
+    Feature record: CXX_FEATURE:0cxx_trailing_return_types
+    Feature record: CXX_FEATURE:0cxx_unicode_literals
+    Feature record: CXX_FEATURE:0cxx_uniform_initialization
+    Feature record: CXX_FEATURE:0cxx_unrestricted_unions
+    Feature record: CXX_FEATURE:0cxx_user_literals
+    Feature record: CXX_FEATURE:0cxx_variable_templates
+    Feature record: CXX_FEATURE:0cxx_variadic_macros
+    Feature record: CXX_FEATURE:0cxx_variadic_templates
+The system is: Linux - 5.4.0-51-generic - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/bin/cc 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/virtualNode/device-management/CMakeFiles/3.18.1/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/bin/c++ 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/virtualNode/device-management/CMakeFiles/3.18.1/CompilerIdCXX/a.out"
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a4b4e/fast && /usr/bin/make  -f CMakeFiles/cmTC_a4b4e.dir/build.make CMakeFiles/cmTC_a4b4e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o
+/usr/bin/cc   -v -o CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCCompilerABI.c
+Using built-in specs.
+COLLECT_GCC=/usr/bin/cc
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/cc1 -quiet -v -imultiarch x86_64-linux-gnu /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -version -fstack-protector-strong -Wformat -Wformat-security -o /tmp/ccLwcefN.s
+GNU C11 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)
+	compiled by GNU C version 7.5.0, GMP version 6.1.2, MPFR version 4.0.1, MPC version 1.1.0, isl version isl-0.19-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/lib/gcc/x86_64-linux-gnu/7/include
+ /usr/local/include
+ /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+GNU C11 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)
+	compiled by GNU C version 7.5.0, GMP version 6.1.2, MPFR version 4.0.1, MPC version 1.1.0, isl version isl-0.19-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: b62ed4a2880cd4159476ea8293b72fa8
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64'
+ as -v --64 -o CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o /tmp/ccLwcefN.s
+GNU assembler version 2.30 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.30
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64'
+Linking C executable cmTC_a4b4e
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a4b4e.dir/link.txt --verbose=1
+/usr/bin/cc  -v -rdynamic CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -o cmTC_a4b4e 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/cc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a4b4e' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/ccxRJ4LM.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_a4b4e /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a4b4e' '-mtune=generic' '-march=x86-64'
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Parsed C implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/lib/gcc/x86_64-linux-gnu/7/include]
+    add: [/usr/local/include]
+    add: [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+    add: [/usr/include/x86_64-linux-gnu]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/7/include] ==> [/usr/lib/gcc/x86_64-linux-gnu/7/include]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed] ==> [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+  collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/usr/lib/gcc/x86_64-linux-gnu/7/include;/usr/local/include;/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed;/usr/include/x86_64-linux-gnu;/usr/include]
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_a4b4e/fast && /usr/bin/make  -f CMakeFiles/cmTC_a4b4e.dir/build.make CMakeFiles/cmTC_a4b4e.dir/build]
+  ignore line: [make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp']
+  ignore line: [Building C object CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/cc   -v -o CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCCompilerABI.c]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/cc]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/cc1 -quiet -v -imultiarch x86_64-linux-gnu /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCCompilerABI.c -quiet -dumpbase CMakeCCompilerABI.c -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -version -fstack-protector-strong -Wformat -Wformat-security -o /tmp/ccLwcefN.s]
+  ignore line: [GNU C11 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 7.5.0  GMP version 6.1.2  MPFR version 4.0.1  MPC version 1.1.0  isl version isl-0.19-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C11 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 7.5.0  GMP version 6.1.2  MPFR version 4.0.1  MPC version 1.1.0  isl version isl-0.19-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: b62ed4a2880cd4159476ea8293b72fa8]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o /tmp/ccLwcefN.s]
+  ignore line: [GNU assembler version 2.30 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.30]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o' '-c' '-mtune=generic' '-march=x86-64']
+  ignore line: [Linking C executable cmTC_a4b4e]
+  ignore line: [/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a4b4e.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/cc  -v -rdynamic CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -o cmTC_a4b4e ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/cc]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_a4b4e' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/ccxRJ4LM.res -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lgcc_s --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_a4b4e /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o -lgcc --push-state --as-needed -lgcc_s --pop-state -lc -lgcc --push-state --as-needed -lgcc_s --pop-state /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccxRJ4LM.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_a4b4e] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o] ==> ignore
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..]
+    arg [CMakeFiles/cmTC_a4b4e.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--push-state] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--pop-state] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7] ==> [/usr/lib/gcc/x86_64-linux-gnu/7]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> [/usr/lib]
+  implicit libs: [gcc;gcc_s;c;gcc;gcc_s]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/7;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_6ec30/fast && /usr/bin/make  -f CMakeFiles/cmTC_6ec30.dir/build.make CMakeFiles/cmTC_6ec30.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++   -v -o CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCXXCompilerABI.cpp
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -version -fstack-protector-strong -Wformat -Wformat-security -o /tmp/cc7M5V3Q.s
+GNU C++14 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)
+	compiled by GNU C version 7.5.0, GMP version 6.1.2, MPFR version 4.0.1, MPC version 1.1.0, isl version isl-0.19-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/7"
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/include/c++/7
+ /usr/include/x86_64-linux-gnu/c++/7
+ /usr/include/c++/7/backward
+ /usr/lib/gcc/x86_64-linux-gnu/7/include
+ /usr/local/include
+ /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+GNU C++14 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)
+	compiled by GNU C version 7.5.0, GMP version 6.1.2, MPFR version 4.0.1, MPC version 1.1.0, isl version isl-0.19-GMP
+
+GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072
+Compiler executable checksum: 3eb3dc290cd5714c3e1c3ae751116f07
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ as -v --64 -o CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o /tmp/cc7M5V3Q.s
+GNU assembler version 2.30 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.30
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+Linking CXX executable cmTC_6ec30
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6ec30.dir/link.txt --verbose=1
+/usr/bin/c++  -v -rdynamic CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_6ec30 
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper
+OFFLOAD_TARGET_NAMES=nvptx-none
+OFFLOAD_TARGET_DEFAULT=1
+Target: x86_64-linux-gnu
+Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c,ada,c++,go,brig,d,fortran,objc,obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32,m64,mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu
+Thread model: posix
+gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) 
+COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/
+LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_6ec30' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/ccwu4mkV.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_6ec30 /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o
+COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_6ec30' '-shared-libgcc' '-mtune=generic' '-march=x86-64'
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Parsed CXX implicit include dir info from above output: rv=done
+  found start of include info
+  found start of implicit include info
+    add: [/usr/include/c++/7]
+    add: [/usr/include/x86_64-linux-gnu/c++/7]
+    add: [/usr/include/c++/7/backward]
+    add: [/usr/lib/gcc/x86_64-linux-gnu/7/include]
+    add: [/usr/local/include]
+    add: [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+    add: [/usr/include/x86_64-linux-gnu]
+    add: [/usr/include]
+  end of search list found
+  collapse include dir [/usr/include/c++/7] ==> [/usr/include/c++/7]
+  collapse include dir [/usr/include/x86_64-linux-gnu/c++/7] ==> [/usr/include/x86_64-linux-gnu/c++/7]
+  collapse include dir [/usr/include/c++/7/backward] ==> [/usr/include/c++/7/backward]
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/7/include] ==> [/usr/lib/gcc/x86_64-linux-gnu/7/include]
+  collapse include dir [/usr/local/include] ==> [/usr/local/include]
+  collapse include dir [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed] ==> [/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+  collapse include dir [/usr/include/x86_64-linux-gnu] ==> [/usr/include/x86_64-linux-gnu]
+  collapse include dir [/usr/include] ==> [/usr/include]
+  implicit include dirs: [/usr/include/c++/7;/usr/include/x86_64-linux-gnu/c++/7;/usr/include/c++/7/backward;/usr/lib/gcc/x86_64-linux-gnu/7/include;/usr/local/include;/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed;/usr/include/x86_64-linux-gnu;/usr/include]
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command(s):/usr/bin/make cmTC_6ec30/fast && /usr/bin/make  -f CMakeFiles/cmTC_6ec30.dir/build.make CMakeFiles/cmTC_6ec30.dir/build]
+  ignore line: [make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp']
+  ignore line: [Building CXX object CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++   -v -o CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/cc1plus -quiet -v -imultiarch x86_64-linux-gnu -D_GNU_SOURCE /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CMakeCXXCompilerABI.cpp -quiet -dumpbase CMakeCXXCompilerABI.cpp -mtune=generic -march=x86-64 -auxbase-strip CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -version -fstack-protector-strong -Wformat -Wformat-security -o /tmp/cc7M5V3Q.s]
+  ignore line: [GNU C++14 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 7.5.0  GMP version 6.1.2  MPFR version 4.0.1  MPC version 1.1.0  isl version isl-0.19-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [ignoring duplicate directory "/usr/include/x86_64-linux-gnu/c++/7"]
+  ignore line: [ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"]
+  ignore line: [ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/7/../../../../x86_64-linux-gnu/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/include/c++/7]
+  ignore line: [ /usr/include/x86_64-linux-gnu/c++/7]
+  ignore line: [ /usr/include/c++/7/backward]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/lib/gcc/x86_64-linux-gnu/7/include-fixed]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [GNU C++14 (Ubuntu 7.5.0-3ubuntu1~18.04) version 7.5.0 (x86_64-linux-gnu)]
+  ignore line: [	compiled by GNU C version 7.5.0  GMP version 6.1.2  MPFR version 4.0.1  MPC version 1.1.0  isl version isl-0.19-GMP]
+  ignore line: []
+  ignore line: [GGC heuristics: --param ggc-min-expand=100 --param ggc-min-heapsize=131072]
+  ignore line: [Compiler executable checksum: 3eb3dc290cd5714c3e1c3ae751116f07]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [ as -v --64 -o CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o /tmp/cc7M5V3Q.s]
+  ignore line: [GNU assembler version 2.30 (x86_64-linux-gnu) using BFD version (GNU Binutils for Ubuntu) 2.30]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o' '-c' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  ignore line: [Linking CXX executable cmTC_6ec30]
+  ignore line: [/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6ec30.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++  -v -rdynamic CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_6ec30 ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper]
+  ignore line: [OFFLOAD_TARGET_NAMES=nvptx-none]
+  ignore line: [OFFLOAD_TARGET_DEFAULT=1]
+  ignore line: [Target: x86_64-linux-gnu]
+  ignore line: [Configured with: ../src/configure -v --with-pkgversion='Ubuntu 7.5.0-3ubuntu1~18.04' --with-bugurl=file:///usr/share/doc/gcc-7/README.Bugs --enable-languages=c ada c++ go brig d fortran objc obj-c++ --prefix=/usr --with-gcc-major-version-only --program-suffix=-7 --program-prefix=x86_64-linux-gnu- --enable-shared --enable-linker-build-id --libexecdir=/usr/lib --without-included-gettext --enable-threads=posix --libdir=/usr/lib --enable-nls --enable-bootstrap --enable-clocale=gnu --enable-libstdcxx-debug --enable-libstdcxx-time=yes --with-default-libstdcxx-abi=new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --enable-default-pie --with-system-zlib --with-target-system-zlib --enable-objc-gc=auto --enable-multiarch --disable-werror --with-arch-32=i686 --with-abi=m64 --with-multilib-list=m32 m64 mx32 --enable-multilib --with-tune=generic --enable-offload-targets=nvptx-none --without-cuda-driver --enable-checking=release --build=x86_64-linux-gnu --host=x86_64-linux-gnu --target=x86_64-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 7.5.0 (Ubuntu 7.5.0-3ubuntu1~18.04) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/7/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/7/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-rdynamic' '-o' 'cmTC_6ec30' '-shared-libgcc' '-mtune=generic' '-march=x86-64']
+  link line: [ /usr/lib/gcc/x86_64-linux-gnu/7/collect2 -plugin /usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so -plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper -plugin-opt=-fresolution=/tmp/ccwu4mkV.res -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc -plugin-opt=-pass-through=-lc -plugin-opt=-pass-through=-lgcc_s -plugin-opt=-pass-through=-lgcc --build-id --eh-frame-hdr -m elf_x86_64 --hash-style=gnu --as-needed -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -pie -z now -z relro -o cmTC_6ec30 /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o /usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o -L/usr/lib/gcc/x86_64-linux-gnu/7 -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu -L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib -L/lib/x86_64-linux-gnu -L/lib/../lib -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/7/../../.. CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o /usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/collect2] ==> ignore
+    arg [-plugin] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/liblto_plugin.so] ==> ignore
+    arg [-plugin-opt=/usr/lib/gcc/x86_64-linux-gnu/7/lto-wrapper] ==> ignore
+    arg [-plugin-opt=-fresolution=/tmp/ccwu4mkV.res] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lc] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc_s] ==> ignore
+    arg [-plugin-opt=-pass-through=-lgcc] ==> ignore
+    arg [--build-id] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [--hash-style=gnu] ==> ignore
+    arg [--as-needed] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-pie] ==> ignore
+    arg [-znow] ==> ignore
+    arg [-zrelro] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTC_6ec30] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/Scrt1.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crti.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtbeginS.o] ==> ignore
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib]
+    arg [-L/lib/x86_64-linux-gnu] ==> dir [/lib/x86_64-linux-gnu]
+    arg [-L/lib/../lib] ==> dir [/lib/../lib]
+    arg [-L/usr/lib/x86_64-linux-gnu] ==> dir [/usr/lib/x86_64-linux-gnu]
+    arg [-L/usr/lib/../lib] ==> dir [/usr/lib/../lib]
+    arg [-L/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..]
+    arg [CMakeFiles/cmTC_6ec30.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/crtendS.o] ==> ignore
+    arg [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu/crtn.o] ==> ignore
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7] ==> [/usr/lib/gcc/x86_64-linux-gnu/7]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../../../lib] ==> [/usr/lib]
+  collapse library dir [/lib/x86_64-linux-gnu] ==> [/lib/x86_64-linux-gnu]
+  collapse library dir [/lib/../lib] ==> [/lib]
+  collapse library dir [/usr/lib/x86_64-linux-gnu] ==> [/usr/lib/x86_64-linux-gnu]
+  collapse library dir [/usr/lib/../lib] ==> [/usr/lib]
+  collapse library dir [/usr/lib/gcc/x86_64-linux-gnu/7/../../..] ==> [/usr/lib]
+  implicit libs: [stdc++;m;gcc_s;gcc;c;gcc_s;gcc]
+  implicit dirs: [/usr/lib/gcc/x86_64-linux-gnu/7;/usr/lib/x86_64-linux-gnu;/usr/lib;/lib/x86_64-linux-gnu;/lib]
+  implicit fwks: []
+
+
+Determining if the include file pthread.h exists passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4b393/fast && /usr/bin/make  -f CMakeFiles/cmTC_4b393.dir/build.make CMakeFiles/cmTC_4b393.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4b393.dir/CheckIncludeFile.c.o
+/usr/bin/cc   -fPIE -std=gnu99 -o CMakeFiles/cmTC_4b393.dir/CheckIncludeFile.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_4b393
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4b393.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_4b393.dir/CheckIncludeFile.c.o -o cmTC_4b393 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function pthread_create exists in the pthread passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0058a/fast && /usr/bin/make  -f CMakeFiles/cmTC_0058a.dir/build.make CMakeFiles/cmTC_0058a.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0058a.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -fPIE -o CMakeFiles/cmTC_0058a.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_0058a
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0058a.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_0058a.dir/CheckFunctionExists.c.o -o cmTC_0058a  -lpthread 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function gethostbyname exists in the nsl passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f83ca/fast && /usr/bin/make  -f CMakeFiles/cmTC_f83ca.dir/build.make CMakeFiles/cmTC_f83ca.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f83ca.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname -fPIE -o CMakeFiles/cmTC_f83ca.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_f83ca
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f83ca.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname CMakeFiles/cmTC_f83ca.dir/CheckFunctionExists.c.o -o cmTC_f83ca  -lnsl 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function clock_gettime exists in the rt passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_7414b/fast && /usr/bin/make  -f CMakeFiles/cmTC_7414b.dir/build.make CMakeFiles/cmTC_7414b.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7414b.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=clock_gettime -fPIE -o CMakeFiles/cmTC_7414b.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_7414b
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7414b.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=clock_gettime CMakeFiles/cmTC_7414b.dir/CheckFunctionExists.c.o -o cmTC_7414b  -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/socket.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f93e6/fast && /usr/bin/make  -f CMakeFiles/cmTC_f93e6.dir/build.make CMakeFiles/cmTC_f93e6.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f93e6.dir/HAVE_SYS_SOCKET_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_f93e6.dir/HAVE_SYS_SOCKET_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_SOCKET_H.c
+Linking C executable cmTC_f93e6
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f93e6.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_f93e6.dir/HAVE_SYS_SOCKET_H.c.o -o cmTC_f93e6 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files arpa/inet.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_41b7c/fast && /usr/bin/make  -f CMakeFiles/cmTC_41b7c.dir/build.make CMakeFiles/cmTC_41b7c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_41b7c.dir/HAVE_ARPA_INET_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_41b7c.dir/HAVE_ARPA_INET_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_ARPA_INET_H.c
+Linking C executable cmTC_41b7c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_41b7c.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_41b7c.dir/HAVE_ARPA_INET_H.c.o -o cmTC_41b7c 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files arpa/nameser_compat.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d659d/fast && /usr/bin/make  -f CMakeFiles/cmTC_d659d.dir/build.make CMakeFiles/cmTC_d659d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d659d.dir/HAVE_ARPA_NAMESER_COMPAT_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_d659d.dir/HAVE_ARPA_NAMESER_COMPAT_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_ARPA_NAMESER_COMPAT_H.c
+Linking C executable cmTC_d659d
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d659d.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_d659d.dir/HAVE_ARPA_NAMESER_COMPAT_H.c.o -o cmTC_d659d 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files arpa/nameser.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_fbedd/fast && /usr/bin/make  -f CMakeFiles/cmTC_fbedd.dir/build.make CMakeFiles/cmTC_fbedd.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fbedd.dir/HAVE_ARPA_NAMESER_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_fbedd.dir/HAVE_ARPA_NAMESER_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_ARPA_NAMESER_H.c
+Linking C executable cmTC_fbedd
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fbedd.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_fbedd.dir/HAVE_ARPA_NAMESER_H.c.o -o cmTC_fbedd 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files assert.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_c67ca/fast && /usr/bin/make  -f CMakeFiles/cmTC_c67ca.dir/build.make CMakeFiles/cmTC_c67ca.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c67ca.dir/HAVE_ASSERT_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_c67ca.dir/HAVE_ASSERT_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_ASSERT_H.c
+Linking C executable cmTC_c67ca
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c67ca.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_c67ca.dir/HAVE_ASSERT_H.c.o -o cmTC_c67ca 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files errno.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ffd59/fast && /usr/bin/make  -f CMakeFiles/cmTC_ffd59.dir/build.make CMakeFiles/cmTC_ffd59.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ffd59.dir/HAVE_ERRNO_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_ffd59.dir/HAVE_ERRNO_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_ERRNO_H.c
+Linking C executable cmTC_ffd59
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ffd59.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_ffd59.dir/HAVE_ERRNO_H.c.o -o cmTC_ffd59 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files fcntl.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a2fd6/fast && /usr/bin/make  -f CMakeFiles/cmTC_a2fd6.dir/build.make CMakeFiles/cmTC_a2fd6.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a2fd6.dir/HAVE_FCNTL_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_a2fd6.dir/HAVE_FCNTL_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_FCNTL_H.c
+Linking C executable cmTC_a2fd6
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a2fd6.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_a2fd6.dir/HAVE_FCNTL_H.c.o -o cmTC_a2fd6 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files inttypes.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b031a/fast && /usr/bin/make  -f CMakeFiles/cmTC_b031a.dir/build.make CMakeFiles/cmTC_b031a.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b031a.dir/HAVE_INTTYPES_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_b031a.dir/HAVE_INTTYPES_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_INTTYPES_H.c
+Linking C executable cmTC_b031a
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b031a.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_b031a.dir/HAVE_INTTYPES_H.c.o -o cmTC_b031a 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files limits.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_c414e/fast && /usr/bin/make  -f CMakeFiles/cmTC_c414e.dir/build.make CMakeFiles/cmTC_c414e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c414e.dir/HAVE_LIMITS_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_c414e.dir/HAVE_LIMITS_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_LIMITS_H.c
+Linking C executable cmTC_c414e
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c414e.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_c414e.dir/HAVE_LIMITS_H.c.o -o cmTC_c414e 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files malloc.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ef78c/fast && /usr/bin/make  -f CMakeFiles/cmTC_ef78c.dir/build.make CMakeFiles/cmTC_ef78c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ef78c.dir/HAVE_MALLOC_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_ef78c.dir/HAVE_MALLOC_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_MALLOC_H.c
+Linking C executable cmTC_ef78c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ef78c.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_ef78c.dir/HAVE_MALLOC_H.c.o -o cmTC_ef78c 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files memory.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a10be/fast && /usr/bin/make  -f CMakeFiles/cmTC_a10be.dir/build.make CMakeFiles/cmTC_a10be.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a10be.dir/HAVE_MEMORY_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_a10be.dir/HAVE_MEMORY_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_MEMORY_H.c
+Linking C executable cmTC_a10be
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a10be.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_a10be.dir/HAVE_MEMORY_H.c.o -o cmTC_a10be 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files netdb.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_cd0ef/fast && /usr/bin/make  -f CMakeFiles/cmTC_cd0ef.dir/build.make CMakeFiles/cmTC_cd0ef.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_cd0ef.dir/HAVE_NETDB_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_cd0ef.dir/HAVE_NETDB_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_NETDB_H.c
+Linking C executable cmTC_cd0ef
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_cd0ef.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_cd0ef.dir/HAVE_NETDB_H.c.o -o cmTC_cd0ef 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files netinet/in.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_6325e/fast && /usr/bin/make  -f CMakeFiles/cmTC_6325e.dir/build.make CMakeFiles/cmTC_6325e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6325e.dir/HAVE_NETINET_IN_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_6325e.dir/HAVE_NETINET_IN_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_NETINET_IN_H.c
+Linking C executable cmTC_6325e
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6325e.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_6325e.dir/HAVE_NETINET_IN_H.c.o -o cmTC_6325e 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files netinet/tcp.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_656d7/fast && /usr/bin/make  -f CMakeFiles/cmTC_656d7.dir/build.make CMakeFiles/cmTC_656d7.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_656d7.dir/HAVE_NETINET_TCP_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_656d7.dir/HAVE_NETINET_TCP_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_NETINET_TCP_H.c
+Linking C executable cmTC_656d7
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_656d7.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_656d7.dir/HAVE_NETINET_TCP_H.c.o -o cmTC_656d7 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files net/if.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e18f5/fast && /usr/bin/make  -f CMakeFiles/cmTC_e18f5.dir/build.make CMakeFiles/cmTC_e18f5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e18f5.dir/HAVE_NET_IF_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_e18f5.dir/HAVE_NET_IF_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_NET_IF_H.c
+Linking C executable cmTC_e18f5
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e18f5.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_e18f5.dir/HAVE_NET_IF_H.c.o -o cmTC_e18f5 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files signal.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a1ca5/fast && /usr/bin/make  -f CMakeFiles/cmTC_a1ca5.dir/build.make CMakeFiles/cmTC_a1ca5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a1ca5.dir/HAVE_SIGNAL_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_a1ca5.dir/HAVE_SIGNAL_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SIGNAL_H.c
+Linking C executable cmTC_a1ca5
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a1ca5.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_a1ca5.dir/HAVE_SIGNAL_H.c.o -o cmTC_a1ca5 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stdbool.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0a988/fast && /usr/bin/make  -f CMakeFiles/cmTC_0a988.dir/build.make CMakeFiles/cmTC_0a988.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0a988.dir/HAVE_STDBOOL_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_0a988.dir/HAVE_STDBOOL_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_STDBOOL_H.c
+Linking C executable cmTC_0a988
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_0a988.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_0a988.dir/HAVE_STDBOOL_H.c.o -o cmTC_0a988 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stdlib.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_19b08/fast && /usr/bin/make  -f CMakeFiles/cmTC_19b08.dir/build.make CMakeFiles/cmTC_19b08.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_19b08.dir/HAVE_STDLIB_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_19b08.dir/HAVE_STDLIB_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_STDLIB_H.c
+Linking C executable cmTC_19b08
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_19b08.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_19b08.dir/HAVE_STDLIB_H.c.o -o cmTC_19b08 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files strings.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_00f79/fast && /usr/bin/make  -f CMakeFiles/cmTC_00f79.dir/build.make CMakeFiles/cmTC_00f79.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_00f79.dir/HAVE_STRINGS_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_00f79.dir/HAVE_STRINGS_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_STRINGS_H.c
+Linking C executable cmTC_00f79
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_00f79.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_00f79.dir/HAVE_STRINGS_H.c.o -o cmTC_00f79 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files string.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_95c47/fast && /usr/bin/make  -f CMakeFiles/cmTC_95c47.dir/build.make CMakeFiles/cmTC_95c47.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_95c47.dir/HAVE_STRING_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_95c47.dir/HAVE_STRING_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_STRING_H.c
+Linking C executable cmTC_95c47
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_95c47.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_95c47.dir/HAVE_STRING_H.c.o -o cmTC_95c47 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files stropts.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9f474/fast && /usr/bin/make  -f CMakeFiles/cmTC_9f474.dir/build.make CMakeFiles/cmTC_9f474.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9f474.dir/HAVE_STROPTS_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_9f474.dir/HAVE_STROPTS_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_STROPTS_H.c
+Linking C executable cmTC_9f474
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9f474.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_9f474.dir/HAVE_STROPTS_H.c.o -o cmTC_9f474 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/ioctl.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_90824/fast && /usr/bin/make  -f CMakeFiles/cmTC_90824.dir/build.make CMakeFiles/cmTC_90824.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_90824.dir/HAVE_SYS_IOCTL_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_90824.dir/HAVE_SYS_IOCTL_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_IOCTL_H.c
+Linking C executable cmTC_90824
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_90824.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_90824.dir/HAVE_SYS_IOCTL_H.c.o -o cmTC_90824 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/param.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_7f382/fast && /usr/bin/make  -f CMakeFiles/cmTC_7f382.dir/build.make CMakeFiles/cmTC_7f382.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7f382.dir/HAVE_SYS_PARAM_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_7f382.dir/HAVE_SYS_PARAM_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_PARAM_H.c
+Linking C executable cmTC_7f382
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7f382.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_7f382.dir/HAVE_SYS_PARAM_H.c.o -o cmTC_7f382 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/select.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_37ed9/fast && /usr/bin/make  -f CMakeFiles/cmTC_37ed9.dir/build.make CMakeFiles/cmTC_37ed9.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_37ed9.dir/HAVE_SYS_SELECT_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_37ed9.dir/HAVE_SYS_SELECT_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_SELECT_H.c
+Linking C executable cmTC_37ed9
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_37ed9.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_37ed9.dir/HAVE_SYS_SELECT_H.c.o -o cmTC_37ed9 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/stat.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_7b974/fast && /usr/bin/make  -f CMakeFiles/cmTC_7b974.dir/build.make CMakeFiles/cmTC_7b974.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_7b974.dir/HAVE_SYS_STAT_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_7b974.dir/HAVE_SYS_STAT_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_STAT_H.c
+Linking C executable cmTC_7b974
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_7b974.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_7b974.dir/HAVE_SYS_STAT_H.c.o -o cmTC_7b974 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/time.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_73e51/fast && /usr/bin/make  -f CMakeFiles/cmTC_73e51.dir/build.make CMakeFiles/cmTC_73e51.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_73e51.dir/HAVE_SYS_TIME_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_73e51.dir/HAVE_SYS_TIME_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_TIME_H.c
+Linking C executable cmTC_73e51
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_73e51.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_73e51.dir/HAVE_SYS_TIME_H.c.o -o cmTC_73e51 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files sys/uio.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_59a8b/fast && /usr/bin/make  -f CMakeFiles/cmTC_59a8b.dir/build.make CMakeFiles/cmTC_59a8b.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_59a8b.dir/HAVE_SYS_UIO_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_59a8b.dir/HAVE_SYS_UIO_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SYS_UIO_H.c
+Linking C executable cmTC_59a8b
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_59a8b.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_59a8b.dir/HAVE_SYS_UIO_H.c.o -o cmTC_59a8b 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files time.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_77ef1/fast && /usr/bin/make  -f CMakeFiles/cmTC_77ef1.dir/build.make CMakeFiles/cmTC_77ef1.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_77ef1.dir/HAVE_TIME_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_77ef1.dir/HAVE_TIME_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_TIME_H.c
+Linking C executable cmTC_77ef1
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_77ef1.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_77ef1.dir/HAVE_TIME_H.c.o -o cmTC_77ef1 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files dlfcn.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9a28d/fast && /usr/bin/make  -f CMakeFiles/cmTC_9a28d.dir/build.make CMakeFiles/cmTC_9a28d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9a28d.dir/HAVE_DLFCN_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_9a28d.dir/HAVE_DLFCN_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_DLFCN_H.c
+Linking C executable cmTC_9a28d
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9a28d.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_9a28d.dir/HAVE_DLFCN_H.c.o -o cmTC_9a28d 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if files unistd.h exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_1842f/fast && /usr/bin/make  -f CMakeFiles/cmTC_1842f.dir/build.make CMakeFiles/cmTC_1842f.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1842f.dir/HAVE_UNISTD_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_1842f.dir/HAVE_UNISTD_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_UNISTD_H.c
+Linking C executable cmTC_1842f
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1842f.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_1842f.dir/HAVE_UNISTD_H.c.o -o cmTC_1842f 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Performing C SOURCE FILE Test HAVE_SOCKLEN_T succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a4be4/fast && /usr/bin/make  -f CMakeFiles/cmTC_a4be4.dir/build.make CMakeFiles/cmTC_a4be4.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a4be4.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_SOCKLEN_T -fPIE -o CMakeFiles/cmTC_a4be4.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_a4be4
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a4be4.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_SOCKLEN_T CMakeFiles/cmTC_a4be4.dir/src.c.o -o cmTC_a4be4  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			socklen_t var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_BOOL_T succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9f117/fast && /usr/bin/make  -f CMakeFiles/cmTC_9f117.dir/build.make CMakeFiles/cmTC_9f117.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9f117.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_BOOL_T -fPIE -o CMakeFiles/cmTC_9f117.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_9f117
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9f117.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_BOOL_T CMakeFiles/cmTC_9f117.dir/src.c.o -o cmTC_9f117  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			bool var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_SSIZE_T succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a20d2/fast && /usr/bin/make  -f CMakeFiles/cmTC_a20d2.dir/build.make CMakeFiles/cmTC_a20d2.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a20d2.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_SSIZE_T -fPIE -o CMakeFiles/cmTC_a20d2.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_a20d2
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a20d2.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_SSIZE_T CMakeFiles/cmTC_a20d2.dir/src.c.o -o cmTC_a20d2  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			ssize_t var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_LONGLONG succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e8cfb/fast && /usr/bin/make  -f CMakeFiles/cmTC_e8cfb.dir/build.make CMakeFiles/cmTC_e8cfb.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e8cfb.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_LONGLONG -fPIE -o CMakeFiles/cmTC_e8cfb.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_e8cfb
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e8cfb.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_LONGLONG CMakeFiles/cmTC_e8cfb.dir/src.c.o -o cmTC_e8cfb  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			long long var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_SIG_ATOMIC_T succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_1723c/fast && /usr/bin/make  -f CMakeFiles/cmTC_1723c.dir/build.make CMakeFiles/cmTC_1723c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1723c.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_SIG_ATOMIC_T -fPIE -o CMakeFiles/cmTC_1723c.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_1723c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1723c.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_SIG_ATOMIC_T CMakeFiles/cmTC_1723c.dir/src.c.o -o cmTC_1723c  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			sig_atomic_t var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_STRUCT_ADDRINFO succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2e715/fast && /usr/bin/make  -f CMakeFiles/cmTC_2e715.dir/build.make CMakeFiles/cmTC_2e715.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2e715.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_STRUCT_ADDRINFO -fPIE -o CMakeFiles/cmTC_2e715.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_2e715
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2e715.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_STRUCT_ADDRINFO CMakeFiles/cmTC_2e715.dir/src.c.o -o cmTC_2e715  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			struct addrinfo var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_STRUCT_IN6_ADDR succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_733db/fast && /usr/bin/make  -f CMakeFiles/cmTC_733db.dir/build.make CMakeFiles/cmTC_733db.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_733db.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_STRUCT_IN6_ADDR -fPIE -o CMakeFiles/cmTC_733db.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_733db
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_733db.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_STRUCT_IN6_ADDR CMakeFiles/cmTC_733db.dir/src.c.o -o cmTC_733db  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			struct in6_addr var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_STRUCT_SOCKADDR_IN6 succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_1839c/fast && /usr/bin/make  -f CMakeFiles/cmTC_1839c.dir/build.make CMakeFiles/cmTC_1839c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1839c.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_STRUCT_SOCKADDR_IN6 -fPIE -o CMakeFiles/cmTC_1839c.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_1839c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1839c.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_STRUCT_SOCKADDR_IN6 CMakeFiles/cmTC_1839c.dir/src.c.o -o cmTC_1839c  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			struct sockaddr_in6 var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_STRUCT_SOCKADDR_STORAGE succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_1d313/fast && /usr/bin/make  -f CMakeFiles/cmTC_1d313.dir/build.make CMakeFiles/cmTC_1d313.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1d313.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_STRUCT_SOCKADDR_STORAGE -fPIE -o CMakeFiles/cmTC_1d313.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_1d313
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1d313.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_STRUCT_SOCKADDR_STORAGE CMakeFiles/cmTC_1d313.dir/src.c.o -o cmTC_1d313  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			struct sockaddr_storage var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Performing C SOURCE FILE Test HAVE_STRUCT_TIMEVAL succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_c7fd8/fast && /usr/bin/make  -f CMakeFiles/cmTC_c7fd8.dir/build.make CMakeFiles/cmTC_c7fd8.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c7fd8.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_STRUCT_TIMEVAL -fPIE -o CMakeFiles/cmTC_c7fd8.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_c7fd8
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c7fd8.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_STRUCT_TIMEVAL CMakeFiles/cmTC_c7fd8.dir/src.c.o -o cmTC_c7fd8  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			struct timeval var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Determining if the AF_INET6 exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f806b/fast && /usr/bin/make  -f CMakeFiles/cmTC_f806b.dir/build.make CMakeFiles/cmTC_f806b.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f806b.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_f806b.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_f806b
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_f806b.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_f806b.dir/CheckSymbolExists.c.o -o cmTC_f806b  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef AF_INET6
+  return ((int*)(&AF_INET6))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the O_NONBLOCK exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_03ac1/fast && /usr/bin/make  -f CMakeFiles/cmTC_03ac1.dir/build.make CMakeFiles/cmTC_03ac1.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_03ac1.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_03ac1.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_03ac1
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_03ac1.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_03ac1.dir/CheckSymbolExists.c.o -o cmTC_03ac1  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef O_NONBLOCK
+  return ((int*)(&O_NONBLOCK))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the FIONBIO exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_dae2a/fast && /usr/bin/make  -f CMakeFiles/cmTC_dae2a.dir/build.make CMakeFiles/cmTC_dae2a.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_dae2a.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_dae2a.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_dae2a
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dae2a.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_dae2a.dir/CheckSymbolExists.c.o -o cmTC_dae2a  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef FIONBIO
+  return ((int*)(&FIONBIO))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the SIOCGIFADDR exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_6d17d/fast && /usr/bin/make  -f CMakeFiles/cmTC_6d17d.dir/build.make CMakeFiles/cmTC_6d17d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6d17d.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_6d17d.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_6d17d
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6d17d.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_6d17d.dir/CheckSymbolExists.c.o -o cmTC_6d17d  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef SIOCGIFADDR
+  return ((int*)(&SIOCGIFADDR))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the MSG_NOSIGNAL exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_051bf/fast && /usr/bin/make  -f CMakeFiles/cmTC_051bf.dir/build.make CMakeFiles/cmTC_051bf.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_051bf.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_051bf.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_051bf
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_051bf.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_051bf.dir/CheckSymbolExists.c.o -o cmTC_051bf  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef MSG_NOSIGNAL
+  return ((int*)(&MSG_NOSIGNAL))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the PF_INET6 exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_c42f1/fast && /usr/bin/make  -f CMakeFiles/cmTC_c42f1.dir/build.make CMakeFiles/cmTC_c42f1.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c42f1.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_c42f1.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_c42f1
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c42f1.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_c42f1.dir/CheckSymbolExists.c.o -o cmTC_c42f1  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef PF_INET6
+  return ((int*)(&PF_INET6))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CLOCK_MONOTONIC exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_16cdd/fast && /usr/bin/make  -f CMakeFiles/cmTC_16cdd.dir/build.make CMakeFiles/cmTC_16cdd.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_16cdd.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_16cdd.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_16cdd
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_16cdd.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_16cdd.dir/CheckSymbolExists.c.o -o cmTC_16cdd  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CLOCK_MONOTONIC
+  return ((int*)(&CLOCK_MONOTONIC))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C SOURCE FILE Test HAVE_SOCKADDR_IN6_SIN6_SCOPE_ID succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2a758/fast && /usr/bin/make  -f CMakeFiles/cmTC_2a758.dir/build.make CMakeFiles/cmTC_2a758.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2a758.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_SOCKADDR_IN6_SIN6_SCOPE_ID -fPIE -o CMakeFiles/cmTC_2a758.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_2a758
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2a758.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_SOCKADDR_IN6_SIN6_SCOPE_ID CMakeFiles/cmTC_2a758.dir/src.c.o -o cmTC_2a758  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main()
+{
+  (void)sizeof(((struct sockaddr_in6 *)0)->sin6_scope_id);
+  return 0;
+}
+
+Performing C SOURCE FILE Test HAVE_LL succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d50f9/fast && /usr/bin/make  -f CMakeFiles/cmTC_d50f9.dir/build.make CMakeFiles/cmTC_d50f9.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d50f9.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_LL -fPIE -o CMakeFiles/cmTC_d50f9.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_d50f9
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d50f9.dir/link.txt --verbose=1
+/usr/bin/cc   -DHAVE_LL CMakeFiles/cmTC_d50f9.dir/src.c.o -o cmTC_d50f9  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+int main() { int n=1234LL; return 0; }
+Determining if the connect exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_347d5/fast && /usr/bin/make  -f CMakeFiles/cmTC_347d5.dir/build.make CMakeFiles/cmTC_347d5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_347d5.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_347d5.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_347d5
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_347d5.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_347d5.dir/CheckSymbolExists.c.o -o cmTC_347d5  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef connect
+  return ((int*)(&connect))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the fcntl exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_972ed/fast && /usr/bin/make  -f CMakeFiles/cmTC_972ed.dir/build.make CMakeFiles/cmTC_972ed.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_972ed.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_972ed.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_972ed
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_972ed.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_972ed.dir/CheckSymbolExists.c.o -o cmTC_972ed  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef fcntl
+  return ((int*)(&fcntl))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the freeaddrinfo exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_b2a30/fast && /usr/bin/make  -f CMakeFiles/cmTC_b2a30.dir/build.make CMakeFiles/cmTC_b2a30.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b2a30.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_b2a30.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_b2a30
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_b2a30.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_b2a30.dir/CheckSymbolExists.c.o -o cmTC_b2a30  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef freeaddrinfo
+  return ((int*)(&freeaddrinfo))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getaddrinfo exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_eb0e6/fast && /usr/bin/make  -f CMakeFiles/cmTC_eb0e6.dir/build.make CMakeFiles/cmTC_eb0e6.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_eb0e6.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_eb0e6.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_eb0e6
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_eb0e6.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_eb0e6.dir/CheckSymbolExists.c.o -o cmTC_eb0e6  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getaddrinfo
+  return ((int*)(&getaddrinfo))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getenv exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_54b1f/fast && /usr/bin/make  -f CMakeFiles/cmTC_54b1f.dir/build.make CMakeFiles/cmTC_54b1f.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_54b1f.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_54b1f.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_54b1f
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_54b1f.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_54b1f.dir/CheckSymbolExists.c.o -o cmTC_54b1f  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getenv
+  return ((int*)(&getenv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the gethostbyaddr exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_330de/fast && /usr/bin/make  -f CMakeFiles/cmTC_330de.dir/build.make CMakeFiles/cmTC_330de.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_330de.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_330de.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_330de
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_330de.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_330de.dir/CheckSymbolExists.c.o -o cmTC_330de  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef gethostbyaddr
+  return ((int*)(&gethostbyaddr))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the gethostbyname exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_25e4c/fast && /usr/bin/make  -f CMakeFiles/cmTC_25e4c.dir/build.make CMakeFiles/cmTC_25e4c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_25e4c.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_25e4c.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_25e4c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_25e4c.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_25e4c.dir/CheckSymbolExists.c.o -o cmTC_25e4c  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef gethostbyname
+  return ((int*)(&gethostbyname))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the gethostname exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a87cb/fast && /usr/bin/make  -f CMakeFiles/cmTC_a87cb.dir/build.make CMakeFiles/cmTC_a87cb.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a87cb.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_a87cb.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_a87cb
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a87cb.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_a87cb.dir/CheckSymbolExists.c.o -o cmTC_a87cb  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef gethostname
+  return ((int*)(&gethostname))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getnameinfo exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_9b759/fast && /usr/bin/make  -f CMakeFiles/cmTC_9b759.dir/build.make CMakeFiles/cmTC_9b759.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_9b759.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_9b759.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_9b759
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9b759.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_9b759.dir/CheckSymbolExists.c.o -o cmTC_9b759  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getnameinfo
+  return ((int*)(&getnameinfo))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the getservbyport_r exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ecb5c/fast && /usr/bin/make  -f CMakeFiles/cmTC_ecb5c.dir/build.make CMakeFiles/cmTC_ecb5c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ecb5c.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_ecb5c.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_ecb5c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ecb5c.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_ecb5c.dir/CheckSymbolExists.c.o -o cmTC_ecb5c  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef getservbyport_r
+  return ((int*)(&getservbyport_r))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the gettimeofday exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8e8cc/fast && /usr/bin/make  -f CMakeFiles/cmTC_8e8cc.dir/build.make CMakeFiles/cmTC_8e8cc.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8e8cc.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_8e8cc.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_8e8cc
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8e8cc.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_8e8cc.dir/CheckSymbolExists.c.o -o cmTC_8e8cc  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef gettimeofday
+  return ((int*)(&gettimeofday))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the if_indextoname exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_420e9/fast && /usr/bin/make  -f CMakeFiles/cmTC_420e9.dir/build.make CMakeFiles/cmTC_420e9.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_420e9.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_420e9.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_420e9
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_420e9.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_420e9.dir/CheckSymbolExists.c.o -o cmTC_420e9  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef if_indextoname
+  return ((int*)(&if_indextoname))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the inet_ntop exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4edd3/fast && /usr/bin/make  -f CMakeFiles/cmTC_4edd3.dir/build.make CMakeFiles/cmTC_4edd3.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4edd3.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_4edd3.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_4edd3
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4edd3.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_4edd3.dir/CheckSymbolExists.c.o -o cmTC_4edd3  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef inet_ntop
+  return ((int*)(&inet_ntop))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the inet_pton exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_fbc9c/fast && /usr/bin/make  -f CMakeFiles/cmTC_fbc9c.dir/build.make CMakeFiles/cmTC_fbc9c.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_fbc9c.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_fbc9c.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_fbc9c
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_fbc9c.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_fbc9c.dir/CheckSymbolExists.c.o -o cmTC_fbc9c  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef inet_pton
+  return ((int*)(&inet_pton))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the ioctl exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_32046/fast && /usr/bin/make  -f CMakeFiles/cmTC_32046.dir/build.make CMakeFiles/cmTC_32046.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_32046.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_32046.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_32046
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_32046.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_32046.dir/CheckSymbolExists.c.o -o cmTC_32046  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef ioctl
+  return ((int*)(&ioctl))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the recv exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_6c61d/fast && /usr/bin/make  -f CMakeFiles/cmTC_6c61d.dir/build.make CMakeFiles/cmTC_6c61d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_6c61d.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_6c61d.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_6c61d
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6c61d.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_6c61d.dir/CheckSymbolExists.c.o -o cmTC_6c61d  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef recv
+  return ((int*)(&recv))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the recvfrom exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2bfc4/fast && /usr/bin/make  -f CMakeFiles/cmTC_2bfc4.dir/build.make CMakeFiles/cmTC_2bfc4.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2bfc4.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_2bfc4.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_2bfc4
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2bfc4.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_2bfc4.dir/CheckSymbolExists.c.o -o cmTC_2bfc4  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef recvfrom
+  return ((int*)(&recvfrom))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the send exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_46a53/fast && /usr/bin/make  -f CMakeFiles/cmTC_46a53.dir/build.make CMakeFiles/cmTC_46a53.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_46a53.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_46a53.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_46a53
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_46a53.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_46a53.dir/CheckSymbolExists.c.o -o cmTC_46a53  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef send
+  return ((int*)(&send))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the setsockopt exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_3d4c1/fast && /usr/bin/make  -f CMakeFiles/cmTC_3d4c1.dir/build.make CMakeFiles/cmTC_3d4c1.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3d4c1.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_3d4c1.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_3d4c1
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3d4c1.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_3d4c1.dir/CheckSymbolExists.c.o -o cmTC_3d4c1  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef setsockopt
+  return ((int*)(&setsockopt))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the socket exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_ae898/fast && /usr/bin/make  -f CMakeFiles/cmTC_ae898.dir/build.make CMakeFiles/cmTC_ae898.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_ae898.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_ae898.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_ae898
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ae898.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_ae898.dir/CheckSymbolExists.c.o -o cmTC_ae898  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef socket
+  return ((int*)(&socket))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strcasecmp exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_dae96/fast && /usr/bin/make  -f CMakeFiles/cmTC_dae96.dir/build.make CMakeFiles/cmTC_dae96.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_dae96.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_dae96.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_dae96
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_dae96.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_dae96.dir/CheckSymbolExists.c.o -o cmTC_dae96  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strcasecmp
+  return ((int*)(&strcasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strdup exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_1649d/fast && /usr/bin/make  -f CMakeFiles/cmTC_1649d.dir/build.make CMakeFiles/cmTC_1649d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_1649d.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_1649d.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_1649d
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_1649d.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_1649d.dir/CheckSymbolExists.c.o -o cmTC_1649d  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strdup
+  return ((int*)(&strdup))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strncasecmp exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_c7c26/fast && /usr/bin/make  -f CMakeFiles/cmTC_c7c26.dir/build.make CMakeFiles/cmTC_c7c26.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_c7c26.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_c7c26.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_c7c26
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_c7c26.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_c7c26.dir/CheckSymbolExists.c.o -o cmTC_c7c26  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strncasecmp
+  return ((int*)(&strncasecmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the writev exist passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_112f4/fast && /usr/bin/make  -f CMakeFiles/cmTC_112f4.dir/build.make CMakeFiles/cmTC_112f4.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_112f4.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_112f4.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_112f4
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_112f4.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_112f4.dir/CheckSymbolExists.c.o -o cmTC_112f4  -lnsl -lrt 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef writev
+  return ((int*)(&writev))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Performing C++ SOURCE FILE Test protobuf_HAVE_BUILTIN_ATOMICS succeeded with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_155fe/fast && /usr/bin/make  -f CMakeFiles/cmTC_155fe.dir/build.make CMakeFiles/cmTC_155fe.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building CXX object CMakeFiles/cmTC_155fe.dir/src.cxx.o
+/usr/bin/c++   -Dprotobuf_HAVE_BUILTIN_ATOMICS -std=c++11 -fPIE -o CMakeFiles/cmTC_155fe.dir/src.cxx.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.cxx
+Linking CXX executable cmTC_155fe
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_155fe.dir/link.txt --verbose=1
+/usr/bin/c++   -Dprotobuf_HAVE_BUILTIN_ATOMICS -std=c++11 -rdynamic CMakeFiles/cmTC_155fe.dir/src.cxx.o -o cmTC_155fe 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+Source file was:
+
+    #include <atomic>
+    int main() {
+      return std::atomic<int64_t>{};
+    }
+  
+Checking whether the ASM compiler is GNU using "--version" matched "(GNU assembler)|(GCC)|(Free Software Foundation)":
+cc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+Copyright (C) 2017 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Determining size of off64_t passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_eaa46/fast && /usr/bin/make  -f CMakeFiles/cmTC_eaa46.dir/build.make CMakeFiles/cmTC_eaa46.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_eaa46.dir/OFF64_T.c.o
+/usr/bin/cc -DHAVE_STDDEF_H -DHAVE_STDINT_H -DHAVE_SYS_TYPES_H -D_LARGEFILE64_SOURCE=1  -fPIE -std=gnu99 -o CMakeFiles/cmTC_eaa46.dir/OFF64_T.c.o -c /virtualNode/device-management/CMakeFiles/CheckTypeSize/OFF64_T.c
+Linking C executable cmTC_eaa46
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_eaa46.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_eaa46.dir/OFF64_T.c.o -o cmTC_eaa46 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the function fseeko exists passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d7d5e/fast && /usr/bin/make  -f CMakeFiles/cmTC_d7d5e.dir/build.make CMakeFiles/cmTC_d7d5e.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d7d5e.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=fseeko -fPIE -o CMakeFiles/cmTC_d7d5e.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_d7d5e
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d7d5e.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=fseeko -rdynamic CMakeFiles/cmTC_d7d5e.dir/CheckFunctionExists.c.o -o cmTC_d7d5e 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+
+Determining if the include file unistd.h exists passed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_d8fec/fast && /usr/bin/make  -f CMakeFiles/cmTC_d8fec.dir/build.make CMakeFiles/cmTC_d8fec.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_d8fec.dir/CheckIncludeFile.c.o
+/usr/bin/cc   -fPIE -std=gnu99 -o CMakeFiles/cmTC_d8fec.dir/CheckIncludeFile.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+Linking C executable cmTC_d8fec
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d8fec.dir/link.txt --verbose=1
+/usr/bin/cc CMakeFiles/cmTC_d8fec.dir/CheckIncludeFile.c.o -o cmTC_d8fec 
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+
+
+

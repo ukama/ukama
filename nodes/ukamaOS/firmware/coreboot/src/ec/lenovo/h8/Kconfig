@@ -1,0 +1,47 @@
+config EC_LENOVO_H8
+	select EC_ACPI
+	bool
+
+if EC_LENOVO_H8
+
+config SEABIOS_PS2_TIMEOUT
+	int
+	depends on PAYLOAD_SEABIOS
+	default 5000
+
+config H8_BEEP_ON_DEATH
+	bool "Beep on fatal error"
+	default y
+	help
+	  Beep when encountered a fatal error.
+
+config H8_FLASH_LEDS_ON_DEATH
+	bool "Flash LEDs on fatal error"
+	default y
+	help
+	  Flash all LEDs when encountered a fatal error.
+
+config H8_SUPPORT_BT_ON_WIFI
+	bool "Support bluetooth on wifi cards"
+	default n
+	help
+	  Disable BDC detection and assume bluetooth is installed. Required for
+	  bluetooth on wifi cards, as it's not possible to detect it in coreboot.
+
+config H8_HAS_BAT_TRESHOLDS_IMPL
+	bool
+	default n
+
+config H8_FN_KEY_AS_VBOOT_RECOVERY_SW
+	bool "Enable Fn-Key as VBOOT recovery switch"
+	depends on VBOOT
+	default n
+	help
+	  If VBOOT is enabled, press Fn-Key at power on to force a recovery mode
+	  boot instead of regular FW_MAIN_x boot.
+
+config H8_HAS_PRIMARY_FN_KEYS
+	bool
+	default n
+
+endif # EC_LENOVO_H8
