@@ -1,7 +1,7 @@
 import {
     UserSettings,
-    NodeSettings,
     AlertSettings,
+    ConsoleSettings,
     NetworkSettings,
     LoadingWrapper,
 } from "../../components";
@@ -20,6 +20,8 @@ import {
     Card,
     CardActions,
     CardContent,
+    IconButton,
+    Box,
 } from "@mui/material";
 import {
     useRecoilState,
@@ -31,6 +33,7 @@ import { colors } from "../../theme";
 import { routes } from "../../router/config";
 import { useHistory } from "react-router-dom";
 import { SettingsMenuTypes } from "../../types";
+import CloseIcon from "@mui/icons-material/Close";
 import React, { useEffect, useState } from "react";
 import { APP_VERSION, COPY_RIGHTS, SETTING_MENU } from "../../constants";
 import { user, pageName, isDarkmode, isSkeltonLoading } from "../../recoil";
@@ -102,7 +105,7 @@ const ActionButtons = ({
 
 const Settings = () => {
     const history = useHistory();
-    const [menuId, setMenuId] = useState(1);
+    const [menuId, setMenuId] = useState(4);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
@@ -143,13 +146,13 @@ const Settings = () => {
             }}
         >
             <CardContent>
-                <Grid container spacing={2} height="80%">
+                <Grid container spacing={3} height="80%">
                     <Grid item xs={12} md={3}>
                         <LoadingWrapper height={237} isLoading={skeltonLoading}>
                             <RoundedCard
                                 sx={{
-                                    p: "12px 20px",
-                                    position: "relative",
+                                    px: 2,
+                                    py: 3,
                                     height: "fit-content",
                                 }}
                             >
@@ -166,7 +169,12 @@ const Settings = () => {
                                             />
                                         )
                                     )}
-                                    <Divider />
+                                    <Divider
+                                        sx={{
+                                            mt: "18px !important",
+                                            mb: "18px !important",
+                                        }}
+                                    />
                                     <SettingMenuItem
                                         label={"Log out"}
                                         isSelected={false}
@@ -185,13 +193,26 @@ const Settings = () => {
                         <LoadingWrapper height={364} isLoading={skeltonLoading}>
                             <Card
                                 sx={{
-                                    padding: "18px 28px",
+                                    px: 4,
+                                    py: 2,
                                     borderRadius: "10px",
                                     boxShadow:
                                         "2px 2px 6px rgba(0, 0, 0, 0.05)",
                                 }}
                             >
-                                <CardContent>
+                                <CardContent sx={{ p: 0 }}>
+                                    <Box
+                                        mb={1}
+                                        width="100%"
+                                        display="flex"
+                                        component={"div"}
+                                        alignItems="flex-end"
+                                        justifyContent="flex-end"
+                                    >
+                                        <IconButton onClick={handleCancel}>
+                                            <CloseIcon />
+                                        </IconButton>
+                                    </Box>
                                     <TabPanel index={1} value={menuId}>
                                         <UserSettings />
                                     </TabPanel>
@@ -202,10 +223,14 @@ const Settings = () => {
                                         <AlertSettings />
                                     </TabPanel>
                                     <TabPanel value={menuId} index={4}>
-                                        <NodeSettings />
+                                        <ConsoleSettings />
                                     </TabPanel>
                                 </CardContent>
-                                <CardActions>
+                                <CardActions
+                                    sx={{
+                                        display: menuId === 4 ? "none" : "flex",
+                                    }}
+                                >
                                     <ActionButtons
                                         handleSaveAction={handleSave}
                                         handleCancelAction={handleCancel}

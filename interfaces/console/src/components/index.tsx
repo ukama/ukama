@@ -12,7 +12,6 @@ import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
 import GraphLoading from "./GraphLoading";
 import NodeDropDown from "./NodeDropDown";
-import NodeSettings from "./NodeSettings";
 import UserSettings from "./UserSettings";
 import NodeStatItem from "./NodeStatItem";
 import NodeRadioTab from "./NodeRadioTab";
@@ -25,6 +24,7 @@ import ApexLineChart from "./ApexLineChart";
 import NodeNetworkTab from "./NodeNetworkTab";
 import LoadingWrapper from "./LoadingWrapper";
 import OptionsPopover from "./OptionsPopover";
+import ConsoleSettings from "./ConsoleSettings";
 import NodeOverviewTab from "./NodeOverviewTab";
 import NodeSoftwareTab from "./NodeSoftwareTab";
 import NodeDetailsCard from "./NodeDetailsCard";
@@ -68,7 +68,6 @@ export {
     TableHeader,
     BasicDialog,
     NodeDropDown,
-    NodeSettings,
     UserSettings,
     NodeStatItem,
     NodeRadioTab,
@@ -82,6 +81,7 @@ export {
     OptionsPopover,
     NodeNetworkTab,
     LoadingWrapper,
+    ConsoleSettings,
     NodeOverviewTab,
     NetworkSettings,
     NodeDetailsCard,

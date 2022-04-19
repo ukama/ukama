@@ -10,13 +10,14 @@ import {
     GetUsersDto,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
+    useUpdateUserMutation,
     useUpdateUserStatusMutation,
 } from "../../generated";
-import { useState } from "react";
-import { useRecoilValue } from "recoil";
+import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
-import { isSkeltonLoading } from "../../recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { isSkeltonLoading, snackbarMessage } from "../../recoil";
 
 const userInit = {
     id: "",
@@ -36,7 +37,19 @@ const User = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [showSimDialog, setShowSimDialog] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
-
+    const setUserNotification = useSetRecoilState(snackbarMessage);
+    const [
+        addUser,
+        { loading: addUserLoading, data: addUserRes, error: addUserError },
+    ] = useAddUserMutation();
+    const [
+        updateUser,
+        {
+            loading: updateUserLoading,
+            data: updateUserRes,
+            error: updateUserError,
+        },
+    ] = useUpdateUserMutation();
     const { data: usersRes, loading: usersByOrgLoading } =
         useGetUsersByOrgQuery({
             onCompleted: res => setUsers(res.getUsersByOrg),
@@ -48,7 +61,7 @@ const User = () => {
         },
     });
 
-    const [updateUserStatus, { loading: updateUserLoading }] =
+    const [updateUserStatus, { loading: useUpdateUserLoading }] =
         useUpdateUserStatusMutation();
 
     const handleSimDialogClose = () => setShowSimDialog(false);
@@ -95,16 +108,87 @@ const User = () => {
         });
     };
 
-    const handleSave = () => {
+    const handleSaveUser = () => {
         setShowSimDialog(false);
+        if (selectedUser.id) {
+            addUser({
+                variables: {
+                    data: {
+                        email: selectedUser?.email || "",
+                        name: selectedUser?.name,
+                    },
+                },
+            });
+        }
     };
+
+    const handleUpdateUser = () => {
+        setShowSimDialog(false);
+        if (selectedUser.id) {
+            updateUser({
+                variables: {
+                    data: {
+                        email: selectedUser?.email || "",
+                        // name: selectedUser?.name,
+                        phone: selectedUser?.phone || "",
+                        id: selectedUser?.id,
+                    },
+                },
+            });
+        }
+    };
+    useEffect(() => {
+        if (addUserRes) {
+            setUserNotification({
+                id: "addUserNotification",
+                message: `The user has been added successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [addUserRes]);
+    useEffect(() => {
+        if (updateUserRes) {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `The user has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [updateUserRes]);
+    useEffect(() => {
+        if (addUserError) {
+            setUserNotification({
+                id: "addUserNotification",
+                message: `${addUserError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [addUserError]);
+    useEffect(() => {
+        if (updateUserError) {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `${updateUserError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [updateUserError]);
 
     return (
         <Box component="div" sx={{ height: "calc(100% - 3%)" }}>
             <LoadingWrapper
                 width="100%"
                 height="inherit"
-                isLoading={isSkeltonLoad || usersByOrgLoading}
+                isLoading={
+                    isSkeltonLoad ||
+                    usersByOrgLoading ||
+                    addUserLoading ||
+                    updateUserLoading
+                }
             >
                 {usersRes && usersRes?.getUsersByOrg?.length > 0 ? (
                     <RoundedCard sx={{ borderRadius: "4px", overflow: "auto" }}>
@@ -150,13 +234,14 @@ const User = () => {
 
                 <UserDetailsDialog
                     user={selectedUser}
-                    saveBtnLabel="save"
+                    saveBtnLabel={"Save"}
                     closeBtnLabel="close"
                     loading={userLoading}
                     isOpen={showSimDialog}
+                    handleUpdateUser={handleUpdateUser}
                     setUserForm={setSelectedUser}
                     simDetailsTitle="SIM Details"
-                    handleSaveSimUser={handleSave}
+                    handleSaveSimUser={handleSaveUser}
                     userDetailsTitle="User Details"
                     handleClose={handleSimDialogClose}
                     userStatusLoading={updateUserLoading}
@@ -168,3 +253,6 @@ const User = () => {
 };
 
 export default User;
+function useAddUserMutation(): [any, { loading: any; data: any; error: any }] {
+    throw new Error("Function not implemented.");
+}

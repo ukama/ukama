@@ -166,6 +166,7 @@ const NodeCard = ({
                         xs={12}
                         container
                         spacing={1}
+                        mb={"2px"}
                         sx={{ alignItems: "center" }}
                     >
                         <Grid

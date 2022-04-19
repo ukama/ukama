@@ -1,11 +1,9 @@
 import {
     Box,
-    Menu,
     AppBar,
     Divider,
     Popover,
     Toolbar,
-    MenuItem,
     IconButton,
     Typography,
     Badge,
@@ -17,24 +15,25 @@ import {
     GetLatestAlertsSubscription,
     useGetAlertsQuery,
 } from "../../generated";
-import {
-    MoreVert,
-    Settings,
-    Notifications,
-    AccountCircle,
-} from "@mui/icons-material";
 import { colors } from "../../theme";
 import { RoundedCard } from "../../styles";
 import { routes } from "../../router/config";
 import { useHistory } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
-import React, { useEffect, useRef, useState } from "react";
+import { Alerts, LoadingWrapper } from "../../components";
+import { useEffect, useRef, useState } from "react";
 import ExitToAppOutlined from "@mui/icons-material/ExitToAppOutlined";
-import { Alerts, DarkModToggle, LoadingWrapper } from "../../components";
+import { Settings, Notifications, AccountCircle } from "@mui/icons-material";
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, user, pageName } from "../../recoil";
 import { useCookies } from "react-cookie";
+
+const popupStyle = {
+    boxShadow:
+        "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
+    borderRadius: "4px",
+};
 
 type HeaderProps = {
     pageName: string;
@@ -52,20 +51,11 @@ const Header = ({
     const history = useHistory();
     const showDivider = _pageName !== "Billing" ? true : false;
     const ref = useRef(null);
-    const menuId = "account-popup-menu";
     const _user = useRecoilValue(user);
     const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(user);
     const [, , removeCookie] = useCookies(["orgId"]);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const isMenuOpen = Boolean(anchorEl);
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-    };
-    const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
 
     const [notificationAnchorEl, setNotificationAnchorEl] =
         useState<HTMLButtonElement | null>(null);
@@ -90,7 +80,6 @@ const Header = ({
     const notificationAnchorElId = open ? "simple-popover" : undefined;
 
     const handleSettingsClick = () => {
-        handleMenuClose();
         handlePageChange("Settings");
         history.push(routes.Settings.path);
     };
@@ -136,28 +125,6 @@ const Header = ({
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };
 
-    const renderMenu = (
-        <Menu
-            id={menuId}
-            keepMounted
-            anchorEl={anchorEl}
-            anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-            }}
-            transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-            }}
-            open={isMenuOpen}
-            onClose={handleMenuClose}
-        >
-            <MenuItem onClick={handleSettingsClick}>Settings</MenuItem>
-            <Divider />
-            <MenuItem onClick={handleMenuClose}>Notifications</MenuItem>
-        </Menu>
-    );
-
     return (
         <Box component="div">
             <Popover
@@ -176,6 +143,7 @@ const Header = ({
                 PaperProps={{
                     style: {
                         background: "transparent",
+                        ...popupStyle,
                     },
                 }}
             >
@@ -202,6 +170,7 @@ const Header = ({
                 PaperProps={{
                     style: {
                         background: "transparent",
+                        ...popupStyle,
                     },
                 }}
             >
@@ -266,14 +235,13 @@ const Header = ({
                         isLoading={isLoading}
                     >
                         <Stack
-                            spacing={3}
+                            spacing={{ xs: 2, md: 3 }}
                             direction="row"
                             sx={{
-                                display: { xs: "none", md: "flex" },
+                                display: { xs: "flex", md: "flex" },
                                 justifyContent: "flex-end",
                             }}
                         >
-                            <DarkModToggle />
                             <IconButton
                                 size="small"
                                 color="inherit"
@@ -324,24 +292,9 @@ const Header = ({
                             </IconButton>
                         </Stack>
                     </LoadingWrapper>
-
-                    <Box
-                        component="div"
-                        sx={{ display: { xs: "flex", md: "none" } }}
-                    >
-                        <IconButton
-                            size="large"
-                            color="inherit"
-                            aria-controls={menuId}
-                            onClick={handleMobileMenuOpen}
-                        >
-                            <MoreVert />
-                        </IconButton>
-                    </Box>
                 </Toolbar>
                 {showDivider && <Divider ref={ref} sx={{ m: "0px" }} />}
             </AppBar>
-            {renderMenu}
         </Box>
     );
 };

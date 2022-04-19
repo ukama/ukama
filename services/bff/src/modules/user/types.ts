@@ -44,37 +44,12 @@ export class UpdateUserDto {
     @Field()
     id: string;
 
-    @Field({ nullable: true })
-    eSimNumber: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    firstName: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    lastName: string;
-
-    @Field({ nullable: true })
-    @IsEmail()
-    email?: string;
-
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone?: string;
-}
-@ObjectType()
-export class UserResponse {
     @Field()
-    id: string;
-
-    @Field()
+    @Length(3, 255)
     name: string;
 
     @Field()
-    sim: string;
-
-    @Field()
+    @IsEmail()
     email: string;
 
     @Field()
@@ -210,7 +185,7 @@ export class OrgUserDto {
 }
 
 @ObjectType()
-export class AddUserResponse {
+export class UserResDto {
     @Field()
     name: string;
 
@@ -221,10 +196,10 @@ export class AddUserResponse {
     phone: string;
 
     @Field()
-    uuid: string;
+    id: string;
 
-    @Field()
-    iccid: string;
+    @Field({ nullable: true })
+    iccid?: string;
 }
 
 @ObjectType()

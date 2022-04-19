@@ -1,12 +1,13 @@
 import { GET_STATUS_TYPE } from "../../constants";
 import { IUserMapper } from "./interface";
 import {
-    AddUserResponse,
+    UserResDto,
     AddUserServiceRes,
     ConnectedUserDto,
     GetUserDto,
     GetUserResponseDto,
     GetUsersDto,
+    OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
     ResidentResponse,
@@ -74,13 +75,21 @@ class UserMapper implements IUserMapper {
             dataUsage: defaultCasual.integer(1, 1024),
         };
     };
-    dtoToAddUserDto = (req: AddUserServiceRes): AddUserResponse | null => {
+    dtoToUserResDto = (req: OrgUserDto): UserResDto => {
+        return {
+            id: req.uuid,
+            name: req.name,
+            email: req.email,
+            phone: req.phone,
+        };
+    };
+    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto | null => {
         if (req) {
             return {
                 name: req.user.name,
                 email: req.user.email,
                 phone: req.user.phone,
-                uuid: req.user.uuid,
+                id: req.user.uuid,
                 iccid: req.iccid,
             };
         }

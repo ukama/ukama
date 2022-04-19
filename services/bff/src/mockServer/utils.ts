@@ -121,34 +121,6 @@ export const activateUser = (req: Request, res: Response): void => {
     });
 };
 
-export const updateUser = (req: Request, res: Response): void => {
-    const { body } = req;
-    let data;
-
-    if (
-        body.id &&
-        (body.firstName ||
-            body.lastName ||
-            body.eSimNumber ||
-            body.email ||
-            body.phone)
-    )
-        data = casual._updateUser(
-            body.id,
-            body.firstName,
-            body.lastName,
-            body.eSimNumber,
-            body.email,
-            body.phone
-        );
-    else data = {};
-
-    res.send({
-        status: "success",
-        data: data,
-    });
-};
-
 export const getUsers = (req: Request, res: Response): void => {
     const filter = req.query.type?.toString();
 
