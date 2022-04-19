@@ -66,8 +66,15 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
-    const [isAddNode, setIsAddNode] = useState<boolean>(false);
-    const [isEditNode, setIsEditNode] = useState<boolean>(false);
+    const [showNodeDialog, setShowDialog] = useState({
+        type: "add",
+        isShow: false,
+        title: "Register Node",
+        subTitle:
+            "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you.",
+        nodeData: null,
+    });
+
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
@@ -98,9 +105,12 @@ const Home = () => {
     ] = useUpdateNodeMutation();
 
     const handleAddNodeClose = () => {
-        setIsEditNode(() => false);
-        setIsAddNode(() => false);
+        setShowDialog(prev => ({
+            ...prev,
+            isShow: false,
+        }));
     };
+
     const {
         data: connectedUserRes,
         loading: connectedUserloading,
@@ -368,7 +378,6 @@ const Home = () => {
 
     const handleUserActivateClose = () => {
         setIsUserActivateOpen(() => false);
-        setIsEditNode(() => false);
     };
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
@@ -381,37 +390,57 @@ const Home = () => {
     };
 
     const handleNodeActions = (id: string, type: string) => {
-        if (type == "edit") {
-            setIsEditNode(true);
-            // nodeRes?.getNodesByOrg.nodes
-            //     .filter(node => node.id == id)
-            //     .map(filteredNode => {
-            //         if (filteredNode) {
-            //             setNode({ ...filteredNode, orgId });
-            //         }
-            //     });
+        if (type == "editNode") {
+            setShowDialog(prev => ({
+                ...prev,
+                type: "editNode",
+                isShow: true,
+                title: "Edit Node",
+            }));
         }
     };
+
     const handleAddNode = () => {
-        setIsAddNode(true);
+        setShowDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: true,
+            title: "Register Node",
+        }));
     };
+
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-    const handleActivationSubmit = (registerNodeData: any) => {
-        let data = {
-            ...registerNodeData,
-            orgId: orgId,
-        };
-        if (registerNodeData.length > 0) {
+
+    const handleNodeSubmitAction = (data: any) => {
+        setShowDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: false,
+            title: "Register Node",
+        }));
+        if (showNodeDialog.type === "add") {
             registerNode({
                 variables: {
-                    data,
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
                 },
             });
-            setIsAddNode(() => registerNodeLoading);
+        } else if (showNodeDialog.type === "editNode") {
+            updateNode({
+                variables: {
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
+                },
+            });
         }
     };
+
     useEffect(() => {
         if (registerNodeRes) {
             setRegisterNodeNotification({
@@ -422,6 +451,7 @@ const Home = () => {
             });
         }
     }, [registerNodeRes]);
+
     useEffect(() => {
         if (updateNodeRes) {
             setRegisterNodeNotification({
@@ -432,6 +462,7 @@ const Home = () => {
             });
         }
     }, [updateNodeRes]);
+
     useEffect(() => {
         if (updateNodError) {
             setRegisterNodeNotification({
@@ -442,6 +473,7 @@ const Home = () => {
             });
         }
     }, [updateNodError]);
+
     useEffect(() => {
         if (addNodError) {
             setRegisterNodeNotification({
@@ -452,22 +484,13 @@ const Home = () => {
             });
         }
     }, [addNodError]);
+
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
-    };
-    const handleEditNodeUpdate = (data: any) => {
-        if (data.length > 0) {
-            updateNode({
-                variables: {
-                    data,
-                },
-            });
-            setIsEditNode(() => updateNodeLoading);
-        }
     };
 
     const handleCloseWelcome = () => {
@@ -484,6 +507,7 @@ const Home = () => {
                         handleAddNode={handleAddNode}
                         handleActivateUser={onActivateUser}
                         loading={networkStatusLoading || isSkeltonLoad}
+                        regLoading={registerNodeLoading || updateNodeLoading}
                         statusType={networkStatusRes?.getNetwork?.status || ""}
                         duration={
                             networkStatusRes?.getNetwork?.description || ""
@@ -630,28 +654,15 @@ const Home = () => {
                 />
             )}
 
-            {isAddNode && (
-                <ActivationDialog
-                    isOpen={isAddNode}
-                    dialogTitle={"Register Node"}
-                    handleClose={handleAddNodeClose}
-                    handleActivationSubmit={handleActivationSubmit}
-                    subTitle={
-                        "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
-                    }
-                />
-            )}
-            {isEditNode && (
-                <ActivationDialog
-                    // action={"editNode"}
-                    // nodeData={node}
-                    isOpen={isEditNode}
-                    dialogTitle={"Edit Node"}
-                    handleClose={handleUserActivateClose}
-                    handleActivationSubmit={handleEditNodeUpdate}
-                    subTitle={""}
-                />
-            )}
+            <ActivationDialog
+                action={showNodeDialog.type}
+                isOpen={showNodeDialog.isShow}
+                handleClose={handleAddNodeClose}
+                nodeData={showNodeDialog.nodeData}
+                dialogTitle={showNodeDialog.title}
+                subTitle={showNodeDialog.subTitle}
+                handleNodeSubmitAction={handleNodeSubmitAction}
+            />
         </Box>
     );
 };

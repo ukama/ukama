@@ -499,7 +499,7 @@ const Nodes = () => {
                 isOpen={isAddNode}
                 dialogTitle={"Register Node"}
                 handleClose={handleAddNodeClose}
-                handleActivationSubmit={handleActivationSubmit}
+                handleNodeSubmitAction={handleActivationSubmit}
                 subTitle={
                     "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                 }

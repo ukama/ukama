@@ -19,11 +19,11 @@ import {
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
+import React, { useState } from "react";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
 import { MASK_BY_TYPE } from "../../../constants";
 import CloseIcon from "@mui/icons-material/Close";
-import React, { useState, useEffect } from "react";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
 const useStyles = makeStyles(() => ({
@@ -82,89 +82,50 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
     }
 );
 
-type ActivationDialogProps = {
+type NodeDialogProps = {
+    nodeData?: any;
     isOpen: boolean;
+    action?: string;
     subTitle: string;
     handleClose: any;
     subTitle2?: string;
     dialogTitle: string;
-    nodeData?: any;
-    handleActivationSubmit: Function;
-    action?: string;
+    handleNodeSubmitAction: Function;
 };
 
 const ActivationDialog = ({
     isOpen,
     subTitle,
-    nodeData,
+    nodeData = {
+        type: "HOME",
+        name: "",
+        nodeId: "",
+        orgId: "",
+    },
     dialogTitle,
     action = "",
     handleClose,
-    handleActivationSubmit,
-}: ActivationDialogProps) => {
+    handleNodeSubmitAction,
+}: NodeDialogProps) => {
     const classes = useStyles();
     const gclasses = globalUseStyles();
-    const [nodeType, setNodeType] = useState("HOME");
-    const [nodeName, setNodeName] = useState("");
-    const [nodeSerial, setNodeSerial] = useState("");
-    const [nodeNameError, setNodeNameError] = useState("");
-    const [nodeSerialError, setNodeSerialError] = useState("");
-    const [orgIdError, setOrgIdError] = useState("");
-    const [orgId, setOrgId] = useState("");
-    useEffect(() => {
-        if (action == "editNode" && nodeData) {
-            setNodeName(nodeData.name);
-            setNodeSerial(nodeData.id);
-            setOrgId(nodeData.orgId);
-        }
-    }, [nodeData]);
+    const [formData, setFormData] = useState({
+        type: nodeData.type,
+        name: nodeData.name,
+        nodeId: nodeData.iccid,
+        orgId: nodeData.orgId,
+    });
+
     const handleRegisterNode = () => {
-        if (action == "editNode" && nodeName && nodeSerial && orgId) {
-            handleActivationSubmit({
-                name: nodeName,
-                nodeId: nodeSerial,
-                orgId: orgId,
-            });
+        if (action == "editNode" && formData.name && formData.nodeId) {
+            handleNodeSubmitAction(formData);
         } else {
-            handleActivationSubmit({
-                name: nodeName,
-                nodeId: nodeSerial,
-            });
-        }
-
-        if (!nodeName) {
-            setNodeNameError("Node Name is required!");
-        }
-        if (!nodeSerial) {
-            setNodeSerialError("Node number is required!");
-        }
-        if (!orgId) {
-            setOrgIdError("Organiation Id is required!");
+            handleNodeSubmitAction(formData);
         }
     };
 
-    useEffect(() => {
-        if (nodeName.length > 0) {
-            setNodeNameError("");
-        }
-    }, [nodeName]);
-
-    useEffect(() => {
-        if (nodeSerial.length > 0) {
-            setNodeSerialError("");
-        }
-    }, [nodeSerial]);
-
-    useEffect(() => {
-        if (orgId.length > 0) {
-            setOrgIdError("");
-        }
-    }, [orgId]);
-
-    const handleNodeTypeChange = (e: SelectChangeEvent) => {
-        setNodeSerial("");
-        setNodeType(e.target.value);
-    };
+    const handleNodeTypeChange = (e: SelectChangeEvent) =>
+        setFormData({ ...formData, nodeId: "", type: e.target.value });
 
     return (
         <Dialog open={isOpen} onClose={handleClose}>
@@ -206,9 +167,10 @@ const ActivationDialog = ({
                                 NODE TYPE
                             </InputLabel>
                             <Select
-                                value={nodeType}
+                                value={formData.type}
                                 variant="outlined"
                                 onChange={handleNodeTypeChange}
+                                disabled={action == "editNode"}
                                 input={
                                     <OutlinedInput
                                         notched
@@ -218,7 +180,7 @@ const ActivationDialog = ({
                                     />
                                 }
                                 MenuProps={{
-                                    disablePortal: true,
+                                    disablePortal: false,
                                     PaperProps: {
                                         sx: {
                                             boxShadow:
@@ -256,32 +218,37 @@ const ActivationDialog = ({
                     </Grid>
                     <Grid item xs={12} md={6}>
                         <TextField
-                            error={nodeNameError ? true : false}
                             fullWidth
-                            value={nodeName}
+                            value={formData.name}
                             label={"NODE NAME"}
                             InputLabelProps={{ shrink: true }}
-                            helperText={nodeNameError}
                             InputProps={{
                                 classes: {
                                     input: gclasses.inputFieldStyle,
                                 },
                             }}
-                            onChange={(e: any) => setNodeName(e.target.value)}
+                            onChange={(e: any) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
                         />
                     </Grid>
                     <Grid item xs={12}>
                         <TextField
                             fullWidth
-                            value={nodeSerial}
-                            error={nodeSerialError ? true : false}
+                            value={formData.nodeId}
                             label={"NODE NUMBER"}
-                            helperText={nodeSerialError}
-                            onChange={(e: any) => {
-                                setNodeSerial(e.target.value.replace(/ /g, ""));
-                            }}
+                            onChange={(e: any) =>
+                                setFormData({
+                                    ...formData,
+                                    nodeId: e.target.value.replace(/ /g, ""),
+                                })
+                            }
+                            disabled={action == "editNode"}
                             InputLabelProps={{ shrink: true }}
-                            name={nodeType}
+                            name={formData.type}
                             id="formatted-text-mask-input"
                             spellCheck={false}
                             InputProps={{
@@ -295,18 +262,16 @@ const ActivationDialog = ({
                     {action == "editNode" && (
                         <Grid item xs={12} md={12}>
                             <TextField
-                                error={orgIdError ? true : false}
                                 fullWidth
-                                value={orgId}
+                                value={formData.orgId}
+                                disabled={true}
                                 label={"ORGANIZATION ID"}
                                 InputLabelProps={{ shrink: true }}
-                                helperText={orgIdError}
                                 InputProps={{
                                     classes: {
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                onChange={(e: any) => setOrgId(e.target.value)}
                             />
                         </Grid>
                     )}
