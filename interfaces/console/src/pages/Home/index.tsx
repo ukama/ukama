@@ -66,19 +66,23 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
-    const [showNodeDialog, setShowDialog] = useState({
+    const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
         title: "Register Node",
         subTitle:
             "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you.",
-        nodeData: null,
+        nodeData: {
+            type: "HOME",
+            name: "",
+            nodeId: "",
+            orgId: "",
+        },
     });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
-    // const [node, setNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -87,6 +91,13 @@ const Home = () => {
     });
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
+
+    const {
+        data: nodeRes,
+        loading: nodeLoading,
+        refetch: refetchGetNodesByOrg,
+    } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
+
     const [
         registerNode,
         {
@@ -94,7 +105,10 @@ const Home = () => {
             data: registerNodeRes,
             error: addNodError,
         },
-    ] = useAddNodeMutation();
+    ] = useAddNodeMutation({
+        onCompleted: () => refetchGetNodesByOrg(),
+    });
+
     const [
         updateNode,
         {
@@ -102,14 +116,7 @@ const Home = () => {
             data: updateNodeRes,
             error: updateNodError,
         },
-    ] = useUpdateNodeMutation();
-
-    const handleAddNodeClose = () => {
-        setShowDialog(prev => ({
-            ...prev,
-            isShow: false,
-        }));
-    };
+    ] = useUpdateNodeMutation({ onCompleted: () => refetchGetNodesByOrg() });
 
     const {
         data: connectedUserRes,
@@ -142,8 +149,6 @@ const Home = () => {
 
     const { data: residentsRes, loading: residentsloading } =
         useGetUsersByOrgQuery();
-
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery();
 
     const {
         data: networkStatusRes,
@@ -275,6 +280,13 @@ const Home = () => {
         }
     }, [getMetricsRes]);
 
+    const handleAddNodeClose = () => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            isShow: false,
+        }));
+    };
+
     const subToConnectedUser = () =>
         subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
             document: GetLatestConnectedUsersDocument,
@@ -390,18 +402,27 @@ const Home = () => {
     };
 
     const handleNodeActions = (id: string, type: string) => {
-        if (type == "editNode") {
-            setShowDialog(prev => ({
-                ...prev,
+        const node = nodeRes?.getNodesByOrg.nodes.filter(
+            item => item.id === id
+        );
+        if (type == "edit" && node && node.length > 0) {
+            setShowNodeDialog({
+                ...showNodeDialog,
                 type: "editNode",
                 isShow: true,
                 title: "Edit Node",
-            }));
+                nodeData: {
+                    type: node[0].type,
+                    name: node[0].name,
+                    nodeId: node[0].id,
+                    orgId: orgId,
+                },
+            });
         }
     };
 
     const handleAddNode = () => {
-        setShowDialog(prev => ({
+        setShowNodeDialog(prev => ({
             ...prev,
             type: "add",
             isShow: true,
@@ -414,7 +435,7 @@ const Home = () => {
     };
 
     const handleNodeSubmitAction = (data: any) => {
-        setShowDialog(prev => ({
+        setShowNodeDialog(prev => ({
             ...prev,
             type: "add",
             isShow: false,
@@ -654,15 +675,17 @@ const Home = () => {
                 />
             )}
 
-            <ActivationDialog
-                action={showNodeDialog.type}
-                isOpen={showNodeDialog.isShow}
-                handleClose={handleAddNodeClose}
-                nodeData={showNodeDialog.nodeData}
-                dialogTitle={showNodeDialog.title}
-                subTitle={showNodeDialog.subTitle}
-                handleNodeSubmitAction={handleNodeSubmitAction}
-            />
+            {showNodeDialog.isShow && (
+                <ActivationDialog
+                    action={showNodeDialog.type}
+                    isOpen={showNodeDialog.isShow}
+                    handleClose={handleAddNodeClose}
+                    nodeData={showNodeDialog.nodeData}
+                    dialogTitle={showNodeDialog.title}
+                    subTitle={showNodeDialog.subTitle}
+                    handleNodeSubmitAction={handleNodeSubmitAction}
+                />
+            )}
         </Box>
     );
 };

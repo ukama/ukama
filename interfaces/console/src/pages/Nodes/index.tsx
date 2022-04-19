@@ -37,6 +37,13 @@ import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 let abortController = new AbortController();
+const NODE_INIT = {
+    type: "HOME",
+    name: "",
+    nodeId: "",
+    orgId: "",
+};
+
 const Nodes = () => {
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
@@ -497,6 +504,7 @@ const Nodes = () => {
             />
             <ActivationDialog
                 isOpen={isAddNode}
+                nodeData={NODE_INIT}
                 dialogTitle={"Register Node"}
                 handleClose={handleAddNodeClose}
                 handleNodeSubmitAction={handleActivationSubmit}

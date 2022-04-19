@@ -1475,6 +1475,7 @@ const MASK_BY_TYPE = {
     AMPLIFIER: "{uk- }000000{ -\\anode- }00{ - }0000",
     TOWER: "{uk- }000000{ -tnode- }00{ - }0000",
 };
+
 export {
     NodeApps,
     NodeAppLogs,

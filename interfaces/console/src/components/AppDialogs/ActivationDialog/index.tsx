@@ -83,7 +83,7 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
 );
 
 type NodeDialogProps = {
-    nodeData?: any;
+    nodeData: any;
     isOpen: boolean;
     action?: string;
     subTitle: string;
@@ -96,12 +96,7 @@ type NodeDialogProps = {
 const ActivationDialog = ({
     isOpen,
     subTitle,
-    nodeData = {
-        type: "HOME",
-        name: "",
-        nodeId: "",
-        orgId: "",
-    },
+    nodeData,
     dialogTitle,
     action = "",
     handleClose,
@@ -112,7 +107,7 @@ const ActivationDialog = ({
     const [formData, setFormData] = useState({
         type: nodeData.type,
         name: nodeData.name,
-        nodeId: nodeData.iccid,
+        nodeId: "uk-sa2209-anode-t1-070d", //nodeData.iccid,
         orgId: nodeData.orgId,
     });
 
