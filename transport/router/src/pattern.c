@@ -77,6 +77,37 @@ static int pattern_count(Pattern *pattern) {
 }
 
 /*
+ * free_service --
+ *
+ */
+void free_service(Service *service) {
+
+  Pattern *ptr=NULL, *tmp=NULL;
+  Forward *fPtr=NULL;
+
+  if (service == NULL) return;
+
+  ptr  = service->pattern;
+  fPtr = service->forward;
+
+  if (fPtr) {
+    if (fPtr->ip)   free(fPtr->ip);
+    if (fPtr->port) free(fPtr->port);
+    free(fPtr);
+  }
+
+  while (ptr) {
+    if (ptr->key)   free(ptr->key);
+    if (ptr->value) free(ptr->value);
+    tmp = ptr->next;
+    free(ptr);
+    ptr = tmp;
+  }
+
+  free(service);
+}
+
+/*
  * find_matching_service --
  *
  */

@@ -129,7 +129,7 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
 
   const char **keys, *value;
   int count, i;
-  Pattern *ptr=NULL;
+  Pattern *ptr=NULL, *next=NULL;
 
   if (map == NULL) return FALSE;
 
@@ -176,44 +176,14 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     if (ptr->key)   free(ptr->key);
     if (ptr->value) free(ptr->value);
 
-    ptr = ptr->next;
+    next = ptr->next;
+    free(ptr);
+    ptr = next;
   }
 
-  if (*pattern) free(*pattern);
   *pattern = NULL;
 
   return FALSE;
-}
-
-/*
- * free_service --
- *
- */
-static void free_service(Service *service) {
-
-  Pattern *ptr=NULL, *tmp=NULL;
-  Forward *fPtr=NULL;
-
-  if (service == NULL) return;
-
-  ptr  = service->pattern;
-  fPtr = service->forward;
-
-  if (fPtr) {
-    if (fPtr->ip)   free(fPtr->ip);
-    if (fPtr->port) free(fPtr->port);
-    free(fPtr);
-  }
-
-  while (ptr) {
-    if (ptr->key)   free(ptr->key);
-    if (ptr->value) free(ptr->value);
-    tmp = ptr->next;
-    free(ptr);
-    ptr = tmp;
-  }
-
-  free(service);
 }
 
 /*
@@ -302,6 +272,7 @@ int callback_post_route(const struct _u_request *request,
 
   json_decref(jResp);
   json_decref(jreq);
+  free(service);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -333,9 +304,10 @@ int callback_post_service(const struct _u_request *request,
 			  void *user_data) {
 
   int retCode, serviceResp;
+  char *mapStr=NULL;
   const char *statusStr=NULL;
   Router *router=NULL;
-  Pattern *requestPattern=NULL;
+  Pattern *requestPattern=NULL, *next, *ptr;
   Forward *requestForward=NULL;
   struct _u_request  *fRequest=NULL;
   struct _u_response *fResponse=NULL;
@@ -359,7 +331,9 @@ int callback_post_service(const struct _u_request *request,
     log_error("%d: %s", retCode, statusStr);
     goto reply;
   } else {
-    log_debug("Recevied forward request: %s", print_map(request->map_url));
+    mapStr = print_map(request->map_url);
+    log_debug("Recevied forward request: %s", mapStr);
+    free(mapStr);
   }
 
   /* Step-2: Pattern match to a service (if any)*/
@@ -420,7 +394,28 @@ int callback_post_service(const struct _u_request *request,
 				  fResponse->binary_body_length);
   }
 
+  /* Clean up */
+  if (requestPattern) {
+    ptr = requestPattern;
+    while (ptr) {
+      if (ptr->key)   free(ptr->key);
+      if (ptr->value) free(ptr->value);
+
+      next = ptr->next;
+      free(ptr);
+      ptr = next;
+    }
+  }
+
+  if (requestForward) {
+    if (requestForward->ip)   free(requestForward->ip);
+    if (requestForward->port) free(requestForward->port);
+    free(requestForward);
+  }
+
+  ulfius_clean_request(fRequest);
   ulfius_clean_response(fResponse);
+  free(fRequest);
   free(fResponse);
 
   return U_CALLBACK_CONTINUE;
