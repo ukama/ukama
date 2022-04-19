@@ -41,7 +41,7 @@ const UserSettings = () => {
 
     return (
         <Grid container spacing={2}>
-            <Grid item container xs={12}>
+            <Grid item container xs={12} spacing={{ xs: 3, sm: 2 }}>
                 <Grid item xs={12} sm={4}>
                     <Typography variant="h6">My Account Details</Typography>
                 </Grid>

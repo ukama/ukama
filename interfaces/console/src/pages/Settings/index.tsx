@@ -21,6 +21,7 @@ import {
     CardActions,
     CardContent,
     IconButton,
+    Stack,
     Box,
 } from "@mui/material";
 import {
@@ -81,26 +82,43 @@ const ActionButtons = ({
     handleCancelAction,
     handleSaveAction,
 }: ActionButtonsProps) => (
-    <VerticalContainer>
-        <Divider sx={{ width: "100%" }} />
-        <HorizontalContainer
+    <Stack
+        spacing={3}
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="flex-end"
+        sx={{
+            xs: {
+                xs: {
+                    flexDirection: "column",
+                    width: "100%",
+                },
+            },
+        }}
+    >
+        <Button
+            variant="outlined"
             sx={{
-                mt: "4px",
-                justifyContent: "flex-end",
+                xs: {
+                    width: "100%",
+                },
             }}
+            onClick={() => handleCancelAction()}
         >
-            <Button
-                variant="outlined"
-                sx={{ mr: "20px" }}
-                onClick={() => handleCancelAction()}
-            >
-                CANCEL
-            </Button>
-            <Button variant="contained" onClick={() => handleSaveAction()}>
-                SAVE SETTINGS
-            </Button>
-        </HorizontalContainer>
-    </VerticalContainer>
+            CANCEL
+        </Button>
+
+        <Button
+            sx={{
+                xs: {
+                    width: "100%",
+                },
+            }}
+            variant="contained"
+            onClick={() => handleSaveAction()}
+        >
+            SAVE SETTINGS
+        </Button>
+    </Stack>
 );
 
 const Settings = () => {
@@ -137,17 +155,19 @@ const Settings = () => {
         <Card
             sx={{
                 height: "100%",
-                display: "flex",
+
                 overflow: "scroll",
-                flexDirection: "column",
-                p: "40px 85px 20px 85px",
+                sx: {
+                    flexDirection: "column",
+                },
+
                 backgroundColor: _isDarkMod ? colors.black : colors.solitude,
                 justifyContent: "space-between",
             }}
         >
             <CardContent>
                 <Grid container spacing={3} height="80%">
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={3} lg={3}>
                         <LoadingWrapper height={237} isLoading={skeltonLoading}>
                             <RoundedCard
                                 sx={{
@@ -226,22 +246,22 @@ const Settings = () => {
                                         <ConsoleSettings />
                                     </TabPanel>
                                 </CardContent>
-                                <CardActions
-                                    sx={{
-                                        display: menuId === 4 ? "none" : "flex",
-                                    }}
-                                >
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </CardActions>
+
+                                <ActionButtons
+                                    handleSaveAction={handleSave}
+                                    handleCancelAction={handleCancel}
+                                />
                             </Card>
                         </LoadingWrapper>
                     </Grid>
                 </Grid>
             </CardContent>
-            <CardActions sx={{ alignItems: "center", display: "contents" }}>
+            <CardActions
+                sx={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                }}
+            >
                 {!skeltonLoading && (
                     <Typography
                         variant={"caption"}
