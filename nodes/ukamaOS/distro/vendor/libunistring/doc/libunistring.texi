@@ -1,0 +1,1017 @@
+\input texinfo          @c -*-texinfo-*-
+@comment %**start of header
+@setfilename libunistring.info
+@documentencoding UTF-8
+@settitle GNU libunistring
+@finalout
+@c Indices:
+@c   am = autoconf macro  @amindex
+@c   cp = concept         @cindex
+@c   fn = function        @findex
+@c   tp = type            @tindex
+@c Unused predefined indices:
+@c   ky = keystroke       @kindex
+@c   pg = program         @pindex
+@c   vr = variable        @vindex
+@defcodeindex am
+@syncodeindex am cp
+@syncodeindex fn cp
+@syncodeindex tp cp
+@ifclear texi2html
+@firstparagraphindent insert
+@end ifclear
+@c texi2html-1.76 does not support @arrow{}.
+@ifset texi2html
+@macro arrow{}
+→
+@end macro
+@end ifset
+@comment %**end of header
+
+@include version.texi
+
+@c Location of the POSIX specification on the web.
+@set POSIXURL http://pubs.opengroup.org/onlinepubs/9699919799
+
+@c Macro for referencing a POSIX header.
+@ifinfo
+@macro posixheader{header}
+@code{<\header\>}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro posixheader{header}
+@uref{@value{POSIXURL}/basedefs/\header\.html,,@code{<\header\>}}
+@end macro
+@end ifnotinfo
+
+@c Macro for referencing a POSIX function.
+@c We don't write it as func(), see section "GNU Manuals" of the
+@c GNU coding standards.
+@ifinfo
+@macro posixfunc{func}
+@code{\func\}
+@end macro
+@end ifinfo
+@ifnotinfo
+@macro posixfunc{func}
+@uref{@value{POSIXURL}/functions/\func\.html,,@code{\func\}}
+@end macro
+@end ifnotinfo
+
+@c Macro for referencing a normal function.
+@c We don't write it as func(), see section "GNU Manuals" of the
+@c GNU coding standards.
+@macro func{func}
+@code{\func\}
+@end macro
+
+@c Macro for an advisory ragged line break in TeX mode.
+@c Needed because there are long unbreakable pieces of text (such as URLs or
+@c formulas), TeX is too shy to move them to a new line. TeX considers only
+@c two choices: a line break in aligned mode (which it rejects due to aesthetic
+@c reasons) and writing into the margin. What we want in many cases is a line
+@c break without filling the first line. Like what @* delivers. But we want it
+@c only when needed, so that it disappears when unrelated changes in the same
+@c paragraph cause a line break in a nearby position. And we need it only in
+@c TeX mode. info and HTML modes are fine.
+@c This trick is from Karl Berry.
+@iftex
+@macro texnl
+@hfil@penalty9000@hfilneg
+@end macro
+@end iftex
+@ifnottex
+@macro texnl
+@end macro
+@end ifnottex
+
+@ifinfo
+@dircategory Software development
+@direntry
+* GNU libunistring: (libunistring).     Unicode string library.
+@end direntry
+@end ifinfo
+
+@ifinfo
+This manual is for GNU libunistring.
+
+@ignore
+@c This was: @copying but it triggers a makeinfo 4.13 bug
+Copyright (C) 2001-2018 Free Software Foundation, Inc.
+
+This manual is free documentation.  It is dually licensed under the
+GNU FDL and the GNU GPL.  This means that you can redistribute this
+manual under either of these two licenses, at your choice.
+
+This manual is covered by the GNU FDL.  Permission is granted to copy,
+distribute and/or modify this document under the terms of the
+GNU Free Documentation License (FDL), either version 1.2 of the
+License, or (at your option) any later version published by the
+Free Software Foundation (FSF); with no Invariant Sections, with no
+Front-Cover Text, and with no Back-Cover Texts.
+A copy of the license is included in @ref{GNU FDL}.
+
+This manual is covered by the GNU GPL.  You can redistribute it and/or
+modify it under the terms of the GNU General Public License (GPL), either
+version 3 of the License, or (at your option) any later version published
+by the Free Software Foundation (FSF).
+A copy of the license is included in @ref{GNU GPL}.
+@end ignore
+@end ifinfo
+
+@titlepage
+@title GNU libunistring, version @value{VERSION}
+@subtitle updated @value{UPDATED}
+@subtitle Edition @value{EDITION}, @value{UPDATED}
+@author Bruno Haible
+
+@ifnothtml
+@page
+@vskip 0pt plus 1filll
+@c @insertcopying
+Copyright (C) 2001-2018 Free Software Foundation, Inc.
+
+This manual is free documentation.  It is dually licensed under the
+GNU FDL and the GNU GPL.  This means that you can redistribute this
+manual under either of these two licenses, at your choice.
+
+This manual is covered by the GNU FDL.  Permission is granted to copy,
+distribute and/or modify this document under the terms of the
+GNU Free Documentation License (FDL), either version 1.2 of the
+License, or (at your option) any later version published by the
+Free Software Foundation (FSF); with no Invariant Sections, with no
+Front-Cover Text, and with no Back-Cover Texts.
+A copy of the license is included in @ref{GNU FDL}.
+
+This manual is covered by the GNU GPL.  You can redistribute it and/or
+modify it under the terms of the GNU General Public License (GPL), either
+version 3 of the License, or (at your option) any later version published
+by the Free Software Foundation (FSF).
+A copy of the license is included in @ref{GNU GPL}.
+@end ifnothtml
+@end titlepage
+
+@c Table of Contents
+@contents
+
+@ifnottex
+@node Top
+@top GNU libunistring
+@end ifnottex
+
+@menu
+* Introduction::                Who may need Unicode strings?
+* Conventions::                 Conventions used in this manual
+* unitypes.h::                  Elementary types
+* unistr.h::                    Elementary Unicode string functions
+* uniconv.h::                   Conversions between Unicode and encodings
+* unistdio.h::                  Output with Unicode strings
+* uniname.h::                   Names of Unicode characters
+* unictype.h::                  Unicode character classification and properties
+* uniwidth.h::                  Display width
+* unigbrk.h::                   Grapheme cluster breaking
+* uniwbrk.h::                   Word breaks in strings
+* unilbrk.h::                   Line breaking
+* uninorm.h::                   Normalization forms
+* unicase.h::                   Case mappings
+* uniregex.h::                  Regular expressions
+* Using the library::           How to link with the library and use it?
+* More functionality::          More advanced functionality
+* The wchar_t mess::            Why @code{wchar_t *} strings are useless
+* Licenses::                    Licenses
+
+* Index::                       General Index
+
+@detailmenu
+ --- The Detailed Node Listing ---
+
+Introduction
+
+* Unicode::                     What is Unicode?
+* Unicode and i18n::            Unicode and internationalization
+* Locale encodings::            What is a locale encoding?
+* In-memory representation::    How to represent strings in memory?
+* char * strings::              What to keep in mind with @code{char *} strings
+* Unicode strings::             How are Unicode strings represented?
+
+unistr.h
+
+* Elementary string checks::
+* Elementary string conversions::
+* Elementary string functions::
+* Elementary string functions with memory allocation::
+* Elementary string functions on NUL terminated strings::
+
+Elementary string functions
+
+* Iterating::
+* Creating Unicode strings::
+* Copying Unicode strings::
+* Comparing Unicode strings::
+* Searching for a character::
+* Counting characters::
+
+Elementary string functions on NUL terminated strings
+
+* Iterating over a NUL terminated Unicode string::
+* Length::
+* Copying a NUL terminated Unicode string::
+* Comparing NUL terminated Unicode strings::
+* Duplicating a NUL terminated Unicode string::
+* Searching for a character in a NUL terminated Unicode string::
+* Searching for a substring::
+* Tokenizing::
+
+unictype.h
+
+* General category::
+* Canonical combining class::
+* Bidi class::
+* Decimal digit value::
+* Digit value::
+* Numeric value::
+* Mirrored character::
+* Arabic shaping::
+* Properties::
+* Scripts::
+* Blocks::
+* ISO C and Java syntax::
+* Classifications like in ISO C::
+
+General category
+
+* Object oriented API::
+* Bit mask API::
+
+Properties
+
+* Properties as objects::
+* Properties as functions::
+
+unigbrk.h
+
+* Grapheme cluster breaks in a string::
+* Grapheme cluster break property::
+
+uniwbrk.h
+
+* Word breaks in a string::
+* Word break property::
+
+uninorm.h
+
+* Decomposition of characters::
+* Composition of characters::
+* Normalization of strings::
+* Normalizing comparisons::
+* Normalization of streams::
+
+unicase,h
+
+* Case mappings of characters::
+* Case mappings of strings::
+* Case mappings of substrings::
+* Case insensitive comparison::
+* Case detection::
+
+Using the library
+
+* Installation::
+* Compiler options::
+* Include files::
+* Autoconf macro::
+* Reporting problems::
+
+Licenses
+
+* GNU GPL::                     GNU General Public License
+* GNU LGPL::                    GNU Lesser General Public License
+* GNU FDL::                     GNU Free Documentation License
+
+@end detailmenu
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+This library provides functions for manipulating Unicode strings and
+for manipulating C strings according to the Unicode standard.
+
+It consists of the following parts:
+
+@table @code
+@item <unistr.h>
+elementary string functions
+@item <uniconv.h>
+conversion from/to legacy encodings
+@item <unistdio.h>
+formatted output to strings
+@item <uniname.h>
+character names
+@item <unictype.h>
+character classification and properties
+@item <uniwidth.h>
+string width when using nonproportional fonts
+@item <unigbrk.h>
+grapheme cluster breaks
+@item <uniwbrk.h>
+word breaks
+@item <unilbrk.h>
+line breaking algorithm
+@item <uninorm.h>
+normalization (composition and decomposition)
+@item <unicase.h>
+case folding
+@item <uniregex.h>
+regular expressions (not yet implemented)
+@end table
+
+@cindex use cases
+@cindex value, of libunistring
+libunistring is for you if your application involves non-trivial text
+processing, such as upper/lower case conversions, line breaking, operations
+on words, or more advanced analysis of text.  Text provided by the user can,
+in general, contain characters of all kinds of scripts.  The text processing
+functions provided by this library handle all scripts and all languages.
+
+libunistring is for you if your application already uses the ISO C / POSIX
+@posixheader{ctype.h}, @posixheader{wctype.h} functions and the text it
+operates on is provided by the user and can be in any language.
+
+libunistring is also for you if your application uses Unicode strings as
+internal in-memory representation.
+
+@menu
+* Unicode::                     What is Unicode?
+* Unicode and i18n::            Unicode and internationalization
+* Locale encodings::            What is a locale encoding?
+* In-memory representation::    How to represent strings in memory?
+* char * strings::              What to keep in mind with @code{char *} strings
+* Unicode strings::             How are Unicode strings represented?
+@end menu
+
+@node Unicode
+@section Unicode
+
+@cindex Unicode
+Unicode is a standardized repertoire of characters that contains characters
+from all scripts of the world, from Latin letters to Chinese ideographs
+and Babylonian cuneiform glyphs.  It also specifies how these characters
+are to be rendered on a screen or on paper, and how common text processing
+(word selection, line breaking, uppercasing of page titles etc.) is supposed
+to behave on Unicode text.
+
+Unicode also specifies three ways of storing sequences of Unicode
+characters in a computer whose basic unit of data is an 8-bit byte:
+@cindex UTF-8
+@cindex UTF-16
+@cindex UTF-32
+@cindex UCS-4
+@table @asis
+@item UTF-8
+Every character is represented as 1 to 4 bytes.
+@item UTF-16
+Every character is represented as 1 to 2 units of 16 bits.
+@item UTF-32, a.k.a@. UCS-4
+Every character is represented as 1 unit of 32 bits.
+@end table
+
+For encoding Unicode text in a file, UTF-8 is usually used.  For encoding
+Unicode strings in memory for a program, either of the three encoding forms
+can be reasonably used.
+
+Unicode is widely used on the web.  Prior to the use of Unicode, web pages
+were in many different encodings (ISO-8859-1 for English, French, Spanish,
+ISO-8859-2 for Polish, ISO-8859-7 for Greek, KOI8-R for Russian, GB2312 or
+BIG5 for Chinese, ISO-2022-JP-2 or EUC-JP or Shift_JIS for Japanese, and many
+many others).  It was next to impossible to create a document that contained
+Chinese and Polish text in the same document.  Due to the many encodings for
+Japanese, even the processing of pure Japanese text was error prone.
+
+References:
+@itemize @bullet
+@item
+The Unicode standard:@texnl{} @url{http://www.unicode.org/}
+@item
+Definition of UTF-8:@texnl{} @url{http://www.rfc-editor.org/rfc/rfc3629.txt}
+@item
+Definition of UTF-16:@texnl{} @url{http://www.rfc-editor.org/rfc/rfc2781.txt}
+@item
+Markus Kuhn's UTF-8 and Unicode FAQ:@texnl{}
+@url{http://www.cl.cam.ac.uk/~mgk25/unicode.html}
+@end itemize
+
+@node Unicode and i18n
+@section Unicode and Internationalization
+
+@cindex internationalization
+Internationalization is the process of changing the source code of a program
+so that it can meet the expectations of users in any culture, if culture
+specific data (translations, images etc.) are provided.
+
+Use of Unicode is not strictly required for internationalization, but it
+makes internationalization much easier, because operations that need to
+look at specific characters (like hyphenation, spell checking, or the
+automatic conversion of double-quotes to opening and closing double-quote
+characters) don't need to consider multiple possible encodings of the text.
+
+Use of Unicode also enables multilingualization: the ability of having text
+in multiple languages present in the same document or even in the same line
+of text.
+
+But use of Unicode is not everything.  Internationalization usually consists
+of four features:
+@itemize @bullet
+@item
+Use of Unicode where needed for text processing.  This is what this library
+is for.
+@item
+Use of message catalogs for messages shown to the user, This is what
+GNU gettext is about.
+@item
+Use of locale specific conventions for date and time formats, for numeric
+formatting, or for sorting of text.  This can be done adequately with the
+POSIX APIs and the implementation of locales in the GNU C library.
+@item
+In graphical user interfaces, adapting the GUI to the default text direction
+of the current locale (see
+@url{https://en.wikipedia.org/wiki/Right-to-left,right-to-left languages}).
+@end itemize
+
+@node Locale encodings
+@section Locale encodings
+
+@cindex locale
+A locale is a set of cultural conventions.  According to POSIX, for a program,
+at any moment, there is one locale being designated as the ``current locale''.
+(Actually, POSIX supports also one locale per thread, but this feature is not
+yet universally implemented and not widely used.)
+@cindex locale categories
+The locale is partitioned into several aspects, called the ``categories''
+of the locale.  The main various aspects are:
+@itemize @bullet
+@item
+The character encoding and the character properties.  This is the
+@code{LC_CTYPE} category.
+@item
+The sorting rules for text.  This is the @code{LC_COLLATE} category.
+@item
+The language specific translations of messages.  This is the
+@code{LC_MESSAGES} category.
+@item
+The formatting rules for numbers, such as the decimal separator.  This is
+the @code{LC_NUMERIC} category.
+@item
+The formatting rules for amounts of money.  This is the @code{LC_MONETARY}
+category.
+@item
+The formatting of date and time.  This is the @code{LC_TIME} category.
+@end itemize
+
+@cindex locale encoding
+In particular, the @code{LC_CTYPE} category of the current locale determines
+the character encoding.  This is the encoding of @samp{char *} strings.
+We also call it the ``locale encoding''.  GNU libunistring has a function,
+@func{locale_charset}, that returns a standardized (platform independent)
+name for this encoding.
+
+All locale encodings used on glibc systems are essentially ASCII compatible:
+Most graphic ASCII characters have the same representation, as a single byte,
+in that encoding as in ASCII.
+
+Among the possible locale encodings are UTF-8 and GB18030.  Both allow
+to represent any Unicode character as a sequence of bytes.  UTF-8 is used in
+most of the world, whereas GB18030 is used in the People's Republic of China,
+because it is backward compatible with the GB2312 encoding that was used in
+this country earlier.
+
+The legacy locale encodings, ISO-8859-15 (which supplanted ISO-8859-1 in
+most of Europe), ISO-8859-2, KOI8-R, EUC-JP, etc., are still in use in
+some places, though.
+
+UTF-16 and UTF-32 are not used as locale encodings, because they are not
+ASCII compatible.
+
+@node In-memory representation
+@section Choice of in-memory representation of strings
+
+There are three ways of representing strings in memory of a running
+program.
+@itemize @bullet
+@item
+As @samp{char *} strings.  Such strings are represented in locale encoding.
+This approach is employed when not much text processing is done by the
+program.  When some Unicode aware processing is to be done, a string is
+converted to Unicode on the fly and back to locale encoding afterwards.
+@item
+As UTF-8 or UTF-16 or UTF-32 strings.  This implies that conversion from
+locale encoding to Unicode is performed on input, and in the opposite
+direction on output.  This approach is employed when the program does
+a significant amount of text processing, or when the program has multiple
+threads operating on the same data but in different locales.
+@item
+As @samp{wchar_t *}, a.k.a@. ``wide strings''.  This approach is misguided,
+see @ref{The wchar_t mess}.
+@end itemize
+
+Of course, a @samp{char *} string can, in some cases, be encoded in UTF-8.
+You will use the data type depending on what you can guarantee about how
+it's encoded: If a string is encoded in the locale encoding, or if you
+don't know how it's encoded, use @samp{char *}.  If, on the other hand,
+you can @emph{guarantee} that it is UTF-8 encoded, then you can use the
+UTF-8 string type, @code{uint8_t *}, for it.
+
+The five types @code{char *}, @code{uint8_t *}, @code{uint16_t *},
+@code{uint32_t *}, and @code{wchar_t *} are incompatible types at the C
+level.  Therefore, @samp{gcc -Wall} will produce a warning if, by mistake,
+your code contains a mismatch between these types.  In the context of
+using GNU libunistring, even a warning about a mismatch between
+@code{char *} and @code{uint8_t *} is a sign of a bug in your code
+that you should not try to silence through a cast.
+
+@node char * strings
+@section @samp{char *} strings
+
+@cindex C string functions
+The classical C strings, with its C library support standardized by
+ISO C and POSIX, can be used in internationalized programs with some
+precautions.  The problem with this API is that many of the C library
+functions for strings don't work correctly on strings in locale
+encodings, leading to bugs that only people in some cultures of the
+world will experience.
+
+@cindex locale, multibyte
+The first problem with the C library API is the support of multibyte
+locales.  According to the locale encoding, in general, every character
+is represented by one or more bytes (up to 4 bytes in practice --- but
+use @code{MB_LEN_MAX} instead of the number 4 in the code).
+When every character is represented by only 1 byte, we speak of an
+``unibyte locale'', otherwise of a ``multibyte locale''.  It is important
+to realize that the majority of Unix installations nowadays use UTF-8
+or GB18030 as locale encoding; therefore, the majority of users are
+using multibyte locales.
+
+@cindex char, type
+The important fact to remember is:
+@cartouche
+@emph{A @samp{char} is a byte, not a character.}
+@end cartouche
+
+As a consequence:
+@itemize @bullet
+@item
+The @posixheader{ctype.h} API is useless in this context; it does not work in
+multibyte locales.
+@item
+The @posixfunc{strlen} function does not return the number of characters
+in a string.  Nor does it return the number of screen columns occupied
+by a string after it is output.  It merely returns the number of
+@emph{bytes} occupied by a string.
+@item
+Truncating a string, for example, with @posixfunc{strncpy}, can have the
+effect of truncating it in the middle of a multibyte character.  Such
+a string will, when output, have a garbled character at its end, often
+represented by a hollow box.
+@item
+@posixfunc{strchr} and @posixfunc{strrchr} do not work with multibyte strings
+if the locale encoding is GB18030 and the character to be searched is
+a digit.
+@item
+@posixfunc{strstr} does not work with multibyte strings if the locale encoding
+is different from UTF-8.
+@item
+@posixfunc{strcspn}, @posixfunc{strpbrk}, @posixfunc{strspn} cannot work
+correctly in multibyte locales: they assume the second argument is a list of
+single-byte characters.  Even in this simple case, they do not work with
+multibyte strings if the locale encoding is GB18030 and one of the
+characters to be searched is a digit.
+@item
+@posixfunc{strsep} and @posixfunc{strtok_r} do not work with multibyte strings
+unless all of the delimiter characters are ASCII characters < 0x30.
+@item
+The @posixfunc{strcasecmp}, @posixfunc{strncasecmp}, and @posixfunc{strcasestr}
+functions do not work with multibyte strings.
+@end itemize
+
+The workarounds can be found in GNU gnulib
+@url{http://www.gnu.org/software/gnulib/}.
+@itemize @bullet
+@item
+gnulib has modules @samp{mbchar}, @samp{mbiter}, @samp{mbuiter} that
+represent multibyte characters and allow to iterate across a multibyte
+string with the same ease as through a unibyte string.
+@item
+gnulib has functions @func{mbslen} and @func{mbswidth} that can be
+used instead of @posixfunc{strlen} when the number of characters or the
+number of screen columns of a string is requested.
+@item
+gnulib has functions @func{mbschr} and @func{mbsrrchr} that are
+like @posixfunc{strchr} and @posixfunc{strrchr}, but work in multibyte locales.
+@item
+gnulib has a function @func{mbsstr}, like @posixfunc{strstr}, but works
+in multibyte locales.
+@item
+gnulib has functions @func{mbscspn}, @func{mbspbrk}, @func{mbsspn}
+that are like @posixfunc{strcspn}, @posixfunc{strpbrk}, @posixfunc{strspn}, but
+work in multibyte locales.
+@item
+gnulib has functions @func{mbssep} and @func{mbstok_r} that are
+like @posixfunc{strsep} and @posixfunc{strtok_r} but work in multibyte locales.
+@item
+gnulib has functions @func{mbscasecmp}, @func{mbsncasecmp},
+@func{mbspcasecmp}, and @func{mbscasestr} that are like @posixfunc{strcasecmp},
+@posixfunc{strncasecmp}, and @posixfunc{strcasestr}, but
+work in multibyte locales.  Still, the function @code{ulc_casecmp} is
+preferable to these functions; see below.
+@end itemize
+
+The second problem with the C library API is that it has some assumptions built-in that are not valid in some languages:
+@itemize @bullet
+@item
+It assumes that there are only two forms of every character: uppercase
+and lowercase.  This is not true for Croatian, where the character
+@sc{LETTER DZ WITH CARON} comes in three forms:
+@sc{LATIN CAPITAL LETTER DZ WITH CARON} (DZ),
+@sc{LATIN CAPITAL LETTER D WITH SMALL LETTER Z WITH CARON} (Dz),
+@sc{LATIN SMALL LETTER DZ WITH CARON} (dz).
+@item
+It assumes that uppercasing of 1 character leads to 1 character.  This
+is not true for German, where the @sc{LATIN SMALL LETTER SHARP S}, when
+uppercased, becomes @samp{SS}.
+@item
+It assumes that there is 1:1 mapping between uppercase and lowercase forms.
+This is not true for the Greek sigma: @sc{GREEK CAPITAL LETTER SIGMA} is
+the uppercase of both @sc{GREEK SMALL LETTER SIGMA} and
+@sc{GREEK SMALL LETTER FINAL SIGMA}.
+@item
+It assumes that the upper/lowercase mappings are position independent.
+This is not true for the Greek sigma and the Lithuanian i.
+@end itemize
+
+The correct way to deal with this problem is
+@enumerate
+@item
+to provide functions for titlecasing, as well as for upper- and
+lowercasing,
+@item
+to view case transformations as functions that operates on strings,
+rather than on characters.
+@end enumerate
+
+This is implemented in this library, through the functions declared in @code{<unicase.h>}, see @ref{unicase.h}.
+
+@node Unicode strings
+@section Unicode strings
+
+libunistring supports Unicode strings in three representations:
+@cindex UTF-8, strings
+@cindex UTF-16, strings
+@cindex UTF-32, strings
+@itemize @bullet
+@item
+UTF-8 strings, through the type @samp{uint8_t *}.  The units are bytes
+(@code{uint8_t}).
+@item
+UTF-16 strings, through the type @samp{uint16_t *},  The units are 16-bit
+memory words (@code{uint16_t}).
+@item
+UTF-32 strings, through the type @samp{uint32_t *}.  The units are 32-bit
+memory words (@code{uint32_t}).
+@end itemize
+
+As with C strings, there are two variants:
+@itemize @bullet
+@item
+Unicode strings with a terminating NUL character are represented as
+a pointer to the first unit of the string.  There is a unit containing
+a 0 value at the end.  It is considered part of the string for all
+memory allocation purposes, but is not considered part of the string
+for all other logical purposes.
+@item
+Unicode strings where embedded NUL characters are allowed.  These
+are represented by a pointer to the first unit and the number of units
+(not bytes!) of the string.  In this setting, there is no trailing
+zero-valued unit used as ``end marker''.
+@end itemize
+
+@node Conventions
+@chapter Conventions
+
+This chapter explains conventions valid throughout the libunistring library.
+
+@cindex argument conventions
+Variables of type @code{char *} denote C strings in locale encoding.
+See @ref{Locale encodings}.
+
+Variables of type @code{uint8_t *} denote UTF-8 strings.  Their units
+are bytes.
+
+Variables of type @code{uint16_t *} denote UTF-16 strings, without byte
+order mark.  Their units are 2-byte words.
+
+Variables of type @code{uint32_t *} denote UTF-32 strings, without byte
+order mark.  Their units are 4-byte words.
+
+Argument pairs @code{(@var{s}, @var{n})} denote a string
+@code{@var{s}[0..@var{n}-1]} with exactly @var{n} units.
+
+All functions with prefix @samp{ulc_} operate on C strings in locale
+encoding.
+
+All functions with prefix @samp{u8_} operate on UTF-8 strings.
+
+All functions with prefix @samp{u16_} operate on UTF-16 strings.
+
+All functions with prefix @samp{u32_} operate on UTF-32 strings.
+
+For every function with prefix @samp{u8_}, operating on UTF-8 strings,
+there is also a corresponding function with prefix @samp{u16_},
+operating on UTF-16 strings, and a corresponding function with prefix
+@samp{u32_}, operating on UTF-32 strings.  Their description is
+analogous; in this documentation we describe only the function that
+operates on UTF-8 strings, for brevity.
+
+A declaration with a variable @var{n} denotes the three concrete
+declarations with @var{n} = 8, @var{n} = 16, @var{n} = 32.
+
+All parameters starting with @samp{str} and the parameters of
+functions starting with @code{u8_str}/@code{u16_str}/@code{u32_str}
+denote a NUL terminated string.
+
+@cindex return value conventions
+Error values are always returned through the @code{errno} variable,
+usually with a return value that indicates the presence of an error
+(NULL for functions that return an pointer, or -1 for functions that
+return an @code{int}).
+
+Functions returning a string result take a
+@code{(@var{resultbuf}, @var{lengthp})}
+argument pair.  If @var{resultbuf} is not NULL and the result fits
+into @code{*@var{lengthp}} units, it is put in @var{resultbuf}, and
+@var{resultbuf} is returned.  Otherwise, a freshly allocated string
+is returned.  In both cases, @code{*@var{lengthp}} is set to the
+length (number of units) of the returned string.  In case of error,
+NULL is returned and @code{errno} is set.
+
+@include unitypes.texi
+@include unistr.texi
+@include uniconv.texi
+@include unistdio.texi
+@include uniname.texi
+@include unictype.texi
+@include uniwidth.texi
+@include unigbrk.texi
+@include uniwbrk.texi
+@include unilbrk.texi
+@include uninorm.texi
+@include unicase.texi
+@include uniregex.texi
+
+@node Using the library
+@chapter Using the library
+
+This chapter explains some practical considerations, regarding the
+installation and compiler options that are needed in order to use this
+library.
+
+@menu
+* Installation::
+* Compiler options::
+* Include files::
+* Autoconf macro::
+* Reporting problems::
+@end menu
+
+@node Installation
+@section Installation
+
+@cindex dependencies
+Before you can use the library, it must be installed.  First, you have to
+make sure all dependencies are installed.  They are listed in the file
+@file{DEPENDENCIES}.
+
+@cindex installation
+Then you can proceed to build and install the library, as described in the
+file @file{INSTALL}.  For installation on Windows systems, please refer to
+the file @file{INSTALL.windows}.
+
+@node Compiler options
+@section Compiler options
+
+Let's denote as @code{LIBUNISTRING_PREFIX} the value of the @samp{--prefix}
+option that you passed to @code{configure} while installing this package.
+If you didn't pass any @samp{--prefix} option, then the package is installed
+in @file{/usr/local}.
+
+Let's denote as @code{LIBUNISTRING_INCLUDEDIR} the directory where the
+include files were installed.  This is usually the same as
+@code{$@{LIBUNISTRING_PREFIX@}/include}.  Except that if you passed an
+@samp{--includedir} option to @code{configure}, it is the value of that
+option.
+
+Let's further denote as @code{LIBUNISTRING_LIBDIR} the directory where
+the library itself was installed.  This is the value that you passed
+with the @samp{--libdir} option to @code{configure}, or otherwise the
+same as @code{$@{LIBUNISTRING_PREFIX@}/lib}.  Recall that when building
+in 64-bit mode on a 64-bit GNU/Linux system that supports executables
+in either 64-bit mode or 32-bit mode, you should have used the option
+@code{--libdir=$@{LIBUNISTRING_PREFIX@}/lib64}.
+
+@cindex compiler options
+So that the compiler finds the include files, you have to pass it the
+option @code{-I$@{LIBUNISTRING_INCLUDEDIR@}}.
+
+So that the compiler finds the library during its linking pass, you have
+to pass it the options @code{-L$@{LIBUNISTRING_LIBDIR@} -lunistring}.
+On some systems, in some configurations, you also have to pass options
+needed for linking with @code{libiconv}.  The autoconf macro
+@code{gl_LIBUNISTRING} (see @ref{Autoconf macro}) deals with this
+particularity.
+
+@node Include files
+@section Include files
+
+Most of the include files have been presented in the introduction, see
+@ref{Introduction}, and subsequent detailed chapters.
+
+Another include file is @code{<unistring/version.h>}. It contains the
+version number of the libunistring library.
+
+@deftypevr Macro int _LIBUNISTRING_VERSION
+This constant contains the version of libunistring that is being used
+at compile time.  It encodes the major and minor parts of the version
+number only.  These parts are encoded in the form @code{(major<<8) + minor}.
+@end deftypevr
+
+@deftypevr Constant int _libunistring_version
+This constant contains the version of libunistring that is being used
+at run time.  It encodes the major and minor parts of the version
+number only.  These parts are encoded in the form @code{(major<<8) + minor}.
+@end deftypevr
+
+It is possible that @code{_libunistring_version} is greater than
+@code{_LIBUNISTRING_VERSION}.  This can happen when you use
+@code{libunistring} as a shared library, and a newer, binary
+backward-compatible version has been installed after your program
+that uses @code{libunistring} was installed.
+
+@node Autoconf macro
+@section Autoconf macro
+
+@cindex autoconf macro
+GNU Gnulib provides an autoconf macro that tests for the availability
+of @code{libunistring}.  It is contained in the Gnulib module
+@samp{libunistring}, see@texnl{}
+@url{http://www.gnu.org/software/gnulib/MODULES.html#module=libunistring}.
+
+@amindex gl_LIBUNISTRING
+The macro is called @code{gl_LIBUNISTRING}.  It searches for an installed
+libunistring.  If found, it sets and AC_SUBSTs @code{HAVE_LIBUNISTRING=yes}
+and the @code{LIBUNISTRING} and @code{LTLIBUNISTRING} variables and augments
+the @code{CPPFLAGS} variable, and defines the C macro
+@code{HAVE_LIBUNISTRING} to 1.  Otherwise, it sets and AC_SUBSTs
+@code{HAVE_LIBUNISTRING=no} and @code{LIBUNISTRING} and @code{LTLIBUNISTRING}
+to empty.
+
+The complexities that @code{gl_LIBUNISTRING} deals with are the following:
+
+@itemize @bullet
+@item
+On some operating systems, in some configurations, libunistring depends
+on @code{libiconv}, and the options for linking with libiconv must be
+mentioned explicitly on the link command line.
+
+@item
+GNU @code{libunistring}, if installed, is not necessarily already in the
+search path (@code{CPPFLAGS} for the include file search path,
+@code{LDFLAGS} for the library search path).
+
+@item
+GNU @code{libunistring}, if installed, is not necessarily already in the
+run time library search path.  To avoid the need for setting an environment
+variable like @code{LD_LIBRARY_PATH}, the macro adds the appropriate
+run time search path options to the @code{LIBUNISTRING} variable.  This works
+on most systems.
+@end itemize
+
+@node Reporting problems
+@section Reporting problems
+
+@cindex bug reports
+@cindex bug tracker
+@cindex mailing list
+If you encounter any problem, please don't hesitate to send a detailed
+bug report to the @code{bug-libunistring@@gnu.org} mailing list.  You can
+alternatively also use the bug tracker at the project page
+@url{https://savannah.gnu.org/projects/libunistring}.
+
+Please always include the version number of this library, and a short
+description of your operating system and compilation environment with
+corresponding version numbers.
+
+For problems that appear while building and installing @code{libunistring},
+for which you don't find the remedy in the @file{INSTALL} file, please include
+a description of the options that you passed to the @samp{configure} script.
+
+@node More functionality
+@chapter More advanced functionality
+
+@cindex bidirectional reordering
+For bidirectional reordering of strings, we recommend the GNU FriBidi library:
+@url{http://www.fribidi.org/}.
+
+@cindex rendering
+For the rendering of Unicode strings outside of the context of a given toolkit
+(KDE/Qt or GNOME/Gtk), we recommend the Pango library:
+@url{http://www.pango.org/}.
+
+@include wchar_t.texi
+
+@node Licenses
+@appendix Licenses
+@cindex Licenses
+
+The files of this package are covered by the licenses indicated in each
+particular file or directory.  Here is a summary:
+
+@itemize @bullet
+@item
+The @code{libunistring} library and its header files are dual-licensed under
+"the GNU LGPLv3+ or the GNU GPLv2". This means, you can use it under either
+@itemize @bullet
+@item @minus{}
+the terms of the GNU Lesser General Public License (LGPL) version 3 or
+(at your option) any later version, or
+@item @minus{}
+the terms of the GNU General Public License (GPL) version 2, or
+@item @minus{}
+the same dual license "the GNU LGPLv3+ or the GNU GPLv2".
+@end itemize
+You find the GNU LGPL version 3 in @ref{GNU LGPL}.  This license is
+based on the GNU GPL version 3, see @ref{GNU GPL}.
+@*
+You can find the GNU GPL version 2 at
+@url{https://www.gnu.org/licenses/old-licenses/gpl-2.0.html}.
+@*
+Note: This dual license makes it possible for the @code{libunistring} library
+to be used by packages under GPLv2 or GPLv2+ licenses, in particular. See
+the table in @url{https://www.gnu.org/licenses/gpl-faq.html#AllCompatibility}.
+
+
+@item
+This manual is free documentation.  It is dually licensed under the
+GNU FDL and the GNU GPL.  This means that you can redistribute this
+manual under either of these two licenses, at your choice.
+@*
+This manual is covered by the GNU FDL.  Permission is granted to copy,
+distribute and/or modify this document under the terms of the
+GNU Free Documentation License (FDL), either version 1.2 of the
+License, or (at your option) any later version published by the
+Free Software Foundation (FSF); with no Invariant Sections, with no
+Front-Cover Text, and with no Back-Cover Texts.
+A copy of the license is included in @ref{GNU FDL}.
+@*
+This manual is covered by the GNU GPL.  You can redistribute it and/or
+modify it under the terms of the GNU General Public License (GPL), either
+version 3 of the License, or (at your option) any later version published
+by the Free Software Foundation (FSF).
+A copy of the license is included in @ref{GNU GPL}.
+@end itemize
+
+@menu
+* GNU GPL::                     GNU General Public License
+* GNU LGPL::                    GNU Lesser General Public License
+* GNU FDL::                     GNU Free Documentation License
+@end menu
+
+@page
+@node GNU GPL
+@appendixsec GNU GENERAL PUBLIC LICENSE
+@cindex GPL, GNU General Public License
+@cindex License, GNU GPL
+@include gpl.texi
+@page
+@node GNU LGPL
+@appendixsec GNU LESSER GENERAL PUBLIC LICENSE
+@cindex LGPL, GNU Lesser General Public License
+@cindex License, GNU LGPL
+@include lgpl.texi
+@page
+@node GNU FDL
+@appendixsec GNU Free Documentation License
+@cindex FDL, GNU Free Documentation License
+@cindex License, GNU FDL
+@include fdl.texi
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye
+
+@c Local Variables:
+@c indent-tabs-mode: nil
+@c whitespace-check-buffer-indent: nil
+@c End:

@@ -1,0 +1,184 @@
+/*
+ * Copyright (c) 2013 Red Hat Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *     * Redistributions of source code must retain the above
+ *       copyright notice, this list of conditions and the
+ *       following disclaimer.
+ *     * Redistributions in binary form must reproduce the
+ *       above copyright notice, this list of conditions and
+ *       the following disclaimer in the documentation and/or
+ *       other materials provided with the distribution.
+ *     * The names of contributors to this software may not be
+ *       used to endorse or promote products derived from this
+ *       software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
+ *
+ * Author: Stef Walter <stefw@redhat.com>
+ */
+
+#include "config.h"
+#include "test.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#ifdef OS_UNIX
+#include <unistd.h>
+#endif
+
+#include "compat.h"
+
+#ifndef HAVE_STRNDUP
+
+static void
+test_strndup (void)
+{
+	char unterminated[] = { 't', 'e', 's', 't', 'e', 'r', 'o', 'n', 'i', 'o' };
+	char *res;
+
+	res = strndup (unterminated, 6);
+	assert_str_eq (res, "tester");
+	free (res);
+
+	res = strndup ("test", 6);
+	assert_str_eq (res, "test");
+	free (res);
+}
+
+#endif
+
+#ifdef OS_UNIX
+
+static void
+test_getauxval (void)
+{
+	/* 23 is AT_SECURE */
+	const char *args[] = { BUILDDIR "/common/frob-getauxval", "23", NULL };
+	char *path;
+	int ret;
+
+	ret = p11_test_run_child (args, true);
+	assert_num_eq (ret, 0);
+
+	path = p11_test_copy_setgid (args[0], BUILDDIR);
+	if (path == NULL)
+		return;
+
+	args[0] = path;
+	ret = p11_test_run_child (args, true);
+	assert_num_cmp (ret, !=, 0);
+
+	if (unlink (path) < 0)
+		assert_fail ("unlink failed", strerror (errno));
+	free (path);
+}
+
+static void
+test_secure_getenv (void)
+{
+	const char *args[] = { BUILDDIR "/common/frob-getenv", "BLAH", NULL };
+	char *path;
+	int ret;
+
+	setenv ("BLAH", "5", 1);
+
+	ret = p11_test_run_child (args, true);
+	assert_num_eq (ret, 5);
+
+	path = p11_test_copy_setgid (args[0], BUILDDIR);
+	if (path == NULL)
+		return;
+
+	args[0] = path;
+	ret = p11_test_run_child (args, true);
+	assert_num_cmp (ret, ==, 0);
+
+	if (unlink (path) < 0)
+		assert_fail ("unlink failed", strerror (errno));
+	free (path);
+}
+
+static void
+test_mmap (void)
+{
+	p11_mmap *map;
+	void *data;
+	size_t size;
+	char file[] = "emptyfileXXXXXX";
+	int fd = mkstemp (file);
+	assert (fd >= 0);
+	close (fd);
+	/* mmap on empty file should work */
+	map = p11_mmap_open (file, NULL, &data, &size);
+	unlink (file);
+	assert_ptr_not_null (map);
+	p11_mmap_close (map);
+}
+
+static void
+test_getprogname (void)
+{
+#if defined(__linux__) && defined(HAVE_PROGRAM_INVOCATION_SHORT_NAME)
+	const char *args[] = { BUILDDIR "/common/frob-getprogname", NULL };
+	char *path;
+	int ret;
+
+	if (access ("/proc/self/exe", F_OK) < 0)
+		assert_skip ("cannot perform getprogname test: no /proc/self/exe", NULL);
+
+	path = realpath ("/proc/self/exe", NULL);
+	if (!path)
+		assert_skip ("cannot perform getprogname test: cannot resolve /proc/self/exe", NULL);
+
+	ret = strcmp (path, BUILDDIR "/test-compat" EXEEXT);
+	free (path);
+	if (ret != 0) {
+		assert_skip ("cannot perform getprogname test: path contains a symlink", NULL);
+	}
+
+	ret = p11_test_run_child (args, false);
+	assert_num_eq (ret, 0);
+#else
+	assert_skip ("cannot perform getprogname test", NULL);
+#endif
+}
+
+#endif /* OS_UNIX */
+
+int
+main (int argc,
+      char *argv[])
+{
+#ifndef HAVE_STRNDUP
+	p11_test (test_strndup, "/compat/strndup");
+#endif
+#ifdef OS_UNIX
+	/* Don't run this test when under fakeroot, or the binary is
+	 * written under /tmp */
+	if (!getenv ("FAKED_MODE") && strncmp (BUILDDIR, "/tmp/", 5) != 0) {
+		p11_test (test_getauxval, "/compat/getauxval");
+		p11_test (test_secure_getenv, "/compat/secure_getenv");
+	}
+	p11_test (test_mmap, "/compat/mmap");
+	p11_test (test_getprogname, "/compat/getprogname");
+#endif
+	return p11_test_run (argc, argv);
+}

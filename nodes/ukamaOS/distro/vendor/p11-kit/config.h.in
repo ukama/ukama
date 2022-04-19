@@ -1,0 +1,331 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define if building universal (internal helper macro) */
+#undef AC_APPLE_UNIVERSAL_BUILD
+
+/* Define to 1 if translation of program messages to the user's native
+   language is requested. */
+#undef ENABLE_NLS
+
+/* File extension for executables */
+#undef EXEEXT
+
+/* Define to 1 if you have the `asprintf' function. */
+#undef HAVE_ASPRINTF
+
+/* Define to 1 if you have the `basename' function. */
+#undef HAVE_BASENAME
+
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the Mac OS X function
+   CFLocaleCopyPreferredLanguages in the CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYPREFERREDLANGUAGES
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define if the GNU dcgettext() function is already present or preinstalled.
+   */
+#undef HAVE_DCGETTEXT
+
+/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_ASPRINTF
+
+/* Define to 1 if you have the declaration of `program_invocation_short_name',
+   and to 0 if you don't. */
+#undef HAVE_DECL_PROGRAM_INVOCATION_SHORT_NAME
+
+/* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
+   don't. */
+#undef HAVE_DECL_REALLOCARRAY
+
+/* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_VASPRINTF
+
+/* Define to 1 if you have the declaration of `__progname', and to 0 if you
+   don't. */
+#undef HAVE_DECL___PROGNAME
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the `fdwalk' function. */
+#undef HAVE_FDWALK
+
+/* Define to 1 if you have the `getauxval' function. */
+#undef HAVE_GETAUXVAL
+
+/* Define to 1 if you have the `getexecname' function. */
+#undef HAVE_GETEXECNAME
+
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getpeerucred' function. */
+#undef HAVE_GETPEERUCRED
+
+/* Define to 1 if you have the `getprogname' function. */
+#undef HAVE_GETPROGNAME
+
+/* Define to 1 if you have the `getresuid' function. */
+#undef HAVE_GETRESUID
+
+/* Define if the GNU gettext() function is already present or preinstalled. */
+#undef HAVE_GETTEXT
+
+/* Whether gmtime_r() is available */
+#undef HAVE_GMTIME_R
+
+/* Define if you have the iconv() function and it works. */
+#undef HAVE_ICONV
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `issetugid' function. */
+#undef HAVE_ISSETUGID
+
+/* Define to 1 if you have the `intl' library (-lintl). */
+#undef HAVE_LIBINTL
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the <locale.h> header file. */
+#undef HAVE_LOCALE_H
+
+/* Define to 1 if the system has the type `locale_t'. */
+#undef HAVE_LOCALE_T
+
+/* Define to 1 if you have the `memdup' function. */
+#undef HAVE_MEMDUP
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#undef HAVE_MKDTEMP
+
+/* Define to 1 if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
+
+/* Define to 1 if you have the `newlocale' function. */
+#undef HAVE_NEWLOCALE
+
+/* Whether program_invocation_short_name available */
+#undef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+
+/* Define to 1 if you have the `reallocarray' function. */
+#undef HAVE_REALLOCARRAY
+
+/* Define to 1 if you have the `secure_getenv' function. */
+#undef HAVE_SECURE_GETENV
+
+/* Define to 1 if you have the `setenv' function. */
+#undef HAVE_SETENV
+
+/* Define to 1 if the system has the type `sighandler_t'. */
+#undef HAVE_SIGHANDLER_T
+
+/* Define to 1 if the system has the type `sig_t'. */
+#undef HAVE_SIG_T
+
+/* Define to 1 if stdbool.h conforms to C99. */
+#undef HAVE_STDBOOL_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strerror_l' function. */
+#undef HAVE_STRERROR_L
+
+/* Define to 1 if you have the `strerror_r' function. */
+#undef HAVE_STRERROR_R
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
+
+/* Define to 1 if you have the `strnstr' function. */
+#undef HAVE_STRNSTR
+
+/* Define to 1 if `d_type' is a member of `struct dirent'. */
+#undef HAVE_STRUCT_DIRENT_D_TYPE
+
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <ucred.h> header file. */
+#undef HAVE_UCRED_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vasprintf' function. */
+#undef HAVE_VASPRINTF
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Whether vsock support available */
+#undef HAVE_VSOCK
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
+
+/* Whether __libc_enable_secure available */
+#undef HAVE___LIBC_ENABLE_SECURE
+
+/* Whether __progname available */
+#undef HAVE___PROGNAME
+
+/* Define to 1 if the system has the type `__sighandler_t'. */
+#undef HAVE___SIGHANDLER_T
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#undef LT_OBJDIR
+
+/* Disable glib assertions */
+#undef NDEBUG
+
+/* Building for unix */
+#undef OS_UNIX
+
+/* Building for win32 */
+#undef OS_WIN32
+
+/* the compiler keyword to define thread-local storage */
+#undef P11_TLS_KEYWORD
+
+/* the number of closures */
+#undef P11_VIRTUAL_MAX_FIXED
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Major version of package */
+#undef PACKAGE_MAJOR
+
+/* Minor version of package */
+#undef PACKAGE_MINOR
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* File extension for shared libraries */
+#undef SHLEXT
+
+/* The size of `unsigned long', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_LONG
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* The trust module input paths */
+#undef TRUST_PATHS
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* Version number of package */
+#undef VERSION
+
+/* Build with libtasn1 and certificate support */
+#undef WITH_ASN1
+
+/* Print debug output */
+#undef WITH_DEBUG
+
+/* Use libffi for building closures */
+#undef WITH_FFI
+
+/* Use freebl for hash implementation */
+#undef WITH_FREEBL
+
+/* More strict checks */
+#undef WITH_STRICT
+
+/* Build with systemd socket activation */
+#undef WITH_SYSTEMD
+
+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
+   significant byte first (like Motorola and SPARC, unlike Intel). */
+#if defined AC_APPLE_UNIVERSAL_BUILD
+# if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+# endif
+#else
+# ifndef WORDS_BIGENDIAN
+#  undef WORDS_BIGENDIAN
+# endif
+#endif
+
+/* In debug mode */
+#undef _DEBUG
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE

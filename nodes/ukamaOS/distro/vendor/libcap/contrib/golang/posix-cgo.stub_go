@@ -1,0 +1,52 @@
+
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <pthread.h>
+// #include <unistd.h>
+// #include <sys/types.h>
+//
+// pthread_t *t = NULL;
+// pthread_mutex_t mu;
+// int nts = 0;
+// int all_done = 0;
+//
+// static void *aFn(void *vargp) {
+//   int done = 0;
+//   while (!done) {
+//     usleep(100);
+//     pthread_mutex_lock(&mu);
+//     done = all_done;
+//     pthread_mutex_unlock(&mu);
+//   }
+//   printf("tid=%d done\n", pthread_self());
+//   return NULL;
+// }
+//
+// void trial(int argc) {
+//   nts = argc;
+//   t = calloc(nts, sizeof(pthread_t));
+//   pthread_mutex_init(&mu, NULL);
+//   for (int i = 0; i < nts; i++) {
+//     printf("launch C-pthread [%d]\n", i);
+//     pthread_create(&t[i], NULL, aFn, NULL);
+//   }
+// }
+//
+// void cleanup(void) {
+//   pthread_mutex_lock(&mu);
+//   all_done = 1;
+//   pthread_mutex_unlock(&mu);
+//   for (int i = 0; i < nts; i++) {
+//     printf("join C-pthread [%d]\n", i);
+//     pthread_join(t[i], NULL);
+//   }
+//   pthread_mutex_destroy(&mu);
+// }
+import "C"
+
+func main() {
+	const cts = 3
+	C.trial(cts)
+	defer C.cleanup()
+	ptest()
+}

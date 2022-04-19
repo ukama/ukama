@@ -1,0 +1,75 @@
+##
+## This file is part of the coreboot project.
+##
+## Copyright 2019 Google Inc.
+##
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; version 2 of the License.
+##
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+
+# Umbrella option to be selected by variant boards.
+config BOARD_GOOGLE_KUKUI_COMMON
+	def_bool n
+
+if BOARD_GOOGLE_KUKUI_COMMON
+
+config VBOOT
+	select EC_GOOGLE_CHROMEEC_SWITCHES
+	select VBOOT_VBNV_FLASH
+
+config BOARD_SPECIFIC_OPTIONS
+	def_bool y
+	select RTC
+	select SOC_MEDIATEK_MT8183
+	select BOARD_ROMSIZE_KB_8192
+	select MAINBOARD_HAS_CHROMEOS
+	select CHROMEOS_USE_EC_WATCHDOG_FLAG if CHROMEOS
+	select COMMON_CBFS_SPI_WRAPPER
+	select SPI_FLASH
+	select SPI_FLASH_INCLUDE_ALL_DRIVERS
+	select EC_GOOGLE_CHROMEEC
+	select EC_GOOGLE_CHROMEEC_BOARDID
+	select EC_GOOGLE_CHROMEEC_SPI
+	select MAINBOARD_HAS_SPI_TPM_CR50 if VBOOT
+	select MAINBOARD_HAS_TPM2 if VBOOT
+	select MAINBOARD_HAS_NATIVE_VGA_INIT
+	select MAINBOARD_FORCE_NATIVE_VGA_INIT
+	select HAVE_LINEAR_FRAMEBUFFER
+	select DRIVER_PARADE_PS8640 if BOARD_GOOGLE_JACUZZI
+	select MT8183_DRAM_EMCP if BOARD_GOOGLE_KRANE
+
+config MAINBOARD_DIR
+	string
+	default google/kukui
+
+config MAINBOARD_PART_NUMBER
+	string
+	default "Kukui" if BOARD_GOOGLE_KUKUI
+	default "Krane" if BOARD_GOOGLE_KRANE
+	default "Kodama" if BOARD_GOOGLE_KODAMA
+	default "Kadadu" if BOARD_GOOGLE_KAKADU
+	default "Flapjack" if BOARD_GOOGLE_FLAPJACK
+	default "Jacuzzi" if BOARD_GOOGLE_JACUZZI
+	default "Juniper" if BOARD_GOOGLE_JUNIPER
+	default "Kappa" if BOARD_GOOGLE_KAPPA
+	default "Damu" if BOARD_GOOGLE_DAMU
+
+config DRIVER_TPM_SPI_BUS
+	hex
+	default 0x0
+
+config BOOT_DEVICE_SPI_FLASH_BUS
+	int
+	default 1
+
+config EC_GOOGLE_CHROMEEC_SPI_BUS
+	hex
+	default 0x2
+
+endif

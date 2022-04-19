@@ -1,0 +1,39 @@
+{
+    "cgroups": [],
+    "mounts": [
+        {
+            "destination": "/containers/onshutdown/000-shutdown/tmp",
+            "type": "tmpfs",
+            "source": "tmpfs"
+        },
+        {
+            "destination": "/containers/onshutdown/000-shutdown/tmp",
+            "options": [
+                "remount",
+                "private"
+            ]
+        },
+        {
+            "destination": "/containers/onshutdown/000-shutdown/rootfs",
+            "type": "overlay",
+            "source": "overlay",
+            "options": [
+                "lowerdir=/containers/onshutdown/000-shutdown/lower",
+                "upperdir=/containers/onshutdown/000-shutdown/tmp/upper",
+                "workdir=/containers/onshutdown/000-shutdown/tmp/work"
+            ]
+        }
+    ],
+    "mkdir": [],
+    "interfaces": [],
+    "bindNS": {
+        "cgroup": "",
+        "ipc": "",
+        "mnt": "",
+        "net": "",
+        "pid": "",
+        "user": "",
+        "uts": ""
+    },
+    "namespace": ""
+}

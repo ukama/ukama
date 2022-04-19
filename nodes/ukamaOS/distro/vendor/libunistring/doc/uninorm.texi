@@ -1,0 +1,310 @@
+@node uninorm.h
+@chapter Normalization forms (composition and decomposition) @code{<uninorm.h>}
+
+@cindex normal forms
+@cindex normalizing
+This include file defines functions for transforming Unicode strings to one
+of the four normal forms, known as NFC, NFD, NKFC, NFKD.  These
+transformations involve decomposition and --- for NFC and NFKC --- composition
+of Unicode characters.
+
+@menu
+* Decomposition of characters::
+* Composition of characters::
+* Normalization of strings::
+* Normalizing comparisons::
+* Normalization of streams::
+@end menu
+
+@node Decomposition of characters
+@section Decomposition of Unicode characters
+
+@cindex decomposing
+The following enumerated values are the possible types of decomposition of a
+Unicode character.
+
+@deftypevr Constant int UC_DECOMP_CANONICAL
+Denotes canonical decomposition.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_FONT
+UCD marker: @code{<font>}.  Denotes a font variant (e.g@. a blackletter form).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_NOBREAK
+UCD marker: @code{<noBreak>}.
+Denotes a no-break version of a space or hyphen.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_INITIAL
+UCD marker: @code{<initial>}.
+Denotes an initial presentation form (Arabic).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_MEDIAL
+UCD marker: @code{<medial>}.
+Denotes a medial presentation form (Arabic).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_FINAL
+UCD marker: @code{<final>}.
+Denotes a final presentation form (Arabic).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_ISOLATED
+UCD marker: @code{<isolated>}.
+Denotes an isolated presentation form (Arabic).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_CIRCLE
+UCD marker: @code{<circle>}.
+Denotes an encircled form.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_SUPER
+UCD marker: @code{<super>}.
+Denotes a superscript form.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_SUB
+UCD marker: @code{<sub>}.
+Denotes a subscript form.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_VERTICAL
+UCD marker: @code{<vertical>}.
+Denotes a vertical layout presentation form.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_WIDE
+UCD marker: @code{<wide>}.
+Denotes a wide (or zenkaku) compatibility character.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_NARROW
+UCD marker: @code{<narrow>}.
+Denotes a narrow (or hankaku) compatibility character.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_SMALL
+UCD marker: @code{<small>}.
+Denotes a small variant form (CNS compatibility).
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_SQUARE
+UCD marker: @code{<square>}.
+Denotes a CJK squared font variant.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_FRACTION
+UCD marker: @code{<fraction>}.
+Denotes a vulgar fraction form.
+@end deftypevr
+
+@deftypevr Constant int UC_DECOMP_COMPAT
+UCD marker: @code{<compat>}.
+Denotes an otherwise unspecified compatibility character.
+@end deftypevr
+
+The following constant denotes the maximum size of decomposition of a single
+Unicode character.
+
+@deftypevr Macro {unsigned int} UC_DECOMPOSITION_MAX_LENGTH
+This macro expands to a constant that is the required size of buffer passed to
+the @code{uc_decomposition} and @code{uc_canonical_decomposition} functions.
+@end deftypevr
+
+The following functions decompose a Unicode character.
+
+@deftypefun int uc_decomposition (ucs4_t @var{uc}, int *@var{decomp_tag}, ucs4_t *@var{decomposition})
+Returns the character decomposition mapping of the Unicode character @var{uc}.
+@var{decomposition} must point to an array of at least
+@code{UC_DECOMPOSITION_MAX_LENGTH} @code{ucs_t} elements.
+
+When a decomposition exists, @code{@var{decomposition}[0..@var{n}-1]} and
+@code{*@var{decomp_tag}} are filled and @var{n} is returned.  Otherwise -1 is
+returned.
+@end deftypefun
+
+@deftypefun int uc_canonical_decomposition (ucs4_t @var{uc}, ucs4_t *@var{decomposition})
+Returns the canonical character decomposition mapping of the Unicode character
+@var{uc}.  @var{decomposition} must point to an array of at least
+@code{UC_DECOMPOSITION_MAX_LENGTH} @code{ucs_t} elements.
+
+When a decomposition exists, @code{@var{decomposition}[0..@var{n}-1]} is filled
+and @var{n} is returned.  Otherwise -1 is returned.
+
+Note: This function returns the (simple) ``canonical decomposition'' of
+@var{uc}.  If you want the ``full canonical decomposition'' of @var{uc},
+that is, the recursive application of ``canonical decomposition'', use the
+function @code{u*_normalize} with argument @code{UNINORM_NFD} instead.
+@end deftypefun
+
+@node Composition of characters
+@section Composition of Unicode characters
+
+@cindex composing, Unicode characters
+@cindex combining, Unicode characters
+The following function composes a Unicode character from two Unicode
+characters.
+
+@deftypefun ucs4_t uc_composition (ucs4_t @var{uc1}, ucs4_t @var{uc2})
+Attempts to combine the Unicode characters @var{uc1}, @var{uc2}.
+@var{uc1} is known to have canonical combining class 0.
+
+Returns the combination of @var{uc1} and @var{uc2}, if it exists.
+Returns 0 otherwise.
+
+Not all decompositions can be recombined using this function.  See the Unicode
+file @file{CompositionExclusions.txt} for details.
+@end deftypefun
+
+@node Normalization of strings
+@section Normalization of strings
+
+The Unicode standard defines four normalization forms for Unicode strings.
+The following type is used to denote a normalization form.
+
+@deftp Type uninorm_t
+An object of type @code{uninorm_t} denotes a Unicode normalization form.
+This is a scalar type; its values can be compared with @code{==}.
+@end deftp
+
+The following constants denote the four normalization forms.
+
+@deftypevr Macro uninorm_t UNINORM_NFD
+Denotes Normalization form D: canonical decomposition.
+@end deftypevr
+
+@deftypevr Macro uninorm_t UNINORM_NFC
+Normalization form C: canonical decomposition, then canonical composition.
+@end deftypevr
+
+@deftypevr Macro uninorm_t UNINORM_NFKD
+Normalization form KD: compatibility decomposition.
+@end deftypevr
+
+@deftypevr Macro uninorm_t UNINORM_NFKC
+Normalization form KC: compatibility decomposition, then canonical composition.
+@end deftypevr
+
+The following functions operate on @code{uninorm_t} objects.
+
+@deftypefun bool uninorm_is_compat_decomposing (uninorm_t @var{nf})
+Tests whether the normalization form @var{nf} does compatibility decomposition.
+@end deftypefun
+
+@deftypefun bool uninorm_is_composing (uninorm_t @var{nf})
+Tests whether the normalization form @var{nf} includes canonical composition.
+@end deftypefun
+
+@deftypefun uninorm_t uninorm_decomposing_form (uninorm_t @var{nf})
+Returns the decomposing variant of the normalization form @var{nf}.
+This maps NFC,NFD @arrow{} NFD and NFKC,NFKD @arrow{} NFKD.
+@end deftypefun
+
+The following functions apply a Unicode normalization form to a Unicode string.
+
+@deftypefun {uint8_t *} u8_normalize (uninorm_t @var{nf}, const uint8_t *@var{s}, size_t @var{n}, uint8_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefunx {uint16_t *} u16_normalize (uninorm_t @var{nf}, const uint16_t *@var{s}, size_t @var{n}, uint16_t *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefunx {uint32_t *} u32_normalize (uninorm_t @var{nf}, const uint32_t *@var{s}, size_t @var{n}, uint32_t *@var{resultbuf}, size_t *@var{lengthp})
+Returns the specified normalization form of a string.
+
+The @var{resultbuf} and @var{lengthp} arguments are as described in
+chapter @ref{Conventions}.
+@end deftypefun
+
+@node Normalizing comparisons
+@section Normalizing comparisons
+
+@cindex comparing, ignoring normalization
+The following functions compare Unicode string, ignoring differences in
+normalization.
+
+@deftypefun int u8_normcmp (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefunx int u16_normcmp (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefunx int u32_normcmp (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+Compares @var{s1} and @var{s2}, ignoring differences in normalization.
+
+@var{nf} must be either @code{UNINORM_NFD} or @code{UNINORM_NFKD}.
+
+If successful, sets @code{*@var{resultp}} to -1 if @var{s1} < @var{s2},
+0 if @var{s1} = @var{s2}, 1 if @var{s1} > @var{s2}, and returns 0.
+Upon failure, returns -1 with @code{errno} set.
+@end deftypefun
+
+@cindex comparing, ignoring normalization, with collation rules
+@cindex comparing, with collation rules, ignoring normalization
+@deftypefun {char *} u8_normxfrm (const uint8_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefunx {char *} u16_normxfrm (const uint16_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
+@deftypefunx {char *} u32_normxfrm (const uint32_t *@var{s}, size_t @var{n}, uninorm_t @var{nf}, char *@var{resultbuf}, size_t *@var{lengthp})
+Converts the string @var{s} of length @var{n} to a NUL-terminated byte
+sequence, in such a way that comparing @code{u8_normxfrm (@var{s1})} and
+@code{u8_normxfrm (@var{s2})} with the @code{u8_cmp2} function is equivalent to
+comparing @var{s1} and @var{s2} with the @code{u8_normcoll} function.
+
+@var{nf} must be either @code{UNINORM_NFC} or @code{UNINORM_NFKC}.
+
+The @var{resultbuf} and @var{lengthp} arguments are as described in
+chapter @ref{Conventions}.
+@end deftypefun
+
+@deftypefun int u8_normcoll (const uint8_t *@var{s1}, size_t @var{n1}, const uint8_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefunx int u16_normcoll (const uint16_t *@var{s1}, size_t @var{n1}, const uint16_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+@deftypefunx int u32_normcoll (const uint32_t *@var{s1}, size_t @var{n1}, const uint32_t *@var{s2}, size_t @var{n2}, uninorm_t @var{nf}, int *@var{resultp})
+Compares @var{s1} and @var{s2}, ignoring differences in normalization, using
+the collation rules of the current locale.
+
+@var{nf} must be either @code{UNINORM_NFC} or @code{UNINORM_NFKC}.
+
+If successful, sets @code{*@var{resultp}} to -1 if @var{s1} < @var{s2},
+0 if @var{s1} = @var{s2}, 1 if @var{s1} > @var{s2}, and returns 0.
+Upon failure, returns -1 with @code{errno} set.
+@end deftypefun
+
+@node Normalization of streams
+@section Normalization of streams of Unicode characters
+
+@cindex stream, normalizing a
+A ``stream of Unicode characters'' is essentially a function that accepts an
+@code{ucs4_t} argument repeatedly, optionally combined with a function that
+``flushes'' the stream.
+
+@deftp Type {struct uninorm_filter}
+This is the data type of a stream of Unicode characters that normalizes its
+input according to a given normalization form and passes the normalized
+character sequence to the encapsulated stream of Unicode characters.
+@end deftp
+
+@deftypefun {struct uninorm_filter *} uninorm_filter_create (uninorm_t @var{nf}, int (*@var{stream_func}) (void *@var{stream_data}, ucs4_t @var{uc}), void *@var{stream_data})
+Creates and returns a normalization filter for Unicode characters.
+
+The pair (@var{stream_func}, @var{stream_data}) is the encapsulated stream.
+@code{@var{stream_func} (@var{stream_data}, @var{uc})} receives the Unicode
+character @var{uc} and returns 0 if successful, or -1 with @code{errno} set
+upon failure.
+
+Returns the new filter, or NULL with @code{errno} set upon failure.
+@end deftypefun
+
+@deftypefun int uninorm_filter_write (struct uninorm_filter *@var{filter}, ucs4_t @var{uc})
+Stuffs a Unicode character into a normalizing filter.
+Returns 0 if successful, or -1 with @code{errno} set upon failure.
+@end deftypefun
+
+@deftypefun int uninorm_filter_flush (struct uninorm_filter *@var{filter})
+Brings data buffered in the filter to its destination, the encapsulated stream.
+
+Returns 0 if successful, or -1 with @code{errno} set upon failure.
+
+Note! If after calling this function, additional characters are written
+into the filter, the resulting character sequence in the encapsulated stream
+will not necessarily be normalized.
+@end deftypefun
+
+@deftypefun int uninorm_filter_free (struct uninorm_filter *@var{filter})
+Brings data buffered in the filter to its destination, the encapsulated stream,
+then closes and frees the filter.
+
+Returns 0 if successful, or -1 with @code{errno} set upon failure.
+@end deftypefun

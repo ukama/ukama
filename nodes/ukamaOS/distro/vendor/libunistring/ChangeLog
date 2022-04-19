@@ -1,0 +1,1162 @@
+2018-05-17  Bruno Haible  <bruno@clisp.org>
+
+	Prepare for 0.9.10 release.
+	* version.sh: Bump version number, date, gnulib version.
+	* README: Update version.
+
+2018-05-17  Bruno Haible  <bruno@clisp.org>
+
+	doc: Fix @menu structure (regression from 2017-12-10).
+	* doc/libunistring.texi (Introduction): Fix @menu.
+
+2018-05-17  Bruno Haible  <bruno@clisp.org>
+
+	Allow use of automake-1.16.
+	* autogen.sh: Update comments.
+
+2018-04-07  Bruno Haible  <bruno@clisp.org>
+
+	Implement the documented functions u*_casing_*_context.
+	Reported by Genki Sky <sky@genki.is>.
+	* autogen.sh (GNULIB_MODULES): Add unicase/u*-prefix-context,
+	unicase/u*-suffix-context.
+	* lib/unicase/.gitignore: Update.
+	* gnulib-m4/gnulib-cache.m4: Updated by gnulib-tool.
+	* NEWS: Mention the change.
+
+2018-03-27  Bruno Haible  <bruno@clisp.org>
+
+	Doc tweaks.
+	* README: Don't recommend to use --prefix=/usr/local, as it produces
+	problems with GCC (since GCC's treatment of /usr/local/include and
+	/usr/local/lib is inconsistent by default).
+
+2011-01-29  Bruno Haible  <bruno@clisp.org>
+
+	* m4/woe32-dll.m4: Add a comment.
+
+2018-02-28  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+
+2018-02-02  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* NEWS: Mention the multithread-safety fix from gnulib module 'malloca'.
+
+2018-01-27  Bruno Haible  <bruno@clisp.org>
+
+	Rename some file.
+	* INSTALL.windows: Renamed from README.windows.
+	* Makefile.am (EXTRA_DIST): Update.
+	* doc/libunistring.texi (Installation): Likewise.
+
+2017-12-10  Bruno Haible  <bruno@clisp.org>
+
+	Documentation updates.
+	Mostly based on feedback by Richard Stallman <rms@gnu.org>.
+	* doc/wchar_t.texi: New file, extracted from doc/libunistring.texi.
+	* doc/Makefile.am (libunistring_TEXINFOS): Add it.
+	* doc/libunistring.texi: Move "The wchar_t mess" section to an appendix.
+	* doc/unitypes.texi: Explain difference between uint32_t and ucs4_t.
+	* doc/unistr.texi (Elementary string functions,
+	Elementary string functions on NUL terminated strings): Add subsection
+	structure.
+	* doc/unictype.texi (Object oriented API): Explain each general category
+	once only.
+	* doc/unistdio.texi, doc/uninorm.texi, doc/unicase.texi: Small changes.
+
+2017-11-30  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* NEWS: Mention 0.9.8 changes.
+	* lib/Makefile.am (LTV_CURRENT, LTV_AGE): Bump for
+	uc_grapheme_breaks.
+
+2017-11-27  Daiki Ueno  <ueno@gnu.org>
+
+	uniwbrk: Define new word break property values
+	* doc/uniwbrk.texi (Word break property): Document WBP_RI, WBP_DQ,
+	WBP_SQ, WBP_HL, WBP_ZWJ, WBP_EB, WBP_EM, WBP_GAZ, and WBP_EBG.
+
+2017-11-27  Daiki Ueno  <ueno@gnu.org>
+
+	unigbrk: Import new module unigbrk/uc-grapheme-breaks
+	* autogen.sh (GNULIB_MODULES): Pull unigbrk/uc-grapheme-breaks.
+	* doc/unigbrk.texi (Grapheme cluster breaks in a string): Mention
+	the limitations of *_grapheme_next and *_grapheme_prev functions
+	and suggest *_grapheme_breaks instead.
+	(Grapheme cluster break property): Document newly added
+	properties; mention the limitations of uc_is_grapheme_break and
+	suggest to use uc_grapheme_breaks instead.
+
+2017-11-18  Bruno Haible  <bruno@clisp.org>
+
+	Clarify the effect of uc_canonical_decomposition.
+	Prompted by a report by DaeHyun Sung <sungdh86@gmail.com>.
+	* doc/uninorm.texi (Decomposition of characters): Clarify.
+	* doc/libunistring.texi: Bump copyright year.
+
+2017-10-21  Bruno Haible  <bruno@clisp.org>
+
+	Upgrade to newer libtool.
+	* m4/libtool.m4: Update from libtool-2.4.6, with modifications.
+	2017-10-21  Bruno Haible  <bruno@clisp.org>
+		Fix -export-symbols and -export-symbols-regex support on
+		Solaris 11.3.
+		* m4/libtool.m4 (_LT_CMD_GLOBAL_SYMBOLS): Adjust symcode for
+		Solaris.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Likewise.
+	* m4/ltsugar.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2017-07-15  Bruno Haible  <bruno@clisp.org>
+
+	Get rid of autom4te.cache directory (left over from autoconf, automake).
+	* autogen.sh: Remove autom4te.cache directory.
+
+2017-06-20  Bruno Haible  <bruno@clisp.org>
+
+	Avoid collision between the generated <unistring/stdbool.h> and the
+	platform's original <stdbool.h>.
+	Reported by Dennis Clarke <dclarke@blastwave.org> in
+	<https://lists.gnu.org/archive/html/bug-gettext/2017-06/msg00022.html>.
+	* lib/stdbool.mini.h: Update from stdbool.in.h from current gnulib. Use
+	compiler dependent conditionals to determine whether <stdbool.h> should
+	be included.
+
+2017-01-10  Bruno Haible  <bruno@clisp.org>
+
+	Modernize URLs.
+	* README: Prefer https over http or ftp URLs.
+	* DEPENDENCIES: Likewise.
+
+2016-12-26  Bruno Haible  <bruno@clisp.org>
+
+	Clarify which version of texinfo.tex is used.
+	* autogen.sh (TEXINFO_VERSION): New variable.
+
+2016-12-10  Bruno Haible  <bruno@clisp.org>
+
+	Make the generated <unistring/stdint.h> work for GCC >= 4.5
+	when GCC is not the system's default compiler.
+	* lib/Makefile.am (unistring/stdint.h): When the compiler is
+	GCC >= 4.5, include its <stdint.h> file.
+	Reported by Marcin Cieślak and analyzed by Krzysztof Malinowski
+	at <https://savannah.gnu.org/bugs/?45783>.
+
+2016-12-02  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* NEWS: Mention 0.9.7 changes.
+
+2016-12-02  Bruno Haible  <bruno@clisp.org>
+
+	Change license to LGPLv3+ or GPLv2.
+	* README (Copyright): Rewrite section.
+	* doc/libunistring.texi (Licenses): Change accordingly.
+	* autogen.sh: Pass option --lgpl=3orGPLv2 to gnulib-tool.
+	Reported by Nikos Mavrogiannopoulos.
+	* gnulib-m4/gnulib-cache.m4: Regenerated.
+
+2016-12-02  Bruno Haible  <bruno@clisp.org>
+
+	Allow use of automake-1.15.
+	* autogen.sh: Update comments. Make sure to get new versions of files
+	brought in by automake.
+
+2016-11-23  Bruno Haible  <bruno@clisp.org>
+
+	Update installation instructions for Windows.
+	* README.windows: Assume a 64-bit Windows. Explain both 32-bit and
+	64-bit builds. Add instructions for the MS Visual C/C++ tool chain.
+	Revamp instructions for Cygwin.
+
+2016-11-23  Bruno Haible  <bruno@clisp.org>
+
+	Drop the nickname "woe32".
+	* README.windows: Renamed from README.woe32.
+	* doc/libunistring.texi (Installation): Update.
+	* Makefile.am (EXTRA_DIST): Update.
+
+2015-06-25  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* NEWS: Mention 0.9.6 changes.
+
+2015-02-16  Daiki Ueno  <ueno@gnu.org>
+
+	* Version 0.9.5 released.
+
+2015-02-16  Daiki Ueno  <ueno@gnu.org>
+
+	* doc/uniname.texi (uniname.h): Document that
+	unicode_name_character now also looks for aliases.
+
+2015-02-16  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* NEWS: Mention 0.9.5 changes.
+
+2014-09-01  Daiki Ueno  <ueno@gnu.org>
+
+	* Version 0.9.4 released.
+
+2014-09-01  Daiki Ueno  <ueno@gnu.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+
+2014-09-01  Daiki Ueno  <ueno@gnu.org>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add dist-xz, so that xz-compressed
+	.tar.xz tarballs will be distributed alongside .tar.gz ones.
+
+2014-08-08  Daiki Ueno  <ueno@gnu.org>
+
+	Replace deprecated $(mkdir_p) usage.
+	Problem report and trivial fix by Nitin A Kamble in:
+	https://lists.gnu.org/archive/html/bug-libunistring/2012-07/msg00000.html
+	* doc/Makefile.am (installdirs-dvi, installdirs-ps)
+	(installdirs-pdf, install-html-monolithic, install-html-split)
+	(installdirs-html, dist-html-monolithic, dist-html-split): Use
+	$(MKDIR_P) instead of deprecated $(mkdir_p).
+
+2014-08-08  Daiki Ueno  <ueno@gnu.org>
+
+	Fix parallel make race when generating unistring/cdefs.h.
+	Trivial fix by Richard Purdie in:
+	http://lists.openembedded.org/pipermail/openembedded-core/2012-April/059850.html
+	* lib/Makefile.am (unistring/cdefs.h): Add $(UNUSED_PARAMETER_H)
+	to prerequisites.
+	Reported by Ludovic Courtès.
+
+2013-01-19  Bruno Haible  <bruno@clisp.org>
+
+	Fix license headers to be LGPL.
+	* lib/stdbool.mini.h: Change license to LGPLv3+.
+	* woe32dll/export.h: Likewise.
+	* woe32dll/unistring-exports.c: Likewise.
+	Reported by Ryan Schmidt.
+
+2012-04-29  Bruno Haible  <bruno@clisp.org>
+
+	Allow use of autoconf-2.69 and automake-1.12.
+	* autogen.sh: Update comments.
+
+2012-01-15  Bruno Haible  <bruno@clisp.org>
+
+	Support for MSVC 9.
+	* woe32dll/export.h (VARIABLE): Define to empty if not using GCC.
+
+2011-01-28  Bruno Haible  <bruno@clisp.org>
+
+	Add a comment.
+	* woe32dll/export.h: Add a reference to the woe32dll writeup.
+
+2011-10-18  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.4.2, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2011-03-29  Bruno Haible  <bruno@clisp.org>
+
+	Add grapheme cluster break functions.
+	* autogen.sh (GNULIB_MODULES): Add unigbrk/*.
+	* gnulib-local/lib/unigbrk.in.h.diff: New file.
+	* gnulib-local/Makefile.am (EXTRA_DIST): Add lib/unigbrk.in.h.diff.
+	* lib/Makefile.am (nobase_include_HEADERS, HEADERS_WITH_EXTERNS): Add
+	unigbrk.h.
+	* doc/Makefile.am (libunistring_TEXINFOS): Move unigbrk.texi before
+	uniwbrk.texi.
+	* doc/libunistring.texi: Move chapter unigbrk.h before chapter
+	uniwbrk.h.
+	* doc/unigbrk.texi (unigbrk.h): Add more index entries. Enhance the
+	explanation of what a grapheme cluster is.
+	(Grapheme cluster break property): Add missing quotes. Avoid imperative
+	form.
+	* doc/uniwbrk.texi (uniwbrk.h): Add more index entries.
+	* AUTHORS: List Ben Pfaff.
+	* README: Mention the new include file unigbrk.h.
+	* NEWS: Likewise.
+
+2011-03-28  Ben Pfaff  <blp@cs.stanford.edu>
+
+	Document grapheme cluster break functions.
+	* doc/Makefile.am (libunistring_TEXINFOS): Add unigbrk.texi.
+	* doc/libunistring.texi: Include unigbrk.texi and refer to it from
+	the text and tables of content.
+	* doc/unigbrk.texi: New file.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Allow omitting spaces in property names.
+	* doc/unictype.texi (Properties as objects): Add details about how
+	uc_property_byname works.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Allow omitting spaces in joining group names.
+	* doc/unictype.texi (Joining group): Add details about how
+	uc_joining_group_byname works.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Support long names of joining types.
+	* doc/unictype.texi (Joining type): Document
+	uc_joining_type_long_name. Mention that uc_joining_type_byname
+	recognizes long names.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Support long names of bidi classes.
+	* doc/unictype.texi (Bidi class): Document
+	uc_bidi_class_long_name. Mention that uc_bidi_class_byname recognizes
+	long names.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh (GNULIB_MODULES): Use unictype/bidiclass-all instead of
+	unictype/bidicategory-all.
+
+2011-03-26  Bruno Haible  <bruno@clisp.org>
+
+	Support names and long names of canonical combining classes.
+	* autogen.sh (GNULIB_MODULES): Use unictype/combining-class-all instead
+	of unictype/combining-class.
+	* doc/unictype.texi (Canonical combining class): Mention UC_CCC_ATA.
+	Document the functions uc_combining_class_name,
+	uc_combining_class_long_name, uc_combining_class_byname.
+
+2011-03-25  Bruno Haible  <bruno@clisp.org>
+
+	Support long names of general category values.
+	* doc/unictype.texi (Object oriented API): Document
+	uc_general_category_long_name. Mention that uc_general_category_byname
+	recognizes long names.
+
+2011-03-25  Bruno Haible  <bruno@clisp.org>
+
+	Add support for general category group LC.
+	* doc/unictype.texi (Object oriented API): Mention UC_CATEGORY_LC,
+	UC_CASED_LETTER.
+	(Bit mask API): Mention UC_CATEGORY_MASK_LC.
+
+2011-03-22  Bruno Haible  <bruno@clisp.org>
+
+	Use term "bidi class" instead of "bidirectional category".
+	* doc/libunistring.texi: Update menu.
+	* doc/unictype.texi (Bidi class): Renamed from Bidirectional category.
+	Mention the new function names.
+
+2011-03-21  Bruno Haible  <bruno@clisp.org>
+
+	Add support for Arabic shaping properties.
+	* autogen.sh (GNULIB_MODULES): Add unictype/joiningtype-all,
+	unictype/joininggroup-all.
+	* doc/libunistring.texi: Update menu.
+	* doc/unictype.texi (Arabic shaping): New section.
+
+2011-01-09  Bruno Haible  <bruno@clisp.org>
+
+	Update to Unicode 6.0.0.
+
+2011-01-09  Bruno Haible  <bruno@clisp.org>
+
+	Update to Unicode 5.2.0.
+	* doc/unictype.texi: Mention the 7 new character properties.
+
+2011-01-09  Bruno Haible  <bruno@clisp.org>
+
+	Bump copyright year.
+	* lib/libunistring.rc: Add year 2011.
+
+2010-12-07  Bruno Haible  <bruno@clisp.org>
+
+	Effects of renaming u8_strcmp on Solaris platforms.
+	* lib/Makefile.am (LTV_*): Bump to 2:0:0.
+
+2010-11-27  Bruno Haible  <bruno@clisp.org>
+
+	Export also undocumented symbols.
+	* lib/Makefile.am (libunistring.sym): Don't remove _UC* symbols.
+
+2010-11-13  Bruno Haible  <bruno@clisp.org>
+
+	Improve documentation.
+	* doc/unistr.texi (Elementary string checks): Add an index entry.
+	(Elementary string functions on NUL terminated strings): Enhance doc
+	about uN_prev.
+	Reported by Ben Pfaff <blp@cs.stanford.edu>.
+
+2010-10-04  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* lib/Makefile.am (libunistring_la_LDFLAGS): Remove 'no-undefined' and
+	dependencies.
+
+2010-09-26  Bruno Haible  <bruno@clisp.org>
+
+	Fix exported symbol list in VPATH builds after 2010-05-16 change.
+	* lib/Makefile.am (libunistring.sym): Find header files in the right
+	directory.
+
+2010-09-23  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* lib/Makefile.am (MOSTLYCLEANDIRS): New variable.
+
+2010-09-23  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.4, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltversion.m4: Update from libtool-2.4.
+	* build-aux/ltmain.sh: Likewise.
+
+2010-09-14  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* autogen.sh: Update creation of lib/unistr.in.h.
+
+2010-09-04  Bruno Haible  <bruno@clisp.org>
+
+	Simplify use of gnulib-tool now that gnulib-tool --import works better.
+	* autogen.sh: Don't remove gnulib-cache.m4 before running gnulib-tool.
+
+2010-06-04  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Update from libtool-2.2.8, with modifications.
+	2009-04-23  Bruno Haible  <bruno@clisp.org>
+		Fix recognition of "nm" command.
+		* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when
+		compiling for mingw in a cygwin environment.
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: Update from libtool-2.2.8.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: Likewise.
+
+2010-06-01  Bruno Haible  <bruno@clisp.org>
+
+	Avoid possible bad interaction with Solaris 2.5.1 <pthread.h>.
+	* lib/stdint.mini.h (_UINT64_T): Don't define.
+	Reported by Ben Pfaff <blp@cs.stanford.edu>.
+
+2010-05-16  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib changed.
+	* gnulib-local/lib/unicase.in.h.diff: Renamed from
+	gnulib-local/lib/unicase.h.diff.
+	* gnulib-local/lib/uniconv.in.h.diff: Renamed from
+	gnulib-local/lib/uniconv.h.diff.
+	* gnulib-local/lib/unictype.in.h.diff: Renamed from
+	gnulib-local/lib/unictype.h.diff.
+	* gnulib-local/lib/unilbrk.in.h.diff: Renamed from
+	gnulib-local/lib/unilbrk.h.diff.
+	* gnulib-local/lib/uninorm.in.h.diff: Renamed from
+	gnulib-local/lib/uninorm.h.diff.
+	* gnulib-local/lib/unistr.in.h.diff: Renamed from
+	gnulib-local/lib/unistr.h.diff.
+	* gnulib-local/lib/unitypes.in.h.diff: Renamed from
+	gnulib-local/lib/unitypes.h.diff.
+	* gnulib-local/lib/uniwidth.in.h.diff: Renamed from
+	gnulib-local/lib/uniwidth.h.diff.
+	* gnulib-local/Makefile.am (EXTRA_DIST): Update.
+	* gnulib-local/modules/unictype/category-none-tests.diff: Update.
+	* autogen.sh: Update.
+
+2010-05-14  Bruno Haible  <bruno@clisp.org>
+
+	Publicize also the subminor version number.
+	* lib/unistring/version.in.h (_LIBUNISTRING_VERSION,
+	_libunistring_version): Include also the subminor version.
+	* configure.ac (HEXVERSION): Likewise.
+
+2010-05-02  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9.3 released.
+
+2010-05-02  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* lib/Makefile.am (LTV_*): Update to 1:2:1.
+
+2010-05-02  Bruno Haible  <bruno@clisp.org>
+
+	* gnulib-m4/gnulib-cache.m4: Updated by gnulib-tool.
+
+2010-03-30  Bruno Haible  <bruno@clisp.org>
+
+	* README.woe32: Update for Cygwin 1.7.x.
+
+2010-03-29  Bruno Haible  <bruno@clisp.org>
+
+	Undo last change, not needed any more.
+	* configure.ac: Remove LT_LANG([C++]) invocation.
+
+2010-03-12  Bruno Haible  <bruno@clisp.org>
+
+	Fix libtool failure with gnulib C++ tests.
+	* configure.ac: Add LT_LANG([C++]) invocation.
+	Reported by Ludovic Courtès <ludo@gnu.org>.
+
+2010-01-10  Bruno Haible  <bruno@clisp.org>
+
+	* doc/unistr.texi (Elementary string functions on NUL terminated
+	strings): Change description of u*_stpncpy return value to be
+	consistent with stpncpy in glibc.
+
+2010-01-01  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9.2.1 released.
+
+2010-01-01  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* doc/libunistring.texi: Update copyright year.
+	* lib/libunistring.rc: Likewise.
+
+2009-12-26  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9.2 released.
+
+2009-12-26  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+	* lib/Makefile.am (LTV_*): Update to 1:1:1.
+	* NEWS: Mention what changed.
+
+2009-12-26  Bruno Haible  <bruno@clisp.org>
+
+	* lib/libunistring.rc: Update.
+
+2009-12-26  Bruno Haible  <bruno@clisp.org>
+
+	* lib/Makefile.am (EXTRA_DIST): Add unistring/cdefs.in.h.
+
+2009-12-24  Bruno Haible  <bruno@clisp.org>
+
+	Update after gnulib added module 'unused-parameter'.
+	* gnulib-local/lib/unistr.h.diff: Replace the #include of
+	"unused-parameter.h".
+	* lib/unistring/cdefs.in.h: Renamed from lib/unistring/cdefs.h. Replace
+	the _UNUSED_PARAMETER_ with a placeholder for _GL_UNUSED_PARAMETER.
+	* lib/Makefile.am (unistring/cdefs.h): New rule.
+	(BUILT_SOURCES, MOSTLYCLEANFILES, CLEANFILES): Augment.
+
+2009-12-12  Bruno Haible  <bruno@clisp.org>
+
+	* lib/libunistring.rc: Untabify.
+	* woe32dll/export.h: Likewise.
+
+2009-12-09  Bruno Haible  <bruno@clisp.org>
+
+	Ensure _UNUSED_PARAMETER_ is defined in the public header files.
+	* lib/unistring/cdefs.h: New file, based on gnulib/m4/gnulib-common.m4.
+	* lib/Makefile.am (nobase_nodist_include_HEADERS): Add it.
+	* gnulib-local/lib/unistr.h.diff: Include unistring/cdefs.h.
+	Reported by Mike Gran <spk121@yahoo.com>.
+
+2009-09-01  Bruno Haible  <bruno@clisp.org>
+
+	* README.woe32: Put the -mno-cygwin option into CC and CXX.
+	Recommended by Paolo Bonzini and Eric Blake.
+
+2009-08-17  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9.1.1 released.
+
+2009-08-16  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump version number and date.
+	* README: Update version.
+
+2009-08-16  Bruno Haible  <bruno@clisp.org>
+
+	* doc/Makefile.am (dist-html-split): Depend on libunistring_toc.html.
+
+2009-08-16  Bruno Haible  <bruno@clisp.org>
+
+	Fix build error when a non-GNU C compiler or Solaris is used.
+	* lib/Makefile.am (unistring/stdbool.h): Depend on stdbool.mini.h.
+	(EXTRA_DIST): Add stdbool.mini.h.
+
+2009-06-30  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9.1 released.
+
+2009-06-30  Bruno Haible  <bruno@clisp.org>
+
+	* woe32dll/unistring-exports.c: Add unicase_empty_prefix_context,
+	unicase_empty_suffix_context.
+
+2009-06-30  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump date.
+	* lib/Makefile.am (LTV_*): Update to 1:0:1.
+	* README: Update version.
+
+2009-06-30  Bruno Haible  <bruno@clisp.org>
+
+	* doc/unicase.texi (Case mappings of substrings): Add an example.
+
+2009-06-29  Bruno Haible  <bruno@clisp.org>
+
+	New functions for case mapping of substrings.
+	* autogen.sh (GNULIB_MODULES): Add unicase/* modules relating to
+	context sensitive case mapping. Preprocess also unicase.h.
+	* doc/unicase.texi (Case mappings of substrings): New section.
+	(Case insensitive comparison): Mention u*_ct_casefold functions.
+	* doc/libunistring.texi: Update menu.
+	Reported by Paolo Bonzini.
+
+2009-06-11  Thien-Thi Nguyen  <ttn@gnuvola.org>
+
+	* doc/libunistring.texi (Autoconf macro): Small fixes.
+
+2009-05-31  Bruno Haible  <bruno@clisp.org>
+
+	* doc/Makefile.am: Use dist-hook instead of old distdir hack.
+	* configure.ac (doc/Makefile.am): Don't invoke FIX_MAKEFILE_DISTRIB.
+	* m4/fixautomake.m4: Remove file.
+
+2009-05-30  Bruno Haible  <bruno@clisp.org>
+
+	Generate a compiler independent <unistring/stdint.h>.
+	* lib/Makefile.am (unistring/stdint.h): Produce a file that relies
+	on more #ifs.
+	Reported by David Byron <dbyron@dbyron.com>.
+
+2009-05-30  Bruno Haible  <bruno@clisp.org>
+
+	Generate a compiler independent <unistring/stdbool.h>.
+	* lib/stdbool.mini.h: New file, a reduced version of gnulib's
+	lib/stdbool.in.h.
+	* lib/Makefile.am (unistring/stdbool.h): Produce a file that relies
+	on #ifs.
+	Reported by David Byron <dbyron@dbyron.com>.
+
+2009-05-23  Bruno Haible  <bruno@clisp.org>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add 'silent-rules' option.
+
+2009-05-23  Bruno Haible  <bruno@clisp.org>
+
+	* m4/init-package-version.m4: New file, from GNU gettext..
+	* configure.ac: Invoke gl_INIT_PACKAGE. Use the preferred form of
+	AM_INIT_AUTOMAKE.
+
+2009-05-21  Bruno Haible  <bruno@clisp.org>
+
+	Colored "make check" output.
+	* tests/Makefile.am (AUTOMAKE_OPTIONS): Add 1.11 and color-tests.
+	* autogen.sh: Update comment.
+
+2009-05-21  Bruno Haible  <bruno@clisp.org>
+
+	Add support for automake 1.11.
+	* m4/fixautomake.m4: Update from GNU gettext.
+	* autogen.sh: Update comment.
+
+2009-05-10  Bruno Haible  <bruno@clisp.org>
+
+	* doc/unictype.texi (Mirrored character): Fix typo.
+	Reported by David Byron <dbyron@dbyron.com>.
+
+2009-05-10  Bruno Haible  <bruno@clisp.org>
+
+	* doc/unicase.texi (Case mappings of characters,
+	Case mappings of strings): Explain what title case is.
+	Reported by Paolo Bonzini.
+
+2009-05-06  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi (texnl): Define using a trick by Karl Berry.
+	Add braces to all its uses.
+	* doc/unictype.texi: Likewise.
+	* doc/uniwbrk.texi: Likewise.
+
+2009-05-03  Bruno Haible  <bruno@clisp.org>
+
+	* lib/Makefile.am (config.h): Echo the commands that are being
+	executed.
+	Reported by Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>.
+
+2009-05-03  Bruno Haible  <bruno@clisp.org>
+
+	* HACKING (Building): Mention also the configure option
+	--disable-static.
+
+2009-05-03  Bruno Haible  <bruno@clisp.org>
+
+	New configure option --disable-namespacing.
+	* configure.ac: New option --disable-namespacing.
+	(NAMESPACING): New substituted variable.
+	* lib/Makefile.am (config.h): Don't alias any symbols if NAMESPACING is
+	set to empty.
+	* HACKING: New section "Building".
+
+2009-05-01  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi: Enable the table of contents also in TeX mode.
+
+2009-05-01  Bruno Haible  <bruno@clisp.org>
+
+	Avoid "overfull hboxes" in the TeXed documentation.
+	* doc/libunistring.texi (texnl): New macro.
+	(Unicode, Autoconf macro): Use it.
+	* doc/unictype.texi (Canonical combining class,
+	Bidirectional category): Likewise.
+	* doc/uniwbrk.texi (Word break property): Likewise.
+	Reported by Ralf Wildenhues.
+
+2009-05-01  Bruno Haible  <bruno@clisp.org>
+
+	* lib/exported.sh.in: Fix quoting of argument reference.
+
+2009-05-01  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh (GNULIB_GIT_COMMIT): New variable.
+	* HACKING: Clarify which version of gnulib to use.
+	Reported by Paolo Bonzini.
+
+2009-04-28  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>  (tiny change)
+
+	* doc/libunistring.texi: Fix typos.
+	* doc/unistr.texi: Likewise.
+	* doc/uniname.texi: Likewise.
+	* doc/unictype.texi: Likewise.
+	* doc/uninorm.texi: Likewise.
+
+2009-04-28  Bruno Haible  <bruno@clisp.org>
+
+	Make VPATH builds work off a git checkout.
+	* lib/Makefile.am (config.h): Look for libunistring.sym first in the
+	current directory.
+	Reported by Ralf Wildenhues <Ralf.Wildenhues@gmx.de>.
+
+2009-04-28  Thien-Thi Nguyen  <ttn@gnuvola.org>  (tiny change)
+
+	Fix typos.
+	* doc/uniconv.texi (uniconv.h): Fix typo.
+	* doc/unictype.texi (Properties): Fix typo.
+
+2009-04-28  Bruno Haible  <bruno@clisp.org>
+
+	Doc tweaks.
+	* doc/libunistring.texi: Fix typo.
+	* doc/unistr.texi (u*_cmp2): Clarify what memcmp2 is.
+	* doc/uninorm.texi (u*_normxfrm): Fix description of return value.
+	* doc/unicase.texi (u*_casexfrm): Likewise.
+	Reported by Paolo Bonzini.
+
+2009-04-26  Bruno Haible  <bruno@clisp.org>
+
+	* Version 0.9 released.
+
+2009-04-26  Bruno Haible  <bruno@clisp.org>
+
+	* version.sh: Bump date.
+
+2009-04-26  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi: Initialize 'am' index.
+	(Using the library): New chapter.
+
+2009-04-26  Bruno Haible  <bruno@clisp.org>
+
+	* README.woe32: New file, from GNU gettext.
+	* Makefile.am (EXTRA_DIST): Add it.
+
+2009-04-26  Bruno Haible  <bruno@clisp.org>
+
+	* doc/uniconv.texi: Update for changed calling conventions of
+	u*_conv_from_encoding and u*_conv_to_encoding functions.
+
+2009-04-24  Bruno Haible  <bruno@clisp.org>
+
+	Make VPATH builds on Cygwin work.
+	* lib/Makefile.am (AM_CPPFLAGS): Add the essential -I options.
+
+2009-04-24  Bruno Haible  <bruno@clisp.org>
+
+	* gnulib-m4/gnulib-cache.m4: Updated by gnulib-tool.
+
+2009-04-24  Bruno Haible  <bruno@clisp.org>
+
+	Make the installed package relocatable.
+	* autogen.sh (GNULIB_MODULES): Add relocatable-lib-lgpl.
+	* lib/Makefile.am (AM_CPPFLAGS): Add DEPENDS_ON_LIBICONV definition.
+
+2009-04-23  Bruno Haible  <bruno@clisp.org>
+
+	Fix recognition of "nm" command.
+	* m4/libtool.m4 (LT_PATH_NM): Try "nm" program also when compiling for
+	mingw in a cygwin environment.
+
+2009-04-23  Bruno Haible  <bruno@clisp.org>
+
+	* m4/libtool.m4: Fix recognition of 'link' command.
+	2009-01-26  Peter Rosin  <peda@lysator.liu.se>
+		Don't settle for any dumpbin/link program as name lister.
+		* m4/libtool.m4 (LT_PATH_NM): When locating dumpbin or
+		link -dump, check if they appear to really be capable of name
+		listing, in order to eliminate e.g. link from coreutils. This
+		makes the name lister decision fall back on nm as the default
+		if no acceptable candidate is found, which mainly happens on
+		(arguably broken) cross compiles.
+
+2008-04-21  Bruno Haible  <bruno@clisp.org>
+
+	Add version metainformation in Windows resource format.
+	* configure.ac: Invoke LT_LANG for Windows Resources.
+	(WOE32): New conditional.
+	* lib/libunistring.rc: New file.
+	* lib/Makefile.am (EXTRA_DIST): Add it.
+	(WOE32_LIBADD): New variable.
+	(libunistring.res.lo): New rule.
+	(libunistring_la_LIBADD, libunistring_la_DEPENDENCIES): Add
+	WOE32_LIBADD.
+	(config.h): Don't compile *.res.c files.
+	* build-aux/windres-options: New file, from GNU gettext.
+	* Makefile.am (EXTRA_DIST): Add it.
+
+2008-04-21  Bruno Haible  <bruno@clisp.org>
+
+	Add version metainformation.
+	* configure.ac (AC_CONFIG_SRCDIR): Use lib/unistring/version.in.h.
+	(HEXVERSION): New variable, computed from VERSION.
+	(AC_CONFIG_FILES): Add lib/unistring/version.h.
+	* lib/unistring/version.in.h: New file.
+	* lib/version.c: New file.
+	* lib/Makefile.am (libunistring_la_SOURCES): Add version.c.
+	(nobase_nodist_include_HEADERS): Add unistring/version.h.
+	(HEADERS_WITH_EXTERNS): Add unistring/version.in.h.
+	* woe32dll/unistring-exports.c: Add _libunistring_version.
+
+2008-04-19  Bruno Haible  <bruno@clisp.org>
+
+	Avoid compilation errors in tests/uninorm/test-nf*.c.
+	* configure.ac (WOE32DLL): Define also as a C macro.
+
+2008-04-19  Bruno Haible  <bruno@clisp.org>
+
+	Avoid a compilation error of tests/unictype/test-categ_none.c.
+	* gnulib-local/modules/unictype/category-none-tests.diff: New file.
+	* gnulib-local/Makefile.am (EXTRA_DIST): Add it.
+
+2008-04-19  Bruno Haible  <bruno@clisp.org>
+
+	Don't commit files brought in by autogen.sh.
+	* build-aux/config.guess: Remove from git repository.
+	* build-aux/config.sub: Likewise.
+
+2008-04-19  Bruno Haible  <bruno@clisp.org>
+
+	Add support for building as shared library on Cygwin and mingw.
+	* autogen.sh: Insert LIBUNISTRING_DLL_VARIABLE tokens into
+	lib/unictype.h and lib/uninorm.h.
+	* gnulib-local/lib/unictype.h.diff: Add an include of
+	<unistring/woe32dll.h>.
+	* gnulib-local/lib/uninorm.h.diff: New file.
+	* gnulib-local/Makefile.am (EXTRA_DIST): Add it.
+	* lib/unistring/woe32dll.in.h: New file.
+	* woe32dll/unistring-exports.c: New file.
+	* woe32dll/export.h: New file, from GNU gettext.
+	* Makefile.am (EXTRA_DIST): Add it.
+	* configure.ac (WOE32DLL): New conditional.
+	(DLL_VARIABLE): New substituted variable.
+	(AC_CONFIG_FILES): Add lib/unistring/woe32dll.h.
+	* lib/Makefile.am (nobase_nodist_include_HEADERS): Add
+	unistring/woe32dll.h.
+	(libunistring_la_SOURCES) [WOE32DLL]: Add unistring-exports.c.
+	(libunistring_la_LDFLAGS) [WOE32DLL]: Add --export-all-symbols linker
+	flag.
+	(config.h): Remove unused macro DLL_VARIABLE.
+
+2008-04-19  Bruno Haible  <bruno@clisp.org>
+
+	Don't use unreliable linker options on native Windows.
+	* m4/woe32-dll.m4: New file, from GNU gettext.
+	* configure.ac: Invoke gl_WOE32_DLL.
+
+2008-04-11  Bruno Haible  <bruno@clisp.org>
+
+	Limit the exported symbols through a config.h trick.
+	* m4/exported.m4: New file, from GNU gettext.
+	* lib/exported.sh.in: New file, from GNU gettext.
+	* configure.ac: Invoke gt_GLOBAL_SYMBOL_PIPE.
+	(AC_CONFIG_FILES): Add lib/exported.sh.
+	* lib/declared.sh: New file, borrowing from GNU gettext's moopp.
+	* lib/Makefile.am (HEADERS_WITH_EXTERNS): New variable.
+	(libunistring.sym, config.h): New rules.
+	(MOSTLYCLEANFILES, MAINTAINERCLEANFILES): Update accordingly.
+	(EXTRA_DIST): Add libunistring.sym, declared.sh.
+	* tests/Makefile.am (DEFAULT_INCLUDES): New variable.
+	* HACKING: Require GNU sed.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	Install all auxiliary include files in a subdirectory.
+	* lib/unistring/inline.h: Renamed from lib/unistring-inline.h.
+	* configure.ac: Invoke AC_PROG_MKDIR_P.
+	* lib/Makefile.am (nobase_include_HEADERS): Renamed from
+	include_HEADERS. Change unistring-inline.h to unistring/inline.h.
+	(nobase_nodist_include_HEADERS): Renamed from nodist_include_HEADERS.
+	Change unistring-*.h to unistring/*.h.
+	(unistring/stdbool.h): Renamed from unistring-stdbool.h. Ensure target
+	directory exists.
+	(unistring/stdint.h): Renamed from unistring-stdint.h. Ensure target
+	directory exists.
+	(unistring/localcharset.h): Renamed from unistring-localcharset.h.
+	Ensure target directory exists.
+	(unistring/iconveh.h): Renamed from unistring-iconveh.h Ensure target
+	directory exists.
+	(BUILT_SOURCES, MOSTLYCLEANFILES, CLEANFILES): Update.
+	(CLEANDIRS, CLEANDIRS_NOT_IN_SRCDIR): New variables.
+	(clean-local): New rule.
+	* gnulib-local/lib/unicase.h.diff: Update include statements.
+	* gnulib-local/lib/uniconv.h.diff: Likewise.
+	* gnulib-local/lib/unictype.h.diff: Likewise.
+	* gnulib-local/lib/unilbrk.h.diff: Likewise.
+	* gnulib-local/lib/unistr.h.diff: Likewise.
+	* gnulib-local/lib/unitypes.h.diff: Likewise.
+	* gnulib-local/lib/uniwidth.h.diff: Likewise.
+	* lib/unistring-notinline.h: Likewise.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	* doc/uniconv.h: Document the 'enum iconv_ilseq_handler' type.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	* doc/uniwbrk.texi (Word break property): Remove extra white space.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	Provide an installable iconveh.h replacement.
+	* gnulib-local/lib/uniconv.h.diff: Include unistring-iconveh.h instead
+	of iconveh.h. Don't include striconveha.h.
+	* lib/Makefile.am (nodist_include_HEADERS): Add unistring-iconveh.h.
+	(unistring-iconveh.h): New rule.
+	(BUILT_SOURCES, MOSTLYCLEANFILES, CLEANFILES): Update accordingly.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	Provide an installable localcharset.h replacement.
+	* gnulib-local/lib/uniconv.h.diff: New file.
+	* gnulib-local/lib/unilbrk.h.diff: New file.
+	* gnulib-local/lib/uniwidth.h.diff: New file.
+	* gnulib-local/Makefile.am (EXTRA_DIST): Add them.
+	* lib/Makefile.am (nodist_include_HEADERS): Add unistring-localcharset.h.
+	(unistring-localcharset.h): New rule.
+	(BUILT_SOURCES, MOSTLYCLEANFILES, CLEANFILES): Update accordingly.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	* INSTALL (Multiple Architectures): Recommend to use
+	--disable-dependency-tracking.
+	Suggested by Peter O'Gorman <peter@pogma.com>.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	Replace HAVE_INLINE in installed include files.
+	* lib/unistring-inline.h: New file.
+	* lib/unistring-notinline.h: New file.
+	* autogen.sh: Postprocess unistr.h.
+	* gnulib-local/lib/unistr.h.diff: Also include unistring-inline.h.
+	* lib/Makefile.am (include_HEADERS): Add unistring-inline.h.
+	(noinst_HEADERS): New variable.
+	(AM_CPPFLAGS): Define IN_LIBUNISTRING.
+
+2008-04-10  Bruno Haible  <bruno@clisp.org>
+
+	Provide installable <stdbool.h>, <stdint.h> replacements.
+	* autogen.sh: Pass --local-dir option to gnulib-tool.
+	* configure.ac (AC_CONFIG_FILES): Add gnulib-local/Makefile.
+	* Makefile.am (SUBDIRS): Add gnulib-local.
+	* gnulib-local/Makefile.am: New file.
+	* gnulib-local/lib/unitypes.h.diff: New file.
+	* gnulib-local/lib/unistr.h.diff: New file.
+	* gnulib-local/lib/unictype.h.diff: New file.
+	* gnulib-local/lib/unicase.h.diff: New file.
+	* lib/stdint.mini.h: New file, a reduced version of gnulib's
+	lib/stdint.in.h.
+	* lib/Makefile.am (nodist_include_HEADERS): New variable.
+	(unistring-stdbool.h, unistring-stdint.h): New rules.
+	(BUILT_SOURCES, MOSTLYCLEANFILES, CLEANFILES): Update accordingly.
+	(EXTRA_DIST): Add stdint.mini.h.
+
+2008-04-09  Bruno Haible  <bruno@clisp.org>
+
+	Build and install documentation.
+	* autogen.sh: Fetch a recent copy of texinfo.tex.
+	* configure.ac (TEXI2DVI, DVIPS, PERL): New substituted variables.
+	(AC_CONFIG_FILES): Add doc/Makefile.
+	* m4/fixautomake.m4: New file, from GNU gettext.
+	* Makefile.am (SUBDIRS): Add doc.
+	(EXTRA_DIST): Add build-aux/texi2html.
+	* doc/Makefile.am: New file.
+	* doc/libunistring.texi: Set document encoding to UTF-8.
+	(arrow): Add a fallback definition for texi2html.
+
+	Put the table of contents at the beginning, not at the end.
+	* build-aux/texi2html (INLINE_CONTENTS): Set to 1.
+	(THISVERSION): Append an 'a'.
+
+	* build-aux/texi2html: New file, from texinfo-1.78.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	Add support for checking with valgrind.
+	* build-aux/run-test: New file.
+	* Makefile.am (EXTRA_DIST): Add it.
+	* tests/Makefile.am (CHECKER, CHECKER_END_OF_COMMENTS): New variables.
+	(TESTS_ENVIRONMENT): Add a run-test invocation.
+	* HACKING: Mention how to use valgrind.
+
+2008-04-06  Bruno Haible  <bruno@clisp.org>
+
+	* Makefile.am (EXTRA_DIST): Add version.sh, DEPENDENCIES, HACKING,
+	autogen.sh, build-aux/fixaclocal.
+	* version.sh: New file.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	Allow building as a shared library on AIX.
+	* lib/Makefile.am (libunistring_la_LDFLAGS): Add -no-undefined flag
+	and INTL_MACOSX_LIBS (for MacOS X).
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	Use libtool versioning.
+	* lib/Makefile.am (LTV_CURRENT, LTV_REVISION, LTV_AGE): New variables.
+	(libunistring_la_LDFLAGS): Pass -version-info option.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* gnulib-m4/gnulib-cache.m4: New file, generated by gnulib-tool.
+
+	* autogen.sh: New file.
+	* configure.ac: New file.
+	* build-aux/fixaclocal: New file, from GNU gettext.
+	* Makefile.am: New file.
+	* lib/Makefile.am: New file.
+	* tests/Makefile.am: New file.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* INSTALL: Renamed from INSTALL.generic. Add section about
+	prerequisites,
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* doc/*.texi: Add index entries.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* doc/unistr.texi (Elementary string functions): Document
+	u{8,16,32}_cmp2.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi (func, posixfunc): New macros.
+	Use them where appropriate.
+	* doc/unistr.texi: Likewise.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi: Complete the detailmenu.
+
+2008-04-05  Bruno Haible  <bruno@clisp.org>
+
+	* doc/libunistring.texi: New file.
+	* doc/unitypes.texi: New file, based on gnulib/lib/unitypes.h.
+	* doc/unistr.texi: New file, based on gnulib/lib/unistr.h.
+	* doc/uniconv.texi: New file, based on gnulib/lib/uniconv.h.
+	* doc/unistdio.texi: New file, based on gnulib/lib/unistdio.h.
+	* doc/uniname.texi: New file, based on gnulib/lib/uniname.h.
+	* doc/unictype.texi: New file, based on gnulib/lib/unictype.h.
+	* doc/uniwidth.texi: New file, based on gnulib/lib/uniwidth.h.
+	* doc/uniwbrk.texi: New file, based on gnulib/lib/uniwbrk.h.
+	* doc/unilbrk.texi: New file, based on gnulib/lib/unilbrk.h.
+	* doc/uninorm.texi: New file, based on gnulib/lib/uninorm.h.
+	* doc/unicase.texi: New file, based on gnulib/lib/unicase.h.
+	* doc/uniregex.texi: New file.
+	* doc/gpl.texi: New file, from gnulib.
+	* doc/lgpl.texi: New file, from gnulib.
+	* doc/fdl.texi: New file, from gnulib.
+
+2008-03-14  Bruno Haible  <bruno@clisp.org>
+
+	* INSTALL.generic: New file, from gnulib/doc/INSTALL.UTF-8 with an
+	added paragraph mentioning --with-libiconv-prefix.
+
+	* COPYING.LIB: New file, from gnulib/doc/COPYING.LESSERv3.
+	* COPYING: New file, from gnulib/doc/COPYINGv3.
+
+	* m4/libtool.m4: New file, from libtool-2.2.6, with modifications:
+	2008-04-06  Bruno Haible  <bruno@clisp.org>
+		* m4/libtool.m4 (LT_INIT): When setting LIBTOOL, use
+		CONFIG_SHELL; don't assume that the Makefile.in will set SHELL
+		to ${CONFIG_SHELL}.
+	* m4/ltoptions.m4: New file, from libtool-2.2.6.
+	* m4/ltsugar.m4: Likewise.
+	* m4/ltversion.m4: Likewise.
+	* m4/lt~obsolete.m4: Likewise.
+	* build-aux/ltmain.sh: New file, from libtool-2.2.6, with
+	modifications.
+	2008-09-28  Bruno Haible  <bruno@clisp.org>
+		* build-aux/ltmain.sh (func_emit_cwrapperexe_src): On mingw,
+		preprocess the argument vector through prepare_spawn.
+
+	* build-aux/config.guess: New file, from gnulib, version 2009-02-03.
+	* build-aux/config.sub: Likewise.
+
+	* README: New file.
+	* AUTHORS: New file.
+	* DEPENDENCIES: New file.
+	* BUGS: New file.
+	* HACKING: New file.
+	* THANKS: New file.
+	* NEWS: New file.
+

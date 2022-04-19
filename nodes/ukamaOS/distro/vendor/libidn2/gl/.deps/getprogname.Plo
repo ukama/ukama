@@ -1,0 +1,33 @@
+getprogname.lo: getprogname.c \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h \
+ ../config.h getprogname.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h \
+ alloca.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h \
+ basename-lgpl.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h:
+
+../config.h:
+
+getprogname.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h:
+
+alloca.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h:
+
+basename-lgpl.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h:

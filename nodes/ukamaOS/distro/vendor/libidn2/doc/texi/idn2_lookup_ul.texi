@@ -1,0 +1,39 @@
+@subheading idn2_lookup_ul
+@anchor{idn2_lookup_ul}
+@deftypefun {int} {idn2_lookup_ul} (const char * @var{src}, char ** @var{lookupname}, int @var{flags})
+@var{src}: input zero-terminated locale encoded string.
+
+@var{lookupname}: newly allocated output variable with name to lookup in DNS.
+
+@var{flags}: optional @code{idn2_flags}  to modify behaviour.
+
+Perform IDNA2008 lookup string conversion on domain name  @code{src} , as
+described in section 5 of RFC 5891.  Note that the input is assumed
+to be encoded in the locale's default coding system, and will be
+transcoded to UTF-8 and NFC normalized by this function.
+
+Pass @code{IDN2_ALABEL_ROUNDTRIP}  in  @code{flags} to
+convert any input A-labels to U-labels and perform additional
+testing. This is default since version 2.2.
+To switch this behavior off, pass IDN2_NO_ALABEL_ROUNDTRIP
+
+Pass @code{IDN2_TRANSITIONAL}  to enable Unicode TR46 transitional processing,
+and @code{IDN2_NONTRANSITIONAL}  to enable Unicode TR46 non-transitional
+processing.
+
+Multiple flags may be specified by binary or:ing them together, for
+example @code{IDN2_ALABEL_ROUNDTRIP}  | @code{IDN2_NONTRANSITIONAL} .
+
+The @code{IDN2_NFC_INPUT}  in  @code{flags} is always enabled in this function.
+
+After version 0.11:  @code{lookupname} may be NULL to test lookup of  @code{src} without allocating memory.
+
+@strong{Returns:} On successful conversion @code{IDN2_OK}  is returned, if
+conversion from locale to UTF-8 fails then @code{IDN2_ICONV_FAIL}  is
+returned, if the output domain or any label would have been too
+long @code{IDN2_TOO_BIG_DOMAIN}  or @code{IDN2_TOO_BIG_LABEL}  is returned, or
+another error code is returned.
+
+@strong{Since:} 0.1
+@end deftypefun
+
