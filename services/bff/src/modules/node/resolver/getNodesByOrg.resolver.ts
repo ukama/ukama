@@ -1,4 +1,4 @@
-import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
+import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
 import { OrgNodeResponseDto } from "../types";
 import { NodeService } from "../service";
