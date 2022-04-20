@@ -87,7 +87,7 @@ const NetworkStatus = ({
                             </Button>
                         </Grid>
                         <Grid item xs={7} md={7} lg={6} xl={5}>
-                            <LoadingWrapper isLoading={regLoading} height={56}>
+                            <LoadingWrapper isLoading={regLoading} height={40}>
                                 <Button
                                     fullWidth
                                     variant="contained"

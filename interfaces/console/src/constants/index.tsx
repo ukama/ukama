@@ -1471,9 +1471,15 @@ const HealtChartsConfigure: any = {
 };
 
 const MASK_BY_TYPE = {
-    HOME: "{uk- }000000{ -hnode- }00{ - }0000",
-    AMPLIFIER: "{uk- }000000{ -\\anode- }00{ - }0000",
-    TOWER: "{uk- }000000{ -tnode- }00{ - }0000",
+    HOME: "{uk- }######{ -hnode- }##{ - }####",
+    AMPLIFIER: "{uk- }######{ -\\anode- }##{ - }}####",
+    TOWER: "{uk- }######{ -tnode- }##{ - }}####",
+};
+
+const MASK_PLACEHOLDERS = {
+    HOME: "uk- ______ -hnode- __ - ____",
+    AMPLIFIER: "uk- ______ -anode- __ - ____",
+    TOWER: "uk- ______ -tnode- __ - ____",
 };
 
 export {
@@ -1503,6 +1509,7 @@ export {
     NodePageTabs,
     UserActivation,
     ROAMING_SELECT,
+    MASK_PLACEHOLDERS,
     DEFAULT_RESPONSE,
     LANGUAGE_OPTIONS,
     BASIC_MENU_ACTIONS,

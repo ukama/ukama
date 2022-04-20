@@ -22,7 +22,7 @@ import { IMaskInput } from "react-imask";
 import React, { useState } from "react";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
-import { MASK_BY_TYPE } from "../../../constants";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
 import CloseIcon from "@mui/icons-material/Close";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
@@ -70,10 +70,13 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
         return (
             <IMaskInput
                 {...other}
-                mask={MASK_BY_TYPE[props.name]}
-                unmask={false}
-                lazy={false}
                 overwrite
+                unmask={false}
+                mask={MASK_BY_TYPE[props.name]}
+                placeholder={MASK_PLACEHOLDERS[props.name]}
+                definitions={{
+                    "#": /[a-zA-Z0-9]/,
+                }}
                 onAccept={(value: any) =>
                     onChange({ target: { name: props.name, value } })
                 }
@@ -107,7 +110,7 @@ const ActivationDialog = ({
     const [formData, setFormData] = useState({
         type: nodeData.type,
         name: nodeData.name,
-        nodeId: "uk-sa2209-anode-t1-070d", //nodeData.iccid,
+        nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
     });
 

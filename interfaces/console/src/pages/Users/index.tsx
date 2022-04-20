@@ -65,7 +65,8 @@ const User = () => {
         },
     });
 
-    const [updateUserStatus] = useUpdateUserStatusMutation();
+    const [updateUserStatus, { loading: updateUserStatusLoading }] =
+        useUpdateUserStatusMutation();
 
     useEffect(() => {
         if (addUserRes) {
@@ -240,17 +241,19 @@ const User = () => {
 
                 {simDialog.isShow && (
                     <UserDetailsDialog
-                        type={simDialog.type}
                         user={selectedUser}
+                        type={simDialog.type}
                         saveBtnLabel={"Save"}
                         closeBtnLabel="close"
-                        loading={userLoading}
+                        loading={
+                            userLoading || addUserLoading || updateUserLoading
+                        }
                         isOpen={simDialog.isShow}
                         setUserForm={setSelectedUser}
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Details"
                         handleClose={handleSimDialogClose}
-                        userStatusLoading={updateUserLoading}
+                        userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
                     />
