@@ -22,17 +22,16 @@ import {
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
-    useAddNodeMutation,
     Node_Type,
 } from "../../generated";
 import { TMetric } from "../../types";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import {
     getMetricObjectByKey,
     getMetricPayload,
     getMetricsInitObj,
 } from "../../utils";
-import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import { isSkeltonLoading } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
@@ -70,7 +69,6 @@ const Nodes = () => {
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
     const [isNodeUpdate, setIsNodeUpdate] = useState<boolean>(false);
     const [isSwitchOffRF, setIsSwitchOffRF] = useState<boolean>(false);
-    const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
@@ -97,43 +95,10 @@ const Nodes = () => {
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
 
-    const [
-        getNodesByOrg,
-        {
-            data: nodesRes,
-            loading: nodesLoading,
-            refetch: refetchGetNodesByOrg,
-        },
-    ] = useGetNodesByOrgLazyQuery({
-        fetchPolicy: "cache-and-network",
-    });
-
-    const [
-        registerNode,
-        {
-            loading: registerNodeLoading,
-            data: registerNodeRes,
-            error: registerNodeError,
-        },
-    ] = useAddNodeMutation({
-        onCompleted: () => {
-            setRegisterNodeNotification({
-                id: "addNodeSuccess",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
-        },
-
-        onError: () =>
-            setRegisterNodeNotification({
-                id: "ErrorAddingNode",
-                message: `${registerNodeError?.message}`,
-                type: "error",
-                show: true,
-            }),
-    });
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            fetchPolicy: "cache-and-network",
+        });
 
     const [
         getMetrics,
@@ -323,16 +288,8 @@ const Nodes = () => {
     };
     const handleAddNodeClose = () => setIsAddNode(() => false);
 
-    const handleActivationSubmit = (data: any) => {
-        registerNode({
-            variables: {
-                data: {
-                    name: data.name,
-                    nodeId: data.nodeId,
-                },
-            },
-        });
-        setIsAddNode(() => registerNodeLoading);
+    const handleActivationSubmit = () => {
+        /* Handle submit activation action */
     };
     const handleCloseNodeRestart = () => {
         setIsNodeRestart(false);
@@ -374,9 +331,7 @@ const Nodes = () => {
                     <Grid item xs={12}>
                         <NodeStatus
                             onAddNode={onAddNode}
-                            loading={
-                                isLoading || nodesLoading || registerNodeLoading
-                            }
+                            loading={isLoading || nodesLoading}
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
                             onNodeActionItemSelected={

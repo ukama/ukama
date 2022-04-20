@@ -103,26 +103,10 @@ const Home = () => {
         {
             loading: registerNodeLoading,
             data: registerNodeRes,
-            error: registerNodeError,
+            error: addNodError,
         },
     ] = useAddNodeMutation({
-        onCompleted: () => {
-            setRegisterNodeNotification({
-                id: "addNodeSuccess",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
-        },
-
-        onError: () =>
-            setRegisterNodeNotification({
-                id: "ErrorAddingNode",
-                message: `${registerNodeError?.message}`,
-                type: "error",
-                show: true,
-            }),
+        onCompleted: () => refetchGetNodesByOrg(),
     });
 
     const [
@@ -132,24 +116,7 @@ const Home = () => {
             data: updateNodeRes,
             error: updateNodError,
         },
-    ] = useUpdateNodeMutation({
-        onCompleted: () => {
-            setRegisterNodeNotification({
-                id: "UpdateNodeNotification",
-                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
-        },
-        onError: () =>
-            setRegisterNodeNotification({
-                id: "UpdateNodeErrorNotification",
-                message: `${updateNodError?.message}`,
-                type: "error",
-                show: true,
-            }),
-    });
+    ] = useUpdateNodeMutation({ onCompleted: () => refetchGetNodesByOrg() });
 
     const {
         data: connectedUserRes,
@@ -494,6 +461,50 @@ const Home = () => {
             });
         }
     };
+
+    useEffect(() => {
+        if (registerNodeRes) {
+            setRegisterNodeNotification({
+                id: "addNodeNotification",
+                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [registerNodeRes]);
+
+    useEffect(() => {
+        if (updateNodeRes) {
+            setRegisterNodeNotification({
+                id: "UpdateNodeNotification",
+                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        }
+    }, [updateNodeRes]);
+
+    useEffect(() => {
+        if (updateNodError) {
+            setRegisterNodeNotification({
+                id: "UpdateNodeErrorNotification",
+                message: `${updateNodError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [updateNodError]);
+
+    useEffect(() => {
+        if (addNodError) {
+            setRegisterNodeNotification({
+                id: "AddNodeErrorNotification",
+                message: `${addNodError.message}`,
+                type: "error",
+                show: true,
+            });
+        }
+    }, [addNodError]);
 
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
