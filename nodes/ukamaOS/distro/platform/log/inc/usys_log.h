@@ -16,12 +16,21 @@ extern "C" {
 
 #include "log.h"
 
-#define usys_log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_info(...) log_log(LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_warn(...) log_log(LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_error(...) log_log(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define usys_log_fatal(...) log_log(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+/* Log levels */
+#define USYS_LOG_TRACE 		LOG_TRACE
+#define USYS_LOG_DEBUG		LOG_DEBUG
+#define USYS_LOG_INFO		LOG_INFO
+#define USYS_LOG_WARN		LOG_WARN
+#define USYS_LOG_ERROR		LOG_ERROR
+#define USYS_LOG_FATAL		LOG_FATAL
+
+/* Logging */
+#define usys_log_trace(...) log_log(USYS_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_debug(...) log_log(USYS_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_info(...) log_log(USYS_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_warn(...) log_log(USYS_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_error(...) log_log(USYS_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define usys_log_fatal(...) log_log(USYS_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 /**
  * @brief Returns the name of the given log level as a string.

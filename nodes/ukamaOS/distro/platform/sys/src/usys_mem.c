@@ -12,6 +12,7 @@
 #include "usys_api.h"
 #include "usys_error.h"
 #include "usys_log.h"
+#include "usys_string.h"
 
 void *usys_malloc(size_t size) {
     return malloc(size);
@@ -59,5 +60,18 @@ void *usys_ecalloc(size_t num, size_t size) {
                        num, size, usys_error(errno));
         usys_exit(errno);
     }
+    return mem;
+}
+
+void *usys_zmalloc(size_t size) {
+    void *mem = usys_malloc(size);
+    if (!mem) {
+        usys_log_error("Failed to allocate memory. Error: %s",
+                       usys_error(errno));
+        usys_exit(errno);
+    } else {
+      usys_memset(mem, 0, size);
+    }
+
     return mem;
 }

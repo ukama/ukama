@@ -97,38 +97,46 @@ int usys_file_symlink_exists(const char *path) {
 }
 
 char *usys_file_read_sym_link(char *fname) {
-    struct stat sb;
+    char *linkname = NULL;
     int readbytes = 0;
-    if (usys_lstat(fname, &sb) == -1) {
+    struct stat *sb = usys_zmalloc(sizeof(struct stat));
+    if (!sb) {
+        usys_log_error("Failed to allocate memory for stat  %s. Error: %s",
+                       fname, usys_error(errno));
+    }
+
+    if (usys_lstat(fname, sb) == -1) {
         usys_log_error("Failed to get info from symbolic link %s. Error: %s",
                        fname, usys_error(errno));
+        usys_free(sb);
         return NULL;
     }
 
-    char *linkname = usys_malloc(sb.st_size + 1);
+    linkname = usys_malloc(sb->st_size + 1);
     if (linkname) {
-        readbytes = usys_readlink(fname, linkname, sb.st_size + 1);
+        readbytes = usys_readlink(fname, linkname, sb->st_size + 1);
         if (readbytes < 0) {
             usys_log_error("Symbolic link %s read failed. Error: %s", fname,
                            usys_error(errno));
             usys_free(linkname);
+            usys_free(sb);
             return NULL;
         }
-        if (readbytes > sb.st_size) {
+        if (readbytes > sb->st_size) {
             usys_log_error("File symlink increased it's size "
                            "memory buffer %d bytes required %d bytes",
-                           sb.st_size, readbytes);
+                           sb->st_size, readbytes);
             usys_free(linkname);
+            usys_free(sb);
             return NULL;
         }
 
-        linkname[sb.st_size] = '\0';
+        linkname[sb->st_size] = '\0';
         usys_log_trace("File '%s' points to '%s'\n", fname, linkname);
 
-    } else {
-        return NULL;
     }
 
+    usys_free(sb);
     return linkname;
 }
 
@@ -270,8 +278,8 @@ int usys_file_read_number(void *fname, void *data, off_t offset, uint16_t count,
         usys_memcpy((value + (idx * size)), val, size);
 
         for (int i = 0; i < size; i++) {
-            usys_log_trace("File %d = 0x%x.", offset,
-                           (uint8_t) * (value + (idx * size) + i));
+            usys_log_trace("File offset %d Value 0x%x.", offset,
+                           (uint8_t) *(value + (idx * size) + i));
         }
 
         offset = offset + size;
@@ -347,16 +355,16 @@ int usys_file_cleanup(void *fname) {
 }
 
 int usys_file_rename(char *old_name, char *new_name) {
-	int ret = 0;
-	ret = usys_rename(old_name, new_name);
-	if (!ret) {
-		usys_log_debug("File %s renamed to %s.", old_name, new_name);
-	} else {
-		usys_log_error("Unable to rename file %s to %s. Error: %s", old_name,
-				new_name, usys_error(errno));
-	}
+  int ret = 0;
+  ret = usys_rename(old_name, new_name);
+  if (!ret) {
+    usys_log_debug("File %s renamed to %s.", old_name, new_name);
+  } else {
+    usys_log_error("Unable to rename file %s to %s. Error: %s", old_name,
+        new_name, usys_error(errno));
+  }
 
-	return ret;
+  return ret;
 }
 
 int usys_file_add_record(char *filename, char *rowdesc, char *data) {
