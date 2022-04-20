@@ -37,10 +37,10 @@ void tearDown(void) {
 /* Test error codes */
 void test_usys_errors(){
 
-    USysErrCodeIdx idx= USYS_BASE_ERR_CODE;
-    for (;idx < ERR_MAX_ERR_CODE; idx++) {
+    USysErrCodeIdx idx= USYS_ERR_BASE_PLTF_CODE;
+    for (;idx < ERR_PLTF_MAX_ERR_CODE; idx++) {
         usys_log_trace("Error Code %d Error string %s", idx, usys_error(idx));
-        TEST_ASSERT_EQUAL_STRING(usysErrCodes[idx-USYS_BASE_ERR_CODE], usys_error(idx));
+        TEST_ASSERT_EQUAL_STRING(usysErrCodes[idx-USYS_ERR_BASE_PLTF_CODE], usys_error(idx));
     }
 }
 
