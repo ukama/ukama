@@ -64,7 +64,6 @@ void set_log_level(char *slevel) {
 void free_router(Router *router) {
 
   Service *sPtr=NULL, *next=NULL;
-  Config *config=NULL;
 
   if (router->services) {
     sPtr = router->services;

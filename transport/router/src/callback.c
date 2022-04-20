@@ -140,32 +140,28 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     return FALSE;
   }
 
-  if (*pattern == NULL) {
-    *pattern = (Pattern *)calloc(1, sizeof(Pattern));
-    if (*pattern == NULL) {
-      log_error("Error allocating memory of size: %d", sizeof(Pattern));
-      return FALSE;
-    }
-  }
-
-  ptr = *pattern;
-
   keys = u_map_enum_keys(map);
   for (i=0; keys[i] != NULL; i++) {
     value = u_map_get(map, keys[i]);
 
-    if (ptr == NULL) {
-      ptr = (Pattern *)calloc(1, sizeof(Pattern));
-      if (ptr == NULL) {
+    if (*pattern == NULL) {
+      *pattern = (Pattern *)calloc(1, sizeof(Pattern));
+      if (*pattern == NULL) {
 	log_error("Error allocating memory of size: %d", sizeof(Pattern));
 	goto failure;
       }
+      ptr = *pattern;
+    } else {
+      ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
+      if (ptr->next == NULL) {
+	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	goto failure;
+      }
+      ptr = ptr->next;
     }
 
     ptr->key   = strdup(keys[i]);
     ptr->value = strdup(value);
-
-    ptr = ptr->next;
   }
 
   return TRUE;
