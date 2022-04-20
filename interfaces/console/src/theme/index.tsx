@@ -126,6 +126,13 @@ const theme = (isDarkmode: boolean) =>
                         },
                     },
                 },
+                MuiDialogActions: {
+                    styleOverrides: {
+                        root: {
+                            padding: "8px 24px 24px",
+                        },
+                    },
+                },
                 MuiDrawer: {
                     styleOverrides: {
                         paper: {

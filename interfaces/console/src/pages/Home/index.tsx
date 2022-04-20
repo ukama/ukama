@@ -535,60 +535,62 @@ const Home = () => {
                         }
                     />
                 </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        Icon={UsersWithBG}
-                        title={"Connected Users"}
-                        options={TIME_FILTER}
-                        subtitle1={
-                            connectedUserRes?.getConnectedUsers?.totalUser ||
-                            "0"
-                        }
-                        subtitle2={""}
-                        option={getStatus("statusUser")}
-                        loading={connectedUserloading || isSkeltonLoad}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusUser", value)
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        title={"Data Usage"}
-                        subtitle1={`${
-                            dataUsageRes?.getDataUsage?.dataConsumed || 0
-                        }`}
-                        subtitle2={`/ ${
-                            dataUsageRes?.getDataUsage?.dataPackage || "-"
-                        }`}
-                        Icon={DataUsage}
-                        options={TIME_FILTER}
-                        option={getStatus("statusUsage")}
-                        loading={dataUsageloading || isSkeltonLoad}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusUsage", value)
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        title={"Data Bill"}
-                        subtitle1={`$ ${
-                            dataBillingRes?.getDataBill?.dataBill || 0
-                        }`}
-                        subtitle2={
-                            dataBillingRes?.getDataBill?.dataBill
-                                ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
-                                : " due"
-                        }
-                        Icon={DataBilling}
-                        options={MONTH_FILTER}
-                        loading={dataBillingloading || isSkeltonLoad}
-                        option={getStatus("statusBill")}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusBill", value)
-                        }
-                    />
+                <Grid item container xs={12} spacing={{ xs: 1.5, md: 3 }}>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            Icon={UsersWithBG}
+                            title={"Connected Users"}
+                            options={TIME_FILTER}
+                            subtitle1={`${
+                                connectedUserRes?.getConnectedUsers
+                                    ?.totalUser || 0
+                            }`}
+                            subtitle2={""}
+                            option={getStatus("statusUser")}
+                            loading={connectedUserloading || isSkeltonLoad}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUser", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Usage"}
+                            subtitle1={`${
+                                dataUsageRes?.getDataUsage?.dataConsumed || 0
+                            }`}
+                            subtitle2={`/ ${
+                                dataUsageRes?.getDataUsage?.dataPackage || "-"
+                            }`}
+                            Icon={DataUsage}
+                            options={TIME_FILTER}
+                            option={getStatus("statusUsage")}
+                            loading={dataUsageloading || isSkeltonLoad}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUsage", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Bill"}
+                            subtitle1={`$ ${
+                                dataBillingRes?.getDataBill?.dataBill || 0
+                            }`}
+                            subtitle2={
+                                dataBillingRes?.getDataBill?.dataBill
+                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
+                                    : " due"
+                            }
+                            Icon={DataBilling}
+                            options={MONTH_FILTER}
+                            loading={dataBillingloading || isSkeltonLoad}
+                            option={getStatus("statusBill")}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusBill", value)
+                            }
+                        />
+                    </Grid>
                 </Grid>
                 <Grid xs={12} item>
                     <StatsCard

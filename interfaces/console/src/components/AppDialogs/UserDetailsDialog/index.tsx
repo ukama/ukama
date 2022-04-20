@@ -1,5 +1,4 @@
 import {
-    Box,
     Grid,
     Stack,
     Button,
@@ -12,24 +11,15 @@ import {
     DialogActions,
     DialogContent,
     CircularProgress,
+    DialogTitle,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
 import { GetUserDto } from "../../../generated";
 import LoadingWrapper from "../../LoadingWrapper";
-
-const useStyles = makeStyles(() => ({
-    basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-}));
+import { ReactEventHandler } from "react";
 
 type BasicDialogProps = {
     type: string;
@@ -37,8 +27,6 @@ type BasicDialogProps = {
     isOpen: boolean;
     setUserForm: any;
     loading: boolean;
-    isClosable?: boolean;
-    handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
     userDetailsTitle: string;
@@ -46,6 +34,7 @@ type BasicDialogProps = {
     userStatusLoading: boolean;
     handleSubmitAction: Function;
     handleServiceAction: Function;
+    handleClose: ReactEventHandler;
 };
 
 const UserDetailsDialog = ({
@@ -59,12 +48,10 @@ const UserDetailsDialog = ({
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
-    isClosable = true,
     userStatusLoading,
     handleSubmitAction,
     handleServiceAction,
 }: BasicDialogProps) => {
-    const classes = useStyles();
     const {
         id,
         name,
@@ -86,53 +73,38 @@ const UserDetailsDialog = ({
         <Dialog
             key={id}
             open={isOpen}
-            onBackdropClick={() => isClosable && handleClose()}
+            onBackdropClick={handleClose}
+            maxWidth="sm"
+            fullWidth
         >
             {loading ? (
                 <CenterContainer>
                     <CircularProgress />
                 </CenterContainer>
             ) : (
-                <Box
-                    component="div"
-                    sx={{
-                        width: { xs: "100%", md: "500px" },
-                        padding: "16px 24px",
-                    }}
-                >
-                    <Box
-                        component="div"
-                        className={classes.basicDialogHeaderStyle}
+                <>
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
                     >
-                        <Stack
-                            direction="row"
-                            sx={{ alignItems: "center" }}
-                            spacing={1}
+                        <DialogTitle>{title}</DialogTitle>
+                        <IconButton
+                            onClick={handleClose}
+                            sx={{ position: "relative", right: 8 }}
                         >
-                            <Typography variant="h5">{title}</Typography>
-                        </Stack>
-                        {isClosable && (
-                            <IconButton
-                                onClick={() => handleClose()}
-                                sx={{ ml: "24px", p: 0 }}
-                            >
-                                <CloseIcon />
-                            </IconButton>
-                        )}
-                    </Box>
-                    <DialogContent
-                        sx={{ padding: 0, mb: 4, overflowX: "hidden" }}
-                    >
-                        <Grid>
-                            <Grid container>
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle2">
-                                        {userDetailsTitle}
-                                    </Typography>
-                                    <Divider />
-                                </Grid>
+                            <CloseIcon />
+                        </IconButton>
+                    </Stack>
+                    <DialogContent sx={{ overflowX: "hidden" }}>
+                        <Grid container spacing={1.5}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {userDetailsTitle}
+                                </Typography>
+                                <Divider />
                             </Grid>
-                            <Grid item container spacing={1}>
+                            <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
                                     <Stack direction="row" spacing={1}>
                                         <Typography variant="body1">
@@ -183,7 +155,7 @@ const UserDetailsDialog = ({
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid container sx={{ mt: 1 }} spacing={1}>
+                            <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
                                     <Typography variant="subtitle2">
                                         {simDetailsTitle}
@@ -297,9 +269,9 @@ const UserDetailsDialog = ({
                             </Grid>
                         </Grid>
                     </DialogContent>
-                    <DialogActions sx={{ padding: 0 }}>
+                    <DialogActions>
                         <Button
-                            onClick={() => handleClose()}
+                            onClick={handleClose}
                             sx={{ mr: 2, justifyItems: "center" }}
                         >
                             {closeBtnLabel}
@@ -311,7 +283,7 @@ const UserDetailsDialog = ({
                             {saveBtnLabel}
                         </Button>
                     </DialogActions>
-                </Box>
+                </>
             )}
         </Dialog>
     );
