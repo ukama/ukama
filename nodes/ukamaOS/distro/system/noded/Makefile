@@ -20,9 +20,9 @@ DISTRO_DIR:=../..
 UNITY_ROOT:=$(DISTRO_DIR)/tools/unity
 
 # Vendor
-VENDOR_DIR:=$(DISTRO_DIR)/vendors
+VENDOR_DIR:=$(DISTRO_DIR)/vendor
 VENDOR_HEADERS_DIR:=$(VENDOR_DIR)/build/include
-VENDOR_LIBS_DIR:=$(VENDOR_DIR)build/libs
+VENDOR_LIBS_DIR:=$(VENDOR_DIR)/build/lib
 
 # Platform
 PLATFORM_DIR:=$(DISTRO_DIR)/platform
@@ -30,6 +30,8 @@ PLATFORM_HEADERS_DIRS:=$(PLATFORM_DIR)/sys/inc
 PLATFORM_HEADERS_DIRS+=$(PLATFORM_DIR)/log/inc
 PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
 PLATFORM_LIB:=usys 
+
+INC_HEADERS+=(VENDOR_DIR)/headers/musl/
 
 # JSON lib
 JSON_LIB:=jansson
@@ -52,7 +54,7 @@ INC_DIRS=inc
 INC_DIRS+=$(UNITY_ROOT)/src
 INC_DIRS+=$(PLATFORM_HEADERS_DIRS)
 INC_DIRS+=$(VENDOR_HEADERS_DIR)
-
+INC_DIRS+=$(INC_HEADERS)
 TEST_DIRS:=test $(UNITY_ROOT)/src
 
 # Build
@@ -62,18 +64,32 @@ BUILD_DIR:=build
 # Compilers and flags
 ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
-XLD=$(XGCCPATH)$(XLD)
+#XLD=$(XGCCPATH)$(XLD)
 else
 XCC=gcc
 endif
 
 # Libraries
+ULFIUS_LIB_DEP=-lorcania 
+ULFIUS_LIB_DEP+=-lyder 
+ULFIUS_LIB_DEP+=-lmicrohttpd
+ULFIUS_LIB_DEP+=-lgnutls
+ULFIUS_LIB_DEP+=-lnettle
+ULFIUS_LIB_DEP+=-lhogweed 
+ULFIUS_LIB_DEP+=-lp11-kit
+ULFIUS_LIB_DEP+=-lz
+CURL_LIB_DEP=-lcurl 
+CURL_LIB_DEP+=-lssl
+CURL_LIB_DEP+=-lcrypto
+
 LIBS+=-lpthread
 LIBS+=-lrt
 LIBS+=-lm
 LIBS+=-l$(PLATFORM_LIB)
 LIBS+=-l$(JSON_LIB)
 LIBS+=-l$(HTTP_SERVER_LIB)
+LIBS+=$(ULFIUS_LIB_DEP)
+LIBS+=$(CURL_LIB_DEP)
 
 
 # Compiler flags

@@ -1,3 +1,51 @@
 [submodule "nodes/ukamaOS/distro/tools/unity"]
 	path = nodes/ukamaOS/distro/tools/unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "nodes/ukamaOS/distro/vendor/openssl"]
+	path = nodes/ukamaOS/distro/vendor/openssl
+	url = https://github.com/openssl/openssl.git
+[submodule "nodes/ukamaOS/distro/vendor/orcania"]
+	path = nodes/ukamaOS/distro/vendor/orcania
+	url = https://github.com/babelouest/orcania.git
+[submodule "nodes/ukamaOS/distro/vendor/tomlc"]
+	path = nodes/ukamaOS/distro/vendor/tomlc
+	url = https://github.com/cktan/tomlc99.git
+[submodule "nodes/ukamaOS/distro/vendor/libmicrohttpd"]
+	path = nodes/ukamaOS/distro/vendor/libmicrohttpd
+	url = https://github.com/markhor/libmicrohttpd.git
+[submodule "nodes/ukamaOS/distro/vendor/zlib"]
+	path = nodes/ukamaOS/distro/vendor/zlib
+	url = https://github.com/madler/zlib.git
+[submodule "nodes/ukamaOS/distro/vendor/yder"]
+	path = nodes/ukamaOS/distro/vendor/yder
+	url = https://github.com/babelouest/yder.git
+[submodule "nodes/ukamaOS/distro/vendor/jansson"]
+	path = nodes/ukamaOS/distro/vendor/jansson
+	url = https://github.com/akheron/jansson.git
+[submodule "nodes/ukamaOS/distro/vendor/curl"]
+	path = nodes/ukamaOS/distro/vendor/curl
+	url = https://github.com/curl/curl.git
+[submodule "nodes/ukamaOS/distro/vendor/mbedtls"]
+	path = nodes/ukamaOS/distro/vendor/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "nodes/ukamaOS/distro/vendor/amqp"]
+	path = nodes/ukamaOS/distro/vendor/amqp
+	url = https://github.com/alanxz/rabbitmq-c.git
+[submodule "nodes/ukamaOS/distro/vendor/Unity"]
+	path = nodes/ukamaOS/distro/vendor/Unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "nodes/ukamaOS/distro/vendor/protobuf-c"]
+	path = nodes/ukamaOS/distro/vendor/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c.git
+[submodule "nodes/ukamaOS/distro/vendor/protobuf"]
+	path = nodes/ukamaOS/distro/vendor/protobuf
+	url = https://github.com/protocolbuffers/protobuf.git
+[submodule "nodes/ukamaOS/distro/vendor/dhcpcd"]
+	path = nodes/ukamaOS/distro/vendor/dhcpcd
+	url = https://github.com/NetworkConfiguration/dhcpcd.git
+[submodule "nodes/ukamaOS/distro/vendor/iproute2"]
+	path = nodes/ukamaOS/distro/vendor/iproute2
+	url = git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+[submodule "nodes/ukamaOS/distro/tools/Unity"]
+	path = nodes/ukamaOS/distro/tools/Unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
