@@ -126,7 +126,7 @@ const ActivationDialog = ({
         setFormData({ ...formData, nodeId: "", type: e.target.value });
 
     return (
-        <Dialog open={isOpen} onClose={handleClose}>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
                 direction="row"
                 alignItems="center"
@@ -151,7 +151,7 @@ const ActivationDialog = ({
                         {subTitle}
                     </Typography>
                 </DialogContentText>
-                <Grid container spacing={2} mt={2}>
+                <Grid container spacing={2.75} mt={2}>
                     <Grid item xs={12} md={6}>
                         <FormControl
                             variant="outlined"
@@ -258,7 +258,7 @@ const ActivationDialog = ({
                         />
                     </Grid>
                     {action == "editNode" && (
-                        <Grid item xs={12} md={12}>
+                        <Grid item xs={12}>
                             <TextField
                                 fullWidth
                                 value={formData.orgId}
@@ -275,7 +275,7 @@ const ActivationDialog = ({
                     )}
                 </Grid>
             </DialogContent>
-            <DialogActions sx={{ mr: 2, paddingBottom: 3 }}>
+            <DialogActions>
                 <Button
                     sx={{ color: colors.primaryMain, mr: 2 }}
                     onClick={handleClose}

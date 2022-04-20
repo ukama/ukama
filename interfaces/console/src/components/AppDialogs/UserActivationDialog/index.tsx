@@ -1,6 +1,4 @@
-import { makeStyles } from "@mui/styles";
 import {
-    Box,
     Button,
     Dialog,
     IconButton,
@@ -8,33 +6,13 @@ import {
     DialogActions,
     DialogContent,
     Stack,
+    DialogTitle,
 } from "@mui/material";
 import { SimCardDesign } from "../..";
 import { colors } from "../../../theme";
 import { SimCardData } from "../../../constants";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState } from "react";
-
-const useStyles = makeStyles(() => ({
-    basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-    actionContainer: {
-        padding: "0px",
-        marginTop: "16px",
-        justifyContent: "space-between",
-    },
-    stepButtonStyle: {
-        "&:disabled": {
-            color: colors.white,
-            backgroundColor: colors.primaryMain,
-        },
-    },
-}));
 
 type UserActivationDialogProps = {
     dialogTitle: string;
@@ -49,56 +27,50 @@ const UserActivationDialog = ({
     dialogTitle,
     handleClose,
 }: UserActivationDialogProps) => {
-    const classes = useStyles();
     const [selectedSim, setSelectedSim] = useState<number | null>(null);
 
     const handleSimCardClick = (id: number) => setSelectedSim(id);
 
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="md" fullWidth>
-            <Box
-                component="div"
-                sx={{
-                    width: { xs: "100%", md: "900px" },
-                    padding: "16px 24px",
-                }}
+            <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
             >
-                <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h4">{dialogTitle}</Typography>
+                <DialogTitle>{dialogTitle}</DialogTitle>
+                <IconButton
+                    onClick={handleClose}
+                    sx={{ position: "relative", right: 8 }}
+                >
+                    <CloseIcon />
+                </IconButton>
+            </Stack>
 
-                    <IconButton
-                        onClick={handleClose}
-                        sx={{ ml: "24px", p: "0px" }}
-                    >
-                        <CloseIcon />
-                    </IconButton>
-                </Box>
-
-                <DialogContent sx={{ p: "1px" }}>
-                    <Stack spacing={2}>
-                        <Typography variant="body1">{subTitle}</Typography>
-                        {SimCardData.map(({ id, title, serial, isActive }) => (
-                            <SimCardDesign
-                                id={id}
-                                key={id}
-                                title={title}
-                                serial={serial}
-                                isActivate={isActive}
-                                isSelected={id === selectedSim}
-                                handleItemClick={handleSimCardClick}
-                            />
-                        ))}
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        sx={{ color: colors.primaryMain, mt: 2 }}
-                        onClick={handleClose}
-                    >
-                        Close
-                    </Button>
-                </DialogActions>
-            </Box>
+            <DialogContent>
+                <Stack spacing={2}>
+                    <Typography variant="body1">{subTitle}</Typography>
+                    {SimCardData.map(({ id, title, serial, isActive }) => (
+                        <SimCardDesign
+                            id={id}
+                            key={id}
+                            title={title}
+                            serial={serial}
+                            isActivate={isActive}
+                            isSelected={id === selectedSim}
+                            handleItemClick={handleSimCardClick}
+                        />
+                    ))}
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button
+                    sx={{ color: colors.primaryMain }}
+                    onClick={handleClose}
+                >
+                    Close
+                </Button>
+            </DialogActions>
         </Dialog>
     );
 };
