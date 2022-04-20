@@ -118,7 +118,7 @@ const Nodes = () => {
     ] = useAddNodeMutation({
         onCompleted: () => {
             setRegisterNodeNotification({
-                id: "addNodeNtification",
+                id: "addNodeSuccess",
                 message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
                 type: "success",
                 show: true,
