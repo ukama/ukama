@@ -15,6 +15,7 @@ import {
     DialogContent,
     OutlinedInput,
     DialogContentText,
+    Alert,
 } from "@mui/material";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
@@ -22,8 +23,9 @@ import { IMaskInput } from "react-imask";
 import React, { useState } from "react";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
-import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
+import ErrorIcon from "@mui/icons-material/Error";
 import CloseIcon from "@mui/icons-material/Close";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
 const useStyles = makeStyles(() => ({
@@ -113,9 +115,14 @@ const ActivationDialog = ({
         nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
     });
+    const [error, setError] = useState("");
 
     const handleRegisterNode = () => {
-        if (action == "editNode" && formData.name && formData.nodeId) {
+        if (!formData.name || !formData.nodeId) {
+            setError("Please fill all require vields");
+            return;
+        }
+        if (action == "editNode") {
             handleNodeSubmitAction(formData);
         } else {
             handleNodeSubmitAction(formData);
@@ -140,7 +147,19 @@ const ActivationDialog = ({
                     <CloseIcon />
                 </IconButton>
             </Stack>
-
+            {error && (
+                <Alert
+                    sx={{
+                        mx: 3,
+                        mb: 1,
+                        color: colors.black,
+                    }}
+                    severity={"error"}
+                    icon={<ErrorIcon sx={{ color: colors.red }} />}
+                >
+                    {error}
+                </Alert>
+            )}
             <DialogContent>
                 <DialogContentText>
                     <Typography
@@ -216,6 +235,7 @@ const ActivationDialog = ({
                     </Grid>
                     <Grid item xs={12} md={6}>
                         <TextField
+                            required
                             fullWidth
                             value={formData.name}
                             label={"NODE NAME"}
@@ -236,6 +256,7 @@ const ActivationDialog = ({
                     <Grid item xs={12}>
                         <TextField
                             fullWidth
+                            required
                             value={formData.nodeId}
                             label={"NODE NUMBER"}
                             onChange={(e: any) =>

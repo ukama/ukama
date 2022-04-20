@@ -64,8 +64,11 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
+
     const statusText = status ? "ACTIVE" : "INACTIVE";
+    const title = type === "add" ? "Add User" : "Edit User";
     const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
+
     return (
         <Dialog
             key={id}
@@ -85,9 +88,7 @@ const UserDetailsDialog = ({
                         alignItems="center"
                         justifyContent="space-between"
                     >
-                        <DialogTitle>
-                            {type === "add" ? "Add User" : "Edit User"}
-                        </DialogTitle>
+                        <DialogTitle>{title}</DialogTitle>
                         <IconButton
                             onClick={handleClose}
                             sx={{ position: "relative", right: 8 }}

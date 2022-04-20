@@ -88,6 +88,10 @@ static void setup_endpoints(Router *router, struct _u_instance *instance) {
   ulfius_add_endpoint_by_val(instance, "GET", EP_STATS, NULL, 0,
                              &callback_get_stats, router);
 
+  /* POST /service */
+  ulfius_add_endpoint_by_val(instance, "POST", EP_SERVICE, NULL, 0,
+                             &callback_post_service, router);
+
   /* default endpoint. */
   ulfius_set_default_endpoint(instance, &callback_default, router);
 }

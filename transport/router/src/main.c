@@ -22,6 +22,7 @@
 #include "router.h"
 #include "network.h"
 #include "log.h"
+#include "pattern.h"
 
 #define DEF_LOG_LEVEL "TRACE"
 
@@ -58,6 +59,29 @@ void set_log_level(char *slevel) {
   }
 
   log_set_level(ilevel);
+}
+
+void free_router(Router *router) {
+
+  Service *sPtr=NULL, *next=NULL;
+  Config *config=NULL;
+
+  if (router->services) {
+    sPtr = router->services;
+
+    while (sPtr) {
+      next = sPtr->next;
+      free_service(sPtr);
+      sPtr = next;
+    }
+  }
+
+  if (router->config) {
+    free(router->config);
+  }
+
+  free(router);
+  router=NULL;
 }
 
 /* srvc_router */
@@ -151,8 +175,7 @@ int main (int argc, char **argv) {
   ulfius_clean_instance(&webInst);
   curl_global_cleanup();
 
-  free(config);
-  free(router);
+  free_router(router);
   
   return 1;
 }
