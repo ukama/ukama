@@ -31,3 +31,4 @@ dhcpcd							./dhcpcd/LICENSE			https://github.com/NetworkConfiguration/dhcpcd.g
 sysctl			Apache License 2.0		./sysctl/LICENSE			https://github.com/linuxkit/linuxkit.git
 iptables		GNU GPL v2			https://www.netfilter.org/licensing.html https://git.netfilter.org/iptables/
 iproute2		GNU GPL				./iproute2/COPYING			git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
+sys/queue.h											https://github.com/openembedded/openembedded-core/blob/master/meta/recipes-core/musl/bsd-headers/sys-queue.h

@@ -12,7 +12,11 @@ TAR_LIB := usys
 TARGET_LIB := lib$(TAR_LIB).so
 UTEST_BIN := platform
 
-INC_HEADERS+=../../headers/musl/
+DISTRO_DIR:=../
+
+# Vendor
+VENDOR_DIR:=$(DISTRO_DIR)/vendor
+INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
 
 # Source paths
 UNITY_ROOT := ../tools/unity
@@ -20,6 +24,7 @@ SRC_DIRS := sys/src log/src
 INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(INC_HEADERS)
 BUILD_DIR := build
 TEST_DIRS := test $(UNITY_ROOT)/src
+
 
 # Compilers and flags
 ifndef XCC
