@@ -14,8 +14,8 @@ subscription getLatestDataUsage {
     }
 }
 
-query getConnectedUsers($orgId: String!, $filter: TIME_FILTER!) {
-    getConnectedUsers(filter: $filter, orgId: $orgId) {
+query getConnectedUsers($filter: TIME_FILTER!) {
+    getConnectedUsers(filter: $filter) {
         totalUser
     }
 }
@@ -70,8 +70,8 @@ subscription getLatestAlerts {
     }
 }
 
-query getNodesByOrg($orgId: String!) {
-    getNodesByOrg(orgId: $orgId) {
+query getNodesByOrg {
+    getNodesByOrg {
         orgId
         nodes {
             id
@@ -118,8 +118,8 @@ query getNodeApps {
         memory
     }
 }
-query getUsersByOrg($orgId: String!) {
-    getUsersByOrg(orgId: $orgId) {
+query getUsersByOrg {
+    getUsersByOrg {
         id
         name
         email
@@ -128,8 +128,8 @@ query getUsersByOrg($orgId: String!) {
         dataUsage
     }
 }
-query getUser($userInput: UserInput!) {
-    getUser(userInput: $userInput) {
+query getUser($userId: String!) {
+    getUser(userId: $userId) {
         id
         status
         name
@@ -140,26 +140,6 @@ query getUser($userInput: UserInput!) {
         roaming
         dataPlan
         dataUsage
-    }
-}
-
-query getResidents($data: PaginationDto!) {
-    getResidents(data: $data) {
-        meta {
-            count
-            page
-            size
-            pages
-        }
-        residents {
-            residents {
-                id
-                name
-                dataUsage
-            }
-            activeResidents
-            totalResidents
-        }
     }
 }
 
@@ -191,8 +171,8 @@ mutation activateUser($data: ActivateUserDto!) {
         success
     }
 }
-mutation addUser($data: AddUserDto!, $orgId: String!) {
-    addUser(data: $data, orgId: $orgId) {
+mutation addUser($data: UserInputDto!) {
+    addUser(data: $data) {
         name
         email
         iccid
@@ -200,8 +180,8 @@ mutation addUser($data: AddUserDto!, $orgId: String!) {
         id
     }
 }
-mutation updateUser($data: UpdateUserDto!, $orgId: String!) {
-    updateUser(data: $data, orgId: $orgId) {
+mutation updateUser($userId: String!, $data: UserInputDto!) {
+    updateUser(data: $data, userId: $userId) {
         name
         email
         iccid
@@ -256,5 +236,11 @@ subscription getMetricsByTabS {
             x
             y
         }
+    }
+}
+
+mutation updateUserStatus($data: UpdateUserServiceInput!) {
+    updateUserStatus(data: $data) {
+        success
     }
 }

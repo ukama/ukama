@@ -39,9 +39,6 @@ const EditableTextField = ({
                 type: type,
                 disableUnderline: true,
                 color: "primary",
-                startAdornment: (
-                    <InputAdornment position="start">-</InputAdornment>
-                ),
                 endAdornment: (
                     <InputAdornment
                         position="end"

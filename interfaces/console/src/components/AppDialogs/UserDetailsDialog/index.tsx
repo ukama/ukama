@@ -18,7 +18,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
-import { GetUserDto, Get_User_Status_Type } from "../../../generated";
+import { GetUserDto } from "../../../generated";
+import LoadingWrapper from "../../LoadingWrapper";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -31,6 +32,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 type BasicDialogProps = {
+    type: string;
     user: GetUserDto;
     isOpen: boolean;
     setUserForm: any;
@@ -39,30 +41,28 @@ type BasicDialogProps = {
     handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
-    handleSaveSimUser?: any;
-    handleUpdateUser?: Function;
     userDetailsTitle: string;
     simDetailsTitle: string;
+    userStatusLoading: boolean;
+    handleSubmitAction: Function;
+    handleServiceAction: Function;
 };
 
-const getTitleByStatus = (status: string) =>
-    status === Get_User_Status_Type.Active ? "PAUSE SERVICE" : "RESUME SERVICE";
-
 const UserDetailsDialog = ({
+    type,
     user,
     isOpen,
     setUserForm,
     handleClose,
     saveBtnLabel,
     closeBtnLabel,
-    handleUpdateUser,
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
     isClosable = true,
-    handleSaveSimUser = () => {
-        /* Default empty function */
-    },
+    userStatusLoading,
+    handleSubmitAction,
+    handleServiceAction,
 }: BasicDialogProps) => {
     const classes = useStyles();
     const {
@@ -77,6 +77,11 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
+
+    const statusText = status ? "ACTIVE" : "INACTIVE";
+    const title = type === "add" ? "Add User" : "Edit User";
+    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
+
     return (
         <Dialog
             key={id}
@@ -104,7 +109,7 @@ const UserDetailsDialog = ({
                             sx={{ alignItems: "center" }}
                             spacing={1}
                         >
-                            <Typography variant="h5">{name}</Typography>
+                            <Typography variant="h5">{title}</Typography>
                         </Stack>
                         {isClosable && (
                             <IconButton
@@ -148,7 +153,7 @@ const UserDetailsDialog = ({
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                name: value || "",
+                                                name: value,
                                             })
                                         }
                                     />
@@ -160,7 +165,7 @@ const UserDetailsDialog = ({
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                email: value || "",
+                                                email: value?.toLowerCase(),
                                             })
                                         }
                                     />
@@ -200,25 +205,29 @@ const UserDetailsDialog = ({
                                             sx={{ pb: "0px !important" }}
                                         >
                                             <Typography variant="body2">
-                                                {status}
+                                                {statusText}
                                             </Typography>
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                variant="outlined"
-                                                onClick={() =>
-                                                    setUserForm({
-                                                        ...user,
-                                                        status:
-                                                            status ===
-                                                            Get_User_Status_Type.Active
-                                                                ? Get_User_Status_Type.Inactive
-                                                                : Get_User_Status_Type.Active,
-                                                    })
-                                                }
+                                            <LoadingWrapper
+                                                height={34}
+                                                width={148}
+                                                isLoading={userStatusLoading}
                                             >
-                                                {getTitleByStatus(status)}
-                                            </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        if (id && iccid)
+                                                            handleServiceAction(
+                                                                id,
+                                                                iccid,
+                                                                !status
+                                                            );
+                                                    }}
+                                                >
+                                                    {statusAction}
+                                                </Button>
+                                            </LoadingWrapper>
                                         </ContainerJustifySpaceBtw>
                                     </Grid>
                                 </Grid>
@@ -296,9 +305,7 @@ const UserDetailsDialog = ({
                             {closeBtnLabel}
                         </Button>
                         <Button
-                            onClick={
-                                user.id ? handleUpdateUser : handleSaveSimUser
-                            }
+                            onClick={() => handleSubmitAction()}
                             variant="contained"
                         >
                             {saveBtnLabel}

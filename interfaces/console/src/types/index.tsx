@@ -97,7 +97,12 @@ export type UserActivateFormType = {
 export type ResponseProps = {
     loading: boolean;
     error: any | null;
-    response: { isValid: boolean } | void | null;
+    response: {
+        id?: string;
+        name?: string;
+        email?: string;
+        isValid: boolean;
+    } | void | null;
 };
 
 export type TVariant = "small" | "medium" | "large";
