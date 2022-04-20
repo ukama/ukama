@@ -116,13 +116,16 @@ const Nodes = () => {
             error: registerNodeError,
         },
     ] = useAddNodeMutation({
-        onCompleted: () =>
+        onCompleted: () => {
             setRegisterNodeNotification({
-                id: "addNodeNotification",
+                id: "addNodeNtification",
                 message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
                 type: "success",
                 show: true,
-            }),
+            });
+            refetchGetNodesByOrg();
+        },
+
         onError: () =>
             setRegisterNodeNotification({
                 id: "ErrorAddingNode",
