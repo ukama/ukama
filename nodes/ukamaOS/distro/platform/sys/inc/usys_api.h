@@ -111,6 +111,34 @@ static inline int usys_fseek(FILE *stream, long int offset, int origin) {
 }
 
 /**
+ * @fn     int usys_ftell(FILE*)
+ * @brief  This function returns the current file position of the stream stream.
+ *
+ * @param  stream
+ * @return On success, the current value of the position indicator is returned.
+ *         On failure, -1L is returned.
+ */
+static inline int usys_ftell(FILE *stream) {
+    return ftell(stream);
+}
+
+/**
+ * @fn     int usys_fputs(char*, FILE*)
+ * @brief  The function fputs writes the string s to the stream stream.
+ *         The terminating null character is not written.This function does not
+ *         add a newline character, either.
+ *         It outputs only the characters in the string.
+ *
+ * @param  str
+ * @param  stream
+ * @return On success , returns a non-negative value.
+ *         On failure, it returns EOF.
+ */
+static inline int usys_fputs(char* str, FILE *stream) {
+    return fputs(str, stream);
+}
+
+/**
  * @fn     int usys_rename(const char*, const char*)
  * @brief  renames a file.
  *
@@ -213,7 +241,7 @@ static inline int usys_stat(const char *pathname, struct stat *statbuf) {
  *         On error, -1
  */
 static inline int usys_lstat(const char *pathname, struct stat *statbuf) {
-    return stat(pathname, statbuf);
+    return lstat(pathname, statbuf);
 }
 
 /**
@@ -519,7 +547,7 @@ static inline int usys_inet_pton_ipv6(const char *data, uint8_t *ip_addr) {
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char *usys_inet_ntop_ipv4(const char *data, char *ip_addr,
+inline static const char* usys_inet_ntop_ipv4(const char *data, char *ip_addr,
                                               socklen_t size) {
     return inet_ntop(AF_INET, data, ip_addr, size);
 }
@@ -535,7 +563,7 @@ static inline const char *usys_inet_ntop_ipv4(const char *data, char *ip_addr,
  * @return On success, inet_ntop() returns a non-null pointer to dst.
  *         NULL is returned if there was an error
  */
-static inline const char *usys_inet_ntop_ipv6(const char *data, char *ip_addr,
+inline static const char* usys_inet_ntop_ipv6(const char *data, char *ip_addr,
                                               socklen_t size) {
     return inet_ntop(AF_INET6, data, ip_addr, size);
 }
@@ -612,6 +640,127 @@ static inline uint32_t usys_sleep(uint32_t sec) {
  */
 static inline int usys_usleep(useconds_t usec) {
     return usleep(usec);
+}
+
+/**
+ * @fn     int usys_puts(char*)
+ * @brief  The puts function writes the string s to the stream stdout
+ *         followed by a newline. The terminating null character of the
+ *         string is not written.
+ *
+ * @param  str
+ * @return On success, non-negative value is returned.
+ *         On error, the function returns EOF
+ */
+static inline int usys_puts(char* str) {
+  return puts(str);
+}
+
+/**
+ * @fn     int usys_putchar(char)
+ * @brief  Writes a character to the standard output stdout
+ *
+ * @param  c
+ * @return On success, the character written is returned.
+ *         On failure, EOF is returned and the error indicator (ferror) is set.
+ */
+static inline int usys_putchar(char c) {
+  return putchar(c);
+}
+
+/**
+ * @fn     int usys_fflush(FILE*)
+ * @brief  If the stream was open for writing any unwritten data in its output
+ *         buffer is written to the file.
+ *
+ * @param  stream
+ * @return On success, zero is returned.
+ *         On failure, EOF is returned and the error indicator (ferror) is set.
+ */
+static inline int usys_fflush(FILE * stream) {
+  return fflush(stream);
+}
+
+/**
+ * @fn     int usys_atoi(const char*)
+ * @brief  Parses the str interpreting its content as an integral number.
+ *
+ * @param  str
+ * @return On success, the function returns the converted integral number
+ *         as an int value.If the int value returned is out of the range of int,
+ *         it causes undefined behavior.
+ */
+static inline int usys_atoi(const char * str) {
+    return atoi(str);
+}
+
+/**
+ * @fn     double usys_atof(const char*)
+ * @brief  Parses the str interpreting its content as an floating point.
+ *
+ * @param  str
+ * @return On success, the function returns the converted floating point number
+ *         as a double value.
+ *         If no valid conversion could be performed,
+ *         the function returns zero (0.0).
+ *         If the converted value would be out of the range of representable
+ *         values by a double, it causes undefined behavior.
+ */
+static inline double usys_atof(const char* str) {
+    return atof(str);
+}
+
+/**
+ * @fn     long int usys_strtol(const char*, char**, int)
+ * @brief  Parses the C-string str interpreting its content as an integral
+ *         number of the specified base, which is returned as a long int value.
+ *         If endptr is not a null pointer, the function also sets the value of
+ *         endptr to point to the first character after the number.
+ *
+ * @param  str
+ * @param  endptr
+ * @param  base
+ * @return On success, the function returns the converted integral number
+ *         as a long int value.
+ *         If no valid conversion could be performed, a zero value is returned.
+ *         If the value read is out of the range of representable values by
+ *         a long int, the function returns LONG_MAX or LONG_MIN
+ */
+static inline long int usys_strtol(const char* str, char** endptr, int base){
+    return strtol(str, endptr, base);
+}
+
+/**
+ * @fn     double usys_strtod(const char*, char**)
+ * @brief  Parses the C string str interpreting its content as a floating point
+ *         number (according to the current locale) and returns its value as a
+ *         long double. If endptr is not a null pointer, the function also sets
+ *         the value of endptr to point to the first character after the number.
+ *
+ * @param  str
+ * @param  endptr
+ * @return On success, the function returns the converted floating
+ *         point number as a value of type long double.
+ *         If no valid conversion could be performed,
+ *         the function returns zero (0.0L).
+ *         If the correct value is out of the range of representable values
+ *         for the type, a positive or negative HUGE_VALL is returned,
+ */
+static inline double usys_strtod(const char* str, char** endptr){
+    return strtod(str, endptr);
+}
+
+/**
+ * @fn     double usys_round(double)
+ * @brief  Returns the integral value that is nearest to x,
+ *         with halfway cases rounded away from zero.
+ *
+ * @param  x
+ * @return The value of x rounded to the nearest integral
+ *         (as a floating-point value).
+ */
+static inline double usys_round(double x) {
+    return round(x);
 }
 
 #ifdef __cplusplus

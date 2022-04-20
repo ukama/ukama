@@ -17,4 +17,4 @@ void setup_endpoints(Router *router, struct _u_instance *instance);
 int start_framework(struct _u_instance *instance);
 int start_web_service(Router *router, struct _u_instance *webInst);
 
-#endif /* WIMC_NETWORK_H */
+#endif /* NETWORK_H */

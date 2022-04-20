@@ -77,8 +77,11 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
+
     const statusText = status ? "ACTIVE" : "INACTIVE";
+    const title = type === "add" ? "Add User" : "Edit User";
     const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
+
     return (
         <Dialog
             key={id}
@@ -106,9 +109,7 @@ const UserDetailsDialog = ({
                             sx={{ alignItems: "center" }}
                             spacing={1}
                         >
-                            <Typography variant="h5">
-                                {type === "add" ? "Add User" : "Edit User"}
-                            </Typography>
+                            <Typography variant="h5">{title}</Typography>
                         </Stack>
                         {isClosable && (
                             <IconButton

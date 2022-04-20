@@ -32,7 +32,11 @@ import {
     getMetricPayload,
     getMetricsInitObj,
 } from "../../utils";
+<<<<<<< HEAD
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+=======
+import { isSkeltonLoading } from "../../recoil";
+>>>>>>> main
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";

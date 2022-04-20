@@ -1,0 +1,3 @@
+[submodule "nodes/ukamaOS/distro/tools/unity"]
+	path = nodes/ukamaOS/distro/tools/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git

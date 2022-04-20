@@ -30,6 +30,7 @@ endif
 # Libraries
 LIBS+=-lpthread
 LIBS+=-lrt
+LIBS+=-lm
 
 # Compiler flags
 CFLAGS+=-g
