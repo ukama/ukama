@@ -32,11 +32,7 @@ import {
     getMetricPayload,
     getMetricsInitObj,
 } from "../../utils";
-<<<<<<< HEAD
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-=======
-import { isSkeltonLoading } from "../../recoil";
->>>>>>> main
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
@@ -120,7 +116,20 @@ const Nodes = () => {
             error: registerNodeError,
         },
     ] = useAddNodeMutation({
-        onCompleted: () => refetchGetNodesByOrg(),
+        onCompleted: () =>
+            setRegisterNodeNotification({
+                id: "addNodeNotification",
+                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                type: "success",
+                show: true,
+            }),
+        onError: () =>
+            setRegisterNodeNotification({
+                id: "ErrorAddingNode",
+                message: `${registerNodeError?.message}`,
+                type: "error",
+                show: true,
+            }),
     });
 
     const [
@@ -310,26 +319,7 @@ const Nodes = () => {
         setIsSwitchOffRF(false);
     };
     const handleAddNodeClose = () => setIsAddNode(() => false);
-    useEffect(() => {
-        if (registerNodeRes) {
-            setRegisterNodeNotification({
-                id: "addNodeNotification",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [registerNodeRes]);
-    useEffect(() => {
-        if (registerNodeError) {
-            setRegisterNodeNotification({
-                id: "UpdateNodeErrorNotification",
-                message: `${registerNodeError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [registerNodeError]);
+
     const handleActivationSubmit = (data: any) => {
         registerNode({
             variables: {
