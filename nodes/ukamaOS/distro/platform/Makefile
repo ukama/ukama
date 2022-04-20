@@ -8,23 +8,24 @@
 include ../../config.mk
 
 # Targets
-TARGET := usys
-TARGET_LIB := lib$(TARGET).so
+TAR_LIB := usys
+TARGET_LIB := lib$(TAR_LIB).so
 UTEST_BIN := platform
+
+INC_HEADERS+=../../headers/musl/
 
 # Source paths
 UNITY_ROOT := ../tools/unity
 SRC_DIRS := sys/src log/src
-INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src
+INC_DIRS := sys/inc log/inc $(UNITY_ROOT)/src $(INC_HEADERS)
 BUILD_DIR := build
 TEST_DIRS := test $(UNITY_ROOT)/src
 
 # Compilers and flags
-ifdef XGCCPATH
-XCC = $(XGCCPATH)$(XGCC)
-XLD = $(XGCCPATH)$(XLD)
-else
-XCC=gcc
+ifndef XCC
+XCC:=gcc
+else 
+XCC:=$(XCC)
 endif
 
 # Libraries
@@ -68,7 +69,7 @@ TEST_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%
 
 INC_FILES := $(INC_DIRS:%=-I%)
 
-$(info CC:: $(CC))
+$(info XCC:: $(XCC))
 $(info LDFLAGS :: $(LDFLAGS))
 
 $(info CFILES :: $(CFILES))
@@ -140,7 +141,7 @@ $(TARGET_LIB): $(OBJFILES)
 
 # Build Unit test binary
 $(UTEST_BIN):$(TEST_OBJFILES) $(TARGET_LIB)
-	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TARGET)
+	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(TAR_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
