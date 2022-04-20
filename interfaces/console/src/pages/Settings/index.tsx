@@ -105,7 +105,7 @@ const ActionButtons = ({
 
 const Settings = () => {
     const history = useHistory();
-    const [menuId, setMenuId] = useState(4);
+    const [menuId, setMenuId] = useState(1);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
@@ -152,7 +152,7 @@ const Settings = () => {
                             <RoundedCard
                                 sx={{
                                     px: 2,
-                                    py: 3,
+                                    py: 4,
                                     height: "fit-content",
                                 }}
                             >
@@ -194,7 +194,6 @@ const Settings = () => {
                             <Card
                                 sx={{
                                     px: 4,
-                                    py: 2,
                                     borderRadius: "10px",
                                     boxShadow:
                                         "2px 2px 6px rgba(0, 0, 0, 0.05)",
@@ -202,12 +201,15 @@ const Settings = () => {
                             >
                                 <CardContent sx={{ p: 0 }}>
                                     <Box
-                                        mb={1}
                                         width="100%"
                                         display="flex"
                                         component={"div"}
                                         alignItems="flex-end"
                                         justifyContent="flex-end"
+                                        sx={{
+                                            position: "relative",
+                                            top: "20px",
+                                        }}
                                     >
                                         <IconButton onClick={handleCancel}>
                                             <CloseIcon />
