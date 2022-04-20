@@ -24,6 +24,7 @@ type NetworkStatusProps = {
     loading?: boolean;
     duration?: string;
     statusType: string;
+    regLoading: boolean;
     handleAddNode: Function;
     handleActivateUser: Function;
 };
@@ -32,6 +33,7 @@ const NetworkStatus = ({
     loading,
     duration,
     statusType,
+    regLoading,
     handleAddNode,
     handleActivateUser,
 }: NetworkStatusProps) => {
@@ -85,13 +87,15 @@ const NetworkStatus = ({
                             </Button>
                         </Grid>
                         <Grid item xs={7} md={7} lg={6} xl={5}>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                onClick={() => handleAddNode()}
-                            >
-                                REGISTER NODE
-                            </Button>
+                            <LoadingWrapper isLoading={regLoading} height={40}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    onClick={() => handleAddNode()}
+                                >
+                                    REGISTER NODE
+                                </Button>
+                            </LoadingWrapper>
                         </Grid>
                     </Grid>
                 </LoadingWrapper>

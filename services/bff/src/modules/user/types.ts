@@ -40,39 +40,9 @@ export class ActivateUserDto {
 }
 
 @InputType()
-export class UpdateUserDto {
-    @Field()
-    id: string;
-
-    @Field({ nullable: true })
-    eSimNumber: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    firstName: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    lastName: string;
-
-    @Field({ nullable: true })
-    @IsEmail()
-    email?: string;
-
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone?: string;
-}
-@ObjectType()
-export class UserResponse {
-    @Field()
-    id: string;
-
+export class UserInputDto {
     @Field()
     name: string;
-
-    @Field()
-    sim: string;
 
     @Field()
     email: string;
@@ -104,11 +74,11 @@ export class GetUserDto {
     @Field()
     iccid: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsPhoneNumber()
     phone: string;
 
@@ -183,17 +153,6 @@ export class DeactivateResponse {
     success: boolean;
 }
 
-@InputType()
-export class AddUserDto {
-    @Field()
-    @Length(3, 255)
-    name: string;
-
-    @Field()
-    @IsEmail()
-    email: string;
-}
-
 @ObjectType()
 export class OrgUserDto {
     @Field()
@@ -210,7 +169,7 @@ export class OrgUserDto {
 }
 
 @ObjectType()
-export class AddUserResponse {
+export class UserResDto {
     @Field()
     name: string;
 
@@ -221,10 +180,10 @@ export class AddUserResponse {
     phone: string;
 
     @Field()
-    uuid: string;
+    id: string;
 
-    @Field()
-    iccid: string;
+    @Field({ nullable: true })
+    iccid?: string;
 }
 
 @ObjectType()

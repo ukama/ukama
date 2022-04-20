@@ -59,7 +59,6 @@ const SimCardDesign = ({
                         variant="body1"
                         sx={{
                             fontSize: "14px",
-                            color: colors.black,
                             fontWeight: "bold",
                         }}
                     >

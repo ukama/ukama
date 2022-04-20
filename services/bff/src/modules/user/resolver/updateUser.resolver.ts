@@ -1,20 +1,23 @@
-import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
-import { UpdateUserDto, UserResponse } from "../types";
+import { UserInputDto, UserResDto } from "../types";
 import { UserService } from "../service";
 import { Authentication } from "../../../common/Authentication";
+import { Context } from "../../../common/types";
+import { parseCookie } from "../../../common";
 
 @Service()
 @Resolver()
 export class UpdateUserResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Mutation(() => UserResponse)
+    @Mutation(() => UserResDto)
     @UseMiddleware(Authentication)
     async updateUser(
-        @Arg("data")
-        req: UpdateUserDto
-    ): Promise<UserResponse | null> {
-        return this.userService.updateUser(req);
+        @Arg("userId") userId: string,
+        @Arg("data") data: UserInputDto,
+        @Ctx() ctx: Context
+    ): Promise<UserResDto | null> {
+        return this.userService.updateUser(userId, data, parseCookie(ctx));
     }
 }

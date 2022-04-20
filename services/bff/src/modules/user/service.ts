@@ -4,15 +4,13 @@ import {
     ConnectedUserDto,
     DeactivateResponse,
     ResidentsResponse,
-    UpdateUserDto,
-    UserResponse,
+    UserInputDto,
     GetUserDto,
-    AddUserDto,
-    AddUserResponse,
     ActivateUserResponse,
     GetUsersDto,
     UpdateUserServiceInput,
     UpdateUserServiceRes,
+    UserResDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -56,15 +54,20 @@ export class UserService implements IUserService {
         return res.data;
     };
 
-    updateUser = async (req: UpdateUserDto): Promise<UserResponse> => {
+    updateUser = async (
+        userId: string,
+        req: UserInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_UPDATE_USER,
-            body: req,
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
+            headers: cookie.header,
+            body: { name: req.name, email: req.email, phone: req.phone },
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
+        return UserMapper.dtoToUserResDto(res);
     };
     deactivateUser = async (id: string): Promise<DeactivateResponse> => {
         const res = await catchAsyncIOMethod({
@@ -119,9 +122,9 @@ export class UserService implements IUserService {
         return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
-        req: AddUserDto,
+        req: UserInputDto,
         cookie: ParsedCookie
-    ): Promise<AddUserResponse | null> => {
+    ): Promise<UserResDto | null> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${cookie.orgId}/users`,
