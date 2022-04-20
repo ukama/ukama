@@ -72,60 +72,6 @@ export const GET_NODES_QUERY = `
     }
 `;
 
-export const GET_RESIDENTS_QUERY = `
-    query getResidents($input:PaginationDto!) {
-        getResidents(data:$input) {
-            residents{
-                residents{
-                    id
-   		 	        name
-                    status
-				    eSimNumber
-                    iccid
-                    email
-                    phone
-                    dataPlan
- 		   	        dataUsage
-                    roaming
-                }
-                activeResidents
-                totalResidents   
-              }
-              meta{
-                page
-                count
-                pages
-                size
-              }
-        }
-    }
-`;
-
-export const GET_USER_QUERY = `
-    query getUsers($input:GetUserPaginationDto!) {
-        getUsers(data:$input) {
-            users{
-                id
-                name
-                status
-				eSimNumber
-                iccid
-                email
-                phone
-                dataPlan
-                dataUsage
-                roaming
-              }
-            meta{
-                page
-                count
-                pages
-                size
-              }
-        }
-    }
-`;
-
 export const POST_ACTIVATE_USER_MUTATION = `
     mutation activateUser($input:ActivateUserDto!) {
         activateUser(data:$input) {

@@ -31,16 +31,22 @@ import {
     getMetricPayload,
     getMetricsInitObj,
 } from "../../utils";
+import { isSkeltonLoading } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
-import { isSkeltonLoading, user } from "../../recoil";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 let abortController = new AbortController();
+const NODE_INIT = {
+    type: "HOME",
+    name: "",
+    nodeId: "",
+    orgId: "",
+};
+
 const Nodes = () => {
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
-            orgId: orgId,
             tab: selectedTab,
             regPolling: false,
             nodeId: nodeId,
@@ -52,13 +58,11 @@ const Nodes = () => {
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: orgId,
             from: from + 1,
             tab: selectedTab,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
 
-    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
@@ -177,7 +181,7 @@ const Nodes = () => {
     });
 
     useEffect(() => {
-        getNodesByOrg({ variables: { orgId: orgId } });
+        getNodesByOrg();
     }, []);
 
     useEffect(() => {
@@ -500,9 +504,10 @@ const Nodes = () => {
             />
             <ActivationDialog
                 isOpen={isAddNode}
+                nodeData={NODE_INIT}
                 dialogTitle={"Register Node"}
                 handleClose={handleAddNodeClose}
-                handleActivationSubmit={handleActivationSubmit}
+                handleNodeSubmitAction={handleActivationSubmit}
                 subTitle={
                     "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                 }

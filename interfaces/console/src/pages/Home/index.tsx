@@ -66,12 +66,23 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
-    const [isAddNode, setIsAddNode] = useState<boolean>(false);
-    const [isEditNode, setIsEditNode] = useState<boolean>(false);
+    const [showNodeDialog, setShowNodeDialog] = useState({
+        type: "add",
+        isShow: false,
+        title: "Register Node",
+        subTitle:
+            "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you.",
+        nodeData: {
+            type: "HOME",
+            name: "",
+            nodeId: "",
+            orgId: "",
+        },
+    });
+
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
-    const [node, setNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -80,6 +91,13 @@ const Home = () => {
     });
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
+
+    const {
+        data: nodeRes,
+        loading: nodeLoading,
+        refetch: refetchGetNodesByOrg,
+    } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
+
     const [
         registerNode,
         {
@@ -87,7 +105,10 @@ const Home = () => {
             data: registerNodeRes,
             error: addNodError,
         },
-    ] = useAddNodeMutation();
+    ] = useAddNodeMutation({
+        onCompleted: () => refetchGetNodesByOrg(),
+    });
+
     const [
         updateNode,
         {
@@ -95,19 +116,14 @@ const Home = () => {
             data: updateNodeRes,
             error: updateNodError,
         },
-    ] = useUpdateNodeMutation();
+    ] = useUpdateNodeMutation({ onCompleted: () => refetchGetNodesByOrg() });
 
-    const handleAddNodeClose = () => {
-        setIsEditNode(() => false);
-        setIsAddNode(() => false);
-    };
     const {
         data: connectedUserRes,
         loading: connectedUserloading,
         subscribeToMore: subscribeToLatestConnectedUsers,
     } = useGetConnectedUsersQuery({
         variables: {
-            orgId: orgId,
             filter: userStatusFilter,
         },
     });
@@ -132,17 +148,7 @@ const Home = () => {
     });
 
     const { data: residentsRes, loading: residentsloading } =
-        useGetUsersByOrgQuery({
-            variables: {
-                orgId: orgId,
-            },
-        });
-
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-    });
+        useGetUsersByOrgQuery();
 
     const {
         data: networkStatusRes,
@@ -234,7 +240,6 @@ const Home = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             tab: 4,
-            orgId: orgId,
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
@@ -246,7 +251,6 @@ const Home = () => {
         getMetricPayload({
             tab: 4,
             from: from,
-            orgId: orgId,
             regPolling: true,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
@@ -275,6 +279,13 @@ const Home = () => {
             });
         }
     }, [getMetricsRes]);
+
+    const handleAddNodeClose = () => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            isShow: false,
+        }));
+    };
 
     const subToConnectedUser = () =>
         subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
@@ -379,7 +390,6 @@ const Home = () => {
 
     const handleUserActivateClose = () => {
         setIsUserActivateOpen(() => false);
-        setIsEditNode(() => false);
     };
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
@@ -392,37 +402,66 @@ const Home = () => {
     };
 
     const handleNodeActions = (id: string, type: string) => {
-        if (type == "edit") {
-            setIsEditNode(true);
-            nodeRes?.getNodesByOrg.nodes
-                .filter(node => node.id == id)
-                .map(filteredNode => {
-                    if (filteredNode) {
-                        setNode({ ...filteredNode, orgId });
-                    }
-                });
+        const node = nodeRes?.getNodesByOrg.nodes.filter(
+            item => item.id === id
+        );
+        if (type == "edit" && node && node.length > 0) {
+            setShowNodeDialog({
+                ...showNodeDialog,
+                type: "editNode",
+                isShow: true,
+                title: "Edit Node",
+                nodeData: {
+                    type: node[0].type,
+                    name: node[0].name,
+                    nodeId: node[0].id,
+                    orgId: orgId,
+                },
+            });
         }
     };
+
     const handleAddNode = () => {
-        setIsAddNode(true);
+        setShowNodeDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: true,
+            title: "Register Node",
+        }));
     };
+
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-    const handleActivationSubmit = (registerNodeData: any) => {
-        let data = {
-            ...registerNodeData,
-            orgId: orgId,
-        };
-        if (registerNodeData.length > 0) {
+
+    const handleNodeSubmitAction = (data: any) => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: false,
+            title: "Register Node",
+        }));
+        if (showNodeDialog.type === "add") {
             registerNode({
                 variables: {
-                    data,
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
                 },
             });
-            setIsAddNode(() => registerNodeLoading);
+        } else if (showNodeDialog.type === "editNode") {
+            updateNode({
+                variables: {
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
+                },
+            });
         }
     };
+
     useEffect(() => {
         if (registerNodeRes) {
             setRegisterNodeNotification({
@@ -433,6 +472,7 @@ const Home = () => {
             });
         }
     }, [registerNodeRes]);
+
     useEffect(() => {
         if (updateNodeRes) {
             setRegisterNodeNotification({
@@ -443,6 +483,7 @@ const Home = () => {
             });
         }
     }, [updateNodeRes]);
+
     useEffect(() => {
         if (updateNodError) {
             setRegisterNodeNotification({
@@ -453,6 +494,7 @@ const Home = () => {
             });
         }
     }, [updateNodError]);
+
     useEffect(() => {
         if (addNodError) {
             setRegisterNodeNotification({
@@ -463,22 +505,13 @@ const Home = () => {
             });
         }
     }, [addNodError]);
+
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
-    };
-    const handleEditNodeUpdate = (data: any) => {
-        if (data.length > 0) {
-            updateNode({
-                variables: {
-                    data,
-                },
-            });
-            setIsEditNode(() => updateNodeLoading);
-        }
     };
 
     const handleCloseWelcome = () => {
@@ -495,6 +528,7 @@ const Home = () => {
                         handleAddNode={handleAddNode}
                         handleActivateUser={onActivateUser}
                         loading={networkStatusLoading || isSkeltonLoad}
+                        regLoading={registerNodeLoading || updateNodeLoading}
                         statusType={networkStatusRes?.getNetwork?.status || ""}
                         duration={
                             networkStatusRes?.getNetwork?.description || ""
@@ -641,26 +675,15 @@ const Home = () => {
                 />
             )}
 
-            {isAddNode && (
+            {showNodeDialog.isShow && (
                 <ActivationDialog
-                    isOpen={isAddNode}
-                    dialogTitle={"Register Node"}
+                    action={showNodeDialog.type}
+                    isOpen={showNodeDialog.isShow}
                     handleClose={handleAddNodeClose}
-                    handleActivationSubmit={handleActivationSubmit}
-                    subTitle={
-                        "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
-                    }
-                />
-            )}
-            {isEditNode && (
-                <ActivationDialog
-                    action={"editNode"}
-                    nodeData={node}
-                    isOpen={isEditNode}
-                    dialogTitle={"Edit Node"}
-                    handleClose={handleUserActivateClose}
-                    handleActivationSubmit={handleEditNodeUpdate}
-                    subTitle={""}
+                    nodeData={showNodeDialog.nodeData}
+                    dialogTitle={showNodeDialog.title}
+                    subTitle={showNodeDialog.subTitle}
+                    handleNodeSubmitAction={handleNodeSubmitAction}
                 />
             )}
         </Box>

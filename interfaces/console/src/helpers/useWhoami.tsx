@@ -37,7 +37,12 @@ const useWhoami = () => {
                     });
                     setResponses((prev: ResponseProps) => ({
                         ...prev,
-                        response: { isValid: true },
+                        response: {
+                            isValid: true,
+                            id: res.identity.id,
+                            name: res.identity.traits.name,
+                            email: res.identity.traits.email,
+                        },
                         error: "",
                         loading: false,
                     }));
