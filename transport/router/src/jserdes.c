@@ -105,6 +105,27 @@ int deserialize_post_route_request(Service **service, json_t *json) {
 }
 
 /*
+ * deserialize_delete_router_request
+ *
+ */
+int deserialize_delete_route_request(char **uuidStr, json_t *json) {
+
+  json_t *jID;
+
+  if (json == NULL) return FALSE;
+
+  jID = json_object_get(json, JSON_UUID);
+  if (jID == NULL) {
+    log_error("Unable to find %s as key for DELETE request", JSON_UUID);
+    return FALSE;
+  }
+
+  *uuidStr = strdup(json_string_value(jID));
+
+  return TRUE;
+}
+
+/*
  * serialize_post_route_response --
  *
  */
