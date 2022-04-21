@@ -22,6 +22,38 @@ type Database struct {
 	Port       int
 }
 
+/*
+Route are key value pair
+*/
+type Route map[string]string
+
+/*
+Service would a have some finite number of routes
+thorugh which it could be reached.
+*/
+type Pattern struct {
+	Routes []Route
+}
+
+/*
+Service would be listing on this
+IP and Port for incoming messages
+*/
+type Forward struct {
+	Ip   string `json:"ip"`
+	Port int    `json:"port"`
+}
+
+/*
+Service API interface is registered to Router service.
+So that Router service know when and where to reach service.
+*/
+type ServiceApiIf struct {
+	Name string  `json:"name"`
+	P    Pattern `json:"pattern"`
+	F    Forward `json:"forward"`
+}
+
 type Queue struct {
 	Uri string // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
