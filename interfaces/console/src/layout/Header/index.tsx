@@ -27,7 +27,6 @@ import ExitToAppOutlined from "@mui/icons-material/ExitToAppOutlined";
 import { Settings, Notifications, AccountCircle } from "@mui/icons-material";
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, user, pageName } from "../../recoil";
-import { useCookies } from "react-cookie";
 
 const popupStyle = {
     boxShadow:
@@ -54,7 +53,6 @@ const Header = ({
     const _user = useRecoilValue(user);
     const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(user);
-    const [, , removeCookie] = useCookies(["orgId"]);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
 
     const [notificationAnchorEl, setNotificationAnchorEl] =
@@ -117,7 +115,6 @@ const Header = ({
     }, [alertsInfoRes]);
 
     const handleLogout = () => {
-        removeCookie("orgId");
         handleUserClose();
         resetData();
         resetPageName();

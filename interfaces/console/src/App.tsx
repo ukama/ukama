@@ -17,7 +17,6 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { useCookies } from "react-cookie";
 
 const SNACKBAR_TIMEOUT = 5000;
 
@@ -25,7 +24,6 @@ const App = () => {
     const { response } = useWhoami();
     const setPage = useSetRecoilState(pageName);
     const _isDarkMod = useRecoilValue(isDarkmode);
-    const [, setCookie] = useCookies(["orgId"]);
     const [_snackbarMessage, setSnackbarMessage] =
         useRecoilState(snackbarMessage);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
@@ -40,7 +38,6 @@ const App = () => {
                     handleGoToLogin();
                 }
             } else if (response?.isValid) {
-                setCookie("orgId", response?.id);
                 setPage(getTitleFromPath(window.location.pathname));
                 setSkeltonLoading(false);
             }
