@@ -1,40 +1,12 @@
 import { IsEmail, IsPhoneNumber, Length } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationDto, PaginationResponse } from "../../common/types";
-import {
-    CONNECTED_USER_TYPE,
-    GET_STATUS_TYPE,
-    GET_USER_TYPE,
-} from "../../constants";
+import { PaginationResponse } from "../../common/types";
+import { GET_STATUS_TYPE } from "../../constants";
 
 @ObjectType()
 export class ConnectedUserDto {
     @Field()
     totalUser: string;
-}
-
-@ObjectType()
-export class UserDto {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field(() => CONNECTED_USER_TYPE)
-    type: CONNECTED_USER_TYPE;
-
-    @Field()
-    email: string;
-}
-
-@ObjectType()
-export class ConnectedUserResponse {
-    @Field()
-    data: ConnectedUserDto;
-
-    @Field()
-    status: string;
 }
 
 @InputType()
@@ -68,39 +40,9 @@ export class ActivateUserDto {
 }
 
 @InputType()
-export class UpdateUserDto {
-    @Field()
-    id: string;
-
-    @Field({ nullable: true })
-    eSimNumber: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    firstName: string;
-
-    @Field({ nullable: true })
-    @Length(3, 255)
-    lastName: string;
-
-    @Field({ nullable: true })
-    @IsEmail()
-    email?: string;
-
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone?: string;
-}
-@ObjectType()
-export class UserResponse {
-    @Field()
-    id: string;
-
+export class UserInputDto {
     @Field()
     name: string;
-
-    @Field()
-    sim: string;
 
     @Field()
     email: string;
@@ -116,21 +58,12 @@ export class ActivateUserResponse {
 }
 
 @ObjectType()
-export class ActiveUserResponseDto {
-    @Field()
-    status: string;
-
-    @Field()
-    data: ActivateUserResponse;
-}
-
-@ObjectType()
 export class GetUserDto {
     @Field()
     id: string;
 
-    @Field(() => GET_STATUS_TYPE)
-    status: GET_STATUS_TYPE;
+    @Field()
+    status: boolean;
 
     @Field()
     name: string;
@@ -141,11 +74,11 @@ export class GetUserDto {
     @Field()
     iccid: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsPhoneNumber()
     phone: string;
 
@@ -194,18 +127,6 @@ export class GetUserResponseDto {
     length: number;
 }
 
-@InputType()
-export class GetUserPaginationDto extends PaginationDto {
-    @Field(() => GET_USER_TYPE)
-    type: GET_USER_TYPE;
-}
-
-@ObjectType()
-export class GetUserResponse extends PaginationResponse {
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
-}
-
 @ObjectType()
 export class ResidentResponse {
     @Field(() => [GetUserDto])
@@ -233,26 +154,6 @@ export class DeactivateResponse {
 }
 
 @ObjectType()
-export class OrgUserResponseDto {
-    @Field()
-    orgName: string;
-
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
-}
-
-@InputType()
-export class AddUserDto {
-    @Field()
-    @Length(3, 255)
-    name: string;
-
-    @Field()
-    @IsEmail()
-    email: string;
-}
-
-@ObjectType()
 export class OrgUserDto {
     @Field()
     name: string;
@@ -268,7 +169,7 @@ export class OrgUserDto {
 }
 
 @ObjectType()
-export class AddUserResponse {
+export class UserResDto {
     @Field()
     name: string;
 
@@ -279,10 +180,10 @@ export class AddUserResponse {
     phone: string;
 
     @Field()
-    uuid: string;
+    id: string;
 
-    @Field()
-    iccid: string;
+    @Field({ nullable: true })
+    iccid?: string;
 }
 
 @ObjectType()
@@ -292,15 +193,6 @@ export class OrgUsersResponse {
 
     @Field(() => [OrgUserDto])
     users: OrgUserDto[];
-}
-
-@InputType()
-export class UserInput {
-    @Field()
-    orgId: string;
-
-    @Field()
-    userId: string;
 }
 
 @ObjectType()
@@ -350,4 +242,21 @@ export class AddUserServiceRes {
 
     @Field()
     iccid: string;
+}
+
+@InputType()
+export class UpdateUserServiceInput {
+    @Field()
+    simId: string;
+
+    @Field()
+    userId: string;
+
+    @Field()
+    status: boolean;
+}
+@ObjectType()
+export class UpdateUserServiceRes {
+    @Field()
+    success: boolean;
 }

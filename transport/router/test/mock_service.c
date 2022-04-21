@@ -185,6 +185,7 @@ static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
  */
 static int service_register(char *rIP, char *rPort, char *ip, char *port,
 		     char *pattern, char **uuidStr) {
+
   int ret=FALSE;
   CURL *curl=NULL;
   char json[MAX_LEN] = {0};

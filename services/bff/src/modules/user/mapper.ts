@@ -1,12 +1,13 @@
 import { GET_STATUS_TYPE } from "../../constants";
 import { IUserMapper } from "./interface";
 import {
-    AddUserResponse,
+    UserResDto,
     AddUserServiceRes,
     ConnectedUserDto,
     GetUserDto,
     GetUserResponseDto,
     GetUsersDto,
+    OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
     ResidentResponse,
@@ -27,13 +28,9 @@ class UserMapper implements IUserMapper {
     };
     residentDtoToDto = (res: GetUserResponseDto): ResidentResponse => {
         const residents: GetUserDto[] = [];
-        let activeResidents = 0;
+        const activeResidents = 0;
         const totalResidents = res.length;
         res.data.forEach(user => {
-            if (user.status === GET_STATUS_TYPE.ACTIVE) {
-                activeResidents++;
-            }
-
             residents.push(user);
         });
         return {
@@ -68,20 +65,31 @@ class UserMapper implements IUserMapper {
             email: user.email,
             phone: user.phone,
             eSimNumber: user.uuid,
-            status: sim?.ukama?.status || GET_STATUS_TYPE.INACTIVE,
+            status:
+                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE
+                    ? sim?.carrier?.services.data
+                    : false,
             roaming:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
             dataPlan: 1024,
             dataUsage: defaultCasual.integer(1, 1024),
         };
     };
-    dtoToAddUserDto = (req: AddUserServiceRes): AddUserResponse | null => {
+    dtoToUserResDto = (req: OrgUserDto): UserResDto => {
+        return {
+            id: req.uuid,
+            name: req.name,
+            email: req.email,
+            phone: req.phone,
+        };
+    };
+    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto | null => {
         if (req) {
             return {
                 name: req.user.name,
                 email: req.user.email,
                 phone: req.user.phone,
-                uuid: req.user.uuid,
+                id: req.user.uuid,
                 iccid: req.iccid,
             };
         }

@@ -200,15 +200,15 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     if (*pattern == NULL) {
       *pattern = (Pattern *)calloc(1, sizeof(Pattern));
       if (*pattern == NULL) {
-	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+      	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
       }
       ptr = *pattern;
     } else {
       ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
       if (ptr->next == NULL) {
-	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+	      log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
       }
       ptr = ptr->next;
     }

@@ -1,59 +1,54 @@
 import {
-    HeaderType,
+    ParsedCookie,
     PaginationDto,
     MetricServiceRes,
 } from "../../common/types";
 import {
     ActivateUserDto,
     ActivateUserResponse,
-    AddUserDto,
-    AddUserResponse,
+    UserResDto,
     AddUserServiceRes,
     ConnectedUserDto,
     DeactivateResponse,
     GetUserDto,
-    GetUserPaginationDto,
-    GetUserResponse,
     GetUserResponseDto,
     GetUsersDto,
+    OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
     ResidentResponse,
     ResidentsResponse,
-    UpdateUserDto,
-    UserInput,
-    UserResponse,
+    UserInputDto,
 } from "./types";
 
 export interface IUserService {
-    getConnectedUsers(
-        orgId: string,
-        header: HeaderType
-    ): Promise<ConnectedUserDto>;
+    getConnectedUsers(cookie: ParsedCookie): Promise<ConnectedUserDto>;
     activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
-    updateUser(req: UpdateUserDto): Promise<UserResponse>;
-    deactivateUser(id: string): Promise<DeactivateResponse>;
-    getUser(data: UserInput, header: HeaderType): Promise<GetUserDto>;
-    getUsers(req: GetUserPaginationDto): Promise<GetUserResponse>;
-    getResidents(req: PaginationDto): Promise<ResidentsResponse>;
-    getUsersByOrg(orgId: string, header: HeaderType): Promise<GetUsersDto[]>;
-    addUser(
-        orgId: string,
-        req: AddUserDto,
-        header: HeaderType
-    ): Promise<AddUserResponse | null>;
-    deleteUser(
-        orgId: string,
+    updateUser(
         userId: string,
-        header: HeaderType
+        req: UserInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserResDto>;
+    deactivateUser(id: string): Promise<DeactivateResponse>;
+    getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
+    getResidents(req: PaginationDto): Promise<ResidentsResponse>;
+    getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;
+    addUser(
+        req: UserInputDto,
+        cookie: ParsedCookie
+    ): Promise<UserResDto | null>;
+    deleteUser(
+        userId: string,
+        cookie: ParsedCookie
     ): Promise<ActivateUserResponse>;
 }
 
 export interface IUserMapper {
-    dtoToAddUserDto(res: AddUserServiceRes): AddUserResponse | null;
+    dtoToAddUserDto(res: AddUserServiceRes): UserResDto | null;
     connectedUsersDtoToDto(res: MetricServiceRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];
     dtoToUserDto(req: OrgUserResponse): GetUserDto;
+    dtoToUserResDto(req: OrgUserDto): UserResDto;
 }

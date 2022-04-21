@@ -22,25 +22,32 @@ import {
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
+    useAddNodeMutation,
     Node_Type,
 } from "../../generated";
 import { TMetric } from "../../types";
-import { useRecoilValue } from "recoil";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
     getMetricObjectByKey,
     getMetricPayload,
     getMetricsInitObj,
 } from "../../utils";
+import { isSkeltonLoading, snackbarMessage } from "../../recoil";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
-import { isSkeltonLoading, user } from "../../recoil";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 let abortController = new AbortController();
+const NODE_INIT = {
+    type: "HOME",
+    name: "",
+    nodeId: "",
+    orgId: "",
+};
+
 const Nodes = () => {
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
-            orgId: orgId,
             tab: selectedTab,
             regPolling: false,
             nodeId: nodeId,
@@ -52,19 +59,18 @@ const Nodes = () => {
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             nodeId: selectedNode?.id,
-            orgId: orgId,
             from: from + 1,
             tab: selectedTab,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
 
-    const { id: orgId = "" } = useRecoilValue(user);
     const [selectedTab, setSelectedTab] = useState(0);
     const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
     const [isNodeUpdate, setIsNodeUpdate] = useState<boolean>(false);
     const [isSwitchOffRF, setIsSwitchOffRF] = useState<boolean>(false);
+    const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
@@ -91,10 +97,43 @@ const Nodes = () => {
     const { data: nodeAppsLogsRes, loading: nodeAppsLogsLoading } =
         useGetNodeAppsVersionLogsQuery();
 
-    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
-        useGetNodesByOrgLazyQuery({
-            fetchPolicy: "cache-and-network",
-        });
+    const [
+        getNodesByOrg,
+        {
+            data: nodesRes,
+            loading: nodesLoading,
+            refetch: refetchGetNodesByOrg,
+        },
+    ] = useGetNodesByOrgLazyQuery({
+        fetchPolicy: "cache-and-network",
+    });
+
+    const [
+        registerNode,
+        {
+            loading: registerNodeLoading,
+            data: registerNodeRes,
+            error: registerNodeError,
+        },
+    ] = useAddNodeMutation({
+        onCompleted: () => {
+            setRegisterNodeNotification({
+                id: "addNodeSuccess",
+                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+
+        onError: () =>
+            setRegisterNodeNotification({
+                id: "ErrorAddingNode",
+                message: `${registerNodeError?.message}`,
+                type: "error",
+                show: true,
+            }),
+    });
 
     const [
         getMetrics,
@@ -162,11 +201,6 @@ const Nodes = () => {
                             name: element.name,
                             data: [...(metric.data || []), ...element.data],
                         };
-                    } else {
-                        _m[element.type] = {
-                            name: element.name,
-                            data: [],
-                        };
                     }
                 }
                 const filter = Object.fromEntries(
@@ -182,7 +216,7 @@ const Nodes = () => {
     });
 
     useEffect(() => {
-        getNodesByOrg({ variables: { orgId: orgId } });
+        getNodesByOrg();
     }, []);
 
     useEffect(() => {
@@ -289,8 +323,16 @@ const Nodes = () => {
     };
     const handleAddNodeClose = () => setIsAddNode(() => false);
 
-    const handleActivationSubmit = () => {
-        /* Handle submit activation action */
+    const handleActivationSubmit = (data: any) => {
+        registerNode({
+            variables: {
+                data: {
+                    name: data.name,
+                    nodeId: data.nodeId,
+                },
+            },
+        });
+        setIsAddNode(() => registerNodeLoading);
     };
     const handleCloseNodeRestart = () => {
         setIsNodeRestart(false);
@@ -332,7 +374,9 @@ const Nodes = () => {
                     <Grid item xs={12}>
                         <NodeStatus
                             onAddNode={onAddNode}
-                            loading={isLoading || nodesLoading}
+                            loading={
+                                isLoading || nodesLoading || registerNodeLoading
+                            }
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
                             onNodeActionItemSelected={
@@ -505,9 +549,10 @@ const Nodes = () => {
             />
             <ActivationDialog
                 isOpen={isAddNode}
+                nodeData={NODE_INIT}
                 dialogTitle={"Register Node"}
                 handleClose={handleAddNodeClose}
-                handleActivationSubmit={handleActivationSubmit}
+                handleNodeSubmitAction={handleActivationSubmit}
                 subTitle={
                     "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                 }

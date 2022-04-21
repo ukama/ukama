@@ -1,0 +1,1171 @@
+{
+  "name" : "Property Definition",
+  "device" : [ {
+    "name" : "TMP464",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "T1 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_input"
+    }, {
+      "id" : 1,
+      "name" : "T1 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_min"
+    }, {
+      "id" : 2,
+      "name" : "T1 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max"
+    }, {
+      "id" : 3,
+      "name" : "T1 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit"
+    }, {
+      "id" : 4,
+      "name" : "T1 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 1,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 5,
+      "name" : "T1 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 2,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 6,
+      "name" : "T1 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 3,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 7,
+      "name" : "T1 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit_hyst"
+    }, {
+      "id" : 8,
+      "name" : "T1 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max_hyst"
+    }, {
+      "id" : 9,
+      "name" : "T1 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp1_offset"
+    }, {
+      "id" : 10,
+      "name" : "T2 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_input"
+    }, {
+      "id" : 11,
+      "name" : "T2 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_min"
+    }, {
+      "id" : 12,
+      "name" : "T2 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_max"
+    }, {
+      "id" : 13,
+      "name" : "T2 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_crit"
+    }, {
+      "id" : 14,
+      "name" : "T2 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 11,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 15,
+      "name" : "T2 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 12,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 16,
+      "name" : "T2 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 13,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 17,
+      "name" : "T2 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_crit_hyst"
+    }, {
+      "id" : 18,
+      "name" : "T2 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_max_hyst"
+    }, {
+      "id" : 19,
+      "name" : "T2 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp2_offset"
+    }, {
+      "id" : 20,
+      "name" : "T3 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_input"
+    }, {
+      "id" : 21,
+      "name" : "T3 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_min"
+    }, {
+      "id" : 22,
+      "name" : "T3 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_max"
+    }, {
+      "id" : 23,
+      "name" : "T3 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_crit"
+    }, {
+      "id" : 24,
+      "name" : "T3 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 21,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 25,
+      "name" : "T3 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 22,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 26,
+      "name" : "T3 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 23,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 27,
+      "name" : "T3 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_crit_hyst"
+    }, {
+      "id" : 28,
+      "name" : "T3 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_max_hyst"
+    }, {
+      "id" : 29,
+      "name" : "T3 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp3_offset"
+    } ]
+  }, {
+    "name" : "ADT7481",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "T1 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_input"
+    }, {
+      "id" : 1,
+      "name" : "T1 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_min"
+    }, {
+      "id" : 2,
+      "name" : "T1 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max"
+    }, {
+      "id" : 3,
+      "name" : "T1 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit"
+    }, {
+      "id" : 4,
+      "name" : "T1 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 1,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 5,
+      "name" : "T1 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 2,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 6,
+      "name" : "T1 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 3,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 7,
+      "name" : "T1 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit_hyst"
+    }, {
+      "id" : 8,
+      "name" : "T1 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max_hyst"
+    }, {
+      "id" : 9,
+      "name" : "T1 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp1_offset"
+    }, {
+      "id" : 10,
+      "name" : "T2 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_input"
+    }, {
+      "id" : 11,
+      "name" : "T2 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_min"
+    }, {
+      "id" : 12,
+      "name" : "T2 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_max"
+    }, {
+      "id" : 13,
+      "name" : "T2 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_crit"
+    }, {
+      "id" : 14,
+      "name" : "T2 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 11,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 15,
+      "name" : "T2 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 12,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 16,
+      "name" : "T2 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp2_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 10,
+        "limitValPropertyId" : 13,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 17,
+      "name" : "T2 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_crit_hyst"
+    }, {
+      "id" : 18,
+      "name" : "T2 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp2_max_hyst"
+    }, {
+      "id" : 19,
+      "name" : "T2 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp2_offset"
+    }, {
+      "id" : 20,
+      "name" : "T3 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_input"
+    }, {
+      "id" : 21,
+      "name" : "T3 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_min"
+    }, {
+      "id" : 22,
+      "name" : "T3 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_max"
+    }, {
+      "id" : 23,
+      "name" : "T3 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_crit"
+    }, {
+      "id" : 24,
+      "name" : "T3 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 21,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 25,
+      "name" : "T3 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 22,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 26,
+      "name" : "T3 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp3_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 20,
+        "limitValPropertyId" : 23,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 27,
+      "name" : "T3 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_crit_hyst"
+    }, {
+      "id" : 28,
+      "name" : "T3 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp3_max_hyst"
+    }, {
+      "id" : 29,
+      "name" : "T3 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp3_offset"
+    } ]
+  }, {
+    "name" : "SE98",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "T1 TEMPERATURE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_input"
+    }, {
+      "id" : 1,
+      "name" : "T1 LOW LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_min"
+    }, {
+      "id" : 2,
+      "name" : "T1 HIGH LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max"
+    }, {
+      "id" : 3,
+      "name" : "T1 CRITICAL LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit"
+    }, {
+      "id" : 4,
+      "name" : "T1 LOW LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_min_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 1,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 5,
+      "name" : "T1 HIGH LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_max_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 2,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 6,
+      "name" : "T1 CRITICAL LIMIT ALERT",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "temp1_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 3,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 7,
+      "name" : "T1 CRITICAL HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_crit_hyst"
+    }, {
+      "id" : 8,
+      "name" : "T1 MAX HYSTERESIS",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliCelsius",
+      "sysFsFile" : "temp1_max_hyst"
+    }, {
+      "id" : 9,
+      "name" : "T1 OFFSET",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_NOTAVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "temp1_offset"
+    } ]
+  }, {
+    "name" : "INA226",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "SHUNT VOLTAGE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliVolts",
+      "sysFsFile" : "in0_input"
+    }, {
+      "id" : 1,
+      "name" : "BUS VOLTAGE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliVolts",
+      "sysFsFile" : "in1_input"
+    }, {
+      "id" : 2,
+      "name" : "CURRENT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "milliAmp",
+      "sysFsFile" : "curr1_input"
+    }, {
+      "id" : 3,
+      "name" : "POWER",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "microWatt",
+      "sysFsFile" : "power1_input"
+    }, {
+      "id" : 4,
+      "name" : "SHUNT RESISTANCE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "microOhm",
+      "sysFsFile" : "shunt_resistor"
+    }, {
+      "id" : 5,
+      "name" : "CRIT LOW SHUNT VOLTAGE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliVolts",
+      "sysFsFile" : "in0_lcrit"
+    }, {
+      "id" : 6,
+      "name" : "CRIT HIGH SHUNT VOLTAGE",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliVolts",
+      "sysFsFile" : "in0_crit"
+    }, {
+      "id" : 7,
+      "name" : "SHUNT VOLTAGE CRIT LOW ALARM",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "in0_lcrit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 5,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 8,
+      "name" : "SHUNT VOLTAGE CRIT HIGH ALARM",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "in0_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 0,
+        "limitValPropertyId" : 6,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 9,
+      "name" : "LOW VOLTAGE LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliVolts",
+      "sysFsFile" : "in1_lcrit"
+    }, {
+      "id" : 10,
+      "name" : "HIGH VOLTAGE LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "milliVolts",
+      "sysFsFile" : "in1_crit"
+    }, {
+      "id" : 11,
+      "name" : "BUS VOLTAGE CRIT LOW ALARM",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "in1_lcrit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 1,
+        "limitValPropertyId" : 9,
+        "alertCondition" : "LESSTHENEQUALTO"
+      }
+    }, {
+      "id" : 12,
+      "name" : "BUS VOLTAGE CRIT HIGH ALARM",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "in1_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 1,
+        "limitValPropertyId" : 10,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 13,
+      "name" : "CRITICAL HIGH POWER LIMIT",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "microWatt",
+      "sysFsFile" : "power1_crit"
+    }, {
+      "id" : 14,
+      "name" : "CRITICAL HIGH POWER",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_ALERT",
+      "units" : "",
+      "sysFsFile" : "power1_crit_alarm",
+      "dependent" : {
+        "currentValPropertyId" : 3,
+        "limitValPropertyId" : 13,
+        "alertCondition" : "GREATERTHENEQUALTO"
+      }
+    }, {
+      "id" : 15,
+      "name" : "DATA CONVERSION TIME",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "update_interval"
+    } ]
+  }, {
+    "name" : "LED-TRICOLOR",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "RED LED BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "red/brightness"
+    }, {
+      "id" : 1,
+      "name" : "RED LED MAX BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "red/max_brightness"
+    }, {
+      "id" : 2,
+      "name" : "RED LED TRIGGER",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "red/trigger"
+    }, {
+      "id" : 3,
+      "name" : "GREEN LED BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "green/brightness"
+    }, {
+      "id" : 4,
+      "name" : "GREEN LED MAX BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "green/max_brightness"
+    }, {
+      "id" : 5,
+      "name" : "GREEN LED TRIGGER",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "green/trigger"
+    }, {
+      "id" : 6,
+      "name" : "BLUE LED BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "blue/brightness"
+    }, {
+      "id" : 7,
+      "name" : "BLUE LED MAX BRIGHTNESS",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "blue/max_brightness"
+    }, {
+      "id" : 8,
+      "name" : "blue LED TRIGGER",
+      "dataType" : "TYPE_UINT8",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "blue/trigger"
+    } ]
+  }, {
+    "name" : "GPIO",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "GPIO DIRECTION",
+      "dataType" : "TYPE_STRING",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "direction"
+    }, {
+      "id" : 1,
+      "name" : "GPIO VALUE",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "value"
+    }, {
+      "id" : 2,
+      "name" : "GPIO EDGE",
+      "dataType" : "TYPE_STRING",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "edge"
+    }, {
+      "id" : 3,
+      "name" : "GPIO POLARITY",
+      "dataType" : "TYPE_BOOL",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "active_low"
+    } ]
+  }, {
+    "name" : "DAT-31R5A-PP",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "ATTENUATION VALUE",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "dB",
+      "sysFsFile" : "in0_attvalue"
+    }, {
+      "id" : 1,
+      "name" : "LATCH FOR ATTENUATION",
+      "dataType" : "TYPE_INT32",
+      "perm" : "PERM_RW",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_CONFIG",
+      "units" : "",
+      "sysFsFile" : "in0_latch"
+    } ]
+  }, {
+    "name" : "ADS1015",
+    "version" : {
+      "major" : 0,
+      "minor" : 1
+    },
+    "propertyTable" : [ {
+      "id" : 0,
+      "name" : "VOLT OVER AIN0 AND AIN1",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in0_input"
+    }, {
+      "id" : 1,
+      "name" : "VOLT OVER AIN0 AND AIN3",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in1_input"
+    }, {
+      "id" : 2,
+      "name" : "VOLT OVER AIN1 AND AIN3",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in2_input"
+    }, {
+      "id" : 3,
+      "name" : "VOLT OVER AIN2 AND AIN3",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in3_input"
+    }, {
+      "id" : 4,
+      "name" : "VOLT OVER AIN0 AND GND",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in4_input"
+    }, {
+      "id" : 5,
+      "name" : "VOLT OVER AIN1 AND GND",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in5_input"
+    }, {
+      "id" : 6,
+      "name" : "VOLT OVER AIN2 AND GND",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in6_input"
+    }, {
+      "id" : 7,
+      "name" : "VOLT OVER AIN3 AND GND",
+      "dataType" : "TYPE_DOUBLE",
+      "perm" : "PERM_RD",
+      "available" : "PROP_AVAIL",
+      "propType" : "PROP_TYPE_STATUS",
+      "units" : "",
+      "sysFsFile" : "in7_input"
+    } ]
+  } ]
+}

@@ -1,4 +1,4 @@
-import { HeaderType, PaginationDto } from "../../common/types";
+import { ParsedCookie, PaginationDto } from "../../common/types";
 import { NetworkDto } from "../network/types";
 import { DeactivateResponse } from "../user/types";
 import {
@@ -19,12 +19,9 @@ export interface INodeService {
     getNodes(req: PaginationDto): Promise<NodesResponse>;
     getNetwork(): Promise<NetworkDto>;
     getNodeDetials(): Promise<NodeDetailDto>;
-    getNodesByOrg(
-        orgId: string,
-        header: HeaderType
-    ): Promise<OrgNodeResponseDto>;
-    addNode(req: AddNodeDto, header: HeaderType): Promise<AddNodeResponse>;
-    updateNode(req: AddNodeDto, header: HeaderType): Promise<OrgNodeDto>;
+    getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
+    addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
+    updateNode(req: AddNodeDto, cookie: ParsedCookie): Promise<OrgNodeDto>;
     deleteNode(id: string): Promise<DeactivateResponse>;
 }
 

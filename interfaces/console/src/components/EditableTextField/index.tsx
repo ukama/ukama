@@ -6,14 +6,14 @@ import { TextField, IconButton, InputAdornment } from "@mui/material";
 type EditableTextFieldProps = {
     label: string;
     type?: string;
-    value: string;
+    value: any;
     isEditable?: boolean;
     handleOnChange?: Function;
 };
 
 const EditableTextField = ({
     label,
-    value,
+    value = "-djkdjflkdjlk",
     type = "text",
     isEditable = true,
     // eslint-disable-next-line no-empty-function
@@ -29,7 +29,7 @@ const EditableTextField = ({
             value={value}
             variant="standard"
             disabled={!iseditable}
-            sx={{ width: { xs: "100%", md: "440px" } }}
+            sx={{ width: { xs: "100%" } }}
             InputLabelProps={{
                 shrink: true,
             }}

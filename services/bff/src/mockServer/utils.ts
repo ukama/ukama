@@ -9,39 +9,8 @@ import { AlertDto } from "../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../modules/billing/types";
 import { EsimDto } from "../modules/esim/types";
 import { NodeDto } from "../modules/node/types";
-import { GetUserDto, UserDto } from "../modules/user/types";
+import { GetUserDto } from "../modules/user/types";
 import casual from "./mockData/casual";
-
-export const getUser = (req: Request, res: Response): void => {
-    let users: UserDto[];
-    const filter = req.query[0]?.toString();
-
-    switch (filter) {
-        case TIME_FILTER.TODAY:
-            users = casual.randomArray<UserDto>(2, 5, casual._user);
-            break;
-        case TIME_FILTER.WEEK:
-            users = casual.randomArray<UserDto>(4, 15, casual._user);
-            break;
-        case TIME_FILTER.MONTH:
-            users = casual.randomArray<UserDto>(14, 25, casual._user);
-            break;
-        case TIME_FILTER.TOTAL:
-            users = casual.randomArray<UserDto>(24, 60, casual._user);
-            break;
-        default:
-            users = [];
-            break;
-    }
-    const totalUser = users.length;
-
-    res.send({
-        status: "success",
-        data: {
-            totalUser: totalUser,
-        },
-    });
-};
 
 export const getDataUsage = (req: Request, res: Response): void => {
     let data;
@@ -152,34 +121,6 @@ export const activateUser = (req: Request, res: Response): void => {
     });
 };
 
-export const updateUser = (req: Request, res: Response): void => {
-    const { body } = req;
-    let data;
-
-    if (
-        body.id &&
-        (body.firstName ||
-            body.lastName ||
-            body.eSimNumber ||
-            body.email ||
-            body.phone)
-    )
-        data = casual._updateUser(
-            body.id,
-            body.firstName,
-            body.lastName,
-            body.eSimNumber,
-            body.email,
-            body.phone
-        );
-    else data = {};
-
-    res.send({
-        status: "success",
-        data: data,
-    });
-};
-
 export const getUsers = (req: Request, res: Response): void => {
     const filter = req.query.type?.toString();
 
@@ -223,18 +164,6 @@ export const addNode = (req: Request, res: Response): void => {
         success: false,
     };
     if (body.name && body.serialNo && body.securityCode) data.success = true;
-    res.send({
-        status: "success",
-        data: data,
-    });
-};
-export const updateNode = (req: Request, res: Response): void => {
-    const { body } = req;
-    let data;
-    if (body.id && (body.name || body.serialNo || body.securityCode))
-        data = casual._updateNode(body.id, body.name, body.serialNo);
-    else data = {};
-
     res.send({
         status: "success",
         data: data,

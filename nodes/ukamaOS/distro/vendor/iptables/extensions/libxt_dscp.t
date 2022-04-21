@@ -1,10 +1,11 @@
-:INPUT,FORWARD,OUTPUT
--m dscp --dscp 0;=;OK
--m dscp --dscp 0x3f;=;OK
--m dscp --dscp -1;;FAIL
--m dscp --dscp 0x40;;FAIL
--m dscp --dscp 0x3f --dscp-class CS0;;FAIL
--m dscp --dscp-class CS0;-m dscp --dscp 0x00;OK
--m dscp --dscp-class BE;-m dscp --dscp 0x00;OK
--m dscp --dscp-class EF;-m dscp --dscp 0x2e;OK
--m dscp;;FAIL
+:PREROUTING,INPUT,FORWARD,OUTPUT,POSTROUTING
+*mangle
+-j DSCP --set-dscp 0;=;OK
+-j DSCP --set-dscp 0x3f;=;OK
+-j DSCP --set-dscp -1;;FAIL
+-j DSCP --set-dscp 0x40;;FAIL
+-j DSCP --set-dscp 0x3f --set-dscp-class CS0;;FAIL
+-j DSCP --set-dscp-class CS0;-j DSCP --set-dscp 0x00;OK
+-j DSCP --set-dscp-class BE;-j DSCP --set-dscp 0x00;OK
+-j DSCP --set-dscp-class EF;-j DSCP --set-dscp 0x2e;OK
+-j DSCP;;FAIL

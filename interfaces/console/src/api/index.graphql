@@ -14,8 +14,8 @@ subscription getLatestDataUsage {
     }
 }
 
-query getConnectedUsers($filter: TIME_FILTER!, $orgId: String!) {
-    getConnectedUsers(filter: $filter, orgId: $orgId) {
+query getConnectedUsers($filter: TIME_FILTER!) {
+    getConnectedUsers(filter: $filter) {
         totalUser
     }
 }
@@ -70,8 +70,8 @@ subscription getLatestAlerts {
     }
 }
 
-query getNodesByOrg($orgId: String!) {
-    getNodesByOrg(orgId: $orgId) {
+query getNodesByOrg {
+    getNodesByOrg {
         orgId
         nodes {
             id
@@ -118,8 +118,8 @@ query getNodeApps {
         memory
     }
 }
-query getUsersByOrg($orgId: String!) {
-    getUsersByOrg(orgId: $orgId) {
+query getUsersByOrg {
+    getUsersByOrg {
         id
         name
         email
@@ -128,8 +128,8 @@ query getUsersByOrg($orgId: String!) {
         dataUsage
     }
 }
-query getUser($userInput: UserInput!) {
-    getUser(userInput: $userInput) {
+query getUser($userId: String!) {
+    getUser(userId: $userId) {
         id
         status
         name
@@ -140,26 +140,6 @@ query getUser($userInput: UserInput!) {
         roaming
         dataPlan
         dataUsage
-    }
-}
-
-query getResidents($data: PaginationDto!) {
-    getResidents(data: $data) {
-        meta {
-            count
-            page
-            size
-            pages
-        }
-        residents {
-            residents {
-                id
-                name
-                dataUsage
-            }
-            activeResidents
-            totalResidents
-        }
     }
 }
 
@@ -185,34 +165,28 @@ mutation deactivateUser($id: String!) {
         success
     }
 }
-mutation updateUser($data: UpdateUserDto!) {
-    updateUser(data: $data) {
-        id
-        name
-        sim
-        email
-        phone
-    }
-}
+
 mutation activateUser($data: ActivateUserDto!) {
     activateUser(data: $data) {
         success
     }
 }
-mutation updateNode($data: UpdateNodeDto!) {
-    updateNode(data: $data) {
-        nodeId
+mutation addUser($data: UserInputDto!) {
+    addUser(data: $data) {
         name
-        state
-        type
+        email
+        iccid
+        phone
+        id
     }
 }
-mutation addNode($data: AddNodeDto!) {
-    addNode(data: $data) {
-        nodeId
+mutation updateUser($userId: String!, $data: UserInputDto!) {
+    updateUser(data: $data, userId: $userId) {
         name
-        state
-        type
+        email
+        iccid
+        phone
+        id
     }
 }
 mutation deleteNode($id: String!) {
@@ -221,7 +195,22 @@ mutation deleteNode($id: String!) {
         success
     }
 }
-
+mutation addNode($data: AddNodeDto!) {
+    addNode(data: $data) {
+        nodeId
+        state
+        type
+        name
+    }
+}
+mutation updateNode($data: UpdateNodeDto!) {
+    updateNode(data: $data) {
+        nodeId
+        state
+        type
+        name
+    }
+}
 query getMetricsByTab($data: MetricsByTabInputDTO!) {
     getMetricsByTab(data: $data) {
         to
@@ -247,5 +236,11 @@ subscription getMetricsByTabS {
             x
             y
         }
+    }
+}
+
+mutation updateUserStatus($data: UpdateUserServiceInput!) {
+    updateUserStatus(data: $data) {
+        success
     }
 }
