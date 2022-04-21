@@ -32,7 +32,7 @@ func NewServiceRouter(path string) *ServiceRouter {
 		C:   c,
 		url: url,
 	}
-	logrus.Tracef("Client created with  %+v", rs)
+	logrus.Tracef("Client created %+v for %s ", rs, rs.url.String())
 	return rs
 }
 

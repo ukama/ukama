@@ -125,7 +125,7 @@ func ValidateNodeId(id string) (NodeID, error) {
 	for _, code := range codes {
 		if strings.Contains(id, code) {
 
-			/* Check index of sunstring */
+			/* Check index of substring */
 			idx := strings.Index(id, code)
 			if idx == CODE_IDX {
 				match = true
