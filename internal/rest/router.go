@@ -5,7 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	"github.com/openIoR/services/bootstrap/lookup/internal/db"
+
+	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
 	common "github.com/ukama/openIoR/services/common/rest"
 )
 

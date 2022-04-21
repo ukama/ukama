@@ -1,4 +1,4 @@
-module github.com/openIoR/services/bootstrap/lookup
+module github.com/ukama/openIoR/services/bootstrap/lookup
 
 go 1.17
 
@@ -6,13 +6,16 @@ replace github.com/ukama/openIoR/services/common => ../../common
 
 replace github.com/ukama/openIoR/services/bootstrap/lookup => ./
 
+replace github.com/ukama/openIoR/services/bootstrap/lookup/internal/db => ./internal/db
+
+replace github.com/ukama/openIoR/services/bootstrap/lookup/internal/rest => ./internal/rest
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/jackc/pgtype v1.10.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/openIoR/services/bootstrap/lookup v0.0.0-00010101000000-000000000000
 	github.com/ukama/openIoR/services/common v0.0.0-00010101000000-000000000000
 	gorm.io/driver/postgres v1.3.4
 	gorm.io/gorm v1.23.4
@@ -68,6 +71,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/wI2L/fizz v0.18.1 // indirect

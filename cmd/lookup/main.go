@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/openIoR/services/bootstrap/lookup/internal"
-	"github.com/openIoR/services/bootstrap/lookup/internal/db"
-	"github.com/openIoR/services/bootstrap/lookup/internal/rest"
 	"github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version"
+	"github.com/ukama/openIoR/services/bootstrap/lookup/internal"
+	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/rest"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/openIoR/services/common/cmd"
