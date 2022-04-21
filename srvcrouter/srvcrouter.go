@@ -1,4 +1,4 @@
-package srvc_router
+package srvcrouter
 
 import (
 	"encoding/json"
