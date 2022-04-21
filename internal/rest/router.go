@@ -2,11 +2,11 @@ package rest
 
 import (
 	"net/http"
-	"ukamaX/bootstrap/lookup/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	common "github.com/ukama/ukamaX/common/rest"
+	"github.com/openIoR/services/bootstrap/lookup/internal/db"
+	common "github.com/ukama/openIoR/services/common/rest"
 )
 
 const NodeIdParamName = "nodeId"

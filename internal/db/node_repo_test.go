@@ -4,9 +4,10 @@ import (
 	extsql "database/sql"
 	"log"
 	"testing"
-	int_db "ukamaX/bootstrap/lookup/internal/db"
 
-	"github.com/ukama/ukamaX/common/ukama"
+	int_db "github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
+
+	"github.com/ukama/openIoR/services/common/ukama"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"

@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/ukama/ukamaX/common/sql"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/openIoR/services/common/sql"
+	"github.com/ukama/openIoR/services/common/ukama"
 	"gorm.io/gorm/clause"
 )
 

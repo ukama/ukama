@@ -2,15 +2,16 @@ package main
 
 import (
 	"os"
-	"ukamaX/bootstrap/lookup/cmd/version"
-	"ukamaX/bootstrap/lookup/internal"
-	"ukamaX/bootstrap/lookup/internal/db"
-	"ukamaX/bootstrap/lookup/internal/rest"
+
+	"github.com/openIoR/services/bootstrap/lookup/internal"
+	"github.com/openIoR/services/bootstrap/lookup/internal/db"
+	"github.com/openIoR/services/bootstrap/lookup/internal/rest"
+	"github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/sql"
+	ccmd "github.com/ukama/openIoR/services/common/cmd"
+	"github.com/ukama/openIoR/services/common/config"
+	"github.com/ukama/openIoR/services/common/sql"
 )
 
 func main() {

@@ -1,9 +1,9 @@
-include ../../config.mk
+include ../../../config.mk
 
 .PHONY: integration.test test build lint deps 
 
-build: integration.build
-	env CGO_ENABLED=0 go build -ldflags='-X ukamaX/bootstrap/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
+build: 
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
 
 test:
 	go test -v ./...
