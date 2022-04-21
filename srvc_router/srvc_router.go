@@ -20,15 +20,15 @@ const (
 
 type QueryParams map[string]string
 
-type RouterServer struct {
+type ServiceRouter struct {
 	C   *resty.Client
 	url *url.URL
 }
 
-func NewRouterServer(path string) *RouterServer {
+func NewServiceRouter(path string) *ServiceRouter {
 	url, _ := url.Parse(path)
 	c := resty.New()
-	rs := &RouterServer{
+	rs := &ServiceRouter{
 		C:   c,
 		url: url,
 	}
@@ -36,7 +36,7 @@ func NewRouterServer(path string) *RouterServer {
 	return rs
 }
 
-func (r *RouterServer) RegisterService(apiIf config.ServiceApiIf) error {
+func (r *ServiceRouter) RegisterService(apiIf config.ServiceApiIf) error {
 	j, err := json.Marshal(apiIf)
 	if err != nil {
 		logrus.Errorf("Failed to encode service pattern into json. Error %v", err.Error())
