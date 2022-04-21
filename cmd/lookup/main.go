@@ -7,7 +7,9 @@ import (
 	"github.com/ukama/openIoR/services/bootstrap/lookup/internal"
 	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
 	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/rest"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/openIoR/services/common/cmd"
 	"github.com/ukama/openIoR/services/common/config"
@@ -23,8 +25,17 @@ func main() {
 		log.Infof("Service running in debug mode")
 	}
 	log.Infof("")
+
+	rs := sr.NewServiceRouter(internal.ServiceConf.ServiceRouter)
+
+	/* Register service */
+	if err := rs.RegisterService(internal.ServiceConf.ApiIf); err != nil {
+		logrus.Errorf("Exiting the bootstarp service.")
+		//return
+	}
+
 	d := initDb()
-	runHttpServer(d)
+	runHttpServer(d, rs)
 }
 
 func initDb() sql.Db {
@@ -43,7 +54,7 @@ func initConfig() {
 	config.LoadConfig(internal.ServiceName, internal.ServiceConf)
 }
 
-func runHttpServer(d sql.Db) {
-	r := rest.NewRouter(db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
+func runHttpServer(d sql.Db, rs *sr.ServiceRouter) {
+	r := rest.NewRouter(rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
 	r.Run()
 }

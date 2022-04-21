@@ -8,20 +8,21 @@ import (
 
 	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
 	common "github.com/ukama/openIoR/services/common/rest"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 )
 
 const NodeIdParamName = "nodeId"
 const orgNameParamName = "org"
 
 type Router struct {
-	gin *gin.Engine
-
+	gin      *gin.Engine
+	R        *sr.ServiceRouter
 	nodeRepo db.NodeRepo
 	orgRepo  db.OrgRepo
 }
 
-func NewRouter(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router {
-	r := &Router{nodeRepo: nodeRepo, orgRepo: orgRepo}
+func NewRouter(svcR *sr.ServiceRouter, nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router {
+	r := &Router{R: svcR, nodeRepo: nodeRepo, orgRepo: orgRepo}
 	if !debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
