@@ -79,11 +79,13 @@ static int init_frameworks(Config *config, struct _u_instance *webInst) {
  */
 static void setup_endpoints(Router *router, struct _u_instance *instance) {
 
-  /* GET, POST /route */
+  /* GET, POST, DELETE /route */
   ulfius_add_endpoint_by_val(instance, "GET", EP_ROUTE, NULL, 0,
                              &callback_get_route, router);
   ulfius_add_endpoint_by_val(instance, "POST", EP_ROUTE, NULL, 0,
                              &callback_post_route, router);
+  ulfius_add_endpoint_by_val(instance, "DELETE", EP_ROUTE, NULL, 0,
+			     &callback_delete_route, router);
   /* GET /stats */
   ulfius_add_endpoint_by_val(instance, "GET", EP_STATS, NULL, 0,
                              &callback_get_stats, router);

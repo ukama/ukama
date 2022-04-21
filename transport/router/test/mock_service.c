@@ -14,6 +14,7 @@
 #include <ulfius.h>
 #include <string.h>
 #include <curl/curl.h>
+#include <jansson.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -21,12 +22,20 @@
 #define MAX_LEN  1024
 #define MAX_SIZE 1024
 
+#define JSON_UUID "uuid"
+
 typedef struct _u_request  req_t;
 typedef struct _u_response resp_t;
 typedef struct _u_map      map_t;
 
+struct Response {
+  char *buffer;
+  size_t size;
+};
+
 #define REG_JSON \
   "{ \"pattern\" : %s , \"forward\": { \"ip\": \"%s\", \"port\" : \"%s\" } }"
+#define DEL_JSON "{ \"uuid\" : \"%s\" }"
 
 static void print_map(map_t *map) {
 
@@ -88,11 +97,35 @@ int callback_post(const req_t *request, resp_t *response, void *user_data) {
 }
 
 /*
- * service_register --
+ * response_callback --
+ */
+static size_t response_callback(void *contents, size_t size, size_t nmemb,
+                                void *userp) {
+
+  size_t realsize = size * nmemb;
+  struct Response *response = (struct Response *)userp;
+
+  response->buffer = realloc(response->buffer, response->size + realsize + 1);
+
+  if(response->buffer == NULL) {
+    fprintf(stderr, "Not enough memory to realloc of size: %ld",
+              response->size + realsize + 1);
+    return 0;
+  }
+
+  memcpy(&(response->buffer[response->size]), contents, realsize);
+  response->size += realsize;
+  response->buffer[response->size] = 0; /* Null terminate. */
+
+  return realsize;
+}
+
+/*
+ * service_unregister --
  *
  */
-int service_register(char *rIP, char *rPort, char *ip, char *port,
-		     char *pattern) {
+static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
+
   int ret=FALSE;
   CURL *curl=NULL;
   char json[MAX_LEN] = {0};
@@ -101,9 +134,11 @@ int service_register(char *rIP, char *rPort, char *ip, char *port,
   CURLcode res = CURLE_FAILED_INIT;
   struct curl_slist *headers = NULL;
 
-  sprintf(json, REG_JSON, pattern, ip, port);
+  if (uuidStr == NULL) return FALSE;
+
+  sprintf(json, DEL_JSON, uuidStr);
   sprintf(url, "http://%s:%s/route", rIP, rPort);
-  
+
   curl = curl_easy_init();
   if(!curl) {
     fprintf(stderr, "Error: curl_easy_init failed.\n");
@@ -114,10 +149,76 @@ int service_register(char *rIP, char *rPort, char *ip, char *port,
 
   headers = curl_slist_append(headers, "Expect:");
   headers = curl_slist_append(headers, "Content-Type: application/json");
+
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, -1L);
   curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuffer);
+
+  curl_easy_setopt(curl, CURLOPT_URL, url);
+
+  fprintf(stdout, "Sending un-register JSON: %s\n", json);
+
+  res = curl_easy_perform(curl);
+  if (res != CURLE_OK) {
+    fprintf(stderr, "error buffer: %s \n", errBuffer);
+    fprintf(stderr, "curl error: %s \n", curl_easy_strerror(res));
+    goto cleanup;
+  } else {
+    fprintf(stdout, "\n un-register success. Status: %d \n", res);
+  }
+
+  ret = TRUE;
+
+ cleanup:
+
+  curl_slist_free_all(headers);
+  curl_easy_cleanup(curl);
+
+  return ret;
+}
+
+/*
+ * service_register --
+ *
+ */
+static int service_register(char *rIP, char *rPort, char *ip, char *port,
+		     char *pattern, char **uuidStr) {
+
+  int ret=FALSE;
+  CURL *curl=NULL;
+  char json[MAX_LEN] = {0};
+  char url[MAX_LEN] = {0};
+  char errBuffer[MAX_SIZE] = {0};
+  CURLcode res = CURLE_FAILED_INIT;
+  struct curl_slist *headers = NULL;
+  struct Response response;
+
+  json_t *jRoot=NULL, *jID=NULL;
+
+  sprintf(json, REG_JSON, pattern, ip, port);
+  sprintf(url, "http://%s:%s/route", rIP, rPort);
+
+  curl = curl_easy_init();
+  if(!curl) {
+    fprintf(stderr, "Error: curl_easy_init failed.\n");
+    goto cleanup;
+  }
+
+  response.buffer = (char *)malloc(1);
+  response.size   = 0;
+
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "ukama/0.1");
+
+  headers = curl_slist_append(headers, "Expect:");
+  headers = curl_slist_append(headers, "Content-Type: application/json");
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, -1L);
+  curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errBuffer);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, response_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&response);
 
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
@@ -132,12 +233,30 @@ int service_register(char *rIP, char *rPort, char *ip, char *port,
     fprintf(stdout, "\nRegistration success. Status: %d \n", res);
   }
 
+  /* get UUID */
+  jRoot = json_loads(response.buffer, JSON_DECODE_ANY, NULL);
+  if (!jRoot) {
+    fprintf(stderr, "Can not load str into JSON object. Str: %s",
+	    response.buffer);
+    goto cleanup;
+  }
+
+  jID = json_object_get(jRoot, JSON_UUID);
+  if (jID == NULL) {
+    fprintf(stderr, "Unable to find %s in response", JSON_UUID);
+    goto cleanup;
+  }
+
+  *uuidStr = strdup(json_string_value(jID));
+
   ret = TRUE;
-  
+
  cleanup:
   
   curl_slist_free_all(headers);
   curl_easy_cleanup(curl);
+  json_decref(jRoot);
+
   return ret;
 }
 
@@ -159,6 +278,7 @@ int main(int argc, char **argv) {
   char *kvPattern, *reply;
   char *rHost;
   char *port, *rPort;
+  char *uuidStr=NULL;
   struct _u_instance inst;
 
   if (argc<6) {
@@ -195,10 +315,15 @@ int main(int argc, char **argv) {
   }
 
   /* register the service to the router */
-  service_register(rHost, rPort, "127.0.0.1", port, kvPattern);
+  service_register(rHost, rPort, "127.0.0.1", port, kvPattern, &uuidStr);
+  fprintf(stdout, "UUID: %s\n", uuidStr);
 
   fprintf(stdout, "Press any key to exit ... \n");
   getchar();
+
+  /*unregister the service from the router */
+  service_unregister(rHost, rPort, uuidStr);
+  fprintf(stdout, "Service un-registered\n");
 
   fprintf(stdout, "End service\n");
 

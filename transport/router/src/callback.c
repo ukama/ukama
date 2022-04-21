@@ -122,6 +122,59 @@ static int add_service_entry(Router **router, Service *service) {
 }
 
 /*
+ * is_valid_uuid --
+ *
+ */
+static int is_valid_uuid(Router *router, uuid_t uuid) {
+
+  Service *ptr=NULL;
+
+  if (router==NULL) return FALSE;
+
+  for (ptr=(router)->services; ptr; ptr=ptr->next) {
+    if (uuid_compare(uuid, ptr->uuid) == 0){
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/*
+ * remove_service_entry
+ *
+ */
+static void remove_service_entry(Router **router, uuid_t uuid) {
+
+  Service *ptr=NULL, *tmp=NULL;
+
+  if (*router == NULL)            return;
+  if ((*router)->services == NULL) return;
+
+  /* base case */
+  if (uuid_compare(uuid, (*router)->services->uuid) == 0) {
+    if ((*router)->services->next) {
+      ptr = (*router)->services;
+      (*router)->services = ptr->next;
+      free_service(ptr);
+    } else {
+      free_service((*router)->services);
+      (*router)->services=NULL;
+    }
+    return;
+  }
+
+  for (ptr=(*router)->services; ptr->next; ptr=ptr->next) {
+    if (uuid_compare(uuid, ptr->next->uuid) == 0){
+      tmp = (ptr->next)->next;
+      free_service(ptr->next);
+      ptr->next = tmp;
+      return;
+    }
+  }
+}
+
+/*
  * parse_request_params --
  *
  */
@@ -140,32 +193,28 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     return FALSE;
   }
 
-  if (*pattern == NULL) {
-    *pattern = (Pattern *)calloc(1, sizeof(Pattern));
-    if (*pattern == NULL) {
-      log_error("Error allocating memory of size: %d", sizeof(Pattern));
-      return FALSE;
-    }
-  }
-
-  ptr = *pattern;
-
   keys = u_map_enum_keys(map);
   for (i=0; keys[i] != NULL; i++) {
     value = u_map_get(map, keys[i]);
 
-    if (ptr == NULL) {
-      ptr = (Pattern *)calloc(1, sizeof(Pattern));
-      if (ptr == NULL) {
-	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+    if (*pattern == NULL) {
+      *pattern = (Pattern *)calloc(1, sizeof(Pattern));
+      if (*pattern == NULL) {
+      	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
       }
+      ptr = *pattern;
+    } else {
+      ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
+      if (ptr->next == NULL) {
+	      log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
+      }
+      ptr = ptr->next;
     }
 
     ptr->key   = strdup(keys[i]);
     ptr->value = strdup(value);
-
-    ptr = ptr->next;
   }
 
   return TRUE;
@@ -273,6 +322,71 @@ int callback_post_route(const struct _u_request *request,
   json_decref(jResp);
   json_decref(jreq);
   free(service);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+/*
+ * callback_delete_route --
+ *
+ */
+int callback_delete_route(const struct _u_request *request,
+			  struct _u_response *response,
+			  void *user_data) {
+
+  int retCode;
+  json_t *jreq=NULL;
+  json_error_t jerr;
+  Router *router=NULL;
+  const char *statusStr=NULL;
+  char *uuidStr=NULL;
+  uuid_t uuid;
+
+  router = (Router *)user_data;
+
+  log_request(request);
+
+  /* get json body */
+  jreq = ulfius_get_json_body_request(request, &jerr);
+  if (!jreq) {
+    log_error("json error for DELETE %s: %s", EP_ROUTE, jerr.text);
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  } else {
+    deserialize_delete_route_request(&uuidStr, jreq);
+  }
+
+  /* retrieve UUID */
+  if (uuid_parse(uuidStr, uuid) < 0) {
+    log_error("Error parsing the UUID into binary: %s", uuidStr);
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  }
+
+  if (is_valid_uuid(router, uuid) == FALSE) {
+    log_error("Invalid UUID recevied for Delete method");
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  }
+
+  /* remove the service from the router list. */
+  remove_service_entry(&router, uuid);
+
+  retCode   = HttpStatus_OK;
+  statusStr = "";
+
+ reply:
+  ulfius_set_string_body_response(response, retCode, statusStr);
+  log_debug("Delete response: %d %s", retCode, statusStr);
+
+  free(uuidStr);
+  json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
 }
