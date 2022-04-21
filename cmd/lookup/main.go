@@ -19,7 +19,11 @@ import (
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
 
+	/* Log level */
+	logrus.SetLevel(logrus.TraceLevel)
+
 	log.Infof("Starting the lookup service")
+
 	initConfig()
 	if internal.ServiceConf.DebugMode {
 		log.Infof("Service running in debug mode")

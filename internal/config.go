@@ -16,27 +16,19 @@ var ServiceConf *Config
 // NewConfig creates new config with default values. Those values will be overridden by Viper
 func NewConfig() *Config {
 	return &Config{
+		ServiceRouter: "http://localhost:8090",
 		ApiIf: config.ServiceApiIf{
 			Name: "lookup",
 			P: config.Pattern{
 				Routes: []config.Route{
 					{
-						"node": "*", "looking_for": "info", "Path": "/node/",
+						"node": "*", "looking_for": "node", "org": "*", "Path": "/orgs/node",
 					},
 					{
-						"node": "*", "looking_to": "update", "Path": "/node/",
+						"node": "*", "looking_to": "add_node", "org": "*", "Path": "/orgs/node",
 					},
 					{
-						"node": "*", "looking_to": "delete", "Path": "/node/",
-					},
-					{
-						"node": "*", "looking_for": "info", "status": "*", "Path": "/node/status",
-					},
-					{
-						"node": "*", "looking_to": "status", "status": "*", "Path": "/node/status",
-					},
-					{
-						"node": "*", "looking_for": "list", "Path": "/node/all",
+						"org": "*", "looking_for": "add_org", "Path": "/orgs/",
 					},
 				},
 			},
