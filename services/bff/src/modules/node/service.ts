@@ -2,8 +2,6 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
-    NodeDetailDto,
-    NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
     MetricDto,
@@ -11,44 +9,25 @@ import {
     NodeAppResponse,
     MetricRes,
     OrgNodeDto,
+    NodeResponse,
 } from "./types";
 import {
     ParsedCookie,
-    MetricsByTabInputDTO,
     MetricsInputDTO,
-    PaginationDto,
+    MetricsByTabInputDTO,
 } from "../../common/types";
 import NodeMapper from "./mapper";
 import { INodeService } from "./interface";
+import { checkError } from "../../errors";
 import { NetworkDto } from "../network/types";
+import { getMetricTitleByType } from "../../utils";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { DeactivateResponse } from "../user/types";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
-import { checkError, HTTP404Error, Messages } from "../../errors";
-import { getMetricTitleByType, getPaginatedOutput } from "../../utils";
 
 @Service()
 export class NodeService implements INodeService {
-    getNodes = async (req: PaginationDto): Promise<NodesResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODES,
-            params: req,
-        });
-
-        if (checkError(res)) throw new Error(res.message);
-
-        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const nodes = NodeMapper.dtoToDto(res);
-
-        if (!nodes) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-        return {
-            nodes,
-            meta,
-        };
-    };
-
     addNode = async (
         req: AddNodeDto,
         cookie: ParsedCookie
@@ -99,12 +78,17 @@ export class NodeService implements INodeService {
         });
         return NodeMapper.dtoToNodesDto(cookie.orgId, res);
     };
-    getNodeDetials = async (): Promise<NodeDetailDto> => {
+    getNode = async (
+        nodeId: string,
+        cookie: ParsedCookie
+    ): Promise<NodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_DETAIL,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${nodeId}`,
+            headers: cookie.header,
         });
-        return res.data;
+        if (checkError(res)) throw new Error(res.message);
+        return res;
     };
     getNetwork = async (): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({

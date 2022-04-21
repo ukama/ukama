@@ -13,7 +13,6 @@ import {
     getNetwork,
     deleteRes,
     getUserByID,
-    getNodeDetails,
     getNodeNetwork,
     getSoftwareLogs,
     getNodeApps,
@@ -34,7 +33,6 @@ export const mockServer = (app: Express): void => {
     app.post("/user/deactivate_user", deleteRes);
     app.post("/node/delete_node", deleteRes);
     app.get("/user/get_user", getUserByID);
-    app.get("/node/node_details", getNodeDetails);
     app.get("/node/get_network", getNodeNetwork);
     app.get("/software_logs", getSoftwareLogs);
     app.get("/node_apps", getNodeApps);

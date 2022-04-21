@@ -1,8 +1,6 @@
 import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 import { INodeMapper } from "./interface";
 import {
-    NodeResponseDto,
-    NodeResponse,
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDto,
@@ -12,17 +10,6 @@ import {
 import * as defaultCasual from "casual";
 
 class NodeMapper implements INodeMapper {
-    dtoToDto = (req: NodeResponse): NodeResponseDto => {
-        const nodes = req.data;
-        let activeNodes = 0;
-        const totalNodes = req.length;
-        req.data.forEach(node => {
-            if (node.status === ORG_NODE_STATE.ONBOARDED) {
-                activeNodes++;
-            }
-        });
-        return { nodes, activeNodes, totalNodes };
-    };
     dtoToNodesDto = (
         orgId: string,
         req: OrgNodeResponse
