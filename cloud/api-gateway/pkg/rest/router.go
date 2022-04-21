@@ -2,11 +2,12 @@ package rest
 
 import (
 	"fmt"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/ukama/ukamaX/common/rest"
 	"github.com/wI2L/fizz/openapi"
@@ -43,7 +44,7 @@ type RouterConfig struct {
 
 type Clients struct {
 	Registry *client.Registry
-	Hss      *client.Hss
+	User     *client.Users
 }
 
 type AuthMiddleware interface {
@@ -54,7 +55,7 @@ type AuthMiddleware interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Registry = client.NewRegistry(endpoints.Registry, endpoints.TimeoutSeconds)
-	c.Hss = client.NewHss(endpoints.Hss, endpoints.TimeoutSeconds)
+	c.User = client.NewUsers(endpoints.Hss, endpoints.TimeoutSeconds)
 	return c
 }
 
@@ -142,14 +143,24 @@ func (r *Router) init() {
 		// hss
 		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
 			"Do not confuse with organization users")
-		hss.GET("", nil, tonic.Handler(r.getUsersHandler, http.StatusOK))
-		hss.POST("", []fizz.OperationOption{}, tonic.Handler(r.postUsersHandler, http.StatusCreated))
-		hss.DELETE("/:user", nil, tonic.Handler(r.deleteUserHandler, http.StatusOK))
-		hss.GET("/:user", nil, tonic.Handler(r.getUserHandler, http.StatusOK))
-		hss.PUT("/:user", nil, tonic.Handler(r.updateUserHandler, http.StatusOK))
-		hss.PUT("/:user/sims/:iccid/services", nil, tonic.Handler(r.setSimStatusHandler, http.StatusOK))
+		hss.GET("", formatDoc("Get list of users", ""), tonic.Handler(r.getUsersHandler, http.StatusOK))
+		hss.POST("", formatDoc("Create new user", ""), tonic.Handler(r.postUsersHandler, http.StatusCreated))
+		hss.DELETE("/:user", formatDoc("Delete user", ""), tonic.Handler(r.deleteUserHandler, http.StatusOK))
+		hss.GET("/:user", formatDoc("Get user info", ""), tonic.Handler(r.getUserHandler, http.StatusOK))
+		hss.PATCH("/:user", formatDoc("Update user's information and deactivates user",
+			"All fields are optional. User could be deactivated by setting isDeactivated flag to true. If a user is deactivated, all his SIM cards are purged. This operation is not recoverable"),
+			tonic.Handler(r.updateUserHandler, http.StatusOK))
+		hss.PUT("/:user/sims/:iccid/services", formatDoc("Enable or disable services for a SIM card", ""),
+			tonic.Handler(r.setSimStatusHandler, http.StatusOK))
 
 	}
+}
+
+func formatDoc(summary string, description string) []fizz.OperationOption {
+	return []fizz.OperationOption{func(info *openapi.OperationInfo) {
+		info.Summary = summary
+		info.Description = description
+	}}
 }
 
 //
@@ -222,11 +233,11 @@ func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*p
 
 func (r *Router) getUsersHandler(c *gin.Context) (*hsspb.ListResponse, error) {
 	orgName := r.getOrgNameFromRoute(c)
-	return r.clients.Hss.GetUsers(orgName)
+	return r.clients.User.GetUsers(orgName)
 }
 
 func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddResponse, error) {
-	return r.clients.Hss.AddUser(req.Org, &hsspb.User{
+	return r.clients.User.AddUser(req.Org, &hsspb.User{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -235,27 +246,36 @@ func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddR
 }
 
 func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*hsspb.User, error) {
-	resp, err := r.clients.Hss.UpdateUser(req.UserId, &hsspb.UserAttributes{
+	if req.IsDeactivated {
+		err := r.clients.User.DeactivateUser(req.UserId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp, err := r.clients.User.UpdateUser(req.UserId, &hsspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
 	})
+
 	if err != nil {
 		return nil, err
 	}
+
 	return resp.User, nil
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
-	return r.clients.Hss.Delete(req.UserId)
+	return r.clients.User.Delete(req.UserId)
 }
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*hsspb.GetResponse, error) {
-	return r.clients.Hss.Get(req.UserId)
+	return r.clients.User.Get(req.UserId)
 }
 
 func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) error {
-	return r.clients.Hss.SetSimStatus(&hsspb.SetSimStatusRequest{
+	return r.clients.User.SetSimStatus(&hsspb.SetSimStatusRequest{
 		Iccid:   req.Iccid,
 		Carrier: simServicesToPbService(req.Carrier),
 		Ukama:   simServicesToPbService(req.Ukama),

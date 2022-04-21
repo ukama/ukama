@@ -273,7 +273,7 @@ func Test_HssMethods(t *testing.T) {
 
 	m := hssmocks.UserServiceClient{}
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-		Hss: client.NewTestHssFromClient(&m),
+		User: client.NewTestHssFromClient(&m),
 	}, routerConfig).f.Engine()
 
 	body, err := json.Marshal(UserRequest{Name: firstName, SimToken: simToken})
@@ -327,7 +327,7 @@ func Test_HssMethods(t *testing.T) {
 	t.Run("DeleteUser", func(t *testing.T) {
 		m = hssmocks.UserServiceClient{}
 		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteRequest) bool {
-			return r.Uuid == userUuid
+			return r.UserId == userUuid
 		})).Return(&hsspb.DeleteResponse{}, nil)
 		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
@@ -367,6 +367,38 @@ func Test_HssMethods(t *testing.T) {
 		assert.Contains(t, w.Body.String(), userUuid)
 		assert.Contains(t, w.Body.String(), orgName)
 		assert.Contains(t, w.Body.String(), firstName)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("UpdateUser", func(t *testing.T) {
+		const changedName = "changed"
+		m = hssmocks.UserServiceClient{}
+		m.On("DeactivateUser", mock.Anything, mock.MatchedBy(func(r *hsspb.DeactivateUserRequest) bool {
+			return r.UserId == userUuid
+		})).Return(&hsspb.DeactivateUserResponse{}, nil)
+		m.On("Update", mock.Anything, mock.MatchedBy(func(r *hsspb.UpdateRequest) bool {
+			return r.UserId == userUuid && r.User.Name == changedName
+		})).Return(&hsspb.UpdateResponse{User: &hsspb.User{
+			Name:          changedName,
+			IsDeactivated: true,
+		}}, nil)
+		updBody, err := json.Marshal(UpdateUserRequest{
+			Name:          changedName,
+			IsDeactivated: true,
+		})
+		if err != nil {
+			assert.FailNow(t, "error marshaling request", err.Error())
+		}
+
+		req, _ := http.NewRequest("PATCH", "/orgs/"+orgName+"/users/"+userUuid, bytes.NewReader(updBody))
+		req.Header.Set("token", "bearer 123")
+		w := httptest.NewRecorder()
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, http.StatusOK, w.Code)
 		m.AssertExpectations(t)
 	})
 }

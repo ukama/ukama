@@ -83,6 +83,29 @@ func (_m *SimManagerServiceServer) SetServiceStatus(_a0 context.Context, _a1 *si
 	return r0, r1
 }
 
+// TerminateSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *simmgr.TerminateSimRequest) (*simmgr.TerminateSimResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *simmgr.TerminateSimResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *simmgr.TerminateSimRequest) *simmgr.TerminateSimResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*simmgr.TerminateSimResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *simmgr.TerminateSimRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedSimManagerServiceServer provides a mock function with given fields:
 func (_m *SimManagerServiceServer) mustEmbedUnimplementedSimManagerServiceServer() {
 	_m.Called()

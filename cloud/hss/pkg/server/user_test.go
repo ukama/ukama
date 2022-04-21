@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukamaX/cloud/hss/mocks"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	mocks2 "github.com/ukama/ukamaX/cloud/hss/pb/gen/mocks"
+	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/sims"
 	"testing"
@@ -19,10 +20,12 @@ const testImis = "1"
 func Test_AddInternal(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
-	imsiRepo := &mocks.ImsiRepo{}
+	hssClient := &mocks2.ImsiServiceClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
 	simProvider := &mocks.SimProvider{}
+	hssProv := &mocks.ImsiClientProvider{}
+	hssProv.On("GetClient").Return(hssClient, nil)
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -35,11 +38,11 @@ func Test_AddInternal(t *testing.T) {
 		Email: userRequest.Email, Phone: userRequest.Phone,
 		Name: userRequest.Name}, nil)
 
-	imsiRepo.On("Add", testOrg, mock.MatchedBy(func(n *db.Imsi) bool {
-		return n.Imsi == testImis
-	})).Return(nil)
+	hssClient.On("Add", mock.MatchedBy(func(n *pb.AddImsiRequest) bool {
+		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
+	})).Return(&pb.AddImsiResponse{}, nil)
 
-	srv := NewUserService(userRepo, imsiRepo, simRepo, simProvider, simManager, "simManager")
+	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 
 	// Act
 	addResp, err := srv.AddInternal(context.Background(), &pb.AddInternalRequest{
@@ -61,9 +64,11 @@ const TEST_SIM_TOKEN = "QQQQQQQQQQQ"
 func Test_Add(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
-	imsiRepo := &mocks.ImsiRepo{}
+	hssClient := &mocks2.ImsiServiceClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
+	hssProv := &mocks.ImsiClientProvider{}
+	hssProv.On("GetClient").Return(hssClient, nil)
 
 	userRequest := &pb.User{
 		Name:  "Joe",
@@ -76,15 +81,15 @@ func Test_Add(t *testing.T) {
 		Email: userRequest.Email, Phone: userRequest.Phone,
 		Name: userRequest.Name}, nil)
 
-	imsiRepo.On("Add", testOrg, mock.MatchedBy(func(n *db.Imsi) bool {
-		return n.Imsi == testImis
-	})).Return(nil)
+	hssClient.On("Add", mock.MatchedBy(func(n *pb.AddImsiRequest) bool {
+		return n.Imsi.Imsi == testImis && n.Imsi.UserId == userUuid.String()
+	})).Return(&pb.AddImsiResponse{}, nil)
 
 	t.Run("WithSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDWithCode", TEST_SIM_TOKEN).Return(sims.GetDubugIccid(), nil)
 
-		srv := NewUserService(userRepo, imsiRepo, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:      testOrg,
@@ -105,7 +110,7 @@ func Test_Add(t *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDFromPool").Return(sims.GetDubugIccid(), nil)
 
-		srv := NewUserService(userRepo, imsiRepo, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:  testOrg,
@@ -122,7 +127,7 @@ func Test_Add(t *testing.T) {
 
 	t.Run("WithDebugSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
-		srv := NewUserService(userRepo, imsiRepo, simRepo, simProvider, simManager, "simManager")
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:      testOrg,
@@ -139,7 +144,48 @@ func Test_Add(t *testing.T) {
 	})
 }
 
-func Test_Validation(t *testing.T) {
+func Test_Deactivate(t *testing.T) {
+	// Arrange
+	userRepo := &mocks.UserRepo{}
+	hssClient := &mocks2.ImsiServiceClient{}
+	simRepo := &mocks.SimcardRepo{}
+	simManager := &mocks2.SimManagerServiceClient{}
+	simProvider := &mocks.SimProvider{}
+	hssProv := &mocks.ImsiClientProvider{}
+	hssProv.On("GetClient").Return(hssClient, nil)
+
+	iccid := sims.GetDubugIccid()
+	userId := uuid.NewString()
+	userRepo.On("Get", uuid.MustParse(userId)).Return(&db.User{
+		Uuid: uuid.MustParse(userId),
+		Simcards: []db.Simcard{
+			{
+				Iccid: iccid,
+			},
+		},
+	}, nil)
+	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {
+		return u.Uuid.String() == userId
+	})).Return(&db.User{}, nil)
+
+	simManager.On("TerminateSim", mock.Anything, mock.MatchedBy(func(t *pbclient.TerminateSimRequest) bool {
+		return t.Iccid == iccid
+	})).Return(&pbclient.TerminateSimResponse{}, nil)
+
+	hssClient.On("Delete", mock.Anything, mock.Anything).Return(&pb.DeleteImsiResponse{}, nil)
+
+	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+
+	_, err := srv.DeactivateUser(context.Background(), &pb.DeactivateUserRequest{
+		UserId: userId,
+	})
+	if assert.NoError(t, err, "Error deactivating user") {
+		hssClient.AssertExpectations(t)
+		userRepo.AssertExpectations(t)
+	}
+}
+
+func Test_AddValidation(t *testing.T) {
 	const name = "nn"
 	tests := []struct {
 		name        string
@@ -210,7 +256,7 @@ func Test_Validation(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run("addRequest_"+test.name, func(tt *testing.T) {
+		t.Run(test.name, func(tt *testing.T) {
 
 			// test add requeset
 			r := &pb.AddRequest{
@@ -221,12 +267,82 @@ func Test_Validation(t *testing.T) {
 			assertValidationErr(tt, err, test.expectErr, test.errContains)
 		})
 	}
+}
+
+func Test_UpdateValidation(t *testing.T) {
+	const name = "nn"
+	tests := []struct {
+		name        string
+		user        *pb.User
+		expectErr   bool
+		errContains string
+	}{
+		{name: "emptyName",
+			user:      &pb.User{},
+			expectErr: false,
+		},
+		{name: "email",
+			user:        &pb.User{Email: "test_example.com", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+		{name: "emailNoTopLevelDomain",
+			user:        &pb.User{Email: "test@example", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+		{name: "emailNotRequired",
+			user:      &pb.User{Name: name},
+			expectErr: false,
+		},
+		{name: "emailIsEmpty",
+			user:        &pb.User{Email: "@example.com", Name: name},
+			expectErr:   true,
+			errContains: "must be an email format",
+		},
+
+		{name: "phone1",
+			user:      &pb.User{Phone: "(+351) 282 43 50 50", Name: name},
+			expectErr: false,
+		},
+		{name: "phone2",
+			user:      &pb.User{Phone: "90191919908", Name: name},
+			expectErr: false,
+		},
+
+		{name: "phone3",
+			user:      &pb.User{Phone: "555-8909", Name: name},
+			expectErr: false,
+		},
+		{name: "phone4",
+			user:      &pb.User{Phone: "001 6867684", Name: name},
+			expectErr: false,
+		},
+		{name: "phone5",
+			user:      &pb.User{Phone: "1 (234) 567-8901", Name: name},
+			expectErr: false,
+		},
+		{name: "phone6",
+			user:      &pb.User{Phone: "+1 34 567-8901", Name: name},
+			expectErr: false,
+		},
+		{name: "phoneEmpty",
+			user:      &pb.User{Name: name},
+			expectErr: false,
+		},
+
+		{name: "phoneErr",
+			user:        &pb.User{Phone: "sdfewr", Name: name},
+			expectErr:   true,
+			errContains: "phone number",
+		},
+	}
 
 	for _, test := range tests {
-		t.Run("updateRequest_"+test.name, func(tt *testing.T) {
+		t.Run(test.name, func(tt *testing.T) {
 			// test update request
 			ru := &pb.UpdateRequest{
-				Uuid: uuid.NewString(),
+				UserId: uuid.NewString(),
 				User: &pb.UserAttributes{
 					Phone: test.user.Phone,
 					Email: test.user.Email,

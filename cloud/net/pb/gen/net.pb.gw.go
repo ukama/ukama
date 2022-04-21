@@ -77,7 +77,7 @@ func RegisterNnsHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -139,7 +139,7 @@ func RegisterNnsHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/ukama.network.v1.Nns/List", runtime.WithHTTPPathPattern("/v1/nns/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

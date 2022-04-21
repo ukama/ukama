@@ -72,7 +72,7 @@ func (r *imsiRepo) GetByImsi(imsi string) (*Imsi, error) {
 
 func (r *imsiRepo) GetImsiByUserUuid(userUuid uuid.UUID) ([]*Imsi, error) {
 	var imsis []*Imsi
-	result := r.db.GetGormDb().Where("user_uuid=?", userUuid).Find(&imsis)
+	result := r.db.GetGormDb().Preload(clause.Associations).Where("user_uuid=?", userUuid).Find(&imsis)
 	if result.Error != nil {
 		return nil, result.Error
 	}

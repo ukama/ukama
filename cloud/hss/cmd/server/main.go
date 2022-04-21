@@ -59,41 +59,44 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to create device feeder request generator. Error: %v", err)
 	}
 
+	// hss service
 	subs := server.NewHssEventsSubscribers(pkg.NewHssNotifications(serviceConfig.Queue), reqGenerator)
+	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), subs)
+
+	// users service
 	client, conn := newSimManagerClient()
 	defer conn.Close()
 
 	simPoolRepo := db.NewIccidpoolRepo(gormdb)
-
-	imsiService := server.NewImsiService(db.NewImsiRepo(gormdb), db.NewGutiRepo(gormdb), subs)
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
-		db.NewImsiRepo(gormdb),
+		pkg.NewImsiClientProvider(serviceConfig.HssHost),
 		db.NewSimcardRepo(gormdb),
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPoolRepo),
 		client,
 		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host)
 
-	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
+	rpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
 		gen.RegisterImsiServiceServer(s, imsiService)
 		gen.RegisterUserServiceServer(s, userService)
 	})
+	rpcServer.StartServer()
 
-	grpcServer.StartServer()
 }
 
 func newSimManagerClient() (client pbclient.SimManagerServiceClient, connection io.Closer) {
 	var conn *grpc.ClientConn
-	if serviceConfig.SimManager.Disabled {
-		return &pkg.SimManagerStub{}, &pkg.CloserStub{}
-	}
 
 	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	log.Infoln("Connecting to service ", serviceConfig.SimManager.Host)
 
-	conn, err := grpc.DialContext(ctx, serviceConfig.SimManager.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.DialContext(ctx, serviceConfig.SimManager.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithConnectParams(
+			grpc.ConnectParams{
+				MinConnectTimeout: time.Second * 5,
+			}))
 	if err != nil {
 		log.Fatalf("Failed to connect to service %s. Error: %v", serviceConfig.SimManager.Host, err)
 	}

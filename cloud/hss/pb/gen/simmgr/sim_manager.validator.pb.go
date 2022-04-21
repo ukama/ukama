@@ -85,3 +85,15 @@ func (this *SetServiceStatusRequest) Validate() error {
 func (this *SetServiceStatusResponse) Validate() error {
 	return nil
 }
+
+var _regex_TerminateSimRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *TerminateSimRequest) Validate() error {
+	if !_regex_TerminateSimRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	return nil
+}
+func (this *TerminateSimResponse) Validate() error {
+	return nil
+}

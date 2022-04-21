@@ -39,13 +39,13 @@ func (_m *UserRepo) Add(user *db.User, orgName string, nestedFunc func(*db.User,
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: _a0
-func (_m *UserRepo) Delete(_a0 uuid.UUID) error {
-	ret := _m.Called(_a0)
+// Delete provides a mock function with given fields: _a0, nestedFunc
+func (_m *UserRepo) Delete(_a0 uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
+	ret := _m.Called(_a0, nestedFunc)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, func(uuid.UUID, *gorm.DB) error) error); ok {
+		r0 = rf(_a0, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

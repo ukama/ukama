@@ -61,9 +61,10 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - HSSHOST=hss:9091
     restart: always
     networks:
-      - ukama-net
+      - ukama-net      
 
   listener:
     build:
@@ -123,21 +124,21 @@ services:
       - DNS_NODEDOMAIN=node.mesh
       - ETCDHOST=etcd:2379
 
-  coredns:
-    image: coredns/coredns:latest
-    command: -conf /etc/coredns/Corefile -dns.port 53
-    container_name: coredns
-    restart: on-failure
-    expose:
-      - '53'
-      - '53/udp'
-    ports:
-      - '53:53'
-      - '53:53/udp'
-    volumes:
-      - './net/DEBUG/Corefile:/etc/coredns/Corefile'
-    networks:
-      - ukama-net
+  # coredns:
+  #   image: coredns/coredns:latest
+  #   command: -conf /etc/coredns/Corefile -dns.port 53
+  #   container_name: coredns
+  #   restart: on-failure
+  #   expose:
+  #     - '53'
+  #     - '53/udp'
+  #   ports:
+  #     - '53:53'
+  #     - '53:53/udp'
+  #   volumes:
+  #     - './net/DEBUG/Corefile:/etc/coredns/Corefile'
+  #   networks:
+  #     - ukama-net
   
 
   etcd:
@@ -164,6 +165,17 @@ services:
     environment:
       - DEBUGMODE=true
       - SERVICES_HSS=hss:9091
+
+  sim-manager:
+    build: ./dummy-sim-manager
+    ports:
+      - "9096:9090"
+    environment:
+      - DEBUGMODE=true
+      - ETCDHOST=etcd:2379
+    restart: always
+    networks:
+      - ukama-net
 
 networks:
   ukama-net:

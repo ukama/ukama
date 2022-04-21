@@ -2,28 +2,29 @@ package client
 
 import (
 	"context"
+	"time"
+
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"time"
 )
 
-type Hss struct {
+type Users struct {
 	conn    *grpc.ClientConn
 	client  pb.UserServiceClient
 	timeout int
 	host    string
 }
 
-func NewHss(host string, timeout int) *Hss {
+func NewUsers(host string, timeout int) *Users {
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewUserServiceClient(conn)
 
-	return &Hss{
+	return &Users{
 		conn:    conn,
 		client:  client,
 		timeout: timeout,
@@ -31,8 +32,8 @@ func NewHss(host string, timeout int) *Hss {
 	}
 }
 
-func NewTestHssFromClient(registryClient pb.UserServiceClient) *Hss {
-	return &Hss{
+func NewTestHssFromClient(registryClient pb.UserServiceClient) *Users {
+	return &Users{
 		host:    "localhost",
 		timeout: 1,
 		conn:    nil,
@@ -40,23 +41,23 @@ func NewTestHssFromClient(registryClient pb.UserServiceClient) *Hss {
 	}
 }
 
-func (r *Hss) Close() {
+func (r *Users) Close() {
 	r.conn.Close()
 }
 
-func (r *Hss) AddUser(orgName string, user *pb.User, simToken string) (*pb.AddResponse, error) {
+func (r *Users) AddUser(orgName string, user *pb.User, simToken string) (*pb.AddResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
 	return r.client.Add(ctx, &pb.AddRequest{Org: orgName, User: user, SimToken: simToken})
 }
 
-func (r *Hss) UpdateUser(userId string, user *pb.UserAttributes) (*pb.UpdateResponse, error) {
+func (r *Users) UpdateUser(userId string, user *pb.UserAttributes) (*pb.UpdateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
 	return r.client.Update(ctx, &pb.UpdateRequest{
-		Uuid: userId,
+		UserId: userId,
 		User: &pb.UserAttributes{
 			Email: user.Email,
 			Phone: user.Phone,
@@ -65,7 +66,7 @@ func (r *Hss) UpdateUser(userId string, user *pb.UserAttributes) (*pb.UpdateResp
 	})
 }
 
-func (r *Hss) GetUsers(orgName string) (*pb.ListResponse, error) {
+func (r *Users) GetUsers(orgName string) (*pb.ListResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
@@ -74,25 +75,33 @@ func (r *Hss) GetUsers(orgName string) (*pb.ListResponse, error) {
 	})
 }
 
-func (r *Hss) Delete(userId string) error {
+func (r *Users) Delete(userId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
-	_, err := r.client.Delete(ctx, &pb.DeleteRequest{Uuid: userId})
+	_, err := r.client.Delete(ctx, &pb.DeleteRequest{UserId: userId})
 	return err
 }
 
-func (r *Hss) Get(userId string) (*pb.GetResponse, error) {
+func (r *Users) Get(userId string) (*pb.GetResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
-	return r.client.Get(ctx, &pb.GetRequest{Uuid: userId})
+	return r.client.Get(ctx, &pb.GetRequest{UserId: userId})
 }
 
-func (r *Hss) SetSimStatus(req *pb.SetSimStatusRequest) error {
+func (r *Users) SetSimStatus(req *pb.SetSimStatusRequest) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
 	_, err := r.client.SetSimStatus(ctx, req)
+	return err
+}
+
+func (r *Users) DeactivateUser(userId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	_, err := r.client.DeactivateUser(ctx, &pb.DeactivateUserRequest{UserId: userId})
 	return err
 }

@@ -13,11 +13,12 @@ type UserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
-	Name    string `json:"name,omitempty"`
-	Email   string `json:"email,omitempty"`
-	Phone   string `json:"phone,omitempty"`
+	OrgName       string `path:"org" validate:"required"`
+	UserId        string `path:"user" validate:"required"`
+	Name          string `json:"name,omitempty"`
+	Email         string `json:"email,omitempty"`
+	Phone         string `json:"phone,omitempty"`
+	IsDeactivated bool   `json:"isDeactivated,omitempty"`
 }
 
 type SetSimStatusRequest struct {

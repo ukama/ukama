@@ -5,7 +5,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen/simmgr";
 
-package sim_manager.v1;
+package ukama.sim_manager.v1;
 
 import "validator.proto";
 import "google/protobuf/wrappers.proto";
@@ -16,6 +16,8 @@ service SimManagerService {
     rpc SetServiceStatus(SetServiceStatusRequest) returns (SetServiceStatusResponse);
     rpc GetSimStatus(GetSimStatusRequest) returns (GetSimStatusResponse);
     rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+    // Terminates sim card permanently
+    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 }
 
 message ActivateSimRequest {
@@ -60,5 +62,13 @@ message SetServiceStatusRequest {
 }
 
 message SetServiceStatusResponse{
+
+}
+
+message TerminateSimRequest {
+    string iccid = 1  [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message TerminateSimResponse{
 
 }

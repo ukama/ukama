@@ -28,6 +28,10 @@ service UserService {
 
     // Set status of sim
     rpc SetSimStatus (SetSimStatusRequest) returns (SetSimStatusResponse);
+
+    // Terminates all user's sim cards
+    rpc DeactivateUser(DeactivateUserRequest) returns (DeactivateUserResponse);
+
 }
 
 message AddInternalRequest{
@@ -58,7 +62,7 @@ message AddResponse{
 
 
 message DeleteRequest{
-    string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
 }
 
 message DeleteResponse {
@@ -84,7 +88,7 @@ message GenerateSimTokenResponse{
 }
 
 message GetRequest {
-    string uuid = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
 }
 
 message GetResponse {
@@ -93,15 +97,23 @@ message GetResponse {
 }
 
 message UpdateRequest {
-    string uuid = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    string userId = 1 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     UserAttributes user = 2;
 }
 message UpdateResponse {
     User user = 1;
 }
+message DeactivateUserRequest {
+    string userId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+}
+
+message  DeactivateUserResponse{
+
+}
+
 
 message UserAttributes {
-    string name = 1 [(validator.field) = { string_not_empty: true,  length_gt: 1 }];
+    string name = 1;
     string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phone = 3  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
 }
@@ -111,6 +123,7 @@ message User {
     string email = 4  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
     string phone = 5  [(validator.field) = { human_error:"must be a phone number format", regex: "^$|^(?:(?:\\(?(?:00|\\+)([1-4]\\d\\d|[1-9]\\d?)\\)?)?[\\-\\.\\ \\\\\\/]?)?((?:\\(?\\d{1,}\\)?[\\-\\.\\ \\\\\\/]?){0,})(?:[\\-\\.\\ \\\\\\/]?(?:#|ext\\.?|extension|x)[\\-\\.\\ \\\\\\/]?(\\d+))?$"}];
     string uuid = 6  [(validator.field) = {uuid_ver: 0}];
+    bool isDeactivated = 7;
 }
 
 message Sim {

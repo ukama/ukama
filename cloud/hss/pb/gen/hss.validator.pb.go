@@ -5,17 +5,20 @@ package gen
 
 import (
 	fmt "fmt"
-	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	math "math"
+	regexp "regexp"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
+
+var _regex_ImsiRecord_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
 func (this *ImsiRecord) Validate() error {
 	if this.Imsi == "" {
@@ -26,6 +29,12 @@ func (this *ImsiRecord) Validate() error {
 	}
 	if !(len(this.Imsi) < 16) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	}
+	if !_regex_ImsiRecord_UserId.MatchString(this.UserId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.UserId))
+	}
+	if this.UserId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must not be an empty string`, this.UserId))
 	}
 	if this.Apn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Apn); err != nil {
@@ -94,15 +103,28 @@ func (this *UpdateImsiRequest) Validate() error {
 func (this *UpdateImsiResponse) Validate() error {
 	return nil
 }
+
+var _regex_DeleteImsiRequest_UserId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
 func (this *DeleteImsiRequest) Validate() error {
-	if this.Imsi == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, this.Imsi))
+	if oneOfNester, ok := this.GetIdOneof().(*DeleteImsiRequest_Imsi); ok {
+		if oneOfNester.Imsi == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must not be an empty string`, oneOfNester.Imsi))
+		}
+		if !(len(oneOfNester.Imsi) > 5) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, oneOfNester.Imsi))
+		}
+		if !(len(oneOfNester.Imsi) < 16) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, oneOfNester.Imsi))
+		}
 	}
-	if !(len(this.Imsi) > 5) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length greater than '5'`, this.Imsi))
-	}
-	if !(len(this.Imsi) < 16) {
-		return github_com_mwitkow_go_proto_validators.FieldError("Imsi", fmt.Errorf(`value '%v' must have a length smaller than '16'`, this.Imsi))
+	if oneOfNester, ok := this.GetIdOneof().(*DeleteImsiRequest_UserId); ok {
+		if !_regex_DeleteImsiRequest_UserId.MatchString(oneOfNester.UserId) {
+			return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, oneOfNester.UserId))
+		}
+		if oneOfNester.UserId == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("UserId", fmt.Errorf(`value '%v' must not be an empty string`, oneOfNester.UserId))
+		}
 	}
 	return nil
 }

@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
 	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/common/grpc"
@@ -50,8 +53,11 @@ func (s *ImsiService) Get(c context.Context, r *pb.GetImsiRequest) (*pb.GetImsiR
 func (s *ImsiService) Add(c context.Context, a *pb.AddImsiRequest) (*pb.AddImsiResponse, error) {
 	sub := a.Imsi
 
-	dbSub := grpcImsiToDb(sub, a.Org)
-	err := s.imsiRepo.Add(a.Org, dbSub)
+	dbSub, err := grpcImsiToDb(sub, a.Org)
+	if err != nil {
+		return nil, err
+	}
+	err = s.imsiRepo.Add(a.Org, dbSub)
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
@@ -66,7 +72,11 @@ func (s *ImsiService) Update(c context.Context, req *pb.UpdateImsiRequest) (*pb.
 		return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
 	}
 
-	dbSub := grpcImsiToDb(req.Imsi, imsi.Org.Name)
+	dbSub, err := grpcImsiToDb(req.Imsi, imsi.Org.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	err = s.imsiRepo.Update(req.ImsiToUpdate, dbSub)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
@@ -75,19 +85,45 @@ func (s *ImsiService) Update(c context.Context, req *pb.UpdateImsiRequest) (*pb.
 	return &pb.UpdateImsiResponse{}, nil
 }
 
-func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (*pb.DeleteImsiResponse, error) {
-	imsi, err := s.imsiRepo.GetByImsi(req.Imsi)
-	if err != nil {
+func (s *ImsiService) Delete(c context.Context, req *pb.DeleteImsiRequest) (resp *pb.DeleteImsiResponse, err error) {
+	var delImsi *db.Imsi
+	switch req.IdOneof.(type) {
+	case *pb.DeleteImsiRequest_Imsi:
 
-		return nil, grpc.SqlErrorToGrpc(err, "error getting imsi")
+		delImsi, err = s.imsiRepo.GetByImsi(req.GetImsi())
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "imsi")
+		}
+
+	case *pb.DeleteImsiRequest_UserId:
+		uuid, err := uuid.Parse(req.GetUserId())
+		if err != nil {
+			logrus.Errorf("Error parsing uuid %s. Error: %s", uuid, err)
+			return nil, fmt.Errorf("error parsing uuid")
+		}
+
+		imsis, err := s.imsiRepo.GetImsiByUserUuid(uuid)
+		if err != nil {
+			return nil, grpc.SqlErrorToGrpc(err, "imsi")
+		}
+
+		if len(imsis) == 1 {
+			delImsi = imsis[0]
+		} else if len(imsis) == 0 {
+			return nil, status.Error(codes.NotFound, "imsi not found")
+		} else {
+			return nil, status.Error(codes.Internal, "invalid number of imsis found")
+		}
 	}
 
-	err = s.imsiRepo.Delete(req.Imsi)
+	err = s.imsiRepo.Delete(delImsi.Imsi)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
-	s.subscriber.ImsiDeleted(imsi.Org.Name, req.Imsi)
+
+	s.subscriber.ImsiDeleted(delImsi.Org.Name, delImsi.Imsi)
 	return &pb.DeleteImsiResponse{}, nil
+
 }
 
 func (s *ImsiService) AddGuti(c context.Context, req *pb.AddGutiRequest) (*pb.AddGutiResponse, error) {
@@ -137,10 +173,16 @@ func (s *ImsiService) UpdateTai(c context.Context, req *pb.UpdateTaiRequest) (*p
 	return &pb.UpdateTaiResponse{}, nil
 }
 
-func grpcImsiToDb(sub *pb.ImsiRecord, orgName string) *db.Imsi {
+func grpcImsiToDb(sub *pb.ImsiRecord, orgName string) (*db.Imsi, error) {
+	userId, err := uuid.Parse(sub.UserId)
+	if err != nil {
+		logrus.Errorf("Error parsing uuid %s. Error: %s", sub.UserId, err)
+		return nil, fmt.Errorf("error parsing uuid")
+	}
 
 	dbSub := &db.Imsi{
 		Imsi:           sub.Imsi,
+		UserUuid:       userId,
 		DefaultApnName: sub.Apn.Name,
 		Key:            sub.Key,
 		Amf:            sub.Amf,
@@ -150,5 +192,5 @@ func grpcImsiToDb(sub *pb.ImsiRecord, orgName string) *db.Imsi {
 		},
 	}
 
-	return dbSub
+	return dbSub, nil
 }

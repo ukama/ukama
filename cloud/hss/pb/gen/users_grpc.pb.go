@@ -38,6 +38,8 @@ type UserServiceClient interface {
 	GenerateSimToken(ctx context.Context, in *GenerateSimTokenRequest, opts ...grpc.CallOption) (*GenerateSimTokenResponse, error)
 	// Set status of sim
 	SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error)
+	// Terminates all user's sim cards
+	DeactivateUser(ctx context.Context, in *DeactivateUserRequest, opts ...grpc.CallOption) (*DeactivateUserResponse, error)
 }
 
 type userServiceClient struct {
@@ -120,6 +122,15 @@ func (c *userServiceClient) SetSimStatus(ctx context.Context, in *SetSimStatusRe
 	return out, nil
 }
 
+func (c *userServiceClient) DeactivateUser(ctx context.Context, in *DeactivateUserRequest, opts ...grpc.CallOption) (*DeactivateUserResponse, error) {
+	out := new(DeactivateUserResponse)
+	err := c.cc.Invoke(ctx, "/ukama.hss.v1.UserService/DeactivateUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -140,6 +151,8 @@ type UserServiceServer interface {
 	GenerateSimToken(context.Context, *GenerateSimTokenRequest) (*GenerateSimTokenResponse, error)
 	// Set status of sim
 	SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error)
+	// Terminates all user's sim cards
+	DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -170,6 +183,9 @@ func (UnimplementedUserServiceServer) GenerateSimToken(context.Context, *Generat
 }
 func (UnimplementedUserServiceServer) SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetSimStatus not implemented")
+}
+func (UnimplementedUserServiceServer) DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeactivateUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -328,6 +344,24 @@ func _UserService_SetSimStatus_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_DeactivateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).DeactivateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.hss.v1.UserService/DeactivateUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).DeactivateUser(ctx, req.(*DeactivateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -366,6 +400,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetSimStatus",
 			Handler:    _UserService_SetSimStatus_Handler,
+		},
+		{
+			MethodName: "DeactivateUser",
+			Handler:    _UserService_DeactivateUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

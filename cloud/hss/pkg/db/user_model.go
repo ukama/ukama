@@ -7,13 +7,14 @@ import (
 
 type User struct {
 	gorm.Model
-	Uuid     uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
-	Name     string    `gorm:"not null;default:'unknown'"`
-	Email    string
-	Phone    string
-	Simcards []Simcard
-	OrgID    uint `gorm:"not null;default:1"`
-	Org      *Org
+	Uuid        uuid.UUID `gorm:"uniqueIndex:uuid_unique,where:deleted_at is null;not null;type:uuid"`
+	Name        string    `gorm:"not null;default:'unknown'"`
+	Email       string
+	Phone       string
+	Simcards    []Simcard
+	OrgID       uint `gorm:"not null;default:1"`
+	Org         *Org
+	Deactivated bool
 }
 
 type Simcard struct {

@@ -38,7 +38,7 @@ func NewNnsClient(cc grpc.ClientConnInterface) NnsClient {
 
 func (c *nnsClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
 	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/network.v1.Nns/Get", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.Nns/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (c *nnsClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOp
 
 func (c *nnsClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error) {
 	out := new(SetResponse)
-	err := c.cc.Invoke(ctx, "/network.v1.Nns/Set", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.Nns/Set", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (c *nnsClient) Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOp
 
 func (c *nnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
 	out := new(ListResponse)
-	err := c.cc.Invoke(ctx, "/network.v1.Nns/List", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.Nns/List", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (c *nnsClient) List(ctx context.Context, in *ListRequest, opts ...grpc.Call
 
 func (c *nnsClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
 	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/network.v1.Nns/Delete", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.Nns/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func _Nns_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/network.v1.Nns/Get",
+		FullMethod: "/ukama.network.v1.Nns/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NnsServer).Get(ctx, req.(*GetRequest))
@@ -140,7 +140,7 @@ func _Nns_Set_Handler(srv interface{}, ctx context.Context, dec func(interface{}
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/network.v1.Nns/Set",
+		FullMethod: "/ukama.network.v1.Nns/Set",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NnsServer).Set(ctx, req.(*SetRequest))
@@ -158,7 +158,7 @@ func _Nns_List_Handler(srv interface{}, ctx context.Context, dec func(interface{
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/network.v1.Nns/List",
+		FullMethod: "/ukama.network.v1.Nns/List",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NnsServer).List(ctx, req.(*ListRequest))
@@ -176,7 +176,7 @@ func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interfac
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/network.v1.Nns/Delete",
+		FullMethod: "/ukama.network.v1.Nns/Delete",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(NnsServer).Delete(ctx, req.(*DeleteRequest))
@@ -188,7 +188,7 @@ func _Nns_Delete_Handler(srv interface{}, ctx context.Context, dec func(interfac
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Nns_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "network.v1.Nns",
+	ServiceName: "ukama.network.v1.Nns",
 	HandlerType: (*NnsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

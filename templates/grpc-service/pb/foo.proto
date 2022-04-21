@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
-package foo.v1;
+package ukama.foo.v1;
 
 
 service FooService {

@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukamaX/cloud/hss/mocks"
@@ -32,9 +33,11 @@ func Test_Add(t *testing.T) {
 	is := server.NewImsiService(&imsiRepo, &gutiRepo, server.NewHssEventsSubscribers(&sub))
 
 	// Act
+	userId := uuid.New()
 	_, err := is.Add(context.TODO(), &pb.AddImsiRequest{
 		Imsi: &pb.ImsiRecord{
-			Imsi: testImsi,
+			Imsi:   testImsi,
+			UserId: userId.String(),
 			Apn: &pb.Apn{
 				Name: "apn",
 			},
@@ -67,8 +70,39 @@ func Test_Delete(t *testing.T) {
 
 	// Act
 	_, err := is.Delete(context.TODO(), &pb.DeleteImsiRequest{
-		Imsi: testImsi,
-		Org:  testOrg,
+		IdOneof: &pb.DeleteImsiRequest_Imsi{
+			Imsi: testImsi,
+		},
+	})
+
+	// give it a sec for go routine to finish
+	time.Sleep(1 * time.Second)
+
+	// assert
+	assert.NoError(t, err)
+	sub.AssertExpectations(t)
+	imsiRepo.AssertExpectations(t)
+}
+
+func Test_DeleteByIccid(t *testing.T) {
+	// Arrange
+	userId := uuid.New()
+	imsiRepo := mocks.ImsiRepo{}
+	imsiRepo.On("Delete", testImsi).Return(nil)
+	imsiRepo.On("GetImsiByUserUuid", userId).Return([]*db.Imsi{{Imsi: testImsi, UserUuid: userId, Org: &db.Org{Name: testOrg}}}, nil)
+
+	gutiRepo := mocks.GutiRepo{}
+
+	sub := mocks.HssSubscriber{}
+	sub.On("ImsiDeleted", testOrg, testImsi).Return().Once()
+
+	is := server.NewImsiService(&imsiRepo, &gutiRepo, server.NewHssEventsSubscribers(&sub))
+
+	// Act
+	_, err := is.Delete(context.TODO(), &pb.DeleteImsiRequest{
+		IdOneof: &pb.DeleteImsiRequest_UserId{
+			UserId: userId.String(),
+		},
 	})
 
 	// give it a sec for go routine to finish

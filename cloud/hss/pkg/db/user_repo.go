@@ -12,7 +12,7 @@ import (
 type UserRepo interface {
 	Add(user *User, orgName string, nestedFunc func(*User, *gorm.DB) error) (*User, error)
 	Get(uuid uuid.UUID) (*User, error)
-	Delete(uuid uuid.UUID) error
+	Delete(uuid uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 	GetByOrg(orgName string) ([]User, error)
 	IsOverTheLimit(orgName string) (bool, error)
 	// Update user modifiable fields
@@ -67,13 +67,29 @@ func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	return &user, nil
 }
 
-func (u *userRepo) Delete(uuid uuid.UUID) error {
-	result := u.Db.GetGormDb().Where(&User{Uuid: uuid}).Delete(&User{})
-	if result.Error != nil {
-		return result.Error
-	}
+func (u *userRepo) Delete(userId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error {
 
-	return nil
+	err := u.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		result := tx.Where(&User{Uuid: userId}).Delete(&User{})
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if nestedFunc != nil {
+			nestErr := nestedFunc(userId, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }
 
 func (u *userRepo) GetByOrg(orgName string) ([]User, error) {
@@ -126,6 +142,9 @@ func (u *userRepo) IsOverTheLimit(org string) (bool, error) {
 
 func (u *userRepo) Update(user *User) (*User, error) {
 	d := u.Db.GetGormDb().Where("uuid = ?", user.Uuid).UpdateColumns(user)
+	if d.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
 	if d.Error != nil {
 		return nil, d.Error
 	}

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-
 	uuid2 "github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -24,16 +23,17 @@ const uuidParsingError = "Error parsing UUID"
 type UserService struct {
 	pb.UnimplementedUserServiceServer
 	userRepo       db.UserRepo
-	imsiRepo       db.ImsiRepo
+	imsiService    pkg.ImsiClientProvider
 	simManager     pbclient.SimManagerServiceClient
 	simManagerName string
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
 }
 
-func NewUserService(userRepo db.UserRepo, imsiRepo db.ImsiRepo, simRepo db.SimcardRepo,
+func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string) *UserService {
-	return &UserService{userRepo: userRepo, imsiRepo: imsiRepo,
+	return &UserService{userRepo: userRepo,
+		imsiService:    imsiProvider,
 		simRepo:        simRepo,
 		simManager:     simManager,
 		simManagerName: simManagerName,
@@ -105,21 +105,14 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 
 		// call get sim info to make sure the ICCID exist
 		var sim *pbclient.GetSimInfoResponse
-		if !sims.IsDebugIdentifier(iccid) {
-			sim, err = u.simManager.GetSimInfo(ctx, &pbclient.GetSimInfoRequest{
-				Iccid: iccid,
-			})
-			if err != nil {
-				return errors.Wrap(err, "failed to get sim info")
-			}
-		} else { // for debug purpose
-			sim = &pbclient.GetSimInfoResponse{
-				Iccid: iccid,
-				Imsi:  sims.GetDubugImsi(iccid),
-			}
+		sim, err = u.simManager.GetSimInfo(ctx, &pbclient.GetSimInfoRequest{
+			Iccid: iccid,
+		})
+		if err != nil {
+			return errors.Wrap(err, "failed to get sim info")
 		}
 
-		logrus.Debugf("Adding new sim")
+		logrus.Infof("Adding new sim")
 		err = db.NewSimcardRepo(txDb).Add(&db.Simcard{
 			Iccid:      iccid,
 			Source:     u.simManagerName,
@@ -130,44 +123,30 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 			return errors.Wrap(err, "failed to add simcard")
 		}
 
-		logrus.Debugf("Adding new imsi %s", sim.Imsi)
-		// we create a new imsi repository to make a call in transaction
-		return db.NewImsiRepo(txDb).Add(org, &db.Imsi{
-			Imsi:     sim.Imsi,
-			UserUuid: usr.Uuid,
+		logrus.Infof("Adding new imsi %s", sim.Imsi)
+		s, err := u.imsiService.GetClient()
+		if err != nil {
+			return errors.Wrap(err, "failed to connect to hss")
+		}
+		_, err = s.Add(ctx, &pb.AddImsiRequest{
+			Imsi: &pb.ImsiRecord{
+				Imsi:   sim.Imsi,
+				UserId: usr.Uuid.String(),
+				Apn:    &pb.Apn{Name: "default"},
+			},
+			Org: org,
 		})
+		if err != nil {
+			return errors.Wrap(err, "failed to add imsi")
+		}
+		return nil
 	})
+	// end of transaction
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 	return user, nil
-}
-
-func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	uuid, err := uuid2.Parse(req.Uuid)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
-	}
-
-	err = u.imsiRepo.DeleteByUserId(uuid, func(tx *gorm.DB) error {
-		err = db.NewUserRepo(sql.NewDbFromGorm(tx, pkg.IsDebugMode)).Delete(uuid)
-		if err != nil {
-			return grpc.SqlErrorToGrpc(err, "user")
-		}
-
-		err = db.NewSimcardRepo(sql.NewDbFromGorm(tx, pkg.IsDebugMode)).DeleteByUser(uuid)
-		if err != nil {
-			return grpc.SqlErrorToGrpc(err, "sim")
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "imsi")
-	}
-
-	return &pb.DeleteResponse{}, nil
 }
 
 func (u *UserService) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
@@ -212,7 +191,7 @@ func (u *UserService) GenerateSimToken(ctx context.Context, in *pb.GenerateSimTo
 }
 
 func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	uuid, err := uuid2.Parse(req.Uuid)
+	uuid, err := uuid2.Parse(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -233,7 +212,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
-	uuid, err := uuid2.Parse(req.Uuid)
+	uuid, err := uuid2.Parse(req.UserId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
@@ -282,6 +261,101 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 	}
 
 	return &pb.SetSimStatusResponse{}, nil
+}
+
+func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	uuid, err := uuid2.Parse(req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	user, err := u.userRepo.Get(uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	// terminate sim cards asynchronously
+	// would be better to trigger an AMQP event
+	go u.terminateSimCard(ctx, user.Simcards)
+
+	// delete user
+	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
+		err = db.NewSimcardRepo(sql.NewDbFromGorm(tx, pkg.IsDebugMode)).DeleteByUser(uuid)
+		if err != nil {
+			return grpc.SqlErrorToGrpc(err, "sim")
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+	return &pb.DeleteResponse{}, nil
+}
+
+func (u *UserService) terminateSimCard(ctx context.Context, simCards []db.Simcard) {
+	for _, sim := range simCards {
+		logrus.Infof("Terminating sim. Iccid %s", sim.Iccid)
+
+		_, err := u.simManager.TerminateSim(ctx, &pbclient.TerminateSimRequest{
+			Iccid: sim.Iccid,
+		})
+
+		if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
+				logrus.Warning("Simcard not found in sim manager")
+				continue
+			}
+
+			logrus.Errorf("Error terminating simcard %s: %s", sim.Iccid, err)
+		}
+	}
+
+}
+
+func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUserRequest) (*pb.DeactivateUserResponse, error) {
+	uuid, err := uuid2.Parse(req.UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
+	}
+
+	usr, err := u.userRepo.Get(uuid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	if usr.Deactivated {
+		return nil, status.Errorf(codes.FailedPrecondition, "user already deactivated")
+	}
+
+	// set user's status to suspended
+	_, err = u.userRepo.Update(&db.User{
+		Uuid:        uuid,
+		Deactivated: true,
+	})
+
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "user")
+	}
+
+	// Deactivate sim cards
+	u.terminateSimCard(ctx, usr.Simcards)
+
+	// Delete imsi record from HSS
+	s, err := u.imsiService.GetClient()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to connect to hss")
+	}
+
+	_, err = s.Delete(ctx, &pb.DeleteImsiRequest{
+		IdOneof: &pb.DeleteImsiRequest_UserId{
+			UserId: req.UserId,
+		},
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "imsi")
+	}
+
+	return &pb.DeactivateUserResponse{}, nil
 }
 
 func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
@@ -357,9 +431,10 @@ func dbusersToPbUsers(users []db.User) []*pb.User {
 
 func dbUsersToPbUsers(user *db.User) *pb.User {
 	return &pb.User{
-		Uuid:  user.Uuid.String(),
-		Name:  user.Name,
-		Phone: user.Phone,
-		Email: user.Email,
+		Uuid:          user.Uuid.String(),
+		Name:          user.Name,
+		Phone:         user.Phone,
+		Email:         user.Email,
+		IsDeactivated: user.Deactivated,
 	}
 }

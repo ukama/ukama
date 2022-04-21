@@ -37,6 +37,7 @@ service ImsiService {
 
 message ImsiRecord {
     string imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
+    string userId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
     bytes key = 3;
     bytes op = 4;
     bytes amf = 5;
@@ -82,8 +83,10 @@ message UpdateImsiResponse{
 }
 
 message DeleteImsiRequest{
-    string org = 1;
-    string imsi = 2 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
+    oneof id_oneof {
+        string imsi = 1 [(validator.field) = { string_not_empty: true,  length_gt: 5, length_lt: 16}];
+        string userId = 2 [(validator.field) = {uuid_ver: 0, string_not_empty: true}];
+    }
 }
 
 message DeleteImsiResponse {

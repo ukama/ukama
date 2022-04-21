@@ -6,6 +6,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/ukama/ukamaX/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,11 +53,13 @@ func Test_ImsiService(t *testing.T) {
 
 	c := pb.NewImsiServiceClient(conn)
 
+	userId := uuid.New()
+
 	// Contact the server and print out its response.
 	testImsi := fmt.Sprintf("00000%010d", time.Now().Unix())
 	testOrg := fmt.Sprintf("integration-test-org-imsi-service-%s", time.Now().Format("20060102150405"))
 	t.Run("AddImis", func(t *testing.T) {
-		addResp, err := c.Add(ctx, &pb.AddImsiRequest{Org: testOrg, Imsi: &pb.ImsiRecord{Imsi: testImsi, Apn: &pb.Apn{Name: "test-apn-name"}}})
+		addResp, err := c.Add(ctx, &pb.AddImsiRequest{Org: testOrg, Imsi: &pb.ImsiRecord{Imsi: testImsi, UserId: userId.String(), Apn: &pb.Apn{Name: "test-apn-name"}}})
 		handleResponse(t, err, addResp)
 	})
 
@@ -100,7 +103,9 @@ func Test_ImsiService(t *testing.T) {
 	})
 
 	t.Run("DeleteImis", func(t *testing.T) {
-		delResp, err := c.Delete(ctx, &pb.DeleteImsiRequest{Imsi: testImsi, Org: testOrg})
+		delResp, err := c.Delete(ctx, &pb.DeleteImsiRequest{IdOneof: &pb.DeleteImsiRequest_Imsi{
+			Imsi: testImsi,
+		}})
 		handleResponse(t, err, delResp)
 	})
 
@@ -162,6 +167,7 @@ func Test_UserService(t *testing.T) {
 			t.FailNow()
 		}
 	})
+	defer cleanupUser(addResp, c)
 
 	// todo: test limit
 	t.Run("list", func(tt *testing.T) {
@@ -176,16 +182,17 @@ func Test_UserService(t *testing.T) {
 
 	getResp := &pb.GetResponse{}
 	t.Run("get", func(tt *testing.T) {
-		getResp, err := c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
+		getResp, err = c.Get(ctx, &pb.GetRequest{UserId: addResp.User.Uuid})
 		if handleResponse(tt, err, getResp) {
 			assert.NotNil(tt, getResp.Sim)
 			assert.NotEqual(tt, getResp.Sim.Carrier.Status, pb.SimStatus_UNKNOWN)
+			assert.Equal(tt, false, getResp.User.IsDeactivated)
 		}
 	})
 
 	t.Run("update ", func(tt *testing.T) {
 		_, err := c.Update(ctx, &pb.UpdateRequest{
-			Uuid: addResp.User.Uuid,
+			UserId: addResp.User.Uuid,
 			User: &pb.UserAttributes{
 				Name:  "changed",
 				Email: "changed@example.com",
@@ -197,7 +204,7 @@ func Test_UserService(t *testing.T) {
 			return
 		}
 
-		getResp, err := c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
+		getResp, err := c.Get(ctx, &pb.GetRequest{UserId: addResp.User.Uuid})
 		if handleResponse(tt, err, getResp) {
 			assert.Equal(tt, "changed", getResp.User.Name)
 			assert.Equal(tt, "1231223132", getResp.User.Phone)
@@ -215,14 +222,29 @@ func Test_UserService(t *testing.T) {
 		})
 
 		if handleResponse(tt, err, setResp) {
-			getResp, err = c.Get(ctx, &pb.GetRequest{Uuid: addResp.User.Uuid})
+			getResp, err = c.Get(ctx, &pb.GetRequest{UserId: addResp.User.Uuid})
 			assert.NoError(tt, err)
 			assert.Equal(tt, targetData, getResp.Sim.Carrier.Services.Data)
 		}
 	})
 
+	t.Run("DeactivateUser", func(tt *testing.T) {
+		_, err = c.DeactivateUser(ctx, &pb.DeactivateUserRequest{
+			UserId: addResp.User.Uuid,
+		})
+		if !assert.NoError(tt, err) {
+			assert.FailNow(tt, "DeactivateUser test failed")
+			return
+		}
+
+		getResp, err = c.Get(ctx, &pb.GetRequest{UserId: addResp.User.Uuid})
+		if handleResponse(tt, err, getResp) {
+			assert.Equal(tt, true, getResp.User.IsDeactivated)
+		}
+	})
+
 	t.Run("Delete", func(tt *testing.T) {
-		getResp, err := c.Delete(ctx, &pb.DeleteRequest{Uuid: addResp.User.Uuid})
+		_, err = c.Delete(ctx, &pb.DeleteRequest{UserId: addResp.User.Uuid})
 
 		if !handleResponse(tt, err, getResp) {
 			assert.FailNow(tt, "")
@@ -236,6 +258,22 @@ func Test_UserService(t *testing.T) {
 			assert.Equal(tt, 0, len(listResp.Users))
 		}
 	})
+}
+
+func cleanupUser(addResp *pb.AddResponse, c pb.UserServiceClient) {
+	if addResp != nil && addResp.User != nil {
+		r := *addResp
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		_, err := c.Delete(ctx, &pb.DeleteRequest{UserId: addResp.User.Uuid})
+		if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
+				return
+			}
+			logrus.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
+		}
+	}
 }
 
 // return false if error is not nil

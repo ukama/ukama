@@ -31,7 +31,7 @@ gen:
 	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
 
 clean:
-	rm pb/gen/*.go
+	rm -r pb/gen
 
 
 # integration tests

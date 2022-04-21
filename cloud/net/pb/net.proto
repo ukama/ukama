@@ -5,7 +5,7 @@ option go_package = "pb/gen";
 import "validator.proto";
 import "google/api/annotations.proto";
 
-package network.v1;
+package ukama.network.v1;
 
 
 service Nns { // The Node Name Service (like DNS)
