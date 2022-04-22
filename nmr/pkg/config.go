@@ -6,30 +6,13 @@ import (
 	"github.com/ukama/openIoR/services/common/rest"
 )
 
-type Routes map[string]string
-
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Metrics           config.Metrics
 	Server            rest.HttpConfig
-	ApiIf             ServiceApiIf
-	RouterService     string
+	ApiIf             config.ServiceApiIf
+	ServiceRouter     string
 	DB                config.Database
-}
-
-type Pattern struct {
-	SRoutes []Routes
-}
-
-type Forward struct {
-	Ip   string `json:"ip"`
-	Port int    `json:"port"`
-}
-
-type ServiceApiIf struct {
-	Name string  `json:"name"`
-	P    Pattern `json:"pattern"`
-	F    Forward `json:"forward"`
 }
 
 /* Info/List--> Get
@@ -47,11 +30,11 @@ func NewConfig() *Config {
 			},
 		},
 
-		RouterService: "http://localhost:8090",
-		ApiIf: ServiceApiIf{
-			Name: "nmr",
-			P: Pattern{
-				SRoutes: []Routes{
+		ServiceRouter: "http://localhost:8090",
+		ApiIf: config.ServiceApiIf{
+			Name: "lookup",
+			P: config.Pattern{
+				Routes: []config.Route{
 					{
 						"node": "*", "looking_for": "info", "Path": "/node/",
 					},
@@ -76,36 +59,9 @@ func NewConfig() *Config {
 					{
 						"node": "*", "looking_for": "list", "Path": "/node/all",
 					},
-					{
-						"module": "*", "looking_for": "info", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_to": "update", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_to": "delete", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_for": "info", "status": "*", "Path": "/module/status",
-					},
-					{
-						"module": "*", "looking_to": "status", "status": "*", "Path": "/module/status",
-					},
-					{
-						"module": "*", "looking_for": "info", "field": "*", "Path": "/module/field",
-					},
-					{
-						"module": "*", "looking_to": "update", "field": "*", "Path": "/module/field",
-					},
-					{
-						"module": "*", "looking_for": "info", "data": "*", "Path": "/module/data",
-					},
-					{
-						"module": "*", "looking_for": "list", "Path": "/module/all",
-					},
 				},
 			},
-			F: Forward{
+			F: config.Forward{
 				Ip:   "http://localhost",
 				Port: 8095,
 			},

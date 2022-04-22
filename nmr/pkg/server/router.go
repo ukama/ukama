@@ -14,10 +14,10 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/openIoR/services/common/rest"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
 	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
-	rs "github.com/ukama/openIoR/services/factory/nmr/pkg/router"
 	"github.com/wI2L/fizz"
 )
 
@@ -29,7 +29,7 @@ const (
 type Router struct {
 	fizz       *fizz.Fizz
 	port       int
-	R          *rs.RouterServer
+	R          *sr.ServiceRouter
 	nodeRepo   db.NodeRepo
 	moduleRepo db.ModuleRepo
 }
@@ -42,13 +42,13 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, rs *rs.RouterServer, nodeRepo db.NodeRepo, moduleRepo db.ModuleRepo) *Router {
+func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo, moduleRepo db.ModuleRepo) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
 
 	r := &Router{fizz: f,
 		port:       config.Server.Port,
-		R:          rs,
+		R:          svcR,
 		nodeRepo:   nodeRepo,
 		moduleRepo: moduleRepo,
 	}

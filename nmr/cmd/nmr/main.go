@@ -7,9 +7,9 @@ import (
 	"syscall"
 
 	"github.com/ukama/openIoR/services/common/metrics"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg/router"
 	"github.com/ukama/openIoR/services/factory/nmr/pkg/server"
 
 	ccmd "github.com/ukama/openIoR/services/common/cmd"
@@ -66,7 +66,7 @@ func startBootstrapServer(ctx context.Context, d sql.Db) {
 
 	logrus.Tracef("Config is %+v", serviceConfig)
 
-	rs := router.NewRouterServer(serviceConfig.RouterService)
+	rs := sr.NewServiceRouter(serviceConfig.ServiceRouter)
 
 	/* Register service */
 	if err := rs.RegisterService(serviceConfig.ApiIf); err != nil {
