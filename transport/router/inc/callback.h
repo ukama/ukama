@@ -18,8 +18,8 @@ int callback_delete_route(const struct _u_request *request,
 			  struct _u_response *response, void *user_data);
 int callback_get_stats(const struct _u_request *request,
 		       struct _u_response *response, void *user_data);
-int callback_post_service(const struct _u_request *request,
-			  struct _u_response *response, void *user_data);
+int callback_service(const struct _u_request *request,
+		     struct _u_response *response, void *user_data);
 int callback_not_allowed(const struct _u_request *request,
 			 struct _u_response *response, void *user_data);
 int callback_default(const struct _u_request *request,

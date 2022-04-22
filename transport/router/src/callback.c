@@ -410,12 +410,12 @@ int callback_get_stats(const struct _u_request *request,
 }
 
 /*
- * callback_post_service --
+ * callback_service --
  *
  */
-int callback_post_service(const struct _u_request *request,
-			  struct _u_response *response,
-			  void *user_data) {
+int callback_service(const struct _u_request *request,
+		     struct _u_response *response,
+		     void *user_data) {
 
   int retCode, serviceResp;
   char *mapStr=NULL;
@@ -542,7 +542,8 @@ int callback_post_service(const struct _u_request *request,
 int callback_not_allowed(const struct _u_request *request,
 			 struct _u_response *response, void *user_data) {
 
-  ulfius_set_string_body_response(response, 403, "Operation not allowed\n");
+  ulfius_set_string_body_response(response, HttpStatus_Forbidden,
+				  HttpStatusStr(HttpStatus_Forbidden));
   return U_CALLBACK_CONTINUE;
 }
 
@@ -553,6 +554,7 @@ int callback_not_allowed(const struct _u_request *request,
 int callback_default(const struct _u_request *request,
                      struct _u_response *response, void *user_data) {
 
-  ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
+  ulfius_set_string_body_response(response, HttpStatus_NotFound,
+				  HttpStatusStr(HttpStatus_NotFound));
   return U_CALLBACK_CONTINUE;
 }
