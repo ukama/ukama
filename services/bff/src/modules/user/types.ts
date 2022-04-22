@@ -218,10 +218,13 @@ export class UserSimUkamaDto {
 export class OrgUserSimDto {
     @Field()
     iccid: string;
+
     @Field()
     isPhysical: boolean;
+
     @Field(() => UserSimUkamaDto)
     ukama?: UserSimUkamaDto;
+
     @Field(() => UserSimUkamaDto)
     carrier?: UserSimUkamaDto;
 }
@@ -254,9 +257,4 @@ export class UpdateUserServiceInput {
 
     @Field()
     status: boolean;
-}
-@ObjectType()
-export class UpdateUserServiceRes {
-    @Field()
-    success: boolean;
 }

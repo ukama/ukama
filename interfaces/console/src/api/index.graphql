@@ -228,6 +228,23 @@ subscription getMetricsByTabS {
 
 mutation updateUserStatus($data: UpdateUserServiceInput!) {
     updateUserStatus(data: $data) {
-        success
+        iccid
+        isPhysical
+        ukama {
+            status
+            services {
+                voice
+                data
+                sms
+            }
+        }
+        carrier {
+            status
+            services {
+                voice
+                data
+                sms
+            }
+        }
     }
 }

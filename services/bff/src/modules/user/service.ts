@@ -9,8 +9,8 @@ import {
     ActivateUserResponse,
     GetUsersDto,
     UpdateUserServiceInput,
-    UpdateUserServiceRes,
     UserResDto,
+    OrgUserSimDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -151,7 +151,7 @@ export class UserService implements IUserService {
     updateUserStatus = async (
         data: UpdateUserServiceInput,
         cookie: ParsedCookie
-    ): Promise<UpdateUserServiceRes> => {
+    ): Promise<OrgUserSimDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
             path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
@@ -165,8 +165,6 @@ export class UserService implements IUserService {
             },
         });
         if (checkError(res)) throw new Error(res.message);
-        return {
-            success: true,
-        };
+        return res;
     };
 }

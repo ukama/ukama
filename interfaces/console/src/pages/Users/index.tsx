@@ -66,7 +66,17 @@ const User = () => {
     });
 
     const [updateUserStatus, { loading: updateUserStatusLoading }] =
-        useUpdateUserStatusMutation();
+        useUpdateUserStatusMutation({
+            onCompleted: res => {
+                if (res) {
+                    setSelectedUser({
+                        ...selectedUser,
+                        status: res.updateUserStatus.carrier.services.data,
+                        roaming: res.updateUserStatus.ukama.services.data,
+                    });
+                }
+            },
+        });
 
     useEffect(() => {
         if (addUserRes) {

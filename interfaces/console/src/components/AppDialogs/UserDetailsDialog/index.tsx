@@ -239,7 +239,11 @@ const UserDetailsDialog = ({
                                     >
                                         <Typography
                                             variant="caption"
-                                            color="textSecondary"
+                                            color={
+                                                status
+                                                    ? "textDisabled"
+                                                    : "textSecondary"
+                                            }
                                             alignSelf={"end"}
                                         >
                                             ROAMING
@@ -257,6 +261,7 @@ const UserDetailsDialog = ({
                                             size="small"
                                             value="active"
                                             checked={roaming}
+                                            disabled={!status}
                                             onClick={(e: any) =>
                                                 setUserForm({
                                                     ...user,
