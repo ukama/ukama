@@ -42,6 +42,7 @@ IP and Port for incoming messages
 type Forward struct {
 	Ip   string `json:"ip"`
 	Port int    `json:"port"`
+	Path string `json:"default_path"`
 }
 
 /*
