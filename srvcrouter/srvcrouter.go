@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	RoutesExt   = "/routes"
+	RoutesExt   = "/route"
 	PatternExt  = "/pattern"
-	ServicesExt = "/services"
+	ServicesExt = "/service"
 	APIExt      = "/api"
 	KeyPathExt  = "Path"
 )
@@ -42,7 +42,9 @@ func (r *ServiceRouter) RegisterService(apiIf config.ServiceApiIf) error {
 		logrus.Errorf("Failed to encode service pattern into json. Error %v", err.Error())
 		return err
 	}
-	resp, err := r.C.R().SetHeader("Content-Type", "application/json").SetBody(j).Put((r.url.String() + RoutesExt))
+
+	logrus.Tracef("Requesting service router %s to add pattern %s for service.", (r.url.String() + RoutesExt), string(j))
+	resp, err := r.C.R().SetHeader("Content-Type", "application/json").SetBody(j).Post((r.url.String() + RoutesExt))
 	if err != nil {
 		logrus.Errorf("Failed to resgister service to service router. Error %s", err.Error())
 		return err
