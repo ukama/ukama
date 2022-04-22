@@ -16,7 +16,7 @@ var ServiceConf *Config
 // NewConfig creates new config with default values. Those values will be overridden by Viper
 func NewConfig() *Config {
 	return &Config{
-		ServiceRouter: "http://localhost:8090",
+		ServiceRouter: "http://192.168.0.14:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: "lookup",
 			P: config.Pattern{
