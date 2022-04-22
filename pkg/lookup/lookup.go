@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 )
 
 type LookUp struct {
-	S *rs.RouterServer
+	S *sr.ServiceRouter
 }
 
 type OrgCredentialsResp struct {
@@ -21,10 +21,10 @@ type OrgCredentialsResp struct {
 	OrgCred []byte `json:"Certs"`
 }
 
-func NewLookUp(rs *rs.RouterServer) *LookUp {
+func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 
 	return &LookUp{
-		S: rs,
+		S: svcR,
 	}
 }
 

@@ -11,29 +11,12 @@ import (
 // 	value interface{}
 // }
 
-type Routes map[string]string
-
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Metrics           config.Metrics
 	Server            rest.HttpConfig
-	ApiIf             ServiceApiIf
-	RouterService     string
-}
-
-type Pattern struct {
-	SRoutes []Routes
-}
-
-type Forward struct {
-	Ip   string `json:"ip"`
-	Port int    `json:"port"`
-}
-
-type ServiceApiIf struct {
-	Name string  `json:"name"`
-	P    Pattern `json:"pattern"`
-	F    Forward `json:"forward"`
+	ApiIf             config.ServiceApiIf
+	ServiceRouter     string
 }
 
 func NewConfig() *Config {
@@ -46,17 +29,17 @@ func NewConfig() *Config {
 			},
 		},
 
-		RouterService: "http://localhost:8090",
-		ApiIf: ServiceApiIf{
+		ServiceRouter: "http://localhost:8090",
+		ApiIf: config.ServiceApiIf{
 			Name: "bootsrap",
-			P: Pattern{
-				SRoutes: []Routes{
+			P: config.Pattern{
+				Routes: []config.Route{
 					{
 						"node": "*", "looking_for": "validation", "Path": "/nodes",
 					},
 				},
 			},
-			F: Forward{
+			F: config.Forward{
 				Ip:   "http://localhost",
 				Port: 8095,
 			},

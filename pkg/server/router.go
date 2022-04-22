@@ -11,8 +11,8 @@ import (
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/lookup"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/nmr"
-	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 	"github.com/ukama/openIoR/services/common/rest"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 	"github.com/wI2L/fizz"
 )
 
@@ -31,13 +31,13 @@ func (r *Router) Run() {
 	}
 }
 
-func NewRouter(config *pkg.Config, rs *rs.RouterServer) *Router {
+func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, pkg.ServiceName, version.Version, pkg.IsDebugMode)
 
-	ls := lookup.NewLookUp(rs)
+	ls := lookup.NewLookUp(svcR)
 
-	fs := nmr.NewFactory(rs)
+	fs := nmr.NewFactory(svcR)
 
 	r := &Router{fizz: f,
 		port: config.Server.Port,

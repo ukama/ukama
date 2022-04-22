@@ -9,8 +9,8 @@ import (
 	"github.com/ukama/openIoR/services/common/metrics"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/server"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 
 	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
 	ccmd "github.com/ukama/openIoR/services/common/cmd"
@@ -53,7 +53,7 @@ func startBootstrapServer(ctx context.Context) {
 
 	logrus.Tracef("Config is %+v", serviceConfig)
 
-	rs := router.NewRouterServer(serviceConfig.RouterService)
+	rs := sr.NewServiceRouter(serviceConfig.ServiceRouter)
 
 	/* Register service */
 	if err := rs.RegisterService(serviceConfig.ApiIf); err != nil {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	rs "github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/router"
+	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 )
 
 const (
@@ -12,13 +12,13 @@ const (
 )
 
 type Factory struct {
-	S *rs.RouterServer
+	S *sr.ServiceRouter
 }
 
-func NewFactory(rs *rs.RouterServer) *Factory {
+func NewFactory(svcR *sr.ServiceRouter) *Factory {
 
 	return &Factory{
-		S: rs,
+		S: svcR,
 	}
 }
 
