@@ -22,7 +22,7 @@ type QueryParams map[string]string
 
 type ServiceRouter struct {
 	C   *resty.Client
-	url *url.URL
+	Url *url.URL
 }
 
 func NewServiceRouter(path string) *ServiceRouter {
@@ -30,9 +30,9 @@ func NewServiceRouter(path string) *ServiceRouter {
 	c := resty.New()
 	rs := &ServiceRouter{
 		C:   c,
-		url: url,
+		Url: url,
 	}
-	logrus.Tracef("Client created %+v for %s ", rs, rs.url.String())
+	logrus.Tracef("Client created %+v for %s ", rs, rs.Url.String())
 	return rs
 }
 
@@ -43,8 +43,8 @@ func (r *ServiceRouter) RegisterService(apiIf config.ServiceApiIf) error {
 		return err
 	}
 
-	logrus.Tracef("Requesting service router %s to add pattern %s for service.", (r.url.String() + RoutesExt), string(j))
-	resp, err := r.C.R().SetHeader("Content-Type", "application/json").SetBody(j).Post((r.url.String() + RoutesExt))
+	logrus.Tracef("Requesting service router %s to add pattern %s for service.", (r.Url.String() + RoutesExt), string(j))
+	resp, err := r.C.R().SetHeader("Content-Type", "application/json").SetBody(j).Post((r.Url.String() + RoutesExt))
 	if err != nil {
 		logrus.Errorf("Failed to resgister service to service router. Error %s", err.Error())
 		return err
