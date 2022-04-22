@@ -23,7 +23,7 @@ func NewConfig() *Config {
 
 	return &Config{
 		Server: rest.HttpConfig{
-			Port: 8085,
+			Port: 8086,
 			Cors: cors.Config{
 				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
 			},
@@ -35,13 +35,14 @@ func NewConfig() *Config {
 			P: config.Pattern{
 				Routes: []config.Route{
 					{
-						"node": "*", "looking_for": "validation", "Path": "/nodes",
+						"node": "*", "looking_for": "validation",
 					},
 				},
 			},
 			F: config.Forward{
 				Ip:   "http://localhost",
 				Port: 8095,
+				Path: "/",
 			},
 		},
 	}

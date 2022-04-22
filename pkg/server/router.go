@@ -102,7 +102,7 @@ func (r *Router) bootstrapGetHandler(c *gin.Context, req *BootstrapRequest) erro
 	}
 
 	c.Header("Content-Type", "application/json")
-	c.IndentedJSON(http.StatusOK, cred.OrgCred)
+	c.IndentedJSON(http.StatusOK, cred)
 
 	return nil
 }

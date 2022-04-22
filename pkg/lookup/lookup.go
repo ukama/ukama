@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/openIoR/services/common/rest"
 	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 )
 
@@ -16,9 +17,11 @@ type LookUp struct {
 }
 
 type OrgCredentialsResp struct {
+	Node    string `json:"nodeId"`
+	OrgName string `json:"orgName,omitempty"`
 	Status  int    `json:"status"`
-	Ip      string `json:"Ip"`
-	OrgCred []byte `json:"Certs"`
+	Ip      string `json:"Ip,omitempty"`
+	OrgCred []byte `json:"certificate,omitempty"`
 }
 
 func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
@@ -30,26 +33,29 @@ func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 
 func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCredentialsResp, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
-	var credResp OrgCredentialsResp
-
+	credResp := &OrgCredentialsResp{}
+	errStatus := &rest.ErrorMessage{}
 	resp, err := L.S.C.R().
+		SetResult(credResp).
+		SetError(errStatus).
 		SetQueryParams(map[string]string{
-			"nodeid":      nodeid,
+			"node":        nodeid,
 			"looking_for": OrgCredentials,
 		}).
 		SetHeader("Accept", "application/json").SetResult(&credResp).
-		Get("/")
+		Get("http://localhost:8080" + "/orgs/node")
+
 	if err != nil {
-		logrus.Errorf("Failed to validate nodeid %s. Error %s", nodeid, err.Error())
+		logrus.Errorf("Failed to look credentials for  nodeid %s. Error %s", nodeid, err.Error())
 		return false, nil, err
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to validate nodeid %s. HTTP resp code %d ", nodeid, resp.StatusCode())
-		return false, nil, fmt.Errorf("http error with response code %d", resp.StatusCode())
-	} else {
-		logrus.Tracef("Credentials for nodeid %s is %+v", nodeid, credResp)
+		logrus.Tracef("Failed to look credentials for nodeid %s. HTTP resp code %d and error %s", nodeid, resp.StatusCode(), errStatus.Message)
+		return false, nil, fmt.Errorf("failed to get credentials: %s", errStatus.Message)
 	}
 
-	return true, &credResp, nil
+	logrus.Tracef("Credentials for nodeid %s is %+v", nodeid, credResp)
+
+	return true, credResp, nil
 }
