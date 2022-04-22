@@ -59,6 +59,33 @@ func NewConfig() *Config {
 					{
 						"node": "*", "looking_for": "list", "Path": "/node/all",
 					},
+					{
+						"module": "*", "looking_for": "info", "Path": "/module/",
+					},
+					{
+						"module": "*", "looking_to": "update", "Path": "/module/",
+					},
+					{
+						"module": "*", "looking_to": "delete", "Path": "/module/",
+					},
+					{
+						"module": "*", "looking_for": "info", "status": "*", "Path": "/module/status",
+					},
+					{
+						"module": "*", "looking_to": "status", "status": "*", "Path": "/module/status",
+					},
+					{
+						"module": "*", "looking_for": "info", "field": "*", "Path": "/module/field",
+					},
+					{
+						"module": "*", "looking_to": "update", "field": "*", "Path": "/module/field",
+					},
+					{
+						"module": "*", "looking_for": "info", "data": "*", "Path": "/module/data",
+					},
+					{
+						"module": "*", "looking_for": "list", "Path": "/module/all",
+					},
 				},
 			},
 			F: config.Forward{
