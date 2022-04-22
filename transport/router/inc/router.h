@@ -13,7 +13,7 @@
 #include <uuid/uuid.h>
 #include <ulfius.h>
 
-#define EP_ROUTE   "/route"
+#define EP_ROUTE   "/routes"
 #define EP_STATS   "/stats"
 #define EP_SERVICE "/service"
 

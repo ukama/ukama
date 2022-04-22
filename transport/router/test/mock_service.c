@@ -84,14 +84,17 @@ static void print_request(const struct _u_request *request) {
 /* Callback function for the web application 
  *
  */
-int callback_post(const req_t *request, resp_t *response, void *user_data) {
+int callback_service(const req_t *request, resp_t *response, void *user_data) {
 
   char *str;
+  char buffer[MAX_LEN] = {0};
 
   print_request(request);
   str = (char *)user_data;
 
-  ulfius_set_string_body_response(response, 200, str);
+  sprintf(buffer, "%s: %s\n", request->http_verb, str);
+
+  ulfius_set_string_body_response(response, 200, buffer);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -137,7 +140,7 @@ static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
   if (uuidStr == NULL) return FALSE;
 
   sprintf(json, DEL_JSON, uuidStr);
-  sprintf(url, "http://%s:%s/route", rIP, rPort);
+  sprintf(url, "http://%s:%s/routes", rIP, rPort);
 
   curl = curl_easy_init();
   if(!curl) {
@@ -198,7 +201,7 @@ static int service_register(char *rIP, char *rPort, char *ip, char *port,
   json_t *jRoot=NULL, *jID=NULL;
 
   sprintf(json, REG_JSON, pattern, ip, port);
-  sprintf(url, "http://%s:%s/route", rIP, rPort);
+  sprintf(url, "http://%s:%s/routes", rIP, rPort);
 
   curl = curl_easy_init();
   if(!curl) {
@@ -264,7 +267,7 @@ int callback_default(const req_t *request, resp_t *response, void *user_data) {
 
   print_request(request);
 
-  ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
+  ulfius_set_string_body_response(response, 404, "Service: Not implemented\n");
   return U_CALLBACK_CONTINUE;
 }
 
@@ -301,8 +304,14 @@ int main(int argc, char **argv) {
   }
 
   /* Endpoint list declaration for service. */
+  ulfius_add_endpoint_by_val(&inst, "GET", "/service", NULL, 0,
+                             &callback_service, (void *)reply);
   ulfius_add_endpoint_by_val(&inst, "POST", "/service", NULL, 0,
-                             &callback_post, (void *)reply);
+                             &callback_service, (void *)reply);
+  ulfius_add_endpoint_by_val(&inst, "PUT", "/service", NULL, 0,
+                             &callback_service, (void *)reply);
+  ulfius_add_endpoint_by_val(&inst, "DELETE", "/service", NULL, 0,
+                             &callback_service, (void *)reply);
 
   /* setup default. */
   ulfius_set_default_endpoint(&inst, &callback_default, NULL);
