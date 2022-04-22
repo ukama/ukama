@@ -174,5 +174,5 @@ message SetSimStatusRequest {
 }
 
 message SetSimStatusResponse{
-
+    Sim sim = 1;
 }

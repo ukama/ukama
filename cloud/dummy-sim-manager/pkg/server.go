@@ -5,30 +5,27 @@ import (
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
-	"go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"strings"
-	"time"
 )
 
 type SimManagerServer struct {
 	simmgr.UnimplementedSimManagerServiceServer
-	etcd *clientv3.Client
+	storage Storage
 }
 
-func NewSimManagerServer(etcdHost string) *SimManagerServer {
-	client, err := clientv3.New(clientv3.Config{
-		DialTimeout: 5 * time.Second,
-		Endpoints:   []string{etcdHost},
-	})
-	if err != nil {
-		logrus.Fatalf("Cannot connect to etcd: %v", err)
-	}
+type Storage interface {
+	Get(key string) ([]byte, error)
+	Put(key string, value string) error
+	Delete(key string) error
+}
+
+func NewSimManagerServer(storage Storage) *SimManagerServer {
 
 	return &SimManagerServer{
-		etcd: client,
+		storage: storage,
 	}
 }
 
@@ -55,7 +52,8 @@ func (s SimManagerServer) SetServiceStatus(ctx context.Context, request *simmgr.
 
 	sim.Services = request.Services
 
-	_, err := s.etcd.Put(ctx, getEtcdKey(request.Iccid), marshalSimInfo(sim))
+	err := s.storage.Put(getEtcdKey(request.Iccid), marshalSimInfo(sim))
+
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot update sim info in etcd: %v", err)
 	}
@@ -64,15 +62,15 @@ func (s SimManagerServer) SetServiceStatus(ctx context.Context, request *simmgr.
 }
 
 func (s SimManagerServer) getSimInfo(ctx context.Context, iccid string) *simInfo {
-	val, err := s.etcd.Get(ctx, getEtcdKey(iccid), clientv3.WithLimit(1))
+	val, err := s.storage.Get(getEtcdKey(iccid))
 	if err != nil {
 		logrus.Errorf("Cannot get sim info from etcd: %v", err)
 		return nil
 	}
 
 	var sim *simInfo
-	if val.Count > 0 {
-		sim = unmarshalSimInfo(val.Kvs[0].Value)
+	if val != nil {
+		sim = unmarshalSimInfo(val)
 	} else {
 		sim = nil
 	}
@@ -149,7 +147,7 @@ func (s SimManagerServer) getOrCreateSim(ctx context.Context, request *simmgr.Ge
 		}
 	}
 
-	_, err := s.etcd.Put(ctx, getEtcdKey(request.Iccid), marshalSimInfo(sim))
+	err := s.storage.Put(getEtcdKey(request.Iccid), marshalSimInfo(sim))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot update sim info in etcd: %v", err)
 	}
@@ -163,7 +161,7 @@ func (s SimManagerServer) TerminateSim(ctx context.Context, request *simmgr.Term
 		return nil, status.Errorf(codes.NotFound, "Sim not found.")
 	}
 
-	_, err := s.etcd.Delete(ctx, getEtcdKey(request.Iccid))
+	err := s.storage.Delete(getEtcdKey(request.Iccid))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from etcd: %v", err)
 	}

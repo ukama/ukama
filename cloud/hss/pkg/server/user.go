@@ -259,8 +259,14 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 	if req.Ukama != nil {
 		return nil, status.Errorf(codes.Unimplemented, "Configuring status in ukama network is not yet implemented")
 	}
+	sim := &pb.Sim{
+		Iccid: req.Iccid,
+	}
+	u.pullSimCardStatuses(ctx, sim)
 
-	return &pb.SetSimStatusResponse{}, nil
+	return &pb.SetSimStatusResponse{
+		Sim: sim,
+	}, nil
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {

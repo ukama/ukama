@@ -5,12 +5,12 @@ package gen
 
 import (
 	fmt "fmt"
+	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
-	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/wrapperspb"
-	math "math"
 	regexp "regexp"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -283,5 +283,10 @@ func (this *SetSimStatusRequest_SetServices) Validate() error {
 	return nil
 }
 func (this *SetSimStatusResponse) Validate() error {
+	if this.Sim != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
+		}
+	}
 	return nil
 }

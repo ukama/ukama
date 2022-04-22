@@ -8,6 +8,7 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Grpc              config.Grpc
 	EtcdHost          string
+	EtcdEnabled       bool
 }
 
 func NewConfig() *Config {
@@ -15,6 +16,7 @@ func NewConfig() *Config {
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
-		EtcdHost: "localhost:2379",
+		EtcdHost:    "localhost:2379",
+		EtcdEnabled: true,
 	}
 }

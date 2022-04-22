@@ -60,7 +60,7 @@ func LoadConfig(configFileName string, config interface{}) {
 	e.SetConfigName(configFileName + ".yaml")
 
 	e.AutomaticEnv() // read in environment variables that match
-
+	
 	// If a config file is found, read it in.
 	err = e.ReadInConfig()
 	if err == nil {

@@ -274,7 +274,7 @@ func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*hsspb.Get
 	return r.clients.User.Get(req.UserId)
 }
 
-func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) error {
+func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (*hsspb.Sim, error) {
 	return r.clients.User.SetSimStatus(&hsspb.SetSimStatusRequest{
 		Iccid:   req.Iccid,
 		Carrier: simServicesToPbService(req.Carrier),

@@ -18,6 +18,6 @@ ORG=$(curl --request GET \
 
 
 # Call nodes endpoint
-curl --request GET \
-  --url https://api.dev.ukama.com/orgs/$ORG/nodes \
-  --header "Authorization: Bearer ${TOKEN}"
+#curl --request GET \
+#  --url https://api.dev.ukama.com/orgs/$ORG/nodes \
+#  --header "Authorization: Bearer ${TOKEN}"

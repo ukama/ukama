@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/sirupsen/logrus"
 	"os"
 
 	"github.com/ukama/ukamaX/cloud/dummy-sim-manager/pkg"
@@ -33,7 +34,17 @@ func initConfig() {
 func runGrpcServer() {
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
-		simmgr.RegisterSimManagerServiceServer(s, pkg.NewSimManagerServer(serviceConfig.EtcdHost))
+
+		var storage pkg.Storage
+		if serviceConfig.EtcdEnabled {
+			storage = pkg.NewEtcdStorage(serviceConfig.EtcdHost)
+			logrus.Infof("Etcd storage enabled")
+		} else {
+			storage = pkg.NewMemStorage()
+			logrus.Infof("In-memory storage enabled")
+		}
+
+		simmgr.RegisterSimManagerServiceServer(s, pkg.NewSimManagerServer(storage))
 	})
 
 	grpcServer.StartServer()

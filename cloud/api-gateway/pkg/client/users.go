@@ -90,12 +90,15 @@ func (r *Users) Get(userId string) (*pb.GetResponse, error) {
 	return r.client.Get(ctx, &pb.GetRequest{UserId: userId})
 }
 
-func (r *Users) SetSimStatus(req *pb.SetSimStatusRequest) error {
+func (r *Users) SetSimStatus(req *pb.SetSimStatusRequest) (*pb.Sim, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
 	defer cancel()
 
-	_, err := r.client.SetSimStatus(ctx, req)
-	return err
+	resp, err := r.client.SetSimStatus(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Sim, err
 }
 
 func (r *Users) DeactivateUser(userId string) error {
