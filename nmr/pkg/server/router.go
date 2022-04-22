@@ -182,6 +182,7 @@ func (r *Router) GetNodeStatusHandler(c *gin.Context, req *ReqGetNodeStatus) (*R
 func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) error {
 	logrus.Debugf("Handling NMR update node request %+v.", req)
 
+	/* Check if the node state corespond to valid mfg state */
 	status, err := db.MfgState(req.Status)
 	if err != nil {
 		return rest.HttpError{

@@ -26,7 +26,7 @@ type ReqAddOrUpdateNode struct {
 type ReqUpdateNodeStatus struct {
 	NodeID    string `query:"node" validate:"required"`
 	LookingTo string `query:"looking_to" validate:"required"`
-	Status    string `query:"status"`
+	Status    string `query:"status" validate:"required"`
 }
 
 type ReqDeleteNode struct {
