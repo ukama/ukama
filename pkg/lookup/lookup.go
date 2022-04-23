@@ -15,11 +15,11 @@ type LookUp struct {
 	S *sr.ServiceRouter
 }
 
-type OrgCredentialsResp struct {
-	Node    string `json:"nodeId"`
-	OrgName string `json:"orgName,omitempty"`
-	Status  int    `json:"status"`
-	Ip      string `json:"Ip,omitempty"`
+type RespOrgCredentials struct {
+	Node    string `json:"node"`
+	OrgName string `json:"org,omitempty"`
+	Status  int    `json:"status,omitempty"`
+	Ip      string `json:"ip,omitempty"`
 	OrgCred []byte `json:"certificate,omitempty"`
 }
 
@@ -34,9 +34,9 @@ func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 	}
 }
 
-func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCredentialsResp, error) {
+func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOrgCredentials, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
-	credResp := &OrgCredentialsResp{}
+	credResp := &RespOrgCredentials{}
 	errStatus := &ErrorMessage{}
 	resp, err := L.S.C.R().
 		SetResult(credResp).
