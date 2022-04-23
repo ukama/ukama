@@ -59,6 +59,6 @@ func initConfig() {
 }
 
 func runHttpServer(d sql.Db, rs *sr.ServiceRouter) {
-	r := rest.NewRouter(rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
+	r := rest.NewRouter(internal.ServiceConf, rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
 	r.Run()
 }
