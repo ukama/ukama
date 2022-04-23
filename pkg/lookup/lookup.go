@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/rest"
 	sr "github.com/ukama/openIoR/services/common/srvcrouter"
 )
 
@@ -24,6 +23,10 @@ type OrgCredentialsResp struct {
 	OrgCred []byte `json:"certificate,omitempty"`
 }
 
+type ErrorMessage struct {
+	Message string `json:"error"`
+}
+
 func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 
 	return &LookUp{
@@ -34,7 +37,7 @@ func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *OrgCredentialsResp, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
 	credResp := &OrgCredentialsResp{}
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &ErrorMessage{}
 	resp, err := L.S.C.R().
 		SetResult(credResp).
 		SetError(errStatus).
