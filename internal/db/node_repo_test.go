@@ -40,6 +40,11 @@ func (u UkamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB
 	return nil
 }
 
+func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error) {
+	log.Fatal("implement me")
+	return nil
+}
+
 func Test_nodeRepo_Get(t *testing.T) {
 
 	t.Run("NodeExist", func(t *testing.T) {

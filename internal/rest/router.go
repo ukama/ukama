@@ -19,20 +19,17 @@ import (
 )
 
 const NodeIdParamName = "node"
-const orgNameParamName = "org"
-const requestPUTorPOST = "looking_to"
-const requestGET = "looking_for"
 
 type Router struct {
 	fizz     *fizz.Fizz
 	port     int
-	gin      *gin.Engine
 	R        *sr.ServiceRouter
 	nodeRepo db.NodeRepo
 	orgRepo  db.OrgRepo
 }
 
 func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router {
+
 	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
 
 	r := &Router{fizz: f,
@@ -72,7 +69,7 @@ func (r *Router) postNodeHandler(c *gin.Context, req *ReqAddNode) error {
 	id, err := ukama.ValidateNodeId(req.NodeID)
 	if err != nil {
 		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
+			HttpCode: http.StatusBadRequest,
 			Message:  "error parsing NodeId :" + err.Error(),
 		}
 	}
@@ -80,7 +77,7 @@ func (r *Router) postNodeHandler(c *gin.Context, req *ReqAddNode) error {
 	org, err := r.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
+			HttpCode: http.StatusInternalServerError,
 			Message:  "organization :" + err.Error(),
 		}
 	}
@@ -88,7 +85,7 @@ func (r *Router) postNodeHandler(c *gin.Context, req *ReqAddNode) error {
 	err = r.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
 	if err != nil {
 		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
+			HttpCode: http.StatusInternalServerError,
 			Message:  "error adding the node mapping :" + err.Error(),
 		}
 	}
@@ -103,7 +100,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *ReqGetNode) (*RespGetNode, 
 	id, err := ukama.ValidateNodeId(req.NodeID)
 	if err != nil {
 		return nil, rest.HttpError{
-			HttpCode: http.StatusNotFound,
+			HttpCode: http.StatusBadRequest,
 			Message:  "error parsing NodeId :" + err.Error(),
 		}
 	}
@@ -147,7 +144,7 @@ func (r *Router) addOrgHandler(c *gin.Context, req *ReqAddOrg) error {
 	err = r.orgRepo.Upsert(&db.Org{Name: req.OrgName, Certificate: req.Certificate, Ip: ip})
 	if err != nil {
 		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
+			HttpCode: http.StatusInternalServerError,
 			Message:  "Error adding org :" + err.Error(),
 		}
 	}
