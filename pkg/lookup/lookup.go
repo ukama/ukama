@@ -46,7 +46,7 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 			"looking_for": OrgCredentials,
 		}).
 		SetHeader("Accept", "application/json").SetResult(&credResp).
-		Get("http://localhost:8080" + "/orgs/node")
+		Get("http://localhost:8087" + "/orgs/node")
 
 	if err != nil {
 		logrus.Errorf("Failed to look credentials for  nodeid %s. Error %s", nodeid, err.Error())
