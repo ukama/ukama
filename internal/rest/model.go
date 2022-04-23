@@ -13,7 +13,7 @@ type ReqGetNode struct {
 }
 
 type RespGetNode struct {
-	NodeId      string `json:"node`
+	NodeId      string `json:"node"`
 	OrgName     string `json:"org"`
 	Certificate string `json:"certificate" binding:"base64"`
 	Ip          string `json:"ip" validate:"ip"`
