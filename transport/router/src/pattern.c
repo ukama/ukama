@@ -88,6 +88,8 @@ void free_service(Service *service) {
 
   if (service == NULL) return;
 
+  if (service->name) free(service->name);
+
   patterns = service->patterns;
   forward  = service->forward;
 
@@ -114,7 +116,11 @@ void free_service(Service *service) {
   if (forward) {
     if (forward->ip)   free(forward->ip);
     if (forward->port) free(forward->port);
+    free(forward);
   }
+
+  free(service);
+  service=NULL;
 }
 
 /*

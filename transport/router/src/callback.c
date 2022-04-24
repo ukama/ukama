@@ -318,6 +318,9 @@ int callback_post_route(const struct _u_request *request,
 
   if (retCode != HttpStatus_OK) {
     free_service(service);
+  } else {
+    if (service->name) free(service->name);
+    free(service);
   }
 
   json_decref(jResp);

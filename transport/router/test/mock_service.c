@@ -105,13 +105,13 @@ static void print_request(const struct _u_request *request) {
 /* Callback function for the web application 
  *
  */
-int callback_service(const req_t *request, resp_t *response, void *user_data) {
+int callback_service(const req_t *request, resp_t *response, void *userData) {
 
   char *str;
   char buffer[MAX_LEN] = {0};
 
   print_request(request);
-  str = (char *)user_data;
+  str = (char *)userData;
 
   sprintf(buffer, "%s: %s\n", request->http_verb, str);
 
@@ -284,11 +284,19 @@ static int service_register(char *name, char *rIP, char *rPort, char *ip,
   return ret;
 }
 
-int callback_default(const req_t *request, resp_t *response, void *user_data) {
+int callback_default(const req_t *request, resp_t *response, void *userData) {
+
+  char *name;
+  char buffer[MAX_LEN] = {0};
+
+  name = (char *)userData;
 
   print_request(request);
 
-  ulfius_set_string_body_response(response, 404, "Service: Not implemented\n");
+  sprintf(buffer, "%s: not implemented. End-point: %s \n", name,
+	  request->url_path);
+
+  ulfius_set_string_body_response(response, 404, buffer);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -337,7 +345,7 @@ int main(int argc, char **argv) {
                              &callback_service, (void *)reply);
 
   /* setup default. */
-  ulfius_set_default_endpoint(&inst, &callback_default, NULL);
+  ulfius_set_default_endpoint(&inst, &callback_default, name);
 
   /* Start the framework */
   if (ulfius_start_framework(&inst) == U_OK) {
