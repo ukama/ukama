@@ -33,8 +33,29 @@ struct Response {
   size_t size;
 };
 
-#define REG_JSON \
-  "{ \"pattern\" : %s , \"forward\": { \"ip\": \"%s\", \"port\" : \"%s\" } }"
+/*
+ * {
+ *      "name": "service_name",
+ *	"patterns": [{
+ *			"key1": "value1",
+ *			"key1": "value2",
+ *			"path": "/abc"
+ *		},
+ *		{
+ *			"key1": "value1",
+ *			"path": "/abv/xcv"
+ *		}
+ *	],
+ *	"forward": {
+ *		"ip": "10.0.0.1",
+ *		"port": "8080",
+ *		"default_path": "/abc"
+ *	}
+ * }
+ *
+ */
+
+#define REG_JSON "{ \"name\" : \"%s\", \"patterns\" : [ %s ], \"forward\": { \"ip\": \"%s\", \"port\" : \"%s\" } }"
 #define DEL_JSON "{ \"uuid\" : \"%s\" }"
 
 static void print_map(map_t *map) {
@@ -84,13 +105,13 @@ static void print_request(const struct _u_request *request) {
 /* Callback function for the web application 
  *
  */
-int callback_service(const req_t *request, resp_t *response, void *user_data) {
+int callback_service(const req_t *request, resp_t *response, void *userData) {
 
   char *str;
   char buffer[MAX_LEN] = {0};
 
   print_request(request);
-  str = (char *)user_data;
+  str = (char *)userData;
 
   sprintf(buffer, "%s: %s\n", request->http_verb, str);
 
@@ -186,8 +207,8 @@ static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
  * service_register --
  *
  */
-static int service_register(char *rIP, char *rPort, char *ip, char *port,
-		     char *pattern, char **uuidStr) {
+static int service_register(char *name, char *rIP, char *rPort, char *ip,
+			    char *port, char *pattern, char **uuidStr) {
 
   int ret=FALSE;
   CURL *curl=NULL;
@@ -200,7 +221,7 @@ static int service_register(char *rIP, char *rPort, char *ip, char *port,
 
   json_t *jRoot=NULL, *jID=NULL;
 
-  sprintf(json, REG_JSON, pattern, ip, port);
+  sprintf(json, REG_JSON, name, pattern, ip, port);
   sprintf(url, "http://%s:%s/routes", rIP, rPort);
 
   curl = curl_easy_init();
@@ -263,11 +284,19 @@ static int service_register(char *rIP, char *rPort, char *ip, char *port,
   return ret;
 }
 
-int callback_default(const req_t *request, resp_t *response, void *user_data) {
+int callback_default(const req_t *request, resp_t *response, void *userData) {
+
+  char *name;
+  char buffer[MAX_LEN] = {0};
+
+  name = (char *)userData;
 
   print_request(request);
 
-  ulfius_set_string_body_response(response, 404, "Service: Not implemented\n");
+  sprintf(buffer, "%s: not implemented. End-point: %s \n", name,
+	  request->url_path);
+
+  ulfius_set_string_body_response(response, 404, buffer);
   return U_CALLBACK_CONTINUE;
 }
 
@@ -278,6 +307,7 @@ int callback_default(const req_t *request, resp_t *response, void *user_data) {
  */
 int main(int argc, char **argv) {
 
+  char *name;
   char *kvPattern, *reply;
   char *rHost;
   char *port, *rPort;
@@ -291,11 +321,12 @@ int main(int argc, char **argv) {
   }
 
   /* Get args */
-  rHost     = strdup(argv[1]);
-  rPort     = strdup(argv[2]);
-  port      = strdup(argv[3]);
-  reply     = strdup(argv[4]);
-  kvPattern = strdup(argv[5]);
+  name      = strdup(argv[1]);
+  rHost     = strdup(argv[2]);
+  rPort     = strdup(argv[3]);
+  port      = strdup(argv[4]);
+  reply     = strdup(argv[5]);
+  kvPattern = strdup(argv[6]);
 
   /* Initialize ulfius framework. */
   if (ulfius_init_instance(&inst, atoi(port), NULL, NULL) != U_OK) {
@@ -314,7 +345,7 @@ int main(int argc, char **argv) {
                              &callback_service, (void *)reply);
 
   /* setup default. */
-  ulfius_set_default_endpoint(&inst, &callback_default, NULL);
+  ulfius_set_default_endpoint(&inst, &callback_default, name);
 
   /* Start the framework */
   if (ulfius_start_framework(&inst) == U_OK) {
@@ -324,7 +355,7 @@ int main(int argc, char **argv) {
   }
 
   /* register the service to the router */
-  service_register(rHost, rPort, "127.0.0.1", port, kvPattern, &uuidStr);
+  service_register(name, rHost, rPort, "127.0.0.1", port, kvPattern, &uuidStr);
   fprintf(stdout, "UUID: %s\n", uuidStr);
 
   fprintf(stdout, "Press any key to exit ... \n");

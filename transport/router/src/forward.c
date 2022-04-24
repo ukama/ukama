@@ -35,7 +35,7 @@ static req_t *init_forward_request(char *host, char *port, char *method,
     return NULL;
   }
 
-  sprintf(url, "http://%s:%s/%s", host, port, EP_SERVICE);
+  sprintf(url, "http://%s:%s/%s", host, port, ep);
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;
@@ -75,13 +75,13 @@ static void add_url_parameters(req_t *req, Pattern *reqPattern) {
  *
  */
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      const req_t *request) {
+			      const req_t *request, char *ep) {
 
   req_t *fRequest=NULL;
 
   /* Initialize the forward request */
   fRequest = init_forward_request(forward->ip, forward->port,
-				  request->http_verb, EP_SERVICE);
+				  request->http_verb, ep);
   if (!fRequest) {
     log_error("Error init forward request");
     return NULL;

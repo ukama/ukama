@@ -114,9 +114,10 @@ static int add_service_entry(Router **router, Service *service) {
   uuid_generate(service->uuid);
 
   uuid_copy(ptr->uuid, service->uuid);
-  ptr->pattern = service->pattern;
-  ptr->forward = service->forward;
-  ptr->next    = NULL;
+  ptr->name     = strdup(service->name);
+  ptr->patterns = service->patterns;
+  ptr->forward  = service->forward;
+  ptr->next     = NULL;
 
   return TRUE;
 }
@@ -317,11 +318,13 @@ int callback_post_route(const struct _u_request *request,
 
   if (retCode != HttpStatus_OK) {
     free_service(service);
+  } else {
+    if (service->name) free(service->name);
+    free(service);
   }
 
   json_decref(jResp);
   json_decref(jreq);
-  free(service);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -418,7 +421,7 @@ int callback_service(const struct _u_request *request,
 		     void *user_data) {
 
   int retCode, serviceResp;
-  char *mapStr=NULL;
+  char *mapStr=NULL, *ep=NULL;
   const char *statusStr=NULL;
   Router *router=NULL;
   Pattern *requestPattern=NULL, *next, *ptr;
@@ -451,7 +454,7 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-2: Pattern match to a service (if any)*/
-  if (!find_matching_service(router, requestPattern, &requestForward)) {
+  if (!find_matching_service(router, requestPattern, &requestForward, &ep)) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
@@ -474,7 +477,8 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-3: setup request to forward */
-  fRequest = create_forward_request(requestForward, requestPattern, request);
+  fRequest = create_forward_request(requestForward, requestPattern,
+				    request, ep);
   if (fRequest == NULL) {
     retCode   = HttpStatus_InternalServerError;
     statusStr = HttpStatusStr(retCode);
@@ -526,6 +530,8 @@ int callback_service(const struct _u_request *request,
     if (requestForward->port) free(requestForward->port);
     free(requestForward);
   }
+
+  if (ep ) free(ep);
 
   ulfius_clean_request(fRequest);
   ulfius_clean_response(fResponse);
