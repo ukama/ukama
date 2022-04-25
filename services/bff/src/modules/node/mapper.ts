@@ -28,7 +28,7 @@ class NodeMapper implements INodeMapper {
                 const nodeObj = this.getNode({
                     id: node.nodeId,
                     status: node.state,
-                    type: node.type as NODE_TYPE,
+                    type: node.type,
                     name: node.name,
                 });
                 nodes.push(nodeObj);
