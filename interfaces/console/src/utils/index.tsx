@@ -195,8 +195,8 @@ const getDefaultMetricList = (name: string) => {
 
 const getTitleByKey = (key: string) => {
     switch (key) {
-        case "uptime":
-            return "Uptime";
+        case "uptimetrx":
+            return "Uptime TRX";
         case "temperaturetrx":
             return "Temp. (TRX)";
         case "temperaturerfe":
@@ -276,7 +276,7 @@ const getMetricsInitObj = () => {
         txpower: null,
         rxpower: null,
         papower: null,
-        uptime: null,
+        uptimetrx: null,
     };
 };
 

@@ -1,4 +1,3 @@
-import { NetworkDto } from "../network/types";
 import { ParsedCookie } from "../../common/types";
 import { DeactivateResponse } from "../user/types";
 import {
@@ -10,10 +9,15 @@ import {
     OrgMetricValueDto,
     OrgNodeDto,
     NodeResponse,
+    GetNodeStatusRes,
+    GetNodeStatusInputDTO,
 } from "./types";
 
 export interface INodeService {
-    getNetwork(): Promise<NetworkDto>;
+    getNodeStatus(
+        data: GetNodeStatusInputDTO,
+        cookie: ParsedCookie
+    ): Promise<GetNodeStatusRes>;
     getNode(nodeId: string, cookie: ParsedCookie): Promise<NodeResponse>;
     getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
@@ -24,4 +28,5 @@ export interface INodeService {
 export interface INodeMapper {
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
     dtoToMetricsDto(res: OrgMetricValueDto[]): MetricDto[];
+    dtoToNodeStatusDto(res: OrgMetricValueDto[]): GetNodeStatusRes;
 }

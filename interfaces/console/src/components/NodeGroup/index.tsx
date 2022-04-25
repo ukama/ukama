@@ -33,7 +33,7 @@ const NodeGroup = ({ nodes, loading, handleNodeAction }: INodeGroup) => {
                         ))
                     ) : (
                         <Typography fontWeight={500} variant="body2">
-                            NA
+                            N/A
                         </Typography>
                     )}
                 </LoadingWrapper>

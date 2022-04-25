@@ -87,7 +87,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        uptime: null,
+        temperaturetrx: null,
     });
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
@@ -204,7 +204,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -220,7 +220,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                uptime: null,
+                temperaturetrx: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -234,7 +234,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
