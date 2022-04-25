@@ -33,7 +33,7 @@ func init() {
 	}
 
 	config.LoadConfig("integration", testConf)
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: TELNAGATEWAYHOST")
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SIMMANAGERHOST")
 	logrus.Infof("%+v", testConf)
 }
 
