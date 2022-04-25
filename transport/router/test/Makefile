@@ -19,7 +19,7 @@ MOCK=mock_service
 
 CC=gcc
 CFLAGS+=-c -Wall -I../inc -D_REENTRANT -g
-LIBS=-lulfius -lcurl
+LIBS=-lulfius -lcurl -ljansson
 
 .PHONY: all
 

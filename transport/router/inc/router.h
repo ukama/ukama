@@ -13,9 +13,11 @@
 #include <uuid/uuid.h>
 #include <ulfius.h>
 
-#define EP_ROUTE   "/route"
+#define EP_ROUTE   "/routes"
 #define EP_STATS   "/stats"
 #define EP_SERVICE "/service"
+
+#define DEFAULT_PATTERN_PATH "/service"
 
 #define FALSE   0
 #define TRUE    1
@@ -46,6 +48,14 @@ typedef struct pattern_ {
   struct pattern_ *next;
 } Pattern;
 
+typedef struct patterns_ {
+
+  Pattern *pattern; /* List of key-value pair */
+  char    *path;    /* EP */
+
+  struct patterns_ *next;
+} Patterns;
+
 /* Various stats */
 typedef struct {
 
@@ -61,9 +71,10 @@ typedef struct {
 
 typedef struct service_ {
 
-  uuid_t  uuid;
-  Pattern *pattern;
-  Forward *forward;
+  uuid_t   uuid;      /* UUID assigned */
+  char     *name;     /* service name */
+  Patterns *patterns; /* List of patterns to match */
+  Forward  *forward;  /* Where to forward the message */
 
   struct service_ *next;
 } Service;

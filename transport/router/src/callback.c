@@ -114,11 +114,65 @@ static int add_service_entry(Router **router, Service *service) {
   uuid_generate(service->uuid);
 
   uuid_copy(ptr->uuid, service->uuid);
-  ptr->pattern = service->pattern;
-  ptr->forward = service->forward;
-  ptr->next    = NULL;
+  ptr->name     = strdup(service->name);
+  ptr->patterns = service->patterns;
+  ptr->forward  = service->forward;
+  ptr->next     = NULL;
 
   return TRUE;
+}
+
+/*
+ * is_valid_uuid --
+ *
+ */
+static int is_valid_uuid(Router *router, uuid_t uuid) {
+
+  Service *ptr=NULL;
+
+  if (router==NULL) return FALSE;
+
+  for (ptr=(router)->services; ptr; ptr=ptr->next) {
+    if (uuid_compare(uuid, ptr->uuid) == 0){
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/*
+ * remove_service_entry
+ *
+ */
+static void remove_service_entry(Router **router, uuid_t uuid) {
+
+  Service *ptr=NULL, *tmp=NULL;
+
+  if (*router == NULL)            return;
+  if ((*router)->services == NULL) return;
+
+  /* base case */
+  if (uuid_compare(uuid, (*router)->services->uuid) == 0) {
+    if ((*router)->services->next) {
+      ptr = (*router)->services;
+      (*router)->services = ptr->next;
+      free_service(ptr);
+    } else {
+      free_service((*router)->services);
+      (*router)->services=NULL;
+    }
+    return;
+  }
+
+  for (ptr=(*router)->services; ptr->next; ptr=ptr->next) {
+    if (uuid_compare(uuid, ptr->next->uuid) == 0){
+      tmp = (ptr->next)->next;
+      free_service(ptr->next);
+      ptr->next = tmp;
+      return;
+    }
+  }
 }
 
 /*
@@ -140,32 +194,28 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     return FALSE;
   }
 
-  if (*pattern == NULL) {
-    *pattern = (Pattern *)calloc(1, sizeof(Pattern));
-    if (*pattern == NULL) {
-      log_error("Error allocating memory of size: %d", sizeof(Pattern));
-      return FALSE;
-    }
-  }
-
-  ptr = *pattern;
-
   keys = u_map_enum_keys(map);
   for (i=0; keys[i] != NULL; i++) {
     value = u_map_get(map, keys[i]);
 
-    if (ptr == NULL) {
-      ptr = (Pattern *)calloc(1, sizeof(Pattern));
-      if (ptr == NULL) {
-	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+    if (*pattern == NULL) {
+      *pattern = (Pattern *)calloc(1, sizeof(Pattern));
+      if (*pattern == NULL) {
+      	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
       }
+      ptr = *pattern;
+    } else {
+      ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
+      if (ptr->next == NULL) {
+	      log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	      goto failure;
+      }
+      ptr = ptr->next;
     }
 
     ptr->key   = strdup(keys[i]);
     ptr->value = strdup(value);
-
-    ptr = ptr->next;
   }
 
   return TRUE;
@@ -192,9 +242,28 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
  */
 int callback_get_route(const struct _u_request *request,
 		       struct _u_response *response,
-		       void *user_data) {
+		       void *userData) {
 
-  ulfius_set_string_body_response(response, 200, "");
+  int ret;
+  Router *router=NULL;
+  json_t *json=NULL;
+  char *str;
+
+  router = (Router *)userData;
+
+  ret = serialize_get_routes_request(&json, router);
+
+  if (ret) {
+    str = json_dumps(json, 0);
+    log_debug("Get routes JSON response: %s", str);
+    free(str);
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+  } else {
+    ulfius_set_string_body_response(response, HttpStatus_InternalServerError,
+			    HttpStatusStr(HttpStatus_InternalServerError));
+  }
 
   return U_CALLBACK_CONTINUE;
 }
@@ -205,7 +274,7 @@ int callback_get_route(const struct _u_request *request,
  */
 int callback_post_route(const struct _u_request *request,
 			struct _u_response *response,
-			void *user_data) {
+			void *userData) {
 
   int retCode;
   json_t *jreq=NULL;
@@ -216,7 +285,7 @@ int callback_post_route(const struct _u_request *request,
   char *jRespStr=NULL;
   const char *statusStr=NULL;
 
-  router = (Router *)user_data;
+  router = (Router *)userData;
 
   log_request(request);
   
@@ -268,11 +337,78 @@ int callback_post_route(const struct _u_request *request,
 
   if (retCode != HttpStatus_OK) {
     free_service(service);
+  } else {
+    if (service->name) free(service->name);
+    free(service);
   }
 
   json_decref(jResp);
   json_decref(jreq);
-  free(service);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+/*
+ * callback_delete_route --
+ *
+ */
+int callback_delete_route(const struct _u_request *request,
+			  struct _u_response *response,
+			  void *userData) {
+
+  int retCode;
+  json_t *jreq=NULL;
+  json_error_t jerr;
+  Router *router=NULL;
+  const char *statusStr=NULL;
+  char *uuidStr=NULL;
+  uuid_t uuid;
+
+  router = (Router *)userData;
+
+  log_request(request);
+
+  /* get json body */
+  jreq = ulfius_get_json_body_request(request, &jerr);
+  if (!jreq) {
+    log_error("json error for DELETE %s: %s", EP_ROUTE, jerr.text);
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  } else {
+    deserialize_delete_route_request(&uuidStr, jreq);
+  }
+
+  /* retrieve UUID */
+  if (uuid_parse(uuidStr, uuid) < 0) {
+    log_error("Error parsing the UUID into binary: %s", uuidStr);
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  }
+
+  if (is_valid_uuid(router, uuid) == FALSE) {
+    log_error("Invalid UUID recevied for Delete method");
+    retCode   = HttpStatus_BadRequest;
+    statusStr = HttpStatusStr(retCode);
+    log_error("%d: %s", retCode, statusStr);
+    goto reply;
+  }
+
+  /* remove the service from the router list. */
+  remove_service_entry(&router, uuid);
+
+  retCode   = HttpStatus_OK;
+  statusStr = "";
+
+ reply:
+  ulfius_set_string_body_response(response, retCode, statusStr);
+  log_debug("Delete response: %d %s", retCode, statusStr);
+
+  free(uuidStr);
+  json_decref(jreq);
 
   return U_CALLBACK_CONTINUE;
 }
@@ -283,7 +419,7 @@ int callback_post_route(const struct _u_request *request,
  */
 int callback_get_stats(const struct _u_request *request,
 		       struct _u_response *response,
-		       void *user_data) {
+		       void *userData) {
 
   char *post_params = print_map(request->map_post_body);
   char *response_body = msprintf("OK!\n%s", post_params);
@@ -296,15 +432,15 @@ int callback_get_stats(const struct _u_request *request,
 }
 
 /*
- * callback_post_service --
+ * callback_service --
  *
  */
-int callback_post_service(const struct _u_request *request,
-			  struct _u_response *response,
-			  void *user_data) {
+int callback_service(const struct _u_request *request,
+		     struct _u_response *response,
+		     void *userData) {
 
   int retCode, serviceResp;
-  char *mapStr=NULL;
+  char *mapStr=NULL, *ep=NULL;
   const char *statusStr=NULL;
   Router *router=NULL;
   Pattern *requestPattern=NULL, *next, *ptr;
@@ -312,7 +448,7 @@ int callback_post_service(const struct _u_request *request,
   struct _u_request  *fRequest=NULL;
   struct _u_response *fResponse=NULL;
 
-  router = (Router *)user_data;
+  router = (Router *)userData;
 
   log_request(request);
 
@@ -337,7 +473,7 @@ int callback_post_service(const struct _u_request *request,
   }
 
   /* Step-2: Pattern match to a service (if any)*/
-  if (!find_matching_service(router, requestPattern, &requestForward)) {
+  if (!find_matching_service(router, requestPattern, &requestForward, &ep)) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
@@ -360,7 +496,8 @@ int callback_post_service(const struct _u_request *request,
   }
 
   /* Step-3: setup request to forward */
-  fRequest = create_forward_request(requestForward, requestPattern, request);
+  fRequest = create_forward_request(requestForward, requestPattern,
+				    request, ep);
   if (fRequest == NULL) {
     retCode   = HttpStatus_InternalServerError;
     statusStr = HttpStatusStr(retCode);
@@ -413,6 +550,8 @@ int callback_post_service(const struct _u_request *request,
     free(requestForward);
   }
 
+  if (ep ) free(ep);
+
   ulfius_clean_request(fRequest);
   ulfius_clean_response(fResponse);
   free(fRequest);
@@ -426,9 +565,10 @@ int callback_post_service(const struct _u_request *request,
  *
  */
 int callback_not_allowed(const struct _u_request *request,
-			 struct _u_response *response, void *user_data) {
+			 struct _u_response *response, void *userData) {
 
-  ulfius_set_string_body_response(response, 403, "Operation not allowed\n");
+  ulfius_set_string_body_response(response, HttpStatus_Forbidden,
+				  HttpStatusStr(HttpStatus_Forbidden));
   return U_CALLBACK_CONTINUE;
 }
 
@@ -437,8 +577,9 @@ int callback_not_allowed(const struct _u_request *request,
  *
  */
 int callback_default(const struct _u_request *request,
-                     struct _u_response *response, void *user_data) {
+                     struct _u_response *response, void *userData) {
 
-  ulfius_set_string_body_response(response, 404, "You are clearly high!\n");
+  ulfius_set_string_body_response(response, HttpStatus_NotFound,
+				  HttpStatusStr(HttpStatus_NotFound));
   return U_CALLBACK_CONTINUE;
 }
