@@ -7,7 +7,7 @@ const Store = () => {
     return (
         <LoadingWrapper isLoading={_isSkeltonLoading} height={"90%"}>
             <div>
-                <h1>Store Page</h1>
+                <h1>Store Page:</h1>
             </div>
         </LoadingWrapper>
     );
