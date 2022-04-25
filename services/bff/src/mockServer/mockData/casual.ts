@@ -14,7 +14,6 @@ import { EsimDto } from "../../modules/esim/types";
 import { NetworkDto } from "../../modules/network/types";
 import {
     NodeAppResponse,
-    NodeDetailDto,
     NodeDto,
     NodeAppsVersionLogsResponse,
 } from "../../modules/node/types";
@@ -155,25 +154,6 @@ const deleteRes = (id: string): DeactivateResponse => {
         success: true,
     };
 };
-const nodeDetail = (): NodeDetailDto => {
-    return {
-        id: defaultCasual._uuid(),
-        modelType: `${defaultCasual.random_value(NODE_TYPE)} Node`,
-        serial: defaultCasual.integer(1111111111111111111, 9999999999999999999),
-        macAddress: defaultCasual.integer(
-            1111111111111111111,
-            9999999999999999999
-        ),
-        osVersion: defaultCasual.integer(1, 9),
-        manufacturing: defaultCasual.integer(
-            1111111111111111,
-            9999999999999999
-        ),
-        ukamaOS: defaultCasual.integer(1, 9),
-        hardware: defaultCasual.integer(1, 9),
-        description: `${defaultCasual.random_value(NODE_TYPE)} node is a xyz`,
-    };
-};
 const nodeNetwork = (): NetworkDto => {
     return {
         id: defaultCasual._uuid(),
@@ -225,7 +205,6 @@ interface Generators extends Casual.Generators {
     _billHistory: () => BillHistoryDto;
     _network: () => NetworkDto;
     _deleteRes: (id: string) => DeactivateResponse;
-    _nodeDetail: () => NodeDetailDto;
     _nodeNetwork: () => NetworkDto;
     _softwareLogs: () => [NodeAppsVersionLogsResponse];
     _nodeApps: () => [NodeAppResponse];
@@ -247,7 +226,6 @@ interface Functions extends Casual.functions {
     billHistory: () => BillHistoryDto;
     network: () => NetworkDto;
     deleteRes: (id: string) => DeactivateResponse;
-    nodeDetail: () => NodeDetailDto;
     nodeNetwork: () => NetworkDto;
     softwareLogs: () => [NodeAppsVersionLogsResponse];
     nodeApps: () => [NodeAppResponse];
@@ -264,7 +242,6 @@ defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
 defaultCasual.define("deleteRes", deleteRes);
-defaultCasual.define("nodeDetail", nodeDetail);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("softwareLogs", softwareLogs);
 defaultCasual.define("nodeApps", nodeApps);

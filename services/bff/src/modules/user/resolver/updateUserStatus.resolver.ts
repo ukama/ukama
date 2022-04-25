@@ -2,7 +2,7 @@ import { Service } from "typedi";
 import { UserService } from "../service";
 import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
-import { UpdateUserServiceInput, UpdateUserServiceRes } from "../types";
+import { UpdateUserServiceInput, OrgUserSimDto } from "../types";
 import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { parseCookie } from "../../../common";
 
@@ -11,12 +11,12 @@ import { parseCookie } from "../../../common";
 export class UpdateUserStatusResolver {
     constructor(private readonly userService: UserService) {}
 
-    @Mutation(() => UpdateUserServiceRes)
+    @Mutation(() => OrgUserSimDto)
     @UseMiddleware(Authentication)
     async updateUserStatus(
         @Arg("data") data: UpdateUserServiceInput,
         @Ctx() ctx: Context
-    ): Promise<UpdateUserServiceRes | null> {
+    ): Promise<OrgUserSimDto> {
         return this.userService.updateUserStatus(data, parseCookie(ctx));
     }
 }

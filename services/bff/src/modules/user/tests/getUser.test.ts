@@ -37,7 +37,6 @@ describe("Get User By Id", () => {
                 req: HEADER,
             },
         });
-        // console.log("Response: ", response);
         // expect(response).toMatchObject({
         //     data: {
         //         getUser: nockResponse.data,

@@ -228,13 +228,6 @@ export const getUserByID = (req: Request, res: Response): void => {
     });
 };
 
-export const getNodeDetails = (req: Request, res: Response): void => {
-    res.send({
-        status: "success",
-        data: casual._nodeDetail(),
-    });
-};
-
 export const getNodeNetwork = (req: Request, res: Response): void => {
     res.send({
         status: "success",

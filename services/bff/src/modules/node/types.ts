@@ -1,5 +1,4 @@
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationResponse } from "../../common/types";
 import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 
 @ObjectType()
@@ -33,36 +32,6 @@ export class NodeDto {
 
     @Field()
     updateDescription: string;
-}
-
-@ObjectType()
-export class NodeResponseDto {
-    @Field(() => [NodeDto])
-    nodes: NodeDto[];
-
-    @Field()
-    activeNodes: number;
-
-    @Field()
-    totalNodes: number;
-}
-
-@ObjectType()
-export class NodesResponse extends PaginationResponse {
-    @Field(() => NodeResponseDto)
-    nodes: NodeResponseDto;
-}
-
-@ObjectType()
-export class NodeResponse {
-    @Field()
-    status: string;
-
-    @Field(() => [NodeDto])
-    data: NodeDto[];
-
-    @Field()
-    length: number;
 }
 
 @ObjectType()
@@ -103,8 +72,8 @@ export class OrgNodeDto {
     @Field()
     nodeId: string;
 
-    @Field()
-    type: string;
+    @Field(() => NODE_TYPE)
+    type: NODE_TYPE;
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
@@ -138,33 +107,21 @@ export class OrgNodeResponseDto {
 }
 
 @ObjectType()
-export class NodeDetailDto {
+export class NodeResponse {
     @Field()
-    id: string;
+    nodeId: string;
+
+    @Field(() => NODE_TYPE)
+    type: NODE_TYPE;
+
+    @Field(() => ORG_NODE_STATE)
+    state: ORG_NODE_STATE;
 
     @Field()
-    modelType: string;
+    name: string;
 
-    @Field()
-    serial: number;
-
-    @Field()
-    macAddress: number;
-
-    @Field()
-    osVersion: number;
-
-    @Field()
-    manufacturing: number;
-
-    @Field()
-    ukamaOS: number;
-
-    @Field()
-    hardware: number;
-
-    @Field()
-    description: string;
+    @Field(() => [OrgNodeDto])
+    attached?: OrgNodeDto[];
 }
 @ObjectType()
 export class MetricDto {
