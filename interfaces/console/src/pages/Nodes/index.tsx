@@ -24,6 +24,7 @@ import {
     useGetMetricsByTabSSubscription,
     useAddNodeMutation,
     Node_Type,
+    useGetNodeLazyQuery,
 } from "../../generated";
 import { TMetric } from "../../types";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -46,6 +47,7 @@ const NODE_INIT = {
 };
 
 const Nodes = () => {
+    const [selectedTab, setSelectedTab] = useState(0);
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
             tab: selectedTab,
@@ -63,8 +65,6 @@ const Nodes = () => {
             tab: selectedTab,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
-
-    const [selectedTab, setSelectedTab] = useState(0);
     const [isAddNode, setIsAddNode] = useState(false);
     const skeltonLoading = useRecoilValue(isSkeltonLoading);
     const [nodeAppDetails, setNodeAppDetails] = useState<any>();
@@ -134,6 +134,15 @@ const Nodes = () => {
                 show: true,
             }),
     });
+
+    const [
+        getNode,
+        {
+            data: getNodeData,
+            loading: getNodeLoading,
+            variables: getNodeVariables,
+        },
+    ] = useGetNodeLazyQuery();
 
     const [
         getMetrics,
@@ -226,6 +235,11 @@ const Nodes = () => {
             nodesRes.getNodesByOrg.nodes.length > 0 &&
             !metricsLoading
         ) {
+            if (nodesRes.getNodesByOrg.nodes[0].type === Node_Type.Tower) {
+                getNode({
+                    variables: { nodeId: nodesRes.getNodesByOrg.nodes[0].id },
+                });
+            }
             setSelectedNode(nodesRes.getNodesByOrg.nodes[0]);
             setMetrics(getMetricsInitObj());
             getMetrics({
@@ -240,6 +254,14 @@ const Nodes = () => {
 
     useEffect(() => {
         if (selectedNode && selectedNode.id && !metricsLoading) {
+            if (
+                selectedNode.type === Node_Type.Tower &&
+                selectedNode.id !== getNodeVariables?.nodeId
+            ) {
+                getNode({
+                    variables: { nodeId: selectedNode.id },
+                });
+            }
             abortController.abort();
             setTimeout(() => {
                 setIsMetricPolling(false);
@@ -274,6 +296,13 @@ const Nodes = () => {
 
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
+    };
+
+    const onNodeSelectedFromGroup = (id: string) => {
+        if (id)
+            setSelectedNode(
+                nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
+            );
     };
 
     const onUpdateNodeClick = () => {
@@ -424,7 +453,10 @@ const Nodes = () => {
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
                                 metricsLoading={metricsLoading}
+                                nodeGroupLoading={getNodeLoading}
                                 handleUpdateNode={handleUpdateNode}
+                                nodeGroupData={getNodeData?.getNode}
+                                onNodeSelected={onNodeSelectedFromGroup}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 loading={
                                     isLoading || nodesLoading || !selectedNode

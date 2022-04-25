@@ -1048,6 +1048,28 @@ export type UpdateUserStatusMutation = {
     };
 };
 
+export type GetNodeQueryVariables = Exact<{
+    nodeId: Scalars["String"];
+}>;
+
+export type GetNodeQuery = {
+    __typename?: "Query";
+    getNode: {
+        __typename?: "NodeResponse";
+        nodeId: string;
+        type: Node_Type;
+        state: Org_Node_State;
+        name: string;
+        attached: Array<{
+            __typename?: "OrgNodeDto";
+            nodeId: string;
+            type: Node_Type;
+            state: Org_Node_State;
+            name: string;
+        }>;
+    };
+};
+
 export const GetDataUsageDocument = gql`
     query getDataUsage($filter: TIME_FILTER!) {
         getDataUsage(filter: $filter) {
@@ -2412,4 +2434,64 @@ export type UpdateUserStatusMutationResult =
 export type UpdateUserStatusMutationOptions = Apollo.BaseMutationOptions<
     UpdateUserStatusMutation,
     UpdateUserStatusMutationVariables
+>;
+export const GetNodeDocument = gql`
+    query getNode($nodeId: String!) {
+        getNode(nodeId: $nodeId) {
+            nodeId
+            type
+            state
+            name
+            attached {
+                nodeId
+                type
+                state
+                name
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetNodeQuery__
+ *
+ * To run a query within a React component, call `useGetNodeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeQuery({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *   },
+ * });
+ */
+export function useGetNodeQuery(
+    baseOptions: Apollo.QueryHookOptions<GetNodeQuery, GetNodeQueryVariables>
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodeQuery, GetNodeQueryVariables>(
+        GetNodeDocument,
+        options
+    );
+}
+export function useGetNodeLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeQuery,
+        GetNodeQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(
+        GetNodeDocument,
+        options
+    );
+}
+export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
+export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
+export type GetNodeQueryResult = Apollo.QueryResult<
+    GetNodeQuery,
+    GetNodeQueryVariables
 >;

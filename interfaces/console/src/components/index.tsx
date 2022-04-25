@@ -2,6 +2,7 @@ import Alerts from "./Alerts";
 import UserCard from "./UserCard";
 import TabPanel from "./TabPanel";
 import NodeCard from "./NodesCard";
+import NodeGroup from "./NodeGroup";
 import StatsCard from "./StatsCard";
 import EmptyView from "./EmptyView";
 import NodeStatus from "./NodeStatus";
@@ -57,6 +58,7 @@ export {
     NodeCard,
     UserCard,
     TabPanel,
+    NodeGroup,
     NodeSlider,
     SplitButton,
     EmptyView,
