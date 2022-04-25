@@ -68,7 +68,7 @@ const UserDetailsDialog = ({
     const statusText = status ? "ACTIVE" : "INACTIVE";
     const title = type === "add" ? "Add User" : "Edit User";
     const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
-
+    const colorActiveInactive = status ? "textDisabled" : "textSecondary";
     return (
         <Dialog
             key={id}
@@ -239,11 +239,7 @@ const UserDetailsDialog = ({
                                     >
                                         <Typography
                                             variant="caption"
-                                            color={
-                                                status
-                                                    ? "textDisabled"
-                                                    : "textSecondary"
-                                            }
+                                            color={colorActiveInactive}
                                             alignSelf={"end"}
                                         >
                                             ROAMING
