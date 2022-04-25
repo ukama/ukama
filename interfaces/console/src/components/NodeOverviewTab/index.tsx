@@ -1,25 +1,36 @@
-import { useEffect, useState } from "react";
-import { NodeDto } from "../../generated";
+import {
+    NodeGroup,
+    ApexLineChart,
+    NodeDetailsCard,
+    NodeStatsContainer,
+} from "..";
 import NodeStatItem from "../NodeStatItem";
+import { useEffect, useState } from "react";
+import { NodeDto, NodeResponse } from "../../generated";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
-import { NodeDetailsCard, NodeStatsContainer, ApexLineChart } from "..";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 
 interface INodeOverviewTab {
     metrics: any;
     loading: boolean;
     metricsLoading: boolean;
+    onNodeSelected: Function;
+    nodeGroupLoading: boolean;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
+    nodeGroupData: NodeResponse | undefined;
 }
 
 const NodeOverviewTab = ({
     metrics,
     loading,
     selectedNode,
+    nodeGroupData,
     metricsLoading,
+    onNodeSelected,
+    nodeGroupLoading,
     handleUpdateNode,
     isUpdateAvailable,
     getNodeSoftwareUpdateInfos,
@@ -44,22 +55,32 @@ const NodeOverviewTab = ({
                         title={"Node Information"}
                         handleAction={handleOnSelected}
                     >
-                        <NodeStatItem
-                            value={`${capitalize(
-                                selectedNode?.type.toLowerCase() || "HOME"
-                            )} Node`}
-                            name={"Model type"}
-                        />
-                        <NodeStatItem
-                            value={selectedNode?.id || "-"}
-                            name={"Serial #"}
-                        />
-                        {selectedNode?.type === "TOWER" && (
-                            <NodeStatItem
-                                value={"Amplifier Node 1"}
-                                name={"Node Group"}
-                            />
-                        )}
+                        <Grid container spacing={1}>
+                            <Grid item xs={12}>
+                                <NodeStatItem
+                                    value={`${capitalize(
+                                        selectedNode?.type.toLowerCase() ||
+                                            "HOME"
+                                    )} Node`}
+                                    name={"Model type"}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <NodeStatItem
+                                    value={selectedNode?.id || "-"}
+                                    name={"Serial #"}
+                                />
+                            </Grid>
+                            {selectedNode?.type === "TOWER" && (
+                                <Grid item xs={12}>
+                                    <NodeGroup
+                                        nodes={nodeGroupData?.attached || []}
+                                        loading={nodeGroupLoading}
+                                        handleNodeAction={onNodeSelected}
+                                    />
+                                </Grid>
+                            )}
+                        </Grid>
                     </NodeStatsContainer>
                     <NodeStatsContainer
                         index={1}

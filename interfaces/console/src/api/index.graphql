@@ -248,3 +248,18 @@ mutation updateUserStatus($data: UpdateUserServiceInput!) {
         }
     }
 }
+
+query getNode($nodeId: String!) {
+    getNode(nodeId: $nodeId) {
+        nodeId
+        type
+        state
+        name
+        attached {
+            nodeId
+            type
+            state
+            name
+        }
+    }
+}
