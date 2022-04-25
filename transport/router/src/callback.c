@@ -242,9 +242,28 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
  */
 int callback_get_route(const struct _u_request *request,
 		       struct _u_response *response,
-		       void *user_data) {
+		       void *userData) {
 
-  ulfius_set_string_body_response(response, 200, "");
+  int ret;
+  Router *router=NULL;
+  json_t *json=NULL;
+  char *str;
+
+  router = (Router *)userData;
+
+  ret = serialize_get_routes_request(&json, router);
+
+  if (ret) {
+    str = json_dumps(json, 0);
+    log_debug("Get routes JSON response: %s", str);
+    free(str);
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+  } else {
+    ulfius_set_string_body_response(response, HttpStatus_InternalServerError,
+			    HttpStatusStr(HttpStatus_InternalServerError));
+  }
 
   return U_CALLBACK_CONTINUE;
 }
@@ -255,7 +274,7 @@ int callback_get_route(const struct _u_request *request,
  */
 int callback_post_route(const struct _u_request *request,
 			struct _u_response *response,
-			void *user_data) {
+			void *userData) {
 
   int retCode;
   json_t *jreq=NULL;
@@ -266,7 +285,7 @@ int callback_post_route(const struct _u_request *request,
   char *jRespStr=NULL;
   const char *statusStr=NULL;
 
-  router = (Router *)user_data;
+  router = (Router *)userData;
 
   log_request(request);
   
@@ -335,7 +354,7 @@ int callback_post_route(const struct _u_request *request,
  */
 int callback_delete_route(const struct _u_request *request,
 			  struct _u_response *response,
-			  void *user_data) {
+			  void *userData) {
 
   int retCode;
   json_t *jreq=NULL;
@@ -345,7 +364,7 @@ int callback_delete_route(const struct _u_request *request,
   char *uuidStr=NULL;
   uuid_t uuid;
 
-  router = (Router *)user_data;
+  router = (Router *)userData;
 
   log_request(request);
 
@@ -400,7 +419,7 @@ int callback_delete_route(const struct _u_request *request,
  */
 int callback_get_stats(const struct _u_request *request,
 		       struct _u_response *response,
-		       void *user_data) {
+		       void *userData) {
 
   char *post_params = print_map(request->map_post_body);
   char *response_body = msprintf("OK!\n%s", post_params);
@@ -418,7 +437,7 @@ int callback_get_stats(const struct _u_request *request,
  */
 int callback_service(const struct _u_request *request,
 		     struct _u_response *response,
-		     void *user_data) {
+		     void *userData) {
 
   int retCode, serviceResp;
   char *mapStr=NULL, *ep=NULL;
@@ -429,7 +448,7 @@ int callback_service(const struct _u_request *request,
   struct _u_request  *fRequest=NULL;
   struct _u_response *fResponse=NULL;
 
-  router = (Router *)user_data;
+  router = (Router *)userData;
 
   log_request(request);
 
@@ -546,7 +565,7 @@ int callback_service(const struct _u_request *request,
  *
  */
 int callback_not_allowed(const struct _u_request *request,
-			 struct _u_response *response, void *user_data) {
+			 struct _u_response *response, void *userData) {
 
   ulfius_set_string_body_response(response, HttpStatus_Forbidden,
 				  HttpStatusStr(HttpStatus_Forbidden));
@@ -558,7 +577,7 @@ int callback_not_allowed(const struct _u_request *request,
  *
  */
 int callback_default(const struct _u_request *request,
-                     struct _u_response *response, void *user_data) {
+                     struct _u_response *response, void *userData) {
 
   ulfius_set_string_body_response(response, HttpStatus_NotFound,
 				  HttpStatusStr(HttpStatus_NotFound));

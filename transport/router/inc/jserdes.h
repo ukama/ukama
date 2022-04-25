@@ -24,10 +24,12 @@
 #define JSON_DEFAULT_PATH "default_path"
 #define JSON_UUID         "uuid"
 #define JSON_ERROR        "error"
+#define JSON_ROUTES       "routes"
 
 int deserialize_delete_route_request(char **uuidStr, json_t *json);
 int deserialize_post_route_request(Service **service, json_t *json);
 int serialize_post_route_response(json_t **json, int respCode, uuid_t uuid,
 				  char *errStr);
+int serialize_get_routes_request(json_t **json, Router *router);
 
 #endif /* JSERDES_H */

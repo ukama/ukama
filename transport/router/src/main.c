@@ -8,7 +8,7 @@
  */
 
 /*
- * Service router --
+ * Ukama Microservice Message Router --
  *
  */
 
@@ -34,7 +34,7 @@
  *
  */
 static void usage() {
-  
+
   printf("srvc_router: Microservice message router\n");
   printf("Usage: srvc_router [options] \n");
   printf("Options:\n");
@@ -47,7 +47,7 @@ static void usage() {
 
 /* Set the verbosity level for logs. */
 void set_log_level(char *slevel) {
-  
+
   int ilevel = LOG_TRACE;
 
   if (!strcmp(slevel, "DEBUG")) {
