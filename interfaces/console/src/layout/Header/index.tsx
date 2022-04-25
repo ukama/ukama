@@ -23,10 +23,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { cloneDeep } from "@apollo/client/utilities";
 import { Alerts, LoadingWrapper } from "../../components";
 import { useEffect, useRef, useState } from "react";
-import { isSkeltonLoading, user, pageName } from "../../recoil";
 import ExitToAppOutlined from "@mui/icons-material/ExitToAppOutlined";
 import { Settings, Notifications, AccountCircle } from "@mui/icons-material";
 import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
+import { isSkeltonLoading, user, pageName } from "../../recoil";
 
 const popupStyle = {
     boxShadow:

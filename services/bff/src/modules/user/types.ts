@@ -1,40 +1,12 @@
 import { IsEmail, IsPhoneNumber, Length } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationDto, PaginationResponse } from "../../common/types";
-import {
-    CONNECTED_USER_TYPE,
-    GET_STATUS_TYPE,
-    GET_USER_TYPE,
-} from "../../constants";
+import { PaginationResponse } from "../../common/types";
+import { GET_STATUS_TYPE } from "../../constants";
 
 @ObjectType()
 export class ConnectedUserDto {
     @Field()
     totalUser: string;
-}
-
-@ObjectType()
-export class UserDto {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field(() => CONNECTED_USER_TYPE)
-    type: CONNECTED_USER_TYPE;
-
-    @Field()
-    email: string;
-}
-
-@ObjectType()
-export class ConnectedUserResponse {
-    @Field()
-    data: ConnectedUserDto;
-
-    @Field()
-    status: string;
 }
 
 @InputType()
@@ -68,16 +40,11 @@ export class ActivateUserDto {
 }
 
 @InputType()
-export class UpdateUserDto {
+export class UserInputDto {
     @Field()
-    id: string;
-
-    @Field()
-    @Length(3, 255)
     name: string;
 
     @Field()
-    @IsEmail()
     email: string;
 
     @Field()
@@ -91,21 +58,12 @@ export class ActivateUserResponse {
 }
 
 @ObjectType()
-export class ActiveUserResponseDto {
-    @Field()
-    status: string;
-
-    @Field()
-    data: ActivateUserResponse;
-}
-
-@ObjectType()
 export class GetUserDto {
     @Field()
     id: string;
 
-    @Field(() => GET_STATUS_TYPE)
-    status: GET_STATUS_TYPE;
+    @Field()
+    status: boolean;
 
     @Field()
     name: string;
@@ -116,11 +74,11 @@ export class GetUserDto {
     @Field()
     iccid: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsPhoneNumber()
     phone: string;
 
@@ -169,18 +127,6 @@ export class GetUserResponseDto {
     length: number;
 }
 
-@InputType()
-export class GetUserPaginationDto extends PaginationDto {
-    @Field(() => GET_USER_TYPE)
-    type: GET_USER_TYPE;
-}
-
-@ObjectType()
-export class GetUserResponse extends PaginationResponse {
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
-}
-
 @ObjectType()
 export class ResidentResponse {
     @Field(() => [GetUserDto])
@@ -205,26 +151,6 @@ export class DeactivateResponse {
 
     @Field()
     success: boolean;
-}
-
-@ObjectType()
-export class OrgUserResponseDto {
-    @Field()
-    orgName: string;
-
-    @Field(() => [GetUserDto])
-    users: GetUserDto[];
-}
-
-@InputType()
-export class AddUserDto {
-    @Field()
-    @Length(3, 255)
-    name: string;
-
-    @Field()
-    @IsEmail()
-    email: string;
 }
 
 @ObjectType()
@@ -269,15 +195,6 @@ export class OrgUsersResponse {
     users: OrgUserDto[];
 }
 
-@InputType()
-export class UserInput {
-    @Field()
-    orgId: string;
-
-    @Field()
-    userId: string;
-}
-
 @ObjectType()
 export class UserSimServices {
     @Field()
@@ -301,10 +218,13 @@ export class UserSimUkamaDto {
 export class OrgUserSimDto {
     @Field()
     iccid: string;
+
     @Field()
     isPhysical: boolean;
+
     @Field(() => UserSimUkamaDto)
     ukama?: UserSimUkamaDto;
+
     @Field(() => UserSimUkamaDto)
     carrier?: UserSimUkamaDto;
 }
@@ -325,4 +245,16 @@ export class AddUserServiceRes {
 
     @Field()
     iccid: string;
+}
+
+@InputType()
+export class UpdateUserServiceInput {
+    @Field()
+    simId: string;
+
+    @Field()
+    userId: string;
+
+    @Field()
+    status: boolean;
 }

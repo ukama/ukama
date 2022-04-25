@@ -1,6 +1,5 @@
 import { Express } from "express";
 import {
-    getUser,
     getDataUsage,
     getDataBill,
     getAlerts,
@@ -12,17 +11,14 @@ import {
     getCurrentBill,
     getBillHistory,
     getNetwork,
-    updateNode,
     deleteRes,
     getUserByID,
-    getNodeDetails,
     getNodeNetwork,
     getSoftwareLogs,
     getNodeApps,
 } from "./utils";
 
 export const mockServer = (app: Express): void => {
-    app.get("/user/get_conneted_users", getUser);
     app.get("/data/data_usage", getDataUsage);
     app.get("/data/data_bill", getDataBill);
     app.get("/alert/get_alerts", getAlerts);
@@ -34,11 +30,9 @@ export const mockServer = (app: Express): void => {
     app.get("/bill/get_current_bill", getCurrentBill);
     app.get("/bill/get_bill_history", getBillHistory);
     app.get("/network/get_network", getNetwork);
-    app.post("/node/update_node", updateNode);
     app.post("/user/deactivate_user", deleteRes);
     app.post("/node/delete_node", deleteRes);
     app.get("/user/get_user", getUserByID);
-    app.get("/node/node_details", getNodeDetails);
     app.get("/node/get_network", getNodeNetwork);
     app.get("/software_logs", getSoftwareLogs);
     app.get("/node_apps", getNodeApps);

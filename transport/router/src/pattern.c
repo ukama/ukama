@@ -82,29 +82,45 @@ static int pattern_count(Pattern *pattern) {
  */
 void free_service(Service *service) {
 
-  Pattern *ptr=NULL, *tmp=NULL;
-  Forward *fPtr=NULL;
+  Patterns *patterns, *ptmp;
+  Pattern *pattern, *tmp;
+  Forward *forward;
 
   if (service == NULL) return;
 
-  ptr  = service->pattern;
-  fPtr = service->forward;
+  if (service->name) free(service->name);
 
-  if (fPtr) {
-    if (fPtr->ip)   free(fPtr->ip);
-    if (fPtr->port) free(fPtr->port);
-    free(fPtr);
+  patterns = service->patterns;
+  forward  = service->forward;
+
+  while(patterns) {
+
+    pattern = patterns->pattern;
+    while (pattern) {
+
+      if (pattern->key)   free(pattern->key);
+      if (pattern->value) free(pattern->value);
+
+      tmp = pattern->next;
+      free(pattern);
+      pattern = tmp;
+    }
+
+    if (patterns->path) free(patterns->path);
+
+    ptmp = patterns->next;
+    free(patterns);
+    patterns = ptmp;
   }
 
-  while (ptr) {
-    if (ptr->key)   free(ptr->key);
-    if (ptr->value) free(ptr->value);
-    tmp = ptr->next;
-    free(ptr);
-    ptr = tmp;
+  if (forward) {
+    if (forward->ip)   free(forward->ip);
+    if (forward->port) free(forward->port);
+    free(forward);
   }
 
   free(service);
+  service=NULL;
 }
 
 /*
@@ -112,9 +128,10 @@ void free_service(Service *service) {
  *
  */
 int find_matching_service(Router *router, Pattern *requestPattern,
-			  Forward **forward) {
+			  Forward **forward, char **ep) {
 
   Service *services=NULL;
+  Patterns *patterns=NULL;
   int requestCount=0, count=0;
 
   /* two basic matching rules:
@@ -132,22 +149,25 @@ int find_matching_service(Router *router, Pattern *requestPattern,
   }
 
   for (services=router->services; services; services=services->next) {
+    for (patterns=services->patterns; patterns; patterns=patterns->next) {
 
-    count = pattern_count(services->pattern);
+      count = pattern_count(patterns->pattern);
 
-    if (count != requestCount) continue;
+      if (count != requestCount) continue;
 
-    if (service_pattern_match(services->pattern, requestPattern)) {
-      *forward = (Forward *)calloc(1, sizeof(Forward));
-      if (*forward == NULL) {
-	log_error("Error allocating memory of size: %lu", sizeof(Forward));
-	return FALSE;
+      if (service_pattern_match(patterns->pattern, requestPattern)) {
+	*forward = (Forward *)calloc(1, sizeof(Forward));
+	if (*forward == NULL) {
+	  log_error("Error allocating memory of size: %lu", sizeof(Forward));
+	  return FALSE;
+	}
+
+	(*forward)->ip   = strdup(services->forward->ip);
+	(*forward)->port = strdup(services->forward->port);
+	(*ep) = strdup(patterns->path);
+
+	  return TRUE;
       }
-
-      (*forward)->ip = strdup(services->forward->ip);
-      (*forward)->port = strdup(services->forward->port);
-
-      return TRUE;
     }
   }
 

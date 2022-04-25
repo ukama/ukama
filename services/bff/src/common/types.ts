@@ -54,8 +54,8 @@ export class ApiMethodDataDto {
 
 export interface Context {
     req: Request;
-    cookie: string | string[] | undefined;
-    token: string | string[] | undefined;
+    cookie: string;
+    token: string | undefined;
 }
 
 @ObjectType()
@@ -81,6 +81,15 @@ export class HeaderType {
     Authorization?: string;
 }
 
+@ObjectType()
+export class ParsedCookie {
+    @Field()
+    header: HeaderType;
+
+    @Field()
+    orgId: string;
+}
+
 @InputType()
 export class MetricsInputDTO {
     @Field()
@@ -104,9 +113,6 @@ export class MetricsInputDTO {
 
 @InputType()
 export class MetricsByTabInputDTO {
-    @Field()
-    orgId: string;
-
     @Field()
     regPolling: boolean;
 

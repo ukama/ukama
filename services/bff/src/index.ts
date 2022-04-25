@@ -24,7 +24,10 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: process.env.DASHBOARD_APP_URL,
+        origin: [
+            process.env.DASHBOARD_APP_URL || "",
+            process.env.AUTH_APP_URL || "",
+        ],
         credentials: true,
     };
     app.use(cors(corsOptions));
@@ -58,6 +61,28 @@ const initializeApp = async () => {
 
     app.get("/ping", (req, res) => {
         res.send("pong");
+    });
+
+    app.get("/getCookie", (req, res) => {
+        if (hasSession(req.headers.cookie || "")) {
+            const { expiry = "", id = "" } = req.query;
+            if (expiry && id) {
+                const date = new Date(expiry as string);
+                res.cookie("id", id, {
+                    path: "/",
+                    secure: true,
+                    expires: date,
+                    httpOnly: true,
+                    sameSite: "lax",
+                    domain:
+                        process.env.NODE_ENV === "development"
+                            ? "localhost"
+                            : ".dev.ukama.com",
+                });
+                res.send({ success: true });
+            }
+        }
+        res.send({ success: false });
     });
 
     mockServer(app);

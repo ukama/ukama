@@ -66,28 +66,65 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
-    const [isAddNode, setIsAddNode] = useState<boolean>(false);
-    const [isEditNode, setIsEditNode] = useState<boolean>(false);
+    const [showNodeDialog, setShowNodeDialog] = useState({
+        type: "add",
+        isShow: false,
+        title: "Register Node",
+        subTitle:
+            "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you.",
+        nodeData: {
+            type: "HOME",
+            name: "",
+            nodeId: "",
+            orgId: "",
+        },
+    });
+
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
-    const [node, setNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        uptime: null,
+        temperaturetrx: null,
     });
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation();
+
+    const {
+        data: nodeRes,
+        loading: nodeLoading,
+        refetch: refetchGetNodesByOrg,
+    } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
+
     const [
         registerNode,
         {
             loading: registerNodeLoading,
             data: registerNodeRes,
-            error: addNodError,
+            error: registerNodeError,
         },
-    ] = useAddNodeMutation();
+    ] = useAddNodeMutation({
+        onCompleted: () => {
+            setRegisterNodeNotification({
+                id: "addNodeSuccess",
+                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+
+        onError: () =>
+            setRegisterNodeNotification({
+                id: "ErrorAddingNode",
+                message: `${registerNodeError?.message}`,
+                type: "error",
+                show: true,
+            }),
+    });
+
     const [
         updateNode,
         {
@@ -95,19 +132,31 @@ const Home = () => {
             data: updateNodeRes,
             error: updateNodError,
         },
-    ] = useUpdateNodeMutation();
+    ] = useUpdateNodeMutation({
+        onCompleted: () => {
+            setRegisterNodeNotification({
+                id: "UpdateNodeNotification",
+                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+        onError: () =>
+            setRegisterNodeNotification({
+                id: "UpdateNodeErrorNotification",
+                message: `${updateNodError?.message}`,
+                type: "error",
+                show: true,
+            }),
+    });
 
-    const handleAddNodeClose = () => {
-        setIsEditNode(() => false);
-        setIsAddNode(() => false);
-    };
     const {
         data: connectedUserRes,
         loading: connectedUserloading,
         subscribeToMore: subscribeToLatestConnectedUsers,
     } = useGetConnectedUsersQuery({
         variables: {
-            orgId: orgId,
             filter: userStatusFilter,
         },
     });
@@ -132,17 +181,7 @@ const Home = () => {
     });
 
     const { data: residentsRes, loading: residentsloading } =
-        useGetUsersByOrgQuery({
-            variables: {
-                orgId: orgId,
-            },
-        });
-
-    const { data: nodeRes, loading: nodeLoading } = useGetNodesByOrgQuery({
-        variables: {
-            orgId: orgId,
-        },
-    });
+        useGetUsersByOrgQuery();
 
     const {
         data: networkStatusRes,
@@ -165,7 +204,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -181,7 +220,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                uptime: null,
+                temperaturetrx: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -195,7 +234,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    uptime: null,
+                    temperaturetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -234,7 +273,6 @@ const Home = () => {
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             tab: 4,
-            orgId: orgId,
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
@@ -246,7 +284,6 @@ const Home = () => {
         getMetricPayload({
             tab: 4,
             from: from,
-            orgId: orgId,
             regPolling: true,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
@@ -275,6 +312,13 @@ const Home = () => {
             });
         }
     }, [getMetricsRes]);
+
+    const handleAddNodeClose = () => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            isShow: false,
+        }));
+    };
 
     const subToConnectedUser = () =>
         subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
@@ -379,7 +423,6 @@ const Home = () => {
 
     const handleUserActivateClose = () => {
         setIsUserActivateOpen(() => false);
-        setIsEditNode(() => false);
     };
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
@@ -392,93 +435,72 @@ const Home = () => {
     };
 
     const handleNodeActions = (id: string, type: string) => {
-        if (type == "edit") {
-            setIsEditNode(true);
-            nodeRes?.getNodesByOrg.nodes
-                .filter(node => node.id == id)
-                .map(filteredNode => {
-                    if (filteredNode) {
-                        setNode({ ...filteredNode, orgId });
-                    }
-                });
+        const node = nodeRes?.getNodesByOrg.nodes.filter(
+            item => item.id === id
+        );
+        if (type == "edit" && node && node.length > 0) {
+            setShowNodeDialog({
+                ...showNodeDialog,
+                type: "editNode",
+                isShow: true,
+                title: "Edit Node",
+                nodeData: {
+                    type: node[0].type,
+                    name: node[0].name,
+                    nodeId: node[0].id,
+                    orgId: orgId,
+                },
+            });
         }
     };
+
     const handleAddNode = () => {
-        setIsAddNode(true);
+        setShowNodeDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: true,
+            title: "Register Node",
+        }));
     };
+
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-    const handleActivationSubmit = (registerNodeData: any) => {
-        let data = {
-            ...registerNodeData,
-            orgId: orgId,
-        };
-        if (registerNodeData.length > 0) {
+
+    const handleNodeSubmitAction = (data: any) => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: false,
+            title: "Register Node",
+        }));
+        if (showNodeDialog.type === "add") {
             registerNode({
                 variables: {
-                    data,
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
                 },
             });
-            setIsAddNode(() => registerNodeLoading);
+        } else if (showNodeDialog.type === "editNode") {
+            updateNode({
+                variables: {
+                    data: {
+                        name: data.name,
+                        nodeId: data.nodeId,
+                    },
+                },
+            });
         }
     };
-    useEffect(() => {
-        if (registerNodeRes) {
-            setRegisterNodeNotification({
-                id: "addNodeNotification",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [registerNodeRes]);
-    useEffect(() => {
-        if (updateNodeRes) {
-            setRegisterNodeNotification({
-                id: "UpdateNodeNotification",
-                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [updateNodeRes]);
-    useEffect(() => {
-        if (updateNodError) {
-            setRegisterNodeNotification({
-                id: "UpdateNodeErrorNotification",
-                message: `${updateNodError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [updateNodError]);
-    useEffect(() => {
-        if (addNodError) {
-            setRegisterNodeNotification({
-                id: "AddNodeErrorNotification",
-                message: `${addNodError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [addNodError]);
+
     const onActivateUser = () => setIsUserActivateOpen(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
-    };
-    const handleEditNodeUpdate = (data: any) => {
-        if (data.length > 0) {
-            updateNode({
-                variables: {
-                    data,
-                },
-            });
-            setIsEditNode(() => updateNodeLoading);
-        }
     };
 
     const handleCloseWelcome = () => {
@@ -495,66 +517,69 @@ const Home = () => {
                         handleAddNode={handleAddNode}
                         handleActivateUser={onActivateUser}
                         loading={networkStatusLoading || isSkeltonLoad}
+                        regLoading={registerNodeLoading || updateNodeLoading}
                         statusType={networkStatusRes?.getNetwork?.status || ""}
                         duration={
                             networkStatusRes?.getNetwork?.description || ""
                         }
                     />
                 </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        Icon={UsersWithBG}
-                        title={"Connected Users"}
-                        options={TIME_FILTER}
-                        subtitle1={
-                            connectedUserRes?.getConnectedUsers?.totalUser ||
-                            "0"
-                        }
-                        subtitle2={""}
-                        option={getStatus("statusUser")}
-                        loading={connectedUserloading || isSkeltonLoad}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusUser", value)
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        title={"Data Usage"}
-                        subtitle1={`${
-                            dataUsageRes?.getDataUsage?.dataConsumed || 0
-                        }`}
-                        subtitle2={`/ ${
-                            dataUsageRes?.getDataUsage?.dataPackage || "-"
-                        }`}
-                        Icon={DataUsage}
-                        options={TIME_FILTER}
-                        option={getStatus("statusUsage")}
-                        loading={dataUsageloading || isSkeltonLoad}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusUsage", value)
-                        }
-                    />
-                </Grid>
-                <Grid item xs={12} md={6} lg={4}>
-                    <StatusCard
-                        title={"Data Bill"}
-                        subtitle1={`$ ${
-                            dataBillingRes?.getDataBill?.dataBill || 0
-                        }`}
-                        subtitle2={
-                            dataBillingRes?.getDataBill?.dataBill
-                                ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
-                                : " due"
-                        }
-                        Icon={DataBilling}
-                        options={MONTH_FILTER}
-                        loading={dataBillingloading || isSkeltonLoad}
-                        option={getStatus("statusBill")}
-                        handleSelect={(value: string) =>
-                            handleSatusChange("statusBill", value)
-                        }
-                    />
+                <Grid item container xs={12} spacing={{ xs: 1.5, md: 3 }}>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            Icon={UsersWithBG}
+                            title={"Connected Users"}
+                            options={TIME_FILTER}
+                            subtitle1={`${
+                                connectedUserRes?.getConnectedUsers
+                                    ?.totalUser || 0
+                            }`}
+                            subtitle2={""}
+                            option={getStatus("statusUser")}
+                            loading={connectedUserloading || isSkeltonLoad}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUser", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Usage"}
+                            subtitle1={`${
+                                dataUsageRes?.getDataUsage?.dataConsumed || 0
+                            }`}
+                            subtitle2={`/ ${
+                                dataUsageRes?.getDataUsage?.dataPackage || "-"
+                            }`}
+                            Icon={DataUsage}
+                            options={TIME_FILTER}
+                            option={getStatus("statusUsage")}
+                            loading={dataUsageloading || isSkeltonLoad}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusUsage", value)
+                            }
+                        />
+                    </Grid>
+                    <Grid item xs={4} md={6} lg={4}>
+                        <StatusCard
+                            title={"Data Bill"}
+                            subtitle1={`$ ${
+                                dataBillingRes?.getDataBill?.dataBill || 0
+                            }`}
+                            subtitle2={
+                                dataBillingRes?.getDataBill?.dataBill
+                                    ? ` / due in ${dataBillingRes?.getDataBill?.billDue} days`
+                                    : " due"
+                            }
+                            Icon={DataBilling}
+                            options={MONTH_FILTER}
+                            loading={dataBillingloading || isSkeltonLoad}
+                            option={getStatus("statusBill")}
+                            handleSelect={(value: string) =>
+                                handleSatusChange("statusBill", value)
+                            }
+                        />
+                    </Grid>
                 </Grid>
                 <Grid xs={12} item>
                     <StatsCard
@@ -641,26 +666,15 @@ const Home = () => {
                 />
             )}
 
-            {isAddNode && (
+            {showNodeDialog.isShow && (
                 <ActivationDialog
-                    isOpen={isAddNode}
-                    dialogTitle={"Register Node"}
+                    action={showNodeDialog.type}
+                    isOpen={showNodeDialog.isShow}
                     handleClose={handleAddNodeClose}
-                    handleActivationSubmit={handleActivationSubmit}
-                    subTitle={
-                        "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
-                    }
-                />
-            )}
-            {isEditNode && (
-                <ActivationDialog
-                    action={"editNode"}
-                    nodeData={node}
-                    isOpen={isEditNode}
-                    dialogTitle={"Edit Node"}
-                    handleClose={handleUserActivateClose}
-                    handleActivationSubmit={handleEditNodeUpdate}
-                    subTitle={""}
+                    nodeData={showNodeDialog.nodeData}
+                    dialogTitle={showNodeDialog.title}
+                    subTitle={showNodeDialog.subTitle}
+                    handleNodeSubmitAction={handleNodeSubmitAction}
                 />
             )}
         </Box>

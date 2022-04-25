@@ -30,19 +30,6 @@ static inline char *usys_strtok(char *str, const char *delim) {
 }
 
 /**
- * @fn     int usys_strtol(const char*, char**, int)
- * @brief
- *
- * @param  nptr
- * @param  endptr
- * @param  base
- * @return
- */
-static inline int usys_strtol(const char *nptr, char **endptr, int base) {
-    return strtol(nptr, endptr, base);
-}
-
-/**
  * @fn     char usys_strcpy*(char*, const char*)
  * @brief  Copies the C string pointed by source into the array pointed by
  *         destination, including the terminating null character
@@ -94,6 +81,34 @@ static inline int usys_strcmp(const char *s1, const char *s2) {
  */
 static inline int usys_strncmp(const char *s1, const char *s2, size_t n) {
     return strncmp(s1, s2, n);
+}
+
+/**
+ * @fn     int usys_strcasecmp(const char*, const char*)
+ * @brief  Compares two strings irrespective of the case of characters
+ *         by converting strings to lower case and then comparing them
+ *
+ * @param  s1
+ * @param  s2
+ * @return Returns an integral value indicating the difference in strings
+ */
+static inline int usys_strcasecmp(const char *s1, const char *s2) {
+    return strcasecmp(s1, s2);
+}
+
+/**
+ * @fn     int usys_strncasecmp(const char*, const char*, size_t)
+ * @brief  Compares first n bytes of two strings irrespective of the case of
+ *         characters by converting strings to lower case and
+ *         then comparing them
+ *
+ * @param  s1
+ * @param  s2
+ * @param  n
+ * @return
+ */
+static inline int usys_strncasecmp(const char *s1, const char *s2, size_t n) {
+    return strncasecmp(s1, s2, n);
 }
 
 /**
@@ -185,7 +200,7 @@ static inline void *usys_memset(void *ptr, int value, size_t num) {
  * @param  num
  * @return dest
  */
-static inline char *usys_memcpy(void *dest, void *src, size_t num) {
+static inline char *usys_memcpy(void *dest, const void *src, size_t num) {
     return memcpy(dest, src, num);
 }
 

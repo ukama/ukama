@@ -138,7 +138,6 @@ const getTabByIndex = (index: number) => {
 
 const getMetricPayload = ({
     tab = 0,
-    orgId = "",
     nodeId = "",
     regPolling = true,
     nodeType = Node_Type.Home,
@@ -148,7 +147,6 @@ const getMetricPayload = ({
     to?: number;
     tab: number;
     from?: number;
-    orgId?: string;
     nodeId?: string;
     nodeType: string;
     regPolling?: boolean;
@@ -156,7 +154,6 @@ const getMetricPayload = ({
     return {
         data: {
             step: 1,
-            orgId: orgId,
             nodeId: nodeId,
             regPolling: regPolling,
             to: to,
@@ -198,8 +195,8 @@ const getDefaultMetricList = (name: string) => {
 
 const getTitleByKey = (key: string) => {
     switch (key) {
-        case "uptime":
-            return "Uptime";
+        case "uptimetrx":
+            return "Uptime TRX";
         case "temperaturetrx":
             return "Temp. (TRX)";
         case "temperaturerfe":
@@ -279,7 +276,7 @@ const getMetricsInitObj = () => {
         txpower: null,
         rxpower: null,
         papower: null,
-        uptime: null,
+        uptimetrx: null,
     };
 };
 

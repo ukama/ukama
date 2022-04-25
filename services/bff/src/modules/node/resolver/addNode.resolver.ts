@@ -4,7 +4,7 @@ import { AddNodeDto, AddNodeResponse } from "../types";
 import { NodeService } from "../service";
 import { Authentication } from "../../../common/Authentication";
 import { Context } from "../../../common/types";
-import { getHeaders } from "../../../common";
+import { parseCookie } from "../../../common";
 
 @Service()
 @Resolver()
@@ -18,6 +18,6 @@ export class AddNodeResolver {
         req: AddNodeDto,
         @Ctx() ctx: Context
     ): Promise<AddNodeResponse | null> {
-        return this.nodeService.addNode(req, getHeaders(ctx));
+        return this.nodeService.addNode(req, parseCookie(ctx));
     }
 }

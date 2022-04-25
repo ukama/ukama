@@ -3,16 +3,14 @@ import {
     ActivateUserDto,
     ConnectedUserDto,
     DeactivateResponse,
-    GetUserPaginationDto,
-    GetUserResponse,
     ResidentsResponse,
-    UpdateUserDto,
+    UserInputDto,
     GetUserDto,
-    AddUserDto,
     ActivateUserResponse,
     GetUsersDto,
-    UserInput,
+    UpdateUserServiceInput,
     UserResDto,
+    OrgUserSimDto,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -21,18 +19,17 @@ import { API_METHOD_TYPE } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
 import { getPaginatedOutput } from "../../utils";
-import { HeaderType, PaginationDto } from "../../common/types";
+import { PaginationDto, ParsedCookie } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
     getConnectedUsers = async (
-        orgId: string,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<ConnectedUserDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${orgId}/metrics/subscribersattached`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/metrics/subscribersattached`,
+            headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.message);
         const connectedUsers = UserMapper.connectedUsersDtoToDto(
@@ -58,14 +55,14 @@ export class UserService implements IUserService {
     };
 
     updateUser = async (
-        orgId: string,
-        req: UpdateUserDto,
-        header: HeaderType
+        userId: string,
+        req: UserInputDto,
+        cookie: ParsedCookie
     ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${orgId}/users/${req.id}`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
+            headers: cookie.header,
             body: { name: req.name, email: req.email, phone: req.phone },
         });
         if (checkError(res)) throw new Error(res.message);
@@ -82,13 +79,13 @@ export class UserService implements IUserService {
         return res.data;
     };
     getUser = async (
-        data: UserInput,
-        header: HeaderType
+        userId: string,
+        cookie: ParsedCookie
     ): Promise<GetUserDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${data.orgId}/users/${data.userId}`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
+            headers: cookie.header,
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -96,24 +93,6 @@ export class UserService implements IUserService {
 
         return UserMapper.dtoToUserDto(res);
     };
-
-    getUsers = async (req: GetUserPaginationDto): Promise<GetUserResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_USERS,
-            params: req,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const users = UserMapper.dtoToDto(res);
-        if (!users) throw new HTTP404Error(Messages.USERS_NOT_FOUND);
-
-        return {
-            users,
-            meta,
-        };
-    };
-
     getResidents = async (req: PaginationDto): Promise<ResidentsResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
@@ -130,14 +109,11 @@ export class UserService implements IUserService {
             meta,
         };
     };
-    getUsersByOrg = async (
-        orgId: string,
-        header: HeaderType
-    ): Promise<GetUsersDto[]> => {
+    getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${orgId}/users`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/users`,
+            headers: cookie.header,
         });
 
         if (checkError(res)) throw new Error(res.message);
@@ -146,32 +122,49 @@ export class UserService implements IUserService {
         return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
-        orgId: string,
-        req: AddUserDto,
-        header: HeaderType
+        req: UserInputDto,
+        cookie: ParsedCookie
     ): Promise<UserResDto | null> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
-            path: `${SERVER.ORG}/${orgId}/users`,
+            path: `${SERVER.ORG}/${cookie.orgId}/users`,
             body: { ...req, simToken: "I_DO_NOT_NEED_A_SIM" },
-            headers: header,
+            headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.description || res.message);
         return UserMapper.dtoToAddUserDto(res);
     };
     deleteUser = async (
-        orgId: string,
         userId: string,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<ActivateUserResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.DELETE,
-            path: `${SERVER.ORG}/${orgId}/users/${userId}`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
+            headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.message);
         return {
             success: true,
         };
+    };
+    updateUserStatus = async (
+        data: UpdateUserServiceInput,
+        cookie: ParsedCookie
+    ): Promise<OrgUserSimDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
+            headers: cookie.header,
+            body: {
+                carrier: {
+                    sms: false,
+                    voice: false,
+                    data: data.status,
+                },
+            },
+        });
+        if (checkError(res)) throw new Error(res.message);
+        return res;
     };
 }

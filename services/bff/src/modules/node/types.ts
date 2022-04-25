@@ -1,5 +1,4 @@
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationResponse } from "../../common/types";
 import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 
 @ObjectType()
@@ -36,36 +35,6 @@ export class NodeDto {
 }
 
 @ObjectType()
-export class NodeResponseDto {
-    @Field(() => [NodeDto])
-    nodes: NodeDto[];
-
-    @Field()
-    activeNodes: number;
-
-    @Field()
-    totalNodes: number;
-}
-
-@ObjectType()
-export class NodesResponse extends PaginationResponse {
-    @Field(() => NodeResponseDto)
-    nodes: NodeResponseDto;
-}
-
-@ObjectType()
-export class NodeResponse {
-    @Field()
-    status: string;
-
-    @Field(() => [NodeDto])
-    data: NodeDto[];
-
-    @Field()
-    length: number;
-}
-
-@ObjectType()
 export class AddNodeResponse {
     @Field()
     nodeId: string;
@@ -87,42 +56,15 @@ export class AddNodeDto {
 
     @Field()
     nodeId: string;
-
-    @Field()
-    orgId: string;
 }
 
 @InputType()
 export class UpdateNodeDto {
     @Field()
-    orgId: string;
-
-    @Field()
     nodeId: string;
 
     @Field()
     name: string;
-}
-
-@ObjectType()
-export class AddNodeResponseDto {
-    @Field()
-    status: string;
-
-    @Field()
-    data: AddNodeResponse;
-}
-
-@ObjectType()
-export class UpdateNodeResponse {
-    @Field()
-    id: string;
-
-    @Field()
-    name: string;
-
-    @Field()
-    serialNo: string;
 }
 
 @ObjectType()
@@ -130,8 +72,8 @@ export class OrgNodeDto {
     @Field()
     nodeId: string;
 
-    @Field()
-    type: string;
+    @Field(() => NODE_TYPE)
+    type: NODE_TYPE;
 
     @Field(() => ORG_NODE_STATE)
     state: ORG_NODE_STATE;
@@ -165,33 +107,21 @@ export class OrgNodeResponseDto {
 }
 
 @ObjectType()
-export class NodeDetailDto {
+export class NodeResponse {
     @Field()
-    id: string;
+    nodeId: string;
+
+    @Field(() => NODE_TYPE)
+    type: NODE_TYPE;
+
+    @Field(() => ORG_NODE_STATE)
+    state: ORG_NODE_STATE;
 
     @Field()
-    modelType: string;
+    name: string;
 
-    @Field()
-    serial: number;
-
-    @Field()
-    macAddress: number;
-
-    @Field()
-    osVersion: number;
-
-    @Field()
-    manufacturing: number;
-
-    @Field()
-    ukamaOS: number;
-
-    @Field()
-    hardware: number;
-
-    @Field()
-    description: string;
+    @Field(() => [OrgNodeDto])
+    attached?: OrgNodeDto[];
 }
 @ObjectType()
 export class MetricDto {
@@ -200,27 +130,6 @@ export class MetricDto {
 
     @Field()
     x: number;
-}
-
-@ObjectType()
-export class OrgMetricResponse {
-    @Field(() => OrgMetricDto)
-    metric: OrgMetricDto;
-
-    @Field(() => [OrgMetricValueDto])
-    values: OrgMetricValueDto[];
-}
-
-@ObjectType()
-export class OrgMetricDto {
-    @Field()
-    nodeId: string;
-
-    @Field()
-    receive: string;
-
-    @Field()
-    tenant_id: string;
 }
 
 @ObjectType()
@@ -285,4 +194,22 @@ export class GetMetricsRes {
 
     @Field(() => [MetricRes])
     metrics: MetricRes[];
+}
+
+@InputType()
+export class GetNodeStatusInputDTO {
+    @Field()
+    nodeId: string;
+
+    @Field(() => NODE_TYPE)
+    nodeType: NODE_TYPE;
+}
+
+@ObjectType()
+export class GetNodeStatusRes {
+    @Field()
+    uptime: number;
+
+    @Field(() => ORG_NODE_STATE)
+    status: ORG_NODE_STATE;
 }

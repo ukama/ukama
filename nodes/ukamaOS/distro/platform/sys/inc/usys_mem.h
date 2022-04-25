@@ -96,6 +96,17 @@ void *usys_erealloc(void *ptr, size_t new_size);
  */
 void *usys_ecalloc(size_t num, size_t size);
 
+/**
+ * @fn     void usys_zmalloc*(size_t)
+ * @brief  Wrapper on usys_malloc function which initializes all allocated
+ *         bytes to zero.
+ *
+ * @param  size
+ * @return On success base address of memory allocated.
+ * 		   On error call usys_exit(errno)
+ */
+void *usys_zmalloc(size_t size);
+
 #ifdef __cplusplus
 }
 #endif

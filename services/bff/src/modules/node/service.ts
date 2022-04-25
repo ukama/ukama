@@ -2,8 +2,6 @@ import { Service } from "typedi";
 import {
     AddNodeDto,
     AddNodeResponse,
-    NodeDetailDto,
-    NodesResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
     MetricDto,
@@ -11,52 +9,35 @@ import {
     NodeAppResponse,
     MetricRes,
     OrgNodeDto,
+    NodeResponse,
+    GetNodeStatusRes,
+    GetNodeStatusInputDTO,
 } from "./types";
-import { INodeService } from "./interface";
-import { checkError, HTTP404Error, Messages } from "../../errors";
 import {
-    HeaderType,
-    MetricsByTabInputDTO,
+    ParsedCookie,
     MetricsInputDTO,
-    PaginationDto,
+    MetricsByTabInputDTO,
 } from "../../common/types";
 import NodeMapper from "./mapper";
-import { getMetricTitleByType, getPaginatedOutput } from "../../utils";
+import { checkError } from "../../errors";
+import { INodeService } from "./interface";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
-import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { DeactivateResponse } from "../user/types";
-import { NetworkDto } from "../network/types";
+import { GRAPHS_TAB } from "./../../constants/index";
+import { getMetricUri, SERVER } from "../../constants/endpoints";
+import { getMetricsByTab, getMetricTitleByType } from "../../utils";
 
 @Service()
 export class NodeService implements INodeService {
-    getNodes = async (req: PaginationDto): Promise<NodesResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODES,
-            params: req,
-        });
-
-        if (checkError(res)) throw new Error(res.message);
-
-        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const nodes = NodeMapper.dtoToDto(res);
-
-        if (!nodes) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-        return {
-            nodes,
-            meta,
-        };
-    };
-
     addNode = async (
         req: AddNodeDto,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
+            headers: cookie.header,
             body: {
                 name: req.name,
             },
@@ -66,12 +47,12 @@ export class NodeService implements INodeService {
     };
     updateNode = async (
         req: UpdateNodeDto,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.PUT,
-            path: `${SERVER.ORG}/${req.orgId}/nodes/${req.nodeId}`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
+            headers: cookie.header,
             body: {
                 name: req.name,
             },
@@ -90,41 +71,59 @@ export class NodeService implements INodeService {
         return res.data;
     };
     getNodesByOrg = async (
-        orgId: string,
-        header: HeaderType
+        cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${orgId}/nodes`,
-            headers: header,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
+            headers: cookie.header,
         });
-        return NodeMapper.dtoToNodesDto(orgId, res);
+        return NodeMapper.dtoToNodesDto(cookie.orgId, res);
     };
-    getNodeDetials = async (): Promise<NodeDetailDto> => {
+    getNode = async (
+        nodeId: string,
+        cookie: ParsedCookie
+    ): Promise<NodeResponse> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_DETAIL,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${nodeId}`,
+            headers: cookie.header,
         });
-        return res.data;
+        if (checkError(res)) throw new Error(res.message);
+        return res;
     };
-    getNetwork = async (): Promise<NetworkDto> => {
+    getNodeStatus = async (
+        data: GetNodeStatusInputDTO,
+        cookie: ParsedCookie
+    ): Promise<GetNodeStatusRes> => {
+        const currentTimestamp = Math.floor(new Date().getTime() / 1000);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_NETWORK,
+            headers: cookie.header,
+            path: getMetricUri(
+                cookie.orgId,
+                data.nodeId,
+                getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
+            ),
+            params: {
+                from: currentTimestamp,
+                to: currentTimestamp,
+                step: 1,
+            },
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
+        return NodeMapper.dtoToNodeStatusDto(res.data?.result[0].values);
     };
     getSingleMetric = async (
         data: MetricsInputDTO,
-        header: HeaderType,
+        cookie: ParsedCookie,
         endpoint: string
     ): Promise<MetricDto[]> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            headers: header,
-            path: getMetricUri(data.orgId, data.nodeId, endpoint),
+            headers: cookie.header,
+            path: getMetricUri(cookie.orgId, data.nodeId, endpoint),
             params: { from: data.from, to: data.to, step: data.step },
         });
         if (checkError(res)) throw new Error(res.message);
@@ -146,15 +145,15 @@ export class NodeService implements INodeService {
     };
     getMultipleMetrics = async (
         data: MetricsByTabInputDTO,
-        header: HeaderType,
+        cookie: ParsedCookie,
         endpoints: string[]
     ): Promise<MetricRes[]> => {
         return Promise.all(
             endpoints.map(endpoint =>
                 catchAsyncIOMethod({
                     type: API_METHOD_TYPE.GET,
-                    headers: header,
-                    path: getMetricUri(data.orgId, data.nodeId, endpoint),
+                    headers: cookie.header,
+                    path: getMetricUri(cookie.orgId, data.nodeId, endpoint),
                     params: {
                         to: data.to,
                         from: data.from,

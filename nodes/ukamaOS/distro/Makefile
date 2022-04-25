@@ -43,7 +43,7 @@ $(DISTROSUBDIRS): rootfs $(PLATFORM)
 	$(MAKE) -C $@
 
 $(PLATFORM): $(TOOLCHAIN)
-	 $(MAKE) -C $@ CC=$(XGCCPATH)$(XGCC)
+	 $(MAKE) -C $@ XCC=$(XGCCPATH)$(XGCC)
 
 #Root FS directory hierarchy
 rootfs: vendor

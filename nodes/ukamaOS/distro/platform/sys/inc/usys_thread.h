@@ -152,4 +152,19 @@ static inline int usys_thread_attr_setstacksize(USysThreadAttr *attr,
     return pthread_attr_setstacksize(attr, stacksize);
 }
 
+/**
+ * @fn     int usys_thread_setcancelstate(int, int*)
+ * @brief  sets the cancelability state of the calling thread to the value
+ *         given in state.  The previous cancelability state of the thread
+ *          is returned in the buffer pointed to by oldstate.
+ *
+ * @param  state
+ * @param  oldstate
+ * @return On success, these functions return 0;
+ *         On error, they return a nonzero error number.
+ */
+static inline int usys_thread_setcancelstate(int state, int *oldstate) {
+    return pthread_setcancelstate(state, oldstate);
+}
+
 #endif /* USYS_SYS_THREAD_H */

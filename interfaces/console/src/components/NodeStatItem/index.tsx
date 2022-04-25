@@ -29,7 +29,7 @@ const TextWithToolTip = ({
     <HorizontalContainer>
         <Typography
             fontWeight={500}
-            variant="subtitle1"
+            variant="body2"
             color={isAlert ? "error" : "default"}
             sx={{ textTransform: "capitalize" }}
         >
@@ -65,9 +65,9 @@ const TextWithToolTip = ({
 const variants = (variant: TVariant, key: string) => {
     switch (key) {
         case "NG":
-            return variant === "small" ? 4 : variant === "large" ? 8 : 6;
+            return variant === "small" ? 4 : variant === "large" ? 8 : 5;
         case "VG":
-            return variant === "small" ? 8 : variant === "large" ? 4 : 6;
+            return variant === "small" ? 8 : variant === "large" ? 4 : 7;
     }
 };
 

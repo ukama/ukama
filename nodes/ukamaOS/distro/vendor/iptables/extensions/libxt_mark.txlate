@@ -1,5 +1,26 @@
-iptables-translate -I INPUT -p tcp -m mark ! --mark 0xa/0xa
-nft insert rule ip filter INPUT ip protocol tcp mark and 0xa != 0xa counter
+iptables-translate -t mangle -A OUTPUT -j MARK --set-mark 0
+nft add rule ip mangle OUTPUT counter meta mark set 0x0
 
-iptables-translate -I INPUT -p tcp -m mark ! --mark 0x1
-nft insert rule ip filter INPUT ip protocol tcp mark != 0x1 counter
+iptables-translate -t mangle -A OUTPUT -j MARK --set-mark 64
+nft add rule ip mangle OUTPUT counter meta mark set 0x40
+
+iptables-translate -t mangle -A OUTPUT -j MARK --set-xmark 0x40/0x32
+nft add rule ip mangle OUTPUT counter meta mark set mark and 0xffffffcd xor 0x40
+
+iptables-translate -t mangle -A OUTPUT -j MARK --or-mark 64
+nft add rule ip mangle OUTPUT counter meta mark set mark or 0x40
+
+iptables-translate -t mangle -A OUTPUT -j MARK --and-mark 64
+nft add rule ip mangle OUTPUT counter meta mark set mark and 0x40
+
+iptables-translate -t mangle -A OUTPUT -j MARK --xor-mark 64
+nft add rule ip mangle OUTPUT counter meta mark set mark xor 0x40
+
+iptables-translate -t mangle -A PREROUTING -j MARK --set-mark 0x64
+nft add rule ip mangle PREROUTING counter meta mark set 0x64
+
+iptables-translate -t mangle -A PREROUTING -j MARK --and-mark 0x64
+nft add rule ip mangle PREROUTING counter meta mark set mark and 0x64
+
+iptables-translate -t mangle -A PREROUTING -j MARK --or-mark 0x64
+nft add rule ip mangle PREROUTING counter meta mark set mark or 0x64

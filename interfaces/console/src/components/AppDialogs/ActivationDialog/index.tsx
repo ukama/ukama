@@ -1,30 +1,32 @@
 import {
+    Grid,
+    Stack,
     Button,
     Dialog,
-    TextField,
-    Typography,
-    DialogActions,
-    DialogContentText,
-    DialogTitle,
-    DialogContent,
-    IconButton,
-    Stack,
-    Grid,
     Select,
     MenuItem,
-    FormControl,
+    TextField,
+    IconButton,
     InputLabel,
+    Typography,
+    DialogTitle,
+    FormControl,
+    DialogActions,
+    DialogContent,
     OutlinedInput,
+    DialogContentText,
+    Alert,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import React, { useState, useEffect } from "react";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
-import { globalUseStyles } from "../../../styles";
 import { IMaskInput } from "react-imask";
-import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
-import { MASK_BY_TYPE } from "../../../constants";
+import React, { useState } from "react";
 import { Node_Type } from "../../../generated";
+import { globalUseStyles } from "../../../styles";
+import ErrorIcon from "@mui/icons-material/Error";
+import CloseIcon from "@mui/icons-material/Close";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
+import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
@@ -70,10 +72,13 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
         return (
             <IMaskInput
                 {...other}
-                mask={MASK_BY_TYPE[props.name]}
-                unmask={false}
-                lazy={false}
                 overwrite
+                unmask={false}
+                mask={MASK_BY_TYPE[props.name]}
+                placeholder={MASK_PLACEHOLDERS[props.name]}
+                definitions={{
+                    "#": /[a-zA-Z0-9]/,
+                }}
                 onAccept={(value: any) =>
                     onChange({ target: { name: props.name, value } })
                 }
@@ -82,15 +87,15 @@ const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
     }
 );
 
-type ActivationDialogProps = {
+type NodeDialogProps = {
+    nodeData: any;
     isOpen: boolean;
+    action?: string;
     subTitle: string;
     handleClose: any;
     subTitle2?: string;
     dialogTitle: string;
-    nodeData?: any;
-    handleActivationSubmit: Function;
-    action?: string;
+    handleNodeSubmitAction: Function;
 };
 
 const ActivationDialog = ({
@@ -100,74 +105,35 @@ const ActivationDialog = ({
     dialogTitle,
     action = "",
     handleClose,
-    handleActivationSubmit,
-}: ActivationDialogProps) => {
+    handleNodeSubmitAction,
+}: NodeDialogProps) => {
     const classes = useStyles();
     const gclasses = globalUseStyles();
-    const [nodeType, setNodeType] = useState("HOME");
-    const [nodeName, setNodeName] = useState("");
-    const [nodeSerial, setNodeSerial] = useState("");
-    const [nodeNameError, setNodeNameError] = useState("");
-    const [nodeSerialError, setNodeSerialError] = useState("");
-    const [orgIdError, setOrgIdError] = useState("");
-    const [orgId, setOrgId] = useState("");
-    useEffect(() => {
-        if (action == "editNode" && nodeData) {
-            setNodeName(nodeData.name);
-            setNodeSerial(nodeData.id);
-            setOrgId(nodeData.orgId);
-        }
-    }, [nodeData]);
+    const [formData, setFormData] = useState({
+        type: nodeData.type,
+        name: nodeData.name,
+        nodeId: nodeData.nodeId,
+        orgId: nodeData.orgId,
+    });
+    const [error, setError] = useState("");
+
     const handleRegisterNode = () => {
-        if (action == "editNode" && nodeName && nodeSerial && orgId) {
-            handleActivationSubmit({
-                name: nodeName,
-                nodeId: nodeSerial,
-                orgId: orgId,
-            });
+        if (!formData.name || !formData.nodeId) {
+            setError("Please fill all require vields");
+            return;
+        }
+        if (action == "editNode") {
+            handleNodeSubmitAction(formData);
         } else {
-            handleActivationSubmit({
-                name: nodeName,
-                nodeId: nodeSerial,
-            });
-        }
-
-        if (!nodeName) {
-            setNodeNameError("Node Name is required!");
-        }
-        if (!nodeSerial) {
-            setNodeSerialError("Node number is required!");
-        }
-        if (!orgId) {
-            setOrgIdError("Organiation Id is required!");
+            handleNodeSubmitAction(formData);
         }
     };
 
-    useEffect(() => {
-        if (nodeName.length > 0) {
-            setNodeNameError("");
-        }
-    }, [nodeName]);
-
-    useEffect(() => {
-        if (nodeSerial.length > 0) {
-            setNodeSerialError("");
-        }
-    }, [nodeSerial]);
-
-    useEffect(() => {
-        if (orgId.length > 0) {
-            setOrgIdError("");
-        }
-    }, [orgId]);
-
-    const handleNodeTypeChange = (e: SelectChangeEvent) => {
-        setNodeSerial("");
-        setNodeType(e.target.value);
-    };
+    const handleNodeTypeChange = (e: SelectChangeEvent) =>
+        setFormData({ ...formData, nodeId: "", type: e.target.value });
 
     return (
-        <Dialog open={isOpen} onClose={handleClose}>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
                 direction="row"
                 alignItems="center"
@@ -181,7 +147,19 @@ const ActivationDialog = ({
                     <CloseIcon />
                 </IconButton>
             </Stack>
-
+            {error && (
+                <Alert
+                    sx={{
+                        mx: 3,
+                        mb: 1,
+                        color: colors.black,
+                    }}
+                    severity={"error"}
+                    icon={<ErrorIcon sx={{ color: colors.red }} />}
+                >
+                    {error}
+                </Alert>
+            )}
             <DialogContent>
                 <DialogContentText>
                     <Typography
@@ -192,7 +170,7 @@ const ActivationDialog = ({
                         {subTitle}
                     </Typography>
                 </DialogContentText>
-                <Grid container spacing={2} mt={2}>
+                <Grid container spacing={2.75} mt={2}>
                     <Grid item xs={12} md={6}>
                         <FormControl
                             variant="outlined"
@@ -206,9 +184,10 @@ const ActivationDialog = ({
                                 NODE TYPE
                             </InputLabel>
                             <Select
-                                value={nodeType}
+                                value={formData.type}
                                 variant="outlined"
                                 onChange={handleNodeTypeChange}
+                                disabled={action == "editNode"}
                                 input={
                                     <OutlinedInput
                                         notched
@@ -218,7 +197,7 @@ const ActivationDialog = ({
                                     />
                                 }
                                 MenuProps={{
-                                    disablePortal: true,
+                                    disablePortal: false,
                                     PaperProps: {
                                         sx: {
                                             boxShadow:
@@ -256,32 +235,39 @@ const ActivationDialog = ({
                     </Grid>
                     <Grid item xs={12} md={6}>
                         <TextField
-                            error={nodeNameError ? true : false}
+                            required
                             fullWidth
-                            value={nodeName}
+                            value={formData.name}
                             label={"NODE NAME"}
                             InputLabelProps={{ shrink: true }}
-                            helperText={nodeNameError}
                             InputProps={{
                                 classes: {
                                     input: gclasses.inputFieldStyle,
                                 },
                             }}
-                            onChange={(e: any) => setNodeName(e.target.value)}
+                            onChange={(e: any) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
                         />
                     </Grid>
                     <Grid item xs={12}>
                         <TextField
                             fullWidth
-                            value={nodeSerial}
-                            error={nodeSerialError ? true : false}
+                            required
+                            value={formData.nodeId}
                             label={"NODE NUMBER"}
-                            helperText={nodeSerialError}
-                            onChange={(e: any) => {
-                                setNodeSerial(e.target.value.replace(/ /g, ""));
-                            }}
+                            onChange={(e: any) =>
+                                setFormData({
+                                    ...formData,
+                                    nodeId: e.target.value.replace(/ /g, ""),
+                                })
+                            }
+                            disabled={action == "editNode"}
                             InputLabelProps={{ shrink: true }}
-                            name={nodeType}
+                            name={formData.type}
                             id="formatted-text-mask-input"
                             spellCheck={false}
                             InputProps={{
@@ -293,26 +279,24 @@ const ActivationDialog = ({
                         />
                     </Grid>
                     {action == "editNode" && (
-                        <Grid item xs={12} md={12}>
+                        <Grid item xs={12}>
                             <TextField
-                                error={orgIdError ? true : false}
                                 fullWidth
-                                value={orgId}
+                                value={formData.orgId}
+                                disabled={true}
                                 label={"ORGANIZATION ID"}
                                 InputLabelProps={{ shrink: true }}
-                                helperText={orgIdError}
                                 InputProps={{
                                     classes: {
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                onChange={(e: any) => setOrgId(e.target.value)}
                             />
                         </Grid>
                     )}
                 </Grid>
             </DialogContent>
-            <DialogActions sx={{ mr: 2, paddingBottom: 3 }}>
+            <DialogActions>
                 <Button
                     sx={{ color: colors.primaryMain, mr: 2 }}
                     onClick={handleClose}

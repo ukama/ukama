@@ -5,11 +5,7 @@ import {
     NetworkSettings,
     LoadingWrapper,
 } from "../../components";
-import {
-    RoundedCard,
-    VerticalContainer,
-    HorizontalContainer,
-} from "../../styles";
+import { RoundedCard } from "../../styles";
 import {
     Grid,
     Button,
@@ -22,7 +18,6 @@ import {
     CardContent,
     IconButton,
     Stack,
-    Box,
 } from "@mui/material";
 import {
     useRecoilState,
@@ -123,7 +118,7 @@ const ActionButtons = ({
 
 const Settings = () => {
     const history = useHistory();
-    const [menuId, setMenuId] = useState(4);
+    const [menuId, setMenuId] = useState(1);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const setPage = useSetRecoilState(pageName);
     const resetPageName = useResetRecoilState(pageName);
@@ -171,8 +166,7 @@ const Settings = () => {
                         <LoadingWrapper height={237} isLoading={skeltonLoading}>
                             <RoundedCard
                                 sx={{
-                                    px: 2,
-                                    py: 3,
+                                    p: 2,
                                     height: "fit-content",
                                 }}
                             >
@@ -214,37 +208,41 @@ const Settings = () => {
                             <Card
                                 sx={{
                                     px: 4,
-                                    py: 2,
+                                    py: 3.5,
                                     borderRadius: "10px",
                                     boxShadow:
                                         "2px 2px 6px rgba(0, 0, 0, 0.05)",
                                 }}
                             >
                                 <CardContent sx={{ p: 0 }}>
-                                    <Box
-                                        mb={1}
-                                        width="100%"
-                                        display="flex"
-                                        component={"div"}
-                                        alignItems="flex-end"
-                                        justifyContent="flex-end"
-                                    >
-                                        <IconButton onClick={handleCancel}>
-                                            <CloseIcon />
-                                        </IconButton>
-                                    </Box>
-                                    <TabPanel index={1} value={menuId}>
-                                        <UserSettings />
-                                    </TabPanel>
-                                    <TabPanel value={menuId} index={2}>
-                                        <NetworkSettings />
-                                    </TabPanel>
-                                    <TabPanel value={menuId} index={3}>
-                                        <AlertSettings />
-                                    </TabPanel>
-                                    <TabPanel value={menuId} index={4}>
-                                        <ConsoleSettings />
-                                    </TabPanel>
+                                    <Grid container>
+                                        <Grid item xs={11}>
+                                            <TabPanel index={1} value={menuId}>
+                                                <UserSettings />
+                                            </TabPanel>
+                                            <TabPanel value={menuId} index={2}>
+                                                <NetworkSettings />
+                                            </TabPanel>
+                                            <TabPanel value={menuId} index={3}>
+                                                <AlertSettings />
+                                            </TabPanel>
+                                            <TabPanel value={menuId} index={4}>
+                                                <ConsoleSettings />
+                                            </TabPanel>
+                                        </Grid>
+                                        <Grid
+                                            item
+                                            container
+                                            xs={1}
+                                            alignItems="start"
+                                            height="fit-content"
+                                            justifyContent={"end"}
+                                        >
+                                            <IconButton onClick={handleCancel}>
+                                                <CloseIcon />
+                                            </IconButton>
+                                        </Grid>
+                                    </Grid>
                                 </CardContent>
 
                                 <ActionButtons

@@ -50,7 +50,7 @@ export const getMetricsByTab = (
                 return ["temperaturectl", "temperaturerfe"];
             else
                 return [
-                    "uptime",
+                    "uptimetrx",
                     "temperaturetrx",
                     "temperaturecom",
                     "subscribersactive",
@@ -91,12 +91,17 @@ export const getMetricsByTab = (
 
         case GRAPHS_TAB.HOME:
             return ["temperaturetrx"];
+
+        case GRAPHS_TAB.NODE_STATUS:
+            if (nodeType === NODE_TYPE.HOME) return ["uptimetrx"];
+            else if (nodeType === NODE_TYPE.AMPLIFIER) return ["uptimectl"];
+            else return ["uptimetrx"];
     }
 };
 
 export const getMetricTitleByType = (type: string): string => {
     switch (type) {
-        case "uptime":
+        case "uptimetrx":
             return "Uptime";
         case "temperaturetrx":
             return "Temp. (TRX)";
@@ -149,4 +154,19 @@ export const getMetricTitleByType = (type: string): string => {
         default:
             return "";
     }
+};
+
+export const converCookieToObj = (cookie: string) => {
+    if (cookie) {
+        return cookie.split(";").reduce((res, c) => {
+            const [key] = c.trim().split("=").map(decodeURIComponent);
+            const val = c.slice(c.indexOf("=") + 1);
+            try {
+                return Object.assign(res, { [key]: JSON.parse(val) });
+            } catch (e) {
+                return Object.assign(res, { [key]: val });
+            }
+        }, {});
+    }
+    return null;
 };

@@ -29,7 +29,7 @@ const EditableTextField = ({
             value={value}
             variant="standard"
             disabled={!iseditable}
-            sx={{ width: { xs: "100%", md: "440px" } }}
+            sx={{ width: { xs: "100%" } }}
             InputLabelProps={{
                 shrink: true,
             }}
@@ -39,9 +39,6 @@ const EditableTextField = ({
                 type: type,
                 disableUnderline: true,
                 color: "primary",
-                startAdornment: (
-                    <InputAdornment position="start">-</InputAdornment>
-                ),
                 endAdornment: (
                     <InputAdornment
                         position="end"

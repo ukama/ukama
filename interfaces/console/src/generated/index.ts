@@ -52,16 +52,9 @@ export type ActivateUserResponse = {
     success: Scalars["Boolean"];
 };
 
-export type ActiveUserResponseDto = {
-    __typename?: "ActiveUserResponseDto";
-    data: ActivateUserResponse;
-    status: Scalars["String"];
-};
-
 export type AddNodeDto = {
     name: Scalars["String"];
     nodeId: Scalars["String"];
-    orgId: Scalars["String"];
 };
 
 export type AddNodeResponse = {
@@ -70,17 +63,6 @@ export type AddNodeResponse = {
     nodeId: Scalars["String"];
     state: Org_Node_State;
     type: Node_Type;
-};
-
-export type AddNodeResponseDto = {
-    __typename?: "AddNodeResponseDto";
-    data: AddNodeResponse;
-    status: Scalars["String"];
-};
-
-export type AddUserDto = {
-    email: Scalars["String"];
-    name: Scalars["String"];
 };
 
 export type AddUserServiceRes = {
@@ -143,20 +125,9 @@ export type BillResponse = {
     total: Scalars["Float"];
 };
 
-export enum Connected_User_Type {
-    Guests = "GUESTS",
-    Residents = "RESIDENTS",
-}
-
 export type ConnectedUserDto = {
     __typename?: "ConnectedUserDto";
     totalUser: Scalars["String"];
-};
-
-export type ConnectedUserResponse = {
-    __typename?: "ConnectedUserResponse";
-    data: ConnectedUserDto;
-    status: Scalars["String"];
 };
 
 export type CurrentBillDto = {
@@ -246,14 +217,6 @@ export enum Get_User_Status_Type {
     Inactive = "INACTIVE",
 }
 
-export enum Get_User_Type {
-    All = "ALL",
-    Guest = "GUEST",
-    Home = "HOME",
-    Resident = "RESIDENT",
-    Visitor = "VISITOR",
-}
-
 export enum Graphs_Tab {
     Home = "HOME",
     Network = "NETWORK",
@@ -274,25 +237,13 @@ export type GetUserDto = {
     dataPlan: Scalars["Float"];
     dataUsage: Scalars["Float"];
     eSimNumber: Scalars["String"];
-    email?: Maybe<Scalars["String"]>;
+    email: Scalars["String"];
     iccid: Scalars["String"];
     id: Scalars["String"];
     name: Scalars["String"];
-    phone?: Maybe<Scalars["String"]>;
+    phone: Scalars["String"];
     roaming: Scalars["Boolean"];
-    status: Get_User_Status_Type;
-};
-
-export type GetUserPaginationDto = {
-    pageNo: Scalars["Float"];
-    pageSize: Scalars["Float"];
-    type: Get_User_Type;
-};
-
-export type GetUserResponse = {
-    __typename?: "GetUserResponse";
-    meta: Meta;
-    users: Array<GetUserDto>;
+    status: Scalars["Boolean"];
 };
 
 export type GetUserResponseDto = {
@@ -361,7 +312,6 @@ export type MetricsByTabInputDto = {
     from: Scalars["Float"];
     nodeId: Scalars["String"];
     nodeType: Node_Type;
-    orgId: Scalars["String"];
     regPolling: Scalars["Boolean"];
     step: Scalars["Float"];
     tab: Graphs_Tab;
@@ -387,6 +337,7 @@ export type Mutation = {
     deleteUser: ActivateUserResponse;
     updateNode: OrgNodeDto;
     updateUser: UserResDto;
+    updateUserStatus: OrgUserSimDto;
 };
 
 export type MutationActivateUserArgs = {
@@ -398,8 +349,7 @@ export type MutationAddNodeArgs = {
 };
 
 export type MutationAddUserArgs = {
-    data: AddUserDto;
-    orgId: Scalars["String"];
+    data: UserInputDto;
 };
 
 export type MutationDeactivateUserArgs = {
@@ -411,7 +361,6 @@ export type MutationDeleteNodeArgs = {
 };
 
 export type MutationDeleteUserArgs = {
-    orgId: Scalars["String"];
     userId: Scalars["String"];
 };
 
@@ -420,8 +369,12 @@ export type MutationUpdateNodeArgs = {
 };
 
 export type MutationUpdateUserArgs = {
-    data: UpdateUserDto;
-    orgId: Scalars["String"];
+    data: UserInputDto;
+    userId: Scalars["String"];
+};
+
+export type MutationUpdateUserStatusArgs = {
+    data: UpdateUserServiceInput;
 };
 
 export enum Network_Status {
@@ -469,19 +422,6 @@ export type NodeAppsVersionLogsResponse = {
     version: Scalars["String"];
 };
 
-export type NodeDetailDto = {
-    __typename?: "NodeDetailDto";
-    description: Scalars["String"];
-    hardware: Scalars["Float"];
-    id: Scalars["String"];
-    macAddress: Scalars["Float"];
-    manufacturing: Scalars["Float"];
-    modelType: Scalars["String"];
-    osVersion: Scalars["Float"];
-    serial: Scalars["Float"];
-    ukamaOS: Scalars["Float"];
-};
-
 export type NodeDto = {
     __typename?: "NodeDto";
     description: Scalars["String"];
@@ -498,22 +438,11 @@ export type NodeDto = {
 
 export type NodeResponse = {
     __typename?: "NodeResponse";
-    data: Array<NodeDto>;
-    length: Scalars["Float"];
-    status: Scalars["String"];
-};
-
-export type NodeResponseDto = {
-    __typename?: "NodeResponseDto";
-    activeNodes: Scalars["Float"];
-    nodes: Array<NodeDto>;
-    totalNodes: Scalars["Float"];
-};
-
-export type NodesResponse = {
-    __typename?: "NodesResponse";
-    meta: Meta;
-    nodes: NodeResponseDto;
+    attached: Array<OrgNodeDto>;
+    name: Scalars["String"];
+    nodeId: Scalars["String"];
+    state: Org_Node_State;
+    type: Node_Type;
 };
 
 export enum Org_Node_State {
@@ -521,19 +450,6 @@ export enum Org_Node_State {
     Pending = "PENDING",
     Undefined = "UNDEFINED",
 }
-
-export type OrgMetricDto = {
-    __typename?: "OrgMetricDto";
-    nodeId: Scalars["String"];
-    receive: Scalars["String"];
-    tenant_id: Scalars["String"];
-};
-
-export type OrgMetricResponse = {
-    __typename?: "OrgMetricResponse";
-    metric: OrgMetricDto;
-    values: Array<OrgMetricValueDto>;
-};
 
 export type OrgMetricValueDto = {
     __typename?: "OrgMetricValueDto";
@@ -546,7 +462,7 @@ export type OrgNodeDto = {
     name: Scalars["String"];
     nodeId: Scalars["String"];
     state: Org_Node_State;
-    type: Scalars["String"];
+    type: Node_Type;
 };
 
 export type OrgNodeResponse = {
@@ -577,12 +493,6 @@ export type OrgUserResponse = {
     user: OrgUserDto;
 };
 
-export type OrgUserResponseDto = {
-    __typename?: "OrgUserResponseDto";
-    orgName: Scalars["String"];
-    users: Array<GetUserDto>;
-};
-
 export type OrgUserSimDto = {
     __typename?: "OrgUserSimDto";
     carrier: UserSimUkamaDto;
@@ -607,6 +517,12 @@ export type PaginationResponse = {
     meta: Meta;
 };
 
+export type ParsedCookie = {
+    __typename?: "ParsedCookie";
+    header: HeaderType;
+    orgId: Scalars["String"];
+};
+
 export type Query = {
     __typename?: "Query";
     getAlerts: AlertsResponse;
@@ -618,15 +534,13 @@ export type Query = {
     getEsims: Array<EsimDto>;
     getMetricsByTab: GetMetricsRes;
     getNetwork: NetworkDto;
+    getNode: NodeResponse;
     getNodeApps: Array<NodeAppResponse>;
     getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
-    getNodeDetails: NodeDetailDto;
     getNodeNetwork: NetworkDto;
-    getNodes: NodesResponse;
     getNodesByOrg: OrgNodeResponseDto;
     getResidents: ResidentsResponse;
     getUser: GetUserDto;
-    getUsers: GetUserResponse;
     getUsersByOrg: Array<GetUsersDto>;
 };
 
@@ -636,7 +550,6 @@ export type QueryGetAlertsArgs = {
 
 export type QueryGetConnectedUsersArgs = {
     filter: Time_Filter;
-    orgId: Scalars["String"];
 };
 
 export type QueryGetDataBillArgs = {
@@ -655,12 +568,8 @@ export type QueryGetNetworkArgs = {
     filter: Network_Type;
 };
 
-export type QueryGetNodesArgs = {
-    data: PaginationDto;
-};
-
-export type QueryGetNodesByOrgArgs = {
-    orgId: Scalars["String"];
+export type QueryGetNodeArgs = {
+    nodeId: Scalars["String"];
 };
 
 export type QueryGetResidentsArgs = {
@@ -668,15 +577,7 @@ export type QueryGetResidentsArgs = {
 };
 
 export type QueryGetUserArgs = {
-    userInput: UserInput;
-};
-
-export type QueryGetUsersArgs = {
-    data: GetUserPaginationDto;
-};
-
-export type QueryGetUsersByOrgArgs = {
-    orgId: Scalars["String"];
+    userId: Scalars["String"];
 };
 
 export type ResidentResponse = {
@@ -712,34 +613,18 @@ export enum Time_Filter {
 export type UpdateNodeDto = {
     name: Scalars["String"];
     nodeId: Scalars["String"];
-    orgId: Scalars["String"];
 };
 
-export type UpdateNodeResponse = {
-    __typename?: "UpdateNodeResponse";
-    id: Scalars["String"];
-    name: Scalars["String"];
-    serialNo: Scalars["String"];
+export type UpdateUserServiceInput = {
+    simId: Scalars["String"];
+    status: Scalars["Boolean"];
+    userId: Scalars["String"];
 };
 
-export type UpdateUserDto = {
+export type UserInputDto = {
     email: Scalars["String"];
-    id: Scalars["String"];
     name: Scalars["String"];
     phone: Scalars["String"];
-};
-
-export type UserDto = {
-    __typename?: "UserDto";
-    email: Scalars["String"];
-    id: Scalars["String"];
-    name: Scalars["String"];
-    type: Connected_User_Type;
-};
-
-export type UserInput = {
-    orgId: Scalars["String"];
-    userId: Scalars["String"];
 };
 
 export type UserResDto = {
@@ -793,7 +678,6 @@ export type GetLatestDataUsageSubscription = {
 };
 
 export type GetConnectedUsersQueryVariables = Exact<{
-    orgId: Scalars["String"];
     filter: Time_Filter;
 }>;
 
@@ -881,9 +765,7 @@ export type GetLatestAlertsSubscription = {
     };
 };
 
-export type GetNodesByOrgQueryVariables = Exact<{
-    orgId: Scalars["String"];
-}>;
+export type GetNodesByOrgQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetNodesByOrgQuery = {
     __typename?: "Query";
@@ -905,24 +787,6 @@ export type GetNodesByOrgQuery = {
             updateShortNote: string;
             updateDescription: string;
         }>;
-    };
-};
-
-export type GetNodeDetailsQueryVariables = Exact<{ [key: string]: never }>;
-
-export type GetNodeDetailsQuery = {
-    __typename?: "Query";
-    getNodeDetails: {
-        __typename?: "NodeDetailDto";
-        id: string;
-        modelType: string;
-        serial: number;
-        macAddress: number;
-        osVersion: number;
-        manufacturing: number;
-        ukamaOS: number;
-        hardware: number;
-        description: string;
     };
 };
 
@@ -954,9 +818,7 @@ export type GetNodeAppsQuery = {
     }>;
 };
 
-export type GetUsersByOrgQueryVariables = Exact<{
-    orgId: Scalars["String"];
-}>;
+export type GetUsersByOrgQueryVariables = Exact<{ [key: string]: never }>;
 
 export type GetUsersByOrgQuery = {
     __typename?: "Query";
@@ -972,7 +834,7 @@ export type GetUsersByOrgQuery = {
 };
 
 export type GetUserQueryVariables = Exact<{
-    userInput: UserInput;
+    userId: Scalars["String"];
 }>;
 
 export type GetUserQuery = {
@@ -980,44 +842,15 @@ export type GetUserQuery = {
     getUser: {
         __typename?: "GetUserDto";
         id: string;
-        status: Get_User_Status_Type;
+        status: boolean;
         name: string;
         eSimNumber: string;
         iccid: string;
-        email?: string | null;
-        phone?: string | null;
+        email: string;
+        phone: string;
         roaming: boolean;
         dataPlan: number;
         dataUsage: number;
-    };
-};
-
-export type GetResidentsQueryVariables = Exact<{
-    data: PaginationDto;
-}>;
-
-export type GetResidentsQuery = {
-    __typename?: "Query";
-    getResidents: {
-        __typename?: "ResidentsResponse";
-        meta: {
-            __typename?: "Meta";
-            count: number;
-            page: number;
-            size: number;
-            pages: number;
-        };
-        residents: {
-            __typename?: "ResidentResponse";
-            activeResidents: number;
-            totalResidents: number;
-            residents: Array<{
-                __typename?: "GetUserDto";
-                id: string;
-                name: string;
-                dataUsage: number;
-            }>;
-        };
     };
 };
 
@@ -1072,8 +905,7 @@ export type ActivateUserMutation = {
 };
 
 export type AddUserMutationVariables = Exact<{
-    data: AddUserDto;
-    orgId: Scalars["String"];
+    data: UserInputDto;
 }>;
 
 export type AddUserMutation = {
@@ -1089,8 +921,8 @@ export type AddUserMutation = {
 };
 
 export type UpdateUserMutationVariables = Exact<{
-    data: UpdateUserDto;
-    orgId: Scalars["String"];
+    userId: Scalars["String"];
+    data: UserInputDto;
 }>;
 
 export type UpdateUserMutation = {
@@ -1143,7 +975,7 @@ export type UpdateNodeMutation = {
         __typename?: "OrgNodeDto";
         nodeId: string;
         state: Org_Node_State;
-        type: string;
+        type: Node_Type;
         name: string;
     };
 };
@@ -1181,6 +1013,61 @@ export type GetMetricsByTabSSubscription = {
         next: boolean;
         data: Array<{ __typename?: "MetricDto"; x: number; y: number }>;
     }>;
+};
+
+export type UpdateUserStatusMutationVariables = Exact<{
+    data: UpdateUserServiceInput;
+}>;
+
+export type UpdateUserStatusMutation = {
+    __typename?: "Mutation";
+    updateUserStatus: {
+        __typename?: "OrgUserSimDto";
+        iccid: string;
+        isPhysical: boolean;
+        ukama: {
+            __typename?: "UserSimUkamaDto";
+            status: Get_User_Status_Type;
+            services: {
+                __typename?: "UserSimServices";
+                voice: boolean;
+                data: boolean;
+                sms: boolean;
+            };
+        };
+        carrier: {
+            __typename?: "UserSimUkamaDto";
+            status: Get_User_Status_Type;
+            services: {
+                __typename?: "UserSimServices";
+                voice: boolean;
+                data: boolean;
+                sms: boolean;
+            };
+        };
+    };
+};
+
+export type GetNodeQueryVariables = Exact<{
+    nodeId: Scalars["String"];
+}>;
+
+export type GetNodeQuery = {
+    __typename?: "Query";
+    getNode: {
+        __typename?: "NodeResponse";
+        nodeId: string;
+        type: Node_Type;
+        state: Org_Node_State;
+        name: string;
+        attached: Array<{
+            __typename?: "OrgNodeDto";
+            nodeId: string;
+            type: Node_Type;
+            state: Org_Node_State;
+            name: string;
+        }>;
+    };
 };
 
 export const GetDataUsageDocument = gql`
@@ -1286,8 +1173,8 @@ export type GetLatestDataUsageSubscriptionHookResult = ReturnType<
 export type GetLatestDataUsageSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestDataUsageSubscription>;
 export const GetConnectedUsersDocument = gql`
-    query getConnectedUsers($orgId: String!, $filter: TIME_FILTER!) {
-        getConnectedUsers(filter: $filter, orgId: $orgId) {
+    query getConnectedUsers($filter: TIME_FILTER!) {
+        getConnectedUsers(filter: $filter) {
             totalUser
         }
     }
@@ -1305,7 +1192,6 @@ export const GetConnectedUsersDocument = gql`
  * @example
  * const { data, loading, error } = useGetConnectedUsersQuery({
  *   variables: {
- *      orgId: // value for 'orgId'
  *      filter: // value for 'filter'
  *   },
  * });
@@ -1597,8 +1483,8 @@ export type GetLatestAlertsSubscriptionHookResult = ReturnType<
 export type GetLatestAlertsSubscriptionResult =
     Apollo.SubscriptionResult<GetLatestAlertsSubscription>;
 export const GetNodesByOrgDocument = gql`
-    query getNodesByOrg($orgId: String!) {
-        getNodesByOrg(orgId: $orgId) {
+    query getNodesByOrg {
+        getNodesByOrg {
             orgId
             nodes {
                 id
@@ -1630,12 +1516,11 @@ export const GetNodesByOrgDocument = gql`
  * @example
  * const { data, loading, error } = useGetNodesByOrgQuery({
  *   variables: {
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
 export function useGetNodesByOrgQuery(
-    baseOptions: Apollo.QueryHookOptions<
+    baseOptions?: Apollo.QueryHookOptions<
         GetNodesByOrgQuery,
         GetNodesByOrgQueryVariables
     >
@@ -1667,71 +1552,6 @@ export type GetNodesByOrgLazyQueryHookResult = ReturnType<
 export type GetNodesByOrgQueryResult = Apollo.QueryResult<
     GetNodesByOrgQuery,
     GetNodesByOrgQueryVariables
->;
-export const GetNodeDetailsDocument = gql`
-    query getNodeDetails {
-        getNodeDetails {
-            id
-            modelType
-            serial
-            macAddress
-            osVersion
-            manufacturing
-            ukamaOS
-            hardware
-            description
-        }
-    }
-`;
-
-/**
- * __useGetNodeDetailsQuery__
- *
- * To run a query within a React component, call `useGetNodeDetailsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeDetailsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetNodeDetailsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetNodeDetailsQuery(
-    baseOptions?: Apollo.QueryHookOptions<
-        GetNodeDetailsQuery,
-        GetNodeDetailsQueryVariables
-    >
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useQuery<GetNodeDetailsQuery, GetNodeDetailsQueryVariables>(
-        GetNodeDetailsDocument,
-        options
-    );
-}
-export function useGetNodeDetailsLazyQuery(
-    baseOptions?: Apollo.LazyQueryHookOptions<
-        GetNodeDetailsQuery,
-        GetNodeDetailsQueryVariables
-    >
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useLazyQuery<
-        GetNodeDetailsQuery,
-        GetNodeDetailsQueryVariables
-    >(GetNodeDetailsDocument, options);
-}
-export type GetNodeDetailsQueryHookResult = ReturnType<
-    typeof useGetNodeDetailsQuery
->;
-export type GetNodeDetailsLazyQueryHookResult = ReturnType<
-    typeof useGetNodeDetailsLazyQuery
->;
-export type GetNodeDetailsQueryResult = Apollo.QueryResult<
-    GetNodeDetailsQuery,
-    GetNodeDetailsQueryVariables
 >;
 export const GetNodeAppsVersionLogsDocument = gql`
     query getNodeAppsVersionLogs {
@@ -1852,8 +1672,8 @@ export type GetNodeAppsQueryResult = Apollo.QueryResult<
     GetNodeAppsQueryVariables
 >;
 export const GetUsersByOrgDocument = gql`
-    query getUsersByOrg($orgId: String!) {
-        getUsersByOrg(orgId: $orgId) {
+    query getUsersByOrg {
+        getUsersByOrg {
             id
             name
             email
@@ -1876,12 +1696,11 @@ export const GetUsersByOrgDocument = gql`
  * @example
  * const { data, loading, error } = useGetUsersByOrgQuery({
  *   variables: {
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
 export function useGetUsersByOrgQuery(
-    baseOptions: Apollo.QueryHookOptions<
+    baseOptions?: Apollo.QueryHookOptions<
         GetUsersByOrgQuery,
         GetUsersByOrgQueryVariables
     >
@@ -1915,8 +1734,8 @@ export type GetUsersByOrgQueryResult = Apollo.QueryResult<
     GetUsersByOrgQueryVariables
 >;
 export const GetUserDocument = gql`
-    query getUser($userInput: UserInput!) {
-        getUser(userInput: $userInput) {
+    query getUser($userId: String!) {
+        getUser(userId: $userId) {
             id
             status
             name
@@ -1943,7 +1762,7 @@ export const GetUserDocument = gql`
  * @example
  * const { data, loading, error } = useGetUserQuery({
  *   variables: {
- *      userInput: // value for 'userInput'
+ *      userId: // value for 'userId'
  *   },
  * });
  */
@@ -1973,78 +1792,6 @@ export type GetUserLazyQueryHookResult = ReturnType<typeof useGetUserLazyQuery>;
 export type GetUserQueryResult = Apollo.QueryResult<
     GetUserQuery,
     GetUserQueryVariables
->;
-export const GetResidentsDocument = gql`
-    query getResidents($data: PaginationDto!) {
-        getResidents(data: $data) {
-            meta {
-                count
-                page
-                size
-                pages
-            }
-            residents {
-                residents {
-                    id
-                    name
-                    dataUsage
-                }
-                activeResidents
-                totalResidents
-            }
-        }
-    }
-`;
-
-/**
- * __useGetResidentsQuery__
- *
- * To run a query within a React component, call `useGetResidentsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetResidentsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetResidentsQuery({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetResidentsQuery(
-    baseOptions: Apollo.QueryHookOptions<
-        GetResidentsQuery,
-        GetResidentsQueryVariables
-    >
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useQuery<GetResidentsQuery, GetResidentsQueryVariables>(
-        GetResidentsDocument,
-        options
-    );
-}
-export function useGetResidentsLazyQuery(
-    baseOptions?: Apollo.LazyQueryHookOptions<
-        GetResidentsQuery,
-        GetResidentsQueryVariables
-    >
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useLazyQuery<GetResidentsQuery, GetResidentsQueryVariables>(
-        GetResidentsDocument,
-        options
-    );
-}
-export type GetResidentsQueryHookResult = ReturnType<
-    typeof useGetResidentsQuery
->;
-export type GetResidentsLazyQueryHookResult = ReturnType<
-    typeof useGetResidentsLazyQuery
->;
-export type GetResidentsQueryResult = Apollo.QueryResult<
-    GetResidentsQuery,
-    GetResidentsQueryVariables
 >;
 export const GetNetworkDocument = gql`
     query getNetwork($filter: NETWORK_TYPE!) {
@@ -2248,8 +1995,8 @@ export type ActivateUserMutationOptions = Apollo.BaseMutationOptions<
     ActivateUserMutationVariables
 >;
 export const AddUserDocument = gql`
-    mutation addUser($data: AddUserDto!, $orgId: String!) {
-        addUser(data: $data, orgId: $orgId) {
+    mutation addUser($data: UserInputDto!) {
+        addUser(data: $data) {
             name
             email
             iccid
@@ -2277,7 +2024,6 @@ export type AddUserMutationFn = Apollo.MutationFunction<
  * const [addUserMutation, { data, loading, error }] = useAddUserMutation({
  *   variables: {
  *      data: // value for 'data'
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
@@ -2300,8 +2046,8 @@ export type AddUserMutationOptions = Apollo.BaseMutationOptions<
     AddUserMutationVariables
 >;
 export const UpdateUserDocument = gql`
-    mutation updateUser($data: UpdateUserDto!, $orgId: String!) {
-        updateUser(data: $data, orgId: $orgId) {
+    mutation updateUser($userId: String!, $data: UserInputDto!) {
+        updateUser(data: $data, userId: $userId) {
             name
             email
             iccid
@@ -2328,8 +2074,8 @@ export type UpdateUserMutationFn = Apollo.MutationFunction<
  * @example
  * const [updateUserMutation, { data, loading, error }] = useUpdateUserMutation({
  *   variables: {
+ *      userId: // value for 'userId'
  *      data: // value for 'data'
- *      orgId: // value for 'orgId'
  *   },
  * });
  */
@@ -2622,3 +2368,130 @@ export type GetMetricsByTabSSubscriptionHookResult = ReturnType<
 >;
 export type GetMetricsByTabSSubscriptionResult =
     Apollo.SubscriptionResult<GetMetricsByTabSSubscription>;
+export const UpdateUserStatusDocument = gql`
+    mutation updateUserStatus($data: UpdateUserServiceInput!) {
+        updateUserStatus(data: $data) {
+            iccid
+            isPhysical
+            ukama {
+                status
+                services {
+                    voice
+                    data
+                    sms
+                }
+            }
+            carrier {
+                status
+                services {
+                    voice
+                    data
+                    sms
+                }
+            }
+        }
+    }
+`;
+export type UpdateUserStatusMutationFn = Apollo.MutationFunction<
+    UpdateUserStatusMutation,
+    UpdateUserStatusMutationVariables
+>;
+
+/**
+ * __useUpdateUserStatusMutation__
+ *
+ * To run a mutation, you first call `useUpdateUserStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserStatusMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUserStatusMutation, { data, loading, error }] = useUpdateUserStatusMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateUserStatusMutation(
+    baseOptions?: Apollo.MutationHookOptions<
+        UpdateUserStatusMutation,
+        UpdateUserStatusMutationVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useMutation<
+        UpdateUserStatusMutation,
+        UpdateUserStatusMutationVariables
+    >(UpdateUserStatusDocument, options);
+}
+export type UpdateUserStatusMutationHookResult = ReturnType<
+    typeof useUpdateUserStatusMutation
+>;
+export type UpdateUserStatusMutationResult =
+    Apollo.MutationResult<UpdateUserStatusMutation>;
+export type UpdateUserStatusMutationOptions = Apollo.BaseMutationOptions<
+    UpdateUserStatusMutation,
+    UpdateUserStatusMutationVariables
+>;
+export const GetNodeDocument = gql`
+    query getNode($nodeId: String!) {
+        getNode(nodeId: $nodeId) {
+            nodeId
+            type
+            state
+            name
+            attached {
+                nodeId
+                type
+                state
+                name
+            }
+        }
+    }
+`;
+
+/**
+ * __useGetNodeQuery__
+ *
+ * To run a query within a React component, call `useGetNodeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeQuery({
+ *   variables: {
+ *      nodeId: // value for 'nodeId'
+ *   },
+ * });
+ */
+export function useGetNodeQuery(
+    baseOptions: Apollo.QueryHookOptions<GetNodeQuery, GetNodeQueryVariables>
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useQuery<GetNodeQuery, GetNodeQueryVariables>(
+        GetNodeDocument,
+        options
+    );
+}
+export function useGetNodeLazyQuery(
+    baseOptions?: Apollo.LazyQueryHookOptions<
+        GetNodeQuery,
+        GetNodeQueryVariables
+    >
+) {
+    const options = { ...defaultOptions, ...baseOptions };
+    return Apollo.useLazyQuery<GetNodeQuery, GetNodeQueryVariables>(
+        GetNodeDocument,
+        options
+    );
+}
+export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
+export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
+export type GetNodeQueryResult = Apollo.QueryResult<
+    GetNodeQuery,
+    GetNodeQueryVariables
+>;

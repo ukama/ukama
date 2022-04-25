@@ -129,6 +129,7 @@ export enum GRAPHS_TAB {
     NETWORK = "NETWORK",
     OVERVIEW = "OVERVIEW",
     RESOURCES = "RESOURCES",
+    NODE_STATUS = "NODE_STATUS",
 }
 registerEnumType(GRAPHS_TAB, {
     name: "GRAPHS_TAB",

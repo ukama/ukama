@@ -1,8 +1,10 @@
-:INPUT,FORWARD,OUTPUT
--m hl;;FAIL
--m hl --hl-eq 42;=;OK
--m hl ! --hl-eq 42;=;OK
--m hl --hl-lt 42;=;OK
--m hl --hl-gt 42;=;OK
--m hl --hl-gt 42 --hl-eq 42;;FAIL
--m hl --hl-gt;;FAIL
+:PREROUTING,INPUT,FORWARD,OUTPUT,POSTROUTING
+*mangle
+-j HL --hl-set 42;=;OK
+-j HL --hl-inc 1;=;OK
+-j HL --hl-dec 1;=;OK
+-j HL --hl-set 256;;FAIL
+-j HL --hl-inc 0;;FAIL
+-j HL --hl-dec 0;;FAIL
+-j HL --hl-dec 1 --hl-inc 1;;FAIL
+-j HL --hl-set --hl-inc 1;;FAIL

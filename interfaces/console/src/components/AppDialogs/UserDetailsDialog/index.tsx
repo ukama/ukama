@@ -1,5 +1,4 @@
 import {
-    Box,
     Grid,
     Stack,
     Button,
@@ -12,59 +11,47 @@ import {
     DialogActions,
     DialogContent,
     CircularProgress,
+    DialogTitle,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
-import { GetUserDto, Get_User_Status_Type } from "../../../generated";
-
-const useStyles = makeStyles(() => ({
-    basicDialogHeaderStyle: {
-        padding: "0px 0px 18px 0px",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-}));
+import { GetUserDto } from "../../../generated";
+import LoadingWrapper from "../../LoadingWrapper";
+import { ReactEventHandler } from "react";
 
 type BasicDialogProps = {
+    type: string;
     user: GetUserDto;
     isOpen: boolean;
     setUserForm: any;
     loading: boolean;
-    isClosable?: boolean;
-    handleClose: Function;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
-    handleSaveSimUser?: any;
-    handleUpdateUser?: Function;
     userDetailsTitle: string;
     simDetailsTitle: string;
+    userStatusLoading: boolean;
+    handleSubmitAction: Function;
+    handleServiceAction: Function;
+    handleClose: ReactEventHandler;
 };
 
-const getTitleByStatus = (status: string) =>
-    status === Get_User_Status_Type.Active ? "PAUSE SERVICE" : "RESUME SERVICE";
-
 const UserDetailsDialog = ({
+    type,
     user,
     isOpen,
     setUserForm,
     handleClose,
     saveBtnLabel,
     closeBtnLabel,
-    handleUpdateUser,
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
-    isClosable = true,
-    handleSaveSimUser = () => {
-        /* Default empty function */
-    },
+    userStatusLoading,
+    handleSubmitAction,
+    handleServiceAction,
 }: BasicDialogProps) => {
-    const classes = useStyles();
     const {
         id,
         name,
@@ -77,57 +64,47 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
+
+    const statusText = status ? "ACTIVE" : "INACTIVE";
+    const title = type === "add" ? "Add User" : "Edit User";
+    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
+    const colorActiveInactive = status ? "textDisabled" : "textSecondary";
     return (
         <Dialog
             key={id}
             open={isOpen}
-            onBackdropClick={() => isClosable && handleClose()}
+            onBackdropClick={handleClose}
+            maxWidth="sm"
+            fullWidth
         >
             {loading ? (
                 <CenterContainer>
                     <CircularProgress />
                 </CenterContainer>
             ) : (
-                <Box
-                    component="div"
-                    sx={{
-                        width: { xs: "100%", md: "500px" },
-                        padding: "16px 24px",
-                    }}
-                >
-                    <Box
-                        component="div"
-                        className={classes.basicDialogHeaderStyle}
+                <>
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
                     >
-                        <Stack
-                            direction="row"
-                            sx={{ alignItems: "center" }}
-                            spacing={1}
+                        <DialogTitle>{title}</DialogTitle>
+                        <IconButton
+                            onClick={handleClose}
+                            sx={{ position: "relative", right: 8 }}
                         >
-                            <Typography variant="h5">{name}</Typography>
-                        </Stack>
-                        {isClosable && (
-                            <IconButton
-                                onClick={() => handleClose()}
-                                sx={{ ml: "24px", p: 0 }}
-                            >
-                                <CloseIcon />
-                            </IconButton>
-                        )}
-                    </Box>
-                    <DialogContent
-                        sx={{ padding: 0, mb: 4, overflowX: "hidden" }}
-                    >
-                        <Grid>
-                            <Grid container>
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle2">
-                                        {userDetailsTitle}
-                                    </Typography>
-                                    <Divider />
-                                </Grid>
+                            <CloseIcon />
+                        </IconButton>
+                    </Stack>
+                    <DialogContent sx={{ overflowX: "hidden" }}>
+                        <Grid container spacing={1.5}>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2">
+                                    {userDetailsTitle}
+                                </Typography>
+                                <Divider />
                             </Grid>
-                            <Grid item container spacing={1}>
+                            <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
                                     <Stack direction="row" spacing={1}>
                                         <Typography variant="body1">
@@ -148,7 +125,7 @@ const UserDetailsDialog = ({
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                name: value || "",
+                                                name: value,
                                             })
                                         }
                                     />
@@ -160,7 +137,7 @@ const UserDetailsDialog = ({
                                         handleOnChange={(value: string) =>
                                             setUserForm({
                                                 ...user,
-                                                email: value || "",
+                                                email: value?.toLowerCase(),
                                             })
                                         }
                                     />
@@ -178,7 +155,7 @@ const UserDetailsDialog = ({
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid container sx={{ mt: 1 }} spacing={1}>
+                            <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
                                     <Typography variant="subtitle2">
                                         {simDetailsTitle}
@@ -200,25 +177,29 @@ const UserDetailsDialog = ({
                                             sx={{ pb: "0px !important" }}
                                         >
                                             <Typography variant="body2">
-                                                {status}
+                                                {statusText}
                                             </Typography>
-                                            <Button
-                                                size="small"
-                                                color="error"
-                                                variant="outlined"
-                                                onClick={() =>
-                                                    setUserForm({
-                                                        ...user,
-                                                        status:
-                                                            status ===
-                                                            Get_User_Status_Type.Active
-                                                                ? Get_User_Status_Type.Inactive
-                                                                : Get_User_Status_Type.Active,
-                                                    })
-                                                }
+                                            <LoadingWrapper
+                                                height={34}
+                                                width={148}
+                                                isLoading={userStatusLoading}
                                             >
-                                                {getTitleByStatus(status)}
-                                            </Button>
+                                                <Button
+                                                    size="small"
+                                                    color="error"
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        if (id && iccid)
+                                                            handleServiceAction(
+                                                                id,
+                                                                iccid,
+                                                                !status
+                                                            );
+                                                    }}
+                                                >
+                                                    {statusAction}
+                                                </Button>
+                                            </LoadingWrapper>
                                         </ContainerJustifySpaceBtw>
                                     </Grid>
                                 </Grid>
@@ -258,7 +239,7 @@ const UserDetailsDialog = ({
                                     >
                                         <Typography
                                             variant="caption"
-                                            color="textSecondary"
+                                            color={colorActiveInactive}
                                             alignSelf={"end"}
                                         >
                                             ROAMING
@@ -276,6 +257,7 @@ const UserDetailsDialog = ({
                                             size="small"
                                             value="active"
                                             checked={roaming}
+                                            disabled={!status}
                                             onClick={(e: any) =>
                                                 setUserForm({
                                                     ...user,
@@ -288,23 +270,21 @@ const UserDetailsDialog = ({
                             </Grid>
                         </Grid>
                     </DialogContent>
-                    <DialogActions sx={{ padding: 0 }}>
+                    <DialogActions>
                         <Button
-                            onClick={() => handleClose()}
+                            onClick={handleClose}
                             sx={{ mr: 2, justifyItems: "center" }}
                         >
                             {closeBtnLabel}
                         </Button>
                         <Button
-                            onClick={
-                                user.id ? handleUpdateUser : handleSaveSimUser
-                            }
+                            onClick={() => handleSubmitAction()}
                             variant="contained"
                         >
                             {saveBtnLabel}
                         </Button>
                     </DialogActions>
-                </Box>
+                </>
             )}
         </Dialog>
     );

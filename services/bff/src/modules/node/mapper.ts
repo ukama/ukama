@@ -1,28 +1,16 @@
 import { NODE_TYPE, ORG_NODE_STATE } from "../../constants";
 import { INodeMapper } from "./interface";
 import {
-    NodeResponseDto,
-    NodeResponse,
     OrgNodeResponse,
     OrgNodeResponseDto,
     NodeDto,
     MetricDto,
     OrgMetricValueDto,
+    GetNodeStatusRes,
 } from "./types";
 import * as defaultCasual from "casual";
 
 class NodeMapper implements INodeMapper {
-    dtoToDto = (req: NodeResponse): NodeResponseDto => {
-        const nodes = req.data;
-        let activeNodes = 0;
-        const totalNodes = req.length;
-        req.data.forEach(node => {
-            if (node.status === ORG_NODE_STATE.ONBOARDED) {
-                activeNodes++;
-            }
-        });
-        return { nodes, activeNodes, totalNodes };
-    };
     dtoToNodesDto = (
         orgId: string,
         req: OrgNodeResponse
@@ -40,7 +28,7 @@ class NodeMapper implements INodeMapper {
                 const nodeObj = this.getNode({
                     id: node.nodeId,
                     status: node.state,
-                    type: node.type as NODE_TYPE,
+                    type: node.type,
                     name: node.name,
                 });
                 nodes.push(nodeObj);
@@ -90,6 +78,23 @@ class NodeMapper implements INodeMapper {
                 "Short introduction.\n\n TL;DR\n\n*** NEW ***\nPoint 1\nPoint 2\nPoint 3\n\n*** IMPROVEMENTS ***\nPoint 1\nPoint 2\nPoint 3\n\n*** FIXES ***\nPoint 1\nPoint 2\nPoint 3\n\nWe would love to hear your feedback -- if you have anything to share, please xyz.",
             updateVersion: "12.4",
         };
+    };
+
+    dtoToNodeStatusDto = (res: OrgMetricValueDto[]): GetNodeStatusRes => {
+        let uptime = 0;
+        let status = ORG_NODE_STATE.UNDEFINED;
+        if (res && res.length > 0) {
+            res.forEach((item: any) => {
+                uptime = item[1];
+            });
+            if (uptime > 0) {
+                status = ORG_NODE_STATE.ONBOARDED;
+            } else {
+                status = ORG_NODE_STATE.PENDING;
+            }
+        }
+
+        return { uptime: uptime, status: status };
     };
 }
 export default <INodeMapper>new NodeMapper();

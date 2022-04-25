@@ -1,6 +1,7 @@
 import { axiosErrorHandler } from "../errors";
-import { ApiMethodDataDto, Context, HeaderType } from "./types";
+import { ApiMethodDataDto, Context, ParsedCookie } from "./types";
 import ApiMethods from "../api";
+import { converCookieToObj } from "../utils";
 
 export const catchAsyncIOMethod = async (
     req: ApiMethodDataDto
@@ -20,16 +21,17 @@ export const catchAsyncIOMethod = async (
     }
 };
 
-export const getHeaders = (ctx: Context): HeaderType => {
+export const parseCookie = (ctx: Context): ParsedCookie => {
     let header = {};
+    const cookieObj: any = converCookieToObj(ctx.cookie);
     if (ctx.token) {
         header = {
             Authorization: ctx.token,
         };
     } else if (ctx.cookie) {
         header = {
-            cookie: ctx.cookie,
+            Cookie: `ukama_session=${cookieObj["ukama_session"]}`,
         };
     }
-    return header;
+    return { header: header, orgId: cookieObj["id"] };
 };

@@ -35,9 +35,9 @@ jobs:
               run: make build
               working-directory: ${{ env.working-directory }}
 
-            - name: Test
-              run: make test
-              working-directory: ${{ env.working-directory }}
+            # - name: Test
+            #   run: make test
+            #   working-directory: ${{ env.working-directory }}
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v1
