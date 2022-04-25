@@ -222,6 +222,98 @@ int serialize_post_route_response(json_t **json, int respCode, uuid_t uuid,
 }
 
 /*
+ * serialize_get_routes_request --
+ *
+ * [{
+ *	"name": "service_name",
+ *	"patterns": [{
+ *			"key1": "value1",
+ *			"key2": "value2",
+ *			"path": "/abc"
+ *		},
+ *		{
+ *			"key1": "value1",
+ *			"path": "/abv/xcv"
+ *		}
+ *	],
+ *	"forward": {
+ *		"ip": "10.0.0.1",
+ *		"port": "8080",
+ *		"default_path": "/abc"
+ *	}
+ *    }
+ *  ]
+ *
+ */
+int serialize_get_routes_request(json_t **json, Router *router) {
+
+  json_t *jArray=NULL, *jService=NULL, *jPArray=NULL;
+  json_t *jPattern=NULL, *jForward=NULL;
+  Patterns *patterns=NULL;
+  Pattern *pattern=NULL;
+  Service *service=NULL;
+
+  if (router == NULL) return FALSE;
+
+  *json = json_object();
+  if (*json == NULL) {
+    return FALSE;
+  }
+
+  json_object_set_new(*json, JSON_ROUTES, json_array());
+  jArray = json_object_get(*json, JSON_ROUTES);
+
+  service = router->services;
+
+  while (service) {
+
+    jService = json_object();
+    json_object_set_new(jService, JSON_NAME, json_string(service->name));
+
+    json_object_set_new(jService, JSON_PATTERNS, json_array());
+    jPArray = json_object_get(jService, JSON_PATTERNS);
+
+    patterns = service->patterns;
+
+    while (patterns) {
+
+      pattern = patterns->pattern;
+      jPattern = json_object();
+
+      while (pattern) {
+	json_object_set_new(jPattern, pattern->key,
+			    json_string(pattern->value));
+	pattern = pattern->next;
+      }
+
+      json_object_set_new(jPattern, JSON_PATH,
+			  json_string(patterns->path));
+
+      json_array_append(jPArray, jPattern);
+      patterns = patterns->next;
+      json_decref(jPattern);
+    }
+
+    json_object_set_new(jService, JSON_FORWARD, json_object());
+    jForward = json_object_get(jService, JSON_FORWARD);
+
+    if (service->forward) {
+      json_object_set_new(jForward, JSON_IP,
+			  json_string(service->forward->ip));
+      json_object_set_new(jForward, JSON_PORT,
+			  json_string(service->forward->port));
+    }
+
+    json_array_append(jArray, jService);
+    service = service->next;
+
+    json_decref(jService);
+  }
+
+  return TRUE;
+}
+
+/*
  * add_key_value_to_pattern --
  *
  */
