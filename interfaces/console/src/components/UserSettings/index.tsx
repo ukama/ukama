@@ -14,7 +14,7 @@ import { useRecoilValue } from "recoil";
 import { isDarkmode } from "../../recoil";
 
 const LineDivider = () => (
-    <Grid item xs={12}>
+    <Grid item xs={12} sx={{ marginY: "10px" }}>
         <Divider />
     </Grid>
 );
