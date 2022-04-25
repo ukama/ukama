@@ -195,3 +195,21 @@ export class GetMetricsRes {
     @Field(() => [MetricRes])
     metrics: MetricRes[];
 }
+
+@InputType()
+export class GetNodeStatusInputDTO {
+    @Field()
+    nodeId: string;
+
+    @Field(() => NODE_TYPE)
+    nodeType: NODE_TYPE;
+}
+
+@ObjectType()
+export class GetNodeStatusRes {
+    @Field()
+    uptime: number;
+
+    @Field(() => ORG_NODE_STATE)
+    status: ORG_NODE_STATE;
+}

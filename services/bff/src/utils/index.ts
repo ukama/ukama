@@ -50,7 +50,7 @@ export const getMetricsByTab = (
                 return ["temperaturectl", "temperaturerfe"];
             else
                 return [
-                    "uptime",
+                    "uptimetrx",
                     "temperaturetrx",
                     "temperaturecom",
                     "subscribersactive",
@@ -91,12 +91,17 @@ export const getMetricsByTab = (
 
         case GRAPHS_TAB.HOME:
             return ["temperaturetrx"];
+
+        case GRAPHS_TAB.NODE_STATUS:
+            if (nodeType === NODE_TYPE.HOME) return ["uptimetrx"];
+            else if (nodeType === NODE_TYPE.AMPLIFIER) return ["uptimectl"];
+            else return ["uptimetrx"];
     }
 };
 
 export const getMetricTitleByType = (type: string): string => {
     switch (type) {
-        case "uptime":
+        case "uptimetrx":
             return "Uptime";
         case "temperaturetrx":
             return "Temp. (TRX)";

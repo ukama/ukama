@@ -10,6 +10,8 @@ import {
     MetricRes,
     OrgNodeDto,
     NodeResponse,
+    GetNodeStatusRes,
+    GetNodeStatusInputDTO,
 } from "./types";
 import {
     ParsedCookie,
@@ -17,14 +19,14 @@ import {
     MetricsByTabInputDTO,
 } from "../../common/types";
 import NodeMapper from "./mapper";
-import { INodeService } from "./interface";
 import { checkError } from "../../errors";
-import { NetworkDto } from "../network/types";
-import { getMetricTitleByType } from "../../utils";
+import { INodeService } from "./interface";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
 import { DeactivateResponse } from "../user/types";
+import { GRAPHS_TAB } from "./../../constants/index";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
+import { getMetricsByTab, getMetricTitleByType } from "../../utils";
 
 @Service()
 export class NodeService implements INodeService {
@@ -90,14 +92,28 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
-    getNetwork = async (): Promise<NetworkDto> => {
+    getNodeStatus = async (
+        data: GetNodeStatusInputDTO,
+        cookie: ParsedCookie
+    ): Promise<GetNodeStatusRes> => {
+        const currentTimestamp = Math.floor(new Date().getTime() / 1000);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NODE_NETWORK,
+            headers: cookie.header,
+            path: getMetricUri(
+                cookie.orgId,
+                data.nodeId,
+                getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
+            ),
+            params: {
+                from: currentTimestamp,
+                to: currentTimestamp,
+                step: 1,
+            },
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
+        return NodeMapper.dtoToNodeStatusDto(res.data?.result[0].values);
     };
     getSingleMetric = async (
         data: MetricsInputDTO,
