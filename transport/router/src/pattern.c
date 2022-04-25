@@ -16,6 +16,7 @@
 #include <curl/easy.h>
 #include <string.h>
 #include <strings.h>
+#include <regex.h>
 
 #include "router.h"
 #include "log.h"
@@ -27,11 +28,22 @@
 static int match_all_key_value(Pattern *pattern, char *key, char *value) {
 
   Pattern *ptr=NULL;
+  int ret;
+  regex_t re;
 
   for(ptr=pattern; ptr; ptr=ptr->next) {
-    if (strcasecmp(ptr->key, key) == 0 &&
-	strcasecmp(ptr->value, value) == 0) {
-      return TRUE;
+
+    if (strcasecmp(ptr->key, key) == 0) {
+      if ((ret=regcomp(&re, value, REG_EXTENDED | REG_NOSUB)) != 0) {
+	return FALSE;
+      }
+
+      if (regexec(&re, ptr->value, 0, NULL, 0) == 0) {
+	regfree(&re);
+	return TRUE;
+      }
+
+      regfree(&re);
     }
   }
 
