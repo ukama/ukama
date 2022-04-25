@@ -36,7 +36,7 @@ static int add_key_value_to_pattern(Patterns **patterns, const char *key,
  *	],
  *	"forward": {
  *		"ip": "10.0.0.1",
- *		"port": "8080",
+ *		"port": 8080,
  *		"default_path": "/abc"
  *	}
  * }
@@ -152,7 +152,7 @@ int deserialize_post_route_request(Service **service, json_t *json) {
   }
 
   (*service)->forward->ip   = strdup(json_string_value(jIP));
-  (*service)->forward->port = strdup(json_string_value(jPort));
+  (*service)->forward->port = json_integer_value(jPort);
 
   return TRUE;
 
@@ -238,7 +238,7 @@ int serialize_post_route_response(json_t **json, int respCode, uuid_t uuid,
  *	],
  *	"forward": {
  *		"ip": "10.0.0.1",
- *		"port": "8080",
+ *		"port": 8080,
  *		"default_path": "/abc"
  *	}
  *    }
@@ -301,7 +301,7 @@ int serialize_get_routes_request(json_t **json, Router *router) {
       json_object_set_new(jForward, JSON_IP,
 			  json_string(service->forward->ip));
       json_object_set_new(jForward, JSON_PORT,
-			  json_string(service->forward->port));
+			  json_integer(service->forward->port));
     }
 
     json_array_append(jArray, jService);

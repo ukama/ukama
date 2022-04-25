@@ -14,6 +14,6 @@
 
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
 			      const req_t *request, char *ep);
-int valid_forward_route(char *host, char *port);
+int valid_forward_route(char *host, int port);
 
 #endif /* FORWARD_H */

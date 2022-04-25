@@ -479,7 +479,7 @@ int callback_service(const struct _u_request *request,
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
     goto reply;
   } else {
-    log_debug("Matching service found at IP: %s port: %s",
+    log_debug("Matching service found at IP: %s port: %d",
 	      requestForward->ip, requestForward->port);
   }
 
@@ -491,7 +491,7 @@ int callback_service(const struct _u_request *request,
 	      statusStr);
     goto reply;
   } else {
-    log_debug("Connection Test OK. Service available at ip: %s port: %s",
+    log_debug("Connection Test OK. Service available at ip: %s port: %d",
 	      requestForward->ip, requestForward->port);
   }
 
@@ -546,7 +546,6 @@ int callback_service(const struct _u_request *request,
 
   if (requestForward) {
     if (requestForward->ip)   free(requestForward->ip);
-    if (requestForward->port) free(requestForward->port);
     free(requestForward);
   }
 
