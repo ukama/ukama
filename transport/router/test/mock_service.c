@@ -48,14 +48,14 @@ struct Response {
  *	],
  *	"forward": {
  *		"ip": "10.0.0.1",
- *		"port": "8080",
+ *		"port": 8080,
  *		"default_path": "/abc"
  *	}
  * }
  *
  */
 
-#define REG_JSON "{ \"name\" : \"%s\", \"patterns\" : [ %s ], \"forward\": { \"ip\": \"%s\", \"port\" : \"%s\" } }"
+#define REG_JSON "{ \"name\" : \"%s\", \"patterns\" : [ %s ], \"forward\": { \"ip\": \"%s\", \"port\" : %d } }"
 #define DEL_JSON "{ \"uuid\" : \"%s\" }"
 
 static void print_map(map_t *map) {
@@ -208,7 +208,7 @@ static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
  *
  */
 static int service_register(char *name, char *rIP, char *rPort, char *ip,
-			    char *port, char *pattern, char **uuidStr) {
+			    int port, char *pattern, char **uuidStr) {
 
   int ret=FALSE;
   CURL *curl=NULL;
@@ -310,7 +310,8 @@ int main(int argc, char **argv) {
   char *name;
   char *kvPattern, *reply;
   char *rHost;
-  char *port, *rPort;
+  int  port;
+  char *rPort;
   char *uuidStr=NULL;
   struct _u_instance inst;
 
@@ -324,12 +325,12 @@ int main(int argc, char **argv) {
   name      = strdup(argv[1]);
   rHost     = strdup(argv[2]);
   rPort     = strdup(argv[3]);
-  port      = strdup(argv[4]);
+  port      = atoi(argv[4]);
   reply     = strdup(argv[5]);
   kvPattern = strdup(argv[6]);
 
   /* Initialize ulfius framework. */
-  if (ulfius_init_instance(&inst, atoi(port), NULL, NULL) != U_OK) {
+  if (ulfius_init_instance(&inst, port, NULL, NULL) != U_OK) {
     fprintf(stderr, "Error ulfius_init_instance, abort\n");
     exit(1);
   }

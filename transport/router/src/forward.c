@@ -23,7 +23,7 @@
  * create_forward_request --
  *
  */
-static req_t *init_forward_request(char *host, char *port, char *method,
+static req_t *init_forward_request(char *host, int port, char *method,
 				   char *ep) {
 
   req_t *req = NULL;
@@ -35,7 +35,7 @@ static req_t *init_forward_request(char *host, char *port, char *method,
     return NULL;
   }
 
-  sprintf(url, "http://%s:%s/%s", host, port, ep);
+  sprintf(url, "http://%s:%d/%s", host, port, ep);
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;
@@ -104,13 +104,13 @@ req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
  * valid_forward_route --
  *
  */
-int valid_forward_route(char *host, char *port) {
+int valid_forward_route(char *host, int port) {
 
   CURL     *curl;
   CURLcode response;
   char     url[MAX_LEN] = {0};
 
-  if (host == NULL || port == NULL) {
+  if (host == NULL || port == 0) {
     return UKAMA_ERROR_INVALID_DEST;
   }
 
@@ -118,7 +118,7 @@ int valid_forward_route(char *host, char *port) {
 
   if (curl) {
 
-    sprintf(url, "http://%s:%s", host, port);
+    sprintf(url, "http://%s:%d", host, port);
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L); /* 2 second timeout */
