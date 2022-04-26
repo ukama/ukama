@@ -1,0 +1,98 @@
+[LWM2M.Object]
+Name = "Temperature"
+Description1 = "This IPSO object should be used with a temperature sensor to report a temperature measurement.  It also provides resources for minimum/maximum measured values and the minimum/maximum range that can be measured by the temperature sensor. An example measurement unit is degrees Celsius."
+ObjectID = 3303
+ObjectURN = "urn:oma:lwm2m:ext:3303:1.1"
+LWM2MVersion = 1
+ObjectVersion = "1.1"
+MultipleInstances = "Multiple"
+Mandatory = "Optional"
+Description2 = ""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Sensor Value"
+ResourceID = 5700
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "Last or Current Measured Value from the Sensor."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Min Measured Value"
+ResourceID = 5601
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "The minimum value measured by the sensor since power ON or reset."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Max Measured Value"
+ResourceID = 5602
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "The maximum value measured by the sensor since power ON or reset."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Min Range Value"
+ResourceID = 5603
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "The minimum value that can be measured by the sensor."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Max Range Value"
+ResourceID = 5604
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "The maximum value that can be measured by the sensor."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Sensor Units"
+ResourceID = 5701
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "Measurement Units Definition."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Reset Min and Max Measured Values"
+ResourceID = 5605
+Operations = "E"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = ""
+RangeEnumeration = ""
+Units = ""
+Description = "Reset the Min and Max Measured Values to Current Value."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Application Type"
+ResourceID = 5750
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "The application type of the sensor or actuator as a string depending on the use case."

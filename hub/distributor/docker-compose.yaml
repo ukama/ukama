@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  minio:
+    image: quay.io/minio/minio
+    command: server /tmp/data --console-address ":9001"
+    ports:
+        - 9000:9000
+        - 9001:9001
+    networks:
+      distr-net:
+        # Don't copy those addresses in your application. Use the local docker socket to get them.
+    environment:
+      # Same for the environment variables, use the local docker socket to read it.
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio123
+
+  hub: # Here, this is where you can configure your gateway.
+    build: ../hub/
+    ports: [ "8080:8080" ]
+    networks:
+      distr-net:
+    restart: always
+    environment:
+      - DEBUGMODE=TRUE
+      - STORAGE_ENDPOINT=minio:9000
+      - CHUNKER_HOST=http://distr:8098
+
+  distr: # Here, this is where you can configure your gateway.
+    build: .
+    ports: [ "8098:8098", "8099:8099" ] 
+    networks:
+      distr-net:
+    restart: always
+    environment:
+      - DEBUGMODE=TRUE
+      - STORE_ENDPOINT=minio:9000
+      - DISTRIBUTION_CHUNK_STORES=s3+http://minio:9000/artifact-hub-local-test/chunks?lookup\=path
+      - DISTRIBUTION_ADDRESSES=localhost:8099/chunks
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESSKEY=minio
+      - STORAGE_SECRETKEY=minio123
+
+networks:
+  distr-net:
