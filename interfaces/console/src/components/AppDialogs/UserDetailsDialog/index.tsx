@@ -186,7 +186,11 @@ const UserDetailsDialog = ({
                                             >
                                                 <Button
                                                     size="small"
-                                                    color="error"
+                                                    color={
+                                                        status
+                                                            ? "error"
+                                                            : "primary"
+                                                    }
                                                     variant="outlined"
                                                     onClick={() => {
                                                         if (id && iccid)
@@ -249,7 +253,7 @@ const UserDetailsDialog = ({
                                                 arrow
                                             >
                                                 <IconButton>
-                                                    <InfoIcon />
+                                                    <InfoIcon fontSize="small" />
                                                 </IconButton>
                                             </Tooltip>
                                         </Typography>
