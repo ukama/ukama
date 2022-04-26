@@ -1,0 +1,142 @@
+syntax="proto3";
+
+option go_package = "controller/specs/device/spec";
+
+import "specs/common/proto/statuscode.proto";
+
+package main;
+
+//New Device
+message Device {
+    string name = 1;
+    string uuid = 2;
+    string devType = 3; // board level like mask/com/lte etc
+    string siteId = 4;
+}
+
+// Resource
+message Resource {
+    string key = 1;
+    string value = 2;
+}
+
+// Config 
+message Config {
+    string path = 1; // Path fo the config file.
+    string type = 2; // Device Config handled by lwm2m and lte config handled by REST API.  
+    string url = 3; // Holds URL fragment, basepath(http://uid-xx-0001:8085)+ URLfragment(/enodeb) = Resource URL
+    //TODO:: Only one of these would be use either Resource 6 or cfgData 7
+    repeated Resource resource = 6 ; 
+    string cfgData = 7;
+}
+
+//New Device response
+message DeviceResp {
+    Device device = 1; 
+    StatusCode  statusCode = 8;
+}
+
+// Add new Device to controller
+message AddNewDeviceReqMsg {
+    uint64 token = 1;
+    Device device = 2; 
+}
+
+// Add new Device response message from controller
+message AddNewDeviceRespMsg {
+    uint64 token = 1;
+    DeviceResp deviceResp = 2; 
+}
+
+
+// Remove Device from controller
+message RemoveDeviceReqMsg {
+    uint64 token = 1;
+    Device device = 2; 
+}
+
+// Remove Device response from controller
+message RemoveDeviceRespMsg {
+    uint64 token = 1;
+    DeviceResp deviceResp = 2; 
+}
+
+// Request to reload metrics collector
+message ReloadMetricsCollectorReqMsg {
+    uint64 token = 1;
+    bool rflag = 2;
+}
+
+// Reload metrics collector response from controller.
+message ReloadMetricsCollectorRespMsg {
+    uint64 token = 1;
+    bool rflag = 2;
+    StatusCode  statusCode = 8;
+}
+
+// Read config data from Device
+message ReadConfigReqMsg {
+    uint64 token = 1;
+    Device device = 2; 
+    Config config  = 3;  
+}
+
+// Read config data response
+message ReadConfigRespMsg {
+    uint64 token = 1;
+    Device device = 2; 
+    Config config  = 3;   
+    StatusCode  statusCode = 8;
+}
+
+// Write Config : This message is added for future support for now we are using configyfy event.
+message WriteConfigReqMsg {
+    uint64 token = 1;
+    Device device = 2; 
+    Config config  = 3;  
+}
+
+message WriteConfigRespMsg {
+    uint64 token = 1;
+    Device device = 2; 
+    Config config  = 3;   
+    StatusCode  statusCode = 8;
+}
+
+//TODO:: Check if we can translate read and write also to Gen config request.
+//Execute/Observe/Cancel Request Config
+message GenConfigReqMsg {
+    uint64 token = 1;
+    Device device = 2; 
+    Config config  = 3;  
+}
+
+//Execute/Observe/Cancel Request Config
+message GenConfigRespMsg {
+    uint64 token = 1;
+    Device device = 2;
+    Config config  = 3;   
+    StatusCode  statusCode = 8;
+}
+
+// Alarms
+message EvtAlarmMsg {
+   uint64 token = 1;
+   string uuid = 2;
+   uint32 evtType = 3;
+   uint32 status = 4;
+   string alarmurl = 5;
+   string resrcurl = 6;
+   string alarmId = 7;
+   float sensorValue = 8;
+   float sensorLimit = 9;
+   string sensorUnit = 10;
+   string ackBy = 11; 
+}
+
+// Errors
+message ErrorReport {
+     uint64 token = 1;
+     string error = 2;
+}
+

@@ -1,0 +1,50 @@
+syntax="proto3";
+
+option go_package = "lwm2m-gateway/specs/lwm2mIface/spec";
+import "specs/common/proto/statuscode.proto";
+
+package main;
+
+
+//New Unit
+message Device {
+    string name = 1;
+    string uuid = 2;
+}
+
+//URI
+message URI {
+    int32 object = 1;
+    int32 instance = 2;
+    int32 resource = 3;
+}
+
+//LwM2MConfigReq: This is per object's instance.
+message Lwm2mConfigReqMsg {
+    Device device = 1; 
+    URI uri = 2;
+    string cfgData = 3;
+}
+
+//LwM2MConfig response message.
+message Lwm2mConfigRespMsg {
+    Device device = 1; 
+    URI uri = 2;
+    string cfgData = 3;
+    StatusCode  statusCode = 8;
+}
+
+// Alarms
+message Lwm2mAlarmMsg {
+   uint64 token = 1;
+   string uuid = 2;
+   int32 evtType = 3;
+   uint32 state = 4;
+   string alarmurl = 5;
+   string resrcurl = 6;
+   string alarmId = 7;
+   float sensorValue = 8;
+   float sensorLimit = 9;
+   string sensorUnit = 10;
+   string ackBy = 11; 
+}
