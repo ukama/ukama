@@ -9,6 +9,7 @@ import {
     GetNodeStatusRes,
 } from "./types";
 import * as defaultCasual from "casual";
+import { MetricServiceValuesRes } from "../../common/types";
 
 class NodeMapper implements INodeMapper {
     dtoToNodesDto = (
@@ -80,17 +81,18 @@ class NodeMapper implements INodeMapper {
         };
     };
 
-    dtoToNodeStatusDto = (res: OrgMetricValueDto[]): GetNodeStatusRes => {
+    dtoToNodeStatusDto = (res: MetricServiceValuesRes): GetNodeStatusRes => {
         let uptime = 0;
         let status = ORG_NODE_STATE.UNDEFINED;
-        if (res && res.length > 0) {
-            res.forEach((item: any) => {
-                uptime = item[1];
-            });
-            if (uptime > 0) {
-                status = ORG_NODE_STATE.ONBOARDED;
-            } else {
-                status = ORG_NODE_STATE.PENDING;
+        if (res && res.values.length > 0) {
+            if (res && res.values.length > 0) {
+                const temp: any = res.values[0];
+                uptime = temp[1];
+                if (uptime > 0) {
+                    status = ORG_NODE_STATE.ONBOARDED;
+                } else {
+                    status = ORG_NODE_STATE.PENDING;
+                }
             }
         }
 

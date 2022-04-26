@@ -1,6 +1,6 @@
 import { styled } from "@mui/styles";
 import { Button, Grid } from "@mui/material";
-import { NodeDto, Org_Node_State } from "../../generated";
+import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
 import { LoadingWrapper, NodeDropDown, SplitButton } from "..";
 
 const StyledBtn = styled(Button)({
@@ -14,15 +14,18 @@ interface INodeStatus {
     onAddNode: Function;
     nodeActionOptions: any[];
     onNodeSelected: Function;
+    nodeStatusLoading: boolean;
+    onUpdateNodeClick: Function;
     handleNodeActionClick: Function;
     onNodeActionItemSelected: Function;
-    onUpdateNodeClick: Function;
     selectedNode: NodeDto | undefined;
+    nodeStatus: GetNodeStatusRes | undefined;
 }
 
 const NodeStatus = ({
     nodes,
     onAddNode,
+    nodeStatus,
     loading = false,
     selectedNode = {
         id: "1",
@@ -38,9 +41,10 @@ const NodeStatus = ({
     },
     onNodeSelected,
     onUpdateNodeClick,
-    onNodeActionItemSelected,
     nodeActionOptions,
+    nodeStatusLoading,
     handleNodeActionClick,
+    onNodeActionItemSelected,
 }: INodeStatus) => {
     const handleUpdateNode = () =>
         onUpdateNodeClick(
@@ -54,8 +58,10 @@ const NodeStatus = ({
                     nodes={nodes}
                     loading={loading}
                     onAddNode={onAddNode}
+                    nodeStatus={nodeStatus}
                     selectedNode={selectedNode}
                     onNodeSelected={onNodeSelected}
+                    nodeStatusLoading={nodeStatusLoading}
                 />
             </Grid>
             <Grid

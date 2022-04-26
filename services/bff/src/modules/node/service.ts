@@ -11,7 +11,7 @@ import {
     OrgNodeDto,
     NodeResponse,
     GetNodeStatusRes,
-    GetNodeStatusInputDTO,
+    GetNodeStatusInput,
 } from "./types";
 import {
     ParsedCookie,
@@ -93,7 +93,7 @@ export class NodeService implements INodeService {
         return res;
     };
     getNodeStatus = async (
-        data: GetNodeStatusInputDTO,
+        data: GetNodeStatusInput,
         cookie: ParsedCookie
     ): Promise<GetNodeStatusRes> => {
         const currentTimestamp = Math.floor(new Date().getTime() / 1000);
@@ -113,7 +113,7 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return NodeMapper.dtoToNodeStatusDto(res.data?.result[0].values);
+        return NodeMapper.dtoToNodeStatusDto(res.data?.result[0]);
     };
     getSingleMetric = async (
         data: MetricsInputDTO,

@@ -1,5 +1,4 @@
 import {
-    Box,
     Stack,
     Theme,
     Select,
@@ -12,10 +11,11 @@ import {
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
-import { getStatusByType, hexToRGB } from "../../utils";
+import { hexToRGB } from "../../utils";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
-import { NodeDto, Org_Node_State } from "../../generated";
+import CircleIcon from "@mui/icons-material/Circle";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
 
 const useStyles = makeStyles<Theme>(() => ({
     selectStyle: () => ({
@@ -26,11 +26,13 @@ const useStyles = makeStyles<Theme>(() => ({
 const getStatusIcon = (status: Org_Node_State) => {
     switch (status) {
         case Org_Node_State.Onboarded:
-            return <CheckCircleIcon htmlColor={colors.green} />;
+            return (
+                <CheckCircleIcon htmlColor={colors.green} fontSize={"small"} />
+            );
         case Org_Node_State.Pending:
-            return <InfoIcon htmlColor={colors.yellow} />;
+            return <InfoIcon htmlColor={colors.yellow} fontSize={"small"} />;
         default:
-            return <InfoIcon htmlColor={colors.error} />;
+            return <CircleIcon htmlColor={colors.black38} fontSize={"small"} />;
     }
 };
 
@@ -39,15 +41,22 @@ interface INodeDropDown {
     onAddNode: Function;
     nodes: NodeDto[] | [];
     onNodeSelected: Function;
+    nodeStatusLoading: boolean;
     selectedNode: NodeDto | undefined;
+    nodeStatus: GetNodeStatusRes | undefined;
 }
 
 const NodeDropDown = ({
     nodes = [],
     onAddNode,
+    nodeStatus = {
+        status: Org_Node_State.Undefined,
+        uptime: new Date().getTime(),
+    },
     selectedNode,
     loading = true,
     onNodeSelected,
+    nodeStatusLoading,
 }: INodeDropDown) => {
     const classes = useStyles();
     const handleChange = (e: SelectChangeEvent<string>) => {
@@ -58,13 +67,14 @@ const NodeDropDown = ({
             );
     };
     return (
-        <LoadingWrapper isLoading={loading} height={40}>
-            <Stack direction={"row"} spacing={1}>
-                {selectedNode && (
-                    <Box component="div" display={"flex"} alignItems={"center"}>
-                        {getStatusIcon(selectedNode?.status)}
-                    </Box>
-                )}
+        <Stack direction={"row"} spacing={2} alignItems="center">
+            {getStatusIcon(nodeStatus.status)}
+
+            <LoadingWrapper
+                height={38}
+                isLoading={loading}
+                width={loading ? "144px" : "fit-content"}
+            >
                 <Select
                     disableUnderline
                     variant="standard"
@@ -143,25 +153,20 @@ const NodeDropDown = ({
                         </Button>
                     </MenuItem>
                 </Select>
+            </LoadingWrapper>
 
-                <Box
-                    component="div"
-                    display="flex"
-                    flexDirection="row"
-                    alignItems="center"
-                >
-                    <Typography variant={"h6"}>
-                        {getStatusByType(selectedNode?.status as string)}
+            <LoadingWrapper
+                height={38}
+                isLoading={nodeStatusLoading}
+                width={nodeStatusLoading ? "200px" : "fit-content"}
+            >
+                {nodeStatus.status !== Org_Node_State.Undefined && (
+                    <Typography ml="8px" variant={"h6"} color="secondary">
+                        {nodeStatus.uptime}
                     </Typography>
-
-                    {selectedNode?.status !== "UNDEFINED" && (
-                        <Typography ml="8px" variant={"h6"} color="secondary">
-                            21 days 5 hours 1 minute
-                        </Typography>
-                    )}
-                </Box>
-            </Stack>
-        </LoadingWrapper>
+                )}
+            </LoadingWrapper>
+        </Stack>
     );
 };
 

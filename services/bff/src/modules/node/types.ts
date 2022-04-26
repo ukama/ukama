@@ -197,7 +197,7 @@ export class GetMetricsRes {
 }
 
 @InputType()
-export class GetNodeStatusInputDTO {
+export class GetNodeStatusInput {
     @Field()
     nodeId: string;
 

@@ -263,3 +263,25 @@ query getNode($nodeId: String!) {
         }
     }
 }
+
+query getNode($nodeId: String!) {
+    getNode(nodeId: $nodeId) {
+        nodeId
+        type
+        state
+        name
+        attached {
+            nodeId
+            type
+            state
+            name
+        }
+    }
+}
+
+query getNodeStatus($data: GetNodeStatusInput!) {
+    getNodeStatus(data: $data) {
+        uptime
+        status
+    }
+}

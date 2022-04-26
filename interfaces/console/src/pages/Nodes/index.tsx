@@ -16,6 +16,7 @@ import {
 } from "../../components";
 import {
     NodeDto,
+    Node_Type,
     Org_Node_State,
     useGetNodeAppsQuery,
     useGetNodesByOrgLazyQuery,
@@ -23,8 +24,8 @@ import {
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
     useAddNodeMutation,
-    Node_Type,
     useGetNodeLazyQuery,
+    useGetNodeStatusQuery,
 } from "../../generated";
 import { TMetric } from "../../types";
 import { useRecoilValue, useSetRecoilState } from "recoil";
@@ -75,12 +76,12 @@ const Nodes = () => {
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
-        type: "",
         name: "",
         totalUser: 0,
         description: "",
         updateVersion: "",
         updateShortNote: "",
+        type: Node_Type.Home,
         updateDescription: "",
         isUpdateAvailable: false,
         status: Org_Node_State.Undefined,
@@ -143,6 +144,18 @@ const Nodes = () => {
             variables: getNodeVariables,
         },
     ] = useGetNodeLazyQuery();
+
+    const { data: getNodeStatusData, loading: nodeStatusLoading } =
+        useGetNodeStatusQuery({
+            skip: !selectedNode?.id,
+            variables: {
+                data: {
+                    nodeId: selectedNode?.id || "",
+                    nodeType:
+                        (selectedNode?.type as Node_Type) || Node_Type.Home,
+                },
+            },
+        });
 
     const [
         getMetrics,
@@ -414,6 +427,8 @@ const Nodes = () => {
                             onNodeSelected={onNodeSelected}
                             nodeActionOptions={NODE_ACTIONS}
                             onUpdateNodeClick={onUpdateNodeClick}
+                            nodeStatus={getNodeStatusData?.getNodeStatus}
+                            nodeStatusLoading={nodeStatusLoading}
                             nodes={nodesRes?.getNodesByOrg?.nodes || []}
                         />
                     </Grid>
