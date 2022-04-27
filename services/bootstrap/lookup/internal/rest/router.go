@@ -10,12 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version"
-	"github.com/ukama/openIoR/services/bootstrap/lookup/internal"
-	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/openIoR/services/common/rest"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
-	"github.com/ukama/openIoR/services/common/ukama"
+	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/ukama/services/common/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
 const NodeIdParamName = "node"

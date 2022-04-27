@@ -3,7 +3,7 @@ include ../../config.mk
 .PHONY: integration.test test build lint deps 
 
 build: 
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/services/bootstrap/lookup/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/lookup cmd/lookup/main.go
 
 test:
 	go test -v ./...

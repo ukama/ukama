@@ -3,17 +3,17 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/openIoR/services/bootstrap/lookup/cmd/version"
-	"github.com/ukama/openIoR/services/bootstrap/lookup/internal"
-	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
-	"github.com/ukama/openIoR/services/bootstrap/lookup/internal/rest"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/openIoR/services/common/cmd"
-	"github.com/ukama/openIoR/services/common/config"
-	"github.com/ukama/openIoR/services/common/sql"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/sql"
 )
 
 func main() {

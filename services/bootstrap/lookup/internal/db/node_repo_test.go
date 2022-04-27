@@ -5,9 +5,9 @@ import (
 	"log"
 	"testing"
 
-	int_db "github.com/ukama/openIoR/services/bootstrap/lookup/internal/db"
+	int_db "github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
 
-	"github.com/ukama/openIoR/services/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
