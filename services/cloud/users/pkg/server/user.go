@@ -348,7 +348,7 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	// Deactivate sim cards
+	// Deactivate sim cards in sim manager
 	u.terminateSimCard(ctx, usr.Simcards)
 
 	// Delete imsi record from HSS

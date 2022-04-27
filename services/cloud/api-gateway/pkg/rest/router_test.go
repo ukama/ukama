@@ -383,6 +383,13 @@ func Test_HssMethods(t *testing.T) {
 			Name:          changedName,
 			IsDeactivated: true,
 		}}, nil)
+
+		m.On("Get", mock.Anything, mock.MatchedBy(func(r *userspb.GetRequest) bool {
+			return r.UserId == userUuid
+		})).Return(&userspb.GetResponse{User: &userspb.User{
+			Name:          changedName,
+			IsDeactivated: true,
+		}}, nil)
 		updBody, err := json.Marshal(UpdateUserRequest{
 			Name:          changedName,
 			IsDeactivated: true,
