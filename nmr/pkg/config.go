@@ -30,67 +30,69 @@ func NewConfig() *Config {
 			},
 		},
 
-		ServiceRouter: "http://localhost:8090",
+		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
-			Name: "lookup",
-			P: config.Pattern{
-				Routes: []config.Route{
-					{
-						"node": "*", "looking_for": "info", "Path": "/node/",
-					},
-					{
-						"node": "*", "looking_to": "update", "Path": "/node/",
-					},
-					{
-						"node": "*", "looking_to": "delete", "Path": "/node/",
-					},
-					{
-						"node": "*", "looking_for": "info", "status": "*", "Path": "/node/status",
-					},
-					{
-						"node": "*", "looking_to": "status", "status": "*", "Path": "/node/status",
-					},
-					{
-						"node": "*", "looking_for": "info", "mfg_status": "*", "Path": "/node/mfg_status",
-					},
-					{
-						"node": "*", "looking_to": "update", "mfg_status": "*", "Path": "/node/mfg_status",
-					},
-					{
-						"node": "*", "looking_for": "list", "Path": "/node/all",
-					},
-					{
-						"module": "*", "looking_for": "info", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_to": "update", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_to": "delete", "Path": "/module/",
-					},
-					{
-						"module": "*", "looking_for": "info", "status": "*", "Path": "/module/status",
-					},
-					{
-						"module": "*", "looking_to": "status", "status": "*", "Path": "/module/status",
-					},
-					{
-						"module": "*", "looking_for": "info", "field": "*", "Path": "/module/field",
-					},
-					{
-						"module": "*", "looking_to": "update", "field": "*", "Path": "/module/field",
-					},
-					{
-						"module": "*", "looking_for": "info", "data": "*", "Path": "/module/data",
-					},
-					{
-						"module": "*", "looking_for": "list", "Path": "/module/all",
-					},
+			Name: ServiceName,
+			P: []config.Route{
+				{
+					"ping": ServiceName, "path": "/ping",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "info", "path": "/node/",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update", "path": "/node/",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "delete", "path": "/node/",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "statusinfo", "path": "/node/status",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update_status", "status": "StatusNodeIntransit", "path": "/node/status",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "mfg_status_info", "path": "/node/mfg_status",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update_mfg_status", "mfg_status": "*", "path": "/node/mfg_status",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "list", "path": "/node/all",
+				},
+				{
+					"module": "*", "looking_for": "info", "path": "/module/",
+				},
+				{
+					"module": "*", "looking_to": "update", "path": "/module/",
+				},
+				{
+					"module": "*", "looking_to": "delete", "path": "/module/",
+				},
+				{
+					"module": "*", "looking_for": "info", "status": "*", "path": "/module/status",
+				},
+				{
+					"module": "*", "looking_to": "status", "status": "*", "path": "/module/status",
+				},
+				{
+					"module": "*", "looking_for": "info", "field": "*", "path": "/module/field",
+				},
+				{
+					"module": "*", "looking_to": "update", "field": "*", "path": "/module/field",
+				},
+				{
+					"module": "*", "looking_for": "info", "data": "*", "path": "/module/data",
+				},
+				{
+					"module": "*", "looking_for": "list", "path": "/module/all",
 				},
 			},
 			F: config.Forward{
-				Ip:   "http://localhost",
-				Port: 8095,
+				Ip:   "localhost",
+				Port: 8085,
+				Path: "/",
 			},
 		},
 		DB: config.Database{

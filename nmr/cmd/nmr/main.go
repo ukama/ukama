@@ -66,18 +66,26 @@ func startBootstrapServer(ctx context.Context, d sql.Db) {
 
 	logrus.Tracef("Config is %+v", serviceConfig)
 
+	ext := make(chan error)
 	rs := sr.NewServiceRouter(serviceConfig.ServiceRouter)
-
-	/* Register service */
-	if err := rs.RegisterService(serviceConfig.ApiIf); err != nil {
-		logrus.Errorf("Exiting the bootstarp service.")
-		//return
-	}
 
 	metrics.StartMetricsServer(&serviceConfig.Metrics)
 
 	r := server.NewRouter(serviceConfig, rs, db.NewNodeRepo(d), db.NewModuleRepo(d))
-	r.Run()
+	go r.Run(ext)
+
+	/* Register service */
+	if err := rs.RegisterService(serviceConfig.ApiIf); err != nil {
+		logrus.Errorf("Exiting the bootstarp service.")
+		return
+	}
+
+	perr := <-ext
+	if perr != nil {
+		panic(perr)
+	}
+
+	logrus.Infof("Exiting service %s", pkg.ServiceName)
 }
 
 /* initConfig reads in config file, ENV variables, and flags if set. */

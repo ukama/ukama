@@ -34,12 +34,13 @@ type Router struct {
 	moduleRepo db.ModuleRepo
 }
 
-func (r *Router) Run() {
+func (r *Router) Run(close chan error) {
 	logrus.Info("Listening on port ", r.port)
 	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
-		panic(err)
+		close <- err
 	}
+	close <- nil
 }
 
 func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo, moduleRepo db.ModuleRepo) *Router {
@@ -54,6 +55,7 @@ func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo,
 	}
 
 	r.init()
+
 	return r
 }
 
@@ -176,6 +178,7 @@ func (r *Router) GetNodeStatusHandler(c *gin.Context, req *ReqGetNodeStatus) (*R
 		resp.Status = string(*status)
 	}
 
+	c.Header("Content-Type", "application/json")
 	return resp, nil
 }
 
@@ -199,6 +202,7 @@ func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) 
 		}
 	}
 
+	c.Header("Content-Type", "application/json")
 	return nil
 }
 
