@@ -10,7 +10,8 @@ generate(){
     for SERVICE in $(ls -l ../../${1} | grep ^d | awk '{print $9}'); do
         echo "generating workflow for ${1}/${SERVICE}"
         SANITIZED=$(echo "${SERVICE}" | sed "s#-##g")
-        WORKFLOW_PATH="${1}-${SERVICE}"
+        SANITIZED_PATH=$(echo "${1}" | tr / -)
+        WORKFLOW_PATH="${SANITIZED_PATH}-${SERVICE}"
         
         echo $WORKFLOW_PATH
         # replace template route placeholder with route name
@@ -22,5 +23,6 @@ generate(){
     done
 }
 
-generate "bootstrap" "bootstrap"
-generate "cloud" "ukamax"
+generate "services/bootstrap" "bootstrap"
+generate "services/cloud" "ukamax"
+generate "services/hub" "hub"

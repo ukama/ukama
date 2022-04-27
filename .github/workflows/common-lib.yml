@@ -5,8 +5,8 @@ name: build-common
 on:  
   push:   
     paths:
-        - "common/**"
-        - ".github/workflows/common.yml"
+        - "services/common/**"
+        - ".github/workflows/common-lib.yml"
 
 jobs:  
   build:
@@ -21,7 +21,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
     
     - name: Test
       run: go test ./...
