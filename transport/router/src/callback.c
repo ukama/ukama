@@ -439,7 +439,7 @@ int callback_service(const struct _u_request *request,
 		     void *userData) {
 
   int retCode, serviceResp;
-  char *mapStr=NULL, *ep=NULL;
+  char *mapStr=NULL;
   const char *statusStr=NULL;
   Router *router=NULL;
   Pattern *requestPattern=NULL, *next, *ptr;
@@ -472,14 +472,15 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-2: Pattern match to a service (if any)*/
-  if (!find_matching_service(router, requestPattern, &requestForward, &ep)) {
+  if (!find_matching_service(router, requestPattern, &requestForward)) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
     goto reply;
   } else {
-    log_debug("Matching service found at IP: %s port: %d",
-	      requestForward->ip, requestForward->port);
+    log_debug("Matching service found at IP: %s port: %d path: %s",
+	      requestForward->ip, requestForward->port,
+	      requestForward->defaultPath);
   }
 
   /* Quick test connection */
@@ -495,8 +496,7 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-3: setup request to forward */
-  fRequest = create_forward_request(requestForward, requestPattern,
-				    request, ep);
+  fRequest = create_forward_request(requestForward, requestPattern, request);
   if (fRequest == NULL) {
     retCode   = HttpStatus_InternalServerError;
     statusStr = HttpStatusStr(retCode);
@@ -556,11 +556,10 @@ int callback_service(const struct _u_request *request,
   }
 
   if (requestForward) {
-    if (requestForward->ip)   free(requestForward->ip);
+    if (requestForward->ip)          free(requestForward->ip);
+    if (requestForward->defaultPath) free(requestForward->defaultPath);
     free(requestForward);
   }
-
-  if (ep ) free(ep);
 
   ulfius_clean_request(fRequest);
   ulfius_clean_response(fResponse);

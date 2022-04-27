@@ -136,7 +136,8 @@ void free_service(Service *service) {
   }
 
   if (forward) {
-    if (forward->ip)   free(forward->ip);
+    if (forward->ip)          free(forward->ip);
+    if (forward->defaultPath) free(forward->defaultPath);
     free(forward);
   }
 
@@ -149,7 +150,7 @@ void free_service(Service *service) {
  *
  */
 int find_matching_service(Router *router, Pattern *requestPattern,
-			  Forward **forward, char **ep) {
+			  Forward **forward) {
 
   Service *services=NULL;
   Patterns *patterns=NULL;
@@ -183,9 +184,9 @@ int find_matching_service(Router *router, Pattern *requestPattern,
 	  return FALSE;
 	}
 
-	(*forward)->ip   = strdup(services->forward->ip);
-	(*forward)->port = services->forward->port;
-	(*ep) = strdup(patterns->path);
+	(*forward)->ip          = strdup(services->forward->ip);
+	(*forward)->port        = services->forward->port;
+	(*forward)->defaultPath = strdup(services->forward->defaultPath);
 
 	return TRUE;
       }

@@ -68,6 +68,7 @@ typedef struct {
 
   char *ip;
   int  port;
+  char *defaultPath;
 } Forward;
 
 typedef struct service_ {

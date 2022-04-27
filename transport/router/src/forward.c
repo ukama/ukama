@@ -74,13 +74,13 @@ static void add_url_parameters(req_t *req, Pattern *reqPattern) {
  *
  */
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      const req_t *request, char *ep) {
+			      const req_t *request) {
 
   req_t *fRequest=NULL;
 
   /* Initialize the forward request */
   fRequest = init_forward_request(forward->ip, forward->port,
-				  request->http_verb, ep);
+				  request->http_verb, forward->defaultPath);
   if (!fRequest) {
     log_error("Error init forward request");
     return NULL;
