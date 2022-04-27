@@ -32,14 +32,26 @@ func main() {
 
 	rs := sr.NewServiceRouter(internal.ServiceConf.ServiceRouter)
 
+	d := initDb()
+
+	ext := make(chan error)
+
+	r := rest.NewRouter(internal.ServiceConf, rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
+	go r.Run(ext)
+
 	/* Register service */
 	if err := rs.RegisterService(internal.ServiceConf.ApiIf); err != nil {
 		logrus.Errorf("Exiting the bootstarp service.")
-		//return
+		return
 	}
 
-	d := initDb()
-	runHttpServer(d, rs)
+	perr := <-ext
+	if perr != nil {
+		panic(perr)
+	}
+
+	logrus.Infof("Exiting service %s", internal.ServiceName)
+
 }
 
 func initDb() sql.Db {
@@ -56,9 +68,4 @@ func initConfig() {
 	log.Infof("Initializing config")
 	internal.ServiceConf = internal.NewConfig()
 	config.LoadConfig(internal.ServiceName, internal.ServiceConf)
-}
-
-func runHttpServer(d sql.Db, rs *sr.ServiceRouter) {
-	r := rest.NewRouter(internal.ServiceConf, rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
-	r.Run()
 }

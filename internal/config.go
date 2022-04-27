@@ -26,25 +26,27 @@ func NewConfig() *Config {
 				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
 			},
 		},
-		ServiceRouter: "http://192.168.0.14:8091",
+		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
-			Name: "lookup",
-			P: config.Pattern{
-				Routes: []config.Route{
-					{
-						"node": "*", "looking_for": "node", "org": "*", "Path": "/orgs/node",
-					},
-					{
-						"node": "*", "looking_to": "add_node", "org": "*", "Path": "/orgs/node",
-					},
-					{
-						"org": "*", "looking_for": "add_org", "Path": "/orgs/",
-					},
+			Name: ServiceName,
+			P: []config.Route{
+				{
+					"ping": ServiceName, "path": "/ping",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "org_credentials", "path": "/orgs/node",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "add_node", "org": "fundme", "path": "/orgs/node",
+				},
+				{
+					"org": "UK-SA2154-HNODE-A1-0001", "looking_for": "add_org", "path": "/orgs/",
 				},
 			},
+
 			F: config.Forward{
-				Ip:   "http://localhost",
-				Port: 8095,
+				Ip:   "localhost",
+				Port: 8087,
 			},
 		},
 
