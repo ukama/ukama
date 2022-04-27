@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -253,7 +254,7 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 		}
 	}
 
-	resp, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
+	_, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -263,7 +264,12 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 		return nil, err
 	}
 
-	return resp.User, nil
+	resUser, err := r.clients.User.Get(req.UserId)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get updated user")
+	}
+
+	return resUser.GetUser(), nil
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
