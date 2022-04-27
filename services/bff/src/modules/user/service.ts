@@ -65,7 +65,6 @@ export class UserService implements IUserService {
             headers: cookie.header,
             body: { isDeactivated: true },
         });
-        console.log(res);
         if (checkError(res)) throw new Error(res.description);
         return res;
     };

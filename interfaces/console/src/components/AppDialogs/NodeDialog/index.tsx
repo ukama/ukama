@@ -98,7 +98,7 @@ type NodeDialogProps = {
     handleNodeSubmitAction: Function;
 };
 
-const ActivationDialog = ({
+const NodeDialog = ({
     isOpen,
     subTitle,
     nodeData,
@@ -316,4 +316,4 @@ const ActivationDialog = ({
     );
 };
 
-export default ActivationDialog;
+export default NodeDialog;

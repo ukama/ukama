@@ -148,14 +148,11 @@ subscription getLatestNetwork {
 
 mutation deactivateUser($id: String!) {
     deactivateUser(id: $id) {
-        id
-        success
-    }
-}
-
-mutation activateUser($data: ActivateUserDto!) {
-    activateUser(data: $data) {
-        success
+        uuid
+        name
+        email
+        phone
+        isDeactivated
     }
 }
 mutation addUser($data: UserInputDto!) {
@@ -174,12 +171,6 @@ mutation updateUser($userId: String!, $data: UserInputDto!) {
         iccid
         phone
         id
-    }
-}
-mutation deleteNode($id: String!) {
-    deleteNode(id: $id) {
-        id
-        success
     }
 }
 mutation addNode($data: AddNodeDto!) {

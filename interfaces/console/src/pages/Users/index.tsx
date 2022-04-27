@@ -28,7 +28,7 @@ const userInit = {
     phone: "",
     dataPlan: 0,
     dataUsage: 0,
-    roaming: true,
+    roaming: false,
     eSimNumber: "",
     status: false,
 };
