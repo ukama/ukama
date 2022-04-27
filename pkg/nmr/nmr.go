@@ -1,6 +1,7 @@
 package nmr
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -8,7 +9,7 @@ import (
 )
 
 const (
-	Status                        string = "status"
+	Status                        string = "statusinfo"
 	StatusProductionTestCompleted string = "StatusProductionTestCompleted"
 	StatusNodeAllocated           string = "StatusNodeAllocated"
 	StatusNodeIntransit           string = "StatusNodeIntransit"
@@ -35,8 +36,9 @@ func NewFactory(svcR *sr.ServiceRouter) *Factory {
 
 func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	logrus.Tracef("Validation request for node %s", nodeid)
-	nStatus := &NodeStatus{}
+	nStatus := NodeStatus{}
 	errStatus := &ErrorMessage{}
+	f.S.C.SetDebug(true)
 	resp, err := f.S.C.R().
 		SetResult(nStatus).
 		SetError(errStatus).
@@ -44,7 +46,8 @@ func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 			"node":        nodeid,
 			"looking_for": Status,
 		}).
-		Get("http://localhost:8085" + "/node/status")
+		Get(f.S.Url.String() + "/service")
+
 	if err != nil {
 		logrus.Errorf("Failed to validate nodeid %s. Error %s", nodeid, err.Error())
 		return false, err
@@ -55,11 +58,16 @@ func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 		return false, fmt.Errorf("validation failure: %s", errStatus.Message)
 	}
 
+	logrus.Debugf("Node status is %+v.", nStatus)
+	if err := json.Unmarshal(resp.Body(), &nStatus); err != nil {
+		return false, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
+	}
+
 	if nStatus.Status != StatusNodeIntransit {
-		logrus.Errorf("Node %s validation failure Node state is %+v.", nodeid, nStatus)
+		logrus.Errorf("Node %s validation failure Node state is %+v.", nodeid, string(resp.Body()))
 		return false, fmt.Errorf("validation failure: unwanted node state %s", nStatus.Status)
 	}
 
-	logrus.Errorf("Node %s validation success.", nodeid)
+	logrus.Infof("Node %s validation success received from %s.", nodeid, f.S.Url.String())
 	return true, nil
 }

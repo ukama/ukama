@@ -23,12 +23,13 @@ type Router struct {
 	fs   *nmr.Factory
 }
 
-func (r *Router) Run() {
+func (r *Router) Run(close chan error) {
 	logrus.Info("Listening on port ", r.port)
 	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
-		panic(err)
+		close <- err
 	}
+	close <- nil
 }
 
 func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter) *Router {

@@ -29,19 +29,20 @@ func NewConfig() *Config {
 			},
 		},
 
-		ServiceRouter: "http://localhost:8090",
+		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
-			Name: "bootsrap",
-			P: config.Pattern{
-				Routes: []config.Route{
-					{
-						"node": "*", "looking_for": "validation",
-					},
+			Name: ServiceName,
+			P: []config.Route{
+				{
+					"ping": ServiceName, "path": "/ping",
+				},
+				{
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "validation", "path": "/",
 				},
 			},
 			F: config.Forward{
-				Ip:   "http://localhost",
-				Port: 8095,
+				Ip:   "localhost",
+				Port: 8086,
 				Path: "/",
 			},
 		},

@@ -1,6 +1,7 @@
 package lookup
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -46,7 +47,7 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 			"looking_for": OrgCredentials,
 		}).
 		SetHeader("Accept", "application/json").SetResult(&credResp).
-		Get("http://localhost:8087" + "/orgs/node")
+		Get(L.S.Url.String() + "/service")
 
 	if err != nil {
 		logrus.Errorf("Failed to look credentials for  nodeid %s. Error %s", nodeid, err.Error())
@@ -58,7 +59,11 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 		return false, nil, fmt.Errorf("failed to get credentials: %s", errStatus.Message)
 	}
 
-	logrus.Tracef("Credentials for nodeid %s is %+v", nodeid, credResp)
+	logrus.Debugf("Credentials for node are %+v.", credResp)
+	if err := json.Unmarshal(resp.Body(), credResp); err != nil {
+		return false, nil, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
+	}
+	logrus.Tracef("Credentials for received from %s for nodeid %s is %+v ", L.S.Url.String(), nodeid, credResp)
 
 	return true, credResp, nil
 }
