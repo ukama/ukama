@@ -16,14 +16,17 @@ require (
 	github.com/jackc/pgtype v1.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.0
 	github.com/ukama/ukama/services/common v0.0.0-20220427143511-d37bb6fc8f9f
 	github.com/wI2L/fizz v0.18.1
 	gorm.io/gorm v1.21.10
 )
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -58,6 +61,7 @@ require (
 	github.com/pelletier/go-toml v1.2.0 // indirect
 	github.com/penglongli/gin-metrics v0.1.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
@@ -68,6 +72,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/spf13/viper v1.7.1 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
@@ -81,5 +86,6 @@ require (
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
 	gopkg.in/ini.v1 v1.51.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	gorm.io/driver/postgres v1.1.0 // indirect
 )
