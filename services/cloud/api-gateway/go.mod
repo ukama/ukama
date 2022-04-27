@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/api-gateway
+module github.com/ukama/ukama/services/cloud/api-gateway
 
 go 1.18
 
@@ -6,11 +6,11 @@ replace github.com/ukama/ukamaX/common => ../../common
 
 replace github.com/ukama/ukamaX/metrics/node-metrics => ../../metrics/node-metrics
 
-replace github.com/ukama/ukamaX/cloud/api-gateway => ./
+replace github.com/ukama/ukama/services/cloud/api-gateway => ./
 
-replace github.com/ukama/ukamaX/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
-replace github.com/ukama/ukamaX/cloud/users => ../users
+replace github.com/ukama/ukama/services/cloud/users => ../users
 
 require (
 	github.com/gin-contrib/cors v1.3.1
@@ -22,8 +22,8 @@ require (
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
-	github.com/ukama/ukamaX/cloud/users v0.0.0-20220407150637-6988f3e0f2e5
+	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
+	github.com/ukama/ukama/services/cloud/users v0.0.0-20220407150637-6988f3e0f2e5
 	github.com/ukama/ukamaX/common v0.0.0-20220425182032-2c377df948f4
 	github.com/vektra/mockery/v2 v2.12.1
 	github.com/wI2L/fizz v0.18.1

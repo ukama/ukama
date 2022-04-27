@@ -2,9 +2,10 @@ package multipl
 
 import (
 	"encoding/json"
+
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 )

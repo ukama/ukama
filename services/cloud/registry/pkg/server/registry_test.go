@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ukama/ukamaX/cloud/registry/pkg/db"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/db"
 
-	mocks "github.com/ukama/ukamaX/cloud/registry/mocks"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	mocks "github.com/ukama/ukama/services/cloud/registry/mocks"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"

@@ -6,7 +6,7 @@ import (
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
-	simmgr "github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
+	simmgr "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
 
 	testing "testing"
 )

@@ -1002,8 +1002,8 @@ github.com/tommy-muehle/go-mnd/v2 v2.5.0 h1:iAj0a8e6+dXSL7Liq0aXPox36FiN1dBbjA6l
 github.com/tommy-muehle/go-mnd/v2 v2.5.0/go.mod h1:WsUAkMJMYww6l/ufffCD3m+P7LEvr8TnZn9lwVDlgzw=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8/go.mod h1:VFNgLljTbGfSG7qAOspJ7OScBnGdDN/yBr0sguwnwf0=
-github.com/ukama/ukamaX/cloud/hss v0.0.0-20220421094812-6b3352c9a822 h1:eIzSI1cgWj27O+Tcpfon4Khn5e3VqG7fnBqBviBT6rw=
-github.com/ukama/ukamaX/cloud/hss v0.0.0-20220421094812-6b3352c9a822/go.mod h1:0Gk0fGtj+C9dLfm9hCCSHLDzYLSMA755P44xDu/pF/g=
+github.com/ukama/ukama/services/cloud/hss v0.0.0-20220421094812-6b3352c9a822 h1:eIzSI1cgWj27O+Tcpfon4Khn5e3VqG7fnBqBviBT6rw=
+github.com/ukama/ukama/services/cloud/hss v0.0.0-20220421094812-6b3352c9a822/go.mod h1:0Gk0fGtj+C9dLfm9hCCSHLDzYLSMA755P44xDu/pF/g=
 github.com/ultraware/funlen v0.0.3 h1:5ylVWm8wsNwH5aWo9438pwvsK0QiqVuUrt9bn7S/iLA=
 github.com/ultraware/funlen v0.0.3/go.mod h1:Dp4UiAus7Wdb9KUZsYWZEWiRzGuM2kXM1lPbfaF6xhA=
 github.com/ultraware/whitespace v0.0.5 h1:hh+/cpIcopyMYbZNVov9iSxvJU3OYQg78Sfaqzi/CzI=

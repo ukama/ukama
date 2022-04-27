@@ -11,19 +11,19 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 	"github.com/ukama/ukamaX/common/rest"
 	"github.com/ukama/ukamaX/common/ukama"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	pbmocks "github.com/ukama/ukamaX/cloud/registry/pb/gen/mocks"
-	usrmocks "github.com/ukama/ukamaX/cloud/users/pb/gen/mocks"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pbmocks "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
+	usrmocks "github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

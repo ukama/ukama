@@ -8,9 +8,9 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/device-gateway/cmd/version"
-	gen "github.com/ukama/ukamaX/cloud/device-gateway/pb/gen"
-	"github.com/ukama/ukamaX/cloud/device-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/device-gateway/cmd/version"
+	gen "github.com/ukama/ukama/services/cloud/device-gateway/pb/gen"
+	"github.com/ukama/ukama/services/cloud/device-gateway/pkg"
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
 	"google.golang.org/grpc"

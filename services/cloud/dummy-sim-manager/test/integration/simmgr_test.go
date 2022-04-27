@@ -15,7 +15,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
+	pb "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
 	"google.golang.org/grpc"
 )
 

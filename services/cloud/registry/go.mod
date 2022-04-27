@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/registry
+module github.com/ukama/ukama/services/cloud/registry
 
 go 1.16
 
@@ -23,6 +23,6 @@ require (
 
 replace github.com/ukama/ukamaX/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/registry => ./
+replace github.com/ukama/ukama/services/cloud/registry => ./
 
-replace github.com/ukama/ukamaX/cloud/registry/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/registry/mocks => ./mocks

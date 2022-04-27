@@ -6,7 +6,7 @@ package integration
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"

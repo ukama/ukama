@@ -8,7 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/registry/pkg"
+	"github.com/ukama/ukama/services/cloud/registry/pkg"
 )
 
 type authenticator struct {

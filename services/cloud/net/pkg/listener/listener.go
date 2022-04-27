@@ -2,12 +2,18 @@ package listener
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	regpb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	regpb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/msgbus"
 	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
@@ -15,11 +21,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
-	"time"
 )
 
 const POD_NAME_ENV_VAR = "POD_NAME"

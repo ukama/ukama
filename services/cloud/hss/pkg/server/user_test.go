@@ -2,16 +2,17 @@ package server
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/cloud/hss/mocks"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	mocks2 "github.com/ukama/ukamaX/cloud/hss/pb/gen/mocks"
-	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/sims"
-	"testing"
+	"github.com/ukama/ukama/services/cloud/hss/mocks"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	mocks2 "github.com/ukama/ukama/services/cloud/hss/pb/gen/mocks"
+	pbclient "github.com/ukama/ukama/services/cloud/hss/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/sims"
 )
 
 const testOrg = "org"

@@ -1,12 +1,13 @@
 package pkg
 
 import (
+	"time"
+
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"time"
 )
 
 type ImsiClientProvider interface {

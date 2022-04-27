@@ -20,7 +20,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
 	"google.golang.org/grpc"
 )

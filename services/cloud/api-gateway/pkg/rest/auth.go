@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 
 	"github.com/gin-gonic/gin"
 

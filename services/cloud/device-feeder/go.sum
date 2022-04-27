@@ -709,10 +709,10 @@ github.com/ugorji/go v1.2.6/go.mod h1:anCg0y61KIhDlPZmnH+so+RQbysYVyDko0IMgJv0Nn
 github.com/ugorji/go/codec v0.0.0-20190128213124-ee1426cffec0/go.mod h1:iT03XoTwV7xq/+UGwKO3UbC1nNNlopQiY61beSdrtOA=
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
-github.com/ukama/ukamaX/cloud/net v0.0.0-20220422163321-18f195cf8dfa h1:CtuMqohMggnXZGzUS4wsp+hPw/yqQj2pU0cSVTObvZA=
-github.com/ukama/ukamaX/cloud/net v0.0.0-20220422163321-18f195cf8dfa/go.mod h1:FzaKC/Vhftditeuu0AkNzu22vvOwSYOsUwK4QOcQ9d8=
-github.com/ukama/ukamaX/cloud/registry v0.0.0-20220422163321-18f195cf8dfa h1:hqzBWUHIiCQJwHYzsIzlUOuGWHC91jBOEQuE7YDM0zc=
-github.com/ukama/ukamaX/cloud/registry v0.0.0-20220422163321-18f195cf8dfa/go.mod h1:1vkSPngT+cPyGi8K311Z6WIFTSBXYg4ogkKh3M7Q7ck=
+github.com/ukama/ukama/services/cloud/net v0.0.0-20220422163321-18f195cf8dfa h1:CtuMqohMggnXZGzUS4wsp+hPw/yqQj2pU0cSVTObvZA=
+github.com/ukama/ukama/services/cloud/net v0.0.0-20220422163321-18f195cf8dfa/go.mod h1:FzaKC/Vhftditeuu0AkNzu22vvOwSYOsUwK4QOcQ9d8=
+github.com/ukama/ukama/services/cloud/registry v0.0.0-20220422163321-18f195cf8dfa h1:hqzBWUHIiCQJwHYzsIzlUOuGWHC91jBOEQuE7YDM0zc=
+github.com/ukama/ukama/services/cloud/registry v0.0.0-20220422163321-18f195cf8dfa/go.mod h1:1vkSPngT+cPyGi8K311Z6WIFTSBXYg4ogkKh3M7Q7ck=
 github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f/go.mod h1:aADpt/Ghhrquzmq675Omb38j91t///mwvBFmIsJGLHw=
 github.com/ukama/ukamaX/common v0.0.0-20220422163321-18f195cf8dfa h1:DB+/HOWdysksN9qIUZxWwVriBAxdfd04BQdeA4Je1Kc=
 github.com/ukama/ukamaX/common v0.0.0-20220422163321-18f195cf8dfa/go.mod h1:H6rhcYB0G/oYIq14tsLCjw2QBB3Tqn0DHrimVyE6y+k=

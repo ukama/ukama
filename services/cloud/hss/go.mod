@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/hss
+module github.com/ukama/ukama/services/cloud/hss
 
 go 1.17
 
@@ -71,6 +71,6 @@ require (
 
 replace github.com/ukama/ukamaX/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/hss => ./
+replace github.com/ukama/ukama/services/cloud/hss => ./
 
-replace github.com/ukama/ukamaX/cloud/hss/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/hss/mocks => ./mocks

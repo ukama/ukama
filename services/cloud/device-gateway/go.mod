@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/device-gateway
+module github.com/ukama/ukama/services/cloud/device-gateway
 
 go 1.17
 
@@ -7,7 +7,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/cloud/hss v0.0.0-20211125132149-eb580caa29dd
+	github.com/ukama/ukama/services/cloud/hss v0.0.0-20211125132149-eb580caa29dd
 	github.com/ukama/ukamaX/common v0.0.0-20220421094812-6b3352c9a822
 	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
@@ -48,4 +48,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/ukama/ukamaX/cloud/hss => ../hss
+replace github.com/ukama/ukama/services/cloud/hss => ../hss

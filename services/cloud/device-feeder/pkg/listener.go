@@ -2,17 +2,18 @@ package pkg
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	amqp "github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/metrics"
-	"github.com/ukama/ukamaX/common/msgbus"
-	"github.com/wagslane/go-rabbitmq"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+
+	"github.com/pkg/errors"
+	amqp "github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/metrics"
+	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/wagslane/go-rabbitmq"
 )
 
 const deadLetterExchangeName = "device-feeder.dead-letter"

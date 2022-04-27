@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/rest"
 	"os"
+
+	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/rest"
 
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"

@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/cloud/net/pkg/server"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	"github.com/ukama/ukama/services/cloud/net/pkg/server"
 
-	"github.com/ukama/ukamaX/cloud/net/pkg"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 
-	"github.com/ukama/ukamaX/cloud/net/cmd/version"
+	"github.com/ukama/ukama/services/cloud/net/cmd/version"
 
 	dnspb "github.com/coredns/coredns/pb"
 	ccmd "github.com/ukama/ukamaX/common/cmd"

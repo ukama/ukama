@@ -1,11 +1,12 @@
 package main
 
 import (
-	"github.com/ukama/ukamaX/cloud/net/cmd/version"
-	"github.com/ukama/ukamaX/cloud/net/pkg/listener"
+	"os"
+
+	"github.com/ukama/ukama/services/cloud/net/cmd/version"
+	"github.com/ukama/ukama/services/cloud/net/pkg/listener"
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"
-	"os"
 )
 
 var listenerConfig *listener.ListenerConfig
