@@ -1,0 +1,16 @@
+metrics:
+  cpu:
+    needrate: true
+    name: system_process_cpu_seconds_total
+    rateinterval: "5m"
+  memory:
+    needrate: true
+    name: system_process_virtual_memory_bytes
+    rateinterval: ""
+  users:
+    needrate: false
+    name: epc_active_ue
+    rateinterval: ""
+  users-test:
+    needrate: false
+    name: epc_active_ue_test

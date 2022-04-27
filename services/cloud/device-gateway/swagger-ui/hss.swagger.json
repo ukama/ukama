@@ -1,0 +1,338 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "hss.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ImsiService"
+    },
+    {
+      "name": "UserService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/hss/guti": {
+      "post": {
+        "operationId": "ImsiService_AddGuti",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddGutiResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddGutiRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImsiService"
+        ]
+      }
+    },
+    "/hss/subscriber": {
+      "post": {
+        "operationId": "ImsiService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetImsiResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetImsiRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImsiService"
+        ]
+      }
+    },
+    "/hss/tai": {
+      "post": {
+        "operationId": "ImsiService_UpdateTai",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateTaiResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateTaiRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ImsiService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AddGutiRequest": {
+      "type": "object",
+      "properties": {
+        "imsi": {
+          "type": "string"
+        },
+        "guti": {
+          "$ref": "#/definitions/v1Guti"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1AddGutiResponse": {
+      "type": "object"
+    },
+    "v1AddImsiResponse": {
+      "type": "object"
+    },
+    "v1AddUserResponse": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/v1User"
+        }
+      }
+    },
+    "v1Apn": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteImsiResponse": {
+      "type": "object"
+    },
+    "v1DeleteUserResponse": {
+      "type": "object"
+    },
+    "v1GetImsiRequest": {
+      "type": "object",
+      "properties": {
+        "org": {
+          "type": "string"
+        },
+        "imsi": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetImsiResponse": {
+      "type": "object",
+      "properties": {
+        "imsi": {
+          "$ref": "#/definitions/v1ImsiRecord"
+        }
+      }
+    },
+    "v1Guti": {
+      "type": "object",
+      "properties": {
+        "plmn_id": {
+          "type": "string"
+        },
+        "mmegi": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mmec": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "mtmsi": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1ImsiRecord": {
+      "type": "object",
+      "properties": {
+        "imsi": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string",
+          "format": "byte"
+        },
+        "op": {
+          "type": "string",
+          "format": "byte"
+        },
+        "amf": {
+          "type": "string",
+          "format": "byte"
+        },
+        "apn": {
+          "$ref": "#/definitions/v1Apn"
+        },
+        "algo_type": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ue_dl_ambr_bps": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "ue_ul_ambr_bps": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "sqn": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "csg_id_prsent": {
+          "type": "boolean"
+        },
+        "csg_id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1ListUsersResponse": {
+      "type": "object",
+      "properties": {
+        "org": {
+          "type": "string"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1User"
+          }
+        }
+      }
+    },
+    "v1UpdateImsiResponse": {
+      "type": "object"
+    },
+    "v1UpdateTaiRequest": {
+      "type": "object",
+      "properties": {
+        "imsi": {
+          "type": "string"
+        },
+        "plmn_id": {
+          "type": "string"
+        },
+        "tac": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1UpdateTaiResponse": {
+      "type": "object"
+    },
+    "v1User": {
+      "type": "object",
+      "properties": {
+        "imsi": {
+          "type": "string"
+        },
+        "firstName": {
+          "type": "string"
+        },
+        "lastName": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "uuid": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,344 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Gabor Kelemen <kelemeng at gnome dot hu>, 2012
+# kelemeng <kelemeng@ubuntu.com>, 2014
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-19 12:28+0000\n"
+"Last-Translator: kelemeng <kelemeng@ubuntu.com>\n"
+"Language-Team: Hungarian (http://www.transifex.com/freedesktop/p11-kit/language/hu/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: hu\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "A művelet megszakítva"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "Nincs elég memória"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "A megadott helyazonosító nem érvényes"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "Belső hiba"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "A művelet meghiúsult"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "Érvénytelen argumentumok"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "A modul nem képes létrehozni a szükséges szálakat"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "A modul nem képes megfelelően zárolni az adatokat"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "A mező írásvédett"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "A mező adatai érzékenyek és nem fedhetők fel"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "A mező érvénytelen vagy nem létezik"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "A mező értéke érvénytelen"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "Az adat érvénytelen vagy ismeretlen"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "Az adat túl hosszú"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "Hiba történt az eszközön"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "Nem érhető el elegendő memória az eszközön"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "Az eszköz eltávolításra vagy leválasztásra került"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "A titkosított adatok érvénytelenek vagy ismeretlenek"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "A titkosított adatok túl hosszúak"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "A művelet nem támogatott"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "A kulcs hiányzik vagy érvénytelen"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "A kulcs mérete hibás"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "A kulcs nem megfelelő típusú"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "Nem szükséges kulcs"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "A kulcs megváltozott"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "Kulcs szükséges"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "A kivonatba nem vehető fel a kulcs"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "Ez a művelet nem végezhető el a kulccsal"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "A kulcs nem alakítható át"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "A kulcs nem exportálható"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "A titkosítási mód érvénytelen vagy ismeretlen"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "A titkosítási mód argumentuma érvénytelen"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "Az objektum hiányzik vagy érvénytelen"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "Már folyamatban van egy művelet"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "Nincs folyamatban művelet"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "A jelszó vagy PIN helytelen"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "A jelszó vagy PIN érvénytelen"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "A jelszó vagy PIN érvénytelen hosszúságú"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "A jelszó vagy PIN lejárt"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "A jelszó vagy PIN zárolva van"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "A munkamenet le van zárva"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "Túl sok munkamenet aktív"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "A munkamenet érvénytelen"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "A munkamenet írásvédett"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "Már létezik nyitott munkamenet"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "Már létezik írásvédett munkamenet"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "Már létezik adminisztrátori munkamenet"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "Az aláírás rossz vagy sérült"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "Az aláírás ismeretlen vagy sérült"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "Néhány szükséges mező hiányzik"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "Néhány szükséges mező értéke érvénytelen"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "Az eszköz nincs jelen vagy eltávolították"
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "Az eszköz érvénytelen vagy felismerhetetlen"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "Az eszköz írásvédett"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "Nem importálható, mert a kulcs érvénytelen"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "Nem importálható, mert a kulcs hibás méretű"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "Nem importálható, mert a kulcs hibás típusú"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "Már bejelentkezett"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "Senki sem jelentkezett be"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "A felhasználó jelszava vagy PIN kódja nincs beállítva"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "A felhasználó érvénytelen típusú"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "Már bejelentkezett egy másik felhasználó"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "Túl sok eltérő típusú felhasználó jelentkezett be"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "Nem importálható érvénytelen kulcs"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "Nem importálható hibás méretű kulcs"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "Nem lehet exportálni, mert a kulcs érvénytelen"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "Nem lehet exportálni, mert a kulcs hibás méretű"
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "Nem lehet exportálni, mert a kulcs hibás típusú"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "A véletlenszám-generátor nem készíthető elő"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "Nem áll rendelkezésre véletlenszám-generátor"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "A titkosítási mechanizmus egy paramétere érvénytelen"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "Nincs elég hely az eredmény tárolásához"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "A mentett állapot érvénytelen"
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "Az információk érzékenyek és nem fedhetők fel"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "Az állapot nem menthető"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "A modul nincs előkészítve"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "A modul már elő lett készítve"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "Nem zárolhatók az adatok"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "Az adatok nem zárolhatók"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr "A felhasználó elutasította a kérést"
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "Ismeretlen hiba"

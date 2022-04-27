@@ -1,0 +1,234 @@
+# Polish translation for libidn.
+# Copyright (C) 2004, 2007, 2008, 2011, 2017, 2019, 2021 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Jakub Bogusz <qboosh@pld-linux.org>, 2004-2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-05-14 17:30+0200\n"
+"Last-Translator: Jakub Bogusz <qboosh@pld-linux.org>\n"
+"Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "sukces"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "brak pamięci"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "nie udało się określić formatu kodowania dla lokalizacji"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "nie udało się przekonwertować łańcucha na UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "błąd kodowania łańcucha"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "normalizacja NFC łańcucha nie powiodła się"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "łańcuch zawiera błędne dane punycode"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "dane zakodowane punycode będą zbyt duże"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "konwersja punycode zakończyła się przepełnieniem"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "nazwa domeny dłuższa niż 255 znaków"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "etykieta domeny dłuższa niż 63 znaki"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "wejściowa etykieta A jest błędna"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "wejściowe etykiety A oraz U nie pasują do siebie"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "łańcuch nie jest w formacie Unicode NFC"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "łańcuch zawiera zabroniony wzorzec z dwoma łącznikami"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "łańcuch zaczyna się lub kończy zabronionym łącznikiem"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "łańcuch zawiera zabroniony wiodący znak łączący"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "łańcuch zawiera niedozwolony znak"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "łańcuch zawiera zabroniony znak context-j"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "łańcuch zawiera znak context-j z pustą regułą"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "łańcuch zawiera zabroniony znak context-o"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "łańcuch zawiera znak context-o z pustą regułą"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "łańcuch zawiera nieprzypisaną wartość kodową"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "łańcuch ma zabronione własności dwukierunkowego pisma"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "etykieta domeny zawiera zabronioną kropkę (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "etykieta domeny zawiera znak zabroniony w trybie przejściowym (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+"etykieta domeny zawiera znak zabroniony w trybie nieprzejściowym (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "przejście A-U-A nie powiodło się"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Nieznany błąd"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Polecenie `%s --help' pozwoli uzyskać więcej informacji.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Składnia: %s [OPCJA]... [ŁAŃCUCHY]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Program konwertuje ŁAŃCUCHY lub standardowe wyjście zgodnie ze standardem\n"
+"IDNA2008 dla umiędzynarodowionych nazw domen.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Jest to interfejs linii poleceń do implementacji Libidn2 standardu "
+"IDNA2008.\n"
+"\n"
+"Wszystkie łańcuchy powinny być zakodowane w zestawie znaków właściwym dla\n"
+"używanej lokalizacji.\n"
+"\n"
+"Aby przetworzyć łańcuch zaczynający się od `-', np. `-foo', należy użyć\n"
+"`--', aby zasygnalizować koniec parametrów, np. `idn2 --quiet -- -foo'.\n"
+"\n"
+"Argumenty obowiązkowe dla długich opcji są również obowiązkowe dla opcji\n"
+"krótkich.\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help                Wypisanie opisu i zakończenie\n"
+"  -V, --version             Wypisanie wersji i zakończenie\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              Zdekodowanie (z punycode) nazwy domeny\n"
+"  -l, --lookup              Wyszukanie nazwy domeny (domyślne)\n"
+"  -r, --register            Zarejestrowanie etykiety\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               Włączenie przetwarzania przejściowego TR46\n"
+"  -N, --tr46nt              Włączenie przetwarzania nieprzejściowego TR46\n"
+"      --no-tr46             Wyłączenie przetwarzania TR46\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   Włączenie reguł STD3 ASCII\n"
+"      --no-alabelroundtrip  Wyłączenie przejścia A-U-A przy wyszukiwaniu\n"
+"      --debug               Wypisywanie informacji diagnostycznych\n"
+"      --quiet               Działanie po cichu\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Zestaw znaków: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Należy podać każdy łańcuch w osobnej linii, zakończony znakiem nowej linii.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "błąd wejścia"

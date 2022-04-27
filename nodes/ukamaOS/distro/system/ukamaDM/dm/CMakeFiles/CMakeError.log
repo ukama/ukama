@@ -1,0 +1,909 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_11a05/fast && /usr/bin/make  -f CMakeFiles/cmTC_11a05.dir/build.make CMakeFiles/cmTC_11a05.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_11a05.dir/src.c.o
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD -fPIE -o CMakeFiles/cmTC_11a05.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_11a05
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_11a05.dir/link.txt --verbose=1
+/usr/bin/cc   -DCMAKE_HAVE_LIBC_PTHREAD CMakeFiles/cmTC_11a05.dir/src.c.o -o cmTC_11a05 
+CMakeFiles/cmTC_11a05.dir/src.c.o: In function `main':
+src.c:(.text+0x3e): undefined reference to `pthread_create'
+src.c:(.text+0x4a): undefined reference to `pthread_detach'
+src.c:(.text+0x56): undefined reference to `pthread_cancel'
+src.c:(.text+0x67): undefined reference to `pthread_join'
+src.c:(.text+0x7b): undefined reference to `pthread_atfork'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_11a05.dir/build.make:105: recipe for target 'cmTC_11a05' failed
+make[1]: *** [cmTC_11a05] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_11a05/fast' failed
+make: *** [cmTC_11a05/fast] Error 2
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e07cb/fast && /usr/bin/make  -f CMakeFiles/cmTC_e07cb.dir/build.make CMakeFiles/cmTC_e07cb.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e07cb.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create -fPIE -o CMakeFiles/cmTC_e07cb.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_e07cb
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e07cb.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=pthread_create CMakeFiles/cmTC_e07cb.dir/CheckFunctionExists.c.o -o cmTC_e07cb  -lpthreads 
+/usr/bin/ld: cannot find -lpthreads
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_e07cb.dir/build.make:105: recipe for target 'cmTC_e07cb' failed
+make[1]: *** [cmTC_e07cb] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_e07cb/fast' failed
+make: *** [cmTC_e07cb/fast] Error 2
+
+
+
+Determining if the function res_servicename exists in the resolv failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_4da57/fast && /usr/bin/make  -f CMakeFiles/cmTC_4da57.dir/build.make CMakeFiles/cmTC_4da57.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_4da57.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=res_servicename -fPIE -o CMakeFiles/cmTC_4da57.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_4da57
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_4da57.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=res_servicename CMakeFiles/cmTC_4da57.dir/CheckFunctionExists.c.o -o cmTC_4da57  -lresolv 
+CMakeFiles/cmTC_4da57.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `res_servicename'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_4da57.dir/build.make:105: recipe for target 'cmTC_4da57' failed
+make[1]: *** [cmTC_4da57] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_4da57/fast' failed
+make: *** [cmTC_4da57/fast] Error 2
+
+
+
+Determining if the function gethostbyname exists in the socket failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2da47/fast && /usr/bin/make  -f CMakeFiles/cmTC_2da47.dir/build.make CMakeFiles/cmTC_2da47.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2da47.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname -fPIE -o CMakeFiles/cmTC_2da47.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_2da47
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_2da47.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=gethostbyname CMakeFiles/cmTC_2da47.dir/CheckFunctionExists.c.o -o cmTC_2da47  -lsocket 
+/usr/bin/ld: cannot find -lsocket
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_2da47.dir/build.make:105: recipe for target 'cmTC_2da47' failed
+make[1]: *** [cmTC_2da47] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_2da47/fast' failed
+make: *** [cmTC_2da47/fast] Error 2
+
+
+
+Determining if the function socket exists in the socket failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e62cc/fast && /usr/bin/make  -f CMakeFiles/cmTC_e62cc.dir/build.make CMakeFiles/cmTC_e62cc.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e62cc.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=socket -fPIE -o CMakeFiles/cmTC_e62cc.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_e62cc
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e62cc.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=socket CMakeFiles/cmTC_e62cc.dir/CheckFunctionExists.c.o -o cmTC_e62cc  -lsocket 
+/usr/bin/ld: cannot find -lsocket
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_e62cc.dir/build.make:105: recipe for target 'cmTC_e62cc' failed
+make[1]: *** [cmTC_e62cc] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_e62cc/fast' failed
+make: *** [cmTC_e62cc/fast] Error 2
+
+
+
+Determining if files socket.h exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8d27d/fast && /usr/bin/make  -f CMakeFiles/cmTC_8d27d.dir/build.make CMakeFiles/cmTC_8d27d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8d27d.dir/HAVE_SOCKET_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_8d27d.dir/HAVE_SOCKET_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SOCKET_H.c
+/virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_SOCKET_H.c:2:10: fatal error: socket.h: No such file or directory
+ #include <socket.h>
+          ^~~~~~~~~~
+compilation terminated.
+CMakeFiles/cmTC_8d27d.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_8d27d.dir/HAVE_SOCKET_H.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_8d27d.dir/HAVE_SOCKET_H.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_8d27d/fast' failed
+make: *** [cmTC_8d27d/fast] Error 2
+
+
+Source:
+/* */
+#include <socket.h>
+
+
+int main(void){return 0;}
+
+Determining if files winsock2.h;windows.h exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_84a60/fast && /usr/bin/make  -f CMakeFiles/cmTC_84a60.dir/build.make CMakeFiles/cmTC_84a60.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_84a60.dir/HAVE_WINSOCK2_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_84a60.dir/HAVE_WINSOCK2_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINSOCK2_H.c
+/virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINSOCK2_H.c:2:10: fatal error: winsock2.h: No such file or directory
+ #include <winsock2.h>
+          ^~~~~~~~~~~~
+compilation terminated.
+CMakeFiles/cmTC_84a60.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_84a60.dir/HAVE_WINSOCK2_H.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_84a60.dir/HAVE_WINSOCK2_H.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_84a60/fast' failed
+make: *** [cmTC_84a60/fast] Error 2
+
+
+Source:
+/* */
+#include <winsock2.h>
+#include <windows.h>
+
+
+int main(void){return 0;}
+
+Determining if files winsock2.h;ws2tcpip.h;windows.h exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_83993/fast && /usr/bin/make  -f CMakeFiles/cmTC_83993.dir/build.make CMakeFiles/cmTC_83993.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_83993.dir/HAVE_WS2TCPIP_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_83993.dir/HAVE_WS2TCPIP_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WS2TCPIP_H.c
+/virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WS2TCPIP_H.c:2:10: fatal error: winsock2.h: No such file or directory
+ #include <winsock2.h>
+          ^~~~~~~~~~~~
+compilation terminated.
+CMakeFiles/cmTC_83993.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_83993.dir/HAVE_WS2TCPIP_H.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_83993.dir/HAVE_WS2TCPIP_H.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_83993/fast' failed
+make: *** [cmTC_83993/fast] Error 2
+
+
+Source:
+/* */
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+
+
+int main(void){return 0;}
+
+Determining if files winsock.h;windows.h exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f59b5/fast && /usr/bin/make  -f CMakeFiles/cmTC_f59b5.dir/build.make CMakeFiles/cmTC_f59b5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f59b5.dir/HAVE_WINSOCK_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_f59b5.dir/HAVE_WINSOCK_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINSOCK_H.c
+/virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINSOCK_H.c:2:10: fatal error: winsock.h: No such file or directory
+ #include <winsock.h>
+          ^~~~~~~~~~~
+compilation terminated.
+CMakeFiles/cmTC_f59b5.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_f59b5.dir/HAVE_WINSOCK_H.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_f59b5.dir/HAVE_WINSOCK_H.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_f59b5/fast' failed
+make: *** [cmTC_f59b5/fast] Error 2
+
+
+Source:
+/* */
+#include <winsock.h>
+#include <windows.h>
+
+
+int main(void){return 0;}
+
+Determining if files windows.h exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_5bae5/fast && /usr/bin/make  -f CMakeFiles/cmTC_5bae5.dir/build.make CMakeFiles/cmTC_5bae5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_5bae5.dir/HAVE_WINDOWS_H.c.o
+/usr/bin/cc   -fPIE -o CMakeFiles/cmTC_5bae5.dir/HAVE_WINDOWS_H.c.o -c /virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINDOWS_H.c
+/virtualNode/device-management/CMakeFiles/CheckIncludeFiles/HAVE_WINDOWS_H.c:2:10: fatal error: windows.h: No such file or directory
+ #include <windows.h>
+          ^~~~~~~~~~~
+compilation terminated.
+CMakeFiles/cmTC_5bae5.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_5bae5.dir/HAVE_WINDOWS_H.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_5bae5.dir/HAVE_WINDOWS_H.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_5bae5/fast' failed
+make: *** [cmTC_5bae5/fast] Error 2
+
+
+Source:
+/* */
+#include <windows.h>
+
+
+int main(void){return 0;}
+
+Performing C SOURCE FILE Test HAVE_TYPE_SOCKET failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2144d/fast && /usr/bin/make  -f CMakeFiles/cmTC_2144d.dir/build.make CMakeFiles/cmTC_2144d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2144d.dir/src.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DHAVE_TYPE_SOCKET -fPIE -o CMakeFiles/cmTC_2144d.dir/src.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/src.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/src.c:26:4: error: unknown type name ‘SOCKET’; did you mean ‘LOCK_EX’?
+    SOCKET var_exists;
+    ^~~~~~
+    LOCK_EX
+CMakeFiles/cmTC_2144d.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_2144d.dir/src.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_2144d.dir/src.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_2144d/fast' failed
+make: *** [cmTC_2144d/fast] Error 2
+
+
+Source file was:
+
+		#include <stdio.h>
+		#include <stdlib.h>
+	
+		#include <stdbool.h>
+		#include <sys/types.h>
+		#include <arpa/inet.h>
+		#include <arpa/nameser.h>
+		#include <netdb.h>
+		#include <net/if.h>
+		#include <netinet/in.h>
+		#include <netinet/tcp.h>
+		#include <signal.h>
+		#include <stdlib.h>
+		#include <string.h>
+		#include <strings.h>
+		#include <sys/ioctl.h>
+		#include <sys/select.h>
+		#include <sys/socket.h>
+		#include <sys/time.h>
+		#include <sys/uio.h>
+		#include <time.h>
+		#include <fcntl.h>
+		#include <unistd.h>
+		int main() {
+			SOCKET var_exists;
+			(void)var_exists;
+			return 0;
+		}
+	
+Determining if the SO_NONBLOCK exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0d68b/fast && /usr/bin/make  -f CMakeFiles/cmTC_0d68b.dir/build.make CMakeFiles/cmTC_0d68b.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0d68b.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_0d68b.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘SO_NONBLOCK’ undeclared (first use in this function); did you mean ‘O_NONBLOCK’?
+   return ((int*)(&SO_NONBLOCK))[argc];
+                   ^~~~~~~~~~~
+                   O_NONBLOCK
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_0d68b.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_0d68b.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_0d68b.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_0d68b/fast' failed
+make: *** [cmTC_0d68b/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef SO_NONBLOCK
+  return ((int*)(&SO_NONBLOCK))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the bitncmp exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_0fd01/fast && /usr/bin/make  -f CMakeFiles/cmTC_0fd01.dir/build.make CMakeFiles/cmTC_0fd01.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_0fd01.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_0fd01.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘bitncmp’ undeclared (first use in this function); did you mean ‘bcmp’?
+   return ((int*)(&bitncmp))[argc];
+                   ^~~~~~~
+                   bcmp
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_0fd01.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_0fd01.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_0fd01.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_0fd01/fast' failed
+make: *** [cmTC_0fd01/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef bitncmp
+  return ((int*)(&bitncmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the closesocket exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_3259d/fast && /usr/bin/make  -f CMakeFiles/cmTC_3259d.dir/build.make CMakeFiles/cmTC_3259d.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3259d.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_3259d.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘closesocket’ undeclared (first use in this function); did you mean ‘socket’?
+   return ((int*)(&closesocket))[argc];
+                   ^~~~~~~~~~~
+                   socket
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_3259d.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_3259d.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_3259d.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_3259d/fast' failed
+make: *** [cmTC_3259d/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef closesocket
+  return ((int*)(&closesocket))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the CloseSocket exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_70601/fast && /usr/bin/make  -f CMakeFiles/cmTC_70601.dir/build.make CMakeFiles/cmTC_70601.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_70601.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_70601.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘CloseSocket’ undeclared (first use in this function); did you mean ‘socket’?
+   return ((int*)(&CloseSocket))[argc];
+                   ^~~~~~~~~~~
+                   socket
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_70601.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_70601.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_70601.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_70601/fast' failed
+make: *** [cmTC_70601/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef CloseSocket
+  return ((int*)(&CloseSocket))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the inet_net_pton exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a21b7/fast && /usr/bin/make  -f CMakeFiles/cmTC_a21b7.dir/build.make CMakeFiles/cmTC_a21b7.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a21b7.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_a21b7.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+Linking C executable cmTC_a21b7
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a21b7.dir/link.txt --verbose=1
+/usr/bin/cc -rdynamic CMakeFiles/cmTC_a21b7.dir/CheckSymbolExists.c.o -o cmTC_a21b7  -lnsl -lrt 
+CMakeFiles/cmTC_a21b7.dir/CheckSymbolExists.c.o: In function `main':
+CheckSymbolExists.c:(.text+0x1b): undefined reference to `inet_net_pton'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_a21b7.dir/build.make:105: recipe for target 'cmTC_a21b7' failed
+make[1]: *** [cmTC_a21b7] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_a21b7/fast' failed
+make: *** [cmTC_a21b7/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef inet_net_pton
+  return ((int*)(&inet_net_pton))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the ioctlsocket exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2d53f/fast && /usr/bin/make  -f CMakeFiles/cmTC_2d53f.dir/build.make CMakeFiles/cmTC_2d53f.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2d53f.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_2d53f.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘ioctlsocket’ undeclared (first use in this function); did you mean ‘socket’?
+   return ((int*)(&ioctlsocket))[argc];
+                   ^~~~~~~~~~~
+                   socket
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_2d53f.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_2d53f.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_2d53f.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_2d53f/fast' failed
+make: *** [cmTC_2d53f/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef ioctlsocket
+  return ((int*)(&ioctlsocket))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the IoctlSocket exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_f1436/fast && /usr/bin/make  -f CMakeFiles/cmTC_f1436.dir/build.make CMakeFiles/cmTC_f1436.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_f1436.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_f1436.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘IoctlSocket’ undeclared (first use in this function); did you mean ‘clock_t’?
+   return ((int*)(&IoctlSocket))[argc];
+                   ^~~~~~~~~~~
+                   clock_t
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_f1436.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_f1436.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_f1436.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_f1436/fast' failed
+make: *** [cmTC_f1436/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef IoctlSocket
+  return ((int*)(&IoctlSocket))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strcmpi exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8c092/fast && /usr/bin/make  -f CMakeFiles/cmTC_8c092.dir/build.make CMakeFiles/cmTC_8c092.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8c092.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_8c092.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘strcmpi’ undeclared (first use in this function); did you mean ‘strcmp’?
+   return ((int*)(&strcmpi))[argc];
+                   ^~~~~~~
+                   strcmp
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_8c092.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_8c092.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_8c092.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_8c092/fast' failed
+make: *** [cmTC_8c092/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strcmpi
+  return ((int*)(&strcmpi))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the stricmp exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_a18f5/fast && /usr/bin/make  -f CMakeFiles/cmTC_a18f5.dir/build.make CMakeFiles/cmTC_a18f5.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_a18f5.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_a18f5.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘stricmp’ undeclared (first use in this function); did you mean ‘strncmp’?
+   return ((int*)(&stricmp))[argc];
+                   ^~~~~~~
+                   strncmp
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_a18f5.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_a18f5.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_a18f5.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_a18f5/fast' failed
+make: *** [cmTC_a18f5/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef stricmp
+  return ((int*)(&stricmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strncmpi exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_728cd/fast && /usr/bin/make  -f CMakeFiles/cmTC_728cd.dir/build.make CMakeFiles/cmTC_728cd.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_728cd.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_728cd.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘strncmpi’ undeclared (first use in this function); did you mean ‘strncmp’?
+   return ((int*)(&strncmpi))[argc];
+                   ^~~~~~~~
+                   strncmp
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_728cd.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_728cd.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_728cd.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_728cd/fast' failed
+make: *** [cmTC_728cd/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strncmpi
+  return ((int*)(&strncmpi))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the strnicmp exist failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e3784/fast && /usr/bin/make  -f CMakeFiles/cmTC_e3784.dir/build.make CMakeFiles/cmTC_e3784.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e3784.dir/CheckSymbolExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -fPIE -o CMakeFiles/cmTC_e3784.dir/CheckSymbolExists.c.o -c /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: error: ‘strnicmp’ undeclared (first use in this function); did you mean ‘strncmp’?
+   return ((int*)(&strnicmp))[argc];
+                   ^~~~~~~~
+                   strncmp
+/virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:27:19: note: each undeclared identifier is reported only once for each function it appears in
+CMakeFiles/cmTC_e3784.dir/build.make:84: recipe for target 'CMakeFiles/cmTC_e3784.dir/CheckSymbolExists.c.o' failed
+make[1]: *** [CMakeFiles/cmTC_e3784.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_e3784/fast' failed
+make: *** [cmTC_e3784/fast] Error 2
+
+
+File /virtualNode/device-management/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdbool.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/uio.h>
+#include <time.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef strnicmp
+  return ((int*)(&strnicmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+Determining if the function __system_property_get exists failed with the following output:
+Change Dir: /virtualNode/device-management/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_8e8e9/fast && /usr/bin/make  -f CMakeFiles/cmTC_8e8e9.dir/build.make CMakeFiles/cmTC_8e8e9.dir/build
+make[1]: Entering directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_8e8e9.dir/CheckFunctionExists.c.o
+/usr/bin/cc -D_GNU_SOURCE -D_POSIX_C_SOURCE=199309L -D_XOPEN_SOURCE=600  -DCHECK_FUNCTION_EXISTS=__system_property_get -fPIE -o CMakeFiles/cmTC_8e8e9.dir/CheckFunctionExists.c.o -c /opt/cmake/cmake-3.18.1-Linux-x86_64/share/cmake-3.18/Modules/CheckFunctionExists.c
+Linking C executable cmTC_8e8e9
+/opt/cmake/cmake-3.18.1-Linux-x86_64/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8e8e9.dir/link.txt --verbose=1
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=__system_property_get -rdynamic CMakeFiles/cmTC_8e8e9.dir/CheckFunctionExists.c.o -o cmTC_8e8e9  -lnsl -lrt 
+CMakeFiles/cmTC_8e8e9.dir/CheckFunctionExists.c.o: In function `main':
+CheckFunctionExists.c:(.text+0x10): undefined reference to `__system_property_get'
+collect2: error: ld returned 1 exit status
+CMakeFiles/cmTC_8e8e9.dir/build.make:105: recipe for target 'cmTC_8e8e9' failed
+make[1]: *** [cmTC_8e8e9] Error 1
+make[1]: Leaving directory '/virtualNode/device-management/CMakeFiles/CMakeTmp'
+Makefile:140: recipe for target 'cmTC_8e8e9/fast' failed
+make: *** [cmTC_8e8e9/fast] Error 2
+
+
+

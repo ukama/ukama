@@ -1,0 +1,27 @@
+@node unitypes.h
+@chapter Elementary types @code{<unitypes.h>}
+
+The include file @code{<unitypes.h>} provides the following basic types.
+
+@deftp Type uint8_t
+@deftpx Type uint16_t
+@deftpx Type uint32_t
+These are the storage units of UTF-8/16/32 strings, respectively.  The definitions are
+taken from @code{<stdint.h>}, on platforms where this include file is present.
+@end deftp
+
+@deftp Type ucs4_t
+This type represents a single Unicode character, outside of an UTF-32 string.
+@end deftp
+
+The types @code{ucs4_t} and @code{uint32_t} happen to be identical.  They differ
+in use and intent, however:
+@itemize @bullet
+@item
+Use @code{uint32_t *} to designate an UTF-32 string.  Use @code{ucs4_t} to
+designate a single Unicode character, outside of an UTF-32 string.
+@item
+Conversions functions that take an UTF-32 string as input will usually perform
+a range-check on the @code{uint32_t} values.  Whereas functions that are
+declared to take @code{ucs4_t} arguments will not perform such a range-check.
+@end itemize

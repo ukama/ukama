@@ -1,0 +1,9 @@
+language: c
+
+sudo: required
+dist: trusty
+
+script:
+    - autoreconf -i && ./configure && make
+    - PATH=./fpart/:./fcp/:./ffs/:$PATH ./fpart/fpart.sh 
+

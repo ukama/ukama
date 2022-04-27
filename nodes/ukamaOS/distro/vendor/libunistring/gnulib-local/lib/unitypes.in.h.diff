@@ -1,0 +1,19 @@
+*** unitypes.in.h.orig	2009-04-05 19:30:36.000000000 +0200
+--- unitypes.in.h	2009-04-10 16:22:07.000000000 +0200
+***************
+*** 18,24 ****
+  #define _UNITYPES_H
+  
+  /* Get uint8_t, uint16_t, uint32_t.  */
+! #include <stdint.h>
+  
+  /* Type representing a Unicode character.  */
+  typedef uint32_t ucs4_t;
+--- 18,24 ----
+  #define _UNITYPES_H
+  
+  /* Get uint8_t, uint16_t, uint32_t.  */
+! #include <unistring/stdint.h>
+  
+  /* Type representing a Unicode character.  */
+  typedef uint32_t ucs4_t;
