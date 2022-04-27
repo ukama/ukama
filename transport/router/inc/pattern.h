@@ -12,6 +12,8 @@
 
 #include "router.h"
 
+#define ASTERIK_ONLY "*"
+
 void free_service(Service *service);
 int find_matching_service(Router *router, Pattern *requestPattern,
 			  Forward **forward, char **ep);

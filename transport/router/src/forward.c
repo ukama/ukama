@@ -35,7 +35,7 @@ static req_t *init_forward_request(char *host, int port, char *method,
     return NULL;
   }
 
-  sprintf(url, "http://%s:%d", host, port);
+  sprintf(url, "http://%s:%d/%s", host, port, ep);
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;
@@ -44,7 +44,6 @@ static req_t *init_forward_request(char *host, int port, char *method,
   ulfius_set_request_properties(req,
 				U_OPT_HTTP_VERB, method,
 				U_OPT_HTTP_URL, url,
-				U_OPT_HTTP_URL_APPEND, ep,
 				U_OPT_TIMEOUT, 20);
   return req;
 
