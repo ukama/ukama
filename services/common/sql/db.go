@@ -18,6 +18,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+const PGERROR_CODE_UNIQUE_VIOLATION = "23505"
+
 type db struct {
 	gorm      *gorm.DB
 	DebugMode bool

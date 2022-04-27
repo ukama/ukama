@@ -2,6 +2,8 @@ module github.com/ukama/ukama/services/common
 
 go 1.17
 
+replace github.com/ukama/ukama/services/common => ./
+
 require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
@@ -84,5 +86,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
-
-replace github.com/ukama/ukama/services/common => ../../common
