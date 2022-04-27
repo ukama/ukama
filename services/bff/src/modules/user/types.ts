@@ -1,4 +1,4 @@
-import { IsEmail, IsPhoneNumber, Length } from "class-validator";
+import { IsEmail, IsPhoneNumber } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
 import { PaginationResponse } from "../../common/types";
 import { GET_STATUS_TYPE } from "../../constants";
@@ -7,36 +7,6 @@ import { GET_STATUS_TYPE } from "../../constants";
 export class ConnectedUserDto {
     @Field()
     totalUser: string;
-}
-
-@InputType()
-export class ActivateUserDto {
-    @Field()
-    eSimNumber: string;
-
-    @Field()
-    iccid: string;
-
-    @Field()
-    @Length(3, 255)
-    name: string;
-
-    @Field({ nullable: true })
-    @IsEmail()
-    email?: string;
-
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone?: string;
-
-    @Field()
-    roaming: boolean;
-
-    @Field()
-    dataUsage: number;
-
-    @Field()
-    dataPlan: number;
 }
 
 @InputType()
@@ -147,10 +117,19 @@ export class ResidentsResponse extends PaginationResponse {
 @ObjectType()
 export class DeactivateResponse {
     @Field()
-    id: string;
+    uuid: string;
 
     @Field()
-    success: boolean;
+    name: string;
+
+    @Field()
+    email: string;
+
+    @Field()
+    phone: string;
+
+    @Field()
+    isDeactivated: boolean;
 }
 
 @ObjectType()
