@@ -12,8 +12,8 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 

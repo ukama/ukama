@@ -14,8 +14,8 @@ import (
 
 	"github.com/ukama/ukama/services/cloud/device-feeder/cmd/version"
 
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var serviceConfig *pkg.Config

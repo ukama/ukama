@@ -7,7 +7,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/cloud/users v0.0.0-20220415113134-07a9598413bd
-	github.com/ukama/ukamaX/common v0.0.0-20220421094812-6b3352c9a822
+	github.com/ukama/ukama/services/common v0.0.0-20220421094812-6b3352c9a822
 	github.com/vektra/mockery/v2 v2.12.0
 	go.etcd.io/etcd/client/v3 v3.5.3
 	google.golang.org/grpc v1.46.0
@@ -186,7 +186,6 @@ require (
 	golang.org/x/tools v0.1.11-0.20220316014157-77aa08bb151a // indirect
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731 // indirect
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
@@ -201,6 +200,6 @@ require (
 
 replace github.com/ukama/ukama/services/cloud/users => ../users
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
 replace github.com/ukama/ukama/services/cloud/dummy-sim-manager => ./

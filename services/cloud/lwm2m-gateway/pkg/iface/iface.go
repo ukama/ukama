@@ -7,7 +7,7 @@ import (
 	spec "lwm2m-gateway/specs/lwm2mIface/spec"
 	"os"
 
-	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukama/services/common/msgbus"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"

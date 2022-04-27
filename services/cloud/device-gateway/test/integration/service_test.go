@@ -6,7 +6,7 @@ package integration
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"net/http"
 	"time"
 

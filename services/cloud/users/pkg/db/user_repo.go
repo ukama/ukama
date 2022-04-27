@@ -3,7 +3,7 @@ package db
 import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

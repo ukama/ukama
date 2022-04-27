@@ -15,10 +15,10 @@ import (
 	"github.com/ukama/ukama/services/cloud/registry/pkg/server"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/sql"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc"
 )
 

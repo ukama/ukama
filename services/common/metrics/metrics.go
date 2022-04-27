@@ -2,8 +2,9 @@ package metrics
 
 import (
 	"fmt"
-	"github.com/ukama/ukamaX/common/config"
 	"net/http"
+
+	"github.com/ukama/ukama/services/common/config"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"

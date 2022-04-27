@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/google/uuid"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 )
 
 type simcardRepo struct {

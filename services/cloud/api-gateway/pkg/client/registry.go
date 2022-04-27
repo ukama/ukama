@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"

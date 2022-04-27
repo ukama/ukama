@@ -7,7 +7,7 @@ import (
 
 	"github.com/ukama/ukama/services/cloud/registry/pkg/validation"
 
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 )
 
 type OrgRepo interface {

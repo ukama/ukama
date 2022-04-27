@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
-	"github.com/ukama/ukamaX/common/grpc"
+	"github.com/ukama/ukama/services/common/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

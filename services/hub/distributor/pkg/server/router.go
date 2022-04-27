@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 	"github.com/ukama/ukamaX/hub/distributor/cmd/version"
 	"github.com/ukama/ukamaX/hub/distributor/pkg"
 	"github.com/ukama/ukamaX/hub/distributor/pkg/chunk"

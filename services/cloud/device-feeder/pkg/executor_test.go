@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/device-feeder/mocks"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
 func Test_requestExecutor_Execute(t *testing.T) {

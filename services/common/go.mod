@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/common
+module github.com/ukama/ukama/services/common
 
 go 1.18
 
@@ -84,4 +84,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common

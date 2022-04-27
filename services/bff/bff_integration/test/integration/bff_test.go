@@ -8,7 +8,7 @@ import (
 
 	graphql "github.com/machinebox/graphql"
 	"github.com/stretchr/testify/suite"
-	"github.com/ukama/ukamaX/common/testing/kratos"
+	"github.com/ukama/ukama/services/common/testing/kratos"
 )
 
 type TestConfig struct {

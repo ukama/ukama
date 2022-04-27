@@ -5,8 +5,8 @@ import (
 
 	"github.com/ukama/ukama/services/cloud/net/cmd/version"
 	"github.com/ukama/ukama/services/cloud/net/pkg/listener"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var listenerConfig *listener.ListenerConfig

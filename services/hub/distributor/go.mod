@@ -2,7 +2,7 @@ module github.com/ukama/ukamaX/hub/distributor
 
 go 1.17
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
 replace github.com/ukama/ukamaX/hub/distributor => ./
 
@@ -16,7 +16,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/common v0.0.0-20220208115908-8a6547083867
+	github.com/ukama/ukama/services/common v0.0.0-20220208115908-8a6547083867
 	github.com/ukama/ukamaX/hub/hub v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
 )

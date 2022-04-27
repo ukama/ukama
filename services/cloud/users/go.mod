@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/cloud/hss v0.0.0-20220421094812-6b3352c9a822
-	github.com/ukama/ukamaX/common v0.0.0-20220421094812-6b3352c9a822
+	github.com/ukama/ukama/services/common v0.0.0-20220421094812-6b3352c9a822
 	github.com/vektra/mockery/v2 v2.12.0
 	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
@@ -192,7 +192,7 @@ require (
 	mvdan.cc/unparam v0.0.0-20220316160445-06cc5682983b // indirect
 )
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
 replace github.com/ukama/ukama/services/cloud/users => ./
 

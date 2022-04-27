@@ -9,7 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/registry/pkg/queue"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
 )
 
 const ServiceName = "registry-listener"

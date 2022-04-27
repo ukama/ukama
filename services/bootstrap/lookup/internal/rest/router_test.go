@@ -12,7 +12,7 @@ import (
 	"ukamaX/bootstrap/lookup/internal/db"
 	"ukamaX/bootstrap/lookup/mocks"
 
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"

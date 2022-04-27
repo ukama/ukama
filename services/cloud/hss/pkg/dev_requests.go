@@ -8,7 +8,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/protobuf/encoding/protojson"
 )

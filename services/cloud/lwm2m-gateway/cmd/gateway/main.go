@@ -14,7 +14,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
 )
 
 // Usage
