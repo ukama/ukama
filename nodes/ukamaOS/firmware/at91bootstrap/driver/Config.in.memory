@@ -1,0 +1,331 @@
+menu "Memory selection"
+
+config SDRAM
+	bool
+	default n
+	help
+	  Initialize SDRAM controller before copying
+
+config SDDRC
+	bool
+	default n
+	help
+	  Initialize DDR SDRAM controller before copying
+
+config DDRC
+	bool
+	default n
+	help
+	  Initialize DDR-2 SDRAM controller before copying
+
+config UMCTL2
+	bool
+	default n
+	help
+	  Initialize DDR Synopsys controller before copying
+
+config PUBL
+	bool
+	default n
+	help
+	  Initialize DDR Synopsys PUBL (Phy Utility Block Lite)
+
+config	ALLOW_DATAFLASH
+	bool
+	default n
+
+config	ALLOW_FLASH
+	bool
+	default n
+
+config	ALLOW_NANDFLASH
+	bool
+	default n
+
+config	ALLOW_SDCARD
+	bool
+	default n
+
+config	ALLOW_PSRAM
+	bool
+	default n
+
+config	ALLOW_SDRAM_16BIT
+	bool
+	default n
+
+menu "RAM Configuration"
+
+choice
+	prompt "RAM size"
+	depends on SDRAM || SDDRC || DDRC || UMCTL2
+	default RAM_64MB
+
+config	RAM_8MB
+	depends on !SAMA7G5
+	bool "8 MB"
+
+config	RAM_32MB
+	depends on !SAMA7G5
+	bool "32 MB"
+
+config	RAM_64MB
+	depends on !SAMA7G5
+	bool "64 MB"
+
+config	RAM_128MB
+	depends on !SAMA7G5
+	bool "128 MB"
+
+config	RAM_256MB
+	bool "256 MB"
+
+config	RAM_512MB
+	depends on !(SAMA7G5 && DDR2)
+	bool "512 MB"
+
+endchoice
+
+choice
+	prompt "DDR-SDRAM device type"
+	depends on DDRC || UMCTL2
+	default DDR2 if !UMCTL2
+	default DDR3 if UMCTL2
+
+config LPDDR1
+	depends on DDRC
+	bool "Low-power DDR1-SDRAM"
+
+config LPDDR2
+	depends on DDRC || UMCTL2
+	bool "Low-power DDR2-SDRAM"
+
+config LPDDR3
+	depends on DDRC || UMCTL2
+	bool "Low-power DDR3-SDRAM"
+
+config DDR2
+	depends on DDRC || UMCTL2
+	bool "DDR2-SDRAM"
+
+config DDR3
+	depends on DDRC || UMCTL2
+	bool "DDR3-SDRAM"
+
+endchoice
+
+config MEM_BANK
+	string "Extern Memory Bank Base Address"
+	default "0x70000000" if AT91SAM9G45 && !BOARD_HAS_2_BANKS
+	default "0x60000000" if SAMA7G5
+	default "0x20000000"
+
+config MEM_BANK2
+	depends on BOARD_HAS_2_BANKS
+	string "Extern Memory Bank2 Base Address"
+	default "0x70000000" if AT91SAM9G45 && BOARD_HAS_2_BANKS
+	default "0"
+
+choice
+	prompt "Extern Memory Clock"
+	depends on UMCTL2
+	default MEM_CLOCK_533 if DDR3 || LPDDR3
+	default MEM_CLOCK_400 if DDR2 || LPDDR2
+
+config MEM_CLOCK_400
+	depends on UMCTL2
+	bool "400 MHz Ram Clock"
+
+config MEM_CLOCK_533
+	depends on UMCTL2
+	bool "533 MHz Ram Clock"
+
+endchoice
+
+choice
+	prompt "Memory module selection"
+	depends on UMCTL2
+	default MT47H128M16RT_25E_C if DDR2
+	default MT41K256M16TW_107 if DDR3
+	default IS43LD16128B_25BLI if LPDDR2
+	default MT52L256M32D1PF_107_WT_B if LPDDR3
+
+config MT41K256M16TW_107
+	bool "Micron DDR3 MT41K256M16TW-107"
+	depends on DDR3
+	help
+	  Micron MT41K256M16 DDR3 32 Meg x 16 x 8 banks DDR3-1066
+
+config MT47H128M16RT_25E_C
+	bool "Micron DDR2 MT47H128M16RT-25E:C"
+	depends on DDR2
+	help
+	  Micron MT47H128M16RT-25E:C DDR2 16 Meg x 16 x 8 banks DDR2-800
+
+config IS43LD16128B_25BLI
+	bool "ISSI LPDDR2 IS43LD16128B-25BLI"
+	depends on LPDDR2
+	help
+	  ISSI LPDDR2 IS43LD16128B-25BLI 16M x 16 x 8 banks LPDDR2-800
+
+config MT52L256M32D1PF_107_WT_B
+	bool "Micron LPDDR3 MT52L256M32D1PF-107 WT:B"
+	depends on LPDDR3
+	help
+	  Micron LPDDR3 MT52L256M32D1PF-107 WT:B 32M x 32 x 8 banks LPDDR3-1066
+	  With SAMA7G5, only 16 bits will be used, thus half the memory size.
+
+endchoice
+
+endmenu
+
+config SAMA5D2_LPDDR2
+	bool
+	default y if LPDDR2 && SAMA5D2
+	default n
+
+config	SDRAM_16BIT
+	bool "Use 16 bit SDRAM"
+	depends on ALLOW_SDRAM_16BIT
+
+config	PSRAM
+	bool "Enable PSRAM on EBI1"
+	depends on ALLOW_PSRAM
+
+choice
+	prompt "Flash Memory Technology"
+	default DATAFLASH
+	help
+	  Select memory for at91bootstrap
+
+config	DATAFLASH
+	bool "Dataflash"
+	depends on ALLOW_DATAFLASH
+
+config	FLASH
+	bool "Parallel NOR flash(supported from ROM Code v2.1)"
+	depends on ALLOW_FLASH
+	help
+	  Before you select it, please check the ROM Code if it supports
+	  to boot from the NOR flash.  Beacause booting from the external
+	  NOR memory is supported in ROM Code v2.1 for SAMA5D3x.
+
+config	NANDFLASH
+	bool "NAND flash"
+	depends on ALLOW_NANDFLASH
+
+config	SDCARD
+	bool "SD card"
+	depends on ALLOW_SDCARD
+
+endchoice
+
+config MEMORY
+	string
+	default "dataflash"	if DATAFLASH
+	default "flash"		if FLASH
+	default "nandflash"	if NANDFLASH
+	default "sdcard"	if SDCARD
+
+menu  "SD Card Configuration"
+	depends on SDCARD
+
+config AT91_MCI
+	bool
+	depends on CPU_HAS_HSMCI0 || CPU_HAS_HSMCI1 || CPU_HAS_HSMCI2 || CPU_HAS_MCI0 || CPU_HAS_MCI1
+	default y
+
+choice
+	prompt "MultiMedia Card Interface Select"
+	depends on AT91_MCI
+	default AT91_MCI0
+	help
+	  This interface allow you select which MultiMedia Card Interface is used for the SD Card.
+
+config AT91_MCI0
+	bool "On Atmel MCI 0"
+	depends on CPU_HAS_HSMCI0 || CPU_HAS_MCI0
+
+config AT91_MCI1
+	bool "On Atmel MCI 1"
+	depends on CPU_HAS_HSMCI1 || CPU_HAS_MCI1
+
+config AT91_MCI2
+	bool "On Atmel MCI 2"
+	depends on CPU_HAS_HSMCI2
+
+endchoice
+
+config SDHC
+	bool
+	depends on CPU_HAS_SDHC0 || CPU_HAS_SDHC1
+	default y
+
+choice
+	prompt "SD Host Controller Select"
+	depends on SDHC
+	default SDHC0
+	help
+	  This interface allow you select which SD Host Controller for the SD Card.
+
+config SDHC0
+	bool "On SDHC0"
+	depends on CPU_HAS_SDHC0
+
+config SDHC1
+	bool "On SDHC1"
+	depends on CPU_HAS_SDHC1
+
+endchoice
+
+config SDHC_NODMA
+	bool "Disable DMA mode"
+	depends on SDHC
+	default n
+	help
+	  Disable SDHC DMA mode, use PIO mode only
+
+config FATFS
+	bool
+	depends on SDCARD
+	default y if SDCARD
+
+endmenu
+
+if DATAFLASH
+	source "driver/Config.in.dataflash"
+endif
+
+config  ALLOW_BOOT_FROM_DATAFLASH_CS0
+	bool
+	default n
+
+config  ALLOW_BOOT_FROM_DATAFLASH_CS1
+	bool
+	default n
+
+config  ALLOW_BOOT_FROM_DATAFLASH_CS2
+	bool
+	default n
+
+config  ALLOW_BOOT_FROM_DATAFLASH_CS3
+	bool
+	default n
+
+if NANDFLASH
+	source "driver/Config.in.nandflash"
+endif
+
+config ALLOW_NANDFLASH_RECOVERY
+	bool
+	default n
+
+config BOOTSTRAP_MAXSIZE
+	string
+	default "4096" if AT91SAM9260
+	default "8192" if AT91SAM9G10 && SDCARD
+	default "12288" if AT91SAM9G10 && !SDCARD
+	default "65536"	if SAMA5D3X || SAMA5D4 || SAMA5D2 || SAM9X60 || SAMA7G5
+	default "23000"
+
+endmenu

@@ -1,0 +1,471 @@
+--
+-- Copyright (C) 2015-2019 secunet Security Networks AG
+--
+-- This program is free software; you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation; either version 2 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+
+pragma Restrictions (No_Elaboration_Code);
+
+private package HW.GFX.GMA.Config is
+
+   Gen : constant Generation := <<GEN>>;
+
+   CPU_First : constant CPU_Type :=
+     (case Gen is
+         when G45       => G45,
+         when Ironlake  => Ironlake,
+         when Haswell   => Haswell,
+         when Broxton   => Broxton,
+         when Skylake   => Skylake);
+   CPU_Last : constant CPU_Type :=
+     (case Gen is
+         when G45       => GM45,
+         when Ironlake  => Ivybridge,
+         when Haswell   => Broadwell,
+         when Broxton   => Broxton,
+         when Skylake   => Kabylake);
+   CPU_Var_Last : constant CPU_Variant :=
+     (case Gen is
+         when Haswell | Skylake  => ULX,
+         when others             => Normal);
+   subtype Gen_CPU_Type is CPU_Type range CPU_First .. CPU_Last;
+   subtype Gen_CPU_Variant is CPU_Variant range Normal .. CPU_Var_Last;
+
+   CPU : constant Gen_CPU_Type := <<CPU>>;
+
+   CPU_Var : constant Gen_CPU_Variant := <<CPU_VARIANT>>;
+
+   Internal_Display : constant Internal_Type := <<INTERNAL_PORT>>;
+
+   Analog_I2C_Port : constant PCH_Port := <<ANALOG_I2C_PORT>>;
+
+   EDP_Low_Voltage_Swing : constant Boolean := False;
+
+   DDI_HDMI_Buffer_Translation : constant Integer := -1;
+
+   Default_MMIO_Base : constant := <<DEFAULT_MMIO_BASE>>;
+
+   LVDS_Dual_Threshold : constant := 95_000_000;
+
+   ----------------------------------------------------------------------------
+
+   -- On older generations dot clocks are limited to 90% of
+   -- the CDClk rate. To ease proofs, we limit CDClk's range.
+   CDClk_Min : constant Frequency_Type :=
+     (case Gen is
+         when G45 .. Ironlake => Frequency_Type'First * 100 / 90 + 1,
+         when others          => Frequency_Type'First);
+   subtype CDClk_Range is Frequency_Type range CDClk_Min .. Frequency_Type'Last;
+
+   ----------------------------------------------------------------------------
+
+   type Valid_Port_Array is array (Port_Type) of Boolean;
+   type Variable_Config is record
+      Valid_Port     : Valid_Port_Array;
+      CDClk          : CDClk_Range;
+      Max_CDClk      : CDClk_Range;
+      Raw_Clock      : Frequency_Type;
+      Dyn_CPU        : Gen_CPU_Type;
+      Dyn_CPU_Var    : Gen_CPU_Variant;
+   end record;
+
+   Initial_Settings : constant Variable_Config :=
+     (Valid_Port     => (others => False),
+      CDClk          => CDClk_Range'First,
+      Max_CDClk      => CDClk_Range'First,
+      Raw_Clock      => Frequency_Type'First,
+      Dyn_CPU        => Gen_CPU_Type'First,
+      Dyn_CPU_Var    => Gen_CPU_Variant'First);
+
+   Variable : Variable_Config with Part_Of => GMA.State;
+
+   Valid_Port  : Valid_Port_Array renames Variable.Valid_Port;
+   CDClk       : CDClk_Range renames Variable.CDClk;
+   Max_CDClk   : CDClk_Range renames Variable.Max_CDClk;
+   Raw_Clock   : Frequency_Type renames Variable.Raw_Clock;
+   CPU         : Gen_CPU_Type renames Variable.Dyn_CPU;
+   CPU_Var     : Gen_CPU_Variant renames Variable.Dyn_CPU_Var;
+
+   ----------------------------------------------------------------------------
+
+   -- To support both static configurations, that are compiled for a
+   -- fixed CPU, and dynamic configurations, where the CPU and its
+   -- variant are detected at runtime, all derived config values are
+   -- tagged based on their dependencies.
+   --
+   -- Booleans that only depend on the generation should be tagged
+   -- <genbool>. Those that may depend on the CPU are tagged with the
+   -- generations where that is the case. For instance `CPU_Ivybridge`
+   -- can be decided purely based on the generation unless the gene-
+   -- ration is Ironlake, thus, it is tagged <ilkbool>.
+   --
+   -- For non-boolean constants, per generation tags <...var> are
+   -- used (e.g. <ilkvar>).
+   --
+   -- To ease parsing, all multiline expressions of tagged config
+   -- values start after a line break.
+
+   Gen_G45           : <genbool> := Gen = G45;
+   Gen_Ironlake      : <genbool> := Gen = Ironlake;
+   Gen_Haswell       : <genbool> := Gen = Haswell;
+   Gen_Broxton       : <genbool> := Gen = Broxton;
+   Gen_Skylake       : <genbool> := Gen = Skylake;
+
+   Up_To_Ironlake    : <genbool> := Gen <= Ironlake;
+   Ironlake_On       : <genbool> := Gen >= Ironlake;
+   Haswell_On        : <genbool> := Gen >= Haswell;
+   Broxton_On        : <genbool> := Gen >= Broxton;
+   Skylake_On        : <genbool> := Gen >= Skylake;
+
+   GMCH_GM45         : <g45bool> := Gen_G45 and then CPU = GM45;
+   CPU_Ironlake      : <ilkbool> := Gen_Ironlake and then CPU = Ironlake;
+   CPU_Sandybridge   : <ilkbool> := Gen_Ironlake and then CPU = Sandybridge;
+   CPU_Ivybridge     : <ilkbool> := Gen_Ironlake and then CPU = Ivybridge;
+   CPU_Haswell       : <hswbool> := Gen_Haswell and then CPU = Haswell;
+   CPU_Broadwell     : <hswbool> := Gen_Haswell and then CPU = Broadwell;
+   CPU_Skylake       : <sklbool> := Gen_Skylake and then CPU = Skylake;
+   CPU_Kabylake      : <sklbool> := Gen_Skylake and then CPU = Kabylake;
+
+   Sandybridge_On    : <ilkbool> :=
+     ((Gen_Ironlake and then CPU >= Sandybridge) or Haswell_On);
+   Ivybridge_On      : <ilkbool> :=
+     ((Gen_Ironlake and then CPU >= Ivybridge) or Haswell_On);
+   Broadwell_On      : <hswbool> :=
+     ((Gen_Haswell and then CPU >= Broadwell) or Broxton_On);
+
+   ----------------------------------------------------------------------------
+
+   Have_HDMI_Buf_Override  : constant Boolean := DDI_HDMI_Buffer_Translation >= 0;
+   Default_MMIO_Base_Set   : constant Boolean := Default_MMIO_Base /= 0;
+
+   Has_Internal_Display    : constant Boolean := Internal_Display /= None;
+   Internal_Is_LVDS        : constant Boolean := Internal_Display = LVDS;
+   Internal_Is_EDP         : constant Boolean := Internal_Display = DP;
+   Have_DVI_I              : constant Boolean := Analog_I2C_Port /= PCH_DAC;
+
+   Has_Presence_Straps           : <genbool> := not Gen_Broxton;
+   Is_ULT                        : <hswsklbool> :=
+     ((Gen_Haswell or Gen_Skylake) and then CPU_Var = ULT);
+   Is_ULX                        : <hswsklbool> :=
+     ((Gen_Haswell or Gen_Skylake) and then CPU_Var = ULX);
+   Is_LP                         : <hswsklbool> := Is_ULT or Is_ULX;
+
+   ---------- CPU pipe: ---------
+   Has_Tertiary_Pipe             : <ilkbool> := Ivybridge_On;
+   Disable_Trickle_Feed          : <genbool> := not Gen_Haswell;
+   Pipe_Enabled_Workaround       : <hswbool> := CPU_Broadwell;
+   Has_EDP_Transcoder            : <genbool> := Haswell_On;
+   Use_PDW_For_EDP_Scaling       : <hswbool> := CPU_Haswell;
+   Has_Pipe_DDI_Func             : <genbool> := Haswell_On;
+   Has_Trans_Clk_Sel             : <genbool> := Haswell_On;
+   Has_Pipe_MSA_Misc             : <genbool> := Haswell_On;
+   Has_Pipeconf_Misc             : <hswbool> := Broadwell_On;
+   Has_Pipeconf_BPC              : <hswbool> := not CPU_Haswell;
+   Has_Plane_Control             : <genbool> := Broxton_On;
+   Has_DSP_Linoff                : <genbool> := Up_To_Ironlake;
+   Has_PF_Pipe_Select            : <ilkhswbool> := CPU_Ivybridge or CPU_Haswell;
+   Has_Ivybridge_Cursors         : <ilkbool> := Ivybridge_On;
+   VGA_Plane_Workaround          : <ilkbool> := CPU_Ivybridge;
+   Has_GMCH_DP_Transcoder        : <genbool> := Gen_G45;
+   Has_GMCH_VGACNTRL             : <genbool> := Gen_G45;
+   Has_GMCH_PFIT_CONTROL         : <genbool> := Gen_G45;
+
+   --------- Panel power: -------
+   Has_PP_Write_Protection       : <genbool> := Up_To_Ironlake;
+   Has_PP_Port_Select            : <genbool> := Up_To_Ironlake;
+   Use_PP_VDD_Override           : <genbool> := Up_To_Ironlake;
+   Has_PCH_Panel_Power           : <genbool> := Ironlake_On;
+
+   ----------- PCH/FDI: ---------
+   Has_PCH                       : <genbool> := not Gen_Broxton and not Gen_G45;
+   Has_PCH_DAC                   : <hswbool> :=
+     (Gen_Ironlake or (Gen_Haswell and then not Is_LP));
+
+   Has_PCH_Aux_Channels          : <genbool> := Gen_Ironlake or Gen_Haswell;
+
+   VGA_Has_Sync_Disable          : <genbool> := Up_To_Ironlake;
+
+   Has_Trans_Timing_Ovrrde       : <ilkbool> := Sandybridge_On;
+
+   Has_DPLL_SEL                  : <genbool> := Gen_Ironlake;
+   Has_FDI_BPC                   : <genbool> := Gen_Ironlake;
+   Has_FDI_Composite_Sel         : <ilkbool> := CPU_Ivybridge;
+   Has_New_FDI_Sink              : <ilkbool> := Sandybridge_On;
+   Has_New_FDI_Source            : <ilkbool> := Ivybridge_On;
+   Has_Trans_DP_Ctl              : <ilkbool> := CPU_Sandybridge or CPU_Ivybridge;
+   Has_FDI_C                     : <ilkbool> := CPU_Ivybridge;
+
+   Has_FDI_RX_Power_Down         : <genbool> := Gen_Haswell;
+
+   ---------- Clocks: -----------
+   Has_GMCH_RawClk               : <genbool> := Gen_G45;
+   Has_GMCH_Mobile_VCO           : <g45bool> := GMCH_GM45;
+   Has_Broadwell_CDClk           : <hswbool> := CPU_Broadwell;
+   Can_Switch_CDClk              : <hswbool> := Broadwell_On;
+
+   ----------- DDI: -------------
+   End_EDP_Training_Late         : <genbool> := Gen_Haswell;
+   Has_Per_DDI_Clock_Sel         : <genbool> := Gen_Haswell;
+   Has_HOTPLUG_CTL               : <genbool> := Gen_Haswell;
+   Has_SHOTPLUG_CTL_A            : <hswbool> :=
+     ((Gen_Haswell and then Is_LP) or Skylake_On);
+
+   Has_DDI_PHYs                  : <genbool> := Gen_Broxton;
+
+   Has_DDI_D                     : <hswsklbool> :=
+     ((Gen_Haswell or Gen_Skylake) and then not Is_LP);
+   -- might be disabled by x4 eDP:
+   Has_DDI_E                     : <hswsklbool> := Has_DDI_D;
+
+   Has_DDI_Buffer_Trans          : <genbool> := Haswell_On and not Has_DDI_PHYs;
+   Has_Low_Voltage_Swing         : <genbool> := Broxton_On;
+   Has_Iboost_Config             : <genbool> := Skylake_On;
+   Use_KBL_DDI_Buf_Trans         : <sklbool> := CPU_Kabylake;
+
+   Need_DP_Aux_Mutex             : <genbool> := False; -- Skylake & (PSR | GTC)
+
+   ----- DP: --------------------
+   DP_Max_2_7_GHz                : <hswbool> :=
+     (not Haswell_On or else (CPU_Haswell and Is_ULX));
+
+   ----------- GMBUS: -----------
+   Ungate_GMBUS_Unit_Level       : <genbool> := Skylake_On;
+   GMBUS_Alternative_Pins        : <genbool> := Gen_Broxton;
+   Has_PCH_GMBUS                 : <genbool> := Ironlake_On;
+
+   ----------- Power: -----------
+   Has_IPS                       : <hswbool> :=
+     (Gen_Haswell and then
+      ((CPU_Haswell and Is_LP) or CPU_Broadwell));
+   Has_IPS_CTL_Mailbox           : <hswbool> := CPU_Broadwell;
+
+   Has_Per_Pipe_SRD              : <hswbool> := Broadwell_On;
+
+   ----------- GTT: -------------
+   Has_64bit_GTT                 : <hswbool> := Broadwell_On;
+
+   ----------------------------------------------------------------------------
+
+   Max_Pipe : <ilkvar> Pipe_Index :=
+     (if Has_Tertiary_Pipe then Tertiary else Secondary);
+
+   Last_Digital_Port : <hswsklvar> Digital_Port :=
+     (if Has_DDI_E then DIGI_E else DIGI_C);
+
+   ----------------------------------------------------------------------------
+
+   type FDI_Per_Port is array (Port_Type) of Boolean;
+   Is_FDI_Port : <hswvar> FDI_Per_Port :=
+     (Disabled       => False,
+      Internal       => Gen_Ironlake and Internal_Is_LVDS,
+      DP1 .. HDMI3   => Gen_Ironlake,
+      Analog         => Has_PCH_DAC);
+
+   type FDI_Lanes_Per_Port is array (GPU_Port) of DP_Lane_Count;
+   FDI_Lane_Count : constant FDI_Lanes_Per_Port :=
+     (DIGI_D => DP_Lane_Count_2,
+      others => (if Gen_Ironlake then DP_Lane_Count_4 else DP_Lane_Count_2));
+
+   FDI_Training : <ilkvar> FDI_Training_Type :=
+     (if    CPU_Ironlake      then Simple_Training
+      elsif CPU_Sandybridge   then Full_Training
+                              else Auto_Training);
+
+   ----------------------------------------------------------------------------
+
+   DDI_Buffer_Iboost : <hswsklvar> Natural :=
+     (if Is_ULX or (CPU_Kabylake and Is_ULT) then 3 else 1);
+
+   Default_DDI_HDMI_Buffer_Translation : <hswvar> DDI_HDMI_Buf_Trans_Range :=
+     (if    CPU_Haswell    then 6
+      elsif CPU_Broadwell  then 7
+      elsif Broxton_On     then 8
+                           else 0);
+
+   ----------------------------------------------------------------------------
+
+   Default_CDClk_Freq : <ilkhswvar> CDClk_Range :=
+     (if    Gen_G45                          then 320_000_000  -- unused
+      elsif CPU_Ironlake                     then 450_000_000
+      elsif CPU_Sandybridge or CPU_Ivybridge then 400_000_000
+      elsif Gen_Haswell and then Is_ULX      then 337_500_000
+      elsif Gen_Haswell                      then 450_000_000
+      elsif Gen_Broxton                      then 288_000_000
+      elsif Gen_Skylake                      then 337_500_000
+                                             else CDClk_Range'First);
+
+   Default_RawClk_Freq : <hswvar> Frequency_Type :=
+     (if    Gen_G45        then 100_000_000  -- unused, depends on FSB
+      elsif Gen_Ironlake   then 125_000_000
+      elsif Gen_Haswell    then (if Is_LP then 24_000_000 else 125_000_000)
+      elsif Gen_Broxton    then Frequency_Type'First  -- none needed
+      elsif Gen_Skylake    then 24_000_000
+                           else Frequency_Type'First);
+
+   ----------------------------------------------------------------------------
+
+   -- Maximum source width with enabled scaler. This only accounts
+   -- for simple 1:1 pipe:scaler mappings.
+
+   type Width_Per_Pipe is array (Pipe_Index) of Width_Type;
+
+   Maximum_Scalable_Width : <hswvar> Width_Per_Pipe :=
+     (if Gen_G45 then   -- TODO: Is this true?
+        (Primary     => 4096,
+         Secondary   => 2048,
+         Tertiary    => Pos32'First)
+      elsif Gen_Ironlake or CPU_Haswell then
+        (Primary     => 4096,
+         Secondary   => 2048,
+         Tertiary    => 2048)
+      else
+        (Primary     => 4096,
+         Secondary   => 4096,
+         Tertiary    => 4096));
+
+   -- Maximum X position of hardware cursors
+   Maximum_Cursor_X : constant :=
+     (case Gen is
+         when G45 .. Ironlake       => 4095,
+         when Haswell .. Skylake    => 8191);
+
+   Maximum_Cursor_Y : constant := 4095;
+
+   ----------------------------------------------------------------------------
+
+   -- FIXME: Unknown for Broxton, Linux' i915 contains a fixme too :-D
+   HDMI_Max_Clock_24bpp : constant Frequency_Type :=
+     (case Gen is
+         when Generation'First .. G45     => 165_000_000,
+         when Ironlake                    => 225_000_000,
+         when Haswell .. Generation'Last  => 300_000_000);
+
+   ----------------------------------------------------------------------------
+
+   GTT_PTE_Size : <hswvar> Natural := (if Has_64bit_GTT then 8 else 4);
+
+   Fence_Base : <ilkvar> Natural :=
+     (if not Sandybridge_On then 16#0000_3000# else 16#0010_0000#);
+
+   Fence_Count : <ilkvar> Natural :=
+     (if not Ivybridge_On then 16 else 32);
+
+   ----------------------------------------------------------------------------
+
+   use type HW.Word16;
+
+   -- GMA PCI IDs:
+   --
+   -- Rather catch too much here than too little, it's
+   -- mostly used to distinguish generations. Best public
+   -- reference for these IDs is Linux' i915.
+   --
+   -- Since Sandybridge, bits 4 and 5 encode the compu-
+   -- tational capabilities and can mostly be ignored.
+   -- From Haswell on, we have to distinguish between
+   -- Normal, ULT (U CPU lines) and ULX (Y CPU lines).
+
+   function Is_Haswell_Y (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffef#) = 16#0a0e#);
+   function Is_Haswell_U (Device_Id : Word16) return Boolean is
+     (((Device_Id and 16#ffc3#) = 16#0a02# or
+       (Device_Id and 16#ffcf#) = 16#0a0b#) and
+      not Is_Haswell_Y (Device_Id));
+   function Is_Haswell (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffc3#) = 16#0402# or
+      (Device_Id and 16#ffcf#) = 16#040b# or
+      (Device_Id and 16#ffc3#) = 16#0c02# or
+      (Device_Id and 16#ffcf#) = 16#0c0b# or
+      (Device_Id and 16#ffc3#) = 16#0d02# or
+      (Device_Id and 16#ffcf#) = 16#0d0b#);
+
+   function Is_Broadwell_Y (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffcf#) = 16#160e#);
+   function Is_Broadwell_U (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffcf#) = 16#1606# or
+      (Device_Id and 16#ffcf#) = 16#160b#);
+   function Is_Broadwell (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffc7#) = 16#1602# or
+      (Device_Id and 16#ffcf#) = 16#160d#);
+
+   function Is_Skylake_Y (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffcf#) = 16#190e#);
+   function Is_Skylake_U (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffc9#) = 16#1901# or
+      (Device_Id and 16#ffcf#) = 16#1906#);
+   function Is_Skylake (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffc7#) = 16#1902# or
+      (Device_Id and 16#ffcf#) = 16#190b# or
+      (Device_Id and 16#ffcf#) = 16#190d#);
+
+   function Is_Kaby_Lake_Y (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffcf#) = 16#5905# or
+      (Device_Id and 16#ffcf#) = 16#590e#);
+   function Is_Kaby_Lake_Y_AML (Device_Id : Word16) return Boolean is
+     (Device_Id = 16#591c# or Device_Id = 16#87c0#);
+   function Is_Kaby_Lake_U (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffcd#) = 16#5901# or
+      (Device_Id and 16#ffce#) = 16#5906#);
+   function Is_Kaby_Lake (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#ffc7#) = 16#5902# or
+      (Device_Id and 16#ffcf#) = 16#5908# or
+      (Device_Id and 16#ffcf#) = 16#590b# or
+      (Device_Id and 16#ffcf#) = 16#590d#);
+
+   function Is_Coffee_Lake_Y_AML (Device_Id : Word16) return Boolean is
+     (Device_Id = 16#87ca#);
+   -- Including Whiskey Lake:
+   function Is_Coffee_Lake_U (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#fff0#) = 16#3ea0#);
+   function Is_Coffee_Lake (Device_Id : Word16) return Boolean is
+     ((Device_Id and 16#fff0#) = 16#3e90#);
+
+   function Is_GPU (Device_Id : Word16; CPU : CPU_Type; CPU_Var : CPU_Variant)
+      return Boolean is
+     (case CPU is
+         when G45          => (Device_Id and 16#ff02#) = 16#2e02#,
+         when GM45         => (Device_Id and 16#fffe#) = 16#2a42#,
+         when Ironlake     => (Device_Id and 16#fff3#) = 16#0042#,
+         when Sandybridge  => (Device_Id and 16#ffc2#) = 16#0102#,
+         when Ivybridge    => (Device_Id and 16#ffc3#) = 16#0142#,
+         when Haswell      => (case CPU_Var is
+                                 when Normal => Is_Haswell (Device_Id),
+                                 when ULT    => Is_Haswell_U (Device_Id),
+                                 when ULX    => Is_Haswell_Y (Device_Id)),
+         when Broadwell    => (case CPU_Var is
+                                 when Normal => Is_Broadwell (Device_Id),
+                                 when ULT    => Is_Broadwell_U (Device_Id),
+                                 when ULX    => Is_Broadwell_Y (Device_Id)),
+         when Broxton      => (Device_Id and 16#fffe#) = 16#5a84#,
+         when Skylake      => (case CPU_Var is
+                                 when Normal => Is_Skylake (Device_Id),
+                                 when ULT    => Is_Skylake_U (Device_Id),
+                                 when ULX    => Is_Skylake_Y (Device_Id)),
+         when Kabylake     => (case CPU_Var is
+                                 when Normal =>
+                                    Is_Kaby_Lake (Device_Id) or
+                                    Is_Coffee_Lake (Device_Id),
+                                 when ULT    =>
+                                    Is_Kaby_Lake_U (Device_Id) or
+                                    Is_Coffee_Lake_U (Device_Id),
+                                 when ULX    =>
+                                    Is_Kaby_Lake_Y (Device_Id) or
+                                    Is_Kaby_Lake_Y_AML (Device_Id) or
+                                    Is_Coffee_Lake_Y_AML (Device_Id)));
+
+   function Compatible_GPU (Device_Id : Word16) return Boolean is
+     (Is_GPU (Device_Id, CPU, CPU_Var));
+
+   pragma Warnings (GNATprove, Off, "subprogram ""Detect_CPU"" has no effect",
+                    Reason => "only effective in dynamic cpu config");
+   procedure Detect_CPU (Device : Word16)<cpunull>;
+
+end HW.GFX.GMA.Config;

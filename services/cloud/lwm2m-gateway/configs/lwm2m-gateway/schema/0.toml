@@ -1,0 +1,166 @@
+[LWM2M.Object]
+Name = "LWM2M Security"
+Description1 = """
+This LwM2M Object provides the keying material of a LwM2M Client appropriate to access a specified LwM2M Server. One Object Instance SHOULD address a LwM2M Bootstrap-Server.
+These LwM2M Object Resources MUST only be changed by a LwM2M Bootstrap-Server or Bootstrap from Smartcard and MUST NOT be accessible by any other LwM2M Server."""
+ObjectID = 0
+ObjectURN = "urn:oma:lwm2m:oma:0"
+MultipleInstances = "Multiple"
+Mandatory = "Mandatory"
+Description2 = ""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "LWM2M  Server URI"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "String"
+RangeEnumeration = "0-255 bytes"
+Units = ""
+Description = "Uniquely identifies the LwM2M Server or LwM2M Bootstrap-Server. The format of the CoAP URI is defined in Section 6 of RFC 7252."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Bootstrap-Server"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Boolean"
+RangeEnumeration = ""
+Units = ""
+Description = "Determines if the current instance concerns a LwM2M Bootstrap-Server (true) or a standard LwM2M Server (false)"
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Security Mode"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Integer"
+RangeEnumeration = "0-4"
+Units = ""
+Description = """
+Determines which UDP payload security mode is used
+0: Pre-Shared Key mode
+1: Raw Public Key mode
+2: Certificate mode
+3: NoSec mode
+4: Certificate mode with EST"""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Public Key or Identity"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Opaque"
+RangeEnumeration = ""
+Units = ""
+Description = "Stores the LwM2M Client’s Certificate (Certificate mode), public key (RPK mode) or PSK Identity (PSK mode). The format is defined in Section E.1.1 of the LwM2M version 1.0 specification."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Server Public Key"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Opaque"
+RangeEnumeration = ""
+Units = ""
+Description = "Stores the LwM2M Server’s or LwM2M Bootstrap-Server’s Certificate (Certificate mode), public key (RPK mode). The format is defined in Section E.1.1 of the LwM2M version 1.0 specification."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Secret Key"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Opaque"
+RangeEnumeration = ""
+Units = ""
+Description = "Stores the secret key or private key of the security mode. The format of the keying material is defined by the security mode in Section E.1.1 of the LwM2M version 1.0 specification. This Resource MUST only be changed by a bootstrap-server and MUST NOT be readable by any server."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "SMS Security Mode"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = "0-255"
+Units = ""
+Description = """
+Determines which SMS security mode is used (see section 7.2 of the LwM2M version 1.0 specification)
+0: Reserved for future use
+1: DTLS mode (Device terminated) PSK mode assumed
+2: Secure Packet Structure mode (Smartcard terminated)
+3: NoSec mode
+4: Reserved mode (DTLS mode with multiplexing Security Association support)
+5-203 : Reserved for future use
+204-255: Proprietary modes"""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "SMS Binding Key Parameters"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Opaque"
+RangeEnumeration = "6 bytes"
+Units = ""
+Description = "Stores the KIc, KID, SPI and TAR. The format is defined in Section E.1.2 of the LwM2M version 1.0 specification."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "SMS Binding Secret Key(s)"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Opaque"
+RangeEnumeration = "16-32-48 bytes"
+Units = ""
+Description = """
+Stores the values of the key(s) for the SMS binding. 
+This resource MUST only be changed by a bootstrap-server and MUST NOT be readable by any server."""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "LwM2M Server SMS Number"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = """
+MSISDN used by the LwM2M Client to send messages to the LwM2M Server via the SMS binding. 
+The LwM2M Client SHALL silently ignore any SMS originated from unknown MSISDN"""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Short Server ID"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = "1-65534"
+Units = ""
+Description = """
+This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.
+This Resource MUST be set when the Bootstrap-Server Resource has false value.
+Specific ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server (Section 6.3 of the LwM2M version 1.0 specification)."""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Client Hold Off Time"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = "s"
+Description = """
+Relevant information for a Bootstrap-Server only.
+The number of seconds to wait before initiating a Client Initiated Bootstrap once the LwM2M Client has determined it should initiate this bootstrap mode.
+In case client initiated bootstrap is supported by the LwM2M Client, this resource MUST be supported."""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Bootstrap-Server Account Timeout"
+Operations = ""
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = "s"
+Description = """
+The LwM2M Client MUST purge the LwM2M Bootstrap-Server Account after the timeout value given by this resource. The lowest timeout value is 1.
+If the value is set to 0, or if this resource is not instantiated, the Bootstrap-Server Account lifetime is infinite."""

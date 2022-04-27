@@ -1,0 +1,1 @@
+**Platform lib for UkamaOS**

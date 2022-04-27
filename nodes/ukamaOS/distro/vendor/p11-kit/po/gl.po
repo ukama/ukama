@@ -1,0 +1,343 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Fran Diéguez <frandieguez@ubuntu.com>, 2012-2013
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-23 18:09+0000\n"
+"Last-Translator: Fran Diéguez <frandieguez@ubuntu.com>\n"
+"Language-Team: Galician (http://www.transifex.com/freedesktop/p11-kit/language/gl/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: gl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "Cancelouse a operación"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "Non hai memoria dispoñíbel dabondo"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "O ID do slot especificado non é válido"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "Erro interno"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "Operacción fallada"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "Argumentos non válidos"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "O módulo non pode crear os fíos necesarios"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "O módulo non pode bloquear os datos correctamente"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "O campo é de só lectura"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "O campo é sensíbel e non pode ser revelado"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "O campo non é válido ou non existe"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "Valor non válido para o campo"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "O dato non é válido ou non se recoñece"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "O dato é demasiado longo"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "Produciuse un erro no dispositivo"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "A memoria dispoñíbel no dispositivo non é suficiente"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "O dispositivo foi extraído ou desconectado"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "Os datos cifrados non son válidos ou non se recoñecen"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "Os datos cifrados son demasiado longos"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "Esta operación non se admite"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "Falta a chave ou non é válida"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "A chave ten un tamaño incorrecto"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "A chave é dun tipo incorrecto"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "Non se precisa chave"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "A chave é diferente da anterior"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "Precísase unha chave"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "Non é posíbel incluir a chave no digest"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "Esta operación non pode levarse a cabo con esta chave"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "A chave non pode envolverse"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "Non é posíbel exportar esta chave"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "O mecanismo de criptografía non é válido ou non se recoñece"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "O mecanismo de criptografía ten un argumento non válido"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "O obxecto falta ou non é válido"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "Xa se esta executando outra operación"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "Non se está levando a cabo outra operación"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "O contrasinal ou PIN é incorrecto"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "O contrasinal ou PIN non é válido"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "O contrasinal ou PIN ten unha lonxitude non válida"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "O contrasinal ou PIN expirou"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "O contrasinal ou PIN está bloqueado"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "A sesión está pechada"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "Demasiadas sesións activas"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "A sesión non é válida"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "A sesión é e só lectura"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "Existe unha sesión aberta"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "Existe unha sesión de só lectura"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "Existe unha sesión de administrador"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "A sinatura é mala ou está corrompida"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "A sinatura non se recoñece ou está corrompida"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "Faltan algúns campos requiridos"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "Certos campos teñen valores non válidos"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "O dispositivo non está presente ou non está conectado"
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "O dispositivo non é válido ou non está conectado"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "O dispositivo está protexido contra a escritura"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "Non é posíbel importar porque a chave non é válida"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "Non é posíbel importar a chave xa que ten un tamaño incorrecto"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "Non é posíbel importar porque a chave ten un tipo non válido"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "Xa ten unha sesión iniciada"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "Non hai usuarios coa sesión iniciada"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "O contrasinal ou PIN do usuario non está estabelecido"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "O usuario ten un tipo non válido"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "Xa hai outro usuario coa sesión iniciada"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "Hai varios usuarios de tipos diferentes coa sesión iniciada"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "Non é posíble importar unha chave non válida"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "Non é posíbel importar unha chave de tamaño incorrecto"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "Non é posíbel exportar a chave porque non é válida"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "Non é posíbel exportar a chave porque ten un tamaño incorrecto "
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "Non é posíbel exportar a chave porque é do tipo incorrecto"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "Non é posíbel inicializar o xerador de números aleatorios"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "Non hai ningún xerador de números aleatorios dispoñíbel"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "O mecanismo criptográfico ten un parámetro non válido"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "Non hai espazo dabondo para almacenar o resultado"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "O estado gardado non é válido"
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "A información é sensíbel e non pode revelarse"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "Non é posíbel gardar o estado"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "O módulo non foi inicializado"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "O módulo xa foi inicializado"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "Non é posíbel bloquear os datos"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "Non é posíbel bloquear os datos"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr "A solicitude foi rexeitada polo usuario"
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "Erro descoñecido"

@@ -1,0 +1,330 @@
+# Japanese messages for libidn.
+# Copyright (C) 2006 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn package.
+# GOTO Masanori <gotom@debian.or.jp>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn 0.5.16\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2006-03-21 11:20+0900\n"
+"Last-Translator: GOTO Masanori <gotom@debian.or.jp>\n"
+"Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=EUC-JP\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+
+#: lib/error.c:54
+#, fuzzy
+msgid "success"
+msgstr "成功"
+
+#: lib/error.c:56
+#, fuzzy
+msgid "out of memory"
+msgstr "メモリ確保に失敗"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr ""
+
+#: lib/error.c:60
+#, fuzzy
+msgid "could not convert string to UTF-8"
+msgstr "%sからUTF-8に変換できませんでした."
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr ""
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr ""
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr ""
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr ""
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr ""
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr ""
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr ""
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr ""
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr ""
+
+#: lib/error.c:80
+#, fuzzy
+msgid "string is not in Unicode NFC format"
+msgstr "UnicodeのNFKC正規化による出力文字列は等しくありません"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr ""
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr ""
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr ""
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr ""
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr ""
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr ""
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr ""
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr ""
+
+#: lib/error.c:98
+#, fuzzy
+msgid "string contains unassigned code point"
+msgstr "許されていない未割当てのコードポイントが入力にあります"
+
+#: lib/error.c:100
+#, fuzzy
+msgid "string has forbidden bi-directional properties"
+msgstr "双方向(bidirectional)性が入力中で衝突しています"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr ""
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "未知のエラー"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr ""
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr ""
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+
+#: src/idn2.c:217
+#, fuzzy, c-format
+msgid "Charset: %s\n"
+msgstr "文字セット`%s'.\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr "改行文字で終端された入力文字列を1行ずつタイプしてください.\n"
+
+#: src/idn2.c:252
+#, fuzzy
+msgid "input error"
+msgstr "入力エラー"
+
+#~ msgid "String preparation failed"
+#~ msgstr "文字列準備中で失敗"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Punycode操作中で失敗"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "入力中に数値/文字/ハイフン以外が存在"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "先頭または末尾にあるマイナス記号(`-')は許されていません"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "出力は大きすぎるか小さすぎる"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "入力はACE接頭辞(`xn--')で始まっていません"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "ToASCII操作による出力文字列は等しくありません"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "入力は既にACE接頭辞(`xn--')を含んでいます"
+
+#~ msgid "System iconv failed"
+#~ msgstr "システム関数iconvで失敗"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "システム関数dlopenで失敗"
+
+#~ msgid "Invalid input"
+#~ msgstr "不正な入力"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "出力は与えられたバッファ空間に収まりません"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "文字列長の限界を越えました"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "禁止コードポイントが入力にあります"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "不正な双方向(bidirectional)文字列"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "禁止双方向(bidirectional)コードポイントが入力にあります"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "stringprepプロファイル定義でエラー"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "フラグがプロファイルと衝突しています"
+
+#~ msgid "Unknown profile"
+#~ msgstr "未知のプロファイル"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Unicode正規化に失敗(内部エラー)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "トップレベルドメインによって禁止されたコードポイント"
+
+#~ msgid "Missing input"
+#~ msgstr "入力がありません"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "トップレベルドメインが入力中に発見できません"
+
+#~ msgid "Only one of -s, -e, -d, -a or -u can be specified."
+#~ msgstr "-s, -e, -d, -a, -uのいずれか1つだけが指定できます."
+
+#~ msgid "Could not convert from UTF-8 to UCS-4."
+#~ msgstr "UTF-8からUCS-4に変換できませんでした."
+
+#~ msgid "input[%d] = U+%04x\n"
+#~ msgstr "入力[%d] = U+%04x\n"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profile: %s"
+
+#~ msgid "output[%d] = U+%04x\n"
+#~ msgstr "出力[%d] = U+%04x\n"
+
+#~ msgid "Could not convert from UTF-8 to %s."
+#~ msgstr "UTF-8から%sに変換できませんでした."
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode: %s"
+
+#~ msgid "malloc"
+#~ msgstr "malloc"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode: %s"
+
+#~ msgid "Could not convert from UCS-4 to UTF-8."
+#~ msgstr "UCS-4からUTF-8に変換できませんでした."
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD): %s"
+
+#~ msgid "tld[%d] = U+%04x\n"
+#~ msgstr "tld[%d] = U+%04x\n"
+
+#~ msgid "tld_check_4z (position %d): %s"
+#~ msgstr "tld_check_4z (位置 %d): %s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z: %s"

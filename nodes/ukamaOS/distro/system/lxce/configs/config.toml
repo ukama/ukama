@@ -1,0 +1,17 @@
+# Config file for lxce.d
+
+[config]
+	local-accept = "4447"
+	local-ep     = "/lxce/"
+	wimc-host    = "localhost"
+	wimc-port    = "4448"
+	mesh-port    = "4449"
+	bridge-iface = "wlp3s0"
+	bridge-ip    = "192.168.0.1"
+	cSpace-configs = [
+		      "/conf/lxce/boot_contained.json",
+		      "/conf/lxce/service_contained.json",
+		      "/conf/lxce/shutdown_contained.json",
+	]
+
+#nothing here.

@@ -1,0 +1,65 @@
+[LWM2M.Object]
+Name = "Digital Output"
+Description1 = "Generic digital output for non-specific actuators"
+ObjectID = 3201
+ObjectURN = "urn:oma:lwm2m:ext:3201:1.1"
+LWM2MVersion = 1
+ObjectVersion = "1.1"
+MultipleInstances = "Multiple"
+Mandatory = "Optional"
+Description2 = ""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Digital Output State"
+ResourceID = 5550
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Boolean"
+RangeEnumeration = ""
+Units = ""
+Description = "The current state of a digital output."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Digital Output Polarity"
+ResourceID = 5551
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Boolean"
+RangeEnumeration = ""
+Units = ""
+Description = "The polarity of the digital output as a Boolean (False = Normal, True = Reversed)."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Application Type"
+ResourceID = 5750
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "The application type of the sensor or actuator as a string depending on the use case."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Timestamp"
+ResourceID = 5518
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Time"
+RangeEnumeration = ""
+Units = ""
+Description = "The timestamp of when the measurement was performed."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Fractional Timestamp"
+ResourceID = 6050
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = "0..1"
+Units = "s"
+Description = "Fractional part of the timestamp when sub-second precision is used (e.g., 0.23 for 230 ms)."

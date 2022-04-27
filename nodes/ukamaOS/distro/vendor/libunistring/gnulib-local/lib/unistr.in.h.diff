@@ -1,0 +1,28 @@
+*** unistr.in.h.orig	2009-12-24 23:21:27.000000000 +0100
+--- unistr.in.h	2009-12-25 02:04:40.000000000 +0100
+***************
+*** 20,29 ****
+  #include "unitypes.h"
+  
+  /* Get common macros for C.  */
+! #include "unused-parameter.h"
+  
+  /* Get bool.  */
+! #include <stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>
+--- 20,32 ----
+  #include "unitypes.h"
+  
+  /* Get common macros for C.  */
+! #include <unistring/cdefs.h>
+! 
+! /* Get inline if available.  */
+! #include <unistring/inline.h>
+  
+  /* Get bool.  */
+! #include <unistring/stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>

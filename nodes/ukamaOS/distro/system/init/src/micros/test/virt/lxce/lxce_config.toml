@@ -1,0 +1,13 @@
+# Config file for lxce.d
+
+[config]
+	local-accept = "4447"
+	local-ep     = "/lxce/"
+	wimc-host    = "localhost"
+	wimc-port    = "4448"
+	mesh-port    = "4449"
+	bridge-iface = "eth0"
+	cSpace-configs = [
+		      ]
+
+#nothing here.

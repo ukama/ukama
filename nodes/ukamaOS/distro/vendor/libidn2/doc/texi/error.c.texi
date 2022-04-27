@@ -1,0 +1,26 @@
+@subheading idn2_strerror
+@anchor{idn2_strerror}
+@deftypefun {const char *} {idn2_strerror} (int @var{rc})
+@var{rc}: return code from another libidn2 function.
+
+Convert internal libidn2 error code to a humanly readable string.
+The returned pointer must not be de-allocated by the caller.
+
+Return value: A humanly readable string describing error.
+@end deftypefun
+
+@subheading idn2_strerror_name
+@anchor{idn2_strerror_name}
+@deftypefun {const char *} {idn2_strerror_name} (int @var{rc})
+@var{rc}: return code from another libidn2 function.
+
+Convert internal libidn2 error code to a string corresponding to
+internal header file symbols.  For example,
+idn2_strerror_name(IDN2_MALLOC) will return the string
+"IDN2_MALLOC".
+
+The caller must not attempt to de-allocate the returned string.
+
+Return value: A string corresponding to error code symbol.
+@end deftypefun
+

@@ -1,0 +1,88 @@
+fcntl.lo: fcntl.c \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h \
+ ../config.h fcntl.h sys/types.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/types.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/endian.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/select.h \
+ sys/stat.h time.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/time.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/stat.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/stat.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/fcntl.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/fcntl.h \
+ unistd.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/unistd.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/posix.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h \
+ alloca.h getopt-cdefs.h getopt-pfx-core.h getopt-core.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h \
+ limits.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/limits.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/limits.h \
+ /home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdarg.h
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdc-predef.h:
+
+../config.h:
+
+fcntl.h:
+
+sys/types.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/types.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/features.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/alltypes.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/endian.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/select.h:
+
+sys/stat.h:
+
+time.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/time.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stddef.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/sys/stat.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/stat.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/fcntl.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/fcntl.h:
+
+unistd.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/unistd.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/posix.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdlib.h:
+
+alloca.h:
+
+getopt-cdefs.h:
+
+getopt-pfx-core.h:
+
+getopt-core.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/errno.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/errno.h:
+
+limits.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/limits.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/bits/limits.h:
+
+/home/vishal/cdrive/go/src/github.com/ukama/ukamaOS/distro/tools/musl-cross-make/output/arm-linux-musleabihf/include/stdarg.h:

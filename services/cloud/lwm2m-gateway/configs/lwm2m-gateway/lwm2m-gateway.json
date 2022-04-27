@@ -1,0 +1,21 @@
+{
+    "LogLevel": "debug",
+    "SchemaDir": "/etc/configs/lwm2m-gateway/schema/",
+    "DevConfigType": "json",
+    
+    "Msgbus": {
+        "address": "localhost",
+        "port": "5672"
+    },
+
+    "Lwm2mServer": {
+        "address": "localhost",
+        "port": "3000"
+    },
+
+    "Lwm2mGateway": {
+        "address": "localhost",
+        "port": "3100"
+    }
+
+}
