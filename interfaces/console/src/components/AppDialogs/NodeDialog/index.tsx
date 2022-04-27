@@ -122,11 +122,8 @@ const NodeDialog = ({
             setError("Please fill all require vields");
             return;
         }
-        if (action == "editNode") {
-            handleNodeSubmitAction(formData);
-        } else {
-            handleNodeSubmitAction(formData);
-        }
+
+        handleNodeSubmitAction(formData);
     };
 
     const handleNodeTypeChange = (e: SelectChangeEvent) =>
