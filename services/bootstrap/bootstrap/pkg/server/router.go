@@ -7,12 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/lookup"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/nmr"
-	"github.com/ukama/openIoR/services/common/rest"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/cmd/version"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/pkg"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/pkg/lookup"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/pkg/nmr"
+	"github.com/ukama/ukama/services/common/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/wI2L/fizz"
 )
 

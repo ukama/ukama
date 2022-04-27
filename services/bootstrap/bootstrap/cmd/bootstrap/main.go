@@ -6,17 +6,17 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ukama/openIoR/services/common/metrics"
+	"github.com/ukama/ukama/services/common/metrics"
 
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg"
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/pkg/server"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/pkg"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/pkg/server"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
 
-	"github.com/ukama/openIoR/services/bootstrap/bootstrap/cmd/version"
-	ccmd "github.com/ukama/openIoR/services/common/cmd"
+	"github.com/ukama/ukama/services/bootstrap/bootstrap/cmd/version"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/config"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var serviceConfig *pkg.Config

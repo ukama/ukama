@@ -1,10 +1,10 @@
-include ../../../config.mk
+include ../../config.mk
 
 .PHONY: build lint deps 
 
 build:
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukamaX/hub/hub/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/bootstrap cmd/bootstrap/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/services/bootstrap/bootstrap/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/bootstrap cmd/bootstrap/main.go
 
 test:
 	go test -v ./...

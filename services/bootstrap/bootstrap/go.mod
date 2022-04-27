@@ -1,18 +1,18 @@
-module github.com/ukama/openIoR/services/bootstrap/bootstrap
+module github.com/ukama/ukama/services/bootstrap/bootstrap
 
 go 1.17
 
-replace github.com/ukama/openIoR/services/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/openIoR/services/bootstrap/bootstrap => ./
+replace github.com/ukama/ukama/services/bootstrap/bootstrap => ./
 
 require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/loopfz/gadgeto v0.11.2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/ukama/openIoR/services/common v0.0.0-00010101000000-000000000000
-	github.com/wI2L/fizz v0.19.0
+	github.com/ukama/ukama/services/common v0.0.0-00010101000000-000000000000
+	github.com/wI2L/fizz v0.20.0
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect

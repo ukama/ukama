@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
 )
 
 const (
