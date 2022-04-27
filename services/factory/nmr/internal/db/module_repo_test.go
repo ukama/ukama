@@ -30,7 +30,7 @@ func Test_moduleRepo_GetModuleMfgStatus(t *testing.T) {
 			PSwVersion: "0.1",
 			MfgDate:    time.Now(),
 			MfgName:    "ukama",
-			Status:     "StatusLabelGenrated",
+			Status:     "StatusLabelGenerated",
 		}
 
 		var db *extsql.DB
@@ -138,7 +138,7 @@ func Test_moduleRepo_GetModule(t *testing.T) {
 			PSwVersion: "0.1",
 			MfgDate:    time.Now(),
 			MfgName:    "ukama",
-			Status:     "StatusLabelGenrated",
+			Status:     "StatusLabelGenerated",
 		}
 
 		var db *extsql.DB
@@ -291,7 +291,7 @@ func Test_moduleRepo_GetModuleList(t *testing.T) {
 			PSwVersion: "0.1",
 			MfgDate:    time.Now(),
 			MfgName:    "ukama",
-			Status:     "LabelGenrated",
+			Status:     "StatusLabelGenerated",
 		}
 
 		var db *extsql.DB

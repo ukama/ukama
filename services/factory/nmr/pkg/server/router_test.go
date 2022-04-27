@@ -16,8 +16,8 @@ import (
 	"github.com/ukama/ukama/services/factory/nmr/mocks"
 	"github.com/ukama/ukama/services/factory/nmr/pkg"
 
+	router "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/services/factory/nmr/internal/db"
-	"github.com/ukama/ukama/services/factory/nmr/pkg/router"
 )
 
 func init() {
@@ -38,7 +38,7 @@ func Test_RouterPing(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/ping", nil)
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -60,7 +60,7 @@ func NewNode(id string) *db.Node {
 		SwVersion:     "1.1",
 		OemName:       "ukama",
 		MfgTestStatus: "MfgTestStatusPending",
-		Status:        "StatusLabelGenrated",
+		Status:        "StatusLabelGenerated",
 	}
 }
 
@@ -73,7 +73,7 @@ func NewModule(id string) *db.Module {
 		Mac:        "00:01:02:03:04:05",
 		SwVersion:  "1.1",
 		MfgName:    "ukama",
-		Status:     "StatusLabelGenrated",
+		Status:     "StatusLabelGenerated",
 	}
 }
 
@@ -89,7 +89,7 @@ func Test_PutNode(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -116,7 +116,7 @@ func Test_GetNode(t *testing.T) {
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
-		rs := router.RouterServer{}
+		rs := router.ServiceRouter{}
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -143,7 +143,7 @@ func Test_DeleteNode(t *testing.T) {
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
-		rs := router.RouterServer{}
+		rs := router.ServiceRouter{}
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -162,7 +162,7 @@ func Test_DeleteNode(t *testing.T) {
 func Test_PutNodeStatus(t *testing.T) {
 	// Arrange
 	nodeId := "1001"
-	status := "StatusLabelGenrated"
+	status := "StatusLabelGenerated"
 
 	url := "/node/status?node=" + nodeId + "&looking_to=update&status=" + status
 	w := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func Test_PutNodeStatus(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -191,7 +191,7 @@ func Test_GetNodeStatus(t *testing.T) {
 	t.Run("Read node status", func(t *testing.T) {
 		// Arrange
 		nodeId := "1001"
-		status := db.StatusLabelGenrated
+		status := db.StatusLabelGenerated
 
 		url := "/node/status?node=" + nodeId + "&looking_for=*"
 
@@ -202,7 +202,7 @@ func Test_GetNodeStatus(t *testing.T) {
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
-		rs := router.RouterServer{}
+		rs := router.ServiceRouter{}
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -231,7 +231,7 @@ func Test_PutNodeMfgTestStatus(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -257,7 +257,7 @@ func Test_PutNodeMfgTestStatusFail(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -284,7 +284,7 @@ func Test_PutNodeMfgTestStatusFail2(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -316,7 +316,7 @@ func Test_GetNodeMfgTestStatus(t *testing.T) {
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
-		rs := router.RouterServer{}
+		rs := router.ServiceRouter{}
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -344,7 +344,7 @@ func Test_PutModule(t *testing.T) {
 		Mac:        "00:01:02:03:04:05",
 		SwVersion:  "1.1",
 		MfgName:    "ukama",
-		Status:     "StatusLabelGenrated",
+		Status:     "StatusLabelGenerated",
 		UnitID:     "0001",
 	}
 	url := "/module/?module=" + moduleId + "&looking_to=update"
@@ -355,7 +355,7 @@ func Test_PutModule(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -380,7 +380,7 @@ func Test_GetModule(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -406,7 +406,7 @@ func Test_DeleteModule(t *testing.T) {
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
-		rs := router.RouterServer{}
+		rs := router.ServiceRouter{}
 
 		r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -434,7 +434,7 @@ func Test_PutAssignModule(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -451,7 +451,7 @@ func Test_PutAssignModule(t *testing.T) {
 func Test_PutModuleMfgStatus(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
-	status := "StatusLabelGenrated"
+	status := "StatusLabelGenerated"
 
 	url := "/module/status?module=" + moduleId + "&looking_to=update&status=" + status
 
@@ -460,7 +460,7 @@ func Test_PutModuleMfgStatus(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -489,7 +489,7 @@ func Test_PutModuleMfgStatusFail(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -515,8 +515,7 @@ func Test_GetModuleMfgStatus(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
-
+	rs := router.ServiceRouter{}
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
 	moduleRepo.On("GetModuleMfgStatus", moduleId).Return(&status, nil)
@@ -544,7 +543,7 @@ func Test_PutModuleMfgField(t *testing.T) {
 
 			nodeRepo := mocks.NodeRepo{}
 			moduleRepo := mocks.ModuleRepo{}
-			rs := router.RouterServer{}
+			rs := router.ServiceRouter{}
 
 			r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -629,7 +628,7 @@ func Test_GetModuleMfgField(t *testing.T) {
 
 			nodeRepo := mocks.NodeRepo{}
 			moduleRepo := mocks.ModuleRepo{}
-			rs := router.RouterServer{}
+			rs := router.ServiceRouter{}
 
 			r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 
@@ -656,7 +655,7 @@ func Test_DeleteBootstrapCerts(t *testing.T) {
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
-	rs := router.RouterServer{}
+	rs := router.ServiceRouter{}
 
 	r := NewRouter(defaultCongif, &rs, &nodeRepo, &moduleRepo).fizz.Engine()
 

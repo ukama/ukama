@@ -57,8 +57,8 @@ func Test_nodeRepo_GetNodeStatus(t *testing.T) {
 			PSwVersion:    "0.1",
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
-			MfgTestStatus: "Pending",
-			Status:        "StatusLabelGenrated",
+			MfgTestStatus: "MfgTestStatusPending",
+			Status:        "StatusLabelGenerated",
 		}
 
 		var db *extsql.DB
@@ -123,7 +123,7 @@ func Test_nodeRepo_GetNode(t *testing.T) {
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
 			MfgTestStatus: "MfgTestStatusPending",
-			Status:        "StatusLabelGenrated",
+			Status:        "StatusLabelGenerated",
 		}
 
 		module := intDb.Module{
@@ -300,7 +300,7 @@ func Test_nodeRepo_GetNodeList(t *testing.T) {
 			AssemblyDate:  time.Now(),
 			OemName:       "ukama",
 			MfgTestStatus: "MfgTestStatusPending",
-			Status:        "StatusLabelGenrated",
+			Status:        "StatusLabelGenerated",
 		}
 
 		module := intDb.Module{
