@@ -27,14 +27,13 @@
 /*
  * decode a u_map into a string
  */
-
 static char *print_map(const struct _u_map * map) {
 
   char * line, * to_return = NULL;
   const char **keys, * value;
-  
+
   int len, i;
-  
+
   if (map != NULL) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
@@ -61,8 +60,8 @@ static char *print_map(const struct _u_map * map) {
   }
 }
 
-/* 
- * log_request -- log various parameters for the incoming request. 
+/*
+ * log_request -- log various parameters for the incoming request
  *
  */
 static void log_request(const struct _u_request *request) {
@@ -202,14 +201,14 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
       *pattern = (Pattern *)calloc(1, sizeof(Pattern));
       if (*pattern == NULL) {
       	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	      goto failure;
+	goto failure;
       }
       ptr = *pattern;
     } else {
       ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
       if (ptr->next == NULL) {
-	      log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	      goto failure;
+	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	goto failure;
       }
       ptr = ptr->next;
     }
@@ -288,7 +287,7 @@ int callback_post_route(const struct _u_request *request,
   router = (Router *)userData;
 
   log_request(request);
-  
+
   /* get json body */
   jreq = ulfius_get_json_body_request(request, &jerr);
   if (!jreq) {
@@ -560,7 +559,7 @@ int callback_service(const struct _u_request *request,
 }
 
 /*
- * callback_not_allowed -- 
+ * callback_not_allowed --
  *
  */
 int callback_not_allowed(const struct _u_request *request,

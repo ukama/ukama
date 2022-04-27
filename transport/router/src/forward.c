@@ -35,7 +35,7 @@ static req_t *init_forward_request(char *host, int port, char *method,
     return NULL;
   }
 
-  sprintf(url, "http://%s:%d/%s", host, port, ep);
+  sprintf(url, "http://%s:%d", host, port);
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;
@@ -118,9 +118,9 @@ int valid_forward_route(char *host, int port) {
 
   if (curl) {
 
-    sprintf(url, "http://%s:%d", host, port);
+    sprintf(url, "http://%s:%d/ping", host, port);
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L); /* 2 second timeout */
 
     response = curl_easy_perform(curl);

@@ -120,6 +120,24 @@ int callback_service(const req_t *request, resp_t *response, void *userData) {
   return U_CALLBACK_CONTINUE;
 }
 
+/* Callback function for /ping
+ *
+ */
+int callback_ping(const req_t *request, resp_t *response, void *userData) {
+
+  char *str;
+  char buffer[MAX_LEN] = {0};
+
+  print_request(request);
+  str = (char *)userData;
+
+  sprintf(buffer, "%s: %s\n", request->http_verb, str);
+
+  ulfius_set_string_body_response(response, 200, buffer);
+
+  return U_CALLBACK_CONTINUE;
+}
+
 /*
  * response_callback --
  */
@@ -344,6 +362,10 @@ int main(int argc, char **argv) {
                              &callback_service, (void *)reply);
   ulfius_add_endpoint_by_val(&inst, "DELETE", "/service", NULL, 0,
                              &callback_service, (void *)reply);
+
+  /* /ping */
+  ulfius_add_endpoint_by_val(&inst, "GET", "/ping", NULL, 0,
+                             &callback_ping, "pong");
 
   /* setup default. */
   ulfius_set_default_endpoint(&inst, &callback_default, name);
