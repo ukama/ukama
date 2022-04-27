@@ -5,14 +5,14 @@ name: build-cli
 on:  
   push:   
     paths:
-        - "cli/**"
+        - "interfaces/cli/**"
         - ".github/workflows/cli.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: cli
+      working-directory: interfaces/cli
 
     name: build and test
     runs-on: ubuntu-latest    
