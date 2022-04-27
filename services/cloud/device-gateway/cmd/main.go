@@ -11,8 +11,8 @@ import (
 	"github.com/ukama/ukama/services/cloud/device-gateway/cmd/version"
 	gen "github.com/ukama/ukama/services/cloud/device-gateway/pb/gen"
 	"github.com/ukama/ukama/services/cloud/device-gateway/pkg"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

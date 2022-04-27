@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/registry/mocks"
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 )
 
 var testDeviceGatewayHost = "127.2.0.1"

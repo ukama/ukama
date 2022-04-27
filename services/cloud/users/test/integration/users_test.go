@@ -6,7 +6,7 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"testing"
 	"time"
 

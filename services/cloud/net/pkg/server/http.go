@@ -12,8 +12,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/rest"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

@@ -2,10 +2,11 @@ package bootstrap
 
 import (
 	"fmt"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 )
 
 type Client interface {

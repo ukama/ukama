@@ -8,8 +8,8 @@ import (
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/rest"
 
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var svcConf = pkg.NewConfig()

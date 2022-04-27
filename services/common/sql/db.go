@@ -4,18 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
 	wrp "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"os"
-	"time"
 )
+
 const PGERROR_CODE_UNIQUE_VIOLATION = "23505"
 
 type db struct {
@@ -24,7 +26,7 @@ type db struct {
 	dbConfig  config.Database
 }
 
-// would be better to seaprate migration logic from actuall ORM 
+// would be better to seaprate migration logic from actuall ORM
 type Db interface {
 	GetGormDb() *gorm.DB
 	Init(model ...interface{}) error
@@ -41,7 +43,6 @@ func NewDb(dbConfig config.Database, debugMode bool) Db {
 	}
 }
 
- 
 func NewDbFromGorm(gormDb *gorm.DB, debugMode bool) Db {
 	return &db{
 		DebugMode: debugMode,
@@ -49,9 +50,8 @@ func NewDbFromGorm(gormDb *gorm.DB, debugMode bool) Db {
 	}
 }
 
-
 func (d *db) GetGormDb() *gorm.DB {
-	if d.gorm == nil{
+	if d.gorm == nil {
 		panic("Database is not connected. Make sure you call Connect() first")
 	}
 	return d.gorm
@@ -165,7 +165,7 @@ func IsNotFoundError(err error) bool {
 	return errors.Is(err, gorm.ErrRecordNotFound)
 }
 
-func IsDuplicateKeyError(err error) (bool) {
+func IsDuplicateKeyError(err error) bool {
 	var pge *pgconn.PgError
 	if errors.As(err, &pge) {
 		return pge.Code == PGERROR_CODE_UNIQUE_VIOLATION
@@ -201,7 +201,7 @@ func (d *db) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nested
 // ExecuteInTransaction executes dbOperation in transaction with all nested functions
 // if any of nested function returns error then transaction is rolled back
 // all nested functions receive transaction as parameter
-func (d *db)  ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error){
+func (d *db) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error) {
 	return d.gorm.Transaction(func(tx *gorm.DB) error {
 		d := dbOperation(tx)
 

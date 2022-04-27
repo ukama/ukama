@@ -11,13 +11,13 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"

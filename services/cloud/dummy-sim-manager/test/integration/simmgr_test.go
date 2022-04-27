@@ -6,7 +6,7 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"

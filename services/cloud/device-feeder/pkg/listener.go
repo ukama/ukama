@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/metrics"
-	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 )
 

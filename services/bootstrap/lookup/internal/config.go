@@ -1,6 +1,6 @@
 package internal
 
-import "github.com/ukama/ukamaX/common/config"
+import "github.com/ukama/ukama/services/common/config"
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`

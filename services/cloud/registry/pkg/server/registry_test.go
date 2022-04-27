@@ -12,7 +12,7 @@ import (
 	uuid2 "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")

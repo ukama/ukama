@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ukama/ukamaX/common/metrics"
+	"github.com/ukama/ukama/services/common/metrics"
 
 	"github.com/ukama/ukamaX/hub/distributor/pkg"
 	"github.com/ukama/ukamaX/hub/distributor/pkg/distribution"
@@ -15,8 +15,8 @@ import (
 	"github.com/ukama/ukamaX/hub/distributor/cmd/version"
 
 	"github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var serviceConfig *pkg.Config

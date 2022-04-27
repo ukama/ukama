@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"testing"

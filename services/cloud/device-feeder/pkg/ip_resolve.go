@@ -8,7 +8,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc"
 )
 

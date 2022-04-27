@@ -2,17 +2,18 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/ukama"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/ukama"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type Device5xxServerError struct {

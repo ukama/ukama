@@ -4,9 +4,10 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

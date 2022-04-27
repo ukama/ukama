@@ -15,13 +15,13 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
+	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.27.1
 	gorm.io/gorm v1.21.15
 )
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
 replace github.com/ukama/ukama/services/cloud/registry => ./
 

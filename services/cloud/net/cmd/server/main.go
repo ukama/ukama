@@ -11,10 +11,10 @@ import (
 	"github.com/ukama/ukama/services/cloud/net/cmd/version"
 
 	dnspb "github.com/coredns/coredns/pb"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/metrics"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/metrics"
 	"google.golang.org/grpc"
 )
 
