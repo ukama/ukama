@@ -15,7 +15,7 @@ require (
 	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220422163321-18f195cf8dfa
 	github.com/ukama/ukamaX/common v0.0.0-20220422163321-18f195cf8dfa
 	github.com/wagslane/go-rabbitmq v0.7.0
-	google.golang.org/grpc v1.45.0
+	google.golang.org/grpc v1.46.0
 )
 
 require (
@@ -46,8 +46,8 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
@@ -59,3 +59,7 @@ require (
 replace github.com/ukama/ukama/services/cloud/device-feeder => ./
 
 replace github.com/ukama/ukama/services/cloud/device-feeder/mocks => ./mocks
+
+replace github.com/ukama/ukama/services/cloud/registry => ../registry
+
+replace github.com/ukama/ukama/services/cloud/net => ../net
