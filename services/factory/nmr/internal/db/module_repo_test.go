@@ -10,8 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
-	intDb "github.com/ukama/openIoR/services/factory/nmr/internal/db"
+	"github.com/ukama/ukama/services/factory/nmr/internal/db"
+	intDb "github.com/ukama/ukama/services/factory/nmr/internal/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm/clause"
 )
 

@@ -2,8 +2,8 @@ package pkg
 
 import (
 	cors "github.com/gin-contrib/cors"
-	"github.com/ukama/openIoR/services/common/config"
-	"github.com/ukama/openIoR/services/common/rest"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/rest"
 )
 
 type Config struct {

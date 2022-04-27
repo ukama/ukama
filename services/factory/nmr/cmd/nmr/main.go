@@ -6,18 +6,18 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/ukama/openIoR/services/common/metrics"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
-	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg/server"
+	"github.com/ukama/ukama/services/common/metrics"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/factory/nmr/internal/db"
+	"github.com/ukama/ukama/services/factory/nmr/pkg"
+	"github.com/ukama/ukama/services/factory/nmr/pkg/server"
 
-	ccmd "github.com/ukama/openIoR/services/common/cmd"
-	"github.com/ukama/openIoR/services/common/sql"
-	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/services/factory/nmr/cmd/version"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/config"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 var serviceConfig *pkg.Config

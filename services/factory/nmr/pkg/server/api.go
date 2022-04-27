@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
+	"github.com/ukama/ukama/services/factory/nmr/internal/db"
 )
 
 type ReqAddOrUpdateNode struct {

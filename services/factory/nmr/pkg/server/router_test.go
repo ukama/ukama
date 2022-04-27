@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/ukama/openIoR/services/common/rest"
-	"github.com/ukama/openIoR/services/factory/nmr/mocks"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/factory/nmr/mocks"
+	"github.com/ukama/ukama/services/factory/nmr/pkg"
 
-	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg/router"
+	"github.com/ukama/ukama/services/factory/nmr/internal/db"
+	"github.com/ukama/ukama/services/factory/nmr/pkg/router"
 )
 
 func init() {

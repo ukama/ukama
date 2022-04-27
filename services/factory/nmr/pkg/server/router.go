@@ -13,11 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/rest"
-	sr "github.com/ukama/openIoR/services/common/srvcrouter"
-	"github.com/ukama/openIoR/services/factory/nmr/cmd/version"
-	"github.com/ukama/openIoR/services/factory/nmr/internal/db"
-	"github.com/ukama/openIoR/services/factory/nmr/pkg"
+	"github.com/ukama/ukama/services/common/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/factory/nmr/cmd/version"
+	"github.com/ukama/ukama/services/factory/nmr/internal/db"
+	"github.com/ukama/ukama/services/factory/nmr/pkg"
 	"github.com/wI2L/fizz"
 )
 

@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm/clause"
 )
 
