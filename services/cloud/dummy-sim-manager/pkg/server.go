@@ -3,12 +3,14 @@ package pkg
 import (
 	"context"
 	"encoding/json"
+	"math/rand"
+	"strings"
+
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
+	"github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"strings"
 )
 
 type SimManagerServer struct {
@@ -166,6 +168,20 @@ func (s SimManagerServer) TerminateSim(ctx context.Context, request *simmgr.Term
 		return nil, status.Errorf(codes.Internal, "Cannot delete sim info from etcd: %v", err)
 	}
 	return &simmgr.TerminateSimResponse{}, nil
+}
+
+func (s SimManagerServer) GetUsage(ctx context.Context, request *simmgr.GetUsageRequest) (*simmgr.GetUsageResponse, error) {
+
+	sim := s.getSimInfo(ctx, request.Iccid)
+	if sim == nil {
+		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+	}
+	total := int64(1024 * 1024)
+
+	return &simmgr.GetUsageResponse{
+		DataUsageInBytes: rand.Int63n(total),
+		DataTotalInBytes: total,
+	}, nil
 }
 
 func getEtcdKey(key string) string {
