@@ -51,7 +51,7 @@ So that Router service know when and where to reach service.
 */
 type ServiceApiIf struct {
 	Name string  `json:"name"`
-	P    Pattern `json:"pattern"`
+	P    []Route `json:"patterns"`
 	F    Forward `json:"forward"`
 }
 

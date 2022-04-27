@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	RoutesExt   = "/route"
+	RoutesExt   = "/routes"
 	PatternExt  = "/pattern"
 	ServicesExt = "/service"
 	APIExt      = "/api"
@@ -32,6 +32,7 @@ func NewServiceRouter(path string) *ServiceRouter {
 		C:   c,
 		Url: url,
 	}
+
 	logrus.Tracef("Client created %+v for %s ", rs, rs.Url.String())
 	return rs
 }
@@ -46,12 +47,12 @@ func (r *ServiceRouter) RegisterService(apiIf config.ServiceApiIf) error {
 	logrus.Tracef("Requesting service router %s to add pattern %s for service.", (r.Url.String() + RoutesExt), string(j))
 	resp, err := r.C.R().SetHeader("Content-Type", "application/json").SetBody(j).Post((r.Url.String() + RoutesExt))
 	if err != nil {
-		logrus.Errorf("Failed to resgister service to service router. Error %s", err.Error())
+		logrus.Errorf("Failed to register service to service router. Error %s", err.Error())
 		return err
 	}
 
 	if resp.IsSuccess() {
-		logrus.Errorf("Service registered to service router. Response code %d", resp.StatusCode())
+		logrus.Infof("Service registered to service router. Response code %d", resp.StatusCode())
 	} else {
 		logrus.Errorf("Service failed to register itself to service router. Response code %d", resp.StatusCode())
 	}
