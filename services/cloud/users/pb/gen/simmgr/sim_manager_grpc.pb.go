@@ -22,11 +22,15 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimManagerServiceClient interface {
-	SetServiceStatus(ctx context.Context, in *SetServiceStatusRequest, opts ...grpc.CallOption) (*SetServiceStatusResponse, error)
+	// Get status of Data, Voice, SMS sevices(enabeld/disabled) for a sim
 	GetSimStatus(ctx context.Context, in *GetSimStatusRequest, opts ...grpc.CallOption) (*GetSimStatusResponse, error)
+	// Enable or disable Data, Voice, SMS services for a sim
+	SetServiceStatus(ctx context.Context, in *SetServiceStatusRequest, opts ...grpc.CallOption) (*SetServiceStatusResponse, error)
+	// GetSimInfo returns an IMSI for an ICCID
 	GetSimInfo(ctx context.Context, in *GetSimInfoRequest, opts ...grpc.CallOption) (*GetSimInfoResponse, error)
 	// Terminates sim card permanently
 	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
+	// Get usage data for a sim card
 	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
 }
 
@@ -38,18 +42,18 @@ func NewSimManagerServiceClient(cc grpc.ClientConnInterface) SimManagerServiceCl
 	return &simManagerServiceClient{cc}
 }
 
-func (c *simManagerServiceClient) SetServiceStatus(ctx context.Context, in *SetServiceStatusRequest, opts ...grpc.CallOption) (*SetServiceStatusResponse, error) {
-	out := new(SetServiceStatusResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/SetServiceStatus", in, out, opts...)
+func (c *simManagerServiceClient) GetSimStatus(ctx context.Context, in *GetSimStatusRequest, opts ...grpc.CallOption) (*GetSimStatusResponse, error) {
+	out := new(GetSimStatusResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *simManagerServiceClient) GetSimStatus(ctx context.Context, in *GetSimStatusRequest, opts ...grpc.CallOption) (*GetSimStatusResponse, error) {
-	out := new(GetSimStatusResponse)
-	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetSimStatus", in, out, opts...)
+func (c *simManagerServiceClient) SetServiceStatus(ctx context.Context, in *SetServiceStatusRequest, opts ...grpc.CallOption) (*SetServiceStatusResponse, error) {
+	out := new(SetServiceStatusResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/SetServiceStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,11 +91,15 @@ func (c *simManagerServiceClient) GetUsage(ctx context.Context, in *GetUsageRequ
 // All implementations must embed UnimplementedSimManagerServiceServer
 // for forward compatibility
 type SimManagerServiceServer interface {
-	SetServiceStatus(context.Context, *SetServiceStatusRequest) (*SetServiceStatusResponse, error)
+	// Get status of Data, Voice, SMS sevices(enabeld/disabled) for a sim
 	GetSimStatus(context.Context, *GetSimStatusRequest) (*GetSimStatusResponse, error)
+	// Enable or disable Data, Voice, SMS services for a sim
+	SetServiceStatus(context.Context, *SetServiceStatusRequest) (*SetServiceStatusResponse, error)
+	// GetSimInfo returns an IMSI for an ICCID
 	GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error)
 	// Terminates sim card permanently
 	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
+	// Get usage data for a sim card
 	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
@@ -100,11 +108,11 @@ type SimManagerServiceServer interface {
 type UnimplementedSimManagerServiceServer struct {
 }
 
-func (UnimplementedSimManagerServiceServer) SetServiceStatus(context.Context, *SetServiceStatusRequest) (*SetServiceStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetServiceStatus not implemented")
-}
 func (UnimplementedSimManagerServiceServer) GetSimStatus(context.Context, *GetSimStatusRequest) (*GetSimStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimStatus not implemented")
+}
+func (UnimplementedSimManagerServiceServer) SetServiceStatus(context.Context, *SetServiceStatusRequest) (*SetServiceStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetServiceStatus not implemented")
 }
 func (UnimplementedSimManagerServiceServer) GetSimInfo(context.Context, *GetSimInfoRequest) (*GetSimInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSimInfo not implemented")
@@ -128,24 +136,6 @@ func RegisterSimManagerServiceServer(s grpc.ServiceRegistrar, srv SimManagerServ
 	s.RegisterService(&SimManagerService_ServiceDesc, srv)
 }
 
-func _SimManagerService_SetServiceStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetServiceStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).SetServiceStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.sim_manager.v1.SimManagerService/SetServiceStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).SetServiceStatus(ctx, req.(*SetServiceStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SimManagerService_GetSimStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSimStatusRequest)
 	if err := dec(in); err != nil {
@@ -160,6 +150,24 @@ func _SimManagerService_GetSimStatus_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetSimStatus(ctx, req.(*GetSimStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_SetServiceStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetServiceStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).SetServiceStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/SetServiceStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).SetServiceStatus(ctx, req.(*SetServiceStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -226,12 +234,12 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SimManagerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SetServiceStatus",
-			Handler:    _SimManagerService_SetServiceStatus_Handler,
-		},
-		{
 			MethodName: "GetSimStatus",
 			Handler:    _SimManagerService_GetSimStatus_Handler,
+		},
+		{
+			MethodName: "SetServiceStatus",
+			Handler:    _SimManagerService_SetServiceStatus_Handler,
 		},
 		{
 			MethodName: "GetSimInfo",
