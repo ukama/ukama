@@ -13,7 +13,7 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/rest/swagger"
+	"github.com/ukama/ukama/services/common/rest/swagger"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
@@ -52,6 +52,7 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 	m.UseWithoutExposingEndpoint(g)
 
 	tonic.SetErrorHook(errorHook)
+	tonic.SetRenderHook(renderHook, jsonContentType[0])
 
 	f := fizz.NewFromEngine(g)
 	f.GET("/ping", nil, tonic.Handler(func(c *gin.Context) (*PingResponse, error) {
@@ -106,4 +107,29 @@ func errorHook(c *gin.Context, e error) (int, interface{}) {
 	}
 
 	return errcode, gin.H{`error`: errpl}
+}
+
+// renderHook is identical to default renderHook from gin except it renders filds that are ommited
+func renderHook(c *gin.Context, statusCode int, payload interface{}) {
+	var status int
+
+	// This is a tricky part.
+	// We need to be able to set the status in toni.Handeler for cases when it's not default
+	// Here is how it done in defaul gin renderHook https://github.com/loopfz/gadgeto/blob/c4f8b2f64586099b9b281cbe99aa2f8b05e7d8b0/tonic/tonic.go#L111
+	// but this does not work because here c.Writer.Written() is always false
+	// We have to realy on default status from Gin taht is always 200 for no reason
+	if c.Writer.Status() != 200 {
+		status = c.Writer.Status()
+	} else {
+		status = statusCode
+	}
+	if payload != nil {
+		if gin.IsDebugging() {
+			c.Render(status, ExtJson{Data: payload, Indent: true})
+		} else {
+			c.Render(status, ExtJson{Data: payload})
+		}
+	} else {
+		c.String(status, "")
+	}
 }

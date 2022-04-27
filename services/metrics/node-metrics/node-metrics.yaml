@@ -1,0 +1,12 @@
+# default config for node metrics
+server:
+  port: 8180
+debugMode: true
+nodeMetrics:
+  metricsServer: "http://localhost:8080"
+  metrics:
+    cpu: { needRate: true, metric: trx_soc_cpu_usage }
+    memory: { needRate: true, metric: trx_memory_ddr_used, rateInterval: 5m }
+    uptime: { needRate: false, metric: trx_generic_system_uptime_seconds }
+
+

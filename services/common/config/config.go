@@ -120,3 +120,14 @@ func DefaultMetrics() *Metrics {
 		Port:    10250,
 	}
 }
+
+func DefaultDatabase() Database {
+	return Database{
+		Host:       "localhost",
+		Password:   "Pass2020!",
+		DbName:     "registry",
+		Username:   "postgres",
+		Port:       5432,
+		SslEnabled: false,
+	}
+}

@@ -1,0 +1,401 @@
+# Simplified Chinese translation for libidn2
+# Copyright (C) 2008 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Meng Jie <zuxyhere@eastday.com>, 2005.
+# Ji ZhengYu <zhengyuji@gmail.com>, 2011, 2012.
+# Boyuan Yang <073plan@gmail.com>, 2020, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-05-13 17:39-0400\n"
+"Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
+"Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"X-Generator: Poedit 2.4.2\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "成功"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "内存耗尽"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "无法确定区域（locale）编码格式"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "无法将字符串转为 UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "字符串编码错误"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "无法对字符串进行 NFC 标准化"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "字符串包含无效的国际化域名编码（punycode）数据"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "国际化域名编码（punycode）数据将会过长"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "国际化域名编码（punycode）转换导致了溢出"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "域名长度超过 255 字符"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "域标签长度超过 63 字符"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "输入 A-label 无效"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "输入 A-label 和 U-label 不匹配"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "字符串未使用 Unicode NFC 格式"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "字符串包含了被禁止使用的双连字符模式"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "字符串的起始部分或终结束部分为被禁止使用的连字符"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "字符串包含了禁止使用的起始部分合并字符"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "字符串包含了不允许的字符"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "字符串包含了禁止使用的 context-j 字符"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "字符串包含带空规则（null rule）的 context-j 字符"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "字符串包含了禁止使用的 context-o 字符"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "字符串包含带空规则（null rule）的 context-o 字符"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "字符串包含未分配的码点"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "字符串含有禁止使用的双向属性"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "域标签含有被禁止使用的点（TR46）"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "域标签含有过渡模式（TR46）禁止使用的字符"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr "域标签含有非过渡模式（TR46）禁止使用的字符"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "A-label roundtrip 失败"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "未知错误"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "尝试用‘%s --help’获取更多信息。\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "用法: %s [选项]... [字符串]...\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr "国际化域名（IDNA2008）转换给定的字符串或标准输入的内容。\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Libidn2 实现的 IDNA2008 的命令行界面。\n"
+"\n"
+"所有的字符串都应以您所在区域的最合适的字符集进行编码。\n"
+"\n"
+"如需处理一个以连字符（“-”）起始的字符串，例如“-foo”，请使用\n"
+"“--”指示参数的结束位置，例如“idn2 --quiet -- -foo”。\n"
+"\n"
+"长选项所必需的参数对于短选项来说也是必需的。\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help               打印此帮助并退出\n"
+"  -V, --version            打印程序版本并退出\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              解码（punycode）域名\n"
+"  -l, --lookup              查找域名（默认）\n"
+"  -r, --register            记录标签\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               启用 TR46 过渡处理\n"
+"  -N, --tr46nt              启用 TR46 非过渡处理\n"
+"      --no-tr46             禁用 TR46 处理\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   启用 STD3 ASCII 规则\n"
+"      --no-alabelroundtrip  查找时禁用 A-label roundtrip\n"
+"      --debug               打印调试信息\n"
+"      --quiet               处理时不显示信息\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "字符集：%s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr "输入时，每个字符串单占一行。\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "输入错误"
+
+#~ msgid "String preparation failed"
+#~ msgstr "预备字符串失败"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Punycode 失败"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "输入中出现非数字/字母/连字符"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "不能使用‘-’作为起始或终止符"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "输出太大或太小"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "输入未以 ACE 前缀(‘xn--’)开头"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "ToASCII 中字符串不是幂等的"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "输入已经包含 ACE前缀(‘xn--’)"
+
+#~ msgid "System iconv failed"
+#~ msgstr "系统 iconv 失败"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "系统 dlopen 失败"
+
+#~ msgid "Invalid input"
+#~ msgstr "无效输入"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "输入将溢出所提供的缓冲区"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "字符串大小越界"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "输入中不能出现代码点"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "双向字符串格式错误"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "输入中不能出现双向的代码点"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "Stringpref 配置文件定义出错"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "标识与配置文件冲突"
+
+#~ msgid "Unknown profile"
+#~ msgstr "未知的配置文件"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Unicode 正规化失败(内部错误)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "顶级域不接受代码点"
+
+#~ msgid "Missing input"
+#~ msgstr "输入缺失"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "输入中未发现顶级域"
+
+#~ msgid ""
+#~ "  -s, --stringprep         Prepare string according to nameprep profile\n"
+#~ "  -d, --punycode-decode    Decode Punycode\n"
+#~ "  -e, --punycode-encode    Encode Punycode\n"
+#~ "  -a, --idna-to-ascii      Convert to ACE according to IDNA (default "
+#~ "mode)\n"
+#~ "  -u, --idna-to-unicode    Convert from ACE according to IDNA\n"
+#~ msgstr ""
+#~ "  -s, --stringprep         按 nameprep 配置文件 准备字符串\n"
+#~ "  -d, --punycode-decode    解码 Punycode\n"
+#~ "  -e, --punycode-encode    编码 Punycode\n"
+#~ "  -a, --idna-to-ascii      按 IDNA 转换为 ACE (默认方式)\n"
+#~ "  -u, --idna-to-unicode    按 IDNA 从 ACE 转换\n"
+
+#~ msgid ""
+#~ "      --allow-unassigned   Toggle IDNA AllowUnassigned flag (default "
+#~ "off)\n"
+#~ "      --usestd3asciirules  Toggle IDNA UseSTD3ASCIIRules flag (default "
+#~ "off)\n"
+#~ msgstr ""
+#~ "      --allow-unassigned   切换 IDNA AllowUnassigned 标识(默认关闭)\n"
+#~ "      --usestd3asciirules  切换 IDNA UseSTD3ASCIIRules 标识(默认关闭)\n"
+
+#~ msgid ""
+#~ "      --no-tld             Don't check string for TLD specific rules\n"
+#~ "                             Only for --idna-to-ascii and --idna-to-"
+#~ "unicode\n"
+#~ msgstr ""
+#~ "     --no-tld                不按 TLD 指定的规则检查字符串\n"
+#~ "                             仅对 --idna-to-ascii 和 --idna-to-unicode 有"
+#~ "效\n"
+
+#~ msgid ""
+#~ "  -n, --nfkc               Normalize string according to Unicode v3.2 "
+#~ "NFKC\n"
+#~ msgstr "  -n, --nfkc               按 Unicode v3.2 NFKC 正规化字符串\n"
+
+#~ msgid ""
+#~ "  -p, --profile=STRING     Use specified stringprep profile instead\n"
+#~ "                             Valid stringprep profiles: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+#~ msgstr ""
+#~ "  -p, --profile=STRING     使用指定的 stringprep 配置文件 代替\n"
+#~ "                             有效的 stringprep 配置文件: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+
+#~ msgid "only one of -s, -e, -d, -a, -u or -n can be specified"
+#~ msgstr "只能指定 -s, -e, -d, -a, -u 或是 -n 中的一个"
+
+#~ msgid "could not convert from UTF-8 to UCS-4"
+#~ msgstr "无法将 UTF-8 转为 UCS-4"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profile：%s"
+
+#~ msgid "could not convert from UTF-8 to %s"
+#~ msgstr "无法将 UTF-8 转为 %s"
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode：%s"
+
+#~ msgid "malloc"
+#~ msgstr "malloc"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode: %s"
+
+#~ msgid "could not convert from UCS-4 to UTF-8"
+#~ msgstr "无法将 UCS-4 转为 UTF-8"
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z：%s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD)：%s"
+
+#~ msgid "tld_check_4z (position %lu): %s"
+#~ msgstr "tld_check_4z (位置 %lu)：%s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z：%s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z：%s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <%s>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "发送错误报告至 <%s>。发送翻译错误至 Chinese (simplified) <translation-"
+#~ "team-zh-cn@lists.sourceforge.net>\n"
+
+#~ msgid "input[%lu] = U+%04x\n"
+#~ msgstr "输入[%lu] = U+%04x\n"
+
+#~ msgid "output[%lu] = U+%04x\n"
+#~ msgstr "输出[%lu] = U+%04x\n"
+
+#~ msgid "tld[%lu] = U+%04x\n"
+#~ msgstr "tld[%lu] = U+%04x\n"

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+          "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd"
+	  [
+	  <!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+	  <!ENTITY version SYSTEM "version.xml">
+	  ]>
+<book id="index">
+  <bookinfo>
+    <title>Libidn2 Reference Manual</title>
+    <releaseinfo>
+      for Libidn2 &version;
+      The latest version of this documentation can be found on-line at
+      <ulink role="online-location"
+	     url="https://www.gnu.org/software/libidn/#libidn2">
+	https://www.gnu.org/software/libidn/#libidn2</ulink>.
+    </releaseinfo>
+  </bookinfo>
+
+  <chapter id="libidn2">
+    <title>Libidn2 Overview</title>
+    <para>
+      Libidn2 is a free software implementation of IDNA2008 and TR46.
+    </para>
+
+    <xi:include href="xml/idn2.xml"/>
+  </chapter>
+
+  <index id="api-index-full">
+    <title>API Index</title>
+    <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
+  </index>
+  <index id="api-index-deprecated">
+    <title>Index of deprecated API</title>
+    <xi:include href="xml/api-index-deprecated.xml"><xi:fallback /></xi:include>
+  </index>
+  <index id="api-index-0.1">
+    <title>Index of new API in 0.1</title>
+    <xi:include href="xml/api-index-0.1.xml"><xi:fallback /></xi:include>
+  </index>
+  <index id="api-index-2.0.0">
+    <title>Index of new API in 2.0.0</title>
+    <xi:include href="xml/api-index-2.0.0.xml"><xi:fallback /></xi:include>
+  </index>
+  <index id="api-index-2.1.1">
+    <title>Index of new API in 2.1.1</title>
+    <xi:include href="xml/api-index-2.1.1.xml"><xi:fallback /></xi:include>
+  </index>
+</book>

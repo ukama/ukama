@@ -1,0 +1,119 @@
+New in 0.9.10:
+* The functions
+    u8_casing_prefix_context, u8_casing_prefixes_context,
+    u8_casing_suffix_context, u8_casing_suffixes_context,
+    u16_casing_prefix_context, u16_casing_prefixes_context,
+    u16_casing_suffix_context, u16_casing_suffixes_context,
+    u32_casing_prefix_context, u32_casing_prefixes_context,
+    u32_casing_suffix_context, u32_casing_suffixes_context,
+  that are documented since version 0.9.1, are now actually implemented.
+
+New in 0.9.9:
+* Fixed a multithread-safety bug.
+
+New in 0.9.8:
+* The data tables and line breaking algorithm have been updated to Unicode
+  version 9.0.0.
+* In the include file unigbrk.h, the function uc_grapheme_breaks has
+  been added to accommodate the new UAX#29 rules involving 3 or more
+  consecutive characters.
+
+New in 0.9.7:
+* The license has changed from LGPLv3+ to "LGPLv3+ or GPLv2"
+
+New in 0.9.6:
+* The data tables and line breaking algorithm have been updated to Unicode
+  version 8.0.0.
+
+New in 0.9.5:
+* The data tables and line breaking algorithm have been updated to Unicode
+  version 7.0.0.
+* In the include file uniname.h, the function unicode_name_character
+  has been extended to look for name aliases.
+
+New in 0.9.4:
+* The data tables and line breaking algorithm have been updated to Unicode
+  version 6.0.0.
+* A new include file unigbrk.h is provided. It declares functions for
+  grapheme cluster breaking, that is, determining the boundaries between
+  graphemes. See the documentation chapter "Grapheme cluster breaks in strings"
+  for details.
+* In the include file unictype.h, constants are defined for the group of
+  general categories LC ("Cased Letter").
+* In the include file unictype.h, functions for associating canonical
+  combining classes with names have been added:
+    uc_combining_class_name
+    uc_combining_class_long_name
+    uc_combining_class_byname
+* In the include file unictype.h, functions for the Arabic joining type and
+  the Arabic joining group have been added:
+    uc_joining_type_name
+    uc_joining_type_long_name
+    uc_joining_type_byname
+    uc_joining_type
+    uc_joining_group_name
+    uc_joining_group_byname
+    uc_joining_group
+* In the include file unictype.h, functions for new predefined properties
+  have been added:
+    uc_is_property_cased
+    uc_is_property_case_ignorable
+    uc_is_property_changes_when_lowercased
+    uc_is_property_changes_when_uppercased
+    uc_is_property_changes_when_titlecased
+    uc_is_property_changes_when_casefolded
+    uc_is_property_changes_when_casemapped
+  But it's recommended to use the case mapping functions from unicase.h
+  instead.
+* In the include file unictype.h, the functions for bidi class, formerly known
+  as bidirectional category, have been renamed:
+    uc_bidi_category_name   -> uc_bidi_class_name
+    uc_bidi_category_byname -> uc_bidi_class_byname
+    uc_bidi_category        -> uc_bidi_class
+    uc_is_bidi_category     -> uc_is_bidi_class
+  The old function names still exist, but are obsolete.
+* In the include file unictype.h, functions for returning long names of
+  property values have been added:
+    uc_general_category_long_name
+    uc_bidi_class_long_name
+  The functions
+    uc_general_category_byname
+    uc_bidi_class_byname
+  have been extended to recognize long names as well as short names.
+* It is now easier to detect the subminor version: The value of the variable
+  _libunistring_version and of the macro _LIBUNISTRING_VERSION now includes
+  also the subminor version.
+* The functions u8_mbtouc and u8_mbtouc_unsafe now handle ill-formed UTF-8
+  input in a better way, that is more compliant with W3C recommendations.
+* The functions u8_strcoll, u16_strcoll, u32_strcoll now produce results that
+  are less dependent on the iconv implementation in use.
+* The functions u8_strstr, u16_strstr, u32_strstr now perform in O(n) time
+  worst-case, where n is the sum of the lengths of the argument strings.
+
+New in 0.9.3:
+* Bug fixes in unistr.h functions:
+  - The functions u16_to_u32, u16_to_u8, u8_to_u32, u8_to_u16 now fail when
+    the argument is not valid. Previously, they returned a converted string
+    where invalid parts were each replaced with U+FFFD.
+  - The function u8_mbsnlen now counts an incomplete character at the end
+    of the argument string as 1 character. Previously, it could count as 2
+    or 3 characters.
+  - The return value of the u8_stpncpy, u16_stpncpy, u32_stpncpy functions
+    was incorrect.
+  - The u8_strcoll, u16_strcoll, u32_strcoll now try harder to give a non-zero
+    return value.
+* Portability to MacOS X 10.6 and Cygwin 1.7.
+
+New in 0.9.2:
+* The function uc_locale_language now uses the locale of the current thread,
+  if a thread-specific locale has been set.
+
+New in 0.9.1:
+* In the include file unicase.h, functions for case mapping of substrings have
+  been added.
+
+New in 0.9:
+* The new include file unicase.h implements case folding.
+* The new include file uninorm.h implements normalization.
+* The new include file uniwbrk.h implements word break determination.
+* The library source code is now part of gnulib.

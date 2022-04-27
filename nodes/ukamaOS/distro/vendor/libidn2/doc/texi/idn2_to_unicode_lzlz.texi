@@ -1,0 +1,19 @@
+@subheading idn2_to_unicode_lzlz
+@anchor{idn2_to_unicode_lzlz}
+@deftypefun {int} {idn2_to_unicode_lzlz} (const char * @var{input}, char ** @var{output}, int @var{flags})
+@var{input}: Input zero-terminated string encoded in the current locale's character set.
+
+@var{output}: Newly allocated output string in current locale's character set.
+
+@var{flags}: Currently unused.
+
+Converts a possibly ACE encoded domain name in the locale's character
+set into a string encoded in the current locale's character set (punycode
+decoding). The output buffer will be zero-terminated and must be
+deallocated by the caller.
+
+ @code{output} may be NULL to test lookup of  @code{input} without allocating memory.
+
+@strong{Since:} 2.0.0
+@end deftypefun
+

@@ -1,0 +1,345 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Collabora Ltd.
+# This file is distributed under the same license as the p11-kit package.
+# 
+# Translators:
+# Seong-ho Cho <darkcircle.0426@gmail.com>, 2013
+# Seong-ho Cho <darkcircle.0426@gmail.com>, 2013
+# Shinjo Park <kde@peremen.name>, 2012
+msgid ""
+msgstr ""
+"Project-Id-Version: p11-kit\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?product=p11-glue\n"
+"POT-Creation-Date: 2018-01-31 16:48+0100\n"
+"PO-Revision-Date: 2017-09-19 12:15+0000\n"
+"Last-Translator: Seong-ho Cho <darkcircle.0426@gmail.com>\n"
+"Language-Team: Korean (http://www.transifex.com/freedesktop/p11-kit/language/ko/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ko\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: p11-kit/messages.c:78
+msgid "The operation was cancelled"
+msgstr "작업이 취소됨"
+
+#: p11-kit/messages.c:81
+msgid "Insufficient memory available"
+msgstr "사용 가능한 메모리가 부족함"
+
+#: p11-kit/messages.c:83
+msgid "The specified slot ID is not valid"
+msgstr "지정한 슬롯 ID가 올바르지 않음"
+
+#: p11-kit/messages.c:85
+msgid "Internal error"
+msgstr "내부 오류"
+
+#: p11-kit/messages.c:87
+msgid "The operation failed"
+msgstr "작업이 실패함"
+
+#: p11-kit/messages.c:89
+msgid "Invalid arguments"
+msgstr "인자가 잘못됨"
+
+#: p11-kit/messages.c:91
+msgid "The module cannot create needed threads"
+msgstr "모듈에서 필요한 스레드를 만들 수 없음"
+
+#: p11-kit/messages.c:93
+msgid "The module cannot lock data properly"
+msgstr "모듈에서 데이터를 올바르게 잠글 수 없음"
+
+#: p11-kit/messages.c:95
+msgid "The field is read-only"
+msgstr "필드가 읽기 전용임"
+
+#: p11-kit/messages.c:97
+msgid "The field is sensitive and cannot be revealed"
+msgstr "필드가 민감한 정보를 포함하고 있어서 볼 수 없음"
+
+#: p11-kit/messages.c:99
+msgid "The field is invalid or does not exist"
+msgstr "필드가 잘못되었거나 존재하지 않음"
+
+#: p11-kit/messages.c:101
+msgid "Invalid value for field"
+msgstr "필드의 값이 잘못됨"
+
+#: p11-kit/messages.c:103
+msgid "The data is not valid or unrecognized"
+msgstr "데이터가 올바르지 않거나 인식되지 않음"
+
+#: p11-kit/messages.c:105
+msgid "The data is too long"
+msgstr "데이터가 너무 김"
+
+#: p11-kit/messages.c:107
+msgid "An error occurred on the device"
+msgstr "장치에 오류가 발생함"
+
+#: p11-kit/messages.c:109
+msgid "Insufficient memory available on the device"
+msgstr "장치에 메모리가 부족함"
+
+#: p11-kit/messages.c:111
+msgid "The device was removed or unplugged"
+msgstr "장치가 제거되었거나 연결이 해제됨"
+
+#: p11-kit/messages.c:113
+msgid "The encrypted data is not valid or unrecognized"
+msgstr "암호화된 데이터가 올바르지 않거나 인식되지 않음"
+
+#: p11-kit/messages.c:115
+msgid "The encrypted data is too long"
+msgstr "암호화된 데이터가 너무 김"
+
+#: p11-kit/messages.c:117
+msgid "This operation is not supported"
+msgstr "이 동작이 지원되지 않음"
+
+#: p11-kit/messages.c:119
+msgid "The key is missing or invalid"
+msgstr "키가 없거나 올바르지 않음"
+
+#: p11-kit/messages.c:121
+msgid "The key is the wrong size"
+msgstr "키 크기가 잘못됨"
+
+#: p11-kit/messages.c:123
+msgid "The key is of the wrong type"
+msgstr "키 종류가 잘못됨"
+
+#: p11-kit/messages.c:125
+msgid "No key is needed"
+msgstr "키가 필요하지 않음"
+
+#: p11-kit/messages.c:127
+msgid "The key is different than before"
+msgstr "키가 이전과 달라짐"
+
+#: p11-kit/messages.c:129
+msgid "A key is needed"
+msgstr "키가 필요함"
+
+#: p11-kit/messages.c:131
+msgid "Cannot include the key in the digest"
+msgstr "다이제스트에 키를 포함할 수 없음"
+
+#: p11-kit/messages.c:133
+msgid "This operation cannot be done with this key"
+msgstr "이 키를 사용하여 작업을 수행할 수 없음"
+
+#: p11-kit/messages.c:135
+msgid "The key cannot be wrapped"
+msgstr "키를 둘러쌀 수 없음"
+
+#: p11-kit/messages.c:137
+msgid "Cannot export this key"
+msgstr "키를 내보낼 수 없음"
+
+#: p11-kit/messages.c:139
+msgid "The crypto mechanism is invalid or unrecognized"
+msgstr "암호화 방식이 잘못되었거나 인식할 수 없음"
+
+#: p11-kit/messages.c:141
+msgid "The crypto mechanism has an invalid argument"
+msgstr "암호화 방식의 인자가 잘못됨"
+
+#: p11-kit/messages.c:143
+msgid "The object is missing or invalid"
+msgstr "객체가 존재하지 않거나 잘못됨"
+
+#: p11-kit/messages.c:145
+msgid "Another operation is already taking place"
+msgstr "다른 작업이 진행 중"
+
+#: p11-kit/messages.c:147
+msgid "No operation is taking place"
+msgstr "진행 중인 작업 없음"
+
+#: p11-kit/messages.c:149
+msgid "The password or PIN is incorrect"
+msgstr "암호나 PIN이 올바르지 않음"
+
+#: p11-kit/messages.c:151
+msgid "The password or PIN is invalid"
+msgstr "암호나 PIN이 잘못됨"
+
+#: p11-kit/messages.c:153
+msgid "The password or PIN is of an invalid length"
+msgstr "암호나 PIN의 길이가 잘못됨"
+
+#: p11-kit/messages.c:155
+msgid "The password or PIN has expired"
+msgstr "암호나 PIN이 만료됨"
+
+#: p11-kit/messages.c:157
+msgid "The password or PIN is locked"
+msgstr "암호나 PIN이 잠김"
+
+#: p11-kit/messages.c:159
+msgid "The session is closed"
+msgstr "세션이 닫힘"
+
+#: p11-kit/messages.c:161
+msgid "Too many sessions are active"
+msgstr "세션이 너무 많이 열려 있음"
+
+#: p11-kit/messages.c:163
+msgid "The session is invalid"
+msgstr "세션이 잘못됨"
+
+#: p11-kit/messages.c:165
+msgid "The session is read-only"
+msgstr "세션이 읽기 전용임"
+
+#: p11-kit/messages.c:167
+msgid "An open session exists"
+msgstr "열린 세션이 존재함"
+
+#: p11-kit/messages.c:169
+msgid "A read-only session exists"
+msgstr "읽기 전용 세션이 존재함"
+
+#: p11-kit/messages.c:171
+msgid "An administrator session exists"
+msgstr "관리자 세션이 존재함"
+
+#: p11-kit/messages.c:173
+msgid "The signature is bad or corrupted"
+msgstr "서명이 잘못되었거나 손상됨"
+
+#: p11-kit/messages.c:175
+msgid "The signature is unrecognized or corrupted"
+msgstr "서명이 인식되지 않았거나 손상됨"
+
+#: p11-kit/messages.c:177
+msgid "Certain required fields are missing"
+msgstr "필요한 필드의 값이 빠졌음"
+
+#: p11-kit/messages.c:179
+msgid "Certain fields have invalid values"
+msgstr "필드의 값이 잘못됨"
+
+#: p11-kit/messages.c:181
+msgid "The device is not present or unplugged"
+msgstr "장치가 존재하지 않거나 연결이 해제됨"
+
+#: p11-kit/messages.c:183
+msgid "The device is invalid or unrecognizable"
+msgstr "장치가 잘못되었거나 인식할 수 없음"
+
+#: p11-kit/messages.c:185
+msgid "The device is write protected"
+msgstr "장치가 쓰기 금지되어 있음"
+
+#: p11-kit/messages.c:187
+msgid "Cannot import because the key is invalid"
+msgstr "키가 잘못되어 가져올 수 없음"
+
+#: p11-kit/messages.c:189
+msgid "Cannot import because the key is of the wrong size"
+msgstr "키 크기가 잘못되어 가져올 수 없음"
+
+#: p11-kit/messages.c:191
+msgid "Cannot import because the key is of the wrong type"
+msgstr "키 종류가 잘못되어 가져올 수 없음"
+
+#: p11-kit/messages.c:193
+msgid "You are already logged in"
+msgstr "이미 로그인되어 있음"
+
+#: p11-kit/messages.c:195
+msgid "No user has logged in"
+msgstr "로그인한 사용자가 없음"
+
+#: p11-kit/messages.c:197
+msgid "The user's password or PIN is not set"
+msgstr "사용자의 암호나 PIN이 설정되지 않음"
+
+#: p11-kit/messages.c:199
+msgid "The user is of an invalid type"
+msgstr "사용자 종류가 잘못됨"
+
+#: p11-kit/messages.c:201
+msgid "Another user is already logged in"
+msgstr "다른 사용자가 로그인되어 있음"
+
+#: p11-kit/messages.c:203
+msgid "Too many users of different types are logged in"
+msgstr "다른 종류의 사용자가 너무 많이 로그인되어 있음"
+
+#: p11-kit/messages.c:205
+msgid "Cannot import an invalid key"
+msgstr "잘못된 키를 가져올 수 없음"
+
+#: p11-kit/messages.c:207
+msgid "Cannot import a key of the wrong size"
+msgstr "크기가 잘못된 키를 가져올 수 없음"
+
+#: p11-kit/messages.c:209
+msgid "Cannot export because the key is invalid"
+msgstr "잘못된 키를 내보낼 수 없음"
+
+#: p11-kit/messages.c:211
+msgid "Cannot export because the key is of the wrong size"
+msgstr "크기가 잘못된 키를 내보낼 수 없음"
+
+#: p11-kit/messages.c:213
+msgid "Cannot export because the key is of the wrong type"
+msgstr "종류가 잘못된 키를 내보낼 수 없음"
+
+#: p11-kit/messages.c:215
+msgid "Unable to initialize the random number generator"
+msgstr "난수 생성기를 초기화할 수 없음"
+
+#: p11-kit/messages.c:217
+msgid "No random number generator available"
+msgstr "난수 생성기를 사용할 수 없음"
+
+#: p11-kit/messages.c:219
+msgid "The crypto mechanism has an invalid parameter"
+msgstr "암호화 방식의 인자가 잘못됨"
+
+#: p11-kit/messages.c:221
+msgid "Not enough space to store the result"
+msgstr "결과를 저장할 공간이 없음"
+
+#: p11-kit/messages.c:223
+msgid "The saved state is invalid"
+msgstr "저장된 상태가 잘못됨"
+
+#: p11-kit/messages.c:225
+msgid "The information is sensitive and cannot be revealed"
+msgstr "민감한 정보를 노출할 수 없음"
+
+#: p11-kit/messages.c:227
+msgid "The state cannot be saved"
+msgstr "상태를 저장할 수 없음"
+
+#: p11-kit/messages.c:229
+msgid "The module has not been initialized"
+msgstr "모듈이 초기화되지 않았음"
+
+#: p11-kit/messages.c:231
+msgid "The module has already been initialized"
+msgstr "모듈이 이미 초기화되었음"
+
+#: p11-kit/messages.c:233
+msgid "Cannot lock data"
+msgstr "데이터를 잠글 수 없음"
+
+#: p11-kit/messages.c:235
+msgid "The data cannot be locked"
+msgstr "데이터를 잠글 수 없음"
+
+#: p11-kit/messages.c:237
+msgid "The request was rejected by the user"
+msgstr "사용자가 요청을 거절했습니다"
+
+#: p11-kit/messages.c:240
+msgid "Unknown error"
+msgstr "알 수 없는 오류"

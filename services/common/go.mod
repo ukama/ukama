@@ -1,4 +1,4 @@
-module github.com/ukama/openIoR/services/common
+module github.com/ukama/ukama/services/common
 
 go 1.17
 
@@ -15,7 +15,7 @@ require (
 	github.com/lib/pq v1.3.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/ory/kratos-client-go v0.8.0-alpha.2
+	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/penglongli/gin-metrics v0.1.9
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
@@ -85,4 +85,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/ukama/openIoR/services/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common

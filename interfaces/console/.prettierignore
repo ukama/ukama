@@ -1,0 +1,4 @@
+.DS_Store
+src/.DS_Store
+src/assets/images/*.png
+src/assets/fonts/*

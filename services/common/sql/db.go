@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
 	wrp "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/openIoR/services/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -50,6 +49,9 @@ func NewDbFromGorm(gormDb *gorm.DB, debugMode bool) Db {
 }
 
 func (d *db) GetGormDb() *gorm.DB {
+	if d.gorm == nil {
+		panic("Database is not connected. Make sure you call Connect() first")
+	}
 	return d.gorm
 }
 
@@ -162,7 +164,11 @@ func IsNotFoundError(err error) bool {
 }
 
 func IsDuplicateKeyError(err error) bool {
-	return strings.Contains(err.Error(), "duplicate key value")
+	var pge *pgconn.PgError
+	if errors.As(err, &pge) {
+		return pge.Code == PGERROR_CODE_UNIQUE_VIOLATION
+	}
+	return false
 }
 
 // ExecuteInTransaction executes dbOperation in transaction with all nested functions

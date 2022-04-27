@@ -1,0 +1,26 @@
+{
+  "Config": {
+    "5601": 0,
+    "5602": 0,
+    "5603": 0,
+    "5604": 0,
+    "5605": 0,
+    "5700": 0,
+    "5750": "milliWatt",
+    "5821": 2000
+  },
+  "Info": {
+    "Description1": "This IPSO object should be used to report power measurements. It also provides resources for minimum and maximum measured values, as well as the minimum and maximum range that can be measured by the sensor. An example measurement unit is Watts. This object may be used for either real power or apparent power measurements.",
+    "Description2": "",
+    "InstanceID": 1,
+    "LWM2MVersion": 1,
+    "Mandatory": "Optional",
+    "MultipleInstances": "Multiple",
+    "Name": "Power",
+    "ObjectID": 3328,
+    "ObjectURN": "urn:oma:lwm2m:ext:3328:1.1",
+    "ObjectVersion": 1.1
+  }
+}
+
+

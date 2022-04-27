@@ -1,0 +1,23 @@
+syntax="proto3";
+
+option go_package = "lwm2m-gateway/specs/lwm2mServer/spec";
+
+package main;
+
+
+//New Unit
+message RequestMessage {
+    uint32 token = 1;
+    uint32 length = 2;
+    int32 sock = 3;
+    string message = 4;
+}
+
+//URI
+message ResponseMessage {
+    uint32 token = 1;
+    uint32 status = 2;
+    uint32 format = 3;
+    uint32 length = 4;
+    string message = 5;
+}

@@ -1,0 +1,23 @@
+This directory contains some test code for system calls that need
+POSIX semantics to work under Go. There are 9 system calls wrapped in
+a nptl:setxid mechanism in glibc, and the following development patch
+adds support for these 9 to native Go.
+
+https://go-review.googlesource.com/c/go/+/210639/
+
+The Go support works with or without CGO_ENABLED.
+
+With a patched Go runtime library:
+
+  make
+  sudo ./posix
+  sudo ./posix-cgo
+
+should validate that all is working as intended.
+
+The above Go patch also exposes the mechanism that achieves this in
+the Go runtime, to ensure that the native Go "libcap/cap" package can
+work with and without CGO_ENABLED.
+
+Andrew G. Morgan <morgan@kernel.org>
+2019-12-10

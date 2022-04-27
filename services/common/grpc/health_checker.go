@@ -2,9 +2,8 @@ package grpc
 
 import (
 	"context"
-
 	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/openIoR/services/common/pb/gen/health"
+	pb "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type HealthCheckerInterface interface {

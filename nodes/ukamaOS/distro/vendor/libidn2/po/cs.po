@@ -1,0 +1,415 @@
+# Czech translation for libidn.
+# Copyright (C) 2007 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+# Petr Pisar <petr.pisar@atlas.cz>, 2007, 2008, 2011, 2017, 2019, 2021.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.3.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2021-05-14 17:16+02:00\n"
+"Last-Translator: Petr Pisar <petr.pisar@atlas.cz>\n"
+"Language-Team: Czech <translation-team-cs@lists.sourceforge.net>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "úspěch"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "nedostatek paměti"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "nebylo možné určit formát kódování národního prostředí"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "řetězec nebylo možné převést do UTF-8"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "chyba kódování řetězce"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "řetězec nebylo možné znormalizovat do NFC"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "řetězec obsahuje neplatný data punycode"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "data kódovaní v punycode budou příliš velká"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "převod punycode vyústil v přetečení"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "doménové jméno je delší než 255 znaků"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "jmenovka domény je delší než 63 znaků"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "vstupní jmenovka A není platná"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "vstupní jmenovky A a U si neodpovídají"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "řetězec není ve formátu Unicode NFC"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "řetězec obsahuje zakázaný vzor se dvěma spojovníky"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "znak začíná/končí na zakázaný spojovník"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "řetězec obsahuje zakázaný úvodní kombinující znak"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "řetězec obsahuje nedovolený znak"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "řetězec obsahuje zakázaný znak kontextu J"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "řetězec obsahuje znak kontextu J s nulovým pravidlem"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "řetězec obsahuje zakázaný znak kontextu O"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "řetězec obsahuje znaku kontextu O s nulovým pravidlem"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "řetězec obsahuje nepřiřazenou kódovou pozici"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "řetězec má zakázané příkazy pro směr textu"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "jmenovka domény má zakázanou tečku (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "jmenovka domény má znak zakázaný v přechodném režimu (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr "jmenovka domény má znak zakázaný v nepřechodném režimu (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr "vyhledávání pomocí A-jmenovky selhalo"
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Neznámá chyba"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "Další informace získáte příkazem „%s --help“.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Použití: %s [PŘEPÍNAČ]… [ŘETĚZEC]…\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"IDNA2008 (internacionalizovaná doménová jména) převádí ŘETĚZCE nebo\n"
+"standardní vstup.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Rozhraní ke knihovně Libidn2 implementující IDNA2008 pro prostředí\n"
+"příkazového řádku.\n"
+"\n"
+"Všechny řetězce jsou očekávány ve znakové sadě vašeho národního prostředí.\n"
+"\n"
+"Je-li třeba pracovat s řetězcem začínající znakem „-“ (např. „-foo“), "
+"použijte\n"
+"„--“ pro označení konce všech parametrů (např. „idn --quiet -- -foo“).\n"
+"\n"
+"Povinné argumenty dlouhých přepínačů jsou rovněž povinné u odpovídajících\n"
+"krátkých přepínačů.\n"
+
+#: src/idn2.c:80
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help                Vypíše nápovědu a skončí\n"
+"  -V, --version             Vypíše verzi a skončí\n"
+
+#: src/idn2.c:84
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode              Dekóduje doménové jméno (punycode)\n"
+"  -l, --lookup              Vyhledá doménové jméno (výchozí)\n"
+"  -r, --register            Registruje jmenovku\n"
+
+#: src/idn2.c:89
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t               Zapne přechodné zpracování podle TR46\n"
+"  -N, --tr46nt              Zapne nepřechodné zpracování podle TR46\n"
+"      --no-tr46             Vypne zpracování podle TR46\n"
+
+#: src/idn2.c:94
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules   Zapne pravidla STD3 ASCII\n"
+"      --no-alabelroundtrip  Vypne vyhledávání pomocí A-jmenovek\n"
+"      --debug               Vypíše ladicí informace\n"
+"      --quiet               Pracuje potichu\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Znaková sada: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Pište po jednom vstupním řetězci na jednom řádku zakončeným znakem nového "
+"řádku.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "chyba na vstupu"
+
+#~ msgid "String preparation failed"
+#~ msgstr "Příprava řetězce selhala"
+
+#~ msgid "Punycode failed"
+#~ msgstr "Punycode selhal"
+
+#~ msgid "Non-digit/letter/hyphen in input"
+#~ msgstr "Znak jiný než číslice/písmeno/spojovník na vstupu"
+
+#~ msgid "Forbidden leading or trailing minus sign (`-')"
+#~ msgstr "Zakázaný úvodní nebo závěrečný spojovník („-“)"
+
+#~ msgid "Output would be too large or too small"
+#~ msgstr "Výstup by byl příliš dlouhý nebo příliš krátký"
+
+#~ msgid "Input does not start with ACE prefix (`xn--')"
+#~ msgstr "Vstup nezačíná předponou ACE („xn--“)"
+
+#~ msgid "String not idempotent under ToASCII"
+#~ msgstr "Řetězec není po ToASCII idempotentní"
+
+#~ msgid "Input already contain ACE prefix (`xn--')"
+#~ msgstr "Vstup již obsahuje předponu ACE („xn--“)"
+
+#~ msgid "System iconv failed"
+#~ msgstr "Selhal systémový iconv"
+
+#~ msgid "System dlopen failed"
+#~ msgstr "Selhalo volání systému dlopen"
+
+#~ msgid "Invalid input"
+#~ msgstr "Neplatný vstup"
+
+#~ msgid "Output would exceed the buffer space provided"
+#~ msgstr "Výstup by se nevešel do poskytnuté vyrovnávací paměti"
+
+#~ msgid "String size limit exceeded"
+#~ msgstr "Omezení délky řetězce bylo překonáno"
+
+#~ msgid "Prohibited code points in input"
+#~ msgstr "Na vstupu zakázaná ordinární čísla"
+
+#~ msgid "Malformed bidirectional string"
+#~ msgstr "Chybně utvořený obousměrný řetězec"
+
+#~ msgid "Prohibited bidirectional code points in input"
+#~ msgstr "Na vstupu zakázaná ordinární čísla pro obousměrný text"
+
+#~ msgid "Error in stringprep profile definition"
+#~ msgstr "Chyba v definici profilu pro stringprep"
+
+#~ msgid "Flag conflict with profile"
+#~ msgstr "Příznak neslučitelný s profilem"
+
+#~ msgid "Unknown profile"
+#~ msgstr "Neznámý profil"
+
+#~ msgid "Unicode normalization failed (internal error)"
+#~ msgstr "Unicodová normalizace selhala (vnitřní chyba)"
+
+#~ msgid "Code points prohibited by top-level domain"
+#~ msgstr "Ordinární čísla zakázaná vrcholovou doménou"
+
+#~ msgid "Missing input"
+#~ msgstr "Postrádám vstup"
+
+#~ msgid "No top-level domain found in input"
+#~ msgstr "Ve vstupu chybí vrcholová doména"
+
+#~ msgid ""
+#~ "  -s, --stringprep         Prepare string according to nameprep profile\n"
+#~ "  -d, --punycode-decode    Decode Punycode\n"
+#~ "  -e, --punycode-encode    Encode Punycode\n"
+#~ "  -a, --idna-to-ascii      Convert to ACE according to IDNA (default "
+#~ "mode)\n"
+#~ "  -u, --idna-to-unicode    Convert from ACE according to IDNA\n"
+#~ msgstr ""
+#~ "  -s, --stringprep         Připraví řetězec podle nameprep profilu\n"
+#~ "  -d, --punycode-decode    Dekóduje Punycode\n"
+#~ "  -e, --punycode-encode    Kóduje do Punycode\n"
+#~ "  -a, --idna-to-ascii      Převede do ACE podle IDNA (implicitní režim)\n"
+#~ "  -u, --idna-to-unicode    Převede z ACE podle IDNA\n"
+
+#~ msgid ""
+#~ "      --allow-unassigned   Toggle IDNA AllowUnassigned flag (default "
+#~ "off)\n"
+#~ "      --usestd3asciirules  Toggle IDNA UseSTD3ASCIIRules flag (default "
+#~ "off)\n"
+#~ msgstr ""
+#~ "      --allow-unassigned   Přepne příznak IDNA AllowUnassigned "
+#~ "(implicitně\n"
+#~ "                           vypnut)\n"
+#~ "      --usestd3asciirules  Přepne příznak IDNA UseSTD3ASCIIRules "
+#~ "(implicitně\n"
+#~ "                           vypnut)\n"
+
+#~ msgid ""
+#~ "      --no-tld             Don't check string for TLD specific rules\n"
+#~ "                             Only for --idna-to-ascii and --idna-to-"
+#~ "unicode\n"
+#~ msgstr ""
+#~ "      --no-tld             Nekontroluje řetězec podle pravidel dané TLD.\n"
+#~ "                           Jen u --idna-to-ascii a --idna-to-unicode\n"
+
+#~ msgid ""
+#~ "  -n, --nfkc               Normalize string according to Unicode v3.2 "
+#~ "NFKC\n"
+#~ msgstr ""
+#~ "  -n, --nfkc               Normalizuje řetězec podle Unicode v3.2 NFKC\n"
+
+#~ msgid ""
+#~ "  -p, --profile=STRING     Use specified stringprep profile instead\n"
+#~ "                             Valid stringprep profiles: `Nameprep',\n"
+#~ "                             `iSCSI', `Nodeprep', `Resourceprep', \n"
+#~ "                             `trace', `SASLprep'\n"
+#~ msgstr ""
+#~ "  -p, --profile=ŘETĚZEC    Použije zadaný stringprep profil.\n"
+#~ "                           Platné stringprep profily jsou: „Nameprep“,\n"
+#~ "                           „iSCSI“, „Nodeprep“, „Resourceprep“, „trace“ "
+#~ "a \n"
+#~ "                           „SASLprep“\n"
+
+#~ msgid "only one of -s, -e, -d, -a, -u or -n can be specified"
+#~ msgstr "Pouze jeden přepínač z -s, -e, -d, -a, -u nebo -n smí být zadán."
+
+#~ msgid "could not convert from UTF-8 to UCS-4"
+#~ msgstr "nelze převést z UTF-8 do UCS-4"
+
+#~ msgid "stringprep_profile: %s"
+#~ msgstr "stringprep_profile (profil pro přípravu řetězce): %s"
+
+#~ msgid "could not convert from UTF-8 to %s"
+#~ msgstr "nelze převést z UTF-8 do %s"
+
+#~ msgid "punycode_encode: %s"
+#~ msgstr "punycode_encode (zakódování do Punycodu): %s"
+
+#~ msgid "malloc"
+#~ msgstr "malloc"
+
+#~ msgid "punycode_decode: %s"
+#~ msgstr "punycode_decode (dekódování Punycodu): %s"
+
+#~ msgid "could not convert from UCS-4 to UTF-8"
+#~ msgstr "nelze převést z UCS-4 do UTF-8"
+
+#~ msgid "idna_to_ascii_4z: %s"
+#~ msgstr "idna_to_ascii_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z (TLD): %s"
+#~ msgstr "idna_to_unicode_8z4z (TLD): %s"
+
+#~ msgid "tld_check_4z (position %lu): %s"
+#~ msgstr "tld_check_4z (pozice %lu): %s"
+
+#~ msgid "tld_check_4z: %s"
+#~ msgstr "tld_check_4z: %s"
+
+#~ msgid "idna_to_unicode_8z4z: %s"
+#~ msgstr "idna_to_unicode_8z4z: %s"
+
+#~ msgid ""
+#~ "\n"
+#~ "Report bugs to <%s>.\n"
+#~ msgstr ""
+#~ "\n"
+#~ "Chyby programu hlaste na <%s> (pouze anglicky),\n"
+#~ "chyby překladu na <translation-team-cs@lists.sourceforge.net> (česky).\n"
+
+#~ msgid "input[%lu] = U+%04x\n"
+#~ msgstr "vstup[%lu] = U+%04x\n"
+
+#~ msgid "output[%lu] = U+%04x\n"
+#~ msgstr "výstup[%lu] = U+%04x\n"
+
+#~ msgid "tld[%lu] = U+%04x\n"
+#~ msgstr "vrcholová_doména[%lu] = U+%04x\n"
+
+#~ msgid "nfkc: %s"
+#~ msgstr "nfkc: %s"

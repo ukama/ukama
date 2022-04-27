@@ -1,0 +1,199 @@
+[LWM2M.Object]
+Name = "Alarm Notification"
+Description1 = "Alarms repoted by the senosrs on the device "
+ObjectID = 34570
+ObjectURN = "urn:oma:lwm2m:x:34570"
+LWM2MVersion = 1
+ObjectVersion = "1"
+MultipleInstances = "Multiple"
+Mandatory = "Optional"
+Description2 = ""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Event Type"
+ResourceID = 6011
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = """
+Event Type is a readable and writable resource used to represent how this event will behave. Event Type should be one of the following values:-
+0. Disabled
+1. Alarm Current State
+2. Alarm State Change Log
+3. Event Log
+
+When the Event Type is set to Disabled (0), this event will not be recorded by the device. No Latest Eventlog payload should be delivered for events that are Disabled.
+When the Event Type is set to Alarm Current State (1), this Event is treated as an alarm state manager and the Latest Eventlog Payload will only contain the current state of this alarm.
+When the Event Type is set to Alarm State Change Log (2), the Event is treated as an alarm that reports whenever the Alarm is either set or cleared. The Latest Eventlog Payload will contain all alarm transitions since the previous delivery in this mode.
+When the Event Type is set to Event Log (3), this object instance is treated as a raw event log. It is used to manage and deliver events. The Latest Eventlog Payload will contain all events since the previous delivery in this mode.
+
+See the Event Log Payload for examples of each of these modes.
+"""
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Alarm Realtime"
+ResourceID = 6012
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Boolean"
+RangeEnumeration = ""
+Units = ""
+Description = "Realtime is a readable and writable resource used to indicate if an event should report immediately (1) at the point of occurrence, or delivered periodically as part of the Latest Eventlog Payload."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Alarm State"
+ResourceID = 1
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Low limit of the sensor value below which it will raise alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Low Threshold"
+ResourceID = 5
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "Low limit of the sensor value below which it will raise alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "High Threshold"
+ResourceID = 6
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "High limit of the sensor value above which it will raise alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Critical Threshold"
+ResourceID = 7
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "Critical limit of the sensor value above which hard cut off might happen."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Object ID"
+ResourceID = 8
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Object Id of the resource which triggred alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Instance ID"
+ResourceID = 9
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Instance Id of the resource which triggred alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Resource ID"
+ResourceID = 10
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Resource ID of the resource which triggred alarm."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Description"
+ResourceID = 13
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "Alarm description."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Alarm Maximum Event Count"
+ResourceID = 6018
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Maximum Event Count is a readable and writable resource used provide a ceiling on the number of events that can be raised within the time period defined in Maximum Event Period resource. If no Maximum Event Count is set, the number of events recorded is unconstrained. The intent of this resource is to control the number of events reported, particularly in the case of a faulty sensor."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Latest Recorded Event Time"
+ResourceID = 6021
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Integer"
+RangeEnumeration = ""
+Units = ""
+Description = "Latest Recorded Event Time is a readonly resource used to represent the last recorded event time for this object instance on the device"
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Alarm Clear"
+ResourceID = 6022
+Operations = "E"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = ""
+RangeEnumeration = ""
+Units = ""
+Description = "Clear Alarm is an executable resource used to allow the LwM2M server to clear alarms when they need to be manually acknowledged."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Sensor Value"
+ResourceID = 5700
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Mandatory"
+Type = "Float"
+RangeEnumeration = ""
+Units = ""
+Description = "Last or Current Measured Value from the Sensor."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Sensor Units"
+ResourceID = 5701
+Operations = "R"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "Measurement Units Definition."
+
+[[LWM2M.Object.Resources.Item]]
+Name = "Application Type"
+ResourceID = 5750
+Operations = "RW"
+MultipleInstances = "Single"
+Mandatory = "Optional"
+Type = "String"
+RangeEnumeration = ""
+Units = ""
+Description = "The application type of the sensor or actuator as a string depending on the use case."

@@ -1,0 +1,74 @@
+// DECLARES THE INTERFACE THAT IS EXPECTED BY HSS
+// MAKE SURE YOU KEEP THIS FILE IN SYNC BETWEEN HSS AND SIM_MANAGER
+
+syntax = "proto3";
+
+option go_package = "pb/gen/simmgr";
+
+package ukama.sim_manager.v1;
+
+import "validator.proto";
+import "google/protobuf/wrappers.proto";
+
+
+
+service SimManagerService {
+    rpc SetServiceStatus(SetServiceStatusRequest) returns (SetServiceStatusResponse);
+    rpc GetSimStatus(GetSimStatusRequest) returns (GetSimStatusResponse);
+    rpc GetSimInfo(GetSimInfoRequest) returns (GetSimInfoResponse);
+    // Terminates sim card permanently
+    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
+}
+
+message ActivateSimRequest {
+    string user_id = 1;
+}
+
+message ActivateSimResponse{}
+
+message GetSimStatusRequest {
+    string iccid = 1 [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetSimStatusResponse {
+    enum Status {
+        UNKNOWN = 0;
+        INACTIVE = 1;
+        ACTIVE = 2;
+    }
+
+    Status status = 1;
+    Services services = 2;
+}
+
+message Services {
+    google.protobuf.BoolValue voice = 1;
+    google.protobuf.BoolValue data = 2;
+    google.protobuf.BoolValue sms = 3;
+}
+
+message GetSimInfoRequest {
+    string iccid = 1 [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetSimInfoResponse {
+    string iccid = 1;
+    string imsi = 2;
+}
+
+message SetServiceStatusRequest {
+    string iccid = 1;
+    Services services = 2 [(validator.field) =  {msg_exists : true}] ;
+}
+
+message SetServiceStatusResponse{
+
+}
+
+message TerminateSimRequest {
+    string iccid = 1  [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message TerminateSimResponse{
+
+}
