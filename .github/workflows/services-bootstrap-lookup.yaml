@@ -5,14 +5,14 @@ name: build-lookup
 on:  
   push:   
     paths:
-        - "bootstrap/lookup/**"
-        - ".github/workflows/bootstrap-lookup.yaml"
+        - "services/bootstrap/lookup/**"
+        - ".github/workflows/services-bootstrap-lookup.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: bootstrap/lookup
+      working-directory: services/bootstrap/lookup
 
     name: build and test
     runs-on: ubuntu-latest    
@@ -35,7 +35,7 @@ jobs:
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
   
-    - name: Build bootstrap/lookup
+    - name: Build services/bootstrap/lookup
       env:
         BUILD_NUMBER: ${{ github.run_number }}
       run: make build
@@ -72,7 +72,7 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push bootstrap/lookup test 
+    - name: OCI Push services/bootstrap/lookup test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/lookup
@@ -108,7 +108,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: bootstrap/lookup
+      working-directory: services/bootstrap/lookup
     steps:
       - uses: actions/checkout@v2
 
@@ -128,7 +128,7 @@ jobs:
       #if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: bootstrap/lookup
+        working-directory: services/bootstrap/lookup
       steps:
         # init vars required for tag generation
         - uses: actions/checkout@v2

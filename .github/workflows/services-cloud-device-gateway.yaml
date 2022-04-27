@@ -5,14 +5,14 @@ name: build-device-gateway
 on:  
   push:   
     paths:
-        - "cloud/device-gateway/**"
-        - ".github/workflows/cloud-device-gateway.yaml"
+        - "services/cloud/device-gateway/**"
+        - ".github/workflows/services-cloud-device-gateway.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: cloud/device-gateway
+      working-directory: services/cloud/device-gateway
 
     name: build and test
     runs-on: ubuntu-latest    
@@ -35,7 +35,7 @@ jobs:
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
   
-    - name: Build cloud/device-gateway
+    - name: Build services/cloud/device-gateway
       env:
         BUILD_NUMBER: ${{ github.run_number }}
       run: make build
@@ -72,7 +72,7 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push cloud/device-gateway test 
+    - name: OCI Push services/cloud/device-gateway test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/device-gateway
@@ -108,7 +108,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: cloud/device-gateway
+      working-directory: services/cloud/device-gateway
     steps:
       - uses: actions/checkout@v2
 
@@ -128,7 +128,7 @@ jobs:
       #if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: cloud/device-gateway
+        working-directory: services/cloud/device-gateway
       steps:
         # init vars required for tag generation
         - uses: actions/checkout@v2
