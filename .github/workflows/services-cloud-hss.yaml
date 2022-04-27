@@ -5,14 +5,14 @@ name: build-hss
 on:  
   push:   
     paths:
-        - "cloud/hss/**"
-        - ".github/workflows/cloud-hss.yaml"
+        - "services/cloud/hss/**"
+        - ".github/workflows/services-cloud-hss.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: cloud/hss
+      working-directory: services/cloud/hss
 
     name: build and test
     runs-on: ubuntu-latest    
@@ -35,7 +35,7 @@ jobs:
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
   
-    - name: Build cloud/hss
+    - name: Build services/cloud/hss
       env:
         BUILD_NUMBER: ${{ github.run_number }}
       run: make build
@@ -72,7 +72,7 @@ jobs:
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
 
-    - name: OCI Push cloud/hss test 
+    - name: OCI Push services/cloud/hss test 
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/hss
@@ -108,7 +108,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: cloud/hss
+      working-directory: services/cloud/hss
     steps:
       - uses: actions/checkout@v2
 
@@ -128,7 +128,7 @@ jobs:
       #if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: cloud/hss
+        working-directory: services/cloud/hss
       steps:
         # init vars required for tag generation
         - uses: actions/checkout@v2
