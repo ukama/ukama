@@ -148,12 +148,6 @@ const billHistory = (): BillHistoryDto => {
         subtotal: subtotal,
     };
 };
-const deleteRes = (id: string): DeactivateResponse => {
-    return {
-        id: id,
-        success: true,
-    };
-};
 const nodeNetwork = (): NetworkDto => {
     return {
         id: defaultCasual._uuid(),
@@ -241,7 +235,6 @@ defaultCasual.define("getUser", getUser);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
-defaultCasual.define("deleteRes", deleteRes);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("softwareLogs", softwareLogs);
 defaultCasual.define("nodeApps", nodeApps);
