@@ -514,11 +514,23 @@ int callback_service(const struct _u_request *request,
     retCode   = fResponse->status;
     statusStr = HttpStatusStr(retCode);
     log_error("Service response error: %d retCode: %d", retCode, statusStr);
+    goto reply;
   } else {
     log_debug("Request Forward to the service");
   }
 
+  if (ulfius_copy_response(response, fResponse) != U_OK) {
+    retCode   = HttpStatus_InternalServerError;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Internal error copy map header %d: %s", retCode, statusStr);
+    goto reply;
+  }
+
   retCode = fResponse->status;
+
+  mapStr = print_map(response->map_header);
+  log_debug("Forward response map_header from the service: %s", mapStr);
+  free(mapStr);
 
  reply:
   /* Step-5: response back to client */
