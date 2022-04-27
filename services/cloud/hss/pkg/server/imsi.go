@@ -3,14 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
 	"github.com/ukama/ukamaX/common/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 type ImsiService struct {

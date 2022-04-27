@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	gen "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	gen "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	grpc "google.golang.org/grpc"
 
 	mock "github.com/stretchr/testify/mock"

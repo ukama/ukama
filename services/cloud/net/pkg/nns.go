@@ -3,14 +3,15 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/net/pkg/metrics"
-	"github.com/ukama/ukamaX/common/ukama"
-	"go.etcd.io/etcd/client/v3"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"net"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/cloud/net/pkg/metrics"
+	"github.com/ukama/ukamaX/common/ukama"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const nodeIdKeyPrefix = "nodeId:"

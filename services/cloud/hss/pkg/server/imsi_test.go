@@ -2,15 +2,16 @@ package server_test
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/cloud/hss/mocks"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/server"
-	"testing"
-	"time"
+	"github.com/ukama/ukama/services/cloud/hss/mocks"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/server"
 )
 
 const testImsi = "000000111111111111111"

@@ -3,9 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
+
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/cloud/net/pkg"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 )
 
 type NnsServer struct {

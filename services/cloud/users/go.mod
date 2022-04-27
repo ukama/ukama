@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/users
+module github.com/ukama/ukama/services/cloud/users
 
 go 1.18
 
@@ -10,7 +10,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/cloud/hss v0.0.0-20220421094812-6b3352c9a822
+	github.com/ukama/ukama/services/cloud/hss v0.0.0-20220421094812-6b3352c9a822
 	github.com/ukama/ukamaX/common v0.0.0-20220421094812-6b3352c9a822
 	github.com/vektra/mockery/v2 v2.12.0
 	google.golang.org/grpc v1.45.0
@@ -194,8 +194,8 @@ require (
 
 replace github.com/ukama/ukamaX/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/users => ./
+replace github.com/ukama/ukama/services/cloud/users => ./
 
-replace github.com/ukama/ukamaX/cloud/users/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/users/mocks => ./mocks
 
-replace github.com/ukama/ukamaX/cloud/hss => ../hss
+replace github.com/ukama/ukama/services/cloud/hss => ../hss

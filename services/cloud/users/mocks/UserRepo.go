@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	db "github.com/ukama/ukamaX/cloud/users/pkg/db"
+	db "github.com/ukama/ukama/services/cloud/users/pkg/db"
 	gorm "gorm.io/gorm"
 
 	mock "github.com/stretchr/testify/mock"

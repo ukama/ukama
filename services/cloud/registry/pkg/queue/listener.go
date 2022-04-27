@@ -3,11 +3,12 @@ package queue
 import (
 	"context"
 	"encoding/json"
-	"google.golang.org/grpc/credentials/insecure"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"google.golang.org/grpc/credentials/insecure"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 
@@ -16,7 +17,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/common/msgbus"
 	"github.com/ukama/ukamaX/common/ukama"
 	"google.golang.org/grpc"

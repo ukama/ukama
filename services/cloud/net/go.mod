@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/net
+module github.com/ukama/ukama/services/cloud/net
 
 go 1.17
 
@@ -14,7 +14,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220329154310-65ca6bcccafc
+	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220329154310-65ca6bcccafc
 	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wagslane/go-rabbitmq v0.7.0
 	go.etcd.io/etcd/client/v3 v3.5.3
@@ -106,8 +106,8 @@ require (
 
 replace github.com/ukama/ukamaX/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
-replace github.com/ukama/ukamaX/cloud/net => ./
+replace github.com/ukama/ukama/services/cloud/net => ./
 
-replace github.com/ukama/ukamaX/cloud/net/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/net/mocks => ./mocks

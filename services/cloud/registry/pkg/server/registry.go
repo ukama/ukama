@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"github.com/jackc/pgconn"
-	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
-	"github.com/ukama/ukamaX/common/grpc"
 	"time"
 
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
+	"github.com/jackc/pgconn"
+	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
+	"github.com/ukama/ukamaX/common/grpc"
+
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
 	"github.com/goombaio/namegenerator"
 

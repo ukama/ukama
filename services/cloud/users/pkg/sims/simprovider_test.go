@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/users/mocks"
+	"github.com/ukama/ukama/services/cloud/users/mocks"
 )
 
 const textToEncode = "{ 'iccid': '8910300000003540855' }"

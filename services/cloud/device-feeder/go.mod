@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/device-feeder
+module github.com/ukama/ukama/services/cloud/device-feeder
 
 go 1.18
 
@@ -11,8 +11,8 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/cloud/net v0.0.0-20220422163321-18f195cf8dfa
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220422163321-18f195cf8dfa
+	github.com/ukama/ukama/services/cloud/net v0.0.0-20220422163321-18f195cf8dfa
+	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220422163321-18f195cf8dfa
 	github.com/ukama/ukamaX/common v0.0.0-20220422163321-18f195cf8dfa
 	github.com/wagslane/go-rabbitmq v0.7.0
 	google.golang.org/grpc v1.45.0
@@ -56,6 +56,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/ukama/ukamaX/cloud/device-feeder => ./
+replace github.com/ukama/ukama/services/cloud/device-feeder => ./
 
-replace github.com/ukama/ukamaX/cloud/device-feeder/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/device-feeder/mocks => ./mocks

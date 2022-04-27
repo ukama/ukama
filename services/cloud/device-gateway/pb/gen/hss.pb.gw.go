@@ -12,7 +12,7 @@ import (
 	"context"
 	"io"
 	"net/http"
-	extGen "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	extGen "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/utilities"

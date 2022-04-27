@@ -2,11 +2,12 @@ package rest
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -14,17 +15,17 @@ import (
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 )
 
 const ORG_URL_PARAMETER = "org"

@@ -2,9 +2,10 @@ package sims
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/hss/mocks"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/services/cloud/hss/mocks"
 )
 
 const textToEncode = "{ 'iccid': '8910300000003540855' }"

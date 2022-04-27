@@ -13,7 +13,7 @@ import (
 	"github.com/ukama/ukamaX/common/rest"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"google.golang.org/grpc"
 )
 

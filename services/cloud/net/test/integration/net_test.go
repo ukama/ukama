@@ -6,7 +6,7 @@ package integration
 import (
 	"context"
 	"fmt"
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/msgbus"
 	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"

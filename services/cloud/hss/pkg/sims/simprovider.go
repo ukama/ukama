@@ -7,9 +7,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
 	"io"
+
+	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
 )
 
 type SimProvider interface {

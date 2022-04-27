@@ -7,12 +7,12 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/global"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/multipl"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/multipl"
 
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 
-	"github.com/ukama/ukamaX/cloud/device-feeder/cmd/version"
+	"github.com/ukama/ukama/services/cloud/device-feeder/cmd/version"
 
 	ccmd "github.com/ukama/ukamaX/common/cmd"
 	"github.com/ukama/ukamaX/common/config"

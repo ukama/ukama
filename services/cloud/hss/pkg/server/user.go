@@ -2,14 +2,15 @@ package server
 
 import (
 	"context"
+
 	uuid2 "github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	pbclient "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
-	"github.com/ukama/ukamaX/cloud/hss/pkg"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/sims"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	pbclient "github.com/ukama/ukama/services/cloud/hss/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/cloud/hss/pkg"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/sims"
 	"github.com/ukama/ukamaX/common/grpc"
 	"github.com/ukama/ukamaX/common/sql"
 	"google.golang.org/grpc/codes"
