@@ -1,6 +1,6 @@
 module github.com/ukama/ukamaX/hub/distributor
 
-go 1.17
+go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../common
 
@@ -15,7 +15,7 @@ require (
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/common v0.0.0-20220208115908-8a6547083867
 	github.com/ukama/ukamaX/hub/hub v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
@@ -107,8 +107,8 @@ require (
 	github.com/spf13/viper v1.10.1 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.3 // indirect
