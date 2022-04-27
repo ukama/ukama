@@ -11,7 +11,7 @@ on:
 jobs:  
   build:
     env: 
-      working-directory: common
+      working-directory: services/common
 
     name: build and test
     runs-on: ubuntu-latest    
