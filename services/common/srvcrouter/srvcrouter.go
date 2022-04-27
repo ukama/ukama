@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 
-	"github.com/ukama/openIoR/services/common/config"
+	"github.com/ukama/ukama/services/common/config"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
