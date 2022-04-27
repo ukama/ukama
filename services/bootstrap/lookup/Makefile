@@ -1,4 +1,4 @@
-include ../../../config.mk
+include ../../config.mk
 
 .PHONY: integration.test test build lint deps 
 

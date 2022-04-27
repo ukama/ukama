@@ -1,0 +1,19 @@
+*** unigbrk.in.h.orig	2011-01-07 17:40:15.000000000 +0100
+--- unigbrk.in.h	2011-03-29 23:36:45.000000000 +0200
+***************
+*** 19,25 ****
+  #define _UNIGBRK_H
+  
+  /* Get bool.  */
+! #include <stdbool.h>
+  
+  /* Get size_t. */
+  #include <stddef.h>
+--- 19,25 ----
+  #define _UNIGBRK_H
+  
+  /* Get bool.  */
+! #include <unistring/stdbool.h>
+  
+  /* Get size_t. */
+  #include <stddef.h>

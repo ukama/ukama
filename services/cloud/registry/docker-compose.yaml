@@ -1,0 +1,68 @@
+version: "3.2"
+services:
+  postgresd:
+    image: postgres:13.3
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Pass2020!
+    networks:
+      - intranet
+    volumes:
+      - postgress-data:/var/lib/postgresql
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8090:8080
+    networks:
+      - intranet
+
+  rabbitmq:
+    # Web interface: http://localhost:15672
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - rabbitmq-data:/var/lib/rabbitmq/
+        #- ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - intranet
+
+  registry:
+    build: .
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=Pass2020!
+      - DB_USER=postgres
+    restart: always
+    networks:
+      - intranet
+
+  listener:
+    build:
+      dockerfile: Dockerfile.listener
+      context: .
+    restart: always
+    networks:
+      - intranet
+    environment:
+      - QUEUE=amqp://guest:guest@rabbitmq:5672
+
+
+networks:
+  intranet:
+
+volumes:
+  postgress-data:
+  rabbitmq-data:
+
+
+

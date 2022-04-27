@@ -1,0 +1,24 @@
+*** unictype.in.h.orig	2009-04-05 12:15:57.000000000 +0200
+--- unictype.in.h	2009-04-12 04:31:36.000000000 +0200
+***************
+*** 19,26 ****
+  
+  #include "unitypes.h"
+  
+  /* Get bool.  */
+! #include <stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>
+--- 19,29 ----
+  
+  #include "unitypes.h"
+  
++ /* Get LIBUNISTRING_DLL_VARIABLE.  */
++ #include <unistring/woe32dll.h>
++ 
+  /* Get bool.  */
+! #include <unistring/stdbool.h>
+  
+  /* Get size_t.  */
+  #include <stddef.h>

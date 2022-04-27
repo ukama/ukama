@@ -1,0 +1,240 @@
+# Hungarian translation for libidn2.
+# Copyright (C) 2014, 2019 Free Software Foundation, Inc.
+# This file is distributed under the same license as the libidn2 package.
+#
+# Balázs Úr <ur.balazs@fsf.hu>, 2014, 2018, 2019.
+msgid ""
+msgstr ""
+"Project-Id-Version: libidn2 2.1.1\n"
+"Report-Msgid-Bugs-To: bug-libidn2@gnu.org\n"
+"POT-Creation-Date: 2021-07-19 20:13+0200\n"
+"PO-Revision-Date: 2019-11-23 22:37+0100\n"
+"Last-Translator: Balázs Úr <ur.balazs@fsf.hu>\n"
+"Language-Team: Hungarian <translation-team-hu@lists.sourceforge.net>\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Bugs: Report translation errors to the Language-Team address.\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 19.04.3\n"
+
+#: lib/error.c:54
+msgid "success"
+msgstr "sikerült"
+
+#: lib/error.c:56
+msgid "out of memory"
+msgstr "elfogyott a memória"
+
+#: lib/error.c:58
+msgid "could not determine locale encoding format"
+msgstr "nem sikerült meghatározni területi beállítás kódolási formátumát"
+
+#: lib/error.c:60
+msgid "could not convert string to UTF-8"
+msgstr "nem sikerült átalakítani a karakterláncot UTF-8 kódolásra"
+
+#: lib/error.c:62
+msgid "string encoding error"
+msgstr "karakterlánc kódolási hiba"
+
+#: lib/error.c:64
+msgid "string could not be NFC normalized"
+msgstr "a karakterlánc nem lehet NFC normalizált"
+
+#: lib/error.c:66
+msgid "string contains invalid punycode data"
+msgstr "a karakterlánc érvénytelen punycode adatokat tartalmaz"
+
+#: lib/error.c:68
+msgid "punycode encoded data will be too large"
+msgstr "a punycode kódolt adatok túl nagyok lesznek"
+
+#: lib/error.c:70
+msgid "punycode conversion resulted in overflow"
+msgstr "a punycode átalakítás túlcsordulást eredményezett"
+
+#: lib/error.c:72
+msgid "domain name longer than 255 characters"
+msgstr "a tartománynév 255 karakternél hosszabb"
+
+#: lib/error.c:74
+msgid "domain label longer than 63 characters"
+msgstr "a tartománycímke 63 karakternél hosszabb"
+
+#: lib/error.c:76
+msgid "input A-label is not valid"
+msgstr "a bemenet A-címkéje nem érvényes"
+
+#: lib/error.c:78
+msgid "input A-label and U-label does not match"
+msgstr "a bemenet A-címkéje és U-címkéje nem egyezik"
+
+#: lib/error.c:80
+msgid "string is not in Unicode NFC format"
+msgstr "a karakterlánc nincs Unicode NFC formátumban"
+
+#: lib/error.c:82
+msgid "string contains forbidden two hyphens pattern"
+msgstr "a karakterlánc tiltott két kötőjel mintát tartalmaz"
+
+#: lib/error.c:84
+msgid "string start/ends with forbidden hyphen"
+msgstr "a karakterlánc tiltott kötőjellel kezdődik vagy végződik"
+
+#: lib/error.c:86
+msgid "string contains a forbidden leading combining character"
+msgstr "a karakterlánc egy tiltott kezdő egyesítő karaktert tartalmaz"
+
+#: lib/error.c:88
+msgid "string contains a disallowed character"
+msgstr "a karakterlánc egy nem engedélyezett karaktert tartalmaz"
+
+#: lib/error.c:90
+msgid "string contains a forbidden context-j character"
+msgstr "a karakterlánc egy tiltott j-környezetű karaktert tartalmaz"
+
+#: lib/error.c:92
+msgid "string contains a context-j character with null rule"
+msgstr "a karakterlánc egy j-környezetű karaktert tartalmaz üres szabállyal"
+
+#: lib/error.c:94
+msgid "string contains a forbidden context-o character"
+msgstr "a karakterlánc egy tiltott o-környezetű karaktert tartalmaz"
+
+#: lib/error.c:96
+msgid "string contains a context-o character with null rule"
+msgstr "a karakterlánc egy o-környezetű karaktert tartalmaz üres szabállyal"
+
+#: lib/error.c:98
+msgid "string contains unassigned code point"
+msgstr "a karakterlánc nem hozzárendelt kódpontot tartalmaz"
+
+#: lib/error.c:100
+msgid "string has forbidden bi-directional properties"
+msgstr "a karakterláncnak tiltott kétirányú tulajdonságai vannak"
+
+#: lib/error.c:102
+msgid "domain label has forbidden dot (TR46)"
+msgstr "a tartománycímke tiltott pontot tartalmaz (TR46)"
+
+#: lib/error.c:105
+msgid "domain label has character forbidden in transitional mode (TR46)"
+msgstr "a tartománycímke tiltott karaktert tartalmaz átmeneti módban (TR46)"
+
+#: lib/error.c:109
+msgid "domain label has character forbidden in non-transitional mode (TR46)"
+msgstr ""
+"a tartománycímke tiltott karaktert tartalmaz nem átmeneti módban (TR46)"
+
+#: lib/error.c:111
+msgid "A-label roundtrip failed"
+msgstr ""
+
+#: lib/error.c:113
+msgid "Unknown error"
+msgstr "Ismeretlen hiba"
+
+#: src/idn2.c:59
+#, c-format
+msgid "Try `%s --help' for more information.\n"
+msgstr "További információkért próbálja a(z) „%s --help” parancsot.\n"
+
+#: src/idn2.c:63
+#, c-format
+msgid "Usage: %s [OPTION]... [STRINGS]...\n"
+msgstr "Használat: %s [KAPCSOLÓ]… [KARAKTERLÁNCOK]…\n"
+
+#: src/idn2.c:66
+msgid ""
+"Internationalized Domain Name (IDNA2008) convert STRINGS, or standard "
+"input.\n"
+"\n"
+msgstr ""
+"Internationalized Domain Name (IDNA2008) átalakított KARAKTERLÁNCOK vagy "
+"szabványos bemenet.\n"
+"\n"
+
+#: src/idn2.c:70
+msgid ""
+"Command line interface to the Libidn2 implementation of IDNA2008.\n"
+"\n"
+"All strings are expected to be encoded in the locale charset.\n"
+"\n"
+"To process a string that starts with `-', for example `-foo', use `--'\n"
+"to signal the end of parameters, as in `idn2 --quiet -- -foo'.\n"
+"\n"
+"Mandatory arguments to long options are mandatory for short options too.\n"
+msgstr ""
+"Parancssori felület az IDNA2008 Libidn2 megvalósításához.\n"
+"\n"
+"Minden karakterlánc a területi beállítás szerinti karakterkészlet\n"
+"használatával kódolva várt.\n"
+"\n"
+"Egy „-” kezdetű karakterlánc feldolgozásához, például „-izé”, használja a\n"
+"„--” jelet a paraméterek végének jelzéséhez, úgymint „idn2 --quiet -- -"
+"izé”.\n"
+"\n"
+"A hosszú kapcsolók kötelező argumentumai a rövid kapcsolóknál is "
+"kötelezőek.\n"
+
+#: src/idn2.c:80
+#, fuzzy
+msgid ""
+"  -h, --help                Print help and exit\n"
+"  -V, --version             Print version and exit\n"
+msgstr ""
+"  -h, --help               Súgó kiírása és kilépés\n"
+"  -V, --version            Verzió kiírása és kilépés\n"
+
+#: src/idn2.c:84
+#, fuzzy
+msgid ""
+"  -d, --decode              Decode (punycode) domain name\n"
+"  -l, --lookup              Lookup domain name (default)\n"
+"  -r, --register            Register label\n"
+msgstr ""
+"  -d, --decode             Tartománynév dekódolása (punycode)\n"
+"  -l, --lookup             Keresési tartománynév (alapértelmezett)\n"
+"  -r, --register           Címke regisztrálása\n"
+
+#: src/idn2.c:89
+#, fuzzy
+msgid ""
+"  -T, --tr46t               Enable TR46 transitional processing\n"
+"  -N, --tr46nt              Enable TR46 non-transitional processing\n"
+"      --no-tr46             Disable TR46 processing\n"
+msgstr ""
+"  -T, --tr46t              TR46 átmeneti feldolgozás engedélyezése\n"
+"  -N, --tr46nt             TR46 nem átmeneti feldolgozás engedélyezése\n"
+"      --no-tr46            TR46 feldolgozás letiltása\n"
+
+#: src/idn2.c:94
+#, fuzzy
+msgid ""
+"      --usestd3asciirules   Enable STD3 ASCII rules\n"
+"      --no-alabelroundtrip  Disable A-label roundtrip for lookups\n"
+"      --debug               Print debugging information\n"
+"      --quiet               Silent operation\n"
+msgstr ""
+"      --usestd3asciirules  STD3 ASCII szabályok engedélyezése\n"
+"      --debug              Hibakeresési információk kiírása\n"
+"      --quiet              Csendes működés\n"
+
+#: src/idn2.c:217
+#, c-format
+msgid "Charset: %s\n"
+msgstr "Karakterkészlet: %s\n"
+
+#: src/idn2.c:221
+msgid ""
+"Type each input string on a line by itself, terminated by a newline "
+"character.\n"
+msgstr ""
+"Minden bemeneti karakterláncot önmagával egy sorba gépeljen be, egy új sor "
+"karakterrel lezárva.\n"
+
+#: src/idn2.c:252
+msgid "input error"
+msgstr "bemeneti hiba"

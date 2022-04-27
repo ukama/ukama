@@ -1,0 +1,39 @@
+{
+    "cgroups": [],
+    "mounts": [
+        {
+            "destination": "/containers/onboot/001-dhcpcd/tmp",
+            "type": "tmpfs",
+            "source": "tmpfs"
+        },
+        {
+            "destination": "/containers/onboot/001-dhcpcd/tmp",
+            "options": [
+                "remount",
+                "private"
+            ]
+        },
+        {
+            "destination": "/containers/onboot/001-dhcpcd/rootfs",
+            "type": "overlay",
+            "source": "overlay",
+            "options": [
+                "lowerdir=/containers/onboot/001-dhcpcd/lower",
+                "upperdir=/containers/onboot/001-dhcpcd/tmp/upper",
+                "workdir=/containers/onboot/001-dhcpcd/tmp/work"
+            ]
+        }
+    ],
+    "mkdir": [],
+    "interfaces": [],
+    "bindNS": {
+        "cgroup": "",
+        "ipc": "",
+        "mnt": "",
+        "net": "",
+        "pid": "",
+        "user": "",
+        "uts": ""
+    },
+    "namespace": ""
+}

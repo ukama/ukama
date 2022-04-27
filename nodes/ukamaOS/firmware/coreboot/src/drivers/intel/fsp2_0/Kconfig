@@ -1,0 +1,178 @@
+#
+# This file is part of the coreboot project.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+
+config PLATFORM_USES_FSP2_0
+	bool
+	default n
+	help
+	  Include FSP 2.0 wrappers and functionality
+
+config PLATFORM_USES_FSP2_1
+	bool
+	default n
+	select PLATFORM_USES_FSP2_0
+	select FSP_USES_CB_STACK
+	select FSP_PEIM_TO_PEIM_INTERFACE
+	help
+	  Include FSP 2.1 wrappers and functionality.
+	  Features added into FSP 2.1 specification that impacts coreboot are:
+	  1. Remove FSP stack switch and use the same stack with boot firmware
+	  2. FSP should support external PPI interface pulled in via FSP_PEIM_TO_PEIM_INTERFACE
+
+if PLATFORM_USES_FSP2_0
+
+config ADD_FSP_BINARIES
+	bool "Add Intel FSP 2.0 binaries to CBFS"
+	help
+	  Add the FSP-M and FSP-S binaries to CBFS. Currently coreboot does not
+	  use the FSP-T binary and it is not added.
+
+config CPU_MICROCODE_CBFS_LEN
+	hex "Microcode update region length in bytes"
+	depends on FSP_CAR
+	default 0x0
+	help
+	  The length in bytes of the microcode update region.
+
+config CPU_MICROCODE_CBFS_LOC
+	hex "Microcode update base address in CBFS"
+	depends on FSP_CAR
+	default 0x0
+	help
+	  The location (base address) in CBFS that contains the
+	  microcode update binary.
+
+config FSP_T_CBFS
+	string "Name of FSP-T in CBFS"
+	depends on FSP_CAR
+	default "fspt.bin"
+
+config FSP_S_CBFS
+	string "Name of FSP-S in CBFS"
+	default "fsps.bin"
+
+config FSP_M_CBFS
+	string "Name of FSP-M in CBFS"
+	default "fspm.bin"
+
+config FSP_USE_REPO
+	bool "Use the IntelFSP based binaries"
+	depends on ADD_FSP_BINARIES
+	depends on SOC_INTEL_APOLLOLAKE || SOC_INTEL_SKYLAKE || \
+		SOC_INTEL_KABYLAKE || SOC_INTEL_COFFEELAKE || \
+		SOC_INTEL_WHISKEYLAKE
+	help
+	  When selecting this option, the SoC must set FSP_HEADER_PATH
+	  and FSP_FD_PATH correctly so FSP splitting works.
+
+config FSP_T_FILE
+	string "Intel FSP-T (temp ram init) binary path and filename"
+	depends on FSP_CAR
+	default "$(obj)/Fsp_T.fd" if FSP_USE_REPO
+	help
+	  The path and filename of the Intel FSP-M binary for this platform.
+
+config FSP_M_FILE
+	string "Intel FSP-M (memory init) binary path and filename"
+	depends on ADD_FSP_BINARIES
+	default "$(obj)/Fsp_M.fd" if FSP_USE_REPO
+	help
+	  The path and filename of the Intel FSP-M binary for this platform.
+
+config FSP_S_FILE
+	string "Intel FSP-S (silicon init) binary path and filename"
+	depends on ADD_FSP_BINARIES
+	default "$(obj)/Fsp_S.fd" if FSP_USE_REPO
+	help
+	  The path and filename of the Intel FSP-S binary for this platform.
+
+config FSP_CAR
+	bool
+	default n
+	help
+	  Use FSP APIs to initialize & Tear Down the Cache-As-Ram
+
+config FSP_M_XIP
+	bool
+	default n
+	help
+	  Select this value when FSP-M is execute-in-place.
+
+config FSP_T_XIP
+	bool
+	default n
+	help
+	  Select this value when FSP-T is execute-in-place.
+
+config FSP_USES_CB_STACK
+	bool
+	default n
+	help
+	  Enable support for fsp to use same stack as coreboot.
+	  This option allows fsp to continue using coreboot stack
+	  without reinitializing stack pointer. This feature is
+	  supported Icelake onwards.
+
+config FSP_TEMP_RAM_SIZE
+	hex
+	depends on FSP_USES_CB_STACK
+	help
+	  The amount of anticipated heap usage in CAR by FSP to setup HOB.
+	  This configuration is applicable for FSP specification using shared
+	  stack with coreboot/bootloader.
+	  Sync this value with Platform FSP integration guide recommendation.
+
+config RESET_ON_INVALID_RAMSTAGE_CACHE
+	bool "Reset the system on S3 wake when ramstage cache invalid."
+	default n
+
+config FSP2_0_USES_TPM_MRC_HASH
+	bool
+	depends on TPM1 || TPM2
+	depends on VBOOT && VBOOT_STARTS_IN_BOOTBLOCK
+	default y if HAS_RECOVERY_MRC_CACHE
+	default n
+	select VBOOT_HAS_REC_HASH_SPACE
+	help
+	  Store hash of trained recovery MRC cache in NVRAM space in TPM.
+	  Use the hash to validate recovery MRC cache before using it.
+	  This hash needs to be updated every time recovery mode training
+	  is recomputed, or if the hash does not match recovery MRC cache.
+	  Selecting this option requires that TPM already be setup by this
+	  point in time.  Thus it is only compatible when the option
+	  VBOOT_STARTS_IN_BOOTBLOCK is selected, which causes verstage and
+	  TPM setup to occur prior to memory initialization.
+
+config FSP_PLATFORM_MEMORY_SETTINGS_VERSIONS
+	bool
+	help
+	  This is selected by SoC or mainboard to supply their own
+	  concept of a version for the memory settings respectively.
+	  This allows deployed systems to bump their version number
+	  with the same FSP which will trigger a retrain of the memory.
+
+config FSP_PEIM_TO_PEIM_INTERFACE
+	bool
+	select FSP_USES_MP_SERVICES_PPI
+	help
+	  This option allows SOC user to create specific PPI for Intel FSP
+	  usage, coreboot will provide required PPI structure definitions
+	  along with all APIs as per EFI specification. So far this feature
+	  is limited till EFI_PEI_MP_SERVICE_PPI and this option might be
+	  useful to add further PPI if required.
+
+if FSP_PEIM_TO_PEIM_INTERFACE
+source "src/drivers/intel/fsp2_0/ppi/Kconfig"
+endif
+
+endif
