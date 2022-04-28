@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/minio/minio-go/v6/pkg/credentials"
-	mc "github.com/ukama/ukamaX/hub/hub/pkg"
+	mc "github.com/ukama/ukama/services/hub/hub/pkg"
 )
 
 type StoreCredentialsOptions struct {

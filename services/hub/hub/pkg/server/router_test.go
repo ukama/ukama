@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukamaX/hub/hub/mocks"
-	"github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/ukama/ukama/services/hub/hub/mocks"
+	"github.com/ukama/ukama/services/hub/hub/pkg"
 )
 
 var emptyChunker = &mocks.Chunker{}

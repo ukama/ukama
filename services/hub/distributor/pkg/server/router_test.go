@@ -10,7 +10,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
 )
 
 func init() {

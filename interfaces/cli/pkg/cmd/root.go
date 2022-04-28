@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/ukama/ukamaX/cli/cmd/version"
-	"github.com/ukama/ukamaX/cli/pkg"
-	"github.com/ukama/ukamaX/cli/pkg/cmd/config"
-	"github.com/ukama/ukamaX/cli/pkg/cmd/node"
+	"github.com/ukama/ukama/services/cli/cmd/version"
+	"github.com/ukama/ukama/services/cli/pkg"
+	"github.com/ukama/ukama/services/cli/pkg/cmd/config"
+	"github.com/ukama/ukama/services/cli/pkg/cmd/node"
 )
 
 func RootCommand() *cobra.Command {

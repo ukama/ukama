@@ -10,9 +10,9 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukamaX/hub/distributor/cmd/version"
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
-	"github.com/ukama/ukamaX/hub/distributor/pkg/chunk"
+	"github.com/ukama/ukama/services/hub/distributor/cmd/version"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg/chunk"
 	"github.com/wI2L/fizz"
 )
 

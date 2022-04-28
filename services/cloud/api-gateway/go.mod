@@ -4,7 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/metrics/node-metrics => ../../metrics/node-metrics
+replace github.com/ukama/ukama/services/metrics/node-metrics => ../../metrics/node-metrics
 
 replace github.com/ukama/ukama/services/cloud/api-gateway => ./
 

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/templates/rest-service/pkg"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/templates/rest-service/pkg"
 )
 
 func init() {

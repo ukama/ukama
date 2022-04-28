@@ -1,12 +1,12 @@
-module github.com/ukama/ukamaX/hub/distributor
+module github.com/ukama/ukama/services/hub/distributor
 
 go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/hub/distributor => ./
+replace github.com/ukama/ukama/services/hub/distributor => ./
 
-replace github.com/ukama/ukamaX/hub/hub => ../hub
+replace github.com/ukama/ukama/services/hub/hub => ../hub
 
 require (
 	github.com/gin-contrib/cors v1.3.1
@@ -17,7 +17,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/common v0.0.0-20220208115908-8a6547083867
-	github.com/ukama/ukamaX/hub/hub v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/services/hub/hub v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.18.1
 )
 

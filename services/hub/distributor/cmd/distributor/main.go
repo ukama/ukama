@@ -8,11 +8,11 @@ import (
 
 	"github.com/ukama/ukama/services/common/metrics"
 
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
-	"github.com/ukama/ukamaX/hub/distributor/pkg/distribution"
-	"github.com/ukama/ukamaX/hub/distributor/pkg/server"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg/distribution"
+	"github.com/ukama/ukama/services/hub/distributor/pkg/server"
 
-	"github.com/ukama/ukamaX/hub/distributor/cmd/version"
+	"github.com/ukama/ukama/services/hub/distributor/cmd/version"
 
 	"github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/services/common/cmd"

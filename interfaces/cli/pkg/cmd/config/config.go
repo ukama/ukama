@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukamaX/cli/pkg"
+	"github.com/ukama/ukama/services/cli/pkg"
 	"io"
 	"os"
 	"reflect"

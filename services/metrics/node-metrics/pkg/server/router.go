@@ -13,8 +13,8 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukamaX/metrics/node-metrics/cmd/version"
-	"github.com/ukama/ukamaX/metrics/node-metrics/pkg"
+	"github.com/ukama/ukama/services/metrics/node-metrics/cmd/version"
+	"github.com/ukama/ukama/services/metrics/node-metrics/pkg"
 	"github.com/wI2L/fizz"
 )
 

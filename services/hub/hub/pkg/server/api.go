@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/ukama/ukama/services/hub/hub/pkg"
 	"time"
 )
 
