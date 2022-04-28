@@ -9,14 +9,6 @@ type Config struct {
 	DB                config.Database
 	Grpc              config.Grpc
 	Queue             config.Queue
-	SimManager        SimManager
-	SimTokenKey       string
-	HssHost           string
-}
-
-type SimManager struct {
-	Host string
-	Name string
 }
 
 func NewConfig() *Config {
@@ -35,11 +27,5 @@ func NewConfig() *Config {
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
-		SimManager: SimManager{
-			Host: "localhost:9090",
-			Name: "SimManager",
-		},
-		SimTokenKey: "11111111111111111111111111111111",
-		HssHost:     "localhost:9090",
 	}
 }

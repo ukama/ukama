@@ -1,17 +1,16 @@
 package db
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"time"
 )
 
 type Org struct {
 	gorm.Model
-	Name      string `gorm:"not null;type:string;uniqueIndex:orgname_idx_case_insensetive,expression:lower(name),where:deleted_at is null"`
-	UserLimit uint
-	Imsis     []Imsi
-	Users     []User
+	Name  string `gorm:"not null;type:string;uniqueIndex:orgname_idx_case_insensetive,expression:lower(name),where:deleted_at is null"`
+	Imsis []Imsi
 }
 
 // Represents record in HSS db

@@ -17,7 +17,7 @@ func Login(kratosUrl string, email string, password string) (*ory.SuccessfulSelf
 	}
 
 	// If you want, print the flow here:
-	PrintJSONPretty(flow)
+	//PrintJSONPretty(flow)
 
 	// Submit the form
 	result, res, err := client.V0alpha2Api.SubmitSelfServiceLoginFlow(ctx).Flow(flow.Id).SubmitSelfServiceLoginFlowBody(

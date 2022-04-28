@@ -104,7 +104,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 	defer cancel()
 
 	logrus.Infoln("Connecting to registry ", testConf.RegistryHost)
-	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.FailNow(t, "Failed to connect to registry", err)
 		return nil, nil, nil

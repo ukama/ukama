@@ -26,23 +26,12 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17
+        go-version: 1.18
       
     - name: Granting private modules access
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
-
-    - name: Setup protoc      
-      uses: arduino/setup-protoc@v1.1.2
-      with:        
-        version: 3.16      
-
-    - name: Setup protobuf-go 
-      run: > 
-          go get google.golang.org/protobuf/cmd/protoc-gen-go
-          google.golang.org/grpc/cmd/protoc-gen-go-grpc 
-          github.com/ysugimoto/grpc-graphql-gateway/protoc-gen-graphql/...
-
+  
     - name: Build {{SERVICE}}
       env:
         BUILD_NUMBER: ${{ github.run_number }}

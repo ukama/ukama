@@ -15,7 +15,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
+	pb "github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
 	"google.golang.org/grpc"
 )
 
@@ -89,6 +89,16 @@ func Test_GetSimInfo(t *testing.T) {
 		}})
 
 		assert.NoError(t, err, "Error resetting service status")
+	})
+
+	t.Run("GetUsage", func(t *testing.T) {
+		resp, err := c.GetUsage(ctx, &pb.GetUsageRequest{
+			Iccid: testConf.Iccid,
+		})
+
+		if assert.NoError(t, err) {
+			assert.Greater(t, resp.DataTotalInBytes, resp.DataUsageInBytes)
+		}
 	})
 
 	t.Run("TerminateSim", func(t *testing.T) {

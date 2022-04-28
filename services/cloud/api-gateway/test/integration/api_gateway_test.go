@@ -6,6 +6,7 @@ package integration
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
 	"github.com/ukama/ukamaX/common/config"
 	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
@@ -72,8 +73,10 @@ func Test_RegistryApi(t *testing.T) {
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
 			Get(getApiUrl() + "/orgs/" + login.Session.Identity.GetId())
 
-		assert.NoError(t, err)
-		assert.Equal(tt, http.StatusOK, resp.StatusCode())
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusOK, resp.StatusCode())
+		}
+
 	})
 
 	t.Run("GetOrgNotFound", func(tt *testing.T) {
@@ -123,7 +126,7 @@ func Test_RegistryApi(t *testing.T) {
 	})
 
 	t.Run("UpdateNode", func(tt *testing.T) {
-		nodeName := "updated-testNode"
+		nodeName := "updated-testNode-" + time.Now().Format(time.RFC3339)
 		resp, err := client.R().
 			EnableTrace().
 			SetHeader("authorization", "bearer "+login.GetSessionToken()).
@@ -136,6 +139,47 @@ func Test_RegistryApi(t *testing.T) {
 			assert.Contains(tt, resp.String(), nodeName)
 		}
 	})
+}
+
+func TestGetUser(b *testing.T) {
+	session, err := kratos.Login(getKratosUrl(), testConf.TestAccountEmail, testConf.TestAccountPass)
+	if err != nil {
+		assert.NoError(b, err, "Failed to login to Kratos")
+		assert.FailNow(b, "Failed to login to Kratos")
+		return
+	}
+	orgId := session.Session.Identity.GetId()
+
+	client := resty.New()
+	users := &userspb.ListResponse{}
+	_, err = client.R().
+		EnableTrace().
+		SetHeader("authorization", "bearer "+session.GetSessionToken()).
+		SetResult(users).
+		Get(getApiUrl() + "/orgs/" + orgId + "/users")
+
+	if assert.NoError(b, err, "Failed to get users") {
+		return
+	}
+
+	userId := ""
+	for i := len(users.Users) - 1; i >= 0; i++ {
+		if !users.Users[i].IsDeactivated {
+			userId = users.Users[i].Uuid
+			break
+		}
+	}
+
+	var user *userspb.GetResponse
+	_, err = client.R().
+		EnableTrace().
+		SetHeader("authorization", "bearer "+session.GetSessionToken()).
+		SetResult(user).
+		Get(getApiUrl() + "/orgs/" + orgId + "/users/" + userId)
+
+	if assert.NoError(b, err, "Failed to get user") {
+		assert.NotEmpty(b, user.GetUser().Uuid, "User UUID is empty")
+	}
 
 }
 
