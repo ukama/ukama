@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"ukamaX/service-boilerplate/pkg"
 
 	"github.com/ukama/ukama/services/cloud/foo/pkg"
 
