@@ -122,17 +122,25 @@ jobs:
     env: 
       working-directory: services/cloud/registry
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Granting private modules access
-        run: |
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+    
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+    
+    - name: Granting private modules access
+      run: |
             git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
 
-      - name: lint
-        uses: golangci/golangci-lint-action@v2
-        with:
-            working-directory: ${{ env.working-directory }}
+    - name: install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
 
+    - name: run static check
+      run: staticcheck ./...
+      working-directory: ${{ env.working-directory }}
 
   release:
       name: release
