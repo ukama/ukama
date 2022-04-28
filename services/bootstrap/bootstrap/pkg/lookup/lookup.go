@@ -1,7 +1,6 @@
 package lookup
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -60,9 +59,9 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 	}
 
 	logrus.Debugf("Credentials for node are %+v.", credResp)
-	if err := json.Unmarshal(resp.Body(), credResp); err != nil {
-		return false, nil, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
-	}
+	// if err := json.Unmarshal(resp.Body(), credResp); err != nil {
+	// 	return false, nil, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
+	// }
 	logrus.Tracef("Credentials for received from %s for nodeid %s is %+v ", L.S.Url.String(), nodeid, credResp)
 
 	return true, credResp, nil

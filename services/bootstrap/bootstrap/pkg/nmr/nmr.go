@@ -1,7 +1,6 @@
 package nmr
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -36,9 +35,8 @@ func NewFactory(svcR *sr.ServiceRouter) *Factory {
 
 func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	logrus.Tracef("Validation request for node %s", nodeid)
-	nStatus := NodeStatus{}
+	nStatus := &NodeStatus{}
 	errStatus := &ErrorMessage{}
-	f.S.C.SetDebug(true)
 	resp, err := f.S.C.R().
 		SetResult(nStatus).
 		SetError(errStatus).
@@ -59,9 +57,9 @@ func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	}
 
 	logrus.Debugf("Node status is %+v.", nStatus)
-	if err := json.Unmarshal(resp.Body(), &nStatus); err != nil {
-		return false, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
-	}
+	// if err := json.Unmarshal(resp.Body(), &nStatus); err != nil {
+	// 	return false, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
+	// }
 
 	if nStatus.Status != StatusNodeIntransit {
 		logrus.Errorf("Node %s validation failure Node state is %+v.", nodeid, string(resp.Body()))
