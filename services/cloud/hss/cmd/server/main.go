@@ -1,21 +1,22 @@
 package main
 
 import (
-	"github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/cloud/hss/pkg"
-	"github.com/ukama/ukamaX/cloud/hss/pkg/server"
 	"os"
 
-	"github.com/ukama/ukamaX/cloud/hss/cmd/version"
+	"github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	"github.com/ukama/ukama/services/cloud/hss/pkg"
+	"github.com/ukama/ukama/services/cloud/hss/pkg/server"
 
-	"github.com/ukama/ukamaX/cloud/hss/pkg/db"
+	"github.com/ukama/ukama/services/cloud/hss/cmd/version"
+
+	"github.com/ukama/ukama/services/cloud/hss/pkg/db"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
 
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc"
 )
 

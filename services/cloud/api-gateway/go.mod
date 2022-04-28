@@ -1,16 +1,16 @@
-module github.com/ukama/ukamaX/cloud/api-gateway
+module github.com/ukama/ukama/services/cloud/api-gateway
 
 go 1.18
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/metrics/node-metrics => ../../metrics/node-metrics
+replace github.com/ukama/ukama/services/metrics/node-metrics => ../../metrics/node-metrics
 
-replace github.com/ukama/ukamaX/cloud/api-gateway => ./
+replace github.com/ukama/ukama/services/cloud/api-gateway => ./
 
-replace github.com/ukama/ukamaX/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
-replace github.com/ukama/ukamaX/cloud/users => ../users
+replace github.com/ukama/ukama/services/cloud/users => ../users
 
 require (
 	github.com/gin-contrib/cors v1.3.1
@@ -20,11 +20,12 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/loopfz/gadgeto v0.11.2
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
+	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
-	github.com/ukama/ukamaX/cloud/users v0.0.0-20220407150637-6988f3e0f2e5
-	github.com/ukama/ukamaX/common v0.0.0-20220425182032-2c377df948f4
+	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
+	github.com/ukama/ukama/services/cloud/users v0.0.0-20220407150637-6988f3e0f2e5
+	github.com/ukama/ukama/services/common v0.0.0-20220425182032-2c377df948f4
 	github.com/vektra/mockery/v2 v2.12.1
 	github.com/wI2L/fizz v0.18.1
 	google.golang.org/grpc v1.45.0
@@ -143,7 +144,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.0-beta.8 // indirect
 	github.com/penglongli/gin-metrics v0.1.9 // indirect
 	github.com/phayes/checkstyle v0.0.0-20170904204023-bfd46e6a821d // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v0.0.0-20220405202032-75552f8aa5ed // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect

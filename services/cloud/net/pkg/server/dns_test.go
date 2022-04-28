@@ -3,15 +3,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/coredns/coredns/pb"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/cloud/net/mocks"
-	"github.com/ukama/ukamaX/cloud/net/pkg"
+	"github.com/ukama/ukama/services/cloud/net/mocks"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"testing"
 )
 
 func TestDnsServer_Query(t *testing.T) {

@@ -2,9 +2,10 @@ package multipl
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
 	"strings"
+
+	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 )
 
 type requestMultiplier struct {

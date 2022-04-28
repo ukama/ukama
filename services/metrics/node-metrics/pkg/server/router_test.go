@@ -10,8 +10,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/metrics/node-metrics/pkg"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/metrics/node-metrics/pkg"
 )
 
 func init() {

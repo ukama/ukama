@@ -3,18 +3,18 @@ package server
 import (
 	"context"
 
-	"github.com/ukama/ukamaX/cloud/users/pkg"
-	"github.com/ukama/ukamaX/cloud/users/pkg/db"
-	"github.com/ukama/ukamaX/cloud/users/pkg/sims"
+	"github.com/ukama/ukama/services/cloud/users/pkg"
+	"github.com/ukama/ukama/services/cloud/users/pkg/db"
+	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	pb "github.com/ukama/ukamaX/cloud/users/pb/gen"
-	pbclient "github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
-	"github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/sql"
+	hsspb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/users/pb/gen"
+	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -348,7 +348,7 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	// Deactivate sim cards
+	// Deactivate sim cards in sim manager
 	u.terminateSimCard(ctx, usr.Simcards)
 
 	// Delete imsi record from HSS

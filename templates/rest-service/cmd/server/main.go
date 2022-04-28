@@ -3,15 +3,15 @@ package main
 import (
 	"os"
 
-	"github.com/ukama/ukamaX/common/metrics"
+	"github.com/ukama/ukama/services/common/metrics"
 
-	"github.com/ukama/ukamaX/templates/rest-service/pkg"
+	"github.com/ukama/ukama/services/templates/rest-service/pkg"
 
-	"github.com/ukama/ukamaX/templates/rest-service/cmd/version"
+	"github.com/ukama/ukama/services/templates/rest-service/cmd/version"
 
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/templates/rest-service/pkg/server"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/templates/rest-service/pkg/server"
 )
 
 var serviceConfig *pkg.Config

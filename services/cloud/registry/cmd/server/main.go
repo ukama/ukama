@@ -1,23 +1,24 @@
 package main
 
 import (
-	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
 	"os"
 
-	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
+	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
 
-	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
-	"github.com/ukama/ukamaX/cloud/registry/pkg"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
-	generated "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/cloud/registry/cmd/version"
+	"github.com/ukama/ukama/services/cloud/registry/pkg"
 
-	"github.com/ukama/ukamaX/cloud/registry/pkg/server"
+	generated "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+
+	"github.com/ukama/ukama/services/cloud/registry/pkg/server"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/sql"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc"
 )
 

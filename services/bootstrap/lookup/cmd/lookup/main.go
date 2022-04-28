@@ -8,9 +8,9 @@ import (
 	"ukamaX/bootstrap/lookup/internal/rest"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/sql"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/sql"
 )
 
 func main() {

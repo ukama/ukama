@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 )
 

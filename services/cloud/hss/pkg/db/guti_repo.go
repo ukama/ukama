@@ -2,10 +2,11 @@ package db
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/common/sql"
-	"gorm.io/gorm"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/sql"
+	"gorm.io/gorm"
 )
 
 const GutiNotUpdatedErr = "more recent guti for imsi exist"

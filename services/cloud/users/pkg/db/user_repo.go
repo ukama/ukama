@@ -3,7 +3,7 @@ package db
 import (
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
+	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -139,6 +139,8 @@ func (u *userRepo) IsOverTheLimit(org string) (bool, error) {
 	return false, nil
 }
 
+// Update user modified non-empty fields provided by user struct
+// Returned fields are those that were updated
 func (u *userRepo) Update(user *User) (*User, error) {
 	d := u.Db.GetGormDb().Where("uuid = ?", user.Uuid).UpdateColumns(user)
 	if d.RowsAffected == 0 {

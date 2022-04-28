@@ -3,14 +3,15 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+	"strings"
+
 	"github.com/coredns/coredns/pb"
 	"github.com/miekg/dns"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/net/pkg"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"net"
-	"strings"
 )
 
 type DnsServer struct {

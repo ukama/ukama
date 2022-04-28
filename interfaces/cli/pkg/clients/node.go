@@ -4,13 +4,14 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/cli/pkg"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/ukama/ukama/interfaces/cli/pkg"
 )
 
 type NodeClient struct {

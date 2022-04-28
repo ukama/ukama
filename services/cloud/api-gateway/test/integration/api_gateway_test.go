@@ -6,15 +6,15 @@ package integration
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/ukama"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/ukama"
 	"net/http"
 	"testing"
 	"time"
 
 	ory "github.com/ory/kratos-client-go"
-	"github.com/ukama/ukamaX/common/testing/kratos"
+	"github.com/ukama/ukama/services/common/testing/kratos"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"

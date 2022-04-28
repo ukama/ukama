@@ -4,20 +4,21 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"github.com/jackc/pgconn"
-	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
-	"github.com/ukama/ukamaX/common/grpc"
 	"time"
 
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
+	"github.com/jackc/pgconn"
+	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
+	"github.com/ukama/ukama/services/common/grpc"
+
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
 	"github.com/goombaio/namegenerator"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

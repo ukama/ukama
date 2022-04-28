@@ -1,14 +1,15 @@
 package rest
 
 import (
-	"github.com/ukama/ukamaX/cloud/api-gateway/mocks"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ukama/ukama/services/cloud/api-gateway/mocks"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 )
 
 const KRATOS_USER_ID_HEADER = "X-Kratos-Authenticated-Identity-Id"

@@ -7,23 +7,25 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	userspb "github.com/ukama/ukamaX/cloud/users/pb/gen"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 )
 
 const ORG_URL_PARAMETER = "org"
@@ -253,7 +255,7 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 		}
 	}
 
-	resp, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
+	_, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -263,7 +265,12 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 		return nil, err
 	}
 
-	return resp.User, nil
+	resUser, err := r.clients.User.Get(req.UserId)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get updated user")
+	}
+
+	return resUser.GetUser(), nil
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {

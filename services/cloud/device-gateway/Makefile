@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build  -ldflags '-X github.com/ukama/ukamaX/cloud/device-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/device-gateway cmd/main.go
+	env CGO_ENABLED=0 go build  -ldflags '-X github.com/ukama/ukama/services/cloud/device-gateway/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/device-gateway cmd/main.go
 
 test:
 	go test -v ./...
@@ -27,7 +27,7 @@ gen:
                 --grpc-gateway_opt standalone=true \
                 hss.proto
 	# we need to replace importing package as we are using grpc client from other module
-	sed -i -e 's/extGen "pb\/gen"/extGen "github.com\/ukama\/ukamaX\/cloud\/hss\/pb\/gen"/' ./pb/gen/hss.pb.gw.go
+	sed -i -e 's/extGen "pb\/gen"/extGen "github.com\/ukama\/ukama\/cloud\/hss\/pb\/gen"/' ./pb/gen/hss.pb.gw.go
 	# generate open api documentation
 	protoc -I ../hss/pb/  -I ../../common/pb/ --openapiv2_out ./swagger-ui \
         --openapiv2_opt logtostderr=true \

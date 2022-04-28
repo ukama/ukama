@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	common "github.com/ukama/ukamaX/common/rest"
+	common "github.com/ukama/ukama/services/common/rest"
 )
 
 const NodeIdParamName = "nodeId"

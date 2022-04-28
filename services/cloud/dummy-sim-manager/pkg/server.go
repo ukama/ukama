@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/users/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"

@@ -2,14 +2,15 @@ package multipl_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/cloud/device-feeder/mocks"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg/multipl"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/services/cloud/device-feeder/mocks"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/multipl"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 )
 
 func Test_requestMultiplier_Process(t *testing.T) {

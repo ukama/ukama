@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/hss
+module github.com/ukama/ukama/services/cloud/hss
 
 go 1.17
 
@@ -11,7 +11,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
-	github.com/ukama/ukamaX/common v0.0.0-20220421094812-6b3352c9a822
+	github.com/ukama/ukama/services/common v0.0.0-20220421094812-6b3352c9a822
 	github.com/wagslane/go-rabbitmq v0.7.0
 	google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 	google.golang.org/grpc v1.45.0
@@ -69,8 +69,8 @@ require (
 	gorm.io/driver/postgres v1.1.0 // indirect
 )
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/hss => ./
+replace github.com/ukama/ukama/services/cloud/hss => ./
 
-replace github.com/ukama/ukamaX/cloud/hss/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/hss/mocks => ./mocks

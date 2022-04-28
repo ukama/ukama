@@ -10,7 +10,7 @@ import (
 	"io"
 
 	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/cloud/users/pkg/db"
+	"github.com/ukama/ukama/services/cloud/users/pkg/db"
 )
 
 type SimProvider interface {

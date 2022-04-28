@@ -2,17 +2,18 @@ package rest
 
 import (
 	"fmt"
-	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"google.golang.org/grpc/status"
 	"net/http"
 	"strings"
+
+	grpcGate "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc/status"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/rest/swagger"
+	"github.com/ukama/ukama/services/common/rest/swagger"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
 )
@@ -117,7 +118,7 @@ func renderHook(c *gin.Context, statusCode int, payload interface{}) {
 	// Here is how it done in defaul gin renderHook https://github.com/loopfz/gadgeto/blob/c4f8b2f64586099b9b281cbe99aa2f8b05e7d8b0/tonic/tonic.go#L111
 	// but this does not work because here c.Writer.Written() is always false
 	// We have to realy on default status from Gin taht is always 200 for no reason
-	if c.Writer.Status() != 200{
+	if c.Writer.Status() != 200 {
 		status = c.Writer.Status()
 	} else {
 		status = statusCode

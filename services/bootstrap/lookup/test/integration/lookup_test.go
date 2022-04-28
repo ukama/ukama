@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package integration
@@ -8,8 +9,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
 type TestConfig struct {

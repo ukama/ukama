@@ -1,16 +1,17 @@
+//go:build integration
 // +build integration
 
 package integration
 
 import (
 	"context"
+	"github.com/ukama/ukama/services/common/config"
 	"testing"
 	"time"
-	"ukamaX/common/config"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/foo/pb/gen"
+	pb "github.com/ukama/ukama/services/foo/pb/gen"
 	"google.golang.org/grpc"
 )
 

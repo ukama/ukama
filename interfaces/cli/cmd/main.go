@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/ukama/ukamaX/cli/pkg/cmd"
+	"github.com/ukama/ukama/interfaces/cli/pkg/cmd"
 )
 
 func main() {

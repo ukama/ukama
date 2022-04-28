@@ -6,7 +6,7 @@ import (
 	"testing"
 	int_db "ukamaX/bootstrap/lookup/internal/db"
 
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"

@@ -2,13 +2,14 @@ package bootstrap
 
 import (
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/registry/pkg"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/services/cloud/registry/pkg"
 )
 
 const VALID_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE2MzM5NTk5MzEsImV4cCI6MjYxMjI2NzEzMSwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoidGVzdEBlY2FtcGxlLmNvbSJ9.zXmh32OAVtgieCmVJV92SmTYcQCFFBHRHKF2te6QdP8"

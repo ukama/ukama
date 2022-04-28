@@ -8,7 +8,7 @@ files = [f for f in os.listdir('.') if os.path.isfile(f)]
 
 for l in files:
     if l.endswith(".yaml")  or l.endswith(".yml"):   
-        print("[![%s-ci](https://github.com/ukama/ukamaX/actions/workflows/%s/badge.svg)](https://github.com/ukama/ukamaX/actions/workflows/%s)" 
+        print("[![%s-ci](https://github.com/ukama/ukama/services/actions/workflows/%s/badge.svg)](https://github.com/ukama/ukama/services/actions/workflows/%s)" 
             % (l[:l.index(".")], l,l))
 
 

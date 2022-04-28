@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/ukama/ukamaX/common/metrics"
 	"os"
 	"time"
 
-	"github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/ukama/ukama/services/common/metrics"
 
-	"github.com/ukama/ukamaX/hub/hub/cmd/version"
+	"github.com/ukama/ukama/services/hub/hub/pkg"
 
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/hub/hub/pkg/server"
+	"github.com/ukama/ukama/services/hub/hub/cmd/version"
+
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/hub/hub/pkg/server"
 )
 
 var serviceConfig *pkg.Config

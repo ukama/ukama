@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/templates/rest-service/cmd/version"
-	"github.com/ukama/ukamaX/templates/rest-service/pkg"
-	"github.com/ukama/ukamaX/templates/rest-service/pkg/metrics"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/templates/rest-service/cmd/version"
+	"github.com/ukama/ukama/services/templates/rest-service/pkg"
+	"github.com/ukama/ukama/services/templates/rest-service/pkg/metrics"
 	"github.com/wI2L/fizz"
 )
 

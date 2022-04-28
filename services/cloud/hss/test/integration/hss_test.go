@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"testing"
@@ -15,7 +15,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	"google.golang.org/grpc"
 )
 

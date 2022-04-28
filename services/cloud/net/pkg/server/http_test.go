@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/net/pkg"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 )
 
 func Test_marshallTargets(t *testing.T) {
