@@ -97,7 +97,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: cli
+      working-directory: interfaces/cli
     steps:
       - uses: actions/checkout@v2
 
