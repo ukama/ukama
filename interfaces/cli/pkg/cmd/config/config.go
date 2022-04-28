@@ -105,7 +105,7 @@ func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{
 	err = validator.New().Struct(rawVal)
 	if err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		if validationErrors != nil && len(validationErrors) > 0 {
+		if len(validationErrors) > 0 {
 			fmt.Fprintf(c.stderr, "Error validating config: '%+v'\n", validationErrors)
 			os.Exit(1)
 		}
