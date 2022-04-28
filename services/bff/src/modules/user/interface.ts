@@ -4,7 +4,6 @@ import {
     MetricServiceRes,
 } from "../../common/types";
 import {
-    ActivateUserDto,
     ActivateUserResponse,
     UserResDto,
     AddUserServiceRes,
@@ -23,13 +22,15 @@ import {
 
 export interface IUserService {
     getConnectedUsers(cookie: ParsedCookie): Promise<ConnectedUserDto>;
-    activateUser(req: ActivateUserDto): Promise<ActivateUserResponse>;
     updateUser(
         userId: string,
         req: UserInputDto,
         cookie: ParsedCookie
     ): Promise<UserResDto>;
-    deactivateUser(id: string): Promise<DeactivateResponse>;
+    deactivateUser(
+        id: string,
+        cookie: ParsedCookie
+    ): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
     getResidents(req: PaginationDto): Promise<ResidentsResponse>;
     getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;

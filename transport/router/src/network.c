@@ -68,7 +68,7 @@ static int init_frameworks(Config *config, struct _u_instance *webInst) {
   }
 
   /* Set few params. */
-  webInst->max_post_body_size = 1024;
+  webInst->max_post_body_size = MAX_POST_BODY_SIZE;
 
   return TRUE;
 }
