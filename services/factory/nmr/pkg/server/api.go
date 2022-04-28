@@ -9,7 +9,7 @@ import (
 
 type ReqAddOrUpdateNode struct {
 	NodeID        string    `query:"node" validate:"required"`
-	LookingTo     string    `query:"looking_to" validate:"required"`
+	LookingTo     string    `query:"looking_to" validate:"eq=update,required"`
 	Type          string    `form:"type" json:"type"`
 	PartNumber    string    `form:"part_number" json:"partNumber"`
 	Skew          string    `form:"skew" json:"skew"`
@@ -25,18 +25,18 @@ type ReqAddOrUpdateNode struct {
 
 type ReqUpdateNodeStatus struct {
 	NodeID    string `query:"node" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=update_status,required"`
 	Status    string `query:"status" validate:"required"`
 }
 
 type ReqDeleteNode struct {
 	NodeID    string `query:"node" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=delete,required"`
 }
 
 type ReqGetNode struct {
 	NodeID     string `query:"node" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=info,required"`
 }
 
 type RespGetNode struct {
@@ -45,7 +45,7 @@ type RespGetNode struct {
 
 type ReqGetNodeList struct {
 	NodeID     string `query:"node" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=list,required"`
 }
 
 type RespGetNodeList struct {
@@ -54,7 +54,7 @@ type RespGetNodeList struct {
 
 type ReqGetNodeStatus struct {
 	NodeID     string `query:"node" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=status_info,required"`
 }
 
 type RespGetNodeStatus struct {
@@ -63,7 +63,7 @@ type RespGetNodeStatus struct {
 
 type ReqGetNodeMfgStatus struct {
 	NodeID     string `query:"node" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=mfg_status_info,required"`
 }
 
 type RespGetNodeMfgStatus struct {
@@ -73,7 +73,7 @@ type RespGetNodeMfgStatus struct {
 
 type ReqUpdateNodeMfgStatus struct {
 	NodeID        string           `query:"node" validate:"required"`
-	LookingTo     string           `query:"looking_to" validate:"required"`
+	LookingTo     string           `query:"looking_to" validate:"eq=update_mfg_status,required"`
 	MfgTestStatus string           `form:"mfgTestStatus" json:"mfgTestStatus"`
 	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfg function test */
 	Status        string           `form:"status" json:"status"`
@@ -82,7 +82,7 @@ type ReqUpdateNodeMfgStatus struct {
 /* Modules */
 type ReqAddOrUpdateModule struct {
 	ModuleID   string    `query:"module" validate:"required"`
-	LookingTo  string    `query:"looking_to" validate:"required"`
+	LookingTo  string    `query:"looking_to" validate:"eq=update,required"`
 	Type       string    `form:"type" json:"type"`
 	PartNumber string    `form:"partNumber" json:"partNumber"`
 	HwVersion  string    `form:"hwVersion" json:"hwVersion"`
@@ -97,7 +97,7 @@ type ReqAddOrUpdateModule struct {
 
 type ReqGetModule struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=info,required"`
 }
 
 type RespGetModule struct {
@@ -106,11 +106,12 @@ type RespGetModule struct {
 
 type ReqDeleteModule struct {
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=delete,required"`
 }
 
 type ReqGetModuleList struct {
-	ModuleID string `query:"module" validate:"required"`
+	ModuleID   string `query:"module" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=list,required"`
 }
 
 type RespGetModuleList struct {
@@ -119,7 +120,7 @@ type RespGetModuleList struct {
 
 type ReqGetModuleMfgStatusData struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=info,required"`
 }
 
 type RespGetModuleMfgStatusData struct {
@@ -128,13 +129,13 @@ type RespGetModuleMfgStatusData struct {
 
 type ReqUpdateModuleMfgStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=update,required"`
 	Status    string `query:"status" json:"status"`
 }
 
 type ReqGetModuleMfgData struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=info,required"`
 }
 
 type RespGetModuleMfgData struct {
@@ -156,7 +157,7 @@ type RespGetModuleMfgData struct {
 
 type ReqGetModuleMfgField struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=info,required"`
 	Field      string `query:"field" validate:"required"`
 }
 
@@ -167,7 +168,7 @@ type RespGetModuleMfgField struct {
 
 type ReqUpdateModuleMfgField struct {
 	ModuleID  string `form:"module" query:"module" json:"module" validate:"required"`
-	LookingTo string `form:"looking_to" query:"looking_to" json:"looking_to" validate:"required"`
+	LookingTo string `form:"looking_to" query:"looking_to" json:"looking_to" validate:"eq=update,required"`
 	Field     string `form:"field" query:"field" json:"field" validate:"required"`
 }
 

@@ -47,7 +47,7 @@ func NewConfig() *Config {
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "delete", "path": "/node/",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "statusinfo", "path": "/node/status",
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "status_info", "path": "/node/status",
 				},
 				{
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update_status", "status": "StatusNodeIntransit", "path": "/node/status",
