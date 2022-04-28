@@ -24,5 +24,5 @@ generate(){
 }
 
 generate "services/bootstrap" "bootstrap"
-generate "services/cloud" "ukamax"
+generate "services/cloud" "ukama"
 generate "services/hub" "hub"

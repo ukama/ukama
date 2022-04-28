@@ -5,9 +5,9 @@ package integration
 
 import (
 	"context"
+	"github.com/ukama/ukama/services/common/config"
 	"testing"
 	"time"
-	"ukamaX/common/config"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
