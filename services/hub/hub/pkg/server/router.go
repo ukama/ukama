@@ -18,8 +18,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/rest"
-	"github.com/ukama/ukamaX/hub/hub/cmd/version"
-	"github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/ukama/ukama/services/hub/hub/cmd/version"
+	"github.com/ukama/ukama/services/hub/hub/pkg"
 	"github.com/wI2L/fizz"
 )
 

@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/ukama/ukamaX/cli/pkg"
+	"github.com/ukama/ukama/services/cli/pkg"
 	"io"
 	"io/ioutil"
 	"net/http"

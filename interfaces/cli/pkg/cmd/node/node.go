@@ -2,7 +2,7 @@ package node
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/ukama/ukamaX/cli/pkg/cmd/config"
+	"github.com/ukama/ukama/services/cli/pkg/cmd/config"
 )
 
 func NewNodeCommand(confReader config.ConfigReader) *cobra.Command {

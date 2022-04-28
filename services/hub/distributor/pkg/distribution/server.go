@@ -12,8 +12,8 @@ import (
 	casync "github.com/folbricht/desync"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
-	"github.com/ukama/ukamaX/hub/distributor/pkg/chunk"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg/chunk"
 )
 
 var (

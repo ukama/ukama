@@ -1,10 +1,10 @@
-module github.com/ukama/ukamaX/hub/hub
+module github.com/ukama/ukama/services/hub/hub
 
 go 1.17
 
 replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/hub/hub => ./
+replace github.com/ukama/ukama/services/hub/hub => ./
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.1
