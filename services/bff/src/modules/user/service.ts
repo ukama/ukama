@@ -123,7 +123,7 @@ export class UserService implements IUserService {
         cookie: ParsedCookie
     ): Promise<OrgUserSimDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.PATCH,
+            type: API_METHOD_TYPE.PUT,
             path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
             headers: cookie.header,
             body: {

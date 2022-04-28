@@ -26,8 +26,8 @@ const userInit = {
     iccid: "",
     email: "",
     phone: "",
-    dataPlan: 0,
-    dataUsage: 0,
+    dataPlan: "0",
+    dataUsage: "0",
     roaming: false,
     eSimNumber: "",
     status: false,
@@ -54,6 +54,7 @@ const User = () => {
             error: updateUserError,
         },
     ] = useUpdateUserMutation();
+
     const { data: usersRes, loading: usersByOrgLoading } =
         useGetUsersByOrgQuery({
             onCompleted: res => setUsers(res.getUsersByOrg),

@@ -721,7 +721,7 @@ export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: Array<{ __ty
 export type GetUsersByOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersByOrgQuery = { __typename?: 'Query', getUsersByOrg: Array<{ __typename?: 'GetUsersDto', id: string, name: string, email?: string | null, phone?: string | null, dataPlan: number, dataUsage: number }> };
+export type GetUsersByOrgQuery = { __typename?: 'Query', getUsersByOrg: Array<{ __typename?: 'GetUsersDto', id: string, name: string, email?: string | null, phone?: string | null, dataPlan: number, dataUsage: number, isDeactivated: boolean }> };
 
 export type GetUserQueryVariables = Exact<{
   userId: Scalars['String'];
@@ -1216,6 +1216,7 @@ export const GetUsersByOrgDocument = gql`
     phone
     dataPlan
     dataUsage
+    isDeactivated
   }
 }
     `;
