@@ -40,7 +40,7 @@ func NewConfig() *Config {
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "add_node", "org": "fundme", "path": "/orgs/node",
 				},
 				{
-					"org": "UK-SA2154-HNODE-A1-0001", "looking_for": "add_org", "path": "/orgs/",
+					"org": "UK-SA2154-HNODE-A1-0001", "looking_to": "add_org", "path": "/orgs/",
 				},
 			},
 
