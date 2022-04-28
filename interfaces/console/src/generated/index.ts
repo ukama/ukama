@@ -233,8 +233,8 @@ export type GetNodeStatusRes = {
 
 export type GetUserDto = {
   __typename?: 'GetUserDto';
-  dataPlan: Scalars['Float'];
-  dataUsage: Scalars['Float'];
+  dataPlan: Scalars['String'];
+  dataUsage: Scalars['String'];
   eSimNumber: Scalars['String'];
   email: Scalars['String'];
   iccid: Scalars['String'];
@@ -258,6 +258,7 @@ export type GetUsersDto = {
   dataUsage: Scalars['Float'];
   email?: Maybe<Scalars['String']>;
   id: Scalars['String'];
+  isDeactivated: Scalars['Boolean'];
   name: Scalars['String'];
   phone?: Maybe<Scalars['String']>;
 };
@@ -484,6 +485,7 @@ export type OrgNodeResponseDto = {
 export type OrgUserDto = {
   __typename?: 'OrgUserDto';
   email: Scalars['String'];
+  isDeactivated: Scalars['Boolean'];
   name: Scalars['String'];
   phone: Scalars['String'];
   uuid: Scalars['String'];
@@ -497,10 +499,10 @@ export type OrgUserResponse = {
 
 export type OrgUserSimDto = {
   __typename?: 'OrgUserSimDto';
-  carrier: UserSimUkamaDto;
+  carrier: UserServicesDto;
   iccid: Scalars['String'];
   isPhysical: Scalars['Boolean'];
-  ukama: UserSimUkamaDto;
+  ukama: UserServicesDto;
 };
 
 export type OrgUsersResponse = {
@@ -541,7 +543,6 @@ export type Query = {
   getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
   getNodeStatus: GetNodeStatusRes;
   getNodesByOrg: OrgNodeResponseDto;
-  getResidents: ResidentsResponse;
   getUser: GetUserDto;
   getUsersByOrg: Array<GetUsersDto>;
 };
@@ -587,26 +588,8 @@ export type QueryGetNodeStatusArgs = {
 };
 
 
-export type QueryGetResidentsArgs = {
-  data: PaginationDto;
-};
-
-
 export type QueryGetUserArgs = {
   userId: Scalars['String'];
-};
-
-export type ResidentResponse = {
-  __typename?: 'ResidentResponse';
-  activeResidents: Scalars['Float'];
-  residents: Array<GetUserDto>;
-  totalResidents: Scalars['Float'];
-};
-
-export type ResidentsResponse = {
-  __typename?: 'ResidentsResponse';
-  meta: Meta;
-  residents: ResidentResponse;
 };
 
 export type Subscription = {
@@ -637,6 +620,12 @@ export type UpdateUserServiceInput = {
   userId: Scalars['String'];
 };
 
+export type UserDataUsageDto = {
+  __typename?: 'UserDataUsageDto';
+  dataAllowanceBytes: Scalars['String'];
+  dataUsedBytes: Scalars['String'];
+};
+
 export type UserInputDto = {
   email: Scalars['String'];
   name: Scalars['String'];
@@ -652,17 +641,18 @@ export type UserResDto = {
   phone: Scalars['String'];
 };
 
+export type UserServicesDto = {
+  __typename?: 'UserServicesDto';
+  services: UserSimServices;
+  status: Get_User_Status_Type;
+  usage: UserDataUsageDto;
+};
+
 export type UserSimServices = {
   __typename?: 'UserSimServices';
   data: Scalars['Boolean'];
   sms: Scalars['Boolean'];
   voice: Scalars['Boolean'];
-};
-
-export type UserSimUkamaDto = {
-  __typename?: 'UserSimUkamaDto';
-  services: UserSimServices;
-  status: Get_User_Status_Type;
 };
 
 export type GetDataUsageQueryVariables = Exact<{
@@ -738,7 +728,7 @@ export type GetUserQueryVariables = Exact<{
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, phone: string, roaming: boolean, dataPlan: number, dataUsage: number } };
+export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, phone: string, roaming: boolean, dataPlan: string, dataUsage: string } };
 
 export type GetNetworkQueryVariables = Exact<{
   filter: Network_Type;
@@ -805,7 +795,7 @@ export type UpdateUserStatusMutationVariables = Exact<{
 }>;
 
 
-export type UpdateUserStatusMutation = { __typename?: 'Mutation', updateUserStatus: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserSimUkamaDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } }, carrier: { __typename?: 'UserSimUkamaDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } } } };
+export type UpdateUserStatusMutation = { __typename?: 'Mutation', updateUserStatus: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } }, carrier: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } } } };
 
 export type GetNodeQueryVariables = Exact<{
   nodeId: Scalars['String'];

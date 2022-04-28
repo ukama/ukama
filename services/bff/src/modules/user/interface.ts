@@ -1,8 +1,4 @@
-import {
-    ParsedCookie,
-    PaginationDto,
-    MetricServiceRes,
-} from "../../common/types";
+import { ParsedCookie, MetricServiceRes } from "../../common/types";
 import {
     ActivateUserResponse,
     UserResDto,
@@ -15,8 +11,6 @@ import {
     OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
-    ResidentResponse,
-    ResidentsResponse,
     UserInputDto,
 } from "./types";
 
@@ -32,7 +26,6 @@ export interface IUserService {
         cookie: ParsedCookie
     ): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
-    getResidents(req: PaginationDto): Promise<ResidentsResponse>;
     getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;
     addUser(
         req: UserInputDto,
@@ -48,7 +41,6 @@ export interface IUserMapper {
     dtoToAddUserDto(res: AddUserServiceRes): UserResDto | null;
     connectedUsersDtoToDto(res: MetricServiceRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
-    residentDtoToDto(res: GetUserResponseDto): ResidentResponse;
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];
     dtoToUserDto(req: OrgUserResponse): GetUserDto;
     dtoToUserResDto(req: OrgUserDto): UserResDto;
