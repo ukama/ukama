@@ -50,13 +50,13 @@ func NewConfig() *Config {
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "status_info", "path": "/node/status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update_status", "status": "StatusNodeIntransit", "path": "/node/status",
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "status_update", "status": "StatusNodeIntransit", "path": "/node/status",
 				},
 				{
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "mfg_status_info", "path": "/node/mfg_status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update_mfg_status", "mfg_status": "*", "path": "/node/mfg_status",
+					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "mfg_status_update", "mfg_status": "*", "path": "/node/mfg_status",
 				},
 				{
 					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "list", "path": "/node/all",
@@ -71,19 +71,22 @@ func NewConfig() *Config {
 					"module": "*", "looking_to": "delete", "path": "/module/",
 				},
 				{
-					"module": "*", "looking_for": "info", "status": "*", "path": "/module/status",
+					"module": "*", "looking_to": "allocate", "path": "/module/",
 				},
 				{
-					"module": "*", "looking_to": "status", "status": "*", "path": "/module/status",
+					"module": "*", "looking_for": "status_info", "status": "*", "path": "/module/status",
 				},
 				{
-					"module": "*", "looking_for": "info", "field": "*", "path": "/module/field",
+					"module": "*", "looking_to": "status_update", "status": "*", "path": "/module/status",
 				},
 				{
-					"module": "*", "looking_to": "update", "field": "*", "path": "/module/field",
+					"module": "*", "looking_for": "field_info", "field": "*", "path": "/module/field",
 				},
 				{
-					"module": "*", "looking_for": "info", "data": "*", "path": "/module/data",
+					"module": "*", "looking_to": "field_update", "field": "*", "path": "/module/field",
+				},
+				{
+					"module": "*", "looking_for": "mfg_info", "data": "*", "path": "/module/data",
 				},
 				{
 					"module": "*", "looking_for": "list", "path": "/module/all",

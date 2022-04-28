@@ -25,7 +25,7 @@ type ReqAddOrUpdateNode struct {
 
 type ReqUpdateNodeStatus struct {
 	NodeID    string `query:"node" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"eq=update_status,required"`
+	LookingTo string `query:"looking_to" validate:"eq=status_update,required"`
 	Status    string `query:"status" validate:"required"`
 }
 
@@ -73,7 +73,7 @@ type RespGetNodeMfgStatus struct {
 
 type ReqUpdateNodeMfgStatus struct {
 	NodeID        string           `query:"node" validate:"required"`
-	LookingTo     string           `query:"looking_to" validate:"eq=update_mfg_status,required"`
+	LookingTo     string           `query:"looking_to" validate:"eq=mfg_status_update,required"`
 	MfgTestStatus string           `form:"mfgTestStatus" json:"mfgTestStatus"`
 	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfg function test */
 	Status        string           `form:"status" json:"status"`
@@ -120,7 +120,7 @@ type RespGetModuleList struct {
 
 type ReqGetModuleMfgStatusData struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"eq=info,required"`
+	LookingFor string `query:"looking_for" validate:"eq=status_info,required"`
 }
 
 type RespGetModuleMfgStatusData struct {
@@ -129,13 +129,13 @@ type RespGetModuleMfgStatusData struct {
 
 type ReqUpdateModuleMfgStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"eq=update,required"`
+	LookingTo string `query:"looking_to" validate:"eq=status_update,required"`
 	Status    string `query:"status" json:"status"`
 }
 
 type ReqGetModuleMfgData struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"eq=info,required"`
+	LookingFor string `query:"looking_for" validate:"eq=mfg_info,required"`
 }
 
 type RespGetModuleMfgData struct {
@@ -157,7 +157,7 @@ type RespGetModuleMfgData struct {
 
 type ReqGetModuleMfgField struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"eq=info,required"`
+	LookingFor string `query:"looking_for" validate:"eq=field_info,required"`
 	Field      string `query:"field" validate:"required"`
 }
 
@@ -168,14 +168,14 @@ type RespGetModuleMfgField struct {
 
 type ReqUpdateModuleMfgField struct {
 	ModuleID  string `form:"module" query:"module" json:"module" validate:"required"`
-	LookingTo string `form:"looking_to" query:"looking_to" json:"looking_to" validate:"eq=update,required"`
+	LookingTo string `form:"looking_to" query:"looking_to" json:"looking_to" validate:"eq=field_update,required"`
 	Field     string `form:"field" query:"field" json:"field" validate:"required"`
 }
 
 type ReqAssignModuleToNode struct {
 	NodeID    string `query:"node" validate:"required"`
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=allocate,required"`
 }
 
 type ReqUpdateModuleBootStrapCerts struct {
