@@ -2,17 +2,18 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"reflect"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukama/services/cli/pkg"
-	"io"
-	"os"
-	"reflect"
-	"strings"
+	"github.com/ukama/ukama/interfaces/cli/pkg"
 )
 
 // We have to keep all config in one struct.
