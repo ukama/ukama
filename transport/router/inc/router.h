@@ -17,7 +17,7 @@
 #define EP_STATS   "/stats"
 #define EP_SERVICE "/service"
 
-#define DEFAULT_PATTERN_PATH "/service"
+#define DEFAULT_PATTERN_PATH "/"
 
 #define FALSE   0
 #define TRUE    1
