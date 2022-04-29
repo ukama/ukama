@@ -49,11 +49,16 @@ func (r *Router) init() {
 	nodes := r.fizz.Group("/nodes", "Nodes Metrics", "Query node metrics")
 
 	nodes.GET("metrics/openapi.json", nil, r.fizz.OpenAPI(nil, "json"))
-	// metrics
+
 	nodes.GET(":node/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
 			info.Description = "Get metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
-		}}, tonic.Handler(r.metricHandler, http.StatusOK))
+		}}, tonic.Handler(r.nodeMetricHandler, http.StatusOK))
+
+	nodes.GET(":node/metrics/:metric/latest", []fizz.OperationOption{
+		func(info *openapi.OperationInfo) {
+			info.Description = "Get lates metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+		}}, tonic.Handler(r.latestMetricHandler, http.StatusOK))
 
 	r.fizz.GET("orgs/:org/metrics/:metric", []fizz.OperationOption{
 		func(info *openapi.OperationInfo) {
@@ -98,8 +103,13 @@ func (r *Router) netMetricHandler(c *gin.Context, in *GetNetMetricsInput) error 
 	return httpErrorOrNil(httpCode, err)
 }
 
-func (r *Router) metricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
+func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) error {
 	return r.requestMetricInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithNodeId(in.NodeID))
+}
+
+func (r *Router) latestMetricHandler(c *gin.Context, in *GetLatestMetricInput) error {
+	httpCode, err := r.nodeMetrics.GetLatestMetric(strings.ToLower(in.Metric), pkg.NewFilter().WithNodeId(in.NodeID), c.Writer)
+	return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) requestMetricInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {

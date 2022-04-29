@@ -5,6 +5,11 @@ type GetNodeMetricsInput struct {
 	NodeID string `path:"node" validate:"required"`
 }
 
+type GetLatestMetricInput struct {
+	Metric string `path:"metric" validate:"required"`
+	NodeID string `path:"node" validate:"required"`
+}
+
 type GetOrgMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
 	Org    string `path:"org" validate:"required"`

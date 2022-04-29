@@ -1,7 +1,9 @@
 package pkg
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -138,6 +140,62 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 	return m.processPromRequest(ctx, u, data, w)
 }
 
+func (m *Metrics) GetLatestMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
+	_, ok := m.conf.Metrics[metricType]
+	if !ok {
+		return http.StatusNotFound, errors.New("metric type not found")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
+	defer cancel()
+
+	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
+
+	data := url.Values{}
+	data.Set("query", m.conf.Metrics[metricType].getLatestQuery(metricFilter))
+
+	logrus.Infof("GetLatestMetric query: %s", data.Encode())
+
+	buf := bytes.Buffer{}
+	st, err := m.processPromRequest(ctx, u, data, &buf)
+	if err != nil {
+		return st, err
+	}
+
+	if st != http.StatusOK {
+		return st, nil
+	}
+
+	// response struct
+	type result struct {
+		Data struct {
+			Result []struct {
+				Value []any `json:"value"`
+			} `json:"result"`
+		} `json:"data"`
+	}
+	var res result
+	err = json.Unmarshal(buf.Bytes(), &res)
+	if err != nil {
+		logrus.Errorf("unable to unmarshal response: %s", err)
+		return http.StatusInternalServerError, fmt.Errorf("unable to unmarshal response")
+	}
+
+	if len(res.Data.Result) == 1 && len(res.Data.Result[0].Value) == 2 {
+		_, err = fmt.Fprintf(w, `{ "time": '%.2f', "value": '%v'  }`,
+			res.Data.Result[0].Value[0], res.Data.Result[0].Value[1])
+		if err != nil {
+			logrus.Errorf("unable to write response: %s", err)
+			return http.StatusInternalServerError, fmt.Errorf("unable to write response")
+		}
+
+	} else {
+		return http.StatusInternalServerError, errors.New("unexpected response from server")
+	}
+
+	return http.StatusOK, nil
+}
+
 func (m *Metrics) processPromRequest(ctx context.Context, url string, data url.Values, w io.Writer) (httpStatusCode int, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(data.Encode()))
 	if err != nil {
@@ -200,4 +258,8 @@ func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
 		exludSt = getExcludeStatements("nodeid", "network")
 	}
 	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, filter.GetFilter(), exludSt)
+}
+
+func (m Metric) getLatestQuery(filter *Filter) string {
+	return fmt.Sprintf("%s {%s}", m.Metric, filter.GetFilter())
 }
