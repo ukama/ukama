@@ -43,6 +43,11 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
 	return TRUE;
       }
 
+      if (strcmp(ptr->value, value) == 0) {
+	return TRUE;
+      }
+
+      /*
       if ((ret=regcomp(&re, value, REG_EXTENDED | REG_NOSUB)) != 0) {
 	return FALSE;
       }
@@ -53,9 +58,9 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
       }
 
       regfree(&re);
+      */
     }
   }
-
   return FALSE;
 }
 

@@ -25,7 +25,7 @@
 #define ERROR   3
 
 #define MAX_LEN 1024
-#define MAX_POST_BODY_SIZE 2048
+#define MAX_POST_BODY_SIZE 4096
 
 #define UKAMA_ERROR_NONE           1
 #define UKAMA_ERROR_INVALID_DEST   2
