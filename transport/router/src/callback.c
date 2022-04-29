@@ -27,14 +27,13 @@
 /*
  * decode a u_map into a string
  */
-
 static char *print_map(const struct _u_map * map) {
 
   char * line, * to_return = NULL;
   const char **keys, * value;
-  
+
   int len, i;
-  
+
   if (map != NULL) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
@@ -61,8 +60,8 @@ static char *print_map(const struct _u_map * map) {
   }
 }
 
-/* 
- * log_request -- log various parameters for the incoming request. 
+/*
+ * log_request -- log various parameters for the incoming request
  *
  */
 static void log_request(const struct _u_request *request) {
@@ -202,14 +201,14 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
       *pattern = (Pattern *)calloc(1, sizeof(Pattern));
       if (*pattern == NULL) {
       	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	      goto failure;
+	goto failure;
       }
       ptr = *pattern;
     } else {
       ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
       if (ptr->next == NULL) {
-	      log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	      goto failure;
+	log_error("Error allocating memory of size: %d", sizeof(Pattern));
+	goto failure;
       }
       ptr = ptr->next;
     }
@@ -288,7 +287,7 @@ int callback_post_route(const struct _u_request *request,
   router = (Router *)userData;
 
   log_request(request);
-  
+
   /* get json body */
   jreq = ulfius_get_json_body_request(request, &jerr);
   if (!jreq) {
@@ -440,7 +439,7 @@ int callback_service(const struct _u_request *request,
 		     void *userData) {
 
   int retCode, serviceResp;
-  char *mapStr=NULL, *ep=NULL;
+  char *mapStr=NULL;
   const char *statusStr=NULL;
   Router *router=NULL;
   Pattern *requestPattern=NULL, *next, *ptr;
@@ -473,14 +472,15 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-2: Pattern match to a service (if any)*/
-  if (!find_matching_service(router, requestPattern, &requestForward, &ep)) {
+  if (!find_matching_service(router, requestPattern, &requestForward)) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("No matching forward service found. %d: %s", retCode, statusStr);
     goto reply;
   } else {
-    log_debug("Matching service found at IP: %s port: %d",
-	      requestForward->ip, requestForward->port);
+    log_debug("Matching service found at IP: %s port: %d path: %s",
+	      requestForward->ip, requestForward->port,
+	      requestForward->defaultPath);
   }
 
   /* Quick test connection */
@@ -496,8 +496,7 @@ int callback_service(const struct _u_request *request,
   }
 
   /* Step-3: setup request to forward */
-  fRequest = create_forward_request(requestForward, requestPattern,
-				    request, ep);
+  fRequest = create_forward_request(requestForward, requestPattern, request);
   if (fRequest == NULL) {
     retCode   = HttpStatus_InternalServerError;
     statusStr = HttpStatusStr(retCode);
@@ -515,11 +514,23 @@ int callback_service(const struct _u_request *request,
     retCode   = fResponse->status;
     statusStr = HttpStatusStr(retCode);
     log_error("Service response error: %d retCode: %d", retCode, statusStr);
+    goto reply;
   } else {
     log_debug("Request Forward to the service");
   }
 
+  if (ulfius_copy_response(response, fResponse) != U_OK) {
+    retCode   = HttpStatus_InternalServerError;
+    statusStr = HttpStatusStr(retCode);
+    log_error("Internal error copy map header %d: %s", retCode, statusStr);
+    goto reply;
+  }
+
   retCode = fResponse->status;
+
+  mapStr = print_map(response->map_header);
+  log_debug("Forward response map_header from the service: %s", mapStr);
+  free(mapStr);
 
  reply:
   /* Step-5: response back to client */
@@ -545,11 +556,10 @@ int callback_service(const struct _u_request *request,
   }
 
   if (requestForward) {
-    if (requestForward->ip)   free(requestForward->ip);
+    if (requestForward->ip)          free(requestForward->ip);
+    if (requestForward->defaultPath) free(requestForward->defaultPath);
     free(requestForward);
   }
-
-  if (ep ) free(ep);
 
   ulfius_clean_request(fRequest);
   ulfius_clean_response(fResponse);
@@ -560,7 +570,7 @@ int callback_service(const struct _u_request *request,
 }
 
 /*
- * callback_not_allowed -- 
+ * callback_not_allowed --
  *
  */
 int callback_not_allowed(const struct _u_request *request,
