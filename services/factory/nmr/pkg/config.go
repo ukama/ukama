@@ -38,28 +38,28 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "info", "path": "/node/",
+					"node": "*", "looking_for": "info", "path": "/node/",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "update", "path": "/node/",
+					"node": "*", "looking_to": "update", "path": "/node/",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "delete", "path": "/node/",
+					"node": "*", "looking_to": "delete", "path": "/node/",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "status_info", "path": "/node/status",
+					"node": "*", "looking_for": "status_info", "path": "/node/status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "status_update", "status": "StatusNodeIntransit", "path": "/node/status",
+					"node": "*", "looking_to": "status_update", "status": "StatusNodeIntransit", "path": "/node/status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "mfg_status_info", "path": "/node/mfg_status",
+					"node": "*", "looking_for": "mfg_status_info", "path": "/node/mfg_status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "mfg_status_update", "mfg_status": "*", "path": "/node/mfg_status",
+					"node": "*", "looking_to": "mfg_status_update", "mfg_status": "*", "path": "/node/mfg_status",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "list", "path": "/node/all",
+					"node": "*", "looking_for": "list", "path": "/node/all",
 				},
 				{
 					"module": "*", "looking_for": "info", "path": "/module/",

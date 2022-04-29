@@ -37,7 +37,7 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "validation", "path": "/",
+					"node": "*", "looking_for": "validation", "path": "/",
 				},
 			},
 			F: config.Forward{

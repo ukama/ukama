@@ -34,13 +34,13 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_for": "org_credentials", "path": "/orgs/node",
+					"node": "*", "looking_for": "org_credentials", "path": "/orgs/node",
 				},
 				{
-					"node": "UK-SA2154-HNODE-A1-0001", "looking_to": "add_node", "org": "fundme", "path": "/orgs/node",
+					"node": "*", "looking_to": "add_node", "org": "fundme", "path": "/orgs/node",
 				},
 				{
-					"org": "UK-SA2154-HNODE-A1-0001", "looking_to": "add_org", "path": "/orgs/",
+					"org": "*", "looking_to": "add_org", "path": "/orgs/",
 				},
 			},
 
