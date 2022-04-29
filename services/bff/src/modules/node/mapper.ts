@@ -85,14 +85,12 @@ class NodeMapper implements INodeMapper {
         let uptime = 0;
         let status = ORG_NODE_STATE.UNDEFINED;
         if (res && res.values.length > 0) {
-            if (res && res.values.length > 0) {
-                const temp: any = res.values[0];
-                uptime = temp[1];
-                if (uptime > 0) {
-                    status = ORG_NODE_STATE.ONBOARDED;
-                } else {
-                    status = ORG_NODE_STATE.PENDING;
-                }
+            const temp: any = res.values[0];
+            uptime = temp[1];
+            if (uptime > 0) {
+                status = ORG_NODE_STATE.ONBOARDED;
+            } else {
+                status = ORG_NODE_STATE.PENDING;
             }
         }
 
