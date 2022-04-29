@@ -108,7 +108,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: cli
+      working-directory: services/hub/hub
     steps:
       - uses: actions/setup-go@v3
         with:
