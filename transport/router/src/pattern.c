@@ -18,6 +18,7 @@
 #include <strings.h>
 #include <regex.h>
 
+#include "pattern.h"
 #include "router.h"
 #include "log.h"
 
@@ -34,6 +35,19 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
   for(ptr=pattern; ptr; ptr=ptr->next) {
 
     if (strcasecmp(ptr->key, key) == 0) {
+
+      /* Special case for asterik-only. If value is '*', it matches
+       * with anything but empty strings */
+      if (strcmp(value, ASTERIK_ONLY) == 0 &&
+	  strlen(ptr->value)) {
+	return TRUE;
+      }
+
+      if (strcmp(ptr->value, value) == 0) {
+	return TRUE;
+      }
+
+      /*
       if ((ret=regcomp(&re, value, REG_EXTENDED | REG_NOSUB)) != 0) {
 	return FALSE;
       }
@@ -44,9 +58,9 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
       }
 
       regfree(&re);
+      */
     }
   }
-
   return FALSE;
 }
 
@@ -126,7 +140,8 @@ void free_service(Service *service) {
   }
 
   if (forward) {
-    if (forward->ip)   free(forward->ip);
+    if (forward->ip)          free(forward->ip);
+    if (forward->defaultPath) free(forward->defaultPath);
     free(forward);
   }
 
@@ -139,7 +154,7 @@ void free_service(Service *service) {
  *
  */
 int find_matching_service(Router *router, Pattern *requestPattern,
-			  Forward **forward, char **ep) {
+			  Forward **forward) {
 
   Service *services=NULL;
   Patterns *patterns=NULL;
@@ -173,9 +188,9 @@ int find_matching_service(Router *router, Pattern *requestPattern,
 	  return FALSE;
 	}
 
-	(*forward)->ip   = strdup(services->forward->ip);
-	(*forward)->port = services->forward->port;
-	(*ep) = strdup(patterns->path);
+	(*forward)->ip          = strdup(services->forward->ip);
+	(*forward)->port        = services->forward->port;
+	(*forward)->defaultPath = strdup(patterns->path);
 
 	return TRUE;
       }
