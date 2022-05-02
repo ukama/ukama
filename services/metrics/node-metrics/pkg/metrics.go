@@ -25,7 +25,8 @@ type Metric struct {
 	// Example: 1d or 5h, or 30s
 	RateInterval string `json:"rateInterval"`
 
-	// consider adding aggregation function as a parameter
+	// Aggregate function used to aggregate metrics that involve multiple nodes
+	AggregateFunc string `json:"aggregateFunc"`
 }
 
 type Metrics struct {
@@ -257,7 +258,12 @@ func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
 	if !filter.HasNetwork() {
 		exludSt = getExcludeStatements("nodeid", "network")
 	}
-	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, filter.GetFilter(), exludSt)
+	af := m.AggregateFunc
+	if len(af) == 0 {
+		af = "sum"
+	}
+
+	return fmt.Sprintf("%s(%s {%s}) %s", af, m.Metric, filter.GetFilter(), exludSt)
 }
 
 func (m Metric) getLatestQuery(filter *Filter) string {

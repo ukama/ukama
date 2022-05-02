@@ -51,6 +51,13 @@ func TestGetAggregateQuery(t *testing.T) {
 
 		assert.Equal(t, "sum(memory {org='org1',network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
 	})
+
+	t.Run("AggregateFunctionConf", func(t *testing.T) {
+		m := Metric{Metric: "memory", NeedRate: true, AggregateFunc: "max"}
+		r := m.getAggregateQuery(NewFilter().WithNetwork("org1", "net1"), "sum")
+
+		assert.Equal(t, "max(memory {org='org1',network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
+	})
 }
 
 func TestGetLatestQuery(t *testing.T) {

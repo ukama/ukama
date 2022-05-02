@@ -3,7 +3,7 @@ package pkg
 import (
 	"time"
 
-	cors "github.com/gin-contrib/cors"
+	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -23,9 +23,9 @@ type NodeMetricsConfig struct {
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":    Metric{false, "trx_soc_cpu_usage", ""},
-	"memory": Metric{false, "trx_memory_ddr_used", ""},
-	"users":  Metric{false, "trx_lte_core_active_ue", ""},
+	"cpu":    {false, "trx_soc_cpu_usage", "", "sum"},
+	"memory": {false, "trx_memory_ddr_used", "", "sum"},
+	"users":  {false, "trx_lte_core_active_ue", "", "avg"},
 }
 
 func NewConfig() *Config {
