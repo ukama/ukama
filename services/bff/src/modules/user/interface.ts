@@ -1,4 +1,4 @@
-import { ParsedCookie } from "../../common/types";
+import { MetricServiceValueRes, ParsedCookie } from "../../common/types";
 import {
     ActivateUserResponse,
     UserResDto,
