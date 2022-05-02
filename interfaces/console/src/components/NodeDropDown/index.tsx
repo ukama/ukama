@@ -5,15 +5,15 @@ import {
     Button,
     Divider,
     MenuItem,
-    SelectChangeEvent,
     Typography,
+    SelectChangeEvent,
 } from "@mui/material";
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
-import { hexToRGB } from "../../utils";
-import InfoIcon from "@mui/icons-material/InfoOutlined";
 import CircleIcon from "@mui/icons-material/Circle";
+import InfoIcon from "@mui/icons-material/InfoOutlined";
+import { hexToRGB, secToHoursNMints } from "../../utils";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
 
@@ -23,6 +23,20 @@ const useStyles = makeStyles<Theme>(() => ({
     }),
 }));
 
+const getStatus = (status: Org_Node_State, time: number) => {
+    switch (status) {
+        case Org_Node_State.Onboarded:
+            return `is online and well for ${secToHoursNMints(
+                time,
+                " hours and "
+            )}.`;
+        case Org_Node_State.Pending:
+            return `is configuring.`;
+        default:
+            return "";
+    }
+};
+
 const getStatusIcon = (status: Org_Node_State) => {
     switch (status) {
         case Org_Node_State.Onboarded:
@@ -31,6 +45,8 @@ const getStatusIcon = (status: Org_Node_State) => {
             );
         case Org_Node_State.Pending:
             return <InfoIcon htmlColor={colors.yellow} fontSize={"small"} />;
+        case Org_Node_State.Error:
+            return <InfoIcon htmlColor={colors.red} fontSize={"small"} />;
         default:
             return <CircleIcon htmlColor={colors.black38} fontSize={"small"} />;
     }
@@ -67,7 +83,7 @@ const NodeDropDown = ({
             );
     };
     return (
-        <Stack direction={"row"} spacing={2} alignItems="center">
+        <Stack direction={"row"} spacing={1} alignItems="center">
             {getStatusIcon(nodeStatus.status)}
 
             <LoadingWrapper
@@ -161,8 +177,8 @@ const NodeDropDown = ({
                 width={nodeStatusLoading ? "200px" : "fit-content"}
             >
                 {nodeStatus.status !== Org_Node_State.Undefined && (
-                    <Typography ml="8px" variant={"h6"} color="secondary">
-                        {nodeStatus.uptime}
+                    <Typography ml="8px" variant={"h6"}>
+                        {getStatus(nodeStatus.status, nodeStatus.uptime)}
                     </Typography>
                 )}
             </LoadingWrapper>

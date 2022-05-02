@@ -1,4 +1,4 @@
-import { MetricServiceValuesRes, ParsedCookie } from "../../common/types";
+import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
 import { DeactivateResponse } from "../user/types";
 import {
     AddNodeResponse,
@@ -28,5 +28,5 @@ export interface INodeService {
 export interface INodeMapper {
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
     dtoToMetricsDto(res: OrgMetricValueDto[]): MetricDto[];
-    dtoToNodeStatusDto(res: MetricServiceValuesRes): GetNodeStatusRes;
+    dtoToNodeStatusDto(res: MetricLatestValueRes): GetNodeStatusRes;
 }

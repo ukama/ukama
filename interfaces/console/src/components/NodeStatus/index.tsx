@@ -1,7 +1,7 @@
 import { styled } from "@mui/styles";
 import { Button, Grid } from "@mui/material";
-import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
 import { LoadingWrapper, NodeDropDown, SplitButton } from "..";
+import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
 
 const StyledBtn = styled(Button)({
     whiteSpace: "nowrap",

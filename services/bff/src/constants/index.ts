@@ -104,6 +104,7 @@ export enum ORG_NODE_STATE {
     ONBOARDED = "ONBOARDED",
     PENDING = "PENDING",
     UNDEFINED = "UNDEFINED",
+    ERROR = "UNDEFINED",
 }
 registerEnumType(ORG_NODE_STATE, {
     name: "ORG_NODE_STATE",

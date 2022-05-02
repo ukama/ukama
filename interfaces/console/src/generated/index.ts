@@ -288,6 +288,12 @@ export type MetricInfo = {
   org: Scalars['String'];
 };
 
+export type MetricLatestValueRes = {
+  __typename?: 'MetricLatestValueRes';
+  time: Scalars['String'];
+  value: Scalars['String'];
+};
+
 export type MetricRes = {
   __typename?: 'MetricRes';
   data: Array<MetricDto>;
@@ -300,12 +306,6 @@ export type MetricServiceValueRes = {
   __typename?: 'MetricServiceValueRes';
   metric: MetricInfo;
   value: Array<MetricValues>;
-};
-
-export type MetricServiceValuesRes = {
-  __typename?: 'MetricServiceValuesRes';
-  metric: MetricInfo;
-  values: Array<MetricValues>;
 };
 
 export type MetricValues = {
@@ -455,6 +455,7 @@ export type NodeResponse = {
 };
 
 export enum Org_Node_State {
+  Error = 'ERROR',
   Onboarded = 'ONBOARDED',
   Pending = 'PENDING',
   Undefined = 'UNDEFINED'

@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, intervalToDuration } from "date-fns";
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from "../generated";
 import { TObject } from "../types";
 
@@ -300,6 +300,44 @@ const formatBytesToMB = (bytes = 0): string => {
     return bytes / (1024 * 1024) + " MB";
 };
 
+const secondsToDuration = (end: any) => {
+    // const units = ["year", "month", "day", "hour", "minute"];
+    const units = ["hour", "minute"];
+
+    const duration: any = intervalToDuration({
+        start: 0,
+        end: end * 1000,
+    });
+
+    const response: any = [];
+    let required = false;
+
+    units.forEach((unit, index) => {
+        if (
+            duration[`${unit}s`] > 0 ||
+            required === true ||
+            index === units.length - 1
+        ) {
+            response.push(
+                `${duration[`${unit}s`]} ${unit}${
+                    duration[`${unit}s`] === 1 ? "" : "s"
+                }`
+            );
+            required = true;
+        }
+    });
+
+    return response.join(" ");
+};
+
+const secToHoursNMints = (seconds: number, separator: string) => {
+    return (
+        [Math.floor(seconds / 60 / 60), Math.floor((seconds / 60) % 60)]
+            .join(separator ? separator : ":")
+            .replace(/\b(\d)\b/g, "0$1") + " minutes"
+    );
+};
+
 export {
     hexToRGB,
     formatBytes,
@@ -309,7 +347,9 @@ export {
     getStatusByType,
     formatBytesToMB,
     getMetricPayload,
+    secToHoursNMints,
     getTitleFromPath,
+    secondsToDuration,
     getMetricsInitObj,
     uniqueObjectsArray,
     isContainNodeUpdate,

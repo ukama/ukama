@@ -100,11 +100,12 @@ export class NodeService implements INodeService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             headers: cookie.header,
-            path: getMetricUri(
-                cookie.orgId,
-                data.nodeId,
-                getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
-            ),
+            path:
+                getMetricUri(
+                    cookie.orgId,
+                    data.nodeId,
+                    getMetricsByTab(data.nodeType, GRAPHS_TAB.NODE_STATUS)[0]
+                ) + "/latest",
             params: {
                 from: currentTimestamp,
                 to: currentTimestamp,
@@ -113,7 +114,7 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return NodeMapper.dtoToNodeStatusDto(res.data?.result[0]);
+        return NodeMapper.dtoToNodeStatusDto(res);
     };
     getSingleMetric = async (
         data: MetricsInputDTO,
