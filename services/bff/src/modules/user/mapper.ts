@@ -32,8 +32,8 @@ class UserMapper implements IUserMapper {
             if (!user.isDeactivated) {
                 const userObj = {
                     id: user.uuid,
-                    dataPlan: "0",
-                    dataUsage: "0,",
+                    dataPlan: "",
+                    dataUsage: "",
                     name: user.name,
                     email: user.email,
                     phone: user.phone,

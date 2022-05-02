@@ -11,6 +11,8 @@ import {
     useAddUserMutation,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
+    useGetUsersDataUsageLazyQuery,
+    useGetUsersDataUsageSSubscription,
     useUpdateUserMutation,
     useUpdateUserStatusMutation,
 } from "../../generated";
@@ -46,6 +48,7 @@ const User = () => {
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation();
+
     const [
         updateUser,
         {
@@ -55,9 +58,41 @@ const User = () => {
         },
     ] = useUpdateUserMutation();
 
+    const [getUsersDataUsage, { loading: usersDataUsageLoading }] =
+        useGetUsersDataUsageLazyQuery();
+
+    useGetUsersDataUsageSSubscription({
+        fetchPolicy: "network-only",
+        onSubscriptionData: res => {
+            if (res.subscriptionData.data?.getUsersDataUsage?.id) {
+                const userRes = res.subscriptionData.data?.getUsersDataUsage;
+                const index = users.findIndex(item => item.id === userRes.id);
+                setUsers([
+                    ...users.slice(0, index),
+                    {
+                        id: userRes.id,
+                        name: userRes.name,
+                        email: userRes.email,
+                        phone: userRes.phone,
+                        dataPlan: userRes.dataPlan,
+                        dataUsage: userRes.dataUsage,
+                    },
+                    ...users.slice(index + 1),
+                ]);
+            }
+        },
+    });
+
     const { data: usersRes, loading: usersByOrgLoading } =
         useGetUsersByOrgQuery({
-            onCompleted: res => setUsers(res.getUsersByOrg),
+            onCompleted: res => {
+                setUsers(res.getUsersByOrg);
+                getUsersDataUsage({
+                    variables: {
+                        data: { ids: res.getUsersByOrg.map(u => u.id) },
+                    },
+                });
+            },
         });
 
     const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
@@ -229,6 +264,7 @@ const User = () => {
                                     >
                                         <UserCard
                                             user={item}
+                                            loading={usersDataUsageLoading}
                                             handleMoreUserdetails={
                                                 onViewMoreClick
                                             }

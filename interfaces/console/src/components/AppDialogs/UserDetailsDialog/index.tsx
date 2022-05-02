@@ -107,17 +107,13 @@ const UserDetailsDialog = ({
                             </Grid>
                             <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
-                                    <Stack direction="row">
-                                        <Typography variant="body1">
-                                            {formatBytes(parseInt(dataUsage))}{" "}
-                                            data used, from
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {` ${formatBytesToMB(
-                                                parseInt(dataPlan)
-                                            )}.`}
-                                        </Typography>
-                                    </Stack>
+                                    <Typography variant="body1">
+                                        {`${formatBytes(
+                                            parseInt(dataUsage)
+                                        )}  data used, from ${formatBytesToMB(
+                                            parseInt(dataPlan)
+                                        )} MB.`}
+                                    </Typography>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <EditableTextField

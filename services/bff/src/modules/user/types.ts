@@ -69,7 +69,7 @@ export class GetUsersDto {
     @Field()
     name: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
@@ -77,14 +77,11 @@ export class GetUsersDto {
     @IsPhoneNumber()
     phone: string;
 
-    @Field()
+    @Field({ nullable: true })
     dataPlan: string;
 
-    @Field()
+    @Field({ nullable: true })
     dataUsage: string;
-
-    @Field()
-    isDeactivated: boolean;
 }
 
 @ObjectType()
