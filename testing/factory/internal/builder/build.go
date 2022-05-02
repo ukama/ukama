@@ -8,6 +8,7 @@ import (
 	"github.com/ukama/ukama/testing/factory/internal"
 
 	"github.com/ukama/ukama/testing/factory/internal/db"
+	"github.com/ukama/ukama/testing/factory/internal/nmr"
 
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -32,9 +33,10 @@ type BuildOps interface {
 type Build struct {
 	clientset        *kubernetes.Clientset
 	currentNamespace string
+	fd               *nmr.NMR
 }
 
-func NewBuild() *Build {
+func NewBuild(d *nmr.NMR) *Build {
 
 	cset, err := connectToK8s()
 	if err != nil {
@@ -51,6 +53,7 @@ func NewBuild() *Build {
 	return &Build{
 		clientset:        cset,
 		currentNamespace: string(ns),
+		fd:               d,
 	}
 }
 

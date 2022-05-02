@@ -12,10 +12,13 @@ type RespGetNode struct {
 }
 
 type ReqBuildNode struct {
-	NodeID    string `query:"node" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"eq=fact_update,required"`
+	LookingTo string `query:"looking_to" validate:"eq=create_node,required"`
 	Type      string `query:"type" validate:"eq=HNODE|eq=TNODE|ANODE,required"`
 	Count     int    `query:"count" default:1`
+}
+
+type RespBuildNode struct {
+	NodeIDList []string `json:"NodeID`
 }
 
 type ReqDeleteNode struct {

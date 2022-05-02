@@ -9,11 +9,9 @@ import (
 	"github.com/ukama/ukama/services/common/metrics"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/testing/factory/internal"
-	"github.com/ukama/ukama/testing/factory/internal/db"
 	"github.com/ukama/ukama/testing/factory/internal/server"
 
 	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/services/common/sql"
 	"github.com/ukama/ukama/testing/factory/cmd/version"
 
 	"github.com/sirupsen/logrus"
@@ -43,24 +41,12 @@ func main() {
 	/* config parsig */
 	initConfig()
 
-	d := initDb()
-
 	/* Start the HTTP server. */
-	startHTTPServer(ctx, d)
-}
-
-func initDb() sql.Db {
-	logrus.Infof("Initializing Database")
-	d := sql.NewDb(internal.ServiceConfig.DB, internal.ServiceConfig.DebugMode)
-	err := d.Init(&db.Node{})
-	if err != nil {
-		logrus.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
+	startHTTPServer(ctx)
 }
 
 /* Start HTTP server for accepting REST  request */
-func startHTTPServer(ctx context.Context, d sql.Db) {
+func startHTTPServer(ctx context.Context) {
 
 	logrus.Tracef("Config is %+v", internal.ServiceConfig)
 
@@ -69,7 +55,7 @@ func startHTTPServer(ctx context.Context, d sql.Db) {
 
 	metrics.StartMetricsServer(&internal.ServiceConfig.Metrics)
 
-	r := server.NewRouter(internal.ServiceConfig, rs, db.NewNodeRepo(d), db.NewModuleRepo(d))
+	r := server.NewRouter(internal.ServiceConfig, rs)
 	go r.Run(ext)
 
 	/* Register service */

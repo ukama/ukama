@@ -1,28 +1,14 @@
-package order
+package worker
 
 import (
 	"time"
 
-	"github.com/ukama/ukama/servcies/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/testing/factory/internal"
 )
 
-type Node struct {
-	NodeID        ukama.NodeID `json:-`
-	Type          string       `json:"type"`
-	PartNumber    string       `json:"partNumber"`
-	Skew          string       `json:"skew"`
-	Mac           string       `json:"mac"`
-	SwVersion     string       `json:"swVersion"`
-	PSwVersion    string       `json:"mfgSwVersion"`
-	AssemblyDate  time.Time    `json:"assemblyDate"`
-	OemName       string       `json:"oemName"`
-	Modules       []Module     `json:-`
-	MfgTestStatus string       `json:"mfgTestStatus"`
-	Status        string       `json:"status"`
-}
-
-func NewHNode() Node {
-	node := Node{
+func NewHNode() internal.Node {
+	node := internal.Node{
 		NodeID:       ukama.NewVirtualHomeNodeId(),
 		Type:         ukama.NODE_ID_TYPE_HOMENODE,
 		PartNumber:   "",
@@ -32,7 +18,7 @@ func NewHNode() Node {
 		PSwVersion:   "",
 		AssemblyDate: time.Now(),
 		OemName:      "",
-		Modules: []Module{
+		Modules: []internal.Module{
 			NewTRXModule(),
 		},
 		MfgTestStatus: "MfgTestStatusPending",
@@ -41,8 +27,8 @@ func NewHNode() Node {
 	return node
 }
 
-func NewTNode() Node {
-	node := Node{
+func NewTNode() internal.Node {
+	node := internal.Node{
 		NodeID:       ukama.NewVirtualTowerNodeId(),
 		Type:         ukama.NODE_ID_TYPE_TOWERNODE,
 		PartNumber:   "",
@@ -52,7 +38,7 @@ func NewTNode() Node {
 		PSwVersion:   "",
 		AssemblyDate: time.Now(),
 		OemName:      "",
-		Modules: []Module{
+		Modules: []internal.Module{
 			NewComModule(),
 			NewTRXModule(),
 		},
@@ -62,8 +48,8 @@ func NewTNode() Node {
 	return node
 }
 
-func NewANode() Node {
-	node := Node{
+func NewANode() internal.Node {
+	node := internal.Node{
 		NodeID:       ukama.NewVirtualAmplifierNodeId(),
 		Type:         ukama.NODE_ID_TYPE_AMPLIFIERNODE,
 		PartNumber:   "",
@@ -73,7 +59,7 @@ func NewANode() Node {
 		PSwVersion:   "",
 		AssemblyDate: time.Now(),
 		OemName:      "",
-		Modules: []Module{
+		Modules: []internal.Module{
 			NewCtrlModule(),
 			NewRFModule(),
 		},

@@ -1,26 +1,14 @@
-package order
+package worker
 
 import (
 	"time"
 
-	"github.com/ukama/ukama/servcies/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/testing/factory/internal"
 )
 
-type Module struct {
-	MouduleID  ukama.ModuleID
-	Type       string    `form:"type" json:"type"`
-	PartNumber string    `form:"partNumber" json:"partNumber"`
-	HwVersion  string    `form:"hwVersion" json:"hwVersion"`
-	Mac        string    `form:"mac" json:"mac"`
-	SwVersion  string    `form:"swVersion" json:"swVersion"`
-	PSwVersion string    `form:"pSwVersion" json:"mfgSwVersion"`
-	MfgDate    time.Time `form:"mfgDate" json:"mfgDate"`
-	MfgName    string    `form:"mfgName" json:"mfgName"`
-	Status     string    `form:"status" json:"status"`
-}
-
-func NewComModule() Module {
-	module := Module{
+func NewComModule() internal.Module {
+	module := internal.Module{
 		MouduleID:  ukama.NewVirtualComId(),
 		Type:       ukama.MODULE_ID_TYPE_COM,
 		PartNumber: "",
@@ -35,8 +23,8 @@ func NewComModule() Module {
 	return module
 }
 
-func NewTRXModule() Module {
-	module := Module{
+func NewTRXModule() internal.Module {
+	module := internal.Module{
 		MouduleID:  ukama.NewVirtualTRXId(),
 		Type:       ukama.MODULE_ID_TYPE_TRX,
 		PartNumber: "",
@@ -51,8 +39,8 @@ func NewTRXModule() Module {
 	return module
 }
 
-func NewRFModule() Module {
-	module := Module{
+func NewRFModule() internal.Module {
+	module := internal.Module{
 		MouduleID:  ukama.NewVirtualRFId(),
 		Type:       ukama.MODULE_ID_TYPE_RF,
 		PartNumber: "",
@@ -67,8 +55,8 @@ func NewRFModule() Module {
 	return module
 }
 
-func NewCtrlModule() Module {
-	module := Module{
+func NewCtrlModule() internal.Module {
+	module := internal.Module{
 		MouduleID:  ukama.NewVirtualCtrlId(),
 		Type:       ukama.MODULE_ID_TYPE_CTRL,
 		PartNumber: "",
