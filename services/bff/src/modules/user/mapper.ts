@@ -10,9 +10,7 @@ import {
     OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
-    ResidentResponse,
 } from "./types";
-import * as defaultCasual from "casual";
 import { MetricServiceRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
@@ -25,19 +23,6 @@ class UserMapper implements IUserMapper {
     };
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
         return res.data;
-    };
-    residentDtoToDto = (res: GetUserResponseDto): ResidentResponse => {
-        const residents: GetUserDto[] = [];
-        const activeResidents = 0;
-        const totalResidents = res.length;
-        res.data.forEach(user => {
-            residents.push(user);
-        });
-        return {
-            residents,
-            activeResidents,
-            totalResidents,
-        };
     };
     dtoToUsersDto = (req: OrgUsersResponse): GetUsersDto[] => {
         const res = req.users;
@@ -74,8 +59,8 @@ class UserMapper implements IUserMapper {
                     : false,
             roaming:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
-            dataPlan: 1024,
-            dataUsage: defaultCasual.integer(1, 1024),
+            dataPlan: sim.carrier?.usage?.dataAllowanceBytes || "0",
+            dataUsage: sim.carrier?.usage?.dataUsedBytes || "0",
         };
     };
     dtoToUserResDto = (req: OrgUserDto): UserResDto => {

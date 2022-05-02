@@ -44,13 +44,13 @@ import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
 import SplitButton from "./SplitButton";
 import {
+    NodeDialog,
     BasicDialog,
-    NodeAppDetailsDialog,
-    ActivationDialog,
-    SoftwareUpdateModal,
-    NodeSoftwareInfosDialog,
     UserDetailsDialog,
+    SoftwareUpdateModal,
     UserActivationDialog,
+    NodeAppDetailsDialog,
+    NodeSoftwareInfosDialog,
 } from "./AppDialogs";
 
 export {
@@ -60,12 +60,13 @@ export {
     TabPanel,
     NodeGroup,
     NodeSlider,
-    SplitButton,
     EmptyView,
     StatsCard,
+    NodeDialog,
     TimeFilter,
     NodeStatus,
     StatusCard,
+    SplitButton,
     CurrentBill,
     TableHeader,
     BasicDialog,
@@ -92,7 +93,6 @@ export {
     ContainerHeader,
     NodeSoftwareTab,
     NodeResourcesTab,
-    ActivationDialog,
     BillingDataTable,
     CustomRadioButton,
     UserDetailsDialog,

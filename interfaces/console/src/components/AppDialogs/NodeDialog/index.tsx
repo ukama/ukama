@@ -98,7 +98,7 @@ type NodeDialogProps = {
     handleNodeSubmitAction: Function;
 };
 
-const ActivationDialog = ({
+const NodeDialog = ({
     isOpen,
     subTitle,
     nodeData,
@@ -122,11 +122,8 @@ const ActivationDialog = ({
             setError("Please fill all require vields");
             return;
         }
-        if (action == "editNode") {
-            handleNodeSubmitAction(formData);
-        } else {
-            handleNodeSubmitAction(formData);
-        }
+
+        handleNodeSubmitAction(formData);
     };
 
     const handleNodeTypeChange = (e: SelectChangeEvent) =>
@@ -316,4 +313,4 @@ const ActivationDialog = ({
     );
 };
 
-export default ActivationDialog;
+export default NodeDialog;
