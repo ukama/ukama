@@ -2,7 +2,6 @@ import { Service } from "typedi";
 import {
     ConnectedUserDto,
     DeactivateResponse,
-    ResidentsResponse,
     UserInputDto,
     GetUserDto,
     ActivateUserResponse,
@@ -17,8 +16,7 @@ import UserMapper from "./mapper";
 import { API_METHOD_TYPE } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
-import { getPaginatedOutput } from "../../utils";
-import { PaginationDto, ParsedCookie } from "../../common/types";
+import { ParsedCookie } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
@@ -65,7 +63,6 @@ export class UserService implements IUserService {
             headers: cookie.header,
             body: { isDeactivated: true },
         });
-        console.log(res);
         if (checkError(res)) throw new Error(res.description);
         return res;
     };
@@ -81,24 +78,7 @@ export class UserService implements IUserService {
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
         return UserMapper.dtoToUserDto(res);
-    };
-    getResidents = async (req: PaginationDto): Promise<ResidentsResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_USERS,
-            params: req,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const residents = UserMapper.residentDtoToDto(res);
-        if (!residents) throw new HTTP404Error(Messages.RESIDENTS_NOT_FOUND);
-
-        return {
-            residents,
-            meta,
-        };
     };
     getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
         const res = await catchAsyncIOMethod({
@@ -109,7 +89,6 @@ export class UserService implements IUserService {
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
         return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
@@ -144,7 +123,7 @@ export class UserService implements IUserService {
         cookie: ParsedCookie
     ): Promise<OrgUserSimDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.PATCH,
+            type: API_METHOD_TYPE.PUT,
             path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
             headers: cookie.header,
             body: {

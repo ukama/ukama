@@ -1,7 +1,4 @@
-import { makeStyles } from "@mui/styles";
-import CloseIcon from "@mui/icons-material/Close";
 import {
-    Box,
     Button,
     Dialog,
     IconButton,
@@ -9,72 +6,80 @@ import {
     DialogActions,
     DialogContent,
     Stack,
+    DialogTitle,
 } from "@mui/material";
-
-const useStyles = makeStyles(() => ({
-    basicDialogHeaderStyle: {
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-}));
+import CloseIcon from "@mui/icons-material/Close";
 
 type BasicDialogProps = {
     title: string;
     isOpen: boolean;
-    content: string;
-    btnLabel: string;
-    handleClose: any;
+    description: string;
     isClosable?: boolean;
-    btnVariant?: "text" | "outlined" | "contained";
+    handleCloseAction: any;
+    labelSuccessBtn?: string;
+    handleSuccessAction?: any;
+    labelNegativeBtn?: string;
 };
 
 const BasicDialog = ({
     title,
     isOpen,
-    content,
-    btnLabel,
-    handleClose,
-    btnVariant = "text",
+    description,
+    labelSuccessBtn,
+    labelNegativeBtn,
+    handleCloseAction,
     isClosable = true,
+    handleSuccessAction,
 }: BasicDialogProps) => {
-    const classes = useStyles();
     return (
         <Dialog
+            fullWidth
             open={isOpen}
-            onClose={handleClose}
+            maxWidth="sm"
+            onClose={handleCloseAction}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
-            onBackdropClick={() => isClosable && handleClose()}
+            onBackdropClick={() => isClosable && handleCloseAction()}
         >
             <Stack
-                spacing={3}
-                sx={{
-                    width: { xs: "100%", md: "500px" },
-                    padding: "16px 8px 8px 24px",
-                }}
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
             >
-                <Box component="div" className={classes.basicDialogHeaderStyle}>
-                    <Typography variant="h6">{title}</Typography>
-                    {isClosable && (
-                        <IconButton
-                            onClick={handleClose}
-                            sx={{ ml: "24px", p: "8px" }}
-                        >
-                            <CloseIcon />
-                        </IconButton>
-                    )}
-                </Box>
-                <DialogContent sx={{ p: 0 }}>
-                    <Typography variant="body1">{content}</Typography>
-                </DialogContent>
-                <DialogActions>
-                    <Button variant={btnVariant} onClick={handleClose}>
-                        {btnLabel}
-                    </Button>
-                </DialogActions>
+                <DialogTitle>{title}</DialogTitle>
+                <IconButton
+                    onClick={handleCloseAction}
+                    sx={{ position: "relative", right: 8 }}
+                >
+                    <CloseIcon />
+                </IconButton>
             </Stack>
+
+            <DialogContent>
+                <Typography variant="body1">{description}</Typography>
+            </DialogContent>
+
+            <DialogActions>
+                <Stack direction={"row"} alignItems="center" spacing={2}>
+                    {labelNegativeBtn && (
+                        <Button variant="text" onClick={handleCloseAction}>
+                            {labelNegativeBtn}
+                        </Button>
+                    )}
+                    {labelSuccessBtn && (
+                        <Button
+                            variant="contained"
+                            onClick={() =>
+                                handleSuccessAction
+                                    ? handleSuccessAction()
+                                    : handleCloseAction()
+                            }
+                        >
+                            {labelSuccessBtn}
+                        </Button>
+                    )}
+                </Stack>
+            </DialogActions>
         </Dialog>
     );
 };
