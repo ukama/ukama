@@ -16,9 +16,10 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
     const [dataLoading, setDataLoading] = useState(user?.dataPlan === "");
 
     useEffect(() => {
-        if (user.dataPlan === "0") {
-            setDataLoading(false);
-        } else if (user.dataPlan !== "" && user.dataPlan !== "0") {
+        if (
+            user.dataPlan !== "" &&
+            (user.dataPlan !== "0" || user.dataPlan === "0")
+        ) {
             setDataLoading(false);
         }
     }, [loading, user]);
