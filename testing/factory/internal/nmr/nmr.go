@@ -28,7 +28,7 @@ func (n *NMR) SendRestAPIReq(query map[string]string, body ...interface{}) error
 
 	errStatus := &ErrorMessage{}
 	var err error
-	var resp resty.Response
+	resp := &resty.Response{}
 	for _, item := range body {
 		resp, err = n.S.C.R().
 			SetError(errStatus).
@@ -61,7 +61,7 @@ func (n *NMR) SendRestAPIReq(query map[string]string, body ...interface{}) error
 
 func (n *NMR) NmrAddModule(module internal.Module) error {
 	query := map[string]string{
-		"module":     module.ModuleID,
+		"module":     string(module.ModuleID),
 		"looking_to": "update_module",
 	}
 
@@ -94,7 +94,7 @@ func (n *NMR) NmrAssignModule(nodeID string, moduleID string) error {
 
 func (n *NMR) NmrAddNode(node internal.Node) error {
 	query := map[string]string{
-		"node":       node.NodeID,
+		"node":       string(node.NodeID),
 		"looking_to": "update_node",
 	}
 
@@ -113,7 +113,7 @@ func (n *NMR) NmrAddNode(node internal.Node) error {
 		logrus.Infof("Module %d with ID %s added to NMR database", idx, node.Modules[idx].ModuleID)
 
 		/* Allocate Module */
-		err = n.NmrAssignModule(node.NodeID, node.Modules[idx].ModuleID)
+		err = n.NmrAssignModule(string(node.NodeID), string(node.Modules[idx].ModuleID))
 		if err != nil {
 			logrus.Errorf("Failed to add module %d  with id %s to NMR database.", idx, module.ModuleID)
 			return err

@@ -9,8 +9,8 @@ import (
 
 func NewComModule() internal.Module {
 	module := internal.Module{
-		MouduleID:  ukama.NewVirtualComId(),
-		Type:       ukama.MODULE_ID_TYPE_COM,
+		ModuleID:   ukama.NewVirtualComId(),
+		Type:       ukama.MODULE_ID_TYPE_COMP,
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",
@@ -25,7 +25,7 @@ func NewComModule() internal.Module {
 
 func NewTRXModule() internal.Module {
 	module := internal.Module{
-		MouduleID:  ukama.NewVirtualTRXId(),
+		ModuleID:   ukama.NewVirtualTRXId(),
 		Type:       ukama.MODULE_ID_TYPE_TRX,
 		PartNumber: "",
 		HwVersion:  "",
@@ -41,8 +41,8 @@ func NewTRXModule() internal.Module {
 
 func NewRFModule() internal.Module {
 	module := internal.Module{
-		MouduleID:  ukama.NewVirtualRFId(),
-		Type:       ukama.MODULE_ID_TYPE_RF,
+		ModuleID:   ukama.NewVirtualFEId(),
+		Type:       ukama.MODULE_ID_TYPE_FE,
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",
@@ -57,7 +57,7 @@ func NewRFModule() internal.Module {
 
 func NewCtrlModule() internal.Module {
 	module := internal.Module{
-		MouduleID:  ukama.NewVirtualCtrlId(),
+		ModuleID:   ukama.NewVirtualCtrlId(),
 		Type:       ukama.MODULE_ID_TYPE_CTRL,
 		PartNumber: "",
 		HwVersion:  "",

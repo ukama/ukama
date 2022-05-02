@@ -7,7 +7,6 @@ import (
 
 	"github.com/ukama/ukama/testing/factory/internal"
 
-	"github.com/ukama/ukama/testing/factory/internal/db"
 	"github.com/ukama/ukama/testing/factory/internal/nmr"
 
 	log "github.com/sirupsen/logrus"
@@ -20,13 +19,13 @@ import (
 )
 
 type BuildOps interface {
-	Init(db db.NodeRepo, cb func(string, string) error)
+	Init(cb func(string, string) error)
 	LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string) error
 	GetJobStatus(jobName string) int
 	DeleteJob(jobName string) error
 	ListBuildJobs()
 	ListPods()
-	WatcherForBuildJobs(db db.NodeRepo, cb func(string, string) error)
+	WatcherForBuildJobs(cb func(string, string) error)
 	LaunchAndMonitorBuild(jobName string, nodetype string) error
 }
 
@@ -60,7 +59,7 @@ func NewBuild(d *nmr.NMR) *Build {
 /* Connect to Kubernetes cluster */
 func connectToK8s() (*kubernetes.Clientset, error) {
 
-	config, err := clientcmd.BuildConfigFromFlags("", internal.ServiceConf.Kubeconfig)
+	config, err := clientcmd.BuildConfigFromFlags("", internal.ServiceConfig.Kubeconfig)
 	if err != nil {
 		log.Errorf("Build:: Failed to create K8s config. Error %s", err.Error())
 		return nil, err
@@ -76,8 +75,8 @@ func connectToK8s() (*kubernetes.Clientset, error) {
 }
 
 /* Starting build job watcher routine */
-func (b *Build) Init(db db.NodeRepo, cb func(string, string) error) {
-	go b.WatcherForBuildJobs(db, cb)
+func (b *Build) Init(cb func(string, string) error) {
+	go b.WatcherForBuildJobs(cb)
 }
 
 /* Launch Build Job in K8 cluister */
@@ -126,23 +125,23 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, node
 								},
 								{
 									Name:  "GITUSR",
-									Value: internal.ServiceConf.GitUser,
+									Value: internal.ServiceConfig.GitUser,
 								},
 								{
 									Name:  "GITKEY",
-									Value: internal.ServiceConf.GitPass,
+									Value: internal.ServiceConfig.GitPass,
 								},
 								{
 									Name:  "DOCKER_USER",
-									Value: internal.ServiceConf.Docker.User,
+									Value: internal.ServiceConfig.Docker.User,
 								},
 								{
 									Name:  "DOCKER_PASS",
-									Value: internal.ServiceConf.Docker.Pass,
+									Value: internal.ServiceConfig.Docker.Pass,
 								},
 								{
 									Name:  "REPO_SERVER_URL",
-									Value: internal.ServiceConf.RepoServerUrl,
+									Value: internal.ServiceConfig.RepoServerUrl,
 								},
 							},
 						},
@@ -221,7 +220,7 @@ func (b *Build) GetJobStatus(jobName string) int {
 /* Go routine to start build process */
 func (b *Build) LaunchAndMonitorBuild(jobName string, nodetype string) error {
 
-	containerImage := internal.ServiceConf.BuilderImage
+	containerImage := internal.ServiceConfig.BuilderImage
 
 	entryCommand := "startup.sh"
 
@@ -251,7 +250,7 @@ func (b *Build) DeleteJob(jobName string) error {
 }
 
 /* Watching for changes in job status */
-func (b *Build) WatcherForBuildJobs(db db.NodeRepo, cb func(string, string) error) {
+func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 
 	/* List Jobs*/
 	b.ListBuildJobs()
@@ -281,10 +280,11 @@ func (b *Build) WatcherForBuildJobs(db db.NodeRepo, cb func(string, string) erro
 
 			switch event.Type {
 			case watch.Added:
-				state := "assembly-begin"
+				state := "StatusPendingAssembly"
 				log.Infof("Build:: New Build job addded kind %s name %s created in namespace %s Active %d Completed %d.\n", job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded)
+
 				/* Updated database */
-				err := db.UpdateNodeStatus(job.Name, state)
+				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
 					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}
@@ -293,22 +293,22 @@ func (b *Build) WatcherForBuildJobs(db db.NodeRepo, cb func(string, string) erro
 				_ = cb(job.Name, state)
 
 			case watch.Modified:
-				state := "assembly-inprogress"
+				state := "StatusUnderAssembly"
 				log.Infof("Build:: Build job modified kind %s name %s created in namespace %s Active %d Completed %d Failed %d .\n",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 
 				/* Since it single pod */
 				if job.Status.Active > 0 {
-					state = "assembly-inprogress"
+					state = "StatusUnderAssembly"
 				} else if job.Status.Succeeded > 0 {
-					state = "assembly-completed"
+					state = "StatusAssemblyCompleted"
 					_ = b.DeleteJob(job.Name)
 				} else if job.Status.Failed > 0 {
-					state = "assembly-failure"
+					state = "StatusProductionTestFail"
 				}
 
 				/* Updated database */
-				err := db.UpdateNodeStatus(job.Name, state)
+				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
 					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}
@@ -320,9 +320,9 @@ func (b *Build) WatcherForBuildJobs(db db.NodeRepo, cb func(string, string) erro
 				log.Infof("Build:: Build job deleted kind %s name %s created in namespace %s Active %d Completed %d Failed %d.",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 				/* TODO:: Send Event on MessageBus */
-				state := "shipped"
+				state := "StatusNodeIntransit"
 				/* Updated database */
-				err := db.UpdateNodeStatus(job.Name, state)
+				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
 					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}

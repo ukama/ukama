@@ -6,13 +6,25 @@ import (
 	"github.com/ukama/ukama/services/common/rest"
 )
 
+type Docker struct {
+	User string
+	Pass string
+}
+
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Metrics           config.Metrics
 	Server            rest.HttpConfig
 	ApiIf             config.ServiceApiIf
 	ServiceRouter     string
-	DB                config.Database
+	GitUser           string
+	GitPass           string
+	Docker            Docker
+	VmImage           string
+	BuilderImage      string
+	Kubeconfig        string
+	RabbitUri         string
+	RepoServerUrl     string
 }
 
 var ServiceConfig *Config
@@ -54,14 +66,6 @@ func NewConfig() *Config {
 				Port: 8085,
 				Path: "/",
 			},
-		},
-		DB: config.Database{
-			Host:       "localhost",
-			Password:   "Pass2020!",
-			Username:   "postgres",
-			DbName:     ServiceName,
-			SslEnabled: false,
-			Port:       5432,
 		},
 	}
 }

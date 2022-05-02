@@ -51,7 +51,7 @@ func NewTNode() internal.Node {
 func NewANode() internal.Node {
 	node := internal.Node{
 		NodeID:       ukama.NewVirtualAmplifierNodeId(),
-		Type:         ukama.NODE_ID_TYPE_AMPLIFIERNODE,
+		Type:         ukama.NODE_ID_TYPE_AMPNODE,
 		PartNumber:   "",
 		Skew:         "",
 		Mac:          "",
