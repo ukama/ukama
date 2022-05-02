@@ -182,7 +182,7 @@ func (m *Metrics) GetLatestMetric(metricType string, metricFilter *Filter, w io.
 	}
 
 	if len(res.Data.Result) == 1 && len(res.Data.Result[0].Value) == 2 {
-		_, err = fmt.Fprintf(w, `{ "time": '%.2f', "value": '%v'  }`,
+		_, err = fmt.Fprintf(w, `{ "time": "%.2f", "value": "%v"  }`,
 			res.Data.Result[0].Value[0], res.Data.Result[0].Value[1])
 		if err != nil {
 			logrus.Errorf("unable to write response: %s", err)
