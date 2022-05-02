@@ -38,6 +38,8 @@ enum {
 	VNODE_CMD_DELETE
 };
 
+extern int build_capp(Config *config);
+
 /*
  * usage --
  *
@@ -59,7 +61,7 @@ void usage() {
  * set_log_level -- set the verbosity level for logs
  *
  */
-void set_log_level(char *slevel) {
+static void set_log_level(char *slevel) {
 
 	int ilevel = LOG_TRACE;
 
@@ -106,7 +108,7 @@ int main (int argc, char *argv[]) {
 	int cmd=VNODE_CMD_NONE;
 	char *configDir=NULL, *registryURL=NULL;
 	char *debug=DEF_LOG_LEVEL;
-	Configs *configs=NULL;
+	Configs *configs=NULL, *ptr=NULL;
 
 	while (TRUE) {
 
@@ -172,6 +174,22 @@ int main (int argc, char *argv[]) {
 				  configDir);
 		free_configs(configs);
 		exit(1);
+	}
+
+	/* Build all them capps */
+	ptr = configs;
+	while (ptr) {
+	  if (ptr->valid && ptr->config) {
+		if (!build_capp(ptr->config)) {
+		  log_error("Error building capp %s:%s using config file: %s",
+					ptr->config->capp->name, ptr->config->capp->version,
+					ptr->fileName);
+		  free_configs(configs);
+		  /* XXX clean up build dir */
+		  exit(1);
+		}
+	  }
+	  ptr = ptr->next;
 	}
 
 	free_configs(configs);
