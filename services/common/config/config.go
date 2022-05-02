@@ -22,6 +22,39 @@ type Database struct {
 	Port       int
 }
 
+/*
+Route are key value pair
+*/
+type Route map[string]string
+
+/*
+Service would a have some finite number of routes
+thorugh which it could be reached.
+*/
+type Pattern struct {
+	Routes []Route
+}
+
+/*
+Service would be listing on this
+IP and Port for incoming messages
+*/
+type Forward struct {
+	Ip   string `json:"ip"`
+	Port int    `json:"port"`
+	Path string `json:"default_path"`
+}
+
+/*
+Service API interface is registered to Router service.
+So that Router service know when and where to reach service.
+*/
+type ServiceApiIf struct {
+	Name string  `json:"name"`
+	P    []Route `json:"patterns"`
+	F    Forward `json:"forward"`
+}
+
 type Queue struct {
 	Uri string // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
@@ -60,7 +93,7 @@ func LoadConfig(configFileName string, config interface{}) {
 	e.SetConfigName(configFileName + ".yaml")
 
 	e.AutomaticEnv() // read in environment variables that match
-	
+
 	// If a config file is found, read it in.
 	err = e.ReadInConfig()
 	if err == nil {
@@ -88,7 +121,7 @@ func DefaultMetrics() *Metrics {
 	}
 }
 
-func DefaultDatabase() Database{
+func DefaultDatabase() Database {
 	return Database{
 		Host:       "localhost",
 		Password:   "Pass2020!",

@@ -2,6 +2,7 @@ package kratos
 
 import (
 	"context"
+
 	ory "github.com/ory/kratos-client-go"
 )
 
@@ -35,11 +36,11 @@ func Login(kratosUrl string, email string, password string) (*ory.SuccessfulSelf
 	return result, nil
 }
 
-func CreateTemporaryUser(client *ory.APIClient ) (email string, password string, err error){
+func CreateTemporaryUser(client *ory.APIClient) (email string, password string, err error) {
 	// Create a temporary user
 	email, password = RandomCredentials()
 	err = CreateIdentityWithSession(client, email, password)
-	if err != nil{
+	if err != nil {
 		return "", "", err
 	}
 	return email, password, nil

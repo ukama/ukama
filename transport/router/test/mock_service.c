@@ -55,7 +55,7 @@ struct Response {
  *
  */
 
-#define REG_JSON "{ \"name\" : \"%s\", \"patterns\" : [ %s ], \"forward\": { \"ip\": \"%s\", \"port\" : %d } }"
+#define REG_JSON "{ \"name\" : \"%s\", \"patterns\" : [ %s ], \"forward\": { \"ip\": \"%s\", \"port\" : %d, \"default_path\": \"%s\" } }"
 #define DEL_JSON "{ \"uuid\" : \"%s\" }"
 
 static void print_map(map_t *map) {
@@ -106,6 +106,24 @@ static void print_request(const struct _u_request *request) {
  *
  */
 int callback_service(const req_t *request, resp_t *response, void *userData) {
+
+  char *str;
+  char buffer[MAX_LEN] = {0};
+
+  print_request(request);
+  str = (char *)userData;
+
+  sprintf(buffer, "%s: %s\n", request->http_verb, str);
+
+  ulfius_set_string_body_response(response, 200, buffer);
+
+  return U_CALLBACK_CONTINUE;
+}
+
+/* Callback function for /ping
+ *
+ */
+int callback_ping(const req_t *request, resp_t *response, void *userData) {
 
   char *str;
   char buffer[MAX_LEN] = {0};
@@ -208,7 +226,8 @@ static int service_unregister(char *rIP, char *rPort, char *uuidStr) {
  *
  */
 static int service_register(char *name, char *rIP, char *rPort, char *ip,
-			    int port, char *pattern, char **uuidStr) {
+			    int port, char *path, char *pattern,
+			    char **uuidStr) {
 
   int ret=FALSE;
   CURL *curl=NULL;
@@ -221,7 +240,7 @@ static int service_register(char *name, char *rIP, char *rPort, char *ip,
 
   json_t *jRoot=NULL, *jID=NULL;
 
-  sprintf(json, REG_JSON, name, pattern, ip, port);
+  sprintf(json, REG_JSON, name, pattern, ip, port, path);
   sprintf(url, "http://%s:%s/routes", rIP, rPort);
 
   curl = curl_easy_init();
@@ -302,7 +321,7 @@ int callback_default(const req_t *request, resp_t *response, void *userData) {
 
 /*
  * Usage example:
- * ./mock_service 127.0.0.1 4444 4445 "hello" "{ \"key1\" : \"value1\", \"key2\" : \"value2\"}"
+ * ./mock_service 127.0.0.1 4444 4445 "/service" "hello" "{ \"key1\" : \"value1\", \"key2\" : \"value2\"}"
  *
  */
 int main(int argc, char **argv) {
@@ -313,6 +332,7 @@ int main(int argc, char **argv) {
   int  port;
   char *rPort;
   char *uuidStr=NULL;
+  char *path;
   struct _u_instance inst;
 
   if (argc<6) {
@@ -326,8 +346,9 @@ int main(int argc, char **argv) {
   rHost     = strdup(argv[2]);
   rPort     = strdup(argv[3]);
   port      = atoi(argv[4]);
-  reply     = strdup(argv[5]);
-  kvPattern = strdup(argv[6]);
+  path      = strdup(argv[5]);
+  reply     = strdup(argv[6]);
+  kvPattern = strdup(argv[7]);
 
   /* Initialize ulfius framework. */
   if (ulfius_init_instance(&inst, port, NULL, NULL) != U_OK) {
@@ -336,14 +357,18 @@ int main(int argc, char **argv) {
   }
 
   /* Endpoint list declaration for service. */
-  ulfius_add_endpoint_by_val(&inst, "GET", "/service", NULL, 0,
+  ulfius_add_endpoint_by_val(&inst, "GET", path, NULL, 0,
                              &callback_service, (void *)reply);
-  ulfius_add_endpoint_by_val(&inst, "POST", "/service", NULL, 0,
+  ulfius_add_endpoint_by_val(&inst, "POST", path, NULL, 0,
                              &callback_service, (void *)reply);
-  ulfius_add_endpoint_by_val(&inst, "PUT", "/service", NULL, 0,
+  ulfius_add_endpoint_by_val(&inst, "PUT", path, NULL, 0,
                              &callback_service, (void *)reply);
-  ulfius_add_endpoint_by_val(&inst, "DELETE", "/service", NULL, 0,
+  ulfius_add_endpoint_by_val(&inst, "DELETE", path, NULL, 0,
                              &callback_service, (void *)reply);
+
+  /* /ping */
+  ulfius_add_endpoint_by_val(&inst, "GET", "/ping", NULL, 0,
+                             &callback_ping, "pong");
 
   /* setup default. */
   ulfius_set_default_endpoint(&inst, &callback_default, name);
@@ -356,7 +381,8 @@ int main(int argc, char **argv) {
   }
 
   /* register the service to the router */
-  service_register(name, rHost, rPort, "127.0.0.1", port, kvPattern, &uuidStr);
+  service_register(name, rHost, rPort, "127.0.0.1", port, path, kvPattern,
+		   &uuidStr);
   fprintf(stdout, "UUID: %s\n", uuidStr);
 
   fprintf(stdout, "Press any key to exit ... \n");

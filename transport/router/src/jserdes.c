@@ -46,7 +46,8 @@ int deserialize_post_route_request(Service **service, json_t *json) {
 
   json_t *jName=NULL, *jPatterns=NULL;
   json_t *jPattern=NULL, *jForward=NULL;
-  json_t *value, *jIP, *jPort;
+  json_t *value=NULL, *jIP=NULL, *jPort=NULL;
+  json_t *jDefaultPath=NULL;
   void *iter;
   const char *key;
   Patterns *ptr=NULL;
@@ -79,9 +80,10 @@ int deserialize_post_route_request(Service **service, json_t *json) {
     return FALSE;
   }
 
-  /* forward: ip and port */
-  jIP   = json_object_get(jForward, JSON_IP);
-  jPort = json_object_get(jForward, JSON_PORT);
+  /* forward: ip, port (both mandatory) and default_path (optional) */
+  jIP          = json_object_get(jForward, JSON_IP);
+  jPort        = json_object_get(jForward, JSON_PORT);
+  jDefaultPath = json_object_get(jForward, JSON_DEFAULT_PATH);
 
   if (jIP == NULL || jPort == NULL) {
     log_error("Missing %s or %s from recvd json request", JSON_IP, JSON_PORT);
@@ -110,6 +112,14 @@ int deserialize_post_route_request(Service **service, json_t *json) {
     goto failure;
   }
 
+  (*service)->forward->ip   = strdup(json_string_value(jIP));
+  (*service)->forward->port = json_integer_value(jPort);
+  if (jDefaultPath) {
+    (*service)->forward->defaultPath = strdup(json_string_value(jDefaultPath));
+  } else {
+    (*service)->forward->defaultPath = strdup(DEFAULT_PATTERN_PATH);
+  }
+
   ptr = (*service)->patterns;
 
   /* Patterns is an array, iterate over each element */
@@ -135,9 +145,9 @@ int deserialize_post_route_request(Service **service, json_t *json) {
 
     /* if path wasn't specified, log it as info and go with default */
     if (ptr->path == NULL) {
-      log_info("Path isn't defined for the pattern. Going default: %s",
-	       DEFAULT_PATTERN_PATH);
-      ptr->path = strdup(DEFAULT_PATTERN_PATH);
+      log_info("Path isn't defined for the pattern. Using default_path: %s",
+	       (*service)->forward->defaultPath);
+      ptr->path = strdup((*service)->forward->defaultPath);
     }
 
     if (i+1 != count) {
@@ -150,9 +160,6 @@ int deserialize_post_route_request(Service **service, json_t *json) {
 
     ptr = ptr->next;
   }
-
-  (*service)->forward->ip   = strdup(json_string_value(jIP));
-  (*service)->forward->port = json_integer_value(jPort);
 
   return TRUE;
 
@@ -302,6 +309,8 @@ int serialize_get_routes_request(json_t **json, Router *router) {
 			  json_string(service->forward->ip));
       json_object_set_new(jForward, JSON_PORT,
 			  json_integer(service->forward->port));
+      json_object_set_new(jForward, JSON_DEFAULT_PATH,
+			  json_string(service->forward->defaultPath));
     }
 
     json_array_append(jArray, jService);

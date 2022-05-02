@@ -1,10 +1,17 @@
 module github.com/ukama/ukama/services/common
 
+<<<<<<< HEAD
 go 1.18
+=======
+go 1.17
+
+replace github.com/ukama/ukama/services/common => ./
+>>>>>>> portOpenIoRBootStrapSystem
 
 require (
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -83,5 +90,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
+<<<<<<< HEAD
 
 replace github.com/ukama/ukama/services/common => ../../common
+=======
+>>>>>>> portOpenIoRBootStrapSystem

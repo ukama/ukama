@@ -55,7 +55,7 @@ func RandomCredentials() (email, password string) {
 }
 
 // CreateIdentityWithSession creates an identity and an Ory Session Token for it.
-func CreateIdentityWithSession(c *ory.APIClient, email, password string) (error) {
+func CreateIdentityWithSession(c *ory.APIClient, email, password string) error {
 	ctx := context.Background()
 
 	if email == "" && password == "" {
@@ -87,5 +87,5 @@ func CreateIdentityWithSession(c *ory.APIClient, email, password string) (error)
 		log.Fatalf("The server is expected to create sessions for new registrations.")
 	}
 
-	return  nil
+	return nil
 }

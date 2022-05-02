@@ -44,7 +44,6 @@ static req_t *init_forward_request(char *host, int port, char *method,
   ulfius_set_request_properties(req,
 				U_OPT_HTTP_VERB, method,
 				U_OPT_HTTP_URL, url,
-				U_OPT_HTTP_URL_APPEND, ep,
 				U_OPT_TIMEOUT, 20);
   return req;
 
@@ -75,13 +74,13 @@ static void add_url_parameters(req_t *req, Pattern *reqPattern) {
  *
  */
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      const req_t *request, char *ep) {
+			      const req_t *request) {
 
   req_t *fRequest=NULL;
 
   /* Initialize the forward request */
   fRequest = init_forward_request(forward->ip, forward->port,
-				  request->http_verb, ep);
+				  request->http_verb, forward->defaultPath);
   if (!fRequest) {
     log_error("Error init forward request");
     return NULL;
@@ -118,9 +117,9 @@ int valid_forward_route(char *host, int port) {
 
   if (curl) {
 
-    sprintf(url, "http://%s:%d", host, port);
+    sprintf(url, "http://%s:%d/ping", host, port);
     curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_NOBODY, 1);
+    curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 2L); /* 2 second timeout */
 
     response = curl_easy_perform(curl);
