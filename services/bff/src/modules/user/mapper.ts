@@ -44,15 +44,18 @@ class UserMapper implements IUserMapper {
         const users: GetUsersDto[] = [];
 
         res.forEach(user => {
-            const userObj = {
-                id: user.uuid,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                dataPlan: 1024,
-                dataUsage: defaultCasual.integer(1, 1024),
-            };
-            users.push(userObj);
+            if (!user.isDeactivated) {
+                const userObj = {
+                    id: user.uuid,
+                    dataPlan: "0",
+                    dataUsage: "0,",
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    isDeactivated: user.isDeactivated,
+                };
+                users.push(userObj);
+            }
         });
         return users;
     };

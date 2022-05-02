@@ -79,10 +79,13 @@ export class GetUsersDto {
     phone: string;
 
     @Field()
-    dataPlan: number;
+    dataPlan: string;
 
     @Field()
-    dataUsage: number;
+    dataUsage: string;
+
+    @Field()
+    isDeactivated: boolean;
 }
 
 @ObjectType()
@@ -145,6 +148,9 @@ export class OrgUserDto {
 
     @Field()
     uuid: string;
+
+    @Field()
+    isDeactivated: boolean;
 }
 
 @ObjectType()
@@ -236,4 +242,10 @@ export class UpdateUserServiceInput {
 
     @Field()
     status: boolean;
+}
+
+@InputType()
+export class DataUsageInputDto {
+    @Field(() => [String])
+    ids: string[];
 }

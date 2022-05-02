@@ -1,10 +1,10 @@
-import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
 import { GetUsersDto } from "../types";
 import { UserService } from "../service";
-import { Authentication } from "../../../common/Authentication";
-import { Context } from "../../../common/types";
 import { parseCookie } from "../../../common";
+import { Context } from "../../../common/types";
+import { Authentication } from "../../../common/Authentication";
+import { Resolver, Query, UseMiddleware, Ctx } from "type-graphql";
 
 @Service()
 @Resolver()
