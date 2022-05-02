@@ -13,7 +13,7 @@
 #include "router.h"
 
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      const req_t *request, char *ep);
+			      const req_t *request);
 int valid_forward_route(char *host, int port);
 
 #endif /* FORWARD_H */

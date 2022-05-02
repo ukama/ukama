@@ -1,0 +1,50 @@
+name: build-e2e-base-image
+on:  
+  push:   
+    paths:
+        - "infra/e2e-base-image/**"
+        - ".github/workflows/infra-e2e-base-image.yaml"
+
+jobs:  
+  build:
+    env: 
+      working-directory: infra/e2e-base-image
+
+    name: build and test
+    runs-on: ubuntu-latest    
+    steps:
+    - uses: actions/checkout@v2
+  
+      # init vars required for tag generation
+    - name: Init vars 
+      id: vars_step
+      run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      run: | 
+            aws ecr get-login-password --region us-east-1 | \
+            buildah login \
+              --username AWS \
+              --password-stdin \
+              003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: OCI build and push
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/e2e-base-image
+      run: |                        
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                -t $REGISTRY\:latest .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:latest 

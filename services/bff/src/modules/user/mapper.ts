@@ -10,7 +10,6 @@ import {
     OrgUserDto,
     OrgUserResponse,
     OrgUsersResponse,
-    ResidentResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 import { MetricServiceValueRes } from "../../common/types";
@@ -28,33 +27,23 @@ class UserMapper implements IUserMapper {
     dtoToDto = (res: GetUserResponseDto): GetUserDto[] => {
         return res.data;
     };
-    residentDtoToDto = (res: GetUserResponseDto): ResidentResponse => {
-        const residents: GetUserDto[] = [];
-        const activeResidents = 0;
-        const totalResidents = res.length;
-        res.data.forEach(user => {
-            residents.push(user);
-        });
-        return {
-            residents,
-            activeResidents,
-            totalResidents,
-        };
-    };
     dtoToUsersDto = (req: OrgUsersResponse): GetUsersDto[] => {
         const res = req.users;
         const users: GetUsersDto[] = [];
 
         res.forEach(user => {
-            const userObj = {
-                id: user.uuid,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                dataPlan: 1024,
-                dataUsage: defaultCasual.integer(1, 1024),
-            };
-            users.push(userObj);
+            if (!user.isDeactivated) {
+                const userObj = {
+                    id: user.uuid,
+                    dataPlan: 1024,
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone,
+                    isDeactivated: user.isDeactivated,
+                    dataUsage: defaultCasual.integer(1, 1024),
+                };
+                users.push(userObj);
+            }
         });
         return users;
     };
@@ -73,8 +62,8 @@ class UserMapper implements IUserMapper {
                     : false,
             roaming:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
-            dataPlan: 1024,
-            dataUsage: defaultCasual.integer(1, 1024),
+            dataPlan: sim.carrier?.usage?.dataAllowanceBytes || "0",
+            dataUsage: sim.carrier?.usage?.dataUsedBytes || "0",
         };
     };
     dtoToUserResDto = (req: OrgUserDto): UserResDto => {

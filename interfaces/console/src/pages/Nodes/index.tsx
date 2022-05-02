@@ -1,5 +1,6 @@
 import {
     TabPanel,
+    NodeDialog,
     NodeStatus,
     NodeRadioTab,
     LoadingWrapper,
@@ -8,11 +9,10 @@ import {
     NodeOverviewTab,
     PagePlaceholder,
     NodeResourcesTab,
+    NodeSchematicTab,
+    SoftwareUpdateModal,
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
-    SoftwareUpdateModal,
-    ActivationDialog,
-    NodeSchematicTab,
 } from "../../components";
 import {
     NodeDto,
@@ -594,7 +594,7 @@ const Nodes = () => {
                 isOpen={showNodeSoftwareUpdatInfos}
                 handleClose={handleCloseNodeInfos}
             />
-            <ActivationDialog
+            <NodeDialog
                 isOpen={isAddNode}
                 nodeData={NODE_INIT}
                 dialogTitle={"Register Node"}

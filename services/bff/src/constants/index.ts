@@ -60,6 +60,7 @@ export enum API_METHOD_TYPE {
     POST = "post",
     PUT = "put",
     DELETE = "delete",
+    PATCH = "patch",
 }
 registerEnumType(API_METHOD_TYPE, {
     name: "API_METHOD_TYPE",

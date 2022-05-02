@@ -1,9 +1,7 @@
 import { Service } from "typedi";
 import {
-    ActivateUserDto,
     ConnectedUserDto,
     DeactivateResponse,
-    ResidentsResponse,
     UserInputDto,
     GetUserDto,
     ActivateUserResponse,
@@ -18,8 +16,7 @@ import UserMapper from "./mapper";
 import { API_METHOD_TYPE } from "../../constants";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
-import { getPaginatedOutput } from "../../utils";
-import { PaginationDto, ParsedCookie } from "../../common/types";
+import { ParsedCookie } from "../../common/types";
 
 @Service()
 export class UserService implements IUserService {
@@ -41,19 +38,6 @@ export class UserService implements IUserService {
         return connectedUsers;
     };
 
-    activateUser = async (
-        req: ActivateUserDto
-    ): Promise<ActivateUserResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_ACTIVE_USER,
-            body: req,
-        });
-        if (checkError(res)) throw new Error(res.message);
-
-        return res.data;
-    };
-
     updateUser = async (
         userId: string,
         req: UserInputDto,
@@ -69,14 +53,18 @@ export class UserService implements IUserService {
 
         return UserMapper.dtoToUserResDto(res);
     };
-    deactivateUser = async (id: string): Promise<DeactivateResponse> => {
+    deactivateUser = async (
+        id: string,
+        cookie: ParsedCookie
+    ): Promise<DeactivateResponse> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_DEACTIVATE_USER,
-            body: { id },
+            type: API_METHOD_TYPE.PATCH,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${id}`,
+            headers: cookie.header,
+            body: { isDeactivated: true },
         });
-        if (checkError(res)) throw new Error(res.message);
-        return res.data;
+        if (checkError(res)) throw new Error(res.description);
+        return res;
     };
     getUser = async (
         userId: string,
@@ -90,24 +78,7 @@ export class UserService implements IUserService {
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
         return UserMapper.dtoToUserDto(res);
-    };
-    getResidents = async (req: PaginationDto): Promise<ResidentsResponse> => {
-        const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_USERS,
-            params: req,
-        });
-        if (checkError(res)) throw new Error(res.message);
-        const meta = getPaginatedOutput(req.pageNo, req.pageSize, res.length);
-        const residents = UserMapper.residentDtoToDto(res);
-        if (!residents) throw new HTTP404Error(Messages.RESIDENTS_NOT_FOUND);
-
-        return {
-            residents,
-            meta,
-        };
     };
     getUsersByOrg = async (cookie: ParsedCookie): Promise<GetUsersDto[]> => {
         const res = await catchAsyncIOMethod({
@@ -118,7 +89,6 @@ export class UserService implements IUserService {
 
         if (checkError(res)) throw new Error(res.message);
         if (!res) throw new HTTP404Error(Messages.NODES_NOT_FOUND);
-
         return UserMapper.dtoToUsersDto(res);
     };
     addUser = async (
@@ -128,7 +98,7 @@ export class UserService implements IUserService {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${cookie.orgId}/users`,
-            body: { ...req, simToken: "I_DO_NOT_NEED_A_SIM" },
+            body: { ...req },
             headers: cookie.header,
         });
         if (checkError(res)) throw new Error(res.description || res.message);

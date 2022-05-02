@@ -10,7 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/common v0.0.0-20211216092038-2f3a10c096f7
+	github.com/ukama/ukama/services/common v0.0.0-20211216092038-2f3a10c096f7
 )
 
 require (

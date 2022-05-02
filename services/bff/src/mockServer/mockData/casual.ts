@@ -2,7 +2,6 @@ import * as defaultCasual from "casual";
 import {
     ALERT_TYPE,
     ORG_NODE_STATE,
-    GET_STATUS_TYPE,
     NETWORK_STATUS,
     NODE_TYPE,
 } from "../../constants";
@@ -73,30 +72,6 @@ const node = (): NodeDto => {
         updateVersion: "12.4",
     };
 };
-
-const getUser = (): GetUserDto => {
-    return {
-        id: defaultCasual._uuid(),
-        status: defaultCasual.random_value(GET_STATUS_TYPE),
-        name: defaultCasual._name(),
-        eSimNumber: `# ${defaultCasual.integer(
-            11111,
-            99999
-        )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
-            1111111,
-            9999999
-        )}`,
-        iccid: `${defaultCasual.integer(11111, 99999)}${defaultCasual.integer(
-            11010,
-            99999
-        )}${defaultCasual.integer(11010, 99999)}`,
-        email: defaultCasual._email(),
-        phone: defaultCasual._phone(),
-        roaming: defaultCasual.random_value([true, false]),
-        dataPlan: defaultCasual.integer(3, 8),
-        dataUsage: defaultCasual.integer(1, 5),
-    };
-};
 const esim = (): EsimDto => {
     const boolean = {
         true: true,
@@ -146,12 +121,6 @@ const billHistory = (): BillHistoryDto => {
         description: `Bill for month`,
         totalUsage,
         subtotal: subtotal,
-    };
-};
-const deleteRes = (id: string): DeactivateResponse => {
-    return {
-        id: id,
-        success: true,
     };
 };
 const nodeNetwork = (): NetworkDto => {
@@ -237,11 +206,9 @@ defaultCasual.define("dataBill", dataBill);
 defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
 defaultCasual.define("esim", esim);
-defaultCasual.define("getUser", getUser);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);
-defaultCasual.define("deleteRes", deleteRes);
 defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("softwareLogs", softwareLogs);
 defaultCasual.define("nodeApps", nodeApps);
