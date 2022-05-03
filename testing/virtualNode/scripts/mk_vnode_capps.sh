@@ -5,12 +5,9 @@
 # Script to generate capps for the virtual node
 
 # Base parameters
-UKAMA_OS=`realpath ../../../nodes/ukamaOS`
+UKAMA_OS=`realpath ../../nodes/ukamaOS`
 SYS_ROOT=${UKAMA_OS}/distro/
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
-BB_ROOT=${UKAMA_OS}/distro/system/busybox
-BB_CONFIG=ukama_minimal_defconfig
-
 DEF_BUILD_DIR=./build/
 
 #Various network related parameters
@@ -35,9 +32,26 @@ build_app() {
     cd ${SRC} && ${CMD} && cd ${CWD}
 }
 
-# main
+#
+# copy all the required lib to rootfs
+#
+copy_all_libs() {
 
-mkdir -p ${BUILD_DIR}
+    BIN=$1
+	CAPP=$2
+
+	mkdir -p ${BUILD_DIR}/$2/lib
+
+    for lib in $(ldd ${BIN} | cut -d '>' -f2 | awk '{print $1}')
+    do
+        if [ -f "${lib}" ]; then
+            cp --parents "${lib}" ${BUILD_DIR}
+            cp "${lib}" ${BUILD_DIR}/$2/lib
+        fi
+    done
+}
+
+# main
 
 # Action can be 'build', 'cp' and 'mkdir'
 ACTION=$1
@@ -59,10 +73,10 @@ case "$ACTION" in
 	patchelf --set-rpath /lib $2
 	;;
     "mkdir")
-	mkdir ${BUILD_DIR}/$2
+	mkdir -p ${BUILD_DIR}/$2
 	;;
     "libs")
-	copy_all_libs $2
+	copy_all_libs $2 $3
 	;;
     "rename")
 	mv ${BUILD_DIR} $2
@@ -72,7 +86,7 @@ case "$ACTION" in
 	then
 	    rm -rf ${BUILD_DIR}
 	else
-	    rm -rf $2
+	    rm -rf ${BUILD_DIR}/$2
 	fi
 esac
 

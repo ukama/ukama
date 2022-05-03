@@ -11,16 +11,16 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/home/kashif/work/ukama/ukamaOS/distro/system/example"
+	source="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/example"
 	cmd="make"
-	bin_from="~/work/ukama/ukamaOS/distro/system/example/example.d"
+	bin_from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/example/example.d"
 	bin_to="/sbin/"
 
 [build-rootfs]
 	mkdir="/conf"
 
 [build-conf]
-        from="~/work/ukama/ukamaOS/distro/system/example/capp/conf/config.file"
+        from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/example/capp/conf/config.file"
         to="/conf/config.file"
 	
 # for [program:<exec>] in supervisor.conf

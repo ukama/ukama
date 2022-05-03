@@ -25,20 +25,19 @@ int build_capp(Config *config) {
 
 	char runMe[MAX_BUFFER] = {0};
 	BuildConfig *build;
+	CappConfig *capp;
 
-	if (config == NULL) return FALSE;
+	if (config == NULL)        return FALSE;
 	if (config->build == NULL) return FALSE;
+	if (config->capp == NULL)  return FALSE;
 
 	build = config->build;
+	capp  = config->capp;
 
-	sprintf(runMe, "%s clean", SCRIPT);
+	sprintf(runMe, "%s clean %s_%s", SCRIPT, capp->name, capp->version);
 	if (system(runMe) < 0) return FALSE;
 
-	sprintf(runMe, "%s clean %s_%s", SCRIPT, config->capp->name,
-			config->capp->version);
-	if (system(runMe) < 0) return FALSE;
-  
-	sprintf(runMe, "%s build busybox", SCRIPT);
+	sprintf(runMe, "%s mkdir %s_%s", SCRIPT, capp->name, capp->version);
 	if (system(runMe) < 0) return FALSE;
 
 	sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
@@ -50,17 +49,24 @@ int build_capp(Config *config) {
 		if (system(runMe) < 0 ) return FALSE;
 	}
 
-	sprintf(runMe, "%s cp %s %s", SCRIPT, build->binFrom, build->binTo);
+	sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name,	capp->version,
+			build->binTo);
+	if (system(runMe) < 0) return FALSE;
+	sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->binFrom,
+			capp->name, capp->version, build->binTo);
 	if (system(runMe) < 0) return FALSE;
 
-	sprintf(runMe, "%s mkdir %s", SCRIPT, build->mkdir);
+	sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name, capp->version,
+			build->mkdir);
 	if (system(runMe) < 0) return FALSE;
 
-	sprintf(runMe, "%s cp %s %s", SCRIPT, build->from, build->to);
+	sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->from, capp->name,
+			capp->version, build->to);
 	if (system(runMe) < 0) return FALSE;
 
 	if (!build->staticFlag) {
-		sprintf(runMe, "%s libs %s", SCRIPT, build->binFrom);
+	    sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,
+				capp->name, capp->version);
 		if (system(runMe) < 0) return FALSE;
 	}
 
