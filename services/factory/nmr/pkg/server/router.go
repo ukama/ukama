@@ -62,7 +62,7 @@ func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo,
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
 	node.GET("/", nil, tonic.Handler(r.GetNodeHandler, http.StatusOK))
-	node.PUT("/", nil, tonic.Handler(r.PutNodeHandler, http.StatusOK))
+	node.PUT("/", nil, tonic.Handler(r.PutNodeHandler, http.StatusCreated))
 	node.DELETE("/", nil, tonic.Handler(r.DeleteNodeHandler, http.StatusOK))
 	node.GET("/status", nil, tonic.Handler(r.GetNodeStatusHandler, http.StatusOK))
 	node.PUT("/status", nil, tonic.Handler(r.PutNodeStatusHandler, http.StatusOK))
@@ -72,7 +72,7 @@ func (r *Router) init() {
 
 	module := r.fizz.Group(ModulePath, "Module", "Module related operations")
 	module.GET("/", nil, tonic.Handler(r.GetModuleHandler, http.StatusOK))
-	module.PUT("/", nil, tonic.Handler(r.PutModuleHandler, http.StatusOK))
+	module.PUT("/", nil, tonic.Handler(r.PutModuleHandler, http.StatusCreated))
 	module.DELETE("/", nil, tonic.Handler(r.DeleteModuleHandler, http.StatusOK))
 	module.GET("/all", nil, tonic.Handler(r.GetModuleListHandler, http.StatusOK))
 	module.PUT("/assign", nil, tonic.Handler(r.PutAssignModuleToNode, http.StatusOK))
