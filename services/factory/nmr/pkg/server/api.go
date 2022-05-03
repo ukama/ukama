@@ -149,12 +149,6 @@ type RespGetModuleMfgData struct {
 	InventoryData      json.RawMessage `form:"inventoryData" json:"inventoryData,omitempty"`
 }
 
-// type ReqUpdateModuleStatusData struct {
-// 	ModuleID  string `query:"module" validate:"required"`
-// 	LookingTo string `query:"looking_for" validate:"required"`
-// 	Status    string `query:"status" validate:"required"`
-// }
-
 type ReqGetModuleMfgField struct {
 	ModuleID   string `query:"module" validate:"required"`
 	LookingFor string `query:"looking_for" validate:"eq=field_info,required"`
