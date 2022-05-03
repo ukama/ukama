@@ -11,10 +11,12 @@ import {
     OrgUserResponse,
     OrgUsersResponse,
 } from "./types";
-import { MetricServiceRes } from "../../common/types";
+import { MetricServiceValueRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
-    connectedUsersDtoToDto = (res: MetricServiceRes[]): ConnectedUserDto => {
+    connectedUsersDtoToDto = (
+        res: MetricServiceValueRes[]
+    ): ConnectedUserDto => {
         if (res.length > 0) {
             const value: any = res[0].value[1];
             return { totalUser: value };

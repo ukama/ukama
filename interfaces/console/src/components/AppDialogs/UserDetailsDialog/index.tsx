@@ -65,8 +65,8 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
-
     const statusText = status ? "ACTIVE" : "INACTIVE";
+    const statusButtonColor = status ? "error" : "primary";
     const title = type === "add" ? "Add User" : "Edit User";
     const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
     const colorActiveInactive = status ? "textDisabled" : "textSecondary";
@@ -183,7 +183,7 @@ const UserDetailsDialog = ({
                                             >
                                                 <Button
                                                     size="small"
-                                                    color="error"
+                                                    color={statusButtonColor}
                                                     variant="outlined"
                                                     onClick={() => {
                                                         if (id && iccid)
