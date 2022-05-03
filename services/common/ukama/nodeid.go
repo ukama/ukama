@@ -17,14 +17,15 @@ const (
 	OEMCODE      = "UK"
 	MFGCODE      = "SA"
 	DELIMITER    = "-"
-	HWVERSION    = "A1"
+	HWVERSION    = "M0"
+	UNITVERSION  = "V0"
 )
 
 const (
-	NODE_ID_TYPE_HOMENODE  = "HOMENODE"
-	NODE_ID_TYPE_TOWERNODE = "TOWERNODE"
-	NODE_ID_TYPE_COMPNODE  = "COMPNODE"
-	NODE_ID_TYPE_AMPNODE   = "AMPNODE"
+	NODE_ID_TYPE_HOMENODE  = "HNODE"
+	NODE_ID_TYPE_TOWERNODE = "TNODE"
+	NODE_ID_TYPE_COMPNODE  = "CNODE"
+	NODE_ID_TYPE_AMPNODE   = "ANODE"
 	NODE_ID_TYPE_UNDEFINED = "UNDEFINED"
 )
 
@@ -82,9 +83,9 @@ func getRandCode(t time.Time) string {
 func GetNodeCodeForUnits(ntype string) string {
 	var code string
 	switch ntype {
-	case NODE_ID_TYPE_HOMENODE, "HomeNode", "homenode":
+	case NODE_ID_TYPE_HOMENODE, "HomeNode", "homenode", "hnode", "HNode":
 		code = "HNODE"
-	case NODE_ID_TYPE_TOWERNODE, "TowerNode", "tnode", "TNODE", "TNode":
+	case NODE_ID_TYPE_TOWERNODE, "TowerNode", "towernode", "tnode", "TNode":
 		code = "TNODE"
 	case NODE_ID_TYPE_AMPNODE, "AmpNode", "ampnode":
 		code = "ANODE"
@@ -123,7 +124,7 @@ func NewVirtualNodeId(ntype string) NodeID {
 
 	/*2+1+6+1+5+1+2+1+4*/
 	/* UK-SA2154-HNODE-A1-XXXX*/
-	uuid := OEMCODE + DELIMITER + MFGCODE + yearcode + weekstr + DELIMITER + code + DELIMITER + HWVERSION + DELIMITER + getRandCode(t)
+	uuid := OEMCODE + DELIMITER + MFGCODE + yearcode + weekstr + DELIMITER + code + DELIMITER + UNITVERSION + DELIMITER + getRandCode(t)
 
 	log.Infof("UUID: New NodeID for %s is %s and length is %d", ntype, uuid, len(uuid))
 
