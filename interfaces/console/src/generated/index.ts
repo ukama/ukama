@@ -832,6 +832,7 @@ export type GetUsersDataUsageSSubscriptionVariables = Exact<{ [key: string]: nev
 
 
 export type GetUsersDataUsageSSubscription = { __typename?: 'Subscription', getUsersDataUsage: { __typename?: 'GetUserDto', id: string, name: string, email: string, phone: string, dataPlan: string, dataUsage: string } };
+
 export type GetNodeStatusQueryVariables = Exact<{
   data: GetNodeStatusInput;
 }>;
@@ -1751,7 +1752,6 @@ export function useGetNodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
 export type GetNodeQueryHookResult = ReturnType<typeof useGetNodeQuery>;
 export type GetNodeLazyQueryHookResult = ReturnType<typeof useGetNodeLazyQuery>;
 export type GetNodeQueryResult = Apollo.QueryResult<GetNodeQuery, GetNodeQueryVariables>;
-<<<<<<< HEAD
 export const GetUsersDataUsageDocument = gql`
     query getUsersDataUsage($data: DataUsageInputDto!) {
   getUsersDataUsage(data: $data) {
@@ -1761,45 +1761,26 @@ export const GetUsersDataUsageDocument = gql`
     phone
     dataPlan
     dataUsage
-=======
-export const GetNodeStatusDocument = gql`
-    query getNodeStatus($data: GetNodeStatusInput!) {
-  getNodeStatus(data: $data) {
-    uptime
-    status
->>>>>>> main
   }
 }
     `;
 
 /**
-<<<<<<< HEAD
  * __useGetUsersDataUsageQuery__
  *
  * To run a query within a React component, call `useGetUsersDataUsageQuery` and pass it any options that fit your needs.
  * When your component renders, `useGetUsersDataUsageQuery` returns an object from Apollo Client that contains loading, error, and data properties
-=======
- * __useGetNodeStatusQuery__
- *
- * To run a query within a React component, call `useGetNodeStatusQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNodeStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
->>>>>>> main
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
-<<<<<<< HEAD
  * const { data, loading, error } = useGetUsersDataUsageQuery({
-=======
- * const { data, loading, error } = useGetNodeStatusQuery({
->>>>>>> main
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-<<<<<<< HEAD
 export function useGetUsersDataUsageQuery(baseOptions: Apollo.QueryHookOptions<GetUsersDataUsageQuery, GetUsersDataUsageQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetUsersDataUsageQuery, GetUsersDataUsageQueryVariables>(GetUsersDataUsageDocument, options);
@@ -1845,7 +1826,31 @@ export function useGetUsersDataUsageSSubscription(baseOptions?: Apollo.Subscript
       }
 export type GetUsersDataUsageSSubscriptionHookResult = ReturnType<typeof useGetUsersDataUsageSSubscription>;
 export type GetUsersDataUsageSSubscriptionResult = Apollo.SubscriptionResult<GetUsersDataUsageSSubscription>;
-=======
+export const GetNodeStatusDocument = gql`
+    query getNodeStatus($data: GetNodeStatusInput!) {
+  getNodeStatus(data: $data) {
+    uptime
+    status
+  }
+}
+    `;
+
+/**
+ * __useGetNodeStatusQuery__
+ *
+ * To run a query within a React component, call `useGetNodeStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNodeStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetNodeStatusQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
 export function useGetNodeStatusQuery(baseOptions: Apollo.QueryHookOptions<GetNodeStatusQuery, GetNodeStatusQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
         return Apollo.useQuery<GetNodeStatusQuery, GetNodeStatusQueryVariables>(GetNodeStatusDocument, options);
@@ -1857,4 +1862,3 @@ export function useGetNodeStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
 export type GetNodeStatusQueryHookResult = ReturnType<typeof useGetNodeStatusQuery>;
 export type GetNodeStatusLazyQueryHookResult = ReturnType<typeof useGetNodeStatusLazyQuery>;
 export type GetNodeStatusQueryResult = Apollo.QueryResult<GetNodeStatusQuery, GetNodeStatusQueryVariables>;
->>>>>>> main

@@ -274,6 +274,9 @@ subscription getUsersDataUsageS {
         phone
         dataPlan
         dataUsage
+    }
+}
+
 query getNode($nodeId: String!) {
     getNode(nodeId: $nodeId) {
         nodeId
