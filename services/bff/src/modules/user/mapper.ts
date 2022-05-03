@@ -11,7 +11,6 @@ import {
     OrgUserResponse,
     OrgUsersResponse,
 } from "./types";
-import * as defaultCasual from "casual";
 import { MetricServiceValueRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
@@ -35,12 +34,12 @@ class UserMapper implements IUserMapper {
             if (!user.isDeactivated) {
                 const userObj = {
                     id: user.uuid,
-                    dataPlan: 1024,
+                    dataPlan: "",
+                    dataUsage: "",
                     name: user.name,
                     email: user.email,
                     phone: user.phone,
                     isDeactivated: user.isDeactivated,
-                    dataUsage: defaultCasual.integer(1, 1024),
                 };
                 users.push(userObj);
             }
