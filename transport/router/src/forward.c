@@ -29,13 +29,19 @@ static req_t *init_forward_request(char *host, int port, char *method,
   req_t *req = NULL;
   char url[MAX_LEN] = {0};
 
+  if (host == NULL || ep <= 0 || ep == NULL) return NULL;
+
   req = (req_t *)calloc(1, sizeof(req_t));
   if (!req) {
     log_error("Error allocating memory of size: %lu", sizeof(req_t));
     return NULL;
   }
 
-  sprintf(url, "http://%s:%d/%s", host, port, ep);
+  if (ep[0] == '/') {
+      sprintf(url, "http://%s:%d%s", host, port, ep);
+  } else  {
+    sprintf(url, "http://%s:%d/%s", host, port, ep);
+  }
 
   if (ulfius_init_request(req) != U_OK) {
     goto failure;

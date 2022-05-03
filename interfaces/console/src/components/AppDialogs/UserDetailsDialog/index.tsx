@@ -13,13 +13,14 @@ import {
     CircularProgress,
     DialogTitle,
 } from "@mui/material";
+import { ReactEventHandler } from "react";
+import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
+import LoadingWrapper from "../../LoadingWrapper";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
+import { formatBytes, formatBytesToMB } from "../../../utils";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
-import { GetUserDto } from "../../../generated";
-import LoadingWrapper from "../../LoadingWrapper";
-import { ReactEventHandler } from "react";
 
 type BasicDialogProps = {
     type: string;
@@ -106,15 +107,15 @@ const UserDetailsDialog = ({
                             </Grid>
                             <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
-                                    <Stack direction="row" spacing={1}>
+                                    <Stack direction="row">
                                         <Typography variant="body1">
-                                            {dataUsage} MB data used,
+                                            {formatBytes(parseInt(dataUsage))}{" "}
+                                            data used, from
                                         </Typography>
                                         <Typography variant="body1">
-                                            {dataPlan - dataUsage}
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            free MB left
+                                            {` ${formatBytesToMB(
+                                                parseInt(dataPlan)
+                                            )}.`}
                                         </Typography>
                                     </Stack>
                                 </Grid>
@@ -237,22 +238,26 @@ const UserDetailsDialog = ({
                                     <ContainerJustifySpaceBtw
                                         sx={{ alignItems: "center" }}
                                     >
-                                        <Typography
-                                            variant="caption"
-                                            color={colorActiveInactive}
-                                            alignSelf={"end"}
-                                        >
-                                            ROAMING
+                                        <Stack direction="row">
+                                            <Typography
+                                                variant="caption"
+                                                color={colorActiveInactive}
+                                                alignSelf={"end"}
+                                            >
+                                                ROAMING
+                                            </Typography>
                                             <Tooltip
                                                 title="Explain roaming policy for CS folks."
                                                 placement="right"
                                                 arrow
                                             >
-                                                <IconButton>
-                                                    <InfoIcon />
+                                                <IconButton sx={{ p: 0 }}>
+                                                    <InfoIcon
+                                                        sx={{ height: 18 }}
+                                                    />
                                                 </IconButton>
                                             </Tooltip>
-                                        </Typography>
+                                        </Stack>
                                         <Switch
                                             size="small"
                                             value="active"

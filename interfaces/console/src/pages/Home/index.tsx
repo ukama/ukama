@@ -1,11 +1,11 @@
 import {
     StatsCard,
+    NodeDialog,
     StatusCard,
     NodeContainer,
     NetworkStatus,
     LoadingWrapper,
     ContainerHeader,
-    ActivationDialog,
     DataTableWithOptions,
     UserActivationDialog,
     SoftwareUpdateModal,
@@ -79,6 +79,11 @@ const Home = () => {
             orgId: "",
         },
     });
+    const [deactivateUserDialog, setDeactivateUserDialog] = useState({
+        isShow: false,
+        userId: "",
+        userName: "",
+    });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
@@ -89,8 +94,6 @@ const Home = () => {
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
         temperaturetrx: null,
     });
-    const [deactivateUser, { loading: deactivateUserLoading }] =
-        useDeactivateUserMutation();
 
     const {
         data: nodeRes,
@@ -180,8 +183,31 @@ const Home = () => {
         },
     });
 
-    const { data: residentsRes, loading: residentsloading } =
-        useGetUsersByOrgQuery();
+    const {
+        data: residentsRes,
+        loading: residentsloading,
+        refetch: refetchResidents,
+    } = useGetUsersByOrgQuery();
+
+    const [deactivateUser, { loading: deactivateUserLoading }] =
+        useDeactivateUserMutation({
+            onCompleted: res => {
+                setRegisterNodeNotification({
+                    id: "userDeactivated",
+                    message: `${res.deactivateUser.name} has been deactivated successfully!`,
+                    type: "success",
+                    show: true,
+                });
+                refetchResidents();
+            },
+            onError: err =>
+                setRegisterNodeNotification({
+                    id: "userDeactivated",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                }),
+        });
 
     const {
         data: networkStatusRes,
@@ -421,15 +447,27 @@ const Home = () => {
         }
     };
 
-    const handleUserActivateClose = () => {
-        setIsUserActivateOpen(() => false);
+    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
+    const handleCloseDeactivateUser = () =>
+        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
+
+    const handleDeactivateUser = () => {
+        handleCloseDeactivateUser();
+        deactivateUser({
+            variables: {
+                id: deactivateUserDialog.userId,
+            },
+        });
     };
+
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
-            deactivateUser({
-                variables: {
-                    id,
-                },
+            setDeactivateUserDialog({
+                isShow: true,
+                userId: id,
+                userName:
+                    residentsRes?.getUsersByOrg.find(item => item.id === id)
+                        ?.name || "",
             });
         }
     };
@@ -646,17 +684,18 @@ const Home = () => {
                 take approximately [insert time here]. Continue updating
                 all?`}
             />
-            <BasicDialog
-                isClosable={false}
-                btnVariant="contained"
-                isOpen={isWelcomeDialog}
-                title={"Welcome to Ukama Console!"}
-                content={
-                    "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
-                }
-                btnLabel={"continue to console"}
-                handleClose={handleCloseWelcome}
-            />
+            {isWelcomeDialog && (
+                <BasicDialog
+                    isClosable={false}
+                    isOpen={isWelcomeDialog}
+                    title={"Welcome to Ukama Console!"}
+                    description={
+                        "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
+                    }
+                    labelSuccessBtn={"continue to console"}
+                    handleCloseAction={handleCloseWelcome}
+                />
+            )}
             {isUserActivateOpen && (
                 <UserActivationDialog
                     isOpen={isUserActivateOpen}
@@ -667,7 +706,7 @@ const Home = () => {
             )}
 
             {showNodeDialog.isShow && (
-                <ActivationDialog
+                <NodeDialog
                     action={showNodeDialog.type}
                     isOpen={showNodeDialog.isShow}
                     handleClose={handleAddNodeClose}
@@ -675,6 +714,19 @@ const Home = () => {
                     dialogTitle={showNodeDialog.title}
                     subTitle={showNodeDialog.subTitle}
                     handleNodeSubmitAction={handleNodeSubmitAction}
+                />
+            )}
+
+            {deactivateUserDialog.isShow && (
+                <BasicDialog
+                    isClosable={true}
+                    isOpen={deactivateUserDialog.isShow}
+                    title={"Deactivate User Confirmation"}
+                    description={`${deactivateUserDialog.userName} will be deactivated permanently. Other copy depends on surrounding policy.`}
+                    labelSuccessBtn={"continue with deactivation"}
+                    labelNegativeBtn={"cancel"}
+                    handleCloseAction={handleCloseDeactivateUser}
+                    handleSuccessAction={handleDeactivateUser}
                 />
             )}
         </Box>

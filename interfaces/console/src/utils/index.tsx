@@ -284,12 +284,30 @@ const getMetricObjectByKey = (key: string) => {
     return { name: getTitleByKey(key), data: [] };
 };
 
+const formatBytes = (bytes = 0): string => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const dm = 3;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ` ${sizes[i]}`;
+};
+
+const formatBytesToMB = (bytes = 0): string => {
+    if (bytes === 0) return "0 MB";
+    return bytes / (1024 * 1024) + " MB";
+};
+
 export {
     hexToRGB,
+    formatBytes,
     isMetricData,
     getRandomData,
     getColorByType,
     getStatusByType,
+    formatBytesToMB,
     getMetricPayload,
     getTitleFromPath,
     getMetricsInitObj,
