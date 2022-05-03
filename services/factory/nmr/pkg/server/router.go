@@ -202,7 +202,6 @@ func (r *Router) PutNodeStatusHandler(c *gin.Context, req *ReqUpdateNodeStatus) 
 		}
 	}
 
-	c.Header("Content-Type", "application/json")
 	return nil
 }
 
