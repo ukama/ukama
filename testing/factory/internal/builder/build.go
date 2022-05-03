@@ -3,7 +3,6 @@ package builder
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/ukama/ukama/testing/factory/internal"
@@ -37,7 +36,7 @@ type Build struct {
 	clientset        *kubernetes.Clientset
 	currentNamespace string
 	fd               *nmr.NMR
-	m                *msgbus.MsgClient
+	m                msgbus.Publisher
 }
 
 func NewMsgBus() *msgbus.MsgClient {
@@ -57,11 +56,11 @@ func NewBuild(d *nmr.NMR) *Build {
 	/* For test */
 	pods, err := cset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		fmt.Printf("error getting pods: %v\n", err)
-		os.Exit(1)
+		log.Errorf("error getting pods: %v\n", err)
+		return nil
 	}
 	for _, pod := range pods.Items {
-		fmt.Printf("Pod name: %s\n", pod.Name)
+		log.Tracef("Pod name: %s\n", pod.Name)
 	}
 
 	// ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
@@ -69,7 +68,11 @@ func NewBuild(d *nmr.NMR) *Build {
 	// 	log.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
 	// 	return nil
 	// }
-	msgC := NewMsgBus()
+	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.RabbitUri)
+	if err != nil {
+		log.Errorf("error getting message publisher: %s\n", err.Error())
+		return nil
+	}
 
 	return &Build{
 		clientset:        cset,
@@ -340,10 +343,14 @@ func (b *Build) WatcherForBuildJobs() error {
 				_ = b.PublishEvent(job.Name, state)
 
 			case watch.Deleted:
+				state := "StatusProductionTestFail"
 				log.Infof("Build:: Build job deleted kind %s name %s created in namespace %s Active %d Completed %d Failed %d.",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 				/* TODO:: Send Event on MessageBus */
-				state := "StatusNodeIntransit"
+				if job.Status.Succeeded > 0 {
+					state = "StatusNodeIntransit"
+					_ = b.DeleteJob(job.Name)
+				}
 				/* Updated database */
 				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {

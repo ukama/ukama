@@ -31,14 +31,18 @@ func initConfig() {
 
 // Msgbus initialization
 func initMsgBus() {
-	mockMsgClient = &msgbus.MsgClient{}
-	mockMsgClient.ConnectToBroker(internal.ServiceConfig.RabbitUri)
+	mockMsgClient, err := msgbus.NewConsumerClient(internal.ServiceConfig.RabbitUri)
+	if err != nil {
+		failOnError(err, "Could not create a consumer. Error %s"+err.Error())
+	}
 
 	// Routing key
 	routingKeys := []msgbus.RoutingKey{builder.EventVirtNodeUpdateStatus}
 
+	log.Debugf("Mock:: msgClient: %+v", mockMsgClient)
+
 	// Subscribe to exchange
-	err := mockMsgClient.Subscribe(msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, msgbus.DeviceQ.ExchangeType, routingKeys, mockHandlerName, EvtMsgHandlerCB)
+	err = mockMsgClient.Subscribe(msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, msgbus.DeviceQ.ExchangeType, routingKeys, mockHandlerName, EvtMsgHandlerCB)
 	failOnError(err, "Could not start subscribe to "+msgbus.DeviceQ.Exchange+msgbus.DeviceQ.ExchangeType)
 
 }
@@ -72,7 +76,7 @@ func EvtMsgHandlerCB(d amqp.Delivery, done chan<- bool) {
 // main
 func main() {
 	// Log level
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.TraceLevel)
 	log.Debugf("Mock::Starting mock services..!!\n")
 
 	// Read config
