@@ -3,18 +3,18 @@ package main
 import (
 	"os"
 
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/cloud/net/pkg/server"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	"github.com/ukama/ukama/services/cloud/net/pkg/server"
 
-	"github.com/ukama/ukamaX/cloud/net/pkg"
+	"github.com/ukama/ukama/services/cloud/net/pkg"
 
-	"github.com/ukama/ukamaX/cloud/net/cmd/version"
+	"github.com/ukama/ukama/services/cloud/net/cmd/version"
 
 	dnspb "github.com/coredns/coredns/pb"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/metrics"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/metrics"
 	"google.golang.org/grpc"
 )
 

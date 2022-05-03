@@ -2,13 +2,14 @@ package bootstrap
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/registry/mocks"
-	"github.com/ukama/ukamaX/common/rest"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/services/cloud/registry/mocks"
+	"github.com/ukama/ukama/services/common/rest"
 )
 
 var testDeviceGatewayHost = "127.2.0.1"

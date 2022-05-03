@@ -2,13 +2,14 @@ package db
 
 import (
 	sql2 "database/sql"
-	"github.com/ukama/ukamaX/common/sql"
-	"github.com/ukama/ukamaX/common/ukama"
+	"strings"
+
+	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"strings"
 )
 
 const MaxAttachedNodes = 2

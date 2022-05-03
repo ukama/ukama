@@ -8,11 +8,11 @@ import (
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	pbmocks "github.com/ukama/ukamaX/cloud/registry/pb/gen/mocks"
-	"github.com/ukama/ukamaX/common/msgbus"
-	"github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
-	"github.com/ukama/ukamaX/common/ukama"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pbmocks "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
+	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/protobuf/proto"
 )
 

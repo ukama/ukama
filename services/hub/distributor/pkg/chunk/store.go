@@ -14,8 +14,8 @@ import (
 	casync "github.com/folbricht/desync"
 	minio "github.com/minio/minio-go/v6"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
-	mc "github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
+	mc "github.com/ukama/ukama/services/hub/hub/pkg"
 )
 
 /* Local store path for artifact

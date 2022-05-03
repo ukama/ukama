@@ -2,19 +2,18 @@ package main
 
 import (
 	"os"
-	"ukamaX/service-boilerplate/pkg"
 
-	"github.com/ukama/ukamaX/cloud/foo/pkg"
+	"github.com/ukama/ukama/services/cloud/foo/pkg"
 
-	"github.com/ukama/ukamaX/cloud/foo/cmd/version"
+	"github.com/ukama/ukama/services/cloud/foo/cmd/version"
 
-	"github.com/ukama/ukamaX/cloud/foo/pkg/db"
+	"github.com/ukama/ukama/services/cloud/foo/pkg/db"
 
 	log "github.com/sirupsen/logrus"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
-	"github.com/ukama/ukamaX/common/sql"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc"
 )
 

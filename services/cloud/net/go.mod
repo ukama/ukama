@@ -1,4 +1,4 @@
-module github.com/ukama/ukamaX/cloud/net
+module github.com/ukama/ukama/services/cloud/net
 
 go 1.17
 
@@ -14,14 +14,14 @@ require (
 	github.com/rabbitmq/amqp091-go v1.1.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
-	github.com/ukama/ukamaX/cloud/registry v0.0.0-20220329154310-65ca6bcccafc
-	github.com/ukama/ukamaX/common v0.0.0-20220322143821-0d6da632684f
+	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220329154310-65ca6bcccafc
+	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wagslane/go-rabbitmq v0.7.0
-	go.etcd.io/etcd/client/v3 v3.5.1
-	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
-	google.golang.org/grpc v1.45.0
+	go.etcd.io/etcd/client/v3 v3.5.3
+	google.golang.org/genproto v0.0.0-20220422154200-b37d22cd5731
+	google.golang.org/grpc v1.46.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 )
 
 require (
@@ -83,15 +83,15 @@ require (
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.1 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.1 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.17.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.3 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.5.3 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
+	go.uber.org/multierr v1.8.0 // indirect
+	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20211215153901-e495a2d5b3d3 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -104,10 +104,10 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/ukama/ukamaX/common => ../../common
+replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukamaX/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
-replace github.com/ukama/ukamaX/cloud/net => ./
+replace github.com/ukama/ukama/services/cloud/net => ./
 
-replace github.com/ukama/ukamaX/cloud/net/mocks => ./mocks
+replace github.com/ukama/ukama/services/cloud/net/mocks => ./mocks

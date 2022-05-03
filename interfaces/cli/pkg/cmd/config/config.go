@@ -2,17 +2,18 @@ package config
 
 import (
 	"fmt"
+	"io"
+	"os"
+	"reflect"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukamaX/cli/pkg"
-	"io"
-	"os"
-	"reflect"
-	"strings"
+	"github.com/ukama/ukama/interfaces/cli/pkg"
 )
 
 // We have to keep all config in one struct.
@@ -104,7 +105,7 @@ func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{
 	err = validator.New().Struct(rawVal)
 	if err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		if validationErrors != nil && len(validationErrors) > 0 {
+		if len(validationErrors) > 0 {
 			fmt.Fprintf(c.stderr, "Error validating config: '%+v'\n", validationErrors)
 			os.Exit(1)
 		}

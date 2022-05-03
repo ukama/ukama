@@ -3,9 +3,9 @@ package pkg
 import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/msgbus"
+	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/msgbus"
 )
 
 const MissingRoutingKeyMessage = "missing routing key segment"

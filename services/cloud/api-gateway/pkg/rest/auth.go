@@ -6,12 +6,12 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/sirupsen/logrus"
-	urest "github.com/ukama/ukamaX/common/rest"
+	urest "github.com/ukama/ukama/services/common/rest"
 )
 
 const USER_ID_KEY = "UserId"

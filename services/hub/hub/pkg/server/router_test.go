@@ -2,16 +2,10 @@ package server
 
 import (
 	"bytes"
-	"github.com/minio/minio-go/v7"
 	"reflect"
 
-	"github.com/Masterminds/semver/v3"
-	"github.com/gin-contrib/cors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/hub/hub/mocks"
-	"github.com/ukama/ukamaX/hub/hub/pkg"
+	"github.com/minio/minio-go/v7"
+
 	"io"
 	"math/rand"
 	"net/http"
@@ -19,6 +13,14 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/gin-contrib/cors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/hub/hub/mocks"
+	"github.com/ukama/ukama/services/hub/hub/pkg"
 )
 
 var emptyChunker = &mocks.Chunker{}

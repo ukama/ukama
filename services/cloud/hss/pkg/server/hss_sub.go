@@ -1,6 +1,6 @@
 package server
 
-import pb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+import pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 
 type HssSubscriber interface {
 	ImsiAdded(org string, imsi *pb.ImsiRecord)

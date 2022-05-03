@@ -12,11 +12,11 @@ import (
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukamaX/cloud/device-feeder/pkg"
-	pbnet "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
-	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
+	pbnet "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -104,7 +104,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 	defer cancel()
 
 	logrus.Infoln("Connecting to registry ", testConf.RegistryHost)
-	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.FailNow(t, "Failed to connect to registry", err)
 		return nil, nil, nil

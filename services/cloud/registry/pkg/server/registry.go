@@ -4,20 +4,21 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"github.com/jackc/pgconn"
-	db2 "github.com/ukama/ukamaX/cloud/registry/pkg/db"
-	"github.com/ukama/ukamaX/common/grpc"
 	"time"
 
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/bootstrap"
+	"github.com/jackc/pgconn"
+	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
+	"github.com/ukama/ukama/services/common/grpc"
+
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
 	"github.com/goombaio/namegenerator"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/common/sql"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -145,13 +146,9 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	})
 
 	if err != nil {
-		var pge *pgconn.PgError
-		if errors.As(err, &pge) {
-			if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
-				return nil, status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", node.Name)
-			} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-				return nil, status.Errorf(codes.AlreadyExists, "node with node id %s already exist", node.NodeID)
-			}
+		duplErr := r.processNodeDuplErrors(err, node.Name, node.NodeID)
+		if duplErr != nil {
+			return nil, duplErr
 		}
 
 		logrus.Error("Error adding the node. " + err.Error())
@@ -161,6 +158,18 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	return &pb.AddNodeResponse{
 		Node: dbNodeToPbNode(node),
 	}, nil
+}
+
+func (r *RegistryServer) processNodeDuplErrors(err error, nodeName string, nodeId string) error {
+	var pge *pgconn.PgError
+	if errors.As(err, &pge) {
+		if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
+			return status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", nodeName)
+		} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
+			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
+		}
+	}
+	return nil
 }
 
 func toDbNodeType(nodeType string) db2.NodeType {
@@ -242,6 +251,7 @@ func (r *RegistryServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNode
 
 	err = r.nodeRepo.Update(nodeId, &dbState, nil)
 	if err != nil {
+		logrus.Error("error updating the node state, ", err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
@@ -258,6 +268,11 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 
 	err = r.nodeRepo.Update(nodeId, nil, &req.Name)
 	if err != nil {
+		duplErr := r.processNodeDuplErrors(err, req.Name, req.NodeId)
+		if duplErr != nil {
+			return nil, duplErr
+		}
+
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 

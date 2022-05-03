@@ -1,7 +1,7 @@
 package rest
 
 import (
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 )
 
 type UserRequest struct {

@@ -14,8 +14,8 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/hub/distributor/pkg"
-	"github.com/ukama/ukamaX/hub/distributor/pkg/archiver"
+	"github.com/ukama/ukama/services/hub/distributor/pkg"
+	"github.com/ukama/ukama/services/hub/distributor/pkg/archiver"
 )
 
 type tarOptions struct {

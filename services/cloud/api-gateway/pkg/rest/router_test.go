@@ -4,25 +4,26 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
-	"github.com/ukama/ukamaX/common/rest"
-	"github.com/ukama/ukamaX/common/ukama"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
+	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/common/ukama"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
+
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	hssmocks "github.com/ukama/ukamaX/cloud/hss/pb/gen/mocks"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	pbmocks "github.com/ukama/ukamaX/cloud/registry/pb/gen/mocks"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pbmocks "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
+	usrmocks "github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -271,7 +272,7 @@ func Test_HssMethods(t *testing.T) {
 	const firstName = "Joe"
 	const simToken = "0000010000000001"
 
-	m := hssmocks.UserServiceClient{}
+	m := usrmocks.UserServiceClient{}
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
 		User: client.NewTestHssFromClient(&m),
 	}, routerConfig).f.Engine()
@@ -283,11 +284,11 @@ func Test_HssMethods(t *testing.T) {
 
 	// tests go here
 	t.Run("AddUser", func(t *testing.T) {
-		m = hssmocks.UserServiceClient{}
-		m.On("Add", mock.Anything, mock.MatchedBy(func(r *hsspb.AddRequest) bool {
+		m = usrmocks.UserServiceClient{}
+		m.On("Add", mock.Anything, mock.MatchedBy(func(r *userspb.AddRequest) bool {
 			return r.User.Name == firstName && r.SimToken == simToken
-		})).Return(&hsspb.AddResponse{
-			User: &hsspb.User{
+		})).Return(&userspb.AddResponse{
+			User: &userspb.User{
 				Name: firstName,
 				Uuid: userUuid,
 			},
@@ -309,7 +310,7 @@ func Test_HssMethods(t *testing.T) {
 	})
 
 	t.Run("AddUserReturnsError", func(t *testing.T) {
-		m = hssmocks.UserServiceClient{}
+		m = usrmocks.UserServiceClient{}
 		m.On("Add", mock.Anything, mock.Anything).Return(nil, status.Error(codes.PermissionDenied, "some err"))
 
 		req, _ := http.NewRequest("POST", "/orgs/"+orgName+"/users", bytes.NewReader(body))
@@ -325,10 +326,10 @@ func Test_HssMethods(t *testing.T) {
 	})
 
 	t.Run("DeleteUser", func(t *testing.T) {
-		m = hssmocks.UserServiceClient{}
-		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *hsspb.DeleteRequest) bool {
+		m = usrmocks.UserServiceClient{}
+		m.On("Delete", mock.Anything, mock.MatchedBy(func(r *userspb.DeleteRequest) bool {
 			return r.UserId == userUuid
-		})).Return(&hsspb.DeleteResponse{}, nil)
+		})).Return(&userspb.DeleteResponse{}, nil)
 		req, _ := http.NewRequest("DELETE", "/orgs/"+orgName+"/users/"+userUuid, nil)
 		req.Header.Set("token", "bearer 123")
 		w := httptest.NewRecorder()
@@ -342,12 +343,12 @@ func Test_HssMethods(t *testing.T) {
 	})
 
 	t.Run("ListUser", func(t *testing.T) {
-		m = hssmocks.UserServiceClient{}
-		m.On("List", mock.Anything, mock.MatchedBy(func(r *hsspb.ListRequest) bool {
+		m = usrmocks.UserServiceClient{}
+		m.On("List", mock.Anything, mock.MatchedBy(func(r *userspb.ListRequest) bool {
 			return r.Org == orgName
-		})).Return(&hsspb.ListResponse{
+		})).Return(&userspb.ListResponse{
 			Org: orgName,
-			Users: []*hsspb.User{
+			Users: []*userspb.User{
 				{
 					Name: firstName,
 					Uuid: userUuid,
@@ -372,13 +373,20 @@ func Test_HssMethods(t *testing.T) {
 
 	t.Run("UpdateUser", func(t *testing.T) {
 		const changedName = "changed"
-		m = hssmocks.UserServiceClient{}
-		m.On("DeactivateUser", mock.Anything, mock.MatchedBy(func(r *hsspb.DeactivateUserRequest) bool {
+		m = usrmocks.UserServiceClient{}
+		m.On("DeactivateUser", mock.Anything, mock.MatchedBy(func(r *userspb.DeactivateUserRequest) bool {
 			return r.UserId == userUuid
-		})).Return(&hsspb.DeactivateUserResponse{}, nil)
-		m.On("Update", mock.Anything, mock.MatchedBy(func(r *hsspb.UpdateRequest) bool {
+		})).Return(&userspb.DeactivateUserResponse{}, nil)
+		m.On("Update", mock.Anything, mock.MatchedBy(func(r *userspb.UpdateRequest) bool {
 			return r.UserId == userUuid && r.User.Name == changedName
-		})).Return(&hsspb.UpdateResponse{User: &hsspb.User{
+		})).Return(&userspb.UpdateResponse{User: &userspb.User{
+			Name:          changedName,
+			IsDeactivated: true,
+		}}, nil)
+
+		m.On("Get", mock.Anything, mock.MatchedBy(func(r *userspb.GetRequest) bool {
+			return r.UserId == userUuid
+		})).Return(&userspb.GetResponse{User: &userspb.User{
 			Name:          changedName,
 			IsDeactivated: true,
 		}}, nil)

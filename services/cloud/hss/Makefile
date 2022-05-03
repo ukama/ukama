@@ -4,7 +4,7 @@ include ../../config.mk
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukamaX/service-boilerplate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/hss cmd/server/main.go	
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/services/service-boilerplate/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/hss cmd/server/main.go	
 
 test:
 	go test -v ./...
@@ -23,12 +23,9 @@ deps:
 gen:
 	protoc -I ./pb  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
                             --go-grpc_opt=require_unimplemented_servers=true \
-                            hss.proto users.proto
-	protoc -I ./pb/client  -I ../../common/pb/dep  --go_out=. --go-grpc_out=. --govalidators_out=. \
-                        --go-grpc_opt=require_unimplemented_servers=true \
-                        sim_manager.proto
+                            hss.proto
 	mockery --all --recursive --dir ./pkg
-	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
+	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm -r pb/gen

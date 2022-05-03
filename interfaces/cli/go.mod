@@ -1,8 +1,8 @@
-module github.com/ukama/ukamaX/cli
+module github.com/ukama/ukama/interfaces/cli
 
-go 1.17
+go 1.18
 
-replace github.com/ukama/ukamaX/cli => ./
+replace github.com/ukama/ukama/interfaces/cli => ./
 
 require (
 	github.com/golangci/golangci-lint v1.44.2

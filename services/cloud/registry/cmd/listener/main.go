@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ukama/ukamaX/cloud/registry/cmd/version"
+	"github.com/ukama/ukama/services/cloud/registry/cmd/version"
 
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukamaX/cloud/registry/pkg/queue"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
+	"github.com/ukama/ukama/services/cloud/registry/pkg/queue"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
 )
 
 const ServiceName = "registry-listener"

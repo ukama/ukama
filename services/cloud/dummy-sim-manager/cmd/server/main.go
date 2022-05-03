@@ -1,17 +1,18 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
 
-	"github.com/ukama/ukamaX/cloud/dummy-sim-manager/pkg"
+	"github.com/sirupsen/logrus"
 
-	"github.com/ukama/ukamaX/cloud/dummy-sim-manager/cmd/version"
+	"github.com/ukama/ukama/services/cloud/dummy-sim-manager/pkg"
 
-	"github.com/ukama/ukamaX/cloud/hss/pb/gen/simmgr"
-	ccmd "github.com/ukama/ukamaX/common/cmd"
-	"github.com/ukama/ukamaX/common/config"
-	ugrpc "github.com/ukama/ukamaX/common/grpc"
+	"github.com/ukama/ukama/services/cloud/dummy-sim-manager/cmd/version"
+
+	"github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
+	ccmd "github.com/ukama/ukama/services/common/cmd"
+	"github.com/ukama/ukama/services/common/config"
+	ugrpc "github.com/ukama/ukama/services/common/grpc"
 	"google.golang.org/grpc"
 )
 

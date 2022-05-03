@@ -6,22 +6,22 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 	"testing"
 	"time"
 
 	uuid2 "github.com/google/uuid"
-	"github.com/ukama/ukamaX/common/ukama"
+	"github.com/ukama/ukama/services/common/ukama"
 
-	"github.com/ukama/ukamaX/common/msgbus"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	commonpb "github.com/ukama/ukamaX/common/pb/gen/ukamaos/mesh"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
 	"google.golang.org/grpc"
 )
 

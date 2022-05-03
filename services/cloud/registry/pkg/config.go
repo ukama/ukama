@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/common/config"
 )
 
 type Config struct {

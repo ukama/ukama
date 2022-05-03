@@ -2,12 +2,13 @@ package pkg
 
 import (
 	"context"
-	"google.golang.org/grpc/credentials/insecure"
 	"time"
 
+	"google.golang.org/grpc/credentials/insecure"
+
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukamaX/cloud/net/pb/gen"
-	"github.com/ukama/ukamaX/common/ukama"
+	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
+	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc"
 )
 

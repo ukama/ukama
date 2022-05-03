@@ -7,23 +7,25 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	"github.com/ukama/ukamaX/common/rest"
+	"github.com/ukama/ukama/services/common/rest"
 	"github.com/wI2L/fizz/openapi"
 
 	"github.com/loopfz/gadgeto/tonic"
-	"github.com/ukama/ukamaX/cloud/api-gateway/cmd/version"
-	pb "github.com/ukama/ukamaX/cloud/registry/pb/gen"
-	"github.com/ukama/ukamaX/common/config"
+	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
+	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg"
-	"github.com/ukama/ukamaX/cloud/api-gateway/pkg/client"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
+	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/client"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	hsspb "github.com/ukama/ukamaX/cloud/hss/pb/gen"
+	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 )
 
 const ORG_URL_PARAMETER = "org"
@@ -55,7 +57,7 @@ type AuthMiddleware interface {
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
 	c.Registry = client.NewRegistry(endpoints.Registry, endpoints.TimeoutSeconds)
-	c.User = client.NewUsers(endpoints.Hss, endpoints.TimeoutSeconds)
+	c.User = client.NewUsers(endpoints.Users, endpoints.TimeoutSeconds)
 	return c
 }
 
@@ -231,13 +233,13 @@ func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*p
 	return node, err
 }
 
-func (r *Router) getUsersHandler(c *gin.Context) (*hsspb.ListResponse, error) {
+func (r *Router) getUsersHandler(c *gin.Context) (*userspb.ListResponse, error) {
 	orgName := r.getOrgNameFromRoute(c)
 	return r.clients.User.GetUsers(orgName)
 }
 
-func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddResponse, error) {
-	return r.clients.User.AddUser(req.Org, &hsspb.User{
+func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*userspb.AddResponse, error) {
+	return r.clients.User.AddUser(req.Org, &userspb.User{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -245,7 +247,7 @@ func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*hsspb.AddR
 		req.SimToken)
 }
 
-func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*hsspb.User, error) {
+func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.User, error) {
 	if req.IsDeactivated {
 		err := r.clients.User.DeactivateUser(req.UserId)
 		if err != nil {
@@ -253,7 +255,7 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*hss
 		}
 	}
 
-	resp, err := r.clients.User.UpdateUser(req.UserId, &hsspb.UserAttributes{
+	_, err := r.clients.User.UpdateUser(req.UserId, &userspb.UserAttributes{
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
@@ -263,19 +265,24 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*hss
 		return nil, err
 	}
 
-	return resp.User, nil
+	resUser, err := r.clients.User.Get(req.UserId)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get updated user")
+	}
+
+	return resUser.GetUser(), nil
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
 	return r.clients.User.Delete(req.UserId)
 }
 
-func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*hsspb.GetResponse, error) {
+func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
 	return r.clients.User.Get(req.UserId)
 }
 
-func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (*hsspb.Sim, error) {
-	return r.clients.User.SetSimStatus(&hsspb.SetSimStatusRequest{
+func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (*userspb.Sim, error) {
+	return r.clients.User.SetSimStatus(&userspb.SetSimStatusRequest{
 		Iccid:   req.Iccid,
 		Carrier: simServicesToPbService(req.Carrier),
 		Ukama:   simServicesToPbService(req.Ukama),
@@ -289,12 +296,12 @@ func boolToPbBool(data *bool) *wrapperspb.BoolValue {
 	return &wrapperspb.BoolValue{Value: *data}
 }
 
-func simServicesToPbService(data *SimServices) *hsspb.SetSimStatusRequest_SetServices {
+func simServicesToPbService(data *SimServices) *userspb.SetSimStatusRequest_SetServices {
 	if data == nil {
 		return nil
 	}
 
-	return &hsspb.SetSimStatusRequest_SetServices{
+	return &userspb.SetSimStatusRequest_SetServices{
 		Data:  boolToPbBool(data.Data),
 		Voice: boolToPbBool(data.Voice),
 		Sms:   boolToPbBool(data.Sms),
