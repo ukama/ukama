@@ -13,7 +13,7 @@ type RespGetNode struct {
 
 type ReqBuildNode struct {
 	LookingTo string `query:"looking_to" validate:"eq=create_node,required"`
-	Type      string `query:"type" validate:"eq=HNODE|eq=TNODE|ANODE,required"`
+	Type      string `query:"type" validate:"eq=HNODE|eq=TNODE|eq=ANODE|eq=hnode|eq=tnode|eq=anode,required"`
 	Count     int    `query:"count" default:1`
 }
 

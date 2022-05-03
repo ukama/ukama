@@ -25,6 +25,7 @@ type Config struct {
 	Kubeconfig        string
 	RabbitUri         string
 	RepoServerUrl     string
+	Namespace         string
 }
 
 var ServiceConfig *Config
@@ -44,7 +45,7 @@ func NewConfig() *Config {
 			},
 		},
 
-		ServiceRouter: "http://localhost:8091",
+		ServiceRouter: "http://192.168.0.14:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
 			P: []config.Route{
@@ -55,14 +56,14 @@ func NewConfig() *Config {
 					"node": "*", "looking_for": "info", "path": "/node/",
 				},
 				{
-					"node": "*", "looking_to": "update", "path": "/node/",
+					"looking_to": "create_node", "type": "*", "count": "*", "path": "/node/",
 				},
 				{
 					"node": "*", "looking_to": "delete", "path": "/node/",
 				},
 			},
 			F: config.Forward{
-				Ip:   "localhost",
+				Ip:   "192.168.0.27",
 				Port: 8085,
 				Path: "/",
 			},

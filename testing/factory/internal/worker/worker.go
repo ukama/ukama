@@ -14,16 +14,22 @@ import (
 type Worker struct {
 	b *builder.Build
 	d *nmr.NMR
+
 }
 
 func NewWorker(r *sr.ServiceRouter) *Worker {
 	fdb := nmr.NewNMR(r)
-
+	
 	return &Worker{
 		d: fdb,
 		b: builder.NewBuild(fdb),
 	}
 
+}
+
+
+func (w *Worker) WorkerInit() {
+	w.b.BuildInit()
 }
 
 /* Build Nodes */
@@ -36,11 +42,11 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 
 		var node internal.Node
 		switch ntype {
-		case ukama.NODE_ID_TYPE_HOMENODE:
+		case ukama.NODE_ID_TYPE_HOMENODE, "hnode":
 			node = NewHNode()
-		case ukama.NODE_ID_TYPE_TOWERNODE:
+		case ukama.NODE_ID_TYPE_TOWERNODE, "tnode":
 			node = NewTNode()
-		case ukama.NODE_ID_TYPE_AMPNODE:
+		case ukama.NODE_ID_TYPE_AMPNODE, "anode":
 			node = NewANode()
 		default:
 			return nodeList, fmt.Errorf("unkown node type %s", ntype)
@@ -54,14 +60,13 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 		if err != nil {
 			/* TODO: May be collect errors for all node and then send response */
 			logrus.Errorf("Failed to add node with nodeID %s. Error %s", node.NodeID, err.Error())
-			fmt.Errorf("failed to add nodeID %s. Error %s", err.Error())
-			return nodeList, err
+			return nodeList, fmt.Errorf("failed to add nodeID %s. Error %s", node.NodeID, err.Error())
+		}
 
-			/* Start bulding node */
-			err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
-			if err != nil {
-				return nodeList, err
-			}
+		/* Start bulding node */
+		err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
+		if err != nil {
+			return nodeList, err
 		}
 
 		idx++

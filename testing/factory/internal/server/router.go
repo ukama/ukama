@@ -46,6 +46,8 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter) *Router {
 
 	r.init()
 
+	r.w.WorkerInit()
+
 	return r
 }
 

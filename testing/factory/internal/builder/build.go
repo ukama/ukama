@@ -2,14 +2,18 @@ package builder
 
 import (
 	"context"
-	"io/ioutil"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/ukama/ukama/testing/factory/internal"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/ukama/ukama/testing/factory/internal/nmr"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/msgbus"
+	spec "github.com/ukama/ukama/testing/factory/specs/factory/spec"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,13 +23,13 @@ import (
 )
 
 type BuildOps interface {
-	Init(cb func(string, string) error)
+	BuildInit()
 	LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string) error
 	GetJobStatus(jobName string) int
 	DeleteJob(jobName string) error
 	ListBuildJobs()
 	ListPods()
-	WatcherForBuildJobs(cb func(string, string) error)
+	WatcherForBuildJobs() error
 	LaunchAndMonitorBuild(jobName string, nodetype string) error
 }
 
@@ -33,6 +37,13 @@ type Build struct {
 	clientset        *kubernetes.Clientset
 	currentNamespace string
 	fd               *nmr.NMR
+	m                *msgbus.MsgClient
+}
+
+func NewMsgBus() *msgbus.MsgClient {
+	msgClient := &msgbus.MsgClient{}
+	msgClient.ConnectToBroker(internal.ServiceConfig.RabbitUri)
+	return msgClient
 }
 
 func NewBuild(d *nmr.NMR) *Build {
@@ -43,16 +54,28 @@ func NewBuild(d *nmr.NMR) *Build {
 		return nil
 	}
 
-	ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	/* For test */
+	pods, err := cset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		log.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
-		return nil
+		fmt.Printf("error getting pods: %v\n", err)
+		os.Exit(1)
 	}
+	for _, pod := range pods.Items {
+		fmt.Printf("Pod name: %s\n", pod.Name)
+	}
+
+	// ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	// if err != nil {
+	// 	log.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
+	// 	return nil
+	// }
+	msgC := NewMsgBus()
 
 	return &Build{
 		clientset:        cset,
-		currentNamespace: string(ns),
+		currentNamespace: internal.ServiceConfig.Namespace,
 		fd:               d,
+		m:                msgC,
 	}
 }
 
@@ -75,8 +98,8 @@ func connectToK8s() (*kubernetes.Clientset, error) {
 }
 
 /* Starting build job watcher routine */
-func (b *Build) Init(cb func(string, string) error) {
-	go b.WatcherForBuildJobs(cb)
+func (b *Build) BuildInit() {
+	go b.WatcherForBuildJobs()
 }
 
 /* Launch Build Job in K8 cluister */
@@ -250,7 +273,7 @@ func (b *Build) DeleteJob(jobName string) error {
 }
 
 /* Watching for changes in job status */
-func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
+func (b *Build) WatcherForBuildJobs() error {
 
 	/* List Jobs*/
 	b.ListBuildJobs()
@@ -275,7 +298,7 @@ func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 			job, ok := event.Object.(*batchv1.Job)
 			if !ok {
 				log.Errorf("Build:: unexpected type")
-				return
+				return fmt.Errorf("unexpected type for job watcher")
 			}
 
 			switch event.Type {
@@ -290,7 +313,7 @@ func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 				}
 
 				/* Send Event on MessageBus */
-				_ = cb(job.Name, state)
+				_ = b.PublishEvent(job.Name, state)
 
 			case watch.Modified:
 				state := "StatusUnderAssembly"
@@ -314,7 +337,7 @@ func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 				}
 
 				/* Send Event on MessageBus */
-				_ = cb(job.Name, state)
+				_ = b.PublishEvent(job.Name, state)
 
 			case watch.Deleted:
 				log.Infof("Build:: Build job deleted kind %s name %s created in namespace %s Active %d Completed %d Failed %d.",
@@ -328,7 +351,7 @@ func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 				}
 
 				/* Send Event on MessageBus */
-				_ = cb(job.Name, state)
+				_ = b.PublishEvent(job.Name, state)
 
 			case watch.Error:
 				log.Errorf("Build:: Build job error kind %s name %s created in namespace %s Active %d Completed %d  Failed %d.",
@@ -339,4 +362,28 @@ func (b *Build) WatcherForBuildJobs(cb func(string, string) error) {
 		log.Debugf("Build:: Exiting Build job watcher routine.")
 	}
 
+}
+
+func (b *Build) PublishEvent(uuid string, state string) error {
+
+	evtMsg := &spec.EvtUpdateVirtnode{
+		Uuid:   uuid,
+		Status: state,
+	}
+
+	// Marshal
+	data, err := proto.Marshal(evtMsg)
+	if err != nil {
+		log.Errorf("Router:: fail marshal: %s", err.Error())
+		return err
+	}
+	log.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, b.m)
+
+	// Publish a message
+	err = b.m.Publish(data, DeviceQ.Queue, DeviceQ.Exchange, EventVirtNodeUpdateStatus, DeviceQ.ExchangeType)
+	if err != nil {
+		log.Errorf(err.Error())
+	}
+
+	return nil
 }

@@ -101,14 +101,14 @@ func (n *NMR) NmrAddNode(node internal.Node) error {
 	err := n.SendRestAPIReq(query, node)
 	if err != nil {
 		logrus.Errorf("Failed to add node %s to NMR database.", node.NodeID)
-		return err
+		//return err
 	}
 
 	for idx, module := range node.Modules {
 		err := n.NmrAddModule(module)
 		if err != nil {
 			logrus.Errorf("Failed to add module %d  with id %s to NMR database.", idx, module.ModuleID)
-			return err
+			//return err
 		}
 		logrus.Infof("Module %d with ID %s added to NMR database", idx, node.Modules[idx].ModuleID)
 
@@ -116,7 +116,7 @@ func (n *NMR) NmrAddNode(node internal.Node) error {
 		err = n.NmrAssignModule(string(node.NodeID), string(node.Modules[idx].ModuleID))
 		if err != nil {
 			logrus.Errorf("Failed to add module %d  with id %s to NMR database.", idx, module.ModuleID)
-			return err
+			//return err
 		}
 		logrus.Infof("Module %d with ID %s added to NMR database", idx, node.Modules[idx].ModuleID)
 	}
