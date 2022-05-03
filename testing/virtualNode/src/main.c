@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "supervisor.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -190,6 +191,13 @@ int main (int argc, char *argv[]) {
 		}
 	  }
 	  ptr = ptr->next;
+	}
+
+	/* Create config file supervisor.d */
+	if (!create_supervisor_config(configs)) {
+	  log_error("Unable to create configuration file for supervisor.d");
+	  free_configs(configs);
+	  exit(1);
 	}
 
 	free_configs(configs);
