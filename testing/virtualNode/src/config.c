@@ -430,7 +430,7 @@ int read_config_files(Configs **configs, char *configDir) {
 
 		if (!read_config_file(config, configFile, &errorStr)) {
 			log_error("Parsing error for: %s", configFile);
-			free_config(config, BUILD_ONLY & CAPP_ONLY);
+			free_config(config, BUILD_ONLY | CAPP_ONLY);
 			free(config);
 			ret = FALSE;
 			configStatus = FALSE;
@@ -450,7 +450,7 @@ int read_config_files(Configs **configs, char *configDir) {
     
  failure:
 	free_configs(*configs);
-	if (config) free_config(config, BUILD_ONLY & CAPP_ONLY);
+	if (config) free_config(config, BUILD_ONLY | CAPP_ONLY);
 	closedir(dir);
 
 	return FALSE;
@@ -540,7 +540,7 @@ void free_configs(Configs *configs) {
 		if (ptr->fileName) free(ptr->fileName);
 		if (ptr->errorStr) free(ptr->errorStr);
 
-		free_config(ptr->config, BUILD_ONLY & CAPP_ONLY);
+		free_config(ptr->config, BUILD_ONLY | CAPP_ONLY);
 		free(ptr);
 
 		ptr = next;
@@ -590,6 +590,10 @@ void free_config(Config *config, int flag) {
 		if (capp->envs)    free(capp->envs);
 
 		free(config->capp);
+	}
+
+	if ((flag & CAPP_ONLY) && (flag & BUILD_ONLY)) {
+	    free(config);
 	}
 }
 
