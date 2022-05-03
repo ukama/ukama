@@ -4,7 +4,7 @@ import { parseCookie } from "../../../common";
 import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
 import { Resolver, Query, UseMiddleware, Arg, Ctx } from "type-graphql";
-import { GetNodeStatusInputDTO, GetNodeStatusRes } from "../../node/types";
+import { GetNodeStatusInput, GetNodeStatusRes } from "../../node/types";
 
 @Service()
 @Resolver()
@@ -14,7 +14,7 @@ export class GetNodeStatusResolver {
     @Query(() => GetNodeStatusRes)
     @UseMiddleware(Authentication)
     async getNodeStatus(
-        @Arg("data") data: GetNodeStatusInputDTO,
+        @Arg("data") data: GetNodeStatusInput,
         @Ctx() ctx: Context
     ): Promise<GetNodeStatusRes> {
         return this.nodeService.getNodeStatus(data, parseCookie(ctx));
