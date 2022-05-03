@@ -21,7 +21,7 @@ DEF_TARGET="local"
 TARGET=${DEF_TARGET}
 
 # default rootfs location is ${DEF_BUILD_DIR}
-BUILD_DIR=${DEF_BUILD_DIR}
+BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 
 #
 # Build the app at given src path and cmd
@@ -47,11 +47,6 @@ case "$ACTION" in
 	if [ "$2" = "app" ]
 	then
 	    build_app $3 "$4"
-	elif [ "$2" = "busybox" ]
-	then
-	     build_busybox
-	     build_rootfs_dirs
-	     setup_etc
 	fi
 	;;
     "cp")
