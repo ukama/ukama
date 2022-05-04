@@ -47,7 +47,7 @@ func (n *NMR) SendRestAPIReq(query map[string]string, url string, body ...interf
 	}
 
 	if len(body) == 0 {
-		logrus.Debugf("Psoting GET: Query +%v", query)
+		logrus.Debugf("Posting GET: Query +%v", query)
 		// resp, err = n.S.C.R().
 		// 	SetError(errStatus).
 		// 	SetQueryParams(query).
