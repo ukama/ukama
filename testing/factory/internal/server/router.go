@@ -38,30 +38,38 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
 
-	worker := worker.NewWorker(svcR)
 	r := &Router{fizz: f,
 		port: config.Server.Port,
-		w:    worker,
+	}
+
+	if svcR != nil {
+		r.w = worker.NewWorker(svcR)
+		r.w.WorkerInit()
 	}
 
 	r.init()
-
-	r.w.WorkerInit()
 
 	return r
 }
 
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
-	node.PUT("/", nil, tonic.Handler(r.PostBuildNode, http.StatusAccepted))
-	node.DELETE("/", nil, tonic.Handler(r.DeleteNode, http.StatusOK))
+	node.PUT("", nil, tonic.Handler(r.PostBuildNode, http.StatusAccepted))
 }
 
 func (r *Router) PostBuildNode(c *gin.Context, req *ReqBuildNode) (*RespBuildNode, error) {
 	logrus.Debugf("Handling buid new node request %+v.", req)
-	list, err := r.w.WorkOnBuildOrder(req.Type, req.Count)
+
+	var err error
+	list := []string{}
 	resp := &RespBuildNode{
 		NodeIDList: list,
+	}
+	if r.w == nil {
+		err = fmt.Errorf("factory worker not initialized")
+	} else {
+		list, err = r.w.WorkOnBuildOrder(req.Type, req.Count)
+		resp.NodeIDList = list
 	}
 
 	if err != nil {
@@ -72,10 +80,4 @@ func (r *Router) PostBuildNode(c *gin.Context, req *ReqBuildNode) (*RespBuildNod
 	}
 
 	return resp, nil
-}
-
-func (r *Router) DeleteNode(c *gin.Context, req *ReqDeleteNode) error {
-	logrus.Debugf("Handling delete node %+v.", req)
-
-	return nil
 }
