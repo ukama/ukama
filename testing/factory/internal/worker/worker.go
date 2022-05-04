@@ -63,7 +63,7 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 		}
 
 		/* Start bulding node */
-		//err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
+		err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
 		if err != nil {
 			return nodeList, err
 		}
