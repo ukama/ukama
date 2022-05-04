@@ -14,19 +14,17 @@ import (
 type Worker struct {
 	b *builder.Build
 	d *nmr.NMR
-
 }
 
 func NewWorker(r *sr.ServiceRouter) *Worker {
 	fdb := nmr.NewNMR(r)
-	
+
 	return &Worker{
 		d: fdb,
 		b: builder.NewBuild(fdb),
 	}
 
 }
-
 
 func (w *Worker) WorkerInit() {
 	w.b.BuildInit()
@@ -56,6 +54,7 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 		nodeList = append(nodeList, strId)
 
 		/* Update the NMR DB */
+		logrus.Debugf("Node %s is %+v", node.NodeID, node)
 		err := w.d.NmrAddNode(node)
 		if err != nil {
 			/* TODO: May be collect errors for all node and then send response */
@@ -64,7 +63,7 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 		}
 
 		/* Start bulding node */
-		err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
+		//err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
 		if err != nil {
 			return nodeList, err
 		}

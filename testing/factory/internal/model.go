@@ -20,7 +20,7 @@ type Module struct {
 }
 
 type Node struct {
-	NodeID        ukama.NodeID `json:-`
+	NodeID        ukama.NodeID `json:"-"`
 	Type          string       `json:"type"`
 	PartNumber    string       `json:"partNumber"`
 	Skew          string       `json:"skew"`
@@ -29,7 +29,7 @@ type Node struct {
 	PSwVersion    string       `json:"mfgSwVersion"`
 	AssemblyDate  time.Time    `json:"assemblyDate"`
 	OemName       string       `json:"oemName"`
-	Modules       []Module     `json:-`
+	Modules       []Module     `json:"-"`
 	MfgTestStatus string       `json:"mfgTestStatus"`
 	Status        string       `json:"status"`
 }
