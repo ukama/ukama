@@ -152,6 +152,6 @@ func (n *NMR) NmrUpdateNodeStatus(nodeID string, status string) error {
 		return err
 	}
 
-	logrus.Info("Status updated for NodeID: %s with %s in NMR Database.", nodeID, status)
+	logrus.Infof("Status updated for NodeID: %s with %s in NMR Database.", nodeID, status)
 	return nil
 }
