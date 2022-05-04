@@ -101,3 +101,18 @@ int create_supervisor_config(Configs *configs) {
 	fclose(fp);
 	return TRUE;
 }
+
+/*
+ * purge_supervisor_config --
+ *
+ */
+void purge_supervisor_config(char *fileName) {
+
+	if (remove(fileName) == 0) {
+		log_debug("supervisor config file removed: %s", fileName);
+	} else {
+		log_error("Unable to delete supervisor config file: %s", fileName);
+	}
+
+	return;
+}

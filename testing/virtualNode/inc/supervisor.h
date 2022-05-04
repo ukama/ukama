@@ -31,5 +31,6 @@
 #define SVISOR_DEFAULT_STDOUT_MAXBYTES 0
 
 int create_supervisor_config(Configs *configs);
+void purge_supervisor_config(char *fileName);
 
 #endif /* SUPERVISOR_H */

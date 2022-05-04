@@ -196,6 +196,7 @@ int main (int argc, char *argv[]) {
 	/* Create config file supervisor.d */
 	if (!create_supervisor_config(configs)) {
 	  log_error("Unable to create configuration file for supervisor.d");
+	  purge_supervisor_config(SVISOR_FILENAME);
 	  free_configs(configs);
 	  exit(1);
 	}
