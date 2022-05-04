@@ -18,7 +18,7 @@ func NewComModule() internal.Module {
 		PSwVersion: "",
 		MfgDate:    time.Now(),
 		MfgName:    "",
-		Status:     "MfgTestStatusPending",
+		Status:     "StatusAssemblyCompleted",
 	}
 	return module
 }
@@ -34,7 +34,7 @@ func NewTRXModule() internal.Module {
 		PSwVersion: "",
 		MfgDate:    time.Now(),
 		MfgName:    "",
-		Status:     "MfgTestStatusPending",
+		Status:     "StatusAssemblyCompleted",
 	}
 	return module
 }
@@ -50,7 +50,7 @@ func NewRFModule() internal.Module {
 		PSwVersion: "",
 		MfgDate:    time.Now(),
 		MfgName:    "",
-		Status:     "MfgTestStatusPending",
+		Status:     "StatusAssemblyCompleted",
 	}
 	return module
 }
@@ -66,7 +66,7 @@ func NewCtrlModule() internal.Module {
 		PSwVersion: "",
 		MfgDate:    time.Now(),
 		MfgName:    "",
-		Status:     "MfgTestStatusPending",
+		Status:     "StatusAssemblyCompleted",
 	}
 	return module
 }
