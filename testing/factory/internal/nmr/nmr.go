@@ -24,7 +24,7 @@ func NewNMR(svcR *sr.ServiceRouter) *NMR {
 	}
 }
 
-func (n *NMR) SendRestAPIReq(query map[string]string, body ...interface{}) error {
+func (n *NMR) SendRestAPIReq(query map[string]string, url string, body ...interface{}) error {
 
 	errStatus := &ErrorMessage{}
 	var err error
@@ -32,20 +32,30 @@ func (n *NMR) SendRestAPIReq(query map[string]string, body ...interface{}) error
 
 	for _, item := range body {
 		logrus.Debugf("Posting PUT: Query %+v \n Body is %+v", query, item)
+		// resp, err = n.S.C.R().
+		// 	SetError(errStatus).
+		// 	SetQueryParams(query).
+		// 	SetHeader("Content-Type", "application/json").
+		// 	SetBody(item).
+		// 	Put(n.S.Url.String() + "/service")
 		resp, err = n.S.C.R().
 			SetError(errStatus).
 			SetQueryParams(query).
 			SetHeader("Content-Type", "application/json").
 			SetBody(item).
-			Put(n.S.Url.String() + "/service")
+			Put(url)
 	}
 
 	if len(body) == 0 {
 		logrus.Debugf("Psoting GET: Query +%v", query)
+		// resp, err = n.S.C.R().
+		// 	SetError(errStatus).
+		// 	SetQueryParams(query).
+		// 	Put(n.S.Url.String() + "/service")
 		resp, err = n.S.C.R().
 			SetError(errStatus).
 			SetQueryParams(query).
-			Put(n.S.Url.String() + "/service")
+			Put(url)
 
 	}
 
@@ -67,8 +77,8 @@ func (n *NMR) NmrAddModule(module internal.Module) error {
 		"module":     string(module.ModuleID),
 		"looking_to": "update_module",
 	}
-
-	err := n.SendRestAPIReq(query, module)
+	url := "http://192.168.0.14:8085/module"
+	err := n.SendRestAPIReq(query, url, module)
 	if err != nil {
 		logrus.Errorf("Failed to add module %s to NMR database.", module.ModuleID)
 		return err
@@ -83,14 +93,14 @@ func (n *NMR) NmrAssignModule(nodeID string, moduleID string) error {
 		"looking_to": "allocate",
 		"module":     moduleID,
 	}
-
-	err := n.SendRestAPIReq(query, nil)
+	url := "http://192.168.0.14:8085/module/assign"
+	err := n.SendRestAPIReq(query, url, nil)
 	if err != nil {
 		logrus.Errorf("Failed to allocate module %s to  nodeID %s status in NMR database. Error: %s", moduleID, nodeID, err.Error())
 		return err
 	}
 
-	logrus.Info("Status allocated moduleID %s for NodeID: %s in NMR Database.", moduleID, nodeID)
+	logrus.Infof("Status allocated moduleID %s for NodeID: %s in NMR Database.", moduleID, nodeID)
 	return nil
 
 }
@@ -101,7 +111,8 @@ func (n *NMR) NmrAddNode(node internal.Node) error {
 		"looking_to": "update_node",
 	}
 
-	err := n.SendRestAPIReq(query, node)
+	url := "http://192.168.0.14:8085/node"
+	err := n.SendRestAPIReq(query, url, node)
 	if err != nil {
 		logrus.Errorf("Failed to add node %s to NMR database.", node.NodeID)
 		return err
@@ -134,7 +145,8 @@ func (n *NMR) NmrUpdateNodeStatus(nodeID string, status string) error {
 		"status":     status,
 	}
 
-	err := n.SendRestAPIReq(query, nil)
+	url := "http://192.168.0.14:8085/node/status"
+	err := n.SendRestAPIReq(query, url, nil)
 	if err != nil {
 		logrus.Errorf("Failed to update nodeID %s status in NMR database. Error: %s", nodeID, err.Error())
 		return err
