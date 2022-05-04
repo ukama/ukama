@@ -387,7 +387,7 @@ func (b *Build) PublishEvent(uuid string, state string) error {
 	log.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, b.m)
 
 	// Publish a message
-	err = b.m.Publish(data, DeviceQ.Queue, DeviceQ.Exchange, EventVirtNodeUpdateStatus, DeviceQ.ExchangeType)
+	err = b.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, msgbus.EventVirtNodeUpdateStatus, msgbus.DeviceQ.ExchangeType)
 	if err != nil {
 		log.Errorf(err.Error())
 	}

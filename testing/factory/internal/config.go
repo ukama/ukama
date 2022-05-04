@@ -45,8 +45,8 @@ func NewConfig() *Config {
 			},
 		},
 
-		//ServiceRouter: "http://192.168.0.14:8091",
-		ServiceRouter: "http://localhost:8091",
+		ServiceRouter: "http://192.168.0.14:8091",
+		//ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
 			P: []config.Route{
@@ -64,8 +64,8 @@ func NewConfig() *Config {
 				},
 			},
 			F: config.Forward{
-				//Ip:   "192.168.0.27",
-				Ip:   "localhost",
+				Ip: "192.168.0.27",
+				//Ip:   "localhost",
 				Port: 8086,
 				Path: "/",
 			},
