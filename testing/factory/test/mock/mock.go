@@ -10,7 +10,6 @@ import (
 
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/testing/factory/internal"
-	"github.com/ukama/ukama/testing/factory/internal/builder"
 	spec "github.com/ukama/ukama/testing/factory/specs/factory/spec"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +36,7 @@ func initMsgBus() {
 	}
 
 	// Routing key
-	routingKeys := []msgbus.RoutingKey{builder.EventVirtNodeUpdateStatus}
+	routingKeys := []msgbus.RoutingKey{msgbus.EventVirtNodeUpdateStatus}
 
 	log.Debugf("Mock:: msgClient: %+v", mockMsgClient)
 
@@ -56,7 +55,7 @@ func EvtMsgHandlerCB(d amqp.Delivery, done chan<- bool) {
 	switch msgbus.RoutingKey(d.RoutingKey) {
 
 	// Add Device Response
-	case builder.EventVirtNodeUpdateStatus:
+	case msgbus.EventVirtNodeUpdateStatus:
 		evtMsg := &spec.EvtUpdateVirtnode{}
 
 		err := proto.Unmarshal(d.Body, evtMsg)
@@ -65,7 +64,7 @@ func EvtMsgHandlerCB(d amqp.Delivery, done chan<- bool) {
 		}
 
 		/* Processing for the event can be done here */
-		log.Debugf("Mock::Received event %s msg: %+v", builder.EventVirtNodeUpdateStatus, evtMsg)
+		log.Debugf("Mock::Received event %s msg: %+v", msgbus.EventVirtNodeUpdateStatus, evtMsg)
 
 	}
 

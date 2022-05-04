@@ -2,7 +2,6 @@ package builder
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/testing/factory/internal"
@@ -276,7 +275,7 @@ func (b *Build) DeleteJob(jobName string) error {
 }
 
 /* Watching for changes in job status */
-func (b *Build) WatcherForBuildJobs() error {
+func (b *Build) WatcherForBuildJobs() {
 
 	/* List Jobs*/
 	b.ListBuildJobs()
@@ -301,7 +300,7 @@ func (b *Build) WatcherForBuildJobs() error {
 			job, ok := event.Object.(*batchv1.Job)
 			if !ok {
 				log.Errorf("Build:: unexpected type")
-				return fmt.Errorf("unexpected type for job watcher")
+				return
 			}
 
 			switch event.Type {

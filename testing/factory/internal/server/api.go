@@ -14,11 +14,11 @@ type RespGetNode struct {
 type ReqBuildNode struct {
 	LookingTo string `query:"looking_to" validate:"eq=create_node,required"`
 	Type      string `query:"type" validate:"eq=HNODE|eq=TNODE|eq=ANODE|eq=hnode|eq=tnode|eq=anode,required"`
-	Count     int    `query:"count" default:1`
+	Count     int    `query:"count" default:"1" type:"integer"`
 }
 
 type RespBuildNode struct {
-	NodeIDList []string `json:"NodeID`
+	NodeIDList []string `json:"NodeID"`
 }
 
 type ReqDeleteNode struct {
@@ -32,5 +32,5 @@ type ReqGetNodeList struct {
 }
 
 type RespGetNodeList struct {
-	NodeList []RespGetNode `json: "nodes"`
+	NodeList []RespGetNode `json:"nodes"`
 }
