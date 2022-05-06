@@ -135,6 +135,12 @@ func (r *Router) init() {
 				info.ID = "GetMetrics"
 			}}, metricsProxy)
 
+		nodes.GET("/:node/metrics/:metric/:path", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "For request format refer to nodes/metrics/openapi.json Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
+				info.Summary = "Get metrics for a node"
+			}}, metricsProxy)
+
 		nodes.GET("/metrics", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
 				info.Description = "Get list of metrics for a node. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
