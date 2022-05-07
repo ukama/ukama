@@ -7,11 +7,11 @@ import (
 	"syscall"
 
 	"github.com/ukama/ukama/services/common/metrics"
+	"github.com/ukama/ukama/services/common/sql"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/testing/network/internal"
 	"github.com/ukama/ukama/testing/network/internal/db"
 	"github.com/ukama/ukama/testing/network/internal/server"
-	"github.com/ukama/ukamaX/common/sql"
 
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/testing/network/cmd/version"
@@ -52,8 +52,8 @@ func main() {
 
 func initDb() sql.Db {
 	logrus.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Node{}, &db.Module{})
+	d := sql.NewDb(internal.ServiceConfig.DB, internal.ServiceConfig.DebugMode)
+	err := d.Init(&db.VNode{})
 	if err != nil {
 		logrus.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -70,7 +70,7 @@ func startHTTPServer(ctx context.Context, d sql.Db) {
 
 	metrics.StartMetricsServer(&internal.ServiceConfig.Metrics)
 
-	r := server.NewRouter(internal.ServiceConfig, rs, db.NewNodeRepo(d))
+	r := server.NewRouter(internal.ServiceConfig, rs, db.NewVNodeRepo(d))
 	go r.Run(ext)
 
 	/* Register service */

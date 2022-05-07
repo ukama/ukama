@@ -8,7 +8,7 @@ import (
 type VNodeRepo interface {
 	Upsert(nodeId string, status string) error
 	PowerOn(nodeId string) error
-	PowerOff(nodeId *string) error
+	PowerOff(nodeId string) error
 	GetInfo(nodeId string) (*VNode, error)
 	List() (*[]VNode, error)
 }
@@ -17,7 +17,7 @@ type vNodeRepo struct {
 	Db sql.Db
 }
 
-func NewVnodeRepo(db sql.Db) *vNodeRepo {
+func NewVNodeRepo(db sql.Db) *vNodeRepo {
 	return &vNodeRepo{
 		Db: db,
 	}
@@ -44,13 +44,13 @@ func (r *vNodeRepo) PowerOn(nodeId string) error {
 
 /* PowerOn */
 func (r *vNodeRepo) PowerOff(nodeId string) error {
-	return r.Upsert(nodeId, VnodeOff.String())
+	return r.Upsert(nodeId, VNodeOff.String())
 }
 
 /* Get VirtNode info */
 func (r *vNodeRepo) GetInfo(nodeId string) (*VNode, error) {
-	var vNode VNode
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&VNode, "node_id = ?", nodeId)
+	vNode := VNode{}
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&vNode, "node_id = ?", nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -59,7 +59,7 @@ func (r *vNodeRepo) GetInfo(nodeId string) (*VNode, error) {
 
 /* List all Modules */
 func (r *vNodeRepo) List() (*[]VNode, error) {
-	var vNodes []VNode
+	vNodes := []VNode{}
 
 	result := r.Db.GetGormDb().Preload(clause.Associations).Find(&vNodes)
 	if result.Error != nil {
