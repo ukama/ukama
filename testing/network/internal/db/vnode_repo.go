@@ -39,12 +39,12 @@ func (r *vNodeRepo) Upsert(nodeId string, status string) error {
 
 /* PowerOn */
 func (r *vNodeRepo) PowerOn(nodeId string) error {
-	return Upsert(nodeId, db.VnodeOn.String())
+	return r.Upsert(nodeId, VNodeOn.String())
 }
 
 /* PowerOn */
 func (r *vNodeRepo) PowerOff(nodeId string) error {
-	return Upsert(nodeId, db.VnodeOff.String())
+	return r.Upsert(nodeId, VnodeOff.String())
 }
 
 /* Get VirtNode info */

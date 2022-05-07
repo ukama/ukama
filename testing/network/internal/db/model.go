@@ -15,7 +15,7 @@ const (
 
 type VNode struct {
 	gorm.Model
-	NodeID string `gorm:"unique;type:string;size:23;expression:lower(node_id);size:32;not null" json:"nodeID" `
+	NodeID string `gorm:"unique;type:string;size:23;expression:lower(node_id);size:32;not null" json:"nodeID"`
 	Status string `gorm:"size:32;not null" json:"status"`
 }
 
