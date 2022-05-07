@@ -27,6 +27,7 @@ CFLAGS+=-D_REENTRANT
 
 # Libs
 LIBS=-ltoml
+LIBS+=-ljansson
 
 # Soruce files
 CFILES   = $(wildcard ./src/*.c)

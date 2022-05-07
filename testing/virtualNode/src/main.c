@@ -19,9 +19,11 @@
 #include <unistd.h>
 #include <getopt.h>
 
+#include "node.h"
 #include "config.h"
 #include "log.h"
 #include "supervisor.h"
+#include "jserdes.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -30,6 +32,8 @@
 #define CMD_INSPECT "inspect"
 #define CMD_DELETE  "delete"
 #define CMD_VERIFY  "verify"
+
+#define ENV_VNODE_METADATA "VNODE_METADATA"
 
 enum {
 	VNODE_CMD_NONE=0,
@@ -109,7 +113,10 @@ int main (int argc, char *argv[]) {
 	int cmd=VNODE_CMD_NONE;
 	char *configDir=NULL, *registryURL=NULL;
 	char *debug=DEF_LOG_LEVEL;
+	char *envVNodeMetaData=NULL;
 	Configs *configs=NULL, *ptr=NULL;
+	Node *node=NULL;
+	json_t *jNode=NULL;
 
 	while (TRUE) {
 
@@ -170,6 +177,25 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+	envVNodeMetaData = getenv(ENV_VNODE_METADATA);
+	if (envVNodeMetaData == NULL) {
+	  log_error("Env variable: %s not set \n Exiting.", ENV_VNODE_METADATA);
+	  exit(1);
+	}
+
+	jNode = json_loads(envVNodeMetaData, JSON_DECODE_ANY, NULL);
+	if (!jNode) {
+	  log_error("Invalid JSON for in env variable: %s\n Exiting",
+				ENV_VNODE_METADATA);
+	  exit(1);
+	}
+
+	if (!deserialize_node(&node, jNode)) {
+	  log_error("Unable to deserialize env variable: %s\n Exiting.",
+				ENV_VNODE_METADATA);
+	  exit(1);
+	}
+
 	if (!read_config_files(&configs, configDir)) {
 	    log_error("Parsing error reading configs from %s \n. Exiting.",
 				  configDir);
@@ -201,6 +227,9 @@ int main (int argc, char *argv[]) {
 	  exit(1);
 	}
 
+ done:
 	free_configs(configs);
+	json_decref(jNode);
+	free_node(node);
 	exit(0);
 }
