@@ -1,0 +1,33 @@
+package server
+
+type ReqActionOnNode struct {
+	NodeID    string `query:"node" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=vnode_power_on|eq=vnode_power_off,required"`
+}
+
+type ReqPowerOnNode struct {
+	ReqActionOnNode
+}
+
+type ReqPowerOffNode struct {
+	ReqActionOnNode
+}
+
+type ReqGetNode struct {
+	NodeID     string `query:"node" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=vnode_info,required"`
+}
+
+type RespGetNode struct {
+	NodeID string `json:"node"`
+	Status string `json:"status"`
+}
+
+type ReqGetNodeList struct {
+	NodeID     string `query:"node" validate:"required"`
+	LookingFor string `query:"looking_for" validate:"eq=vnode_list,required"`
+}
+
+type RespGetNodeList struct {
+	NodeList []RespGetNode `json:"nodes"`
+}
