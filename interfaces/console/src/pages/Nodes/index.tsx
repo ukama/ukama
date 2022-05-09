@@ -92,6 +92,7 @@ const Nodes = () => {
     const [metrics, setMetrics] = useState<TMetric>(getMetricsInitObj());
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
+    const [backToPreviousNode, setBackToPreviousNode] = useState(false);
     const { data: nodeAppsRes, loading: nodeAppsLoading } =
         useGetNodeAppsQuery();
 
@@ -316,6 +317,7 @@ const Nodes = () => {
             setSelectedNode(
                 nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
             );
+        setBackToPreviousNode(true);
     };
 
     const onUpdateNodeClick = () => {
@@ -467,6 +469,7 @@ const Nodes = () => {
                                 metrics={metrics}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
+                                backToOriginalNode={backToPreviousNode}
                                 metricsLoading={metricsLoading}
                                 nodeGroupLoading={getNodeLoading}
                                 handleUpdateNode={handleUpdateNode}
