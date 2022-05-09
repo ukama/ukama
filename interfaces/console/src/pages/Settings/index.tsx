@@ -68,6 +68,7 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
                 width: "100%",
                 height: "400px",
                 overflowY: "scroll",
+                overflowX: "hidden",
             }}
             id={`currentTab-indexpanel-${index}`}
             aria-labelledby={`currentTab-index-${index}`}
@@ -140,7 +141,7 @@ const Settings = () => {
                 display: "flex",
                 overflow: "scroll",
                 flexDirection: "column",
-                p: "40px 85px 20px 85px",
+                p: { xs: 0, md: "40px 85px 20px 85px" },
                 backgroundColor: _isDarkMod ? colors.black : colors.solitude,
                 justifyContent: "space-between",
             }}
@@ -151,7 +152,7 @@ const Settings = () => {
                         <LoadingWrapper height={237} isLoading={skeltonLoading}>
                             <RoundedCard
                                 sx={{
-                                    p: 2,
+                                    p: { xs: 1, md: 2 },
                                     height: "fit-content",
                                 }}
                             >
@@ -192,8 +193,8 @@ const Settings = () => {
                         <LoadingWrapper height={364} isLoading={skeltonLoading}>
                             <Card
                                 sx={{
-                                    px: 4,
-                                    py: 3,
+                                    px: { xs: 3, md: 4 },
+                                    py: { xs: 2, md: 3 },
                                     borderRadius: "10px",
                                     boxShadow:
                                         "2px 2px 6px rgba(0, 0, 0, 0.05)",

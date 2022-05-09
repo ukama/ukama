@@ -41,7 +41,7 @@ const UserSettings = () => {
 
     return (
         <Grid container spacing={2}>
-            <Grid item container xs={12}>
+            <Grid item container xs={12} spacing={2}>
                 <Grid item xs={12} sm={4}>
                     <Typography variant="h6">My Account Details</Typography>
                 </Grid>
@@ -55,9 +55,12 @@ const UserSettings = () => {
                         UKAMA ACCOUNT SETTINGS
                     </Button>
                 </Grid>
+                <Grid item xs={12}>
+                    <LineDivider />
+                </Grid>
             </Grid>
-            <LineDivider />
-            <Grid item container xs={12}>
+
+            <Grid item container xs={12} spacing={2}>
                 <Grid item xs={12} md={4}>
                     <Typography variant="h6">Language & Region</Typography>
                 </Grid>
