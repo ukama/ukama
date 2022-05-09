@@ -74,6 +74,7 @@ const Nodes = () => {
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
+    const [hello, setHello] = useState<boolean>(false);
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         name: "",
@@ -92,7 +93,8 @@ const Nodes = () => {
     const [metrics, setMetrics] = useState<TMetric>(getMetricsInitObj());
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
         useState<boolean>(false);
-    const [backToPreviousNode, setBackToPreviousNode] = useState(false);
+    const [backToPreviousNode, setBackToPreviousNode] =
+        useState<boolean>(false);
     const { data: nodeAppsRes, loading: nodeAppsLoading } =
         useGetNodeAppsQuery();
 
@@ -313,11 +315,12 @@ const Nodes = () => {
     };
 
     const onNodeSelectedFromGroup = (id: string) => {
-        if (id)
+        if (id) {
             setSelectedNode(
                 nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
             );
-        setBackToPreviousNode(true);
+            setBackToPreviousNode(true);
+        }
     };
 
     const onUpdateNodeClick = () => {
@@ -393,6 +396,9 @@ const Nodes = () => {
 
     const handleCloseNodeInfos = () => {
         setShowNodeSoftwareUpdatInfos(false);
+    };
+    const handleBackToSingleTowerNode = () => {
+        //handle back to original towerNode
     };
 
     const handleSoftwareInfos = () => {
@@ -476,6 +482,9 @@ const Nodes = () => {
                                 nodeGroupData={getNodeData?.getNode}
                                 onNodeSelected={onNodeSelectedFromGroup}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
+                                handleBackToSingleTowerNode={
+                                    handleBackToSingleTowerNode
+                                }
                                 loading={
                                     isLoading || nodesLoading || !selectedNode
                                 }

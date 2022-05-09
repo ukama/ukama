@@ -8,11 +8,13 @@ interface INodeGroup {
     loading: boolean;
     handleNodeAction: Function;
     backToPreviousNode: boolean;
+    handleBackToSingleTowerNode: Function;
 }
 
 const NodeGroup = ({
     nodes,
-    backToPreviousNode = false,
+    backToPreviousNode,
+    handleBackToSingleTowerNode,
     loading,
     handleNodeAction,
 }: INodeGroup) => {
@@ -38,9 +40,9 @@ const NodeGroup = ({
                                     key={item.nodeId}
                                     underline="always"
                                     sx={{ textTransform: "capitalize" }}
-                                    onClick={() => {
-                                        handleNodeAction(item.nodeId);
-                                    }}
+                                    onClick={() =>
+                                        handleNodeAction(item.nodeId)
+                                    }
                                 >
                                     {item.name}
                                 </Link>
@@ -64,6 +66,7 @@ const NodeGroup = ({
                         right: 40,
                         pointer: "cursor",
                     }}
+                    onClick={() => handleBackToSingleTowerNode()}
                 >
                     <ArrowBackIcon sx={{ mr: 1 }} />
                     BACK TO ORIGINAL NODE
