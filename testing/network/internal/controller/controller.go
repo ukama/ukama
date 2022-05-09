@@ -15,3 +15,18 @@ func NewController(d db.VNodeRepo) *Controller {
 func (c *Controller) ControllerInit() {
 
 }
+
+/* Pod spec
+
+name: <node-id>
+metadata:
+	labels:
+		node: <nodeid>
+		type: <hnode|anode|tnode>
+		org: <orgname>
+		category: <vm|container>
+spec:
+	container:
+
+	volume:
+*/
