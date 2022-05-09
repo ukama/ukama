@@ -20,6 +20,7 @@ const (
 	CommandDeviceExecuteResource                 RoutingKey = "CMD.DEVICE.EXEC.RESOURCE"
 	ResponseDeviceExecuteResource                RoutingKey = "RESPONSE.DEVICE.EXEC.RESOURCE"
 	EventDeviceCreate                            RoutingKey = "EVENT.DEVICE.CREATE.*"
+	EventVirtNodeUpdateStatus                    RoutingKey = "EVENT.VIRTNODE.STATUS.*"
 )
 
 const (
