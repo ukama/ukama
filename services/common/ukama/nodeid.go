@@ -54,6 +54,14 @@ func (n NodeID) StringLowercase() string {
 	return strings.ToLower(n.String())
 }
 
+func (m ModuleID) String() string {
+	return string(m)
+}
+
+func (m ModuleID) StringLowercase() string {
+	return strings.ToLower(m.String())
+}
+
 func (n NodeID) GetNodeType() string {
 	t := n.String()[CODE_IDX : CODE_IDX+strings.IndexRune(n.String()[CODE_IDX:], '-')]
 	switch strings.ToLower(t) {
