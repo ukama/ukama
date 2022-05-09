@@ -35,5 +35,12 @@ func main() {
 func initConfig() {
 	serviceConfig = pkg.NewConfig()
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
+	// validate
+	for k, _ := range serviceConfig.NodeMetrics.RawQueries {
+		if _, ok := serviceConfig.NodeMetrics.Metrics[k]; ok {
+			panic("Duplicate metric name: " + k)
+		}
+	}
+
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }

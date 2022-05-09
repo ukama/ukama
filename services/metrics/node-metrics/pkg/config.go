@@ -16,16 +16,34 @@ type Config struct {
 }
 
 type NodeMetricsConfig struct {
-	Metrics             map[string]Metric `json:"metrics"`
+	Metrics             map[string]Metric
+	RawQueries          map[string]Query
 	MetricsServer       string
 	Timeout             time.Duration
 	DefaultRateInterval string
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":    {false, "trx_soc_cpu_usage", "", "sum"},
-	"memory": {false, "trx_memory_ddr_used", "", "sum"},
-	"users":  {false, "trx_lte_core_active_ue", "", "avg"},
+	"cpu":    {Metric: "trx_soc_cpu_usage", AggregateFunc: "sum"},
+	"memory": {Metric: "trx_memory_ddr_used", AggregateFunc: "sum"},
+	"users":  {Metric: "trx_lte_core_active_ue", AggregateFunc: "avg"},
+}
+
+var defautQuery = map[string]Query{
+	"uptime": {Query: `min(trx_generic_system_uptime_seconds{${.Filter}})  < min(ctl_generic_system_uptime_seconds{${.Filter}})`},
+}
+
+type Metrics struct {
+	conf *NodeMetricsConfig
+}
+
+type Interval struct {
+	// Unix time
+	Start int64
+	// Unix time
+	End int64
+	// Step in seconds
+	Step uint
 }
 
 func NewConfig() *Config {
