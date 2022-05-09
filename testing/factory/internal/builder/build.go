@@ -2,6 +2,8 @@ package builder
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/testing/factory/internal"
@@ -9,7 +11,7 @@ import (
 
 	"github.com/ukama/ukama/testing/factory/internal/nmr"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/msgbus"
 	spec "github.com/ukama/ukama/testing/factory/specs/factory/spec"
 	batchv1 "k8s.io/api/batch/v1"
@@ -22,13 +24,14 @@ import (
 
 type BuildOps interface {
 	BuildInit()
-	LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string) error
+
 	GetJobStatus(jobName string) int
 	DeleteJob(jobName string) error
 	ListBuildJobs()
 	ListPods()
 	WatcherForBuildJobs() error
-	LaunchAndMonitorBuild(jobName string, nodetype string) error
+	LaunchAndMonitorBuild(jobName string, node internal.Node) error
+	LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string, jNodeMetaData []byte) error
 }
 
 type Build struct {
@@ -36,6 +39,11 @@ type Build struct {
 	currentNamespace string
 	fd               *nmr.NMR
 	m                msgbus.Publisher
+}
+
+type NodeMetaData struct {
+	NodeInfo   internal.Node     `json:nodeInfo`
+	NodeConfig []internal.Module `json:nodeConfig`
 }
 
 func NewMsgBus() *msgbus.MsgClient {
@@ -48,28 +56,28 @@ func NewBuild(d *nmr.NMR) *Build {
 
 	cset, err := connectToK8s()
 	if err != nil {
-		log.Fatalf("Build:: Can't connect to Kuberneets cluster. Err: %s", err.Error())
+		logrus.Fatalf("Build:: Can't connect to Kuberneets cluster. Err: %s", err.Error())
 		return nil
 	}
 
 	/* For test */
 	pods, err := cset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		log.Errorf("error getting pods: %v\n", err)
+		logrus.Errorf("error getting pods: %v\n", err)
 		return nil
 	}
 	for _, pod := range pods.Items {
-		log.Tracef("Pod name: %s\n", pod.Name)
+		logrus.Tracef("Pod name: %s\n", pod.Name)
 	}
 
 	// ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	// if err != nil {
-	// 	log.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
+	// 	logrus.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
 	// 	return nil
 	// }
 	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.RabbitUri)
 	if err != nil {
-		log.Errorf("error getting message publisher: %s\n", err.Error())
+		logrus.Errorf("error getting message publisher: %s\n", err.Error())
 		return nil
 	}
 
@@ -86,13 +94,13 @@ func connectToK8s() (*kubernetes.Clientset, error) {
 
 	config, err := clientcmd.BuildConfigFromFlags("", internal.ServiceConfig.Kubeconfig)
 	if err != nil {
-		log.Errorf("Build:: Failed to create K8s config. Error %s", err.Error())
+		logrus.Errorf("Build:: Failed to create K8s config. Error %s", err.Error())
 		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Errorf("Build:: Failed to create K8s clientset. Error %s", err.Error())
+		logrus.Errorf("Build:: Failed to create K8s clientset. Error %s", err.Error())
 		return nil, err
 	}
 
@@ -105,7 +113,7 @@ func (b *Build) BuildInit() {
 }
 
 /* Launch Build Job in K8 cluister */
-func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string) error {
+func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string, jNodeMetaData []byte) error {
 
 	jobs := b.clientset.BatchV1().Jobs(b.currentNamespace)
 
@@ -149,6 +157,10 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, node
 									Value: *nodetype,
 								},
 								{
+									Name:  "VNODE_METADATA",
+									Value: string(jNodeMetaData),
+								},
+								{
 									Name:  "GITUSR",
 									Value: internal.ServiceConfig.GitUser,
 								},
@@ -187,11 +199,11 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, node
 	/* Create Job */
 	_, err := jobs.Create(context.TODO(), jobSpec, metav1.CreateOptions{})
 	if err != nil {
-		log.Errorf("Build:: Failed to create Build job %s. Error %s", *jobName, err.Error())
+		logrus.Errorf("Build:: Failed to create Build job %s. Error %s", *jobName, err.Error())
 		return err
 	}
 
-	log.Debugf("Build:: Created Build job %s successfully", *jobName)
+	logrus.Debugf("Build:: Created Build job %s successfully", *jobName)
 
 	return nil
 
@@ -204,7 +216,7 @@ func (b *Build) ListBuildJobs() {
 
 	jobs, _ := jobset.List(context.TODO(), metav1.ListOptions{})
 	for _, job := range jobs.Items {
-		log.Debugf("Build:: Job Name %s Job Status %v.", job.Name, job.Status)
+		logrus.Debugf("Build:: Job Name %s Job Status %v.", job.Name, job.Status)
 	}
 
 }
@@ -215,7 +227,7 @@ func (b *Build) ListPods() {
 	pods, _ := b.clientset.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
 
 	for _, pod := range pods.Items {
-		log.Debugf("Build:: Pod Name %s Pod Status %v.", pod.Name, pod.Status)
+		logrus.Debugf("Build:: Pod Name %s Pod Status %v.", pod.Name, pod.Status)
 	}
 }
 
@@ -227,14 +239,14 @@ func (b *Build) GetJobStatus(jobName string) int {
 	job, _ := jobset.Get(context.TODO(), jobName, metav1.GetOptions{})
 
 	if job.Status.Active > 0 {
-		log.Debugf("Build:: Job %s is still running", job.Name)
+		logrus.Debugf("Build:: Job %s is still running", job.Name)
 
 	} else {
 		if job.Status.Succeeded > 0 {
-			log.Infof("Build:: Job %s is completed successfully", job.Name)
+			logrus.Infof("Build:: Job %s is completed successfully", job.Name)
 			done = 1
 		} else {
-			log.Errorf("Build:: Job %s is failed", job.Name)
+			logrus.Errorf("Build:: Job %s is failed", job.Name)
 			done = -1
 		}
 	}
@@ -243,17 +255,30 @@ func (b *Build) GetJobStatus(jobName string) int {
 }
 
 /* Go routine to start build process */
-func (b *Build) LaunchAndMonitorBuild(jobName string, nodetype string) error {
+func (b *Build) LaunchAndMonitorBuild(jobName string, node internal.Node) error {
 
 	containerImage := internal.ServiceConfig.BuilderImage
 
 	entryCommand := "startup.sh"
 
-	log.Infof("Starting build process for %s with id  %s", nodetype, jobName)
+	logrus.Debugf("Starting build process for node %s with details: %+v", jobName, node)
 
-	err := b.LaunchBuildJob(&jobName, &containerImage, &entryCommand, &nodetype)
+	/* Marshal the node info json */
+	nodeMetaData := NodeMetaData{
+		NodeInfo:   node,
+		NodeConfig: node.Modules,
+	}
+
+	jNodeMetaData, err := json.Marshal(nodeMetaData)
 	if err != nil {
-		log.Errorf("Build:: BuildJob fauiled for %s. Error: %s", jobName, err.Error())
+		logrus.Errorf("Failed to add node with nodeID %s. Error %s", node.NodeID, err.Error())
+		return fmt.Errorf("failed to pass nodeID %s info to worker. Error %s", node.NodeID, err.Error())
+	}
+	logrus.Debugf("Node meta data: %+v", string(jNodeMetaData))
+
+	err = b.LaunchBuildJob(&jobName, &containerImage, &entryCommand, &node.Type, jNodeMetaData)
+	if err != nil {
+		logrus.Errorf("Build:: BuildJob fauiled for %s. Error: %s", jobName, err.Error())
 		return err
 	}
 	return err
@@ -266,11 +291,11 @@ func (b *Build) DeleteJob(jobName string) error {
 
 	err := jobset.Delete(context.TODO(), jobName, metav1.DeleteOptions{})
 	if err != nil {
-		log.Errorf("Build:: Failed to delete job %s . Error: %s.", jobName, err.Error())
+		logrus.Errorf("Build:: Failed to delete job %s . Error: %s.", jobName, err.Error())
 		return err
 	}
 
-	log.Debugf("Build:: Job %s delete requested.", jobName)
+	logrus.Debugf("Build:: Job %s delete requested.", jobName)
 	return err
 }
 
@@ -290,28 +315,28 @@ func (b *Build) WatcherForBuildJobs() {
 		/* Watch future changes to Build jobs */
 		watcher, err := b.clientset.BatchV1().Jobs(b.currentNamespace).Watch(ctx, metav1.ListOptions{TimeoutSeconds: &timeout})
 		if err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 		ch := watcher.ResultChan()
 
-		log.Debugf("Build:: Starting Build watcher routine.")
+		logrus.Debugf("Build:: Starting Build watcher routine.")
 
 		for event := range ch {
 			job, ok := event.Object.(*batchv1.Job)
 			if !ok {
-				log.Errorf("Build:: unexpected type")
+				logrus.Errorf("Build:: unexpected type")
 				return
 			}
 
 			switch event.Type {
 			case watch.Added:
 				state := "StatusPendingAssembly"
-				log.Infof("Build:: New Build job addded kind %s name %s created in namespace %s Active %d Completed %d.\n", job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded)
+				logrus.Infof("Build:: New Build job addded kind %s name %s created in namespace %s Active %d Completed %d.\n", job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded)
 
 				/* Updated database */
 				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
-					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
+					logrus.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}
 
 				/* Send Event on MessageBus */
@@ -319,7 +344,7 @@ func (b *Build) WatcherForBuildJobs() {
 
 			case watch.Modified:
 				state := "StatusUnderAssembly"
-				log.Infof("Build:: Build job modified kind %s name %s created in namespace %s Active %d Completed %d Failed %d .\n",
+				logrus.Infof("Build:: Build job modified kind %s name %s created in namespace %s Active %d Completed %d Failed %d .\n",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 
 				/* Since it single pod */
@@ -335,7 +360,7 @@ func (b *Build) WatcherForBuildJobs() {
 				/* Updated database */
 				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
-					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
+					logrus.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}
 
 				/* Send Event on MessageBus */
@@ -343,7 +368,7 @@ func (b *Build) WatcherForBuildJobs() {
 
 			case watch.Deleted:
 				state := "StatusProductionTestFail"
-				log.Infof("Build:: Build job deleted kind %s name %s created in namespace %s Active %d Completed %d Failed %d.",
+				logrus.Infof("Build:: Build job deleted kind %s name %s created in namespace %s Active %d Completed %d Failed %d.",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 				/* TODO:: Send Event on MessageBus */
 				if job.Status.Succeeded > 0 {
@@ -353,19 +378,19 @@ func (b *Build) WatcherForBuildJobs() {
 				/* Updated database */
 				err := b.fd.NmrUpdateNodeStatus(job.Name, state)
 				if err != nil {
-					log.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
+					logrus.Errorf("Build:: Error updating state of the node %s to %s.", job.Name, state)
 				}
 
 				/* Send Event on MessageBus */
 				_ = b.PublishEvent(job.Name, state)
 
 			case watch.Error:
-				log.Errorf("Build:: Build job error kind %s name %s created in namespace %s Active %d Completed %d  Failed %d.",
+				logrus.Errorf("Build:: Build job error kind %s name %s created in namespace %s Active %d Completed %d  Failed %d.",
 					job.Kind, job.Name, job.Namespace, job.Status.Active, job.Status.Succeeded, job.Status.Failed)
 			}
 		}
 
-		log.Debugf("Build:: Exiting Build job watcher routine.")
+		logrus.Debugf("Build:: Exiting Build job watcher routine.")
 	}
 
 }
@@ -380,15 +405,15 @@ func (b *Build) PublishEvent(uuid string, state string) error {
 	// Marshal
 	data, err := proto.Marshal(evtMsg)
 	if err != nil {
-		log.Errorf("Router:: fail marshal: %s", err.Error())
+		logrus.Errorf("Router:: fail marshal: %s", err.Error())
 		return err
 	}
-	log.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, b.m)
+	logrus.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, b.m)
 
 	// Publish a message
 	err = b.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, msgbus.EventVirtNodeUpdateStatus, msgbus.DeviceQ.ExchangeType)
 	if err != nil {
-		log.Errorf(err.Error())
+		logrus.Errorf(err.Error())
 	}
 
 	return nil

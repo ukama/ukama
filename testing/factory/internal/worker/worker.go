@@ -50,8 +50,8 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 			return nodeList, fmt.Errorf("unkown node type %s", ntype)
 		}
 
-		strId := string(node.NodeID)
-		nodeList = append(nodeList, strId)
+		strNodeId := string(node.NodeID)
+		nodeList = append(nodeList, strNodeId)
 
 		/* Update the NMR DB */
 		logrus.Debugf("Node %s is %+v", node.NodeID, node)
@@ -63,7 +63,7 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 		}
 
 		/* Start bulding node */
-		err = w.b.LaunchAndMonitorBuild(string(node.NodeID), node.Type)
+		err = w.b.LaunchAndMonitorBuild(strNodeId, node)
 		if err != nil {
 			return nodeList, err
 		}
