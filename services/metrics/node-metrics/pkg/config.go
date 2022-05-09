@@ -29,7 +29,7 @@ var defaultPrometheusMetric = map[string]Metric{
 	"users":  {Metric: "trx_lte_core_active_ue", AggregateFunc: "avg"},
 }
 
-var defautQuery = map[string]Query{
+var defautQueries = map[string]Query{
 	"uptime": {Query: `min(trx_generic_system_uptime_seconds{${.Filter}})  < min(ctl_generic_system_uptime_seconds{${.Filter}})`},
 }
 
@@ -57,6 +57,7 @@ func NewConfig() *Config {
 		Metrics: config.DefaultMetrics(),
 		NodeMetrics: &NodeMetricsConfig{
 			Metrics:             defaultPrometheusMetric,
+			RawQueries:          defautQueries,
 			MetricsServer:       "http://localhost:8080",
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",
