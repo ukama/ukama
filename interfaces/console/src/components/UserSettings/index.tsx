@@ -14,7 +14,7 @@ import { useRecoilValue } from "recoil";
 import { isDarkmode } from "../../recoil";
 
 const LineDivider = () => (
-    <Grid item xs={12} sx={{ marginY: "10px" }}>
+    <Grid item xs={12}>
         <Divider />
     </Grid>
 );
@@ -57,7 +57,7 @@ const UserSettings = () => {
                 </Grid>
             </Grid>
             <LineDivider />
-            <Grid item container xs={12} spacing={3}>
+            <Grid item container xs={12}>
                 <Grid item xs={12} md={4}>
                     <Typography variant="h6">Language & Region</Typography>
                 </Grid>

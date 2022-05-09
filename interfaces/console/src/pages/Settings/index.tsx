@@ -21,6 +21,7 @@ import {
     CardActions,
     CardContent,
     IconButton,
+    Box,
 } from "@mui/material";
 import {
     useRecoilState,
@@ -192,41 +193,45 @@ const Settings = () => {
                             <Card
                                 sx={{
                                     px: 4,
-                                    py: 3.5,
+                                    py: 3,
                                     borderRadius: "10px",
                                     boxShadow:
                                         "2px 2px 6px rgba(0, 0, 0, 0.05)",
                                 }}
                             >
-                                <CardContent sx={{ p: 0 }}>
-                                    <Grid container>
-                                        <Grid item xs={11}>
-                                            <TabPanel index={1} value={menuId}>
-                                                <UserSettings />
-                                            </TabPanel>
-                                            <TabPanel value={menuId} index={2}>
-                                                <NetworkSettings />
-                                            </TabPanel>
-                                            <TabPanel value={menuId} index={3}>
-                                                <AlertSettings />
-                                            </TabPanel>
-                                            <TabPanel value={menuId} index={4}>
-                                                <ConsoleSettings />
-                                            </TabPanel>
-                                        </Grid>
-                                        <Grid
-                                            item
-                                            container
-                                            xs={1}
-                                            alignItems="start"
-                                            height="fit-content"
-                                            justifyContent={"end"}
-                                        >
-                                            <IconButton onClick={handleCancel}>
-                                                <CloseIcon />
-                                            </IconButton>
-                                        </Grid>
+                                <CardContent
+                                    sx={{ p: 0, position: "relative" }}
+                                >
+                                    <Grid container xs={12}>
+                                        <TabPanel index={1} value={menuId}>
+                                            <UserSettings />
+                                        </TabPanel>
+                                        <TabPanel value={menuId} index={2}>
+                                            <NetworkSettings />
+                                        </TabPanel>
+                                        <TabPanel value={menuId} index={3}>
+                                            <AlertSettings />
+                                        </TabPanel>
+                                        <TabPanel value={menuId} index={4}>
+                                            <ConsoleSettings />
+                                        </TabPanel>
                                     </Grid>
+
+                                    <Box
+                                        component="div"
+                                        sx={{
+                                            top: 0,
+                                            right: 0,
+                                            position: "absolute",
+                                        }}
+                                    >
+                                        <IconButton
+                                            sx={{ p: 0 }}
+                                            onClick={handleCancel}
+                                        >
+                                            <CloseIcon />
+                                        </IconButton>
+                                    </Box>
                                 </CardContent>
                                 <CardActions
                                     sx={{
