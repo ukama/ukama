@@ -39,6 +39,8 @@ import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import Fab from "@mui/material/Fab";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 let abortController = new AbortController();
 const NODE_INIT = {
     type: "HOME",
@@ -74,7 +76,7 @@ const Nodes = () => {
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
-    const [hello, setHello] = useState<boolean>(false);
+    const [towerNodeGroup, setTowerNodeGroup] = useState<NodeDto>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         name: "",
@@ -312,6 +314,7 @@ const Nodes = () => {
 
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
+        setTowerNodeGroup(node);
     };
 
     const onNodeSelectedFromGroup = (id: string) => {
@@ -398,7 +401,8 @@ const Nodes = () => {
         setShowNodeSoftwareUpdatInfos(false);
     };
     const handleBackToSingleTowerNode = () => {
-        //handle back to original towerNode
+        setSelectedNode(towerNodeGroup);
+        setBackToPreviousNode(false);
     };
 
     const handleSoftwareInfos = () => {
@@ -475,16 +479,12 @@ const Nodes = () => {
                                 metrics={metrics}
                                 isUpdateAvailable={true}
                                 selectedNode={selectedNode}
-                                backToOriginalNode={backToPreviousNode}
                                 metricsLoading={metricsLoading}
                                 nodeGroupLoading={getNodeLoading}
                                 handleUpdateNode={handleUpdateNode}
                                 nodeGroupData={getNodeData?.getNode}
                                 onNodeSelected={onNodeSelectedFromGroup}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
-                                handleBackToSingleTowerNode={
-                                    handleBackToSingleTowerNode
-                                }
                                 loading={
                                     isLoading || nodesLoading || !selectedNode
                                 }
@@ -616,6 +616,23 @@ const Nodes = () => {
                     "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                 }
             />
+            {backToPreviousNode && (
+                <Fab
+                    variant="extended"
+                    color="primary"
+                    aria-label="back"
+                    sx={{
+                        position: "fixed",
+                        bottom: 10,
+                        right: 440,
+                        pointer: "cursor",
+                    }}
+                    onClick={() => handleBackToSingleTowerNode()}
+                >
+                    <ArrowBackIcon sx={{ mr: 1 }} />
+                    RETURN TO ORIGINAL NODE
+                </Fab>
+            )}
         </Box>
     );
 };

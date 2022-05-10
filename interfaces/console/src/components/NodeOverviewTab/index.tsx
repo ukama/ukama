@@ -21,8 +21,6 @@ interface INodeOverviewTab {
     selectedNode: NodeDto | undefined;
     getNodeSoftwareUpdateInfos: Function;
     nodeGroupData: NodeResponse | undefined;
-    backToOriginalNode: boolean;
-    handleBackToSingleTowerNode: Function;
 }
 
 const NodeOverviewTab = ({
@@ -31,9 +29,7 @@ const NodeOverviewTab = ({
     selectedNode,
     nodeGroupData,
     metricsLoading,
-    handleBackToSingleTowerNode,
     onNodeSelected,
-    backToOriginalNode,
     nodeGroupLoading,
     handleUpdateNode,
     isUpdateAvailable,
@@ -81,10 +77,6 @@ const NodeOverviewTab = ({
                                         nodes={nodeGroupData?.attached || []}
                                         loading={nodeGroupLoading}
                                         handleNodeAction={onNodeSelected}
-                                        backToPreviousNode={backToOriginalNode}
-                                        handleBackToSingleTowerNode={
-                                            handleBackToSingleTowerNode
-                                        }
                                     />
                                 </Grid>
                             )}
