@@ -24,10 +24,9 @@ jobs:
         go-version: 1.18
     
     - name: Test
-      run: go test ./...
+      run: go test -v ./... -coverprofile="coverage.out"
       working-directory: ${{ env.working-directory }}
     
-    - name: lint
-      uses: golangci/golangci-lint-action@v2
-      with:            
-          working-directory: ${{ env.working-directory }}
+    - name: Test
+      run: make lint
+      working-directory: ${{ env.working-directory }}
