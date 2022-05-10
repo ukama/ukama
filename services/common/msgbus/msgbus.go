@@ -17,13 +17,10 @@ import (
 const CONNECTION_NOT_INIT_ERR_MSG = "Connection is not initialized"
 
 // Defines our interface for connecting and consuming messages.
-// Depreacted: use github.com/wagslane/go-rabbitmq instead
+// Consider using github.com/wagslane/go-rabbitmq instead. It provides similar functionality.
 type IMsgBus interface {
 	ConnectToBroker(connectionString string)
 	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error
-	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
-	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
-	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
 	PublishOnQueue(body []byte, queueName string, initQueue bool) error
 	Subscribe(queueName string, exchangeName string, exchangeType string, routingKeys []RoutingKey, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
 	SubscribeToQueue(queueName string, consumerName string, handlerFunc func(amqp.Delivery, chan<- bool)) error
@@ -32,9 +29,6 @@ type IMsgBus interface {
 
 type Publisher interface {
 	Publish(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) error
-	PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse)
-	PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey))
-	PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error
 	PublishOnQueue(msg []byte, queueName string, initQueue bool) error
 	PublishOnExchange(exchange string, routingKey string, body interface{}) error
 	DeclareQueue(queueName string, durable bool) (*amqp.Queue, error)
@@ -53,6 +47,7 @@ type Consumer interface {
 }
 
 // Real implementation, encapsulates a pointer to an amqp.Connection
+// Does not reconnect if connection is lost
 type MsgClient struct {
 	conn    *amqp.Connection
 	log     *logrus.Entry
@@ -93,14 +88,13 @@ func randomString(l int) string {
 }
 
 // creates a message consumer and initializes connection
-// Depreacted: use github.com/wagslane/go-rabbitmq instead
+
 func NewConsumerClient(connectionString string) (Consumer, error) {
 	return createClient(connectionString)
 }
 
 // NewPublisherClient creates a publisher and opens connection and channel
 // Use one publisher per thread as it's common practice to use one channel per thread
-// Depreacted: use github.com/wagslane/go-rabbitmq instead
 func NewPublisherClient(connectionString string) (Publisher, error) {
 	return createClient(connectionString)
 }
@@ -453,26 +447,6 @@ func (m *MsgClient) sendNack(msg amqp.Delivery) {
 	}
 }
 
-// Publish RPC request. After sending a request meesage on topic exchange wait on the amq.rabbitmq.reply-to for response.
-func (m *MsgClient) PublishRPCRequest(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan bool, respHandleCB func(amqp.Delivery, RoutingKey)) {
-	respCh, corrId, err := m.prepareQueueForPublishing(body, queueName, exchangeName, routingKey, exchangeType)
-	if err != nil {
-		return
-	}
-
-	// Check amq.rabbitmq.reply-to queue for messages
-	for d := range respCh {
-		if corrId == d.CorrelationId {
-			m.log.Debugf("MSGBUS:: RPC response message is recieved for correlationID: %s and routing key %s ", d.CorrelationId, d.RoutingKey)
-			respHandleCB(d, routingKey)
-			break
-		}
-	}
-
-	// Send status to Cleint
-	done <- true
-}
-
 func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) (<-chan amqp.Delivery, string, error) {
 	m.log.Debugf("Publishing RPC messages Queue Name %s Exchange Name %s Routing Key %s Exchange Type %s ", queueName, exchangeName, routingKey, exchangeType)
 	ch, err := m.createChannel()
@@ -534,30 +508,6 @@ func (m *MsgClient) publishMessage(body []byte, ch *amqp.Channel, exchangeName s
 	return corrId, nil
 }
 
-// Publish RPC After sending a request meesage on topic exchange wait on the amq.rabbitmq.reply-to for response.
-func (m *MsgClient) PublishRPC(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string, done chan RPCResponse) {
-	respCh, corrId, err := m.prepareQueueForPublishing(body, queueName, exchangeName, routingKey, exchangeType)
-	if err != nil {
-		return
-	}
-
-	var rpcResp RPCResponse
-
-	// Check amq.rabbitmq.reply-to queue for messages
-	for d := range respCh {
-		if corrId == d.CorrelationId {
-			rpcResp.Status = true
-			rpcResp.Resp = &d
-			rpcResp.RoutingKey = routingKey
-			m.log.Debugf("MSGBUS:: RPC response message is recieved for correlationID: %s and routing key %s ", d.CorrelationId, d.RoutingKey)
-			break
-		}
-	}
-
-	// Send status to Cleint
-	done <- rpcResp
-}
-
 func (m *MsgClient) DeclareQueue(queueName string, durable bool) (*amqp.Queue, error) {
 	queue, err := m.channel.QueueDeclare(
 		queueName, // our queue name
@@ -603,31 +553,4 @@ func (m *MsgClient) bindQueue(ch *amqp.Channel, queueName string, routingKey Rou
 		return err
 	}
 	return nil
-}
-
-//Publish RPC response.
-func (m *MsgClient) PublishRPCResponse(body []byte, correlationId string, routingKey RoutingKey) error {
-	ch, err := m.createChannel()
-	if err != nil {
-		return err
-	}
-	defer ch.Close()
-
-	// Publishes a message onto the amq.rabbitmq.reply-to queue.
-	err = ch.Publish(
-		"",                 // exchange
-		string(routingKey), // routing key
-		false,              // mandatory
-		false,              // immediate
-		amqp.Publishing{
-			ContentType:   "text/plain",
-			CorrelationId: correlationId,
-			Body:          body, // Our JSON body as []byte
-		})
-	if err != nil {
-		m.log.Errorf("Err: %s Failed to publish message.", err)
-	} else {
-		m.log.Debugf("RPC Message response was sent with Routing Key %s and CorrelationId %s", string(routingKey), correlationId)
-	}
-	return err
 }

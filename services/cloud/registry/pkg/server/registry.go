@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"github.com/ukama/ukama/services/cloud/registry/pkg"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"time"
 
 	"github.com/jackc/pgconn"
@@ -31,9 +33,12 @@ type RegistryServer struct {
 	bootstrapClient bootstrap.Client
 	deviceGatewayIp string
 	nameGenerator   namegenerator.Generator
+	queuePub        msgbus.QPub
+	baseRoutingKey  msgbus.RoutingKeyBuilder
 }
 
-func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client, deviceGatewayIp string) *RegistryServer {
+func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client,
+	deviceGatewayIp string, publisher msgbus.QPub) *RegistryServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &RegistryServer{
@@ -42,7 +47,10 @@ func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.N
 		bootstrapClient: bootstrapClient,
 		deviceGatewayIp: deviceGatewayIp,
 		netRepo:         netRepo,
-		nameGenerator:   namegenerator.NewNameGenerator(seed)}
+		nameGenerator:   namegenerator.NewNameGenerator(seed),
+		queuePub:        publisher,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+	}
 }
 
 const defaultNetworkName = "default"
@@ -75,8 +83,12 @@ func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
+	orgResp := &pb.Organization{Name: request.Name, Owner: org.Owner.String()}
+
+	r.pubEvent(orgResp, r.baseRoutingKey.SetActionCreate().SetObject("org").MustBuild())
+
 	return &pb.AddOrgResponse{
-		Org: &pb.Organization{Name: request.Name, Owner: org.Owner.String()},
+		Org: orgResp,
 	}, nil
 }
 
@@ -198,7 +210,12 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 		return nil, status.Errorf(codes.Internal, "error deleting the node")
 	}
 
-	return &pb.DeleteNodeResponse{}, nil
+	resp := &pb.DeleteNodeResponse{
+		NodeId: req.NodeId,
+	}
+	r.pubEvent(resp, r.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild())
+
+	return resp, nil
 }
 
 func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
@@ -255,7 +272,13 @@ func (r *RegistryServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNode
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	return &pb.UpdateNodeStateResponse{}, nil
+	resp := &pb.UpdateNodeStateResponse{
+		NodeId: req.GetNodeId(),
+		State:  req.State,
+	}
+	r.pubEvent(resp, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
+	return resp, nil
 }
 
 func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
@@ -276,7 +299,15 @@ func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeReque
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	return &pb.UpdateNodeResponse{}, nil
+	resp := &pb.UpdateNodeResponse{
+		Node: &pb.Node{
+			NodeId: req.NodeId,
+			Name:   req.Name,
+		},
+	}
+	r.pubEvent(resp, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
+	return resp, nil
 }
 
 func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
@@ -323,6 +354,9 @@ func (r *RegistryServer) AttachNodes(ctx context.Context, req *pb.AttachNodesReq
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
+
+	r.pubEvent(req, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
 	return &pb.AttachNodesResponse{}, nil
 }
 
@@ -336,7 +370,19 @@ func (r *RegistryServer) DetachNodes(ctx context.Context, req *pb.DetachNodeRequ
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
+
+	r.pubEvent(req, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+
 	return &pb.DetachNodeResponse{}, nil
+}
+
+func (r *RegistryServer) pubEvent(payload any, key string) {
+	go func() {
+		err := r.queuePub.Publish(payload, key)
+		if err != nil {
+			logrus.Errorf("Failed to publish event. Error %s", err.Error())
+		}
+	}()
 }
 
 func pbNodeStateToDb(state pb.NodeState) db2.NodeState {
