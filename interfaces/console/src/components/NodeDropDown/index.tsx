@@ -26,12 +26,20 @@ const useStyles = makeStyles<Theme>(() => ({
 const getStatus = (status: Org_Node_State, time: number) => {
     switch (status) {
         case Org_Node_State.Onboarded:
-            return `is online and well for ${secToHoursNMints(
-                time,
-                " hours and "
-            )}.`;
+            return (
+                <Stack display="flex" flexDirection="row" alignItems={"center"}>
+                    <Typography variant={"h6"} mr={"6px"}>
+                        is online and well for
+                    </Typography>
+                    <Typography variant={"h6"} color="primary">
+                        {secToHoursNMints(time, " hours and ")}
+                    </Typography>
+                </Stack>
+            );
+
         case Org_Node_State.Pending:
-            return `is configuring.`;
+            return <Typography variant={"h6"}>is configuring.</Typography>;
+
         default:
             return "";
     }
@@ -101,7 +109,7 @@ const NodeDropDown = ({
                             fontWeight: 600,
                             display: "flex",
                             fontSize: "20px",
-                            marginRight: "4px",
+                            marginLeft: "4px",
                             alignItems: "center",
                             minWidth: "fit-content",
                         },
@@ -176,11 +184,7 @@ const NodeDropDown = ({
                 isLoading={nodeStatusLoading}
                 width={nodeStatusLoading ? "200px" : "fit-content"}
             >
-                {nodeStatus.status !== Org_Node_State.Undefined && (
-                    <Typography ml="8px" variant={"h6"}>
-                        {getStatus(nodeStatus.status, nodeStatus.uptime)}
-                    </Typography>
-                )}
+                {getStatus(nodeStatus.status, nodeStatus.uptime)}
             </LoadingWrapper>
         </Stack>
     );

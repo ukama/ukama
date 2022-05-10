@@ -1,0 +1,130 @@
+import {
+    Stack,
+    Button,
+    Dialog,
+    IconButton,
+    DialogTitle,
+    DialogActions,
+    DialogContent,
+} from "@mui/material";
+import ESimQR from "./ESimQR";
+import Success from "./Success";
+import { useState } from "react";
+import Userform from "./Userform";
+import ChooseSim from "./ChooseSim";
+import PhysicalSimform from "./PhysicalSimform";
+import CloseIcon from "@mui/icons-material/Close";
+
+interface IAddUser {
+    isOpen: boolean;
+    buttonLabel: string;
+    handleClose: Function;
+    handlePositiveAction: Function;
+}
+
+const getDescription = (id: number) => {
+    switch (id) {
+        case 0:
+            return "What SIM do you want to assign to this user?";
+        case 1:
+            return "Add user xyz. They will be emailed the SIM installation link/QR code shortly after.";
+        case 2:
+            return "You have successfully added [Name] as a user to your network, and an eSIM installation invitation has been sent out to them. If they would rather install now, have them scan the QR code below.";
+        case 3:
+            return "Enter security code for Physical SIM lorem ipsum. Instructions for remembering to install SIM after?";
+        case 4:
+            return "You have successfully added [Name] as a user to your network. Instructions for installing physical SIM (might need more thinking if this process is complex).";
+        default:
+            return "";
+    }
+};
+
+const getTitle = (id: number, type: string) =>
+    id === 0 || id === 1 || id === 2
+        ? `Add User${type ? ` - ${type}` : ""}`
+        : "Add User Succesful";
+
+const AddUser = ({
+    isOpen,
+    buttonLabel,
+    handleClose,
+    handlePositiveAction,
+}: IAddUser) => {
+    const [flow, setFlow] = useState(0);
+    const [simType, setSimType] = useState("");
+    const [form, setForm] = useState({
+        name: "",
+        code: "",
+        email: "",
+        iccid: "",
+        roaming: false,
+    });
+
+    const handleSimType = (type: string) => setSimType(type);
+
+    return (
+        <Dialog
+            fullWidth
+            open={isOpen}
+            maxWidth="sm"
+            onClose={() => handleClose()}
+            onBackdropClick={() => handleClose()}
+        >
+            <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+            >
+                <DialogTitle>{getTitle(flow, simType)}</DialogTitle>
+                <IconButton
+                    onClick={() => handleClose()}
+                    sx={{ position: "relative", right: 8 }}
+                >
+                    <CloseIcon />
+                </IconButton>
+            </Stack>
+            <DialogContent sx={{ overflowX: "hidden" }}>
+                {flow === 0 && (
+                    <ChooseSim
+                        description={getDescription(0)}
+                        handleSimType={handleSimType}
+                    />
+                )}
+                {flow === 1 && (
+                    <Userform
+                        formData={form}
+                        setFormData={setForm}
+                        description={getDescription(1)}
+                    />
+                )}
+                {flow === 2 && (
+                    <PhysicalSimform
+                        formData={form}
+                        setFormData={setForm}
+                        description={getDescription(3)}
+                    />
+                )}
+                {flow === 3 && <ESimQR description={getDescription(2)} />}
+                {flow === 4 && <Success description={getDescription(4)} />}
+            </DialogContent>
+            {(flow === 1 || flow === 2) && (
+                <DialogActions>
+                    <Button
+                        onClick={() => handleClose()}
+                        sx={{ mr: 2, justifyItems: "center" }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={() => handlePositiveAction()}
+                        variant="contained"
+                    >
+                        {buttonLabel}
+                    </Button>
+                </DialogActions>
+            )}
+        </Dialog>
+    );
+};
+
+export default AddUser;

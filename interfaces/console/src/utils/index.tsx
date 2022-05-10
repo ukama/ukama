@@ -16,8 +16,6 @@ const getTitleFromPath = (path: string) => {
             return "Users";
         case "/billing":
             return "Billing";
-        case "/store":
-            return "Module Store";
         default:
             return "Home";
     }
