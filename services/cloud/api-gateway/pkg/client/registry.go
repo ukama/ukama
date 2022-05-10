@@ -138,3 +138,16 @@ func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	}
 	return false, nil
 }
+
+func (r *Registry) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	res, err := r.client.DeleteNode(ctx, &pb.DeleteNodeRequest{
+		NodeId: nodeId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}

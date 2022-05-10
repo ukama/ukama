@@ -122,6 +122,7 @@ func (r *Router) init() {
 		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
 		nodes.PUT("/:node", nil, tonic.Handler(r.addOrUpdateNodeHandler, http.StatusOK))
 		nodes.GET("/:node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
+		nodes.DELETE("/:node", nil, tonic.Handler(r.deleteNodeHandler, http.StatusOK))
 
 		nodes.GET("/metrics/openapi.json", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
@@ -237,6 +238,11 @@ func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*p
 	}
 
 	return node, err
+}
+
+func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
+	return r.clients.Registry.DeleteNode(req.NodeId)
+
 }
 
 func (r *Router) getUsersHandler(c *gin.Context) (*userspb.ListResponse, error) {
