@@ -46,6 +46,7 @@ import SplitButton from "./SplitButton";
 import {
     NodeDialog,
     BasicDialog,
+    DeactivateUser,
     UserDetailsDialog,
     SoftwareUpdateModal,
     UserActivationDialog,
@@ -82,6 +83,7 @@ export {
     NetworkStatus,
     NodeContainer,
     OptionsPopover,
+    DeactivateUser,
     NodeNetworkTab,
     LoadingWrapper,
     ConsoleSettings,

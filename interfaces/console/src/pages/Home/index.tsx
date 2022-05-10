@@ -2,14 +2,15 @@ import {
     StatsCard,
     NodeDialog,
     StatusCard,
+    BasicDialog,
     NodeContainer,
     NetworkStatus,
     LoadingWrapper,
+    DeactivateUser,
     ContainerHeader,
     DataTableWithOptions,
     UserActivationDialog,
     SoftwareUpdateModal,
-    BasicDialog,
 } from "../../components";
 import {
     TIME_FILTER,
@@ -50,9 +51,9 @@ import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
+    user,
     isFirstVisit,
     isSkeltonLoading,
-    user,
     snackbarMessage,
 } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -718,12 +719,12 @@ const Home = () => {
             )}
 
             {deactivateUserDialog.isShow && (
-                <BasicDialog
+                <DeactivateUser
                     isClosable={true}
                     isOpen={deactivateUserDialog.isShow}
                     title={"Deactivate User Confirmation"}
                     description={`${deactivateUserDialog.userName} will be deactivated permanently. Other copy depends on surrounding policy.`}
-                    labelSuccessBtn={"continue with deactivation"}
+                    labelSuccessBtn={"DEACTIVATE USER"}
                     labelNegativeBtn={"cancel"}
                     handleCloseAction={handleCloseDeactivateUser}
                     handleSuccessAction={handleDeactivateUser}
