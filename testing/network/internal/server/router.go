@@ -49,7 +49,9 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 
 	if svcR != nil {
 		r.c = controller.NewController(r.repo)
-		r.c.ControllerInit()
+		if err := r.c.ControllerInit(); err != nil {
+			logrus.Errorf("Controller init failed to start watcher for virtual nodes.")
+		}
 	}
 
 	r.init()
@@ -70,7 +72,13 @@ func (r *Router) init() {
 
 func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
 	logrus.Debugf("Handling node power on %+v.", req)
-
+	err := r.c.PowerOnNode(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
 	return nil
 }
 

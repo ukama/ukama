@@ -2,13 +2,14 @@ package controller
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/testing/network/internal"
 	"github.com/ukama/ukama/testing/network/internal/db"
+	spec "github.com/ukama/ukama/testing/network/specs/controller/spec"
+	"google.golang.org/protobuf/proto"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
@@ -17,13 +18,13 @@ import (
 )
 
 type ControllerOps interface {
-	ControllerInit()
+	ControllerInit() error
 	ListNodes()
 	GetNodeStatus(nodeId string) error
-	WatcherForNodes() error
 	PowerOnNode(nodeId string) error
 	PowerOffNode(nodeId string) error
-	CreateNode(name, command string, args []string, ntype string) error
+	CreateNode(name string, image string, command []string, ntype string) error
+	WatcherForNodes(ctx context.Context, cb func(string, string) error) error
 }
 
 type Controller struct {
@@ -41,7 +42,7 @@ func NewController(d db.VNodeRepo) *Controller {
 	}
 
 	/* For test */
-	pods, err := cset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{})
+	pods, err := cset.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logrus.Errorf("error getting pods: %v\n", err)
 		return nil
@@ -87,24 +88,24 @@ func connectToK8s() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-/* Return data volume name forn Id strng */
-func getDataVolumeName(id string) string {
-	return "dv-" + id
-}
+// /* Return data volume name forn Id strng */
+// func getDataVolumeName(id string) string {
+// 	return "dv-" + id
+// }
 
 /* Return node name from ID */
 func getVirtNodeName(id string) string {
 	return "vn-" + id
 }
 
-/* Return VM name from ID */
-func getVirtNodeId(name string) string {
-	return strings.Trim(name, "vn-")
-}
+// /* Return VM name from ID */
+// func getVirtNodeId(name string) string {
+// 	return strings.Trim(name, "vn-")
+// }
 
 /* Starting build job watcher routine */
-func (c *Controller) ControllerInit() {
-	go c.WatcherForNodes()
+func (c *Controller) ControllerInit() error {
+	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
 }
 
 /* Pod spec
@@ -122,13 +123,13 @@ spec:
 	volume:
 */
 
-func (c *Controller) CreateNode(name, command string, ntype string) error {
+func (c *Controller) CreateNode(nodeId string, image string, command []string, ntype string) error {
 
 	/* Image URL */
-	imageName := fmt.Sprintf("%s:%s", internal.ServiceConfig.NodeImage, name)
+	//imageName := fmt.Sprintf("%s:%s", internal.ServiceConfig.NodeImage, name)
 
 	/* Virtual Node Name */
-	vnName := getVirtNodeName(name)
+	vnName := getVirtNodeName(nodeId)
 
 	/* Virt Nodes Instance Labels */
 	labels := map[string]string{
@@ -160,14 +161,14 @@ func (c *Controller) CreateNode(name, command string, ntype string) error {
 			RestartPolicy: v1.RestartPolicyOnFailure,
 			Containers: []v1.Container{
 				v1.Container{
-					Name:    name,
-					Image:   imageName,
-					Command: []string{command},
+					Name:    nodeId,
+					Image:   image,
+					Command: command,
 					Args:    []string{},
 					Env: []v1.EnvVar{
 						{
 							Name:  "UUID",
-							Value: name,
+							Value: nodeId,
 						},
 						{
 							Name:  "NODETYPE",
@@ -183,11 +184,11 @@ func (c *Controller) CreateNode(name, command string, ntype string) error {
 		Pods(c.ns).
 		Create(context.TODO(), podSpec, metav1.CreateOptions{})
 	if err != nil {
-		logrus.Errorf("PowerOn failure for node %s. Error: %s", name, err.Error())
+		logrus.Errorf("PowerOn failure for node %s. Error: %s", nodeId, err.Error())
 		return err
 	}
 
-	logrus.Debugf("PowerOn success for node %s", name)
+	logrus.Debugf("PowerOn success for node %s", nodeId)
 
 	return err
 
@@ -211,13 +212,14 @@ func (c *Controller) GetNodeStatus(nodeId string) int {
 }
 
 /* Go routine to start build process */
-func (c *Controller) PowerOnNode(nodeId string, nodetype string) error {
+func (c *Controller) PowerOnNode(nodeId string) error {
 
 	//containerImage := internal.ServiceConfig.BuilderImage
 
-	entryCommand := "startup.sh"
-
-	err := c.CreateNode(nodeId, entryCommand, nodetype)
+	entryCommand := []string{"sh", "-c", "echo \"Hello, Kubernetes!\" && sleep 3600"}
+	nodeType := "hnode"
+	image := "busybox:1.28"
+	err := c.CreateNode(nodeId, image, entryCommand, nodeType)
 	if err != nil {
 		logrus.Errorf("Create Node innstance failed for %s. Error: %s", nodeId, err.Error())
 		return err
@@ -228,54 +230,93 @@ func (c *Controller) PowerOnNode(nodeId string, nodetype string) error {
 /* Delete job */
 func (c *Controller) PowerOffNode(nodeId string) error {
 
-	logrus.Debugf("Node%s powerOff requested.", nodeId)
+	logrus.Debugf("Node %s powerOff requested.", nodeId)
 	return nil
 }
 
 /* Watching for changes in job status */
-func (c *Controller) WatcherForNodes() {
+func (c *Controller) WatcherForNodes(ctx context.Context, cb func(string, string) error) error {
 
-	// nodeSelctor, _ := labels.NewRequirement("app", selection.In, []string{"virtual-node"})
-	// selector := labels.NewSelector()
-	// selector = selector.Add(*nodeSelctor)
-	timeout := int64(60 * 60 * 240) // 24*10 hours= 10 days Test purpose
+	watcher, err := c.cs.CoreV1().Pods(c.ns).Watch(ctx, metav1.ListOptions{
+		LabelSelector: "app=virtual-node",
+	})
+	if err != nil {
+		return errors.Wrap(err, "cannot create Pod event watcher")
+	}
 
-	for {
+	go func() {
+		for {
+			select {
+			case e := <-watcher.ResultChan():
+				if e.Object == nil {
+					return
+				}
 
-		watcher, err := c.cs.CoreV1().Events(c.ns).Watch(context.TODO(), metav1.ListOptions{
-			Watch:          true,
-			LabelSelector:  "app: virtual-node",
-			TimeoutSeconds: &timeout,
-		})
-		if err != nil {
-			return
-		}
+				pod, ok := e.Object.(*v1.Pod)
+				if !ok {
+					continue
+				}
 
-		ch := watcher.ResultChan()
+				// logrus.WithFields(logrus.Fields{
+				// 	"action":     e.Type,
+				// 	"namespace":  pod.Namespace,
+				// 	"name":       pod.Name,
+				// 	"phase":      pod.Status.Phase,
+				// 	"reason":     pod.Status.Reason,
+				// 	"message":    pod.Status.Message,
+				// 	"container#": len(pod.Status.ContainerStatuses),
+				// }).Debug("Event notified")
 
-		for event := range ch {
-			node, ok := event.Object.(*v1.Pod)
-			if !ok {
-				logrus.Errorf("Controller:: unexpected event type on watcher")
+				switch e.Type {
+
+				case watch.Added:
+
+					switch pod.Status.Phase {
+					case v1.PodPending:
+						state := "PowerOn"
+						logrus.Infof("BootingUp: Node %s ", pod.Name)
+
+						/* Send Event on MessageBus */
+						_ = cb(pod.Name, state)
+
+					default:
+						logrus.Infof("Unkown Node state for %s during PowerOn.", pod.Name)
+
+					}
+
+				case watch.Deleted:
+					for _, cst := range pod.Status.ContainerStatuses {
+						if cst.State.Terminated != nil {
+							state := "PowerOff"
+							logrus.Infof("Poweroff : Node %s PoweredOff at %v Details: ExitCode: %d Reason: %s Message %s ", pod.Name, cst.State.Terminated.FinishedAt, cst.State.Terminated.ExitCode, cst.State.Terminated.Reason, cst.State.Terminated.Message)
+
+							/* Send Event on MessageBus */
+							_ = cb(pod.Name, state)
+						}
+					}
+
+				case watch.Modified:
+
+					for _, cst := range pod.Status.ContainerStatuses {
+						if cst.State.Running != nil {
+							logrus.Tracef("NodeState: Node %s running since %v", pod.Name, cst.State.Running.StartedAt)
+						}
+					}
+
+				default:
+					continue
+				}
+
+			case <-ctx.Done():
+				watcher.Stop()
 				return
 			}
-
-			switch event.Type {
-			case watch.Added:
-				logrus.Debugf("NodeId %s PoweredOn", node.Name)
-			case watch.Modified:
-				logrus.Debugf("NodeId %s Updated", node.Name)
-			case watch.Deleted:
-				logrus.Debugf("NodeId %s PoweredOff", node.Name)
-			case watch.Error:
-				logrus.Debugf("NodeId %s Failure", node.Name)
-			}
 		}
-	}
-	logrus.Debugf("Controller:: Exiting VirtualNode watcher routine.")
+	}()
+
+	return nil
 }
 
-/*
 func (c *Controller) PublishEvent(uuid string, state string) error {
 
 	evtMsg := &spec.EvtUpdateVirtnode{
@@ -299,4 +340,3 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 
 	return nil
 }
-*/
