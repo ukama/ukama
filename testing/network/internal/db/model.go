@@ -9,8 +9,9 @@ import (
 type VNodeStatus string
 
 const (
-	VNodeOn  VNodeStatus = "PowerOn"
-	VNodeOff VNodeStatus = "PowerOff"
+	VNodePreCheck VNodeStatus = "PreCehck"
+	VNodeOn       VNodeStatus = "PowerOn"
+	VNodeOff      VNodeStatus = "PowerOff"
 )
 
 type VNode struct {
@@ -23,10 +24,11 @@ func (s VNodeStatus) String() string {
 	return string(s)
 }
 
-func VnodeState(s string) (*VNodeStatus, error) {
+func VNodeState(s string) (*VNodeStatus, error) {
 	vNodeStatus := map[VNodeStatus]struct{}{
-		VNodeOn:  {},
-		VNodeOff: {},
+		VNodePreCheck: {},
+		VNodeOn:       {},
+		VNodeOff:      {},
 	}
 
 	status := VNodeStatus(s)

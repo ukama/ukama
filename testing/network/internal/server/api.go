@@ -1,5 +1,7 @@
 package server
 
+import "github.com/ukama/ukama/testing/network/internal/db"
+
 type ReqActionOnNode struct {
 	NodeID    string `query:"node" validate:"required"`
 	LookingTo string `query:"looking_to" validate:"eq=vnode_power_on|eq=vnode_power_off,required"`
@@ -19,8 +21,7 @@ type ReqGetNode struct {
 }
 
 type RespGetNode struct {
-	NodeID string `json:"node"`
-	Status string `json:"status"`
+	Node db.VNode `json:"node"`
 }
 
 type ReqGetNodeList struct {
@@ -29,5 +30,5 @@ type ReqGetNodeList struct {
 }
 
 type RespGetNodeList struct {
-	NodeList []RespGetNode `json:"nodes"`
+	NodeList []db.VNode `json:"nodes"`
 }

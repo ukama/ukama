@@ -72,18 +72,64 @@ func (r *Router) init() {
 
 func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
 	logrus.Debugf("Handling node power on %+v.", req)
-	err := r.c.PowerOnNode(req.NodeID)
+
+	/* Validation node from NMR */
+
+	/* Add to db*/
+	err := r.repo.Upsert(req.NodeID, db.VNodePreCheck.String())
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
-			Message:  err.Error(),
+			Message:  "Adding Node:" + err.Error(),
 		}
 	}
+
+	/* PowerOn Node */
+	err = r.c.PowerOnNode(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "PowerOn Node:" + err.Error(),
+		}
+	}
+
 	return nil
 }
 
 func (r *Router) PutPowerOff(c *gin.Context, req *ReqPowerOffNode) error {
 	logrus.Debugf("Handling node power off %+v.", req)
+
+	node, err := r.repo.GetInfo(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Reading Node Info:" + err.Error(),
+		}
+	}
+
+	if node.Status != db.VNodeOn.String() {
+		return rest.HttpError{
+			HttpCode: http.StatusForbidden,
+			Message:  fmt.Sprintf("Node state: Node %s expected state %s but found in %s state.", req.NodeID, db.VNodeOn, node.Status),
+		}
+	}
+
+	err = r.c.PowerOffNode(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Powering off:" + err.Error(),
+		}
+	}
+
+	/* Add to db*/
+	err = r.repo.Upsert(req.NodeID, db.VNodeOff.String())
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Updating Node State:" + err.Error(),
+		}
+	}
 
 	return nil
 }
@@ -91,11 +137,39 @@ func (r *Router) PutPowerOff(c *gin.Context, req *ReqPowerOffNode) error {
 func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
 	logrus.Debugf("Handling get node info %+v.", req)
 
-	return nil, nil
+	resp := &RespGetNode{}
+
+	node, err := r.repo.GetInfo(req.NodeID)
+	if err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Reading Node Info:" + err.Error(),
+		}
+	}
+
+	if node != nil {
+		resp.Node = *node
+	}
+
+	return resp, nil
 }
 
 func (r *Router) GetList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList, error) {
 	logrus.Debugf("Handling get nodes info %+v.", req)
 
-	return nil, nil
+	resp := &RespGetNodeList{}
+
+	nodes, err := r.repo.List()
+	if err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Reading Node Info:" + err.Error(),
+		}
+	}
+
+	if nodes != nil {
+		resp.NodeList = *nodes
+	}
+
+	return resp, nil
 }

@@ -105,7 +105,7 @@ func getVirtNodeName(id string) string {
 
 /* Starting build job watcher routine */
 func (c *Controller) ControllerInit() error {
-	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
+	return c.WatcherForNodes(context.TODO(), c.repo, c.PublishEvent)
 }
 
 /* Pod spec
@@ -235,7 +235,7 @@ func (c *Controller) PowerOffNode(nodeId string) error {
 }
 
 /* Watching for changes in job status */
-func (c *Controller) WatcherForNodes(ctx context.Context, cb func(string, string) error) error {
+func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb func(string, string) error) error {
 
 	watcher, err := c.cs.CoreV1().Pods(c.ns).Watch(ctx, metav1.ListOptions{
 		LabelSelector: "app=virtual-node",
@@ -273,8 +273,14 @@ func (c *Controller) WatcherForNodes(ctx context.Context, cb func(string, string
 
 					switch pod.Status.Phase {
 					case v1.PodPending:
-						state := "PowerOn"
+						state := db.VNodeOn.String()
 						logrus.Infof("BootingUp: Node %s ", pod.Name)
+
+						/* Updated= database */
+						err := d.Update(pod.Name, state)
+						if err != nil {
+							logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
+						}
 
 						/* Send Event on MessageBus */
 						_ = cb(pod.Name, state)
@@ -287,8 +293,14 @@ func (c *Controller) WatcherForNodes(ctx context.Context, cb func(string, string
 				case watch.Deleted:
 					for _, cst := range pod.Status.ContainerStatuses {
 						if cst.State.Terminated != nil {
-							state := "PowerOff"
+							state := db.VNodeOff.String()
 							logrus.Infof("Poweroff : Node %s PoweredOff at %v Details: ExitCode: %d Reason: %s Message %s ", pod.Name, cst.State.Terminated.FinishedAt, cst.State.Terminated.ExitCode, cst.State.Terminated.Reason, cst.State.Terminated.Message)
+
+							/* Updated= database */
+							err := d.Update(pod.Name, state)
+							if err != nil {
+								logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
+							}
 
 							/* Send Event on MessageBus */
 							_ = cb(pod.Name, state)
