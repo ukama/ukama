@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"strings"
 	"time"
 
@@ -71,20 +70,6 @@ type RPCResponse struct {
 	Status     bool
 	Resp       *amqp.Delivery
 	RoutingKey RoutingKey
-}
-
-//Random integer generation
-func randInt(min int, max int) int {
-	return min + rand.Intn(max-min)
-}
-
-// CorrelationID for the RPC message
-func randomString(l int) string {
-	bytes := make([]byte, l)
-	for i := 0; i < l; i++ {
-		bytes[i] = byte(randInt(65, 90))
-	}
-	return string(bytes)
 }
 
 // creates a message consumer and initializes connection
@@ -445,67 +430,6 @@ func (m *MsgClient) sendNack(msg amqp.Delivery) {
 	} else {
 		m.log.Debugf("Acknowledged message [%+v]", msg)
 	}
-}
-
-func (m *MsgClient) prepareQueueForPublishing(body []byte, queueName string, exchangeName string, routingKey RoutingKey, exchangeType string) (<-chan amqp.Delivery, string, error) {
-	m.log.Debugf("Publishing RPC messages Queue Name %s Exchange Name %s Routing Key %s Exchange Type %s ", queueName, exchangeName, routingKey, exchangeType)
-	ch, err := m.createChannel()
-	if err != nil {
-		return nil, "", err
-	}
-	defer ch.Close()
-
-	err = m.declareExchange(ch, exchangeName, exchangeType)
-	if err != nil {
-		return nil, "", err
-	}
-
-	queue, err := m.declareQueue(ch, queueName, false, nil)
-	if err != nil {
-		return nil, "", err
-	}
-
-	err = m.bindQueue(ch, queue.Name, routingKey, exchangeName)
-	if err != nil {
-		return nil, "", err
-	}
-
-	const replyQueueName = "amq.rabbitmq.reply-to"
-	resp, err := m.consume(ch, replyQueueName, "ReplyToRPCConsumer", true)
-	if err != nil {
-		return nil, "", err
-	}
-
-	corrId, err := m.publishMessage(body, ch, exchangeName, routingKey, queue, replyQueueName)
-	if err != nil {
-		return nil, "", err
-	}
-	return resp, corrId, nil
-}
-
-func (m *MsgClient) publishMessage(body []byte, ch *amqp.Channel, exchangeName string,
-	routingKey RoutingKey, queue *amqp.Queue, replyTo string) (string, error) {
-	corrId := randomString(32)
-
-	err := ch.Publish( // Publishes a message onto the queue.
-		exchangeName,       // exchange
-		string(routingKey), // routing key
-		false,              // mandatory
-		false,              // immediate
-		amqp.Publishing{
-			ContentType:   "text/plain",
-			CorrelationId: corrId,
-			ReplyTo:       replyTo,
-			Body:          body, // Our JSON body as []byte
-		})
-
-	if err != nil {
-		m.log.Errorf("Err: %s Failed to publish message.", err)
-		return "", err
-	} else {
-		m.log.Debugf("RPC Message was sent on Exchange %s Queue %s Routing Key %s", exchangeName, queue.Name, string(routingKey))
-	}
-	return corrId, nil
 }
 
 func (m *MsgClient) DeclareQueue(queueName string, durable bool) (*amqp.Queue, error) {
