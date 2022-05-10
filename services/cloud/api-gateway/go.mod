@@ -12,6 +12,8 @@ replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
 replace github.com/ukama/ukama/services/cloud/users => ../users
 
+replace ithub.com/ukama/ukama/services/cloud/hss => ../hss
+
 require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
@@ -24,6 +26,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
+	github.com/ukama/ukama/services/cloud/users v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/services/common v0.0.0-20220425182032-2c377df948f4
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.18.1
@@ -185,7 +188,6 @@ require (
 	github.com/tomarrell/wrapcheck/v2 v2.6.1 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukama/services/cloud/hss v0.0.0-20220509141831-33003a2a0959 // indirect
 	github.com/ultraware/funlen v0.0.3 // indirect
 	github.com/ultraware/whitespace v0.0.5 // indirect
 	github.com/uudashr/gocognit v1.0.5 // indirect
