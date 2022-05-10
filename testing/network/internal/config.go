@@ -21,7 +21,7 @@ type Config struct {
 	GitUser           string
 	GitPass           string
 	Docker            Docker
-	VmImage           string
+	NodeImage         string
 	BuilderImage      string
 	Kubeconfig        string
 	RabbitUri         string
