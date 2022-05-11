@@ -623,8 +623,10 @@ const Nodes = () => {
                     aria-label="back"
                     sx={{
                         position: "fixed",
-                        bottom: 10,
-                        right: 440,
+                        left: "50%",
+                        bottom: "20px",
+                        transform: "translate(-50%, -50%)",
+                        margin: "0 auto",
                         pointer: "cursor",
                     }}
                     onClick={() => handleBackToSingleTowerNode()}
