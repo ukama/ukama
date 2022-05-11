@@ -336,10 +336,14 @@ const secToHoursNMints = (seconds: number, separator: string) => {
     );
 };
 
+const isEmailValid = (email: string): boolean =>
+    /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,20}$/.test(email);
+
 export {
     hexToRGB,
     formatBytes,
     isMetricData,
+    isEmailValid,
     getRandomData,
     getColorByType,
     getStatusByType,

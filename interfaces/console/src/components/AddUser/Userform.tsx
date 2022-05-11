@@ -1,23 +1,51 @@
+import {
+    Grid,
+    Stack,
+    Alert,
+    Switch,
+    TextField,
+    Typography,
+} from "@mui/material";
 import { colors } from "../../theme";
+import ErrorIcon from "@mui/icons-material/Error";
 import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
-import { Stack, Typography, Grid, TextField, Switch } from "@mui/material";
-
 interface IUserform {
     formData: any;
     setFormData: any;
+    formError: string;
     description: String;
 }
 
-const Userform = ({ description, formData, setFormData }: IUserform) => {
+const Userform = ({
+    formData,
+    formError,
+    description,
+    setFormData,
+}: IUserform) => {
     const gclasses = globalUseStyles();
     return (
         <Grid container spacing={2}>
             <Grid item xs={12} mb={1}>
                 <Typography variant="body1">{description}</Typography>
             </Grid>
+            {formError && (
+                <Grid item xs={12}>
+                    <Alert
+                        sx={{
+                            mb: 1,
+                            color: colors.black,
+                        }}
+                        severity={"error"}
+                        icon={<ErrorIcon sx={{ color: colors.red }} />}
+                    >
+                        {formError}
+                    </Alert>
+                </Grid>
+            )}
             <Grid item xs={12}>
                 <TextField
                     fullWidth
+                    required
                     label={"NAME"}
                     value={formData.name}
                     InputLabelProps={{ shrink: true }}
@@ -34,6 +62,7 @@ const Userform = ({ description, formData, setFormData }: IUserform) => {
             <Grid item xs={12}>
                 <TextField
                     fullWidth
+                    required
                     label={"EMAIL"}
                     value={formData.email}
                     InputLabelProps={{ shrink: true }}

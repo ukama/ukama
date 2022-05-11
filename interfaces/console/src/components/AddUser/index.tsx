@@ -14,6 +14,7 @@ import Userform from "./Userform";
 import ChooseSim from "./ChooseSim";
 import PhysicalSimform from "./PhysicalSimform";
 import CloseIcon from "@mui/icons-material/Close";
+import { isEmailValid } from "../../utils";
 
 interface IAddUser {
     isOpen: boolean;
@@ -45,6 +46,7 @@ const getTitle = (id: number, type: string) =>
 
 const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
     const [flow, setFlow] = useState(0);
+    const [formError, setError] = useState("");
     const [simType, setSimType] = useState("");
     const [form, setForm] = useState({
         name: "",
@@ -55,18 +57,34 @@ const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
     });
 
     const handleAction = ({ type = simType }: { type?: string }) => {
+        setError("");
         switch (flow) {
             case 0:
                 setSimType(type);
                 setFlow(flow + 1);
                 break;
             case 1:
+                if (!form.email || !form.name) {
+                    setError("Please file require fileds.");
+                    return;
+                }
+
+                if (!isEmailValid(form.email)) {
+                    setError("Please enter valid email!");
+                    return;
+                }
+
                 if (type === "eSIM") {
                     setFlow(3);
                     handleSubmitAction(form);
                 } else setFlow(flow + 1);
                 break;
             case 2:
+                if (!form.code || !form.iccid) {
+                    setError("Please file require fileds.");
+                    return;
+                }
+
                 if (type !== "eSIM") {
                     setFlow(4);
                     handleSubmitAction(form);
@@ -106,6 +124,7 @@ const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
                 {flow === 1 && (
                     <Userform
                         formData={form}
+                        formError={formError}
                         setFormData={setForm}
                         description={getDescription(1)}
                     />
@@ -113,6 +132,7 @@ const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
                 {flow === 2 && (
                     <PhysicalSimform
                         formData={form}
+                        formError={formError}
                         setFormData={setForm}
                         description={getDescription(3)}
                     />
