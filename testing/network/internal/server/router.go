@@ -13,6 +13,7 @@ import (
 	"github.com/ukama/ukama/testing/network/internal"
 	"github.com/ukama/ukama/testing/network/internal/controller"
 	"github.com/ukama/ukama/testing/network/internal/db"
+	"github.com/ukama/ukama/testing/network/internal/nmr"
 
 	"github.com/wI2L/fizz"
 )
@@ -27,7 +28,7 @@ type Router struct {
 	port int
 	repo db.VNodeRepo
 	c    *controller.Controller
-	sr   *sr.ServiceRouter
+	nmr  *nmr.NMR
 }
 
 func (r *Router) Run(close chan error) {
@@ -46,10 +47,10 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 	r := &Router{fizz: f,
 		port: config.Server.Port,
 		repo: vNodeRepo,
-		sr:   svcR,
 	}
 
 	if svcR != nil {
+		r.nmr = nmr.NewNMR(svcR)
 		r.c = controller.NewController(r.repo)
 		if err := r.c.ControllerInit(); err != nil {
 			logrus.Errorf("Controller init failed to start watcher for virtual nodes.")
@@ -76,9 +77,16 @@ func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
 	logrus.Debugf("Handling node power on %+v.", req)
 
 	/* Validation node from NMR */
+	err := r.nmr.NmrLookForNode(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  err.Error(),
+		}
+	}
 
 	/* Add to db*/
-	err := r.repo.Insert(req.NodeID, db.VNodePreCheck.String())
+	err = r.repo.Insert(req.NodeID, db.VNodePreCheck.String())
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
