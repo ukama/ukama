@@ -2,11 +2,14 @@ package main
 
 import (
 	"os"
-	"ukamaX/bootstrap/lookup/cmd/version"
-	"ukamaX/bootstrap/lookup/internal"
-	"ukamaX/bootstrap/lookup/internal/db"
-	"ukamaX/bootstrap/lookup/internal/rest"
 
+	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
+
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/services/common/config"
@@ -16,14 +19,39 @@ import (
 func main() {
 	ccmd.ProcessVersionArgument("lookup", os.Args, version.Version)
 
+	/* Log level */
+	logrus.SetLevel(logrus.TraceLevel)
+
 	log.Infof("Starting the lookup service")
+
 	initConfig()
 	if internal.ServiceConf.DebugMode {
 		log.Infof("Service running in debug mode")
 	}
 	log.Infof("")
+
+	rs := sr.NewServiceRouter(internal.ServiceConf.ServiceRouter)
+
 	d := initDb()
-	runHttpServer(d)
+
+	ext := make(chan error)
+
+	r := rest.NewRouter(internal.ServiceConf, rs, db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
+	go r.Run(ext)
+
+	/* Register service */
+	if err := rs.RegisterService(internal.ServiceConf.ApiIf); err != nil {
+		logrus.Errorf("Exiting the bootstarp service.")
+		return
+	}
+
+	perr := <-ext
+	if perr != nil {
+		panic(perr)
+	}
+
+	logrus.Infof("Exiting service %s", internal.ServiceName)
+
 }
 
 func initDb() sql.Db {
@@ -40,9 +68,4 @@ func initConfig() {
 	log.Infof("Initializing config")
 	internal.ServiceConf = internal.NewConfig()
 	config.LoadConfig(internal.ServiceName, internal.ServiceConf)
-}
-
-func runHttpServer(d sql.Db) {
-	r := rest.NewRouter(db.NewNodeRepo(d), db.NewOrgRepo(d), internal.ServiceConf.DebugMode)
-	r.Run()
 }

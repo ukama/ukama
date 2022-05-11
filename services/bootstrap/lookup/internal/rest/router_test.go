@@ -9,9 +9,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"ukamaX/bootstrap/lookup/internal/db"
-	"ukamaX/bootstrap/lookup/mocks"
 
+	"github.com/gin-contrib/cors"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/ukama/services/bootstrap/lookup/mocks"
+	"github.com/ukama/ukama/services/common/rest"
 	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/jackc/pgtype"
@@ -24,6 +27,14 @@ var testNodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 const dummyOrgName = "some_org"
 
+var defaultCongif = &internal.Config{
+	Server: rest.HttpConfig{
+		Cors: cors.Config{
+			AllowAllOrigins: true,
+		},
+	},
+}
+
 var testIp = pgtype.Inet{
 	IPNet: &net.IPNet{
 		IP: []byte{1, 2, 3, 4},
@@ -35,7 +46,7 @@ func TestPingRoute(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
-	r := NewRouter(nil, nil, true).gin
+	r := NewRouter(defaultCongif, nil, nil, nil, true).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -45,7 +56,7 @@ func TestPingRoute(t *testing.T) {
 	assert.Contains(t, w.Body.String(), "pong")
 }
 
-func TestGetDeviceRouteDeviceExist(t *testing.T) {
+func TestGetNodeRouteNodeExist(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 
@@ -58,15 +69,16 @@ func TestGetDeviceRouteDeviceExist(t *testing.T) {
 	}
 	nodeRepo.On("Get", testNodeId).Return(dbNode, nil).Once()
 
-	r := NewRouter(nodeRepo, orgRepo, true).gin
+	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
+	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
 	// assert
 	assert.Equal(t, 200, w.Code)
-	resp := GetDeviceResponse{}
+	resp := RespGetNode{}
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 
@@ -76,7 +88,7 @@ func TestGetDeviceRouteDeviceExist(t *testing.T) {
 	assert.Equal(t, dbNode.Org.Ip.IPNet.IP.String(), resp.Ip)
 }
 
-func TestGetDeviceRouteDeviceDoesNotExist(t *testing.T) {
+func TestGetNodeRouteNodeDoesNotExist(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 
@@ -85,10 +97,11 @@ func TestGetDeviceRouteDeviceDoesNotExist(t *testing.T) {
 
 	nodeRepo.On("Get", testNodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-	r := NewRouter(nodeRepo, orgRepo, true).gin
+	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
+	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
 	// assert
@@ -98,24 +111,25 @@ func TestGetDeviceRouteDeviceDoesNotExist(t *testing.T) {
 	nodeRepo.AssertExpectations(t)
 }
 
-func TestGetDeviceRouteRepoError(t *testing.T) {
+func TestGetNodeRouteRepoError(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 
-	nodeRepo.On("Get", testNodeId).Return(nil, fmt.Errorf("DB failed")).Once()
+	nodeRepo.On("Get", testNodeId).Return(nil, fmt.Errorf(" DB failed")).Once()
 
-	r := NewRouter(nodeRepo, orgRepo, true).gin
+	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(), nil)
+	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	assert.Contains(t, w.Body.String(), "Error getting the node")
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Contains(t, w.Body.String(), "node : DB failed")
 
 	nodeRepo.AssertExpectations(t)
 }
@@ -123,18 +137,19 @@ func TestGetDeviceRouteRepoError(t *testing.T) {
 func TestGetDeviceRouteInvalidUuid(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	r := NewRouter(nil, nil, true).gin
+	r := NewRouter(defaultCongif, nil, nil, nil, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("GET", "/orgs/"+dummyOrgName+"/devices/123asadg", nil)
+	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=123asadg"
+	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
 	// assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	assert.Contains(t, w.Body.String(), "Error parsing NodeID")
+	assert.Contains(t, w.Body.String(), "error parsing NodeId")
 }
 
-func TestPostDeviceRoute(t *testing.T) {
+func TestPostNodeRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 
@@ -148,19 +163,16 @@ func TestPostDeviceRoute(t *testing.T) {
 		return n.NodeID == testNodeId.StringLowercase() && n.OrgID == modelId
 	})).Return(nil).Once()
 
-	r := NewRouter(nodeRepo, orgRepo, true).gin
+	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("POST", "/orgs/"+dummyOrgName+"/devices/"+testNodeId.String(),
-		nil)
+	query := "/orgs/node?looking_to=add_node&org=" + dummyOrgName + "&node=" + testNodeId.String()
+	req, _ := http.NewRequest("POST", query, nil)
 
 	r.ServeHTTP(w, req)
 
 	// assert
 	assert.Equal(t, 200, w.Code)
-	resp := GetDeviceResponse{}
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	assert.NoError(t, err)
 
 	nodeRepo.AssertExpectations(t)
 }
@@ -177,10 +189,11 @@ func TestPostOrgRoute(t *testing.T) {
 		return o.Name == orgName && o.Ip.IPNet.IP.String() == testIp.IPNet.IP.String() && o.Certificate == cert
 	})).Return(nil).Once()
 
-	r := NewRouter(nil, orgRepo, true).gin
+	r := NewRouter(defaultCongif, nil, nil, orgRepo, true).fizz.Engine()
 
 	// act
-	req, _ := http.NewRequest("POST", "/orgs/"+orgName,
+	query := "/orgs/?looking_to=add_org&org=" + orgName
+	req, _ := http.NewRequest("POST", query,
 		strings.NewReader(fmt.Sprintf(`{
 				"certificate":"%s",
 				"ip": "%s"
@@ -236,10 +249,11 @@ func TestPostOrgRouteOrgValidation(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
-			r := NewRouter(nil, nil, true).gin
+			r := NewRouter(defaultCongif, nil, nil, nil, true).fizz.Engine()
 
 			// act
-			req, _ := http.NewRequest("POST", "/orgs/"+orgName,
+			query := "/orgs/?looking_to=add_org&org=" + orgName
+			req, _ := http.NewRequest("POST", query,
 				strings.NewReader(test.request))
 
 			r.ServeHTTP(w, req)

@@ -1,26 +1,44 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
-	"ukamaX/bootstrap/lookup/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgtype"
-	common "github.com/ukama/ukama/services/common/rest"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/sirupsen/logrus"
+	"github.com/wI2L/fizz"
+
+	"github.com/ukama/ukama/services/bootstrap/lookup/cmd/version"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal"
+	"github.com/ukama/ukama/services/bootstrap/lookup/internal/db"
+	"github.com/ukama/ukama/services/common/rest"
+	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/common/ukama"
 )
 
-const NodeIdParamName = "nodeId"
-const orgNameParamName = "org"
+const NodeIdParamName = "node"
 
 type Router struct {
-	gin *gin.Engine
-
+	fizz     *fizz.Fizz
+	port     int
+	R        *sr.ServiceRouter
 	nodeRepo db.NodeRepo
 	orgRepo  db.OrgRepo
 }
 
-func NewRouter(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router {
-	r := &Router{nodeRepo: nodeRepo, orgRepo: orgRepo}
+func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router {
+
+	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
+
+	r := &Router{fizz: f,
+		port:     config.Server.Port,
+		R:        svcR,
+		nodeRepo: nodeRepo,
+		orgRepo:  orgRepo,
+	}
+
 	if !debugMode {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -29,93 +47,108 @@ func NewRouter(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, debugMode bool) *Router
 	return r
 }
 
-func (rt *Router) Run() {
-	err := rt.gin.Run()
+func (r *Router) Run(close chan error) {
+	logrus.Info("Listening on port ", r.port)
+	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
-		panic(err)
+		close <- err
 	}
+	close <- nil
 }
 
-func (rt *Router) init() {
-	rt.gin = gin.Default()
+func (r *Router) init() {
+	org := r.fizz.Group("/orgs/", "Org", "Organizaton")
+	org.POST("", nil, tonic.Handler(r.addOrgHandler, http.StatusOK))
+	org.GET("node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
+	org.POST("node", nil, tonic.Handler(r.postNodeHandler, http.StatusOK))
 
-	rt.gin.GET("/ping", rt.pingHandler)
-
-	org := rt.gin.Group("/orgs/:org")
-	{
-		org.POST("", rt.addOrgHandler)
-		org.GET("devices/:"+NodeIdParamName, rt.getDeviceHandler)
-		org.POST("devices/:"+NodeIdParamName, rt.postDeviceHandler)
-	}
 }
 
-func (rt *Router) pingHandler(c *gin.Context) {
-	c.JSON(200, gin.H{
-		"message": "pong",
-	})
+func (r *Router) postNodeHandler(c *gin.Context, req *ReqAddNode) error {
+	logrus.Debugf("Received a request to add Node %s to org %s lookingto %s.", req.NodeID, req.OrgName, req.LookingTo)
+
+	id, err := ukama.ValidateNodeId(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "error parsing NodeId :" + err.Error(),
+		}
+	}
+
+	org, err := r.orgRepo.GetByName(req.OrgName)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "organization :" + err.Error(),
+		}
+	}
+
+	err = r.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "error adding the node mapping :" + err.Error(),
+		}
+	}
+
+	return nil
 }
 
-func (rt *Router) postDeviceHandler(c *gin.Context) {
-	orgName := c.Param(orgNameParamName)
-	id, isValid := common.GetNodeIdFromPath(c, NodeIdParamName)
-	if !isValid {
-		return
-	}
+func (r *Router) getNodeHandler(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
 
-	org, err := rt.orgRepo.GetByName(orgName)
+	logrus.Debugf("Received a request to read Node %s from org %s lookingFor %s.", req.NodeID, req.OrgName, req.LookingFor)
+
+	id, err := ukama.ValidateNodeId(req.NodeID)
 	if err != nil {
-		common.SendErrorResponseFromGet(c, "organisation", err)
-		return
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "error parsing NodeId :" + err.Error(),
+		}
 	}
 
-	err = rt.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
+	node, err := r.nodeRepo.Get(id)
 	if err != nil {
-		common.ThrowError(c, http.StatusInternalServerError, "Error adding the node mapping", err.Error(), err)
-		return
+		return nil, rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "node :" + err.Error(),
+		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "Mapping added or updated"})
-}
-
-func (rt *Router) getDeviceHandler(c *gin.Context) {
-	id, isValid := common.GetNodeIdFromPath(c, NodeIdParamName)
-	if !isValid {
-		return
-	}
-
-	node, err := rt.nodeRepo.Get(id)
-	if err != nil {
-		common.SendErrorResponseFromGet(c, "node", err)
-		return
-	}
-
-	resp := GetDeviceResponse{
+	resp := &RespGetNode{
 		NodeId:      id.StringLowercase(),
 		Certificate: node.Org.Certificate,
 		OrgName:     node.Org.Name,
 		Ip:          node.Org.Ip.IPNet.IP.String(),
 	}
 
-	c.JSON(http.StatusOK, resp)
+	return resp, nil
 }
 
-func (rt *Router) addOrgHandler(c *gin.Context) {
-	name := c.Param(orgNameParamName)
-	var req AddOrgRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
-		return
-	}
+func (r *Router) addOrgHandler(c *gin.Context, req *ReqAddOrg) error {
+	logrus.Debugf("Received a request to addorg name %s lookingto %s.", req.OrgName, req.LookingTo)
+
+	// var req AddOrgRequest
+	// if err := c.ShouldBindJSON(&req); err != nil {
+	// 	common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
+	// 	return
+	// }
+
 	ip := pgtype.Inet{}
 	err := ip.Set(req.Ip + "/32")
 	if err != nil {
-		common.ThrowError(c, http.StatusBadRequest, "Error parsing IP", err.Error(), err)
-		return
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Error parsing IP :" + err.Error(),
+		}
 	}
-	err = rt.orgRepo.Upsert(&db.Org{Name: name, Certificate: req.Certificate, Ip: ip})
+
+	err = r.orgRepo.Upsert(&db.Org{Name: req.OrgName, Certificate: req.Certificate, Ip: ip})
 	if err != nil {
-		common.ThrowError(c, http.StatusBadRequest, "Error parsing request", err.Error(), err)
-		return
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Error adding org :" + err.Error(),
+		}
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "Organisation added or updated"})
+
+	return nil
 }
