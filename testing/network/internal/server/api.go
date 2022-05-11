@@ -21,7 +21,8 @@ type ReqGetNode struct {
 }
 
 type RespGetNode struct {
-	Node db.VNode `json:"node"`
+	Node    db.VNode `json:"node"`
+	Runtime string   `json:"runtime"`
 }
 
 type ReqGetNodeList struct {

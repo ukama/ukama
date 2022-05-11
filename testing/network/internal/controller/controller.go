@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -20,7 +21,7 @@ import (
 type ControllerOps interface {
 	ControllerInit() error
 	ListNodes()
-	GetNodeStatus(nodeId string) error
+	GetNodeRuntimeStatus(nodeId string) (*string, error)
 	PowerOnNode(nodeId string) error
 	PowerOffNode(nodeId string) error
 	CreateNode(name string, image string, command []string, ntype string) error
@@ -98,10 +99,10 @@ func getVirtNodeName(id string) string {
 	return "vn-" + id
 }
 
-// /* Return VM name from ID */
-// func getVirtNodeId(name string) string {
-// 	return strings.Trim(name, "vn-")
-// }
+/* Return VM name from ID */
+func getVirtNodeId(name string) string {
+	return strings.Trim(name, "vn-")
+}
 
 /* Starting build job watcher routine */
 func (c *Controller) ControllerInit() error {
@@ -205,10 +206,31 @@ func (c *Controller) ListNodes() {
 }
 
 /* Get Job status */
-func (c *Controller) GetNodeStatus(nodeId string) int {
-	done := 0
+func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 
-	return done
+	/* Virtual Node Name */
+	var state string
+	vnName := getVirtNodeName(nodeId)
+
+	pod, err := c.cs.CoreV1().Pods(c.ns).Get(context.TODO(), vnName, metav1.GetOptions{})
+	if err != nil {
+		logrus.Errorf("Failed to get status for Node %s. Error: %s", nodeId, err.Error())
+		return nil, err
+	}
+
+	switch pod.Status.Phase {
+	case v1.PodPending:
+		state = "BootingUp"
+	case v1.PodRunning:
+		state = "Running"
+	case v1.PodSucceeded:
+		state = "Halted"
+	case v1.PodFailed:
+		state = "Failed"
+	case v1.PodUnknown:
+		state = "Failed"
+	}
+	return &state, nil
 }
 
 /* Go routine to start build process */
@@ -230,7 +252,16 @@ func (c *Controller) PowerOnNode(nodeId string) error {
 /* Delete job */
 func (c *Controller) PowerOffNode(nodeId string) error {
 
+	/* Virtual Node Name */
+	vnName := getVirtNodeName(nodeId)
+
 	logrus.Debugf("Node %s powerOff requested.", nodeId)
+	err := c.cs.CoreV1().Pods(c.ns).Delete(context.Background(), vnName, metav1.DeleteOptions{})
+	if err != nil {
+		logrus.Errorf("Delete Node failed for %s. Error: %s", nodeId, err.Error())
+		return err
+	}
+
 	return nil
 }
 
@@ -277,13 +308,13 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 						logrus.Infof("BootingUp: Node %s ", pod.Name)
 
 						/* Updated= database */
-						err := d.Update(pod.Name, state)
+						err := d.Update(getVirtNodeId(pod.Name), state)
 						if err != nil {
 							logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
 						}
 
 						/* Send Event on MessageBus */
-						_ = cb(pod.Name, state)
+						_ = cb(getVirtNodeId(pod.Name), state)
 
 					default:
 						logrus.Infof("Unkown Node state for %s during PowerOn.", pod.Name)
@@ -297,13 +328,13 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 							logrus.Infof("Poweroff : Node %s PoweredOff at %v Details: ExitCode: %d Reason: %s Message %s ", pod.Name, cst.State.Terminated.FinishedAt, cst.State.Terminated.ExitCode, cst.State.Terminated.Reason, cst.State.Terminated.Message)
 
 							/* Updated= database */
-							err := d.Update(pod.Name, state)
+							err := d.Update(getVirtNodeId(pod.Name), state)
 							if err != nil {
 								logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
 							}
 
 							/* Send Event on MessageBus */
-							_ = cb(pod.Name, state)
+							_ = cb(getVirtNodeId(pod.Name), state)
 						}
 					}
 

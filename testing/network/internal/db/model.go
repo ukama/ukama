@@ -9,7 +9,7 @@ import (
 type VNodeStatus string
 
 const (
-	VNodePreCheck VNodeStatus = "PreCehck"
+	VNodePreCheck VNodeStatus = "PreCheck"
 	VNodeOn       VNodeStatus = "PowerOn"
 	VNodeOff      VNodeStatus = "PowerOff"
 )

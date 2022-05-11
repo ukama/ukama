@@ -6,7 +6,7 @@ import (
 )
 
 type VNodeRepo interface {
-	Upsert(nodeId string, status string) error
+	Insert(nodeId string, status string) error
 	Update(nodeId string, status string) error
 	PowerOn(nodeId string) error
 	PowerOff(nodeId string) error
@@ -25,13 +25,13 @@ func NewVNodeRepo(db sql.Db) *vNodeRepo {
 }
 
 /* Upsert is used when we know the node id */
-func (r *vNodeRepo) Upsert(nodeId string, status string) error {
+func (r *vNodeRepo) Update(nodeId string, status string) error {
 	d := r.Db.GetGormDb().Where("node_id = ?", nodeId).Updates(VNode{Status: status})
 	return d.Error
 }
 
 /* Update is used when we know the node id */
-func (r *vNodeRepo) Update(nodeId string, status string) error {
+func (r *vNodeRepo) Insert(nodeId string, status string) error {
 	vNode := &VNode{
 		NodeID: nodeId,
 		Status: status,
@@ -39,19 +39,19 @@ func (r *vNodeRepo) Update(nodeId string, status string) error {
 
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "node_id"}},
-		UpdateAll: true,
+		DoNothing: true,
 	}).Create(vNode)
 	return d.Error
 }
 
 /* PowerOn */
 func (r *vNodeRepo) PowerOn(nodeId string) error {
-	return r.Upsert(nodeId, VNodeOn.String())
+	return r.Update(nodeId, VNodeOn.String())
 }
 
 /* PowerOn */
 func (r *vNodeRepo) PowerOff(nodeId string) error {
-	return r.Upsert(nodeId, VNodeOff.String())
+	return r.Update(nodeId, VNodeOff.String())
 }
 
 /* Get VirtNode info */

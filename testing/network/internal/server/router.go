@@ -76,7 +76,7 @@ func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
 	/* Validation node from NMR */
 
 	/* Add to db*/
-	err := r.repo.Upsert(req.NodeID, db.VNodePreCheck.String())
+	err := r.repo.Insert(req.NodeID, db.VNodePreCheck.String())
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -123,7 +123,7 @@ func (r *Router) PutPowerOff(c *gin.Context, req *ReqPowerOffNode) error {
 	}
 
 	/* Add to db*/
-	err = r.repo.Upsert(req.NodeID, db.VNodeOff.String())
+	err = r.repo.Update(req.NodeID, db.VNodeOff.String())
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -137,8 +137,10 @@ func (r *Router) PutPowerOff(c *gin.Context, req *ReqPowerOffNode) error {
 func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
 	logrus.Debugf("Handling get node info %+v.", req)
 
-	resp := &RespGetNode{}
-
+	resp := &RespGetNode{
+		Runtime: "Unknown",
+	}
+	var rstate *string
 	node, err := r.repo.GetInfo(req.NodeID)
 	if err != nil {
 		return nil, rest.HttpError{
@@ -147,8 +149,21 @@ func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) 
 		}
 	}
 
+	if node.Status == db.VNodeOn.String() {
+		rstate, err = r.c.GetNodeRuntimeStatus(req.NodeID)
+		if err != nil {
+			return nil, rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  "Reading Node runtime Info:" + err.Error(),
+			}
+		}
+	}
+
 	if node != nil {
 		resp.Node = *node
+		if rstate != nil {
+			resp.Runtime = *rstate
+		}
 	}
 
 	return resp, nil
