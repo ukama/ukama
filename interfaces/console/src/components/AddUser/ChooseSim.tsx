@@ -23,7 +23,7 @@ const SIM_TYPES = [
 ];
 
 interface IChooseSim {
-    description: String;
+    description: string;
     handleSimType: Function;
 }
 

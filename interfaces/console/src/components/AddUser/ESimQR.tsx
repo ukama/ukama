@@ -10,7 +10,7 @@ import QrCodeIcon from "@mui/icons-material/QrCode2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface IESimQR {
-    description: String;
+    description: string;
 }
 
 const ESimQR = ({ description }: IESimQR) => {

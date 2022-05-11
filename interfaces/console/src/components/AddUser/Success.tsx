@@ -1,7 +1,7 @@
 import { Typography } from "@mui/material";
 
 interface ISuccess {
-    description: String;
+    description: string;
 }
 
 const Success = ({ description }: ISuccess) => {

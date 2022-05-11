@@ -7,7 +7,7 @@ interface IPhysicalSimform {
     formData?: any;
     formError: string;
     setFormData?: any;
-    description: String;
+    description: string;
 }
 
 const PhysicalSimform = ({

@@ -41,7 +41,7 @@ const getDescription = (id: number) => {
 
 const getTitle = (id: number, type: string) =>
     id === 0 || id === 1 || id === 2
-        ? `Add User${type ? ` - ${type}` : ""}`
+        ? `Add User${type && ` - ${type}`}`
         : "Add User Succesful";
 
 const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {

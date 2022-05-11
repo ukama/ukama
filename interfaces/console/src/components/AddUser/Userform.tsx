@@ -13,7 +13,7 @@ interface IUserform {
     formData: any;
     setFormData: any;
     formError: string;
-    description: String;
+    description: string;
 }
 
 const Userform = ({
