@@ -20,47 +20,6 @@
 #include "log.h"
 
 /*
- * create_forward_request --
- *
- */
-static req_t *init_forward_request(char *host, int port, char *method,
-				   char *ep) {
-
-  req_t *req = NULL;
-  char url[MAX_LEN] = {0};
-
-  if (host == NULL || ep <= 0 || ep == NULL) return NULL;
-
-  req = (req_t *)calloc(1, sizeof(req_t));
-  if (!req) {
-    log_error("Error allocating memory of size: %lu", sizeof(req_t));
-    return NULL;
-  }
-
-  if (ep[0] == '/') {
-      sprintf(url, "http://%s:%d%s", host, port, ep);
-  } else  {
-    sprintf(url, "http://%s:%d/%s", host, port, ep);
-  }
-
-  if (ulfius_init_request(req) != U_OK) {
-    goto failure;
-  }
-
-  ulfius_set_request_properties(req,
-				U_OPT_HTTP_VERB, method,
-				U_OPT_HTTP_URL, url,
-				U_OPT_TIMEOUT, 20);
-  return req;
-
- failure:
-  ulfius_clean_request(req);
-  free(req);
-
-  return NULL;
-}
-
-/*
  * add_url_parameters --
  *
  */
@@ -70,8 +29,8 @@ static void add_url_parameters(req_t *req, Pattern *reqPattern) {
 
   for (ptr=reqPattern; ptr; ptr=ptr->next) {
     ulfius_set_request_properties(req,
-				  U_OPT_URL_PARAMETER,
-				  ptr->key, ptr->value);
+          U_OPT_URL_PARAMETER,
+          ptr->key, ptr->value);
   }
 }
 
@@ -79,28 +38,57 @@ static void add_url_parameters(req_t *req, Pattern *reqPattern) {
  * create_forward_request --
  *
  */
+static int  prepare_url(char *host, int port, char *ep, char* url) {
+
+
+  if (host == NULL || ep <= 0 || ep == NULL) return FALSE;
+
+  if (ep[0] == '/') {
+      sprintf(url, "http://%s:%d%s", host, port, ep);
+  } else  {
+    sprintf(url, "http://%s:%d/%s", host, port, ep);
+  }
+
+  return TRUE;
+}
+
+/*
+ * create_forward_request --
+ *
+ */
 req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
-			      const req_t *request) {
+                             const req_t *request) {
 
-  req_t *fRequest=NULL;
+  req_t *fRequest = NULL;
+  char url[MAX_LEN] = {0};
 
-  /* Initialize the forward request */
-  fRequest = init_forward_request(forward->ip, forward->port,
-				  request->http_verb, forward->defaultPath);
-  if (!fRequest) {
-    log_error("Error init forward request");
+  /* Prepare URL for service */
+  if (!prepare_url(forward->ip, forward->port,
+                  forward->defaultPath, url)) {
+    log_error("Error preparing URL for requested service");
     return NULL;
   }
 
-  /* Add any parameter (key/value) to URL header */
-  add_url_parameters(fRequest, reqPattern);
+  /* Preparing Request */
+  fRequest = (req_t *)calloc(1, sizeof(req_t));
+  if (!fRequest) {
+    log_error("Error allocating memory of size: %lu", sizeof(req_t));
+    return NULL;
+  }
 
-  /* Add any JSON data etc. */
+  if (ulfius_init_request(fRequest) == U_OK) {
+    if (ulfius_copy_request(fRequest, request) != U_OK) {
+      log_error("Internal error copying request.");
+      return NULL;
+    }
+  } else {
+    log_error("Internal error initializing request.");
+    return NULL;
+  }
 
-  /* Adjust Content-type and other fields. */
-
-  /* close the parameter list */
-  ulfius_set_request_properties(fRequest, U_OPT_NONE);
+  /* Update URL */
+  ulfius_set_request_properties(fRequest,
+        U_OPT_HTTP_URL, url);
 
   return fRequest;
 }
