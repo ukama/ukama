@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/ukama/ukama/services/common/msgbus"
 	"os"
 
 	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
@@ -24,10 +25,8 @@ import (
 
 var svcConf *pkg.Config
 
-const ServiceName = "registry"
-
 func main() {
-	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
+	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
 	registryDb := initDb()
@@ -37,7 +36,7 @@ func main() {
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	svcConf = pkg.NewConfig()
-	config.LoadConfig(ServiceName, svcConf)
+	config.LoadConfig(pkg.ServiceName, svcConf)
 }
 
 func initDb() sql.Db {
@@ -56,11 +55,17 @@ func runGrpcServer(gormdb sql.Db) {
 		bootstrapCl = bootstrap.DummyBootstrapClient{}
 	}
 
+	pub, err := msgbus.NewQPub(svcConf.Queue.Uri)
+	if err != nil {
+		log.Fatalf("Failed to create publisher. Error: %v", err)
+	}
+
 	regServer := server.NewRegistryServer(db2.NewOrgRepo(gormdb),
 		db2.NewNodeRepo(gormdb),
 		db2.NewNetRepo(gormdb),
 		bootstrapCl,
-		svcConf.DeviceGatewayHost)
+		svcConf.DeviceGatewayHost,
+		pub)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {
 		generated.RegisterRegistryServiceServer(s, regServer)

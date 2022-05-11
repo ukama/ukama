@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"github.com/streadway/amqp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,7 +17,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/services/common/ukama"
