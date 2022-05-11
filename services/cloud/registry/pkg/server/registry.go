@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"time"
+
 	"github.com/ukama/ukama/services/cloud/registry/pkg"
 	"github.com/ukama/ukama/services/common/msgbus"
-	"time"
 
 	"github.com/jackc/pgconn"
 	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
@@ -213,7 +214,7 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 	resp := &pb.DeleteNodeResponse{
 		NodeId: req.NodeId,
 	}
-	r.pubEvent(resp, r.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild())
+	r.pubEvent(resp, r.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild())
 
 	return resp, nil
 }
