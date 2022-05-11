@@ -109,7 +109,7 @@ jobs:
   release:
       name: release
       needs: build
-      #if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
         working-directory: services/cloud/dummy-sim-manager
