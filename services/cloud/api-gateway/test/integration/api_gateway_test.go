@@ -13,11 +13,10 @@ import (
 	"testing"
 	"time"
 
-	ory "github.com/ory/kratos-client-go"
-	"github.com/ukama/ukama/services/common/testing/kratos"
-
 	"github.com/go-resty/resty/v2"
+	ory "github.com/ory/kratos-client-go"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/testing/kratos"
 )
 
 type TestConfig struct {
@@ -137,6 +136,19 @@ func Test_RegistryApi(t *testing.T) {
 			assert.Equal(tt, http.StatusOK, resp.StatusCode())
 			fmt.Println("Response: ", resp.String())
 			assert.Contains(tt, resp.String(), nodeName)
+		}
+	})
+
+	t.Run("DeleteNode", func(tt *testing.T) {
+		resp, err := client.R().
+			EnableTrace().
+			SetHeader("authorization", "bearer "+login.GetSessionToken()).
+			Delete(getApiUrl() + "/orgs/" + login.Session.Identity.GetId() + "/nodes/" + nodeId)
+
+		if assert.NoError(t, err) {
+			assert.Equal(tt, http.StatusOK, resp.StatusCode())
+			fmt.Println("Response: ", resp.String())
+			assert.Contains(tt, resp.String(), nodeId)
 		}
 	})
 }

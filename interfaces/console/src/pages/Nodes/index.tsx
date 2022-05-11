@@ -39,6 +39,9 @@ import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import Fab from "@mui/material/Fab";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { globalUseStyles } from "../../styles";
 let abortController = new AbortController();
 const NODE_INIT = {
     type: "HOME",
@@ -48,6 +51,7 @@ const NODE_INIT = {
 };
 
 const Nodes = () => {
+    const classes = globalUseStyles();
     const [selectedTab, setSelectedTab] = useState(0);
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
@@ -74,6 +78,7 @@ const Nodes = () => {
     const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
+    const [towerNodeGroup, setTowerNodeGroup] = useState<NodeDto>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         name: "",
@@ -91,6 +96,8 @@ const Nodes = () => {
     const [isMetricPolling, setIsMetricPolling] = useState(false);
     const [metrics, setMetrics] = useState<TMetric>(getMetricsInitObj());
     const [showNodeSoftwareUpdatInfos, setShowNodeSoftwareUpdatInfos] =
+        useState<boolean>(false);
+    const [backToPreviousNode, setBackToPreviousNode] =
         useState<boolean>(false);
     const { data: nodeAppsRes, loading: nodeAppsLoading } =
         useGetNodeAppsQuery();
@@ -309,13 +316,16 @@ const Nodes = () => {
 
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
+        setTowerNodeGroup(node);
     };
 
     const onNodeSelectedFromGroup = (id: string) => {
-        if (id)
+        if (id) {
             setSelectedNode(
                 nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
             );
+            setBackToPreviousNode(true);
+        }
     };
 
     const onUpdateNodeClick = () => {
@@ -391,6 +401,10 @@ const Nodes = () => {
 
     const handleCloseNodeInfos = () => {
         setShowNodeSoftwareUpdatInfos(false);
+    };
+    const handleBackToSingleTowerNode = () => {
+        setSelectedNode(towerNodeGroup);
+        setBackToPreviousNode(false);
     };
 
     const handleSoftwareInfos = () => {
@@ -604,6 +618,18 @@ const Nodes = () => {
                     "Ensure node is properly set up in desired location before completing this step. Enter serial number found in your confirmation email, or on the back of your node, and we’ll take care of the rest for you."
                 }
             />
+            {backToPreviousNode && (
+                <Fab
+                    variant="extended"
+                    color="primary"
+                    aria-label="back"
+                    className={classes.backToNodeGroupButtonStyle}
+                    onClick={() => handleBackToSingleTowerNode()}
+                >
+                    <ArrowBackIcon sx={{ mr: 1 }} />
+                    RETURN TO ORIGINAL NODE
+                </Fab>
+            )}
         </Box>
     );
 };

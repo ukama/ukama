@@ -12,6 +12,14 @@ const globalUseStyles = makeStyles(() => ({
         padding: "4px 0px",
         "-webkit-text-fill-color": `${colors.black} !important`,
     },
+    backToNodeGroupButtonStyle: {
+        position: "fixed",
+        left: "50%",
+        bottom: "20px",
+        transform: "translate(-50%, -50%)",
+        margin: "0 auto",
+        pointer: "cursor",
+    },
     GridContainer: {
         padding: "1em",
     },

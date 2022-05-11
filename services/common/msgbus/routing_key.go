@@ -100,7 +100,7 @@ func (r RoutingKeyBuilder) SetAction(action string) RoutingKeyBuilder {
 	return r
 }
 
-// Build creates a routing key. Panics if one of the segments in not set
+// Build creates a routing key.
 func (r RoutingKeyBuilder) Build() (string, error) {
 	const errorFmt = "%s segment is not set"
 	if len(r.action) == 0 {
@@ -123,4 +123,13 @@ func (r RoutingKeyBuilder) Build() (string, error) {
 	}
 
 	return fmt.Sprintf("%s.%s.%s.%s.%s", r.msgType, r.source, r.container, r.object, r.action), nil
+}
+
+// Panics if one of the segments in not set
+func (r RoutingKeyBuilder) MustBuild() string {
+	res, err := r.Build()
+	if err != nil {
+		panic(err)
+	}
+	return res
 }
