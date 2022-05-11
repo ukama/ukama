@@ -113,7 +113,6 @@ query getUsersByOrg {
         phone
         dataPlan
         dataUsage
-        isDeactivated
     }
 }
 query getUser($userId: String!) {
@@ -253,5 +252,49 @@ query getNode($nodeId: String!) {
             state
             name
         }
+    }
+}
+
+query getUsersDataUsage($data: DataUsageInputDto!) {
+    getUsersDataUsage(data: $data) {
+        id
+        name
+        email
+        phone
+        dataPlan
+        dataUsage
+    }
+}
+
+subscription getUsersDataUsageS {
+    getUsersDataUsage {
+        id
+        name
+        email
+        phone
+        dataPlan
+        dataUsage
+    }
+}
+
+query getNode($nodeId: String!) {
+    getNode(nodeId: $nodeId) {
+        nodeId
+        type
+        state
+        name
+        attached {
+            nodeId
+            type
+            state
+            name
+        }
+    }
+}
+
+query getNodeStatus($data: GetNodeStatusInput!) {
+    getNodeStatus(data: $data) {
+        uptime
+        status
     }
 }

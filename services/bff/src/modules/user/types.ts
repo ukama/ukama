@@ -69,7 +69,7 @@ export class GetUsersDto {
     @Field()
     name: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
@@ -77,14 +77,11 @@ export class GetUsersDto {
     @IsPhoneNumber()
     phone: string;
 
-    @Field()
-    dataPlan: number;
+    @Field({ nullable: true })
+    dataPlan: string;
 
-    @Field()
-    dataUsage: number;
-
-    @Field()
-    isDeactivated: boolean;
+    @Field({ nullable: true })
+    dataUsage: string;
 }
 
 @ObjectType()
@@ -236,4 +233,10 @@ export class UpdateUserServiceInput {
 
     @Field()
     status: boolean;
+}
+
+@InputType()
+export class DataUsageInputDto {
+    @Field(() => [String])
+    ids: string[];
 }

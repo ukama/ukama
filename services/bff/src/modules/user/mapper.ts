@@ -11,11 +11,12 @@ import {
     OrgUserResponse,
     OrgUsersResponse,
 } from "./types";
-import * as defaultCasual from "casual";
-import { MetricServiceRes } from "../../common/types";
+import { MetricServiceValueRes } from "../../common/types";
 
 class UserMapper implements IUserMapper {
-    connectedUsersDtoToDto = (res: MetricServiceRes[]): ConnectedUserDto => {
+    connectedUsersDtoToDto = (
+        res: MetricServiceValueRes[]
+    ): ConnectedUserDto => {
         if (res.length > 0) {
             const value: any = res[0].value[1];
             return { totalUser: value };
@@ -33,12 +34,12 @@ class UserMapper implements IUserMapper {
             if (!user.isDeactivated) {
                 const userObj = {
                     id: user.uuid,
-                    dataPlan: 1024,
+                    dataPlan: "",
+                    dataUsage: "",
                     name: user.name,
                     email: user.email,
                     phone: user.phone,
                     isDeactivated: user.isDeactivated,
-                    dataUsage: defaultCasual.integer(1, 1024),
                 };
                 users.push(userObj);
             }

@@ -1,4 +1,4 @@
-import { ParsedCookie, MetricServiceRes } from "../../common/types";
+import { MetricServiceValueRes, ParsedCookie } from "../../common/types";
 import {
     ActivateUserResponse,
     UserResDto,
@@ -39,7 +39,7 @@ export interface IUserService {
 
 export interface IUserMapper {
     dtoToAddUserDto(res: AddUserServiceRes): UserResDto | null;
-    connectedUsersDtoToDto(res: MetricServiceRes[]): ConnectedUserDto;
+    connectedUsersDtoToDto(res: MetricServiceValueRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];
     dtoToUserDto(req: OrgUserResponse): GetUserDto;
