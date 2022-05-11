@@ -40,5 +40,8 @@ func NewConfig() *Config {
 		Debug: Debug{
 			DisableBootstrap: false,
 		},
+		Queue: config.Queue{
+			Uri: "amqp://guest:guest@localhost:5672",
+		},
 	}
 }
