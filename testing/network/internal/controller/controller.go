@@ -18,6 +18,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+type NodeState string
+
+const (
+	VNodeBooting string = "BootingUp"
+	VNodeActive  string = "Running"
+	VNodeHalted  string = "Halted"
+	VNodeFaulty  string = "Faulty"
+	VNodeUnkown  string = "Unkown"
+)
+
 type ControllerOps interface {
 	ControllerInit() error
 	ListNodes()
@@ -107,6 +117,25 @@ func getVirtNodeId(name string) string {
 /* Starting build job watcher routine */
 func (c *Controller) ControllerInit() error {
 	return c.WatcherForNodes(context.TODO(), c.repo, c.PublishEvent)
+}
+
+/* Get Node status from Pod phase */
+func getNodeRuntimeStatus(phase v1.PodPhase) string {
+	var state string = VNodeUnkown
+	switch phase {
+	case v1.PodPending:
+		state = VNodeBooting
+	case v1.PodRunning:
+		state = VNodeActive
+	case v1.PodSucceeded:
+		state = VNodeHalted
+	case v1.PodFailed:
+		state = VNodeFaulty
+	case v1.PodUnknown:
+		state = VNodeUnkown
+	}
+
+	return state
 }
 
 /* Pod spec
@@ -209,7 +238,6 @@ func (c *Controller) ListNodes() {
 func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 
 	/* Virtual Node Name */
-	var state string
 	vnName := getVirtNodeName(nodeId)
 
 	pod, err := c.cs.CoreV1().Pods(c.ns).Get(context.TODO(), vnName, metav1.GetOptions{})
@@ -218,18 +246,8 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 		return nil, err
 	}
 
-	switch pod.Status.Phase {
-	case v1.PodPending:
-		state = "BootingUp"
-	case v1.PodRunning:
-		state = "Running"
-	case v1.PodSucceeded:
-		state = "Halted"
-	case v1.PodFailed:
-		state = "Failed"
-	case v1.PodUnknown:
-		state = "Failed"
-	}
+	state := getNodeRuntimeStatus(pod.Status.Phase)
+
 	return &state, nil
 }
 

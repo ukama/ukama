@@ -27,6 +27,7 @@ type Router struct {
 	port int
 	repo db.VNodeRepo
 	c    *controller.Controller
+	sr   *sr.ServiceRouter
 }
 
 func (r *Router) Run(close chan error) {
@@ -45,6 +46,7 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 	r := &Router{fizz: f,
 		port: config.Server.Port,
 		repo: vNodeRepo,
+		sr:   svcR,
 	}
 
 	if svcR != nil {
@@ -138,7 +140,7 @@ func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) 
 	logrus.Debugf("Handling get node info %+v.", req)
 
 	resp := &RespGetNode{
-		Runtime: "Unknown",
+		Runtime: controller.VNodeUnkown,
 	}
 	var rstate *string
 	node, err := r.repo.GetInfo(req.NodeID)
