@@ -41,6 +41,7 @@ import { SpecsDocsData } from "../../constants/stubData";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
 import Fab from "@mui/material/Fab";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { globalUseStyles } from "../../styles";
 let abortController = new AbortController();
 const NODE_INIT = {
     type: "HOME",
@@ -50,6 +51,7 @@ const NODE_INIT = {
 };
 
 const Nodes = () => {
+    const classes = globalUseStyles();
     const [selectedTab, setSelectedTab] = useState(0);
     const getFirstMetricCallPayload = (nodeId: string) =>
         getMetricPayload({
@@ -621,14 +623,7 @@ const Nodes = () => {
                     variant="extended"
                     color="primary"
                     aria-label="back"
-                    sx={{
-                        position: "fixed",
-                        left: "50%",
-                        bottom: "20px",
-                        transform: "translate(-50%, -50%)",
-                        margin: "0 auto",
-                        pointer: "cursor",
-                    }}
+                    className={classes.backToNodeGroupButtonStyle}
                     onClick={() => handleBackToSingleTowerNode()}
                 >
                     <ArrowBackIcon sx={{ mr: 1 }} />
