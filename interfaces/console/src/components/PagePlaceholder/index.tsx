@@ -60,7 +60,6 @@ const PagePlaceholder = ({
                             {linkText}
                         </LinkStyle>
                     )}
-                    .
                 </Typography>
 
                 {showActionButton && (

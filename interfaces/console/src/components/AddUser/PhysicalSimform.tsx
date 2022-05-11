@@ -1,6 +1,5 @@
-import { colors } from "../../theme";
-import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
-import { Stack, Typography, Grid, TextField, Switch } from "@mui/material";
+import { globalUseStyles } from "../../styles";
+import { Typography, Grid, TextField } from "@mui/material";
 
 interface IPhysicalSimform {
     formData?: any;

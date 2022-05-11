@@ -17,9 +17,8 @@ import CloseIcon from "@mui/icons-material/Close";
 
 interface IAddUser {
     isOpen: boolean;
-    buttonLabel: string;
     handleClose: Function;
-    handlePositiveAction: Function;
+    handleSubmitAction: Function;
 }
 
 const getDescription = (id: number) => {
@@ -44,12 +43,7 @@ const getTitle = (id: number, type: string) =>
         ? `Add User${type ? ` - ${type}` : ""}`
         : "Add User Succesful";
 
-const AddUser = ({
-    isOpen,
-    buttonLabel,
-    handleClose,
-    handlePositiveAction,
-}: IAddUser) => {
+const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
     const [flow, setFlow] = useState(0);
     const [simType, setSimType] = useState("");
     const [form, setForm] = useState({
@@ -60,7 +54,26 @@ const AddUser = ({
         roaming: false,
     });
 
-    const handleSimType = (type: string) => setSimType(type);
+    const handleAction = ({ type = simType }: { type?: string }) => {
+        switch (flow) {
+            case 0:
+                setSimType(type);
+                setFlow(flow + 1);
+                break;
+            case 1:
+                if (type === "eSIM") {
+                    setFlow(3);
+                    handleSubmitAction(form);
+                } else setFlow(flow + 1);
+                break;
+            case 2:
+                if (type !== "eSIM") {
+                    setFlow(4);
+                    handleSubmitAction(form);
+                }
+                break;
+        }
+    };
 
     return (
         <Dialog
@@ -87,7 +100,7 @@ const AddUser = ({
                 {flow === 0 && (
                     <ChooseSim
                         description={getDescription(0)}
-                        handleSimType={handleSimType}
+                        handleSimType={handleAction}
                     />
                 )}
                 {flow === 1 && (
@@ -116,10 +129,12 @@ const AddUser = ({
                         Cancel
                     </Button>
                     <Button
-                        onClick={() => handlePositiveAction()}
                         variant="contained"
+                        onClick={() => handleAction({})}
                     >
-                        {buttonLabel}
+                        {simType !== "eSIM" && flow === 1
+                            ? "Continue"
+                            : "ADD USER"}
                     </Button>
                 </DialogActions>
             )}

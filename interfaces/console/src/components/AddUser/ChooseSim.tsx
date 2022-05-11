@@ -41,7 +41,7 @@ const ChooseSim = ({ description, handleSimType }: IChooseSim) => {
                             key={id}
                             component="div"
                             className={classes.cardStyle}
-                            onClick={() => handleSimType(type)}
+                            onClick={() => handleSimType({ type })}
                         >
                             <HorizontalContainerJustify sx={{ p: 2 }}>
                                 <Typography variant="body1">{title}</Typography>

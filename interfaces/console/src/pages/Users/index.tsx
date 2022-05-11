@@ -311,3 +311,11 @@ const User = () => {
 };
 
 export default User;
+
+{
+    /* <AddUser
+    isOpen={simDialog.isShow}
+    handleClose={handleSimDialogClose}
+    handleSubmitAction={(data: any) => console.log(data)}
+/> */
+}
