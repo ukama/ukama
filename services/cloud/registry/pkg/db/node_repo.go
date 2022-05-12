@@ -91,7 +91,15 @@ func (r *nodeRepo) mapNodes(rows *sql2.Rows, db *gorm.DB) ([]Node, error) {
 
 func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
-		return tx.Delete(&Node{}, "node_id = ?", id.StringLowercase())
+		d := tx.Delete(&Node{}, "node_id = ?", id.StringLowercase())
+		if d.Error != nil {
+			return d
+		}
+		if d.RowsAffected == 0 {
+			d.Error = gorm.ErrRecordNotFound
+			return d
+		}
+		return d
 	}, nestedFunc...)
 
 	return err
