@@ -23,31 +23,33 @@
  * add_url_parameters --
  *
  */
-static void add_url_parameters(req_t *req, Pattern *reqPattern) {
+static void add_url_parameters(req_t **req, Pattern *reqPattern) {
 
   Pattern *ptr=NULL;
+  int ret = U_OK;
 
   for (ptr=reqPattern; ptr; ptr=ptr->next) {
-    ulfius_set_request_properties(req,
+    ret = ulfius_set_request_properties(*req,
           U_OPT_URL_PARAMETER,
-          ptr->key, ptr->value);
+          ptr->key, ptr->value,
+          U_OPT_NONE);
   }
+
+//  ret = ulfius_set_request_properties(*req,
+//                  U_OPT_NONE);
 }
 
 /*
  * create_forward_request --
  *
  */
-static int  prepare_url(char *host, int port, char *ep, char* url) {
+static int  prepare_url(char *host, int port, char* url) {
 
 
-  if (host == NULL || ep <= 0 || ep == NULL) return FALSE;
+  if (host == NULL ) return FALSE;
 
-  if (ep[0] == '/') {
-      sprintf(url, "http://%s:%d%s", host, port, ep);
-  } else  {
-    sprintf(url, "http://%s:%d/%s", host, port, ep);
-  }
+  sprintf(url, "http://%s:%d", host, port);
+
 
   return TRUE;
 }
@@ -61,10 +63,12 @@ req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
 
   req_t *fRequest = NULL;
   char url[MAX_LEN] = {0};
+  char ep[MAX_LEN] = {0};
+  char host[MAX_LEN] = {0};
 
   /* Prepare URL for service */
   if (!prepare_url(forward->ip, forward->port,
-                  forward->defaultPath, url)) {
+                  url)) {
     log_error("Error preparing URL for requested service");
     return NULL;
   }
@@ -88,7 +92,33 @@ req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
 
   /* Update URL */
   ulfius_set_request_properties(fRequest,
-        U_OPT_HTTP_URL, url);
+        U_OPT_HTTP_URL, url,
+        U_OPT_NONE);
+
+  /* End Point */
+  if ( forward->defaultPath == NULL) return NULL;
+
+  if (forward->defaultPath[0] == '/') {
+      sprintf(ep, "%s", forward->defaultPath);
+  } else  {
+      sprintf(ep, "/%s", forward->defaultPath);
+  }
+
+  /* Update EP */
+  ulfius_set_request_properties(fRequest,
+         U_OPT_HTTP_URL_APPEND, ep,
+         U_OPT_NONE);
+
+  /* Host Header */
+  sprintf(host, "%s:%d", forward->ip, forward->port);
+
+  /* Update Header */
+  ulfius_set_request_properties(fRequest,
+        U_OPT_HEADER_PARAMETER, "Host", host,
+        U_OPT_NONE);
+
+  /* Add any parameter (key/value) to URL header */
+  //add_url_parameters(&fRequest, reqPattern);
 
   return fRequest;
 }

@@ -67,7 +67,7 @@ static char *print_map(const struct _u_map * map) {
 static void log_request(const struct _u_request *request) {
 
   log_debug("Recevied: %s %s %s", request->http_protocol, request->http_verb,
-	    request->http_url);
+      request->http_url);
 }
 
 /*
@@ -200,15 +200,15 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
     if (*pattern == NULL) {
       *pattern = (Pattern *)calloc(1, sizeof(Pattern));
       if (*pattern == NULL) {
-      	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+        log_error("Error allocating memory of size: %d", sizeof(Pattern));
+  goto failure;
       }
       ptr = *pattern;
     } else {
       ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
       if (ptr->next == NULL) {
-	log_error("Error allocating memory of size: %d", sizeof(Pattern));
-	goto failure;
+  log_error("Error allocating memory of size: %d", sizeof(Pattern));
+  goto failure;
       }
       ptr = ptr->next;
     }
@@ -240,8 +240,8 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
  *
  */
 int callback_get_route(const struct _u_request *request,
-		       struct _u_response *response,
-		       void *userData) {
+           struct _u_response *response,
+           void *userData) {
 
   int ret;
   Router *router=NULL;
@@ -261,7 +261,7 @@ int callback_get_route(const struct _u_request *request,
     json_decref(json);
   } else {
     ulfius_set_string_body_response(response, HttpStatus_InternalServerError,
-			    HttpStatusStr(HttpStatus_InternalServerError));
+          HttpStatusStr(HttpStatus_InternalServerError));
   }
 
   return U_CALLBACK_CONTINUE;
@@ -272,8 +272,8 @@ int callback_get_route(const struct _u_request *request,
  *
  */
 int callback_post_route(const struct _u_request *request,
-			struct _u_response *response,
-			void *userData) {
+      struct _u_response *response,
+      void *userData) {
 
   int retCode;
   json_t *jreq=NULL;
@@ -310,11 +310,11 @@ int callback_post_route(const struct _u_request *request,
 
   /* Validate the connection with forward service */
   if (valid_forward_route(service->forward->ip,
-			  service->forward->port) != TRUE) {
+        service->forward->port) != TRUE) {
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("Matching forward service unavailable. %d: %s", retCode,
-	      statusStr);
+        statusStr);
     goto reply;
   }
 
@@ -352,8 +352,8 @@ int callback_post_route(const struct _u_request *request,
  *
  */
 int callback_delete_route(const struct _u_request *request,
-			  struct _u_response *response,
-			  void *userData) {
+        struct _u_response *response,
+        void *userData) {
 
   int retCode;
   json_t *jreq=NULL;
@@ -417,8 +417,8 @@ int callback_delete_route(const struct _u_request *request,
  *
  */
 int callback_get_stats(const struct _u_request *request,
-		       struct _u_response *response,
-		       void *userData) {
+           struct _u_response *response,
+           void *userData) {
 
   char *post_params = print_map(request->map_post_body);
   char *response_body = msprintf("OK!\n%s", post_params);
@@ -430,13 +430,41 @@ int callback_get_stats(const struct _u_request *request,
   return U_CALLBACK_CONTINUE;
 }
 
+static void print_request(const struct _u_request *request) {
+
+  fprintf(stdout, "Recevied Packet: \n");
+  fprintf(stdout, " Protocol: %s \n Method: %s \n Path: %s\n",
+         request->http_protocol, request->http_verb, request->http_url);
+
+  if (request->map_header) {
+    fprintf(stdout, "Packet header: \n %s",
+                    print_map(request->map_header));
+  }
+
+  if (request->map_url) {
+    fprintf(stdout, "Packet URL variables: \n %s",
+    print_map(request->map_url));
+  }
+
+  if (request->map_header) {
+    fprintf(stdout, "Packet cookies:\n %s",
+    print_map(request->map_cookie));
+  }
+
+  if (request->map_header) {
+    fprintf(stdout, "Packet post body:\n %s",
+    print_map(request->map_post_body));
+  }
+}
+
+
 /*
  * callback_service --
  *
  */
 int callback_service(const struct _u_request *request,
-		     struct _u_response *response,
-		     void *userData) {
+         struct _u_response *response,
+         void *userData) {
 
   int retCode, serviceResp;
   char *mapStr=NULL;
@@ -479,8 +507,8 @@ int callback_service(const struct _u_request *request,
     goto reply;
   } else {
     log_debug("Matching service found at IP: %s port: %d path: %s",
-	      requestForward->ip, requestForward->port,
-	      requestForward->defaultPath);
+        requestForward->ip, requestForward->port,
+        requestForward->defaultPath);
   }
 
   /* Quick test connection */
@@ -488,11 +516,11 @@ int callback_service(const struct _u_request *request,
     retCode   = HttpStatus_ServiceUnavailable;
     statusStr = HttpStatusStr(retCode);
     log_error("Matching forward service unavailable. %d: %s", retCode,
-	      statusStr);
+        statusStr);
     goto reply;
   } else {
     log_debug("Connection Test OK. Service available at ip: %s port: %d",
-	      requestForward->ip, requestForward->port);
+        requestForward->ip, requestForward->port);
   }
 
   /* Step-3: setup request to forward */
@@ -506,6 +534,12 @@ int callback_service(const struct _u_request *request,
     log_debug("Forward request sucessfully created");
   }
 
+
+  print_request(request);
+
+  print_request(fRequest);
+
+
   /* Step-4: setup connection to the service */
   fResponse = (struct _u_response *)malloc(sizeof(struct _u_response));
   ulfius_init_response(fResponse);
@@ -518,6 +552,8 @@ int callback_service(const struct _u_request *request,
   } else {
     log_debug("Request Forward to the service");
   }
+
+
 
   if (ulfius_copy_response(response, fResponse) != U_OK) {
     retCode   = HttpStatus_InternalServerError;
@@ -538,8 +574,8 @@ int callback_service(const struct _u_request *request,
     ulfius_set_string_body_response(response, retCode, statusStr);
   } else {
     ulfius_set_binary_body_response(response, retCode,
-				  (void *)fResponse->binary_body,
-				  fResponse->binary_body_length);
+          (void *)fResponse->binary_body,
+          fResponse->binary_body_length);
   }
 
   /* Clean up */
@@ -574,10 +610,10 @@ int callback_service(const struct _u_request *request,
  *
  */
 int callback_not_allowed(const struct _u_request *request,
-			 struct _u_response *response, void *userData) {
+       struct _u_response *response, void *userData) {
 
   ulfius_set_string_body_response(response, HttpStatus_Forbidden,
-				  HttpStatusStr(HttpStatus_Forbidden));
+          HttpStatusStr(HttpStatus_Forbidden));
   return U_CALLBACK_CONTINUE;
 }
 
@@ -589,6 +625,6 @@ int callback_default(const struct _u_request *request,
                      struct _u_response *response, void *userData) {
 
   ulfius_set_string_body_response(response, HttpStatus_NotFound,
-				  HttpStatusStr(HttpStatus_NotFound));
+          HttpStatusStr(HttpStatus_NotFound));
   return U_CALLBACK_CONTINUE;
 }
