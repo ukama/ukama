@@ -11,6 +11,7 @@ import {
     DataTableWithOptions,
     UserActivationDialog,
     SoftwareUpdateModal,
+    AddUser,
 } from "../../components";
 import {
     TIME_FILTER,
@@ -44,9 +45,10 @@ import {
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
+    useAddUserMutation,
     useUpdateNodeMutation,
 } from "../../generated";
-import { TMetric } from "../../types";
+import { TMetric, TObject } from "../../types";
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
@@ -92,6 +94,7 @@ const Home = () => {
     });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
+    const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
@@ -132,6 +135,28 @@ const Home = () => {
             });
         },
     });
+    const [
+        addUser,
+        { loading: addUserLoading, data: addUserRes, error: addUserError },
+    ] = useAddUserMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "Add-user-success",
+                message: `${addUserRes?.addUser?.name} has been added successfully!`,
+                type: "success",
+                show: true,
+            });
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "error-add-user-success",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+
     const [
         registerNode,
         {
@@ -326,6 +351,7 @@ const Home = () => {
             setIsWelcomeDialog(true);
         }
     }, [_isFirstVisit, orgId]);
+    const handleSimInstallationClose = () => setShowInstallSim(false);
 
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
@@ -336,7 +362,19 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-
+    const handleSimInstallationSubmit = (data: TObject) => {
+        if (data) {
+            addUser({
+                variables: {
+                    data: {
+                        email: data.email as string,
+                        name: data.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             tab: 4,
@@ -578,7 +616,7 @@ const Home = () => {
         }
     };
 
-    const onActivateUser = () => setIsUserActivateOpen(() => true);
+    const onActivateUser = () => setShowInstallSim(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
@@ -703,7 +741,8 @@ const Home = () => {
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||
-                            isSkeltonLoad
+                            isSkeltonLoad ||
+                            addUserLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -786,6 +825,13 @@ const Home = () => {
                     labelNegativeBtn={"cancel"}
                     handleCloseAction={handleCloseDeleteNode}
                     handleSuccessAction={handleDeleteNode}
+                />
+            )}
+            {showInstallSim && (
+                <AddUser
+                    isOpen={showInstallSim}
+                    handleClose={handleSimInstallationClose}
+                    handleSubmitAction={handleSimInstallationSubmit}
                 />
             )}
         </Box>
