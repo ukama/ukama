@@ -16,7 +16,7 @@ import {
     NodeDto,
     NodeAppsVersionLogsResponse,
 } from "../../modules/node/types";
-import { DeactivateResponse, GetUserDto } from "../../modules/user/types";
+import { GetUserDto } from "../../modules/user/types";
 
 function randomArray<T>(
     minLength: number,
@@ -173,7 +173,6 @@ interface Generators extends Casual.Generators {
     _currentBill: () => CurrentBillDto;
     _billHistory: () => BillHistoryDto;
     _network: () => NetworkDto;
-    _deleteRes: (id: string) => DeactivateResponse;
     _nodeNetwork: () => NetworkDto;
     _softwareLogs: () => [NodeAppsVersionLogsResponse];
     _nodeApps: () => [NodeAppResponse];
@@ -194,7 +193,6 @@ interface Functions extends Casual.functions {
     currentBill: () => CurrentBillDto;
     billHistory: () => BillHistoryDto;
     network: () => NetworkDto;
-    deleteRes: (id: string) => DeactivateResponse;
     nodeNetwork: () => NetworkDto;
     softwareLogs: () => [NodeAppsVersionLogsResponse];
     nodeApps: () => [NodeAppResponse];

@@ -115,6 +115,12 @@ export class DeactivateResponse {
 }
 
 @ObjectType()
+export class DeleteNodeRes {
+    @Field()
+    nodeId: string;
+}
+
+@ObjectType()
 export class OrgUserDto {
     @Field()
     name: string;
