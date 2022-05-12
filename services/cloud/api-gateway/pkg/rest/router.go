@@ -149,7 +149,7 @@ func (r *Router) init() {
 				info.ID = "GetMetricsList"
 			}}, metricsProxy)
 
-		// hss
+		// user's management
 		hss := authorized.Group(org+"/users", "Network Users", "Operations on network users and SIM cards"+
 			"Do not confuse with organization users")
 		hss.GET("", formatDoc("Get list of users", ""), tonic.Handler(r.getUsersHandler, http.StatusOK))
@@ -161,6 +161,8 @@ func (r *Router) init() {
 			tonic.Handler(r.updateUserHandler, http.StatusOK))
 		hss.PUT("/:user/sims/:iccid/services", formatDoc("Enable or disable services for a SIM card", ""),
 			tonic.Handler(r.setSimStatusHandler, http.StatusOK))
+		hss.GET("/:user/sims/:iccid/qr", formatDoc("Get e-sim installation QR code", ""),
+			tonic.Handler(r.getSimQrHandler, http.StatusOK))
 
 	}
 }
@@ -299,6 +301,10 @@ func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (
 		Carrier: simServicesToPbService(req.Carrier),
 		Ukama:   simServicesToPbService(req.Ukama),
 	})
+}
+
+func (r *Router) getSimQrHandler(c *gin.Context, req *GetSimQrRequest) (*userspb.GetQrCodeResponse, error) {
+	return r.clients.User.GetQr(req.Iccid)
 }
 
 func boolToPbBool(data *bool) *wrapperspb.BoolValue {

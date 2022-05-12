@@ -366,6 +366,15 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 	return &pb.DeactivateUserResponse{}, nil
 }
 
+func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (*pb.GetQrCodeResponse, error) {
+	resp, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
+		Iccid: req.Iccid,
+	})
+	return &pb.GetQrCodeResponse{
+		QrCode: resp.QrCode,
+	}, err
+}
+
 func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card status for %s", simCard.Iccid)
 	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{

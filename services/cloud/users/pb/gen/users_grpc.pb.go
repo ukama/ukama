@@ -40,6 +40,7 @@ type UserServiceClient interface {
 	SetSimStatus(ctx context.Context, in *SetSimStatusRequest, opts ...grpc.CallOption) (*SetSimStatusResponse, error)
 	// Terminates all user's sim cards
 	DeactivateUser(ctx context.Context, in *DeactivateUserRequest, opts ...grpc.CallOption) (*DeactivateUserResponse, error)
+	GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error)
 }
 
 type userServiceClient struct {
@@ -131,6 +132,15 @@ func (c *userServiceClient) DeactivateUser(ctx context.Context, in *DeactivateUs
 	return out, nil
 }
 
+func (c *userServiceClient) GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error) {
+	out := new(GetQrCodeResponse)
+	err := c.cc.Invoke(ctx, "/ukama.users.v1.UserService/GetQrCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -153,6 +163,7 @@ type UserServiceServer interface {
 	SetSimStatus(context.Context, *SetSimStatusRequest) (*SetSimStatusResponse, error)
 	// Terminates all user's sim cards
 	DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error)
+	GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -186,6 +197,9 @@ func (UnimplementedUserServiceServer) SetSimStatus(context.Context, *SetSimStatu
 }
 func (UnimplementedUserServiceServer) DeactivateUser(context.Context, *DeactivateUserRequest) (*DeactivateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeactivateUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQrCode not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -362,6 +376,24 @@ func _UserService_DeactivateUser_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetQrCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQrCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetQrCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.users.v1.UserService/GetQrCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetQrCode(ctx, req.(*GetQrCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -404,6 +436,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeactivateUser",
 			Handler:    _UserService_DeactivateUser_Handler,
+		},
+		{
+			MethodName: "GetQrCode",
+			Handler:    _UserService_GetQrCode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
