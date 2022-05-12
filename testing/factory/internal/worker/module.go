@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/services/common/ukama"
@@ -10,7 +11,7 @@ import (
 func NewComModule() internal.Module {
 	module := internal.Module{
 		ModuleID:   ukama.NewVirtualComId(),
-		Type:       ukama.MODULE_ID_TYPE_COMP,
+		Type:       strings.ToLower(ukama.MODULE_ID_TYPE_COMP),
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",
@@ -26,7 +27,7 @@ func NewComModule() internal.Module {
 func NewTRXModule() internal.Module {
 	module := internal.Module{
 		ModuleID:   ukama.NewVirtualTRXId(),
-		Type:       ukama.MODULE_ID_TYPE_TRX,
+		Type:       strings.ToLower(ukama.MODULE_ID_TYPE_TRX),
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",
@@ -42,7 +43,7 @@ func NewTRXModule() internal.Module {
 func NewRFModule() internal.Module {
 	module := internal.Module{
 		ModuleID:   ukama.NewVirtualFEId(),
-		Type:       ukama.MODULE_ID_TYPE_FE,
+		Type:       strings.ToLower(ukama.MODULE_ID_TYPE_FE),
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",
@@ -58,7 +59,7 @@ func NewRFModule() internal.Module {
 func NewCtrlModule() internal.Module {
 	module := internal.Module{
 		ModuleID:   ukama.NewVirtualCtrlId(),
-		Type:       ukama.MODULE_ID_TYPE_CTRL,
+		Type:       strings.ToLower(ukama.MODULE_ID_TYPE_CTRL),
 		PartNumber: "",
 		HwVersion:  "",
 		Mac:        "",

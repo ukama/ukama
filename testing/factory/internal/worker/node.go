@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/services/common/ukama"
@@ -10,7 +11,7 @@ import (
 func NewHNode() internal.Node {
 	node := internal.Node{
 		NodeID:       ukama.NewVirtualHomeNodeId(),
-		Type:         ukama.NODE_ID_TYPE_HOMENODE,
+		Type:         strings.ToLower(ukama.NODE_ID_TYPE_HOMENODE),
 		PartNumber:   "",
 		Skew:         "",
 		Mac:          "",
@@ -30,7 +31,7 @@ func NewHNode() internal.Node {
 func NewTNode() internal.Node {
 	node := internal.Node{
 		NodeID:       ukama.NewVirtualTowerNodeId(),
-		Type:         ukama.NODE_ID_TYPE_TOWERNODE,
+		Type:         strings.ToLower(ukama.NODE_ID_TYPE_TOWERNODE),
 		PartNumber:   "",
 		Skew:         "",
 		Mac:          "",
@@ -51,7 +52,7 @@ func NewTNode() internal.Node {
 func NewANode() internal.Node {
 	node := internal.Node{
 		NodeID:       ukama.NewVirtualAmplifierNodeId(),
-		Type:         ukama.NODE_ID_TYPE_AMPNODE,
+		Type:         strings.ToLower(ukama.NODE_ID_TYPE_AMPNODE),
 		PartNumber:   "",
 		Skew:         "",
 		Mac:          "",
