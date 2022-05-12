@@ -1,6 +1,5 @@
 import {
     Stack,
-    Theme,
     Select,
     Button,
     Divider,
@@ -10,18 +9,12 @@ import {
 } from "@mui/material";
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
-import { makeStyles } from "@mui/styles";
 import CircleIcon from "@mui/icons-material/Circle";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { hexToRGB, secToHoursNMints } from "../../utils";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { PaperProps, SelectDisplayProps, useStyles } from "./styles";
 import { GetNodeStatusRes, NodeDto, Org_Node_State } from "../../generated";
-
-const useStyles = makeStyles<Theme>(() => ({
-    selectStyle: () => ({
-        width: "fit-content",
-    }),
-}));
 
 const getStatus = (status: Org_Node_State, time: number) => {
     switch (status) {
@@ -104,16 +97,7 @@ const NodeDropDown = ({
                     variant="standard"
                     onChange={handleChange}
                     value={selectedNode?.name}
-                    SelectDisplayProps={{
-                        style: {
-                            fontWeight: 600,
-                            display: "flex",
-                            fontSize: "20px",
-                            marginLeft: "4px",
-                            alignItems: "center",
-                            minWidth: "fit-content",
-                        },
-                    }}
+                    SelectDisplayProps={SelectDisplayProps}
                     MenuProps={{
                         disablePortal: true,
                         anchorOrigin: {
@@ -126,9 +110,7 @@ const NodeDropDown = ({
                         },
                         PaperProps: {
                             sx: {
-                                boxShadow:
-                                    "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
-                                borderRadius: "4px",
+                                ...PaperProps,
                             },
                         },
                     }}

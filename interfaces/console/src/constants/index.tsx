@@ -1482,6 +1482,11 @@ const MASK_PLACEHOLDERS = {
     TOWER: "uk- ______ -tnode- __ - ____",
 };
 
+const SIM_TYPES = [
+    { id: 1, title: "Physical SIM", type: "Physical SIM" },
+    { id: 2, title: "eSIM", type: "eSIM" },
+];
+
 export {
     NodeApps,
     NodeAppLogs,
@@ -1492,6 +1497,7 @@ export {
 export {
     RF_NODES,
     TimeZones,
+    SIM_TYPES,
     COPY_RIGHTS,
     APP_VERSION,
     TIME_FILTER,

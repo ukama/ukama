@@ -1,5 +1,6 @@
 import { colors } from "../../theme";
 import { makeStyles } from "@mui/styles";
+import { SIM_TYPES } from "../../constants";
 import { HorizontalContainerJustify } from "../../styles";
 import ArrowIcon from "@mui/icons-material/ArrowForwardIos";
 import { Stack, Typography, Box, IconButton, Grid } from "@mui/material";
@@ -16,11 +17,6 @@ const useStyles = makeStyles(() => ({
         },
     },
 }));
-
-const SIM_TYPES = [
-    { id: 1, title: "Physical SIM", type: "Physical SIM" },
-    { id: 2, title: "eSIM", type: "eSIM" },
-];
 
 interface IChooseSim {
     description: string;
