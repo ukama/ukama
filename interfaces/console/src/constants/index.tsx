@@ -1483,8 +1483,8 @@ const MASK_PLACEHOLDERS = {
 };
 
 const SIM_TYPES = [
-    { id: 1, title: "Physical SIM", type: "Physical SIM" },
     { id: 2, title: "eSIM", type: "eSIM" },
+    { id: 1, title: "Physical SIM", type: "Physical SIM" },
 ];
 
 export {
