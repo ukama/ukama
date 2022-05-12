@@ -99,7 +99,7 @@ func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 			d.Error = gorm.ErrRecordNotFound
 			return d
 		}
-		return nil
+		return d
 	}, nestedFunc...)
 
 	return err
