@@ -67,7 +67,7 @@ static char *print_map(const struct _u_map * map) {
 static void log_request(const struct _u_request *request) {
 
   log_debug("Recevied: %s %s %s", request->http_protocol, request->http_verb,
-      request->http_url);
+           request->http_url);
 }
 
 /*
@@ -201,14 +201,14 @@ static int parse_request_params(struct _u_map * map, Pattern **pattern) {
       *pattern = (Pattern *)calloc(1, sizeof(Pattern));
       if (*pattern == NULL) {
         log_error("Error allocating memory of size: %d", sizeof(Pattern));
-  goto failure;
+        goto failure;
       }
       ptr = *pattern;
     } else {
       ptr->next = (Pattern *)calloc(1, sizeof(Pattern));
       if (ptr->next == NULL) {
-  log_error("Error allocating memory of size: %d", sizeof(Pattern));
-  goto failure;
+        log_error("Error allocating memory of size: %d", sizeof(Pattern));
+        goto failure;
       }
       ptr = ptr->next;
     }
@@ -430,34 +430,6 @@ int callback_get_stats(const struct _u_request *request,
   return U_CALLBACK_CONTINUE;
 }
 
-static void print_request(const struct _u_request *request) {
-
-  fprintf(stdout, "Recevied Packet: \n");
-  fprintf(stdout, " Protocol: %s \n Method: %s \n Path: %s\n",
-         request->http_protocol, request->http_verb, request->http_url);
-
-  if (request->map_header) {
-    fprintf(stdout, "Packet header: \n %s",
-                    print_map(request->map_header));
-  }
-
-  if (request->map_url) {
-    fprintf(stdout, "Packet URL variables: \n %s",
-    print_map(request->map_url));
-  }
-
-  if (request->map_header) {
-    fprintf(stdout, "Packet cookies:\n %s",
-    print_map(request->map_cookie));
-  }
-
-  if (request->map_header) {
-    fprintf(stdout, "Packet post body:\n %s",
-    print_map(request->map_post_body));
-  }
-}
-
-
 /*
  * callback_service --
  *
@@ -533,12 +505,6 @@ int callback_service(const struct _u_request *request,
   } else {
     log_debug("Forward request sucessfully created");
   }
-
-
-  print_request(request);
-
-  print_request(fRequest);
-
 
   /* Step-4: setup connection to the service */
   fResponse = (struct _u_response *)malloc(sizeof(struct _u_response));

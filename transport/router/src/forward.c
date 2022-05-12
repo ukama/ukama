@@ -29,14 +29,12 @@ static void add_url_parameters(req_t **req, Pattern *reqPattern) {
   int ret = U_OK;
 
   for (ptr=reqPattern; ptr; ptr=ptr->next) {
-    ret = ulfius_set_request_properties(*req,
+    ulfius_set_request_properties(*req,
           U_OPT_URL_PARAMETER,
           ptr->key, ptr->value,
           U_OPT_NONE);
   }
 
-//  ret = ulfius_set_request_properties(*req,
-//                  U_OPT_NONE);
 }
 
 /*
@@ -116,9 +114,6 @@ req_t *create_forward_request(Forward *forward, Pattern *reqPattern,
   ulfius_set_request_properties(fRequest,
         U_OPT_HEADER_PARAMETER, "Host", host,
         U_OPT_NONE);
-
-  /* Add any parameter (key/value) to URL header */
-  //add_url_parameters(&fRequest, reqPattern);
 
   return fRequest;
 }
