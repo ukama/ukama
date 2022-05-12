@@ -60,30 +60,31 @@ func NewBuild(d *nmr.NMR) *Build {
 		return nil
 	}
 
-	/* For test */
-	pods, err := cset.CoreV1().Pods("kube-system").List(context.Background(), metav1.ListOptions{})
+	/* For listing already running virtual nodes's  */
+	pods, err := cset.CoreV1().Pods(internal.ServiceConfig.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		logrus.Errorf("error getting pods: %v\n", err)
 		return nil
 	}
 	for _, pod := range pods.Items {
-		logrus.Tracef("Pod name: %s\n", pod.Name)
+		logrus.Tracef("Virtual Node : %s\n", pod.Name)
 	}
 
-	// ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-	// if err != nil {
-	// 	logrus.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
-	// 	return nil
-	// }
 	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.RabbitUri)
 	if err != nil {
 		logrus.Errorf("error getting message publisher: %s\n", err.Error())
 		return nil
 	}
 
+	ns := "default"
+
+	if internal.ServiceConfig.Namespace != "" {
+		ns = internal.ServiceConfig.Namespace
+	}
+
 	return &Build{
 		clientset:        cset,
-		currentNamespace: internal.ServiceConfig.Namespace,
+		currentNamespace: ns,
 		fd:               d,
 		m:                msgC,
 	}
