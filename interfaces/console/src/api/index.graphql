@@ -164,6 +164,11 @@ mutation addUser($data: UserInputDto!) {
         id
     }
 }
+mutation deleteNode($id: String!) {
+    deleteNode(id: $id) {
+        nodeId
+    }
+}
 mutation updateUser($userId: String!, $data: UserInputDto!) {
     updateUser(data: $data, userId: $userId) {
         name
