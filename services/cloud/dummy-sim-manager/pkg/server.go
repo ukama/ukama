@@ -184,6 +184,17 @@ func (s SimManagerServer) GetUsage(ctx context.Context, request *simmgr.GetUsage
 	}, nil
 }
 
+func (s SimManagerServer) GetQrCode(ctx context.Context, request *simmgr.GetQrCodeRequest) (*simmgr.GetQrCodeResponse, error) {
+	sim := s.getSimInfo(ctx, request.Iccid)
+	if sim == nil {
+		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+	}
+
+	return &simmgr.GetQrCodeResponse{
+		QrCode: "1$prod.smdp-plus.rsp.goog$052X-UFXS-CQIY-PNGL",
+	}, nil
+}
+
 func getEtcdKey(key string) string {
 	return etcKeyPrifix + key
 }
