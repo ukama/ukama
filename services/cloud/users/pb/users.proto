@@ -19,10 +19,13 @@ service UserService {
     
     // lists all users for organization
     rpc List(ListRequest) returns (ListResponse);
+
     // Get user info
     rpc Get(GetRequest) returns (GetResponse);
+
     // Get user info
     rpc Update(UpdateRequest) returns (UpdateResponse);
+
     // Generate sim token from ICCID
     rpc GenerateSimToken(GenerateSimTokenRequest) returns (GenerateSimTokenResponse);
 
@@ -31,7 +34,6 @@ service UserService {
 
     // Terminates all user's sim cards
     rpc DeactivateUser(DeactivateUserRequest) returns (DeactivateUserResponse);
-
 }
 
 message AddInternalRequest{

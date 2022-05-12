@@ -203,7 +203,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
 
-	simCard := dbSimcardsToPbSimcards(user.Simcards)
+	simCard := dbSimcardsToPbSimcards(user.Simcard)
 
 	if simCard != nil && !user.Deactivated {
 		u.pullSimCardStatuses(ctx, simCard)
@@ -287,7 +287,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 
 	// terminate sim cards asynchronously
 	// would be better to trigger an AMQP event
-	go u.terminateSimCard(ctx, user.Simcards)
+	go u.terminateSimCard(ctx, user.Simcard)
 
 	// delete user
 	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
@@ -303,24 +303,21 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	return &pb.DeleteResponse{}, nil
 }
 
-func (u *UserService) terminateSimCard(ctx context.Context, simCards []db.Simcard) {
-	for _, sim := range simCards {
-		logrus.Infof("Terminating sim. Iccid %s", sim.Iccid)
+func (u *UserService) terminateSimCard(ctx context.Context, sim db.Simcard) {
 
-		_, err := u.simManager.TerminateSim(ctx, &pbclient.TerminateSimRequest{
-			Iccid: sim.Iccid,
-		})
+	logrus.Infof("Terminating sim. Iccid %s", sim.Iccid)
 
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
-				logrus.Warning("Simcard not found in sim manager")
-				continue
-			}
+	_, err := u.simManager.TerminateSim(ctx, &pbclient.TerminateSimRequest{
+		Iccid: sim.Iccid,
+	})
 
+	if err != nil {
+		if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
+			logrus.Warning("Simcard not found in sim manager")
+		} else {
 			logrus.Errorf("Error terminating simcard %s: %s", sim.Iccid, err)
 		}
 	}
-
 }
 
 func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUserRequest) (*pb.DeactivateUserResponse, error) {
@@ -349,7 +346,7 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 	}
 
 	// Deactivate sim cards in sim manager
-	u.terminateSimCard(ctx, usr.Simcards)
+	u.terminateSimCard(ctx, usr.Simcard)
 
 	// Delete imsi record from HSS
 	s, err := u.imsiService.GetClient()
@@ -433,19 +430,10 @@ func getBoolVal(val *wrapperspb.BoolValue) bool {
 	return val.Value
 }
 
-func dbSimcardsToPbSimcards(simcards []db.Simcard) (res *pb.Sim) {
-	if len(simcards) > 0 {
-		res = &pb.Sim{
-			Iccid:      simcards[0].Iccid,
-			IsPhysical: simcards[0].IsPhysical,
-		}
-	}
-
-	if len(simcards) > 1 {
-		logrus.Errorf("More then one simcard found for a user")
-		for i := 1; i < len(simcards); i++ {
-			logrus.Errorf("ICCID %s for user %d not returned to user", simcards[i].Iccid, simcards[i].UserID)
-		}
+func dbSimcardsToPbSimcards(simcard db.Simcard) (res *pb.Sim) {
+	res = &pb.Sim{
+		Iccid:      simcard.Iccid,
+		IsPhysical: simcard.IsPhysical,
 	}
 
 	return res

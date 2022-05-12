@@ -19,6 +19,36 @@ type SimManagerServiceClient struct {
 	mock.Mock
 }
 
+// GetQrCode provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) GetQrCode(ctx context.Context, in *simmgr.GetQrCodeRequest, opts ...grpc.CallOption) (*simmgr.GetQrCodeResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *simmgr.GetQrCodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *simmgr.GetQrCodeRequest, ...grpc.CallOption) *simmgr.GetQrCodeResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*simmgr.GetQrCodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *simmgr.GetQrCodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSimInfo provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) GetSimInfo(ctx context.Context, in *simmgr.GetSimInfoRequest, opts ...grpc.CallOption) (*simmgr.GetSimInfoResponse, error) {
 	_va := make([]interface{}, len(opts))

@@ -18,7 +18,7 @@ type User struct {
 	Name        string    `gorm:"not null;default:'unknown'"`
 	Email       string
 	Phone       string
-	Simcards    []Simcard
+	Simcard     Simcard
 	OrgID       uint `gorm:"not null;default:1"`
 	Org         *Org
 	Deactivated bool
