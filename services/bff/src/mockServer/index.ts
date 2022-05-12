@@ -11,7 +11,6 @@ import {
     getCurrentBill,
     getBillHistory,
     getNetwork,
-    deleteRes,
     getUserByID,
     getNodeNetwork,
     getSoftwareLogs,
@@ -30,7 +29,6 @@ export const mockServer = (app: Express): void => {
     app.get("/bill/get_current_bill", getCurrentBill);
     app.get("/bill/get_bill_history", getBillHistory);
     app.get("/network/get_network", getNetwork);
-    app.post("/node/delete_node", deleteRes);
     app.get("/user/get_user", getUserByID);
     app.get("/node/get_network", getNodeNetwork);
     app.get("/software_logs", getSoftwareLogs);
