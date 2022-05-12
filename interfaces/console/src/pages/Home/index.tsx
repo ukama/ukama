@@ -30,6 +30,7 @@ import {
     useGetDataUsageQuery,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
+    useDeleteNodeMutation,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useAddNodeMutation,
@@ -85,10 +86,14 @@ const Home = () => {
         userId: "",
         userName: "",
     });
+    const [deleteNodeDialog, setDeleteNodeDialog] = useState({
+        isShow: false,
+        nodeId: "",
+    });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
-    const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
+    const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -101,7 +106,32 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
-
+    const [
+        deleteNode,
+        {
+            loading: deleteNodeLoading,
+            data: deleteNodeRes,
+            error: deleteNodeError,
+        },
+    ] = useDeleteNodeMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeRes?.deleteNode?.nodeId} has been deleted successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
     const [
         registerNode,
         {
@@ -111,7 +141,7 @@ const Home = () => {
         },
     ] = useAddNodeMutation({
         onCompleted: () => {
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "addNodeSuccess",
                 message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
                 type: "success",
@@ -121,7 +151,7 @@ const Home = () => {
         },
 
         onError: () =>
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "ErrorAddingNode",
                 message: `${registerNodeError?.message}`,
                 type: "error",
@@ -138,7 +168,7 @@ const Home = () => {
         },
     ] = useUpdateNodeMutation({
         onCompleted: () => {
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "UpdateNodeNotification",
                 message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
                 type: "success",
@@ -147,7 +177,7 @@ const Home = () => {
             refetchGetNodesByOrg();
         },
         onError: () =>
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "UpdateNodeErrorNotification",
                 message: `${updateNodError?.message}`,
                 type: "error",
@@ -193,7 +223,7 @@ const Home = () => {
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation({
             onCompleted: res => {
-                setRegisterNodeNotification({
+                setNodeToastNotification({
                     id: "userDeactivated",
                     message: `${res.deactivateUser.name} has been deactivated successfully!`,
                     type: "success",
@@ -202,7 +232,7 @@ const Home = () => {
                 refetchResidents();
             },
             onError: err =>
-                setRegisterNodeNotification({
+                setNodeToastNotification({
                     id: "userDeactivated",
                     message: `${err?.message}`,
                     type: "error",
@@ -460,6 +490,14 @@ const Home = () => {
             },
         });
     };
+    const handleDeleteNode = () => {
+        deleteNode({
+            variables: {
+                id: deleteNodeDialog.nodeId,
+            },
+        });
+        handleCloseDeleteNode();
+    };
 
     const onResidentsTableMenuItem = (id: string, type: string) => {
         if (type === "deactivate") {
@@ -490,6 +528,11 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
+        } else {
+            setDeleteNodeDialog({
+                isShow: true,
+                nodeId: id || "",
+            });
         }
     };
 
@@ -505,7 +548,8 @@ const Home = () => {
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-
+    const handleCloseDeleteNode = () =>
+        setDeleteNodeDialog({ ...deleteNodeDialog, isShow: false });
     const handleNodeSubmitAction = (data: any) => {
         setShowNodeDialog(prev => ({
             ...prev,
@@ -631,7 +675,9 @@ const Home = () => {
                 <Grid xs={12} lg={8} item>
                     <LoadingWrapper
                         height={318}
-                        isLoading={nodeLoading || isSkeltonLoad}
+                        isLoading={
+                            nodeLoading || isSkeltonLoad || deleteNodeLoading
+                        }
                     >
                         <RoundedCard>
                             <ContainerHeader
@@ -728,6 +774,18 @@ const Home = () => {
                     labelNegativeBtn={"cancel"}
                     handleCloseAction={handleCloseDeactivateUser}
                     handleSuccessAction={handleDeactivateUser}
+                />
+            )}
+            {deleteNodeDialog.isShow && (
+                <DeactivateUser
+                    isClosable={true}
+                    isOpen={deleteNodeDialog.isShow}
+                    title={"Delete Node Confirmation"}
+                    description={`${deleteNodeDialog?.nodeId} will be deleted permanently.`}
+                    labelSuccessBtn={"DELETE NODE"}
+                    labelNegativeBtn={"cancel"}
+                    handleCloseAction={handleCloseDeleteNode}
+                    handleSuccessAction={handleDeleteNode}
                 />
             )}
         </Box>
