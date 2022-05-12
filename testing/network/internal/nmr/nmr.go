@@ -27,12 +27,12 @@ func (n *NMR) NmrLookForNode(nodeID string) error {
 
 	query := map[string]string{
 		"node":        nodeID,
-		"looking_for": "node_status",
+		"looking_for": "status_info",
 	}
 
 	errStatus := &rest.ErrorMessage{}
 
-	var nodeResp *RespGetNodeStatus
+	var nodeResp = &RespGetNodeStatus{}
 
 	logrus.Debugf("Posting GET: Query +%v", query)
 	resp, err := n.S.C.R().
@@ -51,7 +51,7 @@ func (n *NMR) NmrLookForNode(nodeID string) error {
 		return fmt.Errorf("NMR validation failure: %s", errStatus.Message)
 	}
 
-	if nodeResp.Status != "" {
+	if nodeResp.Status != "StatusNodeIntransit" {
 		logrus.Errorf("Invalid node status for Node %d Status reported %s", nodeID, nodeResp.Status)
 		return fmt.Errorf("NMR validation failure: Invalid node state %s", nodeResp.Status)
 	}

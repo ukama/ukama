@@ -55,23 +55,23 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "*", "looking_for": "vnode_info",
+					"node": "*", "looking_for": "vnode_info", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_on",
+					"node": "*", "looking_to": "vnode_power_on", "path": "/node/poweron",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_off",
+					"node": "*", "looking_to": "vnode_power_off", "path": "/node/poweroff",
 				},
 				{
-					"looking_for": "vnode_list",
+					"looking_for": "vnode_list", "path": "/list",
 				},
 			},
 			F: config.Forward{
 				Ip: "192.168.0.27",
 				//Ip:   "localhost",
 				Port: 8088,
-				Path: "/node",
+				Path: "/",
 			},
 		},
 		DB: config.Database{
