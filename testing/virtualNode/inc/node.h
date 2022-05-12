@@ -15,42 +15,58 @@
 #define TRUE 1
 #define FALSE 0
 
-/* For module(s) */
-typedef struct nodeConfig_ {
+#define NODE_TYPE_HNODE "hnode"
+#define NODE_TYPE_ANODE "anode"
+#define NODE_TYPE_TNODE "tnode"
+#define NODE_TYPE_NONE  ""
 
-	char *uuid;
-	char *name;
-	int  type;
-	char *partNumber;
-	char *hwVersion;
-	char *mac;
-	int  swVersionMinor;
-	int  swVersionMajor;
-	int  prodSWVersionMinor;
-	int  prodSWVersionMajor;
-	char *manufacturingDate;
-	char *manufacturerName;
+#define MODULE_TYPE_COM  "com"
+#define MODULE_TYPE_TRX  "trx"
+#define MODULE_TYPE_CTRL "ctrl"
+#define MODULE_TYPE_FE   "fe"
+#define MODULE_TYPE_MASK "mask"
+#define MODULE_TYPE_NONE ""
 
-	struct nodeConfig_ *next;
-} NodeConfig;
+#define SCHEMA_FILE_COM  "com.json"
+#define SCHEMA_FILE_TRX  "trx.json"
+#define SCHEMA_FILE_MASK "mask.json"
+#define SCHEMA_FILE_CTRL "ctrl.json"
+#define SCHEMA_FILE_FE   "fe.json"
+#define SCHEMA_FILE_NONE ""
 
 /* overall node info */
 typedef struct nodeInfo_ {
 
 	char *uuid;
-	char *name;
-	int  type;
+	char *type;
 	char *partNumber;
 	char *skew;
 	char *mac;
-	int  swVersionMinor;
-	int  swVersionMajor;
-	int  prodSWVersionMinor;
-	int  prodSWVersionMajor;
+	char *swVersion;
+	char *mfgSWVersion;
 	char *assemblyDate;
-	char *oemName;
+	char *oem;
+    char *mfgTestStatus;
+    char *status;
 	int  moduleCount;
 } NodeInfo;
+
+/* For module(s) */
+typedef struct nodeConfig_ {
+
+	char *moduleID;
+	char *type;
+	char *partNumber;
+	char *hwVersion;
+	char *mac;
+	char *swVersion;
+	char *mfgSWVersion;
+	char *mfgDate;
+	char *oem;
+	char *status;
+
+	struct nodeConfig_ *next;
+} NodeConfig;
 
 /* Node meta data via VNODE_METADATA */
 typedef struct node_ {

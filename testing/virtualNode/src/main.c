@@ -24,6 +24,7 @@
 #include "log.h"
 #include "supervisor.h"
 #include "jserdes.h"
+#include "image.h"
 
 #define VERSION       "0.0.1"
 #define DEF_LOG_LEVEL "TRACE"
@@ -33,6 +34,7 @@
 #define CMD_DELETE  "delete"
 #define CMD_VERIFY  "verify"
 
+#define ENV_VNODE_ID       "VNODE_ID"
 #define ENV_VNODE_METADATA "VNODE_METADATA"
 
 enum {
@@ -54,6 +56,7 @@ void usage() {
 	printf("Usage: [options] \n");
 	printf("Options:\n");
 	printf("--h, --help                      help menu.\n");
+	printf("--t, --target                    FROM Target (alpine:latest)\n");
 	printf("--x, --exec                      command to execute\n");
 	printf("                                 [create delete inspect verify]\n");
 	printf("--c, --capps                     capps config folder\n");
@@ -114,6 +117,8 @@ int main (int argc, char *argv[]) {
 	char *configDir=NULL, *registryURL=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *envVNodeMetaData=NULL;
+	char *envNodeID=NULL;
+	char *target=NULL;
 	Configs *configs=NULL, *ptr=NULL;
 	Node *node=NULL;
 	json_t *jNode=NULL;
@@ -125,6 +130,7 @@ int main (int argc, char *argv[]) {
 
 		static struct option long_options[] = {
 			{ "exec",      required_argument, 0, 'x'},
+			{ "target",    required_argument, 0, 't'},
 			{ "capp",      required_argument, 0, 'c'},
 			{ "registry",  required_argument, 0, 'r'},
 			{ "level",     required_argument, 0, 'l'},
@@ -133,7 +139,7 @@ int main (int argc, char *argv[]) {
 			{ 0,           0,                 0,  0}
 		};
 
-		opt = getopt_long(argc, argv, "x:c:r:l:hV:", long_options, &opdidx);
+		opt = getopt_long(argc, argv, "t:x:c:r:l:hV:", long_options, &opdidx);
 		if (opt == -1) {
 			break;
 		}
@@ -142,6 +148,10 @@ int main (int argc, char *argv[]) {
 		case 'h':
 			usage();
 			exit(0);
+			break;
+
+		case 't':
+		    target = optarg;
 			break;
 
 		case 'x':
@@ -179,21 +189,27 @@ int main (int argc, char *argv[]) {
 
 	envVNodeMetaData = getenv(ENV_VNODE_METADATA);
 	if (envVNodeMetaData == NULL) {
-	  log_error("Env variable: %s not set \n Exiting.", ENV_VNODE_METADATA);
-	  exit(1);
+		log_error("Env variable: %s not set \n Exiting.", ENV_VNODE_METADATA);
+		exit(1);
+	}
+
+	envNodeID = getenv(ENV_VNODE_ID);
+	if (envNodeID == NULL) {
+		log_error("Env variable: %s not set \n Exiting.", ENV_VNODE_ID);
+		exit(1);
 	}
 
 	jNode = json_loads(envVNodeMetaData, JSON_DECODE_ANY, NULL);
 	if (!jNode) {
-	  log_error("Invalid JSON for in env variable: %s\n Exiting",
-				ENV_VNODE_METADATA);
-	  exit(1);
+		log_error("Invalid JSON passed in for the node meta data: %s\n Exiting",
+				  ENV_VNODE_METADATA);
+		exit(1);
 	}
 
 	if (!deserialize_node(&node, jNode)) {
-	  log_error("Unable to deserialize env variable: %s\n Exiting.",
-				ENV_VNODE_METADATA);
-	  exit(1);
+		log_error("Unable to deserialize env variable: %s\n Exiting.",
+				  ENV_VNODE_METADATA);
+		exit(1);
 	}
 
 	if (!read_config_files(&configs, configDir)) {
@@ -206,25 +222,32 @@ int main (int argc, char *argv[]) {
 	/* Build all them capps */
 	ptr = configs;
 	while (ptr) {
-	  if (ptr->valid && ptr->config) {
-		if (!build_capp(ptr->config)) {
-		  log_error("Error building capp %s:%s using config file: %s",
-					ptr->config->capp->name, ptr->config->capp->version,
-					ptr->fileName);
-		  free_configs(configs);
-		  /* XXX clean up build dir */
-		  exit(1);
+		if (ptr->valid && ptr->config) {
+			if (!build_capp(ptr->config)) {
+				log_error("Error building capp %s:%s using config file: %s",
+						  ptr->config->capp->name, ptr->config->capp->version,
+						  ptr->fileName);
+				free_configs(configs);
+				/* XXX clean up build dir */
+				exit(1);
+			}
 		}
-	  }
-	  ptr = ptr->next;
+		ptr = ptr->next;
 	}
 
 	/* Create config file supervisor.d */
 	if (!create_supervisor_config(configs)) {
-	  log_error("Unable to create configuration file for supervisor.d");
-	  purge_supervisor_config(SVISOR_FILENAME);
-	  free_configs(configs);
-	  exit(1);
+		log_error("Unable to create configuration file for supervisor.d");
+		purge_supervisor_config(SVISOR_FILENAME);
+		free_configs(configs);
+		exit(1);
+	}
+
+	/* create the image for the virtual node. */
+	if (!create_vnode_image(target, configs, node)) {
+		log_error("Unable to create image for virtual node");
+		purge_vnode_image(node);
+		goto done;
 	}
 
  done:

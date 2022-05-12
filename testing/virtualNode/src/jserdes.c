@@ -38,53 +38,40 @@ static void log_json(json_t *json) {
  * deserialize_node --
  *
  * {
- * "nodeInfo": {
- *  "UUID": "UK-9001-HNODE-SA03-1103",
- *  "name": "tNode",
- *  "type": 2,
- *  "partNumber": "LTE-BAND-3-0XXXX",
- *  "skew": "UK_TNODE-LTE-0001",
- *  "mac": "10:20:30:20:50:60",
- *  "swVersion": {
- *    "major": 0,
- *    "minor": 1
- *  },
- *  "prodSwVersion": {
- *    "major": 1,
- *    "minor": 1
- *  },
- *  "assemblyDate": "30-07-2020",
- *  "oemName": "SANMINA",
- *  "moduleCount": 3
- *},
- *"nodeConfig": [
- *  {
- *    "UUID": "UK-9001-COM-1103",
- *    "name": "COM",
- *    "type": 0,
- *    "partNumber": "COMv1-X86-0XXXX",
- *    "hwVersion": "REV-A",
- *    "mac": "10:20:30:20:50:60",
- *    "swVersion": {
- *      "major": 0,
- *      "minor": 1
- *    },
- *    "prodSwVersion": {
- *      "major": 1,
- *        "minor": 1
- *    },
- *    "manufacturingDate": "29-07-2020",
- *    "manufacturerName": "FOXCON"
- *  },
- * ]
- *}
+ * "NodeInfo": {
+ *  "type": "hnode",
+ *  "partNumber": "",
+ *  "skew": "",
+ *  "mac": "",
+ *  "swVersion": "",
+ *  "mfgSwVersion": "",
+ *  "assemblyDate": "2022-05-09T14:08:02.985079028-07:00",
+ *  "oem": "",
+ *  "mfgTestStatus": "pending",
+ *  "status": "LabelGenerated"
+ * },
+ *
+ * "NodeConfig": [
+ * {
+ *    "ModuleID": "ukma-sa2219-trx-m0-e479",
+ *    "type": "TRX",
+ *    "partNumber": "",
+ *    "hwVersion": "",
+ *    "mac": "",
+ *    "swVersion": "",
+ *    "mfgSwVersion": "",
+ *    "mfgDate": "2022-05-09T14:08:02.985112609-07:00",
+ *    "mfgName": "",
+ *    "status": "AssemblyCompleted"
+ *  }]
+ * }
  *
  */
 int deserialize_node(Node **node, json_t *json) {
 
 	json_t *jNodeInfo=NULL;
 	json_t *jNodeConfig=NULL;
-	int count;
+	int count=0;
 
 	if (json == NULL) return FALSE;
 
@@ -126,18 +113,12 @@ int deserialize_node(Node **node, json_t *json) {
 		goto failure;
 	}
 
-	/* check to see if we have config for all modules */
-	if (count != (*node)->nodeInfo->moduleCount) {
-	  log_error("Module count from nodeInfo: %d mismatch with array: %d",
-				(*node)->nodeInfo->moduleCount, count);
-	  goto failure;
-	}
-
 	if (!deserialize_node_config(node, jNodeConfig, count)) {
 		log_error("Error deserializing node config");
 		goto failure;
 	}
 
+	(*node)->nodeInfo->moduleCount = count;
 	return TRUE;
 
  failure:
@@ -190,24 +171,27 @@ static int deserialize_node_info(Node **node, json_t *json) {
 	nodeInfo = (*node)->nodeInfo;
 	if (nodeInfo == NULL) return FALSE;
 
-	ret |= get_json_entry(json, JSON_UUID, JSON_STRING,
-						  &nodeInfo->uuid, NULL);
-	ret |= get_json_entry(json, JSON_NAME, JSON_STRING,
-						  &nodeInfo->name, NULL);
-	ret |= get_json_entry(json, JSON_TYPE, JSON_INTEGER,
-						  NULL, &nodeInfo->type);
+	nodeInfo->uuid = NULL; /* will be updated via env var VNODE_ID */
+	ret |= get_json_entry(json, JSON_TYPE, JSON_STRING,
+						  &nodeInfo->type, NULL);
 	ret |= get_json_entry(json, JSON_PART_NUMBER, JSON_STRING,
 						  &nodeInfo->partNumber, NULL);
 	ret |= get_json_entry(json, JSON_SKEW, JSON_STRING,
 						  &nodeInfo->skew, NULL);
 	ret |= get_json_entry(json, JSON_MAC, JSON_STRING,
 						  &nodeInfo->mac, NULL);
+	ret |= get_json_entry(json, JSON_SW_VERSION, JSON_STRING,
+						  &nodeInfo->swVersion, NULL);
+	ret |= get_json_entry(json, JSON_MFG_SW_VERSION, JSON_STRING,
+						  &nodeInfo->mfgSWVersion, NULL);
 	ret |= get_json_entry(json, JSON_ASSEMBLY_DATE, JSON_STRING,
 						  &nodeInfo->assemblyDate, NULL);
-	ret |= get_json_entry(json, JSON_OEM_NAME, JSON_STRING,
-						  &nodeInfo->oemName, NULL);
-	ret |= get_json_entry(json, JSON_MODULE_COUNT, JSON_INTEGER, NULL,
-						  &nodeInfo->moduleCount);
+	ret |= get_json_entry(json, JSON_OEM, JSON_STRING,
+						  &nodeInfo->oem, NULL);
+	ret |= get_json_entry(json, JSON_MFG_TEST_STATUS, JSON_STRING,
+						  &nodeInfo->mfgTestStatus, NULL);
+	ret |= get_json_entry(json, JSON_STATUS, JSON_STRING,
+						  &nodeInfo->status, NULL);
 
 	return ret;
 }
@@ -227,23 +211,27 @@ static int deserialize_node_config_elem(NodeConfig **nodeConfig, json_t *json) {
 	  log_error("Error allocating Memory of size: %lu", sizeof(NodeConfig));
 	  return FALSE;
 	}
-	
-	ret |= get_json_entry(json, JSON_UUID, JSON_STRING,
-						  &(*nodeConfig)->uuid, NULL);
-	ret |= get_json_entry(json, JSON_NAME, JSON_STRING,
-						  &(*nodeConfig)->name, NULL);
-	ret |= get_json_entry(json, JSON_TYPE, JSON_INTEGER,
-						  NULL, &(*nodeConfig)->type);
+
+	ret |= get_json_entry(json, JSON_MODULE_ID, JSON_STRING,
+						  &(*nodeConfig)->moduleID, NULL);
+	ret |= get_json_entry(json, JSON_TYPE, JSON_STRING,
+						  &(*nodeConfig)->type, NULL);
 	ret |= get_json_entry(json, JSON_PART_NUMBER, JSON_STRING,
 						  &(*nodeConfig)->partNumber, NULL);
 	ret |= get_json_entry(json, JSON_HW_VERSION, JSON_STRING,
 						  &(*nodeConfig)->hwVersion, NULL);
 	ret |= get_json_entry(json, JSON_MAC, JSON_STRING,
 						  &(*nodeConfig)->mac, NULL);
-	ret |= get_json_entry(json, JSON_MANUFACTURING_DATE, JSON_STRING,
-						  &(*nodeConfig)->manufacturingDate, NULL);
-	ret |= get_json_entry(json, JSON_MANUFACTURER_NAME, JSON_STRING,
-						  &(*nodeConfig)->manufacturerName, NULL);
+	ret |= get_json_entry(json, JSON_SW_VERSION, JSON_STRING,
+						  &(*nodeConfig)->swVersion, NULL);
+	ret |= get_json_entry(json, JSON_MFG_SW_VERSION, JSON_STRING,
+						  &(*nodeConfig)->mfgSWVersion, NULL);
+	ret |= get_json_entry(json, JSON_MFG_DATE, JSON_STRING,
+						  &(*nodeConfig)->mfgDate, NULL);
+	ret |= get_json_entry(json, JSON_OEM, JSON_STRING,
+						  &(*nodeConfig)->oem, NULL);
+	ret |= get_json_entry(json, JSON_STATUS, JSON_STRING,
+						  &(*nodeConfig)->status, NULL);
 
 	return ret;
 }

@@ -17,26 +17,22 @@
 #define JSON_STRING  1
 #define JSON_INTEGER 2
 
-#define JSON_NODE_INFO          "nodeInfo"
-#define JSON_NODE_CONFIG        "nodeConfig"
-
-#define JSON_UUID               "uuid"
-#define JSON_NAME               "name"
-#define JSON_TYPE               "type"
-#define JSON_PART_NUMBER        "partNumber"
-#define JSON_SKEW               "skew"
-#define JSON_SW_VERSION         "swVersion"
-#define JSON_PROD_SW_VERSION    "prodSwVersion"
-#define JSON_MAJOR              "major"
-#define JSON_MINOR              "minor"  
-#define JSON_ASSEMBLY_DATE      "assemblyDate"
-#define JSON_OEM_NAME           "oemName"
-#define JSON_MODULE_COUNT       "moduleCount"
-
-#define JSON_HW_VERSION         "hwVersion"
-#define JSON_MAC                "mac"
-#define JSON_MANUFACTURING_DATE "manufacturingDate"
-#define JSON_MANUFACTURER_NAME  "manufacturerName"
+#define JSON_NODE_INFO       "nodeInfo"
+#define JSON_NODE_CONFIG     "nodeConfig"
+#define JSON_TYPE            "type"
+#define JSON_PART_NUMBER     "partNumber"
+#define JSON_SKEW            "skew"
+#define JSON_SW_VERSION      "swVersion"
+#define JSON_MFG_SW_VERSION  "mfgSwVersion"
+#define JSON_ASSEMBLY_DATE   "assemblyDate"
+#define JSON_OEM             "oem"
+#define JSON_MFG_TEST_STATUS "mfgTestStatus"
+#define JSON_STATUS          "status"
+#define JSON_MODULE_ID       "moduleID"
+#define JSON_HW_VERSION      "hwVersion"
+#define JSON_MAC             "mac"
+#define JSON_MFG_DATE        "mfgData"
+#define JSON_MFG             "mfgName"
 
 int deserialize_node(Node **node, json_t *json);
 

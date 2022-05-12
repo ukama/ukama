@@ -70,13 +70,17 @@ static void free_node_info(NodeInfo *nodeInfo) {
 
 	ptr = nodeInfo;
 
-	if (ptr->uuid)         free(ptr->uuid);
-	if (ptr->name)         free(ptr->name);
-	if (ptr->partNumber)   free(ptr->partNumber);
-	if (ptr->skew)         free(ptr->skew);
-	if (ptr->mac)          free(ptr->mac);
-	if (ptr->assemblyDate) free(ptr->assemblyDate);
-	if (ptr->oemName)      free(ptr->oemName);
+	if (ptr->uuid)          free(ptr->uuid);
+	if (ptr->type)          free(ptr->type);
+	if (ptr->partNumber)    free(ptr->partNumber);
+	if (ptr->skew)          free(ptr->skew);
+	if (ptr->mac)           free(ptr->mac);
+	if (ptr->swVersion)     free(ptr->swVersion);
+	if (ptr->mfgSWVersion)  free(ptr->mfgSWVersion);
+	if (ptr->assemblyDate)  free(ptr->assemblyDate);
+	if (ptr->oem)           free(ptr->oem);
+	if (ptr->mfgTestStatus) free(ptr->mfgTestStatus);
+	if (ptr->status)        free(ptr->status);
 
 	free(ptr); ptr=NULL;
 }
@@ -93,13 +97,16 @@ void free_node_config(NodeConfig *nodeConfig) {
 
 	ptr = nodeConfig;
 
-	if (ptr->uuid)              free(ptr->uuid);
-	if (ptr->name)              free(ptr->name);
-	if (ptr->partNumber)        free(ptr->partNumber);
-	if (ptr->hwVersion)         free(ptr->hwVersion);
-	if (ptr->mac)               free(ptr->mac);
-	if (ptr->manufacturingDate) free(ptr->manufacturingDate);
-	if (ptr->manufacturerName)  free(ptr->manufacturerName);
+	if (ptr->moduleID)     free(ptr->moduleID);
+	if (ptr->type)         free(ptr->type);
+	if (ptr->partNumber)   free(ptr->partNumber);
+	if (ptr->hwVersion)    free(ptr->hwVersion);
+	if (ptr->mac)          free(ptr->mac);
+	if (ptr->swVersion)    free(ptr->swVersion);
+	if (ptr->mfgSWVersion) free(ptr->mfgSWVersion);
+	if (ptr->mfgDate)      free(ptr->mfgDate);
+	if (ptr->oem)          free(ptr->oem);
+	if (ptr->status)       free(ptr->status);
 
 	free(ptr); ptr=NULL;
 }
