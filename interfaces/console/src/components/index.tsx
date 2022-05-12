@@ -1,4 +1,5 @@
 import Alerts from "./Alerts";
+import AddUser from "./AddUser";
 import UserCard from "./UserCard";
 import TabPanel from "./TabPanel";
 import NodeCard from "./NodesCard";
@@ -46,6 +47,7 @@ import SplitButton from "./SplitButton";
 import {
     NodeDialog,
     BasicDialog,
+    DeactivateUser,
     UserDetailsDialog,
     SoftwareUpdateModal,
     UserActivationDialog,
@@ -55,6 +57,7 @@ import {
 
 export {
     Alerts,
+    AddUser,
     NodeCard,
     UserCard,
     TabPanel,
@@ -82,6 +85,7 @@ export {
     NetworkStatus,
     NodeContainer,
     OptionsPopover,
+    DeactivateUser,
     NodeNetworkTab,
     LoadingWrapper,
     ConsoleSettings,

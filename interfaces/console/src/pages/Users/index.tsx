@@ -4,6 +4,7 @@ import {
     UserDetailsDialog,
     PagePlaceholder,
     LoadingWrapper,
+    AddUser,
 } from "../../components";
 import {
     GetUserDto,
@@ -21,6 +22,7 @@ import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import { TObject } from "../../types";
 
 const userInit = {
     id: "",
@@ -42,6 +44,7 @@ const User = () => {
         isShow: false,
         type: "add",
     });
+    const [showInstallSim, setShowInstallSim] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
     const [
@@ -170,9 +173,22 @@ const User = () => {
         });
     };
 
-    const handleSimInstallation = () => {
-        setSelectedUser(userInit);
-        setSimDialog({ isShow: true, type: "add" });
+    const handleSimInstallation = () => setShowInstallSim(true);
+
+    const handleSimInstallationClose = () => setShowInstallSim(false);
+
+    const handleSimInstallationSubmit = (data: TObject) => {
+        if (data) {
+            addUser({
+                variables: {
+                    data: {
+                        email: data.email as string,
+                        name: data.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
     };
 
     const getSearchValue = (search: string) => {
@@ -205,17 +221,7 @@ const User = () => {
 
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
-        if (simDialog.type === "add") {
-            addUser({
-                variables: {
-                    data: {
-                        email: selectedUser.email,
-                        name: selectedUser.name,
-                        phone: selectedUser.phone,
-                    },
-                },
-            });
-        } else if (simDialog.type === "edit" && selectedUser.id) {
+        if (simDialog.type === "edit" && selectedUser.id) {
             updateUser({
                 variables: {
                     userId: selectedUser.id,
@@ -279,9 +285,7 @@ const User = () => {
                         hyperlink=""
                         showActionButton={true}
                         buttonTitle="Install sims"
-                        handleAction={() =>
-                            setSimDialog({ isShow: true, type: "add" })
-                        }
+                        handleAction={handleSimInstallation}
                         description="No users on network. Install SIMs to get started."
                     />
                 )}
@@ -303,6 +307,14 @@ const User = () => {
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
+                    />
+                )}
+
+                {showInstallSim && (
+                    <AddUser
+                        isOpen={showInstallSim}
+                        handleClose={handleSimInstallationClose}
+                        handleSubmitAction={handleSimInstallationSubmit}
                     />
                 )}
             </LoadingWrapper>
