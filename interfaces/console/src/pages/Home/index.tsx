@@ -106,32 +106,26 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
-    const [
-        deleteNode,
-        {
-            loading: deleteNodeLoading,
-            data: deleteNodeRes,
-            error: deleteNodeError,
-        },
-    ] = useDeleteNodeMutation({
-        onCompleted: () => {
-            setNodeToastNotification({
-                id: "delete-node-success",
-                message: `${deleteNodeRes?.deleteNode?.nodeId} has been deleted successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
-        },
-        onError: () => {
-            setNodeToastNotification({
-                id: "delete-node-success",
-                message: `${deleteNodeError?.message}`,
-                type: "error",
-                show: true,
-            });
-        },
-    });
+    const [deleteNode, { loading: deleteNodeLoading, error: deleteNodeError }] =
+        useDeleteNodeMutation({
+            onCompleted: () => {
+                setNodeToastNotification({
+                    id: "delete-node-success",
+                    message: `${deleteNodeDialog.nodeId} has been deleted successfully!`,
+                    type: "success",
+                    show: true,
+                });
+                refetchGetNodesByOrg();
+            },
+            onError: () => {
+                setNodeToastNotification({
+                    id: "delete-node-success",
+                    message: `${deleteNodeError?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            },
+        });
     const [
         registerNode,
         {
