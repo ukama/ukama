@@ -46,10 +46,6 @@ const (
 type NodeID string
 type ModuleID string
 
-func (m ModuleID) String() string {
-	return string(m)
-}
-
 func (n NodeID) String() string {
 	return string(n)
 }
