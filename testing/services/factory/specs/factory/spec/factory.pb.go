@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.0
 // 	protoc        v3.20.1
-// source: specs/factory/proto/factory.proto
+// source: factory.proto
 
 package spec
 
@@ -33,7 +33,7 @@ type EvtUpdateVirtnode struct {
 func (x *EvtUpdateVirtnode) Reset() {
 	*x = EvtUpdateVirtnode{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_specs_factory_proto_factory_proto_msgTypes[0]
+		mi := &file_factory_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -46,7 +46,7 @@ func (x *EvtUpdateVirtnode) String() string {
 func (*EvtUpdateVirtnode) ProtoMessage() {}
 
 func (x *EvtUpdateVirtnode) ProtoReflect() protoreflect.Message {
-	mi := &file_specs_factory_proto_factory_proto_msgTypes[0]
+	mi := &file_factory_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -59,7 +59,7 @@ func (x *EvtUpdateVirtnode) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EvtUpdateVirtnode.ProtoReflect.Descriptor instead.
 func (*EvtUpdateVirtnode) Descriptor() ([]byte, []int) {
-	return file_specs_factory_proto_factory_proto_rawDescGZIP(), []int{0}
+	return file_factory_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *EvtUpdateVirtnode) GetUuid() string {
@@ -76,37 +76,36 @@ func (x *EvtUpdateVirtnode) GetStatus() string {
 	return ""
 }
 
-var File_specs_factory_proto_factory_proto protoreflect.FileDescriptor
+var File_factory_proto protoreflect.FileDescriptor
 
-var file_specs_factory_proto_factory_proto_rawDesc = []byte{
-	0x0a, 0x21, 0x73, 0x70, 0x65, 0x63, 0x73, 0x2f, 0x66, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x66, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x12, 0x04, 0x6d, 0x61, 0x69, 0x6e, 0x22, 0x3f, 0x0a, 0x11, 0x45, 0x76, 0x74,
-	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x56, 0x69, 0x72, 0x74, 0x6e, 0x6f, 0x64, 0x65, 0x12, 0x12,
-	0x0a, 0x04, 0x75, 0x75, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x75,
-	0x69, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x42, 0x14, 0x5a, 0x12, 0x73, 0x70,
-	0x65, 0x63, 0x73, 0x2f, 0x66, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x2f, 0x73, 0x70, 0x65, 0x63,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+var file_factory_proto_rawDesc = []byte{
+	0x0a, 0x0d, 0x66, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12,
+	0x04, 0x6d, 0x61, 0x69, 0x6e, 0x22, 0x3f, 0x0a, 0x11, 0x45, 0x76, 0x74, 0x55, 0x70, 0x64, 0x61,
+	0x74, 0x65, 0x56, 0x69, 0x72, 0x74, 0x6e, 0x6f, 0x64, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x75, 0x75,
+	0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x75, 0x75, 0x69, 0x64, 0x12, 0x16,
+	0x0a, 0x06, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
+	0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x42, 0x14, 0x5a, 0x12, 0x73, 0x70, 0x65, 0x63, 0x73, 0x2f,
+	0x66, 0x61, 0x63, 0x74, 0x6f, 0x72, 0x79, 0x2f, 0x73, 0x70, 0x65, 0x63, 0x62, 0x06, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
-	file_specs_factory_proto_factory_proto_rawDescOnce sync.Once
-	file_specs_factory_proto_factory_proto_rawDescData = file_specs_factory_proto_factory_proto_rawDesc
+	file_factory_proto_rawDescOnce sync.Once
+	file_factory_proto_rawDescData = file_factory_proto_rawDesc
 )
 
-func file_specs_factory_proto_factory_proto_rawDescGZIP() []byte {
-	file_specs_factory_proto_factory_proto_rawDescOnce.Do(func() {
-		file_specs_factory_proto_factory_proto_rawDescData = protoimpl.X.CompressGZIP(file_specs_factory_proto_factory_proto_rawDescData)
+func file_factory_proto_rawDescGZIP() []byte {
+	file_factory_proto_rawDescOnce.Do(func() {
+		file_factory_proto_rawDescData = protoimpl.X.CompressGZIP(file_factory_proto_rawDescData)
 	})
-	return file_specs_factory_proto_factory_proto_rawDescData
+	return file_factory_proto_rawDescData
 }
 
-var file_specs_factory_proto_factory_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_specs_factory_proto_factory_proto_goTypes = []interface{}{
+var file_factory_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_factory_proto_goTypes = []interface{}{
 	(*EvtUpdateVirtnode)(nil), // 0: main.EvtUpdateVirtnode
 }
-var file_specs_factory_proto_factory_proto_depIdxs = []int32{
+var file_factory_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -114,13 +113,13 @@ var file_specs_factory_proto_factory_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_specs_factory_proto_factory_proto_init() }
-func file_specs_factory_proto_factory_proto_init() {
-	if File_specs_factory_proto_factory_proto != nil {
+func init() { file_factory_proto_init() }
+func file_factory_proto_init() {
+	if File_factory_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_specs_factory_proto_factory_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_factory_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*EvtUpdateVirtnode); i {
 			case 0:
 				return &v.state
@@ -137,18 +136,18 @@ func file_specs_factory_proto_factory_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_specs_factory_proto_factory_proto_rawDesc,
+			RawDescriptor: file_factory_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_specs_factory_proto_factory_proto_goTypes,
-		DependencyIndexes: file_specs_factory_proto_factory_proto_depIdxs,
-		MessageInfos:      file_specs_factory_proto_factory_proto_msgTypes,
+		GoTypes:           file_factory_proto_goTypes,
+		DependencyIndexes: file_factory_proto_depIdxs,
+		MessageInfos:      file_factory_proto_msgTypes,
 	}.Build()
-	File_specs_factory_proto_factory_proto = out.File
-	file_specs_factory_proto_factory_proto_rawDesc = nil
-	file_specs_factory_proto_factory_proto_goTypes = nil
-	file_specs_factory_proto_factory_proto_depIdxs = nil
+	File_factory_proto = out.File
+	file_factory_proto_rawDesc = nil
+	file_factory_proto_goTypes = nil
+	file_factory_proto_depIdxs = nil
 }

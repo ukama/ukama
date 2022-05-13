@@ -1,19 +1,19 @@
 include ../../config.mk
   
-.PHONY: build lint deps
+.PHONY: test build lint deps
 
 # Proto's
 # Common
-FACTORY_PROTO:= specs/factory/proto/factory.proto
-FACTORY_SPEC:= specs/factory/spec/*
+FACTORY_PROTO:= factory.proto
+FACTORY_SPEC:= ./specs/factory/spec
 
-build: factoryspec mock
+build:
 	@echo Building version: \"$(BIN_VER)\"
-	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/testing/factory/cmd/factory/version.Version=$(BIN_VER) -extldflags=-static' -o bin/factory cmd/factory/main.go
+	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/testing/services/factory/cmd/factory/version.Version=$(BIN_VER) -extldflags=-static' -o bin/factory cmd/factory/main.go
 
 # Event  Protobuf Spec 
-factoryspec: 
-	protoc --go_out=./ $(FACTORY_PROTO)
+factoryspec:
+	protoc -I ./specs/factory/proto/ --go_out=. --go-grpc_out=. --govalidators_out=.  $(FACTORY_PROTO)
 
 test:
 	go test -v ./...
@@ -24,8 +24,7 @@ lint:
 
 deps:
 	go get google.golang.org/protobuf/cmd/protoc-gen-go \
-			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
-			github.com/vektra/mockery/v2/.../
+			google.golang.org/grpc/cmd/protoc-gen-go-grpc	
 	go install github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@latest
 
 
@@ -38,4 +37,5 @@ mock: factoryspec
 
 clean:
 	rm -rf ./bin
+	rm -rf $(FACTORY_SPEC)/*
 
