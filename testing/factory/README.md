@@ -77,7 +77,7 @@ cd ukama/transport/router/
 
 ### Request to build a virtualnode
 ```
-URL: localhost:8091/service?looking_to=create_node&type=hnode&count=1
+URL: localhost:8090/service?looking_to=create_node&type=hnode&count=1
 HTTP Method: POST
 ```
 
