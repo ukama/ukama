@@ -519,8 +519,6 @@ int callback_service(const struct _u_request *request,
     log_debug("Request Forward to the service");
   }
 
-
-
   if (ulfius_copy_response(response, fResponse) != U_OK) {
     retCode   = HttpStatus_InternalServerError;
     statusStr = HttpStatusStr(retCode);
