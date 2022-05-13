@@ -3,7 +3,6 @@ package msgbus
 import (
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"strings"
 	"time"
 
