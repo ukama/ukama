@@ -9,9 +9,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/rest"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/testing/factory/cmd/version"
-	"github.com/ukama/ukama/testing/factory/internal"
-	"github.com/ukama/ukama/testing/factory/internal/worker"
+	"github.com/ukama/ukama/testing/services/factory/cmd/version"
+	"github.com/ukama/ukama/testing/services/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal/worker"
 	"github.com/wI2L/fizz"
 )
 

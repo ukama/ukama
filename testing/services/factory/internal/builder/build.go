@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ukama/ukama/testing/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/ukama/ukama/testing/factory/internal/nmr"
+	"github.com/ukama/ukama/testing/services/factory/internal/nmr"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/msgbus"
-	spec "github.com/ukama/ukama/testing/factory/specs/factory/spec"
+	spec "github.com/ukama/ukama/testing/services/factory/specs/factory/spec"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

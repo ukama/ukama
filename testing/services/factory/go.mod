@@ -1,10 +1,10 @@
-module github.com/ukama/ukama/testing/factory
+module github.com/ukama/ukama/testing/services/factory
 
 go 1.17
 
-replace github.com/ukama/ukama/services/common => ../../services/common
+replace github.com/ukama/ukama/services/common => ../../../services/common
 
-replace github.com/ukama/ukama/testing/factory => ./
+replace github.com/ukama/ukama/testing/services/factory => ./
 
 require (
 	github.com/gin-contrib/cors v1.3.1
@@ -43,7 +43,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iamolegga/enviper v1.2.1 // indirect
-	github.com/imdario/mergo v0.3.8 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect

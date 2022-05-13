@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/ukama/ukama/testing/factory/internal"
-	spec "github.com/ukama/ukama/testing/factory/specs/factory/spec"
+	"github.com/ukama/ukama/testing/services/factory/internal"
+	spec "github.com/ukama/ukama/testing/services/factory/specs/factory/spec"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"

@@ -7,11 +7,11 @@ import (
 	"github.com/ukama/ukama/services/common/metrics"
 	sig "github.com/ukama/ukama/services/common/signal"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/testing/factory/internal"
-	"github.com/ukama/ukama/testing/factory/internal/server"
+	"github.com/ukama/ukama/testing/services/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal/server"
 
 	ccmd "github.com/ukama/ukama/services/common/cmd"
-	"github.com/ukama/ukama/testing/factory/cmd/version"
+	"github.com/ukama/ukama/testing/services/factory/cmd/version"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/config"

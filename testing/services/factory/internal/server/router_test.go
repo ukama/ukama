@@ -10,7 +10,7 @@ import (
 
 	"github.com/ukama/ukama/services/common/rest"
 
-	"github.com/ukama/ukama/testing/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 
 func init() {

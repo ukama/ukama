@@ -6,7 +6,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
-	"github.com/ukama/ukama/testing/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 
 type NMR struct {

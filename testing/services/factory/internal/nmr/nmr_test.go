@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/services/common/ukama"
-	"github.com/ukama/ukama/testing/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 
 const (
