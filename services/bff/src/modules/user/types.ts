@@ -1,6 +1,5 @@
 import { IsEmail, IsPhoneNumber } from "class-validator";
 import { Field, InputType, ObjectType } from "type-graphql";
-import { PaginationResponse } from "../../common/types";
 import { GET_STATUS_TYPE } from "../../constants";
 
 @ObjectType()
@@ -56,10 +55,10 @@ export class GetUserDto {
     roaming: boolean;
 
     @Field()
-    dataPlan: number;
+    dataPlan: string;
 
     @Field()
-    dataUsage: number;
+    dataUsage: string;
 }
 
 @ObjectType()
@@ -70,7 +69,7 @@ export class GetUsersDto {
     @Field()
     name: string;
 
-    @Field({ nullable: true })
+    @Field()
     @IsEmail()
     email: string;
 
@@ -78,11 +77,11 @@ export class GetUsersDto {
     @IsPhoneNumber()
     phone: string;
 
-    @Field()
-    dataPlan: number;
+    @Field({ nullable: true })
+    dataPlan: string;
 
-    @Field()
-    dataUsage: number;
+    @Field({ nullable: true })
+    dataUsage: string;
 }
 
 @ObjectType()
@@ -97,23 +96,6 @@ export class GetUserResponseDto {
     length: number;
 }
 
-@ObjectType()
-export class ResidentResponse {
-    @Field(() => [GetUserDto])
-    residents: GetUserDto[];
-
-    @Field()
-    activeResidents: number;
-
-    @Field()
-    totalResidents: number;
-}
-
-@ObjectType()
-export class ResidentsResponse extends PaginationResponse {
-    @Field(() => ResidentResponse)
-    residents: ResidentResponse;
-}
 @ObjectType()
 export class DeactivateResponse {
     @Field()
@@ -145,6 +127,9 @@ export class OrgUserDto {
 
     @Field()
     uuid: string;
+
+    @Field()
+    isDeactivated: boolean;
 }
 
 @ObjectType()
@@ -185,12 +170,24 @@ export class UserSimServices {
 }
 
 @ObjectType()
-export class UserSimUkamaDto {
+export class UserDataUsageDto {
+    @Field()
+    dataUsedBytes: string;
+
+    @Field()
+    dataAllowanceBytes: string;
+}
+
+@ObjectType()
+export class UserServicesDto {
     @Field(() => GET_STATUS_TYPE)
     status: GET_STATUS_TYPE;
 
     @Field(() => UserSimServices)
     services: UserSimServices;
+
+    @Field(() => UserDataUsageDto)
+    usage?: UserDataUsageDto;
 }
 
 @ObjectType()
@@ -201,11 +198,11 @@ export class OrgUserSimDto {
     @Field()
     isPhysical: boolean;
 
-    @Field(() => UserSimUkamaDto)
-    ukama?: UserSimUkamaDto;
+    @Field(() => UserServicesDto)
+    ukama?: UserServicesDto;
 
-    @Field(() => UserSimUkamaDto)
-    carrier?: UserSimUkamaDto;
+    @Field(() => UserServicesDto)
+    carrier?: UserServicesDto;
 }
 
 @ObjectType()
@@ -236,4 +233,10 @@ export class UpdateUserServiceInput {
 
     @Field()
     status: boolean;
+}
+
+@InputType()
+export class DataUsageInputDto {
+    @Field(() => [String])
+    ids: string[];
 }

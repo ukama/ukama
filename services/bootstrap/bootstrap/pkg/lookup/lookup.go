@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/rest"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 )
 
@@ -23,10 +24,6 @@ type RespOrgCredentials struct {
 	OrgCred []byte `json:"certificate,omitempty"`
 }
 
-type ErrorMessage struct {
-	Message string `json:"error"`
-}
-
 func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 
 	return &LookUp{
@@ -37,7 +34,7 @@ func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOrgCredentials, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
 	credResp := &RespOrgCredentials{}
-	errStatus := &ErrorMessage{}
+	errStatus := &rest.ErrorMessage{}
 	resp, err := L.S.C.R().
 		SetResult(credResp).
 		SetError(errStatus).
@@ -59,9 +56,7 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 	}
 
 	logrus.Debugf("Credentials for node are %+v.", credResp)
-	// if err := json.Unmarshal(resp.Body(), credResp); err != nil {
-	// 	return false, nil, fmt.Errorf("validation failure: failed t unmarshal error %s", err.Error())
-	// }
+
 	logrus.Tracef("Credentials for received from %s for nodeid %s is %+v ", L.S.Url.String(), nodeid, credResp)
 
 	return true, credResp, nil

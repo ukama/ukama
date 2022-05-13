@@ -39,11 +39,15 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
       /* Special case for asterik-only. If value is '*', it matches
        * with anything but empty strings */
       if (strcmp(value, ASTERIK_ONLY) == 0 &&
-	  strlen(value) == 1 &&
 	  strlen(ptr->value)) {
 	return TRUE;
       }
 
+      if (strcmp(ptr->value, value) == 0) {
+	return TRUE;
+      }
+
+      /*
       if ((ret=regcomp(&re, value, REG_EXTENDED | REG_NOSUB)) != 0) {
 	return FALSE;
       }
@@ -54,9 +58,9 @@ static int match_all_key_value(Pattern *pattern, char *key, char *value) {
       }
 
       regfree(&re);
+      */
     }
   }
-
   return FALSE;
 }
 
@@ -186,7 +190,7 @@ int find_matching_service(Router *router, Pattern *requestPattern,
 
 	(*forward)->ip          = strdup(services->forward->ip);
 	(*forward)->port        = services->forward->port;
-	(*forward)->defaultPath = strdup(services->forward->defaultPath);
+	(*forward)->defaultPath = strdup(patterns->path);
 
 	return TRUE;
       }

@@ -11,6 +11,7 @@ type Config struct {
 	BootstrapAuth     Auth
 	BootstrapUrl      string
 	DeviceGatewayHost string // should be an IP
+	Queue             config.Queue
 	Debug             Debug
 }
 
@@ -38,6 +39,9 @@ func NewConfig() *Config {
 		},
 		Debug: Debug{
 			DisableBootstrap: false,
+		},
+		Queue: config.Queue{
+			Uri: "amqp://guest:guest@localhost:5672",
 		},
 	}
 }

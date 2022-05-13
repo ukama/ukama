@@ -1,7 +1,6 @@
 import { Grid, Link, Typography } from "@mui/material";
 import { OrgNodeDto } from "../../generated";
 import LoadingWrapper from "../LoadingWrapper";
-
 interface INodeGroup {
     nodes: OrgNodeDto[];
     loading: boolean;

@@ -48,9 +48,9 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
     - name: Login to Amazon ECR
       run: | 
@@ -110,31 +110,25 @@ jobs:
     env: 
       working-directory: services/bootstrap/lookup
     steps:
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 1
-    
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
-    
-    - name: Granting private modules access
-      run: |
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - uses: actions/checkout@v3
+
+      - name: Granting private modules access
+        run: |
             git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
 
-    - name: install staticcheck
-      run: go install honnef.co/go/tools/cmd/staticcheck@latest
-
-    - name: run static check
-      run: staticcheck ./...
-      working-directory: ${{ env.working-directory }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3.1.0
+        with:                
+          working-directory: ${{ env.working-directory }}
 
 
   release:
       name: release
       needs: build
-      #if: github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
         working-directory: services/bootstrap/lookup

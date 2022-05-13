@@ -4,6 +4,13 @@ import (
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 )
 
+// Users group
+
+type GetUserRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
+}
+
 type UserRequest struct {
 	Org      string `path:"org" validate:"required"`
 	SimToken string `json:"simToken"`
@@ -35,6 +42,13 @@ type SimServices struct {
 	Data  *bool `json:"data,omitempty"`
 }
 
+type DeleteUserRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
+}
+
+// Nodes group
+
 type NodesList struct {
 	OrgName string  `json:"orgName"`
 	Nodes   []*Node `json:"nodes"`
@@ -52,25 +66,20 @@ type NodeExtended struct {
 	Attached []*Node `json:"attached,omitempty"`
 }
 
-type GetUserRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
-}
-
 type GetNodeRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	NodeId  string `path:"node" validate:"required"`
-}
-
-type DeleteUserRequest struct {
-	OrgName string `path:"org" validate:"required"`
-	UserId  string `path:"user" validate:"required"`
 }
 
 type AddNodeRequest struct {
 	OrgName  string `path:"org" validate:"required"`
 	NodeId   string `path:"node" validate:"required"`
 	NodeName string `json:"name" validate:"max=255"`
+}
+
+type DeleteNodeRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	NodeId  string `path:"node" validate:"required"`
 }
 
 func MapNodesList(pbList *pb.GetNodesResponse) *NodesList {

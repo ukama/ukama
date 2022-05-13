@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/rest"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 )
 
@@ -16,10 +17,6 @@ const (
 
 type NodeStatus struct {
 	Status string `json:"node_status"`
-}
-
-type ErrorMessage struct {
-	Message string `json:"error"`
 }
 
 type Factory struct {
@@ -36,7 +33,7 @@ func NewFactory(svcR *sr.ServiceRouter) *Factory {
 func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	logrus.Tracef("Validation request for node %s", nodeid)
 	nStatus := &NodeStatus{}
-	errStatus := &ErrorMessage{}
+	errStatus := &rest.ErrorMessage{}
 	resp, err := f.S.C.R().
 		SetResult(nStatus).
 		SetError(errStatus).
