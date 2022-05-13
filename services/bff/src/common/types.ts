@@ -151,10 +151,19 @@ export class MetricInfo {
 }
 
 @ObjectType()
-export class MetricServiceRes {
+export class MetricServiceValueRes {
     @Field(() => MetricInfo)
     metric: MetricInfo;
 
     @Field(() => [MetricValues])
     value: MetricValues[];
+}
+
+@ObjectType()
+export class MetricLatestValueRes {
+    @Field()
+    time: string;
+
+    @Field()
+    value: string;
 }

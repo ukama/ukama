@@ -1,0 +1,112 @@
+{
+    "name": "nmr",
+    "patterns": [
+        {
+            "path": "/ping",
+            "ping": "nmr",
+	    "path" : "/gafsdfgdf"
+        },
+        {
+            "looking_for": "info",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/dfdsdfsdfdf"
+        },
+        {
+            "looking_to": "update",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/"
+        },
+        {
+            "looking_to": "delete",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/"
+        },
+        {
+            "looking_for": "status_info",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/status"
+        },
+        {
+            "looking_to": "status_update",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/status",
+            "status": "StatusNodeIntransit"
+        },
+        {
+            "looking_for": "mfg_status_info",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/mfg_status"
+        },
+        {
+            "looking_to": "mfg_status_update",
+            "mfg_status": "*",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/mfg_status"
+        },
+        {
+            "looking_for": "list",
+            "node": "UK-SA2154-HNODE-A1-0001",
+            "path": "/node/all"
+        },
+        {
+            "looking_for": "info",
+            "module": "*",
+            "path": "/module/"
+        },
+        {
+            "looking_to": "update",
+            "module": "*",
+            "path": "/module/"
+        },
+        {
+            "looking_to": "delete",
+            "module": "*",
+            "path": "/module/"
+        },
+        {
+            "looking_to": "allocate",
+            "module": "*",
+            "path": "/module/"
+        },
+        {
+            "looking_for": "status_info",
+            "module": "*",
+            "path": "/module/status",
+            "status": "*"
+        },
+        {
+            "looking_to": "status_update",
+            "module": "*",
+            "path": "/module/status",
+            "status": "*"
+        },
+        {
+            "field": "*",
+            "looking_for": "field_info",
+            "module": "*",
+            "path": "/module/field"
+        },
+        {
+            "field": "*",
+            "looking_to": "field_update",
+            "module": "*",
+            "path": "/module/field"
+        },
+        {
+            "data": "*",
+            "looking_for": "mfg_info",
+            "module": "*",
+            "path": "/module/data"
+        },
+        {
+            "looking_for": "list",
+            "module": "*",
+            "path": "/module/all"
+        }
+    ],
+    "forward": {
+        "ip": "localhost",
+        "port": 8085,
+        "default_path": "/"
+    }
+}

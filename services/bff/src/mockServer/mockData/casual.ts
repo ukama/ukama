@@ -2,7 +2,6 @@ import * as defaultCasual from "casual";
 import {
     ALERT_TYPE,
     ORG_NODE_STATE,
-    GET_STATUS_TYPE,
     NETWORK_STATUS,
     NODE_TYPE,
 } from "../../constants";
@@ -71,30 +70,6 @@ const node = (): NodeDto => {
         updateDescription:
             "Short introduction.\n\n TL;DR\n\n*** NEW ***\nPoint 1\nPoint 2\nPoint 3\n\n*** IMPROVEMENTS ***\nPoint 1\nPoint 2\nPoint 3\n\n*** FIXES ***\nPoint 1\nPoint 2\nPoint 3\n\nWe would love to hear your feedback -- if you have anything to share, please xyz.",
         updateVersion: "12.4",
-    };
-};
-
-const getUser = (): GetUserDto => {
-    return {
-        id: defaultCasual._uuid(),
-        status: defaultCasual.random_value(GET_STATUS_TYPE),
-        name: defaultCasual._name(),
-        eSimNumber: `# ${defaultCasual.integer(
-            11111,
-            99999
-        )}-${defaultCasual.date("DD-MM-YYYY")}-${defaultCasual.integer(
-            1111111,
-            9999999
-        )}`,
-        iccid: `${defaultCasual.integer(11111, 99999)}${defaultCasual.integer(
-            11010,
-            99999
-        )}${defaultCasual.integer(11010, 99999)}`,
-        email: defaultCasual._email(),
-        phone: defaultCasual._phone(),
-        roaming: defaultCasual.random_value([true, false]),
-        dataPlan: defaultCasual.integer(3, 8),
-        dataUsage: defaultCasual.integer(1, 5),
     };
 };
 const esim = (): EsimDto => {
@@ -231,7 +206,6 @@ defaultCasual.define("dataBill", dataBill);
 defaultCasual.define("alert", alert);
 defaultCasual.define("node", node);
 defaultCasual.define("esim", esim);
-defaultCasual.define("getUser", getUser);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
 defaultCasual.define("network", network);

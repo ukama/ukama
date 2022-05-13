@@ -1359,7 +1359,7 @@ const ROAMING_SELECT = [
     {
         id: 1,
         value: "all",
-        text: "CHANGE ROAMING OPTIONS FOR INDIVIDAL SIMS",
+        text: "CHANGE ROAMING FOR INDIVIDAL SIMS",
     },
     {
         id: 2,
