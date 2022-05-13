@@ -30,8 +30,3 @@ type Simcard struct {
 	Iccid      string `gorm:"primarykey"`
 	Source     string
 }
-
-type SimPool struct {
-	gorm.Model
-	Iccid string `gorm:"primarykey"`
-}

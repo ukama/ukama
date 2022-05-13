@@ -46,6 +46,7 @@ func runGrpcServer() {
 		}
 
 		simmgr.RegisterSimManagerServiceServer(s, pkg.NewSimManagerServer(storage))
+		simmgr.RegisterSimPoolServer(s, pkg.NewSimManagerServer(storage))
 	})
 
 	grpcServer.StartServer()

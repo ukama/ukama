@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"io"
-	"os"
-	"time"
-
 	"github.com/ukama/ukama/services/cloud/users/pkg/server"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
 	"google.golang.org/grpc/credentials/insecure"
+	"io"
+	"os"
 
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 
@@ -46,7 +44,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Org{}, &db.Simcard{}, &db.SimPool{}, &db.User{})
+	err := d.Init(&db.Org{}, &db.Simcard{}, &db.User{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -55,15 +53,17 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 
-	client, conn := newSimManagerClient()
+	simMgr, conn := newSimManagerClient(serviceConfig.SimManager)
 	defer conn.Close()
 
-	simPoolRepo := db.NewIccidpoolRepo(gormdb)
+	simPool, pcon := NewIccidPool(serviceConfig.SimManager)
+	defer pcon.Close()
+
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 		pkg.NewImsiClientProvider(serviceConfig.HssHost),
 		db.NewSimcardRepo(gormdb),
-		sims.NewSimProvider(serviceConfig.SimTokenKey, simPoolRepo),
-		client,
+		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
+		simMgr,
 		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host)
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
@@ -74,23 +74,33 @@ func runGrpcServer(gormdb sql.Db) {
 	grpcServer.StartServer()
 }
 
-func newSimManagerClient() (client pbclient.SimManagerServiceClient, connection io.Closer) {
+func NewIccidPool(conf pkg.SimManager) (pbclient.SimPoolClient, io.Closer) {
+	conn := createGrpcConn(conf)
+	return pbclient.NewSimPoolClient(conn), conn
+}
+
+func newSimManagerClient(conf pkg.SimManager) (client pbclient.SimManagerServiceClient, connection io.Closer) {
+	conn := createGrpcConn(conf)
+
+	return pbclient.NewSimManagerServiceClient(conn), conn
+}
+
+func createGrpcConn(conf pkg.SimManager) *grpc.ClientConn {
 	var conn *grpc.ClientConn
 
 	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), conf.Timeout)
 	defer cancel()
 
-	log.Infoln("Connecting to Sim Manager service ", serviceConfig.SimManager.Host)
+	log.Infoln("Connecting to service ", conf.Host)
 
-	conn, err := grpc.DialContext(ctx, serviceConfig.SimManager.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()),
+	conn, err := grpc.DialContext(ctx, conf.Host, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithConnectParams(
 			grpc.ConnectParams{
-				MinConnectTimeout: time.Second * 5,
+				MinConnectTimeout: conf.Timeout,
 			}))
 	if err != nil {
-		log.Fatalf("Failed to connect to service %s. Error: %v", serviceConfig.SimManager.Host, err)
+		log.Fatalf("Failed to connect to service %s. Error: %v", conf.Host, err)
 	}
-
-	return pbclient.NewSimManagerServiceClient(conn), conn
+	return conn
 }

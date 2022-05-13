@@ -2,10 +2,10 @@ package sims
 
 import (
 	"fmt"
+	"github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/ukama/ukama/services/cloud/users/mocks"
 )
 
 const textToEncode = "{ 'iccid': '8910300000003540855' }"
@@ -62,7 +62,7 @@ func Test_decryptErrors(t *testing.T) {
 func TestSimProvider_GetSimToken(t *testing.T) {
 	iccid := "8910300000003540855"
 
-	sPool := mocks.SimPoolRepo{}
+	sPool := mocks.SimPoolClient{}
 	sProv := NewSimProvider(testKey, &sPool)
 
 	token, err := sProv.GetSimToken(iccid)
