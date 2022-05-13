@@ -406,7 +406,7 @@ func (m *MsgClient) handleTransit(msg amqp.Delivery, handlerFunc func(d amqp.Del
 
 	// Request processed but it may be success or failure
 	case res := <-done:
-		logrus.Debugf("Message %s acknowladged with result %v", msg.MessageId, res)
+		logrus.Debugf("Message %s acknowledged with result %v", msg.MessageId, res)
 		m.sendAck(msg)
 
 	case <-time.After(1 * time.Second):

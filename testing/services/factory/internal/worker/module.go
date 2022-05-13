@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/services/common/ukama"
-	"github.com/ukama/ukama/testing/factory/internal"
+	"github.com/ukama/ukama/testing/services/factory/internal"
 )
 
 func NewComModule() internal.Module {
