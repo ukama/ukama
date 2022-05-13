@@ -1,0 +1,153 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-factory
+on:  
+  push:   
+    paths:
+        - "testing/services/factory/**"
+        - ".github/workflows/testing-services-factory.yaml"
+  workflow_dispatch:
+
+jobs:  
+  build:
+    env: 
+      working-directory: testing/services/factory
+
+    name: build and test
+    runs-on: ubuntu-latest    
+    steps:
+    - uses: actions/checkout@v2
+  
+      # init vars required for tag generation
+    - name: Init vars 
+      id: vars_step
+      run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.18
+      
+    - name: Granting private modules access
+      run: |
+          git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
+  
+    - name: Build testing/services/factory
+      env:
+        BUILD_NUMBER: ${{ github.run_number }}
+      run: make build
+      working-directory: ${{ env.working-directory }}
+
+    - name: Test
+      run: go test -v ./... -coverprofile="coverage.out"
+      working-directory: ${{ env.working-directory }}
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+          aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      run: | 
+            aws ecr get-login-password --region us-east-1 | \
+            buildah login \
+              --username AWS \
+              --password-stdin \
+              003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: OCI build and push
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/factory
+      run: |                        
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                -t $REGISTRY\:latest .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:latest 
+
+    - name: OCI Push testing/services/factory test 
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/factory
+      run: |                        
+            buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+                -t $REGISTRY\:latest-test .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+            buildah push $REGISTRY\:latest-test
+
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@v1.6
+      env:
+        GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir:  ${{ env.working-directory }}
+        args: >
+          -Dsonar.organization=ukama
+          -Dsonar.projectKey=ukama_ukamaX_factory
+          -Dsonar.projectName=${{ env.working-directory }}
+          -Dsonar.go.coverage.reportPaths=coverage.out
+          -Dsonar.test.exclusions=tests/**
+          -Dsonar.tests=tests/
+          -Dsonar.verbose=false
+          -Dsonar.sources=.
+          -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
+          -Dsonar.tests=.
+          -Dsonar.test.inclusions=**/*_test.go
+       
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: testing/services/factory
+    steps:
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+      - uses: actions/checkout@v3
+
+      - name: Granting private modules access
+        run: |
+            git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3.1.0
+        with:                
+          working-directory: ${{ env.working-directory }}
+
+
+  release:
+      name: release
+      needs: build
+      if: github.ref == 'refs/heads/main'
+      runs-on: ubuntu-latest
+      env:
+        working-directory: testing/services/factory
+      steps:
+        # init vars required for tag generation
+        - uses: actions/checkout@v2
+        - name: Init vars
+          id: vars_step
+          run: |
+            echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+            echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+
+        - name: update gitops                
+          uses: denispalnitsky/gitops-release@v9
+          with:
+            filename: "releases/factory-helmfile.yaml"
+            key: "factoryImageTag"
+            value:  ${{ steps.vars_step.outputs.sha_short }}
+            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+            github-org-and-repo: "ukama/infra-as-code"
+            github-user-mail: "bot@ukama.com"
+            github-username: "ukama-bot"
