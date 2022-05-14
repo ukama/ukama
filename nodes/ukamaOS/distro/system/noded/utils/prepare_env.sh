@@ -23,6 +23,16 @@ create_sysfs_for_eeprom() {
 	fi
 }
 
+create_and_write_to_file() {
+	FILE=$1
+	VALUE=$2
+
+	touch ${FILE}
+	[ -f "${FILE}" ] && { echo "${FILE} created."; }
+	echo ${VALUE} > ${FILE}
+	echo "Reading ${FILE}" `cat ${FILE}`
+}
+
 create_sysfs_for_tmp() {
 	COUNT=$1
 	FTEMPVALUE=temp${COUNT}_input
@@ -36,56 +46,16 @@ create_sysfs_for_tmp() {
 	FCRITALARM=temp${COUNT}_crit_alarm
 	FOFFSET=temp${COUNT}_offset
 
-	touch ${FTEMPVALUE}
-	[ -f "${FTEMPVALUE}" ] && { echo "${FTEMPVALUE} created.";}
-	echo 45000 > ${FTEMPVALUE}
-	echo "Reading ${FTEMPVALUE}" `cat ${FTEMPVALUE}`
-
-	touch ${FMINVALUE}
-	[ -f "${FMINVALUE}" ] && { echo "${FMINVALUE} created.";}
-	echo -25000 > ${FMINVALUE}
-	echo "Reading ${FMINVALUE}" `cat ${FMINVALUE}`
-
-	touch ${FMAXVALUE}
-	[ -f "${FMAXVALUE}" ] && { echo "${FMAXVALUE} created.";}
-	echo 75000 > ${FMAXVALUE}
-	echo "Reading ${FMAXVALUE}" `cat ${FMAXVALUE}`
-
-	touch ${FCRITVALUE}
-	[ -f "${FCRITVALUE}" ] && { echo "${FCRITVALUE} created."; }
-	echo 85000 > ${FCRITVALUE}
-	echo "Reading ${FCRITVALUE}" `cat ${FCRITVALUE}`
-
-	touch ${FCRITHYST}
-	[ -f "${FCRITHYST}" ] && { echo "${FCRITHYST} created."; }
-	echo 2000 > ${FCRITHYST}
-	echo "Reading ${FCRITHYST}" `cat ${FCRITHYST}`
-
-	touch ${FMAXHYST}
-	[ -f "${FMAXHYST}" ] && { echo "${FMAXHYST} created."; }
-	echo 2000 > ${FMAXHYST}
-	echo "Reading ${FMAXHYST}" `cat ${FMAXHYST}`
-
-	touch ${FOFFSET}
-	[ -f "${FOFFSET}" ] && { echo "${FOFFSET} created."; }
-	echo 5000 > ${FOFFSET}
-	echo "Reading ${FOFFSET}" `cat ${FOFFSET}`
-
-	touch ${FMINALARM}
-	[ -f "${FMINALARM}" ] && { echo "${FMINALARM} created."; }
-	echo 0 > ${FMINALARM}
-	echo "Reading ${FMINALARM}" `cat ${FMINALARM}`
-
-	touch ${FMAXALARM}
-        [ -f "${FMAXALARM}" ] && { echo "${FMAXALARM} created."; }
-        echo 0 > ${FMAXALARM}
-        echo "Reading ${FMAXALARM}" `cat ${FMAXALARM}`
-
-	touch ${FCRITALARM}
-        [ -f "${FCRITALARM}" ] && { echo "${FCRITALARM} created."; }
-        echo 0 > ${FCRITALARM}
-        echo "Reading ${FCRITALARM}" `cat ${FCRITALARM}`
-
+	create_and_write_to_file ${FTEMPVALUE} 45000
+	create_and_write_to_file ${FMINVALUE}  25000
+	create_and_write_to_file ${FMAXVALUE}  75000
+	create_and_write_to_file ${FCRITVALUE} 85000
+	create_and_write_to_file ${FCRITHYST}  2000
+	create_and_write_to_file ${FMAXHYST}   2000
+	create_and_write_to_file ${FOFFSET}    5000
+	create_and_write_to_file ${FMINALARM}  0
+	create_and_write_to_file ${FMAXALARM}  0
+	create_and_write_to_file ${FCRITALARM} 0
 }
 
 create_sysfs_for_adt7481() {
@@ -104,18 +74,18 @@ create_sysfs_for_adt7481() {
 }
 
 create_sysfs_for_tmp464() {
-        SYSDIRPATH=$1
+    SYSDIRPATH=$1
 	CURDEVNO=$2
-        cd ${SYSDIRPATH};
+    cd ${SYSDIRPATH};
 	mkdir -p tmp464_${CURDEVNO};
-        cd tmp464_${CURDEVNO};
-        CURPWD=`pwd`
-        echo "Currently working in ${CURPWD}."
-        echo "Creating Sysfs For TMP464";
-        for (( iter=1; iter<=3 ; iter++ ))
-        do
-                create_sysfs_for_tmp ${iter}
-        done
+    cd tmp464_${CURDEVNO};
+    CURPWD=`pwd`
+    echo "Currently working in ${CURPWD}."
+    echo "Creating Sysfs For TMP464";
+    for (( iter=1; iter<=3 ; iter++ ))
+    do
+		create_sysfs_for_tmp ${iter}
+    done
 }
 
 create_sysfs_for_se98() {
@@ -125,53 +95,46 @@ create_sysfs_for_se98() {
 	mkdir -p se98_${CURDEVNO}
 	cd se98_${CURDEVNO}
 	CURPWD=`pwd`
-        echo "Currently working in ${CURPWD}."
-        echo "Creating Sysfs For SE98";
-        for (( iter=1; iter<=1 ; iter++ ))
-        do
-                create_sysfs_for_tmp ${iter}
-        done
+    echo "Currently working in ${CURPWD}."
+    echo "Creating Sysfs For SE98";
+    for (( iter=1; iter<=1 ; iter++ ))
+    do
+		create_sysfs_for_tmp ${iter}
+	done
 }
 
 create_sysfs_for_att() {
 	SYSDIRPATH=$1
 	NUM=$2
 	cd ${SYSDIRPATH};
-        mkdir -p att${NUM}
+    mkdir -p att${NUM}
 	cd att${NUM}
 
-	touch in0_attvalue
-	echo 63 > in0_attvalue
-
-	touch in0_latch
-	echo 0 > in0_latch
+	create_and_write_to_file in0_attvalue 63
+	create_and_write_to_file in0_latch    0
 }
 
 create_sysfs_led() {
 	SDIR=$1
 	mkdir -p ${SDIR};
-        cd ${SDIR};
-	touch brightness;
-	echo 0 > brightenss;
-	touch max_brightness;
-	echo 255 > max_brightness;
-	touch trigger
-	echo "none" > trigger	
+    cd ${SDIR};
+
+	create_and_write_to_file brightness     0
+	create_and_write_to_file max_brightness 255
+	create_and_write_to_file trigger        "none"
 }
 
 create_sysfs_for_leds() {
 	SYSDIRPATH=${SYSFSLED}
-        LEDNUM=$2
+    LEDNUM=$2
 	LEDDIR=led${LEDNUM} 
 	cd ${SYSDIRPATH};
-        mkdir -p ${LEDDIR}
+    mkdir -p ${LEDDIR}
 	cd ${LEDDIR}
 	CPWD=`pwd`
 	cd ${CPWD}
 	create_sysfs_led red
-	cd ${CPWD}
-        create_sysfs_led green
-	cd ${CPWD}
+    create_sysfs_led green
 	create_sysfs_led blue	
 }	
 
@@ -183,29 +146,15 @@ create_sysfs_for_ads1015() {
 	cd ${SYSDIRPATH}
 	mkdir -p ${SDIR}
 	cd ${SDIR}
-	touch in0_input
-        echo $RANDOM > in0_input
-	
-	touch in1_input
-        echo $RANDOM > in1_input
 
-	touch in2_input
-        echo $RANDOM > in2_input
-
-	touch in3_input
-        echo $RANDOM > in3_input
-
-	touch in4_input
-        echo $RANDOM > in4_input
-
-	touch in5_input
-        echo $RANDOM > in5_input
-
-	touch in6_input
-        echo $RANDOM > in6_input
-
-	touch in7_input
-        echo $RANDOM > in7_input		
+	create_and_write_to_file in0_input $RANDOM
+	create_and_write_to_file in1_input $RANDOM
+	create_and_write_to_file in2_input $RANDOM
+	create_and_write_to_file in3_input $RANDOM
+	create_and_write_to_file in4_input $RANDOM
+	create_and_write_to_file in5_input $RANDOM
+	create_and_write_to_file in6_input $RANDOM
+	create_and_write_to_file in7_input $RANDOM
 }
 
 create_sysfs_for_inpgpio() {
@@ -214,42 +163,38 @@ create_sysfs_for_inpgpio() {
 	cd ${SYSDIRPATH};
 	mkdir -p gpio${GPIONUM}
 	cd gpio${GPIONUM}
-	touch direction 
-	echo "in" > direction;
-	touch value
-	echo 1 > value
-	touch edge
-	echo "rising" > edge
-	touch active_low
-	echo 0 > polarity
+
+	create_and_write_to_file direction  "in"
+	create_and_write_to_file value      1
+	create_and_write_to_file edge       "rising"
+	create_and_write_to_file active_low ""
+	create_and_write_to_file polairy    0
 }
 
 create_sysfs_for_outgpio() {
-        SYSDIRPATH=${SYSFSDIRGPIO}
-        GPIONUM=$1
-        cd ${SYSDIRPATH};
-        mkdir -p gpio${GPIONUM}
-        cd gpio${GPIONUM}
-        touch direction
-        echo "out" > direction;
-        touch value
-        echo 1 > value
-        touch edge
-        echo "both" > edge
-        touch active_low
-        echo 0 > polarity
+	SYSDIRPATH=${SYSFSDIRGPIO}
+    GPIONUM=$1
+    cd ${SYSDIRPATH};
+    mkdir -p gpio${GPIONUM}
+    cd gpio${GPIONUM}
+
+	create_and_write_to_file direction  "out"
+	create_and_write_to_file value      1
+	create_and_write_to_file edge       "both"
+	create_and_write_to_file active_low ""
+	create_and_write_to_file polairy    0
 }
 
 
 create_sysfs_for_ina226() {
 	SYSDIRPATH=$1
-        CURDEVNO=$2
-        cd ${SYSDIRPATH};
-        mkdir -p ina226_${CURDEVNO}
-        cd ina226_${CURDEVNO}
-        CURPWD=`pwd`
-        echo "Currently working in ${CURPWD}."
-        echo "Creating Sysfs For INA226";
+    CURDEVNO=$2
+    cd ${SYSDIRPATH};
+    mkdir -p ina226_${CURDEVNO}
+    cd ina226_${CURDEVNO}
+    CURPWD=`pwd`
+    echo "Currently working in ${CURPWD}."
+    echo "Creating Sysfs For INA226";
 	
 	SHUNTVOLTAGE=in0_input
 	BUSVOLTAGE=in1_input
@@ -291,15 +236,14 @@ create_sysfs_for_ina226() {
 	done
 
 	INASYSFS_ALARM=(${SHUNTVOLTAGECRITLOWALARM} ${SHUNTVOLTAGECRITHIGHALARM} ${BUSVOLTAGECRITLOWALARM} ${BUSVOLTAGECRITHIGHALARM} ${CRITHIGHPWRALARM} )
-	 for FILE in "${INASYSFS_ALARM[@]}"
-        do
-                echo ${FILE}
-                touch ${FILE}
-                [ -f "${FILE}" ] && { echo "${FILE} created."; }
-                echo 0 > ${FILE}
-                echo "Reading ${FILE}" `cat ${FILE}`
-        done
-
+	for FILE in "${INASYSFS_ALARM[@]}"
+	do
+		echo ${FILE}
+        touch ${FILE}
+        [ -f "${FILE}" ] && { echo "${FILE} created."; }
+		echo 0 > ${FILE}
+        echo "Reading ${FILE}" `cat ${FILE}`
+	done
 }
 
 create_sysfs_for_module() {
@@ -316,89 +260,56 @@ create_sysfs_for_module() {
 			create_sysfs_for_eeprom 0 0050 ${UNIT} ${MASTER}
 			cd ${MODDIR}	
 			create_sysfs_for_tmp464 ${MODDIR} 1 
-			cd ${MODDIR}
 			create_sysfs_for_tmp464 ${MODDIR} 2
-			cd ${MODDIR}
 			create_sysfs_for_se98 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 2
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 3
-			cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 0
-                        cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 1
-                        cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 2
-                        cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 3
-                        cd ${MODDIR}
-                        ;;
+            create_sysfs_for_leds ${MODDIR} 0
+            create_sysfs_for_leds ${MODDIR} 1
+            create_sysfs_for_leds ${MODDIR} 2
+            create_sysfs_for_leds ${MODDIR} 3
+            ;;
 
 		2)
 			create_sysfs_for_eeprom 1 0050 ${UNIT} ${MASTER}
-                        cd ${MODDIR}
+            cd ${MODDIR}
 			create_sysfs_for_tmp464 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_tmp464 ${MODDIR} 2
-			cd ${MODDIR}
 			create_sysfs_for_se98 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 2
-			cd ${MODDIR}
 			;;
 		3)
 			create_sysfs_for_eeprom 1 0051 ${UNIT} ${MASTER}
-                        cd ${MODDIR}
+            cd ${MODDIR}
 			create_sysfs_for_adt7481 ${MODDIR} 1
-			cd ${MODDIR}
 			create_sysfs_for_ina226 ${MODDIR} 1
-                	cd ${MODDIR}
 			;;
 		4)
 			create_sysfs_for_eeprom 1 0052 ${UNIT} ${MASTER} 
 			cd ${MODDIR}
-                        create_sysfs_for_se98 ${MODDIR} 1
-                        cd ${MODDIR}
+            create_sysfs_for_se98 ${MODDIR} 1
 			create_sysfs_for_tmp464 ${MODDIR} 1
-                        cd ${MODDIR}
 			create_sysfs_for_ads1015 ${MODDIR} 1
-                        cd ${MODDIR}
 			create_sysfs_for_att ${MODDIR} 1
-                        cd ${MODDIR}
 			create_sysfs_for_att ${MODDIR} 2
-                        cd ${MODDIR}
 			create_sysfs_for_inpgpio 38
-			cd ${MODDIR}
-                        create_sysfs_for_inpgpio 35
-			cd ${MODDIR}
-                        create_sysfs_for_inpgpio 34
-			cd ${MODDIR}
-                        create_sysfs_for_outgpio 63
-                        cd ${MODDIR}
-                        create_sysfs_for_outgpio 61
-                        cd ${MODDIR}
-                        create_sysfs_for_outgpio 40
+            create_sysfs_for_inpgpio 35
+            create_sysfs_for_inpgpio 34
+            create_sysfs_for_outgpio 63
+            create_sysfs_for_outgpio 61
+            create_sysfs_for_outgpio 40
 			;;
 		5)
 			create_sysfs_for_eeprom 0 0051 ${UNIT} ${MASTER}
-                        cd ${MODDIR}
+            cd ${MODDIR}
 			create_sysfs_for_se98 ${MODDIR} 1
-			cd ${MODDIR}
-                        create_sysfs_for_tmp464 ${MODDIR} 1
-			cd ${MODDIR}
+            create_sysfs_for_tmp464 ${MODDIR} 1
 			create_sysfs_for_leds ${MODDIR} 0
-			cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 1
-			cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 2
-			cd ${MODDIR}
-                        create_sysfs_for_leds ${MODDIR} 3
-			cd ${MODDIR}
+            create_sysfs_for_leds ${MODDIR} 1
+            create_sysfs_for_leds ${MODDIR} 2
+            create_sysfs_for_leds ${MODDIR} 3
 			;;
 		*)
 			echo "Unknown module number."
@@ -425,25 +336,31 @@ CPWD=$1
 UNITTYPE=$2
 echo "Current Working DIR is ${CPWD}"
 case ${UNITTYPE} in
-	"cnode-lte")
-		echo "Creating sysfs for CNODE { COM, LTE, MASK }"
-		#COM
-		cd ${SYSFSDIR}
-		create_sysfs_for_module "cnode" 1 1
-		#LTE
+	"hnode")
+		echo "Creating sysfs for homeNode {Modules: TRX}"
+		# TRX
 		cd ${SYSFSDIR}
 		create_sysfs_for_module "cnode" 2 0
-		#MASK  
+		;;
+	"tnode")
+		echo "Creating sysfs for toweNode {Modules: COM, TRX, MASK}"
+		# COM
+		cd ${SYSFSDIR}
+		create_sysfs_for_module "cnode" 1 1
+		# TRX
+		cd ${SYSFSDIR}
+		create_sysfs_for_module "cnode" 2 0
+		# MASK
 		cd ${SYSFSDIR}
 		create_sysfs_for_module "cnode" 3 0
 		;;
 	"anode")				
-		echo "Creating sysfs for ANODE { RF-CTRL , RF-FE }"
+		echo "Creating sysfs for amplifierNode {Modules: CTRL, FE}"
 		cd ${SYSFSDIR}
-		#RF-FE BOARD
+		# FE
 		create_sysfs_for_module "anode" 4 0
 		cd ${SYSFSDIR}
-		# RF-CTRL-BOARD
+		# CTRL
 		create_sysfs_for_module  "anode" 5 1
 		;;
 	*)
@@ -452,7 +369,6 @@ case ${UNITTYPE} in
 esac
 sync;
 }
-
 
 mkdir -p ${SYSDIR} ${SYSFSDIRHWMON} ${SYSFSDIRGPIO} ${SYSFSLED}
 cd ${SYSDIRHWMON}
@@ -468,8 +384,8 @@ do
 	arg="$1"
 	case "${arg}" in
 	-u| --unittype)
-		UNITIN="$2"	
-       		create_sysfs_for_unit ${CURPWD} ${UNITIN}
+		UNITIN="$2"
+		create_sysfs_for_unit ${CURPWD} ${UNITIN}
 		shift 
 		shift
 		;;
