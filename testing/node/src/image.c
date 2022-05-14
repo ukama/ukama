@@ -188,31 +188,35 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 
 	/* Step:0 clean and build the needed tools */
 	sprintf(runMe, "%s clean %s", SCRIPT, nodeInfo->uuid);
-	if (system(runMe) < 0) return FALSE;
+	if (system(runMe) < 0) goto failure;
 
 	sprintf(runMe, "%s init", SCRIPT);
-	if (system(runMe) < 0) return FALSE;
+	if (system(runMe) < 0) goto failure;
 
 	/* Step:1 create sys using prepare_env.sh */
 	/* 'sysfs type uuid module_metadata' */
 	append_module_metadata(node, &buffer);
 	sprintf(runMe, "%s sysfs %s %s \"%s\"", SCRIPT,
 			nodeInfo->type, nodeInfo->uuid, buffer);
-	if (system(runMe) < 0) return FALSE;
+	if (system(runMe) < 0) goto failure;
 
 	/* Step:2 create the container file */
 	if (!create_container_file(target, config, node)) {
 		log_error("Unable to create container file: %s", CONTAINER_FILE);
-		return FALSE;
+		goto failure;
 	}
 
 	/* Step:3 run buildah */
 	/* build container_file type-uuid */
 	sprintf(runMe, "%s build %s %s-%s", SCRIPT, CONTAINER_FILE,
 			nodeInfo->type, nodeInfo->uuid);
-	if (system(runMe) < 0) return FALSE;
-	
+	if (system(runMe) < 0) goto failure;
+
 	return TRUE;
+
+ failure:
+	if (buffer) free(buffer);
+	return FALSE;
 }
 
 /*

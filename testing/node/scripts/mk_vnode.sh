@@ -115,8 +115,7 @@ case "$ACTION" in
 		buildah rmi -f localhost/$1
 		rm -rf ${BUILD_DIR}
 		cd ${NODED_ROOT} && make clean && cd ${CWD}
-	;;
-	
+		;;
 esac
 
 exit
