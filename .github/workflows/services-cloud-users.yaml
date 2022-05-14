@@ -34,8 +34,7 @@ jobs:
     env: 
       working-directory: services/cloud/users
     steps:
-      - uses: actions/setup-go@v3
-            
+      - uses: actions/checkout@v3
       - name: scan
         uses: ./.github/actions/sonar-go
         with:
@@ -52,7 +51,8 @@ jobs:
       working-directory: services/cloud/users
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/lint-go
+      - name: lint
+        uses: ./.github/actions/lint-go
         with:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
@@ -65,13 +65,12 @@ jobs:
       runs-on: ubuntu-latest
       env:
         working-directory: services/cloud/users
-      steps:        
+      steps:
         - uses: actions/checkout@v3
         
         - name: Init vars
           id: vars_step
           uses: ./.github/actions/git-vars
-
 
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
