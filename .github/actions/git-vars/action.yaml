@@ -1,0 +1,23 @@
+name: Init git vars 
+description: Initialize extra git vars
+
+outputs:
+  branch:
+    description: The branch name
+    value: ${{ steps.vars_step.outputs.branch }}
+
+  sha-sort:
+    description: Short git SHA 
+    value: ${{ steps.vars_step.outputs.sha_short }}
+
+    
+runs:
+  using: "composite"
+  steps:  
+
+    - name: Init vars
+      shell: bash
+      id: vars_step
+      run: |
+        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"

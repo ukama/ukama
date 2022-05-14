@@ -1,0 +1,50 @@
+name: Run sonar scan
+description: Build application and image
+
+inputs:
+  project-key:
+    description: Sonarcloud project key 
+    required: true
+  sonar-token:
+    description: API token for sonarcloud
+    required: true
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true  
+
+runs:
+  using: "composite"
+  steps:  
+
+  - uses: actions/cache@v3
+    with:
+      path: |
+        ~/.cache/go-build
+        ~/go/pkg/mod
+        /opt/sonar-scanner/.sonar/cache      
+      key: ${{ runner.os }}-go-ukama
+      restore-keys: |
+        ${{ runner.os }}-go-
+
+  - name: SonarCloud Scan
+    uses: sonarsource/sonarcloud-github-action@v1.6
+    env:
+      GITHUB_TOKEN: ${{ inputs.github-bot-token }}
+      SONAR_TOKEN: ${{ inputs.sonar-token }}
+    with:
+      projectBaseDir:  ${{ inputs.working-directory }}
+      args: >
+        -Dsonar.organization=ukama
+        -Dsonar.projectKey=${{ inputs.project-key }}
+        -Dsonar.projectName=${{ inputs.working-directory }}
+        -Dsonar.go.coverage.reportPaths=coverage.out
+        -Dsonar.test.exclusions=tests/**
+        -Dsonar.tests=tests/
+        -Dsonar.verbose=false
+        -Dsonar.sources=.
+        -Dsonar.exclusions=**/*_test.go,mocks/**,pb/**,test/**
+        -Dsonar.tests=.
+        -Dsonar.test.inclusions=**/*_test.go
