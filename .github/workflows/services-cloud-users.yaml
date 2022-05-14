@@ -45,29 +45,18 @@ jobs:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           project-key: ukama_ukamaX_users
 
- 
-       
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
       working-directory: services/cloud/users
     steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.18
-
       - uses: actions/checkout@v3
-
-      - name: Granting private modules access
-        run: |
-            git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
-
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3.1.0
-        with:                
+      - uses: ./.github/actions/lint-go
+        with:
           working-directory: ${{ env.working-directory }}
-
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          
 
   release:
       name: release
