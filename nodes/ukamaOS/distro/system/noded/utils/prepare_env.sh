@@ -1,5 +1,6 @@
 #!/bin/bash
-#Copyright (c) 2021-present, Ukama.
+#Copyright (c) 2021-present, Ukama Inc.
+# All rights reserved.
 
 SYSDIR=/tmp/sys
 SYSFSDIRHWMON=/tmp/sys/class/hwmon/hwmon0/
@@ -261,14 +262,14 @@ create_sysfs_for_module() {
 			cd ${MODDIR}	
 			create_sysfs_for_tmp464 ${MODDIR} 1 
 			create_sysfs_for_tmp464 ${MODDIR} 2
-			create_sysfs_for_se98 ${MODDIR} 1
+			create_sysfs_for_se98   ${MODDIR} 1
 			create_sysfs_for_ina226 ${MODDIR} 1
 			create_sysfs_for_ina226 ${MODDIR} 2
 			create_sysfs_for_ina226 ${MODDIR} 3
-            create_sysfs_for_leds ${MODDIR} 0
-            create_sysfs_for_leds ${MODDIR} 1
-            create_sysfs_for_leds ${MODDIR} 2
-            create_sysfs_for_leds ${MODDIR} 3
+            create_sysfs_for_leds   ${MODDIR} 0
+            create_sysfs_for_leds   ${MODDIR} 1
+            create_sysfs_for_leds   ${MODDIR} 2
+            create_sysfs_for_leds   ${MODDIR} 3
             ;;
 
 		2)
@@ -276,7 +277,7 @@ create_sysfs_for_module() {
             cd ${MODDIR}
 			create_sysfs_for_tmp464 ${MODDIR} 1
 			create_sysfs_for_tmp464 ${MODDIR} 2
-			create_sysfs_for_se98 ${MODDIR} 1
+			create_sysfs_for_se98   ${MODDIR} 1
 			create_sysfs_for_ina226 ${MODDIR} 1
 			create_sysfs_for_ina226 ${MODDIR} 2
 			;;
@@ -284,16 +285,16 @@ create_sysfs_for_module() {
 			create_sysfs_for_eeprom 1 0051 ${UNIT} ${MASTER}
             cd ${MODDIR}
 			create_sysfs_for_adt7481 ${MODDIR} 1
-			create_sysfs_for_ina226 ${MODDIR} 1
+			create_sysfs_for_ina226  ${MODDIR} 1
 			;;
 		4)
 			create_sysfs_for_eeprom 1 0052 ${UNIT} ${MASTER} 
 			cd ${MODDIR}
-            create_sysfs_for_se98 ${MODDIR} 1
-			create_sysfs_for_tmp464 ${MODDIR} 1
+            create_sysfs_for_se98    ${MODDIR} 1
+			create_sysfs_for_tmp464  ${MODDIR} 1
 			create_sysfs_for_ads1015 ${MODDIR} 1
-			create_sysfs_for_att ${MODDIR} 1
-			create_sysfs_for_att ${MODDIR} 2
+			create_sysfs_for_att     ${MODDIR} 1
+			create_sysfs_for_att     ${MODDIR} 2
 			create_sysfs_for_inpgpio 38
             create_sysfs_for_inpgpio 35
             create_sysfs_for_inpgpio 34
@@ -304,12 +305,12 @@ create_sysfs_for_module() {
 		5)
 			create_sysfs_for_eeprom 0 0051 ${UNIT} ${MASTER}
             cd ${MODDIR}
-			create_sysfs_for_se98 ${MODDIR} 1
+			create_sysfs_for_se98   ${MODDIR} 1
             create_sysfs_for_tmp464 ${MODDIR} 1
-			create_sysfs_for_leds ${MODDIR} 0
-            create_sysfs_for_leds ${MODDIR} 1
-            create_sysfs_for_leds ${MODDIR} 2
-            create_sysfs_for_leds ${MODDIR} 3
+			create_sysfs_for_leds   ${MODDIR} 0
+            create_sysfs_for_leds   ${MODDIR} 1
+            create_sysfs_for_leds   ${MODDIR} 2
+            create_sysfs_for_leds   ${MODDIR} 3
 			;;
 		*)
 			echo "Unknown module number."
