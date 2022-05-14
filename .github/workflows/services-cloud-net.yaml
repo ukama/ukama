@@ -36,8 +36,8 @@ jobs:
       working-directory: ${{ env.working-directory }}
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/net-listener
-      run: |                        
-            buildah bud -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+      run: |
+            buildah bud --pull -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                 -t $REGISTRY\:latest .  && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
