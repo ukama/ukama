@@ -37,8 +37,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: scan
         uses: ./.github/actions/sonar-go
-        with:
-          registry-name: node-metrics
+        with:          
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}

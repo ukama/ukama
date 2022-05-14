@@ -37,11 +37,11 @@ jobs:
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/net-listener
       run: |
-            buildah bud --pull -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+            buildah bud --pull -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                 -t $REGISTRY\:latest .  && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
             buildah push $REGISTRY\:latest 
     
   sonar-scan:
