@@ -10,6 +10,20 @@ type VNodeRepo struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: nodeId
+func (_m *VNodeRepo) Delete(nodeId string) error {
+	ret := _m.Called(nodeId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(nodeId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetInfo provides a mock function with given fields: nodeId
 func (_m *VNodeRepo) GetInfo(nodeId string) (*db.VNode, error) {
 	ret := _m.Called(nodeId)

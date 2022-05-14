@@ -52,7 +52,7 @@ func (n *NMR) NmrLookForNode(nodeID string) error {
 	}
 
 	if nodeResp.Status != "StatusNodeIntransit" {
-		logrus.Errorf("Invalid node status for Node %d Status reported %s", nodeID, nodeResp.Status)
+		logrus.Errorf("Invalid node status for Node %s Status reported %s", nodeID, nodeResp.Status)
 		return fmt.Errorf("NMR validation failure: Invalid node state %s", nodeResp.Status)
 	}
 

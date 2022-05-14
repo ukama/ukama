@@ -33,3 +33,8 @@ type ReqGetNodeList struct {
 type RespGetNodeList struct {
 	NodeList []db.VNode `json:"nodes"`
 }
+
+type ReqDeleteNode struct {
+	NodeID    string `query:"node" validate:"required"`
+	LookingTo string `query:"looking_for" validate:"eq=vnode_delete,required"`
+}

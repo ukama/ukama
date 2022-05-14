@@ -67,6 +67,7 @@ func (r *Router) init() {
 	node.GET("", nil, tonic.Handler(r.GetInfo, http.StatusOK))
 	node.PUT("/poweron", nil, tonic.Handler(r.PutPowerOn, http.StatusOK))
 	node.PUT("/poweroff", nil, tonic.Handler(r.PutPowerOff, http.StatusOK))
+	node.DELETE("", nil, tonic.Handler(r.DeleteNode, http.StatusOK))
 
 	list := r.fizz.Group(ListPath, "List", "Virtual Node list")
 	list.GET("", nil, tonic.Handler(r.GetList, http.StatusOK))
@@ -197,4 +198,37 @@ func (r *Router) GetList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList,
 	}
 
 	return resp, nil
+}
+
+func (r *Router) DeleteNode(c *gin.Context, req *ReqDeleteNode) error {
+	logrus.Debugf("Handling delete node info %+v.", req)
+
+	node, err := r.repo.GetInfo(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Failed to find node:" + err.Error(),
+		}
+	}
+
+	/* If Node is ON */
+	if node.Status == db.VNodeOn.String() {
+		err = r.c.PowerOffNode(req.NodeID)
+		if err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  "Failed to power off node :" + err.Error(),
+			}
+		}
+
+		err = r.repo.Delete(req.NodeID)
+		if err != nil {
+			return rest.HttpError{
+				HttpCode: http.StatusInternalServerError,
+				Message:  "Failed to remove node from db:" + err.Error(),
+			}
+		}
+
+	}
+	return nil
 }

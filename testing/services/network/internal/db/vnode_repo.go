@@ -12,6 +12,7 @@ type VNodeRepo interface {
 	PowerOff(nodeId string) error
 	GetInfo(nodeId string) (*VNode, error)
 	List() (*[]VNode, error)
+	Delete(nodeId string) error
 }
 
 type vNodeRepo struct {
@@ -78,4 +79,13 @@ func (r *vNodeRepo) List() (*[]VNode, error) {
 	} else {
 		return &vNodes, nil
 	}
+}
+
+/* Delete VirtNode info */
+func (r *vNodeRepo) Delete(nodeId string) error {
+	result := r.Db.GetGormDb().Unscoped().Where("node_id = ?", nodeId).Delete(&VNode{})
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
