@@ -1,18 +1,18 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-device-feeder
+name: build-node-metrics
 on:  
   push:   
     paths:
-        - "services/cloud/device-feeder/**"
-        - ".github/workflows/services-cloud-device-feeder.yaml"
+        - "services/metrics/node-metrics/**"
+        - ".github/workflows/services-metrics-node-metrics.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: services/cloud/device-feeder
+      working-directory: services/metrics/node-metrics
 
     name: build and test
     runs-on: ubuntu-latest
@@ -22,7 +22,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: device-feeder
+        registry-name: node-metrics
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,23 +32,23 @@ jobs:
     name: sonar-scan
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/device-feeder
+      working-directory: services/metrics/node-metrics
     steps:
       - uses: actions/checkout@v3
       - name: scan
         uses: ./.github/actions/sonar-go
         with:
-          registry-name: device-feeder
+          registry-name: node-metrics
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_ukamaX_device-feeder
+          project-key: ukama_ukamaX_node-metrics
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/device-feeder
+      working-directory: services/metrics/node-metrics
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -64,7 +64,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: services/cloud/device-feeder
+        working-directory: services/metrics/node-metrics
       steps:
         - uses: actions/checkout@v3
         
@@ -75,8 +75,8 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/ukamax-helmfile.yaml"
-            key: "devicefeederImageTag"
+            filename: "releases/node-metrics-helmfile.yaml"
+            key: "nodemetricsImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
