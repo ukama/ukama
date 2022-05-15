@@ -57,9 +57,8 @@ build_sysfs() {
 	CWD=`pwd`
 	NODE_TPYE=$1
 	NODE_UUID=$2
-	MODULES_METADATA=$3
 
-	${NODED_ROOT}/utils/prepare_env.sh clean
+	${NODED_ROOT}/utils/prepare_env.sh --clean
 	${NODED_ROOT}/utils/prepare_env.sh --unittype $1
 
 	# genSchema --u UK-7001-HNODE-SA03-1102 \
@@ -71,7 +70,7 @@ build_sysfs() {
 	mkdir -p ${BUILD_DIR}/schemas
 	cp ${NODED_ROOT}/mfgdata/schema/*.json  ${BUILD_DIR}/schemas
 
-	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $MODULE_METADATA
+	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $VNODE_SCHEMA_ARGS
 
 	# create EEPROM data using genInventory
 	${BUILD_DIR}/utils/genInventory $MODULE_METADATA
@@ -103,7 +102,7 @@ case "$ACTION" in
 		build_utils
 		;;
 	"sysfs")
-		build_sysfs $2 $3 $4
+		build_sysfs $2 $3
 		;;
 	"build")
 		build_image $1 $2

@@ -17,6 +17,8 @@
 #define CONTAINER_FILE "ContainerFile"
 #define MAX_BUFFER 1024
 
+#define ENV_VNODE_SCHEMA_ARGS "VNODE_SCHEMA_ARGS"
+
 #define SCHEMA_FILE_COM    "com.json"
 #define SCHEMA_FILE_TRX    "trx.json"
 #define SCHEMA_FILE_MASK   "mask.json"

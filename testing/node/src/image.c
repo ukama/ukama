@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <string.h>
 
 #include "log.h"
 #include "node.h"
@@ -21,7 +22,7 @@
 #include "supervisor.h"
 
 static char *module_schema_file(char *type);
-static void append_module_metadata(Node *node, char **buffer);
+static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
 static int create_container_file(char *target, Configs *config, Node *node);
@@ -42,31 +43,26 @@ static char *module_schema_file(char *type) {
 }
 
 /*
- * append_module_metadata --
+ * set_schema_args
  *
  */
-static void append_module_metadata(Node *node, char **buffer) {
+static void set_schema_args(Node *node, char **buffer) {
 
-	NodeInfo   *nodeInfo=NULL;
+	char temp[MAX_BUFFER]={0}, temp1[MAX_BUFFER]={0};
 	NodeConfig *ptr=NULL;
 
 	if (node == NULL || *buffer == NULL) return;
 	if (strcmp(node->nodeInfo->type, NODE_TYPE_NONE) == 0) return;
 
-	ptr      = node->nodeConfig;
-	nodeInfo = node->nodeInfo; 
-
-	if (strcmp(nodeInfo->type, NODE_TYPE_TNODE) == 0) {
-		while (ptr) {
-			sprintf(*buffer, "%s --n %s --m %s --f ./schemas/%s", *buffer,
-					ptr->type, ptr->moduleID, module_schema_file(ptr->type));
-			ptr = ptr->next;
-		}
-	} else if (strcmp(nodeInfo->type, NODE_TYPE_HNODE) == 0) {
-
-	} else if (strcmp(nodeInfo->type, NODE_TYPE_ANODE) == 0) {
-
+	ptr = node->nodeConfig;
+	while (ptr) {
+		sprintf(temp, "--n %s --m %s --f ./schemas/%s",
+				ptr->type, ptr->moduleID, module_schema_file(ptr->type));
+		strcat(temp1, temp);
+		ptr = ptr->next;
 	}
+
+	sprintf(*buffer, "%s=%s", ENV_VNODE_SCHEMA_ARGS, temp1);
 }
 
 /*
@@ -195,9 +191,13 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 
 	/* Step:1 create sys using prepare_env.sh */
 	/* 'sysfs type uuid module_metadata' */
-	append_module_metadata(node, &buffer);
-	sprintf(runMe, "%s sysfs %s %s \"%s\"", SCRIPT,
-			nodeInfo->type, nodeInfo->uuid, buffer);
+	set_schema_args(node, &buffer);
+	if (putenv(buffer) != 0) {
+		log_error("Unable to set environment variable: %s Error: %s",
+				  ENV_VNODE_SCHEMA_ARGS, strerror(errno));
+		goto failure;
+	}
+	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
 	/* Step:2 create the container file */
