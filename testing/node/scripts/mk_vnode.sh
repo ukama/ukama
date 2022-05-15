@@ -66,18 +66,21 @@ build_sysfs() {
 	# --n LTE   --m UK-7001-TRX-1102 --f mfgdata/schema/lte.json \
 	# --n MASK  --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
 
-	# copy the schemas file locally and run genSchema
+	# copy the mfgdata locally and run genSchema/genInventory
 	mkdir -p ${BUILD_DIR}/schemas
 	cp ${NODED_ROOT}/mfgdata/schema/*.json  ${BUILD_DIR}/schemas
+	cp -rf ${NODED_ROOT}/mfgdata ${BUILD_DIR}
 
+	cd ${BUILD_DIR}
 	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $VNODE_SCHEMA_ARGS
 
 	# create EEPROM data using genInventory
-	${BUILD_DIR}/utils/genInventory $MODULE_METADATA
+	${BUILD_DIR}/utils/genInventory $VNODE_SCHEMA_ARGS
 
 	#copy the sysfs to build dir
 	cp -rf /tmp/sys ${BUILD_DIR}/sys
 	rm -rf /tmp/sys
+	cd ${CWD}
 }
 
 #
