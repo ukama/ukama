@@ -14,11 +14,11 @@
 
 /* Board Name */
 static char* boardname[MODULE_TYPE_MAX] = {
-    "COM",
-    "TRX",
-    "MASK",
-    "RF CTRL BOARD",
-    "RF BOARD"
+    "com",
+    "trx",
+    "mask",
+    "ctrl",
+    "fe"
 };
 
 /* Verify UUID */
