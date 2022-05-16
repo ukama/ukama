@@ -1,15 +1,16 @@
 package ukama
 
 import (
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
-	ntypes := []string{"HomeNode", "homenode", "HOMENODE",
-		"CompNode", "compnode", "COMPNODE",
-		"AmpNode", "ampnode", "AMPNODE"}
+	ntypes := []string{"HomeNode", "homenode", "HOMENODE", "hnode", "HNODE",
+		"TowerNode", "towernode", "TNODE", "tnode",
+		"AmpNode", "ampnode", "AMPNODE", "ANODE", "anode"}
 
 	for _, n := range ntypes {
 		nodeid := NewVirtualNodeId(n)
@@ -57,15 +58,15 @@ func TestNegativeValidateCase2(t *testing.T) {
 func TestNodeType(t *testing.T) {
 
 	ntypes := map[string]string{
-		"HomeNode": NODE_ID_TYPE_HOMENODE,
-		"homenode": NODE_ID_TYPE_HOMENODE,
+		"HNode": NODE_ID_TYPE_HOMENODE,
+		"hnode": NODE_ID_TYPE_HOMENODE,
 		"HOMENODE": NODE_ID_TYPE_HOMENODE,
-		"CompNode": NODE_ID_TYPE_COMPNODE,
-		"compnode": NODE_ID_TYPE_COMPNODE,
-		"COMPNODE": NODE_ID_TYPE_COMPNODE,
-		"AmpNode":  NODE_ID_TYPE_AMPNODE,
-		"ampnode":  NODE_ID_TYPE_AMPNODE,
-		"AMPNODE":  NODE_ID_TYPE_AMPNODE}
+		"TNode": NODE_ID_TYPE_COMPNODE,
+		"tnode": NODE_ID_TYPE_COMPNODE,
+		"TNODE": NODE_ID_TYPE_COMPNODE,
+		"ANode":  NODE_ID_TYPE_AMPNODE,
+		"anode":  NODE_ID_TYPE_AMPNODE,
+		"ANODE":  NODE_ID_TYPE_AMPNODE}
 
 	for k, v := range ntypes {
 		nodeid := NewVirtualNodeId(k)
