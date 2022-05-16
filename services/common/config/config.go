@@ -5,6 +5,8 @@ import (
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/ukama/ukama/services/common/rest"
+	cors "github.com/gin-contrib/cors"
 )
 
 // Common properties for all configs.
@@ -129,5 +131,14 @@ func DefaultDatabase() Database {
 		Username:   "postgres",
 		Port:       5432,
 		SslEnabled: false,
+	}
+}
+
+func DefaultHTTPConfig() rest.HttpConfig {
+	return rest.HttpConfig{
+		Port: 8080,
+		Cors: cors.Config{
+			AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
+		},
 	}
 }

@@ -1,7 +1,6 @@
 package internal
 
 import (
-	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -37,12 +36,7 @@ var ServiceConfig *Config
 func NewConfig() *Config {
 
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8080,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-			},
-		},
+		Server: config.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8081",
 		ApiIf: config.ServiceApiIf{
