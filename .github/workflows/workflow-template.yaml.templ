@@ -38,7 +38,7 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_ukamaX_{{SERVICE_NAME}}
+          project-key: ukama_services_{{SERVICE_NAME}}
 
   lint:
     name: lint
