@@ -6,7 +6,7 @@ outputs:
     description: The branch name
     value: ${{ steps.vars_step.outputs.branch }}
 
-  sha-sort:
+  sha-short:
     description: Short git SHA 
     value: ${{ steps.vars_step.outputs.sha_short }}
 
