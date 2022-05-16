@@ -8,9 +8,9 @@ on:
 jobs:  
   build:
     runs-on: ubuntu-latest
-    name: build users
+    name: build and release
     env: 
-      working-directory: ./
+      working-directory: services/cloud/users
     steps:
     - uses: actions/checkout@v3
 
