@@ -1,7 +1,7 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: pr-release-users
+name: pr-release-hss
 on:  
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     name: build and release
     env: 
-      working-directory: services/cloud/users
+      working-directory: services/cloud/hss
     steps:
     - uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: users
+        registry-name: hss
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -32,7 +32,7 @@ jobs:
       uses: denispalnitsky/gitops-release@v9
       with:
         filename: "releases/ukamax/pr-env.yaml"
-        key: "usersImageTag"
+        key: "hssImageTag"
         value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"
