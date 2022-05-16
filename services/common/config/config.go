@@ -142,3 +142,11 @@ func DefaultHTTPConfig() rest.HttpConfig {
 		},
 	}
 }
+
+func DefaultForwardConfig() Forward {
+	return Forward{
+		Ip: "localhost",
+		Port: 8080,
+		Path: "/",
+	}
+}
