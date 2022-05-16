@@ -24,7 +24,6 @@ const (
 const (
 	NODE_ID_TYPE_HOMENODE  = "hnode"
 	NODE_ID_TYPE_TOWERNODE = "tnode"
-	NODE_ID_TYPE_COMPNODE  = "cnode"
 	NODE_ID_TYPE_AMPNODE   = "anode"
 	NODE_ID_TYPE_UNDEFINED = "undef"
 )
@@ -41,7 +40,6 @@ const (
 	node_id_type_component_home      = "hnode"
 	node_id_type_component_tower     = "tnode"
 	node_id_type_component_amplifier = "anode"
-	node_id_type_component_compute   = "cnode"
 )
 
 type NodeID string
@@ -69,11 +67,11 @@ func (n NodeID) GetNodeType() string {
 	case node_id_type_component_home:
 		return NODE_ID_TYPE_HOMENODE
 
-	case node_id_type_component_tower:
-		return NODE_ID_TYPE_COMPNODE
-
 	case node_id_type_component_amplifier:
 		return NODE_ID_TYPE_AMPNODE
+
+	case node_id_type_component_tower:
+		return NODE_ID_TYPE_TOWERNODE
 	default:
 		return NODE_ID_TYPE_UNDEFINED
 	}
