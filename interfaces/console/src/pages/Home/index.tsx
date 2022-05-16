@@ -9,14 +9,12 @@ import {
     DeactivateUser,
     ContainerHeader,
     DataTableWithOptions,
-    UserActivationDialog,
     SoftwareUpdateModal,
     AddUser,
 } from "../../components";
 import {
     TIME_FILTER,
     MONTH_FILTER,
-    UserActivation,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 } from "../../constants";
@@ -66,7 +64,6 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
-    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -516,7 +513,6 @@ const Home = () => {
         }
     };
 
-    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const handleCloseDeactivateUser = () =>
         setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
 
@@ -780,14 +776,6 @@ const Home = () => {
                     }
                     labelSuccessBtn={"continue to console"}
                     handleCloseAction={handleCloseWelcome}
-                />
-            )}
-            {isUserActivateOpen && (
-                <UserActivationDialog
-                    isOpen={isUserActivateOpen}
-                    dialogTitle={UserActivation.title}
-                    subTitle={UserActivation.subTitle}
-                    handleClose={handleUserActivateClose}
                 />
             )}
 

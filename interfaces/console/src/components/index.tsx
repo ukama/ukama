@@ -50,7 +50,6 @@ import {
     DeactivateUser,
     UserDetailsDialog,
     SoftwareUpdateModal,
-    UserActivationDialog,
     NodeAppDetailsDialog,
     NodeSoftwareInfosDialog,
 } from "./AppDialogs";
@@ -106,7 +105,6 @@ export {
     ApexStackAreaChart,
     SoftwareUpdateModal,
     DataTableWithOptions,
-    UserActivationDialog,
     NodeAppDetailsDialog,
     FormControlCheckboxes,
     NodeSoftwareInfosDialog,

@@ -3,7 +3,6 @@ import BasicDialog from "./BasicDialog";
 import DeactivateUser from "./DeactivateUser";
 import UserDetailsDialog from "./UserDetailsDialog";
 import SoftwareUpdateModal from "./SoftwareUpdateModal";
-import UserActivationDialog from "./UserActivationDialog";
 import NodeAppDetailsDialog from "./NodeAppDetailsDialog";
 import NodeSoftwareInfosDialog from "./NodeSoftwareInfosDialog";
 export {
@@ -13,6 +12,5 @@ export {
     UserDetailsDialog,
     SoftwareUpdateModal,
     NodeAppDetailsDialog,
-    UserActivationDialog,
     NodeSoftwareInfosDialog,
 };
