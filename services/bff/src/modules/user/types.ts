@@ -240,9 +240,23 @@ export class UpdateUserServiceInput {
     @Field()
     status: boolean;
 }
+@InputType()
+export class GetESimQRCodeInput {
+    @Field()
+    simId: string;
+
+    @Field()
+    userId: string;
+}
 
 @InputType()
 export class DataUsageInputDto {
     @Field(() => [String])
     ids: string[];
+}
+
+@ObjectType()
+export class ESimQRCodeRes {
+    @Field()
+    qrCode: string;
 }
