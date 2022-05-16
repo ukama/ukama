@@ -10,6 +10,7 @@ require (
 	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
+	github.com/golang/protobuf v1.5.2
 	github.com/jarcoal/httpmock v1.1.0
 	github.com/loopfz/gadgeto v0.11.2
 	github.com/sirupsen/logrus v1.8.1
@@ -35,7 +36,6 @@ require (
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect

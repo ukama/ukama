@@ -3,10 +3,9 @@ package main
 import (
 	"context"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/ukama/ukama/services/common/metrics"
+	sig "github.com/ukama/ukama/services/common/signal"
 	"github.com/ukama/ukama/services/common/sql"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/testing/services/network/internal"
@@ -33,7 +32,7 @@ func main() {
 	defer cancel()
 
 	/* Signal Handling */
-	handleSigterm(func() {
+	sig.HandleSigterm(func() {
 		logrus.Infof("Cleaning %s service.", internal.ServiceName)
 		/* Call anything required for clean exit */
 
@@ -93,19 +92,4 @@ func initConfig() {
 	logrus.Tracef("Config is %+v", internal.ServiceConfig)
 	config.LoadConfig(internal.ServiceName, internal.ServiceConfig)
 	internal.IsDebugMode = internal.ServiceConfig.DebugMode
-}
-
-/* Handles Ctrl+C or most other means of "controlled" shutdown gracefully. Invokes the supplied func before exiting. */
-func handleSigterm(handleExit func()) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-
-	go func() {
-		<-c
-		handleExit()
-		logrus.Infof("Exiting %s.", internal.ServiceName)
-		os.Exit(1)
-	}()
-
 }

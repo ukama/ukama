@@ -1,7 +1,6 @@
 package internal
 
 import (
-	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -39,15 +38,9 @@ var ServiceConfig *Config
 func NewConfig() *Config {
 
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8088,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-			},
-		},
+		Server: config.DefaultHTTPConfig(),
 
-		ServiceRouter: "http://192.168.0.14:8091",
-		//ServiceRouter: "http://localhost:8091",
+		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
 			P: []config.Route{
@@ -67,13 +60,9 @@ func NewConfig() *Config {
 					"looking_for": "vnode_list", "path": "/list",
 				},
 			},
-			F: config.Forward{
-				Ip: "192.168.0.27",
-				//Ip:   "localhost",
-				Port: 8088,
-				Path: "/",
-			},
+			F: config.DefaultForwardConfig(),
 		},
+
 		DB: config.Database{
 			Host:       "192.168.0.14",
 			Password:   "Pass2020!",

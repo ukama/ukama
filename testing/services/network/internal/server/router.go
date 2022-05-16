@@ -65,8 +65,9 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
 	node.GET("", nil, tonic.Handler(r.GetInfo, http.StatusOK))
-	node.PUT("/poweron", nil, tonic.Handler(r.PutPowerOn, http.StatusOK))
-	node.PUT("/poweroff", nil, tonic.Handler(r.PutPowerOff, http.StatusOK))
+	node.PUT("", nil, tonic.Handler(r.GetInfo, http.StatusAccepted))
+	//node.PUT("/poweron", nil, tonic.Handler(r.PutPowerOn, http.))
+	//node.PUT("/poweroff", nil, tonic.Handler(r.PutPowerOff, http.StatusOK))
 	node.DELETE("", nil, tonic.Handler(r.DeleteNode, http.StatusOK))
 
 	list := r.fizz.Group(ListPath, "List", "Virtual Node list")
@@ -74,7 +75,24 @@ func (r *Router) init() {
 
 }
 
-func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
+func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
+	logrus.Debugf("Handling Node opertaion on %+v.", req)
+	switch req.LookingTo {
+	case "vnode_power_on":
+		return r.PutPowerOn(&ReqPowerOnNode{*req})
+	case "vnode_power_off":
+		return r.PutPowerOff(&ReqPowerOffNode{*req})
+	default:
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "invalid opertaion on node",
+		}
+	}
+
+	return nil
+}
+
+func (r *Router) PutPowerOn(req *ReqPowerOnNode) error {
 	logrus.Debugf("Handling node power on %+v.", req)
 
 	/* Validation node from NMR */
@@ -107,7 +125,7 @@ func (r *Router) PutPowerOn(c *gin.Context, req *ReqPowerOnNode) error {
 	return nil
 }
 
-func (r *Router) PutPowerOff(c *gin.Context, req *ReqPowerOffNode) error {
+func (r *Router) PutPowerOff(req *ReqPowerOffNode) error {
 	logrus.Debugf("Handling node power off %+v.", req)
 
 	node, err := r.repo.GetInfo(req.NodeID)

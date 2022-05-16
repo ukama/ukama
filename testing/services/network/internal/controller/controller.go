@@ -15,7 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 )
 
 type NodeState string
@@ -62,20 +62,21 @@ func NewController(d db.VNodeRepo) *Controller {
 		logrus.Tracef("Pod name: %s\n", pod.Name)
 	}
 
-	// ns, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
-	// if err != nil {
-	// 	logrus.Fatalf("Build:: Can't read current namespace. Err: %s", err.Error())
-	// 	return nil
-	// }
 	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.RabbitUri)
 	if err != nil {
 		logrus.Errorf("error getting message publisher: %s\n", err.Error())
 		return nil
 	}
 
+	ns := "default"
+
+	if internal.ServiceConfig.Namespace != "" {
+		ns = internal.ServiceConfig.Namespace
+	}
+
 	return &Controller{
 		cs:   cset,
-		ns:   internal.ServiceConfig.Namespace,
+		ns:   ns,
 		m:    msgC,
 		repo: d,
 	}
@@ -84,7 +85,7 @@ func NewController(d db.VNodeRepo) *Controller {
 /* Connect to Kubernetes cluster */
 func connectToK8s() (*kubernetes.Clientset, error) {
 
-	config, err := clientcmd.BuildConfigFromFlags("", internal.ServiceConfig.Kubeconfig)
+	config, err := rest.InClusterConfig()
 	if err != nil {
 		logrus.Errorf("Build:: Failed to create K8s config. Error %s", err.Error())
 		return nil, err
@@ -98,11 +99,6 @@ func connectToK8s() (*kubernetes.Clientset, error) {
 
 	return clientset, nil
 }
-
-// /* Return data volume name forn Id strng */
-// func getDataVolumeName(id string) string {
-// 	return "dv-" + id
-// }
 
 /* Return node name from ID */
 func getVirtNodeName(id string) string {
@@ -227,7 +223,10 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 /* Debug List of pods */
 func (c *Controller) ListNodes() {
 
-	pods, _ := c.cs.CoreV1().Pods(c.ns).List(context.TODO(), metav1.ListOptions{})
+	pods, err := c.cs.CoreV1().Pods(c.ns).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logrus.Errorf("Failed to get virtulal node runtime list. Error %s", err.Error())
+	}
 
 	for _, pod := range pods.Items {
 		logrus.Debugf("Node Name %s Node Status %v.", pod.Name, pod.Status)
@@ -283,7 +282,7 @@ func (c *Controller) PowerOffNode(nodeId string) error {
 	return nil
 }
 
-/* Watching for changes in job status */
+/* Watching for changes in virtual nodes */
 func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb func(string, string) error) error {
 
 	watcher, err := c.cs.CoreV1().Pods(c.ns).Watch(ctx, metav1.ListOptions{
@@ -306,16 +305,6 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 					continue
 				}
 
-				// logrus.WithFields(logrus.Fields{
-				// 	"action":     e.Type,
-				// 	"namespace":  pod.Namespace,
-				// 	"name":       pod.Name,
-				// 	"phase":      pod.Status.Phase,
-				// 	"reason":     pod.Status.Reason,
-				// 	"message":    pod.Status.Message,
-				// 	"container#": len(pod.Status.ContainerStatuses),
-				// }).Debug("Event notified")
-
 				switch e.Type {
 
 				case watch.Added:
@@ -332,7 +321,10 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 						}
 
 						/* Send Event on MessageBus */
-						_ = cb(getVirtNodeId(pod.Name), state)
+						err = cb(getVirtNodeId(pod.Name), state)
+						if err != nil {
+							logrus.Warningf("Failed to publish Virtual node event %s for %s", state, pod.Name)
+						}
 
 					default:
 						logrus.Infof("Unkown Node state for %s during PowerOn.", pod.Name)
@@ -352,7 +344,10 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 							}
 
 							/* Send Event on MessageBus */
-							_ = cb(getVirtNodeId(pod.Name), state)
+							err = cb(getVirtNodeId(pod.Name), state)
+							if err != nil {
+								logrus.Warningf("Failed to publish Virtual node event %s for %s", state, pod.Name)
+							}
 						}
 					}
 
