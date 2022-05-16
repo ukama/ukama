@@ -9,13 +9,12 @@ import {
     DeactivateUser,
     ContainerHeader,
     DataTableWithOptions,
-    UserActivationDialog,
     SoftwareUpdateModal,
+    AddUser,
 } from "../../components";
 import {
     TIME_FILTER,
     MONTH_FILTER,
-    UserActivation,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 } from "../../constants";
@@ -44,9 +43,10 @@ import {
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
+    useAddUserMutation,
     useUpdateNodeMutation,
 } from "../../generated";
-import { TMetric } from "../../types";
+import { TMetric, TObject } from "../../types";
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
@@ -64,7 +64,6 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
-    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -92,6 +91,7 @@ const Home = () => {
     });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
+    const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
@@ -106,26 +106,54 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
-    const [deleteNode, { loading: deleteNodeLoading, error: deleteNodeError }] =
-        useDeleteNodeMutation({
-            onCompleted: () => {
-                setNodeToastNotification({
-                    id: "delete-node-success",
-                    message: `${deleteNodeDialog.nodeId} has been deleted successfully!`,
-                    type: "success",
-                    show: true,
-                });
-                refetchGetNodesByOrg();
-            },
-            onError: () => {
-                setNodeToastNotification({
-                    id: "delete-node-success",
-                    message: `${deleteNodeError?.message}`,
-                    type: "error",
-                    show: true,
-                });
-            },
-        });
+    const [
+        deleteNode,
+        {
+            loading: deleteNodeLoading,
+            data: deleteNodeRes,
+            error: deleteNodeError,
+        },
+    ] = useDeleteNodeMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeRes?.deleteNode?.nodeId} has been deleted successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [
+        addUser,
+        { loading: addUserLoading, data: addUserRes, error: addUserError },
+    ] = useAddUserMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "Add-user-success",
+                message: `${addUserRes?.addUser?.name} has been added successfully!`,
+                type: "success",
+                show: true,
+            });
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "error-add-user-success",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+
     const [
         registerNode,
         {
@@ -320,6 +348,7 @@ const Home = () => {
             setIsWelcomeDialog(true);
         }
     }, [_isFirstVisit, orgId]);
+    const handleSimInstallationClose = () => setShowInstallSim(false);
 
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
@@ -330,7 +359,19 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-
+    const handleSimInstallationSubmit = (data: TObject) => {
+        if (data) {
+            addUser({
+                variables: {
+                    data: {
+                        email: data.email as string,
+                        name: data.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             tab: 4,
@@ -472,7 +513,6 @@ const Home = () => {
         }
     };
 
-    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const handleCloseDeactivateUser = () =>
         setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
 
@@ -572,7 +612,7 @@ const Home = () => {
         }
     };
 
-    const onActivateUser = () => setIsUserActivateOpen(() => true);
+    const onActivateUser = () => setShowInstallSim(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
@@ -697,7 +737,8 @@ const Home = () => {
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||
-                            isSkeltonLoad
+                            isSkeltonLoad ||
+                            addUserLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -737,14 +778,6 @@ const Home = () => {
                     handleCloseAction={handleCloseWelcome}
                 />
             )}
-            {isUserActivateOpen && (
-                <UserActivationDialog
-                    isOpen={isUserActivateOpen}
-                    dialogTitle={UserActivation.title}
-                    subTitle={UserActivation.subTitle}
-                    handleClose={handleUserActivateClose}
-                />
-            )}
 
             {showNodeDialog.isShow && (
                 <NodeDialog
@@ -780,6 +813,13 @@ const Home = () => {
                     labelNegativeBtn={"cancel"}
                     handleCloseAction={handleCloseDeleteNode}
                     handleSuccessAction={handleDeleteNode}
+                />
+            )}
+            {showInstallSim && (
+                <AddUser
+                    isOpen={showInstallSim}
+                    handleClose={handleSimInstallationClose}
+                    handleSubmitAction={handleSimInstallationSubmit}
                 />
             )}
         </Box>
