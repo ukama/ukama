@@ -1,5 +1,8 @@
-name: pr-release
+name: pr-release-users
 on:
+  push:
+    branches:
+      - pr-release
   workflow_dispatch:
 
 jobs:  
