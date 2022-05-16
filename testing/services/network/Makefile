@@ -7,7 +7,7 @@ include ../../config.mk
 NETWORK_PROTO:= network.proto
 NETWORK_SPEC:= specs/controller/spec
 
-build: mock networkspec
+build: mock
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/testing/services/network/cmd/network/version.Version=$(BIN_VER) -extldflags=-static' -o bin/network cmd/network/main.go
 
@@ -32,7 +32,7 @@ gen:
 	mockery --all --recursive --dir ./internal/db
 
 # Build Mock
-mock: networkspec
+mock: 
 	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/mock.go
 
 clean:
