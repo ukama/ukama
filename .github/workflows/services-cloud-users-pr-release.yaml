@@ -33,7 +33,7 @@ jobs:
       with:
         filename: "releases/ukamax/pr-env.yaml"
         key: "usersImageTag"
-        value:  ${{ steps.vars_step.outputs.sha_short }}
+        value:  ${{ steps.vars_step.outputs.sha-short }}
         github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         github-org-and-repo: "ukama/infra-as-code"
         github-user-mail: "bot@ukama.com"
