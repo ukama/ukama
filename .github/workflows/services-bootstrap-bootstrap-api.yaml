@@ -15,68 +15,81 @@ jobs:
       working-directory: services/bootstrap/bootstrap-api
 
     name: build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest    
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v2
+  
+      # init vars required for tag generation
+    - name: Init vars 
+      id: vars_step
+      run: |
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-    - name: build app
-      uses: ./.github/actions/build-go
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
       with:
-        registry-name: bootstrap-api
-        working-directory: ${{ env.working-directory }}
-        github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-        aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
-        aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
-    
-  sonar-scan:
-    name: sonar-scan
-    runs-on: ubuntu-latest
-    env: 
-      working-directory: services/bootstrap/bootstrap-api
-    steps:
-      - uses: actions/checkout@v3
-      - name: scan
-        uses: ./.github/actions/sonar-go
-        with:        
-          working-directory: ${{ env.working-directory }}
-          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_services_bootstrap-api
+        aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
 
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    env: 
-      working-directory: services/bootstrap/bootstrap-api
-    steps:
-      - uses: actions/checkout@v3
-      - name: lint
-        uses: ./.github/actions/lint-go
-        with:
-          working-directory: ${{ env.working-directory }}
-          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
-          
+    - name: Login to Amazon ECR
+      run: | 
+            aws ecr get-login-password --region us-east-1 | \
+            buildah login \
+              --username AWS \
+              --password-stdin \
+              003664043471.dkr.ecr.us-east-1.amazonaws.com
+
+    - name: OCI build and push
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bootstrap-api
+      run: |                        
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+                -t $REGISTRY\:latest .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:latest 
+
+    - name: OCI Push services/bootstrap/bootstrap-api test 
+      working-directory: ${{ env.working-directory }}
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/bootstrap-api
+      run: |                        
+            buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
+                -t $REGISTRY\:latest-test .  && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+            buildah push $REGISTRY\:latest-test
+
+
 
   release:
       name: release
-      needs: [build, lint]
+      needs: build
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
         working-directory: services/bootstrap/bootstrap-api
       steps:
-        - uses: actions/checkout@v3
-        
+        # init vars required for tag generation
+        - uses: actions/checkout@v2
         - name: Init vars
           id: vars_step
-          uses: ./.github/actions/git-vars
+          run: |
+            echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+            echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
-        - name: update gitops
+        - name: update gitops                
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/bootstrap-helmfile.yaml"
             key: "bootstrapApiImageTag"
-            value:  ${{ steps.vars_step.outputs.sha-short }}
+            value:  ${{ steps.vars_step.outputs.sha_short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
             github-user-mail: "bot@ukama.com"
