@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coredns/coredns/plugin/pkg/log"
-	amqp "github.com/rabbitmq/amqp091-go"
 	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -169,7 +168,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 }
 
 func sendMessageToQueue(msg pkg.DevicesUpdateRequest) error {
-	rabbit, err := rabbitmq.NewPublisher(testConf.QueueUri, amqp.Config{})
+	rabbit, err := rabbitmq.NewPublisher(testConf.QueueUri, rabbitmq.Config{})
 	if err != nil {
 		return err
 	}
