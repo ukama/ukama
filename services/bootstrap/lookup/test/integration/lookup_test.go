@@ -57,7 +57,7 @@ func (i *IntegrationTestSuite) Test_LookuApi() {
 		resp, err := client.R().
 			EnableTrace().
 			SetBody(`{	"certificate":"cert", "ip": "127.0.0.1"	}`).
-			Post(i.config.LookupHost + "/orgs/" + orgName)
+			Post(i.config.LookupHost + "?looking_to=add_org&org=" + orgName)
 
 		logrus.Info("Response: ", resp.String())
 		i.Assert().NoError(err)
@@ -68,7 +68,7 @@ func (i *IntegrationTestSuite) Test_LookuApi() {
 	i.Run("AddDevice", func() {
 		resp, err := client.R().
 			EnableTrace().
-			Post(i.config.LookupHost + "/orgs/" + orgName + "/devices/" + nodeId.String())
+			Post(i.config.LookupHost + "/orgs/node?looking_to=add_node&org=" + orgName + "&node=" + nodeId.String())
 
 		logrus.Info("Response: ", resp.String())
 		i.Assert().NoError(err)
@@ -79,7 +79,7 @@ func (i *IntegrationTestSuite) Test_LookuApi() {
 	i.Run("GetDevice", func() {
 		resp, err := client.R().
 			EnableTrace().
-			Get(i.config.LookupHost + "/orgs/" + orgName + "/devices/" + nodeId.String())
+			Get(i.config.LookupHost + "/orgs/node?looking_for=org_credentials&org=" + orgName + "+&node=" + nodeId.String())
 
 		logrus.Info("Response: ", resp.String())
 		i.Assert().NoError(err)
