@@ -133,12 +133,18 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	}
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 	
-	sprintf(buffer, CF_COPY, "./sbin", "/sbin");
+	sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/conf", "/conf");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/lib", "/lib");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_ADD, SVISOR_FILENAME, "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-	
+
 	sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -183,9 +189,6 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	 */
 
 	/* Step:0 clean and build the needed tools */
-	sprintf(runMe, "%s clean %s", SCRIPT, nodeInfo->uuid);
-	if (system(runMe) < 0) goto failure;
-
 	sprintf(runMe, "%s init", SCRIPT);
 	if (system(runMe) < 0) goto failure;
 
@@ -207,9 +210,8 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	}
 
 	/* Step:3 run buildah */
-	/* build container_file type-uuid */
-	sprintf(runMe, "%s build %s %s-%s", SCRIPT, CONTAINER_FILE,
-			nodeInfo->type, nodeInfo->uuid);
+	/* build container_file uuid */
+	sprintf(runMe, "%s build %s %s", SCRIPT, CONTAINER_FILE, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
 	return TRUE;
