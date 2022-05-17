@@ -92,6 +92,12 @@ build_image() {
 	FILE=$1
 	NAME_TAG=$2
 
+	# copy capp's sbin, conf and lib to /sbin, /conf and /lib
+	mkdir -p ${BUILD_DIR}/sbin ${BUILD_DIR}/lib ${BUILD_DIR}/conf
+	cp -rf ${BUILD_DIR}/capps/*/sbin ${BUILD_DIR}
+	cp -rf ${BUILD_DIR}/capps/*/conf ${BUILD_DIR}
+	cp -rf ${BUILD_DIR}/capps/*/lib  ${BUILD_DIR}
+
 	buildah bud -f $1 -t $2
 }
 
@@ -108,14 +114,13 @@ case "$ACTION" in
 		build_sysfs $2 $3
 		;;
 	"build")
-		build_image $1 $2
+		build_image $2 $3
 		;;
     "cp")
 		cp $2 ${BUILD_DIR}/$3
 		;;
     "clean")
 		buildah rmi -f localhost/$1
-		rm -rf ${BUILD_DIR}
 		cd ${NODED_ROOT} && make clean && cd ${CWD}
 		;;
 esac
