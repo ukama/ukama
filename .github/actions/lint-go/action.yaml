@@ -1,0 +1,27 @@
+name: Go Lint 
+description: Lint go code
+
+inputs:  
+  working-directory:
+    description: The working directory for the application
+    required: true
+  github-bot-token:
+    description: The github bot token
+    required: true  
+
+runs:
+  using: "composite"
+  steps:  
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Granting private modules access
+        shell: bash
+        run: |
+            git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"     
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3.1.0
+        with:                
+          working-directory: ${{ inputs.working-directory }}

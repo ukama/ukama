@@ -82,7 +82,7 @@ jobs:
         projectBaseDir:  ${{ env.working-directory }}
         args: >
           -Dsonar.organization=ukama
-          -Dsonar.projectKey=ukama_ukamaX_cli
+          -Dsonar.projectKey=ukama_interfaces_cli
           -Dsonar.projectName=${{ env.working-directory }}
           -Dsonar.go.coverage.reportPaths=coverage.out
           -Dsonar.test.exclusions=tests/**
