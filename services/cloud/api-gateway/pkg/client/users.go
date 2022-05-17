@@ -108,3 +108,10 @@ func (r *Users) DeactivateUser(userId string) error {
 	_, err := r.client.DeactivateUser(ctx, &pb.DeactivateUserRequest{UserId: userId})
 	return err
 }
+
+func (r *Users) GetQr(iccid string) (*pb.GetQrCodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(r.timeout)*time.Second)
+	defer cancel()
+
+	return r.client.GetQrCode(ctx, &pb.GetQrCodeRequest{Iccid: iccid})
+}

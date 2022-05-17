@@ -16,6 +16,29 @@ type SimManagerServiceServer struct {
 	mock.Mock
 }
 
+// GetQrCode provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) GetQrCode(_a0 context.Context, _a1 *simmgr.GetQrCodeRequest) (*simmgr.GetQrCodeResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *simmgr.GetQrCodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *simmgr.GetQrCodeRequest) *simmgr.GetQrCodeResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*simmgr.GetQrCodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *simmgr.GetQrCodeRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSimInfo provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) GetSimInfo(_a0 context.Context, _a1 *simmgr.GetSimInfoRequest) (*simmgr.GetSimInfoResponse, error) {
 	ret := _m.Called(_a0, _a1)
