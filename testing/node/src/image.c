@@ -200,6 +200,7 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 				  ENV_VNODE_SCHEMA_ARGS, strerror(errno));
 		goto failure;
 	}
+	free(buffer);
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
