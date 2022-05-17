@@ -20,20 +20,21 @@ const (
 	CommandDeviceExecuteResource                 RoutingKey = "CMD.DEVICE.EXEC.RESOURCE"
 	ResponseDeviceExecuteResource                RoutingKey = "RESPONSE.DEVICE.EXEC.RESOURCE"
 	EventDeviceCreate                            RoutingKey = "EVENT.DEVICE.CREATE.*"
+	EventVirtNodeUpdateStatus                    RoutingKey = "EVENT.VIRTNODE.STATUS.*"
 )
 
 const (
-	DeviceConnectedRoutingKey RoutingKey = "event.device.mesh.link.connect"
-	UserRegisteredRoutingKey RoutingKey = "event.cloud.identity.user.create"
-	DeviceFeederRequestRoutingKey  RoutingKey = "request.cloud.device-feeder"
+	DeviceConnectedRoutingKey         RoutingKey = "event.device.mesh.link.connect"
+	UserRegisteredRoutingKey           RoutingKey = "event.cloud.identity.user.create"
+	DeviceFeederRequestRoutingKeyRoutingKey = "request.cloud.device-feeder"
 
 	DefaultExchange = "amq.topic"
 )
 
 var DeviceQ = MsgBusQConfig{
-	Exchange:     DefaultExchange,
+	Exchange:     "DEVICE_EXCHANGE",
 	Queue:        "DEVICE_HANDLE_QUEUE",
-	ExchangeType: "direct",
+	ExchangeType: "topic",
 	ReqRountingKeys: []RoutingKey{
 		RequestDeviceCreate, RequestDeviceDelete,
 		RequestDeviceReadConfig, RequestDeviceUpdateConfig,

@@ -3,7 +3,6 @@ package msgbus
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -128,7 +127,7 @@ func (m *MsgClient) ConnectToBroker(connectionString string) {
 	for !conn {
 		c, err := connectClient(connectionString)
 		if err != nil {
-			m.log.Infof("could not establis connection. Waiting for 5 seconds to re-connect")
+			m.log.Infof("could not establish connection. Waiting for 5 seconds to re-connect")
 			time.Sleep(5 * time.Second)
 		} else {
 			m.conn = c
@@ -243,7 +242,7 @@ func (m *MsgClient) SubscribeWithArgs(queueName string, exchangeName string, exc
 		return err
 	}
 
-	log.Printf("declared Exchange, declaring Queue (%s)", "")
+	m.log.Debugf("declared Exchange, declaring Queue (%s)", "")
 	queue, err := m.declareQueue(ch, queueName, false, queueArgs)
 	if err != nil {
 		return err
@@ -278,13 +277,14 @@ func (m *MsgClient) createChannel() (*amqp.Channel, error) {
 	// Get a channel from the connection
 	ch, err := m.conn.Channel()
 	if err != nil {
-		m.log.Errorf("Err: %s Failed to connect to channel.", err)
+		m.log.Errorf("Err: %s Failed to connect to channel.", err.Error())
 		return nil, err
 	}
 	return ch, nil
 }
 
 func (m *MsgClient) declareExchange(ch *amqp.Channel, exchangeName string, exchangeType string) error {
+	m.log.Debugf("Channel %+v exchange name %s exchange type %s", ch, exchangeName, exchangeType)
 	err := ch.ExchangeDeclare(
 		exchangeName, // name of the exchange
 		exchangeType, // type
@@ -295,7 +295,7 @@ func (m *MsgClient) declareExchange(ch *amqp.Channel, exchangeName string, excha
 		nil,          // arguments
 	)
 	if err != nil {
-		m.log.Errorf("%s: %s", "Error creating an exchange", err)
+		m.log.Errorf("%s: %s", "Error creating an exchange", err.Error())
 		return err
 	}
 	return nil
@@ -406,7 +406,7 @@ func (m *MsgClient) handleTransit(msg amqp.Delivery, handlerFunc func(d amqp.Del
 
 	// Request processed but it may be success or failure
 	case res := <-done:
-		logrus.Debugf("Message %s acknowladged with result %v", msg.MessageId, res)
+		logrus.Debugf("Message %s acknowledged with result %v", msg.MessageId, res)
 		m.sendAck(msg)
 
 	case <-time.After(1 * time.Second):
