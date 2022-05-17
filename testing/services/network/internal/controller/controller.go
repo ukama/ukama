@@ -117,7 +117,7 @@ func (c *Controller) ControllerInit() error {
 
 /* Get Node status from Pod phase */
 func getNodeRuntimeStatus(phase v1.PodPhase) string {
-	var state string = VNodeUnkown
+	var state string
 	switch phase {
 	case v1.PodPending:
 		state = VNodeBooting

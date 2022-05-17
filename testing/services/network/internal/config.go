@@ -64,7 +64,7 @@ func NewConfig() *Config {
 		},
 
 		DB: config.Database{
-			Host:       "192.168.0.14",
+			Host:       "localhost",
 			Password:   "Pass2020!",
 			Username:   "postgres",
 			DbName:     ServiceName,

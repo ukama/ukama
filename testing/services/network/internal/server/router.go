@@ -86,8 +86,6 @@ func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
 			Message:  "invalid opertaion on node",
 		}
 	}
-
-	return nil
 }
 
 func (r *Router) PutPowerOn(req *ReqPowerOnNode) error {
