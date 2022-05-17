@@ -65,9 +65,7 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
 	node.GET("", nil, tonic.Handler(r.GetInfo, http.StatusOK))
-	node.PUT("", nil, tonic.Handler(r.GetInfo, http.StatusAccepted))
-	//node.PUT("/poweron", nil, tonic.Handler(r.PutPowerOn, http.))
-	//node.PUT("/poweroff", nil, tonic.Handler(r.PutPowerOff, http.StatusOK))
+	node.PUT("", nil, tonic.Handler(r.PutNode, http.StatusAccepted))
 	node.DELETE("", nil, tonic.Handler(r.DeleteNode, http.StatusOK))
 
 	list := r.fizz.Group(ListPath, "List", "Virtual Node list")

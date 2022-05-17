@@ -24,6 +24,8 @@ require (
 	k8s.io/client-go v0.24.0
 )
 
+require github.com/evanphx/json-patch v4.12.0+incompatible // indirect
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -50,7 +52,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/iamolegga/enviper v1.2.1 // indirect
-	github.com/imdario/mergo v0.3.5 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.12.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

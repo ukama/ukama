@@ -40,7 +40,7 @@ type ControllerOps interface {
 
 type Controller struct {
 	repo db.VNodeRepo
-	cs   *kubernetes.Clientset
+	cs   kubernetes.Interface
 	ns   string
 	m    msgbus.Publisher
 }
@@ -83,7 +83,7 @@ func NewController(d db.VNodeRepo) *Controller {
 }
 
 /* Connect to Kubernetes cluster */
-func connectToK8s() (*kubernetes.Clientset, error) {
+func connectToK8s() (kubernetes.Interface, error) {
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -112,7 +112,7 @@ func getVirtNodeId(name string) string {
 
 /* Starting build job watcher routine */
 func (c *Controller) ControllerInit() error {
-	return c.WatcherForNodes(context.TODO(), c.repo, c.PublishEvent)
+	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
 }
 
 /* Get Node status from Pod phase */
@@ -129,8 +129,9 @@ func getNodeRuntimeStatus(phase v1.PodPhase) string {
 		state = VNodeFaulty
 	case v1.PodUnknown:
 		state = VNodeUnkown
+	default:
+		state = VNodeUnkown
 	}
-
 	return state
 }
 
@@ -260,7 +261,7 @@ func (c *Controller) PowerOnNode(nodeId string) error {
 	image := "busybox:1.28"
 	err := c.CreateNode(nodeId, image, entryCommand, nodeType)
 	if err != nil {
-		logrus.Errorf("Create Node innstance failed for %s. Error: %s", nodeId, err.Error())
+		logrus.Errorf("Create Node instance failed for %s. Error: %s", nodeId, err.Error())
 		return err
 	}
 	return err
@@ -283,7 +284,7 @@ func (c *Controller) PowerOffNode(nodeId string) error {
 }
 
 /* Watching for changes in virtual nodes */
-func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb func(string, string) error) error {
+func (c *Controller) WatcherForNodes(ctx context.Context, cb func(string, string) error) error {
 
 	watcher, err := c.cs.CoreV1().Pods(c.ns).Watch(ctx, metav1.ListOptions{
 		LabelSelector: "app=virtual-node",
@@ -314,8 +315,9 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 						state := db.VNodeOn.String()
 						logrus.Infof("BootingUp: Node %s ", pod.Name)
 
-						/* Updated= database */
-						err := d.Update(getVirtNodeId(pod.Name), state)
+						/* Update database */
+
+						err := c.repo.Update(getVirtNodeId(pod.Name), state)
 						if err != nil {
 							logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
 						}
@@ -337,8 +339,9 @@ func (c *Controller) WatcherForNodes(ctx context.Context, d db.VNodeRepo, cb fun
 							state := db.VNodeOff.String()
 							logrus.Infof("Poweroff : Node %s PoweredOff at %v Details: ExitCode: %d Reason: %s Message %s ", pod.Name, cst.State.Terminated.FinishedAt, cst.State.Terminated.ExitCode, cst.State.Terminated.Reason, cst.State.Terminated.Message)
 
-							/* Updated= database */
-							err := d.Update(getVirtNodeId(pod.Name), state)
+							/* Update database */
+
+							err := c.repo.Update(getVirtNodeId(pod.Name), state)
 							if err != nil {
 								logrus.Errorf("Error updating state of the node %s to %s.", pod.Name, state)
 							}
