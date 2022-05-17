@@ -2,11 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/ukama/ukama/services/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/internal"
 	"github.com/ukama/ukama/testing/services/network/internal/db"
 	spec "github.com/ukama/ukama/testing/services/network/specs/controller/spec"
@@ -110,7 +112,7 @@ func getVirtNodeId(name string) string {
 	return strings.Trim(name, "vn-")
 }
 
-/* Starting build job watcher routine */
+/* Starting build virtual node watcher routine */
 func (c *Controller) ControllerInit() error {
 	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
 }
@@ -165,17 +167,6 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		"app":  "virtual-node",
 		"org":  "ukama",
 	}
-
-	// /* Data Volume */
-	// dataVolumeName := getDataVolumeName(name)
-
-	// /* Data Volume Labels */
-	// dvlabels := map[string]string{
-	// 	"node": name,
-	// 	"app":  "virtnode-datavolume",
-	// 	"type": ntype,
-	// 	"org":  "ukama",
-	// }
 
 	/* Pod spec */
 	podSpec := &v1.Pod{
@@ -254,12 +245,17 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 /* Go routine to start build process */
 func (c *Controller) PowerOnNode(nodeId string) error {
 
-	//containerImage := internal.ServiceConfig.BuilderImage
+	containerImage := internal.ServiceConfig.BuilderImage
 
-	entryCommand := []string{"sh", "-c", "echo \"Hello, Kubernetes!\" && sleep 3600"}
-	nodeType := "hnode"
-	image := "busybox:1.28"
-	err := c.CreateNode(nodeId, image, entryCommand, nodeType)
+	entryCommand := internal.ServiceConfig.BuilderCmd
+
+	nodeType := ukama.GetNodeType(nodeId)
+	if nodeType == nil {
+		logrus.Errorf("NodeId %s is not a expected uakma node Id.", nodeId)
+		return fmt.Errorf("%s not expected nodeid format", nodeId)
+	}
+
+	err := c.CreateNode(nodeId, containerImage, entryCommand, *nodeType)
 	if err != nil {
 		logrus.Errorf("Create Node instance failed for %s. Error: %s", nodeId, err.Error())
 		return err

@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/services/common/ukama"
+	"github.com/ukama/ukama/testing/services/network/internal"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/fake"
 )
@@ -17,27 +19,51 @@ func fakeNewController() *Controller {
 }
 
 func Test_PowerOnNode(t *testing.T) {
+	internal.ServiceConfig = &internal.Config{
+		BuilderImage: "",
+		BuilderCmd:   []string{},
+	}
+
+	c := fakeNewController()
+	node := ukama.NewVirtualHomeNodeId()
+	err := c.PowerOnNode(node.String())
+	assert.Nil(t, err)
+}
+
+func Test_PowerOnNodeFail(t *testing.T) {
+	internal.ServiceConfig = &internal.Config{
+		BuilderImage: "",
+		BuilderCmd:   []string{},
+	}
+
 	c := fakeNewController()
 	node := "abcd"
 	err := c.PowerOnNode(node)
-	assert.Nil(t, err)
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "not expected nodeid format")
+	}
 }
 
 func Test_PowerOffNode(t *testing.T) {
 	c := fakeNewController()
 
-	node := "abcd"
-	err := c.PowerOnNode(node)
+	internal.ServiceConfig = &internal.Config{
+		BuilderImage: "",
+		BuilderCmd:   []string{},
+	}
+
+	node := ukama.NewVirtualHomeNodeId()
+	err := c.PowerOnNode(node.String())
 	assert.Nil(t, err)
 
-	err = c.PowerOffNode(node)
+	err = c.PowerOffNode(node.String())
 	assert.Nil(t, err)
 }
 
 func Test_PowerOffNodeDoesNotExist(t *testing.T) {
 	c := fakeNewController()
-	node := "abcd"
-	err := c.PowerOffNode(node)
+	node := ukama.NewVirtualHomeNodeId()
+	err := c.PowerOffNode(node.String())
 	if assert.Error(t, err) {
 		assert.Contains(t, err.Error(), "not found")
 	}

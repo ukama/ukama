@@ -22,6 +22,7 @@ type Config struct {
 	Docker            Docker
 	NodeImage         string
 	BuilderImage      string
+	BuilderCmd        []string
 	Kubeconfig        string
 	RabbitUri         string
 	RepoServerUrl     string

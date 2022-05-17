@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/rest"
 	sr "github.com/ukama/ukama/services/common/srvcrouter"
+	"github.com/ukama/ukama/services/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/cmd/version"
 	"github.com/ukama/ukama/testing/services/network/internal"
 	"github.com/ukama/ukama/testing/services/network/internal/controller"
@@ -75,6 +76,16 @@ func (r *Router) init() {
 
 func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
 	logrus.Debugf("Handling Node opertaion on %+v.", req)
+
+	/* validate nodeid */
+	_, err := ukama.ValidateNodeId(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "Invalid node:" + err.Error(),
+		}
+	}
+
 	switch req.LookingTo {
 	case "vnode_power_on":
 		return r.PutPowerOn(&ReqPowerOnNode{*req})
@@ -165,6 +176,16 @@ func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) 
 	resp := &RespGetNode{
 		Runtime: controller.VNodeUnkown,
 	}
+
+	/* validate nodeid */
+	_, err := ukama.ValidateNodeId(req.NodeID)
+	if err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "Invalid node:" + err.Error(),
+		}
+	}
+
 	var rstate *string
 	node, err := r.repo.GetInfo(req.NodeID)
 	if err != nil {
@@ -216,6 +237,15 @@ func (r *Router) GetList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList,
 
 func (r *Router) DeleteNode(c *gin.Context, req *ReqDeleteNode) error {
 	logrus.Debugf("Handling delete node info %+v.", req)
+
+	/* validate nodeid */
+	_, err := ukama.ValidateNodeId(req.NodeID)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "Invalid node:" + err.Error(),
+		}
+	}
 
 	node, err := r.repo.GetInfo(req.NodeID)
 	if err != nil {

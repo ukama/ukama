@@ -53,6 +53,7 @@ func (n NodeID) StringLowercase() string {
 	return strings.ToLower(n.String())
 }
 
+
 func (m ModuleID) String() string {
 	return string(m)
 }
@@ -191,6 +192,30 @@ func NewVirtualAmplifierNodeId() NodeID {
 // Generate new node id for tower node
 func NewVirtualTowerNodeId() NodeID {
 	return NewVirtualNodeId(NODE_ID_TYPE_TOWERNODE)
+}
+
+func GetNodeType(n string) *string {
+	codes := [...]string{
+		NODE_ID_TYPE_HOMENODE,
+		NODE_ID_TYPE_TOWERNODE,
+		NODE_ID_TYPE_AMPNODE}
+
+	var nodeType *string
+	for _, code := range codes {
+		/* Check for the NodeTyope codes */
+		if strings.Contains(strings.ToLower(n), code) {
+			
+			/* Check index of substring */
+			idx := strings.Index(strings.ToLower(n), code)
+			if idx == CODE_IDX {
+				nodeType = &code
+				break
+			}
+
+		}
+	}
+	
+	return nodeType
 }
 
 func ValidateNodeId(id string) (NodeID, error) {
