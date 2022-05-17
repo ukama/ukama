@@ -20,6 +20,7 @@ interface IAddUser {
     isOpen: boolean;
     handleClose: Function;
     handleSubmitAction: Function;
+    qrCodeId: any;
 }
 
 const getDescription = (id: number) => {
@@ -44,7 +45,12 @@ const getTitle = (id: number, type: string) =>
         ? `Add User${type && ` - ${type}`}`
         : "Add User Succesful";
 
-const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
+const AddUser = ({
+    isOpen,
+    handleClose,
+    qrCodeId,
+    handleSubmitAction,
+}: IAddUser) => {
     const [flow, setFlow] = useState(0);
     const [formError, setError] = useState("");
     const [simType, setSimType] = useState("");
@@ -137,7 +143,12 @@ const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
                         description={getDescription(3)}
                     />
                 )}
-                {flow === 3 && <ESimQR description={getDescription(2)} />}
+                {flow === 3 && (
+                    <ESimQR
+                        description={getDescription(2)}
+                        qrCodeId={qrCodeId}
+                    />
+                )}
                 {flow === 4 && <Success description={getDescription(4)} />}
             </DialogContent>
             {(flow === 1 || flow === 2) && (

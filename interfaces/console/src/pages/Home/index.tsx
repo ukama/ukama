@@ -44,6 +44,7 @@ import {
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
     useAddUserMutation,
+    useGetEsimQrMutation,
     useUpdateNodeMutation,
 } from "../../generated";
 import { TMetric, TObject } from "../../types";
@@ -59,11 +60,13 @@ import {
 } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
-
+import useWhoami from "../../helpers/useWhoami";
+import { SettingsInputSvideoOutlined } from "@mui/icons-material";
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
+    const { response: userData } = useWhoami();
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -92,15 +95,22 @@ const Home = () => {
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
+    const [userId, setUserId] = useState<any>();
+    const [qrCodeId, setqrCodeId] = useState<any>();
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [simId, setSimId] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
         temperaturetrx: null,
     });
-
+    useEffect(() => {
+        if (userData) {
+            setUserId(userData.id);
+        }
+    }, []);
     const {
         data: nodeRes,
         loading: nodeLoading,
@@ -132,17 +142,30 @@ const Home = () => {
             });
         },
     });
+
+    const [
+        getUserQrCode,
+        { data: getUserQrCodeRes, error: getUserQrCodeError },
+    ] = useGetEsimQrMutation({
+        onCompleted: () => {
+            setqrCodeId(getUserQrCodeRes?.getEsimQR?.iccid);
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "get-userQrCode-node-error",
+                message: `${getUserQrCodeError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation({
         onCompleted: () => {
-            setNodeToastNotification({
-                id: "Add-user-success",
-                message: `${addUserRes?.addUser?.name} has been added successfully!`,
-                type: "success",
-                show: true,
-            });
+            setSimId(addUserRes?.addUser.iccid);
         },
         onError: () => {
             setNodeToastNotification({
@@ -367,6 +390,14 @@ const Home = () => {
                         email: data.email as string,
                         name: data.name as string,
                         phone: "",
+                    },
+                },
+            });
+            getUserQrCode({
+                variables: {
+                    data: {
+                        userId: userId,
+                        simId: simId,
                     },
                 },
             });
@@ -817,6 +848,7 @@ const Home = () => {
             )}
             {showInstallSim && (
                 <AddUser
+                    qrCodeId={qrCodeId}
                     isOpen={showInstallSim}
                     handleClose={handleSimInstallationClose}
                     handleSubmitAction={handleSimInstallationSubmit}

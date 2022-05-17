@@ -30,8 +30,8 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
         };
     } else if (ctx.cookie) {
         header = {
-            Cookie: `ukama_session=${cookieObj["ukama_session"]}`,
+            Cookie: "ukama_session=MTY1Mjc5Nzg2M3w3TVRyTEUyUEFXcHJuOWNEWm5iN0tmeno2LXJWdnZWSGRPdlF6WVRQZE5BWDcycktWUnc0cFIwNjBmTG9zWkZCUE5TOWtDQzFVZWRkV2hQcXBJWG9RYkRYNHFheVp4alNnM19RbUdDV0lYNnVfekdQSVQyaWd5LUl6WTFlZnl4LU9PTXRUTnktZ1E9PXy32OcVwiQGkXkVfrypzqk-EsX8oNG8JQ10gqAu0su_gA==",
         };
     }
-    return { header: header, orgId: cookieObj["id"] };
+    return { header: header, orgId: "a32485e4-d842-45da-bf3e-798889c68ad0" };
 };
