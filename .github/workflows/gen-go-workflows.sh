@@ -1,5 +1,6 @@
 # read the workflow template
 WORKFLOW_TEMPLATE=$(cat workflow-template.yaml.templ)
+PR_RELEASE_TEMPLATE=$(cat pr-release-template.yaml.templ)
 
 WARNING="# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
@@ -17,13 +18,18 @@ generate(){
         # replace template route placeholder with route name
         WORKFLOW=$(echo "${WORKFLOW_TEMPLATE}" | sed "s#{{SERVICE}}#${1}/${SERVICE}#g" | sed "s#{{SERVICE_NAME}}#${SERVICE}#g" | sed "s#{{HELMFILE_PREFIX}}#${2}#g" \
          | sed "s#{{SANITIZED_NAME}}#${SANITIZED}#g" | sed "s#{{WORKFLOW_PATH}}#${WORKFLOW_PATH}#g" )
+
+        PR_RELEASE=$(echo "${PR_RELEASE_TEMPLATE}" | sed "s#{{SERVICE}}#${1}/${SERVICE}#g" | sed "s#{{SERVICE_NAME}}#${SERVICE}#g" | sed "s#{{HELMFILE_PREFIX}}#${2}#g" \
+         | sed "s#{{SANITIZED_NAME}}#${SANITIZED}#g" | sed "s#{{WORKFLOW_PATH}}#${WORKFLOW_PATH}#g" )
         
         # save workflow to .github/workflows/{ROUTE}
         echo "${WARNING}${WORKFLOW}" > ${WORKFLOW_PATH}.yaml
+        echo "${WARNING}${PR_RELEASE}" > ${WORKFLOW_PATH}-pr-release.yaml
     done
 }
 
 generate "services/bootstrap" "bootstrap"
 generate "services/cloud" "ukama"
 generate "services/hub" "hub"
-generate "testing/services" "factory"
+generate "testing/services" "testing"
+generate "services/metrics" "metrics"

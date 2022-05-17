@@ -208,7 +208,7 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 	err = r.nodeRepo.Delete(nodeId)
 	if err != nil {
 		logrus.Error("error deleting the node, ", err.Error())
-		return nil, status.Errorf(codes.Internal, "error deleting the node")
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.DeleteNodeResponse{
@@ -229,12 +229,8 @@ func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*
 
 	node, err := r.nodeRepo.Get(nodeId)
 	if err != nil {
-		if sql.IsNotFoundError(err) {
-			return nil, status.Errorf(codes.NotFound, "node not found")
-		}
-
 		logrus.Error("error getting the node" + err.Error())
-		return nil, status.Errorf(codes.Internal, "error getting the node")
+		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.GetNodeResponse{

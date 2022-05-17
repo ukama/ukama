@@ -26,6 +26,9 @@ service SimManagerService {
 
     // Get usage data for a sim card
     rpc GetUsage(GetUsageRequest) returns (GetUsageResponse);
+
+    // Get qr code to install esim
+    rpc GetQrCode(GetQrCodeRequest) returns (GetQrCodeResponse);
 }
 
 message ActivateSimRequest {
@@ -43,6 +46,7 @@ message GetSimStatusResponse {
         UNKNOWN = 0;
         INACTIVE = 1;
         ACTIVE = 2;
+        TERMINATED = 3;
     }
 
     Status status = 1;
@@ -63,8 +67,6 @@ message GetSimInfoResponse {
     string iccid = 1;
     string imsi = 2;
 }
-
-
 
 message SetServiceStatusRequest {
     string iccid = 1;
@@ -89,4 +91,12 @@ message GetUsageRequest{
 message GetUsageResponse {
     int64 DataUsageInBytes  = 1;
     int64 DataTotalInBytes  = 2;
+}
+
+message GetQrCodeRequest{
+    string iccid = 1  [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetQrCodeResponse{
+    string qr_code = 1;
 }

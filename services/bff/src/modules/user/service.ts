@@ -9,6 +9,8 @@ import {
     UpdateUserServiceInput,
     UserResDto,
     OrgUserSimDto,
+    GetESimQRCodeInput,
+    ESimQRCodeRes,
 } from "./types";
 import { IUserService } from "./interface";
 import { checkError, HTTP404Error, Messages } from "../../errors";
@@ -135,6 +137,19 @@ export class UserService implements IUserService {
             },
         });
         if (checkError(res)) throw new Error(res.message);
+        return res;
+    };
+    getEsimQRCode = async (
+        data: GetESimQRCodeInput,
+        cookie: ParsedCookie
+    ): Promise<ESimQRCodeRes> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.userId}`,
+            headers: cookie.header,
+        });
+        if (checkError(res)) throw new Error(res.description);
+
         return res;
     };
 }

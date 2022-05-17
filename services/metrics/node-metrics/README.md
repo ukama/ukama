@@ -16,9 +16,12 @@ Here is a basic example:
     metricsServer: "http://localhost:8080"
     metrics:
       cpu: { needRate: true, metric: trx_soc_cpu_usage }
-      memory: { needRate: true, metric: trx_memory_ddr_used, rateInterval: 5m }      
+      memory: { needRate: true, metric: trx_memory_ddr_used, rateInterval: 5m }
+    rawQueries:
+      uptime: { query: "min(trx_generic_system_uptime_seconds{ {{.Filter}} })" }      
 ```
 
+### Node Metrics
 `metrics` tag contains the list of expose metrics. In our case node-metrics exposes two metrics cpu and memory 
 that could be requested using `nodes/[NODE_ID]/metrics/[METRIC_NAME]?from=1643108704&to=1643195104&step=3600` format. 
 
@@ -31,8 +34,13 @@ and
 GET http:// localhost:8080/nodes/uk-test36-hnode-a1-30df/metrics/memory?from=1643108704&to=1643195104&step=3600
 ```
 
-
 Adding a new "metric" will make `node-metrics` service serve it from the path that correspond to the name of the metric.
 - `metric`(required)  - metric name in prometheus 
 - `needRate`(optional, default=false) -  flag indicates whether `rate` prometheus function is applied to the metric query
 - `rateInterval`(optional, default=1h)  - could be set for metrics that have `needRate` enabled. It has prometheus duration format for ex 2h, 10m etc. If it's empty then default is `1h` 
+
+### Raw Queries 
+You can configure metrics server to run arbitrary queries. The only limitation is that the query
+must contain `{{.Filter}}` placeholder that will be replaced with filter expression. Filter expression depends on 
+the request that is sent by the user and could include node id, org id, network. 
+

@@ -3,7 +3,7 @@ package pkg
 import (
 	"time"
 
-	cors "github.com/gin-contrib/cors"
+	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -16,16 +16,34 @@ type Config struct {
 }
 
 type NodeMetricsConfig struct {
-	Metrics             map[string]Metric `json:"metrics"`
+	Metrics             map[string]Metric
+	RawQueries          map[string]Query
 	MetricsServer       string
 	Timeout             time.Duration
 	DefaultRateInterval string
 }
 
 var defaultPrometheusMetric = map[string]Metric{
-	"cpu":    Metric{false, "trx_soc_cpu_usage", ""},
-	"memory": Metric{false, "trx_memory_ddr_used", ""},
-	"users":  Metric{false, "trx_lte_core_active_ue", ""},
+	"cpu":    {Metric: "trx_soc_cpu_usage", AggregateFunc: "sum"},
+	"memory": {Metric: "trx_memory_ddr_used", AggregateFunc: "sum"},
+	"users":  {Metric: "trx_lte_core_active_ue", AggregateFunc: "avg"},
+}
+
+var defautQueries = map[string]Query{
+	"uptime": {Query: `min(trx_generic_system_uptime_seconds{${.Filter}})  < min(ctl_generic_system_uptime_seconds{${.Filter}})`},
+}
+
+type Metrics struct {
+	conf *NodeMetricsConfig
+}
+
+type Interval struct {
+	// Unix time
+	Start int64
+	// Unix time
+	End int64
+	// Step in seconds
+	Step uint
 }
 
 func NewConfig() *Config {
@@ -39,6 +57,7 @@ func NewConfig() *Config {
 		Metrics: config.DefaultMetrics(),
 		NodeMetrics: &NodeMetricsConfig{
 			Metrics:             defaultPrometheusMetric,
+			RawQueries:          defautQueries,
 			MetricsServer:       "http://localhost:8080",
 			Timeout:             time.Second * 5,
 			DefaultRateInterval: "5m",

@@ -1,15 +1,14 @@
 import {
     Box,
     List,
-    Drawer,
-    Divider,
-    Toolbar,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    Typography,
     Paper,
     Stack,
+    Drawer,
+    Toolbar,
+    ListItem,
+    Typography,
+    ListItemIcon,
+    ListItemText,
 } from "@mui/material";
 import React from "react";
 import { colors } from "../../theme";
@@ -19,7 +18,7 @@ import { isDarkmode } from "../../recoil";
 import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper } from "../../components";
-import { DRAWER_WIDTH, SIDEBAR_MENU1, SIDEBAR_MENU2 } from "../../constants";
+import { DRAWER_WIDTH, SIDEBAR_MENU1 } from "../../constants";
 
 const Logo = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -130,15 +129,6 @@ const Sidebar = (
                 }}
             >
                 {MenuList(SIDEBAR_MENU1)}
-                <Divider
-                    sx={{
-                        width: 160,
-                        mt: "8px",
-                        mb: "0px !important",
-                        alignSelf: "center",
-                    }}
-                />
-                {MenuList(SIDEBAR_MENU2)}
             </Stack>
         </Paper>
     );

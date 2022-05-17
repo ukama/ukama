@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"github.com/ukama/ukama/services/common/config"
+	"time"
 )
 
 type Config struct {
@@ -14,8 +15,9 @@ type Config struct {
 }
 
 type SimManager struct {
-	Host string
-	Name string
+	Host    string
+	Name    string
+	Timeout time.Duration
 }
 
 func NewConfig() *Config {
@@ -33,8 +35,9 @@ func NewConfig() *Config {
 		},
 		HssHost: "localhost:9090",
 		SimManager: SimManager{
-			Host: "localhost:9090",
-			Name: "SimManager",
+			Host:    "localhost:9090",
+			Name:    "SimManager",
+			Timeout: 3 * time.Second,
 		},
 		SimTokenKey: "11111111111111111111111111111111",
 	}

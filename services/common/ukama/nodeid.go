@@ -37,6 +37,14 @@ const (
 )
 
 const (
+	MODULE_ID_TYPE_COMP      = "COMV1"
+	MODULE_ID_TYPE_TRX       = "TRX"
+	MODULE_ID_TYPE_CTRL      = "CTRL"
+	MODULE_ID_TYPE_FE        = "FE"
+	MODULE_ID_TYPE_UNDEFINED = "UNDEFINED"
+)
+
+const (
 	node_id_type_component_home      = "hnode"
 	node_id_type_component_tower     = "tnode"
 	node_id_type_component_amplifier = "anode"
@@ -44,6 +52,10 @@ const (
 
 type NodeID string
 type ModuleID string
+
+func (m ModuleID) String() string {
+	return string(m)
+}
 
 func (n NodeID) String() string {
 	return string(n)
@@ -117,6 +129,24 @@ func GetModuleCodeForUnits(mtype string) string {
 		code = MODULE_ID_TYPE_FE
 	default:
 		code = MODULE_ID_TYPE_UNDEFINED
+	}
+	return code
+}
+
+/* Get HW Code */
+func GetModuleCodeForUnits(mtype string) string {
+	var code string
+	switch mtype {
+	case MODULE_ID_TYPE_COMP, "ComV1", "com", "COM":
+		code = "COM"
+	case MODULE_ID_TYPE_TRX, "Trx", "trx":
+		code = "TRX"
+	case MODULE_ID_TYPE_CTRL, "Ctrl", "ctrl":
+		code = "CTRL"
+	case MODULE_ID_TYPE_FE, "Fe", "fe":
+		code = "RFFE"
+	default:
+		code = "XXXXX"
 	}
 	return code
 }

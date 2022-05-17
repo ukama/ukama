@@ -25,17 +25,13 @@ const globalUseStyles = makeStyles(() => ({
     },
 }));
 
-const HorizontalContainerJustify = styled(Box)(props => ({
+const HorizontalContainerJustify = styled(Box)(() => ({
     width: "100%",
     height: "auto",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    [props.theme.breakpoints.down("md")]: {
-        flexDirection: "column",
-        alignItems: "flex-start",
-    },
 }));
 
 const HorizontalContainer = styled(Box)({

@@ -3,8 +3,10 @@ package pkg
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
@@ -15,6 +17,7 @@ import (
 
 type SimManagerServer struct {
 	simmgr.UnimplementedSimManagerServiceServer
+	simmgr.UnimplementedSimPoolServer
 	storage Storage
 }
 
@@ -25,7 +28,6 @@ type Storage interface {
 }
 
 func NewSimManagerServer(storage Storage) *SimManagerServer {
-
 	return &SimManagerServer{
 		storage: storage,
 	}
@@ -181,6 +183,26 @@ func (s SimManagerServer) GetUsage(ctx context.Context, request *simmgr.GetUsage
 	return &simmgr.GetUsageResponse{
 		DataUsageInBytes: rand.Int63n(total),
 		DataTotalInBytes: total,
+	}, nil
+}
+
+func (s SimManagerServer) GetQrCode(ctx context.Context, request *simmgr.GetQrCodeRequest) (*simmgr.GetQrCodeResponse, error) {
+	sim := s.getSimInfo(ctx, request.Iccid)
+	if sim == nil {
+		return nil, status.Errorf(codes.NotFound, "Sim not found.")
+	}
+
+	return &simmgr.GetQrCodeResponse{
+		QrCode: "1$prod.smdp-plus.rsp.goog$052X-UFXS-CQIY-PNGL",
+	}, nil
+}
+
+func (s SimManagerServer) PopIccid(ctx context.Context, request *simmgr.PopIccidRequest) (*simmgr.PopIccidResponse, error) {
+	n := fmt.Sprintf("%018d", time.Now().Unix())
+	iccid := iccidPrefix + n[len(iccidPrefix):]
+
+	return &simmgr.PopIccidResponse{
+		Iccid: iccid,
 	}, nil
 }
 

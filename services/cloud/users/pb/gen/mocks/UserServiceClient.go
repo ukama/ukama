@@ -198,6 +198,36 @@ func (_m *UserServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts .
 	return r0, r1
 }
 
+// GetQrCode provides a mock function with given fields: ctx, in, opts
+func (_m *UserServiceClient) GetQrCode(ctx context.Context, in *gen.GetQrCodeRequest, opts ...grpc.CallOption) (*gen.GetQrCodeResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetQrCodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetQrCodeRequest, ...grpc.CallOption) *gen.GetQrCodeResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetQrCodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetQrCodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // List provides a mock function with given fields: ctx, in, opts
 func (_m *UserServiceClient) List(ctx context.Context, in *gen.ListRequest, opts ...grpc.CallOption) (*gen.ListResponse, error) {
 	_va := make([]interface{}, len(opts))

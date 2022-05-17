@@ -3,7 +3,6 @@ package multipl
 import (
 	"encoding/json"
 
-	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -20,7 +19,7 @@ type QueuePublisher interface {
 
 func NewQueuePublisher(queueUri string) (*queuePublisher, error) {
 
-	publisher, err := rabbitmq.NewPublisher(queueUri, amqp.Config{})
+	publisher, err := rabbitmq.NewPublisher(queueUri, rabbitmq.Config{})
 	if err != nil {
 		return nil, err
 	}
