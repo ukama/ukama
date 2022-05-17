@@ -5,6 +5,7 @@ import "github.com/ukama/ukama/testing/services/network/internal/db"
 type ReqActionOnNode struct {
 	NodeID    string `query:"node" validate:"required"`
 	LookingTo string `query:"looking_to" validate:"eq=vnode_power_on|eq=vnode_power_off,required"`
+	Org       string `query:"org" validate:"required"`
 }
 
 type ReqPowerOnNode struct {

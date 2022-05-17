@@ -121,7 +121,7 @@ func (r *Router) PutPowerOn(req *ReqPowerOnNode) error {
 	}
 
 	/* PowerOn Node */
-	err = r.c.PowerOnNode(req.NodeID)
+	err = r.c.PowerOnNode(req.NodeID, req.Org)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,

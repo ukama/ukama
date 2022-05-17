@@ -26,7 +26,7 @@ func Test_PowerOnNode(t *testing.T) {
 
 	c := fakeNewController()
 	node := ukama.NewVirtualHomeNodeId()
-	err := c.PowerOnNode(node.String())
+	err := c.PowerOnNode(node.String(), "ukama")
 	assert.Nil(t, err)
 }
 
@@ -38,7 +38,7 @@ func Test_PowerOnNodeFail(t *testing.T) {
 
 	c := fakeNewController()
 	node := "abcd"
-	err := c.PowerOnNode(node)
+	err := c.PowerOnNode(node, "ukama")
 	if assert.Error(t, err) {
 		assert.Contains(t, err.Error(), "not expected nodeid format")
 	}
@@ -53,7 +53,7 @@ func Test_PowerOffNode(t *testing.T) {
 	}
 
 	node := ukama.NewVirtualHomeNodeId()
-	err := c.PowerOnNode(node.String())
+	err := c.PowerOnNode(node.String(), "ukama")
 	assert.Nil(t, err)
 
 	err = c.PowerOffNode(node.String())

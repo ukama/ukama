@@ -34,9 +34,9 @@ type ControllerOps interface {
 	ControllerInit() error
 	ListNodes()
 	GetNodeRuntimeStatus(nodeId string) (*string, error)
-	PowerOnNode(nodeId string) error
+	PowerOnNode(nodeId string, org string) error
 	PowerOffNode(nodeId string) error
-	CreateNode(name string, image string, command []string, ntype string) error
+	CreateNode(name string, image string, command []string, ntype string, org string) error
 	WatcherForNodes(ctx context.Context, cb func(string, string) error) error
 }
 
@@ -152,7 +152,7 @@ spec:
 	volume:
 */
 
-func (c *Controller) CreateNode(nodeId string, image string, command []string, ntype string) error {
+func (c *Controller) CreateNode(nodeId string, image string, command []string, ntype string, org string) error {
 
 	/* Image URL */
 	//imageName := fmt.Sprintf("%s:%s", internal.ServiceConfig.NodeImage, name)
@@ -165,7 +165,7 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		"node": vnName,
 		"type": ntype,
 		"app":  "virtual-node",
-		"org":  "ukama",
+		"org":  org,
 	}
 
 	/* Pod spec */
@@ -243,7 +243,7 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 }
 
 /* Go routine to start build process */
-func (c *Controller) PowerOnNode(nodeId string) error {
+func (c *Controller) PowerOnNode(nodeId string, org string) error {
 
 	containerImage := internal.ServiceConfig.BuilderImage
 
@@ -255,7 +255,7 @@ func (c *Controller) PowerOnNode(nodeId string) error {
 		return fmt.Errorf("%s not expected nodeid format", nodeId)
 	}
 
-	err := c.CreateNode(nodeId, containerImage, entryCommand, *nodeType)
+	err := c.CreateNode(nodeId, containerImage, entryCommand, *nodeType, org)
 	if err != nil {
 		logrus.Errorf("Create Node instance failed for %s. Error: %s", nodeId, err.Error())
 		return err
