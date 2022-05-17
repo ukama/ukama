@@ -8,7 +8,7 @@
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
 SYS_ROOT=${UKAMA_OS}/distro/
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
-DEF_BUILD_DIR=./build/
+DEF_BUILD_DIR=./build/capps/
 
 #Various network related parameters
 HOSTNAME="localhost"
@@ -16,9 +16,7 @@ HOSTNAME="localhost"
 # default target is local machine (gcc)
 DEF_TARGET="local"
 TARGET=${DEF_TARGET}
-
-# default rootfs location is ${DEF_BUILD_DIR}
-BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
+BUILD_DIR=${DEF_BUILD_DIR}
 
 #
 # Build the app at given src path and cmd

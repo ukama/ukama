@@ -120,6 +120,7 @@ case "$ACTION" in
 		cp $2 ${BUILD_DIR}/$3
 		;;
     "clean")
+		rm ContainerFile; rm supervisor.conf
 		buildah rmi -f localhost/$1
 		cd ${NODED_ROOT} && make clean && cd ${CWD}
 		;;
