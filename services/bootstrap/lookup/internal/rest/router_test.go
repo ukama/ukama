@@ -72,7 +72,7 @@ func TestGetNodeRouteNodeExist(t *testing.T) {
 	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	query := "/orgs/node?looking_for=org_credentials&org=" + dummyOrgName + "+&node=" + testNodeId.String()
 	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
@@ -100,7 +100,7 @@ func TestGetNodeRouteNodeDoesNotExist(t *testing.T) {
 	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	query := "/orgs/node?looking_for=org_credentials&org=" + dummyOrgName + "+&node=" + testNodeId.String()
 	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
@@ -123,7 +123,7 @@ func TestGetNodeRouteRepoError(t *testing.T) {
 	r := NewRouter(defaultCongif, nil, nodeRepo, orgRepo, true).fizz.Engine()
 
 	// act
-	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=" + testNodeId.String()
+	query := "/orgs/node?looking_for=org_credentials&org=" + dummyOrgName + "+&node=" + testNodeId.String()
 	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
@@ -140,7 +140,7 @@ func TestGetDeviceRouteInvalidUuid(t *testing.T) {
 	r := NewRouter(defaultCongif, nil, nil, nil, true).fizz.Engine()
 
 	// act
-	query := "/orgs/node?looking_for=info&org=" + dummyOrgName + "+&node=123asadg"
+	query := "/orgs/node?looking_for=org_credentials&org=" + dummyOrgName + "+&node=123asadg"
 	req, _ := http.NewRequest("GET", query, nil)
 	r.ServeHTTP(w, req)
 
