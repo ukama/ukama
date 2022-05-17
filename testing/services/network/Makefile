@@ -36,6 +36,6 @@ mock:
 	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/mock.go
 
 clean:
-	rm -rf ./
+	rm -rf ./bin
 	rm -rf $(NETWORK_SPEC)/*
 
