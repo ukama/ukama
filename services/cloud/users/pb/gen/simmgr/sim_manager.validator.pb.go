@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	_ "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/wrapperspb"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -107,5 +107,17 @@ func (this *GetUsageRequest) Validate() error {
 	return nil
 }
 func (this *GetUsageResponse) Validate() error {
+	return nil
+}
+
+var _regex_GetQrCodeRequest_Iccid = regexp.MustCompile(`^[0-9]{18,19}$`)
+
+func (this *GetQrCodeRequest) Validate() error {
+	if !_regex_GetQrCodeRequest_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,19}$"`, this.Iccid))
+	}
+	return nil
+}
+func (this *GetQrCodeResponse) Validate() error {
 	return nil
 }

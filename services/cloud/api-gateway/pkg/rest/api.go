@@ -36,6 +36,12 @@ type SetSimStatusRequest struct {
 	Ukama   *SimServices `json:"ukama,omitempty"`
 }
 
+type GetSimQrRequest struct {
+	OrgName string `path:"org" validate:"required"`
+	UserId  string `path:"user" validate:"required"`
+	Iccid   string `path:"iccid" validate:"required"`
+}
+
 type SimServices struct {
 	Voice *bool `json:"voice,omitempty"`
 	Sms   *bool `json:"sms,omitempty"`

@@ -17,75 +17,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Metric struct {
-	NeedRate bool   `json:"needRate"`
-	Metric   string `json:"metric"`
-	// Range vector duration used in Rate func https://prometheus.io/docs/prometheus/latest/querying/basics/#time-durations
-	// if NeedRate is false then this field is ignored
-	// Example: 1d or 5h, or 30s
-	RateInterval string `json:"rateInterval"`
-
-	// consider adding aggregation function as a parameter
-}
-
-type Metrics struct {
-	conf *NodeMetricsConfig
-}
-
-type Interval struct {
-	// Unix time
-	Start int64
-	// Unix time
-	End int64
-	// Step in seconds
-	Step uint
-}
-
-type Filter struct {
-	nodeId  string
-	org     string
-	network string
-}
-
-func NewFilter() *Filter {
-	return &Filter{}
-}
-
-func (f *Filter) WithNodeId(nodeId string) *Filter {
-	f.nodeId = nodeId
-	return f
-}
-
-func (f *Filter) WithOrg(org string) *Filter {
-	f.org = org
-	return f
-}
-
-func (f *Filter) HasNetwork() bool {
-	return f.network != ""
-}
-
-func (f *Filter) WithNetwork(org string, network string) *Filter {
-	f.org = org
-	f.network = network
-	return f
-}
-
-// GetFilter returns a prometheus filter
-func (f *Filter) GetFilter() string {
-	var filter []string
-	if f.nodeId != "" {
-		filter = append(filter, fmt.Sprintf("nodeid='%s'", f.nodeId))
-	}
-	if f.org != "" {
-		filter = append(filter, fmt.Sprintf("org='%s'", f.org))
-	}
-	if f.network != "" {
-		filter = append(filter, fmt.Sprintf("network='%s'", f.network))
-	}
-	return strings.Join(filter, ",")
-}
-
 // NewMetrics create new instance of metrics
 // when metricsConfig in null then defaul config is used
 func NewMetrics(config *NodeMetricsConfig) (m *Metrics, err error) {
@@ -122,20 +53,27 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, in *Interva
 // GetAggregateMetric returns aggregated value of a metric based on filter
 // uses Sum function by default
 func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
-	_, ok := m.conf.Metrics[metricType]
-	if !ok {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*m.conf.Timeout)
+	defer cancel()
+
+	query := ""
+	if t, ok := m.conf.Metrics[metricType]; ok {
+		query = t.getAggregateQuery(metricFilter)
+	} else if q, ok := m.conf.RawQueries[metricType]; ok {
+		query, err = q.getQuery(metricFilter)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "failed to process raw query")
+		}
+	} else {
 		return http.StatusNotFound, errors.New("metric type not found")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
-	defer cancel()
 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-	data.Set("query", m.conf.Metrics[metricType].getAggregateQuery(metricFilter, "sum"))
+	data.Set("query", query)
 
-	logrus.Infof("GetAggregateMetric query: %s", data.Encode())
+	logrus.Infof("Execute query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, u, data, w)
 }
@@ -228,36 +166,6 @@ func (m *Metrics) List() (r []string) {
 		r = append(r, k)
 	}
 	return r
-}
-
-func getExcludeStatements(labels ...string) string {
-	el := []string{"job", "instance", "receive", "tenant_id"}
-	el = append(el, labels...)
-	return fmt.Sprintf("without (%s)", strings.Join(el, ","))
-}
-
-func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggregateFunc string) string {
-	rateInterval := m.RateInterval
-	if m.NeedRate && len(rateInterval) == 0 {
-		rateInterval = defaultRateInterval
-	}
-
-	if m.NeedRate {
-		return fmt.Sprintf("%s(rate(%s {%s}[%s])) %s", aggregateFunc, m.Metric,
-			metricFilter.GetFilter(), rateInterval, getExcludeStatements())
-	}
-
-	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, metricFilter.GetFilter(), getExcludeStatements())
-}
-
-func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
-	exludSt := getExcludeStatements("nodeid")
-
-	// org only filter
-	if !filter.HasNetwork() {
-		exludSt = getExcludeStatements("nodeid", "network")
-	}
-	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, filter.GetFilter(), exludSt)
 }
 
 func (m Metric) getLatestQuery(filter *Filter) string {

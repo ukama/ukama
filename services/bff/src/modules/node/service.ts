@@ -21,9 +21,9 @@ import {
 import NodeMapper from "./mapper";
 import { checkError } from "../../errors";
 import { INodeService } from "./interface";
+import { DeleteNodeRes } from "../user/types";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
-import { DeactivateResponse } from "../user/types";
 import { GRAPHS_TAB } from "./../../constants/index";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { getMetricsByTab, getMetricTitleByType } from "../../utils";
@@ -60,15 +60,18 @@ export class NodeService implements INodeService {
         if (checkError(res)) throw new Error(res.message);
         return res;
     };
-    deleteNode = async (id: string): Promise<DeactivateResponse> => {
+    deleteNode = async (
+        id: string,
+        cookie: ParsedCookie
+    ): Promise<DeleteNodeRes> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.POST,
-            path: SERVER.POST_DELETE_NODE,
-            body: { id },
+            headers: cookie.header,
+            type: API_METHOD_TYPE.DELETE,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${id}`,
         });
         if (checkError(res)) throw new Error(res.message);
 
-        return res.data;
+        return res;
     };
     getNodesByOrg = async (
         cookie: ParsedCookie

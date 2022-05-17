@@ -2,19 +2,19 @@ import {
     StatsCard,
     NodeDialog,
     StatusCard,
+    BasicDialog,
     NodeContainer,
     NetworkStatus,
     LoadingWrapper,
+    DeactivateUser,
     ContainerHeader,
     DataTableWithOptions,
-    UserActivationDialog,
     SoftwareUpdateModal,
-    BasicDialog,
+    AddUser,
 } from "../../components";
 import {
     TIME_FILTER,
     MONTH_FILTER,
-    UserActivation,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
 } from "../../constants";
@@ -29,6 +29,7 @@ import {
     useGetDataUsageQuery,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
+    useDeleteNodeMutation,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useAddNodeMutation,
@@ -42,17 +43,18 @@ import {
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
+    useAddUserMutation,
     useUpdateNodeMutation,
 } from "../../generated";
-import { TMetric } from "../../types";
+import { TMetric, TObject } from "../../types";
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
+    user,
     isFirstVisit,
     isSkeltonLoading,
-    user,
     snackbarMessage,
 } from "../../recoil";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -62,7 +64,6 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
-    const [isUserActivateOpen, setIsUserActivateOpen] = useState(false);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -84,10 +85,15 @@ const Home = () => {
         userId: "",
         userName: "",
     });
+    const [deleteNodeDialog, setDeleteNodeDialog] = useState({
+        isShow: false,
+        nodeId: "",
+    });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
+    const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
-    const setRegisterNodeNotification = useSetRecoilState(snackbarMessage);
+    const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -100,6 +106,53 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
+    const [
+        deleteNode,
+        {
+            loading: deleteNodeLoading,
+            data: deleteNodeRes,
+            error: deleteNodeError,
+        },
+    ] = useDeleteNodeMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeRes?.deleteNode?.nodeId} has been deleted successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchGetNodesByOrg();
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${deleteNodeError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [
+        addUser,
+        { loading: addUserLoading, data: addUserRes, error: addUserError },
+    ] = useAddUserMutation({
+        onCompleted: () => {
+            setNodeToastNotification({
+                id: "Add-user-success",
+                message: `${addUserRes?.addUser?.name} has been added successfully!`,
+                type: "success",
+                show: true,
+            });
+        },
+        onError: () => {
+            setNodeToastNotification({
+                id: "error-add-user-success",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
 
     const [
         registerNode,
@@ -110,7 +163,7 @@ const Home = () => {
         },
     ] = useAddNodeMutation({
         onCompleted: () => {
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "addNodeSuccess",
                 message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
                 type: "success",
@@ -120,7 +173,7 @@ const Home = () => {
         },
 
         onError: () =>
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "ErrorAddingNode",
                 message: `${registerNodeError?.message}`,
                 type: "error",
@@ -137,7 +190,7 @@ const Home = () => {
         },
     ] = useUpdateNodeMutation({
         onCompleted: () => {
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "UpdateNodeNotification",
                 message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
                 type: "success",
@@ -146,7 +199,7 @@ const Home = () => {
             refetchGetNodesByOrg();
         },
         onError: () =>
-            setRegisterNodeNotification({
+            setNodeToastNotification({
                 id: "UpdateNodeErrorNotification",
                 message: `${updateNodError?.message}`,
                 type: "error",
@@ -192,7 +245,7 @@ const Home = () => {
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation({
             onCompleted: res => {
-                setRegisterNodeNotification({
+                setNodeToastNotification({
                     id: "userDeactivated",
                     message: `${res.deactivateUser.name} has been deactivated successfully!`,
                     type: "success",
@@ -201,7 +254,7 @@ const Home = () => {
                 refetchResidents();
             },
             onError: err =>
-                setRegisterNodeNotification({
+                setNodeToastNotification({
                     id: "userDeactivated",
                     message: `${err?.message}`,
                     type: "error",
@@ -295,6 +348,7 @@ const Home = () => {
             setIsWelcomeDialog(true);
         }
     }, [_isFirstVisit, orgId]);
+    const handleSimInstallationClose = () => setShowInstallSim(false);
 
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
@@ -305,7 +359,19 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-
+    const handleSimInstallationSubmit = (data: TObject) => {
+        if (data) {
+            addUser({
+                variables: {
+                    data: {
+                        email: data.email as string,
+                        name: data.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             tab: 4,
@@ -447,7 +513,6 @@ const Home = () => {
         }
     };
 
-    const handleUserActivateClose = () => setIsUserActivateOpen(() => false);
     const handleCloseDeactivateUser = () =>
         setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
 
@@ -458,6 +523,14 @@ const Home = () => {
                 id: deactivateUserDialog.userId,
             },
         });
+    };
+    const handleDeleteNode = () => {
+        deleteNode({
+            variables: {
+                id: deleteNodeDialog.nodeId,
+            },
+        });
+        handleCloseDeleteNode();
     };
 
     const onResidentsTableMenuItem = (id: string, type: string) => {
@@ -489,6 +562,11 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
+        } else {
+            setDeleteNodeDialog({
+                isShow: true,
+                nodeId: id || "",
+            });
         }
     };
 
@@ -504,7 +582,8 @@ const Home = () => {
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
-
+    const handleCloseDeleteNode = () =>
+        setDeleteNodeDialog({ ...deleteNodeDialog, isShow: false });
     const handleNodeSubmitAction = (data: any) => {
         setShowNodeDialog(prev => ({
             ...prev,
@@ -533,7 +612,7 @@ const Home = () => {
         }
     };
 
-    const onActivateUser = () => setIsUserActivateOpen(() => true);
+    const onActivateUser = () => setShowInstallSim(() => true);
 
     // eslint-disable-next-line no-unused-vars
     const handleNodeUpdateActin = (id: string) => {
@@ -630,7 +709,9 @@ const Home = () => {
                 <Grid xs={12} lg={8} item>
                     <LoadingWrapper
                         height={318}
-                        isLoading={nodeLoading || isSkeltonLoad}
+                        isLoading={
+                            nodeLoading || isSkeltonLoad || deleteNodeLoading
+                        }
                     >
                         <RoundedCard>
                             <ContainerHeader
@@ -656,7 +737,8 @@ const Home = () => {
                         isLoading={
                             residentsloading ||
                             deactivateUserLoading ||
-                            isSkeltonLoad
+                            isSkeltonLoad ||
+                            addUserLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -696,14 +778,6 @@ const Home = () => {
                     handleCloseAction={handleCloseWelcome}
                 />
             )}
-            {isUserActivateOpen && (
-                <UserActivationDialog
-                    isOpen={isUserActivateOpen}
-                    dialogTitle={UserActivation.title}
-                    subTitle={UserActivation.subTitle}
-                    handleClose={handleUserActivateClose}
-                />
-            )}
 
             {showNodeDialog.isShow && (
                 <NodeDialog
@@ -718,15 +792,34 @@ const Home = () => {
             )}
 
             {deactivateUserDialog.isShow && (
-                <BasicDialog
+                <DeactivateUser
                     isClosable={true}
                     isOpen={deactivateUserDialog.isShow}
                     title={"Deactivate User Confirmation"}
                     description={`${deactivateUserDialog.userName} will be deactivated permanently. Other copy depends on surrounding policy.`}
-                    labelSuccessBtn={"continue with deactivation"}
+                    labelSuccessBtn={"DEACTIVATE USER"}
                     labelNegativeBtn={"cancel"}
                     handleCloseAction={handleCloseDeactivateUser}
                     handleSuccessAction={handleDeactivateUser}
+                />
+            )}
+            {deleteNodeDialog.isShow && (
+                <DeactivateUser
+                    isClosable={true}
+                    isOpen={deleteNodeDialog.isShow}
+                    title={"Delete Node Confirmation"}
+                    description={`${deleteNodeDialog?.nodeId} will be deleted permanently.`}
+                    labelSuccessBtn={"DELETE NODE"}
+                    labelNegativeBtn={"cancel"}
+                    handleCloseAction={handleCloseDeleteNode}
+                    handleSuccessAction={handleDeleteNode}
+                />
+            )}
+            {showInstallSim && (
+                <AddUser
+                    isOpen={showInstallSim}
+                    handleClose={handleSimInstallationClose}
+                    handleSubmitAction={handleSimInstallationSubmit}
                 />
             )}
         </Box>

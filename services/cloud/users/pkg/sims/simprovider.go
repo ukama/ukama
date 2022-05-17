@@ -1,6 +1,7 @@
 package sims
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -8,9 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/pkg/errors"
-	"github.com/ukama/ukama/services/cloud/users/pkg/db"
+	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
 )
 
 type SimProvider interface {
@@ -21,19 +23,18 @@ type SimProvider interface {
 
 type simProvider struct {
 	key     string
-	simPool db.SimPoolRepo
+	simPool pbclient.SimPoolClient
 }
 
 type SimToken struct {
 	ICCID string `json:"iccid"`
 }
 
-func NewSimProvider(key string, simPool db.SimPoolRepo) *simProvider {
+func NewSimProvider(key string, simPool pbclient.SimPoolClient) *simProvider {
 	return &simProvider{key: key, simPool: simPool}
 }
 
 func (i simProvider) GetICCIDWithCode(simCode string) (string, error) {
-
 	str, err := decrypt(simCode, i.key)
 	if err != nil {
 		return "", err
@@ -49,11 +50,13 @@ func (i simProvider) GetICCIDWithCode(simCode string) (string, error) {
 }
 
 func (i simProvider) GetICCIDFromPool() (string, error) {
-	iccid, err := i.simPool.Pop()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	resp, err := i.simPool.PopIccid(ctx, &pbclient.PopIccidRequest{})
 	if err != nil {
 		return "", err
 	}
-	return iccid, nil
+	return resp.Iccid, nil
 }
 
 func (i simProvider) GetSimToken(iccid string) (string, error) {

@@ -127,7 +127,18 @@ func DefaultDatabase() Database {
 	return Database{
 		Host:       "localhost",
 		Password:   "Pass2020!",
-		DbName:     "registry",
+		DbName:     "dummydb",
+		Username:   "postgres",
+		Port:       5432,
+		SslEnabled: false,
+	}
+}
+
+func DefaultDatabaseName(name string) Database {
+	return Database{
+		Host:       "localhost",
+		Password:   "Pass2020!",
+		DbName:     name,
 		Username:   "postgres",
 		Port:       5432,
 		SslEnabled: false,

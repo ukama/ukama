@@ -43,7 +43,7 @@ type DevicesUpdateRequest struct {
 }
 
 func NewQueueListener(queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
-	consumer, err := rabbitmq.NewConsumer(queueUri, amqp.Config{},
+	consumer, err := rabbitmq.NewConsumer(queueUri, rabbitmq.Config{},
 		rabbitmq.WithConsumerOptionsLogger(log.WithField("service", "rabbitmq")))
 	if err != nil {
 		return nil, errors.Wrap(err, "error creating queue consumer")

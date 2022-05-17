@@ -47,6 +47,7 @@ services:
       - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
       - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
       - DEBUG_DISABLEBOOTSTRAP=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
     restart: always
     networks:
       - ukama-net

@@ -115,6 +115,12 @@ export class DeactivateResponse {
 }
 
 @ObjectType()
+export class DeleteNodeRes {
+    @Field()
+    nodeId: string;
+}
+
+@ObjectType()
 export class OrgUserDto {
     @Field()
     name: string;
@@ -234,9 +240,23 @@ export class UpdateUserServiceInput {
     @Field()
     status: boolean;
 }
+@InputType()
+export class GetESimQRCodeInput {
+    @Field()
+    simId: string;
+
+    @Field()
+    userId: string;
+}
 
 @InputType()
 export class DataUsageInputDto {
     @Field(() => [String])
     ids: string[];
+}
+
+@ObjectType()
+export class ESimQRCodeRes {
+    @Field()
+    qrCode: string;
 }

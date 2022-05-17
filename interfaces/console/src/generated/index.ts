@@ -184,6 +184,11 @@ export type DeactivateResponse = {
   uuid: Scalars['String'];
 };
 
+export type DeleteNodeRes = {
+  __typename?: 'DeleteNodeRes';
+  nodeId: Scalars['String'];
+};
+
 export type ErrorType = {
   __typename?: 'ErrorType';
   code: Scalars['Float'];
@@ -341,7 +346,7 @@ export type Mutation = {
   addNode: AddNodeResponse;
   addUser: UserResDto;
   deactivateUser: DeactivateResponse;
-  deleteNode: DeactivateResponse;
+  deleteNode: DeleteNodeRes;
   deleteUser: ActivateUserResponse;
   updateNode: OrgNodeDto;
   updateUser: UserResDto;
@@ -772,6 +777,13 @@ export type AddUserMutationVariables = Exact<{
 
 
 export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, phone: string, id: string } };
+
+export type DeleteNodeMutationVariables = Exact<{
+  id: Scalars['String'];
+}>;
+
+
+export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNode: { __typename?: 'DeleteNodeRes', nodeId: string } };
 
 export type UpdateUserMutationVariables = Exact<{
   userId: Scalars['String'];
@@ -1468,6 +1480,39 @@ export function useAddUserMutation(baseOptions?: Apollo.MutationHookOptions<AddU
 export type AddUserMutationHookResult = ReturnType<typeof useAddUserMutation>;
 export type AddUserMutationResult = Apollo.MutationResult<AddUserMutation>;
 export type AddUserMutationOptions = Apollo.BaseMutationOptions<AddUserMutation, AddUserMutationVariables>;
+export const DeleteNodeDocument = gql`
+    mutation deleteNode($id: String!) {
+  deleteNode(id: $id) {
+    nodeId
+  }
+}
+    `;
+export type DeleteNodeMutationFn = Apollo.MutationFunction<DeleteNodeMutation, DeleteNodeMutationVariables>;
+
+/**
+ * __useDeleteNodeMutation__
+ *
+ * To run a mutation, you first call `useDeleteNodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteNodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteNodeMutation, { data, loading, error }] = useDeleteNodeMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteNodeMutation(baseOptions?: Apollo.MutationHookOptions<DeleteNodeMutation, DeleteNodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteNodeMutation, DeleteNodeMutationVariables>(DeleteNodeDocument, options);
+      }
+export type DeleteNodeMutationHookResult = ReturnType<typeof useDeleteNodeMutation>;
+export type DeleteNodeMutationResult = Apollo.MutationResult<DeleteNodeMutation>;
+export type DeleteNodeMutationOptions = Apollo.BaseMutationOptions<DeleteNodeMutation, DeleteNodeMutationVariables>;
 export const UpdateUserDocument = gql`
     mutation updateUser($userId: String!, $data: UserInputDto!) {
   updateUser(data: $data, userId: $userId) {
