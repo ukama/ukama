@@ -3,10 +3,12 @@ server:
   port: 8180
 debugMode: true
 nodeMetrics:
-  metricsServer: "http://localhost:8080"
+  metricsServer: "https://node-metrics.dev.ukama.com"
   metrics:
     cpu: { needRate: true, metric: trx_soc_cpu_usage }
     memory: { needRate: true, metric: trx_memory_ddr_used, rateInterval: 5m }
-    uptime: { needRate: false, metric: trx_generic_system_uptime_seconds }
+    uptimetrx: { needRate: false, metric: trx_generic_system_uptime_seconds }
+  rawQueries:
+    uptime: { query: "min(trx_generic_system_uptime_seconds{ {{.Filter}} })  < min(ctl_generic_system_uptime_seconds{ {{.Filter}} })" }
 
 

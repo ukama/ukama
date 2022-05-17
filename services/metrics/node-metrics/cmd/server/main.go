@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"strings"
 
 	"github.com/ukama/ukama/services/common/metrics"
 
@@ -35,5 +36,15 @@ func main() {
 func initConfig() {
 	serviceConfig = pkg.NewConfig()
 	config.LoadConfig(pkg.ServiceName, serviceConfig)
+	// validate
+	for k, q := range serviceConfig.NodeMetrics.RawQueries {
+		if !strings.Contains(q.Query, ".Filter") {
+			panic("Query must contain {{ .Filter }}")
+		}
+		if _, ok := serviceConfig.NodeMetrics.Metrics[k]; ok {
+			panic("Duplicate metric name: " + k)
+		}
+	}
+
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
