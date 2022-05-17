@@ -53,7 +53,7 @@ func NewLiseterConfig() *ListenerConfig {
 }
 
 func StartListener(config *ListenerConfig) {
-	client, err := rabbitmq.NewConsumer(config.Queue.Uri, amqp.Config{},
+	client, err := rabbitmq.NewConsumer(config.Queue.Uri, rabbitmq.Config{},
 		rabbitmq.WithConsumerOptionsLogger(logrus.WithField("service", "rabbitmq")))
 	if err != nil {
 		logrus.Fatalf("error creating queue consumer. Error: %s", err.Error())

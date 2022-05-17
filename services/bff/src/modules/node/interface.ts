@@ -1,17 +1,17 @@
-import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
-import { DeactivateResponse } from "../user/types";
 import {
-    AddNodeResponse,
-    AddNodeDto,
-    OrgNodeResponse,
-    OrgNodeResponseDto,
     MetricDto,
-    OrgMetricValueDto,
+    AddNodeDto,
     OrgNodeDto,
     NodeResponse,
+    AddNodeResponse,
+    OrgNodeResponse,
     GetNodeStatusRes,
+    OrgMetricValueDto,
+    OrgNodeResponseDto,
     GetNodeStatusInput,
 } from "./types";
+import { DeleteNodeRes } from "../user/types";
+import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
 
 export interface INodeService {
     getNodeStatus(
@@ -22,7 +22,7 @@ export interface INodeService {
     getNodesByOrg(cookie: ParsedCookie): Promise<OrgNodeResponseDto>;
     addNode(req: AddNodeDto, cookie: ParsedCookie): Promise<AddNodeResponse>;
     updateNode(req: AddNodeDto, cookie: ParsedCookie): Promise<OrgNodeDto>;
-    deleteNode(id: string): Promise<DeactivateResponse>;
+    deleteNode(id: string, cookie: ParsedCookie): Promise<DeleteNodeRes>;
 }
 
 export interface INodeMapper {

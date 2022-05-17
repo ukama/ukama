@@ -32,6 +32,8 @@ type SimManagerServiceClient interface {
 	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
 	// Get usage data for a sim card
 	GetUsage(ctx context.Context, in *GetUsageRequest, opts ...grpc.CallOption) (*GetUsageResponse, error)
+	// Get qr code to install esim
+	GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error)
 }
 
 type simManagerServiceClient struct {
@@ -87,6 +89,15 @@ func (c *simManagerServiceClient) GetUsage(ctx context.Context, in *GetUsageRequ
 	return out, nil
 }
 
+func (c *simManagerServiceClient) GetQrCode(ctx context.Context, in *GetQrCodeRequest, opts ...grpc.CallOption) (*GetQrCodeResponse, error) {
+	out := new(GetQrCodeResponse)
+	err := c.cc.Invoke(ctx, "/ukama.sim_manager.v1.SimManagerService/GetQrCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SimManagerServiceServer is the server API for SimManagerService service.
 // All implementations must embed UnimplementedSimManagerServiceServer
 // for forward compatibility
@@ -101,6 +112,8 @@ type SimManagerServiceServer interface {
 	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
 	// Get usage data for a sim card
 	GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error)
+	// Get qr code to install esim
+	GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error)
 	mustEmbedUnimplementedSimManagerServiceServer()
 }
 
@@ -122,6 +135,9 @@ func (UnimplementedSimManagerServiceServer) TerminateSim(context.Context, *Termi
 }
 func (UnimplementedSimManagerServiceServer) GetUsage(context.Context, *GetUsageRequest) (*GetUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsage not implemented")
+}
+func (UnimplementedSimManagerServiceServer) GetQrCode(context.Context, *GetQrCodeRequest) (*GetQrCodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetQrCode not implemented")
 }
 func (UnimplementedSimManagerServiceServer) mustEmbedUnimplementedSimManagerServiceServer() {}
 
@@ -226,6 +242,24 @@ func _SimManagerService_GetUsage_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_GetQrCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetQrCodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).GetQrCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.sim_manager.v1.SimManagerService/GetQrCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).GetQrCode(ctx, req.(*GetQrCodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SimManagerService_ServiceDesc is the grpc.ServiceDesc for SimManagerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -252,6 +286,10 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUsage",
 			Handler:    _SimManagerService_GetUsage_Handler,
+		},
+		{
+			MethodName: "GetQrCode",
+			Handler:    _SimManagerService_GetQrCode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

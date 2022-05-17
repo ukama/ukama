@@ -1,20 +1,23 @@
-import { Resolver, Arg, Mutation, UseMiddleware } from "type-graphql";
 import { Service } from "typedi";
 import { NodeService } from "../service";
+import { parseCookie } from "../../../common";
+import { Context } from "../../../common/types";
+import { DeleteNodeRes } from "../../user/types";
 import { Authentication } from "../../../common/Authentication";
-import { DeactivateResponse } from "../../user/types";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 
 @Service()
 @Resolver()
 export class DeleteNodeResolver {
     constructor(private readonly nodeService: NodeService) {}
 
-    @Mutation(() => DeactivateResponse)
+    @Mutation(() => DeleteNodeRes)
     @UseMiddleware(Authentication)
     async deleteNode(
         @Arg("id")
-        id: string
-    ): Promise<DeactivateResponse | null> {
-        return this.nodeService.deleteNode(id);
+        id: string,
+        @Ctx() ctx: Context
+    ): Promise<DeleteNodeRes | null> {
+        return this.nodeService.deleteNode(id, parseCookie(ctx));
     }
 }

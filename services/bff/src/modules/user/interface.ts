@@ -12,6 +12,8 @@ import {
     OrgUserResponse,
     OrgUsersResponse,
     UserInputDto,
+    GetESimQRCodeInput,
+    ESimQRCodeRes,
 } from "./types";
 
 export interface IUserService {
@@ -35,6 +37,10 @@ export interface IUserService {
         userId: string,
         cookie: ParsedCookie
     ): Promise<ActivateUserResponse>;
+    getEsimQRCode(
+        data: GetESimQRCodeInput,
+        cookie: ParsedCookie
+    ): Promise<ESimQRCodeRes>;
 }
 
 export interface IUserMapper {

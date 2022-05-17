@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -26,7 +25,7 @@ type DevicesUpdateRequest struct {
 
 func NewDeviceFeederReqGenerator(amqpConnStr string) (*DeviceFeederReqGenerator, error) {
 
-	publisher, err := rabbitmq.NewPublisher(amqpConnStr, amqp091.Config{})
+	publisher, err := rabbitmq.NewPublisher(amqpConnStr, rabbitmq.Config{})
 	if err != nil {
 		return nil, err
 	}

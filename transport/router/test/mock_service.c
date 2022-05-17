@@ -62,11 +62,11 @@ static void print_map(map_t *map) {
   int i;
 
   if (map==NULL) return;
-  
+
   for (i=0; i<map->nb_values; i++) {
     fprintf(stdout, "\t %s:%s \n", map->keys[i], map->values[i]);
   }
-  
+
   fprintf(stdout, "----------------------\n");
 }
 
@@ -78,7 +78,7 @@ static void print_request(const struct _u_request *request) {
 
   fprintf(stdout, "Recevied Packet: \n");
   fprintf(stdout, " Protocol: %s \n Method: %s \n Path: %s\n",
-	  request->http_protocol, request->http_verb, request->http_url);
+    request->http_protocol, request->http_verb, request->http_url);
 
   if (request->map_header) {
     fprintf(stdout, "Packet header: \n");
@@ -89,19 +89,19 @@ static void print_request(const struct _u_request *request) {
     fprintf(stdout, "Packet URL variables: \n");
     print_map(request->map_url);
   }
-  
+
   if (request->map_header) {
     fprintf(stdout, "Packet cookies: \n");
     print_map(request->map_cookie);
   }
-  
+
   if (request->map_header) {
     fprintf(stdout, "Packet post body: \n");
     print_map(request->map_post_body);
   }
 }
 
-/* Callback function for the web application 
+/* Callback function for the web application
  *
  */
 int callback_service(const req_t *request, resp_t *response, void *userData) {
@@ -251,8 +251,8 @@ static int read_pattern_from_file(char *fileName, char **buffer) {
  *
  */
 static int service_register(char *name, char *rIP, char *rPort, char *ip,
-			    int port, char *path, char *fileName,
-			    char **uuidStr) {
+          int port, char *path, char *fileName,
+          char **uuidStr) {
 
   int ret=FALSE;
   CURL *curl=NULL;
@@ -293,7 +293,7 @@ static int service_register(char *name, char *rIP, char *rPort, char *ip,
   curl_easy_setopt(curl, CURLOPT_URL, url);
 
   fprintf(stdout, "Sending Registration JSON: %s\n", json);
-  
+
   res = curl_easy_perform(curl);
   if (res != CURLE_OK) {
     fprintf(stderr, "error buffer: %s \n", errBuffer);
@@ -307,7 +307,7 @@ static int service_register(char *name, char *rIP, char *rPort, char *ip,
   jRoot = json_loads(response.buffer, JSON_DECODE_ANY, NULL);
   if (!jRoot) {
     fprintf(stderr, "Can not load str into JSON object. Str: %s",
-	    response.buffer);
+      response.buffer);
     goto cleanup;
   }
 
@@ -322,7 +322,7 @@ static int service_register(char *name, char *rIP, char *rPort, char *ip,
   ret = TRUE;
 
  cleanup:
-  
+
   curl_slist_free_all(headers);
   curl_easy_cleanup(curl);
   json_decref(jRoot);
@@ -341,7 +341,7 @@ int callback_default(const req_t *request, resp_t *response, void *userData) {
   print_request(request);
 
   sprintf(buffer, "%s: not implemented. End-point: %s \n", name,
-	  request->url_path);
+    request->url_path);
 
   ulfius_set_string_body_response(response, 404, buffer);
   return U_CALLBACK_CONTINUE;
@@ -366,18 +366,18 @@ int main(int argc, char **argv) {
 
   if (argc<6) {
     fprintf(stderr, "USAGE: %s router_host router_port port reply kv_pattern\n",
-	    argv[0]);
+      argv[0]);
     return 0;
   }
 
   /* Get args */
-  name      = strdup(argv[1]);
-  rHost     = strdup(argv[2]);
-  rPort     = strdup(argv[3]);
-  port      = atoi(argv[4]);
-  path      = strdup(argv[5]);
-  reply     = strdup(argv[6]);
-  file      = strdup(argv[7]);
+  name      = strdup(argv[0]);
+  rHost     = strdup(argv[1]);
+  rPort     = strdup(argv[2]);
+  port      = atoi(argv[3]);
+  path      = strdup(argv[4]);
+  reply     = strdup(argv[5]);
+  file      = strdup(argv[6]);
 
   /* Initialize ulfius framework. */
   if (ulfius_init_instance(&inst, port, NULL, NULL) != U_OK) {
@@ -411,7 +411,7 @@ int main(int argc, char **argv) {
 
   /* register the service to the router */
   service_register(name, rHost, rPort, "127.0.0.1", port, path, file,
-		   &uuidStr);
+       &uuidStr);
   fprintf(stdout, "UUID: %s\n", uuidStr);
 
   fprintf(stdout, "Press any key to exit ... \n");

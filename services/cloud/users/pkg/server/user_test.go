@@ -161,10 +161,8 @@ func Test_Deactivate(t *testing.T) {
 	userId := uuid.NewString()
 	userRepo.On("Get", uuid.MustParse(userId)).Return(&db.User{
 		Uuid: uuid.MustParse(userId),
-		Simcards: []db.Simcard{
-			{
-				Iccid: iccid,
-			},
+		Simcard: db.Simcard{
+			Iccid: iccid,
 		},
 	}, nil)
 	userRepo.On("Update", mock.MatchedBy(func(u *db.User) bool {

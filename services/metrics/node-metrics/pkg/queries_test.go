@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGetQuery(t *testing.T) {
@@ -34,22 +35,28 @@ func TestGetQuery(t *testing.T) {
 
 		assert.Equal(t, "sum(memory {nodeid='ND12'}) without (job,instance,receive,tenant_id)", r)
 	})
-
 }
 
 func TestGetAggregateQuery(t *testing.T) {
 	t.Run("AggregateOrg", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
-		r := m.getAggregateQuery(NewFilter().WithOrg("org1"), "sum")
+		r := m.getAggregateQuery(NewFilter().WithOrg("org1"))
 
 		assert.Equal(t, "sum(memory {org='org1'}) without (job,instance,receive,tenant_id,nodeid,network)", r)
 	})
 
 	t.Run("AggregateNet", func(t *testing.T) {
 		m := Metric{Metric: "memory", NeedRate: true}
-		r := m.getAggregateQuery(NewFilter().WithNetwork("org1", "net1"), "sum")
+		r := m.getAggregateQuery(NewFilter().WithNetwork("org1", "net1"))
 
 		assert.Equal(t, "sum(memory {org='org1',network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
+	})
+
+	t.Run("AggregateFunctionConf", func(t *testing.T) {
+		m := Metric{Metric: "memory", NeedRate: true, AggregateFunc: "max"}
+		r := m.getAggregateQuery(NewFilter().WithNetwork("org1", "net1"))
+
+		assert.Equal(t, "max(memory {org='org1',network='net1'}) without (job,instance,receive,tenant_id,nodeid)", r)
 	})
 }
 
@@ -60,4 +67,14 @@ func TestGetLatestQuery(t *testing.T) {
 
 		assert.Equal(t, "memory {nodeid='node-id'}", r)
 	})
+}
+
+func TestGetRawQuery(t *testing.T) {
+	q := Query{
+		Query: "avg(memory { {{.Filter}} })",
+	}
+	res, err := q.getQuery(NewFilter().WithNodeId("ND12"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "avg(memory { nodeid='ND12' })", res)
+	}
 }

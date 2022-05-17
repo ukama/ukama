@@ -18,7 +18,7 @@ type User struct {
 	Name        string    `gorm:"not null;default:'unknown'"`
 	Email       string
 	Phone       string
-	Simcards    []Simcard
+	Simcard     Simcard
 	OrgID       uint `gorm:"not null;default:1"`
 	Org         *Org
 	Deactivated bool
@@ -29,9 +29,4 @@ type Simcard struct {
 	IsPhysical bool   `gorm:"not null;default:false"`
 	Iccid      string `gorm:"primarykey"`
 	Source     string
-}
-
-type SimPool struct {
-	gorm.Model
-	Iccid string `gorm:"primarykey"`
 }

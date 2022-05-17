@@ -1,16 +1,16 @@
-import BasicDialog from "./BasicDialog";
 import NodeDialog from "./NodeDialog";
-import UserActivationDialog from "./UserActivationDialog";
+import BasicDialog from "./BasicDialog";
+import DeactivateUser from "./DeactivateUser";
 import UserDetailsDialog from "./UserDetailsDialog";
+import SoftwareUpdateModal from "./SoftwareUpdateModal";
 import NodeAppDetailsDialog from "./NodeAppDetailsDialog";
 import NodeSoftwareInfosDialog from "./NodeSoftwareInfosDialog";
-import SoftwareUpdateModal from "./SoftwareUpdateModal";
 export {
     NodeDialog,
     BasicDialog,
+    DeactivateUser,
     UserDetailsDialog,
     SoftwareUpdateModal,
     NodeAppDetailsDialog,
-    UserActivationDialog,
     NodeSoftwareInfosDialog,
 };

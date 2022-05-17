@@ -85,28 +85,28 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
          * value supplied in argument.
          */
         NodeCfg *udata = (NodeCfg[]){
-            {   .modUuid = "UK-8001-RFC-1102",
-                .modName = "RF CTRL BOARD",
+            {   .modUuid = "ukma-8001-ctrl-1102",
+                .modName = "ctrl",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0051/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul }
             },
-            {    .modUuid = "UK-8001-RFA-1102",
-                 .modName = "RF BOARD",
+            {    .modUuid = "ukma-8001-fe-1102",
+                 .modName = "fe",
                  .sysFs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0052/eeprom",
                  .eepromCfg = &(DevI2cCfg){ .bus = 2, .add = 0x50ul }
             },
-            {   .modUuid = "UK-8001-COM-1102",
-                .modName = "COM",
+            {   .modUuid = "ukma-8001-com-1102",
+                .modName = "com",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 0, .add = 0x50ul }
             },
-            {   .modUuid = "UK-8001-TRX-1102",
-                .modName = "TRX",
+            {   .modUuid = "ukma-8001-trx-1102",
+                .modName = "trx",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0050/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul }
             },
-            {   .modUuid = "UK-8001-MSK-1102",
-                .modName = "MASK",
+            {   .modUuid = "ukma-8001-mask-1102",
+                .modName = "mast",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0051/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x51ul }
             },
@@ -133,7 +133,8 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
                     pcfg->eepromCfg = i2cCfg;
 
                     /* Update Module UUID */
-                    usys_memcpy(pcfg->modUuid, puuid[idx], usys_strlen(puuid[idx]));
+                    usys_memcpy(pcfg->modUuid, puuid[idx],
+								usys_strlen(puuid[idx]));
 
                     break;
 
@@ -190,11 +191,11 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
 }
 
 static struct option longOptions[] = {
-                { "name", required_argument, 0, 'n' },
-                { "muuid", required_argument, 0, 'm' },
-                { "schema", required_argument, 0, 's' },
-                { "logs", required_argument, 0, 'l' },
-                { "help", no_argument, 0, 'h' },
+                { "name",    required_argument, 0, 'n' },
+                { "muuid",   required_argument, 0, 'm' },
+                { "file",    required_argument, 0, 'f' },
+                { "logs",    required_argument, 0, 'l' },
+                { "help",    no_argument, 0, 'h' },
                 { "version", no_argument, 0, 'v' },
                 { 0, 0, 0, 0 }
 };
@@ -220,7 +221,7 @@ void usage() {
     printf("--l, --logs <TRACE> <DEBUG> <INFO>                               Log level for the process.\n");
     printf("--n, --name <ComV1>|<LTE>|<MASK>|<RF CTRL BOARD>,<RF BOARD>      Name of module.\n");
     printf("--m, --muuid <Module UUID>                                       Module UUID.\n");
-    printf("--s, --schema <json file path>                                   JSON Schema file.\n");
+    printf("--f, --file <json file>                                          JSON Schema file.\n");
     printf("--v, --version                                                   Software Version.\n");
 }
 
@@ -248,7 +249,7 @@ int main(int argc, char** argv) {
         int opt = 0;
         int opIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "h:v:m:n:s:l:", longOptions, &opIdx);
+        opt = usys_getopt_long(argc, argv, "h:v:m:n:f:l:", longOptions, &opIdx);
         if (opt == -1) {
             break;
         }
@@ -273,7 +274,7 @@ int main(int argc, char** argv) {
                 uidx++;
                 break;
 
-            case 's':
+            case 'f':
                 schema[sidx] = optarg;
                 sidx++;
                 break;

@@ -11,6 +11,7 @@ import "google/protobuf/wrappers.proto";
 service UserService {
     // adds new user with ICCID. Designed for internal use only.
     rpc Add (AddRequest) returns (AddResponse);
+
     // adds new user with ICCID. Designed for internal use only.
     rpc AddInternal (AddInternalRequest) returns (AddInternalResponse);
 
@@ -19,10 +20,13 @@ service UserService {
     
     // lists all users for organization
     rpc List(ListRequest) returns (ListResponse);
+
     // Get user info
     rpc Get(GetRequest) returns (GetResponse);
+
     // Get user info
     rpc Update(UpdateRequest) returns (UpdateResponse);
+
     // Generate sim token from ICCID
     rpc GenerateSimToken(GenerateSimTokenRequest) returns (GenerateSimTokenResponse);
 
@@ -32,6 +36,7 @@ service UserService {
     // Terminates all user's sim cards
     rpc DeactivateUser(DeactivateUserRequest) returns (DeactivateUserResponse);
 
+    rpc GetQrCode(GetQrCodeRequest) returns (GetQrCodeResponse);
 }
 
 message AddInternalRequest{
@@ -113,7 +118,6 @@ message  DeactivateUserResponse{
 
 }
 
-
 message UserAttributes {
     string name = 1;
     string email = 2  [(validator.field) = { human_error:"must be an email format" regex: "^$|^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,4}$"}];
@@ -183,4 +187,12 @@ message SetSimStatusRequest {
 
 message SetSimStatusResponse{
     Sim sim = 1;
+}
+
+message GetQrCodeRequest{
+    string iccid = 1 [(validator.field) = {regex: "^[0-9]{18,19}$"}];
+}
+
+message GetQrCodeResponse{
+    string qrCode = 1;
 }
