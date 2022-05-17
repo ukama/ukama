@@ -33,8 +33,10 @@ CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
 CFLAGS+=-I./inc
 CFLAGS+=-D_REENTRANT
+CFLAGS+=-static
 
 LDFLAGS+=-L${VENDOR_LIB}
+LDFLAGS+=-static
 
 # Libraries needed.
 LIBS =

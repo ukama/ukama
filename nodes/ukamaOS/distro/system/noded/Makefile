@@ -31,7 +31,7 @@ PLATFORM_HEADERS_DIRS+=$(PLATFORM_DIR)/log/inc
 PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
 PLATFORM_LIB:=usys 
 
-INC_HEADERS+=(VENDOR_DIR)/headers/musl/
+INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
 
 # JSON lib
 JSON_LIB:=jansson

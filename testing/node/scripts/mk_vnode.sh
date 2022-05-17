@@ -57,9 +57,8 @@ build_sysfs() {
 	CWD=`pwd`
 	NODE_TPYE=$1
 	NODE_UUID=$2
-	MODULES_METADATA=$3
 
-	${NODED_ROOT}/utils/prepare_env.sh clean
+	${NODED_ROOT}/utils/prepare_env.sh --clean
 	${NODED_ROOT}/utils/prepare_env.sh --unittype $1
 
 	# genSchema --u UK-7001-HNODE-SA03-1102 \
@@ -67,18 +66,21 @@ build_sysfs() {
 	# --n LTE   --m UK-7001-TRX-1102 --f mfgdata/schema/lte.json \
 	# --n MASK  --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
 
-	# copy the schemas file locally and run genSchema
+	# copy the mfgdata locally and run genSchema/genInventory
 	mkdir -p ${BUILD_DIR}/schemas
 	cp ${NODED_ROOT}/mfgdata/schema/*.json  ${BUILD_DIR}/schemas
+	cp -rf ${NODED_ROOT}/mfgdata ${BUILD_DIR}
 
-	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $MODULE_METADATA
+	cd ${BUILD_DIR}
+	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $VNODE_SCHEMA_ARGS
 
 	# create EEPROM data using genInventory
-	${BUILD_DIR}/utils/genInventory $MODULE_METADATA
+	${BUILD_DIR}/utils/genInventory $VNODE_SCHEMA_ARGS
 
 	#copy the sysfs to build dir
 	cp -rf /tmp/sys ${BUILD_DIR}/sys
 	rm -rf /tmp/sys
+	cd ${CWD}
 }
 
 #
@@ -89,6 +91,12 @@ build_image() {
 
 	FILE=$1
 	NAME_TAG=$2
+
+	# copy capp's sbin, conf and lib to /sbin, /conf and /lib
+	mkdir -p ${BUILD_DIR}/sbin ${BUILD_DIR}/lib ${BUILD_DIR}/conf
+	cp -rf ${BUILD_DIR}/capps/*/sbin ${BUILD_DIR}
+	cp -rf ${BUILD_DIR}/capps/*/conf ${BUILD_DIR}
+	cp -rf ${BUILD_DIR}/capps/*/lib  ${BUILD_DIR}
 
 	buildah bud -f $1 -t $2
 }
@@ -103,20 +111,19 @@ case "$ACTION" in
 		build_utils
 		;;
 	"sysfs")
-		build_sysfs $2 $3 $4
+		build_sysfs $2 $3
 		;;
 	"build")
-		build_image $1 $2
+		build_image $2 $3
 		;;
     "cp")
 		cp $2 ${BUILD_DIR}/$3
 		;;
     "clean")
+		rm ContainerFile; rm supervisor.conf
 		buildah rmi -f localhost/$1
-		rm -rf ${BUILD_DIR}
 		cd ${NODED_ROOT} && make clean && cd ${CWD}
-	;;
-	
+		;;
 esac
 
 exit

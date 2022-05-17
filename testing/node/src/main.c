@@ -212,6 +212,9 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+	/* assign nodeID from the environment variable */
+	node->nodeInfo->uuid = strdup(envNodeID);
+
 	if (!read_config_files(&configs, configDir)) {
 	    log_error("Parsing error reading configs from %s \n. Exiting.",
 				  configDir);
