@@ -63,14 +63,6 @@ func NewConfig() *Config {
 			},
 			F: config.DefaultForwardConfig(),
 		},
-
-		DB: config.Database{
-			Host:       "localhost",
-			Password:   "Pass2020!",
-			Username:   "postgres",
-			DbName:     ServiceName,
-			SslEnabled: false,
-			Port:       5432,
-		},
+		DB: config.DefaultDatabaseName(ServiceName),
 	}
 }
