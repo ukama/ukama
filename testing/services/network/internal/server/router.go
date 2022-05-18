@@ -65,16 +65,16 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, vNodeRepo db.VNo
 
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
-	node.GET("", nil, tonic.Handler(r.GetInfo, http.StatusOK))
-	node.PUT("", nil, tonic.Handler(r.PutNode, http.StatusAccepted))
-	node.DELETE("", nil, tonic.Handler(r.DeleteNode, http.StatusOK))
+	node.GET("", nil, tonic.Handler(r.getInfo, http.StatusOK))
+	node.PUT("", nil, tonic.Handler(r.putNode, http.StatusAccepted))
+	node.DELETE("", nil, tonic.Handler(r.deleteNode, http.StatusOK))
 
 	list := r.fizz.Group(ListPath, "List", "Virtual Node list")
-	list.GET("", nil, tonic.Handler(r.GetList, http.StatusOK))
+	list.GET("", nil, tonic.Handler(r.getList, http.StatusOK))
 
 }
 
-func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
+func (r *Router) putNode(c *gin.Context, req *ReqActionOnNode) error {
 	logrus.Debugf("Handling Node opertaion on %+v.", req)
 
 	/* validate nodeid */
@@ -88,9 +88,9 @@ func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
 
 	switch req.LookingTo {
 	case "vnode_power_on":
-		return r.PutPowerOn(&ReqPowerOnNode{*req})
+		return r.putPowerOn(&ReqPowerOnNode{*req})
 	case "vnode_power_off":
-		return r.PutPowerOff(&ReqPowerOffNode{*req})
+		return r.putPowerOff(&ReqPowerOffNode{*req})
 	default:
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -99,7 +99,7 @@ func (r *Router) PutNode(c *gin.Context, req *ReqActionOnNode) error {
 	}
 }
 
-func (r *Router) PutPowerOn(req *ReqPowerOnNode) error {
+func (r *Router) putPowerOn(req *ReqPowerOnNode) error {
 	logrus.Debugf("Handling node power on %+v.", req)
 
 	/* Validation node from NMR */
@@ -132,7 +132,7 @@ func (r *Router) PutPowerOn(req *ReqPowerOnNode) error {
 	return nil
 }
 
-func (r *Router) PutPowerOff(req *ReqPowerOffNode) error {
+func (r *Router) putPowerOff(req *ReqPowerOffNode) error {
 	logrus.Debugf("Handling node power off %+v.", req)
 
 	node, err := r.repo.GetInfo(req.NodeID)
@@ -170,7 +170,7 @@ func (r *Router) PutPowerOff(req *ReqPowerOffNode) error {
 	return nil
 }
 
-func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
+func (r *Router) getInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) {
 	logrus.Debugf("Handling get node info %+v.", req)
 
 	resp := &RespGetNode{
@@ -215,7 +215,7 @@ func (r *Router) GetInfo(c *gin.Context, req *ReqGetNode) (*RespGetNode, error) 
 	return resp, nil
 }
 
-func (r *Router) GetList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList, error) {
+func (r *Router) getList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList, error) {
 	logrus.Debugf("Handling get nodes info %+v.", req)
 
 	resp := &RespGetNodeList{}
@@ -235,7 +235,7 @@ func (r *Router) GetList(c *gin.Context, req *ReqGetNodeList) (*RespGetNodeList,
 	return resp, nil
 }
 
-func (r *Router) DeleteNode(c *gin.Context, req *ReqDeleteNode) error {
+func (r *Router) deleteNode(c *gin.Context, req *ReqDeleteNode) error {
 	logrus.Debugf("Handling delete node info %+v.", req)
 
 	/* validate nodeid */

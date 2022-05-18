@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -198,9 +199,13 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		},
 	}
 
+	/* Fixing context time limit 30 days */
+	ctx, cancel := context.WithTimeout(context.TODO(), 720*time.Hour)
+	defer cancel() // releases resources if slowOperation completes before timeout elapses
+
 	_, err := c.cs.CoreV1().
 		Pods(c.ns).
-		Create(context.TODO(), podSpec, metav1.CreateOptions{})
+		Create(ctx, podSpec, metav1.CreateOptions{})
 	if err != nil {
 		logrus.Errorf("PowerOn failure for node %s. Error: %s", nodeId, err.Error())
 		return err
