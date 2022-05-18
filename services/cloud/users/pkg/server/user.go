@@ -123,15 +123,15 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 			IsPhysical: isPhysicalSim,
 			Services: []*db.Service{
 				&db.Service{
-					Sms:   true,
+					Sms:   false,
 					Data:  true,
-					Voice: true,
+					Voice: false,
 					Type:  db.ServiceTypeUkama,
 				},
 				&db.Service{
-					Sms:   true,
+					Sms:   false,
 					Data:  true,
-					Voice: true,
+					Voice: false,
 					Type:  db.ServiceTypeCarrier,
 				},
 			},
