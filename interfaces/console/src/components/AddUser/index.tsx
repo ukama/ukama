@@ -151,7 +151,9 @@ const AddUser = ({
                         qrCodeId={qrCodeId}
                     />
                 )}
-                {flow === 4 && <Success description={getDescription(4)} />}
+                {flow === 4 && (
+                    <Success description={getDescription(4, addedUserName)} />
+                )}
             </DialogContent>
             {(flow === 1 || flow === 2) && (
                 <DialogActions>
