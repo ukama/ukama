@@ -36,7 +36,8 @@ func initMsgBus() {
 	}
 
 	// Routing key
-	routingKeys := []msgbus.RoutingKey{msgbus.EventVirtNodeUpdateStatus}
+	key := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName).SetEventType().SetObject("virtnode").SetAction("update").MustBuild()
+	routingKeys := []msgbus.RoutingKey{msgbus.RoutingKey(key)}
 
 	log.Debugf("Mock:: msgClient: %+v", mockMsgClient)
 

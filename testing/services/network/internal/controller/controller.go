@@ -381,6 +381,10 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 		Status: state,
 	}
 
+	// Routing key
+	key := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(internal.ServiceName).SetEventType().SetObject("virtnode").SetAction("update").MustBuild()
+	routingKey := msgbus.RoutingKey(key)
+
 	// Marshal
 	data, err := proto.Marshal(evtMsg)
 	if err != nil {
@@ -390,7 +394,7 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 	logrus.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, c.m)
 
 	// Publish a message
-	err = c.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, msgbus.EventVirtNodeUpdateStatus, msgbus.DeviceQ.ExchangeType)
+	err = c.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, routingKey, msgbus.DeviceQ.ExchangeType)
 	if err != nil {
 		logrus.Errorf(err.Error())
 	}
