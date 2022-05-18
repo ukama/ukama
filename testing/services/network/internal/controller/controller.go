@@ -155,9 +155,6 @@ spec:
 
 func (c *Controller) CreateNode(nodeId string, image string, command []string, ntype string, org string) error {
 
-	/* Image URL */
-	//imageName := fmt.Sprintf("%s:%s", internal.ServiceConfig.NodeImage, name)
-
 	/* Virtual Node Name */
 	vnName := getVirtNodeName(nodeId)
 
