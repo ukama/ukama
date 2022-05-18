@@ -59,6 +59,11 @@ query getAlerts($data: PaginationDto!) {
         }
     }
 }
+query getEsimQR($data: GetESimQRCodeInput!) {
+    getEsimQR(data: $data) {
+        qrCode
+    }
+}
 
 subscription getLatestAlerts {
     getAlerts {

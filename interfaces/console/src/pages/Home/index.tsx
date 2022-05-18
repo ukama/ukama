@@ -27,9 +27,11 @@ import {
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
+    useGetEsimQrQuery,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
+    useGetEsimQrLazyQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useAddNodeMutation,
@@ -45,6 +47,7 @@ import {
     GetLatestConnectedUsersSubscription,
     useAddUserMutation,
     useUpdateNodeMutation,
+    GetESimQrCodeInput,
 } from "../../generated";
 import { TMetric, TObject } from "../../types";
 import { Box, Grid } from "@mui/material";
@@ -60,7 +63,6 @@ import {
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
 import useWhoami from "../../helpers/useWhoami";
-import { SettingsInputSvideoOutlined } from "@mui/icons-material";
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
@@ -94,8 +96,11 @@ const Home = () => {
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
-    const [userId, setUserId] = useState<any>();
     const [qrCodeId, setqrCodeId] = useState<any>();
+    const [esimQrcode, setEsimQrcode] = useState<any>({
+        simId: "",
+        userId: "",
+    });
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
@@ -107,9 +112,10 @@ const Home = () => {
 
     useEffect(() => {
         if (response) {
-            setUserId(response?.id);
+            setEsimQrcode({ userId: response?.id });
         }
     }, [response]);
+
     const {
         data: nodeRes,
         loading: nodeLoading,
@@ -142,23 +148,6 @@ const Home = () => {
         },
     });
 
-    // const [
-    //     getUserQrCode,
-    //     { data: getUserQrCodeRes, error: getUserQrCodeError },
-    // ] = useGetEsimQrMutation({
-    //     onCompleted: () => {
-    //         setqrCodeId(getUserQrCodeRes?.getEsimQR?.iccid);
-    //     },
-    //     onError: () => {
-    //         setNodeToastNotification({
-    //             id: "get-userQrCode-node-error",
-    //             message: `${getUserQrCodeError?.message}`,
-    //             type: "error",
-    //             show: true,
-    //         });
-    //     },
-    // });
-
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
@@ -172,21 +161,30 @@ const Home = () => {
             });
         },
     });
-    const handleGetQrcode = async (iccid: any) => {
-        // await getUserQrCode({
-        //     variables: {
-        //         data: {
-        //             userId: userId,
-        //             simId: iccid,
-        //         },
-        //     },
-        // });
+
+    const [
+        getEsimQrdcodeId,
+        { data: getEsimQrCodeRes, loading: getEsimQrCodeLoading },
+    ] = useGetEsimQrLazyQuery();
+    const handleGetSimQrCode = async (iccid: any) => {
+        await getEsimQrdcodeId({
+            variables: {
+                data: {
+                    userId: esimQrcode.userId,
+                    simId: iccid,
+                },
+            },
+        });
     };
     useEffect(() => {
         if (addUserRes) {
-            handleGetQrcode(addUserRes?.addUser?.iccid);
+            handleGetSimQrCode(addUserRes?.addUser?.iccid);
         }
     }, [addUserRes]);
+
+    useEffect(() => {
+        setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
+    }, [getEsimQrCodeRes]);
     const [
         registerNode,
         {
