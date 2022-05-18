@@ -170,15 +170,7 @@ mutation deleteNode($id: String!) {
         nodeId
     }
 }
-mutation getEsimQR($data: GetESimQRCodeInput!) {
-    getEsimQR(data: $data) {
-        name
-        email
-        phone
-        id
-        iccid
-    }
-}
+
 mutation updateUser($userId: String!, $data: UserInputDto!) {
     updateUser(data: $data, userId: $userId) {
         name

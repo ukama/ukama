@@ -310,13 +310,13 @@ const User = () => {
                     />
                 )}
 
-                {showInstallSim && (
+                {/* {showInstallSim && (
                     <AddUser
                         isOpen={showInstallSim}
                         handleClose={handleSimInstallationClose}
                         handleSubmitAction={handleSimInstallationSubmit}
                     />
-                )}
+                )} */}
             </LoadingWrapper>
         </Box>
     );

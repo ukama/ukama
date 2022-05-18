@@ -44,7 +44,6 @@ import {
     useGetMetricsByTabSSubscription,
     GetLatestConnectedUsersSubscription,
     useAddUserMutation,
-    useGetEsimQrMutation,
     useUpdateNodeMutation,
 } from "../../generated";
 import { TMetric, TObject } from "../../types";
@@ -143,22 +142,22 @@ const Home = () => {
         },
     });
 
-    const [
-        getUserQrCode,
-        { data: getUserQrCodeRes, error: getUserQrCodeError },
-    ] = useGetEsimQrMutation({
-        onCompleted: () => {
-            setqrCodeId(getUserQrCodeRes?.getEsimQR?.iccid);
-        },
-        onError: () => {
-            setNodeToastNotification({
-                id: "get-userQrCode-node-error",
-                message: `${getUserQrCodeError?.message}`,
-                type: "error",
-                show: true,
-            });
-        },
-    });
+    // const [
+    //     getUserQrCode,
+    //     { data: getUserQrCodeRes, error: getUserQrCodeError },
+    // ] = useGetEsimQrMutation({
+    //     onCompleted: () => {
+    //         setqrCodeId(getUserQrCodeRes?.getEsimQR?.iccid);
+    //     },
+    //     onError: () => {
+    //         setNodeToastNotification({
+    //             id: "get-userQrCode-node-error",
+    //             message: `${getUserQrCodeError?.message}`,
+    //             type: "error",
+    //             show: true,
+    //         });
+    //     },
+    // });
 
     const [
         addUser,
@@ -174,14 +173,14 @@ const Home = () => {
         },
     });
     const handleGetQrcode = async (iccid: any) => {
-        await getUserQrCode({
-            variables: {
-                data: {
-                    userId: userId,
-                    simId: iccid,
-                },
-            },
-        });
+        // await getUserQrCode({
+        //     variables: {
+        //         data: {
+        //             userId: userId,
+        //             simId: iccid,
+        //         },
+        //     },
+        // });
     };
     useEffect(() => {
         if (addUserRes) {

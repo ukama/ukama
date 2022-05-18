@@ -801,13 +801,6 @@ export type DeleteNodeMutationVariables = Exact<{
 
 export type DeleteNodeMutation = { __typename?: 'Mutation', deleteNode: { __typename?: 'DeleteNodeRes', nodeId: string } };
 
-export type GetEsimQrMutationVariables = Exact<{
-  data: GetESimQrCodeInput;
-}>;
-
-
-export type GetEsimQrMutation = { __typename?: 'Mutation', getEsimQR: { __typename?: 'UserResDto', name: string, email: string, phone: string, id: string, iccid?: string | null } };
-
 export type UpdateUserMutationVariables = Exact<{
   userId: Scalars['String'];
   data: UserInputDto;
@@ -1536,43 +1529,6 @@ export function useDeleteNodeMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteNodeMutationHookResult = ReturnType<typeof useDeleteNodeMutation>;
 export type DeleteNodeMutationResult = Apollo.MutationResult<DeleteNodeMutation>;
 export type DeleteNodeMutationOptions = Apollo.BaseMutationOptions<DeleteNodeMutation, DeleteNodeMutationVariables>;
-export const GetEsimQrDocument = gql`
-    mutation getEsimQR($data: GetESimQRCodeInput!) {
-  getEsimQR(data: $data) {
-    name
-    email
-    phone
-    id
-    iccid
-  }
-}
-    `;
-export type GetEsimQrMutationFn = Apollo.MutationFunction<GetEsimQrMutation, GetEsimQrMutationVariables>;
-
-/**
- * __useGetEsimQrMutation__
- *
- * To run a mutation, you first call `useGetEsimQrMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGetEsimQrMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [getEsimQrMutation, { data, loading, error }] = useGetEsimQrMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useGetEsimQrMutation(baseOptions?: Apollo.MutationHookOptions<GetEsimQrMutation, GetEsimQrMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GetEsimQrMutation, GetEsimQrMutationVariables>(GetEsimQrDocument, options);
-      }
-export type GetEsimQrMutationHookResult = ReturnType<typeof useGetEsimQrMutation>;
-export type GetEsimQrMutationResult = Apollo.MutationResult<GetEsimQrMutation>;
-export type GetEsimQrMutationOptions = Apollo.BaseMutationOptions<GetEsimQrMutation, GetEsimQrMutationVariables>;
 export const UpdateUserDocument = gql`
     mutation updateUser($userId: String!, $data: UserInputDto!) {
   updateUser(data: $data, userId: $userId) {
