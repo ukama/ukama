@@ -145,11 +145,11 @@ export class UserService implements IUserService {
     ): Promise<ESimQRCodeRes> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.userId}`,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/qr`,
             headers: cookie.header,
         });
-        if (checkError(res)) throw new Error(res.description);
-
+        if (checkError(res))
+            throw new Error(res.description ? res.description : res.message);
         return res;
     };
 }
