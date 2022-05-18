@@ -34,9 +34,6 @@ class NodeMapper implements INodeMapper {
                 });
                 nodes.push(nodeObj);
             });
-        } else {
-            nodesObj = this.getNode({});
-            nodes.push(nodesObj);
         }
         const totalNodes = nodes.length;
         return { orgId, nodes, activeNodes, totalNodes };

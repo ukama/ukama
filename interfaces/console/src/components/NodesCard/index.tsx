@@ -37,9 +37,10 @@ const Line = styled(Divider)(() => ({
 }));
 
 const NODE_IMAGES = {
-    TOWER: "https://i.ibb.co/qRRFz9j/tower-node.png",
-    AMPLIFIER: "https://i.ibb.co/NKtrHzG/amplifier-node.png",
-    HOME: "https://i.ibb.co/G0gqqb5/home-node.png",
+    TOWER: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png",
+    AMPLIFIER:
+        "https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png",
+    HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
 };
 
 const IconStyle = {

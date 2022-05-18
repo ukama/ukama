@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Suspense } from "react";
+import { Box } from "@mui/material";
 import { DDSLoader } from "three-stdlib";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls, useFBX } from "@react-three/drei";
@@ -20,7 +21,7 @@ const Scene = () => {
 
 const DeviceModalView = () => {
     return (
-        <div style={{ height: "70vh" }}>
+        <Box component={"div"} sx={{ height: { xs: "80vh", md: "62vh" } }}>
             <Canvas>
                 <pointLight
                     color="white"
@@ -37,7 +38,7 @@ const DeviceModalView = () => {
                     <OrbitControls minDistance={1.5} maxDistance={10} />
                 </Suspense>
             </Canvas>
-        </div>
+        </Box>
     );
 };
 
