@@ -286,14 +286,16 @@ func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequ
 
 	err = u.simRepo.UpdateServices(ukamaS, carrierS, func() error {
 		if req.Carrier != nil {
-			_, err := u.simManager.SetServiceStatus(ctx, &pbclient.SetServiceStatusRequest{
+			r := &pbclient.SetServiceStatusRequest{
 				Iccid: req.Iccid,
 				Services: &pbclient.Services{
 					Sms:   wrapperspb.Bool(ukamaS.Sms && carrierS.Sms),
 					Data:  wrapperspb.Bool(ukamaS.Data && carrierS.Data),
 					Voice: wrapperspb.Bool(ukamaS.Voice && carrierS.Voice),
 				},
-			})
+			}
+			logrus.Infof("Setting carrier sim status to: %v", r)
+			_, err := u.simManager.SetServiceStatus(ctx, r)
 			if err != nil {
 				return err
 			}
