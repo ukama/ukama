@@ -27,7 +27,6 @@ import {
     useGetNetworkQuery,
     useGetDataBillQuery,
     useGetDataUsageQuery,
-    useGetEsimQrQuery,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
@@ -47,7 +46,6 @@ import {
     GetLatestConnectedUsersSubscription,
     useAddUserMutation,
     useUpdateNodeMutation,
-    GetESimQrCodeInput,
 } from "../../generated";
 import { TMetric, TObject } from "../../types";
 import { Box, Grid } from "@mui/material";
@@ -71,6 +69,7 @@ const Home = () => {
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
+    const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -162,22 +161,21 @@ const Home = () => {
         },
     });
 
-    const [
-        getEsimQrdcodeId,
-        { data: getEsimQrCodeRes, loading: getEsimQrCodeLoading },
-    ] = useGetEsimQrLazyQuery();
-    const handleGetSimQrCode = async (iccid: any) => {
+    const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
+        useGetEsimQrLazyQuery();
+    const handleGetSimQrCode = async (simId: any) => {
         await getEsimQrdcodeId({
             variables: {
                 data: {
                     userId: esimQrcode.userId,
-                    simId: iccid,
+                    simId: simId,
                 },
             },
         });
     };
     useEffect(() => {
         if (addUserRes) {
+            setNewAddedUserName(addUserRes?.addUser?.name);
             handleGetSimQrCode(addUserRes?.addUser?.iccid);
         }
     }, [addUserRes]);
@@ -849,6 +847,7 @@ const Home = () => {
             )}
             {showInstallSim && (
                 <AddUser
+                    addedUserName={newAddedUserName}
                     qrCodeId={qrCodeId}
                     isOpen={showInstallSim}
                     handleClose={handleSimInstallationClose}

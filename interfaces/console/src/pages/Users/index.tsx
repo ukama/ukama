@@ -15,6 +15,7 @@ import {
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
     useUpdateUserMutation,
+    useGetEsimQrLazyQuery,
     useUpdateUserStatusMutation,
 } from "../../generated";
 import { useEffect, useState } from "react";
@@ -22,6 +23,8 @@ import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import useWhoami from "../../helpers/useWhoami";
+
 import { TObject } from "../../types";
 
 const userInit = {
@@ -40,6 +43,7 @@ const userInit = {
 const User = () => {
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
+    const { response } = useWhoami();
     const [simDialog, setSimDialog] = useState({
         isShow: false,
         type: "add",
@@ -47,11 +51,52 @@ const User = () => {
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
+    const [qrCodeId, setqrCodeId] = useState<any>();
+    const [newAddedUserName, setNewAddedUserName] = useState<any>();
+    const [esimQrcode, setEsimQrcode] = useState<any>({
+        simId: "",
+        userId: "",
+    });
+    useEffect(() => {
+        if (response) {
+            setEsimQrcode({ userId: response?.id });
+        }
+    }, [response]);
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
-    ] = useAddUserMutation();
+    ] = useAddUserMutation({
+        onError: () => {
+            setUserNotification({
+                id: "error-add-user",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
+        useGetEsimQrLazyQuery();
+    const handleGetSimQrCode = async (simId: any) => {
+        await getEsimQrdcodeId({
+            variables: {
+                data: {
+                    userId: esimQrcode.userId,
+                    simId: simId,
+                },
+            },
+        });
+    };
+    useEffect(() => {
+        if (addUserRes) {
+            setNewAddedUserName(addUserRes?.addUser?.name);
+            handleGetSimQrCode(addUserRes?.addUser?.iccid);
+        }
+    }, [addUserRes]);
 
+    useEffect(() => {
+        setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
+    }, [getEsimQrCodeRes]);
     const [
         updateUser,
         {
@@ -59,7 +104,24 @@ const User = () => {
             data: updateUserRes,
             error: updateUserError,
         },
-    ] = useUpdateUserMutation();
+    ] = useUpdateUserMutation({
+        onCompleted: () => {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `The ${updateUserRes?.updateUser?.name} has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        },
+        onError: () => {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `${updateUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
 
     const [getUsersDataUsage, { loading: usersDataUsageLoading }] =
         useGetUsersDataUsageLazyQuery();
@@ -116,50 +178,6 @@ const User = () => {
                 }
             },
         });
-
-    useEffect(() => {
-        if (addUserRes) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `The user has been added successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [addUserRes]);
-
-    useEffect(() => {
-        if (updateUserRes) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `The user has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [updateUserRes]);
-
-    useEffect(() => {
-        if (addUserError) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `${addUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [addUserError]);
-
-    useEffect(() => {
-        if (updateUserError) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `${updateUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [updateUserError]);
 
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
@@ -241,10 +259,7 @@ const User = () => {
                 width="100%"
                 height="inherit"
                 isLoading={
-                    isSkeltonLoad ||
-                    usersByOrgLoading ||
-                    addUserLoading ||
-                    updateUserLoading
+                    isSkeltonLoad || usersByOrgLoading || updateUserLoading
                 }
             >
                 {usersRes && usersRes?.getUsersByOrg?.length > 0 ? (
@@ -310,13 +325,15 @@ const User = () => {
                     />
                 )}
 
-                {/* {showInstallSim && (
+                {showInstallSim && (
                     <AddUser
+                        addedUserName={newAddedUserName}
+                        qrCodeId={qrCodeId}
                         isOpen={showInstallSim}
                         handleClose={handleSimInstallationClose}
                         handleSubmitAction={handleSimInstallationSubmit}
                     />
-                )} */}
+                )}
             </LoadingWrapper>
         </Box>
     );

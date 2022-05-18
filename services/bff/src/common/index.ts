@@ -30,7 +30,7 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
         };
     } else if (ctx.cookie) {
         header = {
-            Cookie: "ukama_session=MTY1Mjc5Nzg2M3w3TVRyTEUyUEFXcHJuOWNEWm5iN0tmeno2LXJWdnZWSGRPdlF6WVRQZE5BWDcycktWUnc0cFIwNjBmTG9zWkZCUE5TOWtDQzFVZWRkV2hQcXBJWG9RYkRYNHFheVp4alNnM19RbUdDV0lYNnVfekdQSVQyaWd5LUl6WTFlZnl4LU9PTXRUTnktZ1E9PXy32OcVwiQGkXkVfrypzqk-EsX8oNG8JQ10gqAu0su_gA==",
+            Cookie: "ukama_session=MTY1MjgxMjczOXxpc2E5ZGI4RE1WUkZWTTNZb3NCUFQ0MTBuVGEyZWs5NjFJc1l2a1pjb04zdUJjZ1M2b1JqcVZibnVjMnRkeV9GRVpHY3k0SVhnRE80VmFOQzg1SzBRbTVEblNEUGtEdTJBTmJWTFpGQU9JT3l1NFJrTV9mV1lVUjM0WEltWkdZRlczeVk5a3NrZlE9PXxmdZfBLdfx3DgGNwyov6mp41KGEK4bbQmVYwgP_FHL0A==",
         };
     }
     return { header: header, orgId: "a32485e4-d842-45da-bf3e-798889c68ad0" };
