@@ -66,7 +66,7 @@ const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
-    const { response: userData } = useWhoami();
+    const { response } = useWhoami();
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -99,18 +99,18 @@ const Home = () => {
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
-    const [simId, setSimId] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
         temperaturetrx: null,
     });
+
     useEffect(() => {
-        if (userData) {
-            setUserId(userData.id);
+        if (response) {
+            setUserId(response?.id);
         }
-    }, []);
+    }, [response]);
     const {
         data: nodeRes,
         loading: nodeLoading,
@@ -164,9 +164,6 @@ const Home = () => {
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation({
-        onCompleted: () => {
-            setSimId(addUserRes?.addUser.iccid);
-        },
         onError: () => {
             setNodeToastNotification({
                 id: "error-add-user-success",
@@ -176,7 +173,21 @@ const Home = () => {
             });
         },
     });
-
+    const handleGetQrcode = async (iccid: any) => {
+        await getUserQrCode({
+            variables: {
+                data: {
+                    userId: userId,
+                    simId: iccid,
+                },
+            },
+        });
+    };
+    useEffect(() => {
+        if (addUserRes) {
+            handleGetQrcode(addUserRes?.addUser?.iccid);
+        }
+    }, [addUserRes]);
     const [
         registerNode,
         {
@@ -393,16 +404,9 @@ const Home = () => {
                     },
                 },
             });
-            getUserQrCode({
-                variables: {
-                    data: {
-                        userId: userId,
-                        simId: simId,
-                    },
-                },
-            });
         }
     };
+
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             tab: 4,
