@@ -99,7 +99,7 @@ func Test_PutNode(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 201, w.Code)
 
 }
 
@@ -112,7 +112,7 @@ func Test_GetNode(t *testing.T) {
 		//body, _ := json.Marshal(node)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/node/?node=1001&looking_for=*", nil)
+		req, _ := http.NewRequest("GET", "/node/?node=1001&looking_for=info", nil)
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
@@ -139,7 +139,7 @@ func Test_DeleteNode(t *testing.T) {
 		//body, _ := json.Marshal(node)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", "/node/?node=1001&looking_to=*", nil)
+		req, _ := http.NewRequest("DELETE", "/node/?node=1001&looking_to=delete", nil)
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
@@ -164,7 +164,7 @@ func Test_PutNodeStatus(t *testing.T) {
 	nodeId := "1001"
 	status := "StatusLabelGenerated"
 
-	url := "/node/status?node=" + nodeId + "&looking_to=update&status=" + status
+	url := "/node/status?node=" + nodeId + "&looking_to=status_update&status=" + status
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, nil)
 
@@ -193,7 +193,7 @@ func Test_GetNodeStatus(t *testing.T) {
 		nodeId := "1001"
 		status := db.StatusLabelGenerated
 
-		url := "/node/status?node=" + nodeId + "&looking_for=*"
+		url := "/node/status?node=" + nodeId + "&looking_for=status_info"
 
 		//body, _ := json.Marshal(node)
 
@@ -225,7 +225,7 @@ func Test_PutNodeMfgTestStatus(t *testing.T) {
 
 	jReq := "{ \"mfgTestStatus\" : \"MfgTestStatusUnderTest\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleTest\" }"
 
-	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
+	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=mfg_status_update"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, strings.NewReader(jReq))
 
@@ -251,7 +251,7 @@ func Test_PutNodeMfgTestStatusFail(t *testing.T) {
 
 	jReq := "{ \"mfgTestStatus\" : \"testing\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleTest\" }"
 
-	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
+	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=mfg_status_update"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, strings.NewReader(jReq))
 
@@ -278,7 +278,7 @@ func Test_PutNodeMfgTestStatusFail2(t *testing.T) {
 
 	jReq := "{ \"mfgTestStatus\" : \"MfgTestStatusPending\", \"mfgReport\" : \"production test pass\", \"status\": \"StatusModuleUnkown\" }"
 
-	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=update"
+	url := "/node/mfgstatus?node=" + nodeId + "&looking_to=mfg_status_update"
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, strings.NewReader(jReq))
 
@@ -307,7 +307,7 @@ func Test_GetNodeMfgTestStatus(t *testing.T) {
 
 		mfg := []byte("\"report: passed\"")
 
-		url := "/node/mfgstatus?node=" + nodeId + "&looking_for=*"
+		url := "/node/mfgstatus?node=" + nodeId + "&looking_for=mfg_status_info"
 
 		//body, _ := json.Marshal(node)
 
@@ -365,7 +365,7 @@ func Test_PutModule(t *testing.T) {
 	r.ServeHTTP(w, req)
 
 	// assert
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 201, w.Code)
 
 }
 
@@ -373,7 +373,7 @@ func Test_GetModule(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
 	module := &db.Module{}
-	url := "/module/?module=" + moduleId + "&looking_for=*"
+	url := "/module/?module=" + moduleId + "&looking_for=info"
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", url, nil)
@@ -399,7 +399,7 @@ func Test_DeleteModule(t *testing.T) {
 		// Arrange
 		moduleId := "1001"
 
-		url := "/module/?module=" + moduleId + "&looking_to=*"
+		url := "/module/?module=" + moduleId + "&looking_to=delete"
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", url, nil)
@@ -427,7 +427,7 @@ func Test_PutAssignModule(t *testing.T) {
 	moduleId := "M1001"
 	nodeId := "N1001"
 
-	url := "/module/assign?module=" + moduleId + "&looking_to=update" + "&node=" + nodeId
+	url := "/module/assign?module=" + moduleId + "&looking_to=allocate" + "&node=" + nodeId
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, nil)
@@ -453,7 +453,7 @@ func Test_PutModuleMfgStatus(t *testing.T) {
 	moduleId := "1001"
 	status := "StatusLabelGenerated"
 
-	url := "/module/status?module=" + moduleId + "&looking_to=update&status=" + status
+	url := "/module/status?module=" + moduleId + "&looking_to=mfg_status_update&status=" + status
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, nil)
@@ -482,7 +482,7 @@ func Test_PutModuleMfgStatusFail(t *testing.T) {
 	moduleId := "1001"
 	status := "StatusLabelUnkown"
 
-	url := "/module/status?module=" + moduleId + "&looking_to=update&status=" + status
+	url := "/module/status?module=" + moduleId + "&looking_to=mfg_status_update&status=" + status
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("PUT", url, nil)
@@ -508,7 +508,7 @@ func Test_GetModuleMfgStatus(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
 	var status db.MfgStatus
-	url := "/module/status?module=" + moduleId + "&looking_for=*"
+	url := "/module/status?module=" + moduleId + "&looking_for=mfg_status_info"
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", url, nil)
@@ -536,7 +536,7 @@ func Test_PutModuleMfgField(t *testing.T) {
 	for _, field := range fieldList {
 		t.Run(field, func(t *testing.T) {
 			data := []byte(field)
-			url := "/module/field?module=" + moduleId + "&looking_to=update&field=" + field
+			url := "/module/field?module=" + moduleId + "&looking_to=field_update&field=" + field
 
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(data))
@@ -621,7 +621,7 @@ func Test_GetModuleMfgField(t *testing.T) {
 
 			assert.NotEqual(t, columnName, "")
 
-			url := "/module/field?module=" + moduleId + "&looking_for=update&field=" + field
+			url := "/module/field?module=" + moduleId + "&looking_for=field_info&field=" + field
 
 			w := httptest.NewRecorder()
 			req, _ := http.NewRequest("GET", url, nil)
@@ -648,7 +648,7 @@ func Test_DeleteBootstrapCerts(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
 
-	url := "/module/bootstrapcerts?module=" + moduleId + "&looking_to=update"
+	url := "/module/bootstrapcerts?module=" + moduleId + "&looking_to=bootstrap_cert_delete"
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("DELETE", url, nil)
