@@ -118,17 +118,6 @@ const User = () => {
         });
 
     useEffect(() => {
-        if (addUserRes) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `The user has been added successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [addUserRes]);
-
-    useEffect(() => {
         if (updateUserRes) {
             setUserNotification({
                 id: "updateUserNotification",

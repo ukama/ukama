@@ -91,7 +91,7 @@ const Home = () => {
     });
 
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
-    const [showInstallSim, setShowInstallSim] = useState(false);
+    const [showInstallSim, setShowInstallSim] = useState<boolean>(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
@@ -132,27 +132,17 @@ const Home = () => {
             });
         },
     });
-    const [
-        addUser,
-        { loading: addUserLoading, data: addUserRes, error: addUserError },
-    ] = useAddUserMutation({
-        onCompleted: () => {
-            setNodeToastNotification({
-                id: "Add-user-success",
-                message: `${addUserRes?.addUser?.name} has been added successfully!`,
-                type: "success",
-                show: true,
-            });
-        },
-        onError: () => {
-            setNodeToastNotification({
-                id: "error-add-user-success",
-                message: `${addUserError?.message}`,
-                type: "error",
-                show: true,
-            });
-        },
-    });
+    const [addUser, { loading: addUserLoading, error: addUserError }] =
+        useAddUserMutation({
+            onError: () => {
+                setNodeToastNotification({
+                    id: "error-add-user-success",
+                    message: `${addUserError?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            },
+        });
 
     const [
         registerNode,
