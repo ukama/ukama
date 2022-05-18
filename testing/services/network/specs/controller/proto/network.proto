@@ -2,7 +2,7 @@ syntax="proto3";
 
 option go_package = "specs/controller/spec";
 
-package main;
+package ukama.testing.network.v1;
 
 // Virtual Node Status update event 
 message EvtUpdateVirtnode {
