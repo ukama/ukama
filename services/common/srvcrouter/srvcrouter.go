@@ -28,6 +28,7 @@ type ServiceRouter struct {
 func NewServiceRouter(path string) *ServiceRouter {
 	url, _ := url.Parse(path)
 	c := resty.New()
+	c.SetDebug(true)
 	rs := &ServiceRouter{
 		C:   c,
 		Url: url,

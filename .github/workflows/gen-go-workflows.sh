@@ -31,5 +31,5 @@ generate(){
 generate "services/bootstrap" "bootstrap"
 generate "services/cloud" "ukama"
 generate "services/hub" "hub"
-generate "testing/services" "factory"
+generate "testing/services" "testing"
 generate "services/metrics" "metrics"

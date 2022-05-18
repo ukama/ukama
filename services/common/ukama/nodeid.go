@@ -22,19 +22,18 @@ const (
 )
 
 const (
-	NODE_ID_TYPE_HOMENODE  = "HNODE"
-	NODE_ID_TYPE_TOWERNODE = "TNODE"
-	NODE_ID_TYPE_COMPNODE  = "CNODE"
-	NODE_ID_TYPE_AMPNODE   = "ANODE"
-	NODE_ID_TYPE_UNDEFINED = "UNDEFINED"
+	NODE_ID_TYPE_HOMENODE  = "hnode"
+	NODE_ID_TYPE_TOWERNODE = "tnode"
+	NODE_ID_TYPE_AMPNODE   = "anode"
+	NODE_ID_TYPE_UNDEFINED = "undef"
 )
 
 const (
-	MODULE_ID_TYPE_COMP      = "COMV1"
-	MODULE_ID_TYPE_TRX       = "TRX"
-	MODULE_ID_TYPE_CTRL      = "CTRL"
-	MODULE_ID_TYPE_FE        = "FE"
-	MODULE_ID_TYPE_UNDEFINED = "UNDEFINED"
+	MODULE_ID_TYPE_COMP      = "comv1"
+	MODULE_ID_TYPE_TRX       = "trx"
+	MODULE_ID_TYPE_CTRL      = "ctrl"
+	MODULE_ID_TYPE_FE        = "fe"
+	MODULE_ID_TYPE_UNDEFINED = "undef"
 )
 
 const (
@@ -46,10 +45,6 @@ const (
 type NodeID string
 type ModuleID string
 
-func (m ModuleID) String() string {
-	return string(m)
-}
-
 func (n NodeID) String() string {
 	return string(n)
 }
@@ -58,17 +53,25 @@ func (n NodeID) StringLowercase() string {
 	return strings.ToLower(n.String())
 }
 
+func (m ModuleID) String() string {
+	return string(m)
+}
+
+func (m ModuleID) StringLowercase() string {
+	return strings.ToLower(m.String())
+}
+
 func (n NodeID) GetNodeType() string {
 	t := n.String()[CODE_IDX : CODE_IDX+strings.IndexRune(n.String()[CODE_IDX:], '-')]
 	switch strings.ToLower(t) {
 	case node_id_type_component_home:
 		return NODE_ID_TYPE_HOMENODE
 
-	case node_id_type_component_tower:
-		return NODE_ID_TYPE_COMPNODE
-
 	case node_id_type_component_amplifier:
 		return NODE_ID_TYPE_AMPNODE
+
+	case node_id_type_component_tower:
+		return NODE_ID_TYPE_TOWERNODE
 	default:
 		return NODE_ID_TYPE_UNDEFINED
 	}
@@ -86,15 +89,15 @@ func getRandCode(t time.Time) string {
 /* Get HW Code */
 func GetNodeCodeForUnits(ntype string) string {
 	var code string
-	switch ntype {
-	case NODE_ID_TYPE_HOMENODE, "HomeNode", "homenode", "hnode", "HNode":
-		code = "HNODE"
-	case NODE_ID_TYPE_TOWERNODE, "TowerNode", "towernode", "tnode", "TNode":
-		code = "TNODE"
-	case NODE_ID_TYPE_AMPNODE, "AmpNode", "ampnode":
-		code = "ANODE"
+	switch strings.ToLower(ntype) {
+	case NODE_ID_TYPE_HOMENODE, "homenode":
+		code = NODE_ID_TYPE_HOMENODE
+	case NODE_ID_TYPE_TOWERNODE, "towernode":
+		code = NODE_ID_TYPE_TOWERNODE
+	case NODE_ID_TYPE_AMPNODE, "ampnode":
+		code = NODE_ID_TYPE_AMPNODE
 	default:
-		code = "XXXXX"
+		code = NODE_ID_TYPE_UNDEFINED
 	}
 	return code
 }
@@ -102,17 +105,17 @@ func GetNodeCodeForUnits(ntype string) string {
 /* Get HW Code */
 func GetModuleCodeForUnits(mtype string) string {
 	var code string
-	switch mtype {
-	case MODULE_ID_TYPE_COMP, "ComV1", "com", "COM":
-		code = "COM"
-	case MODULE_ID_TYPE_TRX, "Trx", "trx":
-		code = "TRX"
-	case MODULE_ID_TYPE_CTRL, "Ctrl", "ctrl":
-		code = "CTRL"
-	case MODULE_ID_TYPE_FE, "Fe", "fe":
-		code = "RFFE"
+	switch strings.ToLower(mtype) {
+	case MODULE_ID_TYPE_COMP, "com":
+		code = MODULE_ID_TYPE_COMP
+	case MODULE_ID_TYPE_TRX, "transciever":
+		code = MODULE_ID_TYPE_TRX
+	case MODULE_ID_TYPE_CTRL, "control":
+		code = MODULE_ID_TYPE_CTRL
+	case MODULE_ID_TYPE_FE, "rffe", "frontend":
+		code = MODULE_ID_TYPE_FE
 	default:
-		code = "XXXXX"
+		code = MODULE_ID_TYPE_UNDEFINED
 	}
 	return code
 }
@@ -190,6 +193,30 @@ func NewVirtualTowerNodeId() NodeID {
 	return NewVirtualNodeId(NODE_ID_TYPE_TOWERNODE)
 }
 
+func GetNodeType(n string) *string {
+	codes := [...]string{
+		NODE_ID_TYPE_HOMENODE,
+		NODE_ID_TYPE_TOWERNODE,
+		NODE_ID_TYPE_AMPNODE}
+
+	var nodeType *string
+	for _, code := range codes {
+		/* Check for the NodeTyope codes */
+		if strings.Contains(strings.ToLower(n), code) {
+
+			/* Check index of substring */
+			idx := strings.Index(strings.ToLower(n), code)
+			if idx == CODE_IDX {
+				nodeType = &code
+				break
+			}
+
+		}
+	}
+
+	return nodeType
+}
+
 func ValidateNodeId(id string) (NodeID, error) {
 
 	/* TODO :: ADD more validation once we finalized this format */
@@ -199,15 +226,16 @@ func ValidateNodeId(id string) (NodeID, error) {
 	}
 
 	/* Check for HW codes */
-	codes := [...]string{"ComV1", node_id_type_component_tower,
-		"HNODE", node_id_type_component_home,
-		"ANODE", node_id_type_component_amplifier}
+	codes := [...]string{
+		node_id_type_component_home,
+		node_id_type_component_amplifier,
+		node_id_type_component_tower}
 	match := false
 	for _, code := range codes {
-		if strings.Contains(id, code) {
+		if strings.Contains(strings.ToLower(id), code) {
 
 			/* Check index of substring */
-			idx := strings.Index(id, code)
+			idx := strings.Index(strings.ToLower(id), code)
 			if idx == CODE_IDX {
 				match = true
 				break

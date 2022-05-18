@@ -20,13 +20,13 @@ const (
 	CommandDeviceExecuteResource                 RoutingKey = "CMD.DEVICE.EXEC.RESOURCE"
 	ResponseDeviceExecuteResource                RoutingKey = "RESPONSE.DEVICE.EXEC.RESOURCE"
 	EventDeviceCreate                            RoutingKey = "EVENT.DEVICE.CREATE.*"
-	EventVirtNodeUpdateStatus                    RoutingKey = "EVENT.VIRTNODE.STATUS.*"
+	EventVirtNodeUpdateStatus                    RoutingKey = "EVENT.VIRTNODE.UPDATE.STATUS"
 )
 
 const (
-	DeviceConnectedRoutingKey         RoutingKey = "event.device.mesh.link.connect"
-	UserRegisteredRoutingKey           RoutingKey = "event.cloud.identity.user.create"
-	DeviceFeederRequestRoutingKeyRoutingKey = "request.cloud.device-feeder"
+	DeviceConnectedRoutingKey               RoutingKey = "event.device.mesh.link.connect"
+	UserRegisteredRoutingKey                RoutingKey = "event.cloud.identity.user.create"
+	DeviceFeederRequestRoutingKeyRoutingKey            = "request.cloud.device-feeder"
 
 	DefaultExchange = "amq.topic"
 )
