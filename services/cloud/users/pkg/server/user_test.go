@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"testing"
 
 	"github.com/google/uuid"
@@ -355,6 +356,118 @@ func Test_UpdateValidation(t *testing.T) {
 		})
 	}
 
+}
+
+func Test_UpdateServices(t *testing.T) {
+	// Arrange
+	userRepo := &mocks.UserRepo{}
+	simProvider := &mocks.SimProvider{}
+	hssProv := &mocks.ImsiClientProvider{}
+	testIccid := "890000000000000001"
+
+	t.Run("UpdateUkama", func(tt *testing.T) {
+		simManager := &mocks2.SimManagerServiceClient{}
+		simRepo := &mocks.SimcardRepo{}
+		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
+			{Data: false, Type: db.ServiceTypeUkama},
+			{Data: true, Type: db.ServiceTypeCarrier},
+		}}, nil)
+		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
+			// call the function that is passed as nestec func
+			f()
+			return true
+		})).Return(nil)
+
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// Act
+		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
+			Iccid: testIccid,
+			Ukama: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(true),
+			},
+		})
+
+		// Assert
+		if assert.NoError(t, err) {
+			simRepo.AssertExpectations(tt)
+			simManager.AssertExpectations(tt)
+			assert.NotNil(tt, resp)
+		}
+	})
+
+	t.Run("UpdateCarrier", func(tt *testing.T) {
+		simManager := &mocks2.SimManagerServiceClient{}
+		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
+			return p.Services.Data.GetValue()
+		})).Return(nil, nil)
+
+		simRepo := &mocks.SimcardRepo{}
+		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
+			{Data: false, Type: db.ServiceTypeUkama},
+			{Data: true, Type: db.ServiceTypeCarrier},
+		}}, nil)
+		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
+			// call the function that is passed as nestec func
+			f()
+			return true
+		})).Return(nil)
+
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// Act
+		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
+			Iccid: testIccid,
+			Ukama: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(true),
+			},
+			Carrier: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(true),
+			},
+		})
+
+		// Assert
+		if assert.NoError(t, err) {
+			simRepo.AssertExpectations(tt)
+			simManager.AssertExpectations(tt)
+			assert.NotNil(tt, resp)
+		}
+	})
+
+	t.Run("DisableAllServicesButKeepCarrier", func(tt *testing.T) {
+		simManager := &mocks2.SimManagerServiceClient{}
+		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
+			return p.Services.Data.GetValue() == false
+		})).Return(nil, nil)
+
+		simRepo := &mocks.SimcardRepo{}
+		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
+			{Data: false, Type: db.ServiceTypeUkama},
+			{Data: true, Type: db.ServiceTypeCarrier},
+		}}, nil)
+		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
+			// call the function that is passed as nested func
+			f()
+			return true
+		})).Return(nil)
+
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
+		// Act
+		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
+			Iccid: testIccid,
+			Ukama: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(false),
+			},
+			Carrier: &pb.SetSimStatusRequest_SetServices{
+				Data: wrapperspb.Bool(true),
+			},
+		})
+
+		// Assert
+		if assert.NoError(t, err) {
+			simRepo.AssertExpectations(tt)
+			simManager.AssertExpectations(tt)
+			assert.NotNil(tt, resp)
+		}
+	})
 }
 
 func assertValidationErr(t *testing.T, err error, expectErr bool, errContains string) {

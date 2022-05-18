@@ -121,6 +121,20 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 			Source:     u.simManagerName,
 			UserID:     usr.ID,
 			IsPhysical: isPhysicalSim,
+			Services: []*db.Service{
+				&db.Service{
+					Sms:   true,
+					Data:  true,
+					Voice: true,
+					Type:  db.ServiceTypeUkama,
+				},
+				&db.Service{
+					Sms:   true,
+					Data:  true,
+					Voice: true,
+					Type:  db.ServiceTypeCarrier,
+				},
+			},
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to add simcard")
@@ -206,7 +220,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 	simCard := dbSimcardsToPbSimcards(user.Simcard)
 
 	if simCard != nil && !user.Deactivated {
-		u.pullSimCardStatuses(ctx, simCard)
+		//u.pullSimCardStatuses(ctx, simCard)
 		u.pullUsage(ctx, simCard)
 	}
 
@@ -239,39 +253,77 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequest) (*pb.SetSimStatusResponse, error) {
-	if req.Carrier.Sms != nil && req.Carrier.Sms.Value {
+	if req.Carrier != nil && req.Carrier.Sms != nil && req.Carrier.Sms.Value {
 		return nil, status.Errorf(codes.InvalidArgument, "enabling SMS service is not supported")
 	}
 
-	if req.Carrier.Voice != nil && req.Carrier.Voice.Value {
+	if req.Carrier != nil && req.Carrier.Voice != nil && req.Carrier.Voice.Value {
 		return nil, status.Errorf(codes.InvalidArgument, "enabling VOICE service is not supported")
 	}
 
-	if req.Carrier != nil {
-		_, err := u.simManager.SetServiceStatus(ctx, &pbclient.SetServiceStatusRequest{
+	sim, err := u.simRepo.Get(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	ukamaS := sim.GetServices(db.ServiceTypeUkama)
+	if ukamaS == nil {
+		ukamaS = &db.Service{
+			Type:  db.ServiceTypeUkama,
 			Iccid: req.Iccid,
-			Services: &pbclient.Services{
-				Sms:   req.Carrier.Sms,
-				Data:  req.Carrier.Data,
-				Voice: req.Carrier.Voice,
-			},
-		})
-		if err != nil {
-			return nil, err
 		}
 	}
+	u.updateService(req.Ukama, ukamaS)
 
-	if req.Ukama != nil {
-		return nil, status.Errorf(codes.Unimplemented, "Configuring status in ukama network is not yet implemented")
+	carrierS := sim.GetServices(db.ServiceTypeCarrier)
+	if carrierS == nil {
+		carrierS = &db.Service{
+			Type:  db.ServiceTypeCarrier,
+			Iccid: req.Iccid,
+		}
 	}
-	sim := &pb.Sim{
-		Iccid: req.Iccid,
+	u.updateService(req.Carrier, carrierS)
+
+	err = u.simRepo.UpdateServices(ukamaS, carrierS, func() error {
+		if req.Carrier != nil {
+			_, err := u.simManager.SetServiceStatus(ctx, &pbclient.SetServiceStatusRequest{
+				Iccid: req.Iccid,
+				Services: &pbclient.Services{
+					Sms:   wrapperspb.Bool(ukamaS.Sms && carrierS.Sms),
+					Data:  wrapperspb.Bool(ukamaS.Data && carrierS.Data),
+					Voice: wrapperspb.Bool(ukamaS.Voice && carrierS.Voice),
+				},
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	u.pullSimCardStatuses(ctx, sim)
 
 	return &pb.SetSimStatusResponse{
-		Sim: sim,
+		Sim: dbSimcardsToPbSimcards(*sim),
 	}, nil
+}
+
+func (u *UserService) updateService(req *pb.SetSimStatusRequest_SetServices, ukamaS *db.Service) {
+	if req == nil {
+		return
+	}
+	if req.GetSms() != nil {
+		ukamaS.Sms = req.GetSms().GetValue()
+	}
+
+	if req.GetData() != nil {
+		ukamaS.Data = req.GetData().GetValue()
+	}
+
+	if req.GetVoice() != nil {
+		ukamaS.Voice = req.GetVoice().GetValue()
+	}
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -443,9 +495,27 @@ func dbSimcardsToPbSimcards(simcard db.Simcard) (res *pb.Sim) {
 	res = &pb.Sim{
 		Iccid:      simcard.Iccid,
 		IsPhysical: simcard.IsPhysical,
+		Carrier: &pb.SimStatus{
+			Services: pbServices(simcard.GetServices(db.ServiceTypeCarrier)),
+		},
+		Ukama: &pb.SimStatus{
+			Services: pbServices(simcard.GetServices(db.ServiceTypeUkama)),
+		},
 	}
 
 	return res
+}
+
+func pbServices(services *db.Service) *pb.Services {
+	if services == nil {
+		return nil
+	}
+
+	return &pb.Services{
+		Sms:   services.Sms,
+		Data:  services.Data,
+		Voice: services.Voice,
+	}
 }
 
 func dbusersToPbUsers(users []db.User) []*pb.User {
