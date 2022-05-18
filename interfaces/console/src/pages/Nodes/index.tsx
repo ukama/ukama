@@ -422,6 +422,7 @@ const Nodes = () => {
                 p: 0,
                 mt: 3,
                 pb: 2,
+                height: "100%",
             }}
         >
             {(nodesRes && nodesRes?.getNodesByOrg?.nodes.length > 0) ||
