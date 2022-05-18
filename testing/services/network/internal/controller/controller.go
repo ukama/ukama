@@ -64,7 +64,7 @@ func NewController(d db.VNodeRepo) *Controller {
 		logrus.Tracef("Pod name: %s\n", pod.Name)
 	}
 
-	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.RabbitUri)
+	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.Queue.Uri)
 	if err != nil {
 		logrus.Errorf("error getting message publisher: %s\n", err.Error())
 		return nil

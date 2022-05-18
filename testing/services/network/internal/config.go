@@ -24,7 +24,7 @@ type Config struct {
 	BuilderImage      string
 	BuilderCmd        []string
 	Kubeconfig        string
-	RabbitUri         string
+	Queue             config.Queue
 	RepoServerUrl     string
 	Namespace         string
 }

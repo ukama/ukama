@@ -30,7 +30,7 @@ func initConfig() {
 
 // Msgbus initialization
 func initMsgBus() {
-	mockMsgClient, err := msgbus.NewConsumerClient(internal.ServiceConfig.RabbitUri)
+	mockMsgClient, err := msgbus.NewConsumerClient(internal.ServiceConfig.Queue.Uri)
 	if err != nil {
 		failOnError(err, "Could not create a consumer. Error %s"+err.Error())
 	}
