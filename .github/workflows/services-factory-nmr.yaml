@@ -1,0 +1,83 @@
+# THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
+# DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
+# USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
+name: build-nmr
+on:  
+  push:   
+    paths:
+        - "services/factory/nmr/**"
+        - ".github/workflows/services-factory-nmr.yaml"
+  workflow_dispatch:
+
+jobs:  
+  build:
+    env: 
+      working-directory: services/factory/nmr
+
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: build app
+      uses: ./.github/actions/build-go
+      with:
+        registry-name: nmr
+        working-directory: ${{ env.working-directory }}
+        github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+        aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
+        aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+    
+  sonar-scan:
+    name: sonar-scan
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: services/factory/nmr
+    steps:
+      - uses: actions/checkout@v3
+      - name: scan
+        uses: ./.github/actions/sonar-go
+        with:         
+          working-directory: ${{ env.working-directory }}
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          project-key: ukama_services_nmr
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    env: 
+      working-directory: services/factory/nmr
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: ./.github/actions/lint-go
+        with:
+          working-directory: ${{ env.working-directory }}
+          github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+          
+
+  release:
+      name: release
+      needs: [build, lint]
+      if: github.ref == 'refs/heads/main'
+      runs-on: ubuntu-latest
+      env:
+        working-directory: services/factory/nmr
+      steps:
+        - uses: actions/checkout@v3
+        
+        - name: Init vars
+          id: vars_step
+          uses: ./.github/actions/git-vars
+
+        - name: update gitops
+          uses: denispalnitsky/gitops-release@v9
+          with:
+            filename: "releases/factory-helmfile.yaml"
+            key: "nmrImageTag"
+            value:  ${{ steps.vars_step.outputs.sha-short }}
+            github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
+            github-org-and-repo: "ukama/infra-as-code"
+            github-user-mail: "bot@ukama.com"
+            github-username: "ukama-bot"
