@@ -365,18 +365,23 @@ func Test_UpdateServices(t *testing.T) {
 	hssProv := &mocks.ImsiClientProvider{}
 	testIccid := "890000000000000001"
 
+	simRepo := &mocks.SimcardRepo{}
+	simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
+		{Data: false, Type: db.ServiceTypeUkama},
+		{Data: true, Type: db.ServiceTypeCarrier},
+	}}, nil)
+	simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
+		// call the function that is passed as nestec func
+		err := f()
+		if err != nil {
+			t.Errorf("Error calling nested simmanager.updateServices. Error: %v", err)
+			t.Fail()
+		}
+		return true
+	})).Return(nil)
+
 	t.Run("UpdateUkama", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
-		simRepo := &mocks.SimcardRepo{}
-		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
-			{Data: false, Type: db.ServiceTypeUkama},
-			{Data: true, Type: db.ServiceTypeCarrier},
-		}}, nil)
-		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
-			// call the function that is passed as nestec func
-			f()
-			return true
-		})).Return(nil)
 
 		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act
@@ -400,17 +405,6 @@ func Test_UpdateServices(t *testing.T) {
 		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
 			return p.Services.Data.GetValue()
 		})).Return(nil, nil)
-
-		simRepo := &mocks.SimcardRepo{}
-		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
-			{Data: false, Type: db.ServiceTypeUkama},
-			{Data: true, Type: db.ServiceTypeCarrier},
-		}}, nil)
-		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
-			// call the function that is passed as nestec func
-			f()
-			return true
-		})).Return(nil)
 
 		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act
@@ -437,17 +431,6 @@ func Test_UpdateServices(t *testing.T) {
 		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
 			return p.Services.Data.GetValue() == false
 		})).Return(nil, nil)
-
-		simRepo := &mocks.SimcardRepo{}
-		simRepo.On("Get", testIccid).Return(&db.Simcard{Iccid: testIccid, Services: []*db.Service{
-			{Data: false, Type: db.ServiceTypeUkama},
-			{Data: true, Type: db.ServiceTypeCarrier},
-		}}, nil)
-		simRepo.On("UpdateServices", mock.Anything, mock.Anything, mock.MatchedBy(func(f func() error) bool {
-			// call the function that is passed as nested func
-			f()
-			return true
-		})).Return(nil)
 
 		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
 		// Act

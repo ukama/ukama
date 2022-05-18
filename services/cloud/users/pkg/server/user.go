@@ -427,45 +427,6 @@ func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (
 	}, err
 }
 
-func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
-	logrus.Infof("Get sim card status for %s", simCard.Iccid)
-	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
-		Iccid: simCard.Iccid,
-	})
-
-	if err != nil {
-		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
-		return
-	}
-
-	simCard.Carrier = &pb.SimStatus{}
-
-	switch r.Status {
-	case pbclient.GetSimStatusResponse_INACTIVE:
-		simCard.Carrier.Status = pb.SimStatus_INACTIVE
-	case pbclient.GetSimStatusResponse_ACTIVE:
-		simCard.Carrier.Status = pb.SimStatus_ACTIVE
-	default:
-		logrus.Errorf("Unknown sim status %s", r.Status.String())
-		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
-	}
-	simCard.Carrier.Services = &pb.Services{
-		Sms:   getBoolVal(r.Services.Sms),
-		Data:  getBoolVal(r.Services.Data),
-		Voice: getBoolVal(r.Services.Voice),
-	}
-
-	simCard.Ukama = &pb.SimStatus{
-		// Hardcode for now. Will be updated when Ukama sim support is ready
-		Status: pb.SimStatus_INACTIVE,
-		Services: &pb.Services{
-			Sms:   false,
-			Data:  false,
-			Voice: false,
-		},
-	}
-}
-
 // add usage to simcard. In case of error, simcard is not updated silently
 func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card usage for %s", simCard.Iccid)
@@ -482,13 +443,6 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataAllowanceBytes: r.DataTotalInBytes,
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
-}
-
-func getBoolVal(val *wrapperspb.BoolValue) bool {
-	if val == nil {
-		return false
-	}
-	return val.Value
 }
 
 func dbSimcardsToPbSimcards(simcard db.Simcard) (res *pb.Sim) {
