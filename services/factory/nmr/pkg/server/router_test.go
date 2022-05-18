@@ -85,7 +85,7 @@ func Test_PutNode(t *testing.T) {
 	body, _ := json.Marshal(node)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", "/node/?node=1001&looking_to=update", bytes.NewReader(body))
+	req, _ := http.NewRequest("PUT", "/node?node=1001&looking_to=update", bytes.NewReader(body))
 
 	nodeRepo := mocks.NodeRepo{}
 	moduleRepo := mocks.ModuleRepo{}
@@ -112,7 +112,7 @@ func Test_GetNode(t *testing.T) {
 		//body, _ := json.Marshal(node)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("GET", "/node/?node=1001&looking_for=info", nil)
+		req, _ := http.NewRequest("GET", "/node?node=1001&looking_for=info", nil)
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
@@ -139,7 +139,7 @@ func Test_DeleteNode(t *testing.T) {
 		//body, _ := json.Marshal(node)
 
 		w := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", "/node/?node=1001&looking_to=delete", nil)
+		req, _ := http.NewRequest("DELETE", "/node?node=1001&looking_to=delete", nil)
 
 		nodeRepo := mocks.NodeRepo{}
 		moduleRepo := mocks.ModuleRepo{}
@@ -347,7 +347,7 @@ func Test_PutModule(t *testing.T) {
 		Status:     "StatusLabelGenerated",
 		UnitID:     "0001",
 	}
-	url := "/module/?module=" + moduleId + "&looking_to=update"
+	url := "/module?module=" + moduleId + "&looking_to=update"
 	body, _ := json.Marshal(module)
 
 	w := httptest.NewRecorder()
@@ -373,7 +373,7 @@ func Test_GetModule(t *testing.T) {
 	// Arrange
 	moduleId := "1001"
 	module := &db.Module{}
-	url := "/module/?module=" + moduleId + "&looking_for=info"
+	url := "/module?module=" + moduleId + "&looking_for=info"
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", url, nil)
@@ -399,7 +399,7 @@ func Test_DeleteModule(t *testing.T) {
 		// Arrange
 		moduleId := "1001"
 
-		url := "/module/?module=" + moduleId + "&looking_to=delete"
+		url := "/module?module=" + moduleId + "&looking_to=delete"
 
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("DELETE", url, nil)

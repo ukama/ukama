@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	cors "github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -23,12 +22,7 @@ type Config struct {
 func NewConfig() *Config {
 
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8085,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-			},
-		},
+		Server: config.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
@@ -38,13 +32,13 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "*", "looking_for": "info", "path": "/node/",
+					"node": "*", "looking_for": "info", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "update", "path": "/node/",
+					"node": "*", "looking_to": "update", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "delete", "path": "/node/",
+					"node": "*", "looking_to": "delete", "path": "/node",
 				},
 				{
 					"node": "*", "looking_for": "status_info", "path": "/node/status",
@@ -62,22 +56,22 @@ func NewConfig() *Config {
 					"node": "*", "looking_for": "list", "path": "/node/all",
 				},
 				{
-					"module": "*", "looking_for": "info", "path": "/module/",
+					"module": "*", "looking_for": "info", "path": "/module",
 				},
 				{
-					"module": "*", "looking_to": "update", "path": "/module/",
+					"module": "*", "looking_to": "update", "path": "/module",
 				},
 				{
-					"module": "*", "looking_to": "delete", "path": "/module/",
+					"module": "*", "looking_to": "delete", "path": "/module",
 				},
 				{
-					"module": "*", "looking_to": "allocate", "path": "/module/",
+					"module": "*", "looking_to": "allocate", "path": "/module",
 				},
 				{
-					"module": "*", "looking_for": "status_info", "status": "*", "path": "/module/status",
+					"module": "*", "looking_for": "mfg_status_info", "status": "*", "path": "/module/status",
 				},
 				{
-					"module": "*", "looking_to": "status_update", "status": "*", "path": "/module/status",
+					"module": "*", "looking_to": "mfg_status_update", "status": "*", "path": "/module/status",
 				},
 				{
 					"module": "*", "looking_for": "field_info", "field": "*", "path": "/module/field",
@@ -91,6 +85,9 @@ func NewConfig() *Config {
 				{
 					"module": "*", "looking_for": "list", "path": "/module/all",
 				},
+				{
+					"module": "*", "looking_to": "bootstrap_cert_delete", "path": "/module/bootstrapcerts",
+				},
 			},
 			F: config.Forward{
 				Ip:   "localhost",
@@ -98,13 +95,6 @@ func NewConfig() *Config {
 				Path: "/",
 			},
 		},
-		DB: config.Database{
-			Host:       "localhost",
-			Password:   "Pass2020!",
-			Username:   "postgres",
-			DbName:     ServiceName,
-			SslEnabled: false,
-			Port:       5432,
-		},
+		DB: config.DefaultDatabaseName(ServiceName),
 	}
 }
