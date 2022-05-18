@@ -151,6 +151,7 @@ message SimStatus{
         UNKNOWN = 0;
         INACTIVE = 1;
         ACTIVE = 2;
+        TERMINATED = 3;
     }
     Status status = 1;
     Services services = 2;

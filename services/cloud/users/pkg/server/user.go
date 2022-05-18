@@ -220,7 +220,7 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 	simCard := dbSimcardsToPbSimcards(user.Simcard)
 
 	if simCard != nil && !user.Deactivated {
-		//u.pullSimCardStatuses(ctx, simCard)
+		u.pullSimCardStatuses(ctx, simCard)
 		u.pullUsage(ctx, simCard)
 	}
 
@@ -228,6 +228,31 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 		User: dbUsersToPbUsers(user),
 		Sim:  simCard,
 	}, nil
+}
+
+func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
+	logrus.Infof("Get sim card status for %s", simCard.Iccid)
+	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
+		Iccid: simCard.Iccid,
+	})
+
+	if err != nil {
+		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
+		return
+	}
+
+	switch r.Status {
+	case pbclient.GetSimStatusResponse_INACTIVE:
+		simCard.Carrier.Status = pb.SimStatus_INACTIVE
+	case pbclient.GetSimStatusResponse_ACTIVE:
+		simCard.Carrier.Status = pb.SimStatus_ACTIVE
+	case pbclient.GetSimStatusResponse_TERMINATED:
+		simCard.Carrier.Status = pb.SimStatus_TERMINATED
+
+	default:
+		logrus.Errorf("Unknown sim status %s", r.Status.String())
+		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
+	}
 }
 
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {

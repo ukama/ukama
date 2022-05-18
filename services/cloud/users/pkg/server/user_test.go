@@ -429,7 +429,7 @@ func Test_UpdateServices(t *testing.T) {
 	t.Run("DisableAllServicesButKeepCarrier", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
 		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
-			return p.Services.Data.GetValue() == false
+			return p.Services.Data != nil && p.Services.Data.GetValue() == false
 		})).Return(nil, nil)
 
 		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager")
