@@ -117,6 +117,9 @@ const theme = (isDarkmode: boolean) =>
                                 backgroundColor: "transparent",
                             },
                         },
+                        iconStandard: {
+                            paddingLeft: "4px",
+                        },
                     },
                 },
                 MuiDialogContent: {

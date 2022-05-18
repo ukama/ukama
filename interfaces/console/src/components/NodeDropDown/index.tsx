@@ -124,7 +124,6 @@ const NodeDropDown = ({
                             sx={{
                                 m: 0,
                                 p: "6px 16px",
-
                                 backgroundColor: `${
                                     id === selectedNode?.id
                                         ? hexToRGB(colors.secondaryLight, 0.25)

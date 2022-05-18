@@ -1,9 +1,11 @@
 import { Theme } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import colors from "../../theme/colors";
 
 const useStyles = makeStyles<Theme>(() => ({
     selectStyle: () => ({
         width: "fit-content",
+        color: colors.primaryMain,
     }),
 }));
 
