@@ -20,20 +20,22 @@ interface IAddUser {
     isOpen: boolean;
     handleClose: Function;
     handleSubmitAction: Function;
+    qrCodeId: any;
+    addedUserName: any;
 }
 
-const getDescription = (id: number) => {
+const getDescription = (id: number, addUserName?: any) => {
     switch (id) {
         case 0:
             return "What SIM do you want to assign to this user?";
         case 1:
             return "Add user xyz. They will be emailed the SIM installation link/QR code shortly after.";
         case 2:
-            return "You have successfully added [Name] as a user to your network, and an eSIM installation invitation has been sent out to them. If they would rather install now, have them scan the QR code below.";
+            return `You have successfully added ${addUserName} as a user to your network, and an eSIM installation invitation has been sent out to them. If they would rather install now, have them scan the QR code below.`;
         case 3:
             return "Enter security code for Physical SIM lorem ipsum. Instructions for remembering to install SIM after?";
         case 4:
-            return "You have successfully added [Name] as a user to your network. Instructions for installing physical SIM (might need more thinking if this process is complex).";
+            return `You have successfully added ${addUserName} as a user to your network. Instructions for installing physical SIM (might need more thinking if this process is complex).`;
         default:
             return "";
     }
@@ -44,7 +46,13 @@ const getTitle = (id: number, type: string) =>
         ? `Add User${type && ` - ${type}`}`
         : "Add User Succesful";
 
-const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
+const AddUser = ({
+    isOpen,
+    handleClose,
+    qrCodeId,
+    handleSubmitAction,
+    addedUserName,
+}: IAddUser) => {
     const [flow, setFlow] = useState(0);
     const [formError, setError] = useState("");
     const [simType, setSimType] = useState("");
@@ -137,8 +145,15 @@ const AddUser = ({ isOpen, handleClose, handleSubmitAction }: IAddUser) => {
                         description={getDescription(3)}
                     />
                 )}
-                {flow === 3 && <ESimQR description={getDescription(2)} />}
-                {flow === 4 && <Success description={getDescription(4)} />}
+                {flow === 3 && (
+                    <ESimQR
+                        description={getDescription(2, addedUserName)}
+                        qrCodeId={qrCodeId}
+                    />
+                )}
+                {flow === 4 && (
+                    <Success description={getDescription(4, addedUserName)} />
+                )}
             </DialogContent>
             {(flow === 1 || flow === 2) && (
                 <DialogActions>
