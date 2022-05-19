@@ -175,7 +175,36 @@ mutation deleteNode($id: String!) {
         nodeId
     }
 }
-
+mutation updateUserRoaming($data: UpdateUserServiceInput!) {
+    updateUserRoaming(data: $data) {
+        iccid
+        isPhysical
+        ukama {
+            status
+            services {
+                voice
+                data
+                sms
+            }
+            usage {
+                dataUsedBytes
+                dataAllowanceBytes
+            }
+        }
+        carrier {
+            status
+            services {
+                voice
+                data
+                sms
+            }
+            usage {
+                dataUsedBytes
+                dataAllowanceBytes
+            }
+        }
+    }
+}
 mutation updateUser($userId: String!, $data: UserInputDto!) {
     updateUser(data: $data, userId: $userId) {
         name
