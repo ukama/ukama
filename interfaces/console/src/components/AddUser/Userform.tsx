@@ -79,7 +79,7 @@ const Userform = ({
             <Grid item xs={12}>
                 <ContainerJustifySpaceBtw sx={{ alignItems: "end" }}>
                     <Stack display="flex" alignItems="flex-start">
-                        <Typography variant="caption" color={colors.black54}>
+                        <Typography variant="caption" color={"textPrimary"}>
                             ROAMING
                         </Typography>
                         <Typography variant="body1">

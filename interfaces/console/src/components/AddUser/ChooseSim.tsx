@@ -3,17 +3,19 @@ import { makeStyles } from "@mui/styles";
 import { SIM_TYPES } from "../../constants";
 import { HorizontalContainerJustify } from "../../styles";
 import ArrowIcon from "@mui/icons-material/ArrowForwardIos";
-import { Stack, Typography, Box, IconButton, Grid } from "@mui/material";
+import { Stack, Typography, Box, IconButton, Grid, Theme } from "@mui/material";
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles<Theme>(theme => ({
     cardStyle: {
         cursor: "pointer",
         borderRadius: "4px",
-        background: colors.white,
         border: "1px solid rgba(0, 0, 0, 0.23)",
         "& :hover": {
             borderRadius: "4px",
-            background: colors.solitude,
+            background:
+                theme.palette.mode === "light"
+                    ? colors.solitude
+                    : colors.black38,
         },
     },
 }));
