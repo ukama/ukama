@@ -65,7 +65,7 @@ func NewConfig() *Config {
 					"module": "*", "looking_to": "delete", "path": "/module",
 				},
 				{
-					"module": "*", "looking_to": "allocate", "node": "*", "path": "/module/",
+					"module": "*", "looking_to": "allocate", "node": "*", "path": "/module/assign",
 				},
 				{
 					"module": "*", "looking_for": "mfg_status_info", "status": "*", "path": "/module/status",
@@ -91,7 +91,7 @@ func NewConfig() *Config {
 			},
 			F: config.Forward{
 				Ip:   "localhost",
-				Port: 8085,
+				Port: 8080,
 				Path: "/",
 			},
 		},
