@@ -121,6 +121,20 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 			Source:     u.simManagerName,
 			UserID:     usr.ID,
 			IsPhysical: isPhysicalSim,
+			Services: []*db.Service{
+				&db.Service{
+					Sms:   false,
+					Data:  true,
+					Voice: false,
+					Type:  db.ServiceTypeUkama,
+				},
+				&db.Service{
+					Sms:   false,
+					Data:  true,
+					Voice: false,
+					Type:  db.ServiceTypeCarrier,
+				},
+			},
 		})
 		if err != nil {
 			return errors.Wrap(err, "failed to add simcard")
@@ -216,6 +230,31 @@ func (u *UserService) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRespo
 	}, nil
 }
 
+func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
+	logrus.Infof("Get sim card status for %s", simCard.Iccid)
+	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
+		Iccid: simCard.Iccid,
+	})
+
+	if err != nil {
+		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
+		return
+	}
+
+	switch r.Status {
+	case pbclient.GetSimStatusResponse_INACTIVE:
+		simCard.Carrier.Status = pb.SimStatus_INACTIVE
+	case pbclient.GetSimStatusResponse_ACTIVE:
+		simCard.Carrier.Status = pb.SimStatus_ACTIVE
+	case pbclient.GetSimStatusResponse_TERMINATED:
+		simCard.Carrier.Status = pb.SimStatus_TERMINATED
+
+	default:
+		logrus.Errorf("Unknown sim status %s", r.Status.String())
+		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
+	}
+}
+
 func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.UpdateResponse, error) {
 	uuid, err := uuid2.Parse(req.UserId)
 	if err != nil {
@@ -239,39 +278,79 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 }
 
 func (u *UserService) SetSimStatus(ctx context.Context, req *pb.SetSimStatusRequest) (*pb.SetSimStatusResponse, error) {
-	if req.Carrier.Sms != nil && req.Carrier.Sms.Value {
+	if req.Carrier != nil && req.Carrier.Sms != nil && req.Carrier.Sms.Value {
 		return nil, status.Errorf(codes.InvalidArgument, "enabling SMS service is not supported")
 	}
 
-	if req.Carrier.Voice != nil && req.Carrier.Voice.Value {
+	if req.Carrier != nil && req.Carrier.Voice != nil && req.Carrier.Voice.Value {
 		return nil, status.Errorf(codes.InvalidArgument, "enabling VOICE service is not supported")
 	}
 
-	if req.Carrier != nil {
-		_, err := u.simManager.SetServiceStatus(ctx, &pbclient.SetServiceStatusRequest{
+	sim, err := u.simRepo.Get(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	ukamaS := sim.GetServices(db.ServiceTypeUkama)
+	if ukamaS == nil {
+		ukamaS = &db.Service{
+			Type:  db.ServiceTypeUkama,
 			Iccid: req.Iccid,
-			Services: &pbclient.Services{
-				Sms:   req.Carrier.Sms,
-				Data:  req.Carrier.Data,
-				Voice: req.Carrier.Voice,
-			},
-		})
-		if err != nil {
-			return nil, err
 		}
 	}
+	u.updateService(req.Ukama, ukamaS)
 
-	if req.Ukama != nil {
-		return nil, status.Errorf(codes.Unimplemented, "Configuring status in ukama network is not yet implemented")
+	carrierS := sim.GetServices(db.ServiceTypeCarrier)
+	if carrierS == nil {
+		carrierS = &db.Service{
+			Type:  db.ServiceTypeCarrier,
+			Iccid: req.Iccid,
+		}
 	}
-	sim := &pb.Sim{
-		Iccid: req.Iccid,
+	u.updateService(req.Carrier, carrierS)
+
+	err = u.simRepo.UpdateServices(ukamaS, carrierS, func() error {
+		if req.Carrier != nil {
+			r := &pbclient.SetServiceStatusRequest{
+				Iccid: req.Iccid,
+				Services: &pbclient.Services{
+					Sms:   wrapperspb.Bool(ukamaS.Sms && carrierS.Sms),
+					Data:  wrapperspb.Bool(ukamaS.Data && carrierS.Data),
+					Voice: wrapperspb.Bool(ukamaS.Voice && carrierS.Voice),
+				},
+			}
+			logrus.Infof("Setting carrier sim status to: %v", r)
+			_, err := u.simManager.SetServiceStatus(ctx, r)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "sim")
 	}
-	u.pullSimCardStatuses(ctx, sim)
 
 	return &pb.SetSimStatusResponse{
-		Sim: sim,
+		Sim: dbSimcardsToPbSimcards(*sim),
 	}, nil
+}
+
+func (u *UserService) updateService(req *pb.SetSimStatusRequest_SetServices, ukamaS *db.Service) {
+	if req == nil {
+		return
+	}
+	if req.GetSms() != nil {
+		ukamaS.Sms = req.GetSms().GetValue()
+	}
+
+	if req.GetData() != nil {
+		ukamaS.Data = req.GetData().GetValue()
+	}
+
+	if req.GetVoice() != nil {
+		ukamaS.Voice = req.GetVoice().GetValue()
+	}
 }
 
 func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
@@ -375,45 +454,6 @@ func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (
 	}, err
 }
 
-func (u *UserService) pullSimCardStatuses(ctx context.Context, simCard *pb.Sim) {
-	logrus.Infof("Get sim card status for %s", simCard.Iccid)
-	r, err := u.simManager.GetSimStatus(ctx, &pbclient.GetSimStatusRequest{
-		Iccid: simCard.Iccid,
-	})
-
-	if err != nil {
-		logrus.Errorf("Error getting sim status. Error: %s", err.Error())
-		return
-	}
-
-	simCard.Carrier = &pb.SimStatus{}
-
-	switch r.Status {
-	case pbclient.GetSimStatusResponse_INACTIVE:
-		simCard.Carrier.Status = pb.SimStatus_INACTIVE
-	case pbclient.GetSimStatusResponse_ACTIVE:
-		simCard.Carrier.Status = pb.SimStatus_ACTIVE
-	default:
-		logrus.Errorf("Unknown sim status %s", r.Status.String())
-		simCard.Carrier.Status = pb.SimStatus_UNKNOWN
-	}
-	simCard.Carrier.Services = &pb.Services{
-		Sms:   getBoolVal(r.Services.Sms),
-		Data:  getBoolVal(r.Services.Data),
-		Voice: getBoolVal(r.Services.Voice),
-	}
-
-	simCard.Ukama = &pb.SimStatus{
-		// Hardcode for now. Will be updated when Ukama sim support is ready
-		Status: pb.SimStatus_INACTIVE,
-		Services: &pb.Services{
-			Sms:   false,
-			Data:  false,
-			Voice: false,
-		},
-	}
-}
-
 // add usage to simcard. In case of error, simcard is not updated silently
 func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	logrus.Infof("Get sim card usage for %s", simCard.Iccid)
@@ -432,20 +472,31 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	}
 }
 
-func getBoolVal(val *wrapperspb.BoolValue) bool {
-	if val == nil {
-		return false
-	}
-	return val.Value
-}
-
 func dbSimcardsToPbSimcards(simcard db.Simcard) (res *pb.Sim) {
 	res = &pb.Sim{
 		Iccid:      simcard.Iccid,
 		IsPhysical: simcard.IsPhysical,
+		Carrier: &pb.SimStatus{
+			Services: pbServices(simcard.GetServices(db.ServiceTypeCarrier)),
+		},
+		Ukama: &pb.SimStatus{
+			Services: pbServices(simcard.GetServices(db.ServiceTypeUkama)),
+		},
 	}
 
 	return res
+}
+
+func pbServices(services *db.Service) *pb.Services {
+	if services == nil {
+		return nil
+	}
+
+	return &pb.Services{
+		Sms:   services.Sms,
+		Data:  services.Data,
+		Voice: services.Voice,
+	}
 }
 
 func dbusersToPbUsers(users []db.User) []*pb.User {

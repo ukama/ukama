@@ -24,9 +24,35 @@ type User struct {
 	Deactivated bool
 }
 
+// storage for service statuses
+type Service struct {
+	gorm.Model
+	Iccid string `gorm:"uniqueIndex:iccid_type_unique,where:deleted_at is null"`
+	Voice bool
+	Sms   bool
+	Data  bool
+	Type  uint8 `gorm:"uniqueIndex:iccid_type_unique,where:deleted_at is null"` // 0 - ukama, 1 - carrier
+}
+
+const (
+	ServiceTypeUkama   = 0
+	ServiceTypeCarrier = 1
+)
+
 type Simcard struct {
-	UserID     uint   `gorm:"not null;uniqueIndex;default:0"`
-	IsPhysical bool   `gorm:"not null;default:false"`
-	Iccid      string `gorm:"primarykey"`
+	UserID     uint       `gorm:"not null;uniqueIndex;default:0"`
+	IsPhysical bool       `gorm:"not null;default:false"`
+	Iccid      string     `gorm:"primarykey"`
+	Services   []*Service `gorm:"foreignKey:Iccid;references:Iccid"`
 	Source     string
+}
+
+func (s Simcard) GetServices(srvType uint8) *Service {
+	for _, sr := range s.Services {
+		if sr.Type == srvType {
+			return sr
+		}
+	}
+
+	return nil
 }

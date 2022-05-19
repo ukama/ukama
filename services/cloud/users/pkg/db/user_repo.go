@@ -59,7 +59,8 @@ func (r *userRepo) Add(user *User, orgName string, nestedFunc func(*User, *gorm.
 
 func (u *userRepo) Get(uuid uuid.UUID) (*User, error) {
 	user := User{}
-	result := u.Db.GetGormDb().Preload(clause.Associations).Where(&User{Uuid: uuid}).First(&user)
+	// better way would be to use joing however it's hard to make it work in gorm
+	result := u.Db.GetGormDb().Preload("Simcard.Services").Preload(clause.Associations).Where(&User{Uuid: uuid}).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
 	}
