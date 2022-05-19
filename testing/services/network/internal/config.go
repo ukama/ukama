@@ -52,10 +52,10 @@ func NewConfig() *Config {
 					"node": "*", "looking_for": "vnode_info", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_on", "path": "/node",
+					"node": "*", "looking_to": "vnode_power_on", "org": "*", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_off", "path": "/node",
+					"node": "*", "looking_to": "vnode_power_off", "org": "*", "path": "/node",
 				},
 				{
 					"looking_for": "vnode_list", "path": "/list",
