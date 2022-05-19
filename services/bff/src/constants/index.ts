@@ -67,6 +67,7 @@ registerEnumType(API_METHOD_TYPE, {
 });
 
 export enum GET_STATUS_TYPE {
+    UNKNOWN = "UNKNOWN",
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
 }
