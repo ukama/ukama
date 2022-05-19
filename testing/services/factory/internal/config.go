@@ -21,6 +21,7 @@ type Config struct {
 	Docker            Docker
 	VmImage           string
 	BuilderImage      string
+	BuilderCmd        []string
 	RabbitUri         string
 	RepoServerUrl     string
 	Namespace         string

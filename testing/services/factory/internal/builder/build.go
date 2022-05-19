@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/ukama/ukama/testing/services/factory/internal"
 	"google.golang.org/protobuf/proto"
@@ -31,7 +30,7 @@ type BuildOps interface {
 	ListPods()
 	WatcherForBuildJobs() error
 	LaunchAndMonitorBuild(jobName string, node internal.Node) error
-	LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string, jNodeMetaData []byte) error
+	LaunchBuildJob(jobName *string, image *string, cmd []string, nodetype *string, jNodeMetaData []byte) error
 }
 
 type Build struct {
@@ -114,7 +113,7 @@ func (b *Build) BuildInit() {
 }
 
 /* Launch Build Job in K8 cluster */
-func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, nodetype *string, jNodeMetaData []byte) error {
+func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nodetype *string, jNodeMetaData []byte) error {
 
 	jobs := b.clientset.BatchV1().Jobs(b.currentNamespace)
 
@@ -144,7 +143,7 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd *string, node
 						{
 							Name:    *jobName,
 							Image:   *image,
-							Command: strings.Split(*cmd, " "),
+							Command: cmd,
 							SecurityContext: &v1.SecurityContext{
 								Privileged: &priviligemode,
 							},
@@ -263,7 +262,7 @@ func (b *Build) LaunchAndMonitorBuild(jobName string, node internal.Node) error 
 
 	containerImage := internal.ServiceConfig.BuilderImage
 
-	entryCommand := "startup.sh"
+	entryCommand := internal.ServiceConfig.BuilderCmd
 
 	logrus.Debugf("Build:: Starting build process for node %s with details: %+v", jobName, node)
 
@@ -280,7 +279,7 @@ func (b *Build) LaunchAndMonitorBuild(jobName string, node internal.Node) error 
 	}
 	logrus.Debugf("Build:: Node meta data: %+v", string(jNodeMetaData))
 
-	err = b.LaunchBuildJob(&jobName, &containerImage, &entryCommand, &node.Type, jNodeMetaData)
+	err = b.LaunchBuildJob(&jobName, &containerImage, entryCommand, &node.Type, jNodeMetaData)
 	if err != nil {
 		logrus.Errorf("Build:: BuildJob fauiled for %s. Error: %s", jobName, err.Error())
 		return err
