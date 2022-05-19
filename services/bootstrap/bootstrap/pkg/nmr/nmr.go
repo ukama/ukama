@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	Status                        string = "statusinfo"
+	Status                        string = "status_info"
 	StatusProductionTestCompleted string = "StatusProductionTestCompleted"
 	StatusNodeAllocated           string = "StatusNodeAllocated"
 	StatusNodeIntransit           string = "StatusNodeIntransit"
