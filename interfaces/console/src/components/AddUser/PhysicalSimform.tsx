@@ -1,7 +1,5 @@
-import { colors } from "../../theme";
 import { globalUseStyles } from "../../styles";
-import ErrorIcon from "@mui/icons-material/Error";
-import { Typography, Grid, TextField, Alert } from "@mui/material";
+import { Typography, Grid, TextField } from "@mui/material";
 
 interface IPhysicalSimform {
     formData?: any;
@@ -22,20 +20,7 @@ const PhysicalSimform = ({
             <Grid item xs={12}>
                 <Typography variant="body1">{description}</Typography>
             </Grid>
-            {formError && (
-                <Grid item xs={12}>
-                    <Alert
-                        sx={{
-                            mb: 1,
-                            color: colors.black,
-                        }}
-                        severity={"error"}
-                        icon={<ErrorIcon sx={{ color: colors.red }} />}
-                    >
-                        {formError}
-                    </Alert>
-                </Grid>
-            )}
+
             <Grid container item xs={12} spacing={1}>
                 <Grid item xs={6}>
                     <TextField
@@ -52,6 +37,7 @@ const PhysicalSimform = ({
                         onChange={e =>
                             setFormData({ ...formData, iccid: e.target.value })
                         }
+                        error={Boolean(formError)}
                     />
                 </Grid>
                 <Grid item xs={6}>
@@ -69,6 +55,8 @@ const PhysicalSimform = ({
                         onChange={e =>
                             setFormData({ ...formData, code: e.target.value })
                         }
+                        helperText={formError && formError}
+                        error={Boolean(formError)}
                     />
                 </Grid>
             </Grid>
