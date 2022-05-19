@@ -44,7 +44,7 @@ func NewConfig() *Config {
 					"node": "*", "looking_for": "status_info", "path": "/node/status",
 				},
 				{
-					"node": "*", "looking_to": "status_update", "status": "StatusNodeIntransit", "path": "/node/status",
+					"node": "*", "looking_to": "status_update", "status": "*", "path": "/node/status",
 				},
 				{
 					"node": "*", "looking_for": "mfg_status_info", "path": "/node/mfg_status",
