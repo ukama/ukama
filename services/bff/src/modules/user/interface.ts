@@ -14,6 +14,8 @@ import {
     UserInputDto,
     GetESimQRCodeInput,
     ESimQRCodeRes,
+    UpdateUserServiceInput,
+    OrgUserSimDto,
 } from "./types";
 
 export interface IUserService {
@@ -41,6 +43,10 @@ export interface IUserService {
         data: GetESimQRCodeInput,
         cookie: ParsedCookie
     ): Promise<ESimQRCodeRes>;
+    updateUserRoaming(
+        data: UpdateUserServiceInput,
+        cookie: ParsedCookie
+    ): Promise<OrgUserSimDto>;
 }
 
 export interface IUserMapper {
