@@ -21,8 +21,7 @@ type Config struct {
 	GitPass           string
 	Docker            Docker
 	NodeImage         string
-	BuilderImage      string
-	BuilderCmd        []string
+	NodeCmd           []string
 	Kubeconfig        string
 	Queue             config.Queue
 	RepoServerUrl     string

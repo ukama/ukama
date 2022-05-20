@@ -247,9 +247,9 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 /* Go routine to start build process */
 func (c *Controller) PowerOnNode(nodeId string, org string) error {
 
-	containerImage := internal.ServiceConfig.BuilderImage
+	containerImage := internal.ServiceConfig.NodeImage
 
-	entryCommand := internal.ServiceConfig.BuilderCmd
+	entryCommand := internal.ServiceConfig.NodeCmd
 
 	nodeType := ukama.GetNodeType(nodeId)
 	if nodeType == nil {
