@@ -33,7 +33,7 @@ func NewFactory(svcR *sr.ServiceRouter) *Factory {
 func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	logrus.Tracef("Validation request for node %s", nodeid)
 	nStatus := &NodeStatus{}
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &rest.ErrorResponse{}
 	resp, err := f.S.C.R().
 		SetResult(nStatus).
 		SetError(errStatus).
@@ -49,8 +49,8 @@ func (f *Factory) NmrRequestNodeValidation(nodeid string) (bool, error) {
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to validate nodeid %s. HTTP resp code %d and Error message is %s", nodeid, resp.StatusCode(), errStatus.Message)
-		return false, fmt.Errorf("validation failure: %s", errStatus.Message)
+		logrus.Tracef("Failed to validate nodeid %s. HTTP resp code %d and Error message is %s", nodeid, resp.StatusCode(), errStatus.Error)
+		return false, fmt.Errorf("validation failure: %s", errStatus.Error)
 	}
 
 	logrus.Debugf("Node status is %+v.", nStatus)
