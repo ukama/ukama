@@ -1,10 +1,9 @@
 import {
     Stack,
-    Button,
     Dialog,
     IconButton,
     DialogTitle,
-    DialogActions,
+    CircularProgress,
     DialogContent,
 } from "@mui/material";
 import ESimQR from "./ESimQR";
@@ -14,14 +13,17 @@ import Userform from "./Userform";
 import ChooseSim from "./ChooseSim";
 import PhysicalSimform from "./PhysicalSimform";
 import CloseIcon from "@mui/icons-material/Close";
-import { isEmailValid } from "../../utils";
+import { CenterContainer } from "../../styles";
 
 interface IAddUser {
     isOpen: boolean;
     handleClose: Function;
-    handleSubmitAction: Function;
+    loading?: boolean;
     qrCodeId: any;
+    handlePhysicalSimInstallation: Function;
     addedUserName: any;
+    iSeSimAdded: boolean;
+    handleEsimInstallation: Function;
 }
 
 const getDescription = (id: number, addUserName?: any) => {
@@ -41,61 +43,34 @@ const getDescription = (id: number, addUserName?: any) => {
     }
 };
 
-const getTitle = (id: number, type: string) =>
-    id === 0 || id === 1 || id === 2
-        ? `Add User${type && ` - ${type}`}`
-        : "Add User Succesful";
+const getTitle = (iSeSimAdded: boolean, type: any) =>
+    !iSeSimAdded ? `Add User${type && ` - ${type}`}` : "Add User Succesful";
 
 const AddUser = ({
     isOpen,
     handleClose,
+    loading = false,
     qrCodeId,
-    handleSubmitAction,
+    handlePhysicalSimInstallation,
     addedUserName,
+    handleEsimInstallation,
+    iSeSimAdded,
 }: IAddUser) => {
     const [flow, setFlow] = useState(0);
-    const [formError, setError] = useState("");
     const [simType, setSimType] = useState("");
-    const [form, setForm] = useState({
-        name: "",
-        code: "",
-        email: "",
-        iccid: "",
-        roaming: false,
-    });
 
     const handleAction = ({ type = simType }: { type?: string }) => {
-        setError("");
         switch (flow) {
             case 0:
                 setSimType(type);
                 setFlow(flow + 1);
                 break;
             case 1:
-                if (!form.email || !form.name) {
-                    setError("Please file require fileds.");
-                    return;
-                }
-
-                if (!isEmailValid(form.email)) {
-                    setError("Please enter valid email!");
-                    return;
-                }
-
-                if (type === "eSIM") {
-                    setFlow(3);
-                    handleSubmitAction(form);
-                } else setFlow(flow + 1);
+                setFlow(2);
                 break;
             case 2:
-                if (!form.code || !form.iccid) {
-                    setError("Please file require fileds.");
-                    return;
-                }
-
                 if (type !== "eSIM") {
                     setFlow(4);
-                    handleSubmitAction(form);
                 }
                 break;
         }
@@ -114,7 +89,9 @@ const AddUser = ({
                 alignItems="center"
                 justifyContent="space-between"
             >
-                <DialogTitle>{getTitle(flow, simType)}</DialogTitle>
+                <DialogTitle>
+                    {!loading ? getTitle(iSeSimAdded, simType) : null}
+                </DialogTitle>
                 <IconButton
                     onClick={() => handleClose()}
                     sx={{ position: "relative", right: 8 }}
@@ -129,23 +106,37 @@ const AddUser = ({
                         handleSimType={handleAction}
                     />
                 )}
-                {flow === 1 && (
-                    <Userform
-                        formData={form}
-                        formError={formError}
-                        setFormData={setForm}
-                        description={getDescription(1)}
-                    />
+                {simType == "eSIM" && (
+                    <>
+                        {loading ? (
+                            <CenterContainer>
+                                <CircularProgress />
+                            </CenterContainer>
+                        ) : (
+                            <Userform
+                                handleEsimInstallation={handleEsimInstallation}
+                                description={getDescription(1)}
+                            />
+                        )}
+                    </>
                 )}
-                {flow === 2 && (
-                    <PhysicalSimform
-                        formData={form}
-                        formError={formError}
-                        setFormData={setForm}
-                        description={getDescription(3)}
-                    />
+                {simType == "Physical SIM" && (
+                    <>
+                        {loading ? (
+                            <CenterContainer>
+                                <CircularProgress />
+                            </CenterContainer>
+                        ) : (
+                            <PhysicalSimform
+                                handlePhysicalSimInstallation={
+                                    handlePhysicalSimInstallation
+                                }
+                                description={getDescription(3)}
+                            />
+                        )}
+                    </>
                 )}
-                {flow === 3 && (
+                {iSeSimAdded && (
                     <ESimQR
                         description={getDescription(2, addedUserName)}
                         qrCodeId={qrCodeId}
@@ -155,24 +146,6 @@ const AddUser = ({
                     <Success description={getDescription(4, addedUserName)} />
                 )}
             </DialogContent>
-            {(flow === 1 || flow === 2) && (
-                <DialogActions>
-                    <Button
-                        onClick={() => handleClose()}
-                        sx={{ mr: 2, justifyItems: "center" }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="contained"
-                        onClick={() => handleAction({})}
-                    >
-                        {simType !== "eSIM" && flow === 1
-                            ? "Continue"
-                            : "ADD USER"}
-                    </Button>
-                </DialogActions>
-            )}
         </Dialog>
     );
 };
