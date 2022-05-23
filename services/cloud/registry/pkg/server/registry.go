@@ -3,20 +3,15 @@ package server
 import (
 	"context"
 	"encoding/base64"
-	"errors"
-	"time"
 
 	"github.com/ukama/ukama/services/cloud/registry/pkg"
 	"github.com/ukama/ukama/services/common/msgbus"
 
-	"github.com/jackc/pgconn"
 	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
 	"github.com/ukama/ukama/services/common/grpc"
 
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
-
-	"github.com/goombaio/namegenerator"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -33,14 +28,13 @@ type RegistryServer struct {
 	netRepo         db2.NetRepo
 	bootstrapClient bootstrap.Client
 	deviceGatewayIp string
-	nameGenerator   namegenerator.Generator
-	queuePub        msgbus.QPub
-	baseRoutingKey  msgbus.RoutingKeyBuilder
+
+	queuePub       msgbus.QPub
+	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client,
 	deviceGatewayIp string, publisher msgbus.QPub) *RegistryServer {
-	seed := time.Now().UTC().UnixNano()
 
 	return &RegistryServer{
 		orgRepo:         orgRepo,
@@ -48,9 +42,9 @@ func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.N
 		bootstrapClient: bootstrapClient,
 		deviceGatewayIp: deviceGatewayIp,
 		netRepo:         netRepo,
-		nameGenerator:   namegenerator.NewNameGenerator(seed),
-		queuePub:        publisher,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+
+		queuePub:       publisher,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
@@ -212,18 +206,6 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 	}, nil
 }
 
-func (r *RegistryServer) processNodeDuplErrors(err error, nodeName string, nodeId string) error {
-	var pge *pgconn.PgError
-	if errors.As(err, &pge) {
-		if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
-			return status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", nodeName)
-		} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
-		}
-	}
-	return nil
-}
-
 func toDbNodeType(nodeType string) db2.NodeType {
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_AMPNODE:
@@ -292,58 +274,8 @@ func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*
 	return resp, nil
 }
 
-func (r *RegistryServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeStateResponse, error) {
-	logrus.Infof("Updating node state  %v", req.GetNodeId())
-
-	dbState := pbNodeStateToDb(req.State)
-
-	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-
-	err = r.nodeRepo.Update(nodeId, &dbState, nil)
-	if err != nil {
-		logrus.Error("error updating the node state, ", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.UpdateNodeStateResponse{
-		NodeId: req.GetNodeId(),
-		State:  req.State,
-	}
-	r.pubEvent(resp, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
-
-	return resp, nil
-}
-
 func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
-	logrus.Infof("Updating the node  %v", req.GetNodeId())
 
-	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-
-	err = r.nodeRepo.Update(nodeId, nil, &req.Name)
-	if err != nil {
-		duplErr := r.processNodeDuplErrors(err, req.Name, req.NodeId)
-		if duplErr != nil {
-			return nil, duplErr
-		}
-
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	resp := &pb.UpdateNodeResponse{
-		Node: &pb.Node{
-			NodeId: req.NodeId,
-			Name:   req.Name,
-		},
-	}
-	r.pubEvent(resp, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
-
-	return resp, nil
 }
 
 func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
@@ -372,46 +304,6 @@ func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) 
 	return resp, nil
 }
 
-func (r *RegistryServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
-	nodeId, err := ukama.ValidateNodeId(req.GetParentNodeId())
-	if err != nil {
-		return nil, invalidNodeIdError(req.GetParentNodeId(), err)
-	}
-
-	nds := make([]ukama.NodeID, 0)
-	for _, n := range req.GetAttachedNodeIds() {
-		nd, err := ukama.ValidateNodeId(n)
-		if err != nil {
-			return nil, invalidNodeIdError(n, err)
-		}
-		nds = append(nds, nd)
-	}
-	err = r.nodeRepo.AttachNodes(nodeId, nds)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	r.pubEvent(req, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
-
-	return &pb.AttachNodesResponse{}, nil
-}
-
-func (r *RegistryServer) DetachNodes(ctx context.Context, req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
-	nodeId, err := ukama.ValidateNodeId(req.DetachedNodeId)
-	if err != nil {
-		return nil, invalidNodeIdError(req.DetachedNodeId, err)
-	}
-
-	err = r.nodeRepo.DetachNode(nodeId)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
-	}
-
-	r.pubEvent(req, r.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
-
-	return &pb.DetachNodeResponse{}, nil
-}
-
 func (r *RegistryServer) pubEvent(payload any, key string) {
 	go func() {
 		err := r.queuePub.Publish(payload, key)
@@ -419,33 +311,6 @@ func (r *RegistryServer) pubEvent(payload any, key string) {
 			logrus.Errorf("Failed to publish event. Error %s", err.Error())
 		}
 	}()
-}
-
-func pbNodeStateToDb(state pb.NodeState) db2.NodeState {
-	var dbState db2.NodeState
-	switch state {
-	case pb.NodeState_ONBOARDED:
-		dbState = db2.Onboarded
-	case pb.NodeState_PENDING:
-		dbState = db2.Pending
-	default:
-		dbState = db2.Undefined
-	}
-	return dbState
-}
-
-func dbNodeStateToPb(state db2.NodeState) pb.NodeState {
-	var pbState pb.NodeState
-	switch state {
-	case db2.Onboarded:
-		pbState = pb.NodeState_ONBOARDED
-	case db2.Pending:
-		pbState = pb.NodeState_PENDING
-	default:
-		pbState = pb.NodeState_UNDEFINED
-	}
-
-	return pbState
 }
 
 func dbNodeToPbNode(dbn *db2.Node) *pb.Node {
@@ -464,21 +329,6 @@ func dbNodeToPbNode(dbn *db2.Node) *pb.Node {
 		n.Attached = append(n.Attached, dbNodeToPbNode(nd))
 	}
 	return n
-}
-
-func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
-	var pbNodeType pb.NodeType
-	switch nodeType {
-	case db2.NodeTypeAmplifier:
-		pbNodeType = pb.NodeType_AMPLIFIER
-	case db2.NodeTypeTower:
-		pbNodeType = pb.NodeType_TOWER
-	case db2.NodeTypeHome:
-		pbNodeType = pb.NodeType_HOME
-	default:
-		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
-	}
-	return pbNodeType
 }
 
 func dbNodeTypeToString(nodeType db2.NodeType) string {
