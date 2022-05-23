@@ -3,7 +3,6 @@ package sql
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -12,7 +11,6 @@ import (
 	_ "github.com/lib/pq"
 	wrp "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -23,7 +21,7 @@ const PGERROR_CODE_UNIQUE_VIOLATION = "23505"
 type db struct {
 	gorm      *gorm.DB
 	DebugMode bool
-	dbConfig  config.Database
+	dbConfig  DbConfig
 }
 
 // would be better to seaprate migration logic from actuall ORM
@@ -36,7 +34,13 @@ type Db interface {
 	ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) (err error)
 }
 
-func NewDb(dbConfig config.Database, debugMode bool) Db {
+type DbConfig interface {
+	GetConnString() string
+	ChangeDbName(name string) DbConfig
+	GetDbName() string
+}
+
+func NewDb(dbConfig DbConfig, debugMode bool) Db {
 	return &db{
 		dbConfig:  dbConfig,
 		DebugMode: debugMode,
@@ -76,7 +80,7 @@ func (d *db) initDbConn() error {
 }
 
 func (d *db) Connect() error {
-	dsn := d.formatDbInfo(d.dbConfig.DbName)
+	dsn := d.dbConfig.GetConnString()
 	loggerConf := logger.Config{
 		SlowThreshold:             time.Second, // Slow SQL threshold
 		LogLevel:                  logger.Warn, // Log level
@@ -99,17 +103,6 @@ func (d *db) Connect() error {
 	})
 	d.gorm = db
 	return err
-}
-
-func (d *db) formatDbInfo(dbName string) string {
-	sslMode := "disable"
-	if d.dbConfig.SslEnabled {
-		sslMode = "enable"
-	}
-
-	dsn := fmt.Sprintf("host=%s user=%s password=%s database=%s port=%d sslmode=%s",
-		d.dbConfig.Host, d.dbConfig.Username, d.dbConfig.Password, dbName, d.dbConfig.Port, sslMode)
-	return dsn
 }
 
 func (d *db) migrateDb(dst ...interface{}) error {
@@ -148,13 +141,14 @@ func (d *db) Init(model ...interface{}) error {
 }
 
 func (d *db) createDb() error {
-	dbInfo := d.formatDbInfo("postgres")
-	logrus.Info("Creating database ", d.dbConfig.DbName)
+
+	dbInfo := d.dbConfig.ChangeDbName("postgres").GetConnString()
+	logrus.Info("Creating database ", d.dbConfig.GetDbName())
 	db, err := sql.Open("postgres", dbInfo)
 	if err != nil {
 		return err
 	}
-	_, err = db.Exec("create database " + d.dbConfig.DbName)
+	_, err = db.Exec("create database " + d.dbConfig.GetDbName())
 	if err != nil {
 		return err
 	}

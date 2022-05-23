@@ -10,13 +10,8 @@ service RegistryService {
     rpc GetOrg(GetOrgRequest) returns (Organization);
     rpc AddNetwork(AddNetworkRequest) returns (NetworkResponse);
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
-    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
-    rpc UpdateNodeState(UpdateNodeStateRequest) returns (UpdateNodeStateResponse);
-    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);    
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
-    rpc AttachNodes(AttachNodesRequest) returns (AttachNodesResponse);
-    rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
 }
 
 message AddOrgRequest {
@@ -48,35 +43,6 @@ message DeleteNodeRequest{
 
 message DeleteNodeResponse{
     string nodeId = 1;
-}
-
-message GetNodeRequest{
-    string nodeId = 1;
-}
-
-message GetNodeResponse{
-    Node node = 1;
-    Organization org = 2;
-    Network network = 3;
-}
-
-message  UpdateNodeStateRequest{
-    string nodeId = 1;
-    NodeState state = 2;
-}
-
-message UpdateNodeStateResponse{
-    string nodeId = 1;
-    NodeState state = 2;
-}
-
-message  UpdateNodeRequest{
-    string nodeId = 1;
-    string name = 2;
-}
-
-message UpdateNodeResponse {
-    Node node = 1;
 }
 
 message GetNodesRequest{    
@@ -122,23 +88,6 @@ message Organization {
     string owner = 3;
 }
 
-enum NodeState {
-    UNDEFINED = 0;
-    PENDING = 1;
-    ONBOARDED = 2;
-}
-
-enum NodeType{
-    NODE_TYPE_UNDEFINED = 0;
-    HOME = 1;
-    TOWER = 2;
-    AMPLIFIER = 3;
-}
-
 message Node {
     string nodeId = 1;
-    NodeState state = 4;
-    NodeType type = 5;
-    string name = 6;
-    repeated Node attached = 7;
 }
