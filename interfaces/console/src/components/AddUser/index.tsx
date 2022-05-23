@@ -44,7 +44,7 @@ const getDescription = (id: number, addUserName?: any) => {
 };
 
 const getTitle = (iSeSimAdded: boolean, type: any) =>
-    !iSeSimAdded ? `Add User${type && ` - ${type}`}` : "Add User Succesful";
+    iSeSimAdded ? "Add User Succesful" : `Add User${type && ` - ${type}`}`;
 
 const AddUser = ({
     isOpen,
@@ -67,11 +67,6 @@ const AddUser = ({
                 break;
             case 1:
                 setFlow(2);
-                break;
-            case 2:
-                if (type !== "eSIM") {
-                    setFlow(4);
-                }
                 break;
         }
     };
@@ -106,7 +101,7 @@ const AddUser = ({
                         handleSimType={handleAction}
                     />
                 )}
-                {simType == "eSIM" && (
+                {!iSeSimAdded && simType == "eSIM" && (
                     <>
                         {loading ? (
                             <CenterContainer>
@@ -120,7 +115,7 @@ const AddUser = ({
                         )}
                     </>
                 )}
-                {simType == "Physical SIM" && (
+                {!iSeSimAdded && simType == "Physical SIM" && (
                     <>
                         {loading ? (
                             <CenterContainer>

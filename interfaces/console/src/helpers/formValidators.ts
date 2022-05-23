@@ -3,7 +3,12 @@ const nameValidationRule = Yup.string().required("Name is required.");
 const emailValidatonRule = Yup.string()
     .required("Email is required.")
     .email("Please enter a valid email.");
-const iccidValidator = Yup.string().required("Iccid is required.");
+// const iccidValidator = Yup.string().required("Iccid is required.");
+const iccidValidator = Yup.string()
+    .required()
+    .matches(/^[0-9]+$/, "Must be only digits")
+    .min(18, "Iccid must be 18 digits")
+    .max(18, "Iccid must be 18 digits");
 const securitycodeValidator = Yup.string().required(
     "Security code is required."
 );
