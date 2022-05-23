@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	cors "github.com/gin-contrib/cors"
+
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -22,12 +22,8 @@ type Config struct {
 func NewConfig() *Config {
 
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8086,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-			},
-		},
+
+		Server: config.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
