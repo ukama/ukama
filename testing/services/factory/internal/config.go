@@ -21,6 +21,7 @@ type Config struct {
 	Docker            Docker
 	VmImage           string
 	BuilderImage      string
+	BuilderCmd        []string
 	RabbitUri         string
 	RepoServerUrl     string
 	Namespace         string
@@ -46,13 +47,13 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "*", "looking_for": "info", "path": "/node/",
+					"node": "*", "looking_for": "info", "path": "/node",
 				},
 				{
-					"looking_to": "create_node", "type": "*", "count": "*", "path": "/node/",
+					"looking_to": "create_node", "type": "*", "count": "*", "path": "/node",
 				},
 				{
-					"node": "*", "looking_to": "delete", "path": "/node/",
+					"node": "*", "looking_to": "delete", "path": "/node",
 				},
 			},
 			F: config.Forward{

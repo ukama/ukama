@@ -9,12 +9,15 @@ import {
     TableContainer,
 } from "@mui/material";
 import { EmptyView } from "..";
+import { GetUsersDto } from "../../generated";
+import { formatBytesToMB } from "../../utils";
+import LoadingWrapper from "../LoadingWrapper";
 import OptionsPopover from "../OptionsPopover";
 import UserIcon from "@mui/icons-material/Person";
 import { ColumnsWithOptions, MenuItemType } from "../../types";
 
 interface DataTableWithOptionsInterface {
-    dataset: any;
+    dataset: GetUsersDto[];
     onMenuItemClick: Function;
     menuOptions: MenuItemType[];
     columns: ColumnsWithOptions[];
@@ -22,7 +25,7 @@ interface DataTableWithOptionsInterface {
 
 type CellValueByTypeProps = {
     type: string;
-    row: any;
+    row: GetUsersDto;
     menuOptions: MenuItemType[];
     onMenuItemClick: Function;
 };
@@ -48,8 +51,20 @@ const CellValueByType = ({
                     handleItemClick={onMenuItemClick}
                 />
             );
+        case "dataUsage":
+            return (
+                <LoadingWrapper
+                    width="60px"
+                    height="23px"
+                    radius="small"
+                    variant="text"
+                    isLoading={!row.dataPlan}
+                >
+                    {formatBytesToMB(parseInt(row?.dataUsage || "0"))} MB
+                </LoadingWrapper>
+            );
         default:
-            return <>{`${row[type]} MB`}</>;
+            return <></>;
     }
 };
 
@@ -91,7 +106,7 @@ const DataTableWithOptions = ({
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {dataset?.map((row: any) => (
+                            {dataset?.map((row: GetUsersDto) => (
                                 <TableRow role="row" tabIndex={-1} key={row.id}>
                                     {columns.map(
                                         (

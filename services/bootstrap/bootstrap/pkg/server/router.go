@@ -63,7 +63,7 @@ func (r *Router) bootstrapGetHandler(c *gin.Context, req *BootstrapRequest) erro
 	*/
 	valid, err := r.fs.NmrRequestNodeValidation(req.Nodeid)
 	if err != nil {
-		logrus.Errorf("Couldn't validate node %s validatin failed. Error %s", req.Nodeid, err.Error())
+		logrus.Errorf("Couldn't validate node %s validation failed. Error %s", req.Nodeid, err.Error())
 		/* handle failure */
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,

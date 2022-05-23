@@ -22,51 +22,58 @@ import "../../i18n/i18n";
 import {
     Node_Type,
     Time_Filter,
+    GetUsersDto,
     Network_Type,
     Data_Bill_Filter,
+    useAddNodeMutation,
     useGetNetworkQuery,
+    useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
+    useUpdateNodeMutation,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
+    useGetEsimQrLazyQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
-    useAddNodeMutation,
     useGetConnectedUsersQuery,
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
     useGetMetricsByTabLazyQuery,
     GetLatestNetworkSubscription,
     GetLatestDataBillSubscription,
+    useGetUsersDataUsageLazyQuery,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
+    useGetUsersDataUsageSSubscription,
     GetLatestConnectedUsersSubscription,
-    useAddUserMutation,
-    useUpdateNodeMutation,
 } from "../../generated";
-import { TMetric, TObject } from "../../types";
-import { Box, Grid } from "@mui/material";
-import { RoundedCard } from "../../styles";
-import { useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     user,
     isFirstVisit,
     isSkeltonLoading,
     snackbarMessage,
 } from "../../recoil";
-import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+import { Box, Grid } from "@mui/material";
+import { RoundedCard } from "../../styles";
+import { useEffect, useState } from "react";
+import { TMetric, TObject } from "../../types";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
-
+import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
+    const [users, setUsers] = useState<GetUsersDto[]>([]);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
+    const [newAddedUserName, setNewAddedUserName] = useState<any>();
+    const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
+
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -90,6 +97,7 @@ const Home = () => {
         nodeId: "",
     });
 
+    const [qrCodeId, setqrCodeId] = useState<any>();
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
@@ -132,17 +140,13 @@ const Home = () => {
             });
         },
     });
+
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation({
         onCompleted: () => {
-            setNodeToastNotification({
-                id: "Add-user-success",
-                message: `${addUserRes?.addUser?.name} has been added successfully!`,
-                type: "success",
-                show: true,
-            });
+            setIsEsimAdded(true);
         },
         onError: () => {
             setNodeToastNotification({
@@ -154,6 +158,32 @@ const Home = () => {
         },
     });
 
+    const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
+        useGetEsimQrLazyQuery();
+
+    const handleGetSimQrCode = async (userId: string, simId: string) => {
+        await getEsimQrdcodeId({
+            variables: {
+                data: {
+                    userId: userId,
+                    simId: simId,
+                },
+            },
+        });
+    };
+    useEffect(() => {
+        if (addUserRes) {
+            setNewAddedUserName(addUserRes?.addUser?.name);
+            handleGetSimQrCode(
+                addUserRes.addUser.id,
+                addUserRes?.addUser?.iccid || ""
+            );
+        }
+    }, [addUserRes]);
+
+    useEffect(() => {
+        setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
+    }, [getEsimQrCodeRes]);
     const [
         registerNode,
         {
@@ -236,11 +266,41 @@ const Home = () => {
         },
     });
 
-    const {
-        data: residentsRes,
-        loading: residentsloading,
-        refetch: refetchResidents,
-    } = useGetUsersByOrgQuery();
+    const [getUsersDataUsage] = useGetUsersDataUsageLazyQuery();
+
+    useGetUsersDataUsageSSubscription({
+        fetchPolicy: "network-only",
+        onSubscriptionData: res => {
+            if (res.subscriptionData.data?.getUsersDataUsage?.id) {
+                const userRes = res.subscriptionData.data?.getUsersDataUsage;
+                const index = users.findIndex(item => item.id === userRes.id);
+                setUsers([
+                    ...users.slice(0, index),
+                    {
+                        id: userRes.id,
+                        name: userRes.name,
+                        email: userRes.email,
+                        phone: userRes.phone,
+                        dataPlan: userRes.dataPlan,
+                        dataUsage: userRes.dataUsage,
+                    },
+                    ...users.slice(index + 1),
+                ]);
+            }
+        },
+    });
+
+    const { loading: residentsloading, refetch: refetchResidents } =
+        useGetUsersByOrgQuery({
+            onCompleted: res => {
+                setUsers(res.getUsersByOrg);
+                getUsersDataUsage({
+                    variables: {
+                        data: { ids: res.getUsersByOrg.map(u => u.id) },
+                    },
+                });
+            },
+        });
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation({
@@ -359,19 +419,7 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-    const handleSimInstallationSubmit = (data: TObject) => {
-        if (data) {
-            addUser({
-                variables: {
-                    data: {
-                        email: data.email as string,
-                        name: data.name as string,
-                        phone: "",
-                    },
-                },
-            });
-        }
-    };
+
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
             tab: 4,
@@ -538,9 +586,7 @@ const Home = () => {
             setDeactivateUserDialog({
                 isShow: true,
                 userId: id,
-                userName:
-                    residentsRes?.getUsersByOrg.find(item => item.id === id)
-                        ?.name || "",
+                userName: users?.find(item => item.id === id)?.name || "",
             });
         }
     };
@@ -624,6 +670,32 @@ const Home = () => {
         if (_isFirstVisit) {
             _setIsFirstVisit(false);
             setIsWelcomeDialog(false);
+        }
+    };
+    const handleEsimInstallation = (eSimData: TObject) => {
+        if (eSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: eSimData.email as string,
+                        name: eSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
+    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+        if (physicalSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: physicalSimData.email as string,
+                        name: physicalSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
         }
     };
     return (
@@ -747,8 +819,8 @@ const Home = () => {
                                 showButton={false}
                             />
                             <DataTableWithOptions
+                                dataset={users}
                                 columns={DataTableWithOptionColumns}
-                                dataset={residentsRes?.getUsersByOrg}
                                 menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                 onMenuItemClick={onResidentsTableMenuItem}
                             />
@@ -817,9 +889,16 @@ const Home = () => {
             )}
             {showInstallSim && (
                 <AddUser
+                    handlePhysicalSimInstallation={
+                        handlePhysicalSimInstallation
+                    }
+                    loading={addUserLoading}
+                    handleEsimInstallation={handleEsimInstallation}
+                    addedUserName={newAddedUserName}
+                    qrCodeId={qrCodeId}
+                    iSeSimAdded={isEsimAdded}
                     isOpen={showInstallSim}
                     handleClose={handleSimInstallationClose}
-                    handleSubmitAction={handleSimInstallationSubmit}
                 />
             )}
         </Box>

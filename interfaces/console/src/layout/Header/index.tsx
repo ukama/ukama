@@ -29,6 +29,7 @@ import { useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, user, pageName } from "../../recoil";
 
 const popupStyle = {
+    background: "none",
     boxShadow:
         "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
     borderRadius: "4px",
@@ -139,12 +140,13 @@ const Header = ({
                 }}
                 PaperProps={{
                     style: {
-                        background: "transparent",
                         ...popupStyle,
                     },
                 }}
             >
-                <RoundedCard>
+                <RoundedCard
+                    sx={{ overflow: "hidden", pr: 0, boxShadow: "none" }}
+                >
                     <Typography variant="h6" sx={{ mb: "14px" }}>
                         Alerts
                     </Typography>
@@ -166,12 +168,13 @@ const Header = ({
                 }}
                 PaperProps={{
                     style: {
-                        background: "transparent",
                         ...popupStyle,
                     },
                 }}
             >
-                <RoundedCard sx={{ minWidth: "200px", p: 0 }}>
+                <RoundedCard
+                    sx={{ minWidth: "200px", p: 0, boxShadow: "none" }}
+                >
                     <Stack m={"12px 16px"}>
                         <Typography variant="body1">{_user.name}</Typography>
                         <Typography variant="caption" color={"textSecondary"}>
@@ -252,9 +255,6 @@ const Header = ({
                                 color="inherit"
                                 aria-label="notification-btn"
                                 onClick={handleNotificationClick}
-                                // aria-label={notificationsLabel(
-                                //     alertsInfoRes?.getAlerts?.alerts.length
-                                // )}
                             >
                                 <Badge
                                     badgeContent={

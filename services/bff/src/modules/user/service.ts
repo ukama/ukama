@@ -96,7 +96,7 @@ export class UserService implements IUserService {
     addUser = async (
         req: UserInputDto,
         cookie: ParsedCookie
-    ): Promise<UserResDto | null> => {
+    ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${cookie.orgId}/users`,
@@ -129,7 +129,7 @@ export class UserService implements IUserService {
             path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
             headers: cookie.header,
             body: {
-                carrier: {
+                ukama: {
                     sms: false,
                     voice: false,
                     data: data.status,
@@ -150,6 +150,26 @@ export class UserService implements IUserService {
         });
         if (checkError(res))
             throw new Error(res.description ? res.description : res.message);
+        return res;
+    };
+    updateUserRoaming = async (
+        data: UpdateUserServiceInput,
+        cookie: ParsedCookie
+    ): Promise<OrgUserSimDto> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PUT,
+            path: `${SERVER.ORG}/${cookie.orgId}/users/${data.userId}/sims/${data.simId}/services`,
+            headers: cookie.header,
+            body: {
+                carrier: {
+                    sms: false,
+                    voice: false,
+                    data: data.status,
+                },
+            },
+        });
+        console.log(res);
+        if (checkError(res)) throw new Error(res.message);
         return res;
     };
 }

@@ -6,21 +6,23 @@ import {
     AccordionDetails,
 } from "@mui/material";
 import { colors } from "../../theme";
-import QrCodeIcon from "@mui/icons-material/QrCode2";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-
+import QRCode from "qrcode.react";
 interface IESimQR {
     description: string;
+    qrCodeId: any;
 }
 
-const ESimQR = ({ description }: IESimQR) => {
+const ESimQR = ({ description, qrCodeId }: IESimQR) => {
     return (
         <Grid container mb={2}>
             <Grid item xs={12}>
                 <Typography variant="body1">{description}</Typography>
             </Grid>
             <Grid item xs={12}>
-                <Accordion sx={{ boxShadow: "none" }}>
+                <Accordion
+                    sx={{ boxShadow: "none", background: "transparent" }}
+                >
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon color="primary" />}
                         sx={{
@@ -43,7 +45,11 @@ const ESimQR = ({ description }: IESimQR) => {
                     <AccordionDetails
                         sx={{ p: 0, display: "flex", justifyContent: "center" }}
                     >
-                        <QrCodeIcon sx={{ height: 164, width: 164 }} />
+                        <QRCode
+                            id="qrCodeId"
+                            value={qrCodeId}
+                            style={{ height: 164, width: 164 }}
+                        />
                     </AccordionDetails>
                 </Accordion>
             </Grid>

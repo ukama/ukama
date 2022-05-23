@@ -39,7 +39,7 @@ For testing purpose we can mock our sysfs under /tmp/sys directory using prepare
 Example:
 
 ```
-./utils/prepare_env.sh -u cnode-lte -u anode
+./utils/prepare_env.sh -u tnode -u anode
 ```
 
 **Generate Schema**
@@ -50,7 +50,7 @@ If we just need to replicate these with updated serial numbers we could use usti
 Example:
 
 ```
-./build/genSchema --u UK-7001-HNODE-SA03-1103 --n ComV1 --m UK-7001-COM-1103  --f mfgdata/schema/com.json --n LTE --m UK-7001-LTE-1103  --f mfgdata/schema/lte.json --n MASK --m UK-7001-MSK-1103 --f mfgdata/schema/mask.json
+./build/genSchema --u UK-7001-HNODE-SA03-1103 --n com --m UK-7001-COM-1103  --f mfgdata/schema/com.json --n trx --m UK-7001-LTE-1103  --f mfgdata/schema/trx.json --n mask --m UK-7001-MSK-1103 --f mfgdata/schema/mask.json
 ```
 
 Could use this for more information
@@ -66,7 +66,7 @@ This utilty creates a inventory database for the modules you supplies as an argu
 Example:
 
 ```
-./build/genInventory --n COM --m UK-8001-COM-1102 --s mfgdata/schema/com.json -n LTE --m UK-8001-LTE-1102 --s mfgdata/schema/lte.json --n MASK -m UK-8001-MASK-1102 --s mfgdata/schema/mask.json
+./build/genInventory --n com --m UK-8001-COM-1102 --s mfgdata/schema/com.json -n trx --m UK-8001-LTE-1102 --s mfgdata/schema/trx.json --n mask -m UK-8001-MASK-1102 --s mfgdata/schema/mask.json
 ```
 
 Again this could be used for more information

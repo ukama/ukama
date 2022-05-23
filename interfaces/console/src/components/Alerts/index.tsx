@@ -17,9 +17,10 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
     return (
         <List
             sx={{
+                pr: 3,
                 width: 372,
                 maxHeight: 305,
-                overflowY: "auto",
+                overflowY: "scroll",
                 overflowX: "hidden",
                 position: "relative",
             }}
@@ -28,14 +29,14 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                 ({ id, alertDate, description, title, type }: AlertDto) => (
                     <ListItem key={id} sx={{ p: 0, mb: 2 }}>
                         <Grid container>
-                            <Grid item container spacing={4}>
-                                <Grid item xs={1} {...PROPS}>
+                            <Grid item container>
+                                <Grid item xs={1.4} {...PROPS}>
                                     <CloudOffIcon
                                         fontSize="small"
                                         color={getColorByType(type)}
                                     />
                                 </Grid>
-                                <Grid item xs={7} {...PROPS}>
+                                <Grid item xs={6.6} {...PROPS}>
                                     <Typography
                                         variant="body1"
                                         sx={{ fontWeight: 500 }}
@@ -53,13 +54,16 @@ const Alerts = ({ alertOptions = [] }: AlertsProps) => {
                                         variant="caption"
                                         color={"textSecondary"}
                                     >
-                                        {format(alertDate, "MMM dd ha")}
+                                        {format(
+                                            new Date(alertDate),
+                                            "MMM dd ha"
+                                        )}
                                     </Typography>
                                 </Grid>
                             </Grid>
-                            <Grid item container spacing={3}>
-                                <Grid item xs={1} />
-                                <Grid item xs={11}>
+                            <Grid item container>
+                                <Grid item xs={1.4} />
+                                <Grid item xs={10.6}>
                                     <Typography
                                         variant="body2"
                                         color={"textSecondary"}

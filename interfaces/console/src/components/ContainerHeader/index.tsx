@@ -94,7 +94,7 @@ const ContainerHeader = ({
             <Grid
                 item
                 xs={12}
-                md={3.2}
+                md={3}
                 justifyContent={"flex-end"}
                 display={showSearchBox ? "flex" : "none"}
             >
@@ -118,7 +118,7 @@ const ContainerHeader = ({
             <Grid
                 item
                 xs={0}
-                md={showSearchBox ? 1.8 : 3}
+                md={showSearchBox ? 2 : 3}
                 justifyContent="flex-end"
                 display={{
                     xs: "none",
@@ -127,7 +127,7 @@ const ContainerHeader = ({
             >
                 <Button
                     sx={{
-                        px: { xs: 2, md: 4 },
+                        px: 2,
                         width: { xs: "100%", md: "fit-content" },
                     }}
                     size={buttonSize}

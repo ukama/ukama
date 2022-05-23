@@ -18,6 +18,9 @@ export class UserInputDto {
 
     @Field()
     phone: string;
+
+    @Field()
+    status: boolean;
 }
 
 @ObjectType()
@@ -177,10 +180,10 @@ export class UserSimServices {
 
 @ObjectType()
 export class UserDataUsageDto {
-    @Field()
+    @Field({ nullable: true })
     dataUsedBytes: string;
 
-    @Field()
+    @Field({ nullable: true })
     dataAllowanceBytes: string;
 }
 
@@ -192,6 +195,7 @@ export class UserServicesDto {
     @Field(() => UserSimServices)
     services: UserSimServices;
 
+    @Field({ nullable: true })
     @Field(() => UserDataUsageDto)
     usage?: UserDataUsageDto;
 }

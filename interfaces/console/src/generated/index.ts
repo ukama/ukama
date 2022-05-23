@@ -189,6 +189,11 @@ export type DeleteNodeRes = {
   nodeId: Scalars['String'];
 };
 
+export type ESimQrCodeRes = {
+  __typename?: 'ESimQRCodeRes';
+  qrCode: Scalars['String'];
+};
+
 export type ErrorType = {
   __typename?: 'ErrorType';
   code: Scalars['Float'];
@@ -210,7 +215,8 @@ export type EsimResponse = {
 
 export enum Get_User_Status_Type {
   Active = 'ACTIVE',
-  Inactive = 'INACTIVE'
+  Inactive = 'INACTIVE',
+  Unknown = 'UNKNOWN'
 }
 
 export enum Graphs_Tab {
@@ -221,6 +227,11 @@ export enum Graphs_Tab {
   Radio = 'RADIO',
   Resources = 'RESOURCES'
 }
+
+export type GetESimQrCodeInput = {
+  simId: Scalars['String'];
+  userId: Scalars['String'];
+};
 
 export type GetMetricsRes = {
   __typename?: 'GetMetricsRes';
@@ -350,6 +361,7 @@ export type Mutation = {
   deleteUser: ActivateUserResponse;
   updateNode: OrgNodeDto;
   updateUser: UserResDto;
+  updateUserRoaming: OrgUserSimDto;
   updateUserStatus: OrgUserSimDto;
 };
 
@@ -387,6 +399,11 @@ export type MutationUpdateNodeArgs = {
 export type MutationUpdateUserArgs = {
   data: UserInputDto;
   userId: Scalars['String'];
+};
+
+
+export type MutationUpdateUserRoamingArgs = {
+  data: UpdateUserServiceInput;
 };
 
 
@@ -550,6 +567,7 @@ export type Query = {
   getCurrentBill: BillResponse;
   getDataBill: DataBillDto;
   getDataUsage: DataUsageDto;
+  getEsimQR: ESimQrCodeRes;
   getEsims: Array<EsimDto>;
   getMetricsByTab: GetMetricsRes;
   getNetwork: NetworkDto;
@@ -581,6 +599,11 @@ export type QueryGetDataBillArgs = {
 
 export type QueryGetDataUsageArgs = {
   filter: Time_Filter;
+};
+
+
+export type QueryGetEsimQrArgs = {
+  data: GetESimQrCodeInput;
 };
 
 
@@ -719,6 +742,13 @@ export type GetAlertsQueryVariables = Exact<{
 
 
 export type GetAlertsQuery = { __typename?: 'Query', getAlerts: { __typename?: 'AlertsResponse', meta: { __typename?: 'Meta', count: number, page: number, size: number, pages: number }, alerts: Array<{ __typename?: 'AlertDto', id?: string | null, type: Alert_Type, title?: string | null, description?: string | null, alertDate?: any | null }> } };
+
+export type GetEsimQrQueryVariables = Exact<{
+  data: GetESimQrCodeInput;
+}>;
+
+
+export type GetEsimQrQuery = { __typename?: 'Query', getEsimQR: { __typename?: 'ESimQRCodeRes', qrCode: string } };
 
 export type GetLatestAlertsSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
@@ -1100,6 +1130,41 @@ export function useGetAlertsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<
 export type GetAlertsQueryHookResult = ReturnType<typeof useGetAlertsQuery>;
 export type GetAlertsLazyQueryHookResult = ReturnType<typeof useGetAlertsLazyQuery>;
 export type GetAlertsQueryResult = Apollo.QueryResult<GetAlertsQuery, GetAlertsQueryVariables>;
+export const GetEsimQrDocument = gql`
+    query getEsimQR($data: GetESimQRCodeInput!) {
+  getEsimQR(data: $data) {
+    qrCode
+  }
+}
+    `;
+
+/**
+ * __useGetEsimQrQuery__
+ *
+ * To run a query within a React component, call `useGetEsimQrQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEsimQrQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetEsimQrQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetEsimQrQuery(baseOptions: Apollo.QueryHookOptions<GetEsimQrQuery, GetEsimQrQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetEsimQrQuery, GetEsimQrQueryVariables>(GetEsimQrDocument, options);
+      }
+export function useGetEsimQrLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEsimQrQuery, GetEsimQrQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetEsimQrQuery, GetEsimQrQueryVariables>(GetEsimQrDocument, options);
+        }
+export type GetEsimQrQueryHookResult = ReturnType<typeof useGetEsimQrQuery>;
+export type GetEsimQrLazyQueryHookResult = ReturnType<typeof useGetEsimQrLazyQuery>;
+export type GetEsimQrQueryResult = Apollo.QueryResult<GetEsimQrQuery, GetEsimQrQueryVariables>;
 export const GetLatestAlertsDocument = gql`
     subscription getLatestAlerts {
   getAlerts {

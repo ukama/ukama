@@ -12,17 +12,18 @@ import {
     useAddUserMutation,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
+    useUpdateUserMutation,
+    useGetEsimQrLazyQuery,
+    useUpdateUserStatusMutation,
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
-    useUpdateUserMutation,
-    useUpdateUserStatusMutation,
 } from "../../generated";
+import { TObject } from "../../types";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-import { TObject } from "../../types";
 
 const userInit = {
     id: "",
@@ -47,11 +48,42 @@ const User = () => {
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
+    const [qrCodeId, setqrCodeId] = useState<any>();
+    const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
+    const [newAddedUserName, setNewAddedUserName] = useState<any>();
+
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
-    ] = useAddUserMutation();
+    ] = useAddUserMutation({
+        onCompleted: () => {
+            setIsEsimAdded(true);
+        },
+        onError: () => {
+            setUserNotification({
+                id: "error-add-user",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
+        useGetEsimQrLazyQuery();
 
+    useEffect(() => {
+        if (addUserRes) {
+            setNewAddedUserName(addUserRes?.addUser?.name);
+            handleGetSimQrCode(
+                addUserRes?.addUser.id,
+                addUserRes?.addUser?.iccid || ""
+            );
+        }
+    }, [addUserRes]);
+
+    useEffect(() => {
+        setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
+    }, [getEsimQrCodeRes]);
     const [
         updateUser,
         {
@@ -59,7 +91,24 @@ const User = () => {
             data: updateUserRes,
             error: updateUserError,
         },
-    ] = useUpdateUserMutation();
+    ] = useUpdateUserMutation({
+        onCompleted: () => {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `The ${updateUserRes?.updateUser?.name} has been updated successfully!`,
+                type: "success",
+                show: true,
+            });
+        },
+        onError: () => {
+            setUserNotification({
+                id: "updateUserNotification",
+                message: `${updateUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
 
     const [getUsersDataUsage, { loading: usersDataUsageLoading }] =
         useGetUsersDataUsageLazyQuery();
@@ -117,49 +166,16 @@ const User = () => {
             },
         });
 
-    useEffect(() => {
-        if (addUserRes) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `The user has been added successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [addUserRes]);
-
-    useEffect(() => {
-        if (updateUserRes) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `The user has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-        }
-    }, [updateUserRes]);
-
-    useEffect(() => {
-        if (addUserError) {
-            setUserNotification({
-                id: "addUserNotification",
-                message: `${addUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [addUserError]);
-
-    useEffect(() => {
-        if (updateUserError) {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `${updateUserError.message}`,
-                type: "error",
-                show: true,
-            });
-        }
-    }, [updateUserError]);
+    const handleGetSimQrCode = async (userId: string, simId: string) => {
+        await getEsimQrdcodeId({
+            variables: {
+                data: {
+                    userId: userId,
+                    simId: simId,
+                },
+            },
+        });
+    };
 
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
@@ -176,20 +192,6 @@ const User = () => {
     const handleSimInstallation = () => setShowInstallSim(true);
 
     const handleSimInstallationClose = () => setShowInstallSim(false);
-
-    const handleSimInstallationSubmit = (data: TObject) => {
-        if (data) {
-            addUser({
-                variables: {
-                    data: {
-                        email: data.email as string,
-                        name: data.name as string,
-                        phone: "",
-                    },
-                },
-            });
-        }
-    };
 
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
@@ -219,6 +221,32 @@ const User = () => {
         });
     };
 
+    const handleEsimInstallation = (eSimData: TObject) => {
+        if (eSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: eSimData.email as string,
+                        name: eSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
+    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+        if (physicalSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: physicalSimData.email as string,
+                        name: physicalSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
         if (simDialog.type === "edit" && selectedUser.id) {
@@ -241,10 +269,7 @@ const User = () => {
                 width="100%"
                 height="inherit"
                 isLoading={
-                    isSkeltonLoad ||
-                    usersByOrgLoading ||
-                    addUserLoading ||
-                    updateUserLoading
+                    isSkeltonLoad || usersByOrgLoading || updateUserLoading
                 }
             >
                 {usersRes && usersRes?.getUsersByOrg?.length > 0 ? (
@@ -312,9 +337,16 @@ const User = () => {
 
                 {showInstallSim && (
                     <AddUser
+                        iSeSimAdded={isEsimAdded}
+                        handlePhysicalSimInstallation={
+                            handlePhysicalSimInstallation
+                        }
+                        loading={addUserLoading}
+                        handleEsimInstallation={handleEsimInstallation}
+                        addedUserName={newAddedUserName}
+                        qrCodeId={qrCodeId}
                         isOpen={showInstallSim}
                         handleClose={handleSimInstallationClose}
-                        handleSubmitAction={handleSimInstallationSubmit}
                     />
                 )}
             </LoadingWrapper>
