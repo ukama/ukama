@@ -70,6 +70,8 @@ const Home = () => {
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
+    const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
+
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -151,6 +153,9 @@ const Home = () => {
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation({
+        onCompleted: () => {
+            setIsEsimAdded(true);
+        },
         onError: () => {
             setNodeToastNotification({
                 id: "error-add-user-success",
@@ -388,19 +393,6 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-    const handleSimInstallationSubmit = (data: TObject) => {
-        if (data) {
-            addUser({
-                variables: {
-                    data: {
-                        email: data.email as string,
-                        name: data.name as string,
-                        phone: "",
-                    },
-                },
-            });
-        }
-    };
 
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
@@ -656,6 +648,32 @@ const Home = () => {
             setIsWelcomeDialog(false);
         }
     };
+    const handleEsimInstallation = (eSimData: TObject) => {
+        if (eSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: eSimData.email as string,
+                        name: eSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
+    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+        if (physicalSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: physicalSimData.email as string,
+                        name: physicalSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
             <Grid container spacing={3}>
@@ -847,11 +865,16 @@ const Home = () => {
             )}
             {showInstallSim && (
                 <AddUser
+                    handlePhysicalSimInstallation={
+                        handlePhysicalSimInstallation
+                    }
+                    loading={addUserLoading}
+                    handleEsimInstallation={handleEsimInstallation}
                     addedUserName={newAddedUserName}
                     qrCodeId={qrCodeId}
+                    iSeSimAdded={isEsimAdded}
                     isOpen={showInstallSim}
                     handleClose={handleSimInstallationClose}
-                    handleSubmitAction={handleSimInstallationSubmit}
                 />
             )}
         </Box>
