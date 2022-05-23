@@ -23,5 +23,6 @@ runs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.1.0
-        with:                
+        with:
+          args: --timeout=5m                
           working-directory: ${{ inputs.working-directory }}
