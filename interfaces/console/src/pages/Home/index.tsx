@@ -393,19 +393,6 @@ const Home = () => {
             to: Math.floor(Date.now() / 1000) - 15,
             from: Math.floor(Date.now() / 1000) - 180,
         });
-    // const handleSimInstallationSubmit = (data: TObject) => {
-    //     if (data) {
-    //         addUser({
-    //             variables: {
-    //                 data: {
-    //                     email: data.email as string,
-    //                     name: data.name as string,
-    //                     phone: "",
-    //                 },
-    //             },
-    //         });
-    //     }
-    // };
 
     const getMetricPollingCallPayload = (from: number) =>
         getMetricPayload({
