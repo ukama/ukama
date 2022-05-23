@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
 )
@@ -20,12 +19,8 @@ var ServiceConf *Config
 // NewConfig creates new config with default values. Those values will be overridden by Viper
 func NewConfig() *Config {
 	return &Config{
-		Server: rest.HttpConfig{
-			Port: 8087,
-			Cors: cors.Config{
-				AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-			},
-		},
+
+		Server: config.DefaultHTTPConfig(),
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
@@ -37,26 +32,19 @@ func NewConfig() *Config {
 					"node": "*", "looking_for": "org_credentials", "path": "/orgs/node",
 				},
 				{
-					"node": "*", "looking_to": "add_node", "org": "fundme", "path": "/orgs/node",
+					"node": "*", "looking_to": "add_node", "org": "*", "path": "/orgs/node",
 				},
 				{
-					"org": "*", "looking_to": "add_org", "path": "/orgs/",
+					"org": "*", "looking_to": "add_org", "path": "/orgs",
 				},
 			},
 
 			F: config.Forward{
 				Ip:   "localhost",
-				Port: 8087,
+				Port: 8080,
 			},
 		},
 
-		DB: config.Database{
-			Host:       "localhost",
-			Password:   "Pass2020!",
-			Username:   "postgres",
-			DbName:     ServiceName,
-			SslEnabled: false,
-			Port:       5432,
-		},
+		DB: config.DefaultDatabaseName(ServiceName),
 	}
 }
