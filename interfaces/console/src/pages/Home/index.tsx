@@ -672,26 +672,28 @@ const Home = () => {
             setIsWelcomeDialog(false);
         }
     };
-    const handleEsimInstallation = (eSimData: TObject) => {
+    const handleEsimInstallation = (eSimData: any) => {
         if (eSimData) {
             addUser({
                 variables: {
                     data: {
                         email: eSimData.email as string,
                         name: eSimData.name as string,
+                        status: eSimData.roaming || false,
                         phone: "",
                     },
                 },
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+    const handlePhysicalSimInstallation = (physicalSimData: any) => {
         if (physicalSimData) {
             addUser({
                 variables: {
                     data: {
                         email: physicalSimData.email as string,
                         name: physicalSimData.name as string,
+                        status: physicalSimData.roaming || false,
                         phone: "",
                     },
                 },
