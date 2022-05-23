@@ -11,7 +11,7 @@ test:
 
 # Go lint
 lint:
-	golangci-lint run
+	golangci-lint run --disable structcheck
 
 deps:
 	go install
