@@ -12,20 +12,18 @@ import {
     useAddUserMutation,
     useGetUserLazyQuery,
     useGetUsersByOrgQuery,
-    useGetUsersDataUsageLazyQuery,
-    useGetUsersDataUsageSSubscription,
     useUpdateUserMutation,
     useGetEsimQrLazyQuery,
     useUpdateUserStatusMutation,
+    useGetUsersDataUsageLazyQuery,
+    useGetUsersDataUsageSSubscription,
 } from "../../generated";
+import { TObject } from "../../types";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
-import useWhoami from "../../helpers/useWhoami";
-
-import { TObject } from "../../types";
 
 const userInit = {
     id: "",
@@ -43,7 +41,6 @@ const userInit = {
 const User = () => {
     const [users, setUsers] = useState<GetUsersDto[]>([]);
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
-    const { response } = useWhoami();
     const [simDialog, setSimDialog] = useState({
         isShow: false,
         type: "add",
@@ -53,15 +50,7 @@ const User = () => {
     const setUserNotification = useSetRecoilState(snackbarMessage);
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
-    const [esimQrcode, setEsimQrcode] = useState<any>({
-        simId: "",
-        userId: "",
-    });
-    useEffect(() => {
-        if (response) {
-            setEsimQrcode({ userId: response?.id });
-        }
-    }, [response]);
+
     const [
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
@@ -77,20 +66,14 @@ const User = () => {
     });
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();
-    const handleGetSimQrCode = async (simId: any) => {
-        await getEsimQrdcodeId({
-            variables: {
-                data: {
-                    userId: esimQrcode.userId,
-                    simId: simId,
-                },
-            },
-        });
-    };
+
     useEffect(() => {
         if (addUserRes) {
             setNewAddedUserName(addUserRes?.addUser?.name);
-            handleGetSimQrCode(addUserRes?.addUser?.iccid);
+            handleGetSimQrCode(
+                addUserRes?.addUser.id,
+                addUserRes?.addUser?.iccid || ""
+            );
         }
     }, [addUserRes]);
 
@@ -178,6 +161,17 @@ const User = () => {
                 }
             },
         });
+
+    const handleGetSimQrCode = async (userId: string, simId: string) => {
+        await getEsimQrdcodeId({
+            variables: {
+                data: {
+                    userId: userId,
+                    simId: simId,
+                },
+            },
+        });
+    };
 
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });

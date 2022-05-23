@@ -22,50 +22,52 @@ import "../../i18n/i18n";
 import {
     Node_Type,
     Time_Filter,
+    GetUsersDto,
     Network_Type,
     Data_Bill_Filter,
+    useAddNodeMutation,
     useGetNetworkQuery,
+    useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
+    useUpdateNodeMutation,
     useGetUsersByOrgQuery,
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
     useGetEsimQrLazyQuery,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
-    useAddNodeMutation,
     useGetConnectedUsersQuery,
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
     useGetMetricsByTabLazyQuery,
     GetLatestNetworkSubscription,
     GetLatestDataBillSubscription,
+    useGetUsersDataUsageLazyQuery,
     GetLatestDataUsageSubscription,
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
+    useGetUsersDataUsageSSubscription,
     GetLatestConnectedUsersSubscription,
-    useAddUserMutation,
-    useUpdateNodeMutation,
 } from "../../generated";
-import { TMetric, TObject } from "../../types";
-import { Box, Grid } from "@mui/material";
-import { RoundedCard } from "../../styles";
-import { useEffect, useState } from "react";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     user,
     isFirstVisit,
     isSkeltonLoading,
     snackbarMessage,
 } from "../../recoil";
-import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+import { Box, Grid } from "@mui/material";
+import { RoundedCard } from "../../styles";
+import { useEffect, useState } from "react";
+import { TMetric, TObject } from "../../types";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
-import useWhoami from "../../helpers/useWhoami";
+import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
     const { id: orgId = "" } = useRecoilValue(user);
-    const { response } = useWhoami();
+    const [users, setUsers] = useState<GetUsersDto[]>([]);
     const [isWelcomeDialog, setIsWelcomeDialog] = useState(false);
     const [userStatusFilter, setUserStatusFilter] = useState(Time_Filter.Total);
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
@@ -93,13 +95,9 @@ const Home = () => {
         nodeId: "",
     });
 
+    const [qrCodeId, setqrCodeId] = useState<any>();
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
-    const [qrCodeId, setqrCodeId] = useState<any>();
-    const [esimQrcode, setEsimQrcode] = useState<any>({
-        simId: "",
-        userId: "",
-    });
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [billingStatusFilter, setBillingStatusFilter] = useState(
@@ -108,12 +106,6 @@ const Home = () => {
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
         temperaturetrx: null,
     });
-
-    useEffect(() => {
-        if (response) {
-            setEsimQrcode({ userId: response?.id });
-        }
-    }, [response]);
 
     const {
         data: nodeRes,
@@ -163,11 +155,12 @@ const Home = () => {
 
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();
-    const handleGetSimQrCode = async (simId: any) => {
+
+    const handleGetSimQrCode = async (userId: string, simId: string) => {
         await getEsimQrdcodeId({
             variables: {
                 data: {
-                    userId: esimQrcode.userId,
+                    userId: userId,
                     simId: simId,
                 },
             },
@@ -176,7 +169,10 @@ const Home = () => {
     useEffect(() => {
         if (addUserRes) {
             setNewAddedUserName(addUserRes?.addUser?.name);
-            handleGetSimQrCode(addUserRes?.addUser?.iccid);
+            handleGetSimQrCode(
+                addUserRes.addUser.id,
+                addUserRes?.addUser?.iccid || ""
+            );
         }
     }, [addUserRes]);
 
@@ -265,11 +261,41 @@ const Home = () => {
         },
     });
 
-    const {
-        data: residentsRes,
-        loading: residentsloading,
-        refetch: refetchResidents,
-    } = useGetUsersByOrgQuery();
+    const [getUsersDataUsage] = useGetUsersDataUsageLazyQuery();
+
+    useGetUsersDataUsageSSubscription({
+        fetchPolicy: "network-only",
+        onSubscriptionData: res => {
+            if (res.subscriptionData.data?.getUsersDataUsage?.id) {
+                const userRes = res.subscriptionData.data?.getUsersDataUsage;
+                const index = users.findIndex(item => item.id === userRes.id);
+                setUsers([
+                    ...users.slice(0, index),
+                    {
+                        id: userRes.id,
+                        name: userRes.name,
+                        email: userRes.email,
+                        phone: userRes.phone,
+                        dataPlan: userRes.dataPlan,
+                        dataUsage: userRes.dataUsage,
+                    },
+                    ...users.slice(index + 1),
+                ]);
+            }
+        },
+    });
+
+    const { loading: residentsloading, refetch: refetchResidents } =
+        useGetUsersByOrgQuery({
+            onCompleted: res => {
+                setUsers(res.getUsersByOrg);
+                getUsersDataUsage({
+                    variables: {
+                        data: { ids: res.getUsersByOrg.map(u => u.id) },
+                    },
+                });
+            },
+        });
 
     const [deactivateUser, { loading: deactivateUserLoading }] =
         useDeactivateUserMutation({
@@ -568,9 +594,7 @@ const Home = () => {
             setDeactivateUserDialog({
                 isShow: true,
                 userId: id,
-                userName:
-                    residentsRes?.getUsersByOrg.find(item => item.id === id)
-                        ?.name || "",
+                userName: users?.find(item => item.id === id)?.name || "",
             });
         }
     };
@@ -777,8 +801,8 @@ const Home = () => {
                                 showButton={false}
                             />
                             <DataTableWithOptions
+                                dataset={users}
                                 columns={DataTableWithOptionColumns}
-                                dataset={residentsRes?.getUsersByOrg}
                                 menuOptions={DEACTIVATE_EDIT_ACTION_MENU}
                                 onMenuItemClick={onResidentsTableMenuItem}
                             />

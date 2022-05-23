@@ -20,7 +20,9 @@ const ESimQR = ({ description, qrCodeId }: IESimQR) => {
                 <Typography variant="body1">{description}</Typography>
             </Grid>
             <Grid item xs={12}>
-                <Accordion sx={{ boxShadow: "none" }}>
+                <Accordion
+                    sx={{ boxShadow: "none", background: "transparent" }}
+                >
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon color="primary" />}
                         sx={{
