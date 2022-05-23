@@ -96,7 +96,7 @@ export class UserService implements IUserService {
     addUser = async (
         req: UserInputDto,
         cookie: ParsedCookie
-    ): Promise<UserResDto | null> => {
+    ): Promise<UserResDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.POST,
             path: `${SERVER.ORG}/${cookie.orgId}/users`,
@@ -168,6 +168,7 @@ export class UserService implements IUserService {
                 },
             },
         });
+        console.log(res);
         if (checkError(res)) throw new Error(res.message);
         return res;
     };

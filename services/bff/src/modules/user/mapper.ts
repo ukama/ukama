@@ -56,9 +56,7 @@ class UserMapper implements IUserMapper {
             phone: user.phone,
             eSimNumber: user.uuid,
             status:
-                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE
-                    ? sim?.carrier?.services.data
-                    : false,
+                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
             roaming:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
             dataPlan: sim.carrier?.usage?.dataAllowanceBytes || "0",
@@ -73,17 +71,14 @@ class UserMapper implements IUserMapper {
             phone: req.phone,
         };
     };
-    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto | null => {
-        if (req) {
-            return {
-                name: req.user.name,
-                email: req.user.email,
-                phone: req.user.phone,
-                id: req.user.uuid,
-                iccid: req.iccid,
-            };
-        }
-        return null;
+    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto => {
+        return {
+            name: req.user.name,
+            email: req.user.email,
+            phone: req.user.phone,
+            id: req.user.uuid,
+            iccid: req.iccid,
+        };
     };
 }
 export default <IUserMapper>new UserMapper();

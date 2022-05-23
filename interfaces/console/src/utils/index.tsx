@@ -1,6 +1,6 @@
+import { TObject } from "../types";
 import { format, intervalToDuration } from "date-fns";
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from "../generated";
-import { TObject } from "../types";
 
 const getTitleFromPath = (path: string) => {
     switch (path) {
@@ -339,6 +339,15 @@ const secToHoursNMints = (seconds: number, separator: string) => {
 const isEmailValid = (email: string): boolean =>
     /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,20}$/.test(email);
 
+const doesHttpOnlyCookieExist = (cookiename: string): boolean => {
+    var d = new Date();
+    d.setTime(d.getTime() + 1000);
+    var expires = "expires=" + d.toUTCString();
+
+    document.cookie = cookiename + "=new_value;path=/;" + expires;
+    return document.cookie.indexOf(cookiename + "=") == -1;
+};
+
 export {
     hexToRGB,
     formatBytes,
@@ -359,4 +368,5 @@ export {
     getDefaultMetricList,
     getGraphFilterByType,
     parseObjectInNameValue,
+    doesHttpOnlyCookieExist,
 };

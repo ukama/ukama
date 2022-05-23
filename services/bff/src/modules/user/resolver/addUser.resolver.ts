@@ -16,7 +16,12 @@ export class AddUserResolver {
     async addUser(
         @Arg("data") data: UserInputDto,
         @Ctx() ctx: Context
-    ): Promise<UserResDto | null> {
-        return this.userService.addUser(data, parseCookie(ctx));
+    ): Promise<UserResDto> {
+        const user = await this.userService.addUser(data, parseCookie(ctx));
+        await this.userService.updateUserRoaming(
+            { simId: user?.iccid || "", userId: user.id, status: data.status },
+            parseCookie(ctx)
+        );
+        return user;
     }
 }

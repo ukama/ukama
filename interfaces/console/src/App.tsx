@@ -1,48 +1,71 @@
 import {
+    user,
     pageName,
     isDarkmode,
-    isFirstVisit,
     snackbarMessage,
     isSkeltonLoading,
 } from "./recoil";
+import {
+    useRecoilState,
+    useRecoilValue,
+    useSetRecoilState,
+    useResetRecoilState,
+} from "recoil";
 import { theme } from "./theme";
+import { useEffect } from "react";
 import Router from "./router/Router";
 import client from "./api/ApolloClient";
 import { routes } from "./router/config";
-import { getTitleFromPath } from "./utils";
-import { useEffect } from "react";
-import useWhoami from "./helpers/useWhoami";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import { doesHttpOnlyCookieExist, getTitleFromPath } from "./utils";
 
 const SNACKBAR_TIMEOUT = 5000;
 
 const App = () => {
-    const { response } = useWhoami();
+    const [_user, _setUser] = useRecoilState(user);
     const setPage = useSetRecoilState(pageName);
     const _isDarkMod = useRecoilValue(isDarkmode);
     const [_snackbarMessage, setSnackbarMessage] =
         useRecoilState(snackbarMessage);
+    const resetPageName = useResetRecoilState(pageName);
+    const resetData = useResetRecoilState(user);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
-    const _isFirstVisit = useRecoilValue(isFirstVisit);
+
     useEffect(() => {
-        if (response) {
-            if (!response?.isValid) {
-                setPage("Home");
-                if (_isFirstVisit) {
-                    handleGoToLogin();
-                } else {
-                    handleGoToLogin();
-                }
-            } else if (response?.isValid) {
+        const id = new URLSearchParams(window.location.search).get("id");
+        const name = new URLSearchParams(window.location.search).get("name");
+        const email = new URLSearchParams(window.location.search).get("email");
+        if (id && name && email) {
+            _setUser({ id, name, email });
+            window.history.pushState(null, "", "/");
+        }
+        if ((id && name && email) || (_user.id && _user.name && _user.email)) {
+            if (
+                doesHttpOnlyCookieExist("id") &&
+                doesHttpOnlyCookieExist("ukama_session")
+            ) {
                 setPage(getTitleFromPath(window.location.pathname));
                 setSkeltonLoading(false);
+            } else if (
+                !doesHttpOnlyCookieExist("id") &&
+                doesHttpOnlyCookieExist("ukama_session")
+            ) {
+                setSkeltonLoading(true);
+                resetData();
+                resetPageName();
+                window.location.replace(
+                    `${process.env.REACT_APP_AUTH_URL}/logout`
+                );
             }
+        } else {
+            setSkeltonLoading(true);
+            setPage("Home");
+            handleGoToLogin();
         }
-    }, [response]);
+    }, []);
 
     const handleGoToLogin = () => {
         window.location.replace(process.env.REACT_APP_AUTH_URL || "");
