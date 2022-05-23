@@ -85,7 +85,7 @@ const AddUser = ({
                 justifyContent="space-between"
             >
                 <DialogTitle>
-                    {!loading ? getTitle(iSeSimAdded, simType) : null}
+                    {!loading && getTitle(iSeSimAdded, simType)}
                 </DialogTitle>
                 <IconButton
                     onClick={() => handleClose()}
