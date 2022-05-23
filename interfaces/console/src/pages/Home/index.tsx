@@ -31,6 +31,7 @@ import {
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
     useGetEsimQrLazyQuery,
+    useUpdateUserRoamingMutation,
     GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useAddNodeMutation,
@@ -160,6 +161,23 @@ const Home = () => {
             setNodeToastNotification({
                 id: "error-add-user-success",
                 message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [
+        updateRoamingService,
+        {
+            loading: updateRoamingServiceLoading,
+            data: updateRoamingServiceRes,
+            error: updateRoamingServiceError,
+        },
+    ] = useUpdateUserRoamingMutation({
+        onError: () => {
+            setNodeToastNotification({
+                id: "error-add-user-success",
+                message: `${updateRoamingServiceError?.message}`,
                 type: "error",
                 show: true,
             });
@@ -669,6 +687,26 @@ const Home = () => {
                         email: physicalSimData.email as string,
                         name: physicalSimData.name as string,
                         phone: "",
+                    },
+                },
+            });
+            updateRoamingService({
+                variables: {
+                    data: {
+                        iccid: "555",
+                        isPhysical: true,
+                        ukama: {
+                            status: "ACTIVE",
+                            services: {
+                                voice: false,
+                                data: true,
+                                sms: false,
+                            },
+                            usage: {
+                                dataUsedBytes: "",
+                                dataAllowanceBytes: "",
+                            },
+                        },
                     },
                 },
             });
