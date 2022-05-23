@@ -24,14 +24,14 @@ const initialeEsimFormValue = {
 
 const Userform = ({ handleEsimInstallation, description }: IUserform) => {
     const gclasses = globalUseStyles();
-    const [roaming, setRoaming] = useState(false);
+    const [status, setStatus] = useState<boolean>(false);
 
     return (
         <Formik
             validationSchema={eSimFormSchema}
             initialValues={initialeEsimFormValue}
             onSubmit={async values =>
-                handleEsimInstallation({ ...values, roaming })
+                handleEsimInstallation({ ...values, status })
             }
         >
             {({

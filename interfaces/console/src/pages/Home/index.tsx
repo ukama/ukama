@@ -24,6 +24,7 @@ import {
     Time_Filter,
     GetUsersDto,
     Network_Type,
+    UserInputDto,
     Data_Bill_Filter,
     useAddNodeMutation,
     useGetNetworkQuery,
@@ -672,28 +673,28 @@ const Home = () => {
             setIsWelcomeDialog(false);
         }
     };
-    const handleEsimInstallation = (eSimData: any) => {
+    const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({
                 variables: {
                     data: {
                         email: eSimData.email as string,
                         name: eSimData.name as string,
-                        status: eSimData.roaming || false,
+                        status: eSimData.status || true,
                         phone: "",
                     },
                 },
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: any) => {
+    const handlePhysicalSimInstallation = (physicalSimData: UserInputDto) => {
         if (physicalSimData) {
             addUser({
                 variables: {
                     data: {
                         email: physicalSimData.email as string,
                         name: physicalSimData.name as string,
-                        status: physicalSimData.roaming || false,
+                        status: physicalSimData.status || true,
                         phone: "",
                     },
                 },
