@@ -20,8 +20,8 @@ func fakeNewController() *Controller {
 
 func Test_PowerOnNode(t *testing.T) {
 	internal.ServiceConfig = &internal.Config{
-		BuilderImage: "",
-		BuilderCmd:   []string{},
+		NodeImage: "",
+		NodeCmd:   []string{},
 	}
 
 	c := fakeNewController()
@@ -32,8 +32,8 @@ func Test_PowerOnNode(t *testing.T) {
 
 func Test_PowerOnNodeFail(t *testing.T) {
 	internal.ServiceConfig = &internal.Config{
-		BuilderImage: "",
-		BuilderCmd:   []string{},
+		NodeImage: "",
+		NodeCmd:   []string{},
 	}
 
 	c := fakeNewController()
@@ -48,8 +48,8 @@ func Test_PowerOffNode(t *testing.T) {
 	c := fakeNewController()
 
 	internal.ServiceConfig = &internal.Config{
-		BuilderImage: "",
-		BuilderCmd:   []string{},
+		NodeImage: "",
+		NodeCmd:   []string{},
 	}
 
 	node := ukama.NewVirtualHomeNodeId()
