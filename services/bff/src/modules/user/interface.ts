@@ -31,10 +31,7 @@ export interface IUserService {
     ): Promise<DeactivateResponse>;
     getUser(userId: string, cookie: ParsedCookie): Promise<GetUserDto>;
     getUsersByOrg(cookie: ParsedCookie): Promise<GetUsersDto[]>;
-    addUser(
-        req: UserInputDto,
-        cookie: ParsedCookie
-    ): Promise<UserResDto | null>;
+    addUser(req: UserInputDto, cookie: ParsedCookie): Promise<UserResDto>;
     deleteUser(
         userId: string,
         cookie: ParsedCookie
@@ -50,7 +47,7 @@ export interface IUserService {
 }
 
 export interface IUserMapper {
-    dtoToAddUserDto(res: AddUserServiceRes): UserResDto | null;
+    dtoToAddUserDto(res: AddUserServiceRes): UserResDto;
     connectedUsersDtoToDto(res: MetricServiceValueRes[]): ConnectedUserDto;
     dtoToDto(res: GetUserResponseDto): GetUserDto[];
     dtoToUsersDto(req: OrgUsersResponse): GetUsersDto[];

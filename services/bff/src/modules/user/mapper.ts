@@ -71,17 +71,14 @@ class UserMapper implements IUserMapper {
             phone: req.phone,
         };
     };
-    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto | null => {
-        if (req) {
-            return {
-                name: req.user.name,
-                email: req.user.email,
-                phone: req.user.phone,
-                id: req.user.uuid,
-                iccid: req.iccid,
-            };
-        }
-        return null;
+    dtoToAddUserDto = (req: AddUserServiceRes): UserResDto => {
+        return {
+            name: req.user.name,
+            email: req.user.email,
+            phone: req.user.phone,
+            id: req.user.uuid,
+            iccid: req.iccid,
+        };
     };
 }
 export default <IUserMapper>new UserMapper();
