@@ -52,6 +52,7 @@ const User = () => {
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
     const [qrCodeId, setqrCodeId] = useState<any>();
+    const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [esimQrcode, setEsimQrcode] = useState<any>({
         simId: "",
@@ -66,6 +67,9 @@ const User = () => {
         addUser,
         { loading: addUserLoading, data: addUserRes, error: addUserError },
     ] = useAddUserMutation({
+        onCompleted: () => {
+            setIsEsimAdded(true);
+        },
         onError: () => {
             setUserNotification({
                 id: "error-add-user",
@@ -195,20 +199,6 @@ const User = () => {
 
     const handleSimInstallationClose = () => setShowInstallSim(false);
 
-    const handleSimInstallationSubmit = (data: TObject) => {
-        if (data) {
-            addUser({
-                variables: {
-                    data: {
-                        email: data.email as string,
-                        name: data.name as string,
-                        phone: "",
-                    },
-                },
-            });
-        }
-    };
-
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
             setUsers(
@@ -237,6 +227,32 @@ const User = () => {
         });
     };
 
+    const handleEsimInstallation = (eSimData: TObject) => {
+        if (eSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: eSimData.email as string,
+                        name: eSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
+    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+        if (physicalSimData) {
+            addUser({
+                variables: {
+                    data: {
+                        email: physicalSimData.email as string,
+                        name: physicalSimData.name as string,
+                        phone: "",
+                    },
+                },
+            });
+        }
+    };
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
         if (simDialog.type === "edit" && selectedUser.id) {
@@ -327,11 +343,16 @@ const User = () => {
 
                 {showInstallSim && (
                     <AddUser
+                        iSeSimAdded={isEsimAdded}
+                        handlePhysicalSimInstallation={
+                            handlePhysicalSimInstallation
+                        }
+                        loading={addUserLoading}
+                        handleEsimInstallation={handleEsimInstallation}
                         addedUserName={newAddedUserName}
                         qrCodeId={qrCodeId}
                         isOpen={showInstallSim}
                         handleClose={handleSimInstallationClose}
-                        handleSubmitAction={handleSimInstallationSubmit}
                     />
                 )}
             </LoadingWrapper>
