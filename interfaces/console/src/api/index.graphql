@@ -186,10 +186,6 @@ mutation updateUserRoaming($data: UpdateUserServiceInput!) {
                 data
                 sms
             }
-            usage {
-                dataUsedBytes
-                dataAllowanceBytes
-            }
         }
         carrier {
             status
@@ -197,10 +193,6 @@ mutation updateUserRoaming($data: UpdateUserServiceInput!) {
                 voice
                 data
                 sms
-            }
-            usage {
-                dataUsedBytes
-                dataAllowanceBytes
             }
         }
     }

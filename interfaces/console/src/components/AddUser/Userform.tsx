@@ -24,7 +24,7 @@ const initialeEsimFormValue = {
 
 const Userform = ({ handleEsimInstallation, description }: IUserform) => {
     const gclasses = globalUseStyles();
-    const [roaming, setRoaming] = useState(false);
+    const [roaming, setRoaming] = useState<boolean>(false);
 
     return (
         <Formik

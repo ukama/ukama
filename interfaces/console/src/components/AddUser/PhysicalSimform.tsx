@@ -26,7 +26,7 @@ const PhysicalSimform = ({
     description,
     handlePhysicalSimInstallation,
 }: IPhysicalSimform) => {
-    const [roaming, setRoaming] = useState(false);
+    const [roaming, setRoaming] = useState<boolean>(false);
     const gclasses = globalUseStyles();
     return (
         <Formik

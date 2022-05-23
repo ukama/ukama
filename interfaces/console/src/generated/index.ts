@@ -820,7 +820,7 @@ export type UpdateUserRoamingMutationVariables = Exact<{
 }>;
 
 
-export type UpdateUserRoamingMutation = { __typename?: 'Mutation', updateUserRoaming: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean }, usage: { __typename?: 'UserDataUsageDto', dataUsedBytes: string, dataAllowanceBytes: string } }, carrier: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean }, usage: { __typename?: 'UserDataUsageDto', dataUsedBytes: string, dataAllowanceBytes: string } } } };
+export type UpdateUserRoamingMutation = { __typename?: 'Mutation', updateUserRoaming: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } }, carrier: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', voice: boolean, data: boolean, sms: boolean } } } };
 
 export type UpdateUserMutationVariables = Exact<{
   userId: Scalars['String'];
@@ -1597,10 +1597,6 @@ export const UpdateUserRoamingDocument = gql`
         data
         sms
       }
-      usage {
-        dataUsedBytes
-        dataAllowanceBytes
-      }
     }
     carrier {
       status
@@ -1608,10 +1604,6 @@ export const UpdateUserRoamingDocument = gql`
         voice
         data
         sms
-      }
-      usage {
-        dataUsedBytes
-        dataAllowanceBytes
       }
     }
   }

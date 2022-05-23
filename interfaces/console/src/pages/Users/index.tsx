@@ -14,6 +14,7 @@ import {
     useGetUsersByOrgQuery,
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
+    useUpdateUserRoamingMutation,
     useUpdateUserMutation,
     useGetEsimQrLazyQuery,
     useUpdateUserStatusMutation,
@@ -73,6 +74,23 @@ const User = () => {
         onError: () => {
             setUserNotification({
                 id: "error-add-user",
+                message: `${addUserError?.message}`,
+                type: "error",
+                show: true,
+            });
+        },
+    });
+    const [
+        updateUserRoaming,
+        {
+            loading: updateUserRoamingLoading,
+            data: updateUserRoamingRes,
+            error: updateUserRoamingError,
+        },
+    ] = useUpdateUserRoamingMutation({
+        onError: () => {
+            setUserNotification({
+                id: "error-add-user-success",
                 message: `${addUserError?.message}`,
                 type: "error",
                 show: true,
@@ -240,6 +258,7 @@ const User = () => {
             });
         }
     };
+
     const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
         if (physicalSimData) {
             addUser({
@@ -263,6 +282,15 @@ const User = () => {
                         email: selectedUser.email,
                         name: selectedUser.name,
                         phone: selectedUser.phone,
+                    },
+                },
+            });
+            updateUserRoaming({
+                variables: {
+                    data: {
+                        simId: selectedUser?.iccid,
+                        userId: selectedUser?.id,
+                        status: selectedUser?.roaming,
                     },
                 },
             });
