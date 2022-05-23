@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
+import colors from "../../../theme/colors";
 type BasicDialogProps = {
     title: string;
     isOpen: boolean;
@@ -62,7 +62,11 @@ const BasicDialog = ({
             <DialogActions>
                 <Stack direction={"row"} alignItems="center" spacing={2}>
                     {labelNegativeBtn && (
-                        <Button variant="text" onClick={handleCloseAction}>
+                        <Button
+                            variant="text"
+                            sx={{ color: colors.black }}
+                            onClick={handleCloseAction}
+                        >
                             {labelNegativeBtn}
                         </Button>
                     )}

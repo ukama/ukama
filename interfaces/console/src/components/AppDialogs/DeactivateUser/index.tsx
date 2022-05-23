@@ -66,7 +66,7 @@ const DeactivateUser = ({
                         <Button
                             variant="text"
                             onClick={handleCloseAction}
-                            sx={{ color: colors.primaryMain }}
+                            sx={{ color: colors.black }}
                         >
                             {labelNegativeBtn}
                         </Button>

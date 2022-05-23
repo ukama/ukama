@@ -295,7 +295,7 @@ const NodeDialog = ({
             </DialogContent>
             <DialogActions>
                 <Button
-                    sx={{ color: colors.primaryMain, mr: 2 }}
+                    sx={{ color: colors.black, mr: 2 }}
                     onClick={handleClose}
                 >
                     Cancel

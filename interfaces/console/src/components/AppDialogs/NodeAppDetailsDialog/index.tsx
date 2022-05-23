@@ -96,7 +96,7 @@ const NodeAppDetailsDialog = ({
                         onClick={() => handleClose()}
                         sx={{
                             mr: 2,
-                            color: colors.primaryMain,
+                            color: colors.black,
                             position: "relative",
                             left: 10,
                         }}

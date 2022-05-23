@@ -78,7 +78,7 @@ const NodeSoftwareInfosDialog = ({
                             position: "relative",
                             left: 7,
                             justifyItems: "center",
-                            color: colors.primaryMain,
+                            color: colors.black,
                         }}
                     >
                         {closeBtnLabel}
