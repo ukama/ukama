@@ -68,14 +68,14 @@ type ReqGetNodeMfgStatus struct {
 
 type RespGetNodeMfgStatus struct {
 	Status     string           `json:"node_status"`
-	ProdReport *json.RawMessage `form:"mfgReport" json:"mfgReport"`
+	ProdReport *json.RawMessage `form:"mfgReport" json:"mfg_report"`
 }
 
 type ReqUpdateNodeMfgStatus struct {
 	NodeID        string           `query:"node" validate:"required"`
 	LookingTo     string           `query:"looking_to" validate:"eq=mfg_status_update,required"`
 	MfgTestStatus string           `form:"mfgTestStatus" json:"mfgTestStatus"`
-	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfgReport"` /* Report for mfg function test */
+	MfgReport     *json.RawMessage `form:"mfgReport" json:"mfg_report"` /* Report for mfg function test */
 	Status        string           `form:"status" json:"status"`
 }
 
@@ -120,7 +120,7 @@ type RespGetModuleList struct {
 
 type ReqGetModuleMfgStatusData struct {
 	ModuleID   string `query:"module" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"eq=status_info,required"`
+	LookingFor string `query:"looking_for" validate:"eq=mfg_status_info,required"`
 }
 
 type RespGetModuleMfgStatusData struct {
@@ -129,7 +129,7 @@ type RespGetModuleMfgStatusData struct {
 
 type ReqUpdateModuleMfgStatusData struct {
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"eq=status_update,required"`
+	LookingTo string `query:"looking_to" validate:"eq=mfg_status_update,required"`
 	Status    string `query:"status" json:"status"`
 }
 
@@ -174,5 +174,5 @@ type ReqAssignModuleToNode struct {
 
 type ReqUpdateModuleBootStrapCerts struct {
 	ModuleID  string `query:"module" validate:"required"`
-	LookingTo string `query:"looking_to" validate:"required"`
+	LookingTo string `query:"looking_to" validate:"eq=bootstrap_cert_delete,required"`
 }

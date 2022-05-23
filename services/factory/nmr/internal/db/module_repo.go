@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	MODULE_ID_CLAUSE = "module_id = ?"
+)
+
 type ModuleRepo interface {
 	AddModule(module *Module) error
 	UpsertModule(Module *Module) error
@@ -56,11 +60,7 @@ func NewModuleRepo(db sql.Db) *moduleRepo {
 	}
 }
 
-/* Only done when in mfg line when node Id is yet to be decided.
-TODO: Get better solutuion */
 func (r *moduleRepo) AddModule(module *Module) error {
-
-	//result := r.Db.GetGormDb().Select("module_id", "type", "part_number", "hw_version", "mac", "sw_version", "p_sw_version", "mfg_date", "mfg_name", "mfg_test_status", "mfg_report", "bootstrap_certs", "user_calibration", "factory_calibration", "user_config", "factory_config", "inventory_data", "unit_id").Create(module)
 	result := r.Db.GetGormDb().Create(module)
 	if result.Error != nil {
 		return result.Error
@@ -79,7 +79,7 @@ func (r *moduleRepo) UpsertModule(Module *Module) error {
 
 func (r *moduleRepo) GetModule(ModuleId string) (*Module, error) {
 	var Module Module
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Module, "module_id = ?", ModuleId)
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&Module, MODULE_ID_CLAUSE, ModuleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -88,7 +88,7 @@ func (r *moduleRepo) GetModule(ModuleId string) (*Module, error) {
 
 func (r *moduleRepo) UpdateNodeId(moduleId string, nodeId string) error {
 	module := Module{}
-	result := r.Db.GetGormDb().Model(&module).Where("module_id = ?", moduleId).UpdateColumn("unit_id", nodeId)
+	result := r.Db.GetGormDb().Model(&module).Where(MODULE_ID_CLAUSE, moduleId).UpdateColumn("unit_id", nodeId)
 	if result.Error != nil {
 		logrus.Errorf("This error ss %+v", result)
 		return result.Error
@@ -98,7 +98,7 @@ func (r *moduleRepo) UpdateNodeId(moduleId string, nodeId string) error {
 
 /* Delete Module with module Ip permanently  */
 func (r *moduleRepo) DeleteModule(moduleId string) error {
-	result := r.Db.GetGormDb().Unscoped().Where("module_id = ?", moduleId).Delete(&Module{})
+	result := r.Db.GetGormDb().Unscoped().Where(MODULE_ID_CLAUSE, moduleId).Delete(&Module{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -124,7 +124,7 @@ func (r *moduleRepo) ListModules() (*[]Module, error) {
 /* Read module mfg status */
 func (r *moduleRepo) GetModuleMfgStatus(moduleId string) (*MfgStatus, error) {
 	var module Module
-	result := r.Db.GetGormDb().Select("status").First(&module, "module_id = ?", moduleId)
+	result := r.Db.GetGormDb().Select("status").First(&module, MODULE_ID_CLAUSE, moduleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -143,7 +143,7 @@ func (r *moduleRepo) UpdateModuleMfgStatus(moduleId string, status MfgStatus) er
 		Status: string(status),
 	}
 
-	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumns(module)
+	result := r.Db.GetGormDb().Model(&Module{}).Where(MODULE_ID_CLAUSE, moduleId).UpdateColumns(module)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -166,13 +166,7 @@ func (r *moduleRepo) GetModuleMfgData(moduleId string) (*Module, error) {
 func (r *moduleRepo) GetModuleMfgField(moduleId string, columnName string) (*Module, error) {
 	var module Module
 
-	// columnName, err := GetModuleDataFieldName(field)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	//result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).Pluck(*columnName, &data)
-	result := r.Db.GetGormDb().Select(columnName).First(&module, "module_id = ?", moduleId)
+	result := r.Db.GetGormDb().Select(columnName).First(&module, MODULE_ID_CLAUSE, moduleId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -183,7 +177,7 @@ func (r *moduleRepo) GetModuleMfgField(moduleId string, columnName string) (*Mod
 /* Update Module Mfg field data */
 func (r *moduleRepo) UpdateModuleMfgField(moduleId string, field string, module Module) error {
 
-	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumns(&module)
+	result := r.Db.GetGormDb().Model(&Module{}).Where(MODULE_ID_CLAUSE, moduleId).UpdateColumns(&module)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -202,7 +196,7 @@ func (r *moduleRepo) UpdateModuleBootstrapCert(moduleData *Module) error {
 
 /* Update Production Bootstrap Cert*/
 func (r *moduleRepo) DeleteBootstrapCert(moduleId string) error {
-	result := r.Db.GetGormDb().Model(&Module{}).Where("module_id = ?", moduleId).UpdateColumn("bootstrap_certs", nil)
+	result := r.Db.GetGormDb().Model(&Module{}).Where(MODULE_ID_CLAUSE, moduleId).UpdateColumn("bootstrap_certs", nil)
 	if result.Error != nil {
 		return result.Error
 	}

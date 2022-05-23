@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/services/factory/nmr
 
-go 1.17
+go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../common
 
@@ -10,6 +10,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/gin-contrib/cors v1.3.0
 	github.com/gin-gonic/gin v1.7.7
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
@@ -28,7 +29,6 @@ require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
-	github.com/go-resty/resty/v2 v2.7.0 // indirect
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.3.0 // indirect
