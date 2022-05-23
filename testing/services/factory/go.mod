@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/testing/services/factory
 
-go 1.18
+go 1.17
 
 replace github.com/ukama/ukama/services/common => ../../../services/common
 
