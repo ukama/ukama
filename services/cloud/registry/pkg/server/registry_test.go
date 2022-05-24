@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
+	"testing"
+
 	mocks "github.com/ukama/ukama/services/cloud/registry/mocks"
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukama/services/cloud/registry/pkg/db"
-	"testing"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -250,7 +251,7 @@ func Test_toDbNodeType(t *testing.T) {
 			want:   db.NodeTypeHome,
 		},
 		{
-			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_COMPNODE),
+			nodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE),
 			want:   db.NodeTypeTower,
 		},
 		{

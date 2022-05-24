@@ -189,7 +189,7 @@ func toDbNodeType(nodeType string) db2.NodeType {
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_AMPNODE:
 		return db2.NodeTypeAmplifier
-	case ukama.NODE_ID_TYPE_COMPNODE:
+	case ukama.NODE_ID_TYPE_TOWERNODE:
 		return db2.NodeTypeTower
 	case ukama.NODE_ID_TYPE_HOMENODE:
 		return db2.NodeTypeHome
