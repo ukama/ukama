@@ -1,12 +1,12 @@
 package config
 
 import (
+	cors "github.com/gin-contrib/cors"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/ukama/ukama/services/common/rest"
-	cors "github.com/gin-contrib/cors"
 )
 
 // Common properties for all configs.
@@ -123,17 +123,6 @@ func DefaultMetrics() *Metrics {
 	}
 }
 
-func DefaultDatabase() Database {
-	return Database{
-		Host:       "localhost",
-		Password:   "Pass2020!",
-		DbName:     "dummydb",
-		Username:   "postgres",
-		Port:       5432,
-		SslEnabled: false,
-	}
-}
-
 func DefaultDatabaseName(name string) Database {
 	return Database{
 		Host:       "localhost",
@@ -156,7 +145,7 @@ func DefaultHTTPConfig() rest.HttpConfig {
 
 func DefaultForwardConfig() Forward {
 	return Forward{
-		Ip: "localhost",
+		Ip:   "localhost",
 		Port: 8080,
 		Path: "/",
 	}

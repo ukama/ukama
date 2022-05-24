@@ -29,7 +29,7 @@ type Debug struct {
 
 func NewConfig() *Config {
 	return &Config{
-		DB: config.DefaultDatabase(),
+		DB: config.DefaultDatabaseName(ServiceName),
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
