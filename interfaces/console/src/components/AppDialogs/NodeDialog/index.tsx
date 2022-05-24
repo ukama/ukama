@@ -294,10 +294,7 @@ const NodeDialog = ({
                 </Grid>
             </DialogContent>
             <DialogActions>
-                <Button
-                    sx={{ color: colors.black, mr: 2 }}
-                    onClick={handleClose}
-                >
+                <Button sx={{ mr: 2 }} onClick={handleClose}>
                     Cancel
                 </Button>
                 <Button

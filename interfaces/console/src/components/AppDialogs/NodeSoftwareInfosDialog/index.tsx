@@ -75,10 +75,10 @@ const NodeSoftwareInfosDialog = ({
                         onClick={() => handleClose()}
                         sx={{
                             mr: 2,
-                            position: "relative",
                             left: 7,
+                            position: "relative",
                             justifyItems: "center",
-                            color: colors.black,
+                            color: colors.primaryMain,
                         }}
                     >
                         {closeBtnLabel}

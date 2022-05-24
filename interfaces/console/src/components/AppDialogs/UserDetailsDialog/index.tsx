@@ -278,7 +278,6 @@ const UserDetailsDialog = ({
                             sx={{
                                 mr: 2,
                                 justifyItems: "center",
-                                color: colors.black,
                             }}
                         >
                             {closeBtnLabel}

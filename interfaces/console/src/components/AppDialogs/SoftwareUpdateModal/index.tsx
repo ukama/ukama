@@ -108,7 +108,6 @@ const SoftwareUpdateModal = ({
                     <Button
                         onClick={handleClose}
                         sx={{
-                            color: colors.black,
                             marginRight: 3,
                         }}
                     >

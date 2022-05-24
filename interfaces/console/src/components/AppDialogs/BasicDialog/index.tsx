@@ -64,7 +64,7 @@ const BasicDialog = ({
                     {labelNegativeBtn && (
                         <Button
                             variant="text"
-                            sx={{ color: colors.black }}
+                            color={"primary"}
                             onClick={handleCloseAction}
                         >
                             {labelNegativeBtn}

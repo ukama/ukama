@@ -93,13 +93,13 @@ const NodeAppDetailsDialog = ({
                 </DialogContent>
                 <DialogActions sx={{ padding: 0 }}>
                     <Button
-                        onClick={() => handleClose()}
                         sx={{
                             mr: 2,
-                            color: colors.black,
-                            position: "relative",
                             left: 10,
+                            position: "relative",
+                            color: colors.primaryMain,
                         }}
+                        onClick={() => handleClose()}
                     >
                         {closeBtnLabel}
                     </Button>
