@@ -766,8 +766,8 @@ const Home = () => {
             addUser({
                 variables: {
                     data: {
-                        email: eSimData.email as string,
-                        name: eSimData.name as string,
+                        email: eSimData.email,
+                        name: eSimData.name,
                         status: eSimData.status || true,
                         phone: "",
                     },
@@ -780,8 +780,8 @@ const Home = () => {
             addUser({
                 variables: {
                     data: {
-                        email: physicalSimData.email as string,
-                        name: physicalSimData.name as string,
+                        email: physicalSimData.email,
+                        name: physicalSimData.name,
                         status: physicalSimData.status || true,
                         phone: "",
                     },

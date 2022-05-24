@@ -220,8 +220,8 @@ const User = () => {
             addUser({
                 variables: {
                     data: {
-                        email: eSimData.email as string,
-                        name: eSimData.name as string,
+                        email: eSimData.email,
+                        name: eSimData.name,
                         status: eSimData.status || false,
                         phone: "",
                     },
@@ -234,8 +234,8 @@ const User = () => {
             addUser({
                 variables: {
                     data: {
-                        email: physicalSimData.email as string,
-                        name: physicalSimData.name as string,
+                        email: physicalSimData.email,
+                        name: physicalSimData.name,
                         status: physicalSimData.status || false,
                         phone: "",
                     },
