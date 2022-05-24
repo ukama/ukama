@@ -18,7 +18,6 @@ import {
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
 } from "../../generated";
-import { TObject } from "../../types";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
@@ -58,6 +57,7 @@ const User = () => {
     ] = useAddUserMutation({
         onCompleted: () => {
             setIsEsimAdded(true);
+            refetchResidents();
         },
         onError: () => {
             setUserNotification({
@@ -135,17 +135,20 @@ const User = () => {
         },
     });
 
-    const { data: usersRes, loading: usersByOrgLoading } =
-        useGetUsersByOrgQuery({
-            onCompleted: res => {
-                setUsers(res.getUsersByOrg);
-                getUsersDataUsage({
-                    variables: {
-                        data: { ids: res.getUsersByOrg.map(u => u.id) },
-                    },
-                });
-            },
-        });
+    const {
+        data: usersRes,
+        loading: usersByOrgLoading,
+        refetch: refetchResidents,
+    } = useGetUsersByOrgQuery({
+        onCompleted: res => {
+            setUsers(res.getUsersByOrg);
+            getUsersDataUsage({
+                variables: {
+                    data: { ids: res.getUsersByOrg.map(u => u.id) },
+                },
+            });
+        },
+    });
 
     const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
         onCompleted: res => {

@@ -60,7 +60,7 @@ import {
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
-import { TMetric, TObject } from "../../types";
+import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -148,6 +148,7 @@ const Home = () => {
     ] = useAddUserMutation({
         onCompleted: () => {
             setIsEsimAdded(true);
+            refetchResidents();
         },
         onError: () => {
             setNodeToastNotification({

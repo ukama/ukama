@@ -109,8 +109,8 @@ const Userform = ({ handleEsimInstallation, description }: IUserform) => {
                                 <Switch
                                     size="small"
                                     value="active"
-                                    checked={roaming}
-                                    onChange={e => setRoaming(e.target.checked)}
+                                    checked={status}
+                                    onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
                             <Stack direction="row" justifyContent="flex-end">
