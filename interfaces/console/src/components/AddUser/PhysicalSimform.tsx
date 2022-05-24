@@ -26,14 +26,14 @@ const PhysicalSimform = ({
     description,
     handlePhysicalSimInstallation,
 }: IPhysicalSimform) => {
-    const [roaming, setRoaming] = useState(false);
+    const [status, setStatus] = useState<boolean>(false);
     const gclasses = globalUseStyles();
     return (
         <Formik
             validationSchema={physicalSimFormSchema}
             initialValues={initialePhysicalSimFormValue}
             onSubmit={async values =>
-                handlePhysicalSimInstallation({ ...values, roaming })
+                handlePhysicalSimInstallation({ ...values, status })
             }
         >
             {({
@@ -116,8 +116,8 @@ const PhysicalSimform = ({
                                 <Switch
                                     size="small"
                                     value="active"
-                                    checked={roaming}
-                                    onChange={e => setRoaming(e.target.checked)}
+                                    checked={status}
+                                    onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
                             <Stack direction="row" justifyContent="flex-end">

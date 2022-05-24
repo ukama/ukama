@@ -64,7 +64,7 @@ func (n *NMR) SendRestAPIReq(query map[string]string, body ...interface{}) error
 func (n *NMR) NmrAddModule(module internal.Module) error {
 	query := map[string]string{
 		"module":     string(module.ModuleID),
-		"looking_to": "update_module",
+		"looking_to": "update",
 	}
 
 	err := n.SendRestAPIReq(query, module)
@@ -97,7 +97,7 @@ func (n *NMR) NmrAssignModule(nodeID string, moduleID string) error {
 func (n *NMR) NmrAddNode(node internal.Node) error {
 	query := map[string]string{
 		"node":       string(node.NodeID),
-		"looking_to": "update_node",
+		"looking_to": "update",
 	}
 
 	err := n.SendRestAPIReq(query, node)
@@ -129,7 +129,7 @@ func (n *NMR) NmrAddNode(node internal.Node) error {
 func (n *NMR) NmrUpdateNodeStatus(nodeID string, status string) error {
 	query := map[string]string{
 		"node":       nodeID,
-		"looking_to": "update_status",
+		"looking_to": "status_update",
 		"status":     status,
 	}
 

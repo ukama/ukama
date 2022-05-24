@@ -57,10 +57,10 @@ func (r *Router) Run(close chan error) {
 }
 
 func (r *Router) init() {
-	org := r.fizz.Group("/orgs/", "Org", "Organizaton")
+	org := r.fizz.Group("/orgs", "Org", "Organizaton")
 	org.POST("", nil, tonic.Handler(r.addOrgHandler, http.StatusOK))
-	org.GET("node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
-	org.POST("node", nil, tonic.Handler(r.postNodeHandler, http.StatusOK))
+	org.GET("/node", nil, tonic.Handler(r.getNodeHandler, http.StatusOK))
+	org.POST("/node", nil, tonic.Handler(r.postNodeHandler, http.StatusOK))
 
 }
 

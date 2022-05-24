@@ -1,8 +1,8 @@
 include ../../config.mk
 
-.PHONY: build lint deps 
+.PHONY: integration.test test build lint deps 
 
-build:
+build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
 	env CGO_ENABLED=0 go build -ldflags='-X github.com/ukama/ukama/services/bootstrap/bootstrap/cmd/version.Version=$(BIN_VER) -extldflags=-static' -o bin/bootstrap cmd/bootstrap/main.go
 
@@ -21,7 +21,7 @@ gen:
 	mockery --all --recursive --dir ./pkg
 
 clean:
-	rm pb/gen/*.go
+	rm -rf bin
 
 
 # integration tests

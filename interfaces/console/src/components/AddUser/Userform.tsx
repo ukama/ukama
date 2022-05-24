@@ -24,14 +24,14 @@ const initialeEsimFormValue = {
 
 const Userform = ({ handleEsimInstallation, description }: IUserform) => {
     const gclasses = globalUseStyles();
-    const [roaming, setRoaming] = useState(false);
+    const [status, setStatus] = useState<boolean>(false);
 
     return (
         <Formik
             validationSchema={eSimFormSchema}
             initialValues={initialeEsimFormValue}
             onSubmit={async values =>
-                handleEsimInstallation({ ...values, roaming })
+                handleEsimInstallation({ ...values, status })
             }
         >
             {({
@@ -109,8 +109,8 @@ const Userform = ({ handleEsimInstallation, description }: IUserform) => {
                                 <Switch
                                     size="small"
                                     value="active"
-                                    checked={roaming}
-                                    onChange={e => setRoaming(e.target.checked)}
+                                    checked={status}
+                                    onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
                             <Stack direction="row" justifyContent="flex-end">

@@ -40,11 +40,11 @@ func (w *Worker) WorkOnBuildOrder(ntype string, count int) ([]string, error) {
 
 		var node internal.Node
 		switch ntype {
-		case ukama.NODE_ID_TYPE_HOMENODE, "hnode":
+		case ukama.NODE_ID_TYPE_HOMENODE:
 			node = NewHNode()
-		case ukama.NODE_ID_TYPE_TOWERNODE, "tnode":
+		case ukama.NODE_ID_TYPE_TOWERNODE:
 			node = NewTNode()
-		case ukama.NODE_ID_TYPE_AMPNODE, "anode":
+		case ukama.NODE_ID_TYPE_AMPNODE:
 			node = NewANode()
 		default:
 			return nodeList, fmt.Errorf("unkown node type %s", ntype)

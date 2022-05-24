@@ -1,16 +1,16 @@
 import {
+    useRecoilState,
+    useRecoilValue,
+    useSetRecoilState,
+    useResetRecoilState,
+} from "recoil";
+import {
     user,
     pageName,
     isDarkmode,
     snackbarMessage,
     isSkeltonLoading,
 } from "./recoil";
-import {
-    useRecoilState,
-    useRecoilValue,
-    useSetRecoilState,
-    useResetRecoilState,
-} from "recoil";
 import { theme } from "./theme";
 import { useEffect } from "react";
 import Router from "./router/Router";
@@ -19,8 +19,8 @@ import { routes } from "./router/config";
 import { ApolloProvider } from "@apollo/client";
 import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
-import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 import { doesHttpOnlyCookieExist, getTitleFromPath } from "./utils";
+import { Alert, AlertColor, CssBaseline, Snackbar } from "@mui/material";
 
 const SNACKBAR_TIMEOUT = 5000;
 
@@ -30,8 +30,8 @@ const App = () => {
     const _isDarkMod = useRecoilValue(isDarkmode);
     const [_snackbarMessage, setSnackbarMessage] =
         useRecoilState(snackbarMessage);
-    const resetPageName = useResetRecoilState(pageName);
     const resetData = useResetRecoilState(user);
+    const resetPageName = useResetRecoilState(pageName);
     const setSkeltonLoading = useSetRecoilState(isSkeltonLoading);
 
     useEffect(() => {
@@ -48,26 +48,27 @@ const App = () => {
                 doesHttpOnlyCookieExist("ukama_session")
             ) {
                 setPage(getTitleFromPath(window.location.pathname));
-                setSkeltonLoading(false);
             } else if (
                 !doesHttpOnlyCookieExist("id") &&
                 doesHttpOnlyCookieExist("ukama_session")
             ) {
-                setSkeltonLoading(true);
                 resetData();
                 resetPageName();
                 window.location.replace(
                     `${process.env.REACT_APP_AUTH_URL}/logout`
                 );
-            }
-        } else {
-            setSkeltonLoading(true);
-            setPage("Home");
-            handleGoToLogin();
-        }
+            } else if (
+                doesHttpOnlyCookieExist("id") &&
+                !doesHttpOnlyCookieExist("ukama_session")
+            )
+                handleGoToLogin();
+        } else handleGoToLogin();
+
+        setSkeltonLoading(false);
     }, []);
 
     const handleGoToLogin = () => {
+        setPage("Home");
         window.location.replace(process.env.REACT_APP_AUTH_URL || "");
     };
 

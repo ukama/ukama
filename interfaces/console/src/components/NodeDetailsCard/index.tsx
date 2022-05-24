@@ -2,10 +2,12 @@ import { LoadingWrapper } from "..";
 import colors from "../../theme/colors";
 import DeviceModalView from "../DeviceModalView";
 import { Chip, Paper, Stack, Typography, Link, Grid } from "@mui/material";
+import { Node_Type } from "../../generated";
 
 interface INodeDetailsCard {
     loading: boolean;
     nodeTitle: string;
+    nodeType?: Node_Type;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     getNodeUpdateInfos: Function;
@@ -16,6 +18,7 @@ const NodeDetailsCard = ({
     nodeTitle,
     isUpdateAvailable,
     getNodeUpdateInfos,
+    nodeType = Node_Type.Home,
 }: INodeDetailsCard) => {
     return (
         <LoadingWrapper
@@ -44,37 +47,34 @@ const NodeDetailsCard = ({
                                         border: `1px solid ${colors.primaryMain}`,
                                     }}
                                     label={
-                                        <>
-                                            <Stack
-                                                spacing={"4px"}
-                                                direction="row"
-                                                alignItems="center"
+                                        <Stack
+                                            spacing={"4px"}
+                                            direction="row"
+                                            alignItems="center"
+                                        >
+                                            <Typography variant="body2">
+                                                Software update available — view
+                                            </Typography>
+                                            <Link
+                                                onClick={() =>
+                                                    getNodeUpdateInfos()
+                                                }
+                                                sx={{
+                                                    cursor: "pointer",
+                                                    typography: "body2",
+                                                    color: colors.primaryDark,
+                                                }}
                                             >
-                                                <Typography variant="body2">
-                                                    Software update available —
-                                                    view
-                                                </Typography>
-                                                <Link
-                                                    onClick={() =>
-                                                        getNodeUpdateInfos()
-                                                    }
-                                                    sx={{
-                                                        cursor: "pointer",
-                                                        typography: "body2",
-                                                        color: colors.primaryDark,
-                                                    }}
-                                                >
-                                                    notes
-                                                </Link>
-                                            </Stack>
-                                        </>
+                                                notes
+                                            </Link>
+                                        </Stack>
                                     }
                                 />
                             </Grid>
                         )}
                     </Grid>
 
-                    <DeviceModalView />
+                    <DeviceModalView nodeType={nodeType} />
                 </Stack>
             </Paper>
         </LoadingWrapper>

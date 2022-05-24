@@ -192,7 +192,7 @@ func TestPostOrgRoute(t *testing.T) {
 	r := NewRouter(defaultCongif, nil, nil, orgRepo, true).fizz.Engine()
 
 	// act
-	query := "/orgs/?looking_to=add_org&org=" + orgName
+	query := "/orgs?looking_to=add_org&org=" + orgName
 	req, _ := http.NewRequest("POST", query,
 		strings.NewReader(fmt.Sprintf(`{
 				"certificate":"%s",
@@ -252,7 +252,7 @@ func TestPostOrgRouteOrgValidation(t *testing.T) {
 			r := NewRouter(defaultCongif, nil, nil, nil, true).fizz.Engine()
 
 			// act
-			query := "/orgs/?looking_to=add_org&org=" + orgName
+			query := "/orgs?looking_to=add_org&org=" + orgName
 			req, _ := http.NewRequest("POST", query,
 				strings.NewReader(test.request))
 

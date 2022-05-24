@@ -18,31 +18,33 @@ import {
     NodeDto,
     Node_Type,
     Org_Node_State,
+    useAddNodeMutation,
     useGetNodeAppsQuery,
+    useGetNodeLazyQuery,
+    useGetNodeStatusQuery,
     useGetNodesByOrgLazyQuery,
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
-    useAddNodeMutation,
-    useGetNodeLazyQuery,
-    useGetNodeStatusQuery,
 } from "../../generated";
-import { TMetric } from "../../types";
-import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
-    getMetricObjectByKey,
     getMetricPayload,
     getMetricsInitObj,
+    getMetricObjectByKey,
 } from "../../utils";
-import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+import Fab from "@mui/material/Fab";
+import { TMetric } from "../../types";
+import { globalUseStyles } from "../../styles";
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
-import { NodePageTabs, NODE_ACTIONS } from "../../constants";
-import Fab from "@mui/material/Fab";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { globalUseStyles } from "../../styles";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import { isSkeltonLoading, snackbarMessage } from "../../recoil";
+
 let abortController = new AbortController();
+
 const NODE_INIT = {
     type: "HOME",
     name: "",
@@ -58,7 +60,7 @@ const Nodes = () => {
             tab: selectedTab,
             regPolling: false,
             nodeId: nodeId,
-            to: Math.floor(Date.now() / 1000) - 15,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
             nodeType: selectedNode?.type || Node_Type.Home,
         });
@@ -181,6 +183,7 @@ const Nodes = () => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = getMetricsInitObj();
                 setIsMetricPolling(true);
+
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!metrics[element.type]) {
                         _m[element.type] = {
@@ -432,7 +435,10 @@ const Nodes = () => {
                         <NodeStatus
                             onAddNode={onAddNode}
                             loading={
-                                isLoading || nodesLoading || registerNodeLoading
+                                isLoading ||
+                                nodesLoading ||
+                                registerNodeLoading ||
+                                skeltonLoading
                             }
                             handleNodeActionClick={handleNodeActioOptionClicked}
                             selectedNode={selectedNode}
@@ -487,6 +493,7 @@ const Nodes = () => {
                                 handleUpdateNode={handleUpdateNode}
                                 nodeGroupData={getNodeData?.getNode}
                                 onNodeSelected={onNodeSelectedFromGroup}
+                                uptime={getNodeStatusData?.getNodeStatus.uptime}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 loading={
                                     isLoading || nodesLoading || !selectedNode

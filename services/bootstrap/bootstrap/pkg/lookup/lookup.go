@@ -34,7 +34,7 @@ func NewLookUp(svcR *sr.ServiceRouter) *LookUp {
 func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOrgCredentials, error) {
 	logrus.Tracef("Credential request for node %s", nodeid)
 	credResp := &RespOrgCredentials{}
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &rest.ErrorResponse{}
 	resp, err := L.S.C.R().
 		SetResult(credResp).
 		SetError(errStatus).
@@ -51,8 +51,8 @@ func (L *LookUp) LookupRequestOrgCredentialForNode(nodeid string) (bool, *RespOr
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Tracef("Failed to look credentials for nodeid %s. HTTP resp code %d and error %s", nodeid, resp.StatusCode(), errStatus.Message)
-		return false, nil, fmt.Errorf("failed to get credentials: %s", errStatus.Message)
+		logrus.Tracef("Failed to look credentials for nodeid %s. HTTP resp code %d and error %s", nodeid, resp.StatusCode(), errStatus.Error)
+		return false, nil, fmt.Errorf("failed to get credentials: %s", errStatus.Error)
 	}
 
 	logrus.Debugf("Credentials for node are %+v.", credResp)

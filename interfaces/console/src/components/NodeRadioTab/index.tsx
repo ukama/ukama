@@ -2,6 +2,8 @@ import { useState } from "react";
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexLineChart } from "..";
+
+const PLACEHOLDER_VALUE = "NA";
 interface INodeRadioTab {
     metrics: any;
     loading: boolean;
@@ -22,19 +24,19 @@ const NodeRadioTab = ({ loading, metrics }: INodeRadioTab) => {
                     onCollapse={handleCollapse}
                 >
                     <NodeStatItem
-                        value={"NNN"}
+                        value={PLACEHOLDER_VALUE}
                         variant={"large"}
                         name={"TX Power"}
                         nameInfo={TooltipsText.TXPOWER}
                     />
                     <NodeStatItem
-                        value={"NNN"}
+                        value={PLACEHOLDER_VALUE}
                         variant={"large"}
                         name={"RX Power"}
                         nameInfo={TooltipsText.RXPOWER}
                     />
                     <NodeStatItem
-                        value={"NNN"}
+                        value={PLACEHOLDER_VALUE}
                         name={"PA Power"}
                         variant={"large"}
                         nameInfo={TooltipsText.PAPOWER}

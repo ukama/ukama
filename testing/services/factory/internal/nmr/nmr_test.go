@@ -199,8 +199,8 @@ func Test_NmrAddNode(t *testing.T) {
 		Status:        "StatusLabelGenerated",
 	}
 
-	nodeEp := Url + "/service?looking_to=update_node&node=" + nodeId.String()
-	moduleEp := Url + "/service?looking_to=update_module&module=" + moduleId.String()
+	nodeEp := Url + "/service?looking_to=update&node=" + nodeId.String()
+	moduleEp := Url + "/service?looking_to=update&module=" + moduleId.String()
 	moduleAllocateEP := Url + "/service?looking_to=allocate&module=" + moduleId.String() + "&node=" + nodeId.String()
 
 	defer httpmock.DeactivateAndReset()
@@ -250,7 +250,7 @@ func Test_NmrAddNodeFail(t *testing.T) {
 		Status:        "StatusLabelGenerated",
 	}
 
-	nodeEp := Url + "/service?looking_to=update_node&node=" + nodeId.String()
+	nodeEp := Url + "/service?looking_to=update&node=" + nodeId.String()
 
 	defer httpmock.DeactivateAndReset()
 
@@ -299,8 +299,8 @@ func Test_NmrAddNodeModuleFail(t *testing.T) {
 		Status:        "StatusLabelGenerated",
 	}
 
-	nodeEp := Url + "/service?looking_to=update_node&node=" + nodeId.String()
-	moduleEp := Url + "/service?looking_to=update_module&module=" + moduleId.String()
+	nodeEp := Url + "/service?looking_to=update&node=" + nodeId.String()
+	moduleEp := Url + "/service?looking_to=update&module=" + moduleId.String()
 
 	defer httpmock.DeactivateAndReset()
 
@@ -350,8 +350,8 @@ func Test_NmrAddNodeModuleAllocationFail(t *testing.T) {
 		Status:        "StatusLabelGenerated",
 	}
 
-	nodeEp := Url + "/service?looking_to=update_node&node=" + nodeId.String()
-	moduleEp := Url + "/service?looking_to=update_module&module=" + moduleId.String()
+	nodeEp := Url + "/service?looking_to=update&node=" + nodeId.String()
+	moduleEp := Url + "/service?looking_to=update&module=" + moduleId.String()
 	moduleAllocateEP := Url + "/service?looking_to=allocate&module=" + moduleId.String() + "&node=" + nodeId.String()
 
 	defer httpmock.DeactivateAndReset()

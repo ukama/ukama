@@ -1,19 +1,19 @@
+import {
+    Grid,
+    Card,
+    styled,
+    Tooltip,
+    Divider,
+    Typography,
+    IconButton,
+} from "@mui/material";
 import React from "react";
 import { LoadingWrapper } from "..";
-import OptionsPopover from "../OptionsPopover";
-import { BASIC_MENU_ACTIONS } from "../../constants";
-import UsersIcon from "@mui/icons-material/PeopleAlt";
-import {
-    Typography,
-    Grid,
-    Divider,
-    styled,
-    Card,
-    IconButton,
-    Tooltip,
-} from "@mui/material";
-import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
 import { Node_Type } from "../../generated";
+import OptionsPopover from "../OptionsPopover";
+import UsersIcon from "@mui/icons-material/PeopleAlt";
+import { BASIC_MENU_ACTIONS, NODE_IMAGES } from "../../constants";
+import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
 
 const CpuIcon = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -35,13 +35,6 @@ const Line = styled(Divider)(() => ({
     margin: "18px -18px 4px -18px",
     background: "rgba(255, 255, 255, 0.12)",
 }));
-
-const NODE_IMAGES = {
-    TOWER: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png",
-    AMPLIFIER:
-        "https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png",
-    HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
-};
 
 const IconStyle = {
     display: "flex",

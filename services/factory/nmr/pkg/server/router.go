@@ -24,6 +24,9 @@ import (
 const (
 	NodePath   = "/node"
 	ModulePath = "/module"
+	Status     = "/status"
+	MfgField   = "/field"
+	MfgStatus  = "/mfgstatus"
 )
 
 type Router struct {
@@ -61,25 +64,25 @@ func NewRouter(config *pkg.Config, svcR *sr.ServiceRouter, nodeRepo db.NodeRepo,
 
 func (r *Router) init() {
 	node := r.fizz.Group(NodePath, "Node", "Node related operations")
-	node.GET("/", nil, tonic.Handler(r.GetNodeHandler, http.StatusOK))
-	node.PUT("/", nil, tonic.Handler(r.PutNodeHandler, http.StatusCreated))
-	node.DELETE("/", nil, tonic.Handler(r.DeleteNodeHandler, http.StatusOK))
-	node.GET("/status", nil, tonic.Handler(r.GetNodeStatusHandler, http.StatusOK))
-	node.PUT("/status", nil, tonic.Handler(r.PutNodeStatusHandler, http.StatusOK))
-	node.PUT("/mfgstatus", nil, tonic.Handler(r.PutNodeMfgTestStatusHandler, http.StatusOK))
-	node.GET("/mfgstatus", nil, tonic.Handler(r.GetNodeMfgTestStatusHandler, http.StatusOK))
+	node.GET("", nil, tonic.Handler(r.GetNodeHandler, http.StatusOK))
+	node.PUT("", nil, tonic.Handler(r.PutNodeHandler, http.StatusCreated))
+	node.DELETE("", nil, tonic.Handler(r.DeleteNodeHandler, http.StatusOK))
+	node.GET(Status, nil, tonic.Handler(r.GetNodeStatusHandler, http.StatusOK))
+	node.PUT(Status, nil, tonic.Handler(r.PutNodeStatusHandler, http.StatusOK))
+	node.PUT(MfgStatus, nil, tonic.Handler(r.PutNodeMfgTestStatusHandler, http.StatusOK))
+	node.GET(MfgStatus, nil, tonic.Handler(r.GetNodeMfgTestStatusHandler, http.StatusOK))
 	node.GET("/all", nil, tonic.Handler(r.GetNodeListHandler, http.StatusOK))
 
 	module := r.fizz.Group(ModulePath, "Module", "Module related operations")
-	module.GET("/", nil, tonic.Handler(r.GetModuleHandler, http.StatusOK))
-	module.PUT("/", nil, tonic.Handler(r.PutModuleHandler, http.StatusCreated))
-	module.DELETE("/", nil, tonic.Handler(r.DeleteModuleHandler, http.StatusOK))
+	module.GET("", nil, tonic.Handler(r.GetModuleHandler, http.StatusOK))
+	module.PUT("", nil, tonic.Handler(r.PutModuleHandler, http.StatusCreated))
+	module.DELETE("", nil, tonic.Handler(r.DeleteModuleHandler, http.StatusOK))
 	module.GET("/all", nil, tonic.Handler(r.GetModuleListHandler, http.StatusOK))
 	module.PUT("/assign", nil, tonic.Handler(r.PutAssignModuleToNode, http.StatusOK))
-	module.GET("/status", nil, tonic.Handler(r.GetModuleMfgStatusHandler, http.StatusOK))
-	module.PUT("/status", nil, tonic.Handler(r.PutModuleMfgStatusHandler, http.StatusOK))
-	module.GET("/field", nil, tonic.Handler(r.GetModuleMfgFieldHandler, http.StatusOK))
-	module.PUT("/field", nil, tonic.Handler(r.PutModuleMfgFieldHandler, http.StatusOK))
+	module.GET(Status, nil, tonic.Handler(r.GetModuleMfgStatusHandler, http.StatusOK))
+	module.PUT(Status, nil, tonic.Handler(r.PutModuleMfgStatusHandler, http.StatusOK))
+	module.GET(MfgField, nil, tonic.Handler(r.GetModuleMfgFieldHandler, http.StatusOK))
+	module.PUT(MfgField, nil, tonic.Handler(r.PutModuleMfgFieldHandler, http.StatusOK))
 	module.GET("/data", nil, tonic.Handler(r.GetModuleMfgDataHandler, http.StatusOK))
 	module.DELETE("/bootstrapcerts", nil, tonic.Handler(r.DeleteBootstrapCertsHandler, http.StatusOK))
 
@@ -488,6 +491,29 @@ func (r *Router) GetModuleMfgDataHandler(c *gin.Context, req *ReqGetModuleMfgDat
 	return resp, nil
 }
 
+func prepare_response(c **gin.Context, req *ReqGetModuleMfgField, data *[]byte) error {
+	r := *c
+	if data == nil {
+		return rest.HttpError{
+			HttpCode: http.StatusNoContent,
+			Message:  "No content found",
+		}
+	}
+
+	_, err := io.Copy(r.Writer, bytes.NewReader(*data))
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Artifact not found",
+		}
+	}
+
+	r.Header("Content-Type", "application/octet-stream")
+	r.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s%s", req.ModuleID, req.Field, ".file"))
+
+	return nil
+}
+
 /* Read specific mfg data */
 func (r *Router) GetModuleMfgFieldHandler(c *gin.Context, req *ReqGetModuleMfgField) error {
 	logrus.Debugf("Handling NMR get Module mfg field data request %+v.", req)
@@ -573,33 +599,11 @@ func (r *Router) GetModuleMfgFieldHandler(c *gin.Context, req *ReqGetModuleMfgFi
 		}
 		data = module.InventoryData
 
-	default:
-		return rest.HttpError{
-			HttpCode: http.StatusBadRequest,
-			Message:  "field type not supported",
-		}
-
 	}
 
-	if data == nil {
-		return rest.HttpError{
-			HttpCode: http.StatusNoContent,
-			Message:  "No content found",
-		}
-	}
+	err = prepare_response(&c, req, data)
 
-	_, err = io.Copy(c.Writer, bytes.NewReader(*data))
-	if err != nil {
-		return rest.HttpError{
-			HttpCode: http.StatusNotFound,
-			Message:  "Artifact not found",
-		}
-	}
-
-	c.Header("Content-Type", "application/octet-stream")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s-%s%s", req.ModuleID, req.Field, ".file"))
-
-	return nil
+	return err
 
 }
 
@@ -652,17 +656,6 @@ func (r *Router) PutModuleMfgFieldHandler(c *gin.Context) error {
 	case "factory_calibration":
 		columnName = "factory_calibration"
 		module.FactoryCalibration = &byteBody
-
-	// case "cloud_certs":
-	// 	columnName = "cloud_certs"
-	// 	module, err = r.moduleRepo.GetModuleMfgField(req.ModuleID, req.Field)
-	// 	if err != nil {
-	// 		return nil, rest.HttpError{
-	// 			HttpCode: http.StatusNotFound,
-	// 			Message:  err.Error(),
-	// 		}
-	// 	}
-	// 	data = module.CloudCerts
 
 	case "inventory_data":
 		columnName = "inventory_data"

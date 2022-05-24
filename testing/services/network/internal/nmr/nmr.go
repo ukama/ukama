@@ -30,7 +30,7 @@ func (n *NMR) NmrLookForNode(nodeID string) error {
 		"looking_for": "status_info",
 	}
 
-	errStatus := &rest.ErrorMessage{}
+	errStatus := &rest.ErrorResponse{}
 
 	var nodeResp = &RespGetNodeStatus{}
 
@@ -47,8 +47,8 @@ func (n *NMR) NmrLookForNode(nodeID string) error {
 	}
 
 	if !resp.IsSuccess() {
-		logrus.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Message)
-		return fmt.Errorf("NMR validation failure: %s", errStatus.Message)
+		logrus.Errorf("Failed to perform operation HTTP resp code %d and Error message is %s", resp.StatusCode(), errStatus.Error)
+		return fmt.Errorf("NMR validation failure: %s", errStatus.Error)
 	}
 
 	if nodeResp.Status != "StatusNodeIntransit" {

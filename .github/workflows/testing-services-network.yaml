@@ -81,7 +81,7 @@ jobs:
         projectBaseDir:  ${{ env.working-directory }}
         args: >
           -Dsonar.organization=ukama
-          -Dsonar.projectKey=ukama_testing_network
+          -Dsonar.projectKey=ukama_testing_services_network
           -Dsonar.projectName=${{ env.working-directory }}
           -Dsonar.go.coverage.reportPaths=coverage.out
           -Dsonar.test.exclusions=tests/**
@@ -109,7 +109,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.1.0
-        with:                
+        with:
+          args: --timeout=5m                
           working-directory: ${{ env.working-directory }}
 
 

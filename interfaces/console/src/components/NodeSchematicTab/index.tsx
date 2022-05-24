@@ -1,12 +1,14 @@
-import { Paper, Grid, Typography, Card, Stack } from "@mui/material";
-import { ContainerHeader } from "../../components";
 import { LoadingWrapper } from "..";
+import { ContainerHeader } from "../../components";
+import { Paper, Grid, Typography, Card, Stack, Box } from "@mui/material";
+
 type ISchematicsProps = {
     schematicsSpecsData?: any;
     getSearchValue: Function;
     nodeTitle: string | undefined;
     loading: boolean;
 };
+
 const NodeSchematicTab = ({
     schematicsSpecsData,
     getSearchValue,
@@ -72,9 +74,12 @@ const NodeSchematicTab = ({
                                                 borderRadius: "10px",
                                             }}
                                         >
-                                            <Stack direction="column">
+                                            <Stack
+                                                spacing={1}
+                                                direction="column"
+                                            >
                                                 <Typography
-                                                    variant="h4"
+                                                    variant="h6"
                                                     sx={{
                                                         fontSize: "16px",
                                                     }}
@@ -84,12 +89,23 @@ const NodeSchematicTab = ({
                                                 <Typography variant="caption">
                                                     {readingTime}
                                                 </Typography>
-                                                <img
-                                                    src="https://i.ibb.co/BgfbTsP/1835cf7a15bd359317e492f4ea67166a.png"
-                                                    alt="1835cf7a15bd359317e492f4ea67166a"
-                                                    width="300"
-                                                    height="160"
-                                                />
+                                                <Box
+                                                    component="div"
+                                                    sx={{
+                                                        width: "100%",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent:
+                                                            "center",
+                                                    }}
+                                                >
+                                                    <img
+                                                        src="https://i.ibb.co/BgfbTsP/1835cf7a15bd359317e492f4ea67166a.png"
+                                                        alt="1835cf7a15bd359317e492f4ea67166a"
+                                                        width="300"
+                                                        height="160"
+                                                    />
+                                                </Box>
                                             </Stack>
                                         </Card>
                                     </Grid>

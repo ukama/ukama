@@ -6,6 +6,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	NODE_ID_CLAUSE = "node_id = ?"
+)
+
 type NodeRepo interface {
 	AddOrUpdateNode(node *Node) error
 	GetNode(nodeId string) (*Node, error)
@@ -37,7 +41,7 @@ func (r *nodeRepo) AddOrUpdateNode(node *Node) error {
 
 func (r *nodeRepo) GetNode(nodeId string) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, NODE_ID_CLAUSE, nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -47,7 +51,7 @@ func (r *nodeRepo) GetNode(nodeId string) (*Node, error) {
 
 /* Delete Node  */
 func (r *nodeRepo) DeleteNode(nodeId string) error {
-	result := r.Db.GetGormDb().Unscoped().Where("node_id = ?", nodeId).Delete(&Node{})
+	result := r.Db.GetGormDb().Unscoped().Where(NODE_ID_CLAUSE, nodeId).Delete(&Node{})
 	if result.Error != nil {
 		return result.Error
 	}
@@ -73,7 +77,7 @@ func (r *nodeRepo) ListNodes() (*[]Node, error) {
 func (r *nodeRepo) GetNodeStatus(nodeId string) (*MfgStatus, error) {
 	var node Node
 
-	result := r.Db.GetGormDb().Select("status").First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().Select("status").First(&node, NODE_ID_CLAUSE, nodeId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -89,7 +93,7 @@ func (r *nodeRepo) GetNodeStatus(nodeId string) (*MfgStatus, error) {
 
 func (r *nodeRepo) GetNodeMfgTestStatus(nodeId string) (*MfgTestStatus, *[]byte, error) {
 	var node Node
-	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report").First(&node, "node_id = ?", nodeId)
+	result := r.Db.GetGormDb().Select("mfg_test_status", "mfg_report").First(&node, NODE_ID_CLAUSE, nodeId)
 	if result.Error != nil {
 		return nil, nil, result.Error
 	}
@@ -105,7 +109,7 @@ func (r *nodeRepo) GetNodeMfgTestStatus(nodeId string) (*MfgTestStatus, *[]byte,
 /* Update Production status */
 func (r *nodeRepo) UpdateNodeMfgTestStatus(node *Node) error {
 
-	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", node.NodeID).UpdateColumns(node)
+	result := r.Db.GetGormDb().Model(&Node{}).Where(NODE_ID_CLAUSE, node.NodeID).UpdateColumns(node)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -116,7 +120,7 @@ func (r *nodeRepo) UpdateNodeMfgTestStatus(node *Node) error {
 /* Update Node status */
 func (r *nodeRepo) UpdateNodeStatus(nodeId string, status MfgStatus) error {
 
-	result := r.Db.GetGormDb().Model(&Node{}).Where("node_id = ?", nodeId).UpdateColumn("status", status)
+	result := r.Db.GetGormDb().Model(&Node{}).Where(NODE_ID_CLAUSE, nodeId).UpdateColumn("status", status)
 	if result.Error != nil {
 		return result.Error
 	}

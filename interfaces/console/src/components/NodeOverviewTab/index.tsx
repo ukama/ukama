@@ -6,7 +6,7 @@ import {
 } from "..";
 import NodeStatItem from "../NodeStatItem";
 import { useEffect, useState } from "react";
-import { NodeDto, NodeResponse } from "../../generated";
+import { NodeDto, NodeResponse, Node_Type } from "../../generated";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 
@@ -16,6 +16,7 @@ interface INodeOverviewTab {
     metricsLoading: boolean;
     onNodeSelected: Function;
     nodeGroupLoading: boolean;
+    uptime: number | undefined;
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
@@ -25,6 +26,7 @@ interface INodeOverviewTab {
 
 const NodeOverviewTab = ({
     metrics,
+    uptime,
     loading,
     selectedNode,
     nodeGroupData,
@@ -67,7 +69,9 @@ const NodeOverviewTab = ({
                             </Grid>
                             <Grid item xs={12}>
                                 <NodeStatItem
-                                    value={selectedNode?.id || "-"}
+                                    value={
+                                        selectedNode?.id.toLowerCase() || "-"
+                                    }
                                     name={"Serial #"}
                                 />
                             </Grid>
@@ -94,7 +98,7 @@ const NodeOverviewTab = ({
                             (selectedNode?.type as string) || "HOME"
                         ][0].show && (
                             <NodeStatItem
-                                value={"50 °C"}
+                                value={"24 °C"}
                                 name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
@@ -109,7 +113,7 @@ const NodeOverviewTab = ({
                             (selectedNode?.type as string) || "HOME"
                         ][1].show && (
                             <NodeStatItem
-                                value={"50 °C"}
+                                value={"22 °C"}
                                 name={
                                     HealtChartsConfigure[
                                         (selectedNode?.type as string) || "HOME"
@@ -128,9 +132,15 @@ const NodeOverviewTab = ({
                                         (selectedNode?.type as string) || "HOME"
                                     ][2].name
                                 }
-                                value={"200 hours"}
                                 nameInfo={TooltipsText.COM}
                                 valueInfo={TooltipsText.COM_ALERT}
+                                value={
+                                    uptime
+                                        ? `${Math.floor(
+                                              uptime / 60 / 60
+                                          )} hours`
+                                        : "NA"
+                                }
                             />
                         )}
                     </NodeStatsContainer>
@@ -160,6 +170,9 @@ const NodeOverviewTab = ({
             <Grid item xs={12} md={8}>
                 {selected === 0 && (
                     <NodeDetailsCard
+                        nodeType={
+                            (selectedNode?.type as Node_Type) || undefined
+                        }
                         getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
                         nodeTitle={selectedNode?.name || "HOME"}
