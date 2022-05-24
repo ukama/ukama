@@ -5,14 +5,8 @@ import {
     NetworkSettings,
     LoadingWrapper,
 } from "../../components";
+import { RoundedCard } from "../../styles";
 import {
-    RoundedCard,
-    VerticalContainer,
-    HorizontalContainer,
-} from "../../styles";
-import {
-    Grid,
-    Button,
     Divider,
     MenuList,
     MenuItem,
@@ -22,6 +16,7 @@ import {
     CardContent,
     IconButton,
     Box,
+    Grid,
 } from "@mui/material";
 import {
     useRecoilState,
@@ -42,11 +37,6 @@ interface TabPanelProps {
     children?: React.ReactNode;
     index: number;
     value: number;
-}
-
-interface ActionButtonsProps {
-    handleCancelAction: Function;
-    handleSaveAction: Function;
 }
 
 const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
@@ -77,32 +67,6 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
         </div>
     );
 };
-
-const ActionButtons = ({
-    handleCancelAction,
-    handleSaveAction,
-}: ActionButtonsProps) => (
-    <VerticalContainer>
-        <Divider sx={{ width: "100%" }} />
-        <HorizontalContainer
-            sx={{
-                mt: "4px",
-                justifyContent: "flex-end",
-            }}
-        >
-            <Button
-                variant="outlined"
-                sx={{ mr: "20px" }}
-                onClick={() => handleCancelAction()}
-            >
-                CANCEL
-            </Button>
-            <Button variant="contained" onClick={() => handleSaveAction()}>
-                SAVE SETTINGS
-            </Button>
-        </HorizontalContainer>
-    </VerticalContainer>
-);
 
 const Settings = () => {
     const history = useHistory();
@@ -234,16 +198,6 @@ const Settings = () => {
                                         </IconButton>
                                     </Box>
                                 </CardContent>
-                                <CardActions
-                                    sx={{
-                                        display: menuId === 4 ? "none" : "flex",
-                                    }}
-                                >
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </CardActions>
                             </Card>
                         </LoadingWrapper>
                     </Grid>
