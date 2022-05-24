@@ -106,7 +106,6 @@ const NodeOverviewTab = ({
                                 }
                                 showAlertInfo={false}
                                 nameInfo={TooltipsText.TRX}
-                                valueInfo={TooltipsText.TRX_ALERT}
                             />
                         )}
                         {HealtChartsConfigure[
@@ -120,7 +119,6 @@ const NodeOverviewTab = ({
                                     ][1].name
                                 }
                                 nameInfo={TooltipsText.COM}
-                                valueInfo={TooltipsText.COM_ALERT}
                             />
                         )}
                         {HealtChartsConfigure[
@@ -133,7 +131,6 @@ const NodeOverviewTab = ({
                                     ][2].name
                                 }
                                 nameInfo={TooltipsText.COM}
-                                valueInfo={TooltipsText.COM_ALERT}
                                 value={
                                     uptime
                                         ? `${Math.floor(

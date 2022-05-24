@@ -9,8 +9,8 @@ import { colors } from "../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QRCode from "qrcode.react";
 interface IESimQR {
-    description: string;
     qrCodeId: any;
+    description: string;
 }
 
 const ESimQR = ({ description, qrCodeId }: IESimQR) => {

@@ -31,7 +31,6 @@ const TextWithToolTip = ({
             fontWeight={500}
             variant="body2"
             color={isAlert ? "error" : "default"}
-            sx={{ textTransform: "capitalize" }}
         >
             {title}
         </Typography>

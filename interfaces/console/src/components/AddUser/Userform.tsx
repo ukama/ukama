@@ -14,6 +14,7 @@ import * as Yup from "yup";
 import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
 interface IUserform {
     description: string;
+    handleClose: Function;
     handleEsimInstallation: Function;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
@@ -22,7 +23,11 @@ const initialeEsimFormValue = {
     email: "",
 };
 
-const Userform = ({ handleEsimInstallation, description }: IUserform) => {
+const Userform = ({
+    handleClose,
+    description,
+    handleEsimInstallation,
+}: IUserform) => {
     const gclasses = globalUseStyles();
     const [status, setStatus] = useState<boolean>(false);
 
@@ -114,7 +119,10 @@ const Userform = ({ handleEsimInstallation, description }: IUserform) => {
                                 />
                             </ContainerJustifySpaceBtw>
                             <Stack direction="row" justifyContent="flex-end">
-                                <Button sx={{ mr: 2, justifyItems: "center" }}>
+                                <Button
+                                    sx={{ mr: 2, justifyItems: "center" }}
+                                    onClick={() => handleClose()}
+                                >
                                     Cancel
                                 </Button>
                                 <Button variant="contained" type="submit">
