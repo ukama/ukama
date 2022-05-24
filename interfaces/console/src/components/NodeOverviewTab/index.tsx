@@ -6,7 +6,7 @@ import {
 } from "..";
 import NodeStatItem from "../NodeStatItem";
 import { useEffect, useState } from "react";
-import { NodeDto, NodeResponse } from "../../generated";
+import { NodeDto, NodeResponse, Node_Type } from "../../generated";
 import { HealtChartsConfigure, TooltipsText } from "../../constants";
 import { capitalize, Grid, Paper, Stack, Typography } from "@mui/material";
 
@@ -160,6 +160,9 @@ const NodeOverviewTab = ({
             <Grid item xs={12} md={8}>
                 {selected === 0 && (
                     <NodeDetailsCard
+                        nodeType={
+                            (selectedNode?.type as Node_Type) || undefined
+                        }
                         getNodeUpdateInfos={getNodeSoftwareUpdateInfos}
                         loading={loading}
                         nodeTitle={selectedNode?.name || "HOME"}

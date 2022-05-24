@@ -106,7 +106,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        temperaturetrx: null,
+        memorytrxused: null,
     });
 
     const {
@@ -114,49 +114,39 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
-    const [
-        deleteNode,
-        {
-            loading: deleteNodeLoading,
-            data: deleteNodeRes,
-            error: deleteNodeError,
-        },
-    ] = useDeleteNodeMutation({
-        onCompleted: () => {
+
+    const [deleteNode, { loading: deleteNodeLoading }] = useDeleteNodeMutation({
+        onCompleted: res => {
             setNodeToastNotification({
                 id: "delete-node-success",
-                message: `${deleteNodeRes?.deleteNode?.nodeId} has been deleted successfully!`,
+                message: `${res?.deleteNode?.nodeId} has been deleted successfully!`,
                 type: "success",
                 show: true,
             });
             refetchGetNodesByOrg();
         },
-        onError: () => {
+        onError: err => {
             setNodeToastNotification({
                 id: "delete-node-success",
-                message: `${deleteNodeError?.message}`,
+                message: `${err?.message}`,
                 type: "error",
                 show: true,
             });
         },
     });
 
-    const [
-        addUser,
-        { loading: addUserLoading, data: addUserRes, error: addUserError },
-    ] = useAddUserMutation({
-        onCompleted: () => {
-            setIsEsimAdded(true);
-        },
-        onError: () => {
-            setNodeToastNotification({
-                id: "error-add-user-success",
-                message: `${addUserError?.message}`,
-                type: "error",
-                show: true,
-            });
-        },
-    });
+    const [addUser, { loading: addUserLoading, data: addUserRes }] =
+        useAddUserMutation({
+            onCompleted: () => setIsEsimAdded(true),
+            onError: err => {
+                setNodeToastNotification({
+                    id: "error-add-user-success",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            },
+        });
 
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();
@@ -292,6 +282,7 @@ const Home = () => {
 
     const { loading: residentsloading, refetch: refetchResidents } =
         useGetUsersByOrgQuery({
+            nextFetchPolicy: "network-only",
             onCompleted: res => {
                 setUsers(res.getUsersByOrg);
                 getUsersDataUsage({
@@ -343,7 +334,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    memorytrxused: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -359,7 +350,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                temperaturetrx: null,
+                memorytrxused: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -373,7 +364,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    memorytrxused: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -416,7 +407,7 @@ const Home = () => {
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
-            to: Math.floor(Date.now() / 1000) - 15,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
