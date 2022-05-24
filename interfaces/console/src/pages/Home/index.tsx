@@ -114,10 +114,6 @@ const Home = () => {
         isShow: false,
         nodeId: "",
     });
-    const [editUserDialog, setEditUserDialog] = useState({
-        isShow: false,
-        user: [],
-    });
     const [simDialog, setSimDialog] = useState({
         isShow: false,
         type: "add",
@@ -906,7 +902,8 @@ const Home = () => {
                             deactivateUserLoading ||
                             isSkeltonLoad ||
                             addUserLoading ||
-                            updateUserLoading
+                            updateUserLoading ||
+                            userLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -983,7 +980,7 @@ const Home = () => {
                     handleSuccessAction={handleDeleteNode}
                 />
             )}
-            {editUserDialog.isShow && (
+            {simDialog.isShow && (
                 <UserDetailsDialog
                     user={selectedUser}
                     type={simDialog.type}
