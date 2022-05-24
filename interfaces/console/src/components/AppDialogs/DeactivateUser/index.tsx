@@ -8,7 +8,6 @@ import {
     DialogActions,
     DialogContent,
 } from "@mui/material";
-import { colors } from "../../../theme";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface IDeactivateUser {

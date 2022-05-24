@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import colors from "../../../theme/colors";
+
 type BasicDialogProps = {
     title: string;
     isOpen: boolean;

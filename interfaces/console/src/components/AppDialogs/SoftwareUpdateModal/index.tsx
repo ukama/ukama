@@ -1,18 +1,18 @@
-import { styled } from "@mui/material/styles";
-import CloseIcon from "@mui/icons-material/Close";
-import colors from "../../../theme/colors";
 import {
-    Dialog,
-    IconButton,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
     Button,
-    FormControlLabel,
-    Typography,
+    Dialog,
     Checkbox,
+    IconButton,
+    Typography,
+    DialogTitle,
+    DialogActions,
+    DialogContent,
+    FormControlLabel,
 } from "@mui/material";
 import React from "react";
+import { styled } from "@mui/material/styles";
+import CloseIcon from "@mui/icons-material/Close";
+
 const BootstrapDialog = styled(Dialog)(({ theme }) => ({
     "& .MuiDialogContent-root": {
         padding: theme.spacing(2),

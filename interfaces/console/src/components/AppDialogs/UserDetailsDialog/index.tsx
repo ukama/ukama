@@ -8,15 +8,14 @@ import {
     Tooltip,
     IconButton,
     Typography,
+    DialogTitle,
     DialogActions,
     DialogContent,
     CircularProgress,
-    DialogTitle,
 } from "@mui/material";
 import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
-import colors from "../../../theme/colors";
 import LoadingWrapper from "../../LoadingWrapper";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
