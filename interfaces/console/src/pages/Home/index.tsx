@@ -691,7 +691,7 @@ const Home = () => {
     };
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
-            <Grid container spacing={3}>
+            <Grid container rowSpacing={3} columnSpacing={3}>
                 <Grid xs={12} item>
                     <NetworkStatus
                         handleAddNode={handleAddNode}
@@ -704,7 +704,7 @@ const Home = () => {
                         }
                     />
                 </Grid>
-                <Grid item container xs={12} spacing={{ xs: 1.5, md: 3 }}>
+                <Grid item container columnSpacing={{ xs: 1.5, md: 3 }}>
                     <Grid item xs={4} md={6} lg={4}>
                         <StatusCard
                             Icon={UsersWithBG}
