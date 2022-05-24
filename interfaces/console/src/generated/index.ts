@@ -667,14 +667,15 @@ export type UpdateUserServiceInput = {
 
 export type UserDataUsageDto = {
   __typename?: 'UserDataUsageDto';
-  dataAllowanceBytes: Scalars['String'];
-  dataUsedBytes: Scalars['String'];
+  dataAllowanceBytes?: Maybe<Scalars['String']>;
+  dataUsedBytes?: Maybe<Scalars['String']>;
 };
 
 export type UserInputDto = {
   email: Scalars['String'];
   name: Scalars['String'];
   phone: Scalars['String'];
+  status: Scalars['Boolean'];
 };
 
 export type UserResDto = {
@@ -690,7 +691,7 @@ export type UserServicesDto = {
   __typename?: 'UserServicesDto';
   services: UserSimServices;
   status: Get_User_Status_Type;
-  usage: UserDataUsageDto;
+  usage?: Maybe<UserDataUsageDto>;
 };
 
 export type UserSimServices = {
