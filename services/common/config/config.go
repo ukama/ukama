@@ -80,7 +80,7 @@ type ServiceApiIf struct {
 }
 
 type Queue struct {
-	Uri string  `default:"amqp://guest:guest@localhost:5672/"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
+	Uri string `default:"amqp://guest:guest@localhost:5672/"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
 
 type Grpc struct {
@@ -88,8 +88,8 @@ type Grpc struct {
 }
 
 type Metrics struct {
-	Port    int
-	Enabled bool
+	Port    int  `default:"10250"`
+	Enabled bool `default:"true"`
 }
 
 // LoadConfig loads configuration into `config` object

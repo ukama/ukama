@@ -19,7 +19,7 @@ deps:
 gen:
 	protoc --go_out=. --go-grpc_out=. pb/*.proto --go-grpc_opt=require_unimplemented_servers=true		
 	mockery --all --recursive --dir ./pkg
-	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
+	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm pb/gen/*.go
