@@ -183,6 +183,7 @@ const Nodes = () => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = getMetricsInitObj();
                 setIsMetricPolling(true);
+
                 for (const element of res.getMetricsByTab.metrics) {
                     if (!metrics[element.type]) {
                         _m[element.type] = {

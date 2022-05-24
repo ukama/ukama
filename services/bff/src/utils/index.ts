@@ -41,6 +41,7 @@ export const getMetricsByTab = (
         case GRAPHS_TAB.OVERVIEW:
             if (nodeType === NODE_TYPE.HOME)
                 return [
+                    "uptimetrx",
                     "temperaturetrx",
                     "temperaturerfe",
                     "subscribersactive",

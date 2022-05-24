@@ -1464,7 +1464,7 @@ const HealtChartsConfigure: any = {
     TOWER: [
         { name: "Temp. (TRX)", show: true, id: "temperaturetrx" },
         { name: "Temp. (COM)", show: true, id: "temperaturecom" },
-        { name: "Uptime", show: true, id: "uptime" },
+        { name: "Uptime", show: true, id: "uptimetrx" },
         { name: "Attached ", show: true, id: "subscribersattached" },
         { name: "Active ", show: true, id: "subscribersactive" },
     ],
