@@ -76,6 +76,7 @@ require (
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
+	github.com/ukama/ukamaX/common v0.0.0-20220425182032-2c377df948f4 // indirect
 	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
