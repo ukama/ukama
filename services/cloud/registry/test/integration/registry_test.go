@@ -103,7 +103,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
-		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_COMPNODE)
+		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: tNodeId.String(),
