@@ -2,6 +2,8 @@ import { useState } from "react";
 import { TooltipsText } from "../../constants";
 import { Paper, Grid, Stack } from "@mui/material";
 import { NodeStatsContainer, NodeStatItem, ApexLineChart } from "..";
+
+const PLACEHOLDER_VALUE = "NA";
 interface INodeOverviewTab {
     metrics: any;
     loading: boolean;
@@ -24,30 +26,30 @@ const NodeNetworkTab = ({ loading, metrics }: INodeOverviewTab) => {
                 >
                     <NodeStatItem
                         variant={"large"}
-                        value={"100 Mbps"}
+                        value={PLACEHOLDER_VALUE}
                         name={"Throughput (D/L)"}
                         nameInfo={TooltipsText.DL}
                     />
                     <NodeStatItem
                         variant={"large"}
-                        value={"400 Mbps"}
+                        value={PLACEHOLDER_VALUE}
                         name={"Throughput (U/L)"}
                         nameInfo={TooltipsText.UL}
                     />
                     <NodeStatItem
-                        value={"80%"}
+                        value={PLACEHOLDER_VALUE}
                         variant={"large"}
                         name={"RRC CNX Success"}
                         nameInfo={TooltipsText.RRCCNX}
                     />
                     <NodeStatItem
-                        value={"72%"}
+                        value={PLACEHOLDER_VALUE}
                         variant={"large"}
                         name={"ERAB Drop Rate"}
                         nameInfo={TooltipsText.ERAB}
                     />
                     <NodeStatItem
-                        value={"60%"}
+                        value={PLACEHOLDER_VALUE}
                         variant={"large"}
                         name={"RLS  Drop Rate"}
                         nameInfo={TooltipsText.RLS}

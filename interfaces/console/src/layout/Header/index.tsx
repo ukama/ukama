@@ -191,7 +191,8 @@ const Header = ({
                             typography: "body1",
                             textTransform: "capitalize",
                             ":hover": {
-                                backgroundColor: "white !important",
+                                background: "none",
+                                color: colors.primaryDark,
                                 svg: {
                                     fill: colors.primaryDark,
                                 },

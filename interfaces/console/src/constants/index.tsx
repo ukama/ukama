@@ -1464,7 +1464,7 @@ const HealtChartsConfigure: any = {
     TOWER: [
         { name: "Temp. (TRX)", show: true, id: "temperaturetrx" },
         { name: "Temp. (COM)", show: true, id: "temperaturecom" },
-        { name: "Uptime", show: true, id: "uptime" },
+        { name: "Uptime", show: true, id: "uptimetrx" },
         { name: "Attached ", show: true, id: "subscribersattached" },
         { name: "Active ", show: true, id: "subscribersactive" },
     ],
@@ -1494,6 +1494,13 @@ export {
     CurrentBillingData,
 } from "./stubData";
 
+const NODE_IMAGES = {
+    TOWER: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png",
+    AMPLIFIER:
+        "https://ukama-site-assets.s3.amazonaws.com/images/ukama_amplifier_node.png",
+    HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
+};
+
 export {
     RF_NODES,
     TimeZones,
@@ -1502,6 +1509,7 @@ export {
     APP_VERSION,
     TIME_FILTER,
     BillingTabs,
+    NODE_IMAGES,
     TooltipsText,
     SETTING_MENU,
     DRAWER_WIDTH,

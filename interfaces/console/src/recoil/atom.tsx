@@ -36,6 +36,7 @@ const user = atom({
     default: { id: "", name: "", email: "" },
     effects_UNSTABLE: [persistAtom],
 });
+
 export {
     user,
     pageName,

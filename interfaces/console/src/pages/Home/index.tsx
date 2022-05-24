@@ -128,7 +128,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        temperaturetrx: null,
+        memorytrxused: null,
     });
 
     const {
@@ -136,6 +136,7 @@ const Home = () => {
         loading: nodeLoading,
         refetch: refetchGetNodesByOrg,
     } = useGetNodesByOrgQuery({ fetchPolicy: "network-only" });
+
     const [deleteNode, { loading: deleteNodeLoading }] = useDeleteNodeMutation({
         onCompleted: res => {
             setNodeToastNotification({
@@ -147,14 +148,12 @@ const Home = () => {
             refetchGetNodesByOrg();
         },
         onError: err => {
-            if (err?.message) {
-                setNodeToastNotification({
-                    id: "delete-node-success",
-                    message: `${err?.message}`,
-                    type: "error",
-                    show: true,
-                });
-            }
+            setNodeToastNotification({
+                id: "delete-node-success",
+                message: `${err?.message}`,
+                type: "error",
+                show: true,
+            });
         },
     });
 
@@ -302,6 +301,7 @@ const Home = () => {
 
     const { loading: residentsloading, refetch: refetchResidents } =
         useGetUsersByOrgQuery({
+            nextFetchPolicy: "network-only",
             onCompleted: res => {
                 setUsers(res.getUsersByOrg);
                 getUsersDataUsage({
@@ -353,7 +353,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    memorytrxused: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -369,7 +369,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                temperaturetrx: null,
+                memorytrxused: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -383,7 +383,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    temperaturetrx: null,
+                    memorytrxused: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -426,7 +426,7 @@ const Home = () => {
             regPolling: false,
             nodeType: Node_Type.Home,
             nodeId: "uk-sa2209-comv1-a1-ee58",
-            to: Math.floor(Date.now() / 1000) - 15,
+            to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
 
@@ -791,7 +791,7 @@ const Home = () => {
     };
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
-            <Grid container spacing={3}>
+            <Grid container rowSpacing={3} columnSpacing={3}>
                 <Grid xs={12} item>
                     <NetworkStatus
                         handleAddNode={handleAddNode}
@@ -804,7 +804,7 @@ const Home = () => {
                         }
                     />
                 </Grid>
-                <Grid item container xs={12} spacing={{ xs: 1.5, md: 3 }}>
+                <Grid item container columnSpacing={{ xs: 1.5, md: 3 }}>
                     <Grid item xs={4} md={6} lg={4}>
                         <StatusCard
                             Icon={UsersWithBG}
