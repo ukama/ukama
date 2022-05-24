@@ -4,6 +4,8 @@ import ApexLineChart from "../ApexLineChart";
 import { Paper, Grid, Stack } from "@mui/material";
 import { NodeResourcesTabConfigure, TooltipsText } from "../../constants";
 import { NodeStatsContainer, NodeStatItem } from "..";
+
+const PLACEHOLDER_VALUE = "NA";
 interface INodeResourcesTab {
     metrics: any;
     loading: boolean;
@@ -32,7 +34,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][0].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             variant={"large"}
                             name={
                                 NodeResourcesTabConfigure[
@@ -46,7 +48,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][1].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             variant={"large"}
                             name={
                                 NodeResourcesTabConfigure[
@@ -60,7 +62,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][2].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
@@ -74,7 +76,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][3].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""
@@ -88,7 +90,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][4].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             variant={"large"}
                             name={
                                 NodeResourcesTabConfigure[
@@ -102,7 +104,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][5].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             variant={"large"}
                             name={
                                 NodeResourcesTabConfigure[
@@ -116,7 +118,7 @@ const NodeResourcesTab = ({
                         (selectedNode?.type as string) || ""
                     ][6].show && (
                         <NodeStatItem
-                            value={"NNN"}
+                            value={PLACEHOLDER_VALUE}
                             name={
                                 NodeResourcesTabConfigure[
                                     (selectedNode?.type as string) || ""

@@ -492,6 +492,7 @@ const Nodes = () => {
                                 handleUpdateNode={handleUpdateNode}
                                 nodeGroupData={getNodeData?.getNode}
                                 onNodeSelected={onNodeSelectedFromGroup}
+                                uptime={getNodeStatusData?.getNodeStatus.uptime}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}
                                 loading={
                                     isLoading || nodesLoading || !selectedNode
