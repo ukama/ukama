@@ -10,6 +10,7 @@ import {
     ContainerHeader,
     DataTableWithOptions,
     SoftwareUpdateModal,
+    UserDetailsDialog,
     AddUser,
 } from "../../components";
 import {
@@ -24,14 +25,18 @@ import {
     Time_Filter,
     GetUsersDto,
     Network_Type,
+    UserInputDto,
     Data_Bill_Filter,
+    useGetUserLazyQuery,
     useAddNodeMutation,
+    useUpdateUserMutation,
     useGetNetworkQuery,
     useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
     useUpdateNodeMutation,
     useGetUsersByOrgQuery,
+    GetUserDto,
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
     useGetEsimQrLazyQuery,
@@ -45,6 +50,7 @@ import {
     GetLatestDataBillSubscription,
     useGetUsersDataUsageLazyQuery,
     GetLatestDataUsageSubscription,
+    useUpdateUserStatusMutation,
     GetLatestConnectedUsersDocument,
     useGetMetricsByTabSSubscription,
     useGetUsersDataUsageSSubscription,
@@ -59,10 +65,22 @@ import {
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
-import { TMetric, TObject } from "../../types";
+import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { getMetricPayload, isContainNodeUpdate } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
+const userInit = {
+    id: "",
+    name: "",
+    iccid: "",
+    email: "",
+    phone: "",
+    dataPlan: "0",
+    dataUsage: "0",
+    roaming: false,
+    eSimNumber: "",
+    status: false,
+};
 const Home = () => {
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
     const [_isFirstVisit, _setIsFirstVisit] = useRecoilState(isFirstVisit);
@@ -96,7 +114,11 @@ const Home = () => {
         isShow: false,
         nodeId: "",
     });
-
+    const [simDialog, setSimDialog] = useState({
+        isShow: false,
+        type: "add",
+    });
+    const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
@@ -135,18 +157,26 @@ const Home = () => {
         },
     });
 
-    const [addUser, { loading: addUserLoading, data: addUserRes }] =
-        useAddUserMutation({
-            onCompleted: () => setIsEsimAdded(true),
-            onError: err => {
+    const [addUser, { loading: addUserLoading }] = useAddUserMutation({
+        onCompleted: res => {
+            if (res?.addUser) {
+                setIsEsimAdded(true);
+                setNewAddedUserName(res?.addUser?.name);
+                handleGetSimQrCode(res?.addUser.id, res?.addUser?.iccid || "");
+                refetchResidents();
+            }
+        },
+        onError: err => {
+            if (err?.message) {
                 setNodeToastNotification({
                     id: "error-add-user-success",
                     message: `${err?.message}`,
                     type: "error",
                     show: true,
                 });
-            },
-        });
+            }
+        },
+    });
 
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();
@@ -161,70 +191,59 @@ const Home = () => {
             },
         });
     };
-    useEffect(() => {
-        if (addUserRes) {
-            setNewAddedUserName(addUserRes?.addUser?.name);
-            handleGetSimQrCode(
-                addUserRes.addUser.id,
-                addUserRes?.addUser?.iccid || ""
-            );
-        }
-    }, [addUserRes]);
 
     useEffect(() => {
         setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
     }, [getEsimQrCodeRes]);
-    const [
-        registerNode,
+    const [registerNode, { loading: registerNodeLoading }] = useAddNodeMutation(
         {
-            loading: registerNodeLoading,
-            data: registerNodeRes,
-            error: registerNodeError,
-        },
-    ] = useAddNodeMutation({
-        onCompleted: () => {
-            setNodeToastNotification({
-                id: "addNodeSuccess",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
-        },
+            onCompleted: res => {
+                if (res?.addNode) {
+                    setNodeToastNotification({
+                        id: "addNodeSuccess",
+                        message: `${res?.addNode?.name} has been registered successfully!`,
+                        type: "success",
+                        show: true,
+                    });
+                    refetchGetNodesByOrg();
+                }
+            },
 
-        onError: () =>
-            setNodeToastNotification({
-                id: "ErrorAddingNode",
-                message: `${registerNodeError?.message}`,
-                type: "error",
-                show: true,
-            }),
-    });
+            onError: err => {
+                if (err?.message) {
+                    setNodeToastNotification({
+                        id: "ErrorAddingNode",
+                        message: `${err?.message}`,
+                        type: "error",
+                        show: true,
+                    });
+                }
+            },
+        }
+    );
 
-    const [
-        updateNode,
-        {
-            loading: updateNodeLoading,
-            data: updateNodeRes,
-            error: updateNodError,
+    const [updateNode, { loading: updateNodeLoading }] = useUpdateNodeMutation({
+        onCompleted: res => {
+            if (res?.updateNode) {
+                setNodeToastNotification({
+                    id: "UpdateNodeNotification",
+                    message: `${res?.updateNode?.nodeId} has been updated successfully!`,
+                    type: "success",
+                    show: true,
+                });
+                refetchGetNodesByOrg();
+            }
         },
-    ] = useUpdateNodeMutation({
-        onCompleted: () => {
-            setNodeToastNotification({
-                id: "UpdateNodeNotification",
-                message: `${updateNodeRes?.updateNode?.nodeId} has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-            refetchGetNodesByOrg();
+        onError: err => {
+            if (err?.message) {
+                setNodeToastNotification({
+                    id: "UpdateNodeErrorNotification",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            }
         },
-        onError: () =>
-            setNodeToastNotification({
-                id: "UpdateNodeErrorNotification",
-                message: `${updateNodError?.message}`,
-                type: "error",
-                show: true,
-            }),
     });
 
     const {
@@ -563,6 +582,12 @@ const Home = () => {
             },
         });
     };
+    const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
+        onCompleted: res => {
+            if (res.getUser) setSelectedUser(res.getUser);
+        },
+    });
+
     const handleDeleteNode = () => {
         deleteNode({
             variables: {
@@ -579,9 +604,31 @@ const Home = () => {
                 userId: id,
                 userName: users?.find(item => item.id === id)?.name || "",
             });
+        } else {
+            setSimDialog({ isShow: true, type: "edit" });
+            getUser({
+                variables: {
+                    userId: id,
+                },
+            });
         }
     };
-
+    const handleUserSubmitAction = () => {
+        handleSimDialogClose();
+        if (simDialog.type === "edit" && selectedUser.id) {
+            updateUser({
+                variables: {
+                    userId: selectedUser.id,
+                    data: {
+                        email: selectedUser.email,
+                        name: selectedUser.name,
+                        phone: selectedUser.phone,
+                        status: selectedUser.status,
+                    },
+                },
+            });
+        }
+    };
     const handleNodeActions = (id: string, type: string) => {
         const node = nodeRes?.getNodesByOrg.nodes.filter(
             item => item.id === id
@@ -615,10 +662,61 @@ const Home = () => {
             title: "Register Node",
         }));
     };
-
+    const [updateUser, { loading: updateUserLoading }] = useUpdateUserMutation({
+        onCompleted: res => {
+            if (res?.updateUser) {
+                setNodeToastNotification({
+                    id: "updateUserNotification",
+                    message: `The ${res?.updateUser?.name} has been updated successfully!`,
+                    type: "success",
+                    show: true,
+                });
+            }
+        },
+        onError: err => {
+            if (err?.message) {
+                setNodeToastNotification({
+                    id: "updateUserNotification",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            }
+        },
+    });
+    const [updateUserStatus, { loading: updateUserStatusLoading }] =
+        useUpdateUserStatusMutation({
+            onCompleted: res => {
+                if (res) {
+                    setSelectedUser({
+                        ...selectedUser,
+                        status: res.updateUserStatus.carrier.services.data,
+                        roaming: res.updateUserStatus.ukama.services.data,
+                    });
+                }
+            },
+        });
+    const handleUpdateUserStatus = (
+        id: string,
+        iccid: string,
+        status: boolean
+    ) => {
+        updateUserStatus({
+            variables: {
+                data: {
+                    userId: id,
+                    simId: iccid,
+                    status: status,
+                },
+            },
+        });
+    };
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
+    const handleSimDialogClose = () =>
+        setSimDialog({ ...simDialog, isShow: false });
+
     const handleCloseDeleteNode = () =>
         setDeleteNodeDialog({ ...deleteNodeDialog, isShow: false });
     const handleNodeSubmitAction = (data: any) => {
@@ -663,26 +761,28 @@ const Home = () => {
             setIsWelcomeDialog(false);
         }
     };
-    const handleEsimInstallation = (eSimData: TObject) => {
+    const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({
                 variables: {
                     data: {
-                        email: eSimData.email as string,
-                        name: eSimData.name as string,
+                        email: eSimData.email,
+                        name: eSimData.name,
+                        status: eSimData.status || true,
                         phone: "",
                     },
                 },
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+    const handlePhysicalSimInstallation = (physicalSimData: UserInputDto) => {
         if (physicalSimData) {
             addUser({
                 variables: {
                     data: {
-                        email: physicalSimData.email as string,
-                        name: physicalSimData.name as string,
+                        email: physicalSimData.email,
+                        name: physicalSimData.name,
+                        status: physicalSimData.status || true,
                         phone: "",
                     },
                 },
@@ -801,7 +901,9 @@ const Home = () => {
                             residentsloading ||
                             deactivateUserLoading ||
                             isSkeltonLoad ||
-                            addUserLoading
+                            addUserLoading ||
+                            updateUserLoading ||
+                            userLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -878,6 +980,24 @@ const Home = () => {
                     handleSuccessAction={handleDeleteNode}
                 />
             )}
+            {simDialog.isShow && (
+                <UserDetailsDialog
+                    user={selectedUser}
+                    type={simDialog.type}
+                    saveBtnLabel={"Save"}
+                    closeBtnLabel="close"
+                    loading={updateNodeLoading}
+                    isOpen={simDialog.isShow}
+                    setUserForm={setSelectedUser}
+                    simDetailsTitle="SIM Details"
+                    userDetailsTitle="User Details"
+                    handleClose={handleSimDialogClose}
+                    userStatusLoading={updateUserStatusLoading}
+                    handleServiceAction={handleUpdateUserStatus}
+                    handleSubmitAction={handleUserSubmitAction}
+                />
+            )}
+
             {showInstallSim && (
                 <AddUser
                     handlePhysicalSimInstallation={

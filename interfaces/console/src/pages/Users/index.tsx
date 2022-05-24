@@ -17,8 +17,8 @@ import {
     useUpdateUserStatusMutation,
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
+    UserInputDto,
 } from "../../generated";
-import { TObject } from "../../types";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
 import { Box, Card, Grid } from "@mui/material";
@@ -52,61 +52,52 @@ const User = () => {
     const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
 
-    const [
-        addUser,
-        { loading: addUserLoading, data: addUserRes, error: addUserError },
-    ] = useAddUserMutation({
-        onCompleted: () => {
-            setIsEsimAdded(true);
+    const [addUser, { loading: addUserLoading }] = useAddUserMutation({
+        onCompleted: res => {
+            if (res?.addUser) {
+                setIsEsimAdded(true);
+                setNewAddedUserName(res?.addUser?.name);
+                handleGetSimQrCode(res?.addUser.id, res?.addUser?.iccid || "");
+                refetchResidents();
+            }
         },
-        onError: () => {
-            setUserNotification({
-                id: "error-add-user",
-                message: `${addUserError?.message}`,
-                type: "error",
-                show: true,
-            });
+        onError: err => {
+            if (err?.message) {
+                setUserNotification({
+                    id: "error-add-user",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            }
         },
     });
     const [getEsimQrdcodeId, { data: getEsimQrCodeRes }] =
         useGetEsimQrLazyQuery();
 
     useEffect(() => {
-        if (addUserRes) {
-            setNewAddedUserName(addUserRes?.addUser?.name);
-            handleGetSimQrCode(
-                addUserRes?.addUser.id,
-                addUserRes?.addUser?.iccid || ""
-            );
-        }
-    }, [addUserRes]);
-
-    useEffect(() => {
         setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
     }, [getEsimQrCodeRes]);
-    const [
-        updateUser,
-        {
-            loading: updateUserLoading,
-            data: updateUserRes,
-            error: updateUserError,
+    const [updateUser, { loading: updateUserLoading }] = useUpdateUserMutation({
+        onCompleted: res => {
+            if (res?.updateUser) {
+                setUserNotification({
+                    id: "updateUserNotification",
+                    message: `The ${res?.updateUser?.name} has been updated successfully!`,
+                    type: "success",
+                    show: true,
+                });
+            }
         },
-    ] = useUpdateUserMutation({
-        onCompleted: () => {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `The ${updateUserRes?.updateUser?.name} has been updated successfully!`,
-                type: "success",
-                show: true,
-            });
-        },
-        onError: () => {
-            setUserNotification({
-                id: "updateUserNotification",
-                message: `${updateUserError?.message}`,
-                type: "error",
-                show: true,
-            });
+        onError: err => {
+            if (err?.message) {
+                setUserNotification({
+                    id: "updateUserNotification",
+                    message: `${err?.message}`,
+                    type: "error",
+                    show: true,
+                });
+            }
         },
     });
 
@@ -135,17 +126,20 @@ const User = () => {
         },
     });
 
-    const { data: usersRes, loading: usersByOrgLoading } =
-        useGetUsersByOrgQuery({
-            onCompleted: res => {
-                setUsers(res.getUsersByOrg);
-                getUsersDataUsage({
-                    variables: {
-                        data: { ids: res.getUsersByOrg.map(u => u.id) },
-                    },
-                });
-            },
-        });
+    const {
+        data: usersRes,
+        loading: usersByOrgLoading,
+        refetch: refetchResidents,
+    } = useGetUsersByOrgQuery({
+        onCompleted: res => {
+            setUsers(res.getUsersByOrg);
+            getUsersDataUsage({
+                variables: {
+                    data: { ids: res.getUsersByOrg.map(u => u.id) },
+                },
+            });
+        },
+    });
 
     const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
         onCompleted: res => {
@@ -221,26 +215,28 @@ const User = () => {
         });
     };
 
-    const handleEsimInstallation = (eSimData: TObject) => {
+    const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({
                 variables: {
                     data: {
-                        email: eSimData.email as string,
-                        name: eSimData.name as string,
+                        email: eSimData.email,
+                        name: eSimData.name,
+                        status: eSimData.status || false,
                         phone: "",
                     },
                 },
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: TObject) => {
+    const handlePhysicalSimInstallation = (physicalSimData: UserInputDto) => {
         if (physicalSimData) {
             addUser({
                 variables: {
                     data: {
-                        email: physicalSimData.email as string,
-                        name: physicalSimData.name as string,
+                        email: physicalSimData.email,
+                        name: physicalSimData.name,
+                        status: physicalSimData.status || false,
                         phone: "",
                     },
                 },
@@ -257,6 +253,7 @@ const User = () => {
                         email: selectedUser.email,
                         name: selectedUser.name,
                         phone: selectedUser.phone,
+                        status: selectedUser.status,
                     },
                 },
             });
