@@ -27,7 +27,9 @@ import { API_METHOD_TYPE } from "../../constants";
 import { GRAPHS_TAB } from "./../../constants/index";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { getMetricsByTab, getMetricTitleByType } from "../../utils";
+import setupLogger from "../../config/setupLogger";
 
+const logger = setupLogger("service");
 @Service()
 export class NodeService implements INodeService {
     addNode = async (
@@ -42,7 +44,10 @@ export class NodeService implements INodeService {
                 name: req.name,
             },
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
         return res;
     };
     updateNode = async (
@@ -57,7 +62,10 @@ export class NodeService implements INodeService {
                 name: req.name,
             },
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
         return res;
     };
     deleteNode = async (
@@ -69,7 +77,10 @@ export class NodeService implements INodeService {
             type: API_METHOD_TYPE.DELETE,
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${id}`,
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
 
         return res;
     };
@@ -81,6 +92,10 @@ export class NodeService implements INodeService {
             path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
             headers: cookie.header,
         });
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
         return NodeMapper.dtoToNodesDto(cookie.orgId, res);
     };
     getNode = async (
@@ -92,7 +107,10 @@ export class NodeService implements INodeService {
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${nodeId}`,
             headers: cookie.header,
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
         return res;
     };
     getNodeStatus = async (
@@ -115,7 +133,10 @@ export class NodeService implements INodeService {
                 step: 1,
             },
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
 
         return NodeMapper.dtoToNodeStatusDto(res);
     };
@@ -130,7 +151,10 @@ export class NodeService implements INodeService {
             path: getMetricUri(cookie.orgId, data.nodeId, endpoint),
             params: { from: data.from, to: data.to, step: data.step },
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
         return NodeMapper.dtoToMetricsDto(res.data?.result[0]);
     };
     getSoftwareLogs = async (): Promise<NodeAppsVersionLogsResponse[]> => {
