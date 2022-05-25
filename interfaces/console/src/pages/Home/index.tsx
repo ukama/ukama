@@ -55,6 +55,7 @@ import {
     useGetMetricsByTabSSubscription,
     useGetUsersDataUsageSSubscription,
     GetLatestConnectedUsersSubscription,
+    NodeDto,
 } from "../../generated";
 import {
     user,
@@ -130,6 +131,8 @@ const Home = () => {
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
         memorytrxused: null,
     });
+
+    const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>();
 
     const {
         data: nodeRes,
@@ -831,8 +834,8 @@ const Home = () => {
                             subtitle1={`${
                                 dataUsageRes?.getDataUsage?.dataConsumed || 0
                             }`}
-                            subtitle2={`/ ${
-                                dataUsageRes?.getDataUsage?.dataPackage || "-"
+                            subtitle2={`${
+                                dataUsageRes?.getDataUsage?.dataPackage || ""
                             }`}
                             Icon={DataUsage}
                             options={TIME_FILTER}
