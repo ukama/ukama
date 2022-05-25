@@ -24,9 +24,9 @@ const (
 )
 
 const (
-	DeviceConnectedRoutingKey               RoutingKey = "event.device.mesh.link.connect"
-	UserRegisteredRoutingKey                RoutingKey = "event.cloud.identity.user.create"
-	DeviceFeederRequestRoutingKeyRoutingKey            = "request.cloud.device-feeder"
+	DeviceConnectedRoutingKey     RoutingKey = "event.device.mesh.link.connect"
+	UserRegisteredRoutingKey      RoutingKey = "event.cloud.identity.user.create"
+	DeviceFeederRequestRoutingKey RoutingKey = "request.cloud.device-feeder"
 
 	DefaultExchange = "amq.topic"
 )
