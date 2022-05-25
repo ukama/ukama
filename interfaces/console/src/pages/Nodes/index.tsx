@@ -83,6 +83,7 @@ const Nodes = () => {
     const [isNodeRestart, setIsNodeRestart] = useState<boolean>(false);
     const [isSwitchOffNode, setIsSwitchOffNode] = useState<boolean>(false);
     const [towerNodeGroup, setTowerNodeGroup] = useState<NodeDto>();
+    const [isTowerNode, setIsTowerNode] = useState<any>();
     const [selectedNode, setSelectedNode] = useState<NodeDto | undefined>({
         id: "",
         name: "",
@@ -327,6 +328,7 @@ const Nodes = () => {
 
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
+        setIsTowerNode(selectedNode?.type);
     };
 
     const onNodeSelectedFromGroup = (id: string) => {
@@ -334,11 +336,20 @@ const Nodes = () => {
             setSelectedNode(
                 nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
             );
-            setTowerNodeGroup(selectedNode);
-            setBackToPreviousNode(true);
+            if (selectedNode?.type === "TOWER") {
+                setTowerNodeGroup(selectedNode);
+
+                setBackToPreviousNode(true);
+            } else {
+                setBackToPreviousNode(false);
+            }
         }
     };
-
+    useEffect(() => {
+        if (isTowerNode === "AMPLIFIER" || isTowerNode === "HOME") {
+            setBackToPreviousNode(false);
+        }
+    }, [isTowerNode]);
     const onUpdateNodeClick = () => {
         //TODO: Handle NODE RESTART ACTION
         setIsNodeUpdate(true);
