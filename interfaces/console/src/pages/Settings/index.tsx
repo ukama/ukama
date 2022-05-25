@@ -56,7 +56,7 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
             hidden={value !== index}
             style={{
                 width: "100%",
-                height: "400px",
+                height: "540px",
                 overflowY: "scroll",
                 overflowX: "hidden",
             }}
@@ -165,7 +165,10 @@ const Settings = () => {
                                 }}
                             >
                                 <CardContent
-                                    sx={{ p: 0, position: "relative" }}
+                                    sx={{
+                                        p: 0,
+                                        position: "relative",
+                                    }}
                                 >
                                     <Grid container xs={12}>
                                         <TabPanel index={1} value={menuId}>
