@@ -418,7 +418,10 @@ const Home = () => {
             setIsWelcomeDialog(true);
         }
     }, [_isFirstVisit, orgId]);
-    const handleSimInstallationClose = () => setShowInstallSim(false);
+    const handleSimInstallationClose = () => {
+        setIsEsimAdded(false);
+        setShowInstallSim(false);
+    };
 
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
@@ -768,7 +771,7 @@ const Home = () => {
                     data: {
                         email: eSimData.email,
                         name: eSimData.name,
-                        status: eSimData.status || true,
+                        status: eSimData.status,
                         phone: "",
                     },
                 },

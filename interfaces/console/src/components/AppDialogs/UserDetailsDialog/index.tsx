@@ -8,10 +8,10 @@ import {
     Tooltip,
     IconButton,
     Typography,
+    DialogTitle,
     DialogActions,
     DialogContent,
     CircularProgress,
-    DialogTitle,
 } from "@mui/material";
 import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
@@ -274,7 +274,10 @@ const UserDetailsDialog = ({
                     <DialogActions>
                         <Button
                             onClick={handleClose}
-                            sx={{ mr: 2, justifyItems: "center" }}
+                            sx={{
+                                mr: 2,
+                                justifyItems: "center",
+                            }}
                         >
                             {closeBtnLabel}
                         </Button>

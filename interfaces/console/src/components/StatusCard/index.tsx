@@ -86,7 +86,7 @@ const StatusCard = ({
                         <Grid item xs={6}>
                             <Typography variant="body2" paddingRight="6px">
                                 {`${subtitle1}${
-                                    title === "Data Usage" ? " GBs" : ""
+                                    title === "Data Usage" ? " MBs" : ""
                                 }`}
                             </Typography>
                         </Grid>
@@ -169,7 +169,7 @@ const StatusCard = ({
                                             variant="body1"
                                             paddingRight="4px"
                                         >
-                                            GB
+                                            MBs
                                         </Typography>
                                     </Grid>
                                 )}

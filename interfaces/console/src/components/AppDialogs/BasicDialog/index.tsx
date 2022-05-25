@@ -62,7 +62,11 @@ const BasicDialog = ({
             <DialogActions>
                 <Stack direction={"row"} alignItems="center" spacing={2}>
                     {labelNegativeBtn && (
-                        <Button variant="text" onClick={handleCloseAction}>
+                        <Button
+                            variant="text"
+                            color={"primary"}
+                            onClick={handleCloseAction}
+                        >
                             {labelNegativeBtn}
                         </Button>
                     )}

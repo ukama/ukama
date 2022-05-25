@@ -1,6 +1,6 @@
-import { colors } from "../../theme";
 import { LoadingWrapper } from "..";
-import { getStatusByType } from "../../utils";
+import { colors } from "../../theme";
+import { getStatusByType, secToHoursNMints } from "../../utils";
 import { Typography, Grid, Button, Stack, useMediaQuery } from "@mui/material";
 
 const DOT = (color: string) => (
@@ -66,7 +66,11 @@ const NetworkStatus = ({
                                             fontWeight: { xs: 400, md: 500 },
                                         }}
                                     >
-                                        {duration}
+                                        {secToHoursNMints(
+                                            new Date().getTime() / 1000 -
+                                                parseInt(duration),
+                                            " hours and "
+                                        )}
                                     </Typography>
                                 )}
                             </Stack>

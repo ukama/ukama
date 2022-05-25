@@ -26,6 +26,8 @@ import {
     useGetMetricsByTabLazyQuery,
     useGetNodeAppsVersionLogsQuery,
     useGetMetricsByTabSSubscription,
+    Time_Filter,
+    useGetConnectedUsersQuery,
 } from "../../generated";
 import {
     getMetricPayload,
@@ -244,6 +246,12 @@ const Nodes = () => {
                     ...filter,
                 }));
             }
+        },
+    });
+
+    const { data: connectedUserRes } = useGetConnectedUsersQuery({
+        variables: {
+            filter: Time_Filter.Total,
         },
     });
 
@@ -492,6 +500,10 @@ const Nodes = () => {
                                 nodeGroupLoading={getNodeLoading}
                                 handleUpdateNode={handleUpdateNode}
                                 nodeGroupData={getNodeData?.getNode}
+                                connectedUsers={
+                                    connectedUserRes?.getConnectedUsers
+                                        .totalUser
+                                }
                                 onNodeSelected={onNodeSelectedFromGroup}
                                 uptime={getNodeStatusData?.getNodeStatus.uptime}
                                 getNodeSoftwareUpdateInfos={handleSoftwareInfos}

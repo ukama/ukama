@@ -33,8 +33,8 @@ function randomArray<T>(
 const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
-        dataConsumed: defaultCasual.integer(1, 39),
-        dataPackage: `${defaultCasual.integer(5, 60)} GB free left`,
+        dataConsumed: defaultCasual.integer(1, 2048),
+        dataPackage: `0 UkamaFi; 0 roaming`,
     };
 };
 
@@ -87,15 +87,10 @@ const esim = (): EsimDto => {
 const network = (): NetworkDto => {
     const status = defaultCasual.random_value(NETWORK_STATUS);
 
-    if (status === NETWORK_STATUS.BEING_CONFIGURED)
-        return {
-            id: defaultCasual._uuid(),
-            status,
-        };
     return {
         id: defaultCasual._uuid(),
         status,
-        description: "21 days 5 hours 1 minute",
+        description: "1653416983",
     };
 };
 

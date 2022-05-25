@@ -7,13 +7,13 @@ import {
     TextField,
     Stack,
 } from "@mui/material";
+import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
-import * as Yup from "yup";
-import { colors } from "../../theme";
 import { PHYSICAL_SIM_FORM_SCHEMA } from "../../helpers/formValidators";
 interface IPhysicalSimform {
     description: string;
+    handleClose: Function;
     handlePhysicalSimInstallation: Function;
 }
 const physicalSimFormSchema = Yup.object(PHYSICAL_SIM_FORM_SCHEMA);
@@ -24,9 +24,10 @@ const initialePhysicalSimFormValue = {
 
 const PhysicalSimform = ({
     description,
+    handleClose,
     handlePhysicalSimInstallation,
 }: IPhysicalSimform) => {
-    const [status, setStatus] = useState<boolean>(false);
+    const [status, setStatus] = useState<boolean>(true);
     const gclasses = globalUseStyles();
     return (
         <Formik
@@ -102,10 +103,7 @@ const PhysicalSimform = ({
                                 sx={{ alignItems: "end" }}
                             >
                                 <Stack display="flex" alignItems="flex-start">
-                                    <Typography
-                                        variant="caption"
-                                        color={colors.black54}
-                                    >
+                                    <Typography variant="caption">
                                         ROAMING
                                     </Typography>
                                     <Typography variant="body1">
@@ -120,8 +118,15 @@ const PhysicalSimform = ({
                                     onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
-                            <Stack direction="row" justifyContent="flex-end">
-                                <Button sx={{ mr: 2, justifyItems: "center" }}>
+                            <Stack
+                                mt={1}
+                                direction="row"
+                                justifyContent="flex-end"
+                            >
+                                <Button
+                                    sx={{ mr: 2, justifyItems: "center" }}
+                                    onClick={() => handleClose()}
+                                >
                                     Cancel
                                 </Button>
                                 <Button variant="contained" type="submit">

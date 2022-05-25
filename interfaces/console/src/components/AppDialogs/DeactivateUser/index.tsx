@@ -8,7 +8,6 @@ import {
     DialogActions,
     DialogContent,
 } from "@mui/material";
-import { colors } from "../../../theme";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface IDeactivateUser {
@@ -63,11 +62,7 @@ const DeactivateUser = ({
             <DialogActions>
                 <Stack direction={"row"} alignItems="center" spacing={2}>
                     {labelNegativeBtn && (
-                        <Button
-                            variant="text"
-                            onClick={handleCloseAction}
-                            sx={{ color: colors.primaryMain }}
-                        >
+                        <Button variant="text" onClick={handleCloseAction}>
                             {labelNegativeBtn}
                         </Button>
                     )}

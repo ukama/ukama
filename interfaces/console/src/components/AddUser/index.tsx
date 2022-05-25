@@ -48,13 +48,13 @@ const getTitle = (iSeSimAdded: boolean, type: any) =>
 
 const AddUser = ({
     isOpen,
-    handleClose,
-    loading = false,
     qrCodeId,
-    handlePhysicalSimInstallation,
-    addedUserName,
-    handleEsimInstallation,
+    handleClose,
     iSeSimAdded,
+    addedUserName,
+    loading = false,
+    handleEsimInstallation,
+    handlePhysicalSimInstallation,
 }: IAddUser) => {
     const [flow, setFlow] = useState(0);
     const [simType, setSimType] = useState("");
@@ -109,13 +109,14 @@ const AddUser = ({
                             </CenterContainer>
                         ) : (
                             <Userform
-                                handleEsimInstallation={handleEsimInstallation}
+                                handleClose={handleClose}
                                 description={getDescription(1)}
+                                handleEsimInstallation={handleEsimInstallation}
                             />
                         )}
                     </>
                 )}
-                {!iSeSimAdded && simType == "Physical SIM" && (
+                {!iSeSimAdded && simType == "pSIM" && (
                     <>
                         {loading ? (
                             <CenterContainer>
@@ -123,6 +124,7 @@ const AddUser = ({
                             </CenterContainer>
                         ) : (
                             <PhysicalSimform
+                                handleClose={handleClose}
                                 handlePhysicalSimInstallation={
                                     handlePhysicalSimInstallation
                                 }
