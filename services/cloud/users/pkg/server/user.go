@@ -359,9 +359,13 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	u.DeactivateUser(ctx, &pb.DeactivateUserRequest{
+	_, err = u.DeactivateUser(ctx, &pb.DeactivateUserRequest{
 		UserId: req.UserId,
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	// delete user
 	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
