@@ -8,7 +8,7 @@ import (
 type Org struct {
 	gorm.Model
 	Name      string `gorm:"not null;type:string;uniqueIndex:orgname_idx_case_insensetive,expression:lower(name),where:deleted_at is null"`
-	UserLimit uint
+	UserLimit *uint
 	Users     []User
 }
 
@@ -43,7 +43,7 @@ type Simcard struct {
 	UserID     uint       `gorm:"not null;uniqueIndex;default:0"`
 	IsPhysical bool       `gorm:"not null;default:false"`
 	Iccid      string     `gorm:"primarykey"`
-	Services   []*Service `gorm:"foreignKey:Iccid;references:Iccid"`
+	Services   []*Service `gorm:"foreignKey:Iccid;references:Iccid;constraint:OnDelete:CASCADE;"`
 	Source     string
 }
 

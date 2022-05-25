@@ -47,6 +47,9 @@ func Test_UserService(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
+	// DEBUG
+	ctx = context.Background()
+
 	logrus.Infoln("Connecting to service ", testConf.UsersHost)
 	conn, err := grpc.DialContext(ctx, testConf.UsersHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
@@ -114,7 +117,7 @@ func Test_UserService(t *testing.T) {
 		})
 
 		if handleResponse(tt, err, listResp) {
-			assert.Equal(tt, 1, len(listResp.Users))
+			assert.Equal(tt, 2, len(listResp.Users))
 		}
 	})
 
@@ -193,16 +196,18 @@ func Test_UserService(t *testing.T) {
 			Org: testOrg,
 		})
 		if handleResponse(tt, err, listResp) {
-			assert.Equal(tt, 0, len(listResp.Users))
+			assert.Equal(tt, 1, len(listResp.Users))
 		}
 	})
 }
 
 func cleanupUser(c pb.UserServiceClient, addResp ...*pb.AddResponse) {
+	logrus.Info("Cleaning up")
 	for _, rsp := range addResp {
 		if rsp != nil && rsp.User != nil {
 			r := *rsp
 
+			logrus.Info("Deleting user: ", r.User.Uuid, " Iccid: ", r.Iccid)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 			defer cancel()
 			_, err := c.Delete(ctx, &pb.DeleteRequest{UserId: rsp.User.Uuid})
