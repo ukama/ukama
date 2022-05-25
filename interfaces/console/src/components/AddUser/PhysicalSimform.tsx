@@ -27,7 +27,7 @@ const PhysicalSimform = ({
     handleClose,
     handlePhysicalSimInstallation,
 }: IPhysicalSimform) => {
-    const [status, setStatus] = useState<boolean>(false);
+    const [status, setStatus] = useState<boolean>(true);
     const gclasses = globalUseStyles();
     return (
         <Formik
@@ -118,7 +118,11 @@ const PhysicalSimform = ({
                                     onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
-                            <Stack direction="row" justifyContent="flex-end">
+                            <Stack
+                                mt={1}
+                                direction="row"
+                                justifyContent="flex-end"
+                            >
                                 <Button
                                     sx={{ mr: 2, justifyItems: "center" }}
                                     onClick={() => handleClose()}

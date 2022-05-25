@@ -116,7 +116,7 @@ const AddUser = ({
                         )}
                     </>
                 )}
-                {!iSeSimAdded && simType == "Physical SIM" && (
+                {!iSeSimAdded && simType == "pSIM" && (
                     <>
                         {loading ? (
                             <CenterContainer>

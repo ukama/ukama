@@ -77,12 +77,11 @@ const DataTableWithOptions = ({
     return (
         <Box
             component="div"
-            mt={2}
+            mt={1}
             sx={{
                 height: "100%",
                 minHeight: 234,
                 display: "flex",
-                alignItems: "center",
             }}
         >
             {dataset?.length > 0 ? (

@@ -6,12 +6,11 @@ import {
     Button,
     Typography,
 } from "@mui/material";
-import { colors } from "../../theme";
-import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
+import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
-import * as Yup from "yup";
 import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
+import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 interface IUserform {
     description: string;
     handleClose: Function;
@@ -29,7 +28,7 @@ const Userform = ({
     handleEsimInstallation,
 }: IUserform) => {
     const gclasses = globalUseStyles();
-    const [status, setStatus] = useState<boolean>(false);
+    const [status, setStatus] = useState<boolean>(true);
 
     return (
         <Formik
@@ -100,10 +99,7 @@ const Userform = ({
                                 sx={{ alignItems: "end" }}
                             >
                                 <Stack display="flex" alignItems="flex-start">
-                                    <Typography
-                                        variant="caption"
-                                        color={colors.black54}
-                                    >
+                                    <Typography variant="caption">
                                         ROAMING
                                     </Typography>
                                     <Typography variant="body1">
@@ -118,7 +114,11 @@ const Userform = ({
                                     onChange={e => setStatus(e.target.checked)}
                                 />
                             </ContainerJustifySpaceBtw>
-                            <Stack direction="row" justifyContent="flex-end">
+                            <Stack
+                                direction="row"
+                                justifyContent="flex-end"
+                                mt={1}
+                            >
                                 <Button
                                     sx={{ mr: 2, justifyItems: "center" }}
                                     onClick={() => handleClose()}
