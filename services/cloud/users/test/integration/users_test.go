@@ -47,9 +47,6 @@ func Test_UserService(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 	defer cancel()
 
-	// DEBUG
-	ctx = context.Background()
-
 	logrus.Infoln("Connecting to service ", testConf.UsersHost)
 	conn, err := grpc.DialContext(ctx, testConf.UsersHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
