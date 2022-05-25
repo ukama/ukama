@@ -327,7 +327,6 @@ const Nodes = () => {
 
     const onNodeSelected = (node: NodeDto) => {
         setSelectedNode(node);
-        setTowerNodeGroup(node);
     };
 
     const onNodeSelectedFromGroup = (id: string) => {
@@ -335,6 +334,7 @@ const Nodes = () => {
             setSelectedNode(
                 nodesRes?.getNodesByOrg?.nodes.find(ele => ele.id === id)
             );
+            setTowerNodeGroup(selectedNode);
             setBackToPreviousNode(true);
         }
     };
@@ -413,6 +413,7 @@ const Nodes = () => {
     const handleCloseNodeInfos = () => {
         setShowNodeSoftwareUpdatInfos(false);
     };
+
     const handleBackToSingleTowerNode = () => {
         setSelectedNode(towerNodeGroup);
         setBackToPreviousNode(false);
