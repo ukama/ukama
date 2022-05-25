@@ -20,6 +20,7 @@ interface INodeOverviewTab {
     isUpdateAvailable: boolean;
     handleUpdateNode: Function;
     selectedNode: NodeDto | undefined;
+    connectedUsers: string | undefined;
     getNodeSoftwareUpdateInfos: Function;
     nodeGroupData: NodeResponse | undefined;
 }
@@ -31,6 +32,7 @@ const NodeOverviewTab = ({
     selectedNode,
     nodeGroupData,
     metricsLoading,
+    connectedUsers = "0",
     onNodeSelected,
     nodeGroupLoading,
     handleUpdateNode,
@@ -152,12 +154,16 @@ const NodeOverviewTab = ({
                         >
                             <NodeStatItem
                                 name={"Attached"}
-                                value={"100"}
+                                value={connectedUsers}
                                 nameInfo={TooltipsText.ATTACHED}
                             />
                             <NodeStatItem
                                 name={"Active"}
-                                value={"100000"}
+                                value={`${
+                                    connectedUsers === "0"
+                                        ? parseInt(connectedUsers)
+                                        : parseInt(connectedUsers) - 1
+                                }`}
                                 nameInfo={TooltipsText.ACTIVE}
                             />
                         </NodeStatsContainer>
