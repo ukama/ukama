@@ -5,14 +5,8 @@ import {
     NetworkSettings,
     LoadingWrapper,
 } from "../../components";
+import { RoundedCard } from "../../styles";
 import {
-    RoundedCard,
-    VerticalContainer,
-    HorizontalContainer,
-} from "../../styles";
-import {
-    Grid,
-    Button,
     Divider,
     MenuList,
     MenuItem,
@@ -22,6 +16,7 @@ import {
     CardContent,
     IconButton,
     Box,
+    Grid,
 } from "@mui/material";
 import {
     useRecoilState,
@@ -44,11 +39,6 @@ interface TabPanelProps {
     value: number;
 }
 
-interface ActionButtonsProps {
-    handleCancelAction: Function;
-    handleSaveAction: Function;
-}
-
 const SettingMenuItem = ({ label, isSelected, handleItemClick }: any) => (
     <MenuItem
         selected={isSelected}
@@ -66,7 +56,7 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
             hidden={value !== index}
             style={{
                 width: "100%",
-                height: "400px",
+                height: "540px",
                 overflowY: "scroll",
                 overflowX: "hidden",
             }}
@@ -77,32 +67,6 @@ const TabPanel = ({ children, index, value }: TabPanelProps) => {
         </div>
     );
 };
-
-const ActionButtons = ({
-    handleCancelAction,
-    handleSaveAction,
-}: ActionButtonsProps) => (
-    <VerticalContainer>
-        <Divider sx={{ width: "100%" }} />
-        <HorizontalContainer
-            sx={{
-                mt: "4px",
-                justifyContent: "flex-end",
-            }}
-        >
-            <Button
-                variant="outlined"
-                sx={{ mr: "20px" }}
-                onClick={() => handleCancelAction()}
-            >
-                CANCEL
-            </Button>
-            <Button variant="contained" onClick={() => handleSaveAction()}>
-                SAVE SETTINGS
-            </Button>
-        </HorizontalContainer>
-    </VerticalContainer>
-);
 
 const Settings = () => {
     const history = useHistory();
@@ -201,7 +165,10 @@ const Settings = () => {
                                 }}
                             >
                                 <CardContent
-                                    sx={{ p: 0, position: "relative" }}
+                                    sx={{
+                                        p: 0,
+                                        position: "relative",
+                                    }}
                                 >
                                     <Grid container xs={12}>
                                         <TabPanel index={1} value={menuId}>
@@ -234,16 +201,6 @@ const Settings = () => {
                                         </IconButton>
                                     </Box>
                                 </CardContent>
-                                <CardActions
-                                    sx={{
-                                        display: menuId === 4 ? "none" : "flex",
-                                    }}
-                                >
-                                    <ActionButtons
-                                        handleSaveAction={handleSave}
-                                        handleCancelAction={handleCancel}
-                                    />
-                                </CardActions>
                             </Card>
                         </LoadingWrapper>
                     </Grid>
