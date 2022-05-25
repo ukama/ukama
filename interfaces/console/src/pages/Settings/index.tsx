@@ -91,9 +91,6 @@ const Settings = () => {
         window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };
 
-    const handleSave = () => {
-        /* TODO: Handle Save Action */
-    };
     const handleCancel = () => {
         history.push(routes.Root.path);
     };
