@@ -589,9 +589,11 @@ const Home = () => {
             },
         });
     };
-    const [getUser, { loading: userLoading }] = useGetUserLazyQuery({
+    const [getUser, { loading: getUserLoading }] = useGetUserLazyQuery({
         onCompleted: res => {
-            if (res.getUser) setSelectedUser(res.getUser);
+            if (res.getUser) {
+                setSelectedUser(res.getUser);
+            }
         },
     });
 
@@ -611,13 +613,13 @@ const Home = () => {
                 userId: id,
                 userName: users?.find(item => item.id === id)?.name || "",
             });
-        } else {
-            setSimDialog({ isShow: true, type: "edit" });
+        } else if (type === "edit") {
             getUser({
                 variables: {
                     userId: id,
                 },
             });
+            setSimDialog({ isShow: true, type: "edit" });
         }
     };
     const handleUserSubmitAction = () => {
@@ -678,6 +680,7 @@ const Home = () => {
                     type: "success",
                     show: true,
                 });
+                refetchResidents();
             }
         },
         onError: err => {
@@ -909,8 +912,7 @@ const Home = () => {
                             deactivateUserLoading ||
                             isSkeltonLoad ||
                             addUserLoading ||
-                            updateUserLoading ||
-                            userLoading
+                            updateUserLoading
                         }
                     >
                         <RoundedCard sx={{ height: "100%" }}>
@@ -993,7 +995,7 @@ const Home = () => {
                     type={simDialog.type}
                     saveBtnLabel={"Save"}
                     closeBtnLabel="close"
-                    loading={updateNodeLoading}
+                    loading={getUserLoading}
                     isOpen={simDialog.isShow}
                     setUserForm={setSelectedUser}
                     simDetailsTitle="SIM Details"
