@@ -67,7 +67,11 @@ import { RoundedCard } from "../../styles";
 import { useEffect, useState } from "react";
 import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import { getMetricPayload, isContainNodeUpdate } from "../../utils";
+import {
+    getMetricPayload,
+    getTowerNodeFromNodes,
+    isContainNodeUpdate,
+} from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
 const userInit = {
     id: "",
@@ -428,7 +432,7 @@ const Home = () => {
             tab: 4,
             regPolling: false,
             nodeType: Node_Type.Home,
-            nodeId: "uk-sa2209-comv1-a1-ee58",
+            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
@@ -439,7 +443,7 @@ const Home = () => {
             from: from,
             regPolling: true,
             nodeType: Node_Type.Home,
-            nodeId: "uk-sa2209-comv1-a1-ee58",
+            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
         });
 
     useEffect(() => {
@@ -831,8 +835,8 @@ const Home = () => {
                             subtitle1={`${
                                 dataUsageRes?.getDataUsage?.dataConsumed || 0
                             }`}
-                            subtitle2={`/ ${
-                                dataUsageRes?.getDataUsage?.dataPackage || "-"
+                            subtitle2={`${
+                                dataUsageRes?.getDataUsage?.dataPackage || ""
                             }`}
                             Icon={DataUsage}
                             options={TIME_FILTER}

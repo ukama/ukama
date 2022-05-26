@@ -34,7 +34,7 @@ const dataUsage = (): DataUsageDto => {
     return {
         id: defaultCasual._uuid(),
         dataConsumed: defaultCasual.integer(1, 2048),
-        dataPackage: `0 UkamaFi; 0 roaming`,
+        dataPackage: ``,
     };
 };
 

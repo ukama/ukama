@@ -348,6 +348,18 @@ const doesHttpOnlyCookieExist = (cookiename: string): boolean => {
     return document.cookie.indexOf(cookiename + "=") == -1;
 };
 
+const getTowerNodeFromNodes = (nodes: NodeDto[]): string => {
+    if (nodes.length > 0) {
+        for (const node of nodes) {
+            if (node.type === Node_Type.Tower) return node.id;
+        }
+        for (const node of nodes) {
+            if (node.type === Node_Type.Home) return node.id;
+        }
+    }
+    return "";
+};
+
 export {
     hexToRGB,
     formatBytes,
@@ -367,6 +379,7 @@ export {
     getMetricObjectByKey,
     getDefaultMetricList,
     getGraphFilterByType,
+    getTowerNodeFromNodes,
     parseObjectInNameValue,
     doesHttpOnlyCookieExist,
 };
