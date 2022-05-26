@@ -35,7 +35,6 @@ func (c *OrgCollector) StartMetricsUpdate() {
 	go func() {
 		for {
 			ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
-			defer cancel()
 
 			logrus.Infof("Getting data from registry")
 			resp, err := c.reg.List(ctx, &reg.ListRequest{})
@@ -53,6 +52,7 @@ func (c *OrgCollector) StartMetricsUpdate() {
 			}
 			logrus.Infof("Orgs count %d", len(c.metrics))
 			c.mx.Unlock()
+			cancel()
 
 			logrus.Infof("Data retreival sleeps for %v", c.requestInterval)
 			time.Sleep(c.requestInterval)

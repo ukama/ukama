@@ -46,7 +46,9 @@ func main() {
 	))
 
 	http.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+		if _, err := w.Write([]byte("pong")); err != nil {
+			logrus.Errorf("Error writing ping response %v", err)
+		}
 	}))
 
 	logrus.Info("Starting server on ", serviceConfig.Server.Port)
