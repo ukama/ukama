@@ -24,8 +24,8 @@ const TABLE_EXPORT_OPTIONS = [
     { id: 3, label: "PDF", value: "PDF" },
 ];
 const LANGUAGE_OPTIONS = [
-    { id: 1, label: "🇺🇸  English, US", value: "EN" },
-    { id: 2, label: "🇫🇷  French, France", value: "FR" },
+    { id: 1, label: "🇺🇸  English, US", value: "en" },
+    { id: 2, label: "🇫🇷  French, France", value: "fr" },
 ];
 
 const SIDEBAR_MENU1 = [

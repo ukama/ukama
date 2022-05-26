@@ -4,7 +4,9 @@ import LanguageDetector from "i18next-browser-languagedetector";
 
 import { TRANSLATIONS_EN } from "./translations/en";
 import { TRANSLATIONS_FR } from "./translations/fr";
-
+const defaultLocale = localStorage["i18nextLng"]
+    ? localStorage["i18nextLng"]
+    : "en";
 i18n.use(LanguageDetector)
     .use(initReactI18next)
     .init({
@@ -18,4 +20,4 @@ i18n.use(LanguageDetector)
         },
     });
 
-i18n.changeLanguage("en");
+i18n.changeLanguage(defaultLocale);
