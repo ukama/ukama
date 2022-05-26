@@ -16,6 +16,12 @@ type Config struct {
 	NodeMetricsPort   int
 	Dns               *DnsConfig
 	Metrics           config.Metrics
+	OrgMetricsTarget  OrgMetricsConf
+}
+
+type OrgMetricsConf struct {
+	Url            string
+	ScrapeInterval time.Duration
 }
 
 type DnsConfig struct {
@@ -39,6 +45,10 @@ func NewConfig() *Config {
 		Metrics: config.Metrics{
 			Port:    10250,
 			Enabled: true,
+		},
+		OrgMetricsTarget: OrgMetricsConf{
+			Url:            "https://localhost:10251", // full url with port path and http
+			ScrapeInterval: 1 * time.Minute,
 		},
 	}
 }

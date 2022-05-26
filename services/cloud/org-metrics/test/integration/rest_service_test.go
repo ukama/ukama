@@ -32,7 +32,7 @@ func init() {
 }
 
 // Call webhost endpoint and check response
-func Test_AddCApp(t *testing.T) {
+func Test_GetMetrics(t *testing.T) {
 	rest := resty.New().EnableTrace().SetDebug(tConfig.DebugMode)
 
 	t.Run("Ping", func(t *testing.T) {
@@ -42,7 +42,7 @@ func Test_AddCApp(t *testing.T) {
 	})
 
 	t.Run("Get", func(tt *testing.T) {
-		r, err := rest.R().Get(fmt.Sprintf("%s/%s", tConfig.ServiceHost, "some-name"))
+		r, err := rest.R().Get(fmt.Sprintf("%s", tConfig.ServiceHost))
 		if err != nil {
 			assert.FailNow(tt, err.Error())
 		}
