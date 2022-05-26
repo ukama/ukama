@@ -26,7 +26,7 @@ gen:
  			  registry.proto
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
-	mockery -dir ./pb  -all -recursive -output ./pb/gen/mocks
+	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
 
 clean:
 	rm pb/generated/*.go

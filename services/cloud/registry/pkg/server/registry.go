@@ -113,6 +113,39 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 	return &pb.Organization{Name: org.Name, Owner: org.Owner.String()}, nil
 }
 
+func (r *RegistryServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	logrus.Infof("Listing orgs")
+	orgs, err := r.netRepo.List()
+	if err != nil {
+		logrus.Error(err)
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	orgsResp := &pb.ListResponse{
+		Orgs: make([]*pb.ListResponse_Org, len(orgs)),
+	}
+
+	i := 0
+	for o, n := range orgs {
+		orgsResp.Orgs[i] = &pb.ListResponse_Org{
+			Name:     o,
+			Networks: make([]*pb.ListResponse_Network, len(n)),
+		}
+
+		j := 0
+		for nname, nodecnt := range n {
+			orgsResp.Orgs[i].Networks[j] = &pb.ListResponse_Network{
+				Name:          nname,
+				NumberOfNodes: int32(nodecnt),
+			}
+			j++
+		}
+		i++
+	}
+
+	return orgsResp, nil
+}
+
 func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 	if len(req.OrgName) == 0 {

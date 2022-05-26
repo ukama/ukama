@@ -271,3 +271,43 @@ func Test_toDbNodeType(t *testing.T) {
 		})
 	}
 }
+
+func Test_List(t *testing.T) {
+	nodeRepo := &mocks.NodeRepo{}
+	orgRepo := &mocks.OrgRepo{}
+	netRepo := &mocks.NetRepo{}
+	pub := &qPubStub{}
+
+	queryRes := map[string]map[string]int{
+		"a": {
+			"n1": 1,
+			"n2": 2,
+		},
+		"b": {
+			"n1": 3,
+		},
+	}
+
+	netRepo.On("List").Return(queryRes, nil).Once()
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+
+	// act
+	res, err := s.List(context.TODO(), &pb.ListRequest{})
+
+	// assert
+	if assert.NoError(t, err) && assert.NotNil(t, res.Orgs) {
+
+		assert.Len(t, res.Orgs, 2)
+		assert.Len(t, res.Orgs[0].GetNetworks(), 2)
+
+		assert.Equal(t, "a", res.Orgs[0].GetName())
+		assert.Equal(t, "b", res.Orgs[1].GetName())
+
+		assert.Equal(t, "n1", res.Orgs[0].GetNetworks()[0].GetName())
+		assert.Equal(t, int32(1), res.Orgs[0].GetNetworks()[0].GetNumberOfNodes())
+		assert.Equal(t, "n2", res.Orgs[0].GetNetworks()[1].GetName())
+
+		assert.Equal(t, "n1", res.Orgs[1].GetNetworks()[0].GetName())
+		assert.Equal(t, int32(3), res.Orgs[1].GetNetworks()[0].GetNumberOfNodes())
+	}
+}

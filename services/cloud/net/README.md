@@ -65,3 +65,10 @@ metadata:
 uk-sa2203-hnode-a1-0a16.node.mesh. 0 IN A       172.10.0.1
 ...
 ```
+
+
+## Etcd structure
+
+This service maintains two types of records: 
+- Node -> IP. Keys starting with `nodeId:` like `nodeId:uk-aa0000-hnode-a1-000`
+- Node -> Org, network. Key starts with `map:`  like `map:uk-aa0000-hnode-a1-000`

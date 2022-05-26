@@ -24,7 +24,7 @@ type PingResponse struct {
 }
 
 type HttpConfig struct {
-	Port int
+	Port int `default:"8080"`
 	Cors cors.Config
 }
 

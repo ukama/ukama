@@ -141,3 +141,29 @@ func (this *Node) Validate() error {
 	}
 	return nil
 }
+func (this *ListRequest) Validate() error {
+	return nil
+}
+func (this *ListResponse) Validate() error {
+	for _, item := range this.Orgs {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Orgs", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *ListResponse_Network) Validate() error {
+	return nil
+}
+func (this *ListResponse_Org) Validate() error {
+	for _, item := range this.Networks {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Networks", err)
+			}
+		}
+	}
+	return nil
+}

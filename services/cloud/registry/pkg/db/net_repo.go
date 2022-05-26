@@ -11,6 +11,7 @@ import (
 type NetRepo interface {
 	Get(orgName string, network string) (*Network, error)
 	Add(orgId uint32, network string) (*Network, error)
+	List() (map[string]map[string]int, error)
 }
 
 type netRepo struct {
@@ -72,4 +73,31 @@ func (n netRepo) Add(orgId uint32, network string) (*Network, error) {
 	db = db.Create(netw)
 
 	return netw, db.Error
+}
+
+func (n netRepo) List() (map[string]map[string]int, error) {
+	db := n.Db.GetGormDb()
+
+	rows, err := db.Raw(`select  o."name" org , n."name" network , count(n.id) nodes
+from orgs o 
+inner join networks n  on n.org_id  = o.id 
+inner join nodes nd on nd.network_id  = n.id and nd.deleted_at is null 
+group by o.id , n.id`).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make(map[string]map[string]int)
+
+	for rows.Next() {
+		var org, network string
+		var nodes int
+		err = rows.Scan(&org, &network, &nodes)
+		if err != nil {
+			return nil, err
+		}
+
+		result[org][network] = nodes
+	}
+	return result, nil
 }
