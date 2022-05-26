@@ -9,19 +9,16 @@ replace github.com/ukama/ukama/services/cloud/org-metrics => ./
 replace github.com/ukama/ukama/services/cloud/registry => ../registry
 
 require (
-	github.com/gin-contrib/cors v1.3.0
-	github.com/gin-gonic/gin v1.7.7
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/golangci/golangci-lint v1.46.2
-	github.com/loopfz/gadgeto v0.9.0
 	github.com/num30/config v0.0.5
 	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_model v0.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220526011617-5910c0a0c79d
 	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	github.com/vektra/mockery/v2 v2.12.2
-	github.com/wI2L/fizz v0.18.1
 )
 
 require (
@@ -57,7 +54,9 @@ require (
 	github.com/firefart/nonamedreturns v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fzipp/gocyclo v0.5.1 // indirect
+	github.com/gin-contrib/cors v1.3.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/gin v1.7.7 // indirect
 	github.com/go-critic/go-critic v0.6.3 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -126,6 +125,7 @@ require (
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/leonklingele/grouper v1.1.0 // indirect
 	github.com/lib/pq v1.10.4 // indirect
+	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/lufeee/execinquery v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/maratori/testpackage v1.0.1 // indirect
@@ -154,7 +154,6 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v1.0.0 // indirect
-	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/quasilyte/go-ruleguard v0.3.16-0.20220213074421-6aa060fab41a // indirect
@@ -192,6 +191,7 @@ require (
 	github.com/ultraware/funlen v0.0.3 // indirect
 	github.com/ultraware/whitespace v0.0.5 // indirect
 	github.com/uudashr/gocognit v1.0.5 // indirect
+	github.com/wI2L/fizz v0.18.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.2.0 // indirect
