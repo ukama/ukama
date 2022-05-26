@@ -21,10 +21,11 @@ const LineDivider = () => (
 
 const UserSettings = () => {
     const _isDarkMod = useRecoilValue(isDarkmode);
-    const [language, setLanguage] = useState("EN");
+    const [language, setLanguage] = useState(localStorage["i18nextLng"]);
     const [timezone, setTimezone] = useState("Pacific Standard Time");
     const handleLanguageChange = (event: any) => {
         setLanguage(event.target.value);
+        localStorage.setItem("i18nextLng", event.target.value);
     };
 
     const handleTimezoneChange = (event: any) => {
