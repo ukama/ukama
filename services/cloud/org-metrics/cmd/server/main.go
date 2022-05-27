@@ -39,10 +39,12 @@ func main() {
 
 	http.Handle("/", promhttp.HandlerFor(
 		promReg,
-		promhttp.HandlerOpts{
-			// Opt into OpenMetrics to support exemplars.
-			EnableOpenMetrics: true,
-		},
+		promhttp.HandlerOpts{EnableOpenMetrics: true},
+	))
+
+	http.Handle("/metrics", promhttp.HandlerFor(
+		promReg,
+		promhttp.HandlerOpts{EnableOpenMetrics: true},
 	))
 
 	http.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
