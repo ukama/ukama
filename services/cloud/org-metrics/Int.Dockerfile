@@ -4,4 +4,3 @@ ENV PROJECT_NAME=org-metrics
 
 RUN mkdir -p /usr/bin/testdata
 COPY bin/integration /usr/bin/integration
-COPY test/integration/testdata/capp.tar.gz /testdata/capp.tar.gz
