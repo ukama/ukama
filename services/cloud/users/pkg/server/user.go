@@ -359,14 +359,13 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 		return nil, status.Errorf(codes.InvalidArgument, uuidParsingError)
 	}
 
-	user, err := u.userRepo.Get(uuid)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "user")
-	}
+	_, err = u.DeactivateUser(ctx, &pb.DeactivateUserRequest{
+		UserId: req.UserId,
+	})
 
-	// terminate sim cards asynchronously
-	// would be better to trigger an AMQP event
-	go u.terminateSimCard(ctx, user.Simcard)
+	if err != nil {
+		return nil, err
+	}
 
 	// delete user
 	err = u.userRepo.Delete(uuid, func(uuid uuid2.UUID, tx *gorm.DB) error {
@@ -379,6 +378,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
 	}
+
 	return &pb.DeleteResponse{}, nil
 }
 
@@ -427,22 +427,27 @@ func (u *UserService) DeactivateUser(ctx context.Context, req *pb.DeactivateUser
 	// Deactivate sim cards in sim manager
 	u.terminateSimCard(ctx, usr.Simcard)
 
-	// Delete imsi record from HSS
-	s, err := u.imsiService.GetClient()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to hss")
-	}
-
-	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
-		IdOneof: &hsspb.DeleteImsiRequest_UserId{
-			UserId: req.UserId,
-		},
-	})
+	err = u.deleteImsiFromHss(ctx, req.UserId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
 	return &pb.DeactivateUserResponse{}, nil
+}
+
+func (u *UserService) deleteImsiFromHss(ctx context.Context, userId string) error {
+	// Delete imsi record from HSS
+	s, err := u.imsiService.GetClient()
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to hss")
+	}
+
+	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
+		IdOneof: &hsspb.DeleteImsiRequest_UserId{
+			UserId: userId,
+		},
+	})
+	return err
 }
 
 func (u *UserService) GetQrCode(ctx context.Context, req *pb.GetQrCodeRequest) (*pb.GetQrCodeResponse, error) {

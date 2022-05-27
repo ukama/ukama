@@ -87,7 +87,25 @@ func Test_UserService(t *testing.T) {
 			t.FailNow()
 		}
 	})
-	defer cleanupUser(addResp, c)
+	defer cleanupUser(c, addResp)
+
+	var esimUsr *pb.AddResponse
+	t.Run("AddUserWithESim", func(tt *testing.T) {
+		esimUsr, err = c.Add(ctx, &pb.AddRequest{
+			User: &pb.User{
+				Email: "test@example.com",
+				Name:  "Joe Esim",
+			},
+			Org: testOrg})
+
+		if handleResponse(tt, err, esimUsr) {
+			logrus.Info("Failed to add")
+			assert.NotEmpty(tt, esimUsr.User.Uuid)
+		} else {
+			t.FailNow()
+		}
+	})
+	defer cleanupUser(c, esimUsr)
 
 	// todo: test limit
 	t.Run("list", func(tt *testing.T) {
@@ -96,7 +114,7 @@ func Test_UserService(t *testing.T) {
 		})
 
 		if handleResponse(tt, err, listResp) {
-			assert.Equal(tt, 1, len(listResp.Users))
+			assert.Equal(tt, 2, len(listResp.Users))
 		}
 	})
 
@@ -175,25 +193,30 @@ func Test_UserService(t *testing.T) {
 			Org: testOrg,
 		})
 		if handleResponse(tt, err, listResp) {
-			assert.Equal(tt, 0, len(listResp.Users))
+			assert.Equal(tt, 1, len(listResp.Users))
 		}
 	})
 }
 
-func cleanupUser(addResp *pb.AddResponse, c pb.UserServiceClient) {
-	if addResp != nil && addResp.User != nil {
-		r := *addResp
+func cleanupUser(c pb.UserServiceClient, addResp ...*pb.AddResponse) {
+	logrus.Info("Cleaning up")
+	for _, rsp := range addResp {
+		if rsp != nil && rsp.User != nil {
+			r := *rsp
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		_, err := c.Delete(ctx, &pb.DeleteRequest{UserId: addResp.User.Uuid})
-		if err != nil {
-			if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
-				return
+			logrus.Info("Deleting user: ", r.User.Uuid, " Iccid: ", r.Iccid)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			_, err := c.Delete(ctx, &pb.DeleteRequest{UserId: rsp.User.Uuid})
+			if err != nil {
+				if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
+					return
+				}
+				logrus.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
 			}
-			logrus.Errorf("Failed to delete user %s: %v", r.User.Uuid, err)
 		}
 	}
+
 }
 
 // return false if error is not nil
