@@ -97,6 +97,7 @@ group by o.id , n.id`).Rows()
 			return nil, err
 		}
 
+		result[org] = make(map[string]int)
 		result[org][network] = nodes
 	}
 	return result, nil

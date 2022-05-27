@@ -40,6 +40,8 @@ func (c *OrgCollector) StartMetricsUpdate() {
 			resp, err := c.reg.List(ctx, &reg.ListRequest{})
 			if err != nil {
 				logrus.Errorf("Error while getting registry list: %v", err)
+				time.Sleep(c.requestInterval)
+				continue
 			}
 			c.mx.Lock()
 			for _, o := range resp.Orgs {
