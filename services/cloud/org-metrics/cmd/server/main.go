@@ -36,25 +36,26 @@ func main() {
 	regClient := reg.NewRegistryServiceClient(conn)
 
 	promReg.MustRegister(pkg.NewMetricsCollector(regClient, serviceConfig.Registry.Timeout, serviceConfig.Registry.PollInterval))
+	srv := http.NewServeMux()
 
-	http.Handle("/", promhttp.HandlerFor(
+	srv.Handle("/", promhttp.HandlerFor(
 		promReg,
 		promhttp.HandlerOpts{EnableOpenMetrics: true},
 	))
 
-	http.Handle("/metrics", promhttp.HandlerFor(
+	srv.Handle("/metrics", promhttp.HandlerFor(
 		promReg,
 		promhttp.HandlerOpts{EnableOpenMetrics: true},
 	))
 
-	http.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv.Handle("/ping", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte("pong")); err != nil {
 			logrus.Errorf("Error writing ping response %v", err)
 		}
 	}))
 
 	logrus.Info("Starting server on ", serviceConfig.Server.Port)
-	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", serviceConfig.Server.Port), nil))
+	logrus.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", serviceConfig.Server.Port), srv))
 }
 
 // initConfig reads in config file, ENV variables, and flags if set.
