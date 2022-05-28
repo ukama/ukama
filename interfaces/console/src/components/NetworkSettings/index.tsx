@@ -19,8 +19,11 @@ const LineDivider = () => (
 );
 
 const NetworkSettings = () => {
-    const [roaming, setRoaming] = useState(false);
     const [esim, setEsim] = useState("all");
+    const [networkSettings, setNetworkSettings] = useState<any>({
+        networkType: localStorage["networkType"] || "private",
+        roamingOption: localStorage["roamingOption"] || false,
+    });
 
     const handleTimezoneChange = (event: any) => {
         setEsim(event.target.value);
@@ -82,8 +85,17 @@ const NetworkSettings = () => {
                     <Grid item xs={12} sm={10} md={8}>
                         <RadioGroup
                             aria-label="networkType"
-                            defaultValue="private"
+                            defaultValue={networkSettings.networkType}
                             name="radio-buttons-group"
+                            onChange={(event: any) => {
+                                setNetworkSettings({
+                                    networkType: event.target.value,
+                                });
+                                localStorage.setItem(
+                                    "networkType",
+                                    event.target.value
+                                );
+                            }}
                         >
                             <FormControlLabel
                                 value="public"
@@ -122,8 +134,16 @@ const NetworkSettings = () => {
                         <FormControlLabel
                             control={
                                 <Switch
-                                    checked={roaming}
-                                    onChange={e => setRoaming(e.target.checked)}
+                                    checked={networkSettings.roamingOption}
+                                    onChange={(e: any) => {
+                                        setNetworkSettings({
+                                            roamingOption: e.target.checked,
+                                        });
+                                        localStorage.setItem(
+                                            "roamingOption",
+                                            e.target.checked
+                                        );
+                                    }}
                                 />
                             }
                             label="Enable roaming for all"
@@ -135,7 +155,7 @@ const NetworkSettings = () => {
                             select
                             id="eSims"
                             InputProps={{
-                                disabled: !roaming,
+                                disabled: !networkSettings.roamingOption,
                                 disableUnderline: true,
                             }}
                             value={esim}

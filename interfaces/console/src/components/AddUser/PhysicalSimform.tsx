@@ -10,16 +10,16 @@ import {
 import * as Yup from "yup";
 import { Formik } from "formik";
 import { useState } from "react";
-import { PHYSICAL_SIM_FORM_SCHEMA } from "../../helpers/formValidators";
+import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
 interface IPhysicalSimform {
     description: string;
     handleClose: Function;
     handlePhysicalSimInstallation: Function;
 }
-const physicalSimFormSchema = Yup.object(PHYSICAL_SIM_FORM_SCHEMA);
+const physicalSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialePhysicalSimFormValue = {
-    iccid: "",
-    securityCode: "",
+    name: "",
+    email: "",
 };
 
 const PhysicalSimform = ({
@@ -56,12 +56,12 @@ const PhysicalSimform = ({
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                id="iccid"
-                                name="iccid"
-                                label={"ICCID"}
+                                id="name"
+                                name="name"
+                                label="NAME"
                                 onBlur={handleBlur}
                                 onChange={handleChange}
-                                value={values.iccid}
+                                value={values.name}
                                 sx={{ mb: 1 }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
@@ -69,19 +69,19 @@ const PhysicalSimform = ({
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                helperText={touched.iccid && errors.iccid}
-                                error={touched.iccid && Boolean(errors.iccid)}
+                                helperText={touched.name && errors.name}
+                                error={touched.name && Boolean(errors.name)}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                id="securityCode"
-                                name="securityCode"
-                                label={"SECURITY CODE"}
+                                id="email"
+                                name="email"
+                                label="EMAIL"
                                 onBlur={handleBlur}
                                 onChange={handleChange}
-                                value={values.securityCode}
+                                value={values.email}
                                 sx={{ mb: 1 }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
@@ -89,13 +89,8 @@ const PhysicalSimform = ({
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                helperText={
-                                    touched.securityCode && errors.securityCode
-                                }
-                                error={
-                                    touched.securityCode &&
-                                    Boolean(errors.securityCode)
-                                }
+                                helperText={touched.email && errors.email}
+                                error={touched.email && Boolean(errors.email)}
                             />
                         </Grid>
                         <Grid item xs={12}>
