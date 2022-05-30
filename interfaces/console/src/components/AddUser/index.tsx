@@ -71,8 +71,8 @@ const AddUser = ({
                 break;
         }
     };
-    const getTitle = (iSeSimAdded: boolean, type: any) => {
-        if (iSeSimAdded || isPsimAdded) {
+    const getTitle = (esimSuccess: boolean, type: any) => {
+        if (esimSuccess || isPsimAdded) {
             return "Add User Succesful";
         } else {
             return `Add User${type && ` - ${type}`}`;

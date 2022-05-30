@@ -796,17 +796,11 @@ const Home = () => {
             });
         }
     };
-    const handlePhysicalSimEmailFlow = (physicalSimData: UserInputDto) => {
+    const handlePhysicalSimEmailFlow = () => {
         setSimFlow(simFlow + 1);
-        setPhysicalSimData(physicalSimData);
     };
-    // eslint-disable-next-line no-unused-vars
-    const handlePhysicalSimSecurityFlow = (data: any) => {
-        // eslint-disable-next-line no-unused-vars
-        const payload = {
-            ...physicalSimData,
-            data,
-        };
+
+    const handlePhysicalSimSecurityFlow = () => {
         setSimFlow(simFlow + 1);
         setIsPsimAdded(true);
     };

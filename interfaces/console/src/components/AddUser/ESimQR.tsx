@@ -24,8 +24,9 @@ const ESimQR = ({ description, qrCodeId }: IESimQR) => {
             <Grid item xs={12}>
                 <Accordion
                     sx={{ boxShadow: "none", background: "transparent" }}
-                    onChange={(event: any, expanded: boolean) => {
-                        setShowQrCode(expanded);
+                    // eslint-disable-next-line no-unused-vars
+                    onChange={(event: any, isExpanded: boolean) => {
+                        setShowQrCode(isExpanded);
                     }}
                 >
                     <AccordionSummary
