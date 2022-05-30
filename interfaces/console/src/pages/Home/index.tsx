@@ -97,7 +97,6 @@ const Home = () => {
     const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
-    const [physicalSimData, setPhysicalSimData] = useState<any>();
     const [userStatus, setUserStatus] = useState<boolean>(true);
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
