@@ -87,6 +87,8 @@ registerEnumType(GET_USER_TYPE, {
 });
 export enum NETWORK_STATUS {
     ONLINE = "ONLINE",
+    DOWN = "DOWN",
+    UNDEFINED = "UNDEFINED",
 }
 registerEnumType(NETWORK_STATUS, {
     name: "NETWORK_STATUS",

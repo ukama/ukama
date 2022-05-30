@@ -1,10 +1,5 @@
 import * as defaultCasual from "casual";
-import {
-    ALERT_TYPE,
-    ORG_NODE_STATE,
-    NETWORK_STATUS,
-    NODE_TYPE,
-} from "../../constants";
+import { ALERT_TYPE, ORG_NODE_STATE, NODE_TYPE } from "../../constants";
 import { LoremIpsum } from "lorem-ipsum";
 import { AlertDto } from "../../modules/alert/types";
 import { BillHistoryDto, CurrentBillDto } from "../../modules/billing/types";
@@ -84,15 +79,6 @@ const esim = (): EsimDto => {
         active: defaultCasual.random_value(boolean),
     };
 };
-const network = (): NetworkDto => {
-    const status = defaultCasual.random_value(NETWORK_STATUS);
-
-    return {
-        id: defaultCasual._uuid(),
-        status,
-        description: "1653416983",
-    };
-};
 
 const currentBill = (): CurrentBillDto => {
     const data = defaultCasual.integer(1, 10);
@@ -118,13 +104,7 @@ const billHistory = (): BillHistoryDto => {
         subtotal: subtotal,
     };
 };
-const nodeNetwork = (): NetworkDto => {
-    return {
-        id: defaultCasual._uuid(),
-        status: NETWORK_STATUS.ONLINE,
-        description: "21 days 5 hours 1 minute",
-    };
-};
+
 const softwareLogs = (): NodeAppsVersionLogsResponse[] => {
     const lorem = new LoremIpsum();
     const logs: NodeAppsVersionLogsResponse[] = [];
@@ -201,8 +181,6 @@ defaultCasual.define("node", node);
 defaultCasual.define("esim", esim);
 defaultCasual.define("currentBill", currentBill);
 defaultCasual.define("billHistory", billHistory);
-defaultCasual.define("network", network);
-defaultCasual.define("nodeNetwork", nodeNetwork);
 defaultCasual.define("softwareLogs", softwareLogs);
 defaultCasual.define("nodeApps", nodeApps);
 const casual = defaultCasual as Generators & Functions & Casual.Casual;
