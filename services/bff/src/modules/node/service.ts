@@ -87,6 +87,7 @@ export class NodeService implements INodeService {
     getNodesByOrg = async (
         cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
+        console.info("Request triggers");
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
@@ -94,6 +95,7 @@ export class NodeService implements INodeService {
         });
         if (checkError(res)) {
             logger.error(res);
+            console.error("Response: ", res);
             throw new Error(res.message);
         }
         return NodeMapper.dtoToNodesDto(cookie.orgId, res);
