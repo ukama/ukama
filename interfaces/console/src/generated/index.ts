@@ -412,13 +412,9 @@ export type MutationUpdateUserStatusArgs = {
 };
 
 export enum Network_Status {
-  BeingConfigured = 'BEING_CONFIGURED',
-  Online = 'ONLINE'
-}
-
-export enum Network_Type {
-  Private = 'PRIVATE',
-  Public = 'PUBLIC'
+  Down = 'DOWN',
+  Online = 'ONLINE',
+  Undefined = 'UNDEFINED'
 }
 
 export enum Node_Type {
@@ -429,9 +425,8 @@ export enum Node_Type {
 
 export type NetworkDto = {
   __typename?: 'NetworkDto';
-  description?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
   status: Network_Status;
+  uptime: Scalars['Float'];
 };
 
 export type NetworkResponse = {
@@ -570,7 +565,7 @@ export type Query = {
   getEsimQR: ESimQrCodeRes;
   getEsims: Array<EsimDto>;
   getMetricsByTab: GetMetricsRes;
-  getNetwork: NetworkDto;
+  getNetworkStatus: NetworkDto;
   getNode: NodeResponse;
   getNodeApps: Array<NodeAppResponse>;
   getNodeAppsVersionLogs: Array<NodeAppsVersionLogsResponse>;
@@ -612,11 +607,6 @@ export type QueryGetMetricsByTabArgs = {
 };
 
 
-export type QueryGetNetworkArgs = {
-  filter: Network_Type;
-};
-
-
 export type QueryGetNodeArgs = {
   nodeId: Scalars['String'];
 };
@@ -643,7 +633,7 @@ export type Subscription = {
   getDataBill: DataBillDto;
   getDataUsage: DataUsageDto;
   getMetricsByTab: Array<MetricRes>;
-  getNetwork: NetworkDto;
+  getNetworkStatus: NetworkDto;
   getUsersDataUsage: GetUserDto;
 };
 
@@ -783,17 +773,15 @@ export type GetUserQueryVariables = Exact<{
 
 export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, phone: string, roaming: boolean, dataPlan: string, dataUsage: string } };
 
-export type GetNetworkQueryVariables = Exact<{
-  filter: Network_Type;
-}>;
+export type GetNetworkStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworkQuery = { __typename?: 'Query', getNetwork: { __typename?: 'NetworkDto', id: string, status: Network_Status, description?: string | null } };
+export type GetNetworkStatusQuery = { __typename?: 'Query', getNetworkStatus: { __typename?: 'NetworkDto', uptime: number, status: Network_Status } };
 
-export type GetLatestNetworkSubscriptionVariables = Exact<{ [key: string]: never; }>;
+export type GetNetworkStatusSSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLatestNetworkSubscription = { __typename?: 'Subscription', getNetwork: { __typename?: 'NetworkDto', id: string, status: Network_Status, description?: string | null } };
+export type GetNetworkStatusSSubscription = { __typename?: 'Subscription', getNetworkStatus: { __typename?: 'NetworkDto', uptime: number, status: Network_Status } };
 
 export type DeactivateUserMutationVariables = Exact<{
   id: Scalars['String'];
@@ -1404,74 +1392,71 @@ export function useGetUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Ge
 export type GetUserQueryHookResult = ReturnType<typeof useGetUserQuery>;
 export type GetUserLazyQueryHookResult = ReturnType<typeof useGetUserLazyQuery>;
 export type GetUserQueryResult = Apollo.QueryResult<GetUserQuery, GetUserQueryVariables>;
-export const GetNetworkDocument = gql`
-    query getNetwork($filter: NETWORK_TYPE!) {
-  getNetwork(filter: $filter) {
-    id
+export const GetNetworkStatusDocument = gql`
+    query getNetworkStatus {
+  getNetworkStatus {
+    uptime
     status
-    description
   }
 }
     `;
 
 /**
- * __useGetNetworkQuery__
+ * __useGetNetworkStatusQuery__
  *
- * To run a query within a React component, call `useGetNetworkQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetNetworkQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetNetworkStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetNetworkStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetNetworkQuery({
+ * const { data, loading, error } = useGetNetworkStatusQuery({
  *   variables: {
- *      filter: // value for 'filter'
  *   },
  * });
  */
-export function useGetNetworkQuery(baseOptions: Apollo.QueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
+export function useGetNetworkStatusQuery(baseOptions?: Apollo.QueryHookOptions<GetNetworkStatusQuery, GetNetworkStatusQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
+        return Apollo.useQuery<GetNetworkStatusQuery, GetNetworkStatusQueryVariables>(GetNetworkStatusDocument, options);
       }
-export function useGetNetworkLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkQuery, GetNetworkQueryVariables>) {
+export function useGetNetworkStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetNetworkStatusQuery, GetNetworkStatusQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetNetworkQuery, GetNetworkQueryVariables>(GetNetworkDocument, options);
+          return Apollo.useLazyQuery<GetNetworkStatusQuery, GetNetworkStatusQueryVariables>(GetNetworkStatusDocument, options);
         }
-export type GetNetworkQueryHookResult = ReturnType<typeof useGetNetworkQuery>;
-export type GetNetworkLazyQueryHookResult = ReturnType<typeof useGetNetworkLazyQuery>;
-export type GetNetworkQueryResult = Apollo.QueryResult<GetNetworkQuery, GetNetworkQueryVariables>;
-export const GetLatestNetworkDocument = gql`
-    subscription getLatestNetwork {
-  getNetwork {
-    id
+export type GetNetworkStatusQueryHookResult = ReturnType<typeof useGetNetworkStatusQuery>;
+export type GetNetworkStatusLazyQueryHookResult = ReturnType<typeof useGetNetworkStatusLazyQuery>;
+export type GetNetworkStatusQueryResult = Apollo.QueryResult<GetNetworkStatusQuery, GetNetworkStatusQueryVariables>;
+export const GetNetworkStatusSDocument = gql`
+    subscription getNetworkStatusS {
+  getNetworkStatus {
+    uptime
     status
-    description
   }
 }
     `;
 
 /**
- * __useGetLatestNetworkSubscription__
+ * __useGetNetworkStatusSSubscription__
  *
- * To run a query within a React component, call `useGetLatestNetworkSubscription` and pass it any options that fit your needs.
- * When your component renders, `useGetLatestNetworkSubscription` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetNetworkStatusSSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useGetNetworkStatusSSubscription` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetLatestNetworkSubscription({
+ * const { data, loading, error } = useGetNetworkStatusSSubscription({
  *   variables: {
  *   },
  * });
  */
-export function useGetLatestNetworkSubscription(baseOptions?: Apollo.SubscriptionHookOptions<GetLatestNetworkSubscription, GetLatestNetworkSubscriptionVariables>) {
+export function useGetNetworkStatusSSubscription(baseOptions?: Apollo.SubscriptionHookOptions<GetNetworkStatusSSubscription, GetNetworkStatusSSubscriptionVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useSubscription<GetLatestNetworkSubscription, GetLatestNetworkSubscriptionVariables>(GetLatestNetworkDocument, options);
+        return Apollo.useSubscription<GetNetworkStatusSSubscription, GetNetworkStatusSSubscriptionVariables>(GetNetworkStatusSDocument, options);
       }
-export type GetLatestNetworkSubscriptionHookResult = ReturnType<typeof useGetLatestNetworkSubscription>;
-export type GetLatestNetworkSubscriptionResult = Apollo.SubscriptionResult<GetLatestNetworkSubscription>;
+export type GetNetworkStatusSSubscriptionHookResult = ReturnType<typeof useGetNetworkStatusSSubscription>;
+export type GetNetworkStatusSSubscriptionResult = Apollo.SubscriptionResult<GetNetworkStatusSSubscription>;
 export const DeactivateUserDocument = gql`
     mutation deactivateUser($id: String!) {
   deactivateUser(id: $id) {

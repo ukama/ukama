@@ -1,6 +1,7 @@
 import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
-import { getStatusByType, secToHoursNMints } from "../../utils";
+import { getStatusByType } from "../../utils";
+import { Network_Status } from "../../generated";
 import { Typography, Grid, Button, Stack, useMediaQuery } from "@mui/material";
 
 const DOT = (color: string) => (
@@ -11,31 +12,31 @@ const DOT = (color: string) => (
 
 const getIconByStatus = (status: string) => {
     switch (status) {
-        case "BEING_CONFIGURED":
-            return DOT(colors.yellow);
+        case "DOWN":
+            return DOT(colors.red);
         case "ONLINE":
             return DOT(colors.green);
         default:
-            return DOT(colors.red);
+            return DOT(colors.nightGrey16);
     }
 };
 
 type NetworkStatusProps = {
     loading?: boolean;
-    duration?: string;
-    statusType: string;
     regLoading: boolean;
     handleAddNode: Function;
     handleActivateUser: Function;
+    duration?: number | undefined;
+    statusType: Network_Status | undefined;
 };
 
 const NetworkStatus = ({
     loading,
-    duration,
-    statusType,
     regLoading,
+    duration = 0,
     handleAddNode,
     handleActivateUser,
+    statusType = Network_Status.Undefined,
 }: NetworkStatusProps) => {
     const isSmall = useMediaQuery("(max-width:600px)");
     return (
@@ -66,11 +67,7 @@ const NetworkStatus = ({
                                             fontWeight: { xs: 400, md: 500 },
                                         }}
                                     >
-                                        {secToHoursNMints(
-                                            new Date().getTime() / 1000 -
-                                                parseInt(duration),
-                                            " hours and "
-                                        )}
+                                        {`${Math.round(duration)} %`}
                                     </Typography>
                                 )}
                             </Stack>

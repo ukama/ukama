@@ -24,13 +24,11 @@ import {
     Node_Type,
     Time_Filter,
     GetUsersDto,
-    Network_Type,
     UserInputDto,
     Data_Bill_Filter,
     useGetUserLazyQuery,
     useAddNodeMutation,
     useUpdateUserMutation,
-    useGetNetworkQuery,
     useAddUserMutation,
     useGetDataBillQuery,
     useGetDataUsageQuery,
@@ -40,13 +38,11 @@ import {
     useGetNodesByOrgQuery,
     useDeleteNodeMutation,
     useGetEsimQrLazyQuery,
-    GetLatestNetworkDocument,
     useDeactivateUserMutation,
     useGetConnectedUsersQuery,
     GetLatestDataBillDocument,
     GetLatestDataUsageDocument,
     useGetMetricsByTabLazyQuery,
-    GetLatestNetworkSubscription,
     GetLatestDataBillSubscription,
     useGetUsersDataUsageLazyQuery,
     GetLatestDataUsageSubscription,
@@ -55,6 +51,9 @@ import {
     useGetMetricsByTabSSubscription,
     useGetUsersDataUsageSSubscription,
     GetLatestConnectedUsersSubscription,
+    useGetNetworkStatusQuery,
+    GetNetworkStatusSDocument,
+    GetNetworkStatusSSubscription,
 } from "../../generated";
 import {
     user,
@@ -340,11 +339,7 @@ const Home = () => {
         data: networkStatusRes,
         loading: networkStatusLoading,
         subscribeToMore: subscribeToLatestNetworkStatus,
-    } = useGetNetworkQuery({
-        variables: {
-            filter: Network_Type.Public,
-        },
-    });
+    } = useGetNetworkStatusQuery();
 
     const [
         getMetrics,
@@ -537,14 +532,14 @@ const Home = () => {
 
     useEffect(() => {
         if (networkStatusRes) {
-            subscribeToLatestNetworkStatus<GetLatestNetworkSubscription>({
-                document: GetLatestNetworkDocument,
+            subscribeToLatestNetworkStatus<GetNetworkStatusSSubscription>({
+                document: GetNetworkStatusSDocument,
                 updateQuery: (prev, { subscriptionData }) => {
                     let data = { ...prev };
                     const latestNewtworkStatus =
-                        subscriptionData.data.getNetwork;
+                        subscriptionData.data.getNetworkStatus;
                     if (latestNewtworkStatus.__typename === "NetworkDto")
-                        data.getNetwork = latestNewtworkStatus;
+                        data.getNetworkStatus = latestNewtworkStatus;
                     return data;
                 },
             });
@@ -808,9 +803,13 @@ const Home = () => {
                         handleActivateUser={onActivateUser}
                         loading={networkStatusLoading || isSkeltonLoad}
                         regLoading={registerNodeLoading || updateNodeLoading}
-                        statusType={networkStatusRes?.getNetwork?.status || ""}
+                        statusType={
+                            networkStatusRes?.getNetworkStatus?.status ||
+                            undefined
+                        }
                         duration={
-                            networkStatusRes?.getNetwork?.description || ""
+                            networkStatusRes?.getNetworkStatus?.uptime ||
+                            undefined
                         }
                     />
                 </Grid>

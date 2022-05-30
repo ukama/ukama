@@ -8,7 +8,7 @@ class NetworkMapper implements INetworkMapper {
         let uptime = 0;
         let status = NETWORK_STATUS.UNDEFINED;
         if (res) {
-            uptime = parseFloat(res.value);
+            uptime = parseFloat(res.value[1]);
             if (uptime > 0) {
                 status = NETWORK_STATUS.ONLINE;
             } else {
