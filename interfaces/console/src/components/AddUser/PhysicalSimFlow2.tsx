@@ -1,41 +1,30 @@
-import { globalUseStyles, ContainerJustifySpaceBtw } from "../../styles";
-import {
-    Typography,
-    Grid,
-    Switch,
-    Button,
-    TextField,
-    Stack,
-} from "@mui/material";
+import { globalUseStyles } from "../../styles";
+import { Typography, Grid, Button, TextField, Stack } from "@mui/material";
 import * as Yup from "yup";
 import { Formik } from "formik";
-import { useState } from "react";
-import { ESIM_FORM_SCHEMA } from "../../helpers/formValidators";
+import { PHYSICAL_SIM_FORM_SCHEMA } from "../../helpers/formValidators";
 interface IPhysicalSimform {
     description: string;
     handleClose: Function;
-    handlePhysicalSimInstallation: Function;
+    handlePhysicalSimflow2: Function;
 }
-const physicalSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
+const physicalSimFormSchema = Yup.object(PHYSICAL_SIM_FORM_SCHEMA);
 const initialePhysicalSimFormValue = {
-    name: "",
-    email: "",
+    iccid: "",
+    securityCode: "",
 };
 
-const PhysicalSimform = ({
+const PhysicalSimFlow2 = ({
     description,
     handleClose,
-    handlePhysicalSimInstallation,
+    handlePhysicalSimflow2,
 }: IPhysicalSimform) => {
-    const [status, setStatus] = useState<boolean>(true);
     const gclasses = globalUseStyles();
     return (
         <Formik
             validationSchema={physicalSimFormSchema}
             initialValues={initialePhysicalSimFormValue}
-            onSubmit={async values =>
-                handlePhysicalSimInstallation({ ...values, status })
-            }
+            onSubmit={async values => handlePhysicalSimflow2(values)}
         >
             {({
                 values,
@@ -56,12 +45,12 @@ const PhysicalSimform = ({
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                id="name"
-                                name="name"
-                                label="NAME"
+                                id="iccid"
+                                name="iccid"
+                                label={"ICCID"}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
-                                value={values.name}
+                                value={values.iccid}
                                 sx={{ mb: 1 }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
@@ -69,19 +58,19 @@ const PhysicalSimform = ({
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                helperText={touched.name && errors.name}
-                                error={touched.name && Boolean(errors.name)}
+                                helperText={touched.iccid && errors.iccid}
+                                error={touched.iccid && Boolean(errors.iccid)}
                             />
                         </Grid>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                id="email"
-                                name="email"
-                                label="EMAIL"
+                                id="securityCode"
+                                name="securityCode"
+                                label={"SECURITY CODE"}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
-                                value={values.email}
+                                value={values.securityCode}
                                 sx={{ mb: 1 }}
                                 InputLabelProps={{ shrink: true }}
                                 InputProps={{
@@ -89,30 +78,16 @@ const PhysicalSimform = ({
                                         input: gclasses.inputFieldStyle,
                                     },
                                 }}
-                                helperText={touched.email && errors.email}
-                                error={touched.email && Boolean(errors.email)}
+                                helperText={
+                                    touched.securityCode && errors.securityCode
+                                }
+                                error={
+                                    touched.securityCode &&
+                                    Boolean(errors.securityCode)
+                                }
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <ContainerJustifySpaceBtw
-                                sx={{ alignItems: "end" }}
-                            >
-                                <Stack display="flex" alignItems="flex-start">
-                                    <Typography variant="caption">
-                                        ROAMING
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Roaming allows user to do xyz. Insert
-                                        billing information.
-                                    </Typography>
-                                </Stack>
-                                <Switch
-                                    size="small"
-                                    value="active"
-                                    checked={status}
-                                    onChange={e => setStatus(e.target.checked)}
-                                />
-                            </ContainerJustifySpaceBtw>
                             <Stack
                                 mt={1}
                                 direction="row"
@@ -125,7 +100,7 @@ const PhysicalSimform = ({
                                     Cancel
                                 </Button>
                                 <Button variant="contained" type="submit">
-                                    CONTINUE
+                                    ADD USER
                                 </Button>
                             </Stack>
                         </Grid>
@@ -136,4 +111,4 @@ const PhysicalSimform = ({
     );
 };
 
-export default PhysicalSimform;
+export default PhysicalSimFlow2;

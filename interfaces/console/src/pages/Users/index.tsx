@@ -15,6 +15,7 @@ import {
     useUpdateUserMutation,
     useGetEsimQrLazyQuery,
     useUpdateUserStatusMutation,
+    useDeactivateUserMutation,
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
     UserInputDto,
@@ -51,7 +52,9 @@ const User = () => {
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
-
+    const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
+    const [physicalSimData, setPhysicalSimData] = useState<any>();
+    const [simFlow, setSimFlow] = useState<number>(1);
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -170,7 +173,24 @@ const User = () => {
             },
         });
     };
-
+    const [deactivateUser] = useDeactivateUserMutation({
+        onCompleted: res => {
+            setUserNotification({
+                id: "userDeactivated",
+                message: `${res.deactivateUser.name} has been deactivated successfully!`,
+                type: "success",
+                show: true,
+            });
+            refetchResidents();
+        },
+        onError: err =>
+            setUserNotification({
+                id: "userDeactivated",
+                message: `${err?.message}`,
+                type: "error",
+                show: true,
+            }),
+    });
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
 
@@ -185,7 +205,11 @@ const User = () => {
 
     const handleSimInstallation = () => setShowInstallSim(true);
 
-    const handleSimInstallationClose = () => setShowInstallSim(false);
+    const handleSimInstallationClose = () => {
+        setShowInstallSim(false);
+        setSimFlow(1);
+        setIsEsimAdded(false);
+    };
 
     const getSearchValue = (search: string) => {
         if (search.length > 2) {
@@ -229,19 +253,18 @@ const User = () => {
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: UserInputDto) => {
-        if (physicalSimData) {
-            addUser({
-                variables: {
-                    data: {
-                        email: physicalSimData.email,
-                        name: physicalSimData.name,
-                        status: physicalSimData.status || false,
-                        phone: "",
-                    },
-                },
-            });
-        }
+    const handlePhysicalSimEmailFlow = (physicalSimData: UserInputDto) => {
+        setSimFlow(simFlow + 1);
+        setPhysicalSimData(physicalSimData);
+    };
+    const handlePhysicalSimSecurityFlow = (data: any) => {
+        // eslint-disable-next-line no-unused-vars
+        const payload = {
+            ...physicalSimData,
+            data,
+        };
+        setSimFlow(simFlow + 1);
+        setIsPsimAdded(true);
     };
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
@@ -258,6 +281,14 @@ const User = () => {
                 },
             });
         }
+    };
+    const handleDeactivateAction = (userId: any) => {
+        setSimDialog({ ...simDialog, isShow: false });
+        deactivateUser({
+            variables: {
+                id: userId,
+            },
+        });
     };
 
     return (
@@ -329,21 +360,27 @@ const User = () => {
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
+                        handleDeactivateAction={handleDeactivateAction}
                     />
                 )}
 
                 {showInstallSim && (
                     <AddUser
+                        isPsimAdded={isPsimAdded}
                         iSeSimAdded={isEsimAdded}
-                        handlePhysicalSimInstallation={
-                            handlePhysicalSimInstallation
-                        }
                         loading={addUserLoading}
                         handleEsimInstallation={handleEsimInstallation}
                         addedUserName={newAddedUserName}
+                        step={simFlow}
                         qrCodeId={qrCodeId}
                         isOpen={showInstallSim}
                         handleClose={handleSimInstallationClose}
+                        handlePhysicalSimInstallationFlow1={
+                            handlePhysicalSimEmailFlow
+                        }
+                        handlePhysicalSimInstallationFlow2={
+                            handlePhysicalSimSecurityFlow
+                        }
                     />
                 )}
             </LoadingWrapper>

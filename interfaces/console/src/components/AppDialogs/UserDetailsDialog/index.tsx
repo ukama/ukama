@@ -16,7 +16,6 @@ import {
 import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
-import LoadingWrapper from "../../LoadingWrapper";
 import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { formatBytes, formatBytesToMB } from "../../../utils";
@@ -35,6 +34,7 @@ type BasicDialogProps = {
     userStatusLoading: boolean;
     handleSubmitAction: Function;
     handleServiceAction: Function;
+    handleDeactivateAction: Function;
     handleClose: ReactEventHandler;
 };
 
@@ -44,12 +44,12 @@ const UserDetailsDialog = ({
     isOpen,
     setUserForm,
     handleClose,
+    handleDeactivateAction,
     saveBtnLabel,
     closeBtnLabel,
     loading = true,
     simDetailsTitle,
     userDetailsTitle,
-    userStatusLoading,
     handleSubmitAction,
     handleServiceAction,
 }: BasicDialogProps) => {
@@ -169,20 +169,28 @@ const UserDetailsDialog = ({
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={12}>
-                                        <ContainerJustifySpaceBtw
-                                            alignItems={"center"}
-                                            sx={{ pb: "0px !important" }}
+                                        <Stack
+                                            direction="row"
+                                            alignItems="center"
+                                            justifyContent="space-between"
                                         >
                                             <Typography variant="body2">
                                                 {statusText}
                                             </Typography>
-                                            <LoadingWrapper
-                                                height={34}
-                                                width={148}
-                                                isLoading={userStatusLoading}
-                                            >
+                                            <Stack spacing={1} direction="row">
                                                 <Button
-                                                    size="small"
+                                                    color={statusButtonColor}
+                                                    variant="outlined"
+                                                    onClick={() => {
+                                                        if (id)
+                                                            handleDeactivateAction(
+                                                                id
+                                                            );
+                                                    }}
+                                                >
+                                                    {"deactivate a user"}
+                                                </Button>
+                                                <Button
                                                     color={statusButtonColor}
                                                     variant="outlined"
                                                     onClick={() => {
@@ -196,8 +204,8 @@ const UserDetailsDialog = ({
                                                 >
                                                     {statusAction}
                                                 </Button>
-                                            </LoadingWrapper>
-                                        </ContainerJustifySpaceBtw>
+                                            </Stack>
+                                        </Stack>
                                     </Grid>
                                 </Grid>
                                 <Grid item container xs={12}>
