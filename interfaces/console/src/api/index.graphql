@@ -135,19 +135,17 @@ query getUser($userId: String!) {
     }
 }
 
-query getNetwork($filter: NETWORK_TYPE!) {
-    getNetwork(filter: $filter) {
-        id
+query getNetworkStatus {
+    getNetworkStatus {
+        uptime
         status
-        description
     }
 }
 
-subscription getLatestNetwork {
-    getNetwork {
-        id
+subscription getNetworkStatusS {
+    getNetworkStatus {
+        uptime
         status
-        description
     }
 }
 

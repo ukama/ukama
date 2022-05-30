@@ -4,11 +4,11 @@ import { NetworkDto } from "../../network/types";
 
 @Service()
 @Resolver()
-export class NetworkSubscriptionResolver {
+export class GetNetworkStatusSubscriptionResolver {
     @Subscription(() => NetworkDto, {
-        topics: "getNetwork",
+        topics: "getNetworkStatus",
     })
-    async getNetwork(@Root() network: NetworkDto): Promise<NetworkDto> {
+    async getNetworkStatus(@Root() network: NetworkDto): Promise<NetworkDto> {
         return network;
     }
 }

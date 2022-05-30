@@ -1,22 +1,27 @@
 import { Service } from "typedi";
 import { NetworkDto } from "./types";
+import { checkError } from "../../errors";
 import { INetworkService } from "./interface";
-import NetworkMapper from "./mapper";
 import { catchAsyncIOMethod } from "../../common";
 import { SERVER } from "../../constants/endpoints";
-import { API_METHOD_TYPE, NETWORK_TYPE } from "../../constants";
-import { checkError } from "../../errors";
-
+import { API_METHOD_TYPE } from "../../constants";
+import { ParsedCookie } from "../../common/types";
+import setupLogger from "../../config/setupLogger";
+import NetworkMapper from "./mapper";
+const logger = setupLogger("service");
 @Service()
 export class NetworkService implements INetworkService {
-    getNetwork = async (filter: NETWORK_TYPE): Promise<NetworkDto> => {
+    getNetworkStatus = async (cookie: ParsedCookie): Promise<NetworkDto> => {
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: SERVER.GET_NETWORK,
-            params: `${filter}`,
+            path: `${SERVER.ORG}/${cookie.orgId}/metrics/live-status`,
+            headers: cookie.header,
         });
-        if (checkError(res)) throw new Error(res.message);
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
 
-        return NetworkMapper.dtoToDto(res);
+        return NetworkMapper.dtoToDto(res.data.result[0]);
     };
 }

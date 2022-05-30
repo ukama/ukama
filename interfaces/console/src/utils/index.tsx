@@ -33,11 +33,9 @@ const getColorByType = (type: Alert_Type) => {
 };
 
 const getStatusByType = (status: string) => {
-    if (status === "PENDING" || status === "BEING_CONFIGURED")
-        return "Your network is being configured.";
-    else if (status === "ONBOARDED" || status === "ONLINE")
-        return "Your network is online and well for ";
-    else return "Something went wrong.";
+    if (status === "DOWN") return "Your network is down.";
+    else if (status === "ONLINE") return "Your network is online and well ";
+    else return "Unknown status.";
 };
 
 const parseObjectInNameValue = (obj: any) => {

@@ -1,10 +1,10 @@
-import { NETWORK_TYPE } from "../../constants";
-import { NetworkDto, NetworkResponse } from "./types";
+import { NetworkDto } from "./types";
+import { MetricLatestValueRes, ParsedCookie } from "../../common/types";
 
 export interface INetworkService {
-    getNetwork(filter: NETWORK_TYPE): Promise<NetworkDto>;
+    getNetworkStatus(cookie: ParsedCookie): Promise<NetworkDto>;
 }
 
 export interface INetworkMapper {
-    dtoToDto(res: NetworkResponse): NetworkDto;
+    dtoToDto(res: MetricLatestValueRes): NetworkDto;
 }

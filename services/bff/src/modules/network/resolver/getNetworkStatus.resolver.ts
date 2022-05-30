@@ -5,26 +5,28 @@ import {
     UseMiddleware,
     PubSubEngine,
     PubSub,
+    Ctx,
 } from "type-graphql";
 import { Service } from "typedi";
 import { NetworkDto } from "../types";
 import { NetworkService } from "../service";
+import { parseCookie } from "../../../common";
+import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
-import { NETWORK_TYPE } from "../../../constants";
 
 @Service()
 @Resolver()
-export class GetNetworkResolver {
+export class GetNetworkStatusResolver {
     constructor(private readonly networkService: NetworkService) {}
 
     @Query(() => NetworkDto)
     @UseMiddleware(Authentication)
-    async getNetwork(
-        @Arg("filter", () => NETWORK_TYPE) filter: NETWORK_TYPE,
+    async getNetworkStatus(
+        @Ctx() ctx: Context,
         @PubSub() pubsub: PubSubEngine
     ): Promise<NetworkDto> {
-        const network = this.networkService.getNetwork(filter);
-        pubsub.publish("getNetwork", network);
+        const network = this.networkService.getNetworkStatus(parseCookie(ctx));
+        pubsub.publish("getNetworkStatus", network);
         return network;
     }
 }
