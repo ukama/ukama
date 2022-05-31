@@ -489,7 +489,8 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 }
 
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
-
+	logrus.Infof("Sending email to %s", email)
+	logrus.Infof("Getting qr code")
 	resp, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
 		Iccid: iccid,
 	})
@@ -497,6 +498,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		return errors.Wrap(err, "failed to get qr code")
 	}
 
+	logrus.Infof("Publishing queue message")
 	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
 		To:           email,
 		TemplateName: "test-template",
