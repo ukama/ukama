@@ -33,9 +33,9 @@ type NetworkStatusProps = {
 const NetworkStatus = ({
     loading,
     regLoading,
-    duration = 0,
     handleAddNode,
     handleActivateUser,
+    duration = undefined,
     statusType = Network_Status.Undefined,
 }: NetworkStatusProps) => {
     const isSmall = useMediaQuery("(max-width:600px)");
@@ -55,13 +55,10 @@ const NetworkStatus = ({
                                     sx={{ fontWeight: { xs: 400, md: 500 } }}
                                 >
                                     {getStatusByType(statusType)}
-                                    {isSmall &&
-                                        duration &&
-                                        duration !== "0" &&
-                                        duration}
+                                    {isSmall && duration && duration}
                                 </Typography>
 
-                                {!isSmall && duration && duration !== "0" && (
+                                {!isSmall && duration && (
                                     <Typography
                                         ml={{ xs: "28px", md: "8px" }}
                                         variant={"h6"}
@@ -70,7 +67,7 @@ const NetworkStatus = ({
                                             fontWeight: { xs: 400, md: 500 },
                                         }}
                                     >
-                                        {`${Math.round(duration)} %`}
+                                        {Math.round(duration)} %
                                     </Typography>
                                 )}
                             </Stack>
