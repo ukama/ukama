@@ -1,4 +1,4 @@
-import PhysicalSimform from "./PhysicalSimform";
+import UserForm from "./Userform";
 import PhysicalSimFlow2 from "./PhysicalSimFlow2";
 import Success from "./Success";
 interface IPhysicalSimformFlowPops {
@@ -16,11 +16,9 @@ const PhysicalSimFlow = ({
     switch (step) {
         case 1:
             return (
-                <PhysicalSimform
+                <UserForm
                     handleClose={handleClose}
-                    handlePhysicalSimInstallation={
-                        handlePhysicalSimInstallationFlow1
-                    }
+                    handleSimInstallation={handlePhysicalSimInstallationFlow1}
                     description="Add user xyz. Physical SIM instructions."
                 />
             );

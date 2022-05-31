@@ -53,7 +53,6 @@ const User = () => {
     const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
-    const [physicalSimData, setPhysicalSimData] = useState<any>();
     const [simFlow, setSimFlow] = useState<number>(1);
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
@@ -253,16 +252,10 @@ const User = () => {
             });
         }
     };
-    const handlePhysicalSimEmailFlow = (physicalSimData: UserInputDto) => {
+    const handlePhysicalSimEmailFlow = () => {
         setSimFlow(simFlow + 1);
-        setPhysicalSimData(physicalSimData);
     };
-    const handlePhysicalSimSecurityFlow = (data: any) => {
-        // eslint-disable-next-line no-unused-vars
-        const payload = {
-            ...physicalSimData,
-            data,
-        };
+    const handlePhysicalSimSecurityFlow = () => {
         setSimFlow(simFlow + 1);
         setIsPsimAdded(true);
     };

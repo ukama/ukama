@@ -181,12 +181,12 @@ const UserDetailsDialog = ({
                                                 <Button
                                                     color={statusButtonColor}
                                                     variant="outlined"
-                                                    onClick={() => {
-                                                        if (id)
-                                                            handleDeactivateAction(
-                                                                id
-                                                            );
-                                                    }}
+                                                    onClick={() =>
+                                                        id &&
+                                                        handleDeactivateAction(
+                                                            id
+                                                        )
+                                                    }
                                                 >
                                                     {"deactivate a user"}
                                                 </Button>

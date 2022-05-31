@@ -119,7 +119,7 @@ const AddUser = ({
                             <Userform
                                 handleClose={handleClose}
                                 description={getDescription(1)}
-                                handleEsimInstallation={handleEsimInstallation}
+                                handleSimInstallation={handleEsimInstallation}
                             />
                         )}
                     </>

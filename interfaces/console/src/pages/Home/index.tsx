@@ -768,8 +768,7 @@ const Home = () => {
 
     const onActivateUser = () => setShowInstallSim(() => true);
 
-    // eslint-disable-next-line no-unused-vars
-    const handleNodeUpdateActin = (id: string) => {
+    const handleNodeUpdateActin = () => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
     };
