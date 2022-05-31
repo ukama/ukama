@@ -58,7 +58,11 @@ func (m *Sender) SendEmail(data *msgbus.MailMessage) error {
 		fmt.Println(err)
 		return err
 	}
-	c.Quit()
+
+	err = c.Quit()
+	if err != nil {
+		logrus.Warningf("Error sending quit command to smtp: %s", err)
+	}
 
 	fmt.Println("Email Sent!")
 	return nil

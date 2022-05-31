@@ -2,8 +2,6 @@ package http
 
 import (
 	"fmt"
-	"time"
-
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/mailer/cmd/version"
 	"github.com/ukama/ukama/services/cloud/mailer/pkg"
@@ -12,9 +10,8 @@ import (
 )
 
 type Router struct {
-	fizz                  *fizz.Fizz
-	port                  int
-	storageRequestTimeout time.Duration
+	fizz *fizz.Fizz
+	port int
 }
 
 func (r *Router) Run() {

@@ -24,8 +24,8 @@ type QueueConfig struct {
 }
 
 type SmtpConfig struct {
-	From     string `default:"hello@dev.ukama.com" validation:"required`
-	Host     string `default:"localhost" validation:"required`
+	From     string `default:"hello@dev.ukama.com" validation:"required"`
+	Host     string `default:"localhost" validation:"required"`
 	Port     int    `default:"25" validation:"required"`
 	Password string
 	Username string
