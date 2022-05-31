@@ -14,7 +14,7 @@ import { ContainerJustifySpaceBtw, globalUseStyles } from "../../styles";
 interface IUserform {
     description: string;
     handleClose: Function;
-    handleEsimInstallation: Function;
+    handleSimInstallation: Function;
 }
 const eSimFormSchema = Yup.object(ESIM_FORM_SCHEMA);
 const initialeEsimFormValue = {
@@ -25,7 +25,7 @@ const initialeEsimFormValue = {
 const Userform = ({
     handleClose,
     description,
-    handleEsimInstallation,
+    handleSimInstallation,
 }: IUserform) => {
     const gclasses = globalUseStyles();
     const [status, setStatus] = useState<boolean>(true);
@@ -35,7 +35,7 @@ const Userform = ({
             validationSchema={eSimFormSchema}
             initialValues={initialeEsimFormValue}
             onSubmit={async values =>
-                handleEsimInstallation({ ...values, status })
+                handleSimInstallation({ ...values, status })
             }
         >
             {({

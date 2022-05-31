@@ -7,23 +7,24 @@ import {
     DialogContent,
 } from "@mui/material";
 import ESimQR from "./ESimQR";
-import Success from "./Success";
 import { useState } from "react";
 import Userform from "./Userform";
 import ChooseSim from "./ChooseSim";
-import PhysicalSimform from "./PhysicalSimform";
 import CloseIcon from "@mui/icons-material/Close";
 import { CenterContainer } from "../../styles";
-
+import PhysicalSimFlow from "./PhysicalSimFlow";
 interface IAddUser {
     isOpen: boolean;
+    isPsimAdded: boolean;
     handleClose: Function;
     loading?: boolean;
     qrCodeId: any;
-    handlePhysicalSimInstallation: Function;
     addedUserName: any;
     iSeSimAdded: boolean;
     handleEsimInstallation: Function;
+    handlePhysicalSimInstallationFlow1: Function;
+    handlePhysicalSimInstallationFlow2: Function;
+    step: number;
 }
 
 const getDescription = (id: number, addUserName?: any) => {
@@ -43,18 +44,18 @@ const getDescription = (id: number, addUserName?: any) => {
     }
 };
 
-const getTitle = (iSeSimAdded: boolean, type: any) =>
-    iSeSimAdded ? "Add User Succesful" : `Add User${type && ` - ${type}`}`;
-
 const AddUser = ({
     isOpen,
     qrCodeId,
     handleClose,
     iSeSimAdded,
+    isPsimAdded,
     addedUserName,
     loading = false,
     handleEsimInstallation,
-    handlePhysicalSimInstallation,
+    step,
+    handlePhysicalSimInstallationFlow2,
+    handlePhysicalSimInstallationFlow1,
 }: IAddUser) => {
     const [flow, setFlow] = useState(0);
     const [simType, setSimType] = useState("");
@@ -68,6 +69,13 @@ const AddUser = ({
             case 1:
                 setFlow(2);
                 break;
+        }
+    };
+    const getTitle = (esimSuccess: boolean, type: any) => {
+        if (esimSuccess || isPsimAdded) {
+            return "Add User Succesful";
+        } else {
+            return `Add User${type && ` - ${type}`}`;
         }
     };
 
@@ -101,7 +109,7 @@ const AddUser = ({
                         handleSimType={handleAction}
                     />
                 )}
-                {!iSeSimAdded && simType == "eSIM" && (
+                {simType == "eSIM" && !iSeSimAdded && (
                     <>
                         {loading ? (
                             <CenterContainer>
@@ -111,36 +119,37 @@ const AddUser = ({
                             <Userform
                                 handleClose={handleClose}
                                 description={getDescription(1)}
-                                handleEsimInstallation={handleEsimInstallation}
+                                handleSimInstallation={handleEsimInstallation}
                             />
                         )}
                     </>
                 )}
-                {!iSeSimAdded && simType == "pSIM" && (
+                {simType == "Physical SIM" && !iSeSimAdded && (
                     <>
                         {loading ? (
                             <CenterContainer>
                                 <CircularProgress />
                             </CenterContainer>
                         ) : (
-                            <PhysicalSimform
+                            <PhysicalSimFlow
                                 handleClose={handleClose}
-                                handlePhysicalSimInstallation={
-                                    handlePhysicalSimInstallation
+                                step={step}
+                                handlePhysicalSimInstallationFlow1={
+                                    handlePhysicalSimInstallationFlow1
                                 }
-                                description={getDescription(3)}
+                                handlePhysicalSimInstallationFlow2={
+                                    handlePhysicalSimInstallationFlow2
+                                }
                             />
                         )}
                     </>
                 )}
+
                 {iSeSimAdded && (
                     <ESimQR
                         description={getDescription(2, addedUserName)}
                         qrCodeId={qrCodeId}
                     />
-                )}
-                {flow === 4 && (
-                    <Success description={getDescription(4, addedUserName)} />
                 )}
             </DialogContent>
         </Dialog>

@@ -8,12 +8,14 @@ import {
 import { colors } from "../../theme";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import QRCode from "qrcode.react";
+import { useState } from "react";
 interface IESimQR {
     qrCodeId: any;
     description: string;
 }
 
 const ESimQR = ({ description, qrCodeId }: IESimQR) => {
+    const [showQrCode, setShowQrCode] = useState(false);
     return (
         <Grid container mb={2}>
             <Grid item xs={12}>
@@ -22,6 +24,9 @@ const ESimQR = ({ description, qrCodeId }: IESimQR) => {
             <Grid item xs={12}>
                 <Accordion
                     sx={{ boxShadow: "none", background: "transparent" }}
+                    onChange={(_, isExpanded: boolean) => {
+                        setShowQrCode(isExpanded);
+                    }}
                 >
                     <AccordionSummary
                         expandIcon={<ExpandMoreIcon color="primary" />}
@@ -39,7 +44,7 @@ const ESimQR = ({ description, qrCodeId }: IESimQR) => {
                             variant="caption"
                             color={colors.primaryMain}
                         >
-                            SHOW ESIM QR CODE
+                            {showQrCode ? "HIDE QR CODE" : "SHOW QR CODE"}
                         </Typography>
                     </AccordionSummary>
                     <AccordionDetails

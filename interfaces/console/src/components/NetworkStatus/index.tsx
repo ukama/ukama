@@ -55,10 +55,13 @@ const NetworkStatus = ({
                                     sx={{ fontWeight: { xs: 400, md: 500 } }}
                                 >
                                     {getStatusByType(statusType)}
-                                    {isSmall && duration}
+                                    {isSmall &&
+                                        duration &&
+                                        duration !== "0" &&
+                                        duration}
                                 </Typography>
 
-                                {!isSmall && duration && (
+                                {!isSmall && duration && duration !== "0" && (
                                     <Typography
                                         ml={{ xs: "28px", md: "8px" }}
                                         variant={"h6"}

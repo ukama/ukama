@@ -1,6 +1,5 @@
 import { makeStyles } from "@mui/styles";
 import CloseIcon from "@mui/icons-material/Close";
-import colors from "../../../theme/colors";
 import {
     Box,
     Button,
@@ -78,7 +77,6 @@ const NodeSoftwareInfosDialog = ({
                             left: 7,
                             position: "relative",
                             justifyItems: "center",
-                            color: colors.primaryMain,
                         }}
                     >
                         {closeBtnLabel}

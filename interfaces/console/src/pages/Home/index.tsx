@@ -94,7 +94,9 @@ const Home = () => {
     const [dataStatusFilter, setDataStatusFilter] = useState(Time_Filter.Month);
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isEsimAdded, setIsEsimAdded] = useState<boolean>(false);
-
+    const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
+    const [simFlow, setSimFlow] = useState<number>(1);
+    const [userStatus, setUserStatus] = useState<boolean>(true);
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -167,6 +169,12 @@ const Home = () => {
                 setNewAddedUserName(res?.addUser?.name);
                 handleGetSimQrCode(res?.addUser.id, res?.addUser?.iccid || "");
                 refetchResidents();
+
+                handleUpdateUserStatus(
+                    res.addUser.id,
+                    res.addUser.iccid || "",
+                    userStatus
+                );
             }
         },
         onError: err => {
@@ -418,6 +426,7 @@ const Home = () => {
         }
     }, [_isFirstVisit, orgId]);
     const handleSimInstallationClose = () => {
+        setSimFlow(1);
         setIsEsimAdded(false);
         setShowInstallSim(false);
     };
@@ -754,8 +763,7 @@ const Home = () => {
 
     const onActivateUser = () => setShowInstallSim(() => true);
 
-    // eslint-disable-next-line no-unused-vars
-    const handleNodeUpdateActin = (id: string) => {
+    const handleNodeUpdateActin = () => {
         setIsSoftwaUpdate(true);
         /* Handle node update  action */
     };
@@ -767,6 +775,7 @@ const Home = () => {
         }
     };
     const handleEsimInstallation = (eSimData: UserInputDto) => {
+        setUserStatus(eSimData.status);
         if (eSimData) {
             addUser({
                 variables: {
@@ -780,19 +789,21 @@ const Home = () => {
             });
         }
     };
-    const handlePhysicalSimInstallation = (physicalSimData: UserInputDto) => {
-        if (physicalSimData) {
-            addUser({
-                variables: {
-                    data: {
-                        email: physicalSimData.email,
-                        name: physicalSimData.name,
-                        status: physicalSimData.status || true,
-                        phone: "",
-                    },
-                },
-            });
-        }
+    const handlePhysicalSimEmailFlow = () => {
+        setSimFlow(simFlow + 1);
+    };
+
+    const handlePhysicalSimSecurityFlow = () => {
+        setSimFlow(simFlow + 1);
+        setIsPsimAdded(true);
+    };
+    const handleDeactivateAction = (userId: any) => {
+        setSimDialog({ ...simDialog, isShow: false });
+        deactivateUser({
+            variables: {
+                id: userId,
+            },
+        });
     };
     return (
         <Box component="div" sx={{ flexGrow: 1, pb: "18px" }}>
@@ -1003,19 +1014,25 @@ const Home = () => {
                     userStatusLoading={updateUserStatusLoading}
                     handleServiceAction={handleUpdateUserStatus}
                     handleSubmitAction={handleUserSubmitAction}
+                    handleDeactivateAction={handleDeactivateAction}
                 />
             )}
 
             {showInstallSim && (
                 <AddUser
-                    handlePhysicalSimInstallation={
-                        handlePhysicalSimInstallation
-                    }
                     loading={addUserLoading}
                     handleEsimInstallation={handleEsimInstallation}
                     addedUserName={newAddedUserName}
                     qrCodeId={qrCodeId}
+                    isPsimAdded={isPsimAdded}
                     iSeSimAdded={isEsimAdded}
+                    handlePhysicalSimInstallationFlow1={
+                        handlePhysicalSimEmailFlow
+                    }
+                    handlePhysicalSimInstallationFlow2={
+                        handlePhysicalSimSecurityFlow
+                    }
+                    step={simFlow}
                     isOpen={showInstallSim}
                     handleClose={handleSimInstallationClose}
                 />
