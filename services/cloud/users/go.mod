@@ -155,6 +155,7 @@ require (
 	github.com/quasilyte/gogrep v0.0.0-20220320172536-d3b98902346e // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
+	github.com/rabbitmq/amqp091-go v1.3.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/rs/zerolog v1.26.1 // indirect
 	github.com/ryancurrah/gomodguard v1.2.3 // indirect
@@ -175,6 +176,7 @@ require (
 	github.com/spf13/viper v1.11.0 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.1.1 // indirect
+	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/sylvia7788/contextcheck v1.0.5 // indirect
@@ -188,6 +190,7 @@ require (
 	github.com/ultraware/whitespace v0.0.5 // indirect
 	github.com/uudashr/gocognit v1.0.5 // indirect
 	github.com/wI2L/fizz v0.18.1 // indirect
+	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.2.0 // indirect

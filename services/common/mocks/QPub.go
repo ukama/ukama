@@ -13,6 +13,20 @@ type QPub struct {
 	mock.Mock
 }
 
+// Close provides a mock function with given fields:
+func (_m *QPub) Close() error {
+	ret := _m.Called()
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func() error); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Publish provides a mock function with given fields: payload, routingKey
 func (_m *QPub) Publish(payload interface{}, routingKey string) error {
 	ret := _m.Called(payload, routingKey)
@@ -20,6 +34,20 @@ func (_m *QPub) Publish(payload interface{}, routingKey string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(interface{}, string) error); ok {
 		r0 = rf(payload, routingKey)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// PublishToQueue provides a mock function with given fields: queueName, payload
+func (_m *QPub) PublishToQueue(queueName string, payload interface{}) error {
+	ret := _m.Called(queueName, payload)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, interface{}) error); ok {
+		r0 = rf(queueName, payload)
 	} else {
 		r0 = ret.Error(0)
 	}

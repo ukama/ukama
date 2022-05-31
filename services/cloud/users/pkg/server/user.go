@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 	"github.com/ukama/ukama/services/cloud/users/pkg/db"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
+	"github.com/ukama/ukama/services/common/msgbus"
 
 	uuid2 "github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -31,16 +32,19 @@ type UserService struct {
 	simManagerName string
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
+	queuePub       msgbus.QPub
 }
 
 func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
-	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string) *UserService {
+	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
+	queuePub msgbus.QPub) *UserService {
 	return &UserService{userRepo: userRepo,
 		imsiService:    imsiProvider,
 		simRepo:        simRepo,
 		simManager:     simManager,
 		simManagerName: simManagerName,
 		simProvider:    simProvider,
+		queuePub:       queuePub,
 	}
 }
 
@@ -159,6 +163,13 @@ func (u *UserService) addUserWithIccid(ctx context.Context, reqUser *pb.User, ic
 		return nil
 	})
 	// end of transaction
+
+	if !isPhysicalSim {
+		err = u.sendEmailToUser(ctx, user.Email, user.Name, iccid)
+		if err != nil {
+			logrus.Errorf("Error while sending email to user: %v", err)
+		}
+	}
 
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "user")
@@ -475,6 +486,30 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataAllowanceBytes: r.DataTotalInBytes,
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
+}
+
+func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
+
+	resp, err := u.simManager.GetQrCode(ctx, &pbclient.GetQrCodeRequest{
+		Iccid: iccid,
+	})
+	if err != nil {
+		return errors.Wrap(err, "failed to get qr code")
+	}
+
+	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
+		To:           email,
+		TemplateName: "test-template",
+		Values: map[string]any{
+			"Name":    name,
+			"Message": fmt.Sprintf("Here your QR code: %s", resp.QrCode),
+		},
+	})
+
+	if err != nil {
+		return errors.Wrap(err, "failed to send email")
+	}
+	return nil
 }
 
 func dbSimcardsToPbSimcards(simcard db.Simcard) (res *pb.Sim) {
