@@ -15,12 +15,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
   
-      # init vars required for tag generation
-    - name: Init vars 
+     # init vars required for tag generation
+    - name: Init vars
       id: vars_step
-      run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      uses: ./.github/actions/git-vars
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -42,9 +40,9 @@ jobs:
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/e2e-base-image
       run: |                        
-            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                 -t $REGISTRY\:latest .  && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
             buildah push $REGISTRY\:latest 

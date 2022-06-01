@@ -8,7 +8,7 @@ outputs:
 
   sha-short:
     description: Short git SHA 
-    value: ${{ steps.vars_step.outputs.sha_short }}
+    value: ${{ steps.vars_step.outputs.sha-short }}
 
     
 runs:
@@ -19,5 +19,5 @@ runs:
       shell: bash
       id: vars_step
       run: |
-        echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        echo "::set-output name=sha-short::$(git rev-parse --short=7 HEAD)"
         echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
