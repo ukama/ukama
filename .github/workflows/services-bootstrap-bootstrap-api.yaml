@@ -20,11 +20,9 @@ jobs:
     - uses: actions/checkout@v2
   
       # init vars required for tag generation
-    - name: Init vars 
+    - name: Init vars
       id: vars_step
-      run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      uses: ./.github/actions/git-vars
 
 
     - name: Configure AWS credentials
@@ -77,12 +75,10 @@ jobs:
         working-directory: services/bootstrap/bootstrap-api
       steps:
         # init vars required for tag generation
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
         - name: Init vars
           id: vars_step
-          run: |
-            echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-            echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          uses: ./.github/actions/git-vars
 
         - name: update gitops                
           uses: denispalnitsky/gitops-release@v9

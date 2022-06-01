@@ -17,9 +17,7 @@ jobs:
         # init vars required for tag generation
       - name: Init vars
         id: vars_step
-        run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        uses: ./.github/actions/git-vars
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -118,14 +116,14 @@ jobs:
       working-directory: interfaces/console
     steps:
       # init vars required for tag generation
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      
       - name: Init vars
         id: vars_step
-        run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        uses: ./.github/actions/git-vars
+
       - name: update gitops
-        uses: denispalnitsky/gitops-release@v7
+        uses: denispalnitsky/gitops-release@v9
         with:
           filename: 'releases/console-helmfile.yaml'
           key: 'consoleAppImageTag'
