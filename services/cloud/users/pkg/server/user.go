@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 	"github.com/ukama/ukama/services/cloud/users/pkg/db"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
@@ -501,10 +502,10 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 	logrus.Infof("Publishing queue message")
 	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
 		To:           email,
-		TemplateName: "test-template",
+		TemplateName: "users-qr-code",
 		Values: map[string]any{
-			"Name":    name,
-			"Message": fmt.Sprintf("Here your QR code: %s", resp.QrCode),
+			"Name": name,
+			"Qr":   fmt.Sprintf("Here your QR code: %s", resp.QrCode),
 		},
 	})
 
