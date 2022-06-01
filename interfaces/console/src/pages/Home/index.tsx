@@ -314,7 +314,7 @@ const Home = () => {
         useGetUsersByOrgQuery({
             nextFetchPolicy: "network-only",
             onCompleted: res => {
-                setUsers(res.getUsersByOrg.reverse());
+                setUsers([...res.getUsersByOrg].reverse());
                 getUsersDataUsage({
                     variables: {
                         data: { ids: res.getUsersByOrg.map(u => u.id) },
