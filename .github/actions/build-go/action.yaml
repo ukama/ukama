@@ -83,11 +83,11 @@ runs:
     env:
      REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
     run: |
-      buildah bud --pull -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+      buildah bud --pull -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
         -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
         -t $REGISTRY\:latest .  && \
       buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
       buildah push $REGISTRY\:latest
 
   - name: OCI Push telna-gateway test
@@ -96,9 +96,9 @@ runs:
     env:
       REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}
     run: |
-      buildah bud --pull -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+      buildah bud --pull -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test \
         -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
         -t $REGISTRY\:latest-test .  && \
       buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
-      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+      buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
       buildah push $REGISTRY\:latest-test

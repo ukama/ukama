@@ -57,11 +57,11 @@ jobs:
               env:
                   REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/console/bff
               run: |
-                  buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+                  buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                       -t $REGISTRY\:latest .  && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
                   buildah push $REGISTRY\:latest
               working-directory: ${{ env.working-directory }}
 
@@ -86,11 +86,11 @@ jobs:
                   UKAMA_BOT_GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
 
               run: |
-                  buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test \
+                  buildah bud -f Int.Dockerfile -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test \
                       -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test \
                       -t $REGISTRY\:latest-test . && \
                   buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }}-test && \
-                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }}-test && \
+                  buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
                   buildah push $REGISTRY\:latest-test
             - name: SonarCloud Scan
               uses: sonarsource/sonarcloud-github-action@v1.6
@@ -148,7 +148,7 @@ jobs:
               with:
                   filename: "releases/console-helmfile.yaml"
                   key: "consoleBffImageTag"
-                  value: ${{ steps.vars_step.outputs.sha_short }}
+                  value: ${{ steps.vars_step.outputs.sha-short }}
                   github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
                   github-org-and-repo: "ukama/infra-as-code"
                   github-user-mail: "ukama-bot@ukama.com"
