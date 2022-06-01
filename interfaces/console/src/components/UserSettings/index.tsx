@@ -20,9 +20,13 @@ const LineDivider = () => (
 );
 
 const UserSettings = () => {
+    const defaultTimeZone = localStorage["timeZone"]
+        ? localStorage["timeZone"]
+        : "Pacific Standard Time";
     const _isDarkMod = useRecoilValue(isDarkmode);
     const [language, setLanguage] = useState(localStorage["i18nextLng"]);
-    const [timezone, setTimezone] = useState("Pacific Standard Time");
+    const [timezone, setTimezone] = useState(defaultTimeZone);
+
     const handleLanguageChange = (event: any) => {
         setLanguage(event.target.value);
         localStorage.setItem("i18nextLng", event.target.value);
@@ -30,6 +34,7 @@ const UserSettings = () => {
 
     const handleTimezoneChange = (event: any) => {
         setTimezone(event.target.value);
+        localStorage.setItem("timeZone", event.target.value);
     };
 
     const handleAccountSettings = () => {

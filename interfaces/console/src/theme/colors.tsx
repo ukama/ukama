@@ -28,6 +28,7 @@ const colors = {
     darkGrayGradient: "rgba(57,75,89,.5)",
     solitude: "#f5f6f8",
     darkBlue: "#394b59",
+    darkGray: "#4d4d4d",
     lightChocolate: "#757575",
     vulcan: "#37393E",
     vulcan60: "rgba(55, 57, 62, 0.6)",
