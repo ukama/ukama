@@ -20,11 +20,9 @@ jobs:
     - uses: actions/checkout@v2
   
       # init vars required for tag generation
-    - name: Init vars 
+    - name: Init vars
       id: vars_step
-      run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      uses: ./.github/actions/git-vars
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -65,11 +63,11 @@ jobs:
       env:
         REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/network
       run: |                        
-            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+            buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
                 -t $REGISTRY\:latest .  && \
             buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
             buildah push $REGISTRY\:latest 
 
     - name: SonarCloud Scan
@@ -123,19 +121,17 @@ jobs:
         working-directory: testing/services/network
       steps:
         # init vars required for tag generation
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
         - name: Init vars
           id: vars_step
-          run: |
-            echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-            echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          uses: ./.github/actions/git-vars
 
         - name: update gitops                
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/factory-helmfile.yaml"
             key: "networkImageTag"
-            value:  ${{ steps.vars_step.outputs.sha_short }}
+            value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
             github-user-mail: "bot@ukama.com"
