@@ -188,7 +188,7 @@ const UserDetailsDialog = ({
                                                         )
                                                     }
                                                 >
-                                                    {"deactivate a user"}
+                                                    {"deactivate user"}
                                                 </Button>
                                                 <Button
                                                     color={statusButtonColor}
@@ -239,16 +239,23 @@ const UserDetailsDialog = ({
                                     </Grid>
                                 </Grid>
                                 <Grid item container xs={12}>
+                                    <Typography
+                                        alignSelf={"end"}
+                                        variant="caption"
+                                        color="textSecondary"
+                                    >
+                                        ROAMING
+                                    </Typography>
                                     <ContainerJustifySpaceBtw
                                         sx={{ alignItems: "center" }}
                                     >
                                         <Stack direction="row">
                                             <Typography
-                                                variant="caption"
+                                                variant="body2"
                                                 color={colorActiveInactive}
                                                 alignSelf={"end"}
                                             >
-                                                ROAMING
+                                                {" Description of roaming. "}
                                             </Typography>
                                             <Tooltip
                                                 title="Explain roaming policy for CS folks."

@@ -105,7 +105,7 @@ const theme = (isDarkmode: boolean) =>
                         text: {
                             padding: "0px",
                             minWidth: "auto",
-                            color: isDarkmode ? colors.white : colors.black,
+                            color: isDarkmode ? colors.white : colors.darkGray,
                         },
                     },
                 },
