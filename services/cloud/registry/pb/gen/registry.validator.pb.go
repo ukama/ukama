@@ -5,9 +5,9 @@ package gen
 
 import (
 	fmt "fmt"
-	math "math"
 	proto "github.com/golang/protobuf/proto"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -155,6 +155,7 @@ func (this *ListResponse) Validate() error {
 	return nil
 }
 func (this *ListResponse_Network) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 func (this *ListResponse_Org) Validate() error {

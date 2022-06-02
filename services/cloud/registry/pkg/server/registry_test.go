@@ -278,13 +278,22 @@ func Test_List(t *testing.T) {
 	netRepo := &mocks.NetRepo{}
 	pub := &qPubStub{}
 
-	queryRes := map[string]map[string]int{
+	queryRes := map[string]map[string]map[db.NodeType]int{
 		"a": {
-			"n1": 1,
-			"n2": 2,
+			"n1": map[db.NodeType]int{
+				db.NodeTypeAmplifier: 1,
+				db.NodeTypeTower:     5,
+			},
+			"n2": map[db.NodeType]int{
+				db.NodeTypeAmplifier: 2,
+				db.NodeTypeTower:     6,
+				db.NodeTypeHome:      7,
+			},
 		},
 		"b": {
-			"n1": 3,
+			"n1": map[db.NodeType]int{
+				db.NodeTypeAmplifier: 1,
+			},
 		},
 	}
 
@@ -304,10 +313,15 @@ func Test_List(t *testing.T) {
 		assert.Equal(t, "b", res.Orgs[1].GetName())
 
 		assert.Equal(t, "n1", res.Orgs[0].GetNetworks()[0].GetName())
-		assert.Equal(t, int32(1), res.Orgs[0].GetNetworks()[0].GetNumberOfNodes())
-		assert.Equal(t, "n2", res.Orgs[0].GetNetworks()[1].GetName())
+		assert.Equal(t, uint32(1), res.Orgs[0].GetNetworks()[0].GetNumberOfNodes()["amplifier"])
+
+		n2 := res.Orgs[0].GetNetworks()[1]
+		assert.Equal(t, "n2", n2.GetName())
+		assert.Equal(t, uint32(2), n2.GetNumberOfNodes()["amplifier"])
+		assert.Equal(t, uint32(6), n2.GetNumberOfNodes()["tower"])
+		assert.Equal(t, uint32(7), n2.GetNumberOfNodes()["home"])
 
 		assert.Equal(t, "n1", res.Orgs[1].GetNetworks()[0].GetName())
-		assert.Equal(t, int32(3), res.Orgs[1].GetNetworks()[0].GetNumberOfNodes())
+		assert.Equal(t, uint32(1), res.Orgs[1].GetNetworks()[0].GetNumberOfNodes()["amplifier"])
 	}
 }

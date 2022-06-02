@@ -152,7 +152,7 @@ message ListRequest {
 message ListResponse{
     message Network {
         string name = 1;
-        int32 numberOfNodes = 2;
+        map<string, uint32> numberOfNodes = 2;
     }
 
     message Org {

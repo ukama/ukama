@@ -134,10 +134,16 @@ func (r *RegistryServer) List(ctx context.Context, req *pb.ListRequest) (*pb.Lis
 
 		j := 0
 		for nname, nodecnt := range n {
+			// create node type-count map
+			nCnt := make(map[string]uint32)
+			for t, cnt := range nodecnt {
+				nCnt[dbNodeTypeToString(t)] = uint32(cnt)
+			}
 			orgsResp.Orgs[i].Networks[j] = &pb.ListResponse_Network{
 				Name:          nname,
-				NumberOfNodes: int32(nodecnt),
+				NumberOfNodes: nCnt,
 			}
+
 			j++
 		}
 		i++
@@ -471,6 +477,21 @@ func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
 		pbNodeType = pb.NodeType_HOME
 	default:
 		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
+	}
+	return pbNodeType
+}
+
+func dbNodeTypeToString(nodeType db2.NodeType) string {
+	var pbNodeType string
+	switch nodeType {
+	case db2.NodeTypeAmplifier:
+		pbNodeType = "amplifier"
+	case db2.NodeTypeTower:
+		pbNodeType = "tower"
+	case db2.NodeTypeHome:
+		pbNodeType = "home"
+	default:
+		pbNodeType = "node_type_undefined"
 	}
 	return pbNodeType
 }
