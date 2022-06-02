@@ -17,7 +17,7 @@ func NewMetricsCollector(reg reg.RegistryServiceClient, timeout time.Duration, r
 		reg:             reg,
 		timeout:         timeout,
 		requestInterval: requestInterval,
-		metrics:         map[string]map[string]int32{},
+		metrics:         map[string]map[string]map[string]uint32{},
 	}
 	c.StartMetricsUpdate()
 	return c
@@ -28,7 +28,8 @@ type OrgCollector struct {
 	reg             reg.RegistryServiceClient
 	timeout         time.Duration
 	requestInterval time.Duration
-	metrics         map[string]map[string]int32
+	// map[org][network][nodeType] = count
+	metrics map[string]map[string]map[string]uint32
 }
 
 func (c *OrgCollector) StartMetricsUpdate() {
@@ -45,7 +46,7 @@ func (c *OrgCollector) StartMetricsUpdate() {
 			}
 			c.mx.Lock()
 			for _, o := range resp.Orgs {
-				nl := map[string]int32{}
+				nl := map[string]map[string]uint32{}
 				for _, n := range o.GetNetworks() {
 					nl[n.GetName()] = n.GetNumberOfNodes()
 				}
@@ -72,13 +73,14 @@ func (o *OrgCollector) Collect(c chan<- prometheus.Metric) {
 
 	for org, networks := range o.metrics {
 		for network, nodes := range networks {
-			c <- prometheus.MustNewConstMetric(
-				prometheus.NewDesc("nodes_count", "org metrics", []string{"org", "network"}, nil),
-				prometheus.GaugeValue,
-				float64(nodes),
-				org,
-				network,
-			)
+			for nodeType, count := range nodes {
+				c <- prometheus.MustNewConstMetric(
+					prometheus.NewDesc("org_metrics", "org metrics", []string{"org", "network", "node_type"}, nil),
+					prometheus.GaugeValue,
+					float64(count),
+					org, network, nodeType,
+				)
+			}
 		}
 	}
 

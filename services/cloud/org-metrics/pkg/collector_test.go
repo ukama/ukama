@@ -18,14 +18,21 @@ func Test_Collect(t *testing.T) {
 			&pb.ListResponse_Org{
 				Name: "a",
 				Networks: []*pb.ListResponse_Network{
-					{Name: "n1", NumberOfNodes: 1},
-					{Name: "n2", NumberOfNodes: 2},
+					{Name: "n1", NumberOfNodes: map[string]uint32{
+						"home": 1,
+					}},
+					{Name: "n2", NumberOfNodes: map[string]uint32{
+						"home":  2,
+						"tower": 3,
+					}},
 				},
 			},
 			&pb.ListResponse_Org{
 				Name: "b",
 				Networks: []*pb.ListResponse_Network{
-					{Name: "n3", NumberOfNodes: 5},
+					{Name: "n3", NumberOfNodes: map[string]uint32{
+						"amplifier": 4,
+					}},
 				},
 			},
 		},
@@ -53,16 +60,18 @@ func Test_Collect(t *testing.T) {
 		err := actual.Write(&dtoM)
 		assert.NoError(t, err)
 
-		org, net, nodes := parseMetric(dtoM)
+		org, net, nType, nodes := parseMetric(dtoM)
 
-		switch org + net {
-		case "a" + "n1":
+		switch org + net + nType {
+		case "a" + "n1" + "home":
 			assert.Equal(t, 1, nodes)
-		case "a" + "n2":
+		case "a" + "n2" + "home":
 			assert.Equal(t, 2, nodes)
+		case "a" + "n2" + "tower":
+			assert.Equal(t, 3, nodes)
 
-		case "b" + "n3":
-			assert.Equal(t, 5, nodes)
+		case "b" + "n3" + "amplifier":
+			assert.Equal(t, 4, nodes)
 		default:
 			assert.Fail(t, "unexpected metric")
 		}
@@ -71,14 +80,16 @@ func Test_Collect(t *testing.T) {
 	stop = true
 }
 
-func parseMetric(m dto.Metric) (org string, net string, nodes int) {
+func parseMetric(m dto.Metric) (org string, net string, nodeType string, nodes int) {
 	for _, l := range m.GetLabel() {
 		if l.GetName() == "network" {
 			net = l.GetValue()
 		} else if l.GetName() == "org" {
 			org = l.GetValue()
+		} else if l.GetName() == "node_type" {
+			nodeType = l.GetValue()
 		}
 	}
 
-	return org, net, int(m.Gauge.GetValue())
+	return org, net, nodeType, int(m.Gauge.GetValue())
 }
