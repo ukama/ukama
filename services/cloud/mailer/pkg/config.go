@@ -19,8 +19,9 @@ type ServerConfig struct {
 }
 
 type QueueConfig struct {
-	config.Queue `mapstructure:",squash"`
-	QueueName    string `default:"mailer"`
+	config.Queue  `mapstructure:",squash"`
+	QueueName     string `default:"mailer"`
+	RetryAttempts uint64 `default:"5"`
 }
 
 type SmtpConfig struct {
