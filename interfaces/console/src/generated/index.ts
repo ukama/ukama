@@ -665,7 +665,7 @@ export type UserInputDto = {
   email: Scalars['String'];
   name: Scalars['String'];
   phone: Scalars['String'];
-  status: Scalars['Boolean'];
+  status?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type UserResDto = {
@@ -870,6 +870,13 @@ export type GetNodeStatusQueryVariables = Exact<{
 
 
 export type GetNodeStatusQuery = { __typename?: 'Query', getNodeStatus: { __typename?: 'GetNodeStatusRes', uptime: number, status: Org_Node_State } };
+
+export type UpdateUserRoamingMutationVariables = Exact<{
+  data: UpdateUserServiceInput;
+}>;
+
+
+export type UpdateUserRoamingMutation = { __typename?: 'Mutation', updateUserRoaming: { __typename?: 'OrgUserSimDto', iccid: string, isPhysical: boolean, ukama: { __typename?: 'UserServicesDto', status: Get_User_Status_Type, services: { __typename?: 'UserSimServices', data: boolean } }, carrier: { __typename?: 'UserServicesDto', services: { __typename?: 'UserSimServices', data: boolean } } } };
 
 
 export const GetDataUsageDocument = gql`
@@ -1958,3 +1965,48 @@ export function useGetNodeStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOpti
 export type GetNodeStatusQueryHookResult = ReturnType<typeof useGetNodeStatusQuery>;
 export type GetNodeStatusLazyQueryHookResult = ReturnType<typeof useGetNodeStatusLazyQuery>;
 export type GetNodeStatusQueryResult = Apollo.QueryResult<GetNodeStatusQuery, GetNodeStatusQueryVariables>;
+export const UpdateUserRoamingDocument = gql`
+    mutation updateUserRoaming($data: UpdateUserServiceInput!) {
+  updateUserRoaming(data: $data) {
+    iccid
+    isPhysical
+    ukama {
+      status
+      services {
+        data
+      }
+    }
+    carrier {
+      services {
+        data
+      }
+    }
+  }
+}
+    `;
+export type UpdateUserRoamingMutationFn = Apollo.MutationFunction<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>;
+
+/**
+ * __useUpdateUserRoamingMutation__
+ *
+ * To run a mutation, you first call `useUpdateUserRoamingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateUserRoamingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateUserRoamingMutation, { data, loading, error }] = useUpdateUserRoamingMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateUserRoamingMutation(baseOptions?: Apollo.MutationHookOptions<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>(UpdateUserRoamingDocument, options);
+      }
+export type UpdateUserRoamingMutationHookResult = ReturnType<typeof useUpdateUserRoamingMutation>;
+export type UpdateUserRoamingMutationResult = Apollo.MutationResult<UpdateUserRoamingMutation>;
+export type UpdateUserRoamingMutationOptions = Apollo.BaseMutationOptions<UpdateUserRoamingMutation, UpdateUserRoamingMutationVariables>;

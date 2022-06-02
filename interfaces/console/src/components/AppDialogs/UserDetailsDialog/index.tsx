@@ -20,6 +20,7 @@ import EditableTextField from "../../EditableTextField";
 import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { formatBytes, formatBytesToMB } from "../../../utils";
 import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
+import LoadingWrapper from "../../LoadingWrapper";
 
 type BasicDialogProps = {
     type: string;
@@ -27,6 +28,7 @@ type BasicDialogProps = {
     isOpen: boolean;
     setUserForm: any;
     loading: boolean;
+    roamingLoading: boolean;
     closeBtnLabel?: string;
     saveBtnLabel?: string;
     userDetailsTitle: string;
@@ -35,6 +37,7 @@ type BasicDialogProps = {
     handleSubmitAction: Function;
     handleServiceAction: Function;
     handleDeactivateAction: Function;
+    handleUserRoamingAction: Function;
     handleClose: ReactEventHandler;
 };
 
@@ -44,14 +47,16 @@ const UserDetailsDialog = ({
     isOpen,
     setUserForm,
     handleClose,
-    handleDeactivateAction,
     saveBtnLabel,
     closeBtnLabel,
     loading = true,
+    roamingLoading,
     simDetailsTitle,
     userDetailsTitle,
     handleSubmitAction,
     handleServiceAction,
+    handleDeactivateAction,
+    handleUserRoamingAction,
 }: BasicDialogProps) => {
     const {
         id,
@@ -269,18 +274,29 @@ const UserDetailsDialog = ({
                                                 </IconButton>
                                             </Tooltip>
                                         </Stack>
-                                        <Switch
-                                            size="small"
-                                            value="active"
-                                            checked={roaming}
-                                            disabled={!status}
-                                            onClick={(e: any) =>
-                                                setUserForm({
-                                                    ...user,
-                                                    roaming: e.target.checked,
-                                                })
-                                            }
-                                        />
+                                        <LoadingWrapper
+                                            isLoading={roamingLoading}
+                                            width={"72px"}
+                                            height={"24px"}
+                                        >
+                                            <Switch
+                                                size="small"
+                                                value="active"
+                                                checked={roaming}
+                                                disabled={!status}
+                                                onClick={(e: any) => {
+                                                    setUserForm({
+                                                        ...user,
+                                                        roaming:
+                                                            e.target.checked,
+                                                    });
+                                                    handleUserRoamingAction &&
+                                                        handleUserRoamingAction(
+                                                            e.target.checked
+                                                        );
+                                                }}
+                                            />
+                                        </LoadingWrapper>
                                     </ContainerJustifySpaceBtw>
                                 </Grid>
                             </Grid>

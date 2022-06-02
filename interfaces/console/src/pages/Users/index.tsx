@@ -19,6 +19,7 @@ import {
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
     UserInputDto,
+    useUpdateUserRoamingMutation,
 } from "../../generated";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
@@ -127,6 +128,18 @@ const User = () => {
             }
         },
     });
+
+    const [updateUserRoaming, { loading: updateUserRoamingLoading }] =
+        useUpdateUserRoamingMutation({
+            onCompleted: () => {
+                setUserNotification({
+                    id: "updateUserRoaming",
+                    message: `User roaming status updated.`,
+                    type: "success",
+                    show: true,
+                });
+            },
+        });
 
     const {
         data: usersRes,
@@ -238,6 +251,18 @@ const User = () => {
         });
     };
 
+    const handleUserRoamingAction = (status: boolean) => {
+        updateUserRoaming({
+            variables: {
+                data: {
+                    simId: selectedUser.iccid,
+                    userId: selectedUser.id,
+                    status: status,
+                },
+            },
+        });
+    };
+
     const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({
@@ -269,7 +294,7 @@ const User = () => {
                         email: selectedUser.email,
                         name: selectedUser.name,
                         phone: selectedUser.phone,
-                        status: selectedUser.status,
+                        status: null,
                     },
                 },
             });
@@ -350,10 +375,12 @@ const User = () => {
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Details"
                         handleClose={handleSimDialogClose}
+                        roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
                         handleDeactivateAction={handleDeactivateAction}
+                        handleUserRoamingAction={handleUserRoamingAction}
                     />
                 )}
 

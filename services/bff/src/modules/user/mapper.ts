@@ -57,8 +57,7 @@ class UserMapper implements IUserMapper {
             eSimNumber: user.uuid,
             status:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
-            roaming:
-                sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
+            roaming: sim?.carrier?.services?.data || false,
             dataPlan: sim.carrier?.usage?.dataAllowanceBytes || "0",
             dataUsage: sim.carrier?.usage?.dataUsedBytes || "0",
         };
