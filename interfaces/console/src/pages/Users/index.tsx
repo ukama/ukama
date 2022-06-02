@@ -2,9 +2,9 @@ import {
     UserCard,
     ContainerHeader,
     UserDetailsDialog,
-    DeactivateUser,
     PagePlaceholder,
     LoadingWrapper,
+    DeactivateUser,
     AddUser,
 } from "../../components";
 import {
@@ -20,6 +20,7 @@ import {
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
     UserInputDto,
+    useUpdateUserRoamingMutation,
 } from "../../generated";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
@@ -47,11 +48,6 @@ const User = () => {
         isShow: false,
         type: "add",
     });
-    const [deactivateUserDialog, setDeactivateUserDialog] = useState({
-        isShow: false,
-        userId: "",
-        userName: "",
-    });
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
     const setUserNotification = useSetRecoilState(snackbarMessage);
@@ -60,6 +56,11 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const [deactivateUserDialog, setDeactivateUserDialog] = useState({
+        isShow: false,
+        userId: "",
+        userName: "",
+    });
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -134,6 +135,18 @@ const User = () => {
         },
     });
 
+    const [updateUserRoaming, { loading: updateUserRoamingLoading }] =
+        useUpdateUserRoamingMutation({
+            onCompleted: () => {
+                setUserNotification({
+                    id: "updateUserRoaming",
+                    message: `User roaming status updated.`,
+                    type: "success",
+                    show: true,
+                });
+            },
+        });
+
     const {
         data: usersRes,
         loading: usersByOrgLoading,
@@ -178,6 +191,9 @@ const User = () => {
             },
         });
     };
+    const handleCloseDeactivateUser = () =>
+        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
+
     const [deactivateUser] = useDeactivateUserMutation({
         onCompleted: res => {
             setUserNotification({
@@ -196,14 +212,6 @@ const User = () => {
                 show: true,
             }),
     });
-    const handleDeactivateUser = () => {
-        handleCloseDeactivateUser();
-        deactivateUser({
-            variables: {
-                id: deactivateUserDialog.userId,
-            },
-        });
-    };
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
 
@@ -222,6 +230,14 @@ const User = () => {
         setShowInstallSim(false);
         setSimFlow(1);
         setIsEsimAdded(false);
+    };
+    const handleDeactivateUser = () => {
+        handleCloseDeactivateUser();
+        deactivateUser({
+            variables: {
+                id: deactivateUserDialog.userId,
+            },
+        });
     };
 
     const getSearchValue = (search: string) => {
@@ -246,6 +262,18 @@ const User = () => {
                 data: {
                     userId: id,
                     simId: iccid,
+                    status: status,
+                },
+            },
+        });
+    };
+
+    const handleUserRoamingAction = (status: boolean) => {
+        updateUserRoaming({
+            variables: {
+                data: {
+                    simId: selectedUser.iccid,
+                    userId: selectedUser.id,
                     status: status,
                 },
             },
@@ -283,14 +311,12 @@ const User = () => {
                         email: selectedUser.email,
                         name: selectedUser.name,
                         phone: selectedUser.phone,
-                        status: selectedUser.status,
+                        status: null,
                     },
                 },
             });
         }
     };
-    const handleCloseDeactivateUser = () =>
-        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
 
     const handleDeactivateAction = (userId: any) => {
         setSimDialog({ ...simDialog, isShow: false });
@@ -367,10 +393,12 @@ const User = () => {
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Details"
                         handleClose={handleSimDialogClose}
+                        roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
                         handleDeactivateAction={handleDeactivateAction}
+                        handleUserRoamingAction={handleUserRoamingAction}
                     />
                 )}
                 {deactivateUserDialog.isShow && (
