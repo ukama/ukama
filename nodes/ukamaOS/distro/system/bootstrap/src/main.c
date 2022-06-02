@@ -17,10 +17,12 @@
 #include <string.h>
 #include <getopt.h>
 #include <ulfius.h>
+#include <errno.h>
 #include <curl/curl.h>
 
 #include "nodeInfo.h"
 #include "config.h"
+#include "mesh_config.h"
 #include "server.h"
 #include "log.h"
 
@@ -60,16 +62,41 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
+/*
+ * write_to_file --
+ *
+ */
+static int write_to_file(char *fileName, char *buffer) {
+
+	FILE *fp=NULL;
+	size_t count;
+
+	if (fileName == NULL || buffer == NULL) return FALSE;
+
+    fp = fopen(fileName, "w");
+    if(fp == NULL) {
+		log_error("Error opening file for read: %s Error: %s", fileName,
+				  strerror(errno));
+		return FALSE;
+    }
+
+    count = fwrite(buffer, 1, strlen(buffer), fp);
+    fclose(fp);
+
+    return count;
+}
+
 /* bootstrap */
 
 int main (int argc, char **argv) {
 
 	Config *config=NULL;
+	MeshConfig *meshConfig=NULL;
 	ServerInfo *serverInfo=NULL;
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *nodeID=NULL;
-	int opt, opdidx;
+	int opt, opdidx, ret=TRUE;
 
 	/* Prase command line args. */
 	while (TRUE) {
@@ -127,6 +154,12 @@ int main (int argc, char **argv) {
 		exit(1);
 	}
 
+	meshConfig = (MeshConfig *)calloc(1, sizeof(MeshConfig));
+	if (meshConfig == NULL) {
+		fprintf(stderr, "Error allocating memory of :%lu", sizeof(MeshConfig));
+		exit(1);
+	}
+
 	if (configFile == NULL) {
 		configFile = DEF_CONFIG_FILE;
 	}
@@ -154,17 +187,34 @@ int main (int argc, char **argv) {
 		goto done;
 	}
 	
-	/* Step-4: update config file for mesh.d */
+	/* Step-4: read mesh config file, update server IP and certs */
+	if (read_mesh_config_file(config->meshConfig, meshConfig) != TRUE) {
+		log_error("Error reading mesh.d config file: %s", config->meshConfig);
+		goto done;
+	}
 
-	getchar(); /* For now. XXX */
+	/* Step-5: update mesh.d configuration with the recevied server info. */
+	ret |= write_to_file(meshConfig->remoteIPFile, serverInfo->IP);
+	ret |= write_to_file(meshConfig->certFile,     serverInfo->cert);
+	if (ret != TRUE) {
+		log_error("Error updating mesh.d configs. File: %s",
+				  config->meshConfig);
+		goto done;
+	}
+
+	/* Done. */
+	log_debug("Mesh.d configuration update successfully.");
 
  done:
 	log_debug("Bye World!\n");
 	clear_config(config);
+	clear_mesh_config(meshConfig);
 	free_server_info(serverInfo);
+
 	free(config);
+	free(meshConfig);
 	free(nodeID);
 	free(serverInfo);
-  
+
 	return 1;
 }
