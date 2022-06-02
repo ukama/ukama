@@ -38,12 +38,12 @@
     "yup": "^0.32.10"
   },
   "scripts": {
-    "test": "react-scripts test --watchAll=false",
     "generate": "graphql-codegen",
     "eject": "react-scripts eject",
     "build": "react-scripts build",
-    "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
     "start": "react-scripts start",
+    "test": "react-scripts test --watchAll=false",
+    "lint": "eslint './src/**/*.{ts,tsx,js,jsx}'",
     "codegen": "graphql-codegen --config codegen.yml",
     "lint:fix": "eslint . --ext ts --ext tsx --ext js --fix",
     "pretty": "prettier --write --config .prettierrc './src/**'",
