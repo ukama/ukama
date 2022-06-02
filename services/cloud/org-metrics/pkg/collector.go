@@ -64,7 +64,7 @@ func (c *OrgCollector) StartMetricsUpdate() {
 }
 
 func (o *OrgCollector) Describe(descs chan<- *prometheus.Desc) {
-	descs <- prometheus.NewDesc("org_metrics", "org metrics", []string{"org", "network"}, nil)
+	descs <- prometheus.NewDesc("node_count", "org metrics", []string{"org", "network"}, nil)
 }
 
 func (o *OrgCollector) Collect(c chan<- prometheus.Metric) {
@@ -75,7 +75,7 @@ func (o *OrgCollector) Collect(c chan<- prometheus.Metric) {
 		for network, nodes := range networks {
 			for nodeType, count := range nodes {
 				c <- prometheus.MustNewConstMetric(
-					prometheus.NewDesc("org_metrics", "org metrics", []string{"org", "network", "node_type"}, nil),
+					prometheus.NewDesc("node_count", "org metrics", []string{"org", "network", "node_type"}, nil),
 					prometheus.GaugeValue,
 					float64(count),
 					org, network, nodeType,
