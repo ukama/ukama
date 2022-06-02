@@ -8,11 +8,7 @@
 include ../../../config.mk
 
 # Targets
-TARGET:=noded
-INVENTORY:=genInventory
-SCHEMA:=genSchema
-UTEST:=nodeTest
-
+TARGET:=notifyd
 
 DISTRO_DIR:=../..
 
@@ -40,14 +36,9 @@ JSON_LIB:=jansson
 HTTP_SERVER_LIB:=ulfius
 
 # Source paths
-CORE_DIRS=core utils
-SVC_DIRS=service
-INVT_DIRS=mfg/inventory mfg/common
-SCH_DIR=mfg/schema mfg/common
+SVC_DIRS=src
 
-SVC_SRC_DIRS:=$(CORE_DIRS) $(SVC_DIRS)
-IVNT_SRC_DIRS:=$(CORE_DIRS) $(INVT_DIRS)
-SCH_SRC_DIRS:=$(CORE_DIRS) $(SCH_DIR)
+SVC_SRC_DIRS:= $(SVC_DIRS)
 
 # Includes
 INC_DIRS=inc 
@@ -121,20 +112,10 @@ HDR_EXTS := h
 # Includes
 INC := $(foreach dir, $(INC_DIRS), $(foreach ext, $(HDR_EXTS), $(wildcard $(dir)/*.$(ext))))
 
-# List of all recognized files found in the specified directories for test
-#CFILES := $(foreach dir, $(SRC_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
-
-# Noded Service source files 
+# Service source files 
 SVC_CFILES := $(shell find $(SVC_SRC_DIRS) -name '*.c')
 SVC_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(SVC_CFILES))))
 
-# Inventory source files
-INVT_CFILES := $(shell find $(IVNT_SRC_DIRS) -name '*.c')
-INVT_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(INVT_CFILES))))
-
-# Schema Source files
-SCH_CFILES := $(shell find $(SCH_SRC_DIRS) -name '*.c')
-SCH_OBJFILES := $(foreach ext, $(SRC_EXTS), $(patsubst %.$(ext), $(BUILD_DIR)/%.o, $(filter %.$(ext), $(SCH_CFILES))))
 
 # Unit Test 
 TEST_CFILES := $(foreach dir, $(TEST_DIRS), $(foreach ext, $(SRC_EXTS), $(wildcard $(dir)/*.$(ext))))
@@ -210,16 +191,6 @@ checkcodestyle:
 # Build Target
 $(TARGET): $(SVC_OBJFILES)
 	@echo "Building $(TARGET)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
-
-# Build Registry utility
-$(INVENTORY): $(INVT_OBJFILES)
-	@echo "Building $(INVENTORY)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
-
-#Build Schema utility
-$(SCHEMA): $(SCH_OBJFILES)
-	@echo "Building $(SCHEMA)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 	
 # Build Unit test binary
