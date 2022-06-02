@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
+	"github.com/ukama/ukama/services/cloud/mailer/pkg/metrics"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"os"
@@ -107,13 +108,14 @@ func (m *Mailer) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Act
 	err := json.Unmarshal(delivery.Body, &mail)
 	if err != nil {
 		logrus.Errorf("Failed to unmarshal message: %s. Error: %s", string(delivery.Body), err)
+		metrics.EmailSentFailureRequestMetric()
 		return rabbitmq.NackDiscard
 	}
 
 	err = m.Mail.SendEmail(&mail)
 	if err != nil {
 		logrus.Errorf("Failed to send email: %s. Error: %s", string(delivery.Body), err)
-
+		metrics.EmailSentFailureRequestMetric()
 		// beware that delivery tag is Channel scoped so it won't work for multiple consumers
 		if delivery.DeliveryTag >= m.queueConf.RetryAttempts {
 			logrus.Errorf("Failed to send email: %s. Error: %s. Discarding message", string(delivery.Body), err)
@@ -123,5 +125,6 @@ func (m *Mailer) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Act
 		return rabbitmq.NackRequeue
 	}
 
+	metrics.EmailSentSuccessfulRequestMetric()
 	return rabbitmq.Ack
 }
