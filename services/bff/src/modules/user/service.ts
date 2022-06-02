@@ -167,7 +167,6 @@ export class UserService implements IUserService {
                 },
             },
         });
-        console.log(res);
         if (checkError(res)) throw new Error(res.message);
         return res;
     };

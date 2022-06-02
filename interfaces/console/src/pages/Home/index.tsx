@@ -54,6 +54,7 @@ import {
     useGetNetworkStatusQuery,
     GetNetworkStatusSDocument,
     GetNetworkStatusSSubscription,
+    useUpdateUserRoamingMutation,
 } from "../../generated";
 import {
     user,
@@ -710,6 +711,19 @@ const Home = () => {
                 }
             },
         });
+
+    const [updateUserRoaming, { loading: updateUserRoamingLoading }] =
+        useUpdateUserRoamingMutation({
+            onCompleted: () => {
+                setNodeToastNotification({
+                    id: "updateUserRoaming",
+                    message: `User roaming status updated.`,
+                    type: "success",
+                    show: true,
+                });
+            },
+        });
+
     const handleUpdateUserStatus = (
         id: string,
         iccid: string,
@@ -775,7 +789,7 @@ const Home = () => {
         }
     };
     const handleEsimInstallation = (eSimData: UserInputDto) => {
-        setUserStatus(eSimData.status);
+        setUserStatus(eSimData?.status || true);
         if (eSimData) {
             addUser({
                 variables: {
@@ -797,11 +811,24 @@ const Home = () => {
         setSimFlow(simFlow + 1);
         setIsPsimAdded(true);
     };
+
     const handleDeactivateAction = (userId: any) => {
         setSimDialog({ ...simDialog, isShow: false });
         deactivateUser({
             variables: {
                 id: userId,
+            },
+        });
+    };
+
+    const handleUserRoamingAction = (status: boolean) => {
+        updateUserRoaming({
+            variables: {
+                data: {
+                    simId: selectedUser.iccid,
+                    userId: selectedUser.id,
+                    status: status,
+                },
             },
         });
     };
@@ -1011,10 +1038,12 @@ const Home = () => {
                     simDetailsTitle="SIM Details"
                     userDetailsTitle="User Details"
                     handleClose={handleSimDialogClose}
+                    roamingLoading={updateUserRoamingLoading}
                     userStatusLoading={updateUserStatusLoading}
                     handleServiceAction={handleUpdateUserStatus}
                     handleSubmitAction={handleUserSubmitAction}
                     handleDeactivateAction={handleDeactivateAction}
+                    handleUserRoamingAction={handleUserRoamingAction}
                 />
             )}
 

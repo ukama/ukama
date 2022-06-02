@@ -308,3 +308,21 @@ query getNodeStatus($data: GetNodeStatusInput!) {
         status
     }
 }
+
+mutation updateUserRoaming($data: UpdateUserServiceInput!) {
+    updateUserRoaming(data: $data) {
+        iccid
+        isPhysical
+        ukama {
+            status
+            services {
+                data
+            }
+        }
+        carrier {
+            services {
+                data
+            }
+        }
+    }
+}

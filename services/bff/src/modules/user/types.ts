@@ -19,7 +19,7 @@ export class UserInputDto {
     @Field()
     phone: string;
 
-    @Field()
+    @Field({ nullable: true })
     status: boolean;
 }
 
