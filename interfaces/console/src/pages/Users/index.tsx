@@ -2,6 +2,7 @@ import {
     UserCard,
     ContainerHeader,
     UserDetailsDialog,
+    DeactivateUser,
     PagePlaceholder,
     LoadingWrapper,
     AddUser,
@@ -19,7 +20,6 @@ import {
     useGetUsersDataUsageLazyQuery,
     useGetUsersDataUsageSSubscription,
     UserInputDto,
-    useUpdateUserRoamingMutation,
 } from "../../generated";
 import { useEffect, useState } from "react";
 import { RoundedCard } from "../../styles";
@@ -46,6 +46,11 @@ const User = () => {
     const [simDialog, setSimDialog] = useState({
         isShow: false,
         type: "add",
+    });
+    const [deactivateUserDialog, setDeactivateUserDialog] = useState({
+        isShow: false,
+        userId: "",
+        userName: "",
     });
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [selectedUser, setSelectedUser] = useState<GetUserDto>(userInit);
@@ -129,18 +134,6 @@ const User = () => {
         },
     });
 
-    const [updateUserRoaming, { loading: updateUserRoamingLoading }] =
-        useUpdateUserRoamingMutation({
-            onCompleted: () => {
-                setUserNotification({
-                    id: "updateUserRoaming",
-                    message: `User roaming status updated.`,
-                    type: "success",
-                    show: true,
-                });
-            },
-        });
-
     const {
         data: usersRes,
         loading: usersByOrgLoading,
@@ -203,6 +196,14 @@ const User = () => {
                 show: true,
             }),
     });
+    const handleDeactivateUser = () => {
+        handleCloseDeactivateUser();
+        deactivateUser({
+            variables: {
+                id: deactivateUserDialog.userId,
+            },
+        });
+    };
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
 
@@ -251,18 +252,6 @@ const User = () => {
         });
     };
 
-    const handleUserRoamingAction = (status: boolean) => {
-        updateUserRoaming({
-            variables: {
-                data: {
-                    simId: selectedUser.iccid,
-                    userId: selectedUser.id,
-                    status: status,
-                },
-            },
-        });
-    };
-
     const handleEsimInstallation = (eSimData: UserInputDto) => {
         if (eSimData) {
             addUser({
@@ -294,18 +283,21 @@ const User = () => {
                         email: selectedUser.email,
                         name: selectedUser.name,
                         phone: selectedUser.phone,
-                        status: null,
+                        status: selectedUser.status,
                     },
                 },
             });
         }
     };
+    const handleCloseDeactivateUser = () =>
+        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
+
     const handleDeactivateAction = (userId: any) => {
         setSimDialog({ ...simDialog, isShow: false });
-        deactivateUser({
-            variables: {
-                id: userId,
-            },
+        setDeactivateUserDialog({
+            isShow: true,
+            userId: userId,
+            userName: users?.find(item => item.id === userId)?.name || "",
         });
     };
 
@@ -375,12 +367,22 @@ const User = () => {
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Details"
                         handleClose={handleSimDialogClose}
-                        roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
                         handleSubmitAction={handleUserSubmitAction}
                         handleDeactivateAction={handleDeactivateAction}
-                        handleUserRoamingAction={handleUserRoamingAction}
+                    />
+                )}
+                {deactivateUserDialog.isShow && (
+                    <DeactivateUser
+                        isClosable={true}
+                        isOpen={deactivateUserDialog.isShow}
+                        title={"Deactivate User Confirmation"}
+                        description={`${deactivateUserDialog.userName} will be deactivated permanently. Other copy depends on surrounding policy.`}
+                        labelSuccessBtn={"DEACTIVATE USER"}
+                        labelNegativeBtn={"cancel"}
+                        handleCloseAction={handleCloseDeactivateUser}
+                        handleSuccessAction={handleDeactivateUser}
                     />
                 )}
 
