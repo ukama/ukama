@@ -13,6 +13,7 @@
 #include <jansson.h>
 
 #include "nodeInfo.h"
+#include "server.h"
 
 #define JSON_STRING  1
 #define JSON_INTEGER 2
@@ -27,6 +28,12 @@
 #define JSON_OEM            "oemName"
 #define JSON_ASSEMBLY_DATE  "assemblyDate"
 
-int deserialize_node_info(NodeInfo **nodeinfo, json_t *json);
+/* serverInfo */
+#define JSON_NODE        "node"
+#define JSON_ORG         "org"
+#define JSON_IP          "ip"
+#define JSON_CERTIFICATE "certificate"
 
+int deserialize_node_info(NodeInfo **nodeInfo, json_t *json);
+int deserialize_server_info(ServerInfo *serverInfo, json_t *json);
 #endif /* JSERDES_H */

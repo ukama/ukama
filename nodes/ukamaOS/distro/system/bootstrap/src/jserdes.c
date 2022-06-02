@@ -135,3 +135,35 @@ int deserialize_node_info(NodeInfo **nodeInfo, json_t *json) {
 	return ret;
 }
 
+/*
+ * deserialize_server_info --
+ *
+ * {
+ *   "node": "uk-sa2220-hnode-v0-dcf4",
+ *   "org": "test",
+ *   "ip": "192.168.0.1",
+ *   "certificate": "aGVscG1lCg=="
+ * }
+ *
+ */
+int deserialize_server_info(ServerInfo *serverInfo, json_t *json) {
+
+	int ret=TRUE;
+
+	if (serverInfo == NULL || json == NULL) return FALSE;
+
+	log_json(json);
+
+	ret |= get_json_entry(json, JSON_IP,  JSON_STRING, &serverInfo->IP,  NULL);
+	ret |= get_json_entry(json, JSON_ORG, JSON_STRING, &serverInfo->org, NULL);
+	ret |= get_json_entry(json, JSON_CERTIFICATE, JSON_STRING,
+						  &serverInfo->cert, NULL);
+
+	if (ret == FALSE) {
+		log_error("Error deserializing server info");
+		log_json(json);
+		free_server_info(serverInfo);
+	}
+
+	return ret;
+}

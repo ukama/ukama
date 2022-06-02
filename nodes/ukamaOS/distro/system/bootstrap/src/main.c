@@ -21,6 +21,7 @@
 
 #include "nodeInfo.h"
 #include "config.h"
+#include "server.h"
 #include "log.h"
 
 #define DEF_LOG_LEVEL "TRACE"
@@ -64,6 +65,7 @@ void set_log_level(char *slevel) {
 int main (int argc, char **argv) {
 
 	Config *config=NULL;
+	ServerInfo *serverInfo=NULL;
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	char *nodeID=NULL;
@@ -111,19 +113,25 @@ int main (int argc, char **argv) {
 			usage();
 			exit(0);
 		}
-	} /* while */
+	}
 
 	config = (Config *)calloc(1, sizeof(Config));
 	if (config == NULL) {
 		fprintf(stderr, "Error allocating memory of: %lu", sizeof(Config));
 		exit(1);
 	}
-	
+
+	serverInfo = (ServerInfo *)calloc(1, sizeof(ServerInfo));
+	if (serverInfo == NULL) {
+		fprintf(stderr, "Error allocating memory of: %lu", sizeof(ServerInfo));
+		exit(1);
+	}
+
 	if (configFile == NULL) {
 		configFile = DEF_CONFIG_FILE;
 	}
 
-	/* Step-1 read the configuration file. */
+	/* Step-1 read the configuration file */
 	if (process_config_file(configFile, config) != TRUE) {
 		log_error("Error processing the config file: %s", configFile);
 		exit(1);
@@ -138,18 +146,25 @@ int main (int argc, char **argv) {
 		goto done;
 	}
 
-	/* Step-3: connect with ukama bootstrap server */
-	
+	/* Step-3: connect with the ukama bootstrap server */
+	if (register_to_server(config->bootstrapServer, nodeID, serverInfo)
+		!= TRUE) {
+		log_error("Error receiving server info from boostrap server: %s for %s",
+				  config->bootstrapServer, nodeID);
+		goto done;
+	}
 	
 	/* Step-4: update config file for mesh.d */
-	
+
 	getchar(); /* For now. XXX */
 
  done:
 	log_debug("Bye World!\n");
 	clear_config(config);
+	free_server_info(serverInfo);
 	free(config);
 	free(nodeID);
+	free(serverInfo);
   
 	return 1;
 }

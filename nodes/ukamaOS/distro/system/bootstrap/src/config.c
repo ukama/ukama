@@ -24,12 +24,12 @@
  * parse_config -- process [config] stuff
  *
  */
-
 int parse_config(Config *config, toml_table_t *configData) {
 
 	int ret=FALSE;
 	toml_datum_t nodedHost, nodedPort;
 	toml_datum_t meshConfig, remoteIPFile;
+	toml_datum_t bootstrapServer;
 
 	/* sanity check */
 	if (config == NULL) return FALSE;
@@ -76,16 +76,27 @@ int parse_config(Config *config, toml_table_t *configData) {
 		config->remoteIPFile = strdup(remoteIPFile.u.s);
 	}
 
-	if (nodedHost.ok)    free(nodedHost.u.s);
-	if (nodedPort.ok)    free(nodedPort.u.s);
-	if (meshConfig.ok)   free(meshConfig.u.s);
-	if (remoteIPFile.ok) free(remoteIPFile.u.s);
+	/* bootstrap-server */
+	bootstrapServer = toml_string_in(configData, BOOTSTRAP_SERVER);
+	if (!bootstrapServer.ok) {
+		log_debug("[%s] is missing, setting to default: %s", BOOTSTRAP_SERVER,
+				  DEF_BOOTSTRAP_SERVER);
+		config->bootstrapServer = strdup(DEF_BOOTSTRAP_SERVER);
+	} else {
+		config->bootstrapServer = strdup(bootstrapServer.u.s);
+	}
+
+	if (nodedHost.ok)       free(nodedHost.u.s);
+	if (nodedPort.ok)       free(nodedPort.u.s);
+	if (meshConfig.ok)      free(meshConfig.u.s);
+	if (remoteIPFile.ok)    free(remoteIPFile.u.s);
+	if (bootstrapServer.ok) free(bootstrapServer.u.s);
 
 	return ret;
 }
 
 /*
- * process_config_file -- read and parse the config file.
+ * process_config_file -- read and parse the config file
  *
  */
 int process_config_file(char *fileName, Config *config) {
@@ -146,6 +157,10 @@ void print_config(Config *config) {
 	if (config->remoteIPFile) {
 		log_debug("remote IP file: %s", config->remoteIPFile);
 	}
+
+	if (config->bootstrapServer) {
+	    log_debug("bootstrap server: %s", config->bootstrapServer);
+	}
 }
 
 /*
@@ -160,4 +175,5 @@ void clear_config(Config *config) {
 	free(config->nodedPort);
 	free(config->meshConfig);
 	free(config->remoteIPFile);
+	free(config->bootstrapServer);
 }
