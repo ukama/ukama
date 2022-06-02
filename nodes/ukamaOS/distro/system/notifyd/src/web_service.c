@@ -193,6 +193,7 @@ static int web_service_cb_post_alert(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+
 /**
  * @fn      void web_service_add_end_point(char*, char*, void*, HttpCb)
  * @brief   Wrapper function on adding endpoint to REST framework. This
@@ -213,6 +214,16 @@ static void web_service_add_end_point(char *method, char *endPoint,
     usys_log_trace("Added api[%d] Method %s Endpoint: %s.", endPointCount,
                     "Get", endPoint);
     endPointCount++;
+}
+
+/**
+ * @fn      void web_service_add_discover_endpoints()
+ * @brief   Add REST endpoints for endpoint discovery.
+ *
+ */
+static void web_service_add_discover_endpoints() {
+    web_service_add_end_point("GET", API_RES_EP("discover"), NULL,
+                    web_service_cb_discover_api);
 }
 
 /**

@@ -228,3 +228,41 @@ int json_serialize_error(JsonObj **json, int code, const char *str) {
 
     return ret;
 }
+
+int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
+                            uint16_t count) {
+    int ret = JSON_ENCODING_OK;
+
+    *json = json_object();
+    if (!json) {
+        return ERR_JSON_CRETATION_ERR;
+    }
+
+    if (!apiList) {
+        return ERR_JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_API_LIST, json_array());
+
+    JsonObj *jApiArr = json_object_get(*json, JTAG_API_LIST);
+    if (jApiArr) {
+        for (int iter = 0; iter < count; iter++) {
+            json_t *jApi = json_object();
+
+            json_object_set_new(jApi, JTAG_METHOD,
+                                json_string(apiList[iter].method));
+
+            json_object_set_new(jApi, JTAG_URL_EP,
+                                json_string(apiList[iter].endPoint));
+
+            /* Add element to array */
+            json_array_append(jApiArr, jApi);
+            json_decref(jApi);
+        }
+
+    } else {
+        return ERR_JSON_CRETATION_ERR;
+    }
+
+    return ret;
+}

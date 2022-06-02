@@ -19,6 +19,7 @@ UNITY_ROOT:=$(DISTRO_DIR)/tools/unity
 VENDOR_DIR:=$(DISTRO_DIR)/vendor
 VENDOR_HEADERS_DIR:=$(VENDOR_DIR)/build/include
 VENDOR_LIBS_DIR:=$(VENDOR_DIR)/build/lib
+VENDOR_LIB64_DIR:=$(VENDOR_DIR)/build/lib64
 
 # Platform
 PLATFORM_DIR:=$(DISTRO_DIR)/platform
@@ -57,7 +58,7 @@ ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
 #XLD=$(XGCCPATH)$(XLD)
 else
-XCC=gcc
+XCC=/home/vishal/cdrive/work/git/ukama/ukama/nodes/ukamaOS/distro/tools/musl-cross-make/output/bin/x86_64-linux-musl-gcc
 endif
 
 # Libraries
@@ -94,6 +95,7 @@ CFLAGS+=-DHAVE_SYS_TIME_H
 LDFLAGS+=$(LDPATH)
 LDFLAGS+=-L$(PLATFORM_LIB_DIR) 
 LDFLAGS+=-L$(VENDOR_LIBS_DIR)
+LDFLAGS+=-L$(VENDOR_LIB64_DIR)
 
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
