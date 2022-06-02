@@ -4,6 +4,7 @@ import {
     UserDetailsDialog,
     PagePlaceholder,
     LoadingWrapper,
+    DeactivateUser,
     AddUser,
 } from "../../components";
 import {
@@ -55,6 +56,11 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const [deactivateUserDialog, setDeactivateUserDialog] = useState({
+        isShow: false,
+        userId: "",
+        userName: "",
+    });
     const [addUser, { loading: addUserLoading }] = useAddUserMutation({
         onCompleted: res => {
             if (res?.addUser) {
@@ -185,6 +191,9 @@ const User = () => {
             },
         });
     };
+    const handleCloseDeactivateUser = () =>
+        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
+
     const [deactivateUser] = useDeactivateUserMutation({
         onCompleted: res => {
             setUserNotification({
@@ -221,6 +230,14 @@ const User = () => {
         setShowInstallSim(false);
         setSimFlow(1);
         setIsEsimAdded(false);
+    };
+    const handleDeactivateUser = () => {
+        handleCloseDeactivateUser();
+        deactivateUser({
+            variables: {
+                id: deactivateUserDialog.userId,
+            },
+        });
     };
 
     const getSearchValue = (search: string) => {
@@ -300,12 +317,13 @@ const User = () => {
             });
         }
     };
+
     const handleDeactivateAction = (userId: any) => {
         setSimDialog({ ...simDialog, isShow: false });
-        deactivateUser({
-            variables: {
-                id: userId,
-            },
+        setDeactivateUserDialog({
+            isShow: true,
+            userId: userId,
+            userName: users?.find(item => item.id === userId)?.name || "",
         });
     };
 
@@ -381,6 +399,18 @@ const User = () => {
                         handleSubmitAction={handleUserSubmitAction}
                         handleDeactivateAction={handleDeactivateAction}
                         handleUserRoamingAction={handleUserRoamingAction}
+                    />
+                )}
+                {deactivateUserDialog.isShow && (
+                    <DeactivateUser
+                        isClosable={true}
+                        isOpen={deactivateUserDialog.isShow}
+                        title={"Deactivate User Confirmation"}
+                        description={`${deactivateUserDialog.userName} will be deactivated permanently. Other copy depends on surrounding policy.`}
+                        labelSuccessBtn={"DEACTIVATE USER"}
+                        labelNegativeBtn={"cancel"}
+                        handleCloseAction={handleCloseDeactivateUser}
+                        handleSuccessAction={handleDeactivateUser}
                     />
                 )}
 

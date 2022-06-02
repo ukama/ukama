@@ -814,10 +814,10 @@ const Home = () => {
 
     const handleDeactivateAction = (userId: any) => {
         setSimDialog({ ...simDialog, isShow: false });
-        deactivateUser({
-            variables: {
-                id: userId,
-            },
+        setDeactivateUserDialog({
+            isShow: true,
+            userId: userId,
+            userName: users?.find(item => item.id === userId)?.name || "",
         });
     };
 
