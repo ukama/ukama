@@ -28,6 +28,13 @@ func (q qPubStub) Publish(payload any, routingKey string) error {
 	return nil
 }
 
+func (q qPubStub) PublishToQueue(queueName string, payload any) error {
+	return nil
+}
+func (q qPubStub) Close() error {
+	return nil
+}
+
 func TestRegistryServer_GetOrg(t *testing.T) {
 	orgName := "org-1"
 	nodeRepo := &mocks.NodeRepo{}
