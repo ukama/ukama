@@ -180,7 +180,6 @@ export type DeactivateResponse = {
   email: Scalars['String'];
   isDeactivated: Scalars['Boolean'];
   name: Scalars['String'];
-  phone: Scalars['String'];
   uuid: Scalars['String'];
 };
 
@@ -260,7 +259,6 @@ export type GetUserDto = {
   iccid: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
-  phone: Scalars['String'];
   roaming: Scalars['Boolean'];
   status: Scalars['Boolean'];
 };
@@ -279,7 +277,6 @@ export type GetUsersDto = {
   email: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
-  phone?: Maybe<Scalars['String']>;
 };
 
 export type HeaderType = {
@@ -514,7 +511,6 @@ export type OrgUserDto = {
   email: Scalars['String'];
   isDeactivated: Scalars['Boolean'];
   name: Scalars['String'];
-  phone: Scalars['String'];
   uuid: Scalars['String'];
 };
 
@@ -664,7 +660,6 @@ export type UserDataUsageDto = {
 export type UserInputDto = {
   email: Scalars['String'];
   name: Scalars['String'];
-  phone: Scalars['String'];
   status?: InputMaybe<Scalars['Boolean']>;
 };
 
@@ -674,7 +669,6 @@ export type UserResDto = {
   iccid?: Maybe<Scalars['String']>;
   id: Scalars['String'];
   name: Scalars['String'];
-  phone: Scalars['String'];
 };
 
 export type UserServicesDto = {
@@ -764,14 +758,14 @@ export type GetNodeAppsQuery = { __typename?: 'Query', getNodeApps: Array<{ __ty
 export type GetUsersByOrgQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersByOrgQuery = { __typename?: 'Query', getUsersByOrg: Array<{ __typename?: 'GetUsersDto', id: string, name: string, email: string, phone?: string | null, dataPlan?: string | null, dataUsage?: string | null }> };
+export type GetUsersByOrgQuery = { __typename?: 'Query', getUsersByOrg: Array<{ __typename?: 'GetUsersDto', id: string, name: string, email: string, dataPlan?: string | null, dataUsage?: string | null }> };
 
 export type GetUserQueryVariables = Exact<{
   userId: Scalars['String'];
 }>;
 
 
-export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, phone: string, roaming: boolean, dataPlan: string, dataUsage: string } };
+export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetUserDto', id: string, status: boolean, name: string, eSimNumber: string, iccid: string, email: string, roaming: boolean, dataPlan: string, dataUsage: string } };
 
 export type GetNetworkStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -788,14 +782,14 @@ export type DeactivateUserMutationVariables = Exact<{
 }>;
 
 
-export type DeactivateUserMutation = { __typename?: 'Mutation', deactivateUser: { __typename?: 'DeactivateResponse', uuid: string, name: string, email: string, phone: string, isDeactivated: boolean } };
+export type DeactivateUserMutation = { __typename?: 'Mutation', deactivateUser: { __typename?: 'DeactivateResponse', uuid: string, name: string, email: string, isDeactivated: boolean } };
 
 export type AddUserMutationVariables = Exact<{
   data: UserInputDto;
 }>;
 
 
-export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, phone: string, id: string } };
+export type AddUserMutation = { __typename?: 'Mutation', addUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, id: string } };
 
 export type DeleteNodeMutationVariables = Exact<{
   id: Scalars['String'];
@@ -810,7 +804,7 @@ export type UpdateUserMutationVariables = Exact<{
 }>;
 
 
-export type UpdateUserMutation = { __typename?: 'Mutation', updateUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, phone: string, id: string } };
+export type UpdateUserMutation = { __typename?: 'Mutation', updateUser: { __typename?: 'UserResDto', name: string, email: string, iccid?: string | null, id: string } };
 
 export type AddNodeMutationVariables = Exact<{
   data: AddNodeDto;
@@ -857,12 +851,12 @@ export type GetUsersDataUsageQueryVariables = Exact<{
 }>;
 
 
-export type GetUsersDataUsageQuery = { __typename?: 'Query', getUsersDataUsage: Array<{ __typename?: 'GetUserDto', id: string, name: string, email: string, phone: string, dataPlan: string, dataUsage: string }> };
+export type GetUsersDataUsageQuery = { __typename?: 'Query', getUsersDataUsage: Array<{ __typename?: 'GetUserDto', id: string, name: string, email: string, dataPlan: string, dataUsage: string }> };
 
 export type GetUsersDataUsageSSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUsersDataUsageSSubscription = { __typename?: 'Subscription', getUsersDataUsage: { __typename?: 'GetUserDto', id: string, name: string, email: string, phone: string, dataPlan: string, dataUsage: string } };
+export type GetUsersDataUsageSSubscription = { __typename?: 'Subscription', getUsersDataUsage: { __typename?: 'GetUserDto', id: string, name: string, email: string, dataPlan: string, dataUsage: string } };
 
 export type GetNodeStatusQueryVariables = Exact<{
   data: GetNodeStatusInput;
@@ -1322,7 +1316,6 @@ export const GetUsersByOrgDocument = gql`
     id
     name
     email
-    phone
     dataPlan
     dataUsage
   }
@@ -1364,7 +1357,6 @@ export const GetUserDocument = gql`
     eSimNumber
     iccid
     email
-    phone
     roaming
     dataPlan
     dataUsage
@@ -1470,7 +1462,6 @@ export const DeactivateUserDocument = gql`
     uuid
     name
     email
-    phone
     isDeactivated
   }
 }
@@ -1507,7 +1498,6 @@ export const AddUserDocument = gql`
     name
     email
     iccid
-    phone
     id
   }
 }
@@ -1577,7 +1567,6 @@ export const UpdateUserDocument = gql`
     name
     email
     iccid
-    phone
     id
   }
 }
@@ -1861,7 +1850,6 @@ export const GetUsersDataUsageDocument = gql`
     id
     name
     email
-    phone
     dataPlan
     dataUsage
   }
@@ -1901,7 +1889,6 @@ export const GetUsersDataUsageSDocument = gql`
     id
     name
     email
-    phone
     dataPlan
     dataUsage
   }

@@ -125,7 +125,6 @@ const User = () => {
                         id: userRes.id,
                         name: userRes.name,
                         email: userRes.email,
-                        phone: userRes.phone,
                         dataPlan: userRes.dataPlan,
                         dataUsage: userRes.dataUsage,
                     },
@@ -153,7 +152,7 @@ const User = () => {
         refetch: refetchResidents,
     } = useGetUsersByOrgQuery({
         onCompleted: res => {
-            setUsers([...res.getUsersByOrg].reverse());
+            setUsers(res.getUsersByOrg);
             getUsersDataUsage({
                 variables: {
                     data: { ids: res.getUsersByOrg.map(u => u.id) },
@@ -288,7 +287,6 @@ const User = () => {
                         email: eSimData.email,
                         name: eSimData.name,
                         status: eSimData.status || false,
-                        phone: "",
                     },
                 },
             });
@@ -310,7 +308,6 @@ const User = () => {
                     data: {
                         email: selectedUser.email,
                         name: selectedUser.name,
-                        phone: selectedUser.phone,
                         status: null,
                     },
                 },

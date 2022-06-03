@@ -115,7 +115,6 @@ query getUsersByOrg {
         id
         name
         email
-        phone
         dataPlan
         dataUsage
     }
@@ -128,7 +127,6 @@ query getUser($userId: String!) {
         eSimNumber
         iccid
         email
-        phone
         roaming
         dataPlan
         dataUsage
@@ -154,7 +152,6 @@ mutation deactivateUser($id: String!) {
         uuid
         name
         email
-        phone
         isDeactivated
     }
 }
@@ -163,7 +160,6 @@ mutation addUser($data: UserInputDto!) {
         name
         email
         iccid
-        phone
         id
     }
 }
@@ -179,7 +175,6 @@ mutation updateUser($userId: String!, $data: UserInputDto!) {
         name
         email
         iccid
-        phone
         id
     }
 }
@@ -270,7 +265,6 @@ query getUsersDataUsage($data: DataUsageInputDto!) {
         id
         name
         email
-        phone
         dataPlan
         dataUsage
     }
@@ -281,7 +275,6 @@ subscription getUsersDataUsageS {
         id
         name
         email
-        phone
         dataPlan
         dataUsage
     }

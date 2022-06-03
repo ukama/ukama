@@ -62,7 +62,6 @@ const UserDetailsDialog = ({
         id,
         name,
         email,
-        phone,
         iccid,
         status,
         roaming,
@@ -140,18 +139,6 @@ const UserDetailsDialog = ({
                                             setUserForm({
                                                 ...user,
                                                 email: value?.toLowerCase(),
-                                            })
-                                        }
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <EditableTextField
-                                        value={phone}
-                                        label={"PHONE"}
-                                        handleOnChange={(value: string) =>
-                                            setUserForm({
-                                                ...user,
-                                                phone: value,
                                             })
                                         }
                                     />

@@ -78,7 +78,6 @@ const userInit = {
     name: "",
     iccid: "",
     email: "",
-    phone: "",
     dataPlan: "0",
     dataUsage: "0",
     roaming: false,
@@ -301,7 +300,6 @@ const Home = () => {
                         id: userRes.id,
                         name: userRes.name,
                         email: userRes.email,
-                        phone: userRes.phone,
                         dataPlan: userRes.dataPlan,
                         dataUsage: userRes.dataUsage,
                     },
@@ -315,7 +313,7 @@ const Home = () => {
         useGetUsersByOrgQuery({
             nextFetchPolicy: "network-only",
             onCompleted: res => {
-                setUsers([...res.getUsersByOrg].reverse());
+                setUsers(res.getUsersByOrg);
                 getUsersDataUsage({
                     variables: {
                         data: { ids: res.getUsersByOrg.map(u => u.id) },
@@ -636,7 +634,6 @@ const Home = () => {
                     data: {
                         email: selectedUser.email,
                         name: selectedUser.name,
-                        phone: selectedUser.phone,
                         status: selectedUser.status,
                     },
                 },
@@ -797,7 +794,6 @@ const Home = () => {
                         email: eSimData.email,
                         name: eSimData.name,
                         status: eSimData.status,
-                        phone: "",
                     },
                 },
             });

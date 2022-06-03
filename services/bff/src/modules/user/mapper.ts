@@ -38,12 +38,14 @@ class UserMapper implements IUserMapper {
                     dataUsage: "",
                     name: user.name,
                     email: user.email,
-                    phone: user.phone,
                     isDeactivated: user.isDeactivated,
                 };
                 users.push(userObj);
             }
         });
+        users.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        );
         return users;
     };
     dtoToUserDto = (req: OrgUserResponse): GetUserDto => {
@@ -53,7 +55,6 @@ class UserMapper implements IUserMapper {
             name: user.name,
             iccid: sim?.iccid || "",
             email: user.email,
-            phone: user.phone,
             eSimNumber: user.uuid,
             status:
                 sim?.carrier?.status === GET_STATUS_TYPE.ACTIVE ? true : false,
@@ -67,14 +68,12 @@ class UserMapper implements IUserMapper {
             id: req.uuid,
             name: req.name,
             email: req.email,
-            phone: req.phone,
         };
     };
     dtoToAddUserDto = (req: AddUserServiceRes): UserResDto => {
         return {
             name: req.user.name,
             email: req.user.email,
-            phone: req.user.phone,
             id: req.user.uuid,
             iccid: req.iccid,
         };
