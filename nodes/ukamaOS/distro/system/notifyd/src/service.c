@@ -26,6 +26,13 @@ int service_at_exit() {
 int service_init(int port) {
     int ret = STATUS_OK;
 
+    /* Read Node Info from noded */
+    ret = web_client_init();
+    if (ret) {
+        return ret;
+    }
+
+    /* Initialize web server */
     ret = web_service_init(port);
     if (ret) {
         return ret;

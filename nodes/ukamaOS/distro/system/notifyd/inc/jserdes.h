@@ -25,20 +25,7 @@
 #define JSON_INTEGER 2
 
 /**
- * @fn      int json_serialize_error(JsonObj**, int, const char*)
- * @brief   Serialize error to report to client in JSON body .
- *
- * @param   obj
- * @param   code
- * @param   str
- * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
- *          On Failure, NodeD JSON error code
- */
-int json_serialize_error(JsonObj** obj, int code , const char* str );
-
-
-/**
- * @fn      bool parser_read_boolean_object(const JsonObj*, const char*, bool*)
+ * @fn      bool json_deserialize_boolean_object(const JsonObj*, const char*, bool*)
  * @brief   Parses the object which contain boolean object with key
  *          supplied in argument.
  *
@@ -48,11 +35,11 @@ int json_serialize_error(JsonObj** obj, int code , const char* str );
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_boolean_object(const JsonObj *obj, const char* key,
+bool json_deserialize_boolean_object(const JsonObj *obj, const char* key,
                 bool *bvalue);
 
 /**
- * @fn      bool parser_read_boolean_value(const JsonObj*, bool*)
+ * @fn      bool json_deserialize_boolean_value(const JsonObj*, bool*)
  * @brief   Reads the boolean value from the json object.
  *
  * @param   jBoolObj
@@ -60,11 +47,11 @@ bool parser_read_boolean_object(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_boolean_value(const JsonObj *jBoolObj,
+bool json_deserialize_boolean_value(const JsonObj *jBoolObj,
                 bool *bvalue);
 
 /**
- * @fn      bool parser_read_integer_object(const JsonObj*, const char*, int*)
+ * @fn      bool json_deserialize_integer_object(const JsonObj*, const char*, int*)
  * @brief   Parses the object which contain integer object with key
  *          supplied in argument.
  *
@@ -74,11 +61,11 @@ bool parser_read_boolean_value(const JsonObj *jBoolObj,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_integer_object(const JsonObj *obj, const char* key,
+bool json_deserialize_integer_object(const JsonObj *obj, const char* key,
                 int *ivalue);
 
 /**
- * @fn      bool parser_read_integer_value(const JsonObj*, int*)
+ * @fn      bool json_deserialize_integer_value(const JsonObj*, int*)
  * @brief   Reads the integer value from the json object.
  *
  * @param   obj
@@ -86,10 +73,10 @@ bool parser_read_integer_object(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_integer_value(const JsonObj *obj, int *ivalue);
+bool json_deserialize_integer_value(const JsonObj *obj, int *ivalue);
 
 /**
- * @fn      bool parser_read_real_value(const JsonObj*, double*)
+ * @fn      bool json_deserialize_real_value(const JsonObj*, double*)
  * @brief   Reads the real (double) value from the json object.
  *
  * @param   jObj
@@ -97,10 +84,10 @@ bool parser_read_integer_value(const JsonObj *obj, int *ivalue);
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_real_value(const JsonObj *jObj, double *ivalue);
+bool json_deserialize_real_value(const JsonObj *jObj, double *ivalue);
 
 /**
- * @fn      bool parser_read_string_object(const JsonObj*, const char*, char**)
+ * @fn      bool json_deserialize_string_object(const JsonObj*, const char*, char**)
  * @brief   Parses the object which contain string object with key
  *          supplied in argument and return the memory pointer to string
  *          in svalue. It's user responsibility to free the memory later.
@@ -111,11 +98,11 @@ bool parser_read_real_value(const JsonObj *jObj, double *ivalue);
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_string_object(const JsonObj *obj, const char* key,
+bool json_deserialize_string_object(const JsonObj *obj, const char* key,
                 char **svalue);
 
 /**
- * @fn      bool parser_read_string_object_wrapper(const JsonObj*, const char*, char*)
+ * @fn      bool json_deserialize_string_object_wrapper(const JsonObj*, const char*, char*)
  * @brief   Parses the object which contain string object with key
  *          supplied in argument. After reading the value it copies the string
  *          to the str.
@@ -126,11 +113,11 @@ bool parser_read_string_object(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
+bool json_deserialize_string_object_wrapper(const JsonObj *obj, const char* key,
                 char* str);
 
 /**
- * @fn      bool parser_read_string_value(JsonObj*, char**)
+ * @fn      bool json_deserialize_string_value(JsonObj*, char**)
  * @brief   reads the value from the string object and return the memory
  *          pointer to it. It's caller responsibility to free the memory after
  *          use.
@@ -140,10 +127,10 @@ bool parser_read_string_object_wrapper(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_string_value(JsonObj *obj, char **svalue);
+bool json_deserialize_string_value(JsonObj *obj, char **svalue);
 
 /**
- * @fn      bool parser_read_uint16_object(const JsonObj*, const char*, uint16_t*)
+ * @fn      bool json_deserialize_uint16_object(const JsonObj*, const char*, uint16_t*)
  * @brief   Parses the object which contain integer object with key
  *          supplied in argument abd typecast value to uint16
  *
@@ -153,10 +140,10 @@ bool parser_read_string_value(JsonObj *obj, char **svalue);
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_uint16_object(const JsonObj *obj, const char* key,
+bool json_deserialize_uint16_object(const JsonObj *obj, const char* key,
                 uint16_t *ivalue);
 /**
- * @fn      bool parser_read_uint32_object(const JsonObj*, const char*, uint32_t*)
+ * @fn      bool json_deserialize_uint32_object(const JsonObj*, const char*, uint32_t*)
  * @brief   Parses the object which contain integer object with key
  *          supplied in argument abd typecast value to uint32
  *
@@ -166,11 +153,11 @@ bool parser_read_uint16_object(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_uint32_object(const JsonObj *obj, const char* key,
+bool json_deserialize_uint32_object(const JsonObj *obj, const char* key,
                 uint32_t *ivalue);
 
 /**
- * @fn      bool parser_read_uint8_object(const JsonObj*, const char*, uint8_t*)
+ * @fn      bool json_deserialize_uint8_object(const JsonObj*, const char*, uint8_t*)
  * @brief   Parses the object which contain integer object with key
  *          supplied in argument abd typecast value to uint8
  *
@@ -180,15 +167,26 @@ bool parser_read_uint32_object(const JsonObj *obj, const char* key,
  * @return  On success, true
  *          On failure, false
  */
-bool parser_read_uint8_object(const JsonObj *obj, const char* key,
+bool json_deserialize_uint8_object(const JsonObj *obj, const char* key,
                 uint8_t *ivalue);
 /**
- * @fn      void parser_error(JsonErrObj*, char*)
+ * @fn      void json_deserialize_error(JsonErrObj*, char*)
  * @brief   Logs the parser error occurred while parsing json file.
  *
  * @param   jErr
  * @param   msg
  */
-void parser_error(JsonErrObj *jErr, char* msg);
+void json_deserialize_error(JsonErrObj *jErr, char* msg);
 
+/**
+ * @fn      int json_serialize_error(JsonObj**, int, const char*)
+ * @brief   Serialize error to report to client in JSON body .
+ *
+ * @param   obj
+ * @param   code
+ * @param   str
+ * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
+ *          On Failure, NodeD JSON error code
+ */
+int json_serialize_error(JsonObj** obj, int code , const char* str );
 #endif /* JSERDES_H_ */

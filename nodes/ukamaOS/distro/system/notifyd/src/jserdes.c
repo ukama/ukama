@@ -20,7 +20,7 @@
 #include "usys_types.h"
 
 /* Parser to read real value from JSON object */
-bool parser_read_real_value(const JsonObj *jObj, double *ivalue) {
+bool json_deserialize_real_value(const JsonObj *jObj, double *ivalue) {
     bool ret = USYS_FALSE;
 
     /* Check if object is number */
@@ -36,7 +36,7 @@ bool parser_read_real_value(const JsonObj *jObj, double *ivalue) {
 }
 
 /* Parser to read integer value from JSON object */
-bool parser_read_integer_value(const JsonObj *jObj, int *ivalue) {
+bool json_deserialize_integer_value(const JsonObj *jObj, int *ivalue) {
     bool ret = USYS_FALSE;
 
     /* Check if object is number */
@@ -49,7 +49,7 @@ bool parser_read_integer_value(const JsonObj *jObj, int *ivalue) {
 }
 
 /* Parser to read integer value from JSON object */
-bool parser_read_integer_object(const JsonObj *obj, const char *key,
+bool json_deserialize_integer_object(const JsonObj *obj, const char *key,
                                 int *ivalue) {
     bool ret = USYS_FALSE;
 
@@ -66,7 +66,7 @@ bool parser_read_integer_object(const JsonObj *obj, const char *key,
 }
 
 /* Parser to read integer value from JSON object */
-bool parser_read_uint32_object(const JsonObj *obj, const char *key,
+bool json_deserialize_uint32_object(const JsonObj *obj, const char *key,
                                uint32_t *ivalue) {
     bool ret = USYS_FALSE;
 
@@ -83,12 +83,12 @@ bool parser_read_uint32_object(const JsonObj *obj, const char *key,
 }
 
 /* Parser to read uint16_t value from JSON object */
-bool parser_read_uint16_object(const JsonObj *obj, const char *key,
+bool json_deserialize_uint16_object(const JsonObj *obj, const char *key,
                                uint16_t *ivalue) {
     bool ret = USYS_FALSE;
     int value = 0;
 
-    ret = parser_read_integer_object(obj, key, &value);
+    ret = json_deserialize_integer_object(obj, key, &value);
     if (ret) {
         *ivalue = (uint16_t)value;
     }
@@ -97,12 +97,12 @@ bool parser_read_uint16_object(const JsonObj *obj, const char *key,
 }
 
 /* Parser to read uint8_t value from JSON object */
-bool parser_read_uint8_object(const JsonObj *obj, const char *key,
+bool json_deserialize_uint8_object(const JsonObj *obj, const char *key,
                               uint8_t *ivalue) {
     bool ret = USYS_FALSE;
     int value = 0;
 
-    ret = parser_read_integer_object(obj, key, &value);
+    ret = json_deserialize_integer_object(obj, key, &value);
     if (ret) {
         *ivalue = (uint8_t)value;
     }
@@ -111,7 +111,7 @@ bool parser_read_uint8_object(const JsonObj *obj, const char *key,
 }
 
 /* Parser to read string value from JSON object */
-bool parser_read_string_value(JsonObj *obj, char **svalue) {
+bool json_deserialize_string_value(JsonObj *obj, char **svalue) {
     bool ret = USYS_FALSE;
     int len = 0;
 
@@ -130,7 +130,7 @@ bool parser_read_string_value(JsonObj *obj, char **svalue) {
 }
 
 /* Parser to read string value from JSON object */
-bool parser_read_string_object(const JsonObj *obj, const char *key,
+bool json_deserialize_string_object(const JsonObj *obj, const char *key,
                                char **svalue) {
     bool ret = USYS_FALSE;
 
@@ -152,11 +152,11 @@ bool parser_read_string_object(const JsonObj *obj, const char *key,
 }
 
 /* Wrapper on top of parse_read_string */
-bool parser_read_string_object_wrapper(const JsonObj *obj, const char *key,
+bool json_deserialize_string_object_wrapper(const JsonObj *obj, const char *key,
                                        char *str) {
     bool ret = USYS_FALSE;
     char *tstr;
-    if (parser_read_string_object(obj, key, &tstr)) {
+    if (json_deserialize_string_object(obj, key, &tstr)) {
         usys_strcpy(str, tstr);
         usys_free(tstr);
         tstr = NULL;
@@ -167,7 +167,7 @@ bool parser_read_string_object_wrapper(const JsonObj *obj, const char *key,
 }
 
 /* Parser to read boolean value from JSON object */
-bool parser_read_boolean_value(const JsonObj *jBoolObj, bool *bvalue) {
+bool json_deserialize_boolean_value(const JsonObj *jBoolObj, bool *bvalue) {
     bool ret = USYS_FALSE;
 
     /* Check if object is number */
@@ -180,7 +180,7 @@ bool parser_read_boolean_value(const JsonObj *jBoolObj, bool *bvalue) {
 }
 
 /* Parser to read boolean value from JSON object */
-bool parser_read_boolean_object(const JsonObj *obj, const char *key,
+bool json_deserialize_boolean_object(const JsonObj *obj, const char *key,
                                 bool *bvalue) {
     bool ret = USYS_FALSE;
 
@@ -197,7 +197,7 @@ bool parser_read_boolean_object(const JsonObj *obj, const char *key,
 }
 
 /* Parser Error */
-void parser_error(JsonErrObj *jErr, char *msg) {
+void json_deserialize_error(JsonErrObj *jErr, char *msg) {
     if (jErr) {
         usys_log_error("%s. Error: %s ", msg, jErr->text);
     } else {
@@ -205,6 +205,37 @@ void parser_error(JsonErrObj *jErr, char *msg) {
     }
 }
 
+/* Deserialize node Info */
+bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
+
+    bool ret = USYS_FALSE;
+
+    if (!json){
+        usys_log_error("No data to deserialize in node info");
+        return ret;
+    }
+
+    JsonObj* jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
+    if (jNodeInfo == NULL) {
+        usys_log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
+        return USYS_FALSE;
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID, &nodeId);
+    if (!ret) {
+        usys_log_error("Failed to parse Node ID %s in NodeInfo", JTAG_UUID);
+        return ret;
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_TYPE, &nodeType);
+    if (!ret) {
+        usys_log_error("Failed to parse Node Type %s in NodeInfo", JTAG_TYPE);
+        return ret;
+    }
+
+    return ret;
+
+}
 
 int json_serialize_error(JsonObj **json, int code, const char *str) {
     int ret = JSON_ENCODING_OK;

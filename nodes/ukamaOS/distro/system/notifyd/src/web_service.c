@@ -11,7 +11,6 @@
 
 #include "jserdes.h"
 #include "service.h"
-#include "ulfius.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
