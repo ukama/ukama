@@ -12,6 +12,21 @@
 
 #include "notify_macros.h"
 #include "web.h"
+#include "json_types.h"
+
+/**
+ * @fn      int wc_forward_notification(char*, char*, char*, JsonObj*)
+ * @brief   Forward the node notifications to the remote server
+ *
+ * @param   url
+ * @param   ep
+ * @param   method
+ * @param   body
+ * @return  On success, STATUS_OK
+ *          On Failure, STATUS_NOK
+ */
+int wc_forward_notification(char* url, char* ep, char* method,
+                JsonObj* body );
 
 /**
  * @fn      int wc_read_node_info(char*, char*, char*, int)

@@ -84,7 +84,7 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
     JsonObj *json = NULL;
     JsonErrObj jErr;
 
-    UResponse *httpResp;
+    UResponse *httpResp = NULL;
 
     URequest* httpReq = wc_create_http_request(url, ep, method, NULL);
     if (!httpReq) {
@@ -114,8 +114,51 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
 
     json_decref(json);
     cleanup:
-    ulfius_clean_request(httpReq);
-    ulfius_clean_response(httpResp);
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
+
+    return ret;
+}
+
+int wc_forward_notification(char* url, char* ep, char* method,
+                JsonObj* body ) {
+    int ret = STATUS_NOK;
+    JsonObj *json = NULL;
+    JsonErrObj jErr;
+
+    UResponse *httpResp = NULL;
+
+    URequest* httpReq = wc_create_http_request(url, ep, method, body);
+    if (!httpReq) {
+        return ret;
+    }
+
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK) {
+        usys_log_error("Failed to send http request.");
+        goto cleanup;
+    }
+
+    if (httpResp->status >= 200 && httpResp->status >= 300) {
+        ret = STATUS_OK;
+    }
+
+    json_decref(json);
+    cleanup:
+    if (httpReq) {
+        ulfius_clean_request(httpReq);
+        usys_free(httpReq);
+    }
+    if (httpResp) {
+        ulfius_clean_response(httpResp);
+        usys_free(httpResp);
+    }
 
     return ret;
 }
@@ -151,7 +194,10 @@ int web_client_init() {
 
     }
 
-    usys_log_info("NotifyD: Identified unit ID %s and type %s", gNodeID, gNodeType);
+    usys_log_info("NotifyD: Identified unit ID %s and type %s",
+                    gNodeID, gNodeType);
+
+
     return STATUS_OK;
 
 }

@@ -118,6 +118,30 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_METHOD                     "method"
 #define JTAG_URL_EP                     "endPoint"
 
+#define JTAG_SERVICE_NAME               "serviceName"
+#define JTAG_NOTIFICATION_TYPE          "notificationType"
+#define JTAG_NODE_ID                    "nodeID"
+#define JTAG_NODE_TYPE                  "nodeType"
+#define JTAG_NOTIF_SEVERITY             "severity"
+#define JTAG_NOTIF_DETAILS              "details"
+
+typedef enum {
+    TYPE_NULL = 0,
+    TYPE_CHAR = 1,
+    TYPE_BOOL,
+    TYPE_UINT8,
+    TYPE_UINT16,
+    TYPE_UINT32,
+    TYPE_INT8,
+    TYPE_INT16,
+    TYPE_INT32,
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_DOUBLE,
+    TYPE_ENUM,
+    TYPE_STRING,
+    TYPE_MAX
+} DataType;
 
 #ifdef __cplusplus
 }
