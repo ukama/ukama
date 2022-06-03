@@ -20,14 +20,10 @@ inputs:
 
 runs:
   using: "composite"
-  steps:  
-# init vars required for tag generation
+  steps:
   - name: Init vars
-    shell: bash
     id: vars_step
-    run: |
-      echo "::set-output name=sha-short::$(git rev-parse --short=7 HEAD)"
-      echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+    uses: ./.github/actions/git-vars
 
   - name: Set up Go
     uses: actions/setup-go@v2

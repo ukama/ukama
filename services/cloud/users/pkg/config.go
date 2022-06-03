@@ -12,6 +12,7 @@ type Config struct {
 	HssHost           string
 	SimManager        SimManager
 	SimTokenKey       string
+	Queue             config.Queue
 }
 
 type SimManager struct {

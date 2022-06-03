@@ -59,7 +59,7 @@ type ServiceApiIf struct {
 }
 
 type Queue struct {
-	Uri string // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
+	Uri string `default:"amqp://guest:guest@localhost:5672"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
 
 type Grpc struct {
