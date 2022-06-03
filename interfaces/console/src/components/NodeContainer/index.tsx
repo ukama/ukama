@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { NodeDto } from "../../generated";
 import { EmptyView, NodeSlider } from "..";
 import RouterIcon from "@mui/icons-material/Router";
+import React from "react";
 type NodeContainerProps = {
     items: NodeDto[];
     handleItemAction: Function;
@@ -39,4 +40,4 @@ const NodeContainer = ({
     );
 };
 
-export default NodeContainer;
+export default React.memo(NodeContainer);
