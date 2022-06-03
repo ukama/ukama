@@ -8,7 +8,7 @@ const httpLink = new HttpLink({
 });
 
 const wsLink = new WebSocketLink({
-    uri: process.env.REACT_APP_API_SOCKET ?? "",
+    uri: process.env.REACT_APP_API_SOCKET ?? "ws://localhost:4000/graphql",
     options: {
         reconnect: true,
         connectionParams: {
