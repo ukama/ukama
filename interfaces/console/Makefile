@@ -3,4 +3,4 @@
 build:
 	yarn install  --frozen-lockfile && yarn build 
 test:
-	yarn test
+	yarn test --ci  --coverage --watchAll=false
