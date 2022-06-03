@@ -49,7 +49,7 @@ export class UserService implements IUserService {
             type: API_METHOD_TYPE.PATCH,
             path: `${SERVER.ORG}/${cookie.orgId}/users/${userId}`,
             headers: cookie.header,
-            body: { name: req.name, email: req.email, phone: req.phone },
+            body: { name: req.name, email: req.email },
         });
         if (checkError(res)) throw new Error(res.message);
         return UserMapper.dtoToUserResDto(res);

@@ -17,10 +17,10 @@ import {
     DialogContentText,
     Alert,
 } from "@mui/material";
+import { useState } from "react";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
-import React, { useState } from "react";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
 import ErrorIcon from "@mui/icons-material/Error";
@@ -66,25 +66,17 @@ interface CustomProps {
     name: Node_Type;
 }
 
-const TextMaskCustom = React.forwardRef<HTMLElement, CustomProps>(
-    function TextMaskCustom(props) {
-        const { onChange, ...other } = props;
-        return (
-            <IMaskInput
-                {...other}
-                overwrite
-                unmask={false}
-                mask={MASK_BY_TYPE[props.name]}
-                placeholder={MASK_PLACEHOLDERS[props.name]}
-                definitions={{
-                    "#": /[a-zA-Z0-9]/,
-                }}
-                onAccept={(value: any) =>
-                    onChange({ target: { name: props.name, value } })
-                }
-            />
-        );
-    }
+const TextMaskCustom = ({ onChange, name }: CustomProps) => (
+    <IMaskInput
+        overwrite
+        unmask={false}
+        mask={MASK_BY_TYPE[name]}
+        placeholder={MASK_PLACEHOLDERS[name]}
+        definitions={{
+            "#": /[a-zA-Z0-9]/,
+        }}
+        onAccept={(value: any) => onChange({ target: { name: name, value } })}
+    />
 );
 
 type NodeDialogProps = {
