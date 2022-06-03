@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/ukama/ukama/services/cloud/users/pkg/server"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
+	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"os"
@@ -28,6 +29,7 @@ var serviceConfig *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
+	pkg.InstanceId = os.Getenv("POD_NAME")
 
 	initConfig()
 	usersDb := initDb()
@@ -59,12 +61,18 @@ func runGrpcServer(gormdb sql.Db) {
 	simPool, pcon := NewIccidPool(serviceConfig.SimManager)
 	defer pcon.Close()
 
+	pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
+	if err != nil {
+		log.Fatalf("Failed to create publisher. Error: %v", err)
+	}
+
 	userService := server.NewUserService(db.NewUserRepo(gormdb),
 		pkg.NewImsiClientProvider(serviceConfig.HssHost),
 		db.NewSimcardRepo(gormdb),
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
 		simMgr,
-		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host)
+		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host,
+		pub)
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
 

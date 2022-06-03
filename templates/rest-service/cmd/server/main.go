@@ -21,8 +21,8 @@ func main() {
 
 	initConfig()
 
-	r := server.NewRouter(&serviceConfig.Server)
 	metrics.StartMetricsServer(serviceConfig.Metrics)
+	r := server.NewRouter(&serviceConfig.Server)
 	r.Run()
 }
 

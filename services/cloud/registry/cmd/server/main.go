@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/ukama/ukama/services/common/msgbus"
 	"os"
+
+	"github.com/ukama/ukama/services/common/msgbus"
 
 	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
 
@@ -27,7 +28,7 @@ var svcConf *pkg.Config
 
 func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
-
+	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	registryDb := initDb()
 	runGrpcServer(registryDb)
@@ -55,7 +56,7 @@ func runGrpcServer(gormdb sql.Db) {
 		bootstrapCl = bootstrap.DummyBootstrapClient{}
 	}
 
-	pub, err := msgbus.NewQPub(svcConf.Queue.Uri)
+	pub, err := msgbus.NewQPub(svcConf.Queue.Uri, pkg.ServiceName, pkg.InstanceId)
 	if err != nil {
 		log.Fatalf("Failed to create publisher. Error: %v", err)
 	}

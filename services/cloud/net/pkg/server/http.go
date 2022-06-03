@@ -100,7 +100,7 @@ func (h *HttpServer) prometheusHandler(w http.ResponseWriter, r *http.Request, p
 	// wait for nodeToOrgNetwork mapping to finish
 	<-m
 
-	b, err := marshallTargets(l, nodeToOrg, h.nodeMetricsPort)
+	b, err := h.marshallTargets(l, nodeToOrg, h.nodeMetricsPort)
 	if err != nil {
 		logrus.Error("Error marshalling targets. Error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -123,7 +123,7 @@ type targets struct {
 func (h *HttpServer) marshallTargets(t map[string]string, nodeToOrg map[string]pkg.OrgNet, nodeMetricsPort int) ([]byte, error) {
 	resp := make([]targets, 0, len(t)+1)
 	resp = append(resp, targets{
-		Targets: []string{fmt.Sprintf("%s", h.orgMetricsConf.Host)},
+		Targets: []string{h.orgMetricsConf.Url},
 	})
 
 	for k, v := range t {
