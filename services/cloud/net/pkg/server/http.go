@@ -123,7 +123,7 @@ type targets struct {
 func (h *HttpServer) marshallTargets(t map[string]string, nodeToOrg map[string]pkg.OrgNet, nodeMetricsPort int) ([]byte, error) {
 	resp := make([]targets, 0, len(t)+1)
 	resp = append(resp, targets{
-		Targets: []string{fmt.Sprintf("%s", h.orgMetricsConf.Url)},
+		Targets: []string{h.orgMetricsConf.Url},
 	})
 
 	for k, v := range t {
