@@ -152,7 +152,7 @@ const User = () => {
         refetch: refetchResidents,
     } = useGetUsersByOrgQuery({
         onCompleted: res => {
-            setUsers([...res.getUsersByOrg].reverse());
+            setUsers(res.getUsersByOrg);
             getUsersDataUsage({
                 variables: {
                     data: { ids: res.getUsersByOrg.map(u => u.id) },

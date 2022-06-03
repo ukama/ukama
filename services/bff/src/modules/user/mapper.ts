@@ -43,6 +43,9 @@ class UserMapper implements IUserMapper {
                 users.push(userObj);
             }
         });
+        users.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        );
         return users;
     };
     dtoToUserDto = (req: OrgUserResponse): GetUserDto => {
