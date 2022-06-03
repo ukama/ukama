@@ -62,7 +62,7 @@ const App = () => {
                 !doesHttpOnlyCookieExist("ukama_session")
             )
                 handleGoToLogin();
-        } else handleGoToLogin();
+        } else process.env.NODE_ENV === "test" ? "" : handleGoToLogin;
 
         setSkeltonLoading(false);
     }, []);

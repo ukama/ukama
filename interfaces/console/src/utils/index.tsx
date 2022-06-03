@@ -34,7 +34,8 @@ const getColorByType = (type: Alert_Type) => {
 
 const getStatusByType = (status: string) => {
     if (status === "DOWN") return "Your network is down.";
-    else if (status === "ONLINE") return "Your network is online and well ";
+    else if (status === "ONLINE")
+        return "Your network is online and well; Uptime ";
     else return "Unknown status.";
 };
 

@@ -16,9 +16,6 @@ export class UserInputDto {
     @Field()
     email: string;
 
-    @Field()
-    phone: string;
-
     @Field({ nullable: true })
     status: boolean;
 }
@@ -51,10 +48,6 @@ export class GetUserDto {
     email: string;
 
     @Field()
-    @IsPhoneNumber()
-    phone: string;
-
-    @Field()
     roaming: boolean;
 
     @Field()
@@ -75,10 +68,6 @@ export class GetUsersDto {
     @Field()
     @IsEmail()
     email: string;
-
-    @Field({ nullable: true })
-    @IsPhoneNumber()
-    phone: string;
 
     @Field({ nullable: true })
     dataPlan: string;
@@ -111,9 +100,6 @@ export class DeactivateResponse {
     email: string;
 
     @Field()
-    phone: string;
-
-    @Field()
     isDeactivated: boolean;
 }
 
@@ -127,9 +113,6 @@ export class DeleteNodeRes {
 export class OrgUserDto {
     @Field()
     name: string;
-
-    @Field()
-    phone: string;
 
     @Field()
     email: string;
@@ -148,9 +131,6 @@ export class UserResDto {
 
     @Field()
     email: string;
-
-    @Field()
-    phone: string;
 
     @Field()
     id: string;
