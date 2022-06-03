@@ -23,7 +23,7 @@ jobs:
     - name: Init vars 
       id: vars_step
       run: |
-          echo "::set-output name=sha_short::$(git rev-parse --short=7 HEAD)"
+          echo "::set-output name=sha-short::$(git rev-parse --short=7 HEAD)"
           echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
 
     - name: Set up Go

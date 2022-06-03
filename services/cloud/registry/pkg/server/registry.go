@@ -113,6 +113,45 @@ func (r *RegistryServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) 
 	return &pb.Organization{Name: org.Name, Owner: org.Owner.String()}, nil
 }
 
+func (r *RegistryServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	logrus.Infof("Listing orgs")
+	orgs, err := r.netRepo.List()
+	if err != nil {
+		logrus.Error(err)
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	orgsResp := &pb.ListResponse{
+		Orgs: make([]*pb.ListResponse_Org, len(orgs)),
+	}
+
+	i := 0
+	for o, n := range orgs {
+		orgsResp.Orgs[i] = &pb.ListResponse_Org{
+			Name:     o,
+			Networks: make([]*pb.ListResponse_Network, len(n)),
+		}
+
+		j := 0
+		for nname, nodecnt := range n {
+			// create node type-count map
+			nCnt := make(map[string]uint32)
+			for t, cnt := range nodecnt {
+				nCnt[dbNodeTypeToString(t)] = uint32(cnt)
+			}
+			orgsResp.Orgs[i].Networks[j] = &pb.ListResponse_Network{
+				Name:          nname,
+				NumberOfNodes: nCnt,
+			}
+
+			j++
+		}
+		i++
+	}
+
+	return orgsResp, nil
+}
+
 func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 	if len(req.OrgName) == 0 {
@@ -438,6 +477,21 @@ func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
 		pbNodeType = pb.NodeType_HOME
 	default:
 		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
+	}
+	return pbNodeType
+}
+
+func dbNodeTypeToString(nodeType db2.NodeType) string {
+	var pbNodeType string
+	switch nodeType {
+	case db2.NodeTypeAmplifier:
+		pbNodeType = "amplifier"
+	case db2.NodeTypeTower:
+		pbNodeType = "tower"
+	case db2.NodeTypeHome:
+		pbNodeType = "home"
+	default:
+		pbNodeType = "node_type_undefined"
 	}
 	return pbNodeType
 }

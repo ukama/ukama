@@ -11,6 +11,9 @@ import (
 type NetRepo interface {
 	Get(orgName string, network string) (*Network, error)
 	Add(orgId uint32, network string) (*Network, error)
+	// List gets list of org, networks and node count by type
+	// returns map[org][network][nodeType]=nodeCount
+	List() (map[string]map[string]map[NodeType]int, error)
 }
 
 type netRepo struct {
@@ -72,4 +75,39 @@ func (n netRepo) Add(orgId uint32, network string) (*Network, error) {
 	db = db.Create(netw)
 
 	return netw, db.Error
+}
+
+func (n netRepo) List() (map[string]map[string]map[NodeType]int, error) {
+	db := n.Db.GetGormDb()
+
+	rows, err := db.Raw(`select  o."name" org ,n."name" network ,nd.type , count(n.id) nodes
+from orgs o
+         inner join networks n  on n.org_id  = o.id
+         inner join nodes nd on nd.network_id  = n.id and nd.deleted_at is null
+group by o.id , n.id, nd.type`).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := make(map[string]map[string]map[NodeType]int)
+
+	for rows.Next() {
+		var org, network string
+		var nodes int
+		var nodeType NodeType
+		err = rows.Scan(&org, &network, &nodeType, &nodes)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := result[org]; !ok {
+			result[org] = make(map[string]map[NodeType]int)
+		}
+
+		if _, ok := result[org][network]; !ok {
+			result[org][network] = make(map[NodeType]int)
+		}
+		result[org][network][nodeType] = nodes
+	}
+	return result, nil
 }

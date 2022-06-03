@@ -9,6 +9,9 @@ service RegistryService {
     rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
     rpc GetOrg(GetOrgRequest) returns (Organization);
     rpc AddNetwork(AddNetworkRequest) returns (NetworkResponse);
+    // list all orgs and networks in the registry
+    rpc List(ListRequest) returns (ListResponse);
+
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
@@ -142,3 +145,22 @@ message Node {
     string name = 6;
     repeated Node attached = 7;
 }
+
+message ListRequest {
+}
+
+message ListResponse{
+    message Network {
+        string name = 1;
+        map<string, uint32> numberOfNodes = 2;
+    }
+
+    message Org {
+        string name = 1;
+        repeated Network networks = 2;
+    }
+
+
+    repeated Org orgs = 1;
+}
+

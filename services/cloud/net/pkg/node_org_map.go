@@ -3,16 +3,21 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
-	"strings"
 )
 
 const orgNetMappingKeyPrefix = "map:"
 
+// NodeOrgMap maintains nodeId-> org + network mapping
+// uses orgNetMappingKeyPrefix as a etcd key prefix.
+// The etcd record have `map:[NODE_ID]  = [ORG_NAME].[NETWORK_NAME]` format
 type NodeOrgMap struct {
 	etcd *clientv3.Client
 }
+
 type OrgNet struct {
 	Org     string
 	Network string
@@ -32,6 +37,7 @@ func NewNodeToOrgMap(config *Config) *NodeOrgMap {
 	}
 }
 
+// Add adds a mapping entry
 func (n *NodeOrgMap) Add(ctx context.Context, nodeId string, org string, network string) error {
 	nodeIdKey := formatMappKey(nodeId)
 	_, err := n.etcd.Put(ctx, nodeIdKey, org+"."+network)
@@ -41,6 +47,7 @@ func (n *NodeOrgMap) Add(ctx context.Context, nodeId string, org string, network
 	return nil
 }
 
+// List returns a map with node_id as key and org.network as value
 func (n *NodeOrgMap) List(ctx context.Context) (map[string]OrgNet, error) {
 	vals, err := n.etcd.Get(ctx, orgNetMappingKeyPrefix, clientv3.WithPrefix())
 
