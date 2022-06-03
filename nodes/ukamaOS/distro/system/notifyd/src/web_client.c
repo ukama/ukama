@@ -22,36 +22,84 @@ int noded_port = 8080;
 char* node_info_ep = "/noded/v1/unitinfo";
 
 
+int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
+    int ret = STATUS_NOK;
+
+    *httpResp = (UResponse *)usys_calloc(1, sizeof(UResponse));
+    if (! (*httpResp)) {
+      usys_log_error("Error allocating memory of size: %lu for http response",
+                      sizeof(UResponse));
+      return STATUS_NOK;
+    }
+
+    if (ulfius_init_response(*httpResp)) {
+        usys_log_error("Error initializing new http response.");
+        return STATUS_NOK;
+    }
+
+    ret = ulfius_send_http_request(httpReq,
+                    *httpResp);
+    if (ret != STATUS_OK) {
+        usys_log_error( "Web client failed to send %s web request to %s",
+                        httpReq->http_verb, httpReq->http_url);
+    }
+    return ret;
+}
+
+URequest* wc_create_http_request(char* url,
+                char* ep, char* method, JsonObj* body) {
+
+    /* Preparing Request */
+    URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
+    if (!httpReq) {
+      usys_log_error("Error allocating memory of size: %lu for http Request",
+                      sizeof(URequest));
+      return NULL;
+    }
+
+    if (ulfius_init_request(httpReq)) {
+        usys_log_error("Error initializing new http request.");
+        return NULL;
+    }
+
+    ulfius_set_request_properties(httpReq,
+                       U_OPT_HTTP_VERB, method,
+                       U_OPT_HTTP_URL, url,
+                       U_OPT_HTTP_URL_APPEND, ep,
+                       U_OPT_TIMEOUT, 20,
+                       U_OPT_NONE);
+
+    if(body) {
+        ulfius_set_request_properties(httpReq,
+                        U_OPT_JSON_BODY, body,
+                        U_OPT_NONE);
+    }
+
+    return httpReq;
+}
+
 int wc_send_node_info_request(char* url, char* ep, char* method,
                 char* nodeID, char* nodeType) {
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
     JsonErrObj jErr;
-    URequest httpReq;
-    UResponse httpResp;
-    ulfius_init_request(&httpReq);
-    ulfius_init_response(&httpResp);
-    ulfius_set_request_properties(&httpReq,
-                    U_OPT_HTTP_VERB, method,
-                    U_OPT_HTTP_URL, url,
-                    U_OPT_HTTP_URL_APPEND, ep,
-                    U_OPT_TIMEOUT, 20,
-                    U_OPT_NONE);
 
-    ret = ulfius_send_http_request(&httpReq,
-                    &httpResp);
-    if (ret != STATUS_OK) {
-        usys_log_error( "Web service alert callback function not able "
-                        "to notify notification service.");
+    UResponse *httpResp;
+
+    URequest* httpReq = wc_create_http_request(url, ep, method, NULL);
+    if (!httpReq) {
+        return ret;
     }
 
-    usys_log_debug( "Web service alert callback function"
-                    " notification  response is %d.",
-                    httpResp.status);
+    ret = wc_send_http_request(httpReq, &httpResp);
+    if (ret != STATUS_OK) {
+        usys_log_error("Failed to send http request.");
+       goto cleanup;
+    }
 
-    if (httpResp.status >= 200 && httpResp.status >= 300) {
+    if (httpResp->status >= 200 && httpResp->status >= 300) {
 
-        json = ulfius_get_json_body_response(&httpResp, &jErr);
+        json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
             /* Parse response */
             ret = json_deserialize_node_info(json, nodeID, nodeType);
@@ -65,8 +113,9 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
     }
 
     json_decref(json);
-    ulfius_clean_request(&httpReq);
-    ulfius_clean_response(&httpResp);
+    cleanup:
+    ulfius_clean_request(httpReq);
+    ulfius_clean_response(httpResp);
 
     return ret;
 }

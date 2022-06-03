@@ -9,8 +9,8 @@
 
 #include "service.h"
 
-#include "notify_macros.h"
 #include "web_service.h"
+#include "web_client.h"
 
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -41,5 +41,6 @@ int service_init(int port) {
 }
 
 void service() {
+
     web_service_start();
 }
