@@ -1,6 +1,6 @@
-import { IsEmail, IsPhoneNumber } from "class-validator";
-import { Field, InputType, ObjectType } from "type-graphql";
+import { IsEmail } from "class-validator";
 import { GET_STATUS_TYPE } from "../../constants";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class ConnectedUserDto {
