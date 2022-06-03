@@ -18,7 +18,7 @@
 #include "usys_string.h"
 
 UInst serverInst;
-static char gNotifServer[128] = { 0 };
+
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
@@ -171,7 +171,6 @@ static int web_service_cb_post_event(const URequest *request,
                 UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
 
-    completed:
     return U_CALLBACK_CONTINUE;
 }
 
@@ -187,8 +186,6 @@ static int web_service_cb_post_event(const URequest *request,
 static int web_service_cb_post_alert(const URequest *request,
                 UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
-
-    completed:
     return U_CALLBACK_CONTINUE;
 }
 

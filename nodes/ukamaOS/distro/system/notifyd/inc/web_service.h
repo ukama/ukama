@@ -15,6 +15,7 @@ extern "C" {
 #endif
 
 #include "ulfius.h"
+#include "web.h"
 
 #define WEB_SERVICE_PORT                8095
 
@@ -39,20 +40,6 @@ extern "C" {
 #define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
     REST_API_VERSION EP_BS RES
 
-/* RESPONSE CODE */
-#define RESP_CODE_SUCCESS               200
-#define RESP_CODE_INVALID_REQUEST       400
-#define RESP_CODE_RESOURCE_NOT_FOUND    404
-#define RESP_CODE_SERVER_FAILURE        500
-
-#define METHOD_LENGTH                   7
-#define URL_EXT_LENGTH                  64
-#define MAX_END_POINTS                  64
-
-typedef struct _u_instance  UInst;
-typedef struct _u_instance  UInst;
-typedef struct _u_request   URequest;
-typedef struct _u_response  UResponse;
 
 /* Callback function used by ulfius when APU is request */
 typedef int (*HttpCb)(const URequest *request, // Input parameters (set by the framework)

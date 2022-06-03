@@ -13,7 +13,7 @@
 #include <jansson.h>
 
 #include "json_types.h"
-
+#include "web_service.h"
 #include "usys_types.h"
 
 #define JSON_OK                        STATUS_OK
@@ -179,6 +179,18 @@ bool json_deserialize_uint8_object(const JsonObj *obj, const char* key,
 void json_deserialize_error(JsonErrObj *jErr, char* msg);
 
 /**
+ * @fn      bool json_deserialize_node_info(JsonObj*, char*, char*)
+ * @brief   Deserialize Node Serial Id and Type from the node info.
+ *
+ * @param   json
+ * @param   nodeId
+ * @param   nodeType
+ * @return  On success, true
+ *          On failure, false
+ */
+bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType);
+
+/**
  * @fn      int json_serialize_error(JsonObj**, int, const char*)
  * @brief   Serialize error to report to client in JSON body .
  *
@@ -189,4 +201,16 @@ void json_deserialize_error(JsonErrObj *jErr, char* msg);
  *          On Failure, NodeD JSON error code
  */
 int json_serialize_error(JsonObj** obj, int code , const char* str );
+
+/**
+ * @fn      int json_serialize_api_list(JsonObj**, WebServiceAPI*, uint16_t)
+ * @brief   Serialize the API list exposed by notify.
+ *
+ * @param   json
+ * @param   apiList
+ * @param   count
+ * @return
+ */
+int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
+                            uint16_t count);
 #endif /* JSERDES_H_ */

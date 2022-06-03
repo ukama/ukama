@@ -7,10 +7,9 @@
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-#include "notify_macros.h"
-#include "jserdes.h"
-#include "web_service.h"
+#include "web_client.h"
 
+#include "jserdes.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
@@ -67,7 +66,9 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
 
     json_decref(json);
     ulfius_clean_request(&httpReq);
-    ulfius_clean_response(&httpReq);
+    ulfius_clean_response(&httpResp);
+
+    return ret;
 }
 
 int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
@@ -101,6 +102,7 @@ int web_client_init() {
 
     }
 
+    usys_log_info("NotifyD: Identified unit ID %s and type %s", gNodeID, gNodeType);
     return STATUS_OK;
 
 }
