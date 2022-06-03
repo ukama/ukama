@@ -1,6 +1,7 @@
 package config
 
 import (
+	"time"
 	cors "github.com/gin-contrib/cors"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
@@ -65,9 +66,14 @@ type Grpc struct {
 	Port int
 }
 
+type GrpcService struct {
+	Host string `default:"localhost:9090"`
+	Timeout time.Duration `default:"3s"`
+}
+
 type Metrics struct {
-	Port    int
-	Enabled bool
+	Port    int `default:"10250"`
+	Enabled bool `default:"true"`
 }
 
 // LoadConfig loads configuration into `config` object

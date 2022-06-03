@@ -16,7 +16,7 @@ import (
 
 const nodeIdKeyPrefix = "nodeId:"
 
-// NNS service maintainse NodeID -> IP pamming and provides methods to work with it
+// NNS service maintainse NodeID -> IP mapping in ETCD and provides methods to work with it
 type Nns struct {
 	etcd  *clientv3.Client
 	cache map[string]string

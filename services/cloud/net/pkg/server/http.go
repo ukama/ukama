@@ -24,14 +24,17 @@ type HttpServer struct {
 	grpcConf        config.Grpc
 	nodeMetricsPort int
 	nodeOrgNetMap   *pkg.NodeOrgMap
+	orgMetricsConf  *pkg.OrgMetricsConf
 }
 
-func NewHttpServer(httpConf rest.HttpConfig, grpcConf config.Grpc, nodeMetricsPort int, nnsClient pkg.NnsReader, nodeOrgNetMap *pkg.NodeOrgMap) *HttpServer {
+func NewHttpServer(httpConf rest.HttpConfig, grpcConf config.Grpc, nodeMetricsPort int, nnsClient pkg.NnsReader, nodeOrgNetMap *pkg.NodeOrgMap,
+	orgMetrics *pkg.OrgMetricsConf) *HttpServer {
 	return &HttpServer{nnsClient: nnsClient,
 		httpConf:        httpConf,
 		grpcConf:        grpcConf,
 		nodeMetricsPort: nodeMetricsPort,
 		nodeOrgNetMap:   nodeOrgNetMap,
+		orgMetricsConf:  orgMetrics,
 	}
 }
 
@@ -117,8 +120,11 @@ type targets struct {
 	Labels  map[string]string `json:"labels"`
 }
 
-func marshallTargets(t map[string]string, nodeToOrg map[string]pkg.OrgNet, nodeMetricsPort int) ([]byte, error) {
-	resp := make([]targets, 0, len(t))
+func (h *HttpServer) marshallTargets(t map[string]string, nodeToOrg map[string]pkg.OrgNet, nodeMetricsPort int) ([]byte, error) {
+	resp := make([]targets, 0, len(t)+1)
+	resp = append(resp, targets{
+		Targets: []string{fmt.Sprintf("%s", h.orgMetricsConf.Host)},
+	})
 
 	for k, v := range t {
 		labels := map[string]string{

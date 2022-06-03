@@ -60,6 +60,29 @@ func (_m *NetRepo) Get(orgName string, network string) (*db.Network, error) {
 	return r0, r1
 }
 
+// List provides a mock function with given fields:
+func (_m *NetRepo) List() (map[string]map[string]map[db.NodeType]int, error) {
+	ret := _m.Called()
+
+	var r0 map[string]map[string]map[db.NodeType]int
+	if rf, ok := ret.Get(0).(func() map[string]map[string]map[db.NodeType]int); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]map[string]map[db.NodeType]int)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewNetRepo creates a new instance of NetRepo. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewNetRepo(t testing.TB) *NetRepo {
 	mock := &NetRepo{}
