@@ -67,8 +67,7 @@ interface CustomProps {
 }
 
 const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
-    // eslint-disable-next-line no-unused-vars
-    function TextMaskCustom(props, ref) {
+    function TextMaskCustom(props, _ref) {
         const { onChange, ...other } = props;
         return (
             <IMaskInput

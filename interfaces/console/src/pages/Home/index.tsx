@@ -787,11 +787,6 @@ const Home = () => {
         }
     }, []);
 
-    // const handleNodeUpdateActin = () => {
-    //     setIsSoftwaUpdate(true);
-    //     /* Handle node update  action */
-    // };
-
     const handleCloseWelcome = () => {
         if (_isFirstVisit) {
             _setIsFirstVisit(false);
