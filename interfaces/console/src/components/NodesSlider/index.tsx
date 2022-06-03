@@ -11,7 +11,7 @@ interface INodeSlider {
 }
 
 const NodeSlider = ({
-    items,
+    items = [],
     handleItemAction,
     handleNodeUpdate,
 }: INodeSlider) => {
@@ -30,7 +30,7 @@ const NodeSlider = ({
             });
         }
         setList(slides);
-    }, [small, medium]);
+    }, [items, small, medium]);
 
     return (
         <Carousel

@@ -64,7 +64,7 @@ import {
 } from "../../recoil";
 import { Box, Grid } from "@mui/material";
 import { RoundedCard } from "../../styles";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
@@ -206,6 +206,7 @@ const Home = () => {
     useEffect(() => {
         setqrCodeId(getEsimQrCodeRes?.getEsimQR?.qrCode);
     }, [getEsimQrCodeRes]);
+
     const [registerNode, { loading: registerNodeLoading }] = useAddNodeMutation(
         {
             onCompleted: res => {
@@ -419,179 +420,6 @@ const Home = () => {
         },
     });
 
-    useEffect(() => {
-        if (_isFirstVisit && orgId) {
-            setIsWelcomeDialog(true);
-        }
-    }, [_isFirstVisit, orgId]);
-    const handleSimInstallationClose = () => {
-        setSimFlow(1);
-        setIsEsimAdded(false);
-        setShowInstallSim(false);
-    };
-
-    const getFirstMetricCallPayload = () =>
-        getMetricPayload({
-            tab: 4,
-            regPolling: false,
-            nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
-            to: Math.floor(Date.now() / 1000) - 10,
-            from: Math.floor(Date.now() / 1000) - 180,
-        });
-
-    const getMetricPollingCallPayload = (from: number) =>
-        getMetricPayload({
-            tab: 4,
-            from: from,
-            regPolling: true,
-            nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
-        });
-
-    useEffect(() => {
-        if (nodeRes && nodeRes.getNodesByOrg.nodes.length > 0) {
-            getMetrics({
-                variables: {
-                    ...getFirstMetricCallPayload(),
-                },
-            });
-        }
-    }, [nodeRes]);
-
-    useEffect(() => {
-        if (
-            getMetricsRes &&
-            getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
-        ) {
-            getMetricsRefetch({
-                ...getMetricPollingCallPayload(
-                    getMetricsRes?.getMetricsByTab.to
-                ),
-            });
-        }
-    }, [getMetricsRes]);
-
-    const handleAddNodeClose = () => {
-        setShowNodeDialog(prev => ({
-            ...prev,
-            isShow: false,
-        }));
-    };
-
-    const subToConnectedUser = () =>
-        subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
-            document: GetLatestConnectedUsersDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                let data = { ...prev };
-                const latestConnectedUser =
-                    subscriptionData.data.getConnectedUsers;
-                if (latestConnectedUser.__typename === "ConnectedUserDto")
-                    data.getConnectedUsers = latestConnectedUser;
-                return data;
-            },
-        });
-
-    const subToDataUsage = () =>
-        subscribeToLatestDataUsage<GetLatestDataUsageSubscription>({
-            document: GetLatestDataUsageDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                let data = { ...prev };
-                const latestDataUsage = subscriptionData.data.getDataUsage;
-                if (latestDataUsage.__typename === "DataUsageDto")
-                    data.getDataUsage = latestDataUsage;
-                return data;
-            },
-        });
-
-    const subToDataBill = () =>
-        subscribeToLatestDataBill<GetLatestDataBillSubscription>({
-            document: GetLatestDataBillDocument,
-            updateQuery: (prev, { subscriptionData }) => {
-                let data = { ...prev };
-                const latestDataBill = subscriptionData.data.getDataBill;
-                if (latestDataBill.__typename === "DataBillDto")
-                    data.getDataBill = latestDataBill;
-                return data;
-            },
-        });
-
-    useEffect(() => {
-        let unsub = subToConnectedUser();
-        return () => {
-            unsub && unsub();
-        };
-    }, [connectedUserRes]);
-
-    useEffect(() => {
-        let unsub = subToDataUsage();
-        return () => {
-            unsub && unsub();
-        };
-    }, [dataUsageRes]);
-
-    useEffect(() => {
-        let unsub = subToDataBill();
-        return () => {
-            unsub && unsub();
-        };
-    }, [dataBillingRes]);
-
-    useEffect(() => {
-        if (networkStatusRes) {
-            subscribeToLatestNetworkStatus<GetNetworkStatusSSubscription>({
-                document: GetNetworkStatusSDocument,
-                updateQuery: (prev, { subscriptionData }) => {
-                    let data = { ...prev };
-                    const latestNewtworkStatus =
-                        subscriptionData.data.getNetworkStatus;
-                    if (latestNewtworkStatus.__typename === "NetworkDto")
-                        data.getNetworkStatus = latestNewtworkStatus;
-                    return data;
-                },
-            });
-        }
-    }, [networkStatusRes]);
-
-    const handleSatusChange = (key: string, value: string) => {
-        switch (key) {
-            case "statusUser":
-                return setUserStatusFilter(value as Time_Filter);
-            case "statusUsage":
-                return setDataStatusFilter(value as Time_Filter);
-            case "statusBill":
-                return setBillingStatusFilter(value as Data_Bill_Filter);
-        }
-    };
-    const handleCloseSoftwareUpdate = () => {
-        setIsSoftwaUpdate(false);
-    };
-
-    const getStatus = (key: string) => {
-        switch (key) {
-            case "statusUser":
-                return userStatusFilter;
-            case "statusUsage":
-                return dataStatusFilter;
-            case "statusBill":
-                return billingStatusFilter;
-            default:
-                return "";
-        }
-    };
-
-    const handleCloseDeactivateUser = () =>
-        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
-
-    const handleDeactivateUser = () => {
-        handleCloseDeactivateUser();
-        deactivateUser({
-            variables: {
-                id: deactivateUserDialog.userId,
-            },
-        });
-    };
     const [getUser, { loading: getUserLoading }] = useGetUserLazyQuery({
         onCompleted: res => {
             if (res.getUser) {
@@ -600,79 +428,6 @@ const Home = () => {
         },
     });
 
-    const handleDeleteNode = () => {
-        deleteNode({
-            variables: {
-                id: deleteNodeDialog.nodeId,
-            },
-        });
-        handleCloseDeleteNode();
-    };
-
-    const onResidentsTableMenuItem = (id: string, type: string) => {
-        if (type === "deactivate") {
-            setDeactivateUserDialog({
-                isShow: true,
-                userId: id,
-                userName: users?.find(item => item.id === id)?.name || "",
-            });
-        } else if (type === "edit") {
-            getUser({
-                variables: {
-                    userId: id,
-                },
-            });
-            setSimDialog({ isShow: true, type: "edit" });
-        }
-    };
-    const handleUserSubmitAction = () => {
-        handleSimDialogClose();
-        if (simDialog.type === "edit" && selectedUser.id) {
-            updateUser({
-                variables: {
-                    userId: selectedUser.id,
-                    data: {
-                        email: selectedUser.email,
-                        name: selectedUser.name,
-                        status: selectedUser.status,
-                    },
-                },
-            });
-        }
-    };
-    const handleNodeActions = (id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg.nodes.filter(
-            item => item.id === id
-        );
-        if (type == "edit" && node && node.length > 0) {
-            setShowNodeDialog({
-                ...showNodeDialog,
-                type: "editNode",
-                isShow: true,
-                title: "Edit Node",
-                nodeData: {
-                    type: node[0].type,
-                    name: node[0].name,
-                    nodeId: node[0].id,
-                    orgId: orgId,
-                },
-            });
-        } else {
-            setDeleteNodeDialog({
-                isShow: true,
-                nodeId: id || "",
-            });
-        }
-    };
-
-    const handleAddNode = () => {
-        setShowNodeDialog(prev => ({
-            ...prev,
-            type: "add",
-            isShow: true,
-            title: "Register Node",
-        }));
-    };
     const [updateUser, { loading: updateUserLoading }] = useUpdateUserMutation({
         onCompleted: res => {
             if (res?.updateUser) {
@@ -720,6 +475,235 @@ const Home = () => {
                 });
             },
         });
+
+    useEffect(() => {
+        if (_isFirstVisit && orgId) {
+            setIsWelcomeDialog(true);
+        }
+    }, [_isFirstVisit, orgId]);
+
+    useEffect(() => {
+        if (
+            nodeRes &&
+            nodeRes.getNodesByOrg.nodes.length > 0 &&
+            !getMetricsRes
+        ) {
+            getMetrics({
+                variables: {
+                    ...getFirstMetricCallPayload(),
+                },
+            });
+        }
+    }, [nodeRes]);
+
+    useEffect(() => {
+        if (
+            getMetricsRes &&
+            getMetricsRes.getMetricsByTab.next &&
+            getMetricsRes?.getMetricsByTab.metrics.length > 0
+        ) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
+
+    useEffect(() => {
+        let unsub = subToConnectedUser();
+        return () => {
+            unsub && unsub();
+        };
+    }, [connectedUserRes]);
+
+    useEffect(() => {
+        let unsub = subToDataUsage();
+        return () => {
+            unsub && unsub();
+        };
+    }, [dataUsageRes]);
+
+    useEffect(() => {
+        let unsub = subToDataBill();
+        return () => {
+            unsub && unsub();
+        };
+    }, [dataBillingRes]);
+
+    useEffect(() => {
+        if (networkStatusRes) {
+            subscribeToLatestNetworkStatus<GetNetworkStatusSSubscription>({
+                document: GetNetworkStatusSDocument,
+                updateQuery: (prev, { subscriptionData }) => {
+                    let data = { ...prev };
+                    const latestNewtworkStatus =
+                        subscriptionData.data.getNetworkStatus;
+                    if (latestNewtworkStatus.__typename === "NetworkDto")
+                        data.getNetworkStatus = latestNewtworkStatus;
+                    return data;
+                },
+            });
+        }
+    }, [networkStatusRes]);
+
+    const handleSimInstallationClose = () => {
+        setSimFlow(1);
+        setIsEsimAdded(false);
+        setShowInstallSim(false);
+    };
+
+    const getFirstMetricCallPayload = () =>
+        getMetricPayload({
+            tab: 4,
+            regPolling: false,
+            nodeType: Node_Type.Home,
+            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            to: Math.floor(Date.now() / 1000) - 10,
+            from: Math.floor(Date.now() / 1000) - 180,
+        });
+
+    const getMetricPollingCallPayload = (from: number) =>
+        getMetricPayload({
+            tab: 4,
+            from: from,
+            regPolling: true,
+            nodeType: Node_Type.Home,
+            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+        });
+
+    const handleAddNodeClose = () => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            isShow: false,
+        }));
+    };
+
+    const subToConnectedUser = () =>
+        subscribeToLatestConnectedUsers<GetLatestConnectedUsersSubscription>({
+            document: GetLatestConnectedUsersDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestConnectedUser =
+                    subscriptionData.data.getConnectedUsers;
+                if (latestConnectedUser.__typename === "ConnectedUserDto")
+                    data.getConnectedUsers = latestConnectedUser;
+                return data;
+            },
+        });
+
+    const subToDataUsage = () =>
+        subscribeToLatestDataUsage<GetLatestDataUsageSubscription>({
+            document: GetLatestDataUsageDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestDataUsage = subscriptionData.data.getDataUsage;
+                if (latestDataUsage.__typename === "DataUsageDto")
+                    data.getDataUsage = latestDataUsage;
+                return data;
+            },
+        });
+
+    const subToDataBill = () =>
+        subscribeToLatestDataBill<GetLatestDataBillSubscription>({
+            document: GetLatestDataBillDocument,
+            updateQuery: (prev, { subscriptionData }) => {
+                let data = { ...prev };
+                const latestDataBill = subscriptionData.data.getDataBill;
+                if (latestDataBill.__typename === "DataBillDto")
+                    data.getDataBill = latestDataBill;
+                return data;
+            },
+        });
+
+    const handleSatusChange = (key: string, value: string) => {
+        switch (key) {
+            case "statusUser":
+                return setUserStatusFilter(value as Time_Filter);
+            case "statusUsage":
+                return setDataStatusFilter(value as Time_Filter);
+            case "statusBill":
+                return setBillingStatusFilter(value as Data_Bill_Filter);
+        }
+    };
+    const handleCloseSoftwareUpdate = () => {
+        setIsSoftwaUpdate(false);
+    };
+
+    const getStatus = (key: string) => {
+        switch (key) {
+            case "statusUser":
+                return userStatusFilter;
+            case "statusUsage":
+                return dataStatusFilter;
+            case "statusBill":
+                return billingStatusFilter;
+            default:
+                return "";
+        }
+    };
+
+    const handleCloseDeactivateUser = () =>
+        setDeactivateUserDialog({ ...deactivateUserDialog, isShow: false });
+
+    const handleDeactivateUser = () => {
+        handleCloseDeactivateUser();
+        deactivateUser({
+            variables: {
+                id: deactivateUserDialog.userId,
+            },
+        });
+    };
+
+    const handleDeleteNode = () => {
+        deleteNode({
+            variables: {
+                id: deleteNodeDialog.nodeId,
+            },
+        });
+        handleCloseDeleteNode();
+    };
+
+    const onResidentsTableMenuItem = (id: string, type: string) => {
+        if (type === "deactivate") {
+            setDeactivateUserDialog({
+                isShow: true,
+                userId: id,
+                userName: users?.find(item => item.id === id)?.name || "",
+            });
+        } else if (type === "edit") {
+            getUser({
+                variables: {
+                    userId: id,
+                },
+            });
+            setSimDialog({ isShow: true, type: "edit" });
+        }
+    };
+    const handleUserSubmitAction = () => {
+        handleSimDialogClose();
+        if (simDialog.type === "edit" && selectedUser.id) {
+            updateUser({
+                variables: {
+                    userId: selectedUser.id,
+                    data: {
+                        email: selectedUser.email,
+                        name: selectedUser.name,
+                        status: selectedUser.status,
+                    },
+                },
+            });
+        }
+    };
+
+    const handleAddNode = () => {
+        setShowNodeDialog(prev => ({
+            ...prev,
+            type: "add",
+            isShow: true,
+            title: "Register Node",
+        }));
+    };
 
     const handleUpdateUserStatus = (
         id: string,
@@ -774,10 +758,34 @@ const Home = () => {
 
     const onActivateUser = () => setShowInstallSim(() => true);
 
-    const handleNodeUpdateActin = () => {
+    const handleNodeUpdateAction = useCallback(() => {
         setIsSoftwaUpdate(true);
-        /* Handle node update  action */
-    };
+    }, []);
+
+    const handleNodeActions = useCallback((id: string, type: string) => {
+        const node = nodeRes?.getNodesByOrg.nodes.filter(
+            item => item.id === id
+        );
+        if (type == "edit" && node && node.length > 0) {
+            setShowNodeDialog({
+                ...showNodeDialog,
+                type: "editNode",
+                isShow: true,
+                title: "Edit Node",
+                nodeData: {
+                    type: node[0].type,
+                    name: node[0].name,
+                    nodeId: node[0].id,
+                    orgId: orgId,
+                },
+            });
+        } else {
+            setDeleteNodeDialog({
+                isShow: true,
+                nodeId: id || "",
+            });
+        }
+    }, []);
 
     const handleCloseWelcome = () => {
         if (_isFirstVisit) {
@@ -907,9 +915,7 @@ const Home = () => {
                 <Grid xs={12} item>
                     <StatsCard
                         metricData={uptimeMetric}
-                        loading={
-                            nodeLoading || isSkeltonLoad || getMetricLoading
-                        }
+                        loading={isSkeltonLoad || getMetricLoading}
                     />
                 </Grid>
                 <Grid xs={12} lg={8} item>
@@ -930,7 +936,7 @@ const Home = () => {
                                 buttonTitle={"Update All"}
                             />
                             <NodeContainer
-                                handleNodeUpdate={handleNodeUpdateActin}
+                                handleNodeUpdate={handleNodeUpdateAction}
                                 items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
