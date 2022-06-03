@@ -17,7 +17,7 @@ import {
     DialogContentText,
     Alert,
 } from "@mui/material";
-import { useState } from "react";
+import React, { useState } from "react";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
@@ -66,17 +66,26 @@ interface CustomProps {
     name: Node_Type;
 }
 
-const TextMaskCustom = ({ onChange, name }: CustomProps) => (
-    <IMaskInput
-        overwrite
-        unmask={false}
-        mask={MASK_BY_TYPE[name]}
-        placeholder={MASK_PLACEHOLDERS[name]}
-        definitions={{
-            "#": /[a-zA-Z0-9]/,
-        }}
-        onAccept={(value: any) => onChange({ target: { name: name, value } })}
-    />
+const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
+    // eslint-disable-next-line no-unused-vars
+    function TextMaskCustom(props, ref) {
+        const { onChange, ...other } = props;
+        return (
+            <IMaskInput
+                {...other}
+                overwrite
+                unmask={false}
+                mask={MASK_BY_TYPE[props.name]}
+                placeholder={MASK_PLACEHOLDERS[props.name]}
+                definitions={{
+                    "#": /[a-zA-Z0-9]/,
+                }}
+                onAccept={(value: any) =>
+                    onChange({ target: { name: props.name, value } })
+                }
+            />
+        );
+    }
 );
 
 type NodeDialogProps = {
@@ -141,7 +150,7 @@ const NodeDialog = ({
                     sx={{
                         mx: 3,
                         mb: 1,
-                        color: colors.black,
+                        color: theme => theme.palette.text.primary,
                     }}
                     severity={"error"}
                     icon={<ErrorIcon sx={{ color: colors.red }} />}
@@ -159,7 +168,7 @@ const NodeDialog = ({
                         {subTitle}
                     </Typography>
                 </DialogContentText>
-                <Grid container spacing={2.75} mt={2}>
+                <Grid container rowSpacing={2.75} columnSpacing={2.75} mt={2}>
                     <Grid item xs={12} md={6}>
                         <FormControl
                             variant="outlined"
