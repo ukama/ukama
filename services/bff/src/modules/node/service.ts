@@ -87,18 +87,15 @@ export class NodeService implements INodeService {
     getNodesByOrg = async (
         cookie: ParsedCookie
     ): Promise<OrgNodeResponseDto> => {
-        console.info("Request triggers", `${SERVER.ORG}/${cookie.orgId}/nodes`);
         const res = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
             path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
             headers: cookie.header,
-        }).catch(err => console.error("From catch:", err));
+        });
         if (checkError(res)) {
             logger.error(res);
-            console.error("Response: ", res);
             throw new Error(res.message);
         }
-        console.log("Request successful");
         return NodeMapper.dtoToNodesDto(cookie.orgId, res);
     };
     getNode = async (
