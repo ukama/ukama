@@ -69,7 +69,7 @@ const App = () => {
 
     const handleGoToLogin = () => {
         setPage("Home");
-        window.location.replace(process.env.REACT_APP_AUTH_URL || "");
+        window.location.replace(process.env.REACT_APP_AUTH_URL ?? "");
     };
 
     const handleSnackbarClose = () =>

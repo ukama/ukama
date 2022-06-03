@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
-
+dotenv.config({ path: ".env" });
 import cors from "cors";
 import "reflect-metadata";
 import { PORT } from "./constants";
@@ -25,8 +24,8 @@ const initializeApp = async () => {
 
     const corsOptions = {
         origin: [
-            process.env.DASHBOARD_APP_URL || "",
-            process.env.AUTH_APP_URL || "",
+            process.env.CONSOLE_APP_URL ?? "",
+            process.env.AUTH_APP_URL ?? "",
         ],
         credentials: true,
     };
@@ -74,10 +73,7 @@ const initializeApp = async () => {
                     expires: date,
                     httpOnly: true,
                     sameSite: "lax",
-                    domain:
-                        process.env.NODE_ENV === "development"
-                            ? "localhost"
-                            : ".dev.ukama.com",
+                    domain: process.env.DOMAIN,
                 });
                 res.send({ success: true });
             }
