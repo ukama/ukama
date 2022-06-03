@@ -62,14 +62,17 @@ const App = () => {
                 !doesHttpOnlyCookieExist("ukama_session")
             )
                 handleGoToLogin();
-        } else if (process.env.NODE_ENV !== "test") handleGoToLogin();
+        } else {
+            if (process.env.NODE_ENV === "test") return;
+            handleGoToLogin();
+        }
 
         setSkeltonLoading(false);
     }, []);
 
     const handleGoToLogin = () => {
         setPage("Home");
-        window.location.replace(process.env.REACT_APP_AUTH_URL ?? "");
+        window.location.replace(process.env.REACT_APP_AUTH_URL || "");
     };
 
     const handleSnackbarClose = () =>
