@@ -312,23 +312,35 @@ func Test_List(t *testing.T) {
 
 	// assert
 	if assert.NoError(t, err) && assert.NotNil(t, res.Orgs) {
+		var a, b *pb.ListResponse_Org
+		for _, org := range res.Orgs {
+			switch org.Name {
+			case "a":
+				a = org
+			case "b":
+				b = org
+			}
+		}
 
 		assert.Len(t, res.Orgs, 2)
-		assert.Len(t, res.Orgs[0].GetNetworks(), 2)
+		assert.Len(t, a.GetNetworks(), 2)
 
-		assert.Equal(t, "a", res.Orgs[0].GetName())
-		assert.Equal(t, "b", res.Orgs[1].GetName())
+		var n1, n2 *pb.ListResponse_Network
+		if a.GetNetworks()[0].GetName() == "n1" {
+			n1 = a.GetNetworks()[0]
+			n2 = a.GetNetworks()[1]
+		} else {
+			n2 = a.GetNetworks()[0]
+			n1 = a.GetNetworks()[1]
+		}
 
-		assert.Equal(t, "n1", res.Orgs[0].GetNetworks()[0].GetName())
-		assert.Equal(t, uint32(1), res.Orgs[0].GetNetworks()[0].GetNumberOfNodes()["amplifier"])
+		assert.Equal(t, uint32(1), n1.GetNumberOfNodes()["amplifier"])
 
-		n2 := res.Orgs[0].GetNetworks()[1]
-		assert.Equal(t, "n2", n2.GetName())
 		assert.Equal(t, uint32(2), n2.GetNumberOfNodes()["amplifier"])
 		assert.Equal(t, uint32(6), n2.GetNumberOfNodes()["tower"])
 		assert.Equal(t, uint32(7), n2.GetNumberOfNodes()["home"])
 
-		assert.Equal(t, "n1", res.Orgs[1].GetNetworks()[0].GetName())
-		assert.Equal(t, uint32(1), res.Orgs[1].GetNetworks()[0].GetNumberOfNodes()["amplifier"])
+		assert.Equal(t, "n1", b.GetNetworks()[0].GetName())
+		assert.Equal(t, uint32(1), b.GetNetworks()[0].GetNumberOfNodes()["amplifier"])
 	}
 }
