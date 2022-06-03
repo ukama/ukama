@@ -16,6 +16,7 @@ typedef struct {
     char* nodeId;
     char* nodeType;
     char* severity;
+    char* description;
     char* details;
 } Notification;
 
@@ -30,5 +31,9 @@ typedef struct {
    double* deviceAttrValue;
    char* units;
 } NodedNotifDetails;
+
+
+
+
 
 #endif /* INC_NOTIFY_H_ */

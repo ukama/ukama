@@ -186,7 +186,23 @@ static int web_service_cb_post_event(const URequest *request,
 static int web_service_cb_post_alert(const URequest *request,
                 UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
+    unsigned int respCode = RESP_CODE_SERVER_FAILURE;
+    char *service = u_map_get(request->map_url, "service");
+    usys_log_trace("NotifyD:: Received a post request to alert from %s.",
+                    service);
+
+    JsonObj *json = ulfius_get_json_body_request(request, NULL);
+
+
+
+
+    respCode = RESP_CODE_SUCCESS;
+
+    /* Send response */
+    ulfius_set_empty_body_response(response, respCode);
+
     return U_CALLBACK_CONTINUE;
+
 }
 
 
@@ -228,7 +244,7 @@ static void web_service_add_discover_endpoints() {
  *
  */
 void web_service_add_notify_event_endpoints() {
-    web_service_add_end_point("POST", API_RES_EP("event"), NULL,
+    web_service_add_end_point("POST", API_RES_EP("event/:service"), NULL,
                     web_service_cb_post_event);
 }
 
@@ -238,7 +254,7 @@ void web_service_add_notify_event_endpoints() {
  *
  */
 void web_service_add_notify_alert_endpoints() {
-    web_service_add_end_point("POST", API_RES_EP("alert"), NULL,
+    web_service_add_end_point("POST", API_RES_EP("alert/:service"), NULL,
                     web_service_cb_post_alert);
 }
 

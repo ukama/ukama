@@ -13,4 +13,8 @@
 #define STATUS_OK                           (0)
 #define STATUS_NOK                          (-1)
 
+#define MAX_SERVICE_COUNT                   (32)
+
+#define NOTIFICATION_ALERT                   "alert"
+#define NOTIFICATION_EVENT                   "event"
 #endif /* INC_NOTIFY_MACROS_H_ */

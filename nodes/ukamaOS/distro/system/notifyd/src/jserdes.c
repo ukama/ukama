@@ -530,6 +530,7 @@ bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
 
 }
 
+/* Deserialize alert received from noded */
 bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
 
     bool ret = USYS_FALSE;
@@ -545,44 +546,53 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
         return USYS_FALSE;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME, &details->servcieName);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME,
+                    &details->servcieName);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_SERVICE_NAME);
+        usys_log_error("Failed to parse mandatory tag %s from Node "
+                        "notification", JTAG_SERVICE_NAME);
         return ret;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID, &details->moduleID);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID,
+                    &details->moduleID);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_UUID);
-        return ret;
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_UUID);
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_NAME, &details->deviceName);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_NAME,
+                    &details->deviceName);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_NAME);
-        return ret;
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_NAME);
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_DESCRIPTION, &details->deviceDesc);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_DESCRIPTION,
+                    &details->deviceDesc);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_DESCRIPTION);
-        return ret;
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_DESCRIPTION);
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_PROPERTY_NAME, &details->deviceAttr);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_PROPERTY_NAME,
+                    &details->deviceAttr);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_PROPERTY_NAME);
-        return ret;
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_PROPERTY_NAME);
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_DATA_TYPE, &details->dataType);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_DATA_TYPE,
+                    &details->dataType);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_DATA_TYPE);
-        return ret;
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_DATA_TYPE);
     }
 
     const JsonObj *jValue = json_object_get(jNodeInfo, JTAG_VALUE);
     if (!jValue){
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_VALUE);
         return ret;
     }
 
@@ -590,15 +600,16 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
     if (details->deviceAttrValue) {
         ret = json_deserialize_real_value(jValue, details->deviceAttrValue);
         if (!ret) {
-            usys_log_error("Failed to parse %s from Node notification", JTAG_VALUE);
-            return ret;
+            usys_log_error("Failed to parse %s from Node notification",
+                            JTAG_VALUE);
         }
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_UNITS, &details->units);
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_UNITS,
+                    &details->units);
     if (!ret) {
-        usys_log_error("Failed to parse %s from Node notification", JTAG_UNITS);
-        return ret;
+        usys_log_error("Failed to parse %s from Node notification",
+                        JTAG_UNITS);
     }
 
     return ret;
@@ -667,40 +678,10 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
     return ret;
 }
 
-
-int json_serialize_noded_alert_details(JsonObj **json, const char* modUuid,
-                const char *devName, const char *devDesc, const char *propName,
-                int type, void *data, char* units) {
-    int ret = JSON_ENCODING_OK;
-
-    *json = json_object();
-    if (!json) {
-        return ERR_JSON_CRETATION_ERR;
-    }
-
-    if (!data) {
-        return ERR_JSON_NO_VAL_TO_ENCODE;
-    }
-
-    json_object_set_new(*json, JTAG_UUID, json_string(modUuid));
-
-    json_object_set_new(*json, JTAG_NAME, json_string(devName));
-
-    json_object_set_new(*json, JTAG_DESCRIPTION, json_string(devDesc));
-
-    json_object_set_new(*json, JTAG_PROPERTY_NAME, json_string(propName));
-
-    json_object_set_new(*json, JTAG_DATA_TYPE, json_integer(type));
-
-    json_object_set_new(*json, JTAG_VALUE, json_encode_value(type, data));
-
-    json_object_set_new(*json, JTAG_UNITS, json_string(units));
-
-
-    return ret;
-}
-
-int json_serialize_notification(JsonObj **json, JsonObj* details, Notification* notif) {
+/* Serialize alert details from the noded
+ * This section of tt=he notification is specific to each service */
+int json_serialize_noded_alert_details(JsonObj **json,
+                NodedNotifDetails* details ) {
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();
@@ -712,17 +693,65 @@ int json_serialize_notification(JsonObj **json, JsonObj* details, Notification* 
         return ERR_JSON_NO_VAL_TO_ENCODE;
     }
 
-    json_object_set_new(*json, JTAG_SERVICE_NAME, json_string(notif->serviceName));
+    json_object_set_new(*json, JTAG_UUID,
+                    json_string(details->moduleID));
 
-    json_object_set_new(*json, JTAG_NOTIFICATION_TYPE, json_string(notif->notificationType));
+    json_object_set_new(*json, JTAG_NAME,
+                    json_string(details->deviceName));
 
-    json_object_set_new(*json, JTAG_NODE_ID, json_string(notif->nodeId));
+    json_object_set_new(*json, JTAG_DESCRIPTION,
+                    json_string(details->deviceDesc));
 
-    json_object_set_new(*json, JTAG_NODE_TYPE, json_string(notif->nodeType));
+    json_object_set_new(*json, JTAG_PROPERTY_NAME,
+                    json_string(details->deviceAttr));
 
-    json_object_set_new(*json, JTAG_NOTIF_SEVERITY, json_string(notif->severity));
+    json_object_set_new(*json, JTAG_DATA_TYPE,
+                    json_string(details->dataType));
 
-    json_object_set_new(*json, JTAG_NOTIF_DETAILS, details);
+    //TODO: Remove hard coding
+    json_object_set_new(*json, JTAG_VALUE,
+                    json_encode_value(TYPE_DOUBLE, details->deviceAttrValue));
+
+    json_object_set_new(*json, JTAG_UNITS, json_string(details->units));
+
+
+    return ret;
+}
+
+/* Serialize notification to be forwaded to the remote server */
+int json_serialize_notification(JsonObj **json, JsonObj* details,
+                Notification* notif) {
+    int ret = JSON_ENCODING_OK;
+
+    *json = json_object();
+    if (!json) {
+        return ERR_JSON_CRETATION_ERR;
+    }
+
+    if (!details) {
+        return ERR_JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_SERVICE_NAME,
+                    json_string(notif->serviceName));
+
+    json_object_set_new(*json, JTAG_NOTIFICATION_TYPE,
+                    json_string(notif->notificationType));
+
+    json_object_set_new(*json, JTAG_NODE_ID,
+                    json_string(notif->nodeId));
+
+    json_object_set_new(*json, JTAG_NODE_TYPE,
+                    json_string(notif->nodeType));
+
+    json_object_set_new(*json, JTAG_NOTIF_SEVERITY,
+                    json_string(notif->severity));
+
+    json_object_set_new(*json, JTAG_DESCRIPTION,
+                        json_string(notif->description));
+
+    json_object_set_new(*json, JTAG_NOTIF_DETAILS,
+                    details);
 
     return ret;
 }
