@@ -73,9 +73,9 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
 int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
     int ret = STATUS_NOK;
     /* Send HTTP request */
-    char *url[128]={0};
+    char url[128]={0};
 
-    sprintf(url, "%s:%s", host, port);
+    sprintf(url,"%s:%d", host, port);
 
     ret = wc_send_node_info_request(url, node_info_ep, "GET", nodeID, nodeType);
     if (ret) {
