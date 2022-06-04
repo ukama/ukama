@@ -47,7 +47,7 @@ static size_t response_callback(void *contents, size_t size, size_t nmemb,
  * send_request_to_server
  *
  */
-static long send_request_to_server(char *url, char *uuid, Response *response) {
+static long send_request_to_server(char *url, Response *response) {
 
 	long resCode=0;
 	CURL *curl=NULL;
@@ -60,13 +60,8 @@ static long send_request_to_server(char *url, char *uuid, Response *response) {
 		return resCode;
 	}
 
-	headers = curl_slist_append(headers, KEY_UUID);
-	headers = curl_slist_append(headers,": ");
-	headers = curl_slist_append(headers, uuid);
-
-	headers = curl_slist_append(headers, KEY_LOOKING_FOR);
-	headers = curl_slist_append(headers,": ");
-	headers = curl_slist_append(headers, VALUE_VALIDATION);
+	headers = curl_slist_append(headers, "Accept: application/json");
+	headers = curl_slist_append(headers, "charset: utf-8");
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "GET");
@@ -131,10 +126,14 @@ int register_to_server(char *bootstrapServer, char *uuid, ServerInfo *server) {
 
 	int ret=FALSE;
 	Response response = {NULL, 0};
+	char url[MAX_GET_URL_LEN] = {0};
 
 	if (bootstrapServer == NULL || uuid == NULL) return FALSE;
 
-	if (send_request_to_server(bootstrapServer, uuid, &response) == 200) {
+	sprintf(url, "http://%s/service/?%s=%s&%s=%s", bootstrapServer,
+			KEY_NODE, uuid, KEY_LOOKING_FOR, VALUE_VALIDATION);
+
+	if (send_request_to_server(&url[0], &response) == 200) {
 		if (process_response_from_server(response.buffer, server)) {
 			log_debug_server(server);
 			log_debug("Recevied server IP: %s", server->IP);

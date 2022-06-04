@@ -17,9 +17,11 @@
 #define TRUE  1
 #define FALSE 0
 
-#define KEY_UUID         "uuid"
-#define KEY_LOOKING_FOR  "looking-for"
+#define KEY_NODE         "node"
+#define KEY_LOOKING_FOR  "looking_for"
 #define VALUE_VALIDATION "validation"
+
+#define MAX_GET_URL_LEN 2048
 
 typedef struct _response {
 	char *buffer;
