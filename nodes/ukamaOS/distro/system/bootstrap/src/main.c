@@ -194,9 +194,9 @@ int main (int argc, char **argv) {
 	}
 
 	/* Step-5: update mesh.d configuration with the recevied server info. */
-	ret |= write_to_file(meshConfig->remoteIPFile, serverInfo->IP);
-	ret |= write_to_file(meshConfig->certFile,     serverInfo->cert);
-	if (ret != TRUE) {
+	ret &= write_to_file(meshConfig->remoteIPFile, serverInfo->IP);
+	ret &= write_to_file(meshConfig->certFile,     serverInfo->cert);
+	if (ret == FALSE) {
 		log_error("Error updating mesh.d configs. File: %s",
 				  config->meshConfig);
 		goto done;
