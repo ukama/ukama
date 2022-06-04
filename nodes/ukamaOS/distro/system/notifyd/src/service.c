@@ -9,6 +9,7 @@
 
 #include "service.h"
 
+#include "notification.h"
 #include "web_service.h"
 #include "web_client.h"
 
@@ -26,8 +27,17 @@ int service_at_exit() {
 int service_init(int port) {
     int ret = STATUS_OK;
 
+    char* nodeId = NULL;
+    char* nodeType = NULL;
+
     /* Read Node Info from noded */
-    ret = web_client_init();
+    ret = web_client_init(nodeId, nodeType);
+    if (ret) {
+        return ret;
+    }
+
+    /* Notification Init */
+    ret = notify_init(nodeId, nodeType);
     if (ret) {
         return ret;
     }

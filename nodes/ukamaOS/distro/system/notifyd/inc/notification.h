@@ -23,6 +23,17 @@ typedef struct {
 } NotifyHandler;
 
 /**
+ * @fn      int notify_init(char*, char*)
+ * @brief   Set some parameters required for notification like node ID and
+ *          type.
+ *
+ * @param   nodeID
+ * @param   nodeType
+ * @return  On Success, USYS_OK (0)
+ *          On Failure, USYS_NOK (-1)
+ */
+int notify_init(char* nodeID, char* nodeType);
+/**
  * @fn      int notify_process_incoming_notification(char*, char*, JsonObj*)
  * @brief   Receive all incoming notification from services and choose the
  *          appropriate handler to parse and process request.

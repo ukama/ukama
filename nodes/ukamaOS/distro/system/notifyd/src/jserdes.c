@@ -547,7 +547,7 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
     }
 
     ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME,
-                    &details->servcieName);
+                    &details->serviceName);
     if (!ret) {
         usys_log_error("Failed to parse mandatory tag %s from Node "
                         "notification", JTAG_SERVICE_NAME);

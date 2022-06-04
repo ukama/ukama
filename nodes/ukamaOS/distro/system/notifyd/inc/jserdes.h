@@ -13,6 +13,7 @@
 #include <jansson.h>
 
 #include "json_types.h"
+#include "notify.h"
 #include "web_service.h"
 #include "usys_types.h"
 
@@ -213,4 +214,39 @@ int json_serialize_error(JsonObj** obj, int code , const char* str );
  */
 int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
                             uint16_t count);
+
+/**
+ * @fn      int json_serialize_noded_alert_details(JsonObj**, NodedNotifDetails*)
+ * @brief   Serializes the noded alert details into JSON.
+ *
+ * @param   json
+ * @param   details
+ * @return  On success, JSON_ENCODING_OK
+ *          On failure, Non zero value
+ */
+int json_serialize_noded_alert_details(JsonObj **json,
+                NodedNotifDetails* details );
+/**
+ * @fn      int json_serialize_notification(JsonObj**, JsonObj*, Notification*)
+ * @brief   Serializes the notification data into JSON.
+ *
+ * @param   json
+ * @param   details
+ * @param   notif
+ * @return  On success, JSON_ENCODING_OK
+ *          On failure, Non zero value
+ */
+int json_serialize_notification(JsonObj **json, JsonObj* details,
+                Notification* notif);
+
+/**
+ * @fn      bool json_deserialize_noded_alerts(JsonObj*, NodedNotifDetails*)
+ * @brief   Deserailize node alert details received by notify service.
+ *
+ * @param   json
+ * @param   details
+ * @return  On success, TRUE
+ *          On failure, FALSE
+ */
+bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details );
 #endif /* JSERDES_H_ */

@@ -17,11 +17,11 @@ typedef struct {
     char* nodeType;
     char* severity;
     char* description;
-    char* details;
+    char* deviceAttr;
 } Notification;
 
 typedef struct {
-   char* servcieName;
+   char* serviceName;
    char* severity;
    char* moduleID;
    char* deviceName;

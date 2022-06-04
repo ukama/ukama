@@ -43,12 +43,14 @@ int wc_forward_notification(char* url, char* ep, char* method,
 int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port);
 
 /**
- * @fn      int web_client_init()
+ * @fn      int web_client_init(char*, char*)
  * @brief   Connected to Noded for reading Unit info.
  *
+ * @param   nodeID
+ * @param   nodeType
  * @return  On success, STATUS_OK
  *          On Failure, STATUS_NOK
  */
-int web_client_init();
+int web_client_init(char* nodeID, char* nodeType);
 
 #endif /* INC_WEB_CLIENT_H_ */

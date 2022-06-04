@@ -14,9 +14,7 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-char gNodeID[32];
-char gNodeType[32];
-
+//TODO
 char* noded_host = "localhost";
 int noded_port = 8080;
 char* node_info_ep = "/noded/v1/unitinfo";
@@ -179,24 +177,16 @@ int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
     return ret;
 }
 
-int web_client_init() {
-    char* nodeID = NULL;
-    char* nodeType = NULL;
+int web_client_init(char* nodeID, char* nodeType) {
 
     int ret = wc_read_node_info(nodeID, nodeType, noded_host, noded_port);
     if (!ret) {
         usys_log_error("Error reading NodeID from noded.d");
         return STATUS_NOK;
-    } else {
-
-        usys_memcpy(gNodeID, nodeID, strlen(nodeID));
-        usys_memcpy(gNodeType, nodeType, strlen(nodeType));
-
     }
 
     usys_log_info("NotifyD: Identified unit ID %s and type %s",
-                    gNodeID, gNodeType);
-
+                    nodeID, nodeType);
 
     return STATUS_OK;
 
