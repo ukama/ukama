@@ -505,7 +505,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		TemplateName: "users-qr-code",
 		Values: map[string]any{
 			"Name": name,
-			"Qr":   fmt.Sprintf("Here your QR code: %s", resp.QrCode),
+			"Qr":   fmt.Sprintf(resp.QrCode),
 		},
 	})
 
