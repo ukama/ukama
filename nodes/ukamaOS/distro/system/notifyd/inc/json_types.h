@@ -125,6 +125,8 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_NOTIF_SEVERITY             "severity"
 #define JTAG_NOTIF_DETAILS              "details"
 
+#define JTAG_EPOCH_TIME                 "time"
+
 typedef enum {
     TYPE_NULL = 0,
     TYPE_CHAR = 1,

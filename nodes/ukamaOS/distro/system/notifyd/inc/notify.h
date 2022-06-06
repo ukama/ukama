@@ -10,6 +10,8 @@
 #ifndef INC_NOTIFY_H_
 #define INC_NOTIFY_H_
 
+#include <usys_types.h>
+
 typedef struct {
     char* serviceName;
     char* notificationType;
@@ -18,11 +20,13 @@ typedef struct {
     char* severity;
     char* description;
     char* deviceAttr;
+    uint32_t epcohTime;
 } Notification;
 
 typedef struct {
    char* serviceName;
    char* severity;
+   uint32_t epcohTime;
    char* moduleID;
    char* deviceName;
    char* deviceDesc;

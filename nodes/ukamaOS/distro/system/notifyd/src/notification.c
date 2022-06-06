@@ -165,7 +165,9 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
     envlp->severity = usys_strdup(noded->severity);
 
-    envlp->notificationType = usys_strdup(NOTIFICATION_ALERT) ;
+    envlp->notificationType = usys_strdup(NOTIFICATION_ALERT);
+
+    envlp->epcohTime = noded->epcohTime;
 
     envlp->nodeId = usys_strdup(gNodeID);
 
@@ -177,7 +179,8 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
 }
 
-int notify_process_incoming_notification(char* service, char* notif, JsonObj* json){
+int notify_process_incoming_notification(char* service, char* notif,
+                JsonObj* json){
     int ret = STATUS_OK;
     ServiceHandler handler = find_handler(service, notif);
     if (handler) {
@@ -193,6 +196,7 @@ int notify_process_incoming_noded_alert(JsonObj* json, char* notifType) {
     JsonObj* jNotify;
     NodedNotifDetails details;
 
+    /* Deserialize incomming message from noded */
     if (!json_deserialize_noded_alerts(json, &details)) {
         return ret;
     }

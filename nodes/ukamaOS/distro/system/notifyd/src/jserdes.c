@@ -554,6 +554,13 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
         return ret;
     }
 
+    ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
+                    &details->epcohTime);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_EPOCH_TIME);
+    }
+
     ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID,
                     &details->moduleID);
     if (!ret) {
@@ -705,7 +712,7 @@ int json_serialize_noded_alert_details(JsonObj **json,
     json_object_set_new(*json, JTAG_PROPERTY_NAME,
                     json_string(details->deviceAttr));
 
-    json_object_set_new(*json, JTAG_DATA_TYPE,
+    json_object_set_new(*json, JTAG_EPOCH_TIME,
                     json_string(details->dataType));
 
     //TODO: Remove hard coding
@@ -749,6 +756,9 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
 
     json_object_set_new(*json, JTAG_DESCRIPTION,
                         json_string(notif->description));
+
+    json_object_set_new(*json, JTAG_DATA_TYPE,
+                    json_integer(notif->epcohTime));
 
     json_object_set_new(*json, JTAG_NOTIF_DETAILS,
                     details);
