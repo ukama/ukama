@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/slices"
+	"google.golang.org/grpc/credentials/insecure"
 	"testing"
 	"time"
 
@@ -54,7 +56,7 @@ func Test_FullFlow(t *testing.T) {
 	defer cancel()
 
 	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
-	conn, err := grpc.DialContext(ctx, tConfig.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, tConfig.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
 		return
@@ -92,54 +94,18 @@ func Test_FullFlow(t *testing.T) {
 		assert.NotNil(tt, addResp.Node)
 		assert.Equal(tt, nodeName, addResp.Node.Name)
 
-		r, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: node.String(), State: pb.NodeState_ONBOARDED})
+		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), Node: &pb.Node{
+			State: pb.NodeState_ONBOARDED,
+		}})
 		handleResponse(tt, err, r)
 
-		nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
-		handleResponse(tt, err, nodeResp)
-		assert.Equal(tt, pb.NodeState_ONBOARDED, nodeResp.Node.State)
-		assert.Equal(tt, pb.NodeType_HOME, nodeResp.Node.Type)
-		assert.NotNil(tt, nodeResp.Network)
-	})
-
-	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
-		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
-		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
-			Node: &pb.Node{
-				NodeId: tNodeId.String(),
-				State:  pb.NodeState_UNDEFINED,
-			},
-			OrgName: orgName,
-		})
-		if err != nil {
-			assert.FailNow(tt, "AddNode failed", err.Error())
-		}
-
-		aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
-		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
-			Node: &pb.Node{
-				NodeId: aNodeId.String(),
-				State:  pb.NodeState_UNDEFINED,
-			},
-			OrgName: orgName,
-		})
-		if err != nil {
-			assert.FailNow(tt, "AddNode failed", err.Error())
-		}
-
-		_, err = c.AttachNodes(ctx, &pb.AttachNodesRequest{
-			ParentNodeId:    tNodeId.String(),
-			AttachedNodeIds: []string{aNodeId.String()},
-		})
-		if err != nil {
-			assert.FailNow(tt, "AttachNodes failed", err.Error())
-		}
-
-		resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeId.String()})
-		if assert.NoError(tt, err, "GetNode failed") {
-			assert.NotNil(tt, resp.Node.Attached)
-			assert.Equal(tt, 1, len(resp.Node.Attached))
-			assert.Equal(tt, aNodeId.StringLowercase(), resp.Node.Attached[0].NodeId)
+		nodeResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
+		if handleResponse(tt, err, nodeResp) {
+			nd := slices.FindPointer(nodeResp.Nodes, func(n *pb.Node) bool {
+				return n.NodeId == node.String()
+			})
+			assert.Equal(tt, pb.NodeState_ONBOARDED, nd.State)
+			assert.Equal(tt, pb.NodeType_HOME, nd.Type)
 		}
 	})
 
@@ -198,7 +164,6 @@ func Test_Listener(t *testing.T) {
 		assert.NoError(t, err)
 		return
 	}
-
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
 		NodeId: nodeId, State: pb.NodeState_UNDEFINED,
 	}, OrgName: org})
@@ -210,7 +175,9 @@ func Test_Listener(t *testing.T) {
 		return
 	}
 
-	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{NodeId: nodeId, State: pb.NodeState_PENDING})
+	_, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: nodeId, Node: &pb.Node{
+		State: pb.NodeState_PENDING,
+	}})
 	if err != nil {
 		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
 	}
@@ -221,10 +188,13 @@ func Test_Listener(t *testing.T) {
 	// Assert
 	assert.NoError(t, err)
 	time.Sleep(3 * time.Second)
-	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId})
-	assert.NoError(t, err)
-	if err != nil {
-		assert.Equal(t, pb.NodeState_ONBOARDED, nodeResp.Node.State)
+	nodeResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: org})
+
+	if handleResponse(t, err, nodeResp) {
+		nd := slices.FindPointer(nodeResp.Nodes, func(n *pb.Node) bool {
+			return n.NodeId == nodeId
+		})
+		assert.Equal(t, pb.NodeState_ONBOARDED, nd.State)
 	}
 }
 
@@ -256,9 +226,11 @@ func sendMessageToQueue(nodeId string) error {
 	return err
 }
 
-func handleResponse(t *testing.T, err error, r interface{}) {
+func handleResponse(t *testing.T, err error, r interface{}) bool {
 	fmt.Printf("Response: %v\n", r)
 	if err != nil {
 		assert.FailNow(t, "Request failed: %v\n", err)
+		return false
 	}
+	return true
 }

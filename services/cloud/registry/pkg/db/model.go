@@ -61,9 +61,6 @@ type Node struct {
 	SiteID    *uint32
 	State     NodeState `gorm:"type:uint;not null"`
 	Type      NodeType  `gorm:"type:uint;not null"`
-
-	// TODO: add unique key on attached nodes to make sure that node could be attached only once
-	Attached []*Node `gorm:"many2many:attached_nodes"`
 }
 
 type Network struct {

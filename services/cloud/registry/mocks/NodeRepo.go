@@ -37,20 +37,6 @@ func (_m *NodeRepo) Add(node *db.Node, nestedFunc ...func() error) error {
 	return r0
 }
 
-// AttachNodes provides a mock function with given fields: nodeId, attachedNodeId
-func (_m *NodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
-	ret := _m.Called(nodeId, attachedNodeId)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, []ukama.NodeID) error); ok {
-		r0 = rf(nodeId, attachedNodeId)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // Delete provides a mock function with given fields: id, nestedFunc
 func (_m *NodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	_va := make([]interface{}, len(nestedFunc))
@@ -65,20 +51,6 @@ func (_m *NodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(ukama.NodeID, ...func() error) error); ok {
 		r0 = rf(id, nestedFunc...)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DetachNode provides a mock function with given fields: detachNodeId
-func (_m *NodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	ret := _m.Called(detachNodeId)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
-		r0 = rf(detachNodeId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -132,20 +104,20 @@ func (_m *NodeRepo) GetByOrg(orgName string) ([]db.Node, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: id, state, nodeName, nestedFunc
-func (_m *NodeRepo) Update(id ukama.NodeID, state *db.NodeState, nodeName *string, nestedFunc ...func() error) error {
+// Update provides a mock function with given fields: id, node, nestedFunc
+func (_m *NodeRepo) Update(id ukama.NodeID, node *db.NodeAttributes, nestedFunc ...func() error) error {
 	_va := make([]interface{}, len(nestedFunc))
 	for _i := range nestedFunc {
 		_va[_i] = nestedFunc[_i]
 	}
 	var _ca []interface{}
-	_ca = append(_ca, id, state, nodeName)
+	_ca = append(_ca, id, node)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID, *db.NodeState, *string, ...func() error) error); ok {
-		r0 = rf(id, state, nodeName, nestedFunc...)
+	if rf, ok := ret.Get(0).(func(ukama.NodeID, *db.NodeAttributes, ...func() error) error); ok {
+		r0 = rf(id, node, nestedFunc...)
 	} else {
 		r0 = ret.Error(0)
 	}

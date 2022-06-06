@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"encoding/base64"
+	"github.com/jackc/pgconn"
+	"github.com/pkg/errors"
 
 	"github.com/ukama/ukama/services/cloud/registry/pkg"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -172,11 +174,6 @@ func (r *RegistryServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*
 		return nil, status.Errorf(codes.InvalidArgument, "type is determined from nodeId and can not be set specifically")
 	}
 
-	// Generate random node name if it's missing
-	if len(req.Node.Name) == 0 {
-		req.Node.Name = r.nameGenerator.Generate()
-	}
-
 	node := &db2.Node{
 		NodeID:    req.Node.NodeId,
 		State:     pbNodeStateToDb(req.Node.State),
@@ -223,7 +220,7 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 	logrus.Infof("Deleting the node  %v", req.NodeId)
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, invalidNodeIdError(req.GetNodeId(), err)
 	}
 
 	err = r.nodeRepo.Delete(nodeId)
@@ -240,44 +237,38 @@ func (r *RegistryServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeReque
 	return resp, nil
 }
 
-func (r *RegistryServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
-	logrus.Infof("Get node  %v", req.GetNodeId())
+func (n *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+	logrus.Infof("Updating the node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+		return nil, invalidNodeIdError(req.GetNodeId(), err)
 	}
-
-	node, err := r.nodeRepo.Get(nodeId)
+	st := pbNodeStateToDb(req.GetNode().GetState())
+	err = n.nodeRepo.Update(nodeId, &db2.NodeAttributes{
+		State: &st,
+		Name:  &req.Node.Name,
+	})
 	if err != nil {
-		logrus.Error("error getting the node" + err.Error())
+		duplErr := n.processNodeDuplErrors(err, req.GetNode().GetName(), req.NodeId)
+		if duplErr != nil {
+			return nil, duplErr
+		}
+
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp := &pb.GetNodeResponse{
-		Node: dbNodeToPbNode(node),
-		Org: &pb.Organization{
-			Owner: node.Network.Org.Owner.String(),
-			Name:  node.Network.Org.Name,
+	resp := &pb.UpdateNodeResponse{
+		Node: &pb.Node{
+			NodeId: req.NodeId,
+			Name:   req.Node.Name,
+			State:  req.Node.State,
 		},
 	}
-	if node.Network != nil {
-		resp.Network = &pb.Network{
-			Name: node.Network.Name,
-		}
-	} else {
-		resp.Network = &pb.Network{
-			Name: "default",
-		}
-	}
+	n.pubEvent(resp, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
 
 	return resp, nil
 }
-
-func (r *RegistryServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
-
-}
-
 func (r *RegistryServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	logrus.Infof("Get nodes for org %s", req.OrgName)
 
@@ -313,21 +304,26 @@ func (r *RegistryServer) pubEvent(payload any, key string) {
 	}()
 }
 
+func (n *RegistryServer) processNodeDuplErrors(err error, nodeName string, nodeId string) error {
+	var pge *pgconn.PgError
+	if errors.As(err, &pge) {
+		if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
+			return status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", nodeName)
+		} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
+			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
+		}
+	}
+	return nil
+}
+
 func dbNodeToPbNode(dbn *db2.Node) *pb.Node {
 	n := &pb.Node{
 		NodeId: dbn.NodeID,
-		State:  dbNodeStateToPb(dbn.State),
 		Type:   dbNodeTypeToPb(dbn.Type),
 		Name:   dbn.Name,
+		State:  dbNodeStateToPb(dbn.State),
 	}
 
-	if len(dbn.Attached) > 0 {
-		n.Attached = make([]*pb.Node, 0)
-	}
-
-	for _, nd := range dbn.Attached {
-		n.Attached = append(n.Attached, dbNodeToPbNode(nd))
-	}
 	return n
 }
 
@@ -348,4 +344,46 @@ func dbNodeTypeToString(nodeType db2.NodeType) string {
 
 func invalidNodeIdError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
+}
+
+func pbNodeStateToDb(state pb.NodeState) db2.NodeState {
+	var dbState db2.NodeState
+	switch state {
+	case pb.NodeState_ONBOARDED:
+		dbState = db2.Onboarded
+	case pb.NodeState_PENDING:
+		dbState = db2.Pending
+	default:
+		dbState = db2.Undefined
+	}
+	return dbState
+}
+
+func dbNodeTypeToPb(nodeType db2.NodeType) pb.NodeType {
+	var pbNodeType pb.NodeType
+	switch nodeType {
+	case db2.NodeTypeAmplifier:
+		pbNodeType = pb.NodeType_AMPLIFIER
+	case db2.NodeTypeTower:
+		pbNodeType = pb.NodeType_TOWER
+	case db2.NodeTypeHome:
+		pbNodeType = pb.NodeType_HOME
+	default:
+		pbNodeType = pb.NodeType_NODE_TYPE_UNDEFINED
+	}
+	return pbNodeType
+}
+
+func dbNodeStateToPb(state db2.NodeState) pb.NodeState {
+	var pbState pb.NodeState
+	switch state {
+	case db2.Onboarded:
+		pbState = pb.NodeState_ONBOARDED
+	case db2.Pending:
+		pbState = pb.NodeState_PENDING
+	default:
+		pbState = pb.NodeState_UNDEFINED
+	}
+
+	return pbState
 }

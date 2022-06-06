@@ -103,46 +103,21 @@ func TestRegistryServer_AddOrg(t *testing.T) {
 	bootstrapClient.AssertExpectations(t)
 }
 
-func TestRegistryServer_GetNode(t *testing.T) {
-	orgName := "node-1"
-	ownerId := uuid2.New()
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := createNetRepoMock()
-	pub := &qPubStub{}
-
-	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
-		State: db.Pending, Type: db.NodeTypeHome,
-		Network: &db.Network{
-			Name: testNetName,
-			Org: &db.Org{
-				Name:  orgName,
-				Owner: ownerId,
-			},
-		}}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
-	node, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: testNodeId.String()})
-	assert.NoError(t, err)
-	assert.Equal(t, orgName, node.Org.Name)
-	assert.Equal(t, pb.NodeState_PENDING, node.Node.State)
-	assert.Equal(t, pb.NodeType_HOME, node.Node.Type)
-	nodeRepo.AssertExpectations(t)
-	orgRepo.AssertExpectations(t)
-}
-
-func TestRegistryServer_UpdateNodeState(t *testing.T) {
+func TestRegistryServer_UpdateNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
 	pub := qPubStub{}
 
-	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeState) bool {
-		return *ns == db.Onboarded
-	}), (*string)(nil)).Return(nil).Once()
+	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeAttributes) bool {
+		return *ns.State == db.Onboarded
+	}), mock.Anything).Return(nil).Once()
 	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
-	_, err := s.UpdateNodeState(context.TODO(), &pb.UpdateNodeStateRequest{
+	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
 		NodeId: testNodeId.String(),
-		State:  pb.NodeState_ONBOARDED,
+		Node: &pb.Node{
+			State: pb.NodeState_ONBOARDED,
+		},
 	})
 
 	// Assert
@@ -172,16 +147,18 @@ func TestRegistryServer_AddNode(t *testing.T) {
 		Node: &pb.Node{
 			NodeId: nodeId,
 			State:  pb.NodeState_PENDING,
+			Name:   "node-1",
 		},
 		OrgName: testOrgName,
 		Network: testNetName,
 	})
 
 	// Assert
-	assert.NoError(t, err)
-	assert.NotEmpty(t, actNode.Node.Name)
-	nodeRepo.AssertExpectations(t)
-	bootstrapClient.AssertExpectations(t)
+	if assert.NoError(t, err) {
+		assert.Equal(t, "node-1", actNode.Node.Name)
+		nodeRepo.AssertExpectations(t)
+		bootstrapClient.AssertExpectations(t)
+	}
 }
 
 func createNetRepoMock() *mocks.NetRepo {
@@ -218,13 +195,14 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 		OrgName: orgName,
 	})
 
-	assert.NoError(t, err)
-	assert.Equal(t, pb.NodeState_UNDEFINED, resp.Nodes[0].State)
-	assert.Equal(t, NodeName0, resp.Nodes[0].Name)
-	assert.Equal(t, resp.OrgName, orgName)
-	assert.Equal(t, resp.Nodes[1].State, pb.NodeState_PENDING)
-	assert.Equal(t, resp.Nodes[1].NodeId, nodeUuid2.String())
-	nodeRepo.AssertExpectations(t)
+	if assert.NoError(t, err) {
+		assert.Equal(t, pb.NodeState_UNDEFINED, resp.Nodes[0].State)
+		assert.Equal(t, NodeName0, resp.Nodes[0].Name)
+		assert.Equal(t, resp.OrgName, orgName)
+		assert.Equal(t, pb.NodeState_PENDING, resp.Nodes[1].State)
+		assert.Equal(t, nodeUuid2.String(), resp.Nodes[1].NodeId)
+		nodeRepo.AssertExpectations(t)
+	}
 }
 
 func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {

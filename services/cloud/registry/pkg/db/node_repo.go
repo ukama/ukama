@@ -6,8 +6,6 @@ import (
 
 	"github.com/ukama/ukama/services/common/sql"
 	"github.com/ukama/ukama/services/common/ukama"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -20,9 +18,12 @@ type NodeRepo interface {
 	Get(id ukama.NodeID) (*Node, error)
 	GetByOrg(orgName string) ([]Node, error)
 	Delete(id ukama.NodeID, nestedFunc ...func() error) error
-	Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error
-	AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error
-	DetachNode(detachNodeId ukama.NodeID) error
+	Update(id ukama.NodeID, node *NodeAttributes, nestedFunc ...func() error) error
+}
+
+type NodeAttributes struct {
+	State *NodeState
+	Name  *string
 }
 
 type nodeRepo struct {
@@ -106,15 +107,15 @@ func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {
 }
 
 // Update updated node with `id`. Only fields that are not nil are updated
-func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, nestedFunc ...func() error) error {
+func (r *nodeRepo) Update(id ukama.NodeID, node *NodeAttributes, nestedFunc ...func() error) error {
 	var rowsAffected int64
 	err := r.Db.ExecuteInTransaction(func(tx *gorm.DB) *gorm.DB {
 		nd := Node{}
-		if state != nil {
-			nd.State = *state
+		if node.State != nil {
+			nd.State = *node.State
 		}
-		if nodeName != nil {
-			nd.Name = *nodeName
+		if node.Name != nil {
+			nd.Name = *node.Name
 		}
 
 		result := tx.Where("node_id=?", id.StringLowercase()).Updates(nd)
@@ -126,45 +127,4 @@ func (r *nodeRepo) Update(id ukama.NodeID, state *NodeState, nodeName *string, n
 		return gorm.ErrRecordNotFound
 	}
 	return err
-}
-
-func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeID) error {
-	parentNode, err := r.Get(nodeId)
-	if err != nil {
-		return err
-	}
-
-	if parentNode.Type != NodeTypeTower {
-		return status.Errorf(codes.InvalidArgument, "node type must be a towernode")
-	}
-
-	if parentNode.Attached == nil {
-		parentNode.Attached = make([]*Node, 0)
-	}
-
-	if len(attachedNodeId)+len(parentNode.Attached) > MaxAttachedNodes {
-		return status.Errorf(codes.InvalidArgument, "max number of attached nodes is %d", MaxAttachedNodes)
-	}
-
-	for _, n := range attachedNodeId {
-		an, err := r.Get(n)
-		if err != nil {
-			return err
-		}
-
-		if an.Type != NodeTypeAmplifier {
-			return status.Errorf(codes.InvalidArgument, "cannot attach non amplifier node")
-		}
-
-		parentNode.Attached = append(parentNode.Attached, an)
-	}
-
-	db := r.Db.GetGormDb().Save(parentNode)
-	return db.Error
-}
-
-// DetachNode removes node from parent node
-func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=?", detachNodeId.StringLowercase())
-	return db.Error
 }

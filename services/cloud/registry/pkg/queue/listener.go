@@ -123,10 +123,13 @@ func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery 
 		return
 	}
 
-	_, err = q.registryClient.UpdateNodeState(ctx,
-		&pb.UpdateNodeStateRequest{
+	_, err = q.registryClient.UpdateNode(ctx,
+		&pb.UpdateNodeRequest{
 			NodeId: nodeId.String(),
-			State:  pb.NodeState_ONBOARDED},
+			Node: &pb.Node{
+				State: pb.NodeState_ONBOARDED,
+			},
+		},
 		grpc_retry.WithMax(3))
 
 	if err != nil {

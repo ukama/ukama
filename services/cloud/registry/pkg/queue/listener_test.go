@@ -21,8 +21,8 @@ func TestDeviceIncomingMessageHandler(t *testing.T) {
 	reg := &pbmocks.RegistryServiceClient{}
 	nodeId := string(ukama.NewVirtualNodeId("homenode"))
 
-	reg.On("UpdateNodeState", mock.Anything, mock.MatchedBy(func(r *pb.UpdateNodeStateRequest) bool {
-		return r.NodeId == nodeId && r.State == pb.NodeState_ONBOARDED
+	reg.On("UpdateNode", mock.Anything, mock.MatchedBy(func(r *pb.UpdateNodeRequest) bool {
+		return r.NodeId == nodeId && r.GetNode().State == pb.NodeState_ONBOARDED
 	}), mock.Anything).Return(nil, nil)
 
 	message, err := proto.Marshal(&mesh.Link{NodeId: &nodeId, Ip: proto.String("192.168.0.1")})

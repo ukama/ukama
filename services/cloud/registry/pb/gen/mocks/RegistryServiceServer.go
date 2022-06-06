@@ -85,29 +85,6 @@ func (_m *RegistryServiceServer) AddOrg(_a0 context.Context, _a1 *gen.AddOrgRequ
 	return r0, r1
 }
 
-// AttachNodes provides a mock function with given fields: _a0, _a1
-func (_m *RegistryServiceServer) AttachNodes(_a0 context.Context, _a1 *gen.AttachNodesRequest) (*gen.AttachNodesResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.AttachNodesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AttachNodesRequest) *gen.AttachNodesResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AttachNodesResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AttachNodesRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteNode provides a mock function with given fields: _a0, _a1
 func (_m *RegistryServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -123,52 +100,6 @@ func (_m *RegistryServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.Delete
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DetachNode provides a mock function with given fields: _a0, _a1
-func (_m *RegistryServiceServer) DetachNode(_a0 context.Context, _a1 *gen.DetachNodeRequest) (*gen.DetachNodeResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.DetachNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DetachNodeRequest) *gen.DetachNodeResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DetachNodeResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DetachNodeRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetNode provides a mock function with given fields: _a0, _a1
-func (_m *RegistryServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.GetNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest) *gen.GetNodeResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -261,29 +192,6 @@ func (_m *RegistryServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.Update
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateNodeState provides a mock function with given fields: _a0, _a1
-func (_m *RegistryServiceServer) UpdateNodeState(_a0 context.Context, _a1 *gen.UpdateNodeStateRequest) (*gen.UpdateNodeStateResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.UpdateNodeStateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest) *gen.UpdateNodeStateResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateNodeStateResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeStateRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

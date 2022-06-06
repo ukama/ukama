@@ -108,36 +108,6 @@ func (_m *RegistryServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgReque
 	return r0, r1
 }
 
-// AttachNodes provides a mock function with given fields: ctx, in, opts
-func (_m *RegistryServiceClient) AttachNodes(ctx context.Context, in *gen.AttachNodesRequest, opts ...grpc.CallOption) (*gen.AttachNodesResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.AttachNodesResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AttachNodesRequest, ...grpc.CallOption) *gen.AttachNodesResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AttachNodesResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AttachNodesRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteNode provides a mock function with given fields: ctx, in, opts
 func (_m *RegistryServiceClient) DeleteNode(ctx context.Context, in *gen.DeleteNodeRequest, opts ...grpc.CallOption) (*gen.DeleteNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -160,66 +130,6 @@ func (_m *RegistryServiceClient) DeleteNode(ctx context.Context, in *gen.DeleteN
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DetachNode provides a mock function with given fields: ctx, in, opts
-func (_m *RegistryServiceClient) DetachNode(ctx context.Context, in *gen.DetachNodeRequest, opts ...grpc.CallOption) (*gen.DetachNodeResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.DetachNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.DetachNodeRequest, ...grpc.CallOption) *gen.DetachNodeResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DetachNodeResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.DetachNodeRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetNode provides a mock function with given fields: ctx, in, opts
-func (_m *RegistryServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest, opts ...grpc.CallOption) (*gen.GetNodeResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.GetNodeResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) *gen.GetNodeResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetNodeResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -340,36 +250,6 @@ func (_m *RegistryServiceClient) UpdateNode(ctx context.Context, in *gen.UpdateN
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateNodeState provides a mock function with given fields: ctx, in, opts
-func (_m *RegistryServiceClient) UpdateNodeState(ctx context.Context, in *gen.UpdateNodeStateRequest, opts ...grpc.CallOption) (*gen.UpdateNodeStateResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.UpdateNodeStateResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) *gen.UpdateNodeStateResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateNodeStateResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateNodeStateRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

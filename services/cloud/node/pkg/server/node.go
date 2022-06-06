@@ -110,7 +110,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	err = n.nodeRepo.Update(nodeId, nil, &req.Name)
 	if err != nil {
-		duplErr := n.processNodeDuplErrors(err, req.Name, req.NodeId)
+		duplErr := n.processNodeDuplErrors(err, req.NodeId)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -178,7 +178,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	err = n.nodeRepo.Add(node)
 
 	if err != nil {
-		duplErr := n.processNodeDuplErrors(err, node.Name, node.NodeID)
+		duplErr := n.processNodeDuplErrors(err, node.NodeID)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -223,16 +223,13 @@ func pbNodeStateToDb(state pb.NodeState) db.NodeState {
 	return dbState
 }
 
-func (n *NodeServer) processNodeDuplErrors(err error, nodeName string, nodeId string) error {
+func (n *NodeServer) processNodeDuplErrors(err error, nodeId string) error {
 	var pge *pgconn.PgError
-	if errors.As(err, &pge) {
-		if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION && pge.ConstraintName == "node_name_network_idx" {
-			return status.Errorf(codes.AlreadyExists, "node with name %s already exists in network", nodeName)
-		} else if pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-			return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
-		}
+	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
+		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
 	}
-	return nil
+
+	return grpc.SqlErrorToGrpc(err, "node")
 }
 
 func dbNodeToPbNode(dbn *db.Node) *pb.Node {

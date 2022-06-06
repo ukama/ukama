@@ -2,6 +2,7 @@ syntax = "proto3";
 
 option go_package = "pb/gen";
 
+import "validator.proto";
 
 package ukama.registry.v1;
 
@@ -13,8 +14,9 @@ service RegistryService {
     rpc List(ListRequest) returns (ListResponse);
 
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
-    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);    
+    rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
+    rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
 }
 
 message AddOrgRequest {
@@ -27,9 +29,9 @@ message AddOrgResponse{
 }
 
 message AddNodeRequest{
-    Node node = 1;
+    Node node = 1  [(validator.field) = {msg_exists : true}];
     string  orgName = 2;
-    string network = 3;
+    string network = 3 [(validator.field) = { string_not_empty: true}];
 }
 
 message AddNodeResponse{
@@ -41,7 +43,7 @@ message GetOrgRequest{
 }
 
 message DeleteNodeRequest{
-    string nodeId = 1;
+    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
 }
 
 message DeleteNodeResponse{
@@ -58,28 +60,11 @@ message GetNodesResponse{
 }
 
 message AddNetworkRequest{
-    string name = 1;
+    string name = 1 [(validator.field) = { string_not_empty: true}];
     string orgName = 2;
 }
 message NetworkResponse{
     Network network = 1;
-}
-
-message AttachNodesRequest {
-    string parentNodeId = 1;
-    repeated string  attachedNodeIds = 2;
-}
-
-message AttachNodesResponse {
-
-}
-
-message DetachNodeRequest{
-    string detachedNodeId = 2;
-}
-
-message DetachNodeResponse {
-
 }
 
 message Network {
@@ -96,7 +81,6 @@ message Node {
     NodeState state = 4;
     NodeType type = 5;
     string name = 6;
-    repeated Node attached = 7;
 }
 
 message ListRequest {
@@ -115,5 +99,27 @@ message ListResponse{
 
 
     repeated Org orgs = 1;
+}
+
+message  UpdateNodeRequest{
+    string nodeId = 1  [(validator.field) = { string_not_empty: true}]; // node ID to update
+    Node Node = 2 [(validator.field) = {msg_exists : true}];
+}
+
+message UpdateNodeResponse {
+    Node Node = 1;
+}
+
+enum NodeState {
+    UNDEFINED = 0;
+    PENDING = 1;
+    ONBOARDED = 2;
+}
+
+enum NodeType{
+    NODE_TYPE_UNDEFINED = 0;
+    HOME = 1;
+    TOWER = 2;
+    AMPLIFIER = 3;
 }
 
