@@ -61,9 +61,9 @@ func initDb() sql.Db {
 }
 
 func runGrpcServer(gormdb sql.Db) {
-
+	instanceId := os.Getenv("POD_NAME")
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
-		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri)
+		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, instanceId)
 		if err != nil {
 			log.Fatalf("Failed to create publisher. Error: %v", err)
 		}
