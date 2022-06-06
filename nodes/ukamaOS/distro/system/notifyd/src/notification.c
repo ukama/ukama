@@ -173,6 +173,8 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
     envlp->description = usys_strdup(noded->deviceDesc);
 
+    return envlp;
+
 }
 
 int notify_process_incoming_notification(char* service, char* notif, JsonObj* json){
