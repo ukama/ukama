@@ -14,7 +14,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/errors"
 )
 
 // NewMetrics create new instance of metrics

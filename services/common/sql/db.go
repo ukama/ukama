@@ -9,8 +9,8 @@ import (
 
 	"github.com/jackc/pgconn"
 	_ "github.com/lib/pq"
-	wrp "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	wrp "github.com/ukama/ukama/services/common/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

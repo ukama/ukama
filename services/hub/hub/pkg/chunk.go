@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 )
 
 type Chunker interface {

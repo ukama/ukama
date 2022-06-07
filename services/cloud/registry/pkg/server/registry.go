@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 	"encoding/base64"
+
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
+	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/services/cloud/registry/pkg"
 	"github.com/ukama/ukama/services/common/msgbus"
 
@@ -13,9 +15,7 @@ import (
 	"github.com/ukama/ukama/services/common/grpc"
 
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
-	uuid2 "github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/common/sql"
 	"github.com/ukama/ukama/services/common/ukama"
@@ -29,65 +29,25 @@ type RegistryServer struct {
 	nodeRepo        db2.NodeRepo
 	netRepo         db2.NetRepo
 	bootstrapClient bootstrap.Client
-	deviceGatewayIp string
 
 	queuePub       msgbus.QPub
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
 func NewRegistryServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.NetRepo, bootstrapClient bootstrap.Client,
-	deviceGatewayIp string, publisher msgbus.QPub) *RegistryServer {
+	publisher msgbus.QPub) *RegistryServer {
 
 	return &RegistryServer{
 		orgRepo:         orgRepo,
 		nodeRepo:        nodeRepo,
-		bootstrapClient: bootstrapClient,
-		deviceGatewayIp: deviceGatewayIp,
 		netRepo:         netRepo,
-
-		queuePub:       publisher,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
+		bootstrapClient: bootstrapClient,
+		queuePub:        publisher,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
 const defaultNetworkName = "default"
-
-func (r *RegistryServer) AddOrg(ctx context.Context, request *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
-	logrus.Infof("Adding org %v", request)
-	if len(request.Owner) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
-	}
-
-	owner, err := uuid2.Parse(request.Owner)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of owner id. Error %s", err.Error())
-	}
-
-	org := &db2.Org{
-		Name:        request.Name,
-		Owner:       owner,
-		Certificate: generateCertificate(),
-	}
-	err = r.orgRepo.Add(org, func() error {
-		return r.bootstrapClient.AddOrUpdateOrg(org.Name, org.Certificate, r.deviceGatewayIp)
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "org")
-	}
-
-	_, err = r.netRepo.Add(org.BaseModel.ID, defaultNetworkName)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "network")
-	}
-
-	orgResp := &pb.Organization{Name: request.Name, Owner: org.Owner.String()}
-
-	r.pubEvent(orgResp, r.baseRoutingKey.SetActionCreate().SetObject("org").MustBuild())
-
-	return &pb.AddOrgResponse{
-		Org: orgResp,
-	}, nil
-}
 
 func generateCertificate() string {
 	logrus.Warning("Certificate generation is not yet implemented")

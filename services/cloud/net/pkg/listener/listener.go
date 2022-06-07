@@ -9,12 +9,12 @@ import (
 	"time"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
 	regpb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
 	"github.com/wagslane/go-rabbitmq"

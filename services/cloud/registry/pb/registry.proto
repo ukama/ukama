@@ -6,9 +6,7 @@ import "validator.proto";
 
 package ukama.registry.v1;
 
-service RegistryService {
-    rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
-    rpc GetOrg(GetOrgRequest) returns (Organization);
+service RegistryService {        
     rpc AddNetwork(AddNetworkRequest) returns (NetworkResponse);
     // list all orgs and networks in the registry
     rpc List(ListRequest) returns (ListResponse);
@@ -19,15 +17,6 @@ service RegistryService {
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
 }
 
-message AddOrgRequest {
-    string name = 1;
-    string owner = 2;
-}
-
-message AddOrgResponse{
-    Organization org = 1;
-}
-
 message AddNodeRequest{
     Node node = 1  [(validator.field) = {msg_exists : true}];
     string  orgName = 2;
@@ -36,10 +25,6 @@ message AddNodeRequest{
 
 message AddNodeResponse{
     Node node = 1;
-}
-
-message GetOrgRequest{
-    string name = 1;
 }
 
 message DeleteNodeRequest{
@@ -69,11 +54,6 @@ message NetworkResponse{
 
 message Network {
     string name = 1;
-}
-
-message Organization {
-    string name = 1;
-    string owner = 3;
 }
 
 message Node {

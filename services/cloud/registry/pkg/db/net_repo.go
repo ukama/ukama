@@ -3,8 +3,8 @@ package db
 import (
 	"fmt"
 
-	"github.com/ukama/ukama/services/cloud/registry/pkg/validation"
 	"github.com/ukama/ukama/services/common/sql"
+	"github.com/ukama/ukama/services/common/validation"
 	"gorm.io/gorm"
 )
 

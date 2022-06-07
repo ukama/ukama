@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option go_package = "pb/gen";
+
+package ukama.org.v1;
+
+import "validator.proto";
+
+
+service OrgService {
+    rpc GetOrg(GetOrgRequest) returns (GetOrgResponse);
+    rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
+}
+
+message GetOrgRequest {
+    string name = 1;
+}
+
+message GetOrgResponse{
+    Organization org = 1;
+}
+
+message Organization {
+    string name = 1 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
+    string owner = 2 [(validator.field) = { string_not_empty: true}];
+    string certificate = 3;
+}
+
+message AddOrgRequest{
+    Organization org = 1 [(validator.field) = {msg_exists : true}];
+}
+
+message AddOrgResponse{
+    Organization org = 1;
+}

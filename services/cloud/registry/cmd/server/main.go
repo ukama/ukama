@@ -3,11 +3,10 @@ package main
 import (
 	"os"
 
+	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	"github.com/ukama/ukama/services/common/msgbus"
 
 	db2 "github.com/ukama/ukama/services/cloud/registry/pkg/db"
-
-	"github.com/ukama/ukama/services/cloud/registry/pkg/bootstrap"
 
 	"github.com/ukama/ukama/services/cloud/registry/cmd/version"
 	"github.com/ukama/ukama/services/cloud/registry/pkg"
@@ -65,7 +64,6 @@ func runGrpcServer(gormdb sql.Db) {
 		db2.NewNodeRepo(gormdb),
 		db2.NewNetRepo(gormdb),
 		bootstrapCl,
-		svcConf.DeviceGatewayHost,
 		pub)
 
 	grpcServer := ugrpc.NewGrpcServer(svcConf.Grpc, func(s *grpc.Server) {

@@ -10,8 +10,8 @@ import (
 	"os"
 
 	casync "github.com/folbricht/desync"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/hub/distributor/pkg"
 	"github.com/ukama/ukama/services/hub/distributor/pkg/chunk"
 )

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/services/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/internal"

@@ -4,46 +4,32 @@ import (
 	"context"
 	"testing"
 
+	bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
 	mocks "github.com/ukama/ukama/services/cloud/registry/mocks"
 	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"github.com/ukama/ukama/services/cloud/registry/pkg/db"
+	"github.com/ukama/ukama/services/common/msgbus/stub"
 
-	uuid2 "github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/services/common/ukama"
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")
-var testDeviceGatewayHost = "1.1.1.1"
 
 const testOrgName = "org-1"
 const testNetName = "net-1"
 const testNetId = 98
-
-type qPubStub struct {
-}
-
-func (q qPubStub) Publish(payload any, routingKey string) error {
-	return nil
-}
-
-func (q qPubStub) PublishToQueue(queueName string, payload any) error {
-	return nil
-}
-func (q qPubStub) Close() error {
-	return nil
-}
 
 func TestRegistryServer_GetOrg(t *testing.T) {
 	orgName := "org-1"
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
 
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	org, err := s.GetOrg(context.TODO(), &pb.GetOrgRequest{Name: orgName})
 	assert.NoError(t, err)
 	assert.Equal(t, orgName, org.Name)
@@ -54,8 +40,8 @@ func TestRegistryServer_AddOrg_fails_without_owner_id(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := &qPubStub{}
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	pub := &stub.QPubStub{}
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: testOrgName})
 	assert.Error(t, err)
 }
@@ -65,54 +51,22 @@ func TestRegistryServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := &qPubStub{}
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	pub := &stub.QPubStub{}
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName})
 	assert.Error(t, err)
-}
-
-func TestRegistryServer_AddOrg(t *testing.T) {
-	// Arrange
-	orgName := "org-1"
-	ownerId := uuid2.NewString()
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
-	pub := &qPubStub{}
-
-	// trick to call nested bootstrap call
-	orgRepo.On("Add", mock.Anything, mock.Anything).
-		Return(func(o *db.Org, f ...func() error) error {
-			return f[0]()
-		}).Once()
-
-	netRepo.On("Add", mock.Anything, mock.Anything).Return(&db.Network{}, nil).Once()
-	bootstrapClient := &mocks.Client{}
-	bootstrapClient.On("AddOrUpdateOrg", orgName, mock.Anything, testDeviceGatewayHost).Return(nil)
-
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, bootstrapClient, testDeviceGatewayHost, pub)
-
-	// Act
-	res, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName, Owner: ownerId})
-
-	// Assert
-	assert.NoError(t, err)
-	assert.Equal(t, orgName, res.Org.Name)
-	assert.Equal(t, ownerId, res.Org.Owner)
-	orgRepo.AssertExpectations(t)
-	bootstrapClient.AssertExpectations(t)
 }
 
 func TestRegistryServer_UpdateNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := qPubStub{}
+	pub := stub.QPubStub{}
 
 	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeAttributes) bool {
 		return *ns.State == db.Onboarded
 	}), mock.Anything).Return(nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
 		NodeId: testNodeId.String(),
 		Node: &pb.Node{
@@ -131,16 +85,16 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := createNetRepoMock()
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
 		return n.State == db.Pending && n.NodeID == nodeId && n.NetworkID == testNetId
 	}), mock.Anything).Return(func(o *db.Node, f ...func() error) error {
 		return f[0]()
 	}).Once()
-	bootstrapClient := &mocks.Client{}
+	bootstrapClient := &bstmock.Client{}
 	bootstrapClient.On("AddNode", testOrgName, nodeId).Return(nil)
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, bootstrapClient, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, bootstrapClient, pub)
 
 	// Act
 	actNode, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
@@ -183,14 +137,14 @@ func TestRegistryServer_GetNodes(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	const NodeName0 = "NodeName0"
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{
 		{NodeID: nodeUuid1.String(), State: db.Undefined, Name: NodeName0, Network: &db.Network{Org: &db.Org{Name: orgName}}},
 		{NodeID: nodeUuid2.String(), State: db.Pending, Name: "NodeNeme2", Network: &db.Network{Org: &db.Org{Name: orgName}}},
 	}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 	resp, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
 		OrgName: orgName,
 	})
@@ -209,10 +163,10 @@ func TestRegistryServer_GetNodesReturnsEmptyList(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	nodeRepo.On("GetByOrg", mock.Anything, mock.Anything).Return([]db.Node{}, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 
 	// act
 	res, err := s.GetNodes(context.TODO(), &pb.GetNodesRequest{
@@ -261,7 +215,7 @@ func Test_List(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}
 	netRepo := &mocks.NetRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	queryRes := map[string]map[string]map[db.NodeType]int{
 		"a": {
@@ -283,7 +237,7 @@ func Test_List(t *testing.T) {
 	}
 
 	netRepo.On("List").Return(queryRes, nil).Once()
-	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &mocks.Client{}, testDeviceGatewayHost, pub)
+	s := NewRegistryServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
 
 	// act
 	res, err := s.List(context.TODO(), &pb.ListRequest{})

@@ -2,16 +2,17 @@ package pkg
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
-	"github.com/ukama/ukama/services/cloud/mailer/pkg/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/wagslane/go-rabbitmq"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
+	"github.com/ukama/ukama/services/cloud/mailer/pkg/metrics"
+	"github.com/ukama/ukama/services/common/errors"
+	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/wagslane/go-rabbitmq"
 )
 
 const deadLetterExchangeHeaderName = "x-dead-letter-exchange"

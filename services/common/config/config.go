@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	cors "github.com/gin-contrib/cors"
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukama/services/common/rest"
 	"github.com/ukama/ukama/services/common/sql"
 )
 
@@ -163,14 +161,6 @@ func DefaultDatabaseName(name string) Database {
 	}
 }
 
-func DefaultHTTPConfig() rest.HttpConfig {
-	return rest.HttpConfig{
-		Port: 8080,
-		Cors: cors.Config{
-			AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-		},
-	}
-}
 
 func DefaultForwardConfig() Forward {
 	return Forward{

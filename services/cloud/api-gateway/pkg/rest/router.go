@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/errors"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
