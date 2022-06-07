@@ -4,6 +4,7 @@ import (
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
 	"github.com/ukama/ukama/services/cloud/org/pkg/server"
+	"github.com/ukama/ukama/services/common/metrics"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"os"
 
@@ -31,6 +32,8 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
 	orgDb := initDb()
+	metrics.StartMetricsServer(svcConf.Metrics)
+
 	runGrpcServer(orgDb)
 }
 

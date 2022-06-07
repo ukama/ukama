@@ -15,4 +15,5 @@ type Config struct {
 	DeviceGatewayHost string               // should be an IP
 	Queue             *config.Queue        `default:"{}"`
 	Debug             *bootstrap.DebugConf `default:"{}"`
+	Metrics           *config.Metrics      `default:"{}"`
 }
