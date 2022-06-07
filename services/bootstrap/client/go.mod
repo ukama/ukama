@@ -3,6 +3,7 @@ module github.com/ukama/ukama/services/bootstrap/client
 go 1.18
 
 replace github.com/ukama/ukama/services/common => ../../common
+
 replace github.com/ukama/ukama/services/bootstrap/client/ => ./
 
 require (
