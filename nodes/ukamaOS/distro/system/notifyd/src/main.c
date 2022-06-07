@@ -15,7 +15,7 @@
 #include "usys_types.h"
 
 #define DEF_LOG_LEVEL  "TRACE"
-#define DEF_PORT       "8080"
+#define DEF_PORT       "8085"
 #define NOTIFY_VERSION "0.0.0"
 
 

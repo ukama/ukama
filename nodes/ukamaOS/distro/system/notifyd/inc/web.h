@@ -14,6 +14,8 @@
 
 /* RESPONSE CODE */
 #define RESP_CODE_SUCCESS               200
+#define RESP_CODE_CREATED               201
+#define RESP_CODE_ACCEPTED              202
 #define RESP_CODE_INVALID_REQUEST       400
 #define RESP_CODE_RESOURCE_NOT_FOUND    404
 #define RESP_CODE_SERVER_FAILURE        500

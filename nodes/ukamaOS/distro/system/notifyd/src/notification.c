@@ -32,7 +32,7 @@ NotifyHandler handler[MAX_SERVICE_COUNT] = {
 };
 
 
-ServiceHandler find_handler(char* service, char* notif) {
+ServiceHandler find_handler(const char* service, char* notif) {
     for (uint8_t idx = 0; idx <= MAX_SERVICE_COUNT ; idx++) {
 
         if (!usys_strcmp(service, handler[idx].service)) {
@@ -53,14 +53,14 @@ ServiceHandler find_handler(char* service, char* notif) {
 }
 
 int notify_init(char* nodeID, char* nodeType) {
-    gNodeID = nodeID;
-    gNodeType = nodeType;
+    gNodeID = usys_strdup(nodeID);
+    gNodeType = usys_strdup(nodeType);
     return STATUS_OK;
 }
 
 int notify_send_notification(JsonObj* jNotify) {
 
-    return wc_forward_notification(remote_url, NULL, "POST", jNotify);
+    return wc_forward_notification(remote_url, "POST", jNotify);
 
 }
 
@@ -179,7 +179,7 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
 }
 
-int notify_process_incoming_notification(char* service, char* notif,
+int notify_process_incoming_notification(const char* service, char* notif,
                 JsonObj* json){
     int ret = STATUS_OK;
     ServiceHandler handler = find_handler(service, notif);
@@ -196,7 +196,7 @@ int notify_process_incoming_noded_alert(JsonObj* json, char* notifType) {
     JsonObj* jNotify;
     NodedNotifDetails details;
 
-    /* Deserialize incomming message from noded */
+    /* Deserialize incoming message from noded */
     if (!json_deserialize_noded_alerts(json, &details)) {
         return ret;
     }

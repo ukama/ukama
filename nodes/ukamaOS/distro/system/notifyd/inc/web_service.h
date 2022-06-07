@@ -17,7 +17,7 @@ extern "C" {
 #include "ulfius.h"
 #include "web.h"
 
-#define WEB_SERVICE_PORT                8095
+#define WEB_SERVICE_PORT                8085
 
 #define WEB_SOCKETS                     1
 #define WEB_SERVICE                     0
@@ -37,8 +37,8 @@ extern "C" {
 #define ENABLE                          "enable"
 #define DISABLE                         "disable"
 
-#define API_RES_EP(RES)                  EP_BS WEBSERVICE EP_BS \
-    REST_API_VERSION EP_BS RES
+#define URL_PREFIX                      EP_BS WEBSERVICE EP_BS REST_API_VERSION
+#define API_RES_EP(RES)                 EP_BS RES
 
 
 /* Callback function used by ulfius when APU is request */

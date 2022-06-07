@@ -16,8 +16,8 @@
 
 //TODO
 char* noded_host = "localhost";
-int noded_port = 8080;
-char* node_info_ep = "/noded/v1/unitinfo";
+int noded_port = 8095;
+char* node_info_ep = "/noded/v1/nodeinfo";
 
 
 int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
@@ -45,7 +45,7 @@ int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
 }
 
 URequest* wc_create_http_request(char* url,
-                char* ep, char* method, JsonObj* body) {
+                char* method, JsonObj* body) {
 
     /* Preparing Request */
     URequest* httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
@@ -63,7 +63,6 @@ URequest* wc_create_http_request(char* url,
     ulfius_set_request_properties(httpReq,
                        U_OPT_HTTP_VERB, method,
                        U_OPT_HTTP_URL, url,
-                       U_OPT_HTTP_URL_APPEND, ep,
                        U_OPT_TIMEOUT, 20,
                        U_OPT_NONE);
 
@@ -76,7 +75,7 @@ URequest* wc_create_http_request(char* url,
     return httpReq;
 }
 
-int wc_send_node_info_request(char* url, char* ep, char* method,
+int wc_send_node_info_request(char* url, char* method,
                 char* nodeID, char* nodeType) {
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -84,7 +83,7 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
 
     UResponse *httpResp = NULL;
 
-    URequest* httpReq = wc_create_http_request(url, ep, method, NULL);
+    URequest* httpReq = wc_create_http_request(url, method, NULL);
     if (!httpReq) {
         return ret;
     }
@@ -95,7 +94,7 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
        goto cleanup;
     }
 
-    if (httpResp->status >= 200 && httpResp->status >= 300) {
+    if (httpResp->status >= 200 && httpResp->status <= 300) {
 
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
@@ -124,7 +123,7 @@ int wc_send_node_info_request(char* url, char* ep, char* method,
     return ret;
 }
 
-int wc_forward_notification(char* url, char* ep, char* method,
+int wc_forward_notification(char* url, char* method,
                 JsonObj* body ) {
     int ret = STATUS_NOK;
     JsonObj *json = NULL;
@@ -132,7 +131,7 @@ int wc_forward_notification(char* url, char* ep, char* method,
 
     UResponse *httpResp = NULL;
 
-    URequest* httpReq = wc_create_http_request(url, ep, method, body);
+    URequest* httpReq = wc_create_http_request(url, method, body);
     if (!httpReq) {
         return ret;
     }
@@ -166,9 +165,9 @@ int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
     /* Send HTTP request */
     char url[128]={0};
 
-    sprintf(url,"%s:%d", host, port);
+    sprintf(url,"http://%s:%d%s", host, port, node_info_ep);
 
-    ret = wc_send_node_info_request(url, node_info_ep, "GET", nodeID, nodeType);
+    ret = wc_send_node_info_request(url, "GET", nodeID, nodeType);
     if (ret) {
         usys_log_error("Failed to parse NodeInfo response from noded.");
         return ret;
@@ -180,7 +179,7 @@ int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
 int web_client_init(char* nodeID, char* nodeType) {
 
     int ret = wc_read_node_info(nodeID, nodeType, noded_host, noded_port);
-    if (!ret) {
+    if (ret) {
         usys_log_error("Error reading NodeID from noded.d");
         return STATUS_NOK;
     }

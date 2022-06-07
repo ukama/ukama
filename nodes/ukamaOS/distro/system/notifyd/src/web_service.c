@@ -94,7 +94,7 @@ static int web_service_cb_ping(const URequest *request, UResponse *response,
     int respCode = RESP_CODE_SUCCESS;
 
     ulfius_set_string_body_response(response, respCode,
-                    "NodeD Service: Hi, there..!!");
+                    "NotifyD Service: Hi, there..!!");
 
     return U_CALLBACK_CONTINUE;
 }
@@ -170,6 +170,20 @@ static int web_service_cb_discover_api(const URequest *request,
 static int web_service_cb_post_event(const URequest *request,
                 UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
+    unsigned int respCode = RESP_CODE_SERVER_FAILURE;
+    const char *service = u_map_get(request->map_url, "service");
+    usys_log_trace("NotifyD:: Received a post request to event from %s.",
+                    service);
+
+    JsonObj *json = ulfius_get_json_body_request(request, NULL);
+
+    ret = notify_process_incoming_notification(service, NOTIFICATION_EVENT, json);
+    if (ret == STATUS_OK) {
+        respCode = RESP_CODE_ACCEPTED;
+    }
+
+    /* Send response */
+    ulfius_set_empty_body_response(response, respCode);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -187,16 +201,16 @@ static int web_service_cb_post_alert(const URequest *request,
                 UResponse *response, void *epConfig) {
     int ret = STATUS_NOK;
     unsigned int respCode = RESP_CODE_SERVER_FAILURE;
-    char *service = u_map_get(request->map_url, "service");
+    const char *service = u_map_get(request->map_url, "service");
     usys_log_trace("NotifyD:: Received a post request to alert from %s.",
                     service);
 
     JsonObj *json = ulfius_get_json_body_request(request, NULL);
 
-
-
-
-    respCode = RESP_CODE_SUCCESS;
+    ret = notify_process_incoming_notification(service, NOTIFICATION_ALERT, json);
+    if (ret == STATUS_OK) {
+        respCode = RESP_CODE_ACCEPTED;
+    }
 
     /* Send response */
     ulfius_set_empty_body_response(response, respCode);
@@ -219,12 +233,15 @@ static int web_service_cb_post_alert(const URequest *request,
  */
 static void web_service_add_end_point(char *method, char *endPoint,
                 void *config, HttpCb cb) {
-    ulfius_add_endpoint_by_val(&serverInst, method, endPoint, NULL, 0, cb,
+    ulfius_add_endpoint_by_val(&serverInst, method, URL_PREFIX, endPoint, 0, cb,
                     config);
     usys_strcpy(gApi[endPointCount].method, method);
-    usys_strcpy(gApi[endPointCount].endPoint, endPoint);
+    char api[128] = {0};
+    usys_strcpy(api, (URL_PREFIX));
+    usys_strcat(api, endPoint);
+    usys_strcpy(gApi[endPointCount].endPoint, api);
     usys_log_trace("Added api[%d] Method %s Endpoint: %s.", endPointCount,
-                    "Get", endPoint);
+                    "Get", gApi[endPointCount].endPoint);
     endPointCount++;
 }
 
@@ -342,12 +359,11 @@ int web_service_start() {
 
     /* open connection for web_services */
     if (start_framework(&serverInst)) {
-        usys_log_error("Failed to start web_services for cld_ctrl: %d",
-                        WEB_SERVICE_PORT);
+        usys_log_error("Failed to start web_services for notifyd.");
         return STATUS_NOK;
     }
 
-    usys_log_info("Webservice on client port: %d started.", WEB_SERVICE_PORT);
+    usys_log_info("WebService on notifyd started.");
 
     return STATUS_OK;
 }
@@ -366,5 +382,6 @@ int web_service_init(int port) {
         usys_log_error("Error initializing web_service framework");
         return STATUS_NOK;
     }
+    usys_log_info("WebService on notifyd initialized at port %d.", port);
     return STATUS_OK;
 }

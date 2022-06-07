@@ -34,7 +34,7 @@ typedef struct {
  */
 int notify_init(char* nodeID, char* nodeType);
 /**
- * @fn      int notify_process_incoming_notification(char*, char*, JsonObj*)
+ * @fn      int notify_process_incoming_notification(const char*, char*, JsonObj*)
  * @brief   Receive all incoming notification from services and choose the
  *          appropriate handler to parse and process request.
  *
@@ -44,7 +44,7 @@ int notify_init(char* nodeID, char* nodeType);
  * @return  On Success, USYS_OK (0)
  *          On Failure, USYS_NOK (-1)
  */
-int notify_process_incoming_notification(char* service, char* notif, JsonObj* json);
+int notify_process_incoming_notification(const char* service, char* notif, JsonObj* json);
 
 /**
  * @fn      int notify_process_incoming_noded_event(JsonObj*, char*)

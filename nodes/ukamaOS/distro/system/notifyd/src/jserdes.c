@@ -11,6 +11,7 @@
 
 #include "errorcode.h"
 #include "json_types.h"
+#include "node.h"
 #include "notify.h"
 #include "web_service.h"
 
@@ -138,8 +139,8 @@ bool json_deserialize_string_object(const JsonObj *obj, const char *key,
     /* String Json Object */
     JsonObj *jStrObj = json_object_get(obj, key);
 
-    /* Check if object is number */
-    if (jStrObj && json_is_string(jStrObj)) {
+    /* Check if object is string */
+    if (json_is_string(jStrObj)) {
         int length = json_string_length(jStrObj);
         *svalue = usys_zmalloc(sizeof(char) * (length + 1));
         if (*svalue) {
@@ -498,6 +499,23 @@ void *json_decode_value(json_t *json, int type) {
     return data;
 }
 
+void deserailize_node_type(int type, char** nodeType) {
+
+    switch(type) {
+        case TNODE:
+            *nodeType = usys_strdup("TowerNode");
+            break;
+        case HNODE:
+            *nodeType= usys_strdup("HomeNode");
+            break;
+        case ANODE:
+            *nodeType= usys_strdup("AmplifierNode");
+            break;
+        default:
+            *nodeType = NULL;
+    }
+}
+
 /* Deserialize node Info */
 bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
 
@@ -514,16 +532,24 @@ bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
         return USYS_FALSE;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_UUID, &nodeId);
+    ret = json_deserialize_string_object_wrapper(jNodeInfo, JTAG_UUID, nodeId);
     if (!ret) {
         usys_log_error("Failed to parse Node ID %s in NodeInfo", JTAG_UUID);
         return ret;
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_TYPE, &nodeType);
+    int type = 0;
+    ret = json_deserialize_integer_object(jNodeInfo, JTAG_TYPE, &type);
     if (!ret) {
         usys_log_error("Failed to parse Node Type %s in NodeInfo", JTAG_TYPE);
         return ret;
+    } else {
+        char *nType = NULL;
+        deserailize_node_type(type, &nType);
+        if (nType) {
+            usys_strcpy(nodeType, nType);
+            usys_free(nType);
+        }
     }
 
     return ret;

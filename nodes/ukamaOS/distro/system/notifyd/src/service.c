@@ -27,8 +27,8 @@ int service_at_exit() {
 int service_init(int port) {
     int ret = STATUS_OK;
 
-    char* nodeId = NULL;
-    char* nodeType = NULL;
+    char nodeId[32] = {0};
+    char nodeType[32] = {0};
 
     /* Read Node Info from noded */
     ret = web_client_init(nodeId, nodeType);
