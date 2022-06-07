@@ -22,6 +22,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
 )
+import qrcode "github.com/skip2/go-qrcode"
 
 const uuidParsingError = "Error parsing UUID"
 
@@ -488,6 +489,16 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
 }
+func generateQrcode(qrcodeId string,qrcodeName string) {
+
+	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId,qrcode.medium,256)
+	if qrGenerateError != nil {
+		return errors.Wrap(qrGenerateError, "failed to generate qrcode")
+	 }
+	 encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
+	return encodedData 
+}
+
 
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
 	logrus.Infof("Sending email to %s", email)
@@ -496,7 +507,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to get qr code")
+		return errors.Wrap("failed to get qr code",%v,err)
 	}
 
 	logrus.Infof("Publishing queue message")
@@ -505,7 +516,8 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		TemplateName: "users-qr-code",
 		Values: map[string]any{
 			"Name": name,
-			"Qr":   fmt.Sprintf(resp.QrCode),
+			"Qr":   generateQrcode(resp.QrCode,name),
+			"QrCodeLink":resp.QrCode
 		},
 	})
 
