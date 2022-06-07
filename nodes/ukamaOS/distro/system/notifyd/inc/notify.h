@@ -31,7 +31,7 @@ typedef struct {
    char* deviceName;
    char* deviceDesc;
    char* deviceAttr;
-   char* dataType;
+   int   dataType;
    double* deviceAttrValue;
    char* units;
 } NodedNotifDetails;

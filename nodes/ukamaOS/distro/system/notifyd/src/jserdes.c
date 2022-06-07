@@ -566,9 +566,9 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
         return ret;
     }
 
-    JsonObj* jNodeInfo = json_object_get(json, JTAG_NODE_INFO);
+    JsonObj* jNodeInfo = json_object_get(json, JTAG_NOTIFY);
     if (jNodeInfo == NULL) {
-        usys_log_error("Missing mandatory %s from JSON", JTAG_NODE_INFO);
+        usys_log_error("Missing mandatory %s from JSON", JTAG_NOTIFY);
         return USYS_FALSE;
     }
 
@@ -615,7 +615,7 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
                         JTAG_PROPERTY_NAME);
     }
 
-    ret = json_deserialize_string_object(jNodeInfo, JTAG_DATA_TYPE,
+    ret = json_deserialize_integer_object(jNodeInfo, JTAG_DATA_TYPE,
                     &details->dataType);
     if (!ret) {
         usys_log_warn("Failed to parse %s from Node notification",
@@ -739,7 +739,7 @@ int json_serialize_noded_alert_details(JsonObj **json,
                     json_string(details->deviceAttr));
 
     json_object_set_new(*json, JTAG_EPOCH_TIME,
-                    json_string(details->dataType));
+                    json_integer(details->dataType));
 
     //TODO: Remove hard coding
     json_object_set_new(*json, JTAG_VALUE,

@@ -18,7 +18,7 @@
 #include "usys_string.h"
 
 //TODO
-char *remote_url = "";
+char *remote_url = "localhost:8091";
 char* gNodeID;
 char* gNodeType;
 
