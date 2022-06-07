@@ -36,7 +36,7 @@ height: 30px;
 <body>
 <div style="width:600px">
 <p style="margin-bottom:5px,margin-top:3px,font-size:20px,fontWeight:"bold">Download your eSIM </p>
-<p style="margin-bottom:5px,margin-top:3px,font-size:10px">Hi {{.name}},</p>
+<p style="margin-bottom:5px,margin-top:3px,font-size:10px">Hi {{.Values.Name}},</p>
 <div style="maring-bottom:3px,font-size:10px">[Network Owner name] has invited you to join their network. To get started, scan the QR code below to download your eSIM, and start using the Ukama network. You have X GBs of free data, and will be charged at $5/GB while roaming.
 </div><br>
 <div style="maring-bottom:3px,font-size:10px">
@@ -45,7 +45,7 @@ This invitation expires in 48 hours for security purposes, but another invitatio
 <div style="maring-bottom:3px,font-size:10px"> 
 Note: you don’t have to do anything with your current SIM in your phone./other instructions regarding how to navigate this
 </div><br>
-<div style="margin-bottom:3px,font-size:16px">Having trouble with the QR code? Use the following link instead: {{.message}}</div> 
+<div style="margin-bottom:3px,font-size:16px">Having trouble with the QR code? Use the following link instead: {{ .Values.Name }}</div> 
 
 <div style="white-space: pre">
 Thanks,
