@@ -136,13 +136,16 @@ int wc_forward_notification(char* url, char* method,
         return ret;
     }
 
+    char *logbody = json_dumps(body, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    usys_log_trace("Body is :\n %s", logbody);
+
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK) {
         usys_log_error("Failed to send http request.");
         goto cleanup;
     }
 
-    if (httpResp->status >= 200 && httpResp->status >= 300) {
+    if (httpResp->status >= 200 && httpResp->status <= 300) {
         ret = STATUS_OK;
     }
 

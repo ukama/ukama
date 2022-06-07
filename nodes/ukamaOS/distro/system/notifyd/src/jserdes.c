@@ -580,6 +580,14 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
         return ret;
     }
 
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_SEVERITY,
+                        &details->severity);
+        if (!ret) {
+            usys_log_error("Failed to parse mandatory tag %s from Node "
+                            "notification", JTAG_SEVERITY);
+            return ret;
+        }
+
     ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
                     &details->epcohTime);
     if (!ret) {

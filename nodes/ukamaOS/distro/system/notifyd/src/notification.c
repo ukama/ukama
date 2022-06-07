@@ -98,6 +98,11 @@ void free_notification(Notification* notif) {
             notif->nodeType = NULL;
         }
 
+        if(notif->deviceAttr) {
+            usys_free(notif->deviceAttr);
+            notif->deviceAttr = NULL;
+        }
+
         usys_free(notif);
         notif = NULL;
     }
@@ -135,11 +140,6 @@ void free_noded_details(NodedNotifDetails* notif) {
         if(notif->deviceAttr) {
             usys_free(notif->deviceAttr);
             notif->deviceAttr = NULL;
-        }
-
-        if(notif->dataType) {
-            usys_free(notif->dataType);
-            notif->dataType = NULL;
         }
 
         if(notif->deviceAttrValue) {
@@ -194,7 +194,7 @@ int notify_process_incoming_noded_alert(JsonObj* json, char* notifType) {
     int ret = STATUS_NOK;
     JsonObj* jDetails;
     JsonObj* jNotify;
-    NodedNotifDetails details;
+    NodedNotifDetails details = {0};
 
     /* Deserialize incoming message from noded */
     if (!json_deserialize_noded_alerts(json, &details)) {

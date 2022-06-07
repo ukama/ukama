@@ -120,6 +120,7 @@ typedef  json_error_t JsonErrObj;
 
 #define JTAG_NOTIFY                     "notify"
 #define JTAG_SERVICE_NAME               "serviceName"
+#define JTAG_SEVERITY                   "severity"
 #define JTAG_NOTIFICATION_TYPE          "notificationType"
 #define JTAG_NODE_ID                    "nodeID"
 #define JTAG_NODE_TYPE                  "nodeType"
