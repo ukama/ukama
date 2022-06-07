@@ -17,6 +17,7 @@
 
 #define SVISOR_PROGRAM                  "[program: %s_%s]\n"
 #define SVISOR_COMMAND                  "%s command=%s/%s\n"
+#define SVISOR_COMMAND_WITH_ARGS        "%s command=%s/%s %s\n"
 #define SVISOR_AUTOSTART                "%s autostart=%s\n"
 #define SVISOR_AUTORESTART              "%s autorestart=%s\n"
 #define SVISOR_STDERR_LOGFILE           "%s stderr_logfile=%s\n"

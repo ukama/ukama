@@ -77,7 +77,14 @@ int create_supervisor_config(Configs *configs) {
 		memset(buffer, 0, SVISOR_MAX_SIZE);
 
 		sprintf(buffer, SVISOR_PROGRAM, capp->name, capp->version);
-		sprintf(buffer, SVISOR_COMMAND, buffer, capp->path, capp->bin);
+
+		if (capp->args) {
+			sprintf(buffer, SVISOR_COMMAND_WITH_ARGS, buffer, capp->path,
+					capp->bin, capp->args);
+		} else {
+			sprintf(buffer, SVISOR_COMMAND, buffer, capp->path, capp->bin);
+		}
+
 		sprintf(buffer, SVISOR_AUTOSTART, buffer,
 				(capp->autostart ? "true": "false"));
 		sprintf(buffer, SVISOR_AUTORESTART, buffer,
