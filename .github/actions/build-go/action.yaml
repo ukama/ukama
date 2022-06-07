@@ -17,6 +17,10 @@ inputs:
   aws-secret-key:
     description: The AWS secret key
     required: true
+  build-listener: 
+    description: The build listener image 
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -86,7 +90,21 @@ runs:
       buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
       buildah push $REGISTRY\:latest
 
-  - name: OCI Push telna-gateway test
+  - name: OCI Push listener 
+    shell: bash
+    if: ${{ inputs.build-listener == 'true' }}
+    working-directory: ${{ env.working-directory }}
+    env:
+      REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/${{ inputs.registry-name }}-listener
+    run: |                        
+          buildah bud -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} \
+              -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+              -t $REGISTRY\:latest .  && \
+          buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+          buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha_short }} && \
+          buildah push $REGISTRY\:latest 
+
+  - name: OCI Push Integration Tests
     shell: bash
     working-directory: ${{ inputs.working-directory }}
     env:

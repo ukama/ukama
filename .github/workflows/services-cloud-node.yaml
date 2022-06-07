@@ -1,18 +1,18 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-users
+name: build-node
 on:  
   push:   
     paths:
-        - "services/cloud/users/**"
-        - ".github/workflows/services-cloud-users.yaml"
+        - "services/cloud/node/**"
+        - ".github/workflows/services-cloud-node.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: services/cloud/users
+      working-directory: services/cloud/node
 
     name: build and test
     runs-on: ubuntu-latest
@@ -22,17 +22,18 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: users
+        registry-name: node
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+        build-listener: true
     
   sonar-scan:
     name: sonar-scan
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/users
+      working-directory: services/cloud/node
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -41,13 +42,13 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_services_users
+          project-key: ukama_services_node
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/users
+      working-directory: services/cloud/node
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -63,7 +64,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: services/cloud/users
+        working-directory: services/cloud/node
       steps:
         - uses: actions/checkout@v3
         
@@ -75,7 +76,7 @@ jobs:
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/ukama-helmfile.yaml"
-            key: "usersImageTag"
+            key: "nodeImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
