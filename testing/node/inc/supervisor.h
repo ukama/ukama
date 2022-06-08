@@ -16,8 +16,8 @@
 #define SVISOR_HEADER                   "[supervisord] \n nodaemon=true \n\n"
 
 #define SVISOR_PROGRAM                  "[program: %s_%s]\n"
-#define SVISOR_COMMAND                  "%s command=%s/%s\n"
-#define SVISOR_COMMAND_WITH_ARGS        "%s command=%s/%s %s\n"
+#define SVISOR_COMMAND                  "%s command=%s %s %s \"%s/%s\"\n"
+#define SVISOR_COMMAND_WITH_ARGS        "%s command=%s %s %s \"%s/%s %s\"\n"
 #define SVISOR_AUTOSTART                "%s autostart=%s\n"
 #define SVISOR_AUTORESTART              "%s autorestart=%s\n"
 #define SVISOR_STDERR_LOGFILE           "%s stderr_logfile=%s\n"
@@ -30,6 +30,9 @@
 #define SVISOR_DEFAULT_STDERR          "/dev/stdout"
 #define SVISOR_DEFAULT_STDERR_MAXBYTES 0
 #define SVISOR_DEFAULT_STDOUT_MAXBYTES 0
+
+#define SVISOR_RUNME_SH   "/bin/runme.sh"
+#define SVISOR_WAITFOR_SH "/bin/waitfor.sh"
 
 int create_supervisor_config(Configs *configs);
 void purge_supervisor_config(char *fileName);

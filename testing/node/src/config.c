@@ -145,6 +145,16 @@ static int read_capp_table(toml_table_t *table, Config *config,
 						DATUM_BOOL | DATUM_MANDATORY)) {
 			return FALSE;
 		}
+
+		if (!read_entry(table, KEY_DEPENDS_ON, &capp->dependsOn, NULL,
+						DATUM_STRING)) {
+			return FALSE;
+		}
+
+		if (!read_entry(table, KEY_WAIT_FOR, &capp->waitFor, NULL,
+						DATUM_STRING)) {
+			return FALSE;
+		}
 	} else {
 		return FALSE;
 	}
@@ -565,11 +575,9 @@ void free_config(Config *config, int flag) {
 		if (build->cmd)     free(build->cmd);
 		if (build->binFrom) free(build->binFrom);
 		if (build->binTo)   free(build->binTo);
-
-		if (build->mkdir) free(build->mkdir);
-
-		if (build->from)     free(build->from);
-		if (build->to)       free(build->to);
+		if (build->mkdir)   free(build->mkdir);
+		if (build->from)    free(build->from);
+		if (build->to)      free(build->to);
 
 		free(config->build);
 	}
@@ -584,6 +592,8 @@ void free_config(Config *config, int flag) {
 		if (capp->path)    free(capp->path);
 		if (capp->args)    free(capp->args);
 		if (capp->envs)    free(capp->envs);
+		if (capp->waitFor) free(capp->waitFor);
+		if (capp->dependsOn) free(capp->dependsOn);
 
 		free(config->capp);
 	}
@@ -651,6 +661,12 @@ void log_config(Config *config) {
 			log_debug("\t envs: %s", capp->envs);
 		} else {
 			log_debug("\t No env");
+		}
+		if (capp->dependsOn) {
+			log_debug("\t dependsOn: %s", capp->dependsOn);
+		}
+		if (capp->waitFor) {
+			log_debug("\t waitFor: %s", capp->waitFor);
 		}
 	}
 }
