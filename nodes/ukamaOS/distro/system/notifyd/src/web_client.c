@@ -15,9 +15,9 @@
 #include "usys_string.h"
 
 //TODO
-char* noded_host = "localhost";
-int noded_port = 8095;
-char* node_info_ep = "/noded/v1/nodeinfo";
+//char* noded_host = "localhost";
+//int noded_port = 8095;
+//char* node_info_ep = "/noded/v1/nodeinfo";
 
 
 int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
@@ -67,9 +67,12 @@ URequest* wc_create_http_request(char* url,
                        U_OPT_NONE);
 
     if(body) {
-        ulfius_set_request_properties(httpReq,
-                        U_OPT_JSON_BODY, body,
-                        U_OPT_NONE);
+       if( STATUS_OK != ulfius_set_json_body_request(httpReq,
+                         body)) {
+           ulfius_clean_request(httpReq);
+           usys_free(httpReq);
+           httpReq = NULL;
+       }
     }
 
     return httpReq;
@@ -163,12 +166,13 @@ int wc_forward_notification(char* url, char* method,
     return ret;
 }
 
-int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
+int wc_read_node_info(char* nodeID, char* nodeType, Config* config) {
     int ret = STATUS_NOK;
     /* Send HTTP request */
     char url[128]={0};
 
-    sprintf(url,"http://%s:%d%s", host, port, node_info_ep);
+    sprintf(url,"http://%s:%d%s", config->nodedHost, config->nodedPort,
+                    config->nodedEP);
 
     ret = wc_send_node_info_request(url, "GET", nodeID, nodeType);
     if (ret) {
@@ -179,9 +183,9 @@ int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port) {
     return ret;
 }
 
-int web_client_init(char* nodeID, char* nodeType) {
+int web_client_init(char* nodeID, char* nodeType, Config* config) {
 
-    int ret = wc_read_node_info(nodeID, nodeType, noded_host, noded_port);
+    int ret = wc_read_node_info(nodeID, nodeType, config);
     if (ret) {
         usys_log_error("Error reading NodeID from noded.d");
         return STATUS_NOK;

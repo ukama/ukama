@@ -10,6 +10,7 @@
 #ifndef WEB_CLIENT_H_
 #define WEB_CLIENT_H_
 
+#include "config.h"
 #include "notify_macros.h"
 #include "web.h"
 #include "json_types.h"
@@ -34,12 +35,11 @@ int wc_forward_notification(char* url, char* method,
  *
  * @param   nodeID
  * @param   nodeType
- * @param   host
- * @param   port
+ * @param   config
  * @return  On success, STATUS_OK
  *          On Failure, STATUS_NOK
  */
-int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port);
+int wc_read_node_info(char* nodeID, char* nodeType, Config* config);
 
 /**
  * @fn      int web_client_init(char*, char*)
@@ -47,9 +47,10 @@ int wc_read_node_info(char* nodeID, char* nodeType, char* host, int port);
  *
  * @param   nodeID
  * @param   nodeType
+ * @param   config
  * @return  On success, STATUS_OK
  *          On Failure, STATUS_NOK
  */
-int web_client_init(char* nodeID, char* nodeType);
+int web_client_init(char* nodeID, char* nodeType, Config* config);
 
 #endif /* INC_WEB_CLIENT_H_ */

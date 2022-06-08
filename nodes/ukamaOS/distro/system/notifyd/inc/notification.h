@@ -10,6 +10,7 @@
 #ifndef INC_NOTIFICATION_H_
 #define INC_NOTIFICATION_H_
 
+#include "config.h"
 #include "notify.h"
 #include "jserdes.h"
 #include "json_types.h"
@@ -29,10 +30,11 @@ typedef struct {
  *
  * @param   nodeID
  * @param   nodeType
+ * @param   config
  * @return  On Success, USYS_OK (0)
  *          On Failure, USYS_NOK (-1)
  */
-int notify_init(char* nodeID, char* nodeType);
+int notify_init(char* nodeID, char* nodeType, Config* config);
 /**
  * @fn      int notify_process_incoming_notification(const char*, char*, JsonObj*)
  * @brief   Receive all incoming notification from services and choose the

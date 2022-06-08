@@ -14,18 +14,18 @@
 extern "C" {
 #endif
 
-#include "service.h"
+#include "config.h"
 
 /**
- * @fn int service_init(char*, char*, char*)
+ * @fn     int service_init(char*, char*, char*)
  * @brief  Perform the pre-requisites required for node service to run.
  *         1. Initialize web framework.
  *
- * @param port
+ * @param  cfg
  * @return On Success, USYS_OK (0)
  *         On Failure, USYS_NOK (-1)
  */
-int service_init(int port);
+int service_init(Config* cfg);
 
 /**
  * @fn     int service_at_exit()

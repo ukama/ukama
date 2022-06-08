@@ -24,26 +24,26 @@ int service_at_exit() {
     return ret;
 }
 
-int service_init(int port) {
+int service_init(Config *config) {
     int ret = STATUS_OK;
 
     char nodeId[32] = {0};
     char nodeType[32] = {0};
 
     /* Read Node Info from noded */
-    ret = web_client_init(nodeId, nodeType);
+    ret = web_client_init(nodeId, nodeType, config);
     if (ret) {
         return ret;
     }
 
     /* Notification Init */
-    ret = notify_init(nodeId, nodeType);
+    ret = notify_init(nodeId, nodeType, config);
     if (ret) {
         return ret;
     }
 
     /* Initialize web server */
-    ret = web_service_init(port);
+    ret = web_service_init(config->port);
     if (ret) {
         return ret;
     }

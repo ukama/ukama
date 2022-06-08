@@ -14,8 +14,11 @@
 extern "C" {
 #endif
 
-#include "ulfius.h"
+
+#include "config.h"
 #include "web.h"
+
+#include "ulfius.h"
 
 #define WEB_SERVICE_PORT                8085
 

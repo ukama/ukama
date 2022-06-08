@@ -18,7 +18,7 @@
 #include "usys_string.h"
 
 //TODO
-char *remote_url = "localhost:8091";
+char *gRemoteServer;
 char* gNodeID;
 char* gNodeType;
 
@@ -52,15 +52,16 @@ ServiceHandler find_handler(const char* service, char* notif) {
     return NULL;
 }
 
-int notify_init(char* nodeID, char* nodeType) {
+int notify_init(char* nodeID, char* nodeType, Config* config) {
     gNodeID = usys_strdup(nodeID);
     gNodeType = usys_strdup(nodeType);
+    gRemoteServer = usys_strdup(config->remoteServer);
     return STATUS_OK;
 }
 
 int notify_send_notification(JsonObj* jNotify) {
 
-    return wc_forward_notification(remote_url, "POST", jNotify);
+    return wc_forward_notification(gRemoteServer, "POST", jNotify);
 
 }
 
@@ -156,7 +157,7 @@ void free_noded_details(NodedNotifDetails* notif) {
 
 Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
-    Notification *envlp = usys_malloc(sizeof(Notification));
+    Notification *envlp = usys_calloc(1, sizeof(Notification));
     if (!envlp) {
         return NULL;
     }
