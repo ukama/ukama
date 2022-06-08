@@ -73,5 +73,8 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 	}
 
 	_, err = ch.storage.PutFile(ctx, name, ver, ChunkIndexExtension, resp.Body)
-	return errors.Wrap(err, "failed to save index file")
+	if err != nil {
+		errors.Wrap(err, "failed to save index file")
+	}
+	return nil
 }
