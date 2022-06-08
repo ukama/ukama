@@ -52,7 +52,7 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
+	logrus.Infoln("Connecting to network ", tConfig.RegistryHost)
 	conn, err := grpc.DialContext(ctx, tConfig.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
@@ -186,7 +186,7 @@ func Test_Listener(t *testing.T) {
 }
 
 func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
-	logrus.Infoln("Connecting to registry ", tConfig.RegistryHost)
+	logrus.Infoln("Connecting to network ", tConfig.RegistryHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	conn, err := grpc.DialContext(context, tConfig.RegistryHost, grpc.WithInsecure())

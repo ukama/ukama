@@ -16,7 +16,7 @@ import (
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
@@ -117,7 +117,7 @@ func (r *Router) init() {
 				info.ID = "GetMetrics"
 			}}, metricsProxy)
 
-		// registry
+		// network
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
 		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
 		nodes.PUT("/:node", nil, tonic.Handler(r.addOrUpdateNodeHandler, http.StatusOK))

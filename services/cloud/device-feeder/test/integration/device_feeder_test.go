@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 	pbnet "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
@@ -83,7 +83,7 @@ func Test_FullFlow(t *testing.T) {
 	assert.True(t, isRequesReceived, "Request was not received")
 }
 
-func cleanupData(client pb.RegistryServiceClient, nodes []string) {
+func cleanupData(client pb.NetworkServiceClient, nodes []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	log.Infof("Cleanup data")
@@ -98,18 +98,18 @@ func cleanupData(client pb.RegistryServiceClient, nodes []string) {
 	}
 }
 
-func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClient, []string) {
+func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient, []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	logrus.Infoln("Connecting to registry ", testConf.RegistryHost)
+	logrus.Infoln("Connecting to network ", testConf.RegistryHost)
 	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		assert.FailNow(t, "Failed to connect to registry", err)
+		assert.FailNow(t, "Failed to connect to network", err)
 		return nil, nil, nil
 	}
 
-	c := pb.NewRegistryServiceClient(regConn)
+	c := pb.NewNetworkServiceClient(regConn)
 
 	logrus.Infoln("Connecting to net ", testConf.NetHost)
 	netConn, err := grpc.DialContext(ctx, testConf.NetHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))

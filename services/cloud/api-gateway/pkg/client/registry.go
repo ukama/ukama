@@ -13,7 +13,7 @@ import (
 	"github.com/ukama/ukama/services/common/rest"
 
 	"github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"google.golang.org/grpc"
 )
 
@@ -39,12 +39,12 @@ func NewRegistry(host string, timeout int) *Registry {
 	}
 }
 
-func NewRegistryFromClient(registryClient pb.RegistryServiceClient) *Registry {
+func NewRegistryFromClient(networkClient pb.RegistryServiceClient) *Registry {
 	return &Registry{
 		host:    "localhost",
 		timeout: 1,
 		conn:    nil,
-		client:  registryClient,
+		client:  networkClient,
 	}
 }
 

@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -9,11 +12,9 @@ import (
 	"github.com/ukama/ukama/services/cloud/org-metrics/pkg"
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/metrics"
-	"net/http"
-	"os"
 
 	"github.com/num30/config"
-	reg "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	reg "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 )
 

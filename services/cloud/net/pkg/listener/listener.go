@@ -12,7 +12,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	regpb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	regpb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -30,7 +30,7 @@ type listener struct {
 	nnsClient   pb.NnsClient
 	grpcTimeout int
 	serviceId   string
-	registry    regpb.RegistryServiceClient
+	network     regpb.RegistryServiceClient
 }
 
 type ListenerConfig struct {
@@ -66,7 +66,7 @@ func StartListener(config *ListenerConfig) {
 		config.Queue.Uri[strings.LastIndex(config.Queue.Uri, "@"):], config.NnsGrpcHost)
 	l := listener{
 		nnsClient:   pb.NewNnsClient(nnsConn),
-		registry:    regpb.NewRegistryServiceClient(regConn),
+		network:     regpb.NewRegistryServiceClient(regConn),
 		msgBusConn:  client,
 		grpcTimeout: config.GrpcTimeout,
 		serviceId:   os.Getenv(POD_NAME_ENV_VAR),
@@ -148,12 +148,12 @@ func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.A
 func (l listener) getOrgAndNetwork(nodeId string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(l.grpcTimeout)*time.Second)
 	defer cancel()
-	r, err := l.registry.GetNode(ctx, &regpb.GetNodeRequest{
+	r, err := l.network.GetNode(ctx, &regpb.GetNodeRequest{
 		NodeId: nodeId,
 	})
 
 	if err != nil {
-		logrus.Errorf("Failed to get node from registry. Error: %+v", err)
+		logrus.Errorf("Failed to get node from network. Error: %+v", err)
 		return "", "", errors.Wrap(err, "error getting node")
 	}
 	return r.Org.Name, r.Network.Name, nil

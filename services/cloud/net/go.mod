@@ -13,7 +13,7 @@ require (
 	github.com/rabbitmq/amqp091-go v1.3.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
-	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220329154310-65ca6bcccafc
+	github.com/ukama/ukama/services/cloud/network v0.0.0-20220329154310-65ca6bcccafc
 	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	github.com/wagslane/go-rabbitmq v0.8.1
 	go.etcd.io/etcd/client/v3 v3.5.3
@@ -107,7 +107,7 @@ require (
 
 replace github.com/ukama/ukama/services/common => ../../common
 
-replace github.com/ukama/ukama/services/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/network => ../network
 
 replace github.com/ukama/ukama/services/cloud/net => ./
 

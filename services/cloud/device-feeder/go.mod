@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
 	github.com/ukama/ukama/services/cloud/net v0.0.0-20220422163321-18f195cf8dfa
-	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220422163321-18f195cf8dfa
+	github.com/ukama/ukama/services/cloud/network v0.0.0-20220422163321-18f195cf8dfa
 	github.com/ukama/ukama/services/common v0.0.0-20220422163321-18f195cf8dfa
 	github.com/wagslane/go-rabbitmq v0.8.1
 	google.golang.org/grpc v1.46.0
@@ -76,7 +76,7 @@ replace github.com/ukama/ukama/services/cloud/device-feeder => ./
 
 replace github.com/ukama/ukama/services/cloud/device-feeder/mocks => ./mocks
 
-replace github.com/ukama/ukama/services/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/network => ../network
 
 replace github.com/ukama/ukama/services/cloud/net => ../net
 

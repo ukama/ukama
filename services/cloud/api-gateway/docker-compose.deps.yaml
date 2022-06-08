@@ -22,8 +22,8 @@ services:
     networks:
       - intranet
 
-  registry:
-    image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/registry:latest
+  network:
+    image: 003664043471.dkr.ecr.us-east-1.amazonaws.com/network:latest
     ports:
       - "9090:9090"
     environment:

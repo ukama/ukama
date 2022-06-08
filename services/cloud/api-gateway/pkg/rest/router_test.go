@@ -21,8 +21,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	pbmocks "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	pbmocks "github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
 	usrmocks "github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

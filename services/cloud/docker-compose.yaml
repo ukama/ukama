@@ -33,8 +33,8 @@ services:
     networks:
         - ukama-net
   
-  registry:
-    build: ./registry
+  network:
+    build: ./network
     ports:
       - "9090:9090"
     environment:
@@ -70,7 +70,7 @@ services:
   listener:
     build:
       dockerfile: ./Dockerfile.listener
-      context: ./registry
+      context: ./network
     restart: always
     networks:
       - ukama-net
@@ -87,7 +87,7 @@ services:
     environment:
       - DEBUGMODE=true
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - REGISTRY_HOST=registry:9090
+      - REGISTRY_HOST=network:9090
       - NET_HOST=net:9090
       - DEVICE_PORT=8080
       - LISTENER_THREADS=1

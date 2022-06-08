@@ -1,7 +1,7 @@
 package rest
 
 import (
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 )
 
 // Users group

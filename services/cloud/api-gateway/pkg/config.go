@@ -47,7 +47,7 @@ func NewConfig() *Config {
 
 		Services: GrpcEndpoints{
 			TimeoutSeconds: 5,
-			Registry:       "registry:9090",
+			Registry:       "network:9090",
 			Users:          "users:9090",
 		},
 		HttpServices: HttpEndpoints{

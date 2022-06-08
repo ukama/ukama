@@ -1,14 +1,15 @@
 package pkg
 
 import (
+	"testing"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	regMock "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
-	"testing"
-	"time"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	regMock "github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
 )
 
 func Test_Collect(t *testing.T) {

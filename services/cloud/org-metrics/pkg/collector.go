@@ -2,11 +2,12 @@ package pkg
 
 import (
 	"context"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
-	reg "github.com/ukama/ukama/services/cloud/registry/pb/gen"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
+	reg "github.com/ukama/ukama/services/cloud/network/pb/gen"
 )
 
 func NewMetricsCollector(reg reg.RegistryServiceClient, timeout time.Duration, requestInterval time.Duration) prometheus.Collector {
@@ -37,10 +38,10 @@ func (c *OrgCollector) StartMetricsUpdate() {
 		for {
 			ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 
-			logrus.Infof("Getting data from registry")
+			logrus.Infof("Getting data from network")
 			resp, err := c.reg.List(ctx, &reg.ListRequest{})
 			if err != nil {
-				logrus.Errorf("Error while getting registry list: %v", err)
+				logrus.Errorf("Error while getting network list: %v", err)
 				time.Sleep(c.requestInterval)
 				continue
 			}

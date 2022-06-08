@@ -8,7 +8,7 @@ replace github.com/ukama/ukama/services/metrics/node-metrics => ../../metrics/no
 
 replace github.com/ukama/ukama/services/cloud/api-gateway => ./
 
-replace github.com/ukama/ukama/services/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/network => ../network
 
 replace github.com/ukama/ukama/services/cloud/users => ../users
 
@@ -24,7 +24,7 @@ require (
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
-	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220411114835-b0c45e71a50a
+	github.com/ukama/ukama/services/cloud/network v0.0.0-20220411114835-b0c45e71a50a
 	github.com/ukama/ukama/services/cloud/users v0.0.0-20220512133656-20562212723f
 	github.com/ukama/ukama/services/common v0.0.0-20220425182032-2c377df948f4
 	github.com/vektra/mockery/v2 v2.12.2

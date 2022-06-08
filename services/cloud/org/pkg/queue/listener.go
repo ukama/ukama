@@ -48,17 +48,17 @@ func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId st
 		return nil, err
 	}
 
-	registryConn, err := grpc.Dial(conf.OrgService.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	networkConn, err := grpc.Dial(conf.OrgService.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
 
 	return &QueueListener{
-		orgClient:   pb.NewOrgServiceClient(registryConn),
+		orgClient:   pb.NewOrgServiceClient(networkConn),
 		msgBusConn:  client,
 		grpcTimeout: conf.OrgService.Timeout,
 		serviceId:   serviceId,
-		grpcConn:    registryConn,
+		grpcConn:    networkConn,
 	}, nil
 }
 

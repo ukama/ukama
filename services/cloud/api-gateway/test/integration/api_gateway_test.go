@@ -60,7 +60,7 @@ func Test_RegistryApi(t *testing.T) {
 		}
 	}
 
-	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
+	time.Sleep(3 * time.Second) //give network some time to create a default org for account
 
 	client := resty.New()
 

@@ -32,12 +32,12 @@ func NewUsers(host string, timeout int) *Users {
 	}
 }
 
-func NewTestHssFromClient(registryClient pb.UserServiceClient) *Users {
+func NewTestHssFromClient(networkClient pb.UserServiceClient) *Users {
 	return &Users{
 		host:    "localhost",
 		timeout: 1,
 		conn:    nil,
-		client:  registryClient,
+		client:  networkClient,
 	}
 }
 

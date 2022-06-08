@@ -6,7 +6,7 @@ replace github.com/ukama/ukama/services/common => ../../common
 
 replace github.com/ukama/ukama/services/cloud/org-metrics => ./
 
-replace github.com/ukama/ukama/services/cloud/registry => ../registry
+replace github.com/ukama/ukama/services/cloud/network => ../network
 
 require (
 	github.com/go-resty/resty/v2 v2.7.0
@@ -16,7 +16,7 @@ require (
 	github.com/prometheus/client_model v0.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
-	github.com/ukama/ukama/services/cloud/registry v0.0.0-20220526011617-5910c0a0c79d
+	github.com/ukama/ukama/services/cloud/network v0.0.0-20220526011617-5910c0a0c79d
 	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	github.com/vektra/mockery/v2 v2.12.2
 )
