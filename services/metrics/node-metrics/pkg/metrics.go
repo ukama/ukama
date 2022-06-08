@@ -31,7 +31,7 @@ func (m *Metrics) GetMetric(metricType string, metricFilter *Filter, in *Interva
 
 	_, ok := m.conf.Metrics[metricType]
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, fmt.Errorf("metric type not found")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -65,7 +65,7 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 			return http.StatusInternalServerError, errors.Wrap(err, "failed to process raw query")
 		}
 	} else {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, fmt.Errorf("metric type not found")
 	}
 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
@@ -81,7 +81,7 @@ func (m *Metrics) GetAggregateMetric(metricType string, metricFilter *Filter, w 
 func (m *Metrics) GetLatestMetric(metricType string, metricFilter *Filter, w io.Writer) (httpStatus int, err error) {
 	_, ok := m.conf.Metrics[metricType]
 	if !ok {
-		return http.StatusNotFound, errors.New("metric type not found")
+		return http.StatusNotFound, fmt.Errorf("metric type not found")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
@@ -128,7 +128,7 @@ func (m *Metrics) GetLatestMetric(metricType string, metricFilter *Filter, w io.
 		}
 
 	} else {
-		return http.StatusInternalServerError, errors.New("unexpected response from server")
+		return http.StatusInternalServerError, fmt.Errorf("unexpected response from server")
 	}
 
 	return http.StatusOK, nil
