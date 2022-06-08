@@ -14,12 +14,6 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-//TODO
-//char* noded_host = "localhost";
-//int noded_port = 8095;
-//char* node_info_ep = "/noded/v1/nodeinfo";
-
-
 int wc_send_http_request( URequest* httpReq , UResponse** httpResp) {
     int ret = STATUS_NOK;
 

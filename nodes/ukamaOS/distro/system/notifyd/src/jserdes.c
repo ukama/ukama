@@ -791,7 +791,7 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
     json_object_set_new(*json, JTAG_DESCRIPTION,
                         json_string(notif->description));
 
-    json_object_set_new(*json, JTAG_DATA_TYPE,
+    json_object_set_new(*json, JTAG_EPOCH_TIME,
                     json_integer(notif->epcohTime));
 
     json_object_set_new(*json, JTAG_NOTIF_DETAILS,
