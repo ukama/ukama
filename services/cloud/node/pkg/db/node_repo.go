@@ -1,7 +1,6 @@
 package db
 
 import (
-	sql2 "database/sql"
 	"strings"
 
 	"github.com/ukama/ukama/services/common/sql"
@@ -50,25 +49,6 @@ func (r *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 		return nil, result.Error
 	}
 	return &node, nil
-}
-
-func (r *nodeRepo) mapNodes(rows *sql2.Rows, db *gorm.DB) ([]Node, error) {
-	var nodes []Node
-	defer rows.Close()
-
-	for rows.Next() {
-		var node Node
-
-		// Node columns are mapped correctly
-		err := db.ScanRows(rows, &node)
-		if err != nil {
-			return nil, err
-		}
-
-		nodes = append(nodes, node)
-	}
-
-	return nodes, nil
 }
 
 func (r *nodeRepo) Delete(id ukama.NodeID, nestedFunc ...func() error) error {

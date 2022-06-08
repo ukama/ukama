@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/node/cmd/version"
@@ -8,7 +10,6 @@ import (
 	"github.com/ukama/ukama/services/cloud/node/pkg/queue"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/services/common/metrics"
-	"os"
 )
 
 const serviceName = pkg.ServiceName + "-listener"
@@ -27,5 +28,9 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to create queue listener: %v", err)
 	}
-	listener.StartQueueListening()
+
+	err = listener.StartQueueListening()
+	if err != nil {
+		logrus.Fatalf("Failed to start queue listener: %v", err)
+	}
 }

@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/goombaio/namegenerator"
 	"github.com/jackc/pgconn"
 	"github.com/sirupsen/logrus"
@@ -15,7 +17,6 @@ import (
 	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 type NodeServer struct {
@@ -190,11 +191,6 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	return &pb.AddNodeResponse{
 		Node: dbNodeToPbNode(node),
 	}, nil
-}
-
-func (n *NodeServer) mustEmbedUnimplementedNodeRegistryServiceServer() {
-	//TODO implement me
-	panic("implement me")
 }
 
 func invalidNodeIdError(nodeId string, err error) error {

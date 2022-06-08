@@ -4,6 +4,7 @@ import (
 	cors "github.com/gin-contrib/cors"
 )
 
+// Use this if you don't use github.com/num30/config
 func DefaultHTTPConfig() HttpConfig {
 	return HttpConfig{
 		Port: 8080,
@@ -14,6 +15,6 @@ func DefaultHTTPConfig() HttpConfig {
 }
 
 type HttpConfig struct {
-	Port int `default:"8080"`
-	Cors cors.Config
+	Port int         `default:"8080"`
+	Cors cors.Config `default:"{\"AllowOrigins\": [\"http://localhost\", \"https://localhost\", \"*\"]}"`
 }

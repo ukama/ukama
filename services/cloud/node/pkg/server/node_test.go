@@ -2,10 +2,13 @@ package server
 
 import (
 	"context"
+	"testing"
+
+	"github.com/ukama/ukama/services/common/msgbus/stub"
+
 	mocks "github.com/ukama/ukama/services/cloud/node/mocks"
 	pb "github.com/ukama/ukama/services/cloud/node/pb/gen"
 	"github.com/ukama/ukama/services/cloud/node/pkg/db"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -13,29 +16,10 @@ import (
 )
 
 var testNodeId = ukama.NewVirtualNodeId("HomeNode")
-var testDeviceGatewayHost = "1.1.1.1"
-
-const testOrgName = "org-1"
-const testNetName = "net-1"
-const testNetId = 98
-
-type qPubStub struct {
-}
-
-func (q qPubStub) Publish(payload any, routingKey string) error {
-	return nil
-}
-
-func (q qPubStub) PublishToQueue(queueName string, payload any) error {
-	return nil
-}
-func (q qPubStub) Close() error {
-	return nil
-}
 
 func TestRegistryServer_GetNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	nodeRepo.On("Get", testNodeId).Return(&db.Node{NodeID: testNodeId.String(),
 		State: db.Pending, Type: db.NodeTypeHome,
@@ -52,7 +36,7 @@ func TestRegistryServer_GetNode(t *testing.T) {
 func TestRegistryServer_UpdateNodeState(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 
-	pub := qPubStub{}
+	pub := &stub.QPubStub{}
 
 	nodeRepo.On("Update", testNodeId, mock.MatchedBy(func(ns *db.NodeState) bool {
 		return *ns == db.Onboarded
@@ -72,7 +56,7 @@ func TestRegistryServer_AddNode(t *testing.T) {
 	// Arrange
 	nodeId := testNodeId.String()
 	nodeRepo := &mocks.NodeRepo{}
-	pub := &qPubStub{}
+	pub := &stub.QPubStub{}
 
 	nodeRepo.On("Add", mock.MatchedBy(func(n *db.Node) bool {
 		return n.State == db.Pending && n.NodeID == nodeId

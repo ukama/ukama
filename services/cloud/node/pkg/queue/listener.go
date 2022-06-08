@@ -2,6 +2,11 @@ package queue
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -9,14 +14,11 @@ import (
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/msgbus"
 	pbmesh "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
+
 	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type QueueListener struct {
@@ -25,6 +27,8 @@ type QueueListener struct {
 	grpcTimeout time.Duration
 	serviceId   string
 	serviceName string
+	// keep it to be able to close it
+	grpcConn *grpc.ClientConn
 }
 
 type QueueListenerConfig struct {
@@ -38,7 +42,7 @@ type QueueListenerConfig struct {
 
 func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId string) (*QueueListener, error) {
 
-	registryConn, err := grpc.Dial(conf.Registry.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.Dial(conf.Registry.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
@@ -49,11 +53,12 @@ func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId st
 	}
 
 	return &QueueListener{
-		nodeClient:  pb.NewNodeServiceClient(registryConn),
+		nodeClient:  pb.NewNodeServiceClient(conn),
 		msgBusConn:  client,
 		grpcTimeout: conf.Registry.Timeout,
 		serviceId:   serviceId,
 		serviceName: serviceName,
+		grpcConn:    conn,
 	}, nil
 }
 
@@ -116,4 +121,9 @@ func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery 
 		MessageProcessedMetric()
 		log.Infof("Node %s updated successefully", nodeId.String())
 	}
+}
+
+func (q *QueueListener) Close() {
+	q.msgBusConn.Close()
+	q.grpcConn.Close()
 }

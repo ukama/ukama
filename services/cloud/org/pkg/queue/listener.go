@@ -25,13 +25,13 @@ type QueueListener struct {
 	grpcTimeout time.Duration
 	serviceId   string
 	// keep it here to be able to close it in Close()
-	registryConn *grpc.ClientConn
+	grpcConn *grpc.ClientConn
 }
 
 type QueueListenerConfig struct {
-	Registry struct {
-		Host    string `default:"localhost:9090"`
-		Timeout time.Duration
+	OrgService struct {
+		Host    string        `default:"localhost:9090"`
+		Timeout time.Duration `default:"5s"`
 	}
 	Queue   config.Queue
 	Metrics config.Metrics
@@ -48,17 +48,17 @@ func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId st
 		return nil, err
 	}
 
-	registryConn, err := grpc.Dial(conf.Registry.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	registryConn, err := grpc.Dial(conf.OrgService.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
 
 	return &QueueListener{
-		orgClient:    pb.NewOrgServiceClient(registryConn),
-		msgBusConn:   client,
-		grpcTimeout:  conf.Registry.Timeout,
-		serviceId:    serviceId,
-		registryConn: registryConn,
+		orgClient:   pb.NewOrgServiceClient(registryConn),
+		msgBusConn:  client,
+		grpcTimeout: conf.OrgService.Timeout,
+		serviceId:   serviceId,
+		grpcConn:    registryConn,
 	}, nil
 }
 
@@ -117,5 +117,5 @@ func (q *QueueListener) processUserRegisteredMsg(ctx context.Context, delivery a
 
 func (q *QueueListener) Close() {
 	q.msgBusConn.Close()
-	q.registryConn.Close()
+	q.grpcConn.Close()
 }
