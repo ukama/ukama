@@ -29,6 +29,7 @@ type QueueListener struct {
 	registryClient pb.RegistryServiceClient
 	grpcTimeout    int
 	serviceId      string
+	grpcConn       *grpc.ClientConn
 }
 
 type UserRegisteredBody struct {
@@ -52,6 +53,7 @@ func NewQueueListener(registryGrpcHost string, connectionString string, grpcTime
 		msgBusConn:     client,
 		grpcTimeout:    grpcTimeout,
 		serviceId:      serviceId,
+		grpcConn:       registryConn,
 	}, nil
 }
 
@@ -67,6 +69,8 @@ func (q *QueueListener) StartQueueListening() (err error) {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	log.Info("Shutting down...")
+	q.Close()
 	return nil
 }
 
@@ -142,5 +146,5 @@ func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery 
 
 func (q *QueueListener) Close() {
 	q.msgBusConn.Close()
-	q.registryClient.Close()
+	q.grpcConn.Close()
 }

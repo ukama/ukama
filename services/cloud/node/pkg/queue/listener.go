@@ -73,6 +73,9 @@ func (q *QueueListener) StartQueueListening() (err error) {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	log.Info("Shutting down...")
+	q.msgBusConn.Close()
+
 	return nil
 }
 

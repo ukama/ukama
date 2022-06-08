@@ -62,6 +62,11 @@ func (m *Mailer) Start() error {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	logrus.Info("Shutting down...")
+	err = client.Close()
+	if err != nil {
+		logrus.Errorf("Error closing consumer: %s", err.Error())
+	}
 
 	return nil
 }
@@ -128,4 +133,8 @@ func (m *Mailer) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Act
 
 	metrics.EmailSentSuccessfulRequestMetric()
 	return rabbitmq.Ack
+}
+
+func (m *Mailer) Close() {
+
 }

@@ -103,6 +103,12 @@ func (l listener) startQueueListening() {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	logrus.Info("Shutting down...")
+	err = l.msgBusConn.Close()
+	if err != nil {
+		logrus.Errorf("Error closing queue consumer. Error: %+v", err)
+	}
+
 }
 
 func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Action {
