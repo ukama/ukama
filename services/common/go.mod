@@ -18,6 +18,7 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/loopfz/gadgeto v0.9.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/num30/config v0.0.5
 	github.com/ory/kratos-client-go v0.8.2-alpha.1
 	github.com/penglongli/gin-metrics v0.1.9
 	github.com/prometheus/client_golang v1.12.1
@@ -147,7 +148,6 @@ require (
 	github.com/nbutton23/zxcvbn-go v0.0.0-20210217022336-fa2cb2858354 // indirect
 	github.com/nishanths/exhaustive v0.7.11 // indirect
 	github.com/nishanths/predeclared v0.2.2 // indirect
-	github.com/num30/config v0.0.5 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.0 // indirect
