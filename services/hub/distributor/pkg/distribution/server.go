@@ -11,7 +11,6 @@ import (
 
 	casync "github.com/folbricht/desync"
 	"github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/hub/distributor/pkg"
 	"github.com/ukama/ukama/services/hub/distributor/pkg/chunk"
 )
@@ -79,7 +78,7 @@ func chunkServerStore(serverCfg *pkg.DistributionConfig) (casync.Store, error) {
 
 	// Got to have at least one upstream store
 	if len(stores) == 0 {
-		return nil, errors.New("no store provided")
+		return nil, fmt.Errorf("no store provided")
 	}
 
 	var s casync.Store

@@ -69,7 +69,7 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 			logrus.Errorf("failed to read response body. Error: %+v", err)
 		}
 		logrus.Errorf("response body: %s", string(b))
-		return errors.Errorf("failed to chunk file")
+		return fmt.Errorf("failed to chunk file")
 	}
 
 	_, err = ch.storage.PutFile(ctx, name, ver, ChunkIndexExtension, resp.Body)
