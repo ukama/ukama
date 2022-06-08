@@ -3,11 +3,12 @@ package queue
 import (
 	"context"
 	"encoding/json"
-	"github.com/streadway/amqp"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/streadway/amqp"
 
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -137,4 +138,9 @@ func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery 
 	} else {
 		log.Infof("Node %s updated successefully", nodeId.String())
 	}
+}
+
+func (q *QueueListener) Close() {
+	q.msgBusConn.Close()
+	q.registryClient.Close()
 }

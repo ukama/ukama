@@ -3,6 +3,11 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
@@ -12,10 +17,6 @@ import (
 	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 type QueueListener struct {
@@ -23,6 +24,8 @@ type QueueListener struct {
 	orgClient   pb.OrgServiceClient
 	grpcTimeout time.Duration
 	serviceId   string
+	// keep it here to be able to close it in Close()
+	registryConn *grpc.ClientConn
 }
 
 type QueueListenerConfig struct {
@@ -51,10 +54,11 @@ func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId st
 	}
 
 	return &QueueListener{
-		orgClient:   pb.NewOrgServiceClient(registryConn),
-		msgBusConn:  client,
-		grpcTimeout: conf.Registry.Timeout,
-		serviceId:   serviceId,
+		orgClient:    pb.NewOrgServiceClient(registryConn),
+		msgBusConn:   client,
+		grpcTimeout:  conf.Registry.Timeout,
+		serviceId:    serviceId,
+		registryConn: registryConn,
 	}, nil
 }
 
@@ -109,4 +113,9 @@ func (q *QueueListener) processUserRegisteredMsg(ctx context.Context, delivery a
 	} else {
 		log.Infof("Organization %s added successefully", user.Id)
 	}
+}
+
+func (q *QueueListener) Close() {
+	q.msgBusConn.Close()
+	q.registryConn.Close()
 }
