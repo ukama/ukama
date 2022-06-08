@@ -1,18 +1,18 @@
 # THIS FILE IS GENERATED AUTOMATICALLY BY RUNNING gen-workflow.sh 
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
-name: build-registry
+name: build-network
 on:  
   push:   
     paths:
-        - "services/cloud/registry/**"
-        - ".github/workflows/services-cloud-registry.yaml"
+        - "services/cloud/network/**"
+        - ".github/workflows/services-cloud-network.yaml"
   workflow_dispatch:
 
 jobs:  
   build:
     env: 
-      working-directory: services/cloud/registry
+      working-directory: services/cloud/network
 
     name: build and test
     runs-on: ubuntu-latest
@@ -22,7 +22,7 @@ jobs:
     - name: build app
       uses: ./.github/actions/build-go
       with:
-        registry-name: registry
+        registry-name: cloud/network
         working-directory: ${{ env.working-directory }}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
@@ -33,7 +33,7 @@ jobs:
     name: sonar-scan
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/registry
+      working-directory: services/cloud/network
     steps:
       - uses: actions/checkout@v3
       - name: scan
@@ -42,13 +42,13 @@ jobs:
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: ukama_services_registry
+          project-key: ukama_services_network
 
   lint:
     name: lint
     runs-on: ubuntu-latest
     env: 
-      working-directory: services/cloud/registry
+      working-directory: services/cloud/network
     steps:
       - uses: actions/checkout@v3
       - name: lint
@@ -64,7 +64,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       runs-on: ubuntu-latest
       env:
-        working-directory: services/cloud/registry
+        working-directory: services/cloud/network
       steps:
         - uses: actions/checkout@v3
         
@@ -76,7 +76,7 @@ jobs:
           uses: denispalnitsky/gitops-release@v9
           with:
             filename: "releases/ukamax-helmfile.yaml"
-            key: "registryImageTag"
+            key: "networkImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
             github-org-and-repo: "ukama/infra-as-code"
