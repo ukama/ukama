@@ -1,0 +1,38 @@
+
+#
+# Config file to build mesh.d for the Ukama's Virtual Node.
+#
+
+# Base image to use to build container. Examples are alpine, Ubuntu, etc.
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh"
+	cmd="make"
+	bin_from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh/mesh.d"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+	from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh/configs/config.toml"
+	to="/conf/config.toml"
+
+# for [program:<exec>] in supervisor.conf
+[capp-exec]
+	name="meshd"
+	version="latest"
+	depends_on="bootstrap"
+	wait_for="10s"
+	autostart="true"
+	autorestart="false"
+	bin="mesh.d"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	args="--config /conf/config.toml --mode client"
+
+# Nothing to see here. Move on

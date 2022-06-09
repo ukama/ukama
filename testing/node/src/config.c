@@ -145,6 +145,16 @@ static int read_capp_table(toml_table_t *table, Config *config,
 						DATUM_BOOL | DATUM_MANDATORY)) {
 			return FALSE;
 		}
+
+		if (!read_entry(table, KEY_DEPENDS_ON, &capp->dependsOn, NULL,
+						DATUM_STRING)) {
+			return FALSE;
+		}
+
+		if (!read_entry(table, KEY_WAIT_FOR, &capp->waitFor, NULL,
+						DATUM_STRING)) {
+			return FALSE;
+		}
 	} else {
 		return FALSE;
 	}
@@ -278,20 +288,14 @@ static int read_build_config(Config *config, char *fileName,
 		goto done;
 	}
 
-	ret = read_build_table(buildRootfs, config, TABLE_BUILD_ROOTFS);
-	if (ret == FALSE) {
-		log_error("[%s] section parsing error in config file: %s\n",
+	if (read_build_table(buildRootfs, config, TABLE_BUILD_ROOTFS) == FALSE) {
+	    log_debug("[%s] section parsing error in config file: %s\n",
 				  TABLE_BUILD_ROOTFS, fileName);
-		free_config(config, BUILD_ONLY);
-		goto done;
 	}
 
-	ret = read_build_table(buildConf, config, TABLE_BUILD_CONF);
-	if (ret == FALSE) {
-		log_error("[%s] section parsing error in config file: %s\n",
+	if (read_build_table(buildConf, config, TABLE_BUILD_CONF) == FALSE) {
+		log_debug("[%s] section parsing error in config file: %s\n",
 				  TABLE_BUILD_CONF, fileName);
-		free_config(config, BUILD_ONLY);
-		goto done;
 	}
 
  done:
@@ -503,9 +507,11 @@ static int read_config_file(Config *config, char *fileName, char **error) {
 	/* get all mandatory tables for build and capp */
 	if (!get_table(fileData, TABLE_BUILD_FROM,    &buildFrom))    goto done;
 	if (!get_table(fileData, TABLE_BUILD_COMPILE, &buildCompile)) goto done;
-	if (!get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs))  goto done;
-	if (!get_table(fileData, TABLE_BUILD_CONF,    &buildConf))    goto done;
 	if (!get_table(fileData, TABLE_CAPP_EXEC,     &cappExec))     goto done;
+
+	/* optional table */
+	get_table(fileData, TABLE_BUILD_ROOTFS,  &buildRootfs);
+	get_table(fileData, TABLE_BUILD_CONF,    &buildConf);
 
 	ret = read_build_config(config, fileName, buildFrom, buildCompile,
 							buildRootfs, buildConf);
@@ -569,11 +575,9 @@ void free_config(Config *config, int flag) {
 		if (build->cmd)     free(build->cmd);
 		if (build->binFrom) free(build->binFrom);
 		if (build->binTo)   free(build->binTo);
-
-		if (build->mkdir) free(build->mkdir);
-
-		if (build->from)     free(build->from);
-		if (build->to)       free(build->to);
+		if (build->mkdir)   free(build->mkdir);
+		if (build->from)    free(build->from);
+		if (build->to)      free(build->to);
 
 		free(config->build);
 	}
@@ -588,6 +592,8 @@ void free_config(Config *config, int flag) {
 		if (capp->path)    free(capp->path);
 		if (capp->args)    free(capp->args);
 		if (capp->envs)    free(capp->envs);
+		if (capp->waitFor) free(capp->waitFor);
+		if (capp->dependsOn) free(capp->dependsOn);
 
 		free(config->capp);
 	}
@@ -655,6 +661,12 @@ void log_config(Config *config) {
 			log_debug("\t envs: %s", capp->envs);
 		} else {
 			log_debug("\t No env");
+		}
+		if (capp->dependsOn) {
+			log_debug("\t dependsOn: %s", capp->dependsOn);
+		}
+		if (capp->waitFor) {
+			log_debug("\t waitFor: %s", capp->waitFor);
 		}
 	}
 }
