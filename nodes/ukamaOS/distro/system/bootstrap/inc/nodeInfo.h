@@ -33,7 +33,7 @@
 typedef struct nodeInfo_ {
 
 	char *uuid;
-    char *name;
+	char *name;
 	char *partNumber;
 	char *skew;
 	char *mac;

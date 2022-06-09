@@ -15,9 +15,6 @@
 #include "nodeInfo.h"
 #include "server.h"
 
-#define JSON_STRING  1
-#define JSON_INTEGER 2
-
 #define JSON_NODE_INFO      "nodeInfo"
 #define JSON_UUID           "UUID"
 #define JSON_NAME           "name"

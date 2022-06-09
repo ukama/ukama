@@ -16,8 +16,8 @@
 #include "log.h"
 
 static void log_json(json_t *json);
-static int get_json_entry(json_t *json, char *key, int type, char **strValue,
-						  int *intValue);
+static int get_json_entry(json_t *json, char *key, json_type type,
+						  char **strValue, int *intValue);
 /*
  * log_json --
  *
@@ -37,8 +37,8 @@ static void log_json(json_t *json) {
  * get_json_entry --
  *
  */
-static int get_json_entry(json_t *json, char *key, int type, char **strValue,
-						  int *intValue) {
+static int get_json_entry(json_t *json, char *key, json_type type,
+						  char **strValue, int *intValue) {
 
 	json_t *jEntry=NULL;
 
