@@ -15,6 +15,7 @@ import (
 
 	"github.com/ukama/ukama/services/cloud/network/pkg/server"
 
+	confr "github.com/num30/config"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/services/common/config"
@@ -35,8 +36,15 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = pkg.NewConfig()
-	config.LoadConfig(pkg.ServiceName, svcConf)
+	svcConf = &pkg.Config{
+		DB: config.Database{
+			DbName: pkg.ServiceName,
+		},
+	}
+	err := confr.NewConfReader(pkg.ServiceName).Read(svcConf)
+	if err != nil {
+		log.Fatalf("Failed to read config. Error: %v", err)
+	}
 }
 
 func initDb() sql.Db {

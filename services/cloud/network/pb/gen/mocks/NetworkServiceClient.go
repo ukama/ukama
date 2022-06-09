@@ -18,8 +18,8 @@ type NetworkServiceClient struct {
 	mock.Mock
 }
 
-// AddNetwork provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) AddNetwork(ctx context.Context, in *gen.AddNetworkRequest, opts ...grpc.CallOption) (*gen.NetworkResponse, error) {
+// Add provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ...grpc.CallOption) (*gen.AddResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -29,17 +29,17 @@ func (_m *NetworkServiceClient) AddNetwork(ctx context.Context, in *gen.AddNetwo
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.NetworkResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddNetworkRequest, ...grpc.CallOption) *gen.NetworkResponse); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) *gen.AddResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.NetworkResponse)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddNetworkRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

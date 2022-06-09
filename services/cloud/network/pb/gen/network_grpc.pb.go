@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkServiceClient interface {
-	AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error)
+	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
 	// list all orgs and networks in the network
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
 	AddNode(ctx context.Context, in *AddNodeRequest, opts ...grpc.CallOption) (*AddNodeResponse, error)
@@ -40,9 +40,9 @@ func NewNetworkServiceClient(cc grpc.ClientConnInterface) NetworkServiceClient {
 	return &networkServiceClient{cc}
 }
 
-func (c *networkServiceClient) AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error) {
-	out := new(NetworkResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/AddNetwork", in, out, opts...)
+func (c *networkServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
+	out := new(AddResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/Add", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +107,7 @@ func (c *networkServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, 
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
-	AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error)
+	Add(context.Context, *AddRequest) (*AddResponse, error)
 	// list all orgs and networks in the network
 	List(context.Context, *ListRequest) (*ListResponse, error)
 	AddNode(context.Context, *AddNodeRequest) (*AddNodeResponse, error)
@@ -122,8 +122,8 @@ type NetworkServiceServer interface {
 type UnimplementedNetworkServiceServer struct {
 }
 
-func (UnimplementedNetworkServiceServer) AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddNetwork not implemented")
+func (UnimplementedNetworkServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
 }
 func (UnimplementedNetworkServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
@@ -156,20 +156,20 @@ func RegisterNetworkServiceServer(s grpc.ServiceRegistrar, srv NetworkServiceSer
 	s.RegisterService(&NetworkService_ServiceDesc, srv)
 }
 
-func _NetworkService_AddNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddNetworkRequest)
+func _NetworkService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(NetworkServiceServer).AddNetwork(ctx, in)
+		return srv.(NetworkServiceServer).Add(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/AddNetwork",
+		FullMethod: "/ukama.network.v1.NetworkService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).AddNetwork(ctx, req.(*AddNetworkRequest))
+		return srv.(NetworkServiceServer).Add(ctx, req.(*AddRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -290,8 +290,8 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*NetworkServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddNetwork",
-			Handler:    _NetworkService_AddNetwork_Handler,
+			MethodName: "Add",
+			Handler:    _NetworkService_Add_Handler,
 		},
 		{
 			MethodName: "List",

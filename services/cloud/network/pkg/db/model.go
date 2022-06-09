@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql/driver"
-	uuid "github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -73,9 +72,7 @@ type Network struct {
 
 type Org struct {
 	BaseModel
-	Name        string    `gorm:"uniqueIndex"`
-	Owner       uuid.UUID `gorm:"type:uuid"`
-	Certificate string
+	Name string `gorm:"uniqueIndex"`
 }
 
 type Site struct {

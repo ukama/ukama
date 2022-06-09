@@ -29,13 +29,15 @@ import (
 var tConfig *TestConfig
 var orgName string
 
+const networkName = "test-network"
+
 func init() {
 	// set org name
 	orgName = fmt.Sprintf("network-integration-self-test-org-%d", time.Now().Unix())
 
 	// load config
 	tConfig = &TestConfig{
-		NetworkHost: "localhost:9090",
+		ServiceHost: "localhost:9090",
 		Rabbitmq:    "amqp://guest:guest@localhost:5672",
 	}
 
@@ -46,7 +48,7 @@ func init() {
 }
 
 type TestConfig struct {
-	NetworkHost string
+	ServiceHost string
 	Rabbitmq    string
 }
 
@@ -54,8 +56,8 @@ func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	logrus.Infoln("Connecting to network ", tConfig.NetworkHost)
-	conn, err := grpc.DialContext(ctx, tConfig.NetworkHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+	conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
 		return
@@ -65,11 +67,15 @@ func Test_FullFlow(t *testing.T) {
 
 	// Contact the server and print out its response.
 	node := ukama.NewVirtualNodeId("HomeNode")
+	nodeToDelete := ukama.NewVirtualHomeNodeId()
 
 	var r interface{}
 
 	t.Run("AddNetwork", func(tt *testing.T) {
-		r, err = c.AddNetwork(ctx, &pb.AddNetworkRequest{})
+		r, err = c.Add(ctx, &pb.AddRequest{
+			Name:    networkName,
+			OrgName: orgName,
+		})
 		handleResponse(tt, err, r)
 	})
 
@@ -82,15 +88,29 @@ func Test_FullFlow(t *testing.T) {
 				Name:   nodeName,
 			},
 			OrgName: orgName,
+			Network: networkName,
 		})
-		handleResponse(tt, err, addResp)
-		assert.NotNil(tt, addResp.Node)
-		assert.Equal(tt, nodeName, addResp.Node.Name)
+		if handleResponse(tt, err, addResp) {
+			assert.NotNil(tt, addResp.Node)
+			assert.Equal(tt, nodeName, addResp.Node.Name)
+		}
 
 		r, err = c.UpdateNode(ctx, &pb.UpdateNodeRequest{NodeId: node.String(), Node: &pb.Node{
 			State: pb.NodeState_ONBOARDED,
 		}})
 		handleResponse(tt, err, r)
+
+		// add second node
+		add2, err := c.AddNode(ctx, &pb.AddNodeRequest{
+			Node: &pb.Node{
+				NodeId: nodeToDelete.String(),
+				State:  pb.NodeState_UNDEFINED,
+				Name:   "nodeToDelete",
+			},
+			OrgName: orgName,
+			Network: networkName,
+		})
+		handleResponse(tt, err, add2)
 
 		nodeResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 		if handleResponse(tt, err, nodeResp) {
@@ -103,23 +123,17 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("DeleteNode", func(tt *testing.T) {
-		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: node.String()})
+		r, err = c.DeleteNode(ctx, &pb.DeleteNodeRequest{NodeId: nodeToDelete.String()})
 		handleResponse(tt, err, r)
 
-		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
-			Node: &pb.Node{
-				NodeId: node.String(),
-				State:  pb.NodeState_UNDEFINED,
-			},
-			OrgName: orgName,
-		})
-		handleResponse(tt, err, r)
 	})
 
 	t.Run("GetNodes", func(tt *testing.T) {
 		nodesResp, err := c.GetNodes(ctx, &pb.GetNodesRequest{OrgName: orgName})
 		handleResponse(t, err, nodesResp)
-		if assert.Equal(tt, 3, len(nodesResp.Nodes)) {
+
+		// we added 2 node and deleted 1
+		if assert.Equal(tt, 1, len(nodesResp.Nodes)) {
 			cont := false
 			for _, n := range nodesResp.Nodes {
 				if node.String() == n.NodeId {
@@ -148,7 +162,7 @@ func Test_Listener(t *testing.T) {
 		return
 	}
 
-	_, err = c.AddNetwork(ctx, &pb.AddNetworkRequest{Name: "test-network", OrgName: org})
+	_, err = c.Add(ctx, &pb.AddRequest{Name: "test-network", OrgName: org})
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("org already exist, err %+v\n", err)
@@ -192,10 +206,10 @@ func Test_Listener(t *testing.T) {
 }
 
 func CreateNetworkClient() (*grpc.ClientConn, pb.NetworkServiceClient, error) {
-	logrus.Infoln("Connecting to network ", tConfig.NetworkHost)
+	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	conn, err := grpc.DialContext(context, tConfig.NetworkHost, grpc.WithInsecure())
+	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, err
 	}

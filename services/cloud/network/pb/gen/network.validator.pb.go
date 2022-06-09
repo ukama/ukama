@@ -25,6 +25,9 @@ func (this *AddNodeRequest) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
 		}
 	}
+	if this.OrgName == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OrgName", fmt.Errorf(`value '%v' must not be an empty string`, this.OrgName))
+	}
 	if this.Network == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Network", fmt.Errorf(`value '%v' must not be an empty string`, this.Network))
 	}
@@ -60,13 +63,13 @@ func (this *GetNodesResponse) Validate() error {
 	}
 	return nil
 }
-func (this *AddNetworkRequest) Validate() error {
+func (this *AddRequest) Validate() error {
 	if this.Name == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Name", fmt.Errorf(`value '%v' must not be an empty string`, this.Name))
 	}
 	return nil
 }
-func (this *NetworkResponse) Validate() error {
+func (this *AddResponse) Validate() error {
 	if this.Network != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)

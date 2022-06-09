@@ -2,8 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/base64"
-
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
 
@@ -49,9 +47,23 @@ func NewNetworkServer(orgRepo db2.OrgRepo, nodeRepo db2.NodeRepo, netRepo db2.Ne
 
 const defaultNetworkName = "default"
 
-func generateCertificate() string {
-	logrus.Warning("Certificate generation is not yet implemented")
-	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
+func (r *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	org, err := r.orgRepo.MakeUserOrgExist(req.GetOrgName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	n, err := r.netRepo.Add(org.ID, req.GetName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	return &pb.AddResponse{
+		Network: &pb.Network{
+			Name: n.Name,
+		},
+		Org: req.GetOrgName(),
+	}, nil
 }
 
 func (r *NetworkServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {

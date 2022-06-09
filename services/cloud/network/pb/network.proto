@@ -7,7 +7,7 @@ import "validator.proto";
 package ukama.network.v1;
 
 service NetworkService {        
-    rpc AddNetwork(AddNetworkRequest) returns (NetworkResponse);
+    rpc Add(AddRequest) returns (AddResponse);
     // list all orgs and networks in the network
     rpc List(ListRequest) returns (ListResponse);
 
@@ -45,11 +45,11 @@ message GetNodesResponse{
     repeated Node nodes = 2;
 }
 
-message AddNetworkRequest{
+message AddRequest{
     string name = 1 [(validator.field) = { string_not_empty: true}];
     string orgName = 2;
 }
-message NetworkResponse{
+message AddResponse{
     Network network = 1;
     string org = 2;
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/ukama/ukama/services/common/errors"
 
 	"gorm.io/gorm"
 
@@ -14,6 +15,7 @@ type OrgRepo interface {
 	Add(org *Org, nestedFunc ...func() error) error
 	Get(id int) (*Org, error)
 	GetByName(name string) (*Org, error)
+	MakeUserOrgExist(orgName string) (*Org, error)
 }
 
 type orgRepo struct {
@@ -55,6 +57,25 @@ func (r *orgRepo) GetByName(name string) (*Org, error) {
 	result := r.Db.GetGormDb().First(&org, "name = ?", name)
 	if result.Error != nil {
 		return nil, result.Error
+	}
+	return &org, nil
+}
+
+func (r *orgRepo) MakeUserOrgExist(orgName string) (*Org, error) {
+	org := Org{
+		Name: orgName,
+	}
+	d := r.Db.GetGormDb().First(&org, "name = ?", orgName)
+	if d.Error != nil {
+		if sql.IsNotFoundError(d.Error) {
+			d2 := r.Db.GetGormDb().Create(&org)
+			if d2.Error != nil {
+				return nil, errors.Wrap(d2.Error, "error adding the org")
+			}
+
+		} else {
+			return nil, errors.Wrap(d.Error, "error finding the org")
+		}
 	}
 	return &org, nil
 }
