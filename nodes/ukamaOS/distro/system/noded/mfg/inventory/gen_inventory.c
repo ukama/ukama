@@ -106,7 +106,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x50ul }
             },
             {   .modUuid = "ukma-8001-mask-1102",
-                .modName = "mast",
+                .modName = "mask",
                 .sysFs = "/tmp/sys/bus/i2c/devices/i2c-1/1-0051/eeprom",
                 .eepromCfg = &(DevI2cCfg){ .bus = 1, .add = 0x51ul }
             },
