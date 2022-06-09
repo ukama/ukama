@@ -14,16 +14,10 @@
 extern "C" {
 #endif
 
-
 #include "config.h"
 #include "web.h"
 
 #include "ulfius.h"
-
-#define WEB_SERVICE_PORT                8085
-
-#define WEB_SOCKETS                     1
-#define WEB_SERVICE                     0
 
 #define EP_BS                           "/"
 #define WEBSERVICE                      "notify"

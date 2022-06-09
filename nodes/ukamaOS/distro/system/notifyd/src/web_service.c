@@ -10,6 +10,7 @@
 #include "web_service.h"
 
 #include "jserdes.h"
+#include "notification.h"
 #include "service.h"
 
 #include "usys_error.h"

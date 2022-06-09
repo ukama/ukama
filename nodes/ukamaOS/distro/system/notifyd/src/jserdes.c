@@ -663,7 +663,7 @@ int json_serialize_error(JsonObj **json, int code, const char *str) {
 
     *json = json_object();
     if (!json) {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     json_object_set_new(*json, JTAG_ERROR, json_object());
@@ -675,7 +675,7 @@ int json_serialize_error(JsonObj **json, int code, const char *str) {
         json_object_set_new(jError, JTAG_ERROR_CSTRING, json_string(str));
 
     } else {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     return ret;
@@ -687,7 +687,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
 
     *json = json_object();
     if (!json) {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     if (!apiList) {
@@ -713,7 +713,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
         }
 
     } else {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     return ret;
@@ -727,7 +727,7 @@ int json_serialize_noded_alert_details(JsonObj **json,
 
     *json = json_object();
     if (!json) {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     if (!details) {
@@ -766,7 +766,7 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
 
     *json = json_object();
     if (!json) {
-        return ERR_JSON_CRETATION_ERR;
+        return ERR_JSON_CREATION_ERR;
     }
 
     if (!details) {

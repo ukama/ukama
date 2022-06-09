@@ -13,7 +13,6 @@
 #include "config.h"
 #include "notify.h"
 #include "jserdes.h"
-#include "json_types.h"
 
 typedef int (*ServiceHandler)(JsonObj* json, char* type);
 

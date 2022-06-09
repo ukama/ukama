@@ -20,8 +20,8 @@ extern "C" {
 #include "jansson.h"
 
 /* JSON types used by parser */
-typedef  json_t  JsonObj;
-typedef  json_error_t JsonErrObj;
+typedef  json_t         JsonObj;
+typedef  json_error_t   JsonErrObj;
 
 #define MAX_JSON_SCHEMA     5
 

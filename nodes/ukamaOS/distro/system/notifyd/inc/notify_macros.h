@@ -10,14 +10,14 @@
 #ifndef NOTIFY_MACROS_H_
 #define NOTIFY_MACROS_H_
 
-#define SERVICE_NAME          "NotifyD"
-#define STATUS_OK             (0)
-#define STATUS_NOK            (-1)
+#define SERVICE_NAME           "NotifyD"
+#define STATUS_OK              (0)
+#define STATUS_NOK             (-1)
 
-#define MAX_SERVICE_COUNT     (32)
+#define MAX_SERVICE_COUNT      (32)
 
-#define NOTIFICATION_ALERT    "alert"
-#define NOTIFICATION_EVENT    "event"
+#define NOTIFICATION_ALERT     "alert"
+#define NOTIFICATION_EVENT     "event"
 
 #define DEF_LOG_LEVEL          "TRACE"
 #define DEF_SERVICE_PORT       "8085"

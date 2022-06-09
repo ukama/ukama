@@ -10,6 +10,7 @@
 #ifndef INC_CONFIG_H_
 #define INC_CONFIG_H_
 
+/* Service configuration */
 typedef struct {
   char* name;
   int port;
@@ -17,7 +18,6 @@ typedef struct {
   int nodedPort;
   char* nodedEP;
   char* remoteServer;
-
 } Config;
 
 

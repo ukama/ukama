@@ -22,8 +22,6 @@
 #define JSON_ENCODING_OK               JSON_OK
 #define JSON_DECODING_OK               JSON_OK
 
-#define JSON_TYPE_STRING  1
-#define JSON_TYPE_INTEGER 2
 
 /**
  * @fn      bool json_deserialize_boolean_object(const JsonObj*, const char*, bool*)

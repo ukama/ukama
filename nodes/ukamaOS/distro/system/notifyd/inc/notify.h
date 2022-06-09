@@ -12,6 +12,7 @@
 
 #include <usys_types.h>
 
+/* Generic notification sent from the NotifyD to remote server */
 typedef struct {
     char* serviceName;
     char* notificationType;
@@ -23,6 +24,7 @@ typedef struct {
     uint32_t epcohTime;
 } Notification;
 
+/* Noded Sepecific notifications */
 typedef struct {
    char* serviceName;
    char* severity;
@@ -35,9 +37,5 @@ typedef struct {
    double* deviceAttrValue;
    char* units;
 } NodedNotifDetails;
-
-
-
-
 
 #endif /* INC_NOTIFY_H_ */
