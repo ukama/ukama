@@ -221,7 +221,7 @@ static inline int usys_memcmp(void *ptr1, void *ptr2, size_t num) {
 }
 
 /**
- * @fn      int usys_strdup(char*)
+ * @fn      char* usys_strdup(char*)
  * @brief   Returns a pointer to a null-terminated byte string,
  *          which is a duplicate of the string pointed to by str
  *
