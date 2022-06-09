@@ -321,9 +321,8 @@ create_sysfs_for_module() {
 usage() {
 	echo "./prepare_env.sh [option]"
 	echo "Options:"
-	echo " -c | --clean		Clean the sysfs dir."
-	echo " -u | --unittype          Create sysfs for unit type.
-					Valid unit types: cnode-lte/anode"
+	echo " -c | --clean		Clean the sysfs dir"
+	echo " -u | --unittype        Create sysfs for unit (hnode, tnode, anode)"
 }
      	
 clean_sysfs_dir() {
@@ -341,19 +340,19 @@ case ${UNITTYPE} in
 		echo "Creating sysfs for homeNode {Modules: TRX}"
 		# TRX
 		cd ${SYSFSDIR}
-		create_sysfs_for_module "cnode" 2 0
+		create_sysfs_for_module "hnode" 2 0
 		;;
 	"tnode")
 		echo "Creating sysfs for toweNode {Modules: COM, TRX, MASK}"
 		# COM
 		cd ${SYSFSDIR}
-		create_sysfs_for_module "cnode" 1 1
+		create_sysfs_for_module "tnode" 1 1
 		# TRX
 		cd ${SYSFSDIR}
-		create_sysfs_for_module "cnode" 2 0
+		create_sysfs_for_module "tnode" 2 0
 		# MASK
 		cd ${SYSFSDIR}
-		create_sysfs_for_module "cnode" 3 0
+		create_sysfs_for_module "tnode" 3 0
 		;;
 	"anode")				
 		echo "Creating sysfs for amplifierNode {Modules: CTRL, FE}"
@@ -362,7 +361,7 @@ case ${UNITTYPE} in
 		create_sysfs_for_module "anode" 4 0
 		cd ${SYSFSDIR}
 		# CTRL
-		create_sysfs_for_module  "anode" 5 1
+		create_sysfs_for_module "anode" 5 1
 		;;
 	*)
 		echo "Wrong Unit Type."
