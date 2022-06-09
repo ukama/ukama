@@ -16,21 +16,21 @@ type OrgServiceServer struct {
 	mock.Mock
 }
 
-// AddOrg provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) AddOrg(_a0 context.Context, _a1 *gen.AddOrgRequest) (*gen.AddOrgResponse, error) {
+// Add provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) Add(_a0 context.Context, _a1 *gen.AddRequest) (*gen.AddResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.AddOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddOrgRequest) *gen.AddOrgResponse); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.AddResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddOrgResponse)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddOrgRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -39,21 +39,44 @@ func (_m *OrgServiceServer) AddOrg(_a0 context.Context, _a1 *gen.AddOrgRequest) 
 	return r0, r1
 }
 
-// GetOrg provides a mock function with given fields: _a0, _a1
-func (_m *OrgServiceServer) GetOrg(_a0 context.Context, _a1 *gen.GetOrgRequest) (*gen.GetOrgResponse, error) {
+// Delete provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.DeleteResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 *gen.GetOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgRequest) *gen.GetOrgResponse); ok {
+	var r0 *gen.DeleteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) *gen.DeleteResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetOrgResponse)
+			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetOrgRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *OrgServiceServer) Get(_a0 context.Context, _a1 *gen.GetRequest) (*gen.GetResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest) *gen.GetResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

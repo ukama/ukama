@@ -35,6 +35,20 @@ func (_m *OrgRepo) Add(org *db.Org, nestedFunc ...func() error) error {
 	return r0
 }
 
+// Delete provides a mock function with given fields: name
+func (_m *OrgRepo) Delete(name string) error {
+	ret := _m.Called(name)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: id
 func (_m *OrgRepo) Get(id int) (*db.Org, error) {
 	ret := _m.Called(id)

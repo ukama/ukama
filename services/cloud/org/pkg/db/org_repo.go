@@ -14,6 +14,7 @@ type OrgRepo interface {
 	Add(org *Org, nestedFunc ...func() error) error
 	Get(id int) (*Org, error)
 	GetByName(name string) (*Org, error)
+	Delete(name string) error
 }
 
 type orgRepo struct {
@@ -57,4 +58,8 @@ func (r *orgRepo) GetByName(name string) (*Org, error) {
 		return nil, result.Error
 	}
 	return &org, nil
+}
+
+func (r *orgRepo) Delete(name string) error {
+	return r.Db.GetGormDb().Delete(&Org{}, "name = ?", name).Error
 }

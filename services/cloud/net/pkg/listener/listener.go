@@ -30,7 +30,7 @@ type listener struct {
 	nnsClient   pb.NnsClient
 	grpcTimeout int
 	serviceId   string
-	network     regpb.RegistryServiceClient
+	network     regpb.NetworkServiceClient
 }
 
 type ListenerConfig struct {
@@ -38,7 +38,7 @@ type ListenerConfig struct {
 	Queue             config.Queue
 	GrpcTimeout       int
 	NnsGrpcHost       string
-	RegistryHost      string
+	NetworkHost       string
 }
 
 func NewLiseterConfig() *ListenerConfig {
@@ -46,9 +46,9 @@ func NewLiseterConfig() *ListenerConfig {
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@localhost:5672/",
 		},
-		NnsGrpcHost:  "localhost:9090",
-		RegistryHost: "localhost:9090",
-		GrpcTimeout:  3,
+		NnsGrpcHost: "localhost:9090",
+		NetworkHost: "localhost:9090",
+		GrpcTimeout: 3,
 	}
 }
 
@@ -60,13 +60,13 @@ func StartListener(config *ListenerConfig) {
 	}
 
 	nnsConn := newGrpcConnection(config.NnsGrpcHost, config.GrpcTimeout)
-	regConn := newGrpcConnection(config.RegistryHost, config.GrpcTimeout)
+	regConn := newGrpcConnection(config.NetworkHost, config.GrpcTimeout)
 
 	logrus.Infof("Creating listener. Queue: %s. Nns: %s",
 		config.Queue.Uri[strings.LastIndex(config.Queue.Uri, "@"):], config.NnsGrpcHost)
 	l := listener{
 		nnsClient:   pb.NewNnsClient(nnsConn),
-		network:     regpb.NewRegistryServiceClient(regConn),
+		network:     regpb.NewNetworkServiceClient(regConn),
 		msgBusConn:  client,
 		grpcTimeout: config.GrpcTimeout,
 		serviceId:   os.Getenv(POD_NAME_ENV_VAR),

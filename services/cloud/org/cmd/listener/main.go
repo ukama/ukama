@@ -23,9 +23,9 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to read config: %v", err)
 	}
-	metrics.StartMetricsServer(&conf.Metrics)
+	metrics.StartMetricsServer(conf.Metrics)
 
-	listener, err := queue.NewQueueListener(conf, serviceName, os.Getenv("POD_NAME"))
+	listener, err := queue.NewQueueListener(conf, os.Getenv("POD_NAME"))
 	if err != nil {
 		logrus.Fatalf("Failed to create queue listener: %v", err)
 	}

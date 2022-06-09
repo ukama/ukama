@@ -18,8 +18,8 @@ type OrgServiceClient struct {
 	mock.Mock
 }
 
-// AddOrg provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgRequest, opts ...grpc.CallOption) (*gen.AddOrgResponse, error) {
+// Add provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) Add(ctx context.Context, in *gen.AddRequest, opts ...grpc.CallOption) (*gen.AddResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -29,17 +29,17 @@ func (_m *OrgServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgRequest, o
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.AddOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddOrgRequest, ...grpc.CallOption) *gen.AddOrgResponse); ok {
+	var r0 *gen.AddResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) *gen.AddResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddOrgResponse)
+			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddOrgRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -48,8 +48,8 @@ func (_m *OrgServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgRequest, o
 	return r0, r1
 }
 
-// GetOrg provides a mock function with given fields: ctx, in, opts
-func (_m *OrgServiceClient) GetOrg(ctx context.Context, in *gen.GetOrgRequest, opts ...grpc.CallOption) (*gen.GetOrgResponse, error) {
+// Delete provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) Delete(ctx context.Context, in *gen.DeleteRequest, opts ...grpc.CallOption) (*gen.DeleteResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -59,17 +59,47 @@ func (_m *OrgServiceClient) GetOrg(ctx context.Context, in *gen.GetOrgRequest, o
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
 
-	var r0 *gen.GetOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgRequest, ...grpc.CallOption) *gen.GetOrgResponse); ok {
+	var r0 *gen.DeleteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest, ...grpc.CallOption) *gen.DeleteResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetOrgResponse)
+			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetOrgRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Get provides a mock function with given fields: ctx, in, opts
+func (_m *OrgServiceClient) Get(ctx context.Context, in *gen.GetRequest, opts ...grpc.CallOption) (*gen.GetResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) *gen.GetResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	uuid2 "github.com/google/uuid"
 	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -65,18 +64,12 @@ func Test_FullFlow(t *testing.T) {
 	c := pb.NewNetworkServiceClient(conn)
 
 	// Contact the server and print out its response.
-	ownerId := uuid2.NewString()
 	node := ukama.NewVirtualNodeId("HomeNode")
 
 	var r interface{}
 
-	t.Run("AddOrg", func(tt *testing.T) {
-		r, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId})
-		handleResponse(tt, err, r)
-	})
-
-	t.Run("GetOrg", func(tt *testing.T) {
-		r, err = c.GetOrg(ctx, &pb.GetOrgRequest{Name: orgName})
+	t.Run("AddNetwork", func(tt *testing.T) {
+		r, err = c.AddNetwork(ctx, &pb.AddNetworkRequest{})
 		handleResponse(tt, err, r)
 	})
 
@@ -144,7 +137,6 @@ func Test_Listener(t *testing.T) {
 	// Arrange
 	org := "network-listener-integration-test-org"
 	nodeId := "UK-SA2136-HNODE-A1-30DF"
-	ownerId := "474bd2c3-77a0-49f2-a143-dd840dce2c91"
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -156,7 +148,7 @@ func Test_Listener(t *testing.T) {
 		return
 	}
 
-	_, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: org, Owner: ownerId})
+	_, err = c.AddNetwork(ctx, &pb.AddNetworkRequest{Name: "test-network", OrgName: org})
 	e, ok := status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("org already exist, err %+v\n", err)
@@ -166,7 +158,8 @@ func Test_Listener(t *testing.T) {
 	}
 	_, err = c.AddNode(ctx, &pb.AddNodeRequest{Node: &pb.Node{
 		NodeId: nodeId, State: pb.NodeState_UNDEFINED,
-	}, OrgName: org})
+	}, OrgName: org,
+	})
 	e, ok = status.FromError(err)
 	if ok && e.Code() == codes.AlreadyExists {
 		logrus.Infof("node already exist, err %+v\n", err)

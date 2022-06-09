@@ -16,10 +16,10 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *GetOrgRequest) Validate() error {
+func (this *GetRequest) Validate() error {
 	return nil
 }
-func (this *GetOrgResponse) Validate() error {
+func (this *GetResponse) Validate() error {
 	if this.Org != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Org); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Org", err)
@@ -36,7 +36,7 @@ func (this *Organization) Validate() error {
 	}
 	return nil
 }
-func (this *AddOrgRequest) Validate() error {
+func (this *AddRequest) Validate() error {
 	if nil == this.Org {
 		return github_com_mwitkow_go_proto_validators.FieldError("Org", fmt.Errorf("message must exist"))
 	}
@@ -47,11 +47,17 @@ func (this *AddOrgRequest) Validate() error {
 	}
 	return nil
 }
-func (this *AddOrgResponse) Validate() error {
+func (this *AddResponse) Validate() error {
 	if this.Org != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Org); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Org", err)
 		}
 	}
+	return nil
+}
+func (this *DeleteRequest) Validate() error {
+	return nil
+}
+func (this *DeleteResponse) Validate() error {
 	return nil
 }

@@ -22,8 +22,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrgServiceClient interface {
-	GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*GetOrgResponse, error)
-	AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error)
+	Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error)
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type orgServiceClient struct {
@@ -34,18 +35,27 @@ func NewOrgServiceClient(cc grpc.ClientConnInterface) OrgServiceClient {
 	return &orgServiceClient{cc}
 }
 
-func (c *orgServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*GetOrgResponse, error) {
-	out := new(GetOrgResponse)
-	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/GetOrg", in, out, opts...)
+func (c *orgServiceClient) Get(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
+	out := new(GetResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/Get", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *orgServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error) {
-	out := new(AddOrgResponse)
-	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/AddOrg", in, out, opts...)
+func (c *orgServiceClient) Add(ctx context.Context, in *AddRequest, opts ...grpc.CallOption) (*AddResponse, error) {
+	out := new(AddResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/Add", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orgServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/ukama.org.v1.OrgService/Delete", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,8 +66,9 @@ func (c *orgServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, opts .
 // All implementations must embed UnimplementedOrgServiceServer
 // for forward compatibility
 type OrgServiceServer interface {
-	GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error)
-	AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error)
+	Get(context.Context, *GetRequest) (*GetResponse, error)
+	Add(context.Context, *AddRequest) (*AddResponse, error)
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 	mustEmbedUnimplementedOrgServiceServer()
 }
 
@@ -65,11 +76,14 @@ type OrgServiceServer interface {
 type UnimplementedOrgServiceServer struct {
 }
 
-func (UnimplementedOrgServiceServer) GetOrg(context.Context, *GetOrgRequest) (*GetOrgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrg not implemented")
+func (UnimplementedOrgServiceServer) Get(context.Context, *GetRequest) (*GetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
-func (UnimplementedOrgServiceServer) AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddOrg not implemented")
+func (UnimplementedOrgServiceServer) Add(context.Context, *AddRequest) (*AddResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Add not implemented")
+}
+func (UnimplementedOrgServiceServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (UnimplementedOrgServiceServer) mustEmbedUnimplementedOrgServiceServer() {}
 
@@ -84,38 +98,56 @@ func RegisterOrgServiceServer(s grpc.ServiceRegistrar, srv OrgServiceServer) {
 	s.RegisterService(&OrgService_ServiceDesc, srv)
 }
 
-func _OrgService_GetOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrgRequest)
+func _OrgService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).GetOrg(ctx, in)
+		return srv.(OrgServiceServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.org.v1.OrgService/GetOrg",
+		FullMethod: "/ukama.org.v1.OrgService/Get",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).GetOrg(ctx, req.(*GetOrgRequest))
+		return srv.(OrgServiceServer).Get(ctx, req.(*GetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OrgService_AddOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddOrgRequest)
+func _OrgService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrgServiceServer).AddOrg(ctx, in)
+		return srv.(OrgServiceServer).Add(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/ukama.org.v1.OrgService/AddOrg",
+		FullMethod: "/ukama.org.v1.OrgService/Add",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrgServiceServer).AddOrg(ctx, req.(*AddOrgRequest))
+		return srv.(OrgServiceServer).Add(ctx, req.(*AddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrgService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrgServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.org.v1.OrgService/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrgServiceServer).Delete(ctx, req.(*DeleteRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -128,12 +160,16 @@ var OrgService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*OrgServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetOrg",
-			Handler:    _OrgService_GetOrg_Handler,
+			MethodName: "Get",
+			Handler:    _OrgService_Get_Handler,
 		},
 		{
-			MethodName: "AddOrg",
-			Handler:    _OrgService_AddOrg_Handler,
+			MethodName: "Add",
+			Handler:    _OrgService_Add_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _OrgService_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

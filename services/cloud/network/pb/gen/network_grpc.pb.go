@@ -22,8 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NetworkServiceClient interface {
-	AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error)
-	GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*Organization, error)
 	AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error)
 	// list all orgs and networks in the network
 	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
@@ -31,6 +29,7 @@ type NetworkServiceClient interface {
 	DeleteNode(ctx context.Context, in *DeleteNodeRequest, opts ...grpc.CallOption) (*DeleteNodeResponse, error)
 	GetNodes(ctx context.Context, in *GetNodesRequest, opts ...grpc.CallOption) (*GetNodesResponse, error)
 	UpdateNode(ctx context.Context, in *UpdateNodeRequest, opts ...grpc.CallOption) (*UpdateNodeResponse, error)
+	GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error)
 }
 
 type networkServiceClient struct {
@@ -39,24 +38,6 @@ type networkServiceClient struct {
 
 func NewNetworkServiceClient(cc grpc.ClientConnInterface) NetworkServiceClient {
 	return &networkServiceClient{cc}
-}
-
-func (c *networkServiceClient) AddOrg(ctx context.Context, in *AddOrgRequest, opts ...grpc.CallOption) (*AddOrgResponse, error) {
-	out := new(AddOrgResponse)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/AddOrg", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *networkServiceClient) GetOrg(ctx context.Context, in *GetOrgRequest, opts ...grpc.CallOption) (*Organization, error) {
-	out := new(Organization)
-	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetOrg", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *networkServiceClient) AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*NetworkResponse, error) {
@@ -113,12 +94,19 @@ func (c *networkServiceClient) UpdateNode(ctx context.Context, in *UpdateNodeReq
 	return out, nil
 }
 
+func (c *networkServiceClient) GetNode(ctx context.Context, in *GetNodeRequest, opts ...grpc.CallOption) (*GetNodeResponse, error) {
+	out := new(GetNodeResponse)
+	err := c.cc.Invoke(ctx, "/ukama.network.v1.NetworkService/GetNode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NetworkServiceServer is the server API for NetworkService service.
 // All implementations must embed UnimplementedNetworkServiceServer
 // for forward compatibility
 type NetworkServiceServer interface {
-	AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error)
-	GetOrg(context.Context, *GetOrgRequest) (*Organization, error)
 	AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error)
 	// list all orgs and networks in the network
 	List(context.Context, *ListRequest) (*ListResponse, error)
@@ -126,6 +114,7 @@ type NetworkServiceServer interface {
 	DeleteNode(context.Context, *DeleteNodeRequest) (*DeleteNodeResponse, error)
 	GetNodes(context.Context, *GetNodesRequest) (*GetNodesResponse, error)
 	UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error)
+	GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error)
 	mustEmbedUnimplementedNetworkServiceServer()
 }
 
@@ -133,12 +122,6 @@ type NetworkServiceServer interface {
 type UnimplementedNetworkServiceServer struct {
 }
 
-func (UnimplementedNetworkServiceServer) AddOrg(context.Context, *AddOrgRequest) (*AddOrgResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddOrg not implemented")
-}
-func (UnimplementedNetworkServiceServer) GetOrg(context.Context, *GetOrgRequest) (*Organization, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetOrg not implemented")
-}
 func (UnimplementedNetworkServiceServer) AddNetwork(context.Context, *AddNetworkRequest) (*NetworkResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddNetwork not implemented")
 }
@@ -157,6 +140,9 @@ func (UnimplementedNetworkServiceServer) GetNodes(context.Context, *GetNodesRequ
 func (UnimplementedNetworkServiceServer) UpdateNode(context.Context, *UpdateNodeRequest) (*UpdateNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNode not implemented")
 }
+func (UnimplementedNetworkServiceServer) GetNode(context.Context, *GetNodeRequest) (*GetNodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNode not implemented")
+}
 func (UnimplementedNetworkServiceServer) mustEmbedUnimplementedNetworkServiceServer() {}
 
 // UnsafeNetworkServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -168,42 +154,6 @@ type UnsafeNetworkServiceServer interface {
 
 func RegisterNetworkServiceServer(s grpc.ServiceRegistrar, srv NetworkServiceServer) {
 	s.RegisterService(&NetworkService_ServiceDesc, srv)
-}
-
-func _NetworkService_AddOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddOrgRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NetworkServiceServer).AddOrg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/AddOrg",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).AddOrg(ctx, req.(*AddOrgRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NetworkService_GetOrg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetOrgRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NetworkServiceServer).GetOrg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/ukama.network.v1.NetworkService/GetOrg",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NetworkServiceServer).GetOrg(ctx, req.(*GetOrgRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _NetworkService_AddNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -314,6 +264,24 @@ func _NetworkService_UpdateNode_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NetworkService_GetNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NetworkServiceServer).GetNode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.network.v1.NetworkService/GetNode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NetworkServiceServer).GetNode(ctx, req.(*GetNodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NetworkService_ServiceDesc is the grpc.ServiceDesc for NetworkService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -321,14 +289,6 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "ukama.network.v1.NetworkService",
 	HandlerType: (*NetworkServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "AddOrg",
-			Handler:    _NetworkService_AddOrg_Handler,
-		},
-		{
-			MethodName: "GetOrg",
-			Handler:    _NetworkService_GetOrg_Handler,
-		},
 		{
 			MethodName: "AddNetwork",
 			Handler:    _NetworkService_AddNetwork_Handler,
@@ -352,6 +312,10 @@ var NetworkService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateNode",
 			Handler:    _NetworkService_UpdateNode_Handler,
+		},
+		{
+			MethodName: "GetNode",
+			Handler:    _NetworkService_GetNode_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

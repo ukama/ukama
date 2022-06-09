@@ -62,29 +62,6 @@ func (_m *NetworkServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeReq
 	return r0, r1
 }
 
-// AddOrg provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) AddOrg(_a0 context.Context, _a1 *gen.AddOrgRequest) (*gen.AddOrgResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.AddOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddOrgRequest) *gen.AddOrgResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddOrgResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddOrgRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteNode provides a mock function with given fields: _a0, _a1
 func (_m *NetworkServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -108,6 +85,29 @@ func (_m *NetworkServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteN
 	return r0, r1
 }
 
+// GetNode provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) GetNode(_a0 context.Context, _a1 *gen.GetNodeRequest) (*gen.GetNodeResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.GetNodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest) *gen.GetNodeResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetNodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodes provides a mock function with given fields: _a0, _a1
 func (_m *NetworkServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesRequest) (*gen.GetNodesResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -123,29 +123,6 @@ func (_m *NetworkServiceServer) GetNodes(_a0 context.Context, _a1 *gen.GetNodesR
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetOrg provides a mock function with given fields: _a0, _a1
-func (_m *NetworkServiceServer) GetOrg(_a0 context.Context, _a1 *gen.GetOrgRequest) (*gen.Organization, error) {
-	ret := _m.Called(_a0, _a1)
-
-	var r0 *gen.Organization
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgRequest) *gen.Organization); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Organization)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetOrgRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

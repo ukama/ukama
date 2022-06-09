@@ -32,9 +32,9 @@ type QueueListener struct {
 	grpcConn      *grpc.ClientConn
 }
 
-type UserRegisteredBody struct {
-	Id    string `json:"id"`
-	Email string `json:"email"`
+type OrgCreatedBody struct {
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
 }
 
 func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeout int, serviceId string) (*QueueListener, error) {
@@ -58,9 +58,8 @@ func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeo
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-
 	err = q.msgBusConn.SubscribeToServiceQueue("network-listener", msgbus.DeviceQ.Exchange,
-		[]msgbus.RoutingKey{msgbus.DeviceConnectedRoutingKey, msgbus.UserRegisteredRoutingKey}, q.serviceId, q.incomingMessageHandler)
+		[]msgbus.RoutingKey{msgbus.DeviceConnectedRoutingKey, msgbus.OrgCreatedRoutingKey}, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for a queue messages. Error: %+v", err)
 		return err
@@ -84,8 +83,8 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	case string(msgbus.DeviceConnectedRoutingKey):
 		q.processDeviceConnectedMsg(ctx, delivery)
 
-	case string(msgbus.UserRegisteredRoutingKey):
-		q.processUserRegisteredMsg(ctx, delivery)
+	case string(msgbus.OrgCreatedRoutingKey):
+		q.processOrgCreatedMsg(ctx, delivery)
 
 	default:
 		log.Warning("No handler for routing key ", delivery.RoutingKey)
@@ -94,22 +93,22 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	done <- true
 }
 
-func (q *QueueListener) processUserRegisteredMsg(ctx context.Context, delivery amqp.Delivery) {
-	user := &UserRegisteredBody{}
-	err := json.Unmarshal(delivery.Body, user)
+func (q *QueueListener) processOrgCreatedMsg(ctx context.Context, delivery amqp.Delivery) {
+	org := &OrgCreatedBody{}
+	err := json.Unmarshal(delivery.Body, org)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return
 	}
-	_, err = q.networkClient.AddOrg(ctx, &pb.AddOrgRequest{
-		Name:  user.Id,
-		Owner: user.Id,
+	_, err = q.networkClient.AddNetwork(ctx, &pb.AddNetworkRequest{
+		Name:    "default",
+		OrgName: org.Name,
 	}, grpc_retry.WithMax(3))
 
 	if err != nil {
-		log.Errorf("Failed to add organization '%s'. Error: %v", user.Id, err)
+		log.Errorf("Failed to add organization '%s'. Error: %v", org.Name, err)
 	} else {
-		log.Infof("Organization %s added successefully", user.Id)
+		log.Infof("Organization %s added successefully", org.Name)
 	}
 }
 

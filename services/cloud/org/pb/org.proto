@@ -8,15 +8,16 @@ import "validator.proto";
 
 
 service OrgService {
-    rpc GetOrg(GetOrgRequest) returns (GetOrgResponse);
-    rpc AddOrg(AddOrgRequest) returns (AddOrgResponse);
+    rpc Get(GetRequest) returns (GetResponse);
+    rpc Add(AddRequest) returns (AddResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
 }
 
-message GetOrgRequest {
+message GetRequest {
     string name = 1;
 }
 
-message GetOrgResponse{
+message GetResponse{
     Organization org = 1;
 }
 
@@ -26,10 +27,17 @@ message Organization {
     string certificate = 3;
 }
 
-message AddOrgRequest{
+message AddRequest{
     Organization org = 1 [(validator.field) = {msg_exists : true}];
 }
 
-message AddOrgResponse{
+message AddResponse{
     Organization org = 1;
+}
+
+message DeleteRequest{
+    string name = 1;
+}
+message DeleteResponse{
+
 }

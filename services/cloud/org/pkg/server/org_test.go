@@ -15,6 +15,8 @@ import (
 
 var testDeviceGatewayHost = "1.1.1.1"
 
+const testOrgName = "test-org"
+
 func TestOrgServer_AddOrg(t *testing.T) {
 	// Arrange
 	orgName := "org-1"
@@ -34,7 +36,7 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	s := NewOrgServer(orgRepo, bootstrapClient, testDeviceGatewayHost, pub)
 
 	// Act
-	res, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Org: &pb.Organization{
+	res, err := s.Add(context.TODO(), &pb.AddRequest{Org: &pb.Organization{
 		Name: orgName, Owner: ownerId,
 	}})
 
@@ -44,4 +46,39 @@ func TestOrgServer_AddOrg(t *testing.T) {
 	assert.Equal(t, ownerId, res.Org.Owner)
 	orgRepo.AssertExpectations(t)
 	bootstrapClient.AssertExpectations(t)
+}
+
+func TestNetworkServer_GetOrg(t *testing.T) {
+	orgName := "org-1"
+
+	orgRepo := &mocks.OrgRepo{}
+	pub := &stub.QPubStub{}
+	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
+
+	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	org, err := s.Get(context.TODO(), &pb.GetRequest{Name: orgName})
+	assert.NoError(t, err)
+	assert.Equal(t, orgName, org.GetOrg().GetName())
+	orgRepo.AssertExpectations(t)
+}
+
+func TestNetworkServer_AddOrg_fails_without_owner_id(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	pub := &stub.QPubStub{}
+	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	_, err := s.Add(context.TODO(), &pb.AddRequest{
+		Org: &pb.Organization{Name: testOrgName},
+	})
+	assert.Error(t, err)
+}
+
+func TestNetworkServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
+	orgName := "org-1"
+	orgRepo := &mocks.OrgRepo{}
+	pub := &stub.QPubStub{}
+	s := NewOrgServer(orgRepo, &bstmock.Client{}, testDeviceGatewayHost, pub)
+	_, err := s.Add(context.TODO(), &pb.AddRequest{
+		Org: &pb.Organization{Name: orgName},
+	})
+	assert.Error(t, err)
 }

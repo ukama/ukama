@@ -78,36 +78,6 @@ func (_m *NetworkServiceClient) AddNode(ctx context.Context, in *gen.AddNodeRequ
 	return r0, r1
 }
 
-// AddOrg provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) AddOrg(ctx context.Context, in *gen.AddOrgRequest, opts ...grpc.CallOption) (*gen.AddOrgResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.AddOrgResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddOrgRequest, ...grpc.CallOption) *gen.AddOrgResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddOrgResponse)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddOrgRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteNode provides a mock function with given fields: ctx, in, opts
 func (_m *NetworkServiceClient) DeleteNode(ctx context.Context, in *gen.DeleteNodeRequest, opts ...grpc.CallOption) (*gen.DeleteNodeResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -138,6 +108,36 @@ func (_m *NetworkServiceClient) DeleteNode(ctx context.Context, in *gen.DeleteNo
 	return r0, r1
 }
 
+// GetNode provides a mock function with given fields: ctx, in, opts
+func (_m *NetworkServiceClient) GetNode(ctx context.Context, in *gen.GetNodeRequest, opts ...grpc.CallOption) (*gen.GetNodeResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 *gen.GetNodeResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) *gen.GetNodeResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetNodeResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodeRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodes provides a mock function with given fields: ctx, in, opts
 func (_m *NetworkServiceClient) GetNodes(ctx context.Context, in *gen.GetNodesRequest, opts ...grpc.CallOption) (*gen.GetNodesResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -160,36 +160,6 @@ func (_m *NetworkServiceClient) GetNodes(ctx context.Context, in *gen.GetNodesRe
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetNodesRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetOrg provides a mock function with given fields: ctx, in, opts
-func (_m *NetworkServiceClient) GetOrg(ctx context.Context, in *gen.GetOrgRequest, opts ...grpc.CallOption) (*gen.Organization, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	var r0 *gen.Organization
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetOrgRequest, ...grpc.CallOption) *gen.Organization); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.Organization)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetOrgRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

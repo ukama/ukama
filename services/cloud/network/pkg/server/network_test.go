@@ -21,42 +21,6 @@ const testOrgName = "org-1"
 const testNetName = "net-1"
 const testNetId = 98
 
-func TestNetworkServer_GetOrg(t *testing.T) {
-	orgName := "org-1"
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := &mocks.NetRepo{}
-	pub := &stub.QPubStub{}
-	orgRepo.On("GetByName", mock.Anything).Return(&db.Org{Name: orgName}, nil).Once()
-
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	org, err := s.GetOrg(context.TODO(), &pb.GetOrgRequest{Name: orgName})
-	assert.NoError(t, err)
-	assert.Equal(t, orgName, org.Name)
-	orgRepo.AssertExpectations(t)
-}
-
-func TestNetworkServer_AddOrg_fails_without_owner_id(t *testing.T) {
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := createNetRepoMock()
-	pub := &stub.QPubStub{}
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: testOrgName})
-	assert.Error(t, err)
-}
-
-func TestNetworkServer_AddOrg_fails_with_bad_owner_id(t *testing.T) {
-	orgName := "org-1"
-	nodeRepo := &mocks.NodeRepo{}
-	orgRepo := &mocks.OrgRepo{}
-	netRepo := createNetRepoMock()
-	pub := &stub.QPubStub{}
-	s := NewNetworkServer(orgRepo, nodeRepo, netRepo, &bstmock.Client{}, pub)
-	_, err := s.AddOrg(context.TODO(), &pb.AddOrgRequest{Name: orgName})
-	assert.Error(t, err)
-}
-
 func TestNetworkServer_UpdateNode(t *testing.T) {
 	nodeRepo := &mocks.NodeRepo{}
 	orgRepo := &mocks.OrgRepo{}

@@ -16,17 +16,6 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *AddOrgRequest) Validate() error {
-	return nil
-}
-func (this *AddOrgResponse) Validate() error {
-	if this.Org != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Org); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Org", err)
-		}
-	}
-	return nil
-}
 func (this *AddNodeRequest) Validate() error {
 	if nil == this.Node {
 		return github_com_mwitkow_go_proto_validators.FieldError("Node", fmt.Errorf("message must exist"))
@@ -47,9 +36,6 @@ func (this *AddNodeResponse) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
 		}
 	}
-	return nil
-}
-func (this *GetOrgRequest) Validate() error {
 	return nil
 }
 func (this *DeleteNodeRequest) Validate() error {
@@ -89,9 +75,6 @@ func (this *NetworkResponse) Validate() error {
 	return nil
 }
 func (this *Network) Validate() error {
-	return nil
-}
-func (this *Organization) Validate() error {
 	return nil
 }
 func (this *Node) Validate() error {
@@ -142,6 +125,22 @@ func (this *UpdateNodeResponse) Validate() error {
 	if this.Node != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+		}
+	}
+	return nil
+}
+func (this *GetNodeRequest) Validate() error {
+	return nil
+}
+func (this *GetNodeResponse) Validate() error {
+	if this.Node != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Node); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Node", err)
+		}
+	}
+	if this.Network != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Network); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
 		}
 	}
 	return nil

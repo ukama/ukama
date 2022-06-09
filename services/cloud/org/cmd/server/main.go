@@ -19,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
+	uconf "github.com/ukama/ukama/services/common/config"
 
 	ugrpc "github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
@@ -39,7 +40,9 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	svcConf = &pkg.Config{}
+	svcConf = &pkg.Config{
+		DB: &uconf.Database{DbName: pkg.ServiceName},
+	}
 	// We change only DB name. Rest of the fields is set by default.
 	svcConf.DB.DbName = pkg.ServiceName
 

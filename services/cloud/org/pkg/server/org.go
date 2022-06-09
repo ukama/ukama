@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
 	pb "github.com/ukama/ukama/services/cloud/org/pb/gen"
-	"github.com/ukama/ukama/services/cloud/org/pkg"
 	"github.com/ukama/ukama/services/cloud/org/pkg/db"
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -23,8 +22,7 @@ type OrgServer struct {
 	bootstrapClient bootstrap.Client
 	deviceGatewayIp string
 
-	queuePub       msgbus.QPub
-	baseRoutingKey msgbus.RoutingKeyBuilder
+	queuePub msgbus.QPub
 }
 
 func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
@@ -35,11 +33,10 @@ func NewOrgServer(orgRepo db.OrgRepo, bootstrapClient bootstrap.Client,
 		bootstrapClient: bootstrapClient,
 		deviceGatewayIp: deviceGatewayIp,
 		queuePub:        publisher,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetContainer(pkg.ServiceName),
 	}
 }
 
-func (r *OrgServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.AddOrgResponse, error) {
+func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
 	logrus.Infof("Adding org %v", req)
 	if len(req.GetOrg().GetOwner()) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "owner id cannot be empty")
@@ -64,11 +61,37 @@ func (r *OrgServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.AddO
 
 	orgResp := &pb.Organization{Name: req.GetOrg().GetName(), Owner: req.GetOrg().GetOwner()}
 
-	r.pubEventAsync(orgResp, r.baseRoutingKey.SetActionCreate().SetObject("org").MustBuild())
+	r.pubEventAsync(orgResp, msgbus.OrgCreatedRoutingKey)
 
-	return &pb.AddOrgResponse{
+	return &pb.AddResponse{
 		Org: orgResp,
 	}, nil
+}
+
+func (r *OrgServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+	logrus.Infof("Getting org %v", req)
+	org, err := r.orgRepo.GetByName(req.GetName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	return &pb.GetResponse{
+		Org: &pb.Organization{
+			Owner: org.Owner.String(),
+			Name:  org.Name,
+		},
+	}, nil
+}
+
+func (r *OrgServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	logrus.Infof("Deleting org %v", req)
+	err := r.orgRepo.Delete(req.GetName())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	r.pubEventAsync(&pb.Organization{Name: req.GetName()}, msgbus.OrgDeletedRoutingKey)
+	return &pb.DeleteResponse{}, nil
 }
 
 func generateCertificate() string {
@@ -76,9 +99,9 @@ func generateCertificate() string {
 	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
 }
 
-func (r *OrgServer) pubEventAsync(payload any, key string) {
+func (r *OrgServer) pubEventAsync(payload any, key msgbus.RoutingKey) {
 	go func() {
-		err := r.queuePub.Publish(payload, key)
+		err := r.queuePub.Publish(payload, string(key))
 		if err != nil {
 			logrus.Errorf("Failed to publish event. Error %s", err.Error())
 		}

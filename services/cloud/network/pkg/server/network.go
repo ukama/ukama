@@ -54,21 +54,6 @@ func generateCertificate() string {
 	return base64.StdEncoding.EncodeToString([]byte("Test certificate"))
 }
 
-func (r *NetworkServer) GetOrg(ctx context.Context, request *pb.GetOrgRequest) (*pb.Organization, error) {
-	logrus.Infof("Getting org %v", request)
-	org, err := r.orgRepo.GetByName(request.Name)
-	if err != nil {
-		if sql.IsNotFoundError(err) {
-			return nil, status.Errorf(codes.NotFound, "Organization not found")
-		}
-
-		logrus.Error(err)
-		return nil, status.Errorf(codes.Internal, err.Error())
-	}
-
-	return &pb.Organization{Name: org.Name, Owner: org.Owner.String()}, nil
-}
-
 func (r *NetworkServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	logrus.Infof("Listing orgs")
 	orgs, err := r.netRepo.List()

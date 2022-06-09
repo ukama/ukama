@@ -15,11 +15,12 @@ service NetworkService {
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
+    rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
 }
 
 message AddNodeRequest{
     Node node = 1  [(validator.field) = {msg_exists : true}];
-    string  orgName = 2;
+    string  orgName = 2 [(validator.field) = { string_not_empty: true}];
     string network = 3 [(validator.field) = { string_not_empty: true}];
 }
 
@@ -50,6 +51,7 @@ message AddNetworkRequest{
 }
 message NetworkResponse{
     Network network = 1;
+    string org = 2;
 }
 
 message Network {
@@ -88,6 +90,16 @@ message  UpdateNodeRequest{
 
 message UpdateNodeResponse {
     Node Node = 1;
+}
+
+message GetNodeRequest{
+    string nodeId = 1;
+}
+
+message GetNodeResponse{
+    Node node = 1;
+    string org = 2;
+    Network network = 3;
 }
 
 enum NodeState {
