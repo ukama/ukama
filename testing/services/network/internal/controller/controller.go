@@ -55,16 +55,6 @@ func NewController(d db.VNodeRepo) *Controller {
 		return nil
 	}
 
-	/* For test */
-	pods, err := cset.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		logrus.Errorf("error getting pods: %v\n", err)
-		return nil
-	}
-	for _, pod := range pods.Items {
-		logrus.Tracef("Pod name: %s\n", pod.Name)
-	}
-
 	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.Queue.Uri)
 	if err != nil {
 		logrus.Errorf("error getting message publisher: %s\n", err.Error())
