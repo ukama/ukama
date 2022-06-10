@@ -849,13 +849,22 @@ const Home = () => {
                             networkStatusRes?.getNetworkStatus?.status ||
                             undefined
                         }
-                        duration={
-                            networkStatusRes?.getNetworkStatus?.uptime ||
+                        liveNodes={
+                            networkStatusRes?.getNetworkStatus?.liveNode ||
+                            undefined
+                        }
+                        totalNodes={
+                            networkStatusRes?.getNetworkStatus?.totalNodes ||
                             undefined
                         }
                     />
                 </Grid>
-                <Grid item container columnSpacing={{ xs: 1.5, md: 3 }}>
+                <Grid
+                    item
+                    container
+                    columnSpacing={{ xs: 1.5, md: 3 }}
+                    rowSpacing={{ xs: 1.5, md: 3 }}
+                >
                     <Grid item xs={4} md={6} lg={4}>
                         <StatusCard
                             Icon={UsersWithBG}

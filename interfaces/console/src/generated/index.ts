@@ -422,8 +422,9 @@ export enum Node_Type {
 
 export type NetworkDto = {
   __typename?: 'NetworkDto';
+  liveNode: Scalars['Float'];
   status: Network_Status;
-  uptime: Scalars['Float'];
+  totalNodes: Scalars['Float'];
 };
 
 export type NetworkResponse = {
@@ -770,12 +771,12 @@ export type GetUserQuery = { __typename?: 'Query', getUser: { __typename?: 'GetU
 export type GetNetworkStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworkStatusQuery = { __typename?: 'Query', getNetworkStatus: { __typename?: 'NetworkDto', uptime: number, status: Network_Status } };
+export type GetNetworkStatusQuery = { __typename?: 'Query', getNetworkStatus: { __typename?: 'NetworkDto', totalNodes: number, liveNode: number, status: Network_Status } };
 
 export type GetNetworkStatusSSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetNetworkStatusSSubscription = { __typename?: 'Subscription', getNetworkStatus: { __typename?: 'NetworkDto', uptime: number, status: Network_Status } };
+export type GetNetworkStatusSSubscription = { __typename?: 'Subscription', getNetworkStatus: { __typename?: 'NetworkDto', totalNodes: number, liveNode: number, status: Network_Status } };
 
 export type DeactivateUserMutationVariables = Exact<{
   id: Scalars['String'];
@@ -1394,7 +1395,8 @@ export type GetUserQueryResult = Apollo.QueryResult<GetUserQuery, GetUserQueryVa
 export const GetNetworkStatusDocument = gql`
     query getNetworkStatus {
   getNetworkStatus {
-    uptime
+    totalNodes
+    liveNode
     status
   }
 }
@@ -1429,7 +1431,8 @@ export type GetNetworkStatusQueryResult = Apollo.QueryResult<GetNetworkStatusQue
 export const GetNetworkStatusSDocument = gql`
     subscription getNetworkStatusS {
   getNetworkStatus {
-    uptime
+    totalNodes
+    liveNode
     status
   }
 }

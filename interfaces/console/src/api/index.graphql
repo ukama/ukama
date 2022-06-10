@@ -135,14 +135,16 @@ query getUser($userId: String!) {
 
 query getNetworkStatus {
     getNetworkStatus {
-        uptime
+        totalNodes
+        liveNode
         status
     }
 }
 
 subscription getNetworkStatusS {
     getNetworkStatus {
-        uptime
+        totalNodes
+        liveNode
         status
     }
 }
