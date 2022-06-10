@@ -6,5 +6,5 @@ export interface INetworkService {
 }
 
 export interface INetworkMapper {
-    dtoToDto(res: MetricLatestValueRes): NetworkDto;
+    dtoToDto(totalNodes: number, liveNodes: MetricLatestValueRes): NetworkDto;
 }

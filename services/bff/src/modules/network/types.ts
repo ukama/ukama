@@ -4,7 +4,10 @@ import { NETWORK_STATUS } from "../../constants";
 @ObjectType()
 export class NetworkDto {
     @Field()
-    uptime: number;
+    liveNode: number;
+
+    @Field()
+    totalNodes: number;
 
     @Field(() => NETWORK_STATUS)
     status: NETWORK_STATUS;

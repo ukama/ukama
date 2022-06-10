@@ -12,16 +12,28 @@ const logger = setupLogger("service");
 @Service()
 export class NetworkService implements INetworkService {
     getNetworkStatus = async (cookie: ParsedCookie): Promise<NetworkDto> => {
-        const res = await catchAsyncIOMethod({
+        const resLiveNodes = await catchAsyncIOMethod({
             type: API_METHOD_TYPE.GET,
-            path: `${SERVER.ORG}/${cookie.orgId}/metrics/live-status`,
+            path: `${SERVER.ORG}/${cookie.orgId}/metrics/live-nodes`,
             headers: cookie.header,
         });
-        if (checkError(res)) {
-            logger.error(res);
-            throw new Error(res.message);
+        const resTotalNodes = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.GET,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes`,
+            headers: cookie.header,
+        });
+        if (checkError(resLiveNodes)) {
+            logger.error(resLiveNodes);
+            throw new Error(resLiveNodes.message);
+        }
+        if (checkError(resTotalNodes)) {
+            logger.error(resTotalNodes);
+            throw new Error(resTotalNodes.message);
         }
 
-        return NetworkMapper.dtoToDto(res.data.result[0]);
+        return NetworkMapper.dtoToDto(
+            resTotalNodes.nodes.length,
+            resLiveNodes.data.result[0]
+        );
     };
 }
