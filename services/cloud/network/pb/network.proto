@@ -10,12 +10,14 @@ service NetworkService {
     rpc Add(AddRequest) returns (AddResponse);
     // list all orgs and networks in the network
     rpc List(ListRequest) returns (ListResponse);
+    rpc Delete(DeleteRequest) returns (DeleteResponse);
 
     rpc AddNode(AddNodeRequest) returns (AddNodeResponse);
     rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse);
     rpc GetNodes(GetNodesRequest) returns (GetNodesResponse);
     rpc UpdateNode(UpdateNodeRequest) returns (UpdateNodeResponse);
     rpc GetNode(GetNodeRequest) returns (GetNodeResponse);
+
 }
 
 message AddNodeRequest{
@@ -115,3 +117,10 @@ enum NodeType{
     AMPLIFIER = 3;
 }
 
+message DeleteRequest{
+    string orgName = 1;
+    string name = 2;
+}
+
+message DeleteResponse{
+}

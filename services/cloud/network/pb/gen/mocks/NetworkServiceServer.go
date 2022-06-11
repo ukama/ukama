@@ -62,6 +62,29 @@ func (_m *NetworkServiceServer) AddNode(_a0 context.Context, _a1 *gen.AddNodeReq
 	return r0, r1
 }
 
+// Delete provides a mock function with given fields: _a0, _a1
+func (_m *NetworkServiceServer) Delete(_a0 context.Context, _a1 *gen.DeleteRequest) (*gen.DeleteResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 *gen.DeleteResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteRequest) *gen.DeleteResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteNode provides a mock function with given fields: _a0, _a1
 func (_m *NetworkServiceServer) DeleteNode(_a0 context.Context, _a1 *gen.DeleteNodeRequest) (*gen.DeleteNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)

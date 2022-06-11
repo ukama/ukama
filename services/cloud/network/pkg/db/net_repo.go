@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/ukama/ukama/services/cloud/network/pkg"
 
 	"github.com/ukama/ukama/services/common/sql"
 	"github.com/ukama/ukama/services/common/validation"
@@ -10,10 +11,11 @@ import (
 
 type NetRepo interface {
 	Get(orgName string, network string) (*Network, error)
-	Add(orgId uint32, network string) (*Network, error)
+	Add(orgId uint, network string) (*Network, error)
 	// List gets list of org, networks and node count by type
 	// returns map[org][network][nodeType]=nodeCount
 	List() (map[string]map[string]map[NodeType]int, error)
+	Delete(orgName string, network string) error
 }
 
 type netRepo struct {
@@ -61,7 +63,7 @@ where n.deleted_at IS NULL and o.deleted_at IS NULL and
 	return &nt, nil
 }
 
-func (n netRepo) Add(orgId uint32, network string) (*Network, error) {
+func (n netRepo) Add(orgId uint, network string) (*Network, error) {
 	db := n.Db.GetGormDb()
 	if !validation.IsValidDnsLabelName(network) {
 		return nil, fmt.Errorf("invalid name. must be less then 253 " +
@@ -110,4 +112,28 @@ group by o.id , n.id, nd.type`).Rows()
 		result[org][network][nodeType] = nodes
 	}
 	return result, nil
+}
+
+func (n netRepo) Delete(orgName string, network string) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		txGorm := sql.NewDbFromGorm(tx, pkg.IsDebugMode)
+		txr := NewNetRepo(txGorm)
+
+		net, err := txr.Get(orgName, network)
+		if err != nil {
+			return err
+		}
+		err = tx.Delete(net).Error
+		if err != nil {
+			return err
+		}
+
+		err = tx.Where("network_id = ?", net.ID).Delete(&Node{}).Error
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err
 }

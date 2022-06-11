@@ -252,6 +252,39 @@ func (r *NetworkServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (
 	return resp, nil
 }
 
+func (r *NetworkServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+	logrus.Infof("Get node %s", req.NodeId)
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+
+	nd, err := r.nodeRepo.Get(nId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+	return &pb.GetNodeResponse{
+		Node: dbNodeToPbNode(nd),
+		Network: &pb.Network{
+			Name: nd.Network.Name,
+		},
+		Org: nd.Network.Org.Name,
+	}, nil
+}
+
+func (r *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	logrus.Infof("Deleting network %s", req.Name)
+	err := r.netRepo.Delete(req.OrgName, req.Name)
+	if err != nil {
+		logrus.Error(err)
+		return nil, grpc.SqlErrorToGrpc(err, "network")
+	}
+
+	resp := &pb.DeleteResponse{}
+	r.pubEvent(resp, r.baseRoutingKey.SetActionDelete().SetObject("network").MustBuild())
+	return resp, nil
+}
+
 func (r *NetworkServer) pubEvent(payload any, key string) {
 	go func() {
 		err := r.queuePub.Publish(payload, key)

@@ -61,7 +61,10 @@ func (r *OrgServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespons
 
 	orgResp := &pb.Organization{Name: req.GetOrg().GetName(), Owner: req.GetOrg().GetOwner()}
 
-	r.pubEventAsync(orgResp, msgbus.OrgCreatedRoutingKey)
+	r.pubEventAsync(&msgbus.OrgCreatedBody{
+		Name:  orgResp.Name,
+		Owner: orgResp.Owner,
+	}, msgbus.OrgCreatedRoutingKey)
 
 	return &pb.AddResponse{
 		Org: orgResp,

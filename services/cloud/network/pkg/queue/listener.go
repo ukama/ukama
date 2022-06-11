@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"github.com/ukama/ukama/services/cloud/network/pkg"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,9 +15,6 @@ import (
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 
-	pbmesh "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
-	"google.golang.org/protobuf/proto"
-
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/msgbus"
@@ -27,17 +25,12 @@ import (
 type QueueListener struct {
 	msgBusConn    msgbus.Consumer
 	networkClient pb.NetworkServiceClient
-	grpcTimeout   int
+	grpcTimeout   time.Duration
 	serviceId     string
 	grpcConn      *grpc.ClientConn
 }
 
-type OrgCreatedBody struct {
-	Name  string `json:"name"`
-	Owner string `json:"owner"`
-}
-
-func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeout int, serviceId string) (*QueueListener, error) {
+func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeout time.Duration, serviceId string) (*QueueListener, error) {
 	client, err := msgbus.NewConsumerClient(connectionString)
 	if err != nil {
 		return nil, err
@@ -58,8 +51,8 @@ func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeo
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
-	err = q.msgBusConn.SubscribeToServiceQueue("network-listener", msgbus.DeviceQ.Exchange,
-		[]msgbus.RoutingKey{msgbus.DeviceConnectedRoutingKey, msgbus.OrgCreatedRoutingKey}, q.serviceId, q.incomingMessageHandler)
+	err = q.msgBusConn.SubscribeToServiceQueue(pkg.ServiceName+"-listener", msgbus.DefaultExchange,
+		[]msgbus.RoutingKey{msgbus.NodeUpdatedRoutingKey, msgbus.OrgCreatedRoutingKey}, q.serviceId, q.incomingMessageHandler)
 	if err != nil {
 		log.Errorf("Error subscribing for a queue messages. Error: %+v", err)
 		return err
@@ -75,13 +68,13 @@ func (q *QueueListener) StartQueueListening() (err error) {
 
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(q.grpcTimeout))
+	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
 	defer cancel()
 
 	switch delivery.RoutingKey {
 
-	case string(msgbus.DeviceConnectedRoutingKey):
-		q.processDeviceConnectedMsg(ctx, delivery)
+	case string(msgbus.NodeUpdatedRoutingKey):
+		q.processNodeUpdatedMsg(ctx, delivery)
 
 	case string(msgbus.OrgCreatedRoutingKey):
 		q.processOrgCreatedMsg(ctx, delivery)
@@ -94,13 +87,13 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 }
 
 func (q *QueueListener) processOrgCreatedMsg(ctx context.Context, delivery amqp.Delivery) {
-	org := &OrgCreatedBody{}
+	org := &msgbus.OrgCreatedBody{}
 	err := json.Unmarshal(delivery.Body, org)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return
 	}
-	_, err = q.networkClient.AddNetwork(ctx, &pb.AddNetworkRequest{
+	_, err = q.networkClient.Add(ctx, &pb.AddRequest{
 		Name:    "default",
 		OrgName: org.Name,
 	}, grpc_retry.WithMax(3))
@@ -112,27 +105,39 @@ func (q *QueueListener) processOrgCreatedMsg(ctx context.Context, delivery amqp.
 	}
 }
 
-func (q *QueueListener) processDeviceConnectedMsg(ctx context.Context, delivery amqp.Delivery) {
-	link := &pbmesh.Link{}
-	err := proto.Unmarshal(delivery.Body, link)
+func (q *QueueListener) processNodeUpdatedMsg(ctx context.Context, delivery amqp.Delivery) {
+	body := &msgbus.NodeUpdateBody{}
+	err := json.Unmarshal(delivery.Body, body)
 	if err != nil {
 		log.Errorf("Error unmarshaling message. Error %v", err)
 		return
 	}
 
 	log.Debugf("Updating node %+v", delivery)
-	nodeId, err := ukama.ValidateNodeId(link.GetNodeId())
+	nodeId, err := ukama.ValidateNodeId(body.NodeId)
 	if err != nil {
 		log.Errorf("Invalid Node ID format. Error %v", err)
 		return
 	}
 
+	nd := &pb.Node{}
+	if body.State != "" {
+		if ist, ok := pb.NodeState_value[body.State]; ok {
+			nd.State = pb.NodeState(ist)
+		} else {
+			log.Errorf("Invalid node state %s", body.State)
+			nd.State = pb.NodeState_UNDEFINED
+			return
+		}
+	}
+	if len(body.Name) != 0 {
+		nd.Name = body.Name
+	}
+
 	_, err = q.networkClient.UpdateNode(ctx,
 		&pb.UpdateNodeRequest{
 			NodeId: nodeId.String(),
-			Node: &pb.Node{
-				State: pb.NodeState_ONBOARDED,
-			},
+			Node:   nd,
 		},
 		grpc_retry.WithMax(3))
 

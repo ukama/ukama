@@ -81,6 +81,29 @@ func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	return r0, r1
 }
 
+// MakeUserOrgExist provides a mock function with given fields: orgName
+func (_m *OrgRepo) MakeUserOrgExist(orgName string) (*db.Org, error) {
+	ret := _m.Called(orgName)
+
+	var r0 *db.Org
+	if rf, ok := ret.Get(0).(func(string) *db.Org); ok {
+		r0 = rf(orgName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.Org)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(orgName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewOrgRepo creates a new instance of OrgRepo. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewOrgRepo(t testing.TB) *OrgRepo {
 	mock := &OrgRepo{}

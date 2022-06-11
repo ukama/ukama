@@ -49,33 +49,30 @@ func (e NodeType) Value() (driver.Value, error) {
 }
 
 type Node struct {
-	ID        uint32 `gorm:"primary_key"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
-	NodeID    string         `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
-	Name      string         `gorm:"type:string;uniqueIndex:node_name_network_idx"`
-	NetworkID uint32         `gorm:"uniqueIndex:node_name_network_idx"`
+	gorm.Model
+	NodeID    string `gorm:"type:string;uniqueIndex:node_id_idx_case_insensitive,expression:lower(node_id),where:deleted_at is null;size:23"`
+	Name      string `gorm:"type:string;uniqueIndex:node_name_network_idx"`
+	NetworkID uint   `gorm:"uniqueIndex:node_name_network_idx"`
 	Network   *Network
-	SiteID    *uint32
+	SiteID    *uint
 	State     NodeState `gorm:"type:uint;not null"`
 	Type      NodeType  `gorm:"type:uint;not null"`
 }
 
 type Network struct {
-	BaseModel
+	gorm.Model
 	Nodes []Node
 	Name  string `gorm:"uniqueIndex:network_name_org_idx"`
-	OrgID uint32 `gorm:"uniqueIndex:network_name_org_idx"`
+	OrgID uint   `gorm:"uniqueIndex:network_name_org_idx"`
 	Org   *Org
 }
 
 type Org struct {
-	BaseModel
+	gorm.Model
 	Name string `gorm:"uniqueIndex"`
 }
 
 type Site struct {
-	BaseModel
+	gorm.Model
 	Nodes []Node
 }

@@ -15,11 +15,11 @@ type NetRepo struct {
 }
 
 // Add provides a mock function with given fields: orgId, network
-func (_m *NetRepo) Add(orgId uint32, network string) (*db.Network, error) {
+func (_m *NetRepo) Add(orgId uint, network string) (*db.Network, error) {
 	ret := _m.Called(orgId, network)
 
 	var r0 *db.Network
-	if rf, ok := ret.Get(0).(func(uint32, string) *db.Network); ok {
+	if rf, ok := ret.Get(0).(func(uint, string) *db.Network); ok {
 		r0 = rf(orgId, network)
 	} else {
 		if ret.Get(0) != nil {
@@ -28,13 +28,27 @@ func (_m *NetRepo) Add(orgId uint32, network string) (*db.Network, error) {
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(uint32, string) error); ok {
+	if rf, ok := ret.Get(1).(func(uint, string) error); ok {
 		r1 = rf(orgId, network)
 	} else {
 		r1 = ret.Error(1)
 	}
 
 	return r0, r1
+}
+
+// Delete provides a mock function with given fields: orgName, network
+func (_m *NetRepo) Delete(orgName string, network string) error {
+	ret := _m.Called(orgName, network)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(orgName, network)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // Get provides a mock function with given fields: orgName, network

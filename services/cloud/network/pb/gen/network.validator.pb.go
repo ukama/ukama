@@ -5,10 +5,10 @@ package gen
 
 import (
 	fmt "fmt"
-	math "math"
 	proto "github.com/golang/protobuf/proto"
 	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -146,5 +146,11 @@ func (this *GetNodeResponse) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Network", err)
 		}
 	}
+	return nil
+}
+func (this *DeleteRequest) Validate() error {
+	return nil
+}
+func (this *DeleteResponse) Validate() error {
 	return nil
 }

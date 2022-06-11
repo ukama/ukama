@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"gorm.io/gorm"
 	"testing"
 
 	bstmock "github.com/ukama/ukama/services/bootstrap/client/mocks"
@@ -83,13 +84,11 @@ func createNetRepoMock() *mocks.NetRepo {
 	netRepo := &mocks.NetRepo{}
 	netRepo.On("Get", testOrgName, testNetName).
 		Return(&db.Network{
-			BaseModel: db.BaseModel{ID: testNetId},
-			Name:      testNetName,
+			Model: gorm.Model{ID: testNetId},
+			Name:  testNetName,
 			Org: &db.Org{
-				Name: testOrgName,
-				BaseModel: db.BaseModel{
-					ID: 101,
-				},
+				Name:  testOrgName,
+				Model: gorm.Model{ID: 101},
 			}}, nil).Once()
 	return netRepo
 }

@@ -14,15 +14,3 @@ type Config struct {
 	Queue             config.Queue
 	Debug             bootstrap.DebugConf
 }
-
-func NewConfig() *Config {
-	return &Config{
-		DB: config.DefaultDatabaseName(ServiceName),
-		Grpc: config.Grpc{
-			Port: 9090,
-		},
-		Queue: config.Queue{
-			Uri: "amqp://guest:guest@localhost:5672",
-		},
-	}
-}

@@ -45,6 +45,7 @@ func initConfig() {
 	if err != nil {
 		log.Fatalf("Failed to read config. Error: %v", err)
 	}
+	pkg.IsDebugMode = svcConf.DebugMode
 }
 
 func initDb() sql.Db {

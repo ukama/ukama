@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/iamolegga/enviper"
@@ -81,6 +82,11 @@ type ServiceApiIf struct {
 
 type Queue struct {
 	Uri string `default:"amqp://guest:guest@localhost:5672"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
+}
+
+// SafeString returns URI without password for logging purpose
+func (q *Queue) SafeString() string {
+	return q.Uri[strings.LastIndex(q.Uri, "@"):]
 }
 
 type Grpc struct {

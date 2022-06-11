@@ -96,7 +96,10 @@ func (n *NodeServer) UpdateNodeState(ctx context.Context, req *pb.UpdateNodeStat
 		NodeId: req.GetNodeId(),
 		State:  req.State,
 	}
-	n.pubEvent(resp, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+	n.pubEvent(&msgbus.NodeUpdateBody{
+		NodeId: req.GetNodeId(),
+		State:  req.GetState().String(),
+	}, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
 
 	return resp, nil
 }
@@ -125,7 +128,10 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 			Name:   req.Name,
 		},
 	}
-	n.pubEvent(resp, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
+	n.pubEvent(&msgbus.NodeUpdateBody{
+		NodeId: req.GetNodeId(),
+		Name:   req.Name,
+	}, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
 
 	return resp, nil
 }
@@ -150,6 +156,7 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 
 	return resp, nil
 }
+
 func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	logrus.Infof("Adding node  %v", req.Node)
 

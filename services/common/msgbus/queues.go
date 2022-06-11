@@ -30,9 +30,21 @@ const (
 	DeviceFeederRequestRoutingKey RoutingKey = "request.cloud.device-feeder"
 	OrgCreatedRoutingKey          RoutingKey = "event.cloud.org.org.created"
 	OrgDeletedRoutingKey          RoutingKey = "event.cloud.org.org.deleted"
+	NodeUpdatedRoutingKey         RoutingKey = "event.cloud.node.node.updated"
 
 	DefaultExchange = "amq.topic"
 )
+
+type NodeUpdateBody struct {
+	NodeId string `json:"nodeId"`
+	State  string `json:"state"`
+	Name   string `json:"name"`
+}
+
+type OrgCreatedBody struct {
+	Name  string `json:"name"`
+	Owner string `json:"owner"`
+}
 
 var DeviceQ = MsgBusQConfig{
 	Exchange:     "DEVICE_EXCHANGE",
