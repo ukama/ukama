@@ -52,6 +52,44 @@ services:
     networks:
       - ukama-net
   
+  org:
+    build: ./org
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+
+  node:
+    build: ./node
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+  
   hss:
     build: ./hss
     ports:

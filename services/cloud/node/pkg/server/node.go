@@ -200,6 +200,21 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 	}, nil
 }
 
+func (n *NodeServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+	nId, err := ukama.ValidateNodeId(req.GetNodeId())
+	if err != nil {
+		return nil, invalidNodeIdError(req.GetNodeId(), err)
+	}
+
+	err = n.nodeRepo.Delete(nId)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "node")
+	}
+	return &pb.DeleteResponse{
+		NodeId: req.GetNodeId(),
+	}, nil
+}
+
 func invalidNodeIdError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }

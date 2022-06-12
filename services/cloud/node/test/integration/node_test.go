@@ -33,8 +33,8 @@ func init() {
 
 	// load config
 	tConfig = &TestConfig{
-		RegistryHost: "localhost:9090",
-		Rabbitmq:     "amqp://guest:guest@localhost:5672",
+		ServiceHost: "localhost:9090",
+		Rabbitmq:    "amqp://guest:guest@localhost:5672",
 	}
 
 	config.LoadConfig("integration", tConfig)
@@ -44,25 +44,30 @@ func init() {
 }
 
 type TestConfig struct {
-	RegistryHost string
-	Rabbitmq     string
+	ServiceHost string
+	Rabbitmq    string
 }
 
 func Test_FullFlow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	logrus.Infoln("Connecting to network ", tConfig.RegistryHost)
-	conn, err := grpc.DialContext(ctx, tConfig.RegistryHost, grpc.WithInsecure(), grpc.WithBlock())
+	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
+	conn, err := grpc.DialContext(ctx, tConfig.ServiceHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		assert.NoError(t, err, "did not connect: %v", err)
 		return
 	}
 
 	c := pb.NewNodeServiceClient(conn)
+	// keep all used nodes here so we could delete them after test
+	ndToClean := []ukama.NodeID{}
 
 	// Contact the server and print out its response.
-	node := ukama.NewVirtualNodeId("HomeNode")
+	node := ukama.NewVirtualHomeNodeId()
+	ndToClean = append(ndToClean, node)
+
+	defer cleanupNodes(t, c, ndToClean)
 
 	var r interface{}
 
@@ -90,6 +95,7 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
 		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+		ndToClean = append(ndToClean, tNodeId)
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: tNodeId.String(),
@@ -101,6 +107,7 @@ func Test_FullFlow(t *testing.T) {
 		}
 
 		aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
+		ndToClean = append(ndToClean, aNodeId)
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
 				NodeId: aNodeId.String(),
@@ -127,19 +134,23 @@ func Test_FullFlow(t *testing.T) {
 		}
 	})
 
-	t.Run("DeleteNode", func(tt *testing.T) {
-		r, err = c.Delete(ctx, &pb.DeleteRequest{NodeId: node.String()})
-		handleResponse(tt, err, r)
+}
 
-		r, err = c.AddNode(ctx, &pb.AddNodeRequest{
-			Node: &pb.Node{
-				NodeId: node.String(),
-				State:  pb.NodeState_UNDEFINED,
-			},
-		})
-		handleResponse(tt, err, r)
-	})
+func cleanupNodes(tt *testing.T, c pb.NodeServiceClient, nodes []ukama.NodeID) {
+	for _, node := range nodes {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
 
+		_, err := c.Delete(ctx, &pb.DeleteRequest{NodeId: node.String()})
+		if err != nil {
+			assert.FailNow(tt, "DeleteNode failed", err.Error())
+		}
+
+		_, err = c.GetNode(ctx, &pb.GetNodeRequest{NodeId: node.String()})
+		if assert.Error(tt, err) {
+			assert.Equal(tt, codes.NotFound, status.Code(err))
+		}
+	}
 }
 
 func Test_Listener(t *testing.T) {
@@ -186,10 +197,10 @@ func Test_Listener(t *testing.T) {
 }
 
 func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
-	logrus.Infoln("Connecting to network ", tConfig.RegistryHost)
+	logrus.Infoln("Connecting to network ", tConfig.ServiceHost)
 	context, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
-	conn, err := grpc.DialContext(context, tConfig.RegistryHost, grpc.WithInsecure())
+	conn, err := grpc.DialContext(context, tConfig.ServiceHost, grpc.WithInsecure())
 	if err != nil {
 		return nil, nil, err
 	}

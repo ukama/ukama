@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ukama/ukama/services/cloud/node/pkg/server"
+	uconf "github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"os"
 
@@ -35,8 +36,11 @@ func main() {
 
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
-	serviceConfig = &pkg.Config{}
-	serviceConfig.DB.DbName = pkg.ServiceName
+	serviceConfig = &pkg.Config{
+		DB: &uconf.Database{
+			DbName: pkg.ServiceName,
+		},
+	}
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
@@ -62,7 +66,7 @@ func initDb() sql.Db {
 
 func runGrpcServer(gormdb sql.Db) {
 	instanceId := os.Getenv("POD_NAME")
-	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
+	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pub, err := msgbus.NewQPub(serviceConfig.Queue.Uri, pkg.ServiceName, instanceId)
 		if err != nil {
 			log.Fatalf("Failed to create publisher. Error: %v", err)

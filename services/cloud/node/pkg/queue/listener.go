@@ -32,9 +32,10 @@ type QueueListener struct {
 }
 
 type QueueListenerConfig struct {
-	Registry struct {
-		Host    string `default:"localhost:9090"`
-		Timeout time.Duration
+	config.BaseConfig `mapstructure:",squash"`
+	Service           struct {
+		Host    string        `default:"localhost:9090"`
+		Timeout time.Duration `default:"3s"`
 	}
 	Queue   config.Queue
 	Metrics config.Metrics
@@ -42,7 +43,7 @@ type QueueListenerConfig struct {
 
 func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId string) (*QueueListener, error) {
 
-	conn, err := grpc.Dial(conf.Registry.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.Dial(conf.Service.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
@@ -55,7 +56,7 @@ func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId st
 	return &QueueListener{
 		nodeClient:  pb.NewNodeServiceClient(conn),
 		msgBusConn:  client,
-		grpcTimeout: conf.Registry.Timeout,
+		grpcTimeout: conf.Service.Timeout,
 		serviceId:   serviceId,
 		serviceName: serviceName,
 		grpcConn:    conn,
