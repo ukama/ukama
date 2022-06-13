@@ -69,4 +69,15 @@ int notify_process_incoming_noded_event(JsonObj* json, char* notif);
  */
 int notify_process_incoming_noded_alert(JsonObj* json, char* notif);
 
+/**
+ * @fn      int notify_process_incoming_generic_notification(JsonObj*, char*)
+ * @brief   Process incoming notification and forward those to remote server.
+ *
+ * @param   json
+ * @param   notifType
+ * @return  On Success, USYS_OK (0)
+ *          On Failure, USYS_NOK (-1)
+ */
+int notify_process_incoming_generic_notification(JsonObj* json,
+                char* notifType);
 #endif /* INC_NOTIFICATION_H_ */

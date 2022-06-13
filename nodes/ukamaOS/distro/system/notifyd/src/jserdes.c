@@ -657,7 +657,6 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
 
 }
 
-
 int json_serialize_error(JsonObj **json, int code, const char *str) {
     int ret = JSON_ENCODING_OK;
 
@@ -759,6 +758,39 @@ int json_serialize_noded_alert_details(JsonObj **json,
     return ret;
 }
 
+/* Serialize alert details from generic message
+ * This section of the notification is specific to each service */
+int json_serialize_generic_details(JsonObj **json,
+                ServiceNotifDetails* details ) {
+    int ret = JSON_ENCODING_OK;
+
+    *json = json_object();
+    if (!json) {
+        return ERR_JSON_CREATION_ERR;
+    }
+
+    if (!details) {
+        return ERR_JSON_NO_VAL_TO_ENCODE;
+    }
+
+    json_object_set_new(*json, JTAG_NOTIF_REASON,
+                    json_string(details->reason));
+
+    json_object_set_new(*json, JTAG_NOTIF_DETAILS,
+                    json_string(details->details));
+
+    json_object_set_new(*json, JTAG_PROPERTY_NAME,
+                    json_string(details->attr->name));
+
+    json_object_set_new(*json, JTAG_VALUE,
+                    json_encode_value(TYPE_DOUBLE, details->attr->value));
+
+    json_object_set_new(*json, JTAG_UNITS, json_string(details->attr->units));
+
+
+    return ret;
+}
+
 /* Serialize notification to be forwaded to the remote server */
 int json_serialize_notification(JsonObj **json, JsonObj* details,
                 Notification* notif) {
@@ -800,6 +832,134 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
     return ret;
 }
 
+/* Deserialize attributes of the notification received*/
+bool json_deserialize_attr(JsonObj *json, ServiceAttr** svcAttr ) {
 
+    bool ret = USYS_FALSE;
+
+    ServiceAttr * details = * svcAttr;
+    /* Name */
+    ret = json_deserialize_string_object(json, JTAG_PROPERTY_NAME,
+                    &details->name);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from service attribute",
+                        JTAG_PROPERTY_NAME);
+    }
+
+    /* Value */
+    const JsonObj *jValue = json_object_get(json, JTAG_VALUE);
+    if (!jValue){
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_VALUE);
+        return ret;
+    }
+
+    details->value = (double*)usys_calloc(1, sizeof(double));
+    if (details->value) {
+        ret = json_deserialize_real_value(jValue, details->value);
+        if (!ret) {
+            /* No failure */
+            usys_log_error("Failed to parse %s from Node notification",
+                            JTAG_VALUE);
+        }
+
+    }
+
+    /* units */
+    ret = json_deserialize_string_object(json, JTAG_UNITS,
+                    &details->units);
+    if (!ret) {
+        usys_log_error("Failed to parse %s from Node notification",
+                        JTAG_UNITS);
+    }
+
+    return ret;
+}
+
+/* Deserialize generic notification received from services */
+bool json_deserialize_generic_notification(JsonObj *json,
+                ServiceNotifDetails* details ) {
+
+    bool ret = USYS_FALSE;
+
+    if (!json){
+        usys_log_error("No data to deserialize alerts");
+        return ret;
+    }
+
+    JsonObj* jNodeInfo = json_object_get(json, JTAG_NOTIFY);
+    if (jNodeInfo == NULL) {
+        usys_log_error("Missing mandatory %s from JSON", JTAG_NOTIFY);
+        return USYS_FALSE;
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_SERVICE_NAME,
+                    &details->serviceName);
+    if (!ret) {
+        usys_log_error("Failed to parse mandatory tag %s from Node "
+                        "notification", JTAG_SERVICE_NAME);
+        return ret;
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_SEVERITY,
+                        &details->severity);
+        if (!ret) {
+            usys_log_error("Failed to parse mandatory tag %s from Node "
+                            "notification", JTAG_SEVERITY);
+            return ret;
+        }
+
+    ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
+                    &details->epochTime);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_EPOCH_TIME);
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_DESCRIPTION,
+                    &details->description);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_DESCRIPTION);
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_REASON,
+                    &details->description);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_NOTIF_REASON);
+    }
+
+    ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_DETAILS,
+                    &details->description);
+    if (!ret) {
+        usys_log_warn("Failed to parse %s from Node notification",
+                        JTAG_NOTIF_DETAILS);
+    }
+
+    JsonObj* jAttrInfo = json_object_get(jNodeInfo, JTAG_NOTIF_ATTR);
+    if (jAttrInfo != NULL) {
+        ServiceAttr *svcAttr = usys_calloc(1, sizeof(svcAttr));
+        if (!svcAttr) {
+            /* Would still send notification but without attribute values */
+            usys_log_warn("Failed to allocate memory for service attribute"
+                            " parsing", JTAG_NOTIF_ATTR);
+            return ret;
+        }
+
+        /* Deserialize attributes */
+        ret = json_deserialize_attr(jAttrInfo, &svcAttr);
+        if (!ret) {
+            usys_log_warn("Failed to parse %s from Node notification",
+                            JTAG_NOTIF_ATTR);
+        }
+
+        details->attr = svcAttr;
+    }
+
+
+    return ret;
+
+}
 
 

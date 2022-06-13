@@ -247,4 +247,30 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
  *          On failure, FALSE
  */
 bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details );
+
+/**
+ * @fn      bool json_deserialize_generic_notification(JsonObj*,
+ *              ServiceNotifDetails*)
+ * @brief   deserialize generic notifications.
+ *
+ * @param   json
+ * @param   details
+ * @return  On success, TRUE
+ *          On failure, FALSE
+ */
+bool json_deserialize_generic_notification(JsonObj *json,
+                ServiceNotifDetails* details );
+
+/**
+ * @fn      int json_serialize_generic_details(JsonObj**, ServiceNotifDetails*)
+ * @brief   serialize generic notification details to send to remote server.
+ *
+ * @param   json
+ * @param   details
+ * @return  On success, TRUE
+ *          On failure, FALSE
+ */
+int json_serialize_generic_details(JsonObj **json,
+                ServiceNotifDetails* details );
+
 #endif /* JSERDES_H_ */

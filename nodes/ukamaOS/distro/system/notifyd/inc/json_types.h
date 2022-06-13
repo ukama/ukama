@@ -126,7 +126,8 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_NODE_TYPE                  "nodeType"
 #define JTAG_NOTIF_SEVERITY             "severity"
 #define JTAG_NOTIF_DETAILS              "details"
-
+#define JTAG_NOTIF_REASON               "reason"
+#define JTAG_NOTIF_ATTR                 "attribute"
 #define JTAG_EPOCH_TIME                 "time"
 
 typedef enum {

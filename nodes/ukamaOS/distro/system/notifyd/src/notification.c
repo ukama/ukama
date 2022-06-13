@@ -22,13 +22,26 @@ char *gRemoteServer;
 char* gNodeID;
 char* gNodeType;
 
-//TODO: try runtime update
 NotifyHandler handler[MAX_SERVICE_COUNT] = {
                 {
                     .service = "noded",
                     .alertHandler = &notify_process_incoming_noded_alert,
                     .eventHandler = &notify_process_incoming_noded_event,
                 },
+                {
+                    .service = "core",
+                    .alertHandler =
+                               &notify_process_incoming_generic_notification,
+                    .eventHandler =
+                               &notify_process_incoming_generic_notification,
+                },
+                {
+                    .service = "stack",
+                    .alertHandler =
+                               &notify_process_incoming_generic_notification,
+                    .eventHandler =
+                               &notify_process_incoming_generic_notification,
+                }
 };
 
 
@@ -155,6 +168,42 @@ void free_noded_details(NodedNotifDetails* notif) {
     }
 }
 
+void free_generic_notif_details(ServiceNotifDetails* notif) {
+
+    if (notif) {
+
+        usys_free(notif->serviceName);
+        notif->serviceName = NULL;
+
+        usys_free(notif->severity);
+        notif->severity = NULL;
+
+        usys_free(notif->description);
+        notif->description = NULL;
+
+        usys_free(notif->reason);
+        notif->reason = NULL;
+
+        usys_free(notif->details);
+        notif->details = NULL;
+
+        if(notif->attr) {
+            usys_free(notif->attr->name);
+            notif->attr->name = NULL;
+
+            usys_free(notif->attr->value);
+            notif->attr->value = NULL;
+
+            usys_free(notif->attr->units);
+            notif->attr->units = NULL;
+
+            usys_free(notif->attr);
+            notif->attr = NULL;
+        }
+
+    }
+}
+
 Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
     Notification *envlp = usys_calloc(1, sizeof(Notification));
@@ -175,6 +224,33 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
     envlp->nodeType = usys_strdup(gNodeType);
 
     envlp->description = usys_strdup(noded->deviceDesc);
+
+    return envlp;
+
+}
+
+
+Notification* notify_new_message_from_generic_notification(
+                ServiceNotifDetails* notif) {
+
+    Notification *envlp = usys_calloc(1, sizeof(Notification));
+    if (!envlp) {
+        return NULL;
+    }
+
+    envlp->serviceName = usys_strdup(notif->serviceName);
+
+    envlp->severity = usys_strdup(notif->severity);
+
+    envlp->notificationType = usys_strdup(NOTIFICATION_ALERT);
+
+    envlp->epochTime = notif->epochTime;
+
+    envlp->nodeId = usys_strdup(gNodeID);
+
+    envlp->nodeType = usys_strdup(gNodeType);
+
+    envlp->description = usys_strdup(notif->description);
 
     return envlp;
 
@@ -240,3 +316,53 @@ int notify_process_incoming_noded_event(JsonObj* json, char* notifType) {
 
     return ret;
 }
+
+int notify_process_incoming_generic_notification(JsonObj* json,
+                char* notifType) {
+    int ret = STATUS_NOK;
+    JsonObj* jDetails;
+    JsonObj* jNotify;
+    ServiceNotifDetails details = {0};
+
+    /* Deserialize incoming message from noded */
+    if (!json_deserialize_generic_notification(json, &details)) {
+        free_generic_notif_details(&details);
+        return ret;
+    }
+
+    Notification *envlp =
+                    notify_new_message_from_generic_notification(&details);
+    if (!envlp) {
+        return ret;
+    }
+
+    /* Serialize details */
+    if(json_serialize_generic_details(&jDetails, &details)){
+        free_notification(envlp);
+        return ret;
+    }
+
+    /* Serialize Notification */
+    if(json_serialize_notification(&jNotify, jDetails, envlp)){
+        free_notification(envlp);
+        json_decref(jDetails);
+        return ret;
+    }
+
+    ret = notify_send_notification(jNotify);
+    if (ret != STATUS_OK) {
+        usys_log_error("Failed to forward notification %s from %s to remote "
+                        "server", envlp->description, envlp->serviceName);
+    }
+
+    free_notification(envlp);
+    free_generic_notif_details(&details);
+    json_decref(jDetails);
+    json_decref(jNotify);
+
+    return ret;
+}
+
+
+
+
