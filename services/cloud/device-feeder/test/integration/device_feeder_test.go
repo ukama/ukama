@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coredns/coredns/plugin/pkg/log"
-	uuid2 "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
@@ -119,9 +118,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClien
 	}
 	nt := pbnet.NewNnsClient(netConn)
 
-	ownerId := uuid2.NewV4()
-
-	_, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId.String()})
+	_, err = c.Add(ctx, &pb.AddRequest{Name: "test-net", OrgName: orgName})
 	if err != nil {
 		log.Warning("error adding org: ", err)
 	}

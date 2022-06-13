@@ -14,9 +14,7 @@ lint:
 	golangci-lint run
 
 deps:
-	go get google.golang.org/protobuf/cmd/protoc-gen-go \
-			google.golang.org/grpc/cmd/protoc-gen-go-grpc \
-			github.com/vektra/mockery/v2/.../
+	go get github.com/vektra/mockery/v2/.../
 
 
 gen:
