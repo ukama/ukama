@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 	"github.com/ukama/ukama/services/cloud/users/pkg/db"
@@ -21,8 +21,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
+
+	qrcode "github.com/skip2/go-qrcode"
 )
-import qrcode "github.com/skip2/go-qrcode"
 
 const uuidParsingError = "Error parsing UUID"
 
@@ -489,11 +490,11 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
 }
-func generateQrcode(qrcodeId string,qrcodeName string) {
+func generateQrcode(qrcodeId string,qrcodeName string)(string) {
 
 	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId,qrcode.medium,256)
 	if qrGenerateError != nil {
-		return errors.Wrap(qrGenerateError, "failed to generate qrcode")
+		 errors.Wrap(qrGenerateError, "failed to generate qrcode")
 	 }
 	 encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
 	return encodedData 
@@ -507,7 +508,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap("failed to get qr code",%v,err)
+		return errors.Wrap("failed to get qr code %v",err)
 	}
 
 	logrus.Infof("Publishing queue message")
@@ -517,7 +518,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Values: map[string]any{
 			"Name": name,
 			"Qr":   generateQrcode(resp.QrCode,name),
-			"QrCodeLink":resp.QrCode
+			"QrCodeLink":resp.QrCode,
 		},
 	})
 
