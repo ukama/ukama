@@ -557,7 +557,7 @@ bool json_deserialize_node_info(JsonObj *json, char* nodeId, char* nodeType) {
 }
 
 /* Deserialize alert received from noded */
-bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
+bool json_deserialize_noded_notif(JsonObj *json, NodedNotifDetails* details ) {
 
     bool ret = USYS_FALSE;
 
@@ -720,7 +720,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
 
 /* Serialize alert details from the noded
  * This section of tt=he notification is specific to each service */
-int json_serialize_noded_alert_details(JsonObj **json,
+int json_serialize_noded_notif_details(JsonObj **json,
                 NodedNotifDetails* details ) {
     int ret = JSON_ENCODING_OK;
 
@@ -839,11 +839,11 @@ bool json_deserialize_attr(JsonObj *json, ServiceAttr** svcAttr ) {
 
     ServiceAttr * details = * svcAttr;
     /* Name */
-    ret = json_deserialize_string_object(json, JTAG_PROPERTY_NAME,
+    ret = json_deserialize_string_object(json, JTAG_NAME,
                     &details->name);
     if (!ret) {
         usys_log_warn("Failed to parse %s from service attribute",
-                        JTAG_PROPERTY_NAME);
+                        JTAG_NAME);
     }
 
     /* Value */

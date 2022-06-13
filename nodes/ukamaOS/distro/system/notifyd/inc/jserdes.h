@@ -214,7 +214,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
                             uint16_t count);
 
 /**
- * @fn      int json_serialize_noded_alert_details(JsonObj**, NodedNotifDetails*)
+ * @fn      int json_serialize_noded_notif_details(JsonObj**, NodedNotifDetails*)
  * @brief   Serializes the noded alert details into JSON.
  *
  * @param   json
@@ -222,7 +222,7 @@ int json_serialize_api_list(JsonObj **json, WebServiceAPI *apiList,
  * @return  On success, JSON_ENCODING_OK
  *          On failure, Non zero value
  */
-int json_serialize_noded_alert_details(JsonObj **json,
+int json_serialize_noded_notif_details(JsonObj **json,
                 NodedNotifDetails* details );
 /**
  * @fn      int json_serialize_notification(JsonObj**, JsonObj*, Notification*)
@@ -238,7 +238,7 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
                 Notification* notif);
 
 /**
- * @fn      bool json_deserialize_noded_alerts(JsonObj*, NodedNotifDetails*)
+ * @fn      bool json_deserialize_noded_notif(JsonObj*, NodedNotifDetails*)
  * @brief   Deserailize node alert details received by notify service.
  *
  * @param   json
@@ -246,7 +246,7 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
  * @return  On success, TRUE
  *          On failure, FALSE
  */
-bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details );
+bool json_deserialize_noded_notif(JsonObj *json, NodedNotifDetails* details );
 
 /**
  * @fn      bool json_deserialize_generic_notification(JsonObj*,

@@ -25,8 +25,8 @@ char* gNodeType;
 NotifyHandler handler[MAX_SERVICE_COUNT] = {
                 {
                     .service = "noded",
-                    .alertHandler = &notify_process_incoming_noded_alert,
-                    .eventHandler = &notify_process_incoming_noded_event,
+                    .alertHandler = &notify_process_incoming_noded_notification,
+                    .eventHandler = &notify_process_incoming_noded_notification,
                 },
                 {
                     .service = "core",
@@ -48,7 +48,7 @@ NotifyHandler handler[MAX_SERVICE_COUNT] = {
 ServiceHandler find_handler(const char* service, char* notif) {
     for (uint8_t idx = 0; idx <= MAX_SERVICE_COUNT ; idx++) {
 
-        if (!usys_strcmp(service, handler[idx].service)) {
+        if (handler[idx].service && !usys_strcmp(service, handler[idx].service) ) {
 
             if (!usys_strcmp(notif,NOTIFICATION_ALERT)) {
                 return handler[idx].alertHandler;
@@ -62,6 +62,9 @@ ServiceHandler find_handler(const char* service, char* notif) {
         }
     }
 
+    usys_log_error("Failed to forward notification from %s to remote "
+                        "server as no agent to process the notification found",
+                        service);
     return NULL;
 }
 
@@ -204,7 +207,8 @@ void free_generic_notif_details(ServiceNotifDetails* notif) {
     }
 }
 
-Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
+Notification* notify_new_message_from_noded_notif(NodedNotifDetails* noded,
+                char* notifType) {
 
     Notification *envlp = usys_calloc(1, sizeof(Notification));
     if (!envlp) {
@@ -215,7 +219,7 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
     envlp->severity = usys_strdup(noded->severity);
 
-    envlp->notificationType = usys_strdup(NOTIFICATION_ALERT);
+    envlp->notificationType = usys_strdup(notifType);
 
     envlp->epochTime = noded->epochTime;
 
@@ -231,7 +235,7 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
 
 Notification* notify_new_message_from_generic_notification(
-                ServiceNotifDetails* notif) {
+                ServiceNotifDetails* notif, char* notifType) {
 
     Notification *envlp = usys_calloc(1, sizeof(Notification));
     if (!envlp) {
@@ -242,7 +246,7 @@ Notification* notify_new_message_from_generic_notification(
 
     envlp->severity = usys_strdup(notif->severity);
 
-    envlp->notificationType = usys_strdup(NOTIFICATION_ALERT);
+    envlp->notificationType = usys_strdup(notifType);
 
     envlp->epochTime = notif->epochTime;
 
@@ -267,25 +271,25 @@ int notify_process_incoming_notification(const char* service, char* notif,
     return ret;
 }
 
-int notify_process_incoming_noded_alert(JsonObj* json, char* notifType) {
+int notify_process_incoming_noded_notification(JsonObj* json, char* notifType) {
     int ret = STATUS_NOK;
     JsonObj* jDetails;
     JsonObj* jNotify;
     NodedNotifDetails details = {0};
 
     /* Deserialize incoming message from noded */
-    if (!json_deserialize_noded_alerts(json, &details)) {
+    if (!json_deserialize_noded_notif(json, &details)) {
         return ret;
     }
 
     Notification *envlp =
-                    notify_new_message_from_noded_alert(&details);
+                    notify_new_message_from_noded_notif(&details, notifType);
     if (!envlp) {
         return ret;
     }
 
     /* Serialize details */
-    if(json_serialize_noded_alert_details(&jDetails, &details)){
+    if(json_serialize_noded_notif_details(&jDetails, &details)){
         free_notification(envlp);
         return ret;
     }
@@ -331,7 +335,8 @@ int notify_process_incoming_generic_notification(JsonObj* json,
     }
 
     Notification *envlp =
-                    notify_new_message_from_generic_notification(&details);
+                    notify_new_message_from_generic_notification(&details,
+                                    notifType );
     if (!envlp) {
         return ret;
     }
@@ -362,7 +367,3 @@ int notify_process_incoming_generic_notification(JsonObj* json,
 
     return ret;
 }
-
-
-
-

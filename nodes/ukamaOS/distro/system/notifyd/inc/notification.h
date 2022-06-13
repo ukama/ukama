@@ -59,7 +59,7 @@ int notify_process_incoming_notification(const char* service, char* notif, JsonO
 int notify_process_incoming_noded_event(JsonObj* json, char* notif);
 
 /**
- * @fn      int notify_process_incoming_noded_alert(JsonObj*, char*)
+ * @fn      int notify_process_incoming_noded_notification(JsonObj*, char*)
  * @brief   Parses and process all noded service events.
  *
  * @param   json
@@ -67,7 +67,7 @@ int notify_process_incoming_noded_event(JsonObj* json, char* notif);
  * @return  On Success, USYS_OK (0)
  *          On Failure, USYS_NOK (-1)
  */
-int notify_process_incoming_noded_alert(JsonObj* json, char* notif);
+int notify_process_incoming_noded_notification(JsonObj* json, char* notif);
 
 /**
  * @fn      int notify_process_incoming_generic_notification(JsonObj*, char*)
