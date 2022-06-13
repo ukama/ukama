@@ -17,7 +17,7 @@ import (
 	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
-	"github.com/wagslane/go-rabbitmq"
+	rabbitmq "github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
@@ -156,5 +156,5 @@ func (l listener) getOrgAndNetwork(nodeId string) (string, string, error) {
 		logrus.Errorf("Failed to get node from network. Error: %+v", err)
 		return "", "", errors.Wrap(err, "error getting node")
 	}
-	return r.Org.Name, r.Network.Name, nil
+	return r.Org, r.GetNetwork().GetName(), nil
 }
