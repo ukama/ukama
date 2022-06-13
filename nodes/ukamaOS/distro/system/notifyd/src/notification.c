@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2022-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -168,7 +168,7 @@ Notification* notify_new_message_from_noded_alert(NodedNotifDetails* noded) {
 
     envlp->notificationType = usys_strdup(NOTIFICATION_ALERT);
 
-    envlp->epcohTime = noded->epcohTime;
+    envlp->epochTime = noded->epochTime;
 
     envlp->nodeId = usys_strdup(gNodeID);
 

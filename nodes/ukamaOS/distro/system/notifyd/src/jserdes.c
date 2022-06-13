@@ -589,7 +589,7 @@ bool json_deserialize_noded_alerts(JsonObj *json, NodedNotifDetails* details ) {
         }
 
     ret = json_deserialize_uint32_object(jNodeInfo, JTAG_EPOCH_TIME,
-                    &details->epcohTime);
+                    &details->epochTime);
     if (!ret) {
         usys_log_warn("Failed to parse %s from Node notification",
                         JTAG_EPOCH_TIME);
@@ -792,7 +792,7 @@ int json_serialize_notification(JsonObj **json, JsonObj* details,
                         json_string(notif->description));
 
     json_object_set_new(*json, JTAG_EPOCH_TIME,
-                    json_integer(notif->epcohTime));
+                    json_integer(notif->epochTime));
 
     json_object_set_new(*json, JTAG_NOTIF_DETAILS,
                     details);

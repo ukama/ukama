@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2022-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -21,14 +21,14 @@ typedef struct {
     char* severity;
     char* description;
     char* deviceAttr;
-    uint32_t epcohTime;
+    uint32_t epochTime;
 } Notification;
 
-/* Noded Sepecific notifications */
+/* Noded Specific notifications */
 typedef struct {
    char* serviceName;
    char* severity;
-   uint32_t epcohTime;
+   uint32_t epochTime;
    char* moduleID;
    char* deviceName;
    char* deviceDesc;

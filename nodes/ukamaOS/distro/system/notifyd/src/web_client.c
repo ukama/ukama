@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2022-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -133,7 +133,8 @@ int wc_forward_notification(char* url, char* method,
         return ret;
     }
 
-    char *logbody = json_dumps(body, (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
+    char *logbody = json_dumps(body,
+                    (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
     usys_log_trace("Body is :\n %s", logbody);
 
     ret = wc_send_http_request(httpReq, &httpResp);

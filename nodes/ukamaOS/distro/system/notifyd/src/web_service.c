@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2022-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -22,8 +22,6 @@ UInst serverInst;
 
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
-
-
 
 /**
  * @fn      void report_failure_with_response_code(UResponse*, int, int,
@@ -309,7 +307,7 @@ static int start_framework(UInst *instance) {
         usys_log_error("Error starting the web_service.");
 
         /* clean up. */
-        ulfius_stop_framework(instance); /* don't think need this. XXX */
+        ulfius_stop_framework(instance);
         ulfius_clean_instance(instance);
 
         return STATUS_NOK;
@@ -360,11 +358,11 @@ int web_service_start() {
 
     /* open connection for web_services */
     if (start_framework(&serverInst)) {
-        usys_log_error("Failed to start web_services for notifyd.");
+        usys_log_error("Failed to start web_services for NotifyD.");
         return STATUS_NOK;
     }
 
-    usys_log_info("WebService on notifyd started.");
+    usys_log_info("WebService on NotifyD started.");
 
     return STATUS_OK;
 }
@@ -383,6 +381,6 @@ int web_service_init(int port) {
         usys_log_error("Error initializing web_service framework");
         return STATUS_NOK;
     }
-    usys_log_info("WebService on notifyd initialized at port %d.", port);
+    usys_log_info("WebService on NotifyD initialized at port %d.", port);
     return STATUS_OK;
 }

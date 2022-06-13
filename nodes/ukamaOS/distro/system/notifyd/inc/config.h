@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2021-present, Ukama Inc.
+ * Copyright (c) 2022-present, Ukama Inc.
  * All rights reserved.
  *
  * This source code is licensed under the XXX-style license found in the
@@ -19,6 +19,5 @@ typedef struct {
   char* nodedEP;
   char* remoteServer;
 } Config;
-
 
 #endif /* INC_CONFIG_H_ */
