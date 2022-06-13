@@ -135,7 +135,12 @@ int wc_forward_notification(char* url, char* method,
 
     char *logbody = json_dumps(body,
                     (JSON_INDENT(4)|JSON_COMPACT|JSON_ENCODE_ANY));
-    usys_log_trace("Body is :\n %s", logbody);
+    if (logbody) {
+        usys_log_trace("Body is :\n %s", logbody);
+        usys_free(logbody);
+        logbody = NULL;
+    }
+
 
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK) {

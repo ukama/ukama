@@ -145,7 +145,7 @@ static int web_service_cb_post_event(const URequest *request,
 
     /* Send response */
     ulfius_set_empty_body_response(response, respCode);
-
+    json_free(&json);
     return U_CALLBACK_CONTINUE;
 }
 
@@ -175,6 +175,7 @@ static int web_service_cb_post_alert(const URequest *request,
 
     /* Send response */
     ulfius_set_empty_body_response(response, respCode);
+    json_free(&json);
 
     return U_CALLBACK_CONTINUE;
 
@@ -345,4 +346,11 @@ int web_service_init(int port) {
     }
     usys_log_info("WebService on NotifyD initialized at port %d.", port);
     return STATUS_OK;
+}
+
+void web_service_exit() {
+    /* clean up. */
+    ulfius_stop_framework(&serverInst);
+    ulfius_clean_instance(&serverInst);
+
 }

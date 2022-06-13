@@ -209,11 +209,7 @@ void json_deserialize_error(JsonErrObj *jErr, char *msg) {
 
 
 json_t *json_encode_value(int type, void *data) {
-    JsonObj *json = json_object();
-    if (!json) {
-        return NULL;
-    }
-
+    JsonObj *json = NULL;
     switch (type) {
     case TYPE_NULL: {
         json = json_null();
@@ -748,7 +744,6 @@ int json_serialize_noded_notif_details(JsonObj **json,
     json_object_set_new(*json, JTAG_EPOCH_TIME,
                     json_integer(details->dataType));
 
-    //TODO: Remove hard coding
     json_object_set_new(*json, JTAG_VALUE,
                     json_encode_value(TYPE_DOUBLE, details->deviceAttrValue));
 
@@ -765,7 +760,7 @@ int json_serialize_generic_details(JsonObj **json,
     int ret = JSON_ENCODING_OK;
 
     *json = json_object();
-    if (!json) {
+    if (!(*json)) {
         return ERR_JSON_CREATION_ERR;
     }
 
@@ -837,7 +832,7 @@ bool json_deserialize_attr(JsonObj *json, ServiceAttr** svcAttr ) {
 
     bool ret = USYS_FALSE;
 
-    ServiceAttr * details = * svcAttr;
+    ServiceAttr *details = *svcAttr;
     /* Name */
     ret = json_deserialize_string_object(json, JTAG_NAME,
                     &details->name);
@@ -854,15 +849,17 @@ bool json_deserialize_attr(JsonObj *json, ServiceAttr** svcAttr ) {
         return ret;
     }
 
-    details->value = (double*)usys_calloc(1, sizeof(double));
-    if (details->value) {
-        ret = json_deserialize_real_value(jValue, details->value);
-        if (!ret) {
-            /* No failure */
-            usys_log_error("Failed to parse %s from Node notification",
-                            JTAG_VALUE);
+    double val = 0;
+    ret = json_deserialize_real_value(jValue, &val);
+    if (!ret) {
+        /* No failure */
+        usys_log_error("Failed to parse %s from Node notification",
+                        JTAG_VALUE);
+    } else {
+        details->value = (double*)usys_calloc(1, sizeof(double));
+        if (details->value) {
+            *(details->value) = val;
         }
-
     }
 
     /* units */
@@ -924,14 +921,14 @@ bool json_deserialize_generic_notification(JsonObj *json,
     }
 
     ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_REASON,
-                    &details->description);
+                    &details->reason);
     if (!ret) {
         usys_log_warn("Failed to parse %s from Node notification",
                         JTAG_NOTIF_REASON);
     }
 
     ret = json_deserialize_string_object(jNodeInfo, JTAG_NOTIF_DETAILS,
-                    &details->description);
+                    &details->details);
     if (!ret) {
         usys_log_warn("Failed to parse %s from Node notification",
                         JTAG_NOTIF_DETAILS);
@@ -939,7 +936,7 @@ bool json_deserialize_generic_notification(JsonObj *json,
 
     JsonObj* jAttrInfo = json_object_get(jNodeInfo, JTAG_NOTIF_ATTR);
     if (jAttrInfo != NULL) {
-        ServiceAttr *svcAttr = usys_calloc(1, sizeof(svcAttr));
+        ServiceAttr *svcAttr = usys_calloc(1, sizeof(ServiceAttr));
         if (!svcAttr) {
             /* Would still send notification but without attribute values */
             usys_log_warn("Failed to allocate memory for service attribute"
@@ -960,6 +957,14 @@ bool json_deserialize_generic_notification(JsonObj *json,
 
     return ret;
 
+}
+
+/* Decrement json references */
+void json_free(JsonObj** json) {
+    if (*json){
+        json_decref(*json);
+        *json = NULL;
+    }
 }
 
 

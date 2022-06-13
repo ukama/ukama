@@ -273,4 +273,11 @@ bool json_deserialize_generic_notification(JsonObj *json,
 int json_serialize_generic_details(JsonObj **json,
                 ServiceNotifDetails* details );
 
+/**
+ * @fn      void json_free(JsonObj*)
+ * @brief   Free the json object
+ *
+ * @param   json
+ */
+void json_free(JsonObj** json);
 #endif /* JSERDES_H_ */

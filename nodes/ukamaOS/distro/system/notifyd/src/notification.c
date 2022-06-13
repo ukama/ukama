@@ -68,10 +68,17 @@ ServiceHandler find_handler(const char* service, char* notif) {
     return NULL;
 }
 
-int notify_init(char* nodeID, char* nodeType, Config* config) {
+int notification_init(char* nodeID, char* nodeType, Config* config) {
     gNodeID = usys_strdup(nodeID);
     gNodeType = usys_strdup(nodeType);
     gRemoteServer = usys_strdup(config->remoteServer);
+    return STATUS_OK;
+}
+
+int notification_exit() {
+    usys_free(gRemoteServer);
+    usys_free(gNodeID);
+    usys_free(gNodeType);
     return STATUS_OK;
 }
 
@@ -273,32 +280,29 @@ int notify_process_incoming_notification(const char* service, char* notif,
 
 int notify_process_incoming_noded_notification(JsonObj* json, char* notifType) {
     int ret = STATUS_NOK;
-    JsonObj* jDetails;
-    JsonObj* jNotify;
+    JsonObj* jDetails = NULL;
+    JsonObj* jNotify = NULL;
     NodedNotifDetails details = {0};
 
     /* Deserialize incoming message from noded */
     if (!json_deserialize_noded_notif(json, &details)) {
-        return ret;
+        goto cleanup;
     }
 
     Notification *envlp =
                     notify_new_message_from_noded_notif(&details, notifType);
     if (!envlp) {
-        return ret;
+        goto cleanup;
     }
 
     /* Serialize details */
     if(json_serialize_noded_notif_details(&jDetails, &details)){
-        free_notification(envlp);
-        return ret;
+        goto cleanup;
     }
 
     /* Serialize Notification */
     if(json_serialize_notification(&jNotify,jDetails, envlp)){
-        free_notification(envlp);
-        json_decref(jDetails);
-        return ret;
+        goto cleanup;
     }
 
     ret = notify_send_notification(jNotify);
@@ -307,11 +311,10 @@ int notify_process_incoming_noded_notification(JsonObj* json, char* notifType) {
                         "server", envlp->description, envlp->serviceName);
     }
 
+    cleanup:
     free_notification(envlp);
     free_noded_details(&details);
-    json_decref(jDetails);
-    json_decref(jNotify);
-
+    json_free(&jNotify);
     return ret;
 }
 
@@ -362,8 +365,7 @@ int notify_process_incoming_generic_notification(JsonObj* json,
 
     free_notification(envlp);
     free_generic_notif_details(&details);
-    json_decref(jDetails);
-    json_decref(jNotify);
+    json_free(&jNotify);
 
     return ret;
 }

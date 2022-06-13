@@ -21,6 +21,14 @@
 int service_at_exit() {
     int ret = STATUS_OK;
 
+    /* Exit web service */
+    web_service_exit();
+
+    /* Notification Exit */
+    ret = notification_exit();
+    if (ret) {
+        return ret;
+    }
     return ret;
 }
 
@@ -37,7 +45,7 @@ int service_init(Config *config) {
     }
 
     /* Notification Init */
-    ret = notify_init(nodeId, nodeType, config);
+    ret = notification_init(nodeId, nodeType, config);
     if (ret) {
         return ret;
     }

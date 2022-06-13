@@ -79,7 +79,12 @@ int web_service_start();
  */
 void web_service_add_node_endpoints();
 
-
+/**
+ * @fn      void web_service_exit()
+ * @brief   Stop ulfius framework.
+ *
+ */
+void web_service_exit();
 #ifdef __cplusplus
 }
 #endif
