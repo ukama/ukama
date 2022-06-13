@@ -17,7 +17,6 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-//TODO
 char *gRemoteServer;
 char* gNodeID;
 char* gNodeType;
@@ -91,7 +90,6 @@ int notify_send_notification(JsonObj* jNotify) {
 void free_notification(Notification* notif) {
 
     if (notif) {
-
         if (notif->nodeId) {
             usys_free(notif->nodeId);
             notif->nodeId = NULL;
@@ -135,7 +133,6 @@ void free_notification(Notification* notif) {
 void free_noded_details(NodedNotifDetails* notif) {
 
     if (notif) {
-
         if(notif->serviceName) {
             usys_free(notif->serviceName);
             notif->serviceName = NULL;
@@ -170,18 +167,17 @@ void free_noded_details(NodedNotifDetails* notif) {
             usys_free(notif->deviceAttrValue);
             notif->deviceAttrValue = NULL;
         }
+
         if(notif->units) {
             usys_free(notif->units);
             notif->units = NULL;
         }
-
     }
 }
 
 void free_generic_notif_details(ServiceNotifDetails* notif) {
 
     if (notif) {
-
         usys_free(notif->serviceName);
         notif->serviceName = NULL;
 
@@ -210,7 +206,6 @@ void free_generic_notif_details(ServiceNotifDetails* notif) {
             usys_free(notif->attr);
             notif->attr = NULL;
         }
-
     }
 }
 
@@ -239,7 +234,6 @@ Notification* notify_new_message_from_noded_notif(NodedNotifDetails* noded,
     return envlp;
 
 }
-
 
 Notification* notify_new_message_from_generic_notification(
                 ServiceNotifDetails* notif, char* notifType) {
