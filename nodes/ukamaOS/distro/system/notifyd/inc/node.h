@@ -10,6 +10,10 @@
 #ifndef INC_NODE_H_
 #define INC_NODE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "usys_types.h"
 
 typedef enum {
@@ -26,4 +30,7 @@ typedef enum {
     MOD_MASK
 } ModuleType;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_NODE_H_ */

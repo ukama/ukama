@@ -10,6 +10,10 @@
 #ifndef WEB_CLIENT_H_
 #define WEB_CLIENT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "config.h"
 #include "notify_macros.h"
 #include "web.h"
@@ -53,4 +57,7 @@ int wc_read_node_info(char* nodeID, char* nodeType, Config* config);
  */
 int web_client_init(char* nodeID, char* nodeType, Config* config);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_WEB_CLIENT_H_ */

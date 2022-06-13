@@ -10,6 +10,10 @@
 #ifndef JSERDES_H
 #define JSERDES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <jansson.h>
 
 #include "json_types.h"
@@ -21,7 +25,6 @@
 #define JSON_FAILURE                   STATUS_NOTOK
 #define JSON_ENCODING_OK               JSON_OK
 #define JSON_DECODING_OK               JSON_OK
-
 
 /**
  * @fn      bool json_deserialize_boolean_object(const JsonObj*, const char*, bool*)
@@ -280,4 +283,8 @@ int json_serialize_generic_details(JsonObj **json,
  * @param   json
  */
 void json_free(JsonObj** json);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* JSERDES_H_ */

@@ -46,5 +46,4 @@ void service();
 #ifdef __cplusplus
 }
 #endif
-
 #endif /* INC_SERVICE_H_ */

@@ -10,6 +10,10 @@
 #ifndef INC_NOTIFICATION_H_
 #define INC_NOTIFICATION_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "config.h"
 #include "notify.h"
 #include "jserdes.h"
@@ -90,4 +94,8 @@ int notify_process_incoming_noded_notification(JsonObj* json, char* notif);
  */
 int notify_process_incoming_generic_notification(JsonObj* json,
                 char* notifType);
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_NOTIFICATION_H_ */

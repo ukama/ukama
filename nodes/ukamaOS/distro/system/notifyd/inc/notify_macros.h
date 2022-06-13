@@ -10,6 +10,10 @@
 #ifndef NOTIFY_MACROS_H_
 #define NOTIFY_MACROS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SERVICE_NAME           "NotifyD"
 #define STATUS_OK              (0)
 #define STATUS_NOK             (-1)
@@ -28,4 +32,7 @@
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_REMOTE_SERVER      "http://localhost:8091"
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_NOTIFY_MACROS_H_ */

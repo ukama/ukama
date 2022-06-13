@@ -88,5 +88,4 @@ void web_service_exit();
 #ifdef __cplusplus
 }
 #endif
-
 #endif /* INC_WEB_SERVICE_H_ */

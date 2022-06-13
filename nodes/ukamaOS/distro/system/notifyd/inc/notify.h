@@ -10,6 +10,10 @@
 #ifndef INC_NOTIFY_H_
 #define INC_NOTIFY_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <usys_types.h>
 
 typedef struct {
@@ -55,4 +59,7 @@ typedef struct {
    char* details;       /* Additional details if required */
 } ServiceNotifDetails;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_NOTIFY_H_ */

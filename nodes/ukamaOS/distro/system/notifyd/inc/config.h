@@ -10,6 +10,10 @@
 #ifndef INC_CONFIG_H_
 #define INC_CONFIG_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Service configuration */
 typedef struct {
   char* name;
@@ -19,5 +23,9 @@ typedef struct {
   char* nodedEP;
   char* remoteServer;
 } Config;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_CONFIG_H_ */

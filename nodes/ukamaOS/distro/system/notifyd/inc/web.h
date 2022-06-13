@@ -10,6 +10,10 @@
 #ifndef WEB_H_
 #define WEB_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "ulfius.h"
 
 /* RESPONSE CODE */
@@ -29,4 +33,7 @@ typedef struct _u_instance  UInst;
 typedef struct _u_request   URequest;
 typedef struct _u_response  UResponse;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* INC_WEB_H_ */
