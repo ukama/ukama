@@ -56,9 +56,9 @@ BUILD_DIR:=build
 # Compilers and flags
 ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
-#XLD=$(XGCCPATH)$(XLD)
+XLD=$(XGCCPATH)$(XLD)
 else
-XCC=/home/vishal/cdrive/work/git/ukama/ukama/nodes/ukamaOS/distro/tools/musl-cross-make/output/bin/x86_64-linux-musl-gcc
+XCC=/usr/bin/gcc
 endif
 
 # Libraries

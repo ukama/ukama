@@ -24,27 +24,6 @@ static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
 /**
- * @fn      void report_failure_with_response_code(UResponse*, int, int,
- *           char*)
- * @brief   Reports the failure to client using json object with HTTP repsonse
- *          provided in respcode.
- *
- * @param   response
- * @param   responsecode
- * @param   ret
- * @param   msg
- */
-static void report_failure_with_response_code(UResponse *response, int respcode,
-                int ret, char *msg) {
-    JsonObj *json = NULL;
-    ret = json_serialize_error(&json, ret, msg);
-    if (ret != JSON_ENCODING_OK) {
-        ulfius_set_empty_body_response(response, respcode);
-    }
-    ulfius_set_json_body_response(response, respcode, json);
-}
-
-/**
  * @fn      void report_failure(UResponse*, int, char*)
  * @brief   Reports a generic failure to the client using JSON
  *          with HTTP response code 500.
@@ -56,23 +35,6 @@ static void report_failure_with_response_code(UResponse *response, int respcode,
 static void report_failure(UResponse *response, int ret, char *msg) {
     JsonObj *json = NULL;
     ret = json_serialize_error(&json, ret, msg);
-    if (ret != JSON_ENCODING_OK) {
-        ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
-    }
-    ulfius_set_json_body_response(response, RESP_CODE_SERVER_FAILURE, json);
-}
-
-/**
- * @fn      void report_memory_failure(UResponse*, int)
- * @brief   Report memory related failure to client using json.
- *          with HTTP response code 500.
- *
- * @param   response
- * @param   errnum
- */
-static void report_memory_failure(UResponse *response, int errnum) {
-    JsonObj *json = NULL;
-    int ret = json_serialize_error(&json, errnum, usys_error(errnum));
     if (ret != JSON_ENCODING_OK) {
         ulfius_set_empty_body_response(response, RESP_CODE_SERVER_FAILURE);
     }
