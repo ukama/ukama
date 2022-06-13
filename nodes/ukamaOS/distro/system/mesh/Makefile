@@ -2,7 +2,7 @@
 # All rights reserved.
 
 #
-# Makefile for the Mesh.d
+# Makefile for the mesh.d
 #
 
 include ../../../config.mk
@@ -16,7 +16,7 @@ VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target.
-VENDOR_PKG = tomlc curl amqp protobuf-c jansson ulfius
+VENDOR_PKG = tomlc curl jansson ulfius
 
 # Setting up various compile and link flags.
 CFLAGS=-c
@@ -24,7 +24,6 @@ CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
 CFLAGS+=-I$(VENDOR_INC)
-CFLAGS+=-I$(VENDOR_INC)/rabbitmq-c/
 CFLAGS+=-I./inc
 CFLAGS+=-D_REENTRANT
 CFLAGS+=-DTEST_EMBED_CERT
@@ -41,8 +40,6 @@ LIBS+=-ljansson
 LIBS+=-luuid
 LIBS+=-lpthread
 LIBS+=-ltoml
-LIBS+=-lprotobuf-c
-LIBS+=-lrabbitmq
 
 # Soruce files.
 CFILES   = $(wildcard ./src/*.c)
@@ -67,7 +64,3 @@ $(VENDOR_PKG):
 
 clean:
 	rm -f $(TARGET_EXEC) $(OBJFILES);
-	cd ./third_party/mbedtls/ && make clean && cd -;
-	cd $(TOML_LOCATION) && make clean
-
-

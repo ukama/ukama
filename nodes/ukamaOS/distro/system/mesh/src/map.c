@@ -16,13 +16,12 @@
 /*
  * init_map_table -- 
  */
-
 void init_map_table(MapTable **table) {
 
-  (*table)->first = NULL;
-  (*table)->last  = NULL;
+	(*table)->first = NULL;
+	(*table)->last  = NULL;
 
-  pthread_mutex_init(&(*table)->mutex, NULL);
+	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
 /*
@@ -31,45 +30,44 @@ void init_map_table(MapTable **table) {
  */
 static MapItem *create_map_item(char *ip, unsigned short port) { 
 
-  MapItem *map;
+	MapItem *map;
 
-  /* Sanity check */
-  if (ip == NULL && !port)
-    return NULL;
+	/* Sanity check */
+	if (ip == NULL && !port)
+		return NULL;
 
-  map = (MapItem *)malloc(sizeof(MapItem));
-  if (!map) {
-    log_error("Error allocating memory: %d", sizeof(MapItem));
-    return NULL;
-  }
+	map = (MapItem *)malloc(sizeof(MapItem));
+	if (!map) {
+		log_error("Error allocating memory: %d", sizeof(MapItem));
+		return NULL;
+	}
 
-  map->port = port;
-  map->ip   = strdup(ip);
+	map->port = port;
+	map->ip   = strdup(ip);
 
-  pthread_mutex_init(&map->mutex, NULL);
-  pthread_cond_init(&map->hasResp, NULL);
+	pthread_mutex_init(&map->mutex, NULL);
+	pthread_cond_init(&map->hasResp, NULL);
 
-  /* Assign a new UUID. */
-  uuid_generate(map->uuid);
+	/* Assign a new UUID. */
+	uuid_generate(map->uuid);
 
-  map->next = NULL;
+	map->next = NULL;
 
-  return map;
+	return map;
 }
 
 /*
  * destroy_work_item --
  *
  */
-
 void destroy_map_item(MapItem *map) {
 
-  if (!map) {
-    return;
-  }
+	if (!map) {
+		return;
+	}
 
-  free(map->ip);
-  free(map);
+	free(map->ip);
+	free(map);
 }
 
 /*
@@ -77,27 +75,27 @@ void destroy_map_item(MapItem *map) {
  *
  */
 static MapItem *is_existing_item(MapTable *table, char *ip,
-				 unsigned short port) {
+								 unsigned short port) {
 
-  MapItem *items;
+	MapItem *items;
 
-  if (table == NULL && ip == NULL && port == 0) {
-    return NULL;
-  }
+	if (table == NULL && ip == NULL && port == 0) {
+		return NULL;
+	}
 
-  /* Is empty. */
-  if (table->first == NULL) {
-    return NULL;
-  }
+	/* is empty */
+	if (table->first == NULL) {
+		return NULL;
+	}
 
-  for (items = table->first; items; items=items->next) {
-    if (strcmp(items->ip, ip)==0 && port == items->port && /* Match found. */
-	uuid_is_null(items->uuid)==0) { /* have valid UUID. */
-      return items;
-    }
-  }
+	for (items = table->first; items; items=items->next) {
+		if (strcmp(items->ip, ip)==0 && port == items->port && /* Match found */
+			uuid_is_null(items->uuid)==0) { /* have valid UUID */
+			return items;
+		}
+	}
 
-  return NULL;
+	return NULL;
 }
 
 /*
@@ -106,46 +104,46 @@ static MapItem *is_existing_item(MapTable *table, char *ip,
  */
 MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port) {
 
-  MapItem *map=NULL;
-  char idStr[36+1] = {0};
+	MapItem *map=NULL;
+	char idStr[36+1] = {0};
 
-  if (ip == NULL && *table == NULL && !port)
-    return NULL;
+	if (ip == NULL && *table == NULL && !port)
+		return NULL;
 
-  /* An existing mapping? */
-  map = is_existing_item(*table, ip, port);
-  if (map != NULL) {
-    return map;
-  }
+	/* An existing mapping? */
+	map = is_existing_item(*table, ip, port);
+	if (map != NULL) {
+		return map;
+	}
 
-  map = create_map_item(ip, port);
-  if (map == NULL) {
-    return NULL;
-  }
+	map = create_map_item(ip, port);
+	if (map == NULL) {
+		return NULL;
+	}
 
-  /* Try to get lock. */
-  pthread_mutex_lock(&(*table)->mutex);
+	/* Try to get lock. */
+	pthread_mutex_lock(&(*table)->mutex);
 
-  /* Got the lock. Add to the list and unlock. */
-  if ((*table)->first == NULL) {
-    (*table)->first = map;
-    (*table)->last  = map;
-  } else {
-    (*table)->last->next = map;
-  }
+	/* Got the lock. Add to the list and unlock. */
+	if ((*table)->first == NULL) {
+		(*table)->first = map;
+		(*table)->last  = map;
+	} else {
+		(*table)->last->next = map;
+	}
 
-  /* Update pointer to last entry. */
-  (*table)->last = map;
-  (*table)->last->next = NULL;
+	/* Update pointer to last entry. */
+	(*table)->last = map;
+	(*table)->last->next = NULL;
 
-  /* Unlock */
-  pthread_mutex_unlock(&((*table)->mutex));
+	/* Unlock */
+	pthread_mutex_unlock(&((*table)->mutex));
 
-  uuid_unparse(map->uuid, &idStr[0]);
-  log_debug("Added new mapping entry in the table. IP: %s port: %d UUID: %s",
-	    ip, port, idStr);
+	uuid_unparse(map->uuid, &idStr[0]);
+	log_debug("Added new mapping entry in the table. IP: %s port: %d UUID: %s",
+			  ip, port, idStr);
 
-  return map;
+	return map;
 }
 
 /*
@@ -154,24 +152,24 @@ MapItem *add_map_to_table(MapTable **table, char *ip, unsigned short port) {
  */
 MapItem *lookup_item(MapTable *table, uuid_t uuid) {
 
-  MapItem *items;
+	MapItem *items;
 
-  if (table == NULL && uuid_is_null(uuid)) {
-    return NULL;
-  }
+	if (table == NULL && uuid_is_null(uuid)) {
+		return NULL;
+	}
 
-  /* Is empty. */
-  if (table->first == NULL) {
-    return NULL;
-  }
+	/* Is empty. */
+	if (table->first == NULL) {
+		return NULL;
+	}
 
-  for (items = table->first; items; items=items->next) {
-    if (uuid_compare(uuid, items->uuid)==0) {
-      return items;
-    }
-  }
+	for (items = table->first; items; items=items->next) {
+		if (uuid_compare(uuid, items->uuid)==0) {
+			return items;
+		}
+	}
 
-  return NULL;
+	return NULL;
 }
 
 /*
