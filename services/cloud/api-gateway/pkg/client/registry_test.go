@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
+	pbnode "github.com/ukama/ukama/services/cloud/node/pb/gen"
+	ndmock "github.com/ukama/ukama/services/cloud/node/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,20 +18,22 @@ const testName = "testName"
 
 func TestRegistry_UpdateNode(t *testing.T) {
 	// mock GetNode
-	rc := mocks.RegistryServiceClient{}
+	rc := mocks.NetworkServiceClient{}
+	nodeC := ndmock.NodeServiceClient{}
 
-	rc.On("GetNode", mock.Anything, mock.Anything).Return(&gen.GetNodeResponse{
-		Node: &gen.Node{
+	nodeC.On("GetNode", mock.Anything, mock.Anything).Return(&pbnode.GetNodeResponse{
+		Node: &pbnode.Node{
 			NodeId: nodeId,
 		},
 	}, nil)
 
-	rc.On("UpdateNode", mock.Anything, mock.MatchedBy(func(r *gen.UpdateNodeRequest) bool {
-		return r.Name == testName && r.NodeId == nodeId
-	})).Return(&gen.UpdateNodeResponse{}, nil)
+	nodeC.On("UpdateNode", mock.Anything, mock.MatchedBy(func(r *pbnode.UpdateNodeRequest) bool {
+		return r.GetName() == testName && r.NodeId == nodeId
+	})).Return(&pbnode.UpdateNodeResponse{}, nil)
 
 	r := Registry{
-		client: &rc,
+		client:     &rc,
+		nodeClient: &nodeC,
 	}
 
 	resp, isCreated, err := r.AddOrUpdate("org", nodeId, testName)
@@ -42,9 +46,10 @@ func TestRegistry_UpdateNode(t *testing.T) {
 
 func TestRegistry_AddNode(t *testing.T) {
 	// mock GetNode
-	rc := mocks.RegistryServiceClient{}
+	rc := mocks.NetworkServiceClient{}
+	nodeC := ndmock.NodeServiceClient{}
 
-	rc.On("GetNode", mock.Anything, mock.Anything).Return(
+	nodeC.On("GetNode", mock.Anything, mock.Anything).Return(
 		nil, status.Error(codes.NotFound, ""))
 
 	rc.On("AddNode", mock.Anything, mock.MatchedBy(func(r *gen.AddNodeRequest) bool {
@@ -56,8 +61,18 @@ func TestRegistry_AddNode(t *testing.T) {
 		},
 	}, nil)
 
+	nodeC.On("AddNode", mock.Anything, mock.MatchedBy(func(r *pbnode.AddNodeRequest) bool {
+		return r.Node.Name == testName && r.Node.NodeId == nodeId
+	})).Return(&pbnode.AddNodeResponse{
+		Node: &pbnode.Node{
+			NodeId: nodeId,
+			Name:   testName,
+		},
+	}, nil)
+
 	r := Registry{
-		client: &rc,
+		client:     &rc,
+		nodeClient: &nodeC,
 	}
 
 	resp, isCreated, err := r.AddOrUpdate("org", nodeId, testName)

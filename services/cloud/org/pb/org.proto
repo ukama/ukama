@@ -23,8 +23,7 @@ message GetResponse{
 
 message Organization {
     string name = 1 [(validator.field) = {string_not_empty: true}]; // there is extra vlidation on repository level
-    string owner = 2 [(validator.field) = { string_not_empty: true}];
-    string certificate = 3;
+    string owner = 2 [(validator.field) = { string_not_empty: true}];    
 }
 
 message AddRequest{

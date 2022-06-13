@@ -7,7 +7,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rabbitmq/amqp091-go v1.3.0
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.2
 	github.com/ukama/ukama/services/cloud/net v0.0.0-20220422163321-18f195cf8dfa

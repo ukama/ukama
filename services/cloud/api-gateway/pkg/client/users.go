@@ -13,11 +13,11 @@ import (
 type Users struct {
 	conn    *grpc.ClientConn
 	client  pb.UserServiceClient
-	timeout int
+	timeout time.Duration
 	host    string
 }
 
-func NewUsers(host string, timeout int) *Users {
+func NewUsers(host string, timeout time.Duration) *Users {
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)

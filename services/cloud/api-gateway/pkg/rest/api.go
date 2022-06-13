@@ -2,6 +2,7 @@ package rest
 
 import (
 	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	pbnode "github.com/ukama/ukama/services/cloud/node/pb/gen"
 )
 
 // Users group
@@ -108,7 +109,7 @@ func mapPbNode(node *pb.Node) *Node {
 	}
 }
 
-func mapExtendeNode(node *pb.Node) *NodeExtended {
+func mapExtendeNode(node *pbnode.Node) *NodeExtended {
 	nx := &NodeExtended{
 		Node: Node{
 			NodeId: node.NodeId,
@@ -120,8 +121,17 @@ func mapExtendeNode(node *pb.Node) *NodeExtended {
 	if len(node.Attached) > 0 {
 		nx.Attached = make([]*Node, len(node.Attached))
 		for i, n := range node.Attached {
-			nx.Attached[i] = mapPbNode(n)
+			nx.Attached[i] = mapNodePbNode(n)
 		}
 	}
 	return nx
+}
+
+func mapNodePbNode(node *pbnode.Node) *Node {
+	return &Node{
+		NodeId: node.NodeId,
+		State:  pb.NodeState_name[int32(node.State)],
+		Type:   pb.NodeType_name[int32(node.Type)],
+		Name:   node.Name,
+	}
 }
