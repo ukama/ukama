@@ -17,3 +17,38 @@ make
 
 ## Test
 
+Start a remote web server to receive alerts
+
+```
+TBU
+``
+
+Start noded service
+
+```
+./build/noded
+```
+
+Start NotifyD service
+
+```
+./build/notifyd
+```
+
+Post event to NotifyD:
+
+```
+curl --request POST \
+  --url http://localhost:8085/notify/v1/event/core \
+  --header 'content-type: application/json' \
+  --data '{\n   "notify":{\n        "serviceName":"noded",\n        "time":1654566750,\n        "severity":"high",\n        "description":"UserOverload",\n     "reason": "Too Many users",\n       "details": "Error: user exceeding limit.",\n        "attribute": {\n            "name":"ActiveUser",\n          "units":"",\n           "value":64\n        },\n        "units":""\n    }\n}'
+```
+
+Post alert to NotifyD:
+
+```
+curl --request POST \
+  --url http://localhost:8085/notify/v1/alert/core \
+  --header 'content-type: application/json' \
+  --data '{\n   "notify":{\n        "serviceName":"core",\n     "time":1654566750,\n        "severity":"high",\n        "description":"UserOverload",\n     "reason": "Too Many users",\n       "details": "Error: user exceeding limit.",\n        "attribute": {\n            "name":"ActiveUser",\n          "units":"",\n           "value":64\n        },\n        "units":""\n    }\n}'
+```
