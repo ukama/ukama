@@ -32,11 +32,11 @@ func main() {
 
 	// create grpc connection
 	// panics if connection fails
-	conn := grpc.CreateGrpcConn(serviceConfig.Registry.GrpcService)
+	conn := grpc.CreateGrpcConn(serviceConfig.Network.GrpcService)
 
-	regClient := reg.NewRegistryServiceClient(conn)
+	regClient := reg.NewNetworkServiceClient(conn)
 
-	promReg.MustRegister(pkg.NewMetricsCollector(regClient, serviceConfig.Registry.Timeout, serviceConfig.Registry.PollInterval))
+	promReg.MustRegister(pkg.NewMetricsCollector(regClient, serviceConfig.Network.Timeout, serviceConfig.Network.PollInterval))
 	srv := http.NewServeMux()
 
 	srv.Handle("/", promhttp.HandlerFor(

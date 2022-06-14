@@ -10,7 +10,7 @@ import (
 	reg "github.com/ukama/ukama/services/cloud/network/pb/gen"
 )
 
-func NewMetricsCollector(reg reg.RegistryServiceClient, timeout time.Duration, requestInterval time.Duration) prometheus.Collector {
+func NewMetricsCollector(reg reg.NetworkServiceClient, timeout time.Duration, requestInterval time.Duration) prometheus.Collector {
 	mx := sync.RWMutex{}
 
 	c := &OrgCollector{
@@ -26,7 +26,7 @@ func NewMetricsCollector(reg reg.RegistryServiceClient, timeout time.Duration, r
 
 type OrgCollector struct {
 	mx              *sync.RWMutex
-	reg             reg.RegistryServiceClient
+	reg             reg.NetworkServiceClient
 	timeout         time.Duration
 	requestInterval time.Duration
 	// map[org][network][nodeType] = count
