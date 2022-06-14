@@ -11,9 +11,9 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/noded"
+	source="/distro/system/noded"
 	cmd="make"
-	bin_from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/noded/build/noded"
+	bin_from="/distro/system/noded/build/noded"
 	bin_to="/sbin/"
 	
 # for [program:<exec>] in supervisor.conf

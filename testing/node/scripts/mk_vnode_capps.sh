@@ -24,7 +24,7 @@ BUILD_DIR=${DEF_BUILD_DIR}
 build_app() {
 
     CWD=`pwd`
-    SRC=$1
+    SRC=${UKAMA_OS}/$1
     CMD=$2
 
     cd ${SRC} && ${CMD} && cd ${CWD}
@@ -62,7 +62,7 @@ case "$ACTION" in
 	fi
 	;;
     "cp")
-	cp $2 ${BUILD_DIR}/$3
+	cp ${UKAMA_OS}/$2 ${BUILD_DIR}/$3
 	;;
     "exec")
 	$2
@@ -74,7 +74,7 @@ case "$ACTION" in
 	mkdir -p ${BUILD_DIR}/$2
 	;;
     "libs")
-	copy_all_libs $2 $3
+	copy_all_libs ${UKAMA_OS}/$2 $3
 	;;
     "rename")
 	mv ${BUILD_DIR} $2

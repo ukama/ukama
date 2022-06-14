@@ -11,16 +11,16 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh"
+	source="/distro/system/mesh"
 	cmd="make"
-	bin_from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh/mesh.d"
+	bin_from="/distro/system/mesh/mesh.d"
 	bin_to="/sbin/"
 
 [build-rootfs]
 	mkdir="/conf"
 
 [build-conf]
-	from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/mesh/configs/config.toml"
+	from="/distro/system/mesh/configs/config.toml"
 	to="/conf/config.toml"
 
 # for [program:<exec>] in supervisor.conf
