@@ -24,7 +24,7 @@ func main() {
 	ccmd.ProcessVersionArgument(global.ServiceName, os.Args, version.Version)
 	initConfig()
 
-	networkClient, err := multipl.NewRegistryClient(serviceConfig.Registry.Host, serviceConfig.Registry.TimeoutSeconds)
+	networkClient, err := multipl.NewNetworkClient(serviceConfig.Network.Host, serviceConfig.Network.TimeoutSeconds)
 	if err != nil {
 		logrus.Fatalf("Failed to create network client: %v", err)
 	}
@@ -36,7 +36,7 @@ func main() {
 
 	m := multipl.NewRequestMultiplier(networkClient, pub)
 
-	ipResolve, err := pkg.NewDeviceIpResolver(serviceConfig.Net.Host, serviceConfig.Registry.TimeoutSeconds)
+	ipResolve, err := pkg.NewDeviceIpResolver(serviceConfig.Net.Host, serviceConfig.Network.TimeoutSeconds)
 	if err != nil {
 		logrus.Fatalf("Failed to create device ip resolver: %v", err)
 	}

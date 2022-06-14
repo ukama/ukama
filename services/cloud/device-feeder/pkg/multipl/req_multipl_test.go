@@ -14,7 +14,7 @@ import (
 )
 
 func Test_requestMultiplier_Process(t *testing.T) {
-	network := mocks.RegistryClient{}
+	network := mocks.NetworkClient{}
 	network.On("GetNodesList", "test-org").Return([]*pb.Node{
 		{
 			NodeId: "node-1",

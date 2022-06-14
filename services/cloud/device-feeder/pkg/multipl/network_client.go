@@ -16,11 +16,11 @@ type networkClient struct {
 	timeoutSecond int
 }
 
-type RegistryClient interface {
+type NetworkClient interface {
 	GetNodesList(orgName string) (nodes []*pb.Node, err error)
 }
 
-func NewRegistryClient(networkHost string, timeoutSecond int) (*networkClient, error) {
+func NewNetworkClient(networkHost string, timeoutSecond int) (*networkClient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSecond)*time.Second)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))

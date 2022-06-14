@@ -9,11 +9,11 @@ import (
 )
 
 type requestMultiplier struct {
-	networkClient RegistryClient
+	networkClient NetworkClient
 	queue         QueuePublisher
 }
 
-func NewRequestMultiplier(networkClient RegistryClient, queue QueuePublisher) pkg.RequestMultiplier {
+func NewRequestMultiplier(networkClient NetworkClient, queue QueuePublisher) pkg.RequestMultiplier {
 	return &requestMultiplier{
 		networkClient: networkClient,
 		queue:         queue,

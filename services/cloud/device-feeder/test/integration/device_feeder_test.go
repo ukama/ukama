@@ -25,7 +25,7 @@ import (
 )
 
 type TestConf struct {
-	RegistryHost string
+	NetworkHost  string
 	QueueUri     string
 	DevicePort   int
 	WaitingTime  int
@@ -40,7 +40,7 @@ const orgName = "device-feeder-integration-tests-org"
 func init() {
 	testConf = &TestConf{
 		QueueUri:     "amqp://guest:guest@localhost:5672/",
-		RegistryHost: "localhost:9090",
+		NetworkHost:  "localhost:9090",
 		NetHost:      "localhost:9090",
 		DevicePort:   8080, // dummy device port
 		WaitingTime:  10,   // how long dummy node waits for the request from device feeder
@@ -57,7 +57,7 @@ func init() {
 func Test_FullFlow(t *testing.T) {
 
 	log.Info("Preparing data for device-feeder test")
-	conn, regClient, nodes := PrepareRegistryData(t)
+	conn, regClient, nodes := PrepareNetworkData(t)
 	defer conn.Close()
 	defer cleanupData(regClient, nodes)
 
@@ -97,12 +97,12 @@ func cleanupData(client pb.NetworkServiceClient, nodes []string) {
 	}
 }
 
-func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient, []string) {
+func PrepareNetworkData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient, []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	logrus.Infoln("Connecting to network ", testConf.RegistryHost)
-	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	logrus.Infoln("Connecting to network ", testConf.NetworkHost)
+	regConn, err := grpc.DialContext(ctx, testConf.NetworkHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		assert.FailNow(t, "Failed to connect to network", err)
 		return nil, nil, nil
