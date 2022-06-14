@@ -7,7 +7,7 @@ import (
 )
 
 type KratosClient interface {
-	GetSimToken(networkOwnerId string) (string, error)
+	GetAccountName(networkOwnerId string) (string, error)
 }
 
 type kratosClient struct {
@@ -15,7 +15,7 @@ type kratosClient struct {
 }
 
 
-func (i kratosClient) GetICCIDWithCode(networkOwnerId string) (string, error) {
+func (i kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 	resp, err := http.Get(`https://kratos-admin.dev.ukama.com/admin/identities/`+networkOwnerId)
 	if err != nil {
 	   log.Fatal(err)
