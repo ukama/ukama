@@ -107,6 +107,7 @@ func PrepareNetworkData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient
 		assert.FailNow(t, "Failed to connect to network", err)
 		return nil, nil, nil
 	}
+	defer regConn.Close()
 
 	c := pb.NewNetworkServiceClient(regConn)
 
@@ -116,6 +117,8 @@ func PrepareNetworkData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient
 		assert.FailNow(t, "Failed to connect to net service", err)
 		return nil, nil, nil
 	}
+	defer netConn.Close()
+
 	nt := pbnet.NewNnsClient(netConn)
 
 	_, err = c.Add(ctx, &pb.AddRequest{Name: "test-net", OrgName: orgName})
@@ -135,6 +138,7 @@ func PrepareNetworkData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient
 				State:  pb.NodeState_UNDEFINED,
 			},
 			OrgName: orgName,
+			Network: "test-net",
 		})
 
 		if err != nil {
