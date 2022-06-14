@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
-	regMock "github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
+	netMock "github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
 )
 
 func Test_Collect(t *testing.T) {
-	regM := &regMock.RegistryServiceClient{}
+	regM := &netMock.NetworkServiceClient{}
 	regM.On("List", mock.Anything, mock.Anything).Return(&pb.ListResponse{
 		Orgs: []*pb.ListResponse_Org{
 			&pb.ListResponse_Org{
