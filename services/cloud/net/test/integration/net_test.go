@@ -33,6 +33,7 @@ type TestConf struct {
 	Queue          config.Queue
 	NodeBaseDomain string
 	DnsHost        string
+	Timeout        time.Duration
 }
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 			Uri: "amqp://guest:guest@localhost:5672/",
 		},
 		NodeBaseDomain: "node.mesh",
+		Timeout:        5 * time.Second,
 	}
 
 	config.LoadConfig("integration", testConf)
@@ -51,7 +53,7 @@ func init() {
 
 func Test_FullFlow(t *testing.T) {
 	// connect to Grpc service
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	ctx, cancel := context.WithTimeout(context.Background(), testConf.Timeout)
 	defer cancel()
 
 	logrus.Infoln("Connecting to service ", testConf.NetHost)
@@ -78,18 +80,28 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("ResolevMissingIp", func(tt *testing.T) {
 		_, err := c.Get(ctx, &pb.GetRequest{NodeId: ukama.NewVirtualHomeNodeId().String()})
-		s, ok := status.FromError(err)
-		assert.True(tt, ok)
-		assert.Equal(tt, codes.NotFound, s.Code())
+		if assert.Error(t, err) {
+			s, ok := status.FromError(err)
+			assert.True(tt, ok)
+			assert.Equal(tt, codes.NotFound, s.Code())
+		}
 	})
 
 	t.Run("GetIpList", func(tt *testing.T) {
 		_, err := c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), Ip: ip})
-		assert.NoError(t, err)
+		if assert.NoError(t, err) {
+			t.FailNow()
+		}
 		_, err = c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), Ip: "1.1.1.2"})
-		assert.NoError(t, err)
+		if assert.NoError(t, err) {
+			t.FailNow()
+		}
+
 		r, err := c.List(ctx, &pb.ListRequest{})
-		assert.NoError(t, err)
+		if assert.NoError(t, err) {
+			t.FailNow()
+		}
+
 		// just make sure it's unique list
 		assert.Greater(tt, len(r.Ips), 1)
 		un := make(map[string]bool)
