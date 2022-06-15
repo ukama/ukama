@@ -763,10 +763,10 @@ const Home = () => {
     }, []);
 
     const handleNodeActions = useCallback((id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg.nodes.filter(
+        const node = nodeRes?.getNodesByOrg?.nodes.filter(
             item => item.id === id
         );
-        if (type == "edit" && node && node.length > 0) {
+        if (type == "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -779,7 +779,7 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else {
+        } else if (type == "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",

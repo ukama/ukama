@@ -120,9 +120,8 @@ const Header = ({
         resetData();
         resetPageName();
         setSkeltonLoading(true);
-        window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
+        window.location.replace(`${process.env.REACT_APP_AUTH_URL}logout`);
     };
-
     return (
         <Box component="div">
             <Popover
