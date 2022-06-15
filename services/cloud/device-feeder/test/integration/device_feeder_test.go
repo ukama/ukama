@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coredns/coredns/plugin/pkg/log"
+	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 	pbnet "github.com/ukama/ukama/services/cloud/net/pb/gen"
 	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
-	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
@@ -47,7 +47,12 @@ func init() {
 		DevicesCount: 3,    // how many devices to create
 	}
 
-	config.LoadConfig("integration", testConf)
+	reader := rconf.NewConfReader("integration")
+	err := reader.Read(testConf)
+	if err != nil {
+		logrus.Fatalf("Failed to read config: %v", err)
+	}
+
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("%+v", testConf)
 
