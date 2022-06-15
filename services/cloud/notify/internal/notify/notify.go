@@ -66,7 +66,7 @@ func (n *Notify) PublishNotification(notif db.Notification) error {
 		SetContainer(internal.ServiceName).
 		SetEventType().
 		SetObject("notify").
-		SetAction(string(notif.NotificationType)).
+		SetAction(string(notif.Type)).
 		MustBuild()
 	routingKey := msgbus.RoutingKey(key)
 

@@ -31,15 +31,15 @@ const (
 
 type Notification struct {
 	gorm.Model
-	NotificationID   uuid.UUID        `gorm:"unique;type:string;size:23;expression:lower(node_id);size:32" json:"id"`
-	NodeID           string           `gorm:"type:string;size:23;expression:lower(node_id);size:32" json:"nodeID"`
-	NodeType         string           `json:"nodeType"`
-	Severity         SeverityType     `gorm:"type:string;expression:lower(severity);json:"severity"`
-	NotificationType NotificationType `gorm:"type:string;expression:lower(notification_type);json:"notificationType"`
-	ServiceName      string           `json:"ServiceName"`
-	Time             uint32           `json:"Time"`
-	Description      string           `json:"Description"`
-	Details          datatypes.JSON   `json:"Details"`
+	NotificationID uuid.UUID        `gorm:"unique;type:string;size:23;expression:lower(node_id);size:32" json:"id"`
+	NodeID         string           `gorm:"type:string;size:23;expression:lower(node_id);size:32" json:"nodeID"`
+	NodeType       string           `json:"nodeType"`
+	Severity       SeverityType     `gorm:"type:string;expression:lower(severity)" json:"severity"`
+	Type           NotificationType `gorm:"type:string;expression:lower(notification_type)" json:"notificationType"`
+	ServiceName    string           `json:"ServiceName"`
+	Time           uint32           `json:"Time"`
+	Description    string           `json:"Description"`
+	Details        datatypes.JSON   `json:"Details"`
 }
 
 func (n NotificationType) String() string {
