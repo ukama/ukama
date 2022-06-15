@@ -48,16 +48,31 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "*", "looking_for": "vnode_info", "path": "/node",
+					"looking_to": "post_notification", "path": "/",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_on", "org": "*", "path": "/node",
+					"looking_to": "delete_notification", "path": "/",
 				},
 				{
-					"node": "*", "looking_to": "vnode_power_off", "org": "*", "path": "/node",
+					"looking_for": "list_notification", "path": "/",
 				},
 				{
-					"looking_for": "vnode_list", "path": "/list",
+					"node": "*", "looking_to": "notification", "type": "*", "path": "/",
+				},
+				{
+					"node": "*", "looking_to": "delete_notification", "type": "*", "path": "/",
+				},
+				{
+					"node": "*", "looking_for": "list_notification", "type": "*", "path": "/",
+				},
+				{
+					"service": "*", "looking_to": "notification", "type": "*", "path": "/",
+				},
+				{
+					"service": "*", "looking_to": "delete_notification", "type": "*", "path": "/",
+				},
+				{
+					"service": "*", "looking_for": "list_notification", "type": "*", "path": "/",
 				},
 			},
 			F: config.DefaultForwardConfig(),
