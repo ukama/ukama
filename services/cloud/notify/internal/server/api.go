@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/gofrs/uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/services/cloud/notify/internal/db"
 )
 

@@ -86,3 +86,77 @@ func (n *Notify) PublishNotification(notif db.Notification) error {
 
 	return nil
 }
+
+func (n *Notify) DeleteNotification(id uuid.UUID) error {
+
+	err := n.repo.DeleteNotification(id.String())
+	if err != nil {
+		logrus.Errorf("Error deleting notification from database. Error: %s\n", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (n *Notify) ListNotification() (*[]db.Notification, error) {
+
+	list, err := n.repo.List()
+	if err != nil {
+		logrus.Errorf("Error listing notification from database. Error: %s\n", err.Error())
+		return nil, err
+	}
+
+	return list, nil
+}
+
+func (n *Notify) GetSpecificNotification(service *string, nodeId *string, ntype string) (*[]db.Notification, error) {
+	var list *[]db.Notification
+	var err error
+	if service != nil {
+		list, err = n.repo.GetNotificationForService(*service, ntype)
+	} else if nodeId != nil {
+		list, err = n.repo.GetNotificationForNode(*nodeId, ntype)
+	}
+
+	if err != nil {
+		logrus.Errorf("Error Reading notification from database. Error: %s\n", err.Error())
+		return nil, err
+	}
+
+	return list, nil
+}
+
+func (n *Notify) DeleteSpecificNotification(service *string, nodeId *string, ntype string) error {
+
+	var err error
+	if service != nil {
+		err = n.repo.DeleteNotificationForService(*service, ntype)
+	} else if nodeId != nil {
+		err = n.repo.DeleteNotificationForNode(*nodeId, ntype)
+	}
+
+	if err != nil {
+		logrus.Errorf("Error deleting notification from database. Error: %s\n", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (n *Notify) ListSpecificNotification(service *string, nodeId *string, ntype string) (*[]db.Notification, error) {
+
+	var list *[]db.Notification
+	var err error
+	if service != nil {
+		list, err = n.repo.ListNotificationForService(*service)
+	} else if nodeId != nil {
+		list, err = n.repo.ListNotificationForNode(*nodeId)
+	}
+
+	if err != nil {
+		logrus.Errorf("Error Reading notification from database. Error: %s\n", err.Error())
+		return nil, err
+	}
+
+	return list, nil
+}

@@ -71,16 +71,9 @@ func (r *Router) init() {
 
 }
 
-func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
-	return nil
-}
-
-func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) error {
-	return nil
-}
-
+/* Handle new notification */
 func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) error {
-	logrus.Debugf("Handling new notification opertaion on %+v.", req)
+	logrus.Debugf("Handling new notification: %+v.", req)
 
 	/* validate nodeid */
 	_, err := ukama.ValidateNodeId(req.NodeID)
@@ -90,7 +83,52 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 			Message:  "Invalid node:" + err.Error(),
 		}
 	}
+
+	n := NewNotification(req)
+
+	err = r.n.NewNotificationHandler(*n)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Failed to register new notification:" + err.Error(),
+		}
+	}
+
 	return nil
+}
+
+/* delete notification */
+func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
+	logrus.Debugf("Handling delete notification: %+v.", req)
+
+	err := r.n.DeleteNotification(req.Id)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Failed to register new notification:" + err.Error(),
+		}
+	}
+
+	return nil
+}
+
+/* List notification */
+func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) (*[]db.Notification, error) {
+	logrus.Debugf("Handling list notification: %+v.", req)
+
+	list, err := r.n.ListNotification()
+	if err != nil {
+		return nil, rest.HttpError{
+			HttpCode: http.StatusInternalServerError,
+			Message:  "Failed to register new notification:" + err.Error(),
+		}
+	}
+
+	return list, nil
+}
+
+func (r *Router) GetNotificationForNode(c *gin.Context, req *ReqGetNotificationTypeForNode) (*db.Notification, error) {
+	return nil, nil
 }
 
 func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotificationForNode) error {
@@ -101,7 +139,7 @@ func (r *Router) ListNotificationForNode(c *gin.Context, req *ReqListNotificatio
 	return nil, nil
 }
 
-func (r *Router) GetNotificationForNode(c *gin.Context, req *ReqGetNotificationTypeForNode) (*db.Notification, error) {
+func (r *Router) GetNotificationForService(c *gin.Context, req *ReqGetNotificationTypeForService) (*db.Notification, error) {
 	return nil, nil
 }
 
@@ -113,6 +151,16 @@ func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotifica
 	return nil, nil
 }
 
-func (r *Router) GetNotificationForService(c *gin.Context, req *ReqGetNotificationTypeForService) (*db.Notification, error) {
-	return nil, nil
+func NewNotification(r *ReqPostNotification) *db.Notification {
+	n := db.Notification{
+		NodeID:      r.NodeID,
+		NodeType:    r.NodeType,
+		Severity:    r.Severity,
+		Type:        r.Type,
+		ServiceName: r.ServiceName,
+		Time:        r.Time,
+		Description: r.Description,
+		Details:     r.Details,
+	}
+	return &n
 }
