@@ -127,33 +127,6 @@ static int start_framework(Config *config, UInst *instance, int flag) {
 }
 
 /*
- * start_websocket_server -- start websocket server on the server port.
- *
- */
-
-int start_websocket_server(Config *cfg, UInst *serverInst) {
-
-  /* Initialize the admin and client webservices framework. */
-  if (init_framework(serverInst, atoi(cfg->remoteAccept)) != TRUE) {
-    log_error("Error initializing webservice framework");
-    return FALSE;
-  }
-
-  /* setup endpoints and methods callback. */
-  setup_websocket_endpoints(cfg, serverInst);
-  
-  /* open connection for both admin and client webservices */
-  if (start_framework(cfg, serverInst, WEB_SOCKETS)==FALSE) {
-    log_error("Failed to start websocket at remote port %s", cfg->remoteAccept);
-    return FALSE;
-  }
-  
-  log_debug("Websocket on remote port %s: started.", cfg->remoteAccept);
-
-  return TRUE;
-}
-
-/*
  * add_device_info_to_request -- Add device related information to the
  *                               request
  *

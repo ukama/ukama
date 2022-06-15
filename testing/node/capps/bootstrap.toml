@@ -1,6 +1,6 @@
 
 #
-# Config file to build mesh.d for the Ukama's Virtual Node.
+# Config file to build bootstrap for the Ukama's Virtual Node.
 #
 
 # Base image to use to build container. Examples are alpine, Ubuntu, etc.
@@ -11,28 +11,27 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/distro/system/mesh"
+	source="/distro/system/bootstrap"
 	cmd="make"
-	bin_from="/distro/system/mesh/mesh.d"
+	bin_from="/distro/system/bootstrap/bootstrap"
 	bin_to="/sbin/"
 
 [build-rootfs]
 	mkdir="/conf"
 
 [build-conf]
-	from="/distro/system/mesh/configs/config.toml"
-	to="/conf/mesh_config.toml"
+	from="/distro/system/bootstrap/config/config.toml"
+	to="/conf/bootstrap_config.toml"
 
 # for [program:<exec>] in supervisor.conf
 [capp-exec]
-	name="meshd"
+	name="bootstrap"
 	version="latest"
-	depends_on="bootstrap"
 	wait_for="10s"
 	autostart="true"
 	autorestart="false"
-	bin="mesh.d"
+	bin="bootstrap"
 	path="/sbin/" # path where the exec should be. Mathches build.bin_to
-	args="--config /conf/mesh_config.toml"
+	args="--config /conf/bootstrap_config.toml"
 
 # Nothing to see here. Move on

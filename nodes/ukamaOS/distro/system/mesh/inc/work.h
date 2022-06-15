@@ -22,12 +22,12 @@ typedef void (*thread_func_t)(Packet, void *arg);
  */
 typedef struct work_item_t {
 
-  thread_func_t preFunc;    /* Packet pre-process function, can be NULL */
-  thread_func_t postFunc;   /* Packet post-processing function, can be NULL */
-  void          *preArgs;   /* Args for pre-function. */
-  void          *postArgs;  /* Args for post-funciion. */
-  Packet        data;       /* Data packet to process. */
-  struct work_item_t *next; /* Link to next item in the queue. */
+	thread_func_t preFunc;    /* Packet pre-process function, can be NULL */
+	thread_func_t postFunc;   /* Packet post-processing function, can be NULL */
+	void          *preArgs;   /* Args for pre-function. */
+	void          *postArgs;  /* Args for post-funciion. */
+	Packet        data;       /* Data packet to process. */
+	struct work_item_t *next; /* Link to next item in the queue. */
 }WorkItem;
 
 /*
@@ -35,18 +35,18 @@ typedef struct work_item_t {
  */
 typedef struct {
 
-  /* Transmit work list and mutex */
-  WorkItem       *first;   /* First item in the TX queue. */
-  WorkItem       *last;    /* Pointer to last item in the TX queue. */
+	/* Transmit work list and mutex */
+	WorkItem       *first;   /* First item in the TX queue. */
+	WorkItem       *last;    /* Pointer to last item in the TX queue. */
   
-  pthread_mutex_t mutex;    /* Mutex for insert and remove */
-  pthread_cond_t  hasWork;  /* Cond to signal when there is work. */
-  int             exit;     /* if TX thread is to exit or exited. */
+	pthread_mutex_t mutex;    /* Mutex for insert and remove */
+	pthread_cond_t  hasWork;  /* Cond to signal when there is work. */
+	int             exit;     /* if TX thread is to exit or exited. */
 }WorkList;
 
 /* Functions. */
 int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
-		      void *preArgs, thread_func_t post, void *postArgs);
+					  void *preArgs, thread_func_t post, void *postArgs);
 WorkItem *get_work_to_transmit(WorkList *list);
 void init_work_list(WorkList **list);
 void destroy_work_item(WorkItem *work);
