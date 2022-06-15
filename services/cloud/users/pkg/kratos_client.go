@@ -4,40 +4,55 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
+type KratosClient interface {
+	GetAccountName(networkOwnerId string) (string, error)
+}
 type kratosClient struct {
-   
+	apiUrl string
 }
 
 type Response struct {
-	Traits         struct {
+	Traits struct {
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	} `json:"traits"`
 }
-func (i kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 
-resp, err := http.Get(`https://kratos-admin.dev.ukama.com/admin/identities/`+networkOwnerId)
-	if err != nil {
-	   log.Fatal(err)
-      
-	}
-    
- defer resp.Body.Close()
-
-dataByte,erroBytes:=ioutil.ReadAll(resp.Body)
-
-var result Response
-
-    if err := json.Unmarshal(dataByte, &result); err != nil {  
-        fmt.Println("Can not unmarshal JSON")
-    }
-   
-return result.Traits.Name,erroBytes
+func NewKratosClient(apiUrl string) *kratosClient {
+	return &kratosClient{apiUrl: apiUrl}
 }
 
+func (i *kratosClient) GetAccountName(networkOwnerId string) (string, error) {
+	if len(networkOwnerId) <= 0 {
+		return "", errors.Wrap("userId cannot be empty")
+	}
+	resp, err := http.Get(i.apiUrl + networkOwnerId)
+	if err != nil {
+		return "", fmt.Errorf("failed to get a response")
 
+	}
 
+	defer resp.Body.Close()
+
+	dataByte, erroBytes := ioutil.ReadAll(resp.Body)
+
+	if erroBytes != nil {
+		return "", errors.Wrap(err, "failed to decode json response")
+	}
+
+	var result Response
+
+	if err := json.Unmarshal(dataByte, &result); err != nil {
+		return "", errors.Wrap(err, "failed to marshal userName")
+
+	}
+
+	usr := result.Traits.Name
+
+	return usr, nil
+}
