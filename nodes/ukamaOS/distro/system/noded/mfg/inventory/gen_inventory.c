@@ -133,6 +133,7 @@ int create_db_hook(char **puuid, char** name, char** schema, int count) {
                     pcfg->eepromCfg = i2cCfg;
 
                     /* Update Module UUID */
+		    usys_memset(pcfg->modUuid, 0, 32);
                     usys_memcpy(pcfg->modUuid, puuid[idx],
 								usys_strlen(puuid[idx]));
 
