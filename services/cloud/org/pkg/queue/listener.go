@@ -43,12 +43,16 @@ type UserRegisteredBody struct {
 }
 
 func NewQueueListener(conf QueueListenerConfig, serviceId string) (*QueueListener, error) {
+	log.Info("Starting queue listener")
 	client, err := msgbus.NewConsumerClient(conf.Queue.Uri)
 	if err != nil {
 		return nil, err
 	}
 
-	networkConn, err := grpc.Dial(conf.OrgService.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	log.Info("Connecting to org service")
+	ctx, cancel := context.WithTimeout(context.Background(), conf.OrgService.Timeout)
+	defer cancel()
+	networkConn, err := grpc.DialContext(ctx, conf.OrgService.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}

@@ -1,8 +1,9 @@
 package main
 
 import (
-	sig "github.com/ukama/ukama/services/common/signal"
 	"os"
+
+	sig "github.com/ukama/ukama/services/common/signal"
 
 	"github.com/num30/config"
 	"github.com/sirupsen/logrus"

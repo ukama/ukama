@@ -5,7 +5,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	confr "github.com/num30/config"
@@ -13,6 +12,7 @@ import (
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc/credentials/insecure"
+	"os"
 	"testing"
 	"time"
 
@@ -112,7 +112,7 @@ func Test_Listener(t *testing.T) {
 	logrus.Info("Sleeping for 2 seconds")
 	time.Sleep(2 * time.Second)
 
-	logrus.Info("Getting org" + ownerId)
+	logrus.Info("Getting org: " + ownerId)
 	resp, err := c.Get(ctx, &pb.GetRequest{Name: ownerId})
 	if assert.NoError(t, err) {
 		assert.Equal(t, ownerId, resp.Org.Owner)
@@ -135,17 +135,20 @@ func CreateOrgClient() (*grpc.ClientConn, pb.OrgServiceClient, error) {
 
 func sendMessageToQueue(ownerId string) error {
 	logrus.Info("Sending message to queue")
-	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+
+	rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
 	if err != nil {
+		logrus.Errorf("could not create rabbitmq client %+v", err)
 		return err
 	}
-	message, err := json.Marshal(&queue.UserRegisteredBody{
+
+	err = rabbit.Publish(&queue.UserRegisteredBody{
 		Id:    ownerId,
 		Email: "org-integration-test@gmail.com",
-	})
+	}, string(msgbus.UserRegisteredRoutingKey))
 	if err != nil {
-		return err
+		logrus.Errorf("could not publish message %+v", err)
 	}
-	err = rabbit.Publish(message, "", msgbus.DefaultExchange, msgbus.UserRegisteredRoutingKey, "topic")
+
 	return err
 }
