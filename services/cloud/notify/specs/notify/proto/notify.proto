@@ -1,0 +1,17 @@
+syntax="proto3";
+
+option go_package = "specs/notify/spec";
+
+package ukama.services.cloud.notify.v1;
+
+// Virtual Node Status update event 
+message NotificationMsg  {
+    string NotificationID = 1;
+    string NodeID = 2;
+    string NodeType = 3;
+    string NotificationType = 4;
+    string Description = 5;
+    string Severity = 6;
+    string ServiceName = 7;
+    uint32 EpochTime = 8; 
+}
