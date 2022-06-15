@@ -89,17 +89,17 @@ func Test_FullFlow(t *testing.T) {
 
 	t.Run("GetIpList", func(tt *testing.T) {
 		_, err := c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), Ip: ip})
-		if assert.NoError(t, err) {
-			t.FailNow()
+		if !assert.NoError(t, err) {
+			return
 		}
 		_, err = c.Set(ctx, &pb.SetRequest{NodeId: ukama.NewVirtualHomeNodeId().String(), Ip: "1.1.1.2"})
-		if assert.NoError(t, err) {
-			t.FailNow()
+		if !assert.NoError(t, err) {
+			return
 		}
 
 		r, err := c.List(ctx, &pb.ListRequest{})
-		if assert.NoError(t, err) {
-			t.FailNow()
+		if !assert.NoError(t, err) {
+			return
 		}
 
 		// just make sure it's unique list
