@@ -16,6 +16,7 @@ import (
 
 	"github.com/ukama/ukama/services/common/ukama"
 
+	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
@@ -27,20 +28,20 @@ var tConfig *TestConfig
 
 func init() {
 	// load config
-	tConfig = &TestConfig{
-		ServiceHost: "localhost:9090",
-		Rabbitmq:    "amqp://guest:guest@localhost:5672",
+	tConfig = &TestConfig{}
+	reader := rconf.NewConfReader("integration")
+	err := reader.Read(tConfig)
+	if err != nil {
+		logrus.Fatalf("Failed to read config: %v", err)
 	}
 
-	config.LoadConfig("integration", tConfig)
-
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: REGISTRYHOST")
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("Config: %+v\n", tConfig)
 }
 
 type TestConfig struct {
-	ServiceHost string
-	Rabbitmq    string
+	ServiceHost string        `default:"localhost:9090"`
+	Queue       *config.Queue `default:"{}"`
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -151,7 +152,11 @@ func Test_Listener(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rabbit, err := msgbus.NewQPub(tConfig.Rabbitmq, "network-listener-integration-test", os.Getenv("POD_NAME"))
+	rabbit, err := msgbus.NewQPub(tConfig.Queue.Uri, "network-listener-integration-test", os.Getenv("POD_NAME"))
+	if err != nil {
+		assert.NoErrorf(t, err, "could not create rabbitmq client %+v", err)
+		return
+	}
 
 	conn, c, err := CreateNetworkClient()
 	defer conn.Close()
