@@ -3,11 +3,12 @@ package queue
 import (
 	"context"
 	"encoding/json"
-	"github.com/ukama/ukama/services/cloud/network/pkg"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/ukama/ukama/services/cloud/network/pkg"
 
 	"github.com/streadway/amqp"
 
@@ -36,9 +37,13 @@ func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeo
 		return nil, err
 	}
 
-	networkConn, err := grpc.Dial(networkGrpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	log.Info("Connecting to network service")
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+	defer cancel()
+
+	networkConn, err := grpc.DialContext(ctx, networkGrpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("Could not connect: %v", err)
+		log.Fatalf("Could not connect to network service: %v", err)
 	}
 
 	return &QueueListener{
@@ -51,6 +56,7 @@ func NewQueueListener(networkGrpcHost string, connectionString string, grpcTimeo
 }
 
 func (q *QueueListener) StartQueueListening() (err error) {
+	log.Info("Starting queue listener")
 	err = q.msgBusConn.SubscribeToServiceQueue(pkg.ServiceName+"-listener", msgbus.DefaultExchange,
 		[]msgbus.RoutingKey{msgbus.NodeUpdatedRoutingKey, msgbus.OrgCreatedRoutingKey}, q.serviceId, q.incomingMessageHandler)
 	if err != nil {

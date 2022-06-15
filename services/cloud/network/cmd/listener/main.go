@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/ukama/ukama/services/cloud/network/pkg"
-	"github.com/ukama/ukama/services/common/config"
 	"os"
 	"time"
+
+	"github.com/ukama/ukama/services/cloud/network/pkg"
+	"github.com/ukama/ukama/services/common/config"
 
 	"github.com/ukama/ukama/services/cloud/network/cmd/version"
 
