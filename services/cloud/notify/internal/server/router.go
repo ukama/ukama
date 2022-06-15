@@ -72,9 +72,11 @@ func (r *Router) init() {
 }
 
 func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
+	return nil
 }
 
 func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) error {
+	return nil
 }
 
 func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) error {
@@ -88,7 +90,7 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 			Message:  "Invalid node:" + err.Error(),
 		}
 	}
-
+	return nil
 }
 
 func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotificationForNode) error {

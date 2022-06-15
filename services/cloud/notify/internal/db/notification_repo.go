@@ -8,11 +8,11 @@ import (
 type NotificationRepo interface {
 	Insert(n Notification) error
 	GetNotification(id uint) (*Notification, error)
-	GetNotificationForNode(nodeId string) (*Notification, error)
-	GetAlertForNode(nodeId string) (*Notification, error)
-	GetEventForNode(nodeId string) (*Notification, error)
-	CleanAlertForNode(nodeId string) error
-	CleanEventForNode(nodeId string) error
+	GetNotificationForNode(nodeId string) (*[]Notification, error)
+	GetAlertsForNode(nodeId string) (*[]Notification, error)
+	GetEventsForNode(nodeId string) (*[]Notification, error)
+	CleanAlertsForNode(nodeId string) error
+	CleanEventsForNode(nodeId string) error
 	CleanEverything() error
 	List() (*[]Notification, error)
 }
@@ -21,7 +21,7 @@ type notificationRepo struct {
 	Db sql.Db
 }
 
-func NewnotificationRepo(db sql.Db) *notificationRepo {
+func NewNotificationRepo(db sql.Db) *notificationRepo {
 	return &notificationRepo{
 		Db: db,
 	}
@@ -49,7 +49,7 @@ func (r *notificationRepo) GetNotification(id uint) (*Notification, error) {
 
 /* Get Notification for node */
 func (r *notificationRepo) GetNotificationForNode(NodeID string) (*[]Notification, error) {
-	notification := Notification{}
+	notification := []Notification{}
 	result := r.Db.GetGormDb().Find(&notification, "node_id = ?", NodeID)
 	if result.Error != nil {
 		return nil, result.Error
@@ -59,7 +59,7 @@ func (r *notificationRepo) GetNotificationForNode(NodeID string) (*[]Notificatio
 
 /* Get Alerts for node */
 func (r *notificationRepo) GetAlertsForNode(NodeID string) (*[]Notification, error) {
-	notification := Notification{}
+	notification := []Notification{}
 	result := r.Db.GetGormDb().Find(&notification, "node_id = ? AND notification_type = alert", NodeID)
 	if result.Error != nil {
 		return nil, result.Error
@@ -69,7 +69,7 @@ func (r *notificationRepo) GetAlertsForNode(NodeID string) (*[]Notification, err
 
 /* Get Events for node */
 func (r *notificationRepo) GetEventsForNode(NodeID string) (*[]Notification, error) {
-	notification := Notification{}
+	notification := []Notification{}
 	result := r.Db.GetGormDb().Find(&notification, "node_id = ? otification_type = event", NodeID)
 	if result.Error != nil {
 		return nil, result.Error
@@ -103,7 +103,7 @@ func (r *notificationRepo) Delete(id uint) error {
 }
 
 /* Clean all alert */
-func (r *notificationRepo) CleanAlertForNode(NodeID string) error {
+func (r *notificationRepo) CleanAlertsForNode(NodeID string) error {
 	result := r.Db.GetGormDb().Unscoped().Where("node_id = ? AND notification_type = alert", NodeID).Delete(&Notification{})
 	if result.Error != nil {
 		return result.Error

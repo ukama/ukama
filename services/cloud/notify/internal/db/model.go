@@ -37,7 +37,7 @@ type Notification struct {
 	Severity         SeverityType     `gorm:"type:string;expression:lower(severity);json:"severity"`
 	NotificationType NotificationType `gorm:"type:string;expression:lower(notification_type);json:"notificationType"`
 	ServiceName      string           `json:"ServiceName"`
-	Time             int64            `json:"Time"`
+	Time             uint32           `json:"Time"`
 	Description      string           `json:"Description"`
 	Details          datatypes.JSON   `json:"Details"`
 }

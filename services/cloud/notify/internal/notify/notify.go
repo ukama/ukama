@@ -51,11 +51,11 @@ func (n *Notify) NewNotificationHandler(notif db.Notification) error {
 func (n *Notify) PublishNotification(notif db.Notification) error {
 
 	msg := &spec.NotificationMsg{
-		NotificationID: notif.ID,
+		NotificationID: notif.NotificationID.String(),
 		NodeID:         notif.NodeID,
 		NodeType:       notif.NodeType,
 		Description:    notif.Description,
-		Severity:       notif.Severity,
+		Severity:       string(notif.Severity),
 		ServiceName:    notif.ServiceName,
 		EpochTime:      notif.Time,
 	}

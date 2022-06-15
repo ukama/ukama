@@ -52,7 +52,7 @@ func main() {
 func initDb() sql.Db {
 	logrus.Infof("Initializing Database")
 	d := sql.NewDb(internal.ServiceConfig.DB, internal.ServiceConfig.DebugMode)
-	err := d.Init(&db.VNode{})
+	err := d.Init(&db.Notification{})
 	if err != nil {
 		logrus.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -69,7 +69,7 @@ func startHTTPServer(ctx context.Context, d sql.Db) {
 
 	metrics.StartMetricsServer(&internal.ServiceConfig.Metrics)
 
-	r := server.NewRouter(internal.ServiceConfig, rs, db.NewVNodeRepo(d))
+	r := server.NewRouter(internal.ServiceConfig, rs, db.NewNotificationRepo(d))
 	go r.Run(ext)
 
 	/* Register service */
