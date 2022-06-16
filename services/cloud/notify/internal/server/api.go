@@ -5,14 +5,30 @@ import (
 	"github.com/ukama/ukama/services/cloud/notify/internal/db"
 )
 
+type Notification struct {
+	NotificationID uuid.UUID           `json:"notificationID"`
+	NodeID         string              `json:"nodeID"`
+	NodeType       string              `json:"nodeType"`
+	Severity       db.SeverityType     `json:"severity" type:"string"`
+	Type           db.NotificationType `json:"notificationType" type:"string"`
+	ServiceName    string              `json:"serviceName"`
+	Time           uint32              `json:"time"`
+	Description    string              `json:"description"`
+	Details        []byte              `json:"details"`
+}
+
 type ReqPostNotification struct {
 	LookingTo string `query:"looking_to" validate:"eq=post_notification,required"`
-	db.Notification
+	Notification
 }
 
 type ReqDeleteNotification struct {
 	LookingFor string    `query:"looking_to" validate:"eq=delete_notification,required"`
 	Id         uuid.UUID `query:"notification_id" validate:"required"`
+}
+
+type RespNotificationList struct {
+	Notifications []Notification `json:"notifications"`
 }
 
 type ReqListNotification struct {
@@ -43,9 +59,9 @@ type ReqGetNotificationTypeForService struct {
 }
 
 type ReqDeleteNotificationForService struct {
-	NodeID     string              `query:"service" validate:"required"`
-	LookingFor string              `query:"looking_to" validate:"eq=delete_notification,required"`
-	Type       db.NotificationType `query:"notification_type" default:"alert" validate:"eq=alert|eq=event"`
+	ServiceName string              `query:"service" validate:"required"`
+	LookingFor  string              `query:"looking_to" validate:"eq=delete_notification,required"`
+	Type        db.NotificationType `query:"notification_type" default:"alert" validate:"eq=alert|eq=event"`
 }
 
 type ReqListNotificationForService struct {

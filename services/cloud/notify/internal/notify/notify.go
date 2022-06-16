@@ -149,7 +149,7 @@ func (n *Notify) DeleteSpecificNotification(service *string, nodeId *string, nty
 	return nil
 }
 
-func (n *Notify) ListSpecificNotification(service *string, nodeId *string, ntype string) (*[]db.Notification, error) {
+func (n *Notify) ListSpecificNotification(service *string, nodeId *string) (*[]db.Notification, error) {
 
 	var list *[]db.Notification
 	var err error
