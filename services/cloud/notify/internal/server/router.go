@@ -126,11 +126,11 @@ func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) (*Re
 			Message:  "Failed to get notification list. Error:" + err.Error(),
 		}
 	}
-	logrus.Debugf("list notifications: %+v.", list)
 
 	if list != nil {
 		resp = getNotificationList(list)
 	}
+	logrus.Debugf("Response with notifications: %+v.", resp)
 	return resp, nil
 }
 
@@ -145,13 +145,13 @@ func (r *Router) GetNotificationForNode(c *gin.Context, req *ReqGetNotificationT
 			Message:  "Failed to get notification list for node " + req.NodeID + "Error:" + err.Error(),
 		}
 	}
-	logrus.Debugf("list notifications for Node %s: %+v.", req.NodeID, list)
 
 	if list != nil {
 		resp = getNotificationList(list)
 	}
-	return resp, nil
+	logrus.Debugf("Response with notifications for node: %+v.", resp)
 
+	return resp, nil
 }
 
 func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotificationForNode) error {
@@ -178,30 +178,32 @@ func (r *Router) ListNotificationForNode(c *gin.Context, req *ReqListNotificatio
 			Message:  "Failed to get notification list for node" + req.NodeID + ": Error" + err.Error(),
 		}
 	}
-	logrus.Debugf("list notifications for node : %+v.", list)
 
 	if list != nil {
 		resp = getNotificationList(list)
 	}
+	logrus.Debugf("Response with notifications for node: %+v.", resp)
+
 	return resp, nil
 }
 
 func (r *Router) GetNotificationForService(c *gin.Context, req *ReqGetNotificationTypeForService) (*RespNotificationList, error) {
-	logrus.Debugf("Handling list notifications for node : %+v.", req)
+	logrus.Debugf("Handling list notifications for Service : %+v.", req)
 
 	var resp *RespNotificationList
 	list, err := r.n.GetSpecificNotification(&req.ServiceName, nil, string(req.Type))
 	if err != nil {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
-			Message:  "Failed to get notification list for node " + req.ServiceName + "Error:" + err.Error(),
+			Message:  "Failed to get notification list for Service " + req.ServiceName + "Error:" + err.Error(),
 		}
 	}
-	logrus.Debugf("list notifications: %+v.", list)
 
 	if list != nil {
 		resp = getNotificationList(list)
 	}
+	logrus.Debugf("Response with notifications for service: %+v.", resp)
+
 	return resp, nil
 }
 
@@ -220,7 +222,7 @@ func (r *Router) DeleteNotificationForService(c *gin.Context, req *ReqDeleteNoti
 }
 
 func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotificationForService) (*RespNotificationList, error) {
-	logrus.Debugf("Handling list notifications for node: %+v.", req)
+	logrus.Debugf("Handling list notifications for service: %+v.", req)
 	var resp *RespNotificationList
 	list, err := r.n.ListSpecificNotification(&req.ServiceName, nil)
 	if err != nil {
@@ -229,11 +231,12 @@ func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotifica
 			Message:  "Failed to get notification list for service" + req.ServiceName + ": Error" + err.Error(),
 		}
 	}
-	logrus.Debugf("list notifications for node : %+v.", list)
 
 	if list != nil {
 		resp = getNotificationList(list)
 	}
+	logrus.Debugf("Response with notifications for service: %+v.", resp)
+
 	return resp, nil
 }
 
@@ -255,7 +258,7 @@ func NewNotification(r *ReqPostNotification) *db.Notification {
 func getNotificationList(list *[]db.Notification) *RespNotificationList {
 	var resp = &RespNotificationList{}
 
-	size := len(*list);
+	size := len(*list)
 
 	resp.Notifications = make([]Notification, size)
 	for idx, nt := range *list {

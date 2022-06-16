@@ -3,18 +3,19 @@ package server
 import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/ukama/ukama/services/cloud/notify/internal/db"
+	"gorm.io/datatypes"
 )
 
 type Notification struct {
 	NotificationID uuid.UUID           `json:"notificationID"`
 	NodeID         string              `json:"nodeID"`
 	NodeType       string              `json:"nodeType"`
-	Severity       db.SeverityType     `json:"severity" type:"string"`
-	Type           db.NotificationType `json:"notificationType" type:"string"`
-	ServiceName    string              `json:"serviceName"`
-	Time           uint32              `json:"time"`
-	Description    string              `json:"description"`
-	Details        []byte              `json:"details"`
+	Severity       db.SeverityType     `json:"severity,omitempty" type:"string"`
+	Type           db.NotificationType `json:"notificationType,omitempty" type:"string"`
+	ServiceName    string              `json:"serviceName,omitempty"`
+	Time           uint32              `json:"time,omitempty"`
+	Description    string              `json:"description,omitempty"`
+	Details        datatypes.JSON      `json:"details,omitempty"`
 }
 
 type ReqPostNotification struct {
