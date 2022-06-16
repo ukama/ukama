@@ -49,7 +49,9 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, repo db.Notifica
 		r.s = svcR
 	}
 
-	r.n = notify.NewNotify(repo)
+	if repo != nil {
+		r.n = notify.NewNotify(repo)
+	}
 
 	r.init()
 
@@ -58,7 +60,7 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, repo db.Notifica
 
 func (r *Router) init() {
 	notif := r.fizz.Group("notification", "Notification", "Notifications")
-	notif.POST("", nil, tonic.Handler(r.PostNewNotification, http.StatusOK))
+	notif.POST("", nil, tonic.Handler(r.PostNewNotification, http.StatusCreated))
 	notif.DELETE("", nil, tonic.Handler(r.DeleteNotification, http.StatusOK))
 	notif.GET("/list", nil, tonic.Handler(r.ListNotification, http.StatusOK))
 
@@ -83,11 +85,11 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusBadRequest,
-			Message:  "Invalid node:" + err.Error(),
+			Message:  "Invalid node: " + err.Error(),
 		}
 	}
 
-	nf := NewNotification(req)
+	nf := NewDbNotification(req)
 
 	err = r.n.NewNotificationHandler(nf)
 	if err != nil {
@@ -104,7 +106,15 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
 	logrus.Debugf("Handling delete notification: %+v.", req)
 
-	err := r.n.DeleteNotification(req.Id)
+	id, err := uuid.FromString(req.Id)
+	if err != nil {
+		return rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  "Invalid UUID supplied as notification ID. Error: " + err.Error(),
+		}
+	}
+
+	err = r.n.DeleteNotification(id)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -240,13 +250,13 @@ func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotifica
 	return resp, nil
 }
 
-func NewNotification(r *ReqPostNotification) *db.Notification {
+func NewDbNotification(r *ReqPostNotification) *db.Notification {
 	n := &db.Notification{
 		NotificationID: uuid.NewV4(),
 		NodeID:         r.NodeID,
 		NodeType:       r.NodeType,
-		Severity:       r.Severity,
-		Type:           r.Type,
+		Severity:       db.SeverityType(r.Severity),
+		Type:           db.NotificationType(r.Type),
 		ServiceName:    r.ServiceName,
 		Time:           r.Time,
 		Description:    r.Description,
@@ -267,8 +277,8 @@ func getNotificationList(list *[]db.Notification) *RespNotificationList {
 			NotificationID: nt.NotificationID,
 			NodeID:         nt.NodeID,
 			NodeType:       nt.NodeType,
-			Severity:       nt.Severity,
-			Type:           nt.Type,
+			Severity:       nt.Severity.String(),
+			Type:           nt.Type.String(),
 			ServiceName:    nt.ServiceName,
 			Time:           nt.Time,
 			Description:    nt.Description,

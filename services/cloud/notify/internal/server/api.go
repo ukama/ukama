@@ -7,15 +7,15 @@ import (
 )
 
 type Notification struct {
-	NotificationID uuid.UUID           `json:"notificationID"`
-	NodeID         string              `json:"nodeID"`
-	NodeType       string              `json:"nodeType"`
-	Severity       db.SeverityType     `json:"severity,omitempty" type:"string"`
-	Type           db.NotificationType `json:"notificationType,omitempty" type:"string"`
-	ServiceName    string              `json:"serviceName,omitempty"`
-	Time           uint32              `json:"time,omitempty"`
-	Description    string              `json:"description,omitempty"`
-	Details        datatypes.JSON      `json:"details,omitempty"`
+	NotificationID uuid.UUID      `json:"notificationID"`
+	NodeID         string         `json:"nodeID"`
+	NodeType       string         `json:"nodeType"`
+	Severity       string         `json:"severity,omitempty" type:"string"`
+	Type           string         `json:"notificationType,omitempty" validate:"eq=alert|eq=event"`
+	ServiceName    string         `json:"serviceName,omitempty"`
+	Time           uint32         `json:"time,omitempty"`
+	Description    string         `json:"description,omitempty"`
+	Details        datatypes.JSON `json:"details,omitempty"`
 }
 
 type ReqPostNotification struct {
@@ -24,8 +24,8 @@ type ReqPostNotification struct {
 }
 
 type ReqDeleteNotification struct {
-	LookingFor string    `query:"looking_to" validate:"eq=delete_notification,required"`
-	Id         uuid.UUID `query:"notification_id" validate:"required"`
+	LookingFor string `query:"looking_to" validate:"eq=delete_notification,required"`
+	Id         string `query:"notification_id" validate:"required"`
 }
 
 type RespNotificationList struct {

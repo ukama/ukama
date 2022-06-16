@@ -7,10 +7,12 @@ replace github.com/ukama/ukama/services/common => ../../common
 replace github.com/ukama/ukama/services/cloud/notify => ./
 
 require (
+	github.com/gin-contrib/cors v1.3.1
 	github.com/gin-gonic/gin v1.7.7
 	github.com/golang/protobuf v1.5.2
 	github.com/loopfz/gadgeto v0.11.2
 	github.com/sirupsen/logrus v1.8.1
+	github.com/stretchr/testify v1.7.1
 	github.com/ukama/ukama/services/common v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.20.0
 	google.golang.org/protobuf v1.28.0
@@ -19,10 +21,12 @@ require (
 )
 
 require (
-	github.com/gin-contrib/cors v1.3.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/streadway/amqp v1.0.0 // indirect
+	github.com/stretchr/objx v0.2.0 // indirect
 	gorm.io/driver/mysql v1.3.2 // indirect
 )
 
@@ -35,7 +39,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/go-resty/resty/v2 v2.7.0 // indirect
-	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

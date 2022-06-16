@@ -16,17 +16,23 @@ type Notify struct {
 }
 
 func NewNotify(d db.NotificationRepo) *Notify {
+	var msgC msgbus.Publisher
+	var err error
 
-	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.Queue.Uri)
-	if err != nil {
-		logrus.Errorf("error getting message publisher: %s\n", err.Error())
-		return nil
+	if internal.ServiceConfig.Queue.Uri != "" {
+		msgC, err = msgbus.NewPublisherClient(internal.ServiceConfig.Queue.Uri)
+		if err != nil {
+			logrus.Errorf("error getting message publisher: %s\n", err.Error())
+			return nil
+		}
+
 	}
 
 	return &Notify{
 		m:    msgC,
 		repo: d,
 	}
+
 }
 
 func (n *Notify) NewNotificationHandler(notif *db.Notification) error {
@@ -53,6 +59,11 @@ func (n *Notify) NewNotificationHandler(notif *db.Notification) error {
 }
 
 func (n *Notify) PublishNotification(notif *db.Notification) error {
+
+	if n.m == nil {
+		logrus.Errorf("No msgbus registerd to service.")
+		return nil
+	}
 
 	msg := &spec.NotificationMsg{
 		NotificationID:   notif.NotificationID.String(),
