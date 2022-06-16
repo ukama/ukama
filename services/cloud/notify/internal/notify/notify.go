@@ -135,9 +135,12 @@ func (n *Notify) GetSpecificNotification(service *string, nodeId *string, ntype 
 func (n *Notify) DeleteSpecificNotification(service *string, nodeId *string, ntype string) error {
 
 	var err error
+
 	if service != nil {
+		logrus.Debugf("Deleting %s for service %s", ntype, *service)
 		err = n.repo.DeleteNotificationForService(*service, ntype)
 	} else if nodeId != nil {
+		logrus.Debugf("Deleting %s for node %s", ntype, *nodeId)
 		err = n.repo.DeleteNotificationForNode(*nodeId, ntype)
 	}
 

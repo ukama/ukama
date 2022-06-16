@@ -259,6 +259,7 @@ func getNotificationList(list *[]db.Notification) *RespNotificationList {
 	var resp = &RespNotificationList{}
 
 	size := len(*list)
+	logrus.Debugf("Notification Count is %d", size)
 
 	resp.Notifications = make([]Notification, size)
 	for idx, nt := range *list {
