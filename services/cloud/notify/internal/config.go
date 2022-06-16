@@ -66,7 +66,7 @@ func NewConfig() *Config {
 					"node": "*", "looking_to": "delete_notification", "type": "*", "path": "/notification/node",
 				},
 				{
-					"node": "*", "looking_for": "list_notification", "path": "/notification/node/list",
+					"node": "*", "looking_for": "list_notification", "count": "*", "path": "/notification/node/list",
 				},
 				{
 					"service": "*", "looking_to": "notification", "type": "*", "path": "/notification/service",
@@ -75,7 +75,7 @@ func NewConfig() *Config {
 					"service": "*", "looking_to": "delete_notification", "type": "*", "path": "/notification/service",
 				},
 				{
-					"service": "*", "looking_for": "list_notification", "path": "/notification/service/list",
+					"service": "*", "looking_for": "list_notification", "count": "*", "path": "/notification/service/list",
 				},
 			},
 			F: config.DefaultForwardConfig(),

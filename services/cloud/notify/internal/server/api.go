@@ -51,6 +51,7 @@ type ReqDeleteNotificationForNode struct {
 type ReqListNotificationForNode struct {
 	NodeID     string `query:"node" validate:"required"`
 	LookingFor string `query:"looking_for" validate:"eq=list_notification,required"`
+	Count      int    `query:"count" validate:"gte=1,lte=10" default:"5"`
 }
 
 type ReqGetNotificationTypeForService struct {
@@ -68,4 +69,5 @@ type ReqDeleteNotificationForService struct {
 type ReqListNotificationForService struct {
 	ServiceName string `query:"service" validate:"required"`
 	LookingFor  string `query:"looking_for" validate:"eq=list_notification,required"`
+	Count       int    `query:"count" validate:"gte=1,lte=10" default:"5"`
 }

@@ -171,7 +171,7 @@ func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotific
 func (r *Router) ListNotificationForNode(c *gin.Context, req *ReqListNotificationForNode) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for node: %+v.", req)
 	var resp *RespNotificationList
-	list, err := r.n.ListSpecificNotification(nil, &req.NodeID)
+	list, err := r.n.ListSpecificNotification(nil, &req.NodeID, req.Count)
 	if err != nil {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -224,7 +224,7 @@ func (r *Router) DeleteNotificationForService(c *gin.Context, req *ReqDeleteNoti
 func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotificationForService) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for service: %+v.", req)
 	var resp *RespNotificationList
-	list, err := r.n.ListSpecificNotification(&req.ServiceName, nil)
+	list, err := r.n.ListSpecificNotification(&req.ServiceName, nil, req.Count)
 	if err != nil {
 		return nil, rest.HttpError{
 			HttpCode: http.StatusInternalServerError,

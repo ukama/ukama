@@ -152,14 +152,14 @@ func (n *Notify) DeleteSpecificNotification(service *string, nodeId *string, nty
 	return nil
 }
 
-func (n *Notify) ListSpecificNotification(service *string, nodeId *string) (*[]db.Notification, error) {
+func (n *Notify) ListSpecificNotification(service *string, nodeId *string, count int) (*[]db.Notification, error) {
 
 	var list *[]db.Notification
 	var err error
 	if service != nil {
-		list, err = n.repo.ListNotificationForService(*service)
+		list, err = n.repo.ListNotificationForService(*service, count)
 	} else if nodeId != nil {
-		list, err = n.repo.ListNotificationForNode(*nodeId)
+		list, err = n.repo.ListNotificationForNode(*nodeId, count)
 	}
 
 	if err != nil {

@@ -13,8 +13,8 @@ type NotificationRepo interface {
 	GetNotificationForNode(nodeId string, ntype string) (*[]Notification, error)
 	DeleteNotificationForService(service string, ntype string) error
 	DeleteNotificationForNode(nodeId string, ntype string) error
-	ListNotificationForService(service string) (*[]Notification, error)
-	ListNotificationForNode(nodeId string) (*[]Notification, error)
+	ListNotificationForService(service string, count int) (*[]Notification, error)
+	ListNotificationForNode(nodeId string, count int) (*[]Notification, error)
 	CleanEverything() error
 }
 
@@ -113,9 +113,9 @@ func (r *notificationRepo) DeleteNotificationForService(service string, nType st
 }
 
 /* List specifc notification for node */
-func (r *notificationRepo) ListNotificationForNode(NodeID string) (*[]Notification, error) {
+func (r *notificationRepo) ListNotificationForNode(NodeID string, count int) (*[]Notification, error) {
 	notification := []Notification{}
-	result := r.Db.GetGormDb().Find(&notification, "node_id = ?", NodeID)
+	result := r.Db.GetGormDb().Limit(count).Order("time DESC").Find(&notification, "node_id = ?", NodeID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -123,9 +123,9 @@ func (r *notificationRepo) ListNotificationForNode(NodeID string) (*[]Notificati
 }
 
 /* List specifc notification for service */
-func (r *notificationRepo) ListNotificationForService(service string) (*[]Notification, error) {
+func (r *notificationRepo) ListNotificationForService(service string, count int) (*[]Notification, error) {
 	notification := []Notification{}
-	result := r.Db.GetGormDb().Find(&notification, "service_name = ?", service)
+	result := r.Db.GetGormDb().Limit(count).Order("time DESC").Find(&notification, "service_name = ?", service)
 	if result.Error != nil {
 		return nil, result.Error
 	}
