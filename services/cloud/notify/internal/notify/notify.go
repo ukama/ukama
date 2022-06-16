@@ -22,17 +22,21 @@ func NewNotify(d db.NotificationRepo) *Notify {
 		logrus.Errorf("error getting message publisher: %s\n", err.Error())
 		return nil
 	}
+
 	return &Notify{
 		m:    msgC,
 		repo: d,
 	}
 }
 
-func (n *Notify) NewNotificationHandler(notif db.Notification) error {
+func (n *Notify) NewNotificationHandler(notif *db.Notification) error {
 
+	var err error
 	/* Insert to database */
-	notif.NotificationID = uuid.Must(uuid.NewV4(), nil)
-	err := n.repo.Insert(notif)
+	notif.NotificationID = uuid.Must(uuid.NewV4(), err)
+	logrus.Debugf("New notification is : %+v.", notif)
+
+	err = n.repo.Insert(notif)
 	if err != nil {
 		logrus.Errorf("Error adding new notification to database. Error: %s\n", err.Error())
 		return err
@@ -48,25 +52,27 @@ func (n *Notify) NewNotificationHandler(notif db.Notification) error {
 	return nil
 }
 
-func (n *Notify) PublishNotification(notif db.Notification) error {
+func (n *Notify) PublishNotification(notif *db.Notification) error {
 
 	msg := &spec.NotificationMsg{
-		NotificationID: notif.NotificationID.String(),
-		NodeID:         notif.NodeID,
-		NodeType:       notif.NodeType,
-		Description:    notif.Description,
-		Severity:       string(notif.Severity),
-		ServiceName:    notif.ServiceName,
-		EpochTime:      notif.Time,
+		NotificationID:   notif.NotificationID.String(),
+		NodeID:           notif.NodeID,
+		NodeType:         notif.NodeType,
+		Description:      notif.Description,
+		Severity:         string(notif.Severity),
+		ServiceName:      notif.ServiceName,
+		EpochTime:        notif.Time,
+		NotificationType: notif.Type.String(),
 	}
 
+	logrus.Debugf("Broadcasted notification: %+v.", notif)
 	// Routing key
 	key := msgbus.NewRoutingKeyBuilder().
-		SetCloudSource().
+		SetDeviceSource().
 		SetContainer(internal.ServiceName).
 		SetEventType().
-		SetObject("notify").
-		SetAction(string(notif.Type)).
+		SetObject("notification").
+		SetAction(msg.NotificationType).
 		MustBuild()
 	routingKey := msgbus.RoutingKey(key)
 

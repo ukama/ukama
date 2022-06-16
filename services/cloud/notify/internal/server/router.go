@@ -48,6 +48,8 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, repo db.Notifica
 		r.s = svcR
 	}
 
+	r.n = notify.NewNotify(repo)
+
 	r.init()
 
 	return r
@@ -84,9 +86,9 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 		}
 	}
 
-	n := NewNotification(req)
+	nf := NewNotification(req)
 
-	err = r.n.NewNotificationHandler(*n)
+	err = r.n.NewNotificationHandler(nf)
 	if err != nil {
 		return rest.HttpError{
 			HttpCode: http.StatusInternalServerError,
@@ -152,7 +154,7 @@ func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotifica
 }
 
 func NewNotification(r *ReqPostNotification) *db.Notification {
-	n := db.Notification{
+	n := &db.Notification{
 		NodeID:      r.NodeID,
 		NodeType:    r.NodeType,
 		Severity:    r.Severity,
@@ -162,5 +164,5 @@ func NewNotification(r *ReqPostNotification) *db.Notification {
 		Description: r.Description,
 		Details:     r.Details,
 	}
-	return &n
+	return n
 }

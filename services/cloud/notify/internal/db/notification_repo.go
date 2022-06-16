@@ -6,7 +6,7 @@ import (
 )
 
 type NotificationRepo interface {
-	Insert(n Notification) error
+	Insert(n *Notification) error
 	DeleteNotification(id string) error
 	List() (*[]Notification, error)
 	GetNotificationForService(service string, ntype string) (*[]Notification, error)
@@ -29,7 +29,7 @@ func NewNotificationRepo(db sql.Db) *notificationRepo {
 }
 
 /* Update is used when we know the node id */
-func (r *notificationRepo) Insert(n Notification) error {
+func (r *notificationRepo) Insert(n *Notification) error {
 
 	d := r.Db.GetGormDb().Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "id"}},

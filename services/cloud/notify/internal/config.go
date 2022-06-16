@@ -41,6 +41,9 @@ func NewConfig() *Config {
 		Server: config.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
+		Queue: config.Queue{
+			Uri: "amqp://guest:guest@localhost:5672",
+		},
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
 			P: []config.Route{
@@ -48,31 +51,31 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"looking_to": "post_notification", "path": "/",
+					"looking_to": "post_notification", "path": "/notification",
 				},
 				{
-					"looking_to": "delete_notification", "path": "/",
+					"looking_to": "delete_notification", "path": "/notification",
 				},
 				{
-					"looking_for": "list_notification", "path": "/",
+					"looking_for": "list_notification", "path": "/notification/list",
 				},
 				{
-					"node": "*", "looking_to": "notification", "type": "*", "path": "/",
+					"node": "*", "looking_to": "notification", "type": "*", "path": "/notification/node",
 				},
 				{
-					"node": "*", "looking_to": "delete_notification", "type": "*", "path": "/",
+					"node": "*", "looking_to": "delete_notification", "type": "*", "path": "/notification/node",
 				},
 				{
-					"node": "*", "looking_for": "list_notification", "type": "*", "path": "/",
+					"node": "*", "looking_for": "list_notification", "type": "*", "path": "/notification/node/list",
 				},
 				{
-					"service": "*", "looking_to": "notification", "type": "*", "path": "/",
+					"service": "*", "looking_to": "notification", "type": "*", "path": "/notification/service",
 				},
 				{
-					"service": "*", "looking_to": "delete_notification", "type": "*", "path": "/",
+					"service": "*", "looking_to": "delete_notification", "type": "*", "path": "/notification/service",
 				},
 				{
-					"service": "*", "looking_for": "list_notification", "type": "*", "path": "/",
+					"service": "*", "looking_for": "list_notification", "type": "*", "path": "/notification/service/list",
 				},
 			},
 			F: config.DefaultForwardConfig(),
