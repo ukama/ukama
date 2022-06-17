@@ -2,6 +2,7 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"regexp"
 	"testing"
 	"time"
 
@@ -80,38 +81,17 @@ func prepare_db(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
 func Test_Insert(t *testing.T) {
 	node := ukama.NewVirtualHomeNodeId()
 	nt := NewTestDbNotification(node.String(), "alert")
-	var db *extsql.DB
 	var err error
 
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
+	mock, gdb := prepare_db(t)
+	var id uint = 1
 
-	// rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type", "severity", "service_name", "time", "description", "details"}).
-	// 	AddRow(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details)
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "notifications" ("created_at","updated_at","deleted_at","notification_id","node_id","node_type","severity","type","service_name","time","description","details") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) ON CONFLICT ("id") DO NOTHING RETURNING "id"`)).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.Type, nt.ServiceName, nt.Time, nt.Description, nt.Details).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
 
-	// mock.ExpectExec("^INSERT INTO \"groups\" (.+)$").WithArgs(AnyTime{}, AnyTime{}, nil, name, description).WillReturnResult(sqlmock.NewResult(1, 1))
-	// mock.ExpectQuery(regexp.QuoteMeta(
-	// 	`INSERT INTO  ("id","created_at","updated_at","delted_at","notification_id", "node_id", "node_type", "severity", "service_name", "time", "description", "details")
-	// 			 VALUES ($1,$2,$3,4,$5,$6,$7,$8) RETURNING "person"."id"`)).
-	// 	WithArgs(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details).
-	// 	WillReturnRows(
-	// 		sqlmock.NewRows([]string{"id"}).AddRow(id.String()))
-
-	// mock.ExpectQuery(`^SELECT.*nodes.*`).
-	// 	WithArgs(node.NodeID).
-	// 	WillReturnRows(rows)
-
-	//mock.ExpectQuery("^INSERT INTO \"notifications\" (.+)$").WithArgs(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details).WillReturnRows(sqlmock.Rows(1, 1))
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
+	mock.ExpectCommit()
 
 	r := intdb.NewNotificationRepo(&UkamaDbMock{
 		GormDb: gdb,
@@ -180,7 +160,7 @@ func Test_GetNotificationForService(t *testing.T) {
 		AddRow(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details)
 
 	mock.ExpectQuery(`^SELECT.*notifications.*`).
-		WithArgs().
+		WithArgs(nt.ServiceName, string(nt.Type)).
 		WillReturnRows(rows)
 
 	r := intdb.NewNotificationRepo(&UkamaDbMock{
@@ -202,4 +182,206 @@ func Test_GetNotificationForService(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, list)
 
+}
+
+func Test_GetNotificationForNode(t *testing.T) {
+
+	node := ukama.NewVirtualHomeNodeId()
+	nt := NewTestDbNotification(node.String(), "alert")
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type", "severity", "service_name", "time", "description", "details"}).
+		AddRow(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details)
+
+	mock.ExpectQuery(`^SELECT.*notifications.*`).
+		WithArgs(nt.NodeID, string(nt.Type)).
+		WillReturnRows(rows)
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	list, err := r.GetNotificationForNode(nt.NodeID, string(nt.Type))
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+
+}
+
+func Test_ListNotificationForService(t *testing.T) {
+
+	node := ukama.NewVirtualHomeNodeId()
+	nt := NewTestDbNotification(node.String(), "alert")
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type", "severity", "service_name", "time", "description", "details"}).
+		AddRow(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details)
+
+	mock.ExpectQuery(`^SELECT.*notifications.*`).
+		WithArgs(nt.ServiceName).
+		WillReturnRows(rows)
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	list, err := r.ListNotificationForService(nt.ServiceName, 1)
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+
+}
+
+func Test_ListNotificationForNode(t *testing.T) {
+
+	node := ukama.NewVirtualHomeNodeId()
+	nt := NewTestDbNotification(node.String(), "alert")
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	rows := sqlmock.NewRows([]string{"notification_id", "node_id", "node_type", "severity", "service_name", "time", "description", "details"}).
+		AddRow(nt.NotificationID, nt.NodeID, nt.NodeType, nt.Severity, nt.ServiceName, nt.Time, nt.Description, nt.Details)
+
+	mock.ExpectQuery(`^SELECT.*notifications.*`).
+		WithArgs(nt.NodeID).
+		WillReturnRows(rows)
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	list, err := r.ListNotificationForNode(nt.NodeID, 1)
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
+	assert.NotNil(t, list)
+
+}
+
+func Test_DeleteNotificationForService(t *testing.T) {
+
+	node := ukama.NewVirtualHomeNodeId()
+	nt := NewTestDbNotification(node.String(), "alert")
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(nt.ServiceName, string(nt.Type)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	err = r.DeleteNotificationForService(nt.ServiceName, string(nt.Type))
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
+}
+
+func Test_DeleteNotificationForNode(t *testing.T) {
+
+	node := ukama.NewVirtualHomeNodeId()
+	nt := NewTestDbNotification(node.String(), "alert")
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(nt.NodeID, string(nt.Type)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	err = r.DeleteNotificationForNode(nt.NodeID, string(nt.Type))
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
+}
+
+func Test_CleanEverything(t *testing.T) {
+
+	var err error
+
+	mock, gdb := prepare_db(t)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs().
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	r := intdb.NewNotificationRepo(&UkamaDbMock{
+		GormDb: gdb,
+	})
+
+	assert.NoError(t, err)
+
+	// Act
+	err = r.CleanEverything()
+
+	// Assert
+	assert.NoError(t, err)
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expections: %s", err)
+	}
+
+	assert.NoError(t, err)
 }
