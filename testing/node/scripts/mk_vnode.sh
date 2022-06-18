@@ -16,6 +16,8 @@ TARGET=${DEF_TARGET}
 # default rootfs location is ${DEF_BUILD_DIR}
 BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 
+REGISTRY_URL=
+
 #
 # Build needed tools, e.g., genSchema, genInventory, if needed.
 #
@@ -89,7 +91,9 @@ build_sysfs() {
 build_image() {
 
 	FILE=$1
-	NAME_TAG=$2
+	UUID=$2
+
+	NAME_TAG=`echo ${UUID} | awk '{print tolower($0)}'`
 
 	# copy capp's sbin, conf and lib to /sbin, /conf and /lib
 	mkdir -p ${BUILD_DIR}/sbin ${BUILD_DIR}/lib ${BUILD_DIR}/conf
@@ -102,7 +106,23 @@ build_image() {
 	cp ./scripts/runme.sh   ${BUILD_DIR}/bin/
 	cp ./scripts/waitfor.sh ${BUILD_DIR}/bin/
 
-	buildah bud -f $1 -t $2
+	buildah bud -f $1 -t $NAME_TAG ${REGISTRY_URL}
+}
+
+#
+# push image to repo
+#
+push_image() {
+
+	UUID=$1
+	TAG="latest"
+	NAME=`echo ${UUID} | awk '{print tolower($0)}'`
+
+	if [ ${DOCKER_USER} != "aws" ]; then
+		REGISTRY_URL=${DOCKER_USER}
+		buildah push --tls-verify=false --creds ${DOCKER_USER}:${DOCKER_PASS} \
+				 ${NAME}:${TAG}
+	fi
 }
 
 # main
@@ -119,6 +139,9 @@ case "$ACTION" in
 		;;
 	"build")
 		build_image $2 $3
+		;;
+	"push")
+		push_image $2
 		;;
 	"cp")
 		cp $2 ${BUILD_DIR}/$3
