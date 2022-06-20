@@ -37,12 +37,12 @@ import {
 import Fab from "@mui/material/Fab";
 import { TMetric } from "../../types";
 import { globalUseStyles } from "../../styles";
-import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import React, { useCallback, useEffect, useState } from "react";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
 
 let abortController = new AbortController();
@@ -173,8 +173,9 @@ const Nodes = () => {
         getMetrics,
         {
             data: getMetricsRes,
-            refetch: getMetricsRefetch,
             loading: metricsLoading,
+            refetch: getMetricsRefetch,
+            variables: lastMetricsFetchVariables,
         },
     ] = useGetMetricsByTabLazyQuery({
         context: {
@@ -198,6 +199,7 @@ const Nodes = () => {
                 const filter = Object.fromEntries(
                     Object.entries(_m).filter(([_, v]) => v !== null)
                 );
+
                 setMetrics((_prev: TMetric) => ({ ...filter }));
             }
         },
@@ -211,6 +213,16 @@ const Nodes = () => {
         },
         fetchPolicy: "network-only",
     });
+
+    const refetchMetrics = useCallback(() => {
+        if (getMetricsRes && getMetricsRes.getMetricsByTab.to) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
 
     useGetMetricsByTabSSubscription({
         fetchPolicy: "network-only",
@@ -241,11 +253,19 @@ const Nodes = () => {
                 const filter = Object.fromEntries(
                     Object.entries(_m).filter(([_, v]) => v !== null)
                 );
-
                 setMetrics((_prev: TMetric) => ({
                     ..._prev,
                     ...filter,
                 }));
+
+                let next = false;
+                for (const element of res.subscriptionData.data
+                    .getMetricsByTab) {
+                    if (!next && element.next) next = true;
+                }
+                if (next) {
+                    refetchMetrics();
+                }
             }
         },
     });
@@ -313,7 +333,7 @@ const Nodes = () => {
             isMetricPolling &&
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
+            !lastMetricsFetchVariables?.data.regPolling
         ) {
             getMetricsRefetch({
                 ...getMetricPollingCallPayload(

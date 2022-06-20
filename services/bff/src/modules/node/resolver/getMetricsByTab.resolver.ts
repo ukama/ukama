@@ -8,13 +8,17 @@ import {
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
+import { Worker } from "worker_threads";
 import { NodeService } from "../service";
+import { GetMetricsRes } from "../types";
 import { parseCookie } from "../../../common";
-import { GetMetricsRes, MetricRes } from "../types";
-import { getMetricsByTab, oneSecSleep } from "../../../utils";
+import { getMetricsByTab } from "../../../utils";
+import setupLogger from "../../../config/setupLogger";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsByTabInputDTO } from "../../../common/types";
 
+const logger = setupLogger("Resolver");
+const THREAD = "./MetricsThread.tsx";
 @Service()
 @Resolver()
 export class GetMetricsByTabResolver {
@@ -36,26 +40,22 @@ export class GetMetricsByTabResolver {
         let next = false;
         if (data.regPolling) {
             const length = data.to - data.from;
-            for (let i = 0; i < length; i++) {
-                const metric: MetricRes[] = [];
-                for (const element of response) {
-                    if (!next && element.next) next = true;
-                    metric.push({
-                        next: element.next,
-                        type: element.type,
-                        name: element.name,
-                        data: element.data[i] ? [element.data[i]] : [],
-                    });
-                }
-                await oneSecSleep();
-                pubsub.publish("metricsByTab", metric);
-            }
+
+            const workerData: any = { length, response };
+            const worker = new Worker(THREAD, {
+                workerData,
+            });
+            worker.on("message", (data: any) =>
+                pubsub.publish("metricsByTab", data.metric)
+            );
+            worker.on("exit", (code: any) => {
+                logger.info("Thread exited", code);
+            });
         } else {
             for (const element of response) {
                 if (!next && element.next) next = true;
             }
         }
-
         return { to: data.to, next: next, metrics: response };
     }
 }
