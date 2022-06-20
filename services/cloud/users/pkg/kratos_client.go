@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -33,15 +32,15 @@ func (i *kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 	}
 	resp, err := http.Get(i.apiUrl + networkOwnerId)
 	if err != nil {
-		return "", fmt.Errorf("failed to get a response")
+		return "", errors.Wrap("failed to get a response")
 
 	}
 
 	defer resp.Body.Close()
 
-	dataByte, erroBytes := ioutil.ReadAll(resp.Body)
+	dataByte, err := ioutil.ReadAll(resp.Body)
 
-	if erroBytes != nil {
+	if err != nil {
 		return "", errors.Wrap(err, "failed to decode json response")
 	}
 
