@@ -119,11 +119,11 @@ func (r *Registry) AddOrUpdate(orgName string, nodeId string, name string) (node
 		return ar.GetNode(), true, nil
 	} else if err != nil {
 		return nil, false, err
-	}
-
-	_, err = r.nodeClient.UpdateNode(ctx, &pbnode.UpdateNodeRequest{NodeId: nodeId, Name: name})
-	if err != nil {
-		return nil, false, err
+	} else {
+		_, err = r.nodeClient.UpdateNode(ctx, &pbnode.UpdateNodeRequest{NodeId: nodeId, Name: name})
+		if err != nil {
+			return nil, false, err
+		}
 	}
 	getResp.Node.Name = name
 
