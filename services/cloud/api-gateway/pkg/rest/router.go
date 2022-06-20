@@ -249,7 +249,7 @@ func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.
 
 func (r *Router) getUsersHandler(c *gin.Context) (*userspb.ListResponse, error) {
 	orgName := r.getOrgNameFromRoute(c)
-	return r.clients.User.GetUsers(orgName)
+	return r.clients.User.GetUsers(orgName, c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*userspb.AddResponse, error) {
@@ -258,12 +258,13 @@ func (r *Router) postUsersHandler(c *gin.Context, req *UserRequest) (*userspb.Ad
 		Email: req.Email,
 		Phone: req.Phone,
 	},
-		req.SimToken)
+		req.SimToken,
+		c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*userspb.User, error) {
 	if req.IsDeactivated {
-		err := r.clients.User.DeactivateUser(req.UserId)
+		err := r.clients.User.DeactivateUser(req.UserId, c.GetString(USER_ID_KEY))
 		if err != nil {
 			return nil, err
 		}
@@ -273,13 +274,13 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 		Name:  req.Name,
 		Email: req.Email,
 		Phone: req.Phone,
-	})
+	}, c.GetString(USER_ID_KEY))
 
 	if err != nil {
 		return nil, err
 	}
 
-	resUser, err := r.clients.User.Get(req.UserId)
+	resUser, err := r.clients.User.Get(req.UserId, c.GetString(USER_ID_KEY))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get updated user")
 	}
@@ -288,11 +289,11 @@ func (r *Router) updateUserHandler(c *gin.Context, req *UpdateUserRequest) (*use
 }
 
 func (r *Router) deleteUserHandler(c *gin.Context, req *DeleteUserRequest) error {
-	return r.clients.User.Delete(req.UserId)
+	return r.clients.User.Delete(req.UserId, c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) getUserHandler(c *gin.Context, req *GetUserRequest) (*userspb.GetResponse, error) {
-	return r.clients.User.Get(req.UserId)
+	return r.clients.User.Get(req.UserId, c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (*userspb.Sim, error) {
@@ -300,11 +301,11 @@ func (r *Router) setSimStatusHandler(c *gin.Context, req *SetSimStatusRequest) (
 		Iccid:   req.Iccid,
 		Carrier: simServicesToPbService(req.Carrier),
 		Ukama:   simServicesToPbService(req.Ukama),
-	})
+	}, c.GetString(USER_ID_KEY))
 }
 
 func (r *Router) getSimQrHandler(c *gin.Context, req *GetSimQrRequest) (*userspb.GetQrCodeResponse, error) {
-	return r.clients.User.GetQr(req.Iccid)
+	return r.clients.User.GetQr(req.Iccid, c.GetString(USER_ID_KEY))
 }
 
 func boolToPbBool(data *bool) *wrapperspb.BoolValue {
