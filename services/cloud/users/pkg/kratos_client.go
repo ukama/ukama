@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -28,11 +29,12 @@ func NewKratosClient(apiUrl string) *kratosClient {
 
 func (i *kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 	if len(networkOwnerId) <= 0 {
-		return "", errors.Wrap("userId cannot be empty")
+		fmt.Println("Missing userId in the request")
+		
 	}
 	resp, err := http.Get(i.apiUrl + networkOwnerId)
 	if err != nil {
-		return "", errors.Wrap("failed to get a response")
+		return "", errors.Wrap(err,"failed to get a response")
 
 	}
 
