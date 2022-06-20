@@ -42,7 +42,7 @@ func NewConfig() *Config {
 			Name:    "SimManager",
 			Timeout: 3 * time.Second,
 		},
-		KratoAdminUrl:"https://kratos-admin.dev.ukama.com/admin/identities/",
+		KratoAdminUrl:"localhost",
 		SimTokenKey: "11111111111111111111111111111111",
 	}
 }
