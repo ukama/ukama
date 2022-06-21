@@ -60,24 +60,24 @@ func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, repo db.Notifica
 
 func (r *Router) init() {
 	notif := r.fizz.Group("notification", "Notification", "Notifications")
-	notif.POST("", nil, tonic.Handler(r.PostNewNotification, http.StatusCreated))
-	notif.DELETE("", nil, tonic.Handler(r.DeleteNotification, http.StatusOK))
-	notif.GET("/list", nil, tonic.Handler(r.ListNotification, http.StatusOK))
+	notif.POST("", nil, tonic.Handler(r.postNewNotification, http.StatusCreated))
+	notif.DELETE("", nil, tonic.Handler(r.deleteNotification, http.StatusOK))
+	notif.GET("/list", nil, tonic.Handler(r.listNotification, http.StatusOK))
 
 	node := notif.Group("node", "Node", "Node")
-	node.DELETE("", nil, tonic.Handler(r.DeleteNotificationForNode, http.StatusOK))
-	node.GET("", nil, tonic.Handler(r.GetNotificationForNode, http.StatusOK))
-	node.GET("/list", nil, tonic.Handler(r.ListNotificationForNode, http.StatusOK))
+	node.DELETE("", nil, tonic.Handler(r.deleteNotificationForNode, http.StatusOK))
+	node.GET("", nil, tonic.Handler(r.getNotificationForNode, http.StatusOK))
+	node.GET("/list", nil, tonic.Handler(r.listNotificationForNode, http.StatusOK))
 
 	service := notif.Group("service", "Service", "Service")
-	service.DELETE("", nil, tonic.Handler(r.DeleteNotificationForService, http.StatusOK))
-	service.GET("", nil, tonic.Handler(r.GetNotificationForService, http.StatusOK))
-	service.GET("/list", nil, tonic.Handler(r.ListNotificationForService, http.StatusOK))
+	service.DELETE("", nil, tonic.Handler(r.deleteNotificationForService, http.StatusOK))
+	service.GET("", nil, tonic.Handler(r.getNotificationForService, http.StatusOK))
+	service.GET("/list", nil, tonic.Handler(r.listNotificationForService, http.StatusOK))
 
 }
 
 /* Handle new notification */
-func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) error {
+func (r *Router) postNewNotification(c *gin.Context, req *ReqPostNotification) error {
 	logrus.Debugf("Handling new notification: %+v.", req)
 
 	/* validate nodeid */
@@ -103,7 +103,7 @@ func (r *Router) PostNewNotification(c *gin.Context, req *ReqPostNotification) e
 }
 
 /* delete notification */
-func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
+func (r *Router) deleteNotification(c *gin.Context, req *ReqDeleteNotification) error {
 	logrus.Debugf("Handling delete notification: %+v.", req)
 
 	id, err := uuid.FromString(req.Id)
@@ -126,7 +126,7 @@ func (r *Router) DeleteNotification(c *gin.Context, req *ReqDeleteNotification) 
 }
 
 /* List notification */
-func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) (*RespNotificationList, error) {
+func (r *Router) listNotification(c *gin.Context, req *ReqListNotification) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications: %+v.", req)
 	var resp *RespNotificationList
 	list, err := r.n.ListNotification()
@@ -144,7 +144,7 @@ func (r *Router) ListNotification(c *gin.Context, req *ReqListNotification) (*Re
 	return resp, nil
 }
 
-func (r *Router) GetNotificationForNode(c *gin.Context, req *ReqGetNotificationTypeForNode) (*RespNotificationList, error) {
+func (r *Router) getNotificationForNode(c *gin.Context, req *ReqGetNotificationTypeForNode) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for NodeId : %+v.", req)
 
 	var resp *RespNotificationList
@@ -164,7 +164,7 @@ func (r *Router) GetNotificationForNode(c *gin.Context, req *ReqGetNotificationT
 	return resp, nil
 }
 
-func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotificationForNode) error {
+func (r *Router) deleteNotificationForNode(c *gin.Context, req *ReqDeleteNotificationForNode) error {
 	logrus.Debugf("Handling delete notification for node: %+v.", req)
 
 	err := r.n.DeleteSpecificNotification(nil, &req.NodeID, string(req.Type))
@@ -178,7 +178,7 @@ func (r *Router) DeleteNotificationForNode(c *gin.Context, req *ReqDeleteNotific
 	return nil
 }
 
-func (r *Router) ListNotificationForNode(c *gin.Context, req *ReqListNotificationForNode) (*RespNotificationList, error) {
+func (r *Router) listNotificationForNode(c *gin.Context, req *ReqListNotificationForNode) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for node: %+v.", req)
 	var resp *RespNotificationList
 	list, err := r.n.ListSpecificNotification(nil, &req.NodeID, req.Count)
@@ -197,7 +197,7 @@ func (r *Router) ListNotificationForNode(c *gin.Context, req *ReqListNotificatio
 	return resp, nil
 }
 
-func (r *Router) GetNotificationForService(c *gin.Context, req *ReqGetNotificationTypeForService) (*RespNotificationList, error) {
+func (r *Router) getNotificationForService(c *gin.Context, req *ReqGetNotificationTypeForService) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for Service : %+v.", req)
 
 	var resp *RespNotificationList
@@ -217,7 +217,7 @@ func (r *Router) GetNotificationForService(c *gin.Context, req *ReqGetNotificati
 	return resp, nil
 }
 
-func (r *Router) DeleteNotificationForService(c *gin.Context, req *ReqDeleteNotificationForService) error {
+func (r *Router) deleteNotificationForService(c *gin.Context, req *ReqDeleteNotificationForService) error {
 	logrus.Debugf("Handling delete notification for service: %+v.", req)
 
 	err := r.n.DeleteSpecificNotification(&req.ServiceName, nil, string(req.Type))
@@ -231,7 +231,7 @@ func (r *Router) DeleteNotificationForService(c *gin.Context, req *ReqDeleteNoti
 	return nil
 }
 
-func (r *Router) ListNotificationForService(c *gin.Context, req *ReqListNotificationForService) (*RespNotificationList, error) {
+func (r *Router) listNotificationForService(c *gin.Context, req *ReqListNotificationForService) (*RespNotificationList, error) {
 	logrus.Debugf("Handling list notifications for service: %+v.", req)
 	var resp *RespNotificationList
 	list, err := r.n.ListSpecificNotification(&req.ServiceName, nil, req.Count)
