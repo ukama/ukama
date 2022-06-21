@@ -17,33 +17,22 @@ type Config struct {
 	ApiIf             config.ServiceApiIf
 	DB                config.Database
 	ServiceRouter     string
-	GitUser           string
-	GitPass           string
-	Docker            Docker
-	NodeImage         string
-	NodeCmd           []string
-	Kubeconfig        string
 	Queue             config.Queue
-	RepoServerUrl     string
-	Namespace         string
 }
 
 var ServiceConfig *Config
 
-/* Info/List--> Get
-   Update --> PUT
-   Add --> POST
-   delete -> delete
-*/
 func NewConfig() *Config {
 
 	return &Config{
 		Server: config.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
+
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@localhost:5672",
 		},
+
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
 			P: []config.Route{
