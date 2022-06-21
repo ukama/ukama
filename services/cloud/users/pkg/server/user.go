@@ -459,7 +459,6 @@ func (u *UserService) deleteImsiFromHss(ctx context.Context, userId string) erro
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to hss")
 	}
-
 	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
 		IdOneof: &hsspb.DeleteImsiRequest_UserId{
 			UserId: userId,
@@ -496,11 +495,12 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 }
 func generateQrcode(qrcodeId string, qrcodeName string) string {
 
-	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
-	if qrGenerateError != nil {
-		errors.Wrap(qrGenerateError, "failed to generate qrcode")
+	qrcode,err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
+	if err!=nil{
+		fmt.Printf("Could not generate qrcode :,%v",err)
 	}
-	encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
+	
+	encodedData := base64.StdEncoding.EncodeToString(qrcode)
 	return encodedData
 }
 
