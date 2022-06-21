@@ -33,5 +33,11 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
             Cookie: `ukama_session=${cookieObj["ukama_session"]}`,
         };
     }
-    return { header: header, orgId: cookieObj["id"] };
+    // return { header: header, orgId: cookieObj["id"] };
+    return {
+        header: {
+            Cookie: "ukama_session=MTY1NTc0MDQyOHxBRldBWkpRTm93N21JVkNWNjBoR0lqZEg2N3NHSkpLcnNPN3NWaV9SU0I3WFNZZlRHLUhLRFEtTTB2M2hRUHZDLXlOc2pGMWZmQkhCU0s3QjZzOFZpc0szUkZCOFVYMjRYY29Bc2xTQ0RWWmN3X2g5QklOMEo1cU0yYzczZW0zbXhhSFdIVDdsTWc9PXzyMqp_jQPabM8ke3kVqZ8yUgphK8ir21t3lsGOyibzOw==",
+        },
+        orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
+    };
 };
