@@ -495,7 +495,7 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	}
 }
 func generateQrcode(qrcodeId string, qrcodeName string) string {
-	
+
 	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
 	if qrGenerateError != nil {
 		errors.Wrap(qrGenerateError, "failed to generate qrcode")
@@ -511,7 +511,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap(err,"failed to get qr code")
+		return errors.Wrap(err, "failed to get qr code")
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
 	noId := "Unknown"
