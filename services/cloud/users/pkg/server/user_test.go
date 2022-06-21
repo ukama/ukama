@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"testing"
+
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -26,6 +28,7 @@ func Test_AddInternal(t *testing.T) {
 	// Arrange
 	userRepo := &mocks.UserRepo{}
 	hssClient := &hssmocks.ImsiServiceClient{}
+	kratosClient:=&mocks.KratosClient{}
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
 	simProvider := &mocks.SimProvider{}
@@ -54,10 +57,11 @@ func Test_AddInternal(t *testing.T) {
 	pub := &commock.QPub{}
 	pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
-
+	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
+	md := metadata.Pairs("x-requester", "89273897297392")
+	ctx := metadata.NewOutgoingContext(context.TODO(), md)
 	// Act
-	addResp, err := srv.AddInternal(context.Background(), &pb.AddInternalRequest{
+	addResp, err := srv.AddInternal(ctx, &pb.AddInternalRequest{
 		Org:  testOrg,
 		User: userRequest,
 	})
@@ -106,8 +110,8 @@ func Test_Add(t *testing.T) {
 	t.Run("WithSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDWithCode", TEST_SIM_TOKEN).Return(sims.GetDubugIccid(), nil)
-
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+kratosClient:=&mocks.KratosClient{}
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:      testOrg,
@@ -127,11 +131,11 @@ func Test_Add(t *testing.T) {
 	t.Run("WithoutSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		simProvider.On("GetICCIDFromPool").Return(sims.GetDubugIccid(), nil)
-
+kratosClient :=&mocks.KratosClient{}
 		pub := &commock.QPub{}
 		pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:  testOrg,
@@ -149,8 +153,9 @@ func Test_Add(t *testing.T) {
 	t.Run("WithDebugSimToken", func(tt *testing.T) {
 		simProvider := &mocks.SimProvider{}
 		pub := &commock.QPub{}
+		kratosClient :=&mocks.KratosClient{}
 		pub.On("PublishToQueue", "mailer", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 		// Act
 		addResp, err := srv.Add(context.Background(), &pb.AddRequest{
 			Org:      testOrg,
@@ -174,6 +179,7 @@ func Test_Deactivate(t *testing.T) {
 	simRepo := &mocks.SimcardRepo{}
 	simManager := &mocks2.SimManagerServiceClient{}
 	simProvider := &mocks.SimProvider{}
+	kratosClient :=&mocks.KratosClient{}
 	hssProv := &mocks.ImsiClientProvider{}
 	hssProv.On("GetClient").Return(hssClient, nil)
 	pub := &commock.QPub{}
@@ -196,7 +202,7 @@ func Test_Deactivate(t *testing.T) {
 
 	hssClient.On("Delete", mock.Anything, mock.Anything).Return(&hsspb.DeleteImsiResponse{}, nil)
 
-	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+	srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 
 	_, err := srv.DeactivateUser(context.Background(), &pb.DeactivateUserRequest{
 		UserId: userId,
@@ -404,8 +410,9 @@ func Test_UpdateServices(t *testing.T) {
 
 	t.Run("UpdateUkama", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
+		kratosClient :=&mocks.KratosClient{}
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub,kratosClient)
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,
@@ -424,11 +431,12 @@ func Test_UpdateServices(t *testing.T) {
 
 	t.Run("UpdateCarrier", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
+		kratosClient :=&mocks.KratosClient{}
 		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
 			return p.Services.Data.GetValue()
 		})).Return(nil, nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,
@@ -450,11 +458,12 @@ func Test_UpdateServices(t *testing.T) {
 
 	t.Run("DisableAllServicesButKeepCarrier", func(tt *testing.T) {
 		simManager := &mocks2.SimManagerServiceClient{}
+		kratosClient :=&mocks.KratosClient{}
 		simManager.On("SetServiceStatus", mock.Anything, mock.MatchedBy(func(p *pbclient.SetServiceStatusRequest) bool {
 			return p.Services.Data != nil && p.Services.Data.GetValue() == false
 		})).Return(nil, nil)
 
-		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub)
+		srv := NewUserService(userRepo, hssProv, simRepo, simProvider, simManager, "simManager", pub, kratosClient)
 		// Act
 		resp, err := srv.SetSimStatus(context.TODO(), &pb.SetSimStatusRequest{
 			Iccid: testIccid,
