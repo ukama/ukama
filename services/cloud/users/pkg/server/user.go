@@ -514,7 +514,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		return errors.Wrap(err, "failed to get qr code")
 	}
 	md, ok := metadata.FromIncomingContext(ctx)
-	noId := "Unknown"
+	var noId string
 	if ok && len(md["x-requester"]) == 1 {
 		noId = md["x-requester"][0]
 	} else {
