@@ -8,13 +8,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/coredns/coredns/plugin/pkg/log"
-	uuid2 "github.com/satori/go.uuid"
+	rconf "github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 	pbnet "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	"github.com/ukama/ukama/services/common/config"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
@@ -26,7 +25,7 @@ import (
 )
 
 type TestConf struct {
-	RegistryHost string
+	NetworkHost  string
 	QueueUri     string
 	DevicePort   int
 	WaitingTime  int
@@ -41,14 +40,19 @@ const orgName = "device-feeder-integration-tests-org"
 func init() {
 	testConf = &TestConf{
 		QueueUri:     "amqp://guest:guest@localhost:5672/",
-		RegistryHost: "localhost:9090",
+		NetworkHost:  "localhost:9090",
 		NetHost:      "localhost:9090",
 		DevicePort:   8080, // dummy device port
 		WaitingTime:  10,   // how long dummy node waits for the request from device feeder
 		DevicesCount: 3,    // how many devices to create
 	}
 
-	config.LoadConfig("integration", testConf)
+	reader := rconf.NewConfReader("integration")
+	err := reader.Read(testConf)
+	if err != nil {
+		logrus.Fatalf("Failed to read config: %v", err)
+	}
+
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("%+v", testConf)
 
@@ -58,7 +62,7 @@ func init() {
 func Test_FullFlow(t *testing.T) {
 
 	log.Info("Preparing data for device-feeder test")
-	conn, regClient, nodes := PrepareRegistryData(t)
+	conn, regClient, nodes := PrepareNetworkData(t)
 	defer conn.Close()
 	defer cleanupData(regClient, nodes)
 
@@ -83,7 +87,7 @@ func Test_FullFlow(t *testing.T) {
 	assert.True(t, isRequesReceived, "Request was not received")
 }
 
-func cleanupData(client pb.RegistryServiceClient, nodes []string) {
+func cleanupData(client pb.NetworkServiceClient, nodes []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 	log.Infof("Cleanup data")
@@ -98,18 +102,19 @@ func cleanupData(client pb.RegistryServiceClient, nodes []string) {
 	}
 }
 
-func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClient, []string) {
+func PrepareNetworkData(t *testing.T) (*grpc.ClientConn, pb.NetworkServiceClient, []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
-	logrus.Infoln("Connecting to registry ", testConf.RegistryHost)
-	regConn, err := grpc.DialContext(ctx, testConf.RegistryHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	logrus.Infoln("Connecting to network ", testConf.NetworkHost)
+	regConn, err := grpc.DialContext(ctx, testConf.NetworkHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		assert.FailNow(t, "Failed to connect to registry", err)
+		assert.FailNow(t, "Failed to connect to network", err)
 		return nil, nil, nil
 	}
+	defer regConn.Close()
 
-	c := pb.NewRegistryServiceClient(regConn)
+	c := pb.NewNetworkServiceClient(regConn)
 
 	logrus.Infoln("Connecting to net ", testConf.NetHost)
 	netConn, err := grpc.DialContext(ctx, testConf.NetHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -117,11 +122,11 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 		assert.FailNow(t, "Failed to connect to net service", err)
 		return nil, nil, nil
 	}
+	defer netConn.Close()
+
 	nt := pbnet.NewNnsClient(netConn)
 
-	ownerId := uuid2.NewV4()
-
-	_, err = c.AddOrg(ctx, &pb.AddOrgRequest{Name: orgName, Owner: ownerId.String()})
+	_, err = c.Add(ctx, &pb.AddRequest{Name: "test-net", OrgName: orgName})
 	if err != nil {
 		log.Warning("error adding org: ", err)
 	}
@@ -138,6 +143,7 @@ func PrepareRegistryData(t *testing.T) (*grpc.ClientConn, pb.RegistryServiceClie
 				State:  pb.NodeState_UNDEFINED,
 			},
 			OrgName: orgName,
+			Network: "test-net",
 		})
 
 		if err != nil {

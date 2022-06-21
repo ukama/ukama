@@ -22,7 +22,7 @@ func main() {
 
 	var authMiddleware rest.AuthMiddleware
 	authMiddleware = rest.NewKratosAuthMiddleware(&svcConf.Kratos,
-		client.NewRegistry(svcConf.Services.Registry, svcConf.Services.TimeoutSeconds), svcConf.DebugMode)
+		client.NewRegistry(svcConf.Services.Network, svcConf.Services.Org, svcConf.Services.Node, svcConf.Services.Timeout), svcConf.DebugMode)
 
 	if svcConf.BypassAuthMode && svcConf.DebugMode {
 		authMiddleware = rest.NewDebugAuthMiddleware()

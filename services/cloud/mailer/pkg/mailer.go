@@ -2,16 +2,17 @@ package pkg
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
-	"github.com/ukama/ukama/services/cloud/mailer/pkg/metrics"
-	"github.com/ukama/ukama/services/common/msgbus"
-	"github.com/wagslane/go-rabbitmq"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
+	"github.com/ukama/ukama/services/cloud/mailer/pkg/metrics"
+	"github.com/ukama/ukama/services/common/errors"
+	"github.com/ukama/ukama/services/common/msgbus"
+	"github.com/wagslane/go-rabbitmq"
 )
 
 const deadLetterExchangeHeaderName = "x-dead-letter-exchange"
@@ -61,6 +62,11 @@ func (m *Mailer) Start() error {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	logrus.Info("Shutting down...")
+	err = client.Close()
+	if err != nil {
+		logrus.Errorf("Error closing consumer: %s", err.Error())
+	}
 
 	return nil
 }
@@ -127,4 +133,8 @@ func (m *Mailer) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Act
 
 	metrics.EmailSentSuccessfulRequestMetric()
 	return rabbitmq.Ack
+}
+
+func (m *Mailer) Close() {
+
 }

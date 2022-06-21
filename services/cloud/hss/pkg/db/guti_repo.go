@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 )

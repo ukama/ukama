@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
+	"github.com/ukama/ukama/services/common/errors"
 )
 
 type NodeClient struct {

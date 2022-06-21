@@ -17,6 +17,7 @@ require (
 	github.com/ukama/ukama/services/common v0.0.0-20220322143821-0d6da632684f
 	github.com/vektra/mockery/v2 v2.12.2
 	github.com/wI2L/fizz v0.18.1
+	github.com/wagslane/go-rabbitmq v0.8.1
 )
 
 require (
@@ -95,6 +96,14 @@ require (
 	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/iamolegga/enviper v1.4.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
+	github.com/jackc/pgconn v1.8.1 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgproto3/v2 v2.0.6 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/pgtype v1.7.0 // indirect
+	github.com/jackc/pgx/v4 v4.11.0 // indirect
 	github.com/jgautheron/goconst v1.5.1 // indirect
 	github.com/jingyugao/rowserrcheck v1.1.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -111,6 +120,7 @@ require (
 	github.com/ldez/tagliatelle v0.3.1 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/leonklingele/grouper v1.1.0 // indirect
+	github.com/lib/pq v1.10.4 // indirect
 	github.com/loopfz/gadgeto v0.9.0 // indirect
 	github.com/lufeee/execinquery v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
@@ -175,11 +185,9 @@ require (
 	github.com/tomarrell/wrapcheck/v2 v2.6.1 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
-	github.com/ukama/ukamaX/common v0.0.0-20220425182032-2c377df948f4 // indirect
 	github.com/ultraware/funlen v0.0.3 // indirect
 	github.com/ultraware/whitespace v0.0.5 // indirect
 	github.com/uudashr/gocognit v1.0.5 // indirect
-	github.com/wagslane/go-rabbitmq v0.8.1 // indirect
 	github.com/willf/bitset v1.1.11 // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
 	github.com/yeya24/promlinter v0.2.0 // indirect
@@ -201,6 +209,7 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gorm.io/driver/postgres v1.1.0 // indirect
 	gorm.io/gorm v1.21.15 // indirect
 	honnef.co/go/tools v0.3.1 // indirect
 	mvdan.cc/gofumpt v0.3.1 // indirect

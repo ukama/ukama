@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

@@ -33,8 +33,46 @@ services:
     networks:
         - ukama-net
   
-  registry:
-    build: ./registry
+  network:
+    build: ./network
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+  
+  org:
+    build: ./org
+    ports:
+      - "9090:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - BOOTSTRAP_URL=bootstrap.dev.ukama.com
+      - BOOTSTRAP_AUTH0_CLIENTID=${BOOTSTRAP_AUTH0_CLIENTID}
+      - BOOTSTRAP_AUTH0_SECRET=${BOOTSTRAP_AUTH0_SECRET}
+      - BOOTSTRAP_AUTH0_HOST=${BOOTSTRAP_AUTH0_HOST}
+      - DEBUG_DISABLEBOOTSTRAP=true
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+    restart: always
+    networks:
+      - ukama-net
+
+  node:
+    build: ./node
     ports:
       - "9090:9090"
     environment:
@@ -70,7 +108,7 @@ services:
   listener:
     build:
       dockerfile: ./Dockerfile.listener
-      context: ./registry
+      context: ./network
     restart: always
     networks:
       - ukama-net
@@ -87,7 +125,7 @@ services:
     environment:
       - DEBUGMODE=true
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - REGISTRY_HOST=registry:9090
+      - REGISTRY_HOST=network:9090
       - NET_HOST=net:9090
       - DEVICE_PORT=8080
       - LISTENER_THREADS=1

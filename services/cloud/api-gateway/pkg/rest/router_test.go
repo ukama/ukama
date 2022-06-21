@@ -21,8 +21,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
-	pbmocks "github.com/ukama/ukama/services/cloud/registry/pb/gen/mocks"
+	netpb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	netmocks "github.com/ukama/ukama/services/cloud/network/pb/gen/mocks"
+	nodepb "github.com/ukama/ukama/services/cloud/node/pb/gen"
+	nodemocks "github.com/ukama/ukama/services/cloud/node/pb/gen/mocks"
+	orgpb "github.com/ukama/ukama/services/cloud/org/pb/gen"
+	orgmocks "github.com/ukama/ukama/services/cloud/org/pb/gen/mocks"
 	usrmocks "github.com/ukama/ukama/services/cloud/users/pb/gen/mocks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,11 +83,14 @@ func TestGetOrg_NotFound(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 	req.Header.Set("token", "bearer 123")
 
-	m := &pbmocks.RegistryServiceClient{}
-	m.On("GetOrg", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
+	n := &netmocks.NetworkServiceClient{}
+
+	o := &orgmocks.OrgServiceClient{}
+	o.On("Get", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, "org not found"))
+	nd := &nodemocks.NodeServiceClient{}
 
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-		Registry: client.NewRegistryFromClient(m),
+		Registry: client.NewRegistryFromClient(n, o, nd),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -91,7 +98,7 @@ func TestGetOrg_NotFound(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	m.AssertExpectations(t)
+	n.AssertExpectations(t)
 }
 
 func TestGetOrg(t *testing.T) {
@@ -101,14 +108,20 @@ func TestGetOrg(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/orgs/"+orgName, nil)
 	req.Header.Set("token", "bearer 123")
 
-	m := &pbmocks.RegistryServiceClient{}
-	m.On("GetOrg", mock.Anything, mock.Anything).Return(&pb.Organization{
-		Name:  orgName,
-		Owner: "owner",
+	n := &netmocks.NetworkServiceClient{}
+
+	o := &orgmocks.OrgServiceClient{}
+	nd := &nodemocks.NodeServiceClient{}
+
+	o.On("Get", mock.Anything, mock.Anything).Return(&orgpb.GetResponse{
+		Org: &orgpb.Organization{
+			Name:  orgName,
+			Owner: "owner",
+		},
 	}, nil)
 
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-		Registry: client.NewRegistryFromClient(m),
+		Registry: client.NewRegistryFromClient(n, o, nd),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -116,7 +129,7 @@ func TestGetOrg(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
-	m.AssertExpectations(t)
+	o.AssertExpectations(t)
 	assert.Contains(t, w.Body.String(), `"name":"org-name"`)
 }
 
@@ -128,17 +141,19 @@ func TestGetNodes(t *testing.T) {
 
 	t.Run("GetNodesSucceeded", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		m := &pbmocks.RegistryServiceClient{}
-		m.On("GetNodes", mock.Anything, mock.MatchedBy(func(r *pb.GetNodesRequest) bool {
+		m := &netmocks.NetworkServiceClient{}
+		o := &orgmocks.OrgServiceClient{}
+		nd := &nodemocks.NodeServiceClient{}
+		m.On("GetNodes", mock.Anything, mock.MatchedBy(func(r *netpb.GetNodesRequest) bool {
 			return r.OrgName == "test-org"
-		})).Return(&pb.GetNodesResponse{
-			Nodes: []*pb.Node{
+		})).Return(&netpb.GetNodesResponse{
+			Nodes: []*netpb.Node{
 				{NodeId: nodeId.String()}},
 			OrgName: "test-org",
 		}, nil)
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-			Registry: client.NewRegistryFromClient(m),
+			Registry: client.NewRegistryFromClient(m, o, nd),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -152,13 +167,15 @@ func TestGetNodes(t *testing.T) {
 
 	t.Run("NoNodesReturned", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		m := &pbmocks.RegistryServiceClient{}
-		m.On("GetNodes", mock.Anything, mock.Anything).Return(&pb.GetNodesResponse{
-			Nodes: []*pb.Node{},
+		m := &netmocks.NetworkServiceClient{}
+		o := &orgmocks.OrgServiceClient{}
+		nd := &nodemocks.NodeServiceClient{}
+		m.On("GetNodes", mock.Anything, mock.Anything).Return(&netpb.GetNodesResponse{
+			Nodes: []*netpb.Node{},
 		}, nil)
 
 		r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-			Registry: client.NewRegistryFromClient(m),
+			Registry: client.NewRegistryFromClient(m, o, nd),
 		}, routerConfig).f.Engine()
 
 		// act
@@ -183,18 +200,20 @@ func TestGetNode(t *testing.T) {
 	req.Header.Set("token", "bearer 123")
 
 	w := httptest.NewRecorder()
-	m := &pbmocks.RegistryServiceClient{}
-	m.On("GetNode", mock.Anything, mock.Anything).Return(&pb.GetNodeResponse{
-		Node: &pb.Node{
+	m := &netmocks.NetworkServiceClient{}
+	o := &orgmocks.OrgServiceClient{}
+	nd := &nodemocks.NodeServiceClient{}
+	nd.On("GetNode", mock.Anything, mock.Anything).Return(&nodepb.GetNodeResponse{
+		Node: &nodepb.Node{
 			NodeId: nodeId.String(),
-			Attached: []*pb.Node{
+			Attached: []*nodepb.Node{
 				{NodeId: attachedNodeId},
 				{NodeId: "nodeId2"},
 			}},
 	}, nil)
 
 	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-		Registry: client.NewRegistryFromClient(m),
+		Registry: client.NewRegistryFromClient(m, o, nd),
 	}, routerConfig).f.Engine()
 
 	// act
@@ -240,27 +259,31 @@ func TestAddUpdateNode(t *testing.T) {
 			req.Header.Set("token", "bearer 123")
 
 			w := httptest.NewRecorder()
-			m := &pbmocks.RegistryServiceClient{}
+			net := &netmocks.NetworkServiceClient{}
+			o := &orgmocks.OrgServiceClient{}
+			nd := &nodemocks.NodeServiceClient{}
 
 			if test.isCreated {
-				m.On("GetNode", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, ""))
-				m.On("AddNode", mock.Anything, mock.Anything).Return(&pb.AddNodeResponse{}, nil)
+				nd.On("GetNode", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, ""))
+				nd.On("AddNode", mock.Anything, mock.Anything).Return(&nodepb.AddNodeResponse{}, nil)
+				net.On("AddNode", mock.Anything, mock.Anything).Return(&netpb.AddNodeResponse{}, nil)
 			} else {
-				m.On("GetNode", mock.Anything, mock.Anything).Return(&pb.GetNodeResponse{
-					Node: &pb.Node{NodeId: nodeId}}, nil)
-				m.On("UpdateNode", mock.Anything, mock.Anything).Return(&pb.UpdateNodeResponse{}, nil)
+				nd.On("GetNode", mock.Anything, mock.Anything).Return(&nodepb.GetNodeResponse{
+					Node: &nodepb.Node{NodeId: nodeId}}, nil)
+				nd.On("UpdateNode", mock.Anything, mock.Anything).Return(&nodepb.UpdateNodeResponse{}, nil)
 			}
 
 			r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-				Registry: client.NewRegistryFromClient(m),
+				Registry: client.NewRegistryFromClient(net, o, nd),
 			}, routerConfig).f.Engine()
 
 			// act
 			r.ServeHTTP(w, req)
 
 			// assert
+			fmt.Printf("Response: %s\n", w.Body.String())
 			assert.Equal(t, test.expectedHttpCode, w.Code)
-			m.AssertExpectations(t)
+			net.AssertExpectations(t)
 		})
 	}
 }

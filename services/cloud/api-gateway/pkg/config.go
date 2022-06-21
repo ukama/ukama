@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	"github.com/gin-contrib/cors"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/rest"
@@ -21,14 +23,16 @@ type Kratos struct {
 }
 
 type GrpcEndpoints struct {
-	TimeoutSeconds int `mapstructure:"timeoutSeconds"`
-	Registry       string
-	Users          string
+	Timeout time.Duration
+	Network string
+	Users   string
+	Org     string
+	Node    string
 }
 
 type HttpEndpoints struct {
-	TimeoutSeconds int `mapstructure:"timeoutSeconds"`
-	NodeMetrics    string
+	Timeout     time.Duration
+	NodeMetrics string
 }
 
 func NewConfig() *Config {
@@ -46,13 +50,15 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			TimeoutSeconds: 5,
-			Registry:       "registry:9090",
-			Users:          "users:9090",
+			Timeout: 3 * time.Second,
+			Network: "network:9090",
+			Users:   "users:9090",
+			Org:     "org:9090",
+			Node:    "node:9090",
 		},
 		HttpServices: HttpEndpoints{
-			TimeoutSeconds: 5,
-			NodeMetrics:    "http://localhost",
+			Timeout:     3 * time.Second,
+			NodeMetrics: "http://localhost",
 		},
 
 		Server: rest.HttpConfig{

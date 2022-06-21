@@ -9,15 +9,15 @@ import (
 	"time"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/net/pb/gen"
-	regpb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	regpb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
-	"github.com/wagslane/go-rabbitmq"
+	rabbitmq "github.com/wagslane/go-rabbitmq"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
@@ -30,7 +30,7 @@ type listener struct {
 	nnsClient   pb.NnsClient
 	grpcTimeout int
 	serviceId   string
-	registry    regpb.RegistryServiceClient
+	network     regpb.NetworkServiceClient
 }
 
 type ListenerConfig struct {
@@ -38,7 +38,7 @@ type ListenerConfig struct {
 	Queue             config.Queue
 	GrpcTimeout       int
 	NnsGrpcHost       string
-	RegistryHost      string
+	NetworkHost       string
 }
 
 func NewLiseterConfig() *ListenerConfig {
@@ -46,9 +46,9 @@ func NewLiseterConfig() *ListenerConfig {
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@localhost:5672/",
 		},
-		NnsGrpcHost:  "localhost:9090",
-		RegistryHost: "localhost:9090",
-		GrpcTimeout:  3,
+		NnsGrpcHost: "localhost:9090",
+		NetworkHost: "localhost:9090",
+		GrpcTimeout: 3,
 	}
 }
 
@@ -60,13 +60,13 @@ func StartListener(config *ListenerConfig) {
 	}
 
 	nnsConn := newGrpcConnection(config.NnsGrpcHost, config.GrpcTimeout)
-	regConn := newGrpcConnection(config.RegistryHost, config.GrpcTimeout)
+	regConn := newGrpcConnection(config.NetworkHost, config.GrpcTimeout)
 
 	logrus.Infof("Creating listener. Queue: %s. Nns: %s",
 		config.Queue.Uri[strings.LastIndex(config.Queue.Uri, "@"):], config.NnsGrpcHost)
 	l := listener{
 		nnsClient:   pb.NewNnsClient(nnsConn),
-		registry:    regpb.NewRegistryServiceClient(regConn),
+		network:     regpb.NewNetworkServiceClient(regConn),
 		msgBusConn:  client,
 		grpcTimeout: config.GrpcTimeout,
 		serviceId:   os.Getenv(POD_NAME_ENV_VAR),
@@ -103,6 +103,12 @@ func (l listener) startQueueListening() {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	logrus.Info("Shutting down...")
+	err = l.msgBusConn.Close()
+	if err != nil {
+		logrus.Errorf("Error closing queue consumer. Error: %+v", err)
+	}
+
 }
 
 func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.Action {
@@ -142,13 +148,13 @@ func (l *listener) incomingMessageHandler(delivery rabbitmq.Delivery) rabbitmq.A
 func (l listener) getOrgAndNetwork(nodeId string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(l.grpcTimeout)*time.Second)
 	defer cancel()
-	r, err := l.registry.GetNode(ctx, &regpb.GetNodeRequest{
+	r, err := l.network.GetNode(ctx, &regpb.GetNodeRequest{
 		NodeId: nodeId,
 	})
 
 	if err != nil {
-		logrus.Errorf("Failed to get node from registry. Error: %+v", err)
+		logrus.Errorf("Failed to get node from network. Error: %+v", err)
 		return "", "", errors.Wrap(err, "error getting node")
 	}
-	return r.Org.Name, r.Network.Name, nil
+	return r.Org, r.GetNetwork().GetName(), nil
 }

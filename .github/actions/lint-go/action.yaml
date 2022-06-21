@@ -22,7 +22,7 @@ runs:
             git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"     
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3.1.0
+        uses: golangci/golangci-lint-action@v3.2.0
         with:
           args: --timeout=5m                
           working-directory: ${{ inputs.working-directory }}

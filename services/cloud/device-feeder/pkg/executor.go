@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

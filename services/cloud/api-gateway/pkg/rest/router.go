@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/ukama/ukama/services/common/errors"
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -16,7 +16,7 @@ import (
 
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
 	"github.com/wI2L/fizz"
 
@@ -25,6 +25,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	nodepb "github.com/ukama/ukama/services/cloud/node/pb/gen"
+	pborg "github.com/ukama/ukama/services/cloud/org/pb/gen"
 	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 )
 
@@ -56,8 +58,8 @@ type AuthMiddleware interface {
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c := &Clients{}
-	c.Registry = client.NewRegistry(endpoints.Registry, endpoints.TimeoutSeconds)
-	c.User = client.NewUsers(endpoints.Users, endpoints.TimeoutSeconds)
+	c.Registry = client.NewRegistry(endpoints.Network, endpoints.Org, endpoints.Users, endpoints.Timeout)
+	c.User = client.NewUsers(endpoints.Users, endpoints.Timeout)
 	return c
 }
 
@@ -105,6 +107,7 @@ func (r *Router) init() {
 	{
 		const org = "/orgs/" + ":" + ORG_URL_PARAMETER
 
+		// org handler
 		authorized.GET(org, []fizz.OperationOption{}, tonic.Handler(r.orgHandler, http.StatusOK))
 
 		// metrics
@@ -117,7 +120,7 @@ func (r *Router) init() {
 				info.ID = "GetMetrics"
 			}}, metricsProxy)
 
-		// registry
+		// network
 		nodes := authorized.Group(org+"/nodes", "Nodes", "Nodes operations")
 		nodes.GET("", nil, tonic.Handler(r.getNodesHandler, http.StatusOK))
 		nodes.PUT("/:node", nil, tonic.Handler(r.addOrUpdateNodeHandler, http.StatusOK))
@@ -208,7 +211,7 @@ func (r *Router) getOrgNameFromRoute(c *gin.Context) string {
 	return c.Param("org")
 }
 
-func (r *Router) orgHandler(c *gin.Context) (*pb.Organization, error) {
+func (r *Router) orgHandler(c *gin.Context) (*pborg.Organization, error) {
 	orgName := r.getOrgNameFromRoute(c)
 	return r.clients.Registry.GetOrg(orgName)
 }
@@ -232,7 +235,7 @@ func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*NodeExten
 	return mapExtendeNode(resp.Node), nil
 }
 
-func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*pb.Node, error) {
+func (r *Router) addOrUpdateNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.Node, error) {
 	node, isCreated, err := r.clients.Registry.AddOrUpdate(req.OrgName, req.NodeId, req.NodeName)
 
 	if isCreated {

@@ -14,6 +14,7 @@ type TestConfig struct {
 	BaseConfig `mapstructure:",squash"`
 	SomeUrl    string
 	DB         *Database // this should be initialized
+	Array      []string
 }
 
 func TestLoadConfig(t *testing.T) {
@@ -23,6 +24,11 @@ func TestLoadConfig(t *testing.T) {
 		os.Setenv("SOMEURL", url)
 		os.Setenv("DB_DBNAME", "connStr")
 		os.Setenv("DEBUGMODE", "true")
+		os.Setenv("ARRAY", "this,is,test")
+		defer os.Unsetenv("SOMEURL")
+		defer os.Unsetenv("DB_DBNAME")
+		defer os.Unsetenv("DEBUGMODE")
+
 		conf := &TestConfig{
 			DB: &Database{},
 		}
@@ -30,10 +36,9 @@ func TestLoadConfig(t *testing.T) {
 		assert.Equal(t, url, conf.SomeUrl)
 		assert.Equal(t, "connStr", conf.DB.DbName)
 		assert.Equal(t, true, conf.DebugMode)
-
-		os.Unsetenv("SOMEURL")
-		os.Unsetenv("DB_DBNAME")
-		os.Unsetenv("DEBUGMODE")
+		assert.Len(t, conf.Array, 3)
+		assert.Equal(t, "this", conf.Array[0])
+		assert.Equal(t, "is", conf.Array[1])
 	})
 
 	t.Run("ConfigFile", func(t *testing.T) {
@@ -46,6 +51,7 @@ someUrl: test_url
 debugMode: "true"
 db:
    dbName: connectionStr
+array: ["this", "is", "test" ]
 `
 		err = ioutil.WriteFile(file, []byte(fileContent), 0644)
 		assert.NoError(t, err)
@@ -55,6 +61,9 @@ db:
 		assert.Equal(t, url, conf.SomeUrl)
 		assert.Equal(t, "connectionStr", conf.DB.DbName)
 		assert.Equal(t, true, conf.DebugMode)
+		assert.Len(t, conf.Array, 3)
+		assert.Equal(t, "this", conf.Array[0])
+		assert.Equal(t, "is", conf.Array[1])
 		os.Remove(file)
 	})
 
