@@ -5,7 +5,6 @@ import {
     Dialog,
     Switch,
     Divider,
-    Tooltip,
     IconButton,
     Typography,
     DialogTitle,
@@ -17,9 +16,8 @@ import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
-import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { formatBytes, formatBytesToMB } from "../../../utils";
-import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
+import { CenterContainer } from "../../../styles";
 import LoadingWrapper from "../../LoadingWrapper";
 import colors from "../../../theme/colors";
 
@@ -74,10 +72,9 @@ const UserDetailsDialog = ({
         const title = type === "add" ? "Add User" : `${userName}`;
         return title;
     };
-    const statusText = status ? "ACTIVE" : "INACTIVE";
-    const statusButtonColor = status ? "error" : "primary";
-    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
-    const colorActiveInactive = status ? "textDisabled" : "textSecondary";
+    const statusButtonColor = roaming ? "error" : "primary";
+    const statusAction = roaming ? "PAUSE SERVICE" : "RESUME SERVICE";
+
     return (
         <Dialog
             key={id}
@@ -170,174 +167,6 @@ const UserDetailsDialog = ({
                                     />
                                 </Grid>
 
-                                {/* <Grid container sx={{ p: 1 }}>
-                                    <Grid item xs={12}>
-                                        <Typography
-                                            variant="caption"
-                                            color="textSecondary"
-                                        >
-                                            USER STATUS
-                                        </Typography>
-                                    </Grid>
-
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1">
-                                            Users with paused service will not
-                                            incur any fees, [insert other
-                                            policy].
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={2} />
-
-                                    <Grid item xs={4}>
-                                        <Button
-                                            color={statusButtonColor}
-                                            variant="outlined"
-                                            fullWidth
-                                            onClick={() => {
-                                                if (id && iccid)
-                                                    handleServiceAction(
-                                                        id,
-                                                        iccid,
-                                                        !status
-                                                    );
-                                            }}
-                                        >
-                                            {statusAction}
-                                        </Button>
-                                    </Grid>
-                                </Grid> */}
-                                {/* <Grid container sx={{ p: 1 }}>
-                                    <Grid item xs={12}>
-                                        <Typography
-                                            variant="caption"
-                                            color="textSecondary"
-                                        >
-                                            USER REMOVAL
-                                        </Typography>
-                                    </Grid>
-
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1">
-                                            Once you deactivate a user, [xyz].
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={2} />
-
-                                    <Grid item xs={4}>
-                                        <Button
-                                            color={statusButtonColor}
-                                            variant="outlined"
-                                            fullWidth
-                                            onClick={() =>
-                                                id && handleDeactivateAction(id)
-                                            }
-                                        >
-                                            {"deactivate user"}
-                                        </Button>
-                                    </Grid>
-                                </Grid> */}
-                                {/* <Grid item xs={12}>
-                                    <Typography
-                                        variant="caption"
-                                        color="textSecondary"
-                                    >
-                                        ENABLE ROAMING
-                                    </Typography>
-                                </Grid>
-                                <Grid
-                                    container
-                                    direction="row"
-                                    justifyContent="space-between"
-                                    alignItems="center"
-                                >
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1">
-                                            Roaming allows users to connect to
-                                            networks outside their networks for
-                                            a fee.
-                                        </Typography>
-                                    </Grid>
-                                    <Grid
-                                        item
-                                        xs={6}
-                                        container
-                                        justifyContent="flex-end"
-                                    >
-                                        <LoadingWrapper
-                                            isLoading={roamingLoading}
-                                            width={"72px"}
-                                            height={"24px"}
-                                        >
-                                            <Switch
-                                                size="small"
-                                                value="active"
-                                                checked={roaming}
-                                                disabled={!status}
-                                                onClick={(e: any) => {
-                                                    setUserForm({
-                                                        ...user,
-                                                        roaming:
-                                                            e.target.checked,
-                                                    });
-                                                    handleUserRoamingAction &&
-                                                        handleUserRoamingAction(
-                                                            e.target.checked
-                                                        );
-                                                }}
-                                            />
-                                        </LoadingWrapper>
-                                    </Grid>
-                                </Grid> */}
-                                {/* <Grid
-                                    container
-                                    sx={{ p: 1 }}
-                                    justifyContent="space-between"
-                                >
-                                    <Grid item xs={12}>
-                                        <Typography
-                                            variant="caption"
-                                            color="textSecondary"
-                                        >
-                                            ENABLE ROAMING
-                                        </Typography>
-                                    </Grid>
-
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1">
-                                            Roaming allows users to connect to
-                                            networks outside their networks for
-                                            a fee.
-                                        </Typography>
-                                    </Grid>
-                                    <Grid item xs={2} />
-
-                                    <Grid item xs={4}>
-                                        <LoadingWrapper
-                                            isLoading={roamingLoading}
-                                            width={"72px"}
-                                            height={"24px"}
-                                        >
-                                            <Switch
-                                                size="small"
-                                                value="active"
-                                                checked={roaming}
-                                                disabled={!status}
-                                                onClick={(e: any) => {
-                                                    setUserForm({
-                                                        ...user,
-                                                        roaming:
-                                                            e.target.checked,
-                                                    });
-                                                    handleUserRoamingAction &&
-                                                        handleUserRoamingAction(
-                                                            e.target.checked
-                                                        );
-                                                }}
-                                            />
-                                        </LoadingWrapper>
-                                    </Grid>
-                                </Grid> */}
                                 <Grid item container>
                                     <Grid item xs={12}>
                                         <Typography
@@ -402,7 +231,7 @@ const UserDetailsDialog = ({
                                             justifyContent="flex-end"
                                         >
                                             <Button
-                                                color={statusButtonColor}
+                                                color={"error"}
                                                 variant="outlined"
                                                 onClick={() =>
                                                     id &&

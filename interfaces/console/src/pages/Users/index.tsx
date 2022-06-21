@@ -239,18 +239,6 @@ const User = () => {
         });
     };
 
-    const getSearchValue = (search: string) => {
-        if (search.length > 2) {
-            setUsers(
-                users.filter((_user: GetUsersDto) =>
-                    _user.name.toLocaleLowerCase().includes(search)
-                )
-            );
-        } else {
-            setUsers(usersRes?.getUsersByOrg || []);
-        }
-    };
-
     const handleUpdateUserStatus = (
         id: string,
         iccid: string,
@@ -338,10 +326,9 @@ const User = () => {
                         <ContainerHeader
                             title="My Users"
                             showButton={true}
-                            showSearchBox={true}
+                            showSearchBox={false}
                             buttonSize="medium"
                             buttonTitle="ADD USERS"
-                            handleSearchChange={getSearchValue}
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />

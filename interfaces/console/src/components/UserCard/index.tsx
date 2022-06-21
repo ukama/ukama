@@ -2,7 +2,15 @@ import { colors } from "../../theme";
 import { useEffect, useState } from "react";
 import { GetUsersDto } from "../../generated";
 import { formatBytesToMB } from "../../utils";
-import { Grid, Button, Typography, LinearProgress, Stack } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+
+import {
+    Grid,
+    Typography,
+    IconButton,
+    LinearProgress,
+    Stack,
+} from "@mui/material";
 import LoadingWrapper from "../LoadingWrapper";
 
 type UserCardProps = {
@@ -26,10 +34,21 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
 
     return (
         <Grid container spacing={{ xs: 1.5 }}>
-            <Grid item xs={12}>
-                <Typography variant="body2" color="textSecondary">
-                    {user.id}
-                </Typography>
+            <Grid item xs={12} container>
+                <Grid item xs={8}>
+                    <Typography variant="body2" color="textSecondary">
+                        {user.id}
+                    </Typography>
+                </Grid>
+                <Grid item xs={4} container justifyContent="flex-end">
+                    <IconButton
+                        edge="end"
+                        size="small"
+                        onClick={() => handleMoreUserdetails(user)}
+                    >
+                        <EditIcon />
+                    </IconButton>
+                </Grid>
             </Grid>
             <Grid item xs={12}>
                 <Typography variant="h5">{user.name}</Typography>
@@ -68,7 +87,7 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                     </Typography>
                 </LoadingWrapper>
             </Grid>
-            <Grid item xs={12} display="grid">
+            <Grid item xs={12} display="grid" sx={{ pb: 2 }}>
                 <LoadingWrapper
                     width="100%"
                     height="8px"
@@ -91,14 +110,6 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                         }}
                     />
                 </LoadingWrapper>
-            </Grid>
-            <Grid item xs={12}>
-                <Button
-                    variant="text"
-                    onClick={() => handleMoreUserdetails(user)}
-                >
-                    VIEW MORE
-                </Button>
             </Grid>
         </Grid>
     );
