@@ -23,10 +23,10 @@ type Response struct {
 	} `json:"traits"`
 }
 
-func NewKratosClient(apiUrl string) *kratosClient {
+
+func NewKratosClient(apiUrl string) KratosClient {
 	return &kratosClient{apiUrl: apiUrl}
 }
-
 func (i *kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 	if len(networkOwnerId) <= 0 {
 		fmt.Println("Missing userId in the request")
