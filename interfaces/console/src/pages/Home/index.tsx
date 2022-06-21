@@ -762,11 +762,16 @@ const Home = () => {
         setIsSoftwaUpdate(true);
     }, []);
 
-    const handleNodeActions = useCallback((id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg?.nodes.filter(
+    const handleNodeActions = (id: string, type: string) => {
+        const node = nodeRes?.getNodesByOrg?.nodes?.filter(
             item => item.id === id
         );
-        if (type == "edit" && node) {
+
+        if (!node) {
+            return null;
+        }
+
+        if (type == "edit") {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -785,7 +790,7 @@ const Home = () => {
                 nodeId: id || "",
             });
         }
-    }, []);
+    };
 
     const handleCloseWelcome = () => {
         if (_isFirstVisit) {
@@ -946,7 +951,7 @@ const Home = () => {
                             />
                             <NodeContainer
                                 handleNodeUpdate={handleNodeUpdateAction}
-                                items={nodeRes?.getNodesByOrg.nodes || []}
+                                items={nodeRes?.getNodesByOrg?.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
                         </RoundedCard>

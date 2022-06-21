@@ -93,30 +93,6 @@ const ContainerHeader = ({
 
             <Grid
                 item
-                xs={12}
-                md={3}
-                justifyContent={"flex-end"}
-                display={showSearchBox ? "flex" : "none"}
-            >
-                <StyledInputBase
-                    placeholder="Search…"
-                    value={currentSearchValue}
-                    onChange={(e: any) => setCurrentSearchValue(e.target.value)}
-                    sx={{
-                        height: "42px",
-                        borderRadius: 2,
-                        minWidth: { xs: "100%", md: "300px" },
-                        border: `1px solid ${colors.silver}`,
-                        padding: "4px 8px 4px 12px !important",
-                    }}
-                    endAdornment={
-                        <SearchIcon fontSize="small" color="primary" />
-                    }
-                />
-            </Grid>
-
-            <Grid
-                item
                 xs={0}
                 md={showSearchBox ? 2 : 3}
                 justifyContent="flex-end"

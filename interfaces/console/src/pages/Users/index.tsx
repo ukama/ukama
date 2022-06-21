@@ -340,7 +340,7 @@ const User = () => {
                             showButton={true}
                             showSearchBox={true}
                             buttonSize="medium"
-                            buttonTitle="INSTALL SIMS"
+                            buttonTitle="ADD USERS"
                             handleSearchChange={getSearchValue}
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
@@ -388,7 +388,7 @@ const User = () => {
                         isOpen={simDialog.isShow}
                         setUserForm={setSelectedUser}
                         simDetailsTitle="SIM Details"
-                        userDetailsTitle="User Details"
+                        userDetailsTitle="User Settings"
                         handleClose={handleSimDialogClose}
                         roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
