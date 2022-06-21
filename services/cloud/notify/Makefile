@@ -33,7 +33,7 @@ gen:
 
 # Build Mock
 mock: 
-	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/mock.go
+	env GO111MODULE=on CGO_ENABLED=0 go build -ldflags='-extldflags=-static' -o bin/mock test/mock/listener.go
 
 clean:
 	rm -rf ./bin
