@@ -763,6 +763,22 @@ static inline double usys_round(double x) {
     return round(x);
 }
 
+/**
+ * @fn      double usys_time(time_t*)
+ * @brief   Returns the time as the number of seconds since the Epoch,
+ *          1970-01-01 00:00:00 +0000 (UTC).
+ *          If t is non-NULL, the return value is also stored in the
+ *          memory pointed to by t.
+ *
+ * @param   t
+ * @return  On success, the value of time in seconds since
+ *          the Epoch is returned.
+ *          On error, ((time_t) -1) is returned, and errno is set appropriately.
+ */
+static inline double usys_time(time_t *t) {
+    return time(t);
+}
+
 #ifdef __cplusplus
 }
 #endif
