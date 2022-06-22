@@ -23,10 +23,11 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: [
-            process.env.CONSOLE_APP_URL ?? "",
-            process.env.AUTH_APP_URL ?? "",
-        ],
+        origin: "*",
+
+        methods: ["GET", "POST"],
+
+        allowedHeaders: ["Content-Type"],
         credentials: true,
     };
     logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
