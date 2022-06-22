@@ -12,6 +12,7 @@
 #include "notify_macros.h"
 #include "web_client.h"
 
+#include "usys_api.h"
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -82,7 +83,9 @@ int notification_exit() {
 }
 
 int notify_send_notification(JsonObj* jNotify) {
-
+    /* Preparing request for service router */
+    char urlWithServiceQuery[MAX_URL_LENGTH] = {0};
+    usys_sprintf(urlWithServiceQuery,"%s?%s=%s",gRemoteServer, ROUTING_KEY, ROUTING_VALUE);
     return wc_forward_notification(gRemoteServer, "POST", jNotify);
 
 }
