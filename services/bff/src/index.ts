@@ -75,10 +75,13 @@ const initializeApp = async () => {
                     sameSite: "lax",
                     domain: process.env.DOMAIN,
                 });
-                res.send({ success: true });
+                res.status(200).send({ success: true });
+                res.end();
             }
+        } else {
+            res.status(500).send({ success: false });
+            res.end();
         }
-        res.send({ success: false });
     });
 
     mockServer(app);
