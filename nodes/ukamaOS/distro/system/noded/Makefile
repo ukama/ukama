@@ -33,6 +33,7 @@ PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
 PLATFORM_LIB:=usys 
 
 INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
+INC_HEADERS+=$(DISTRO_DIR)/system/common/inc
 
 # JSON lib
 JSON_LIB:=jansson

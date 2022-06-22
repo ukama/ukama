@@ -119,6 +119,18 @@ typedef  json_error_t JsonErrObj;
 #define JTAG_METHOD                     "method"
 #define JTAG_URL_EP                     "endPoint"
 
+#define JTAG_NOTIFY                     "notify"
+#define JTAG_SERVICE_NAME               "serviceName"
+#define JTAG_SEVERITY                   "severity"
+#define JTAG_NOTIFICATION_TYPE          "notificationType"
+#define JTAG_NODE_ID                    "nodeID"
+#define JTAG_NODE_TYPE                  "nodeType"
+#define JTAG_NOTIF_SEVERITY             "severity"
+#define JTAG_NOTIF_DETAILS              "details"
+#define JTAG_NOTIF_REASON               "reason"
+#define JTAG_NOTIF_ATTR                 "attribute"
+#define JTAG_EPOCH_TIME                 "time"
+
 /**
  * @fn      bool parser_read_boolean_object(const JsonObj*, const char*, bool*)
  * @brief   Parses the object which contain boolean object with key
