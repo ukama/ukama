@@ -13,6 +13,7 @@ XLD  = ld
 XGXX = g++
 HOST = $(shell gcc -dumpmachine)
 
+VERSION = v0.0.1
 OPENSSLTARGET = linux-generic64
 
 TARGET_EXEC = virtualNode
@@ -43,6 +44,10 @@ $(TARGET_EXEC): $(OBJFILES)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
+
+container: $(TARGET_EXEC)
+	@echo Building container
+	buildah bud -f . -t testing/virtualnode:${VERSION}
 
 all: $(TARGET_EXEC)
 
