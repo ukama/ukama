@@ -17,9 +17,9 @@ extern "C" {
 #include <jansson.h>
 
 #include "json_types.h"
-#include "notify.h"
 #include "web_service.h"
 #include "usys_types.h"
+#include "notify/notify.h"
 
 #define JSON_OK                        STATUS_OK
 #define JSON_FAILURE                   STATUS_NOTOK
