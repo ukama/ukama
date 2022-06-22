@@ -122,6 +122,12 @@ push_image() {
 		REGISTRY_URL=${DOCKER_USER}
 		buildah push --tls-verify=false --creds ${DOCKER_USER}:${DOCKER_PASS} \
 				 ${NAME}:${TAG}
+	else
+		REGISTRY_URL=${REPO_SERVER_URL}
+		echo "Docker login to AWS"
+		mkdir -p ~/.docker/
+		echo '{ "credsStore": "ecr-login" }' > ~/.docker/config.json
+		buildah push --format docker://${REGISTRY_URL}/repo/${NAME}:${TAG}
 	fi
 }
 
