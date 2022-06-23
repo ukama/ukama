@@ -50,7 +50,7 @@ If we just need to replicate these with updated serial numbers we could use usti
 Example:
 
 ```
-./build/genSchema --u UK-9001-HNODE-SA03-1103 --n com --m UK-9001-COM-1103  --f mfgdata/schema/com.json --n trx --m UK-9001-LTE-1103  --f mfgdata/schema/trx.json --n mask --m UK-9001-MSK-1103 --f mfgdata/schema/mask.json
+./build/genSchema --u UK-SA9001-HNODE-A1-1103 --n com --m UK-SA9001-COM-A1-1103  --f mfgdata/schema/com.json --n trx --m UK-SA9001-TRX-A1-1103  --f mfgdata/schema/trx.json --n mask --m UK-SA9001-MSK-A1-1103 --f mfgdata/schema/mask.json
 ```
 
 Could use this for more information
@@ -66,7 +66,7 @@ This utilty creates a inventory database for the modules you supplies as an argu
 Example:
 
 ```
-./build/genInventory --n com --m UK-9001-COM-1103 --f mfgdata/schema/com.json -n trx --m UK-9001-TRX-1103 --f mfgdata/schema/trx.json --n mask -m UK-9001-MSK-1103 --f mfgdata/schema/mask.json
+./build/genInventory --n com --m UK-SA9001-COM-A1-1103 --f mfgdata/schema/com.json -n trx --m UK-SA9001-TRX-A1-1103 --f mfgdata/schema/trx.json --n mask -m UK-SA9001-MSK-A1-1103 --f mfgdata/schema/mask.json
 ```
 
 Again this could be used for more information
