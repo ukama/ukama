@@ -93,7 +93,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("PostNewNotificationAlert", func() {
-		ep := "/notification?looking_to=post_notification"
+		ep := "/notification"
 		body, err := json.Marshal(nt)
 		i.Assert().NoError(err)
 
@@ -107,7 +107,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("PostNewNotificationEvent", func() {
-		ep := "/notification?looking_to=post_notification"
+		ep := "/notification"
 		body, err := json.Marshal(nt1)
 		i.Assert().NoError(err)
 
@@ -121,7 +121,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("ListNotification", func() {
-		ep := "/notification/list?looking_for=list_notification"
+		ep := "/notification/list"
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -134,7 +134,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("GetAlertNotificationForNode", func() {
-		ep := "/notification/node?node=" + node + "&looking_for=notification&type=" + ntypeAlert
+		ep := "/notification/node?node=" + node + "&type=" + ntypeAlert
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -145,7 +145,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("GetEventNotificationForNode", func() {
-		ep := "/notification/node?node=" + node + "&looking_for=notification&type=" + ntypeEvent
+		ep := "/notification/node?node=" + node + "&type=" + ntypeEvent
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -156,7 +156,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("GetAlertNotificationForService", func() {
-		ep := "/notification/service?service=noded" + "&looking_for=notification&type=" + ntypeAlert
+		ep := "/notification/service?service=noded" + "&type=" + ntypeAlert
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -167,7 +167,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("GetEventNotificationForService", func() {
-		ep := "/notification/service?service=noded" + "&looking_for=notification&type=" + ntypeEvent
+		ep := "/notification/service?service=noded" + "&type=" + ntypeEvent
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -178,7 +178,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("ListNotificationForNode", func() {
-		ep := "/notification/node/list?node=" + node + "&looking_for=notification&count=1"
+		ep := "/notification/node/list?node=" + node + "&count=1"
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -190,7 +190,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("ListNotificationForService", func() {
-		ep := "/notification/service/list?service=noded&looking_for=notification&count=1"
+		ep := "/notification/service/list?service=noded&count=1"
 		resp, err := client.R().
 			EnableTrace().
 			Get(i.config.NotifyHost + ep)
@@ -202,7 +202,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("DeleteNotificationForNode", func() {
-		ep := "/notification/node?node=" + node + "&looking_to=delete_notification&type=" + ntypeAlert
+		ep := "/notification/node?node=" + node + "&type=" + ntypeAlert
 		resp, err := client.R().
 			EnableTrace().
 			Delete(i.config.NotifyHost + ep)
@@ -214,7 +214,7 @@ func (i *IntegrationTestSuite) Test_NotifyApi() {
 	})
 
 	i.Run("DeleteNotificationForService", func() {
-		ep := "/notification/service?service=noded&looking_to=delete_notification&type=" + ntypeEvent
+		ep := "/notification/service?service=noded&type=" + ntypeEvent
 		resp, err := client.R().
 			EnableTrace().
 			Delete(i.config.NotifyHost + ep)

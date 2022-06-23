@@ -19,55 +19,43 @@ type Notification struct {
 }
 
 type ReqPostNotification struct {
-	LookingTo string `query:"looking_to" validate:"eq=post_notification,required"`
 	Notification
 }
 
 type ReqDeleteNotification struct {
-	LookingFor string `query:"looking_to" validate:"eq=delete_notification,required"`
-	Id         string `query:"notification_id" validate:"required"`
+	Id string `query:"notification_id" validate:"required"`
 }
 
 type RespNotificationList struct {
 	Notifications []Notification `json:"notifications"`
 }
 
-type ReqListNotification struct {
-	LookingFor string `query:"looking_for" validate:"eq=list_notification,required"`
-}
-
 type ReqGetNotificationTypeForNode struct {
-	NodeID     string              `query:"node" validate:"required"`
-	LookingFor string              `query:"looking_for" validate:"eq=notification,required"`
-	Type       db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
+	NodeID string              `query:"node" validate:"required"`
+	Type   db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
 }
 
 type ReqDeleteNotificationForNode struct {
-	NodeID     string              `query:"node" validate:"required"`
-	LookingFor string              `query:"looking_to" validate:"eq=delete_notification,required"`
-	Type       db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
+	NodeID string              `query:"node" validate:"required"`
+	Type   db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
 }
 
 type ReqListNotificationForNode struct {
-	NodeID     string `query:"node" validate:"required"`
-	LookingFor string `query:"looking_for" validate:"eq=list_notification,required"`
-	Count      int    `query:"count" validate:"gte=1,lte=10" default:"5"`
+	NodeID string `query:"node" validate:"required"`
+	Count  int    `query:"count" validate:"gte=1,lte=10" default:"5"`
 }
 
 type ReqGetNotificationTypeForService struct {
 	ServiceName string              `query:"service" validate:"required"`
-	LookingFor  string              `query:"looking_for" validate:"eq=notification,required"`
 	Type        db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
 }
 
 type ReqDeleteNotificationForService struct {
 	ServiceName string              `query:"service" validate:"required"`
-	LookingFor  string              `query:"looking_to" validate:"eq=delete_notification,required"`
 	Type        db.NotificationType `query:"type" default:"alert" validate:"eq=alert|eq=event"`
 }
 
 type ReqListNotificationForService struct {
 	ServiceName string `query:"service" validate:"required"`
-	LookingFor  string `query:"looking_for" validate:"eq=list_notification,required"`
 	Count       int    `query:"count" validate:"gte=1,lte=10" default:"5"`
 }

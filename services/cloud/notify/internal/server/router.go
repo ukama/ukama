@@ -13,7 +13,6 @@ import (
 	"github.com/ukama/ukama/services/cloud/notify/internal/db"
 	"github.com/ukama/ukama/services/cloud/notify/internal/notify"
 	"github.com/ukama/ukama/services/common/rest"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
 	"github.com/ukama/ukama/services/common/ukama"
 
 	"github.com/wI2L/fizz"
@@ -24,29 +23,23 @@ type Router struct {
 	port int
 	repo db.NotificationRepo
 	n    *notify.Notify
-	s    *sr.ServiceRouter
 }
 
-func (r *Router) Run(close chan error) {
+func (r *Router) Run() {
 	logrus.Info("Listening on port ", r.port)
 	err := r.fizz.Engine().Run(fmt.Sprint(":", r.port))
 	if err != nil {
-		close <- err
+		panic(err)
 	}
-	close <- nil
 }
 
-func NewRouter(config *internal.Config, svcR *sr.ServiceRouter, repo db.NotificationRepo) *Router {
+func NewRouter(config *internal.Config, repo db.NotificationRepo) *Router {
 
 	f := rest.NewFizzRouter(&config.Server, internal.ServiceName, version.Version, internal.IsDebugMode)
 
 	r := &Router{fizz: f,
 		port: config.Server.Port,
 		repo: repo,
-	}
-
-	if svcR != nil {
-		r.s = svcR
 	}
 
 	if repo != nil {
@@ -126,8 +119,8 @@ func (r *Router) deleteNotification(c *gin.Context, req *ReqDeleteNotification) 
 }
 
 /* List notification */
-func (r *Router) listNotification(c *gin.Context, req *ReqListNotification) (*RespNotificationList, error) {
-	logrus.Debugf("Handling list notifications: %+v.", req)
+func (r *Router) listNotification(c *gin.Context) (*RespNotificationList, error) {
+	logrus.Debugf("Handling list notifications")
 	var resp *RespNotificationList
 	list, err := r.n.ListNotification()
 	if err != nil {

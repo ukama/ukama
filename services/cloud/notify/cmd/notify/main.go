@@ -10,7 +10,6 @@ import (
 	"github.com/ukama/ukama/services/common/metrics"
 	sig "github.com/ukama/ukama/services/common/signal"
 	"github.com/ukama/ukama/services/common/sql"
-	sr "github.com/ukama/ukama/services/common/srvcrouter"
 
 	"github.com/ukama/ukama/services/cloud/notify/cmd/version"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
@@ -64,24 +63,11 @@ func startHTTPServer(ctx context.Context, d sql.Db) {
 
 	logrus.Tracef("Config is %+v", internal.ServiceConfig)
 
-	ext := make(chan error)
-	rs := sr.NewServiceRouter(internal.ServiceConfig.ServiceRouter)
-
 	metrics.StartMetricsServer(&internal.ServiceConfig.Metrics)
 
-	r := server.NewRouter(internal.ServiceConfig, rs, db.NewNotificationRepo(d))
-	go r.Run(ext)
+	r := server.NewRouter(internal.ServiceConfig, db.NewNotificationRepo(d))
 
-	/* Register service */
-	if err := rs.RegisterService(internal.ServiceConfig.ApiIf); err != nil {
-		logrus.Errorf("Exiting the %s service registration failed.", internal.ServiceName)
-		return
-	}
-
-	perr := <-ext
-	if perr != nil {
-		panic(perr)
-	}
+	r.Run()
 
 	logrus.Infof("Exiting service %s", internal.ServiceName)
 }

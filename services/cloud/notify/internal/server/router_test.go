@@ -33,7 +33,7 @@ var defaultConfig = &internal.Config{
 			AllowAllOrigins: true,
 		},
 	},
-	ServiceRouter: "http://localhost",
+
 	Queue: config.Queue{
 		Uri: "",
 	},
@@ -72,7 +72,7 @@ func Test_RouterPing(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/ping", nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -92,11 +92,11 @@ func Test_PostNotification(t *testing.T) {
 
 	body, _ := json.Marshal(notif)
 
-	url := "/notification?node=" + node + "&looking_to=post_notification"
+	url := "/notification?node=" + node
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("Insert", mock.Anything).Return(nil)
 
@@ -121,11 +121,11 @@ func Test_PostNotificationNodeIdFailure(t *testing.T) {
 
 	body, _ := json.Marshal(notif)
 
-	url := "/notification?node=" + node + "&looking_to=post_notification"
+	url := "/notification?node=" + node
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("Insert", mock.Anything).Return(nil)
 
@@ -151,11 +151,11 @@ func Test_PostNotificationEventFailure(t *testing.T) {
 
 	body, _ := json.Marshal(notif)
 
-	url := "/notification?node=" + node + "&looking_to=post_notification"
+	url := "/notification?node=" + node
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(body))
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("Insert", mock.Anything).Return(nil)
 
@@ -175,11 +175,11 @@ func Test_DeleteNotification(t *testing.T) {
 
 	id := uuid.NewV4()
 
-	url := "/notification?notification_id=" + id.String() + "&looking_to=delete_notification"
+	url := "/notification?notification_id=" + id.String()
 	req, _ := http.NewRequest("DELETE", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("DeleteNotification", mock.Anything).Return(nil)
 
@@ -201,11 +201,11 @@ func Test_ListNotification(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	resp[0] = dn
 
-	url := "/notification/list?looking_for=list_notification"
+	url := "/notification/list"
 	req, _ := http.NewRequest("GET", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("List").Return(&resp, nil)
 
@@ -228,11 +228,11 @@ func Test_GetNotificationForNode(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	resp[0] = dn
 
-	url := "/notification/node?looking_for=notification&type=" + ntype + "&node=" + node
+	url := "/notification/node?type=" + ntype + "&node=" + node
 	req, _ := http.NewRequest("GET", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("GetNotificationForNode", node, ntype).Return(&resp, nil)
 
@@ -253,11 +253,11 @@ func Test_DeleteNotificationForNode(t *testing.T) {
 
 	ntype := "alert"
 
-	url := "/notification/node?node=" + node + "&looking_to=delete_notification&type=" + ntype
+	url := "/notification/node?node=" + node + "&type=" + ntype
 	req, _ := http.NewRequest("DELETE", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("DeleteNotificationForNode", node, ntype).Return(nil)
 
@@ -279,11 +279,11 @@ func Test_ListNotificationForNode(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	resp[0] = dn
 
-	url := "/notification/node/list?looking_for=list_notification&count=" + strconv.Itoa(count) + "&node=" + node
+	url := "/notification/node/list?count=" + strconv.Itoa(count) + "&node=" + node
 	req, _ := http.NewRequest("GET", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("ListNotificationForNode", node, count).Return(&resp, nil)
 
@@ -308,11 +308,11 @@ func Test_GetNotificationForService(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	resp[0] = dn
 
-	url := "/notification/service?looking_for=notification&type=" + ntype + "&service=" + service
+	url := "/notification/service?type=" + ntype + "&service=" + service
 	req, _ := http.NewRequest("GET", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("GetNotificationForService", service, ntype).Return(&resp, nil)
 
@@ -331,11 +331,11 @@ func Test_DeleteNotificationForService(t *testing.T) {
 	service := "noded"
 	ntype := "alert"
 
-	url := "/notification/service?service=" + service + "&looking_to=delete_notification&type=" + ntype
+	url := "/notification/service?service=" + service + "&type=" + ntype
 	req, _ := http.NewRequest("DELETE", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("DeleteNotificationForService", service, ntype).Return(nil)
 
@@ -358,11 +358,11 @@ func Test_ListNotificationForService(t *testing.T) {
 	resp := make([]db.Notification, 1)
 	resp[0] = dn
 
-	url := "/notification/service/list?looking_for=list_notification&count=" + strconv.Itoa(count) + "&service=" + service
+	url := "/notification/service/list?count=" + strconv.Itoa(count) + "&service=" + service
 	req, _ := http.NewRequest("GET", url, nil)
 
 	repo := mocks.NotificationRepo{}
-	r := NewRouter(defaultConfig, nil, &repo).fizz.Engine()
+	r := NewRouter(defaultConfig, &repo).fizz.Engine()
 
 	repo.On("ListNotificationForService", service, count).Return(&resp, nil)
 
