@@ -300,6 +300,8 @@ const User = () => {
                     },
                 },
             });
+
+            refetchResidents();
         }
     };
 
@@ -372,7 +374,7 @@ const User = () => {
                         loading={
                             userLoading || addUserLoading || updateUserLoading
                         }
-                        isOpen={simDialog.isShow}
+                        isOpen={true}
                         setUserForm={setSelectedUser}
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Settings"

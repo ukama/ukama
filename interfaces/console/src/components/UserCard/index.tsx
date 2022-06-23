@@ -35,12 +35,12 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
     return (
         <Grid container spacing={{ xs: 1.5 }}>
             <Grid item xs={12} container>
-                <Grid item xs={8}>
+                <Grid item xs={10}>
                     <Typography variant="body2" color="textSecondary">
                         {user.id}
                     </Typography>
                 </Grid>
-                <Grid item xs={4} container justifyContent="flex-end">
+                <Grid item xs={2} container justifyContent="flex-end">
                     <IconButton
                         edge="end"
                         size="small"

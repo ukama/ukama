@@ -100,10 +100,7 @@ const UserDetailsDialog = ({
                                 sx={{ alignItems: "center" }}
                                 spacing={1}
                             >
-                                <Typography
-                                    variant="h6"
-                                    sx={{ color: colors.black }}
-                                >
+                                <Typography variant="h6">
                                     {getTitle(name)}
                                 </Typography>
                                 <Typography
@@ -124,10 +121,7 @@ const UserDetailsDialog = ({
                     <DialogContent sx={{ overflowX: "hidden" }}>
                         <Grid container spacing={1.5}>
                             <Grid item xs={12}>
-                                <Typography
-                                    variant="subtitle2"
-                                    sx={{ color: colors.black }}
-                                >
+                                <Typography variant="subtitle2">
                                     {userDetailsTitle}
                                 </Typography>
                                 <Divider />
@@ -274,6 +268,10 @@ const UserDetailsDialog = ({
                                                 <Switch
                                                     size="small"
                                                     value="active"
+                                                    sx={{
+                                                        position: "relative",
+                                                        left: 30,
+                                                    }}
                                                     checked={roaming}
                                                     disabled={!status}
                                                     onClick={(e: any) => {
@@ -296,10 +294,7 @@ const UserDetailsDialog = ({
                             </Grid>
                             <Grid item container spacing={1.5}>
                                 <Grid item xs={12}>
-                                    <Typography
-                                        variant="subtitle2"
-                                        sx={{ color: colors.black }}
-                                    >
+                                    <Typography variant="subtitle2">
                                         {simDetailsTitle}
                                     </Typography>
                                     <Divider />
