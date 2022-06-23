@@ -50,7 +50,7 @@ If we just need to replicate these with updated serial numbers we could use usti
 Example:
 
 ```
-./build/genSchema --u UK-7001-HNODE-SA03-1103 --n com --m UK-7001-COM-1103  --f mfgdata/schema/com.json --n trx --m UK-7001-LTE-1103  --f mfgdata/schema/trx.json --n mask --m UK-7001-MSK-1103 --f mfgdata/schema/mask.json
+./build/genSchema --u UK-9001-HNODE-SA03-1103 --n com --m UK-9001-COM-1103  --f mfgdata/schema/com.json --n trx --m UK-9001-LTE-1103  --f mfgdata/schema/trx.json --n mask --m UK-9001-MSK-1103 --f mfgdata/schema/mask.json
 ```
 
 Could use this for more information
@@ -66,7 +66,7 @@ This utilty creates a inventory database for the modules you supplies as an argu
 Example:
 
 ```
-./build/genInventory --n com --m UK-8001-COM-1102 --s mfgdata/schema/com.json -n trx --m UK-8001-LTE-1102 --s mfgdata/schema/trx.json --n mask -m UK-8001-MASK-1102 --s mfgdata/schema/mask.json
+./build/genInventory --n com --m UK-9001-COM-1103 --f mfgdata/schema/com.json -n trx --m UK-9001-TRX-1103 --f mfgdata/schema/trx.json --n mask -m UK-9001-MSK-1103 --f mfgdata/schema/mask.json
 ```
 
 Again this could be used for more information
@@ -106,11 +106,11 @@ curl -X GET "http://localhost:8085/noded/v1/discover" | jq
     },
     {
       "method": "GET",
-      "endPoint": "/noded/v1/unitinfo"
+      "endPoint": "/noded/v1/nodeinfo"
     },
     {
       "method": "GET",
-      "endPoint": "/noded/v1/unitconfig"
+      "endPoint": "/noded/v1/nodeconfig"
     },
     {
       "method": "GET",
@@ -147,8 +147,8 @@ curl -X GET "http://localhost:8085/noded/v1/discover" | jq
 #### Examples
 
 ```
-Unit Info: curl --request GET   --url http://localhost:8085/noded/v1/unitinfo | jq
-Unit Config: curl --request GET   --url http://localhost:8085/noded/v1/unitconfig | jq
+Node Info: curl --request GET   --url http://localhost:8085/noded/v1/nodeinfo | jq
+Node Config: curl --request GET   --url http://localhost:8085/noded/v1/nodeconfig | jq
 Module Info: curl --request GET   --url 'http://localhost:8085/noded/v1/moduleinfo?uuid=UK-8001-LTE-1102' | jq
 Module Config: curl --request GET   --url 'http://localhost:8085/noded/v1/moduleconfig?uuid=UK-8001-LTE-1102' | jq
 

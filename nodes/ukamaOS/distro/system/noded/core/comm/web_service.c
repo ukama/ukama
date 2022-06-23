@@ -23,12 +23,12 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-#define NOTIFY_ALERT_EP       "notify/v1/alert/"
-#define NOTIFY_EVENT_EP       "notify/v1/event/"
+#define NOTIFY_ALERT_EP       "/notify/v1/alert/"
+#define NOTIFY_EVENT_EP       "/notify/v1/event/"
 #define SERVICE_NAME          "noded"
 
 UInst serverInst;
-static char gNotifServer[128] = { 0 };
+static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
@@ -170,17 +170,25 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
                             obj->name, obj->desc, obj->modUuid, *count);
             goto cleanup;
         } else {
+            char urlWithEp[MAX_URL_LENGTH] = {0};
+            usys_sprintf(urlWithEp, "%s%s%s",gNotifServer, NOTIFY_ALERT_EP,
+                            SERVICE_NAME);
+
             ulfius_init_request(&alertNotification);
             ulfius_init_response(&alertNotificationResp);
             ulfius_set_request_properties(&alertNotification,
                             U_OPT_HTTP_VERB, "POST",
-                            U_OPT_HTTP_URL, gNotifServer,
-                            U_OPT_HTTP_URL_APPEND, NOTIFY_ALERT_EP,
-                            U_OPT_HTTP_URL_APPEND, SERVICE_NAME,
-
+                            U_OPT_HTTP_URL, urlWithEp,
                             U_OPT_TIMEOUT, 20,
-                            U_OPT_JSON_BODY, json,
                             U_OPT_NONE);
+
+            if(json) {
+                if(STATUS_OK != ulfius_set_json_body_request(&alertNotification,
+                                     json)) {
+                    goto cleanup;
+                }
+            }
+
             ret = ulfius_send_http_request(&alertNotification,
                             &alertNotificationResp);
             if (ret != STATUS_OK) {
@@ -201,6 +209,8 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
         usys_free(adata);
         clean_noded_notifiocation(&nodeAlerts);
         json_free(&json);
+        ulfius_clean_request(&alertNotification);
+        ulfius_clean_response(&alertNotificationResp);
 
     } else {
 

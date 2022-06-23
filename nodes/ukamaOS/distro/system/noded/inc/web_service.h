@@ -47,6 +47,7 @@ extern "C" {
 #define RESP_CODE_SERVER_FAILURE        500
 
 #define METHOD_LENGTH                   7
+#define MAX_URL_LENGTH                  128
 #define URL_EXT_LENGTH                  64
 #define MAX_END_POINTS                  64
 
