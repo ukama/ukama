@@ -83,11 +83,9 @@ int notification_exit() {
 }
 
 int notify_send_notification(JsonObj* jNotify) {
-    /* Preparing request for service router */
-    char urlWithServiceQuery[MAX_URL_LENGTH] = {0};
-    usys_sprintf(urlWithServiceQuery,"%s?%s=%s",gRemoteServer, ROUTING_KEY, ROUTING_VALUE);
-    return wc_forward_notification(gRemoteServer, "POST", jNotify);
-
+    char urlWithEp[MAX_URL_LENGTH] = {0};
+    usys_sprintf(urlWithEp, "%s%s", gRemoteServer, DEF_REMOTE_EP);
+    return wc_forward_notification(urlWithEp, "POST", jNotify);
 }
 
 void free_notification(Notification* notif) {
