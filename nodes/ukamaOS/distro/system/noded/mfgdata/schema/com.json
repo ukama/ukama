@@ -135,7 +135,7 @@
         }
     ],
     "nodeInfo":{
-        "UUID":"UK-9001-HNODE-SA03-1103",
+        "UUID":"UK-SA9001-HNODE-A1-1103",
         "name":"tNode",
         "type":2,
         "partNumber":"LTE-BAND-3-0XXXX",
@@ -155,7 +155,7 @@
     },
     "nodeConfig":[
         {
-            "UUID":"UK-9001-COM-1103",
+            "UUID":"UK-SA9001-COM-A1-1103",
             "name":"COM",
             "invtSysFsFile":"/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
             "invtDeviceInfo":{
@@ -164,7 +164,7 @@
             }
         },
         {
-            "UUID":"UK-9001-TRX-1103",
+            "UUID":"UK-SA9001-TRX-A1-1103",
             "name":"TRX",
             "invtSysFsFile":"/tmp/sys/bus/i2c/devices/i2c-1/1-0050/eeprom",
             "invtDeviceInfo":{
@@ -173,7 +173,7 @@
             }
         },
         {
-            "UUID":"UK-9001-MSK-1103",
+            "UUID":"UK-SA9001-MSK-A1-1103",
             "name":"MASK",
             "invtSysFsFile":"/tmp/sys/bus/i2c/devices/i2c-1/1-0051/eeprom",
             "invtDeviceInfo":{
@@ -183,7 +183,7 @@
         }
     ],
     "moduleInfo":{
-        "UUID":"UK-9001-COM-1103",
+        "UUID":"UK-SA9001-COM-A1-1103",
         "name":"COM",
         "type":0,
         "partNumber":"COMv1-X86-0XXXX",
