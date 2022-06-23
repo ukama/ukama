@@ -30,7 +30,6 @@ var defaultConfig = &internal.Config{
 			AllowAllOrigins: true,
 		},
 	},
-	ServiceRouter: "http://localhost",
 	Queue: config.Queue{
 		Uri: "",
 	},
