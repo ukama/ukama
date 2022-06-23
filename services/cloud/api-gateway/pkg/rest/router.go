@@ -25,7 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	nodepb "github.com/ukama/ukama/services/cloud/node/pb/gen"
+	pbnode "github.com/ukama/ukama/services/cloud/node/pb/gen"
 	pborg "github.com/ukama/ukama/services/cloud/org/pb/gen"
 	userspb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 )
@@ -47,13 +47,25 @@ type RouterConfig struct {
 }
 
 type Clients struct {
-	Registry *client.Registry
+	Registry registry
 	User     *client.Users
 }
 
 type AuthMiddleware interface {
 	IsAuthenticated(c *gin.Context)
 	IsAuthorized(c *gin.Context)
+}
+
+type registry interface {
+	GetOrg(orgName string) (*pborg.Organization, error)
+	Add(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error)
+	UpdateNode(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error)
+	GetNodes(orgName string) (*pb.GetNodesResponse, error)
+	GetNode(nodeId string) (*pbnode.GetNodeResponse, error)
+	AttachNode(towerNodeId string, amplNodeId ...string)
+	IsAuthorized(userId string, org string) (bool, error)
+	DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error)
+	DetachNode(nodeId string, attachedId string) (*pbnode.Node, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -247,13 +259,13 @@ func (r *Router) getAttacheNodesIds(nodes []*NodeAttach) []string {
 	return nds
 }
 
-func (r *Router) updateNodeHandler(c *gin.Context, req *AddUpdateNodeRequest) (*nodepb.Node, error) {
+func (r *Router) updateNodeHandler(c *gin.Context, req *AddUpdateNodeRequest) (*pbnode.Node, error) {
 	node, err := r.clients.Registry.UpdateNode(req.OrgName, req.NodeId, req.Node.Name, r.getAttacheNodesIds(req.Node.Attached)...)
 
 	return node, err
 }
 
-func (r *Router) addNodeHandler(c *gin.Context, req *AddUpdateNodeRequest) (*nodepb.Node, error) {
+func (r *Router) addNodeHandler(c *gin.Context, req *AddUpdateNodeRequest) (*pbnode.Node, error) {
 	node, err := r.clients.Registry.Add(req.OrgName, req.NodeId, req.Node.Name, r.getAttacheNodesIds(req.Node.Attached)...)
 	return node, err
 }
@@ -263,7 +275,7 @@ func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*pb.
 
 }
 
-func (r *Router) detachNode(c *gin.Context, req *DetachNodeRequest) (*nodepb.Node, error) {
+func (r *Router) detachNode(c *gin.Context, req *DetachNodeRequest) (*pbnode.Node, error) {
 	node, err := r.clients.Registry.DetachNode(req.NodeId, req.AttachedNodeId)
 	return node, err
 }
