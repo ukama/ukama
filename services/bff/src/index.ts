@@ -23,11 +23,9 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: [
-            "https://auth.salman.dev.ukama.com/",
-            "https://app.salman.dev.ukama.com/",
-        ],
+        origin: "*",
         credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
     };
     logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
     app.use(cors(corsOptions));
@@ -76,10 +74,14 @@ const initializeApp = async () => {
                     sameSite: "lax",
                     domain: process.env.DOMAIN,
                 });
+                res.setHeader("Access-Control-Allow-Origin", "*");
                 res.send({ success: true });
+                res.end();
             }
+        } else {
+            res.send({ success: false });
+            res.end();
         }
-        res.send({ success: false });
     });
 
     mockServer(app);
