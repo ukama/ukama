@@ -340,7 +340,7 @@ case ${UNITTYPE} in
 		echo "Creating sysfs for homeNode {Modules: TRX}"
 		# TRX
 		cd ${SYSFSDIR}
-		create_sysfs_for_module "hnode" 2 0
+		create_sysfs_for_module "hnode" 2 1
 		;;
 	"tnode")
 		echo "Creating sysfs for toweNode {Modules: COM, TRX, MASK}"
