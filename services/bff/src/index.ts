@@ -34,7 +34,7 @@ const initializeApp = async () => {
     app.use(cookieParser());
 
     const { server, schema } = await configureApolloServer();
-    server.applyMiddleware({ app, cors: false });
+    server.applyMiddleware({ app, cors: corsOptions });
 
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
