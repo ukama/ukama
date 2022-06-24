@@ -57,7 +57,7 @@ $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	echo "Done."
 
 $(VENDOR_PKG):
-	cd $(VENDOR_DIR) && make $@
+	$(MAKE) -C $(VENDOR_DIR) $@
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@
