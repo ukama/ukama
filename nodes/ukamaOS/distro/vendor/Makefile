@@ -246,7 +246,7 @@ endif
 
 nettle:
 	$(call print_msg,"nettle")
-ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.*))
+ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.* ${DEPDIR}/lib64/libnettle.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} \
@@ -443,6 +443,7 @@ iproute2:
         $(MAKE) && $(MAKE) install DESTDIR=${DEPDIR} && \
         $(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
 
 clean:
 	echo "Cleaning Dependencies."
