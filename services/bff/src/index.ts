@@ -24,8 +24,8 @@ const initializeApp = async () => {
 
     const corsOptions = {
         origin: [
-            process.env.CONSOLE_APP_URL ?? "",
-            process.env.AUTH_APP_URL ?? "",
+            "https://auth.salman.dev.ukama.com/",
+            "https://app.salman.dev.ukama.com/",
         ],
         credentials: true,
     };
