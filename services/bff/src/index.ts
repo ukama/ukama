@@ -23,7 +23,10 @@ const initializeApp = async () => {
     });
 
     const corsOptions = {
-        origin: "*",
+        origin: [
+            process.env.CONSOLE_APP_URL ?? "",
+            process.env.AUTH_APP_URL ?? "",
+        ],
         credentials: true,
         allowedHeaders: ["Content-Type", "Authorization"],
     };
