@@ -96,7 +96,7 @@ build: $(LIST)
 zlib:
 	$(call print_msg,"zlib")
 ifeq (,$(wildcard ${DEPDIR}/lib/libz.a))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && sudo ../configure --static --prefix=$(DEPDIR) && \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && ../configure --static --prefix=$(DEPDIR) && \
 		$(MAKE) -j${NPROCS} CC=$(XCC) CFLAGS="${CFLAGS} -fPIC" && \
 		$(MAKE) -j${NPROCS} install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
