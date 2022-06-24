@@ -13,7 +13,6 @@ INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
 
-
 DISTRO_DIR:=../..
 
 # Unit test
@@ -61,7 +60,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 # Build
 BUILD_DIR:=build
 
-
 # Compilers and flags
 ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
@@ -69,6 +67,9 @@ XCC=$(XGCCPATH)$(XGCC)
 else
 XCC=gcc
 endif
+
+# VENDOR_PKG
+VENDOR_PKG = tomlc curl jansson ulfius
 
 # Libraries
 ULFIUS_LIB_DEP=-lorcania 
@@ -209,17 +210,20 @@ checkcodestyle:
 	done
 	@echo "Ukama Coding Style check pass..!!"
 
+$(VENDOR_PKG):
+	$(MAKE) -C $(VENDOR_DIR) $@
+
 # Build Target
-$(TARGET): $(SVC_OBJFILES)
+$(TARGET): $(SVC_OBJFILES) $(VENDOR_PKG)
 	@echo "Building $(TARGET)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
-$(INVENTORY): $(INVT_OBJFILES)
+$(INVENTORY): $(INVT_OBJFILES) 
 	@echo "Building $(INVENTORY)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
-#Build Schema utility
+# Build Schema utility
 $(SCHEMA): $(SCH_OBJFILES)
 	@echo "Building $(SCHEMA)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
@@ -242,7 +246,3 @@ memcheck: $(UTEST)
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
-
