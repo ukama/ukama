@@ -15,7 +15,7 @@
 	cmd="make"
 	bin_from="/distro/system/noded/build/noded"
 	bin_to="/sbin/"
-	
+
 # for [program:<exec>] in supervisor.conf
 [capp-exec]
 	name="noded"

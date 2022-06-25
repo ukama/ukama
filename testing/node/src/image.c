@@ -21,7 +21,7 @@
 #include "config.h"
 #include "supervisor.h"
 
-static char *module_schema_file(char *type);
+static char *module_schema_file(char* nodeType, char *type);
 static void set_schema_args(Node *node, char **buffer);
 static FILE* init_container_file(char *fileName);
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp);
@@ -31,10 +31,17 @@ static int create_container_file(char *target, Configs *config, Node *node);
  * module_schema_file --
  *
  */
-static char *module_schema_file(char *type) {
+static char *module_schema_file(char* nodeType, char *type) {
 
 	if (strcmp(type, MODULE_TYPE_COM) == 0)  return SCHEMA_FILE_COM;
-	if (strcmp(type, MODULE_TYPE_TRX) == 0)  return SCHEMA_FILE_TRX;
+
+	/* TRX module schema is selected based on node type */
+	if (strcmp(nodeType, NODE_TYPE_TNODE) == 0) {
+		if (strcmp(type, MODULE_TYPE_TRX) == 0)  return SCHEMA_FILE_TRX;
+	} else if ((strcmp(nodeType, NODE_TYPE_HNODE) == 0)) {
+		if (strcmp(type, MODULE_TYPE_TRX) == 0)  return SCHEMA_FILE_HNODE_TRX;
+	}
+
 	if (strcmp(type, MODULE_TYPE_MASK) == 0) return SCHEMA_FILE_MASK;
 	if (strcmp(type, MODULE_TYPE_CTRL) == 0) return SCHEMA_FILE_RFCTRL;
 	if (strcmp(type, MODULE_TYPE_FE) == 0)   return SCHEMA_FILE_RFFE;
@@ -57,7 +64,7 @@ static void set_schema_args(Node *node, char **buffer) {
 	ptr = node->nodeConfig;
 	while (ptr) {
 		sprintf(temp, " --n %s --m %s --f ./schemas/%s",
-				ptr->type, ptr->moduleID, module_schema_file(ptr->type));
+				ptr->type, ptr->moduleID, module_schema_file(node->nodeInfo->type, ptr->type));
 		strcat(temp1, temp);
 		ptr = ptr->next;
 	}
@@ -85,7 +92,7 @@ static FILE* init_container_file(char *fileName) {
 				  CF_HEADER, strerror(errno));
 		return NULL;
 	}
-	
+
 	return fp;
 }
 
@@ -96,7 +103,7 @@ static FILE* init_container_file(char *fileName) {
 static int write_to_container_file(char *buffer, char *fileName, FILE *fp) {
 
 	if (buffer == NULL || fp == NULL) return FALSE;
-	
+
 	if (fwrite(buffer, strlen(buffer), 1, fp) <=0 ) {
 		log_error("Error writing to %s. Str: %s. Error: %s",
 				  SVISOR_FILENAME, buffer, strerror(errno));
@@ -133,14 +140,17 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 		sprintf(buffer, CF_RUN_APT, UPDATE_PKGS);
 	}
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
-	
+
+	sprintf (buffer, CF_MKDIR, NODE_LIBS);
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
 	sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_COPY, "./build/conf", "/conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_COPY, "./build/lib", "/lib");
+	sprintf(buffer, CF_COPY, "./build/lib", NODE_LIBS);
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
@@ -158,10 +168,13 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ADD, SVISOR_FILENAME, "/etc/supervisor.conf");
+	sprintf(buffer, CF_ADD, "supervisord.conf", "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_ENV, LIB_PATH, NODE_LIBS);
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	fclose(fp);
@@ -195,7 +208,7 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 		log_error("Memory allocation error of size: %lu", MAX_BUFFER);
 		return FALSE;
 	}
-	
+
 	/* steps are:
 	 * 0. clean and build the needed tools
 	 * 1. create sysfs

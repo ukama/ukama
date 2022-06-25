@@ -23,12 +23,15 @@ CFLAGS=-c
 CFLAGS+=-g
 CFLAGS+=-Wall
 CFLAGS+=-O0
-CFLAGS+=-I./inc
+CFLAGS+=-I./inc -I../../nodes/ukamaOS/distro/vendor/build/include
 CFLAGS+=-D_REENTRANT
 
 # Libs
 LIBS=-ltoml
 LIBS+=-ljansson
+
+LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib
+LDFLAGS+=-L../../nodes/ukamaOS/distro/vendor/build/lib64
 
 # Soruce files
 CFILES   = $(wildcard ./src/*.c)

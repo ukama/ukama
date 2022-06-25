@@ -6,9 +6,9 @@
 
 # Base parameters
 UKAMA_OS=`realpath ../../nodes/ukamaOS`
-SYS_ROOT=${UKAMA_OS}/distro/
+SYS_ROOT=${UKAMA_OS}/distro
 SCRIPTS_ROOT=${SYS_ROOT}/scripts/
-DEF_BUILD_DIR=./build/capps/
+DEF_BUILD_DIR=./build/capps
 
 #Various network related parameters
 HOSTNAME="localhost"
@@ -24,7 +24,7 @@ BUILD_DIR=${DEF_BUILD_DIR}
 build_app() {
 
     CWD=`pwd`
-    SRC=${UKAMA_OS}/$1
+    SRC=${UKAMA_OS}$1
     CMD=$2
 
     cd ${SRC} && ${CMD} && cd ${CWD}
@@ -68,7 +68,7 @@ case "$ACTION" in
 	$2
 	;;
     "patchelf")
-	patchelf --set-rpath /lib $2
+	patchelf --set-rpath /usys/lib ${UKAMA_OS}/$2
 	;;
     "mkdir")
 	mkdir -p ${BUILD_DIR}/$2

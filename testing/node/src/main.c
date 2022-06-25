@@ -8,7 +8,7 @@
  */
 
 /*
- * virtualNode -- tool to create, destory, info stuff related to ukama's 
+ * virtualNode -- tool to create, destory, info stuff related to ukama's
  *                virtual node
  *
  */
@@ -65,7 +65,7 @@ void usage() {
 	printf("--V, --version                   version.\n");
 }
 
-/* 
+/*
  * set_log_level -- set the verbosity level for logs
  *
  */
@@ -221,6 +221,14 @@ int main (int argc, char *argv[]) {
 		free_configs(configs);
 		exit(1);
 	}
+
+	/* TODO
+	 * Clone git Repo
+	 * OR
+	 * use tar which is uploaded with container
+	 * OR
+	 * Totally different approach to use pre-build bins using
+	 */
 
 	/* Build all them capps */
 	ptr = configs;

@@ -63,10 +63,13 @@ build_sysfs() {
 	${NODED_ROOT}/utils/prepare_env.sh --clean
 	${NODED_ROOT}/utils/prepare_env.sh --unittype $1
 
-	# genSchema --u UK-7001-HNODE-SA03-1102 \
-	# --n ComV1 --m UK-7001-COM-1102 --f mfgdata/schema/com.json \
-	# --n LTE   --m UK-7001-TRX-1102 --f mfgdata/schema/lte.json \
-	# --n MASK  --m UK-7001-MSK-1102 --f mfgdata/schema/mask.json
+	# genSchema --u UK-SA7001-HNODE-m0-1102 \
+	# --n LTE   --m UK-SA7001-TRX-m0-1102 --f mfgdata/schema/hnode_trx.json
+
+	# genSchema --u UK-SA7001-TNODE-m0-1102 \
+	# --n ComV1 --m UK-SA7001-COM-m0-1102 --f mfgdata/schema/com.json \
+	# --n LTE   --m UK-SA7001-TRX-m0-1102 --f mfgdata/schema/trx.json \
+	# --n MASK  --m UK-SA7001-MSK-m0-1102 --f mfgdata/schema/mask.json
 
 	# copy the mfgdata locally and run genSchema/genInventory
 	mkdir -p ${BUILD_DIR}/schemas
@@ -105,6 +108,7 @@ build_image() {
 
 	cp ./scripts/runme.sh   ${BUILD_DIR}/bin/
 	cp ./scripts/waitfor.sh ${BUILD_DIR}/bin/
+	cp ./scripts/kickstart.sh ${BUILD_DIR}/bin/
 
 	buildah bud -f $1 -t $NAME_TAG ${REGISTRY_URL}
 }
