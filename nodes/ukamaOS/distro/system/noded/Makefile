@@ -211,12 +211,12 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 $(VENDOR_PKG):
-	$(MAKE) -C $(VENDOR_DIR) $@
+	cd $(VENDOR_DIR) &&$(MAKE) $@
 
 # Build Target
 $(TARGET): $(SVC_OBJFILES) $(VENDOR_PKG)
 	@echo "Building $(TARGET)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
+	$(XCC) -o $(BUILD_DIR)/$@ $< $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
 $(INVENTORY): $(INVT_OBJFILES) 
