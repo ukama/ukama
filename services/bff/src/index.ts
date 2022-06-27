@@ -38,7 +38,10 @@ const initializeApp = async () => {
     server.applyMiddleware({ app, cors: true });
 
     app.use((req, res, next) => {
-        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Origin", [
+            process.env.CONSOLE_APP_URL ?? "",
+            process.env.AUTH_APP_URL ?? "",
+        ]);
         res.header(
             "Access-Control-Allow-Headers",
             "Origin, X-Requested-With, Content-Type, Accept"
@@ -90,7 +93,10 @@ const initializeApp = async () => {
                     sameSite: "lax",
                     domain: process.env.DOMAIN,
                 });
-                res.setHeader("Access-Control-Allow-Origin", "*");
+                res.setHeader(
+                    "Access-Control-Allow-Origin",
+                    process.env.AUTH_APP_URL ?? ""
+                );
                 res.send({ success: true });
                 res.end();
             }
