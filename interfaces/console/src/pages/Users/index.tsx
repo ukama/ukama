@@ -96,6 +96,7 @@ const User = () => {
                     type: "success",
                     show: true,
                 });
+                refetchResidents();
             }
         },
         onError: err => {
