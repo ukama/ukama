@@ -72,8 +72,8 @@ const UserDetailsDialog = ({
         const title = type === "add" ? "Add User" : `${userName}`;
         return title;
     };
-    const statusButtonColor = roaming ? "error" : "primary";
-    const statusAction = roaming ? "PAUSE SERVICE" : "RESUME SERVICE";
+    const statusButtonColor = status ? "error" : "primary";
+    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
 
     return (
         <Dialog

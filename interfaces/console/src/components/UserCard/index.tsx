@@ -71,7 +71,12 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                     </Stack>
                 </LoadingWrapper>
             </Grid>
-            <Grid item xs={8} alignSelf="end">
+            <Grid
+                item
+                xs={8}
+                alignSelf="end"
+                sx={{ position: "relative", bottom: 4 }}
+            >
                 <LoadingWrapper
                     width="100%"
                     height="23px"
