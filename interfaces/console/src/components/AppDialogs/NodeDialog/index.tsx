@@ -27,7 +27,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import CloseIcon from "@mui/icons-material/Close";
 import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
-
+import AddIcon from "@mui/icons-material/Add";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
         padding: "0px 0px 18px 0px",
@@ -115,6 +115,7 @@ const NodeDialog = ({
         nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
     });
+
     const [error, setError] = useState("");
 
     const handleRegisterNode = () => {
@@ -122,12 +123,13 @@ const NodeDialog = ({
             setError("Please fill all require vields");
             return;
         }
-
         handleNodeSubmitAction(formData);
     };
 
-    const handleNodeTypeChange = (e: SelectChangeEvent) =>
+    const handleNodeTypeChange = (e: SelectChangeEvent) => {
         setFormData({ ...formData, nodeId: "", type: e.target.value });
+        console.log("DATA :", e.target.value);
+    };
 
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -291,6 +293,18 @@ const NodeDialog = ({
                             />
                         </Grid>
                     )}
+                    {formData.type == "TOWER" && (
+                        <Grid item xs={12}>
+                            <Button
+                                variant="text"
+                                startIcon={<AddIcon />}
+                                sx={{ color: colors.primaryMain }}
+                            >
+                                add amplifier node
+                            </Button>
+                        </Grid>
+                    )}
+                    {formData.type == "AMPLIFIER" && <div>aplifier node</div>}
                 </Grid>
             </DialogContent>
             <DialogActions>
