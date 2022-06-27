@@ -22,20 +22,33 @@ const initializeApp = async () => {
         logger,
     });
 
-    const corsOptions = {
-        origin: [
-            process.env.CONSOLE_APP_URL ?? "",
-            process.env.AUTH_APP_URL ?? "",
-        ],
-        credentials: true,
-        allowedHeaders: ["Content-Type", "Authorization"],
-    };
-    logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
-    app.use(cors(corsOptions));
+    // const corsOptions = {
+    //     origin: [
+    //         process.env.CONSOLE_APP_URL ?? "",
+    //         process.env.AUTH_APP_URL ?? "",
+    //     ],
+    //     credentials: true,
+    //     allowedHeaders: ["Content-Type", "Authorization"],
+    // };
+    // logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
+    // app.use(cors(corsOptions));
     app.use(cookieParser());
 
     const { server, schema } = await configureApolloServer();
     server.applyMiddleware({ app, cors: true });
+
+    app.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header(
+            "Access-Control-Allow-Headers",
+            "Origin, X-Requested-With, Content-Type, Accept"
+        );
+        res.header(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, DELETE, OPTIONS"
+        );
+        next();
+    });
 
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
