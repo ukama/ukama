@@ -121,11 +121,12 @@ func (r *Registry) Add(orgName string, nodeId string, name string, attachedNodes
 		return nil, errors.Wrap(err, "failed to add node to network")
 	}
 
+	// consider making it async when we have UI notification infrastructure
 	if len(attachedNodes) != 0 {
 		if addedNd.Node.GetType() != pbnode.NodeType_TOWER {
 			return nil, rest.HttpError{
 				HttpCode: http.StatusBadRequest,
-				Message:  fmt.Sprintf("Cannot attach nodes to node type %s", addedNd.Node.GetType())}
+				Message:  fmt.Sprintf("Failed to attach nodes to node type %s", addedNd.Node.GetType())}
 		}
 
 		_, err = r.nodeClient.AttachNodes(ctx, &pbnode.AttachNodesRequest{
@@ -134,7 +135,7 @@ func (r *Registry) Add(orgName string, nodeId string, name string, attachedNodes
 		})
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to attach node(s)")
 		}
 	}
 
