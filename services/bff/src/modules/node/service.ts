@@ -42,7 +42,9 @@ export class NodeService implements INodeService {
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {
-                name: req.name,
+                node: {
+                    name: req.name,
+                },
             },
         });
         if (checkError(res)) {

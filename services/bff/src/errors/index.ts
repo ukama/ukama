@@ -22,8 +22,8 @@ export const axiosErrorHandler = (error: any): ErrorType => {
         if (error.response.data) {
             return {
                 code: error.response.status,
-                message: error.response.statusText,
-                description: error.response.data.error,
+                message: error.response.data.message,
+                description: error.response.statusText,
             };
         } else {
             return {
