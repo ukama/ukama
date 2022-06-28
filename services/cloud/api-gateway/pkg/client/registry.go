@@ -6,9 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/rest"
@@ -40,7 +38,7 @@ func NewRegistry(networkHost string, orgHost string, nodeHost string, timeout ti
 	}
 	client := pb.NewNetworkServiceClient(conn)
 
-	orgConn, err := grpc.Dial(networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	orgConn, err := grpc.Dial(orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
@@ -92,42 +90,94 @@ func (r *Registry) GetOrg(orgName string) (*pborg.Organization, error) {
 	return res.Org, nil
 }
 
-func (r *Registry) AddOrUpdate(orgName string, nodeId string, name string) (node *pbnode.Node, isCreated bool, err error) {
+func (r *Registry) Add(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 	defer cancel()
 
-	getResp, err := r.nodeClient.GetNode(ctx, &pbnode.GetNodeRequest{NodeId: nodeId})
-	if err != nil && status.Code(err) == codes.NotFound {
-		ar, err := r.nodeClient.AddNode(ctx, &pbnode.AddNodeRequest{Node: &pbnode.Node{NodeId: nodeId, Name: name}})
-		if err != nil {
-			return nil, false, err
+	addedNd, err := r.nodeClient.AddNode(ctx, &pbnode.AddNodeRequest{Node: &pbnode.Node{NodeId: nodeId, Name: name}})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.client.AddNode(ctx, &pb.AddNodeRequest{
+		OrgName: orgName,
+		Node: &pb.Node{
+			NodeId: nodeId,
+			Name:   addedNd.GetNode().Name,
+		},
+		Network: DefaultNetworkName,
+	})
+
+	if err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+		defer cancel()
+		logrus.Info("Deleting node from node service because it was not added to networks")
+		_, derr := r.nodeClient.Delete(ctx, &pbnode.DeleteRequest{
+			NodeId: nodeId,
+		})
+		if derr != nil {
+			logrus.Errorf("Error deleting the node after failure. Error: %v", derr)
+		}
+		return nil, errors.Wrap(err, "failed to add node to network")
+	}
+
+	// consider making it async when we have UI notification infrastructure
+	if len(attachedNodes) != 0 {
+		if addedNd.Node.GetType() != pbnode.NodeType_TOWER {
+			return nil, rest.HttpError{
+				HttpCode: http.StatusBadRequest,
+				Message:  fmt.Sprintf("Failed to attach nodes to node type %s", addedNd.Node.GetType())}
 		}
 
-		_, err = r.client.AddNode(ctx, &pb.AddNodeRequest{
-			OrgName: orgName,
-			Node: &pb.Node{
-				NodeId: nodeId,
-				Name:   name,
-			},
-			Network: DefaultNetworkName,
+		_, err = r.nodeClient.AttachNodes(ctx, &pbnode.AttachNodesRequest{
+			ParentNodeId:    nodeId,
+			AttachedNodeIds: attachedNodes,
 		})
 
 		if err != nil {
-			return nil, false, errors.Wrap(err, "failed to add node to network")
-		}
-
-		return ar.GetNode(), true, nil
-	} else if err != nil {
-		return nil, false, err
-	} else {
-		_, err = r.nodeClient.UpdateNode(ctx, &pbnode.UpdateNodeRequest{NodeId: nodeId, Name: name})
-		if err != nil {
-			return nil, false, err
+			return nil, errors.Wrap(err, "failed to attach node(s)")
 		}
 	}
-	getResp.Node.Name = name
 
-	return getResp.Node, false, nil
+	getResp, err := r.nodeClient.GetNode(ctx, &pbnode.GetNodeRequest{NodeId: nodeId})
+	if err != nil {
+		return nil, err
+	}
+
+	return getResp.Node, nil
+}
+
+func (r *Registry) UpdateNode(orgName string, nodeId string, name string, attachedNodes ...string) (node *pbnode.Node, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	nd, err := r.nodeClient.UpdateNode(ctx, &pbnode.UpdateNodeRequest{NodeId: nodeId, Name: name})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(attachedNodes) > 0 {
+		if nd.Node.GetType() != pbnode.NodeType_TOWER {
+			return nil, rest.HttpError{
+				HttpCode: http.StatusBadRequest,
+				Message:  fmt.Sprintf("Cannot attach nodes to node type %s", nd.Node.GetType())}
+		}
+
+		_, err = r.nodeClient.AttachNodes(ctx, &pbnode.AttachNodesRequest{
+			ParentNodeId:    nodeId,
+			AttachedNodeIds: attachedNodes,
+		})
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to attach nodes")
+		}
+	}
+
+	getResp, err := r.nodeClient.GetNode(ctx, &pbnode.GetNodeRequest{NodeId: nodeId})
+	if err != nil {
+		return nil, err
+	}
+
+	return getResp.Node, nil
 }
 
 // GetOrg returns list of nodes
@@ -163,6 +213,20 @@ func (r *Registry) GetNode(nodeId string) (*pbnode.GetNodeResponse, error) {
 	}
 	return res, nil
 }
+
+func (r *Registry) AttachNode(towerNodeId string, amplNodeId ...string) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	_, err := r.nodeClient.AttachNodes(ctx, &pbnode.AttachNodesRequest{
+		ParentNodeId:    towerNodeId,
+		AttachedNodeIds: amplNodeId,
+	})
+	if err != nil {
+		logrus.Errorf("Failed to attach node: %v", err)
+	}
+}
+
 func (r *Registry) IsAuthorized(userId string, org string) (bool, error) {
 	orgResp, err := r.GetOrg(org)
 	if err != nil {
@@ -192,5 +256,30 @@ func (r *Registry) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return res, nil
+}
+
+func (r *Registry) DetachNode(nodeId string, attachedId string) (*pbnode.Node, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
+	defer cancel()
+
+	_, err := r.nodeClient.DetachNode(ctx, &pbnode.DetachNodeRequest{
+		DetachedNodeId: attachedId,
+	})
+	if err != nil {
+		logrus.Errorf("Error detaching node %s. Error: %s", nodeId, err.Error())
+		return nil, err
+	}
+
+	resp, err := r.nodeClient.GetNode(ctx, &pbnode.GetNodeRequest{
+		NodeId: nodeId,
+	})
+
+	if err != nil {
+		logrus.Warnf("Error getting node %s. Error %s", nodeId, err.Error())
+		return nil, nil
+	}
+	return resp.Node, nil
+
 }

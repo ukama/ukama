@@ -2,8 +2,9 @@ package db
 
 import (
 	"database/sql/driver"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type BaseModel struct {
