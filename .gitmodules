@@ -49,6 +49,3 @@
 [submodule "nodes/ukamaOS/distro/tools/Unity"]
 	path = nodes/ukamaOS/distro/tools/Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
-[submodule "nodes/ukamaOS/distro/vendor/rabbit-mq"]
-	path = nodes/ukamaOS/distro/vendor/rabbit-mq
-	url = https://github.com/alanxz/rabbitmq-c.git
