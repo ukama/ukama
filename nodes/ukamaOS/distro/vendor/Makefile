@@ -304,7 +304,7 @@ endif
 
 p11-kit:
 	$(call print_msg,"p11-kit")
-ifeq (,$(wildcard ${DEPDIR}/lib/libcrypto.*))
+ifeq (,$(wildcard ${DEPDIR}/lib/libp11-kit.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
