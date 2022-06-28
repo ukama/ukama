@@ -1,13 +1,16 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (c) 2022-present, Ukama Inc.
 # All rights reserved.
 
 # Script to create ukama's virtual node.
 
+set -x
+
 # Base parameters
-UKAMA_OS=`realpath ../../nodes/ukamaOS`
-NODED_ROOT=${UKAMA_OS}/distro/system/noded/
+#UKAMA_OS=`realpath ../../nodes/ukamaOS`
+NODED_ROOT=
 DEF_BUILD_DIR=./build/
+BUILD_ENV=container
 
 # default target is local machine (gcc)
 DEF_TARGET="local"
@@ -19,6 +22,43 @@ BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 REGISTRY_URL=
 
 #
+# Check if building on local or in container
+#
+
+if_host() {
+	val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
+	if [ ${val} == "/" ]; then
+		BUILD_ENV=local
+    fi
+}
+
+#
+# Update UKAMA_OS
+#
+
+update_ukama_os_env() {
+	if_host
+
+	if [ "$BUILD_ENV" == "local" ]; then
+		UKAMA_OS=`realpath ../../nodes/ukamaOS`
+	elif [ "$BUILD_ENV" == "container" ]; then
+		UKAMA_OS="/tmp/virtnode/ukamaOS"
+		if [ -z $UAKMA_OS ]; then
+			echo "UKAMA OS env set to $UKAMA_OS"
+		else
+			echo "Failed to find ukamaOS at $UAKMA_OS"
+			exit 1
+		fi
+	else
+		echo "Unkown enviornment."
+		exit 1
+	fi
+
+	NODED_ROOT=${UKAMA_OS}/distro/system/noded
+
+}
+
+#
 # Build needed tools, e.g., genSchema, genInventory, if needed.
 #
 build_utils() {
@@ -27,8 +67,10 @@ build_utils() {
 
 	mkdir -p ${BUILD_DIR}/utils
 
+    update_ukama_os_env
+
 	# Build genSchema
-        cd ${NODED_ROOT} && make genSchema
+    cd ${NODED_ROOT} && make genSchema
 	if [ -f ${NODED_ROOT}/build/genSchema ]; then
 		cp ${NODED_ROOT}/build/genSchema ${BUILD_DIR}/utils/
 	else
@@ -59,6 +101,8 @@ build_sysfs() {
 	CWD=`pwd`
 	NODE_TPYE=$1
 	NODE_UUID=$2
+
+	update_ukama_os_env
 
 	${NODED_ROOT}/utils/prepare_env.sh --clean
 	${NODED_ROOT}/utils/prepare_env.sh --unittype $1
@@ -157,6 +201,7 @@ case "$ACTION" in
 		cp $2 ${BUILD_DIR}/$3
 		;;
 	"clean")
+		update_ukama_os_env
 		rm ContainerFile; rm supervisor.conf
 		buildah rmi -f localhost/$1
 		cd ${NODED_ROOT} && make clean && cd ${CWD}

@@ -222,13 +222,11 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
-	/* TODO
-	 * Clone git Repo
-	 * OR
-	 * use tar which is uploaded with container
-	 * OR
-	 * Totally different approach to use pre-build bins using
-	 */
+	/* Prepare environment for virtual node build */
+	if (!prepare_env_for_creating_virtual_node()) {
+		log_error("Unable to prepare environment for building virtual node.");
+		exit(1);
+	}
 
 	/* Build all them capps */
 	ptr = configs;

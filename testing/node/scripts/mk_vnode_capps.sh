@@ -1,13 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (c) 2022-present, Ukama Inc.
 # All rights reserved.
 
 # Script to generate capps for the virtual node
 
 # Base parameters
-UKAMA_OS=`realpath ../../nodes/ukamaOS`
-SYS_ROOT=${UKAMA_OS}/distro
-SCRIPTS_ROOT=${SYS_ROOT}/scripts/
+#UKAMA_OS=`realpath ../../nodes/ukamaOS`
+BUILD_ENV=container
+UKAMA_OS_PATH=/tmp/virtnode/ukamaOS
+
 DEF_BUILD_DIR=./build/capps
 
 #Various network related parameters
@@ -17,6 +18,15 @@ HOSTNAME="localhost"
 DEF_TARGET="local"
 TARGET=${DEF_TARGET}
 BUILD_DIR=${DEF_BUILD_DIR}
+
+# Check if building on local or in container
+if_host() {
+     val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
+     if [ $val == "/" ]; then
+         BUILD_ENV=local
+     fi
+}
+
 
 #
 # Build the app at given src path and cmd
@@ -53,6 +63,22 @@ copy_all_libs() {
 
 # Action can be 'build', 'cp' and 'mkdir'
 ACTION=$1
+
+if_host
+
+echo "Build envionment is $BUILD_ENV"
+
+if [ $BUILD_ENV == "local" ]; then
+    UKAMA_OS=`realpath ../../nodes/ukamaOS`
+elif [ $BUILD_ENV == "container" ]; then
+    UKAMA_OS=$UKAMA_OS_PATH
+else
+   echo "Unkown enviornment."
+   exit 1
+fi
+
+SYS_ROOT=${UKAMA_OS}/distro
+SCRIPTS_ROOT=${SYS_ROOT}/scripts/
 
 case "$ACTION" in
     "build")
