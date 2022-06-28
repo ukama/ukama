@@ -82,7 +82,7 @@ type GetNodeRequest struct {
 type AddUpdateNodeRequest struct {
 	OrgName string     `path:"org" validate:"required"`
 	NodeId  string     `path:"node" validate:"required"`
-	Node    NodeModify `json: "node"  validate:"required"`
+	Node    NodeModify `json:"node" validate:"required"`
 }
 
 type NodeModify struct {
