@@ -71,6 +71,9 @@ endif
 # VENDOR_PKG
 VENDOR_PKG = tomlc curl jansson ulfius
 
+# Platform Package
+PLATFORM_PKG = usys
+
 # Libraries
 ULFIUS_LIB_DEP=-lorcania 
 ULFIUS_LIB_DEP+=-lyder 
@@ -211,12 +214,15 @@ checkcodestyle:
 	@echo "Ukama Coding Style check pass..!!"
 
 $(VENDOR_PKG):
-	cd $(VENDOR_DIR) &&$(MAKE) $@
+	cd $(VENDOR_DIR) && $(MAKE) $@
+
+$(PLATFORM_PKG):
+	cd $(PLATFORM_DIR) && $(MAKE)
 
 # Build Target
-$(TARGET): $(SVC_OBJFILES) $(VENDOR_PKG)
+$(TARGET): $(SVC_OBJFILES)
 	@echo "Building $(TARGET)" 
-	$(XCC) -o $(BUILD_DIR)/$@ $< $(LDFLAGS) $(LIBS)
+	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
 $(INVENTORY): $(INVT_OBJFILES) 
@@ -234,7 +240,7 @@ $(UTEST):$(TEST_OBJFILES) $(TARGET)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
-$(BUILD_DIR)/%.o: %.c 
+$(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) 
 	mkdir -p $(dir $@)
 	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
