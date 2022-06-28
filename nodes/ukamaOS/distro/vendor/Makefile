@@ -227,7 +227,7 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-curl: openssl
+curl: openssl gnutls 
 	$(call print_msg,"curl")
 ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
