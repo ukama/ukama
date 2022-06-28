@@ -19,7 +19,9 @@ TARGET=${DEF_TARGET}
 # default rootfs location is ${DEF_BUILD_DIR}
 BUILD_DIR=`realpath ${DEF_BUILD_DIR}`
 
-REGISTRY_URL=
+REGISTRY_URL=${REPO_SERVER_URL}
+
+REGISTRY_NAME=${REPO_NAME}
 
 #
 # Check if building on local or in container
@@ -27,7 +29,7 @@ REGISTRY_URL=
 
 if_host() {
 	val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-	if [ ${val} == "/" ]; then
+	if [ ${val} == "/init.scope" ]; then
 		BUILD_ENV=local
     fi
 }
@@ -154,7 +156,7 @@ build_image() {
 	cp ./scripts/waitfor.sh ${BUILD_DIR}/bin/
 	cp ./scripts/kickstart.sh ${BUILD_DIR}/bin/
 
-	buildah bud -f $1 -t $NAME_TAG ${REGISTRY_URL}
+	buildah bud -f $1 -t ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
 }
 
 #
@@ -163,19 +165,29 @@ build_image() {
 push_image() {
 
 	UUID=$1
-	TAG="latest"
-	NAME=`echo ${UUID} | awk '{print tolower($0)}'`
+	TAG=`echo ${UUID} | awk '{print tolower($0)}'`
 
-	if [ ${DOCKER_USER} != "aws" ]; then
-		REGISTRY_URL=${DOCKER_USER}
-		buildah push --tls-verify=false --creds ${DOCKER_USER}:${DOCKER_PASS} \
-				 ${NAME}:${TAG}
+	buildah login --username ${DOCKER_USER} --password ${DOCKER_PASS} ${REGISTRY_URL}
+	if [ $? == 0 ]; then
+		echo "Registry login success."
 	else
-		REGISTRY_URL=${REPO_SERVER_URL}
-		echo "Docker login to AWS"
-		mkdir -p ~/.docker/
-		echo '{ "credsStore": "ecr-login" }' > ~/.docker/config.json
-		buildah push --format docker://${REGISTRY_URL}/repo/${NAME}:${TAG}
+		echo "Registry login failure."
+		exit 1
+	fi
+
+	if [ ${DOCKER_USER} != "AWS" ]; then
+
+		buildah push --tls-verify=false --creds ${DOCKER_USER}:${DOCKER_PASS} \
+				 ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG}
+	else
+
+		buildah push ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG}
+		if [ $? == 0 ]; then
+			echo "Image ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG} pushed to registry."
+		else
+			echo "Failure to push image ${REGISTRY_URL}/${REGISTRY_NAME}:${TAG} to registry"
+			exit 1
+		fi
 	fi
 }
 

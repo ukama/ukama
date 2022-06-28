@@ -55,11 +55,12 @@ $(TARGET_EXEC): $(OBJFILES)
 	 
 sourcetgz:
 	rm -rf /tmp/virtnode/
+	rm -rf ukamaOS_*.tgz 
 	(mkdir -p /tmp/virtnode/ukamaOS/distro && \
 	rsync -av --exclude='musl-cross-make' ../../nodes/ukamaOS/distro/ /tmp/virtnode/ukamaOS/distro && \
 	rsync -av ../../nodes/ukamaOS/config.mk /tmp/virtnode/ukamaOS/config.mk &&\
 	tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
-	mv /tmp/virtnode/ukamaOS.tgz ./build/ukamaOS_${VERSION}.tgz)
+	mv /tmp/virtnode/ukamaOS.tgz ukamaOS_${VERSION}.tgz)
 
 container: $(TARGET_EXEC) sourcetgz
 	@echo Building container

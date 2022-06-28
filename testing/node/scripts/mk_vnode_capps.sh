@@ -22,7 +22,7 @@ BUILD_DIR=${DEF_BUILD_DIR}
 # Check if building on local or in container
 if_host() {
      val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-     if [ $val == "/" ]; then
+     if [ $val == "/init.scope" ]; then
          BUILD_ENV=local
      fi
 }
