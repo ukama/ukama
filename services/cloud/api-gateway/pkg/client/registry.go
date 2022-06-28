@@ -111,7 +111,7 @@ func (r *Registry) Add(orgName string, nodeId string, name string, attachedNodes
 	if err != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), r.timeout)
 		defer cancel()
-		logrus.Info("Deleting node from node service because it was no added to networks")
+		logrus.Info("Deleting node from node service because it was not added to networks")
 		_, derr := r.nodeClient.Delete(ctx, &pbnode.DeleteRequest{
 			NodeId: nodeId,
 		})
