@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+	"os"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -9,11 +12,9 @@ import (
 	"github.com/ukama/ukama/services/cloud/org-metrics/pkg"
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/metrics"
-	"net/http"
-	"os"
 
 	"github.com/num30/config"
-	reg "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	reg "github.com/ukama/ukama/services/cloud/network/pb/gen"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 )
 
@@ -31,11 +32,11 @@ func main() {
 
 	// create grpc connection
 	// panics if connection fails
-	conn := grpc.CreateGrpcConn(serviceConfig.Registry.GrpcService)
+	conn := grpc.CreateGrpcConn(serviceConfig.Network.GrpcService)
 
-	regClient := reg.NewRegistryServiceClient(conn)
+	regClient := reg.NewNetworkServiceClient(conn)
 
-	promReg.MustRegister(pkg.NewMetricsCollector(regClient, serviceConfig.Registry.Timeout, serviceConfig.Registry.PollInterval))
+	promReg.MustRegister(pkg.NewMetricsCollector(regClient, serviceConfig.Network.Timeout, serviceConfig.Network.PollInterval))
 	srv := http.NewServeMux()
 
 	srv.Handle("/", promhttp.HandlerFor(

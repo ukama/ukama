@@ -21,17 +21,17 @@
  */
 typedef struct map_item_t {
 
-  unsigned short    port;    /* Client port number */
-  char              *ip;     /* Client IP in sting format */
-  uuid_t            uuid;    /* Mapped UUID */
-  pthread_mutex_t   mutex;   /* Client thread waiting on response. 
-			      * This mutex is released by websocket */
-  pthread_cond_t    hasResp; /* Conditional wait for response */
+	unsigned short    port;    /* Client port number */
+	char              *ip;     /* Client IP in sting format */
+	uuid_t            uuid;    /* Mapped UUID */
+	pthread_mutex_t   mutex;   /* Client thread waiting on response
+								* This mutex is released by websocket */
+	pthread_cond_t    hasResp; /* Conditional wait for response */
 
-  int               size;    /* size of data packet. */
-  void              *data;   /* response data recevied. */
+	int               size;    /* size of data packet. */
+	void              *data;   /* response data recevied. */
 
-  struct map_item_t *next;   /* Link to next item in the table */
+	struct map_item_t *next;   /* Link to next item in the table */
 } MapItem;
 
 /*
@@ -39,10 +39,10 @@ typedef struct map_item_t {
  */
 typedef struct {
 
-  MapItem *first;        /* First item in the mapping table */
-  MapItem *last;         /* Last item in the mapping table */
+	MapItem *first;        /* First item in the mapping table */
+	MapItem *last;         /* Last item in the mapping table */
 
-  pthread_mutex_t mutex;    /* Mutex for insert and remove */
+	pthread_mutex_t mutex;    /* Mutex for insert and remove */
 } MapTable;
 
 /* Functions. */

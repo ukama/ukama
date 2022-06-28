@@ -56,13 +56,14 @@ static void set_schema_args(Node *node, char **buffer) {
 
 	ptr = node->nodeConfig;
 	while (ptr) {
-		sprintf(temp, "--n %s --m %s --f ./schemas/%s",
+		sprintf(temp, " --n %s --m %s --f ./schemas/%s",
 				ptr->type, ptr->moduleID, module_schema_file(ptr->type));
 		strcat(temp1, temp);
 		ptr = ptr->next;
 	}
 
 	sprintf(*buffer, "%s=%s", ENV_VNODE_SCHEMA_ARGS, temp1);
+	//	sprintf(*buffer, "%s", temp1);
 }
 
 /*
@@ -142,6 +143,21 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf(buffer, CF_COPY, "./build/lib", "/lib");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
+	sprintf(buffer, CF_COPY, "./build/mfgdata", "/mfgdata");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/schemas", "/schemas");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/sys", "/tmp");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/capps", "/capps");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
+	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
+	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
+
 	sprintf(buffer, CF_ADD, SVISOR_FILENAME, "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
@@ -195,12 +211,13 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	/* Step:1 create sys using prepare_env.sh */
 	/* 'sysfs type uuid module_metadata' */
 	set_schema_args(node, &buffer);
+
 	if (putenv(buffer) != 0) {
 		log_error("Unable to set environment variable: %s Error: %s",
 				  ENV_VNODE_SCHEMA_ARGS, strerror(errno));
 		goto failure;
 	}
-	free(buffer);
+
 	sprintf(runMe, "%s sysfs %s %s", SCRIPT, nodeInfo->type, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
@@ -215,6 +232,7 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	sprintf(runMe, "%s build %s %s", SCRIPT, CONTAINER_FILE, nodeInfo->uuid);
 	if (system(runMe) < 0) goto failure;
 
+	if (buffer) free(buffer);
 	return TRUE;
 
  failure:

@@ -1,0 +1,37 @@
+
+#
+# Config file to build bootstrap for the Ukama's Virtual Node.
+#
+
+# Base image to use to build container. Examples are alpine, Ubuntu, etc.
+[build-from]
+	base="alpine"
+	version="latest"
+
+[build-compile]
+	version="0.1"
+	static="false"
+	source="/distro/system/bootstrap"
+	cmd="make"
+	bin_from="/distro/system/bootstrap/bootstrap"
+	bin_to="/sbin/"
+
+[build-rootfs]
+	mkdir="/conf"
+
+[build-conf]
+	from="/distro/system/bootstrap/config/config.toml"
+	to="/conf/bootstrap_config.toml"
+
+# for [program:<exec>] in supervisor.conf
+[capp-exec]
+	name="bootstrap"
+	version="latest"
+	wait_for="10s"
+	autostart="true"
+	autorestart="false"
+	bin="bootstrap"
+	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	args="--config /conf/bootstrap_config.toml"
+
+# Nothing to see here. Move on

@@ -54,6 +54,7 @@ int create_supervisor_config(Configs *configs) {
 	Configs    *ptr=NULL;
 	CappConfig *capp=NULL;
 	char buffer[SVISOR_MAX_SIZE] = {0};
+	char cmd[SVISOR_MAX_SIZE] = {0};
 	FILE *fp=NULL;
 
 	if (configs == NULL) return FALSE;
@@ -77,7 +78,30 @@ int create_supervisor_config(Configs *configs) {
 		memset(buffer, 0, SVISOR_MAX_SIZE);
 
 		sprintf(buffer, SVISOR_PROGRAM, capp->name, capp->version);
-		sprintf(buffer, SVISOR_COMMAND, buffer, capp->path, capp->bin);
+
+		/* formulate the command */
+		/* wait for progs to finish exec */
+		if (capp->dependsOn) {
+			sprintf(cmd, "%s %s;", SVISOR_WAITFOR_SH, capp->dependsOn);
+		} else {
+			sprintf(cmd, " ");
+		}
+		/* sleep for sometime */
+		if (capp->waitFor) {
+			sprintf(cmd, "%s sleep %s;", cmd, capp->waitFor);
+		} else {
+			sprintf(cmd, "%s ", cmd);
+		}
+
+		if (capp->args) {
+			sprintf(buffer, SVISOR_COMMAND_WITH_ARGS, buffer, cmd,
+					SVISOR_RUNME_SH, capp->name,
+					capp->path, capp->bin, capp->args);
+		} else {
+			sprintf(buffer, SVISOR_COMMAND, buffer, cmd,
+					SVISOR_RUNME_SH, capp->name, capp->path, capp->bin);
+		}
+
 		sprintf(buffer, SVISOR_AUTOSTART, buffer,
 				(capp->autostart ? "true": "false"));
 		sprintf(buffer, SVISOR_AUTORESTART, buffer,

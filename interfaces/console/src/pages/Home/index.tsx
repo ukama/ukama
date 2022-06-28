@@ -763,10 +763,10 @@ const Home = () => {
     }, []);
 
     const handleNodeActions = useCallback((id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg.nodes.filter(
+        const node = nodeRes?.getNodesByOrg?.nodes.filter(
             item => item.id === id
         );
-        if (type == "edit" && node && node.length > 0) {
+        if (type == "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -779,7 +779,7 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else {
+        } else if (type == "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",
@@ -849,13 +849,22 @@ const Home = () => {
                             networkStatusRes?.getNetworkStatus?.status ||
                             undefined
                         }
-                        duration={
-                            networkStatusRes?.getNetworkStatus?.uptime ||
+                        liveNodes={
+                            networkStatusRes?.getNetworkStatus?.liveNode ||
+                            undefined
+                        }
+                        totalNodes={
+                            networkStatusRes?.getNetworkStatus?.totalNodes ||
                             undefined
                         }
                     />
                 </Grid>
-                <Grid item container columnSpacing={{ xs: 1.5, md: 3 }}>
+                <Grid
+                    item
+                    container
+                    columnSpacing={{ xs: 1.5, md: 3 }}
+                    rowSpacing={{ xs: 1.5, md: 3 }}
+                >
                     <Grid item xs={4} md={6} lg={4}>
                         <StatusCard
                             Icon={UsersWithBG}

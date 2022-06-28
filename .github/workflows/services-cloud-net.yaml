@@ -27,22 +27,7 @@ jobs:
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
-
-    - name: Init vars
-      id: vars_step
-      uses: ./.github/actions/git-vars
-
-    - name: OCI Push net-listener 
-      working-directory: ${{ env.working-directory }}
-      env:
-        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/net-listener
-      run: |
-            buildah bud --pull -f Dockerfile.listener -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
-                -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
-                -t $REGISTRY\:latest .  && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
-            buildah push $REGISTRY\:latest 
+        build-listener: true
     
   sonar-scan:
     name: sonar-scan
@@ -53,8 +38,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: scan
         uses: ./.github/actions/sonar-go
-        with:
-          registry-name: net
+        with:         
           working-directory: ${{ env.working-directory }}
           github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
@@ -91,7 +75,7 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/ukamax-helmfile.yaml"
+            filename: "releases/ukamax/dev.yaml"
             key: "netImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}

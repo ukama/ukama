@@ -4,7 +4,7 @@ import (
 	"github.com/ukama/ukama/services/common/config"
 )
 
-type RegistryConfig struct {
+type NetworkConfig struct {
 	Host           string
 	TimeoutSeconds int
 }
@@ -28,7 +28,7 @@ type ListenerConfig struct {
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Queue             config.Queue
-	Registry          RegistryConfig
+	Network           NetworkConfig
 	Net               NetConfig
 	Device            DeviceNetworkConfig
 	Listener          ListenerConfig
@@ -41,7 +41,7 @@ func NewConfig() *Config {
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@rabbitmq:5672/",
 		},
-		Registry: RegistryConfig{
+		Network: NetworkConfig{
 			Host:           "localhost:9090",
 			TimeoutSeconds: 3,
 		},

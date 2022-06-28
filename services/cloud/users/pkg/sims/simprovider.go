@@ -11,8 +11,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/pkg/errors"
 	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/common/errors"
 )
 
 type SimProvider interface {

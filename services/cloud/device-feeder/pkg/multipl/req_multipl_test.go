@@ -10,12 +10,12 @@ import (
 	"github.com/ukama/ukama/services/cloud/device-feeder/mocks"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/multipl"
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
 )
 
 func Test_requestMultiplier_Process(t *testing.T) {
-	registry := mocks.RegistryClient{}
-	registry.On("GetNodesList", "test-org").Return([]*pb.Node{
+	network := mocks.NetworkClient{}
+	network.On("GetNodesList", "test-org").Return([]*pb.Node{
 		{
 			NodeId: "node-1",
 		},
@@ -28,7 +28,7 @@ func Test_requestMultiplier_Process(t *testing.T) {
 		pub := mocks.QueuePublisher{}
 		pub.On("Publish", mock.Anything).Return(nil).Twice()
 
-		m := multipl.NewRequestMultiplier(&registry, &pub)
+		m := multipl.NewRequestMultiplier(&network, &pub)
 
 		err := m.Process(&pkg.DevicesUpdateRequest{
 			HttpMethod: "POST",
@@ -51,7 +51,7 @@ func Test_requestMultiplier_Process(t *testing.T) {
 			return strings.HasSuffix(m.Target, "node-2")
 		})).Return(fmt.Errorf("error publishing the message")).Once()
 
-		m := multipl.NewRequestMultiplier(&registry, &pub)
+		m := multipl.NewRequestMultiplier(&network, &pub)
 
 		err := m.Process(&pkg.DevicesUpdateRequest{
 			HttpMethod: "POST",

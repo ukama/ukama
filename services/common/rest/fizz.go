@@ -23,11 +23,6 @@ type PingResponse struct {
 	Service string `json:"service"`
 }
 
-type HttpConfig struct {
-	Port int `default:"8080"`
-	Cors cors.Config
-}
-
 type HttpError struct {
 	HttpCode int
 	Message  string

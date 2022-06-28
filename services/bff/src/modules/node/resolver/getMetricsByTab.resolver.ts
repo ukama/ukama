@@ -8,9 +8,9 @@ import {
     UseMiddleware,
 } from "type-graphql";
 import { Service } from "typedi";
-import { GetMetricsRes, MetricRes } from "../types";
 import { NodeService } from "../service";
 import { parseCookie } from "../../../common";
+import { GetMetricsRes, MetricRes } from "../types";
 import { getMetricsByTab, oneSecSleep } from "../../../utils";
 import { Authentication } from "../../../common/Authentication";
 import { Context, MetricsByTabInputDTO } from "../../../common/types";

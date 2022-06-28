@@ -7,11 +7,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/global"
 	"github.com/ukama/ukama/services/cloud/device-feeder/pkg/metrics"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/wagslane/go-rabbitmq"
 )
@@ -164,6 +164,9 @@ func (q *QueueListener) StartQueueListening() (err error) {
 	quitChannel := make(chan os.Signal, 1)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel
+	q.consumer.Close()
+	log.Info("Shutting down...")
+
 	return nil
 }
 

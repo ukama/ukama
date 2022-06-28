@@ -39,6 +39,8 @@
 #define KEY_BIN         "bin"
 #define KEY_AUTOSTART   "autostart"
 #define KEY_AUTORESTART "autorestart"
+#define KEY_DEPENDS_ON  "depends_on"
+#define KEY_WAIT_FOR    "wait_for"
 
 #define VALUE_YES       "yes"
 #define VALUE_NO        "no"
@@ -86,8 +88,10 @@ typedef struct capp_config_t {
 	char *path;       /* Absolute path to the bin */
 	char *args;       /* Runtime arguments, if any */
 	char *envs;       /* Environment variables, if any */
+	char *dependsOn;  /* wait on program(s) to finish exec */
+	char *waitFor;    /* time to wait before executing */
 	int  autostart;   /* autostart for supervisor.d */
-	int  autorestart; /* autorestart for supervisor.d */  
+	int  autorestart; /* autorestart for supervisor.d */
 } CappConfig;
 
 typedef struct config_t {

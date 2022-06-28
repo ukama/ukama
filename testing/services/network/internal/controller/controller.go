@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"github.com/ukama/ukama/services/common/ukama"
 	"github.com/ukama/ukama/testing/services/network/internal"
@@ -53,16 +53,6 @@ func NewController(d db.VNodeRepo) *Controller {
 	if err != nil {
 		logrus.Fatalf("Build:: Can't connect to Kuberneets cluster. Err: %s", err.Error())
 		return nil
-	}
-
-	/* For test */
-	pods, err := cset.CoreV1().Pods("default").List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		logrus.Errorf("error getting pods: %v\n", err)
-		return nil
-	}
-	for _, pod := range pods.Items {
-		logrus.Tracef("Pod name: %s\n", pod.Name)
 	}
 
 	msgC, err := msgbus.NewPublisherClient(internal.ServiceConfig.Queue.Uri)

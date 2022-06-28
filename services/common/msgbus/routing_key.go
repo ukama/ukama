@@ -36,6 +36,7 @@ type RoutingKeyBuilder struct {
 	action    string //  connect, fail, active, lost, end, close, valid, invalid, update, expired
 }
 
+// Deprecated. Just use string constants. This one is hard to read
 func NewRoutingKeyBuilder() RoutingKeyBuilder {
 	return RoutingKeyBuilder{
 		msgType: TYPE_EVENT,

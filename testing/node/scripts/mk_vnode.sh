@@ -26,7 +26,7 @@ build_utils() {
 	mkdir -p ${BUILD_DIR}/utils
 
 	# Build genSchema
-    cd ${NODED_ROOT} && make genSchema
+        cd ${NODED_ROOT} && make genSchema
 	if [ -f ${NODED_ROOT}/build/genSchema ]; then
 		cp ${NODED_ROOT}/build/genSchema ${BUILD_DIR}/utils/
 	else
@@ -51,7 +51,7 @@ build_utils() {
 # 1. prepare_env.sh
 # 2. genSchema
 # 3. genInventory
-
+#
 build_sysfs() {
 
 	CWD=`pwd`
@@ -86,7 +86,6 @@ build_sysfs() {
 #
 # Build image using buildah
 #
-
 build_image() {
 
 	FILE=$1
@@ -94,9 +93,14 @@ build_image() {
 
 	# copy capp's sbin, conf and lib to /sbin, /conf and /lib
 	mkdir -p ${BUILD_DIR}/sbin ${BUILD_DIR}/lib ${BUILD_DIR}/conf
+	mkdir -p ${BUILD_DIR}/tmp ${BUILD_DIR}/bin
+
 	cp -rf ${BUILD_DIR}/capps/*/sbin ${BUILD_DIR}
 	cp -rf ${BUILD_DIR}/capps/*/conf ${BUILD_DIR}
 	cp -rf ${BUILD_DIR}/capps/*/lib  ${BUILD_DIR}
+
+	cp ./scripts/runme.sh   ${BUILD_DIR}/bin/
+	cp ./scripts/waitfor.sh ${BUILD_DIR}/bin/
 
 	buildah bud -f $1 -t $2
 }
@@ -116,10 +120,10 @@ case "$ACTION" in
 	"build")
 		build_image $2 $3
 		;;
-    "cp")
+	"cp")
 		cp $2 ${BUILD_DIR}/$3
 		;;
-    "clean")
+	"clean")
 		rm ContainerFile; rm supervisor.conf
 		buildah rmi -f localhost/$1
 		cd ${NODED_ROOT} && make clean && cd ${CWD}

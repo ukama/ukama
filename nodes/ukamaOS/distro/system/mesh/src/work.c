@@ -15,16 +15,15 @@
 /*
  * init_work_list -- 
  */
-
 void init_work_list(WorkList **list) {
 
-  (*list)->first = NULL;
-  (*list)->last  = NULL;
+	(*list)->first = NULL;
+	(*list)->last  = NULL;
 
-  pthread_mutex_init(&(*list)->mutex, NULL);
-  pthread_cond_init(&(*list)->hasWork, NULL);
+	pthread_mutex_init(&(*list)->mutex, NULL);
+	pthread_cond_init(&(*list)->hasWork, NULL);
 
-  (*list)->exit = FALSE;
+	(*list)->exit = FALSE;
 }
 
 /*
@@ -32,44 +31,43 @@ void init_work_list(WorkList **list) {
  *
  */
 static WorkItem *create_work_item(Packet data, thread_func_t pre, void *preArgs,
-				  thread_func_t post, void *postArgs) {
+								  thread_func_t post, void *postArgs) {
 
-  WorkItem *work;
+	WorkItem *work;
 
-  /* Sanity check */
-  if (data == NULL)
-    return NULL;
+	/* Sanity check */
+	if (data == NULL)
+		return NULL;
 
-  work = (WorkItem *)malloc(sizeof(WorkItem));
-  if (!work) {
-    log_error("Error allocating memory: %d", sizeof(WorkItem));
-    return NULL;
-  }
+	work = (WorkItem *)malloc(sizeof(WorkItem));
+	if (!work) {
+		log_error("Error allocating memory: %d", sizeof(WorkItem));
+		return NULL;
+	}
 
-  work->preFunc  = pre;
-  work->postFunc = post;
-  work->preArgs  = preArgs;
-  work->postArgs = postArgs;
+	work->preFunc  = pre;
+	work->postFunc = post;
+	work->preArgs  = preArgs;
+	work->postArgs = postArgs;
 
-  work->data = data;
-  work->next = NULL;
+	work->data = data;
+	work->next = NULL;
 
-  return work;
+	return work;
 }
 
 /*
  * destroy_work_item --
  *
  */
-
 void destroy_work_item(WorkItem *work) {
 
-  if (!work) {
-    return;
-  }
+	if (!work) {
+		return;
+	}
 
-  json_decref(work->data);
-  free(work);
+	json_decref(work->data);
+	free(work);
 }
 
 /*
@@ -77,54 +75,53 @@ void destroy_work_item(WorkItem *work) {
  *                      for websocket.
  *
  */
-
 int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
-		      void *preArgs, thread_func_t post, void *postArgs) {
+					  void *preArgs, thread_func_t post, void *postArgs) {
 
-  WorkItem *work=NULL;
-  char *str;
+	WorkItem *work=NULL;
+	char *str;
   
-  if (data == NULL && *list == NULL)
-    return FALSE;
+	if (data == NULL && *list == NULL)
+		return FALSE;
 
-  work = create_work_item(data, pre, preArgs, post, postArgs);
-  if (work == NULL) {
-    return FALSE;
-  }
+	work = create_work_item(data, pre, preArgs, post, postArgs);
+	if (work == NULL) {
+		return FALSE;
+	}
 
-  /* Try to get lock. */
-  pthread_mutex_lock(&(*list)->mutex);
+	/* Try to get lock. */
+	pthread_mutex_lock(&(*list)->mutex);
 
-  /* Got the lock. Add to the list and unlock. */
-  if ((*list)->first == NULL) {
-    (*list)->first = work;
-    (*list)->last  = work;
-  } else {
-    (*list)->last->next = work;
-  }
+	/* Got the lock. Add to the list and unlock. */
+	if ((*list)->first == NULL) {
+		(*list)->first = work;
+		(*list)->last  = work;
+	} else {
+		(*list)->last->next = work;
+	}
 
-  /* Update pointer to last entry. */
-  (*list)->last = work;
-  (*list)->last->next = NULL;
+	/* Update pointer to last entry. */
+	(*list)->last = work;
+	(*list)->last->next = NULL;
 
-  /* Broadcast new work item is available in the queue. */
-  pthread_cond_broadcast(&((*list)->hasWork));
+	/* Broadcast new work item is available in the queue. */
+	pthread_cond_broadcast(&((*list)->hasWork));
 
-  /* Unlock */
-  pthread_mutex_unlock(&((*list)->mutex));
+	/* Unlock */
+	pthread_mutex_unlock(&((*list)->mutex));
 
-  str = json_dumps((json_t *)data, 0);
-  if (str) {
-    log_debug("Work added on the tansmit queue. Len: %d Data: %s", strlen(str),
-	      str);
-    free(str);
-  } else {
-    /* non-JSON data. */
-    log_debug("Work added on the transmit queue. Len: %d Data: %s",
-	      strlen(data), data);
-  }
+	str = json_dumps((json_t *)data, 0);
+	if (str) {
+		log_debug("Work added on the tansmit queue. Len: %d Data: %s",
+				  strlen(str), str);
+		free(str);
+	} else {
+		/* non-JSON data. */
+		log_debug("Work added on the transmit queue. Len: %d Data: %s",
+				  strlen(data), data);
+	}
 
-  return TRUE;
+	return TRUE;
 }
 
 /*
@@ -134,24 +131,24 @@ int add_work_to_queue(WorkList **list, Packet data, thread_func_t pre,
  */
 WorkItem *get_work_to_transmit(WorkList *list){
 
-  WorkItem *item=NULL;
+	WorkItem *item=NULL;
 
-  /* Is empty. */
-  if (list->first == NULL) {
-    return NULL;
-  }
+	/* Is empty. */
+	if (list->first == NULL) {
+		return NULL;
+	}
 
-  /* Is the only item. i.e., first == last */
-  if (list->first == list->last) {
-    item = list->first;
-    list->first = NULL;
-    list->last  = NULL;
-  } else { /* General case. */
-    /* FIFO, always return the first entry in */
-    item = list->first;
-    list->first = item->next;
-    item->next = NULL;
-  }
+	/* Is the only item. i.e., first == last */
+	if (list->first == list->last) {
+		item = list->first;
+		list->first = NULL;
+		list->last  = NULL;
+	} else { /* General case. */
+		/* FIFO, always return the first entry in */
+		item = list->first;
+		list->first = item->next;
+		item->next = NULL;
+	}
 
-  return item;
+	return item;
 }

@@ -26,7 +26,8 @@ type NetworkStatusProps = {
     regLoading: boolean;
     handleAddNode: Function;
     handleActivateUser: Function;
-    duration?: number | undefined;
+    totalNodes: number | undefined;
+    liveNodes: number | undefined;
     statusType: Network_Status | undefined;
 };
 
@@ -35,7 +36,8 @@ const NetworkStatus = ({
     regLoading,
     handleAddNode,
     handleActivateUser,
-    duration = undefined,
+    totalNodes = undefined,
+    liveNodes = undefined,
     statusType = Network_Status.Undefined,
 }: NetworkStatusProps) => {
     const isSmall = useMediaQuery("(max-width:600px)");
@@ -55,20 +57,40 @@ const NetworkStatus = ({
                                     sx={{ fontWeight: { xs: 400, md: 500 } }}
                                 >
                                     {getStatusByType(statusType)}
-                                    {isSmall && duration && duration}
+                                    {isSmall &&
+                                        totalNodes &&
+                                        liveNodes &&
+                                        ` ${liveNodes}/${totalNodes} nodes up.`}
                                 </Typography>
 
-                                {!isSmall && duration && (
-                                    <Typography
-                                        ml={{ xs: "28px", md: "8px" }}
-                                        variant={"h6"}
-                                        color="secondary"
-                                        sx={{
-                                            fontWeight: { xs: 400, md: 500 },
-                                        }}
-                                    >
-                                        {Math.round(duration)} %
-                                    </Typography>
+                                {!isSmall && totalNodes && liveNodes && (
+                                    <>
+                                        <Typography
+                                            variant={"h6"}
+                                            color="secondary"
+                                            sx={{
+                                                fontWeight: {
+                                                    xs: 400,
+                                                    md: 500,
+                                                },
+                                                whiteSpace: "break-spaces",
+                                                ml: { xs: "28px", md: "8px" },
+                                            }}
+                                        >
+                                            {`${liveNodes}/${totalNodes} `}
+                                        </Typography>
+                                        <Typography
+                                            variant={"h6"}
+                                            sx={{
+                                                fontWeight: {
+                                                    xs: 400,
+                                                    md: 500,
+                                                },
+                                            }}
+                                        >
+                                            nodes up
+                                        </Typography>
+                                    </>
                                 )}
                             </Stack>
                         </Grid>

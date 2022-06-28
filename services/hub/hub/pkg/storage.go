@@ -3,9 +3,10 @@ package pkg
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
 	"time"
+
+	"github.com/ukama/ukama/services/common/errors"
 
 	"github.com/Masterminds/semver/v3"
 

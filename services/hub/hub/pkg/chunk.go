@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/services/common/errors"
 )
 
 type Chunker interface {
@@ -69,9 +69,12 @@ func (ch *chunker) Chunk(name string, ver *semver.Version, fileStorageUrl string
 			logrus.Errorf("failed to read response body. Error: %+v", err)
 		}
 		logrus.Errorf("response body: %s", string(b))
-		return errors.Errorf("failed to chunk file")
+		return fmt.Errorf("failed to chunk file")
 	}
 
 	_, err = ch.storage.PutFile(ctx, name, ver, ChunkIndexExtension, resp.Body)
-	return errors.Wrap(err, "failed to save index file")
+	if err != nil {
+		return errors.Wrap(err, "failed to save index file")
+	}
+	return nil
 }

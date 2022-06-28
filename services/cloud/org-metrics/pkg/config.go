@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/ukama/ukama/services/common/config"
 	"time"
+
+	"github.com/ukama/ukama/services/common/config"
 )
 
 type ServerConfig struct {
@@ -13,10 +14,10 @@ type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Metrics           *config.Metrics `default:"{}"`
 	Server            *ServerConfig   `default:"{}"`
-	Registry          *RegistryConf   `default:"{}"`
+	Network           *NetworkConf    `default:"{}"`
 }
 
-type RegistryConf struct {
+type NetworkConf struct {
 	config.GrpcService `mapstructure:",squash"`
 	PollInterval       time.Duration `default:"1m"`
 }

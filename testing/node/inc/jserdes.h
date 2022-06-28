@@ -31,7 +31,7 @@
 #define JSON_MODULE_ID       "moduleID"
 #define JSON_HW_VERSION      "hwVersion"
 #define JSON_MAC             "mac"
-#define JSON_MFG_DATE        "mfgData"
+#define JSON_MFG_DATE        "mfgDate"
 #define JSON_MFG             "mfgName"
 
 int deserialize_node(Node **node, json_t *json);

@@ -11,11 +11,11 @@ import (
 	"github.com/ukama/ukama/services/common/msgbus"
 
 	uuid2 "github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	hsspb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	pb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc/codes"

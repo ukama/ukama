@@ -20,7 +20,8 @@ import (
 )
 
 type TestConfig struct {
-	BaseDomain       string
+	ApiUrl           string
+	KratosUrl        string
 	DummyAuthMode    bool
 	TestAccountEmail string
 	TestAccountPass  string
@@ -30,10 +31,11 @@ var testConf *TestConfig
 
 func init() {
 	testConf = &TestConfig{
-		BaseDomain:       "dev.ukama.com",
 		DummyAuthMode:    false,
 		TestAccountEmail: "integration-test@ukama.com",
 		TestAccountPass:  "Pass2020!!",
+		KratosUrl:        "https://auth.dev.ukama.com/.api",
+		ApiUrl:           "https://api.dev.ukama.com",
 	}
 
 	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: BASEDOMAIN")
@@ -46,6 +48,7 @@ func Test_RegistryApi(t *testing.T) {
 	var err error
 
 	if testConf.DummyAuthMode {
+		fmt.Println("Dummy auth mode enabled")
 		tkn := "dummy-token"
 		login = &ory.SuccessfulSelfServiceLoginWithoutBrowser{
 			SessionToken: &tkn,
@@ -60,7 +63,7 @@ func Test_RegistryApi(t *testing.T) {
 		}
 	}
 
-	time.Sleep(3 * time.Second) //give registry some time to create a default org for account
+	time.Sleep(3 * time.Second) //give network some time to create a default org for account
 
 	client := resty.New()
 
@@ -196,9 +199,9 @@ func TestGetUser(b *testing.T) {
 }
 
 func getApiUrl() string {
-	return "https://api." + testConf.BaseDomain
+	return testConf.ApiUrl
 }
 
 func getKratosUrl() string {
-	return "https://auth." + testConf.BaseDomain + "/.api"
+	return testConf.KratosUrl
 }

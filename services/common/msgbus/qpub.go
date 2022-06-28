@@ -2,6 +2,7 @@ package msgbus
 
 import (
 	"encoding/json"
+
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -26,12 +27,13 @@ func NewQPub(queueUri string, serviceName string, instanceId string) (*qPub, err
 	}
 
 	return &qPub{
-		publisher: publisher,
+		publisher:   publisher,
 		serviceName: serviceName,
-		instanceId: instanceId,
+		instanceId:  instanceId,
 	}, nil
 }
 
+// Publish publishes a message in json format to the default topic exchange with a routing key specified
 func (q *qPub) Publish(payload any, routingKey string) error {
 
 	b, err := json.Marshal(payload)
@@ -42,7 +44,7 @@ func (q *qPub) Publish(payload any, routingKey string) error {
 	err = q.publisher.Publish(b, []string{routingKey},
 		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
 			"source-service": q.serviceName,
-			"instance-id": q.instanceId,
+			"instance-id":    q.instanceId,
 		}),
 		rabbitmq.WithPublishOptionsExchange(DefaultExchange))
 
@@ -52,8 +54,6 @@ func (q *qPub) Publish(payload any, routingKey string) error {
 
 	return nil
 }
-
-
 
 func (q *qPub) Close() error {
 	return q.publisher.Close()
@@ -67,9 +67,9 @@ func (q *qPub) PublishToQueue(queueName string, payload any) error {
 
 	err = q.publisher.Publish(b, []string{queueName},
 		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
-		"source-service": q.serviceName,
-		"instance-id": q.instanceId,
-		})		)
+			"source-service": q.serviceName,
+			"instance-id":    q.instanceId,
+		}))
 
 	if err != nil {
 		return err
