@@ -53,7 +53,7 @@ $(TARGET_EXEC): $(OBJFILES)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 	 
-sourcetgz:
+sourcetgz: $(TARGET_EXEC)
 	rm -rf /tmp/virtnode/
 	rm -rf ukamaOS_*.tgz 
 	(mkdir -p /tmp/virtnode/ukamaOS/distro && \
@@ -62,7 +62,7 @@ sourcetgz:
 	tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
 	mv /tmp/virtnode/ukamaOS.tgz ukamaOS_${VERSION}.tgz)
 
-container: $(TARGET_EXEC) sourcetgz
+container:  sourcetgz
 	@echo Building container
 	buildah bud -f . -t testing/virtualnode:${VERSION}
 
