@@ -34,11 +34,11 @@ jobs:
         make sourcetgz
 
     - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY  }}
-          aws-region: us-east-1
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY  }}
+        aws-region: us-east-1
 
     - name: Login to Amazon ECR
       shell: bash
@@ -50,15 +50,15 @@ jobs:
             003664043471.dkr.ecr.us-east-1.amazonaws.com
     
     - name: Build and push
-        shell: bash
-        working-directory: ./testing/node
-        env:
-            REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtualnode
-        run: |
-            buildah bud -f . -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
-            -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
-            -t $REGISTRY\:latest .  && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
-            buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
-            buildah push $REGISTRY\:latest
+      shell: bash
+      working-directory: ./testing/node
+      env:
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtualnode
+      run: |
+        buildah bud -f . -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
+        -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
+        -t $REGISTRY\:latest .  && \
+        buildah push $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} && \
+        buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} && \
+        buildah push $REGISTRY\:latest
     
