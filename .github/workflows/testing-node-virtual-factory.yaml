@@ -1,9 +1,9 @@
-name: build-testing-virtual-factory
+name: build-testing-node-virtual-factory
 on:
   push:
     paths:
         - "testing/node/**"
-        - ".github/workflows/testing-virtual-factory.yaml"
+        - ".github/workflows/testing-node-virtual-factory.yaml"
   workflow_dispatch:
 
 jobs:  
