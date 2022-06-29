@@ -118,16 +118,16 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 	jobs := b.clientset.BatchV1().Jobs(b.currentNamespace)
 
 	/* Tries 4 time before matking it as fail.*/
-	var backOffLimit int32 = 4
+	var backOffLimit int32 = internal.ServiceConfig.BackOffLimit
 
 	/* Priviliged mode : mercy!! (because of dind for linuxkit build)
 	Would be removed with our microCE
 	*/
 	var priviligemode bool = true
-	var timetolive int32 = 60
+	var timetolive int32 = internal.ServiceConfig.TimeToLive
 
 	/* Add a time period for job to complete if not completetd within that time frame remove it.*/
-	var activeDeadlineSeconds int64 = 90 * 60
+	var activeDeadlineSeconds int64 = internal.ServiceConfig.ActiveDeadLineSeconds
 
 	/* Job spec */
 	jobSpec := &batchv1.Job{
@@ -149,7 +149,7 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 							},
 							Env: []v1.EnvVar{
 								{
-									Name:  "UUID",
+									Name:  "VNODE_ID",
 									Value: *jobName,
 								},
 								{
@@ -178,14 +178,18 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 								},
 								{
 									Name:  "REPO_SERVER_URL",
-									Value: internal.ServiceConfig.RepoServerUrl,
+									Value: internal.ServiceConfig.VNodeRepoServerUrl,
+								},
+								{
+									Name:  "REPO_NAME",
+									Value: internal.ServiceConfig.VNodeRepoName,
 								},
 							},
 						},
 					},
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
-							Name: "dregcred",
+							Name: internal.ServiceConfig.BuilderRegCred,
 						},
 					},
 					RestartPolicy: v1.RestartPolicyOnFailure,
