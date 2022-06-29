@@ -61,7 +61,7 @@ jobs:
     - name: OCI build and push
       working-directory: ${{ env.working-directory }}
       env:
-        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtualnode
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtual/nodebuilder
       run: |                        
             buildah bud -f . -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
