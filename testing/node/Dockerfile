@@ -27,4 +27,4 @@ COPY ./scripts/*.sh /scripts
 
 COPY supervisord.conf /
 
-CMD ["/sbin/virtualNode", "--target", "ubuntu:20.04:latest", "--exec", "create", "--c", "/capps/"]
+CMD ["/sbin/virtualNode", "--target", "ubuntu:20.04", "--exec", "create", "--c", "/capps/"]
