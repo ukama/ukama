@@ -34,7 +34,7 @@ XCC:=$(XCC)
 endif
 
 # Libraries
-LIBS+=-lpthread
+LIBS:=-lpthread
 LIBS+=-lrt
 LIBS+=-lm
 
