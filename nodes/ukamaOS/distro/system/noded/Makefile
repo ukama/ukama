@@ -240,7 +240,7 @@ $(UTEST):$(TEST_OBJFILES) $(TARGET)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
-$(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) 
+$(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) $(PLATFORM_PKG) 
 	mkdir -p $(dir $@)
 	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
