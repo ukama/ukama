@@ -53,12 +53,6 @@ func NewConfig() *Config {
 				{
 					"node": "*", "looking_for": "fact_node_info", "path": "/node",
 				},
-				{
-					"looking_to": "create_node", "type": "*", "count": "*", "path": "/node",
-				},
-				{
-					"node": "*", "looking_to": "fact_delete", "path": "/node",
-				},
 			},
 			F: config.Forward{
 				Ip:   "localhost",
