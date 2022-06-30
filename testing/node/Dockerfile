@@ -1,16 +1,22 @@
 FROM ubuntu:21.04
 ENTRYPOINT []
-CMD []
+
 WORKDIR /
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
-RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim -y
+RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim unzip -y
 
 RUN mkdir -p /ukama
 
 RUN mkdir -p /scripts
+
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+RUN unzip awscliv2.zip
+
+RUN /aws/install
 
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/tmp/virtnode/ukamaOS/distro/vendor/build/lib:/tmp/virtnode/ukamaOS/distro/platform/build"
 

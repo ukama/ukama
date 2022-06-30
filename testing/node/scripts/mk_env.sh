@@ -13,9 +13,9 @@ UKAMA_OS_PATH=/tmp/virtnode/ukamaOS
 
 # Check if building on local or in container
 if_host() {
-	val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-	if [ $val == "/init.scope" ]; then
-		BUILD_ENV=local
+    val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
+    if [ ${val} == "/init.scope" || ${val} == "/" ]; then
+        BUILD_ENV=local
     fi
 }
 

@@ -21,10 +21,10 @@ BUILD_DIR=${DEF_BUILD_DIR}
 
 # Check if building on local or in container
 if_host() {
-     val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-     if [ $val == "/init.scope" ]; then
-         BUILD_ENV=local
-     fi
+    val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
+    if [ ${val} == "/init.scope" || ${val} == "/" ]; then
+        BUILD_ENV=local
+    fi
 }
 
 
@@ -37,7 +37,15 @@ build_app() {
     SRC=${UKAMA_OS}$1
     CMD=$2
 
-    cd ${SRC} && ${CMD} && cd ${CWD}
+    cd ${SRC} && ${CMD}
+    if [ $? == 0 ]; then
+       echo "CApp build done for ${CMD} ${SRC}"
+    else
+        echo "CApp build failed for ${CMD} ${SRC}"
+        exit 1
+    fi
+
+	cd ${CWD}
 }
 
 #
@@ -114,4 +122,4 @@ case "$ACTION" in
 	fi
 esac
 
-exit
+exit 0

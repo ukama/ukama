@@ -41,7 +41,7 @@ int build_capp(Config *config) {
 	if (system(runMe) < 0) return FALSE;
 
 	sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
-	if (system(runMe) < 0) return FALSE;
+	if (system(runMe) != 0) return FALSE;
 
 	if (!build->staticFlag) {
 		/* set rpath for the executable */

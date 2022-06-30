@@ -29,7 +29,7 @@ REGISTRY_NAME=${REPO_NAME}
 
 if_host() {
 	val=`cat /proc/1/cgroup | grep -i "pids" |  awk -F":" 'NR==1{print $NF}'`
-	if [ ${val} == "/init.scope" ]; then
+	if [ ${val} == "/init.scope" || ${val} == "/" ]; then
 		BUILD_ENV=local
     fi
 }
@@ -125,15 +125,15 @@ build_sysfs() {
 	cd ${BUILD_DIR}
 	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $VNODE_SCHEMA_ARGS
 	if [ $? != 0 ]; then
-		echo "Failed to create schema for $NODE_UUID $VNODE_SCHEMA_ARGS."
-		exit 1
+        echo "Failed to create schema for $NODE_UUID $VNODE_SCHEMA_ARGS."
+        exit 1
 	fi
 
 	# create EEPROM data using genInventory
 	${BUILD_DIR}/utils/genInventory $VNODE_SCHEMA_ARGS
 	if [ $? != 0 ]; then
-		echo "Failed to create inventory DB $VNODE_SCHEMA_ARGS."
-		exit 1
+        echo "Failed to create inventory DB $VNODE_SCHEMA_ARGS."
+        exit 1
 	fi
 
 	#copy the sysfs to build dir
@@ -166,10 +166,10 @@ build_image() {
 
 	buildah bud -f $1 -t ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
 	if [ $? == 0 ]; then
-		echo "Buildah created image ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}"
+        echo "Buildah created image ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}"
 	else
-		echo "Buildah image creation failed"
-		exit 1
+        echo "Buildah image creation failed"
+        exit 1
 	fi
 
 }
@@ -182,7 +182,9 @@ push_image() {
 	UUID=$1
 	TAG=`echo ${UUID} | awk '{print tolower($0)}'`
 
-	buildah login --username ${DOCKER_USER} --password ${DOCKER_PASS} ${REGISTRY_URL}
+	pass=`aws ecr get-login-password`
+
+	buildah login --username ${DOCKER_USER} --password ${pass} ${REGISTRY_URL}
 	if [ $? == 0 ]; then
 		echo "Registry login success."
 	else
