@@ -15,7 +15,7 @@ ifndef XGCCPATH
 endif
 
 ifeq ($(TARGETBOARD), $(LOCAL))
-PKG_CFG_PATH=${DEPDIR}/lib64/pkgconfig
+PKG_CFG_PATH=${DEPDIR}/lib/pkgconfig:${DEPDIR}/lib64/pkgconfig
 else
 PKG_CFG_PATH=${DEPDIR}/lib/pkgconfig
 endif
@@ -321,7 +321,7 @@ gnutls: p11-kit openssl nettle gmp
 ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
-		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
+		LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" ../configure --prefix=${DEPDIR} \
 		--exec-prefix=${DEPDIR} GMP_LIBS=${DEPDIR}/lib \
 		--host=${HOST} --with-included-libtasn1 \
 		--disable-openssl-compatibility \
