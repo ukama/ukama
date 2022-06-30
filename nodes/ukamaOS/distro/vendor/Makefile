@@ -305,10 +305,10 @@ endif
 p11-kit:
 	$(call print_msg,"p11-kit")
 ifeq (,$(wildcard ${DEPDIR}/lib/libp11-kit.*))
-	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
+	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && cd ${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
-		--without-libtasn1 --without-systemd && \
+		--without-libtasn1 --without-systemd --without-bash-completion && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
