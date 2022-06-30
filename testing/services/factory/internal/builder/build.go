@@ -141,9 +141,9 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:    *jobName,
-							Image:   *image,
-							Command: cmd,
+							Name:  *jobName,
+							Image: *image,
+							//Command: cmd,
 							SecurityContext: &v1.SecurityContext{
 								Privileged: &priviligemode,
 							},
