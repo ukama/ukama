@@ -4,6 +4,7 @@ on:
     paths:
         - "testing/node/**"
         - ".github/workflows/testing-node-virtualnode.yaml"
+        - "nodes/ukamaOS/distro/system/**"
   workflow_dispatch:
 
 jobs:  
