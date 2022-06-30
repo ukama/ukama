@@ -18,7 +18,7 @@ VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target
-VENDOR_PKG = tomlc curl jansson
+VENDOR_PKG = tomlc curl jansson ulfius
 
 # Setting up various compile and link flags
 CFLAGS=-c
