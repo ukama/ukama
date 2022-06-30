@@ -124,9 +124,17 @@ build_sysfs() {
 
 	cd ${BUILD_DIR}
 	${BUILD_DIR}/utils/genSchema -u $NODE_UUID $VNODE_SCHEMA_ARGS
+	if [ $? != 0 ]; then
+		echo "Failed to create schema for $NODE_UUID $VNODE_SCHEMA_ARGS."
+		exit 1
+	fi
 
 	# create EEPROM data using genInventory
 	${BUILD_DIR}/utils/genInventory $VNODE_SCHEMA_ARGS
+	if [ $? != 0 ]; then
+		echo "Failed to create inventory DB $VNODE_SCHEMA_ARGS."
+		exit 1
+	fi
 
 	#copy the sysfs to build dir
 	cp -rf /tmp/sys ${BUILD_DIR}/sys
@@ -157,6 +165,13 @@ build_image() {
 	cp ./scripts/kickstart.sh ${BUILD_DIR}/bin/
 
 	buildah bud -f $1 -t ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}
+	if [ $? == 0 ]; then
+		echo "Buildah created image ${REGISTRY_URL}/${REGISTRY_NAME}:${NAME_TAG}"
+	else
+		echo "Buildah image creation failed"
+		exit 1
+	fi
+
 }
 
 #
@@ -220,4 +235,4 @@ case "$ACTION" in
 		;;
 esac
 
-exit
+exit 0

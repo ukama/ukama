@@ -256,7 +256,7 @@ int main (int argc, char *argv[]) {
 	if (!create_vnode_image(target, configs, node)) {
 		log_error("Unable to create image for virtual node");
 		purge_vnode_image(node);
-		goto done;
+		exit(1);
 	}
 
  done:

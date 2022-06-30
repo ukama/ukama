@@ -243,11 +243,11 @@ int create_vnode_image(char *target, Configs *config, Node *node) {
 	/* Step:3 run buildah */
 	/* build container_file uuid */
 	sprintf(runMe, "%s build %s %s", SCRIPT, CONTAINER_FILE, nodeInfo->uuid);
-	if (system(runMe) < 0) goto failure;
+	if (system(runMe) != 0) goto failure;
 
 	/* Step:4 push image to the registry */
 	sprintf(runMe, "%s push %s", SCRIPT, nodeInfo->uuid);
-	if (system(runMe) < 0) goto failure;
+	if (system(runMe) != 0) goto failure;
 
 	if (buffer) free(buffer);
 	return TRUE;
