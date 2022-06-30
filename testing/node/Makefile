@@ -59,7 +59,7 @@ sourcetgz: $(TARGET_EXEC)
 	(mkdir -p /tmp/virtnode/ukamaOS/distro && \
 	rsync -av --exclude='musl-cross-make' ../../nodes/ukamaOS/distro/ /tmp/virtnode/ukamaOS/distro && \
 	rsync -av ../../nodes/ukamaOS/config.mk /tmp/virtnode/ukamaOS/config.mk &&\
-	tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
+	sync && tar -zcvf /tmp/virtnode/ukamaOS.tgz /tmp/virtnode/ukamaOS && \
 	mv /tmp/virtnode/ukamaOS.tgz ukamaOS_${VERSION}.tgz)
 
 container:  sourcetgz
