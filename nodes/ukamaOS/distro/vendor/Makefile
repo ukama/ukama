@@ -220,7 +220,7 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libssl.*))
 		--prefix=${DEPDIR} --openssldir=${DEPDIR} \
 		--with-zlib-lib=${DEPDIR}/lib \
 		--with-zlib-include=${DEPDIR}/include && \
-	make -j${NPROCS} && make -j${NPROCS} install
+	make -j${NPROCS} && make -j${NPROCS} install_sw
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
