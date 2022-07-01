@@ -25,6 +25,8 @@ type Config struct {
 	RabbitUri         string
 	RepoServerUrl     string
 	Namespace         string
+	SecRef            string
+	CmRef             string
 }
 
 var ServiceConfig *Config
