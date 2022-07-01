@@ -141,8 +141,8 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:  *jobName,
-							Image: *image,
+							Name:    *jobName,
+							Image:   *image,
 							Command: cmd,
 							SecurityContext: &v1.SecurityContext{
 								Privileged: &priviligemode,
@@ -183,6 +183,14 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 								{
 									Name:  "REPO_NAME",
 									Value: internal.ServiceConfig.VNodeRepoName,
+								},
+								{
+									Name:  "AWS_ACCESS_KEY_ID",
+									Value: internal.ServiceConfig.AwsKey,
+								},
+								{
+									Name:  "AWS_SECRET_ACCESS_KEY",
+									Value: internal.ServiceConfig.AwsSecret,
 								},
 							},
 

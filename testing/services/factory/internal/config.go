@@ -31,6 +31,8 @@ type Config struct {
 	ActiveDeadLineSeconds int64 `default:"3600"`
 	SecRef                string
 	CmRef                 string
+	AwsKey                string
+	AwsSecret             string
 }
 
 var ServiceConfig *Config
