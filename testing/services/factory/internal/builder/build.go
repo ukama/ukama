@@ -143,7 +143,7 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 						{
 							Name:  *jobName,
 							Image: *image,
-							//Command: cmd,
+							Command: cmd,
 							SecurityContext: &v1.SecurityContext{
 								Privileged: &priviligemode,
 							},
