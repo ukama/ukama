@@ -144,7 +144,7 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf (buffer, CF_MKDIR, NODE_LIBS);
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf (buffer, CF_MKDIR, SYFS_DIR);
+	sprintf (buffer, CF_MKDIR, SYSFS_DIR);
 		if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_COPY, "./build/sbin", "/sbin");
