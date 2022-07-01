@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu:21.04
 ENTRYPOINT []
 
 WORKDIR /
@@ -40,4 +40,4 @@ COPY ./scripts/*.sh /scripts
 
 COPY supervisord.conf /
 
-CMD ["/sbin/virtualNode", "--target", "ubuntu:22.04", "--exec", "create", "--c", "/capps/"]
+CMD ["/sbin/virtualNode", "--target", "ubuntu:21.04", "--exec", "create", "--c", "/capps/"]
