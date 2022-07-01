@@ -12,7 +12,7 @@ import {
     DialogContent,
     CircularProgress,
 } from "@mui/material";
-import { ReactEventHandler, useEffect } from "react";
+import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";

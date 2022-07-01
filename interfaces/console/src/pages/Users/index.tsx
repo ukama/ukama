@@ -56,7 +56,6 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
-    const [test, setTest] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
         userId: "",
