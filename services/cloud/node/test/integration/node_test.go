@@ -93,8 +93,9 @@ func Test_FullFlow(t *testing.T) {
 		assert.Equal(tt, pb.NodeType_HOME, nodeResp.Node.Type)
 	})
 
+	tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+	aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
 	t.Run("AddTowerNodeWithAmplifiers", func(tt *testing.T) {
-		tNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
 		ndToClean = append(ndToClean, tNodeId)
 		_, err := c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
@@ -106,7 +107,6 @@ func Test_FullFlow(t *testing.T) {
 			assert.FailNow(tt, "AddNode failed", err.Error())
 		}
 
-		aNodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE)
 		ndToClean = append(ndToClean, aNodeId)
 		_, err = c.AddNode(ctx, &pb.AddNodeRequest{
 			Node: &pb.Node{
@@ -134,6 +134,17 @@ func Test_FullFlow(t *testing.T) {
 		}
 	})
 
+	t.Run("DetachNode", func(tt *testing.T) {
+		_, err := c.DetachNode(ctx, &pb.DetachNodeRequest{
+			DetachedNodeId: aNodeId.String(),
+		})
+		if assert.NoError(t, err) {
+			resp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: tNodeId.String()})
+			if assert.NoError(t, err) {
+				assert.Nil(t, resp.Node.Attached)
+			}
+		}
+	})
 }
 
 func cleanupNodes(tt *testing.T, c pb.NodeServiceClient, nodes []ukama.NodeID) {
