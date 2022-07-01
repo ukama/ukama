@@ -56,6 +56,10 @@ export class GetMetricsByTabResolver {
                 if (!next && element.next) next = true;
             }
         }
-        return { to: data.to, next: next, metrics: response };
+        return {
+            to: data.to,
+            next: next,
+            metrics: data.regPolling ? [] : response,
+        };
     }
 }

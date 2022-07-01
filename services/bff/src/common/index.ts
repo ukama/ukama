@@ -36,7 +36,7 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
     // return { header: header, orgId: cookieObj["id"] };
     return {
         header: {
-            Cookie: "ukama_session=MTY1NjY3NTU4N3xyRjkzLUZGTEYzaGVkamJVVmJXanNrbjQ5YzlTZllad292OEt6SDVNLUsxNUF3Nks4c1VISFpYMDRTWExFazRXRHFEU1U4ZnNkdF9YbEVSd21SS2Q2b0kyUEUwajY1elRnMjd5VTRfYnZwQVRBN1o2SWw4dWoyTEtpbWFpQ1JiN1JKenBuTE9yMEE9PXwwKhXp-1c_swFCbwvGTJ4uptxaY1o16v23j6_z29LFDA==",
+            Cookie: "ukama_session=MTY1NjY4ODE4MnxCV3J6RC0tUnBkNGVLV2k0ejE0T1ROTkZEbmNzdWc3aTk0NHBrcUE4M05xN1JEU25hcFRaZXZxbHk4eFowNkVnWEhxR1phc0RPdHJXRUhHN1JGX2ZSOFpqMS16YV9yVzA1MHZ0b1VUcWRYbXlSaUtrVHJRVEdWcEpwU3VsT2FSc0w2VkRJOXp5NXc9PXzWzPtKEVwlPm9dG0IFv6R4Bm_5Q4Vd5wNtrpUUlY5f4A==",
         },
         orgId: "a32485e4-d842-45da-bf3e-798889c68ad0",
     };
