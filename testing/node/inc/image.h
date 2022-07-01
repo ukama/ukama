@@ -41,6 +41,7 @@
 #define UPDATE_PKGS "python3 supervisor"
 
 #define NODE_LIBS	  "/usys/lib"
+#define SYSFS_DIR	  "/tmp/sys/"
 #define LIB_PATH	  "LD_LIBRARY_PATH"
 
 #define TARGET_ALPINE "alpine"
