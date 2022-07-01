@@ -12,7 +12,7 @@ import {
     DialogContent,
     CircularProgress,
 } from "@mui/material";
-import { ReactEventHandler } from "react";
+import { ReactEventHandler, useEffect } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
@@ -72,8 +72,27 @@ const UserDetailsDialog = ({
         const title = type === "add" ? "Add User" : `${userName}`;
         return title;
     };
-    const statusButtonColor = status ? "error" : "primary";
-    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
+
+    let value = localStorage.getItem("status");
+    const getStatus = (status: any) => {
+        switch (status) {
+            case "true":
+                return true;
+
+            case "false":
+                return false;
+        }
+    };
+    const statusAction = getStatus(value) ? "PAUSE SERVICE" : "RESUME SERVICE";
+    const statusButtonColor = (status: any) => {
+        switch (status) {
+            case "true":
+                return "error";
+
+            case "false":
+                return "primary";
+        }
+    };
 
     return (
         <Dialog
@@ -185,7 +204,7 @@ const UserDetailsDialog = ({
                                             justifyContent="flex-end"
                                         >
                                             <Button
-                                                color={statusButtonColor}
+                                                color={statusButtonColor(value)}
                                                 variant="outlined"
                                                 size="small"
                                                 onClick={() => {
@@ -273,7 +292,7 @@ const UserDetailsDialog = ({
                                                         left: 30,
                                                     }}
                                                     checked={roaming}
-                                                    disabled={!status}
+                                                    disabled={!getStatus(value)}
                                                     onClick={(e: any) => {
                                                         setUserForm({
                                                             ...user,

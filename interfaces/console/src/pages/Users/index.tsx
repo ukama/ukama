@@ -56,6 +56,7 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const [test, setTest] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
         userId: "",
@@ -174,9 +175,14 @@ const User = () => {
                 if (res) {
                     setSelectedUser({
                         ...selectedUser,
-                        status: res.updateUserStatus.carrier.services.data,
-                        roaming: res.updateUserStatus.ukama.services.data,
+                        status: res.updateUserStatus.ukama.services.data,
+                        roaming: res.updateUserStatus.carrier.services.data,
                     });
+
+                    localStorage.setItem(
+                        "status",
+                        JSON.stringify(res.updateUserStatus.ukama.services.data)
+                    );
                 }
             },
         });
