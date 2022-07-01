@@ -29,6 +29,8 @@ type Config struct {
 	BackOffLimit          int32 `default:"4"`
 	TimeToLive            int32 `default:"60"`
 	ActiveDeadLineSeconds int64 `default:"3600"`
+	SecRef                string
+	CmRef                 string
 }
 
 var ServiceConfig *Config
