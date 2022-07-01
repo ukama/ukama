@@ -11,7 +11,7 @@ RUN apt install software-properties-common -y
 
 RUN add-apt-repository ppa:deadsnakes/ppa -y
 
-RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python3.11 python3.11-dev libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim unzip -y
+RUN apt-get install bc build-essential git libncurses5-dev lzop perl libssl-dev gnat flex wget zlib1g-dev gcc-arm-linux-gnueabihf automake bison python3.9 python3.9-dev libelf-dev cmake curl libtool tcl pkg-config tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript gawk libjansson-dev buildah patchelf vim unzip -y
 
 RUN apt-get -y install fuse-overlayfs
 
