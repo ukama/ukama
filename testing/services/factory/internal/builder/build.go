@@ -193,6 +193,8 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 											Name: internal.ServiceConfig.CmRef,
 										},
 									},
+								},
+								{
 									SecretRef: &v1.SecretEnvSource{
 										LocalObjectReference: v1.LocalObjectReference{
 											Name: internal.ServiceConfig.SecRef,
