@@ -183,11 +183,14 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 					},
 				},
 			},
+			Hostname:                      nodeId,
+			TerminationGracePeriodSeconds: &internal.ServiceConfig.TerminationGracePeriodSeconds,
+			ActiveDeadlineSeconds:         &internal.ServiceConfig.ActiveDeadlineSeconds,
 		},
 	}
 
 	/* Fixing context time limit 30 days */
-	ctx, cancel := context.WithTimeout(context.TODO(), 720*time.Hour)
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Duration(internal.ServiceConfig.TtlHours)*time.Hour)
 	defer cancel() // releases resources if slowOperation completes before timeout elapses
 
 	_, err := c.cs.CoreV1().
@@ -198,7 +201,7 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		return err
 	}
 
-	logrus.Debugf("PowerOn success for node %s", nodeId)
+	logrus.Infof("PowerOn poweron initiated for node %s", nodeId)
 
 	return err
 
@@ -261,7 +264,7 @@ func (c *Controller) PowerOffNode(nodeId string) error {
 	/* Virtual Node Name */
 	vnName := getVirtNodeName(nodeId)
 
-	logrus.Debugf("Node %s powerOff requested.", nodeId)
+	logrus.Infof("Node %s powerOff requested.", nodeId)
 	err := c.cs.CoreV1().Pods(c.ns).Delete(context.Background(), vnName, metav1.DeleteOptions{})
 	if err != nil {
 		logrus.Errorf("Delete Node failed for %s. Error: %s", nodeId, err.Error())
@@ -381,7 +384,7 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 		logrus.Errorf("Router:: fail marshal: %s", err.Error())
 		return err
 	}
-	logrus.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, c.m)
+	logrus.Debugf("Router:: Proto data for message is %+v \n MsgClient %+v", data, c.m)
 
 	// Publish a message
 	err = c.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, routingKey, msgbus.DeviceQ.ExchangeType)
