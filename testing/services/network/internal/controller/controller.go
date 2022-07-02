@@ -251,7 +251,7 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 /* Go routine to start build process */
 func (c *Controller) PowerOnNode(nodeId string, org string) error {
 
-	containerImage := internal.ServiceConfig.NodeImage
+	containerImage := internal.ServiceConfig.NodeImage + ":" + nodeId
 
 	entryCommand := internal.ServiceConfig.NodeCmd
 
@@ -261,6 +261,7 @@ func (c *Controller) PowerOnNode(nodeId string, org string) error {
 		return fmt.Errorf("%s not expected nodeid format", nodeId)
 	}
 
+	logrus.Debugf("Starting node %s with Image %s and start up %s", nodeId, containerImage, entryCommand)
 	err := c.CreateNode(nodeId, containerImage, entryCommand, *nodeType, org)
 	if err != nil {
 		logrus.Errorf("Create Node instance failed for %s. Error: %s", nodeId, err.Error())
