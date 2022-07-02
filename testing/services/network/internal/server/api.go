@@ -27,7 +27,6 @@ type RespGetNode struct {
 }
 
 type ReqGetNodeList struct {
-	NodeID     string `query:"node" validate:"required"`
 	LookingFor string `query:"looking_for" validate:"eq=vnode_list,required"`
 }
 

@@ -38,7 +38,7 @@ var ServiceConfig *Config
 func NewConfig() *Config {
 
 	return &Config{
-		Server: config.DefaultHTTPConfig(),
+		Server: rest.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
@@ -55,6 +55,9 @@ func NewConfig() *Config {
 				},
 				{
 					"node": "*", "looking_to": "vnode_power_off", "org": "*", "path": "/node",
+				},
+				{
+					"node": "*", "looking_to": "vnode_delete", "org": "*", "path": "/node",
 				},
 				{
 					"looking_for": "vnode_list", "path": "/list",
