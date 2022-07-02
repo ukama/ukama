@@ -36,13 +36,12 @@ type UserService struct {
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
 	queuePub       msgbus.QPub
-	kratosClient   pkg.kratosClient
-
+	kratosClient   pkg.KratosClient
 }
 
 func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
-	queuePub msgbus.QPub,kratosClient pkg.kratosClient) *UserService {
+	queuePub msgbus.QPub, kratosClient pkg.KratosClient) *UserService {
 	return &UserService{userRepo: userRepo,
 		imsiService:    imsiProvider,
 		simRepo:        simRepo,
@@ -493,9 +492,9 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
 }
-func generateQrcode(qrcodeId string,qrcodeName string)(string) {
-
-	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId,qrcode.medium,256)
+func generateQrcode(qrcodeId string, qrcodeName string) string {
+	
+	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
 	if qrGenerateError != nil {
 		 errors.Wrap(qrGenerateError, "failed to generate qrcode")
 	 }
@@ -511,7 +510,7 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap("failed to get qr code %v",err)
+		return errors.Wrap(err,"failed to get qr code")
 	}
 neworkOwner,err :=u.kratosClient.GetAccountName("a32485e4-d842-45da-bf3e-798889c68ad0")
 if err != nil {
