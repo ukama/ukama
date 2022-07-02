@@ -178,10 +178,10 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 			RestartPolicy: v1.RestartPolicyOnFailure,
 			Containers: []v1.Container{
 				v1.Container{
-					Name:    nodeId,
-					Image:   image,
-					Command: command,
-					Args:    []string{},
+					Name:  nodeId,
+					Image: image,
+					//Command: command,
+					Args: []string{},
 					Env: []v1.EnvVar{
 						{
 							Name:  "UUID",
