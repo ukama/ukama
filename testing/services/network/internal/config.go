@@ -25,10 +25,10 @@ type Config struct {
 	Kubeconfig                    string
 	Queue                         config.Queue
 	RepoServerUrl                 string
-	Namespace                     string `default="default"`
-	TerminationGracePeriodSeconds int64  `default="60"`
-	ActiveDeadlineSeconds         int64  `default="60"`
-	TtlHours                      int64  `default="720"` /* 30 days */
+	Namespace                     string `default:"default"`
+	TerminationGracePeriodSeconds int64  `default:"60"`
+	ActiveDeadlineSeconds         int64  `default:"60"`
+	TtlHours                      int64  `default:"720"` /* 30 days */
 }
 
 var ServiceConfig *Config
