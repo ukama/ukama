@@ -105,6 +105,17 @@ func getVirtNodeId(name string) string {
 
 /* Starting build virtual node watcher routine */
 func (c *Controller) ControllerInit() error {
+
+	/* For listing already running virtual nodes in network  */
+	pods, err := c.cs.CoreV1().Pods(c.ns).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		logrus.Errorf("Network:: Error getting pods: %v\n", err)
+		return err
+	}
+	for _, pod := range pods.Items {
+		logrus.Tracef("Network:: Pod Name: %s\n", pod.Name)
+	}
+
 	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
 }
 
