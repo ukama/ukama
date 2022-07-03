@@ -38,6 +38,7 @@ type BasicDialogProps = {
     handleDeactivateAction: Function;
     handleUserRoamingAction: Function;
     handleClose: ReactEventHandler;
+    serviceStatusIndicator: boolean;
 };
 
 const UserDetailsDialog = ({
@@ -56,6 +57,7 @@ const UserDetailsDialog = ({
     handleServiceAction,
     handleDeactivateAction,
     handleUserRoamingAction,
+    serviceStatusIndicator,
 }: BasicDialogProps) => {
     const {
         id,
@@ -73,27 +75,11 @@ const UserDetailsDialog = ({
         return title;
     };
 
-    let value = localStorage.getItem("status");
-    const getStatus = (status: any) => {
-        switch (status) {
-            case "true":
-                return true;
+    const statusAction = serviceStatusIndicator
+        ? "PAUSE SERVICE"
+        : "RESUME SERVICE";
 
-            case "false":
-                return false;
-        }
-    };
-    const statusAction = getStatus(value) ? "PAUSE SERVICE" : "RESUME SERVICE";
-    const statusButtonColor = (status: any) => {
-        switch (status) {
-            case "true":
-                return "error";
-
-            case "false":
-                return "primary";
-        }
-    };
-
+    const statusButtonColor = serviceStatusIndicator ? "error" : "primary";
     return (
         <Dialog
             key={id}
@@ -204,7 +190,7 @@ const UserDetailsDialog = ({
                                             justifyContent="flex-end"
                                         >
                                             <Button
-                                                color={statusButtonColor(value)}
+                                                color={statusButtonColor}
                                                 variant="outlined"
                                                 size="small"
                                                 onClick={() => {
@@ -292,7 +278,9 @@ const UserDetailsDialog = ({
                                                         left: 30,
                                                     }}
                                                     checked={roaming}
-                                                    disabled={!getStatus(value)}
+                                                    disabled={
+                                                        !serviceStatusIndicator
+                                                    }
                                                     onClick={(e: any) => {
                                                         setUserForm({
                                                             ...user,

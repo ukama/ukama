@@ -56,6 +56,7 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
         userId: "",
@@ -171,17 +172,15 @@ const User = () => {
     const [updateUserStatus, { loading: updateUserStatusLoading }] =
         useUpdateUserStatusMutation({
             onCompleted: res => {
+                setServiceStatusIndicator(
+                    res?.updateUserStatus?.ukama.services.data
+                );
                 if (res) {
                     setSelectedUser({
                         ...selectedUser,
                         status: res.updateUserStatus.ukama.services.data,
                         roaming: res.updateUserStatus.carrier.services.data,
                     });
-
-                    localStorage.setItem(
-                        "status",
-                        JSON.stringify(res.updateUserStatus.ukama.services.data)
-                    );
                 }
             },
         });
@@ -382,9 +381,10 @@ const User = () => {
                         }
                         isOpen={true}
                         setUserForm={setSelectedUser}
+                        serviceStatusIndicator={serviceStatusIndicator}
+                        handleClose={handleSimDialogClose}
                         simDetailsTitle="SIM Details"
                         userDetailsTitle="User Settings"
-                        handleClose={handleSimDialogClose}
                         roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}
