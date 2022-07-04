@@ -189,18 +189,13 @@ const Nodes = () => {
                 setIsMetricPolling(true);
 
                 for (const element of res.getMetricsByTab.metrics) {
-                    if (!metrics[element.type]) {
-                        _m[element.type] = {
-                            name: element.name,
-                            data: element.data,
-                        };
-                    }
+                    _m[element.type] = {
+                        name: element.name,
+                        data: element.data,
+                    };
                 }
-                const filter = Object.fromEntries(
-                    Object.entries(_m).filter(([_, v]) => v !== null)
-                );
 
-                setMetrics((_prev: TMetric) => ({ ...filter }));
+                setMetrics((_prev: TMetric) => ({ ..._m }));
             }
         },
         onError: () => {
@@ -232,10 +227,12 @@ const Nodes = () => {
                 res?.subscriptionData?.data?.getMetricsByTab &&
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
-                const _m: TMetric = getMetricsInitObj();
+                const _m: TMetric = {};
+
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
                     const metric = metrics[element.type];
+
                     if (
                         metric &&
                         metric.data &&
@@ -250,12 +247,10 @@ const Nodes = () => {
                         };
                     }
                 }
-                const filter = Object.fromEntries(
-                    Object.entries(_m).filter(([_, v]) => v !== null)
-                );
+
                 setMetrics((_prev: TMetric) => ({
                     ..._prev,
-                    ...filter,
+                    ..._m,
                 }));
 
                 let next = false;
