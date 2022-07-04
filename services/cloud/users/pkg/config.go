@@ -1,8 +1,9 @@
 package pkg
 
 import (
-	"github.com/ukama/ukama/services/common/config"
 	"time"
+
+	"github.com/ukama/ukama/services/common/config"
 )
 
 type Config struct {
@@ -13,6 +14,7 @@ type Config struct {
 	SimManager        SimManager
 	SimTokenKey       string
 	Queue             config.Queue
+	KratoAdminUrl     string
 }
 
 type SimManager struct {
@@ -40,6 +42,7 @@ func NewConfig() *Config {
 			Name:    "SimManager",
 			Timeout: 3 * time.Second,
 		},
+		KratoAdminUrl:"localhost",
 		SimTokenKey: "11111111111111111111111111111111",
 	}
 }

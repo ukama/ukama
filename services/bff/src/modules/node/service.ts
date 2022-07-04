@@ -1,6 +1,5 @@
 import { Service } from "typedi";
 import {
-    AddNodeDto,
     AddNodeResponse,
     OrgNodeResponseDto,
     UpdateNodeDto,
@@ -12,6 +11,8 @@ import {
     NodeResponse,
     GetNodeStatusRes,
     GetNodeStatusInput,
+    LinkNodes,
+    NodeObj,
 } from "./types";
 import {
     ParsedCookie,
@@ -24,16 +25,16 @@ import { INodeService } from "./interface";
 import { DeleteNodeRes } from "../user/types";
 import { catchAsyncIOMethod } from "../../common";
 import { API_METHOD_TYPE } from "../../constants";
+import setupLogger from "../../config/setupLogger";
 import { GRAPHS_TAB } from "./../../constants/index";
 import { getMetricUri, SERVER } from "../../constants/endpoints";
 import { getMetricsByTab, getMetricTitleByType } from "../../utils";
-import setupLogger from "../../config/setupLogger";
 
 const logger = setupLogger("service");
 @Service()
 export class NodeService implements INodeService {
     addNode = async (
-        req: AddNodeDto,
+        req: NodeObj,
         cookie: ParsedCookie
     ): Promise<AddNodeResponse> => {
         const res = await catchAsyncIOMethod({
@@ -41,7 +42,29 @@ export class NodeService implements INodeService {
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {
-                name: req.name,
+                node: {
+                    name: req.name,
+                },
+            },
+        });
+        if (checkError(res)) {
+            logger.error(res);
+            throw new Error(res.message);
+        }
+        return res;
+    };
+    linkNodes = async (
+        req: LinkNodes,
+        cookie: ParsedCookie
+    ): Promise<AddNodeResponse> => {
+        const res = await catchAsyncIOMethod({
+            type: API_METHOD_TYPE.PATCH,
+            path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
+            headers: cookie.header,
+            body: {
+                node: {
+                    attached: req.attached,
+                },
             },
         });
         if (checkError(res)) {
@@ -55,7 +78,7 @@ export class NodeService implements INodeService {
         cookie: ParsedCookie
     ): Promise<OrgNodeDto> => {
         const res = await catchAsyncIOMethod({
-            type: API_METHOD_TYPE.PUT,
+            type: API_METHOD_TYPE.PATCH,
             path: `${SERVER.ORG}/${cookie.orgId}/nodes/${req.nodeId}`,
             headers: cookie.header,
             body: {

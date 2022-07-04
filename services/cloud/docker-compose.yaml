@@ -33,10 +33,12 @@ services:
     networks:
         - ukama-net
   
-  network:
-    build: ./network
+  network:    
+    build:
+      context: ./network
+      dockerfile: ./Dockerfile
     ports:
-      - "9090:9090"
+      - "9093:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
@@ -55,7 +57,7 @@ services:
   org:
     build: ./org
     ports:
-      - "9090:9090"
+      - "9094:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
@@ -74,7 +76,7 @@ services:
   node:
     build: ./node
     ports:
-      - "9090:9090"
+      - "9097:9090"
     environment:
       - DEBUGMODE=true
       - DB_HOST=postgresd
@@ -103,7 +105,22 @@ services:
       - HSSHOST=hss:9091
     restart: always
     networks:
-      - ukama-net      
+      - ukama-net
+
+  users:
+    build: ./users
+    ports:
+      - "9098:9090"
+    environment:
+      - DEBUGMODE=true
+      - DB_HOST=postgresd
+      - DB_PASSWORD=ThisIsUkamaXPass
+      - DB_USER=postgres
+      - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
+      - HSSHOST=hss:9091
+    restart: always
+    networks:
+      - ukama-net  
 
   listener:
     build:
@@ -142,7 +159,7 @@ services:
       - ukama-net
     environment:
       - DEBUGMODE=true
-      - BYPASSAUTHMODE=true
+      - BYPASSAUTHMODE=true      
       # - CORS_ALLOWALLORIGINS=true
       # - CORS_ALLOWORIGINS=""
 
