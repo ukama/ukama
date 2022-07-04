@@ -6,7 +6,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/ukama/ukama/services/common/config"
 	"testing"
 	"time"
 
@@ -17,11 +16,14 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/num30/config"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	pb "github.com/ukama/ukama/services/cloud/node/pb/gen"
+	uconf "github.com/ukama/ukama/services/common/config"
 	commonpb "github.com/ukama/ukama/services/common/pb/gen/ukamaos/mesh"
 	"google.golang.org/grpc"
+	"gopkg.in/yaml.v3"
 )
 
 var tConfig *TestConfig
@@ -32,20 +34,26 @@ func init() {
 	orgName = fmt.Sprintf("node-integration-self-test-org-%d", time.Now().Unix())
 
 	// load config
-	tConfig = &TestConfig{
-		ServiceHost: "localhost:9090",
-		Rabbitmq:    "amqp://guest:guest@localhost:5672",
+	tConfig = &TestConfig{}
+
+	err := config.NewConfReader("integration").Read(tConfig)
+	if err != nil {
+		logrus.Fatal("Error reading config ", err)
+	} else if tConfig.DebugMode {
+		b, err := yaml.Marshal(tConfig)
+		if err != nil {
+			logrus.Infof("Config:\n%s", string(b))
+		}
 	}
 
-	config.LoadConfig("integration", tConfig)
-
-	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: REGISTRYHOST")
+	logrus.Info("Expected config ", "integration.yaml", " or env vars for ex: SERVICEHOST")
 	logrus.Infof("Config: %+v\n", tConfig)
 }
 
 type TestConfig struct {
-	ServiceHost string
-	Rabbitmq    string
+	uconf.BaseConfig `mapstructure:",squash"`
+	ServiceHost      string       `default:"localhost:9090"`
+	Queue            *uconf.Queue `default:{}`
 }
 
 func Test_FullFlow(t *testing.T) {
@@ -221,7 +229,7 @@ func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
 }
 
 func sendMessageToQueue(nodeId string) error {
-	rabbit, err := msgbus.NewPublisherClient(tConfig.Rabbitmq)
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
 
 	if err != nil {
 		return err
