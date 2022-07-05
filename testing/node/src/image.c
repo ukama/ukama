@@ -171,7 +171,7 @@ static int create_container_file(char *target, Configs *config, Node *node) {
 	sprintf(buffer, CF_COPY, "./build/bin", "/bin");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
-	sprintf(buffer, CF_ADD, "supervisord.conf", "/etc/supervisor.conf");
+	sprintf(buffer, CF_ADD, "supervisor.conf", "/etc/supervisor.conf");
 	if (!write_to_container_file(buffer, CONTAINER_FILE, fp)) return FALSE;
 
 	sprintf(buffer, CF_CMD, SUPERVISOR_CMD);
