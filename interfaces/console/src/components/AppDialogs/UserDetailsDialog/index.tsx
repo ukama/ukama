@@ -52,6 +52,7 @@ const UserDetailsDialog = ({
     loading = true,
     roamingLoading,
     simDetailsTitle,
+    userStatusLoading,
     userDetailsTitle,
     handleSubmitAction,
     handleServiceAction,
@@ -189,21 +190,27 @@ const UserDetailsDialog = ({
                                             container
                                             justifyContent="flex-end"
                                         >
-                                            <Button
-                                                color={statusButtonColor}
-                                                variant="outlined"
-                                                size="small"
-                                                onClick={() => {
-                                                    if (id && iccid)
-                                                        handleServiceAction(
-                                                            id,
-                                                            iccid,
-                                                            !status
-                                                        );
-                                                }}
+                                            <LoadingWrapper
+                                                isLoading={userStatusLoading}
+                                                width={"150px"}
+                                                height={"30px"}
                                             >
-                                                {statusAction}
-                                            </Button>
+                                                <Button
+                                                    color={statusButtonColor}
+                                                    variant="outlined"
+                                                    size="small"
+                                                    onClick={() => {
+                                                        if (id && iccid)
+                                                            handleServiceAction(
+                                                                id,
+                                                                iccid,
+                                                                !status
+                                                            );
+                                                    }}
+                                                >
+                                                    {statusAction}
+                                                </Button>
+                                            </LoadingWrapper>
                                         </Grid>
                                     </Grid>
                                 </Grid>
