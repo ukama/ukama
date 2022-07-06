@@ -36,7 +36,7 @@ func (i *imsiClientProvider) GetClient() (pb.ImsiServiceClient, error) {
 
 		conn, err := grpc.DialContext(ctx, i.hssHost, grpc.WithBlock(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			log.Fatalf("Failed to connect to service %s. Error: %v", i.hssHost, err)
+			log.Fatalf("Failed to connect to hss service %s. Error: %v", i.hssHost, err)
 		}
 
 		i.imsiService = pb.NewImsiServiceClient(conn)

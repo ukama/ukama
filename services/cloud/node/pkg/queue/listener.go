@@ -43,7 +43,7 @@ type QueueListenerConfig struct {
 
 func NewQueueListener(conf QueueListenerConfig, serviceName string, serviceId string) (*QueueListener, error) {
 
-	conn, err := grpc.Dial(conf.Service.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	conn, err := grpc.Dial(conf.Service.Host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock(), grpc.WithTimeout(conf.Service.Timeout))
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
