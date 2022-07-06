@@ -8,25 +8,47 @@ import {
 import { useState } from "react";
 import { MenuItemType } from "../../types";
 import MenuDots from "@mui/icons-material/MoreHoriz";
+import { colors } from "../../theme";
 
 type ItemProps = {
     Icon: any;
     type: string;
     title: string;
+    isShowUpdate: boolean;
     handleItemClick: Function;
 };
 
-const OptionItem = ({ type, Icon, title, handleItemClick }: ItemProps) => (
-    <MenuItem onClick={() => handleItemClick(type)}>
+const OptionItem = ({
+    type,
+    Icon,
+    title,
+    isShowUpdate,
+    handleItemClick,
+}: ItemProps) => (
+    <MenuItem
+        onClick={() => handleItemClick(type)}
+        sx={{ display: isShowUpdate ? "flex" : "none" }}
+    >
         <ListItemIcon>
             <Icon fontSize="small" />
         </ListItemIcon>
-        <ListItemText>{title}</ListItemText>
+        <ListItemText sx={{ mr: 1 }}>{title}</ListItemText>
+        {type === "update" && (
+            <div
+                style={{
+                    width: 6,
+                    height: 6,
+                    borderRadius: "100%",
+                    backgroundColor: colors.primaryMain,
+                }}
+            />
+        )}
     </MenuItem>
 );
 
 type OptionsPopoverProps = {
     cid: string;
+    isShowUpdate?: boolean;
     menuOptions: MenuItemType[];
     handleItemClick: Function;
     style?: any;
@@ -35,6 +57,7 @@ type OptionsPopoverProps = {
 const OptionsPopover = ({
     cid,
     menuOptions,
+    isShowUpdate = false,
     handleItemClick,
     style,
 }: OptionsPopoverProps) => {
@@ -50,9 +73,22 @@ const OptionsPopover = ({
                 onClick={handlePopoverOpen}
                 aria-describedby={id}
                 style={style}
-                sx={{ p: 0 }}
+                sx={{ p: 0, position: "relative" }}
             >
                 <MenuDots fontSize="small" />
+                {isShowUpdate && (
+                    <div
+                        style={{
+                            top: "2px",
+                            right: 0,
+                            width: 6,
+                            height: 6,
+                            position: "absolute",
+                            borderRadius: "100%",
+                            backgroundColor: colors.primaryMain,
+                        }}
+                    />
+                )}
             </IconButton>
             <Popover
                 id={id}
@@ -74,6 +110,7 @@ const OptionsPopover = ({
                         type={route}
                         Icon={Icon}
                         title={title}
+                        isShowUpdate={optId === 3 ? isShowUpdate : true}
                         handleItemClick={(type: string) => {
                             handleItemClick(type);
                             handlePopoverClose();

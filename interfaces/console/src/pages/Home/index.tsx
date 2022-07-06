@@ -770,12 +770,7 @@ const Home = () => {
         const node = nodeRes?.getNodesByOrg?.nodes?.filter(
             item => item.id === id
         );
-
-        if (!node) {
-            return null;
-        }
-
-        if (type == "edit") {
+        if (type === "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -788,11 +783,13 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else if (type == "delete") {
+        } else if (type === "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",
             });
+        } else if (type === "update") {
+            handleNodeUpdateAction();
         }
     };
 
@@ -954,8 +951,7 @@ const Home = () => {
                                 buttonTitle={"Update All"}
                             />
                             <NodeContainer
-                                handleNodeUpdate={handleNodeUpdateAction}
-                                items={nodeRes?.getNodesByOrg?.nodes || []}
+                                items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
                         </RoundedCard>
@@ -1052,7 +1048,6 @@ const Home = () => {
                     type={simDialog.type}
                     saveBtnLabel={"Save"}
                     closeBtnLabel="close"
-                    serviceStatusIndicator={serviceStatusIndicator}
                     loading={getUserLoading}
                     isOpen={simDialog.isShow}
                     setUserForm={setSelectedUser}
@@ -1063,6 +1058,7 @@ const Home = () => {
                     userStatusLoading={updateUserStatusLoading}
                     handleServiceAction={handleUpdateUserStatus}
                     handleSubmitAction={handleUserSubmitAction}
+                    serviceStatusIndicator={serviceStatusIndicator}
                     handleDeactivateAction={handleDeactivateAction}
                     handleUserRoamingAction={handleUserRoamingAction}
                 />
