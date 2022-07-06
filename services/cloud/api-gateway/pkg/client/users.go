@@ -18,8 +18,6 @@ type Users struct {
 }
 
 func NewUsers(host string, timeout time.Duration) *Users {
-
-	// Todo. Add timeout
 	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithTimeout(timeout))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
