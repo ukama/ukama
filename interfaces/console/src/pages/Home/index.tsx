@@ -573,7 +573,7 @@ const Home = () => {
             tab: 4,
             regPolling: false,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
@@ -584,7 +584,7 @@ const Home = () => {
             from: from,
             regPolling: true,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
         });
 
     const handleAddNodeClose = () => {
