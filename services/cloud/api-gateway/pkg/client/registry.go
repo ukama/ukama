@@ -32,19 +32,23 @@ type Registry struct {
 }
 
 func NewRegistry(networkHost string, orgHost string, nodeHost string, timeout time.Duration) *Registry {
-	conn, err := grpc.Dial(networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithTimeout(timeout))
+	// using same context for three connections
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
 	client := pb.NewNetworkServiceClient(conn)
 
-	orgConn, err := grpc.Dial(orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithTimeout(timeout))
+	orgConn, err := grpc.DialContext(ctx, orgHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
 	orgClient := pborg.NewOrgServiceClient(orgConn)
 
-	nodeConn, err := grpc.Dial(nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithTimeout(timeout))
+	nodeConn, err := grpc.DialContext(ctx, nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}
