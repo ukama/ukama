@@ -1,19 +1,10 @@
-import {
-    Grid,
-    Card,
-    styled,
-    Tooltip,
-    Divider,
-    Typography,
-    IconButton,
-} from "@mui/material";
 import React from "react";
 import { LoadingWrapper } from "..";
 import { Node_Type } from "../../generated";
 import OptionsPopover from "../OptionsPopover";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import { BASIC_MENU_ACTIONS, NODE_IMAGES } from "../../constants";
-import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
+import { Grid, Card, styled, Divider, Typography } from "@mui/material";
 
 const CpuIcon = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -52,23 +43,17 @@ type NodeCardProps = {
     isConfigure?: boolean;
     updateShortNote: string;
     isUpdateAvailable: boolean;
-    handleNodeUpdate: Function;
     handleOptionItemClick?: Function;
 };
 
 const NodeCard = ({
-    id,
     type,
     title,
     users,
     subTitle,
     loading,
-    updateShortNote = "",
     isUpdateAvailable = false,
     handleOptionItemClick = () => {
-        /* Default empty function */
-    },
-    handleNodeUpdate = () => {
         /* Default empty function */
     },
 }: NodeCardProps) => {
@@ -113,28 +98,15 @@ const NodeCard = ({
                         alignItems="center"
                         justifyContent={"flex-end"}
                     >
-                        {isUpdateAvailable ? (
-                            <Tooltip title={updateShortNote} arrow>
-                                <IconButton
-                                    sx={{ p: 0, cursor: "pointer" }}
-                                    onClick={() => handleNodeUpdate(id)}
-                                >
-                                    <UpdateIcon
-                                        fontSize="small"
-                                        color="primary"
-                                    />
-                                </IconButton>
-                            </Tooltip>
-                        ) : (
-                            <OptionsPopover
-                                style={{ cursor: "pointer" }}
-                                cid={"node-card-options"}
-                                menuOptions={BASIC_MENU_ACTIONS}
-                                handleItemClick={(type: string) =>
-                                    handleOptionItemClick(type)
-                                }
-                            />
-                        )}
+                        <OptionsPopover
+                            style={{ cursor: "pointer" }}
+                            cid={"node-card-options"}
+                            isShowUpdate={isUpdateAvailable}
+                            menuOptions={BASIC_MENU_ACTIONS}
+                            handleItemClick={(type: string) =>
+                                handleOptionItemClick(type)
+                            }
+                        />
                     </Grid>
                     <Grid item xs={12} textAlign="initial">
                         <Typography variant="caption">{subTitle}</Typography>

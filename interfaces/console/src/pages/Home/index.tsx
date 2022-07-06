@@ -766,7 +766,7 @@ const Home = () => {
         const node = nodeRes?.getNodesByOrg?.nodes.filter(
             item => item.id === id
         );
-        if (type == "edit" && node) {
+        if (type === "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -779,11 +779,13 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else if (type == "delete") {
+        } else if (type === "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",
             });
+        } else if (type === "update") {
+            handleNodeUpdateAction();
         }
     }, []);
 
@@ -945,7 +947,6 @@ const Home = () => {
                                 buttonTitle={"Update All"}
                             />
                             <NodeContainer
-                                handleNodeUpdate={handleNodeUpdateAction}
                                 items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />

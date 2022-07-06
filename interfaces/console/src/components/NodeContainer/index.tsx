@@ -6,14 +6,9 @@ import React from "react";
 type NodeContainerProps = {
     items: NodeDto[];
     handleItemAction: Function;
-    handleNodeUpdate: Function;
 };
 
-const NodeContainer = ({
-    items,
-    handleItemAction,
-    handleNodeUpdate,
-}: NodeContainerProps) => {
+const NodeContainer = ({ items, handleItemAction }: NodeContainerProps) => {
     return (
         <Box
             component="div"
@@ -24,11 +19,7 @@ const NodeContainer = ({
             }}
         >
             {items.length > 0 ? (
-                <NodeSlider
-                    items={items}
-                    handleItemAction={handleItemAction}
-                    handleNodeUpdate={handleNodeUpdate}
-                />
+                <NodeSlider items={items} handleItemAction={handleItemAction} />
             ) : (
                 <EmptyView
                     size="large"

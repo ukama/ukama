@@ -7,14 +7,9 @@ import { NodeDto } from "../../generated";
 interface INodeSlider {
     items: NodeDto[];
     handleItemAction: Function;
-    handleNodeUpdate: Function;
 }
 
-const NodeSlider = ({
-    items = [],
-    handleItemAction,
-    handleNodeUpdate,
-}: INodeSlider) => {
+const NodeSlider = ({ items = [], handleItemAction }: INodeSlider) => {
     const small = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm"));
     const medium = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
     const [list, setList] = useState<any>([]);
@@ -84,7 +79,6 @@ const NodeSlider = ({
                                 handleOptionItemClick={(type: string) =>
                                     handleItemAction(id, type)
                                 }
-                                handleNodeUpdate={handleNodeUpdate}
                             />
                         )
                     )}
