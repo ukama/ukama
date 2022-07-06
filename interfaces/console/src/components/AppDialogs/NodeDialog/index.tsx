@@ -14,18 +14,21 @@ import {
     DialogActions,
     DialogContent,
     OutlinedInput,
+    Divider,
     DialogContentText,
     Alert,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { Fragment, useState } from "react";
 import { colors } from "../../../theme";
 import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
+import AddIcon from "@mui/icons-material/Add";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
 import ErrorIcon from "@mui/icons-material/Error";
 import CloseIcon from "@mui/icons-material/Close";
 import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
 const useStyles = makeStyles(() => ({
@@ -91,11 +94,11 @@ type NodeDialogProps = {
     nodeData: any;
     isOpen: boolean;
     action?: string;
-    associatedTowerNode?: any;
     subTitle: string;
     handleClose: any;
     subTitle2?: string;
     dialogTitle: string;
+    associatedTowerNodes?: any;
     handleNodeSubmitAction: Function;
 };
 
@@ -104,9 +107,9 @@ const NodeDialog = ({
     subTitle,
     nodeData,
     dialogTitle,
-    associatedTowerNode,
     action = "",
     handleClose,
+    associatedTowerNodes,
     handleNodeSubmitAction,
 }: NodeDialogProps) => {
     const classes = useStyles();
@@ -116,9 +119,38 @@ const NodeDialog = ({
         name: nodeData.name,
         nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
+        associatedTowerNode: nodeData.associatedTowerNode,
     });
+
     const [error, setError] = useState("");
-    const [nodeType, setNodeType] = useState<any>();
+    const [attachedAmplierNode, setAttachedAmplierNode] = useState([
+        {
+            nodeId: "",
+            nodeName: "",
+        },
+    ]);
+    const handleInputChange = (e: any, index: number) => {
+        const { name, value } = e.target;
+        const list: any = [...attachedAmplierNode];
+        list[index][name] = value;
+        setAttachedAmplierNode(list);
+    };
+
+    const handleRemoveClick = (index: number) => {
+        const list = [...attachedAmplierNode];
+        list.splice(index, 1);
+        setAttachedAmplierNode(list);
+    };
+    const onAddTowerNode = () => {
+        //handle addTowerNode
+    };
+
+    const handleAddClick = () => {
+        setAttachedAmplierNode([
+            ...attachedAmplierNode,
+            { nodeId: "", nodeName: "" },
+        ]);
+    };
 
     const handleRegisterNode = () => {
         if (!formData.name || !formData.nodeId) {
@@ -131,10 +163,17 @@ const NodeDialog = ({
 
     const handleNodeTypeChange = (e: SelectChangeEvent) => {
         setFormData({ ...formData, nodeId: "", type: e.target.value });
-        setNodeType(e.target.value);
-        console.log("TYPE", e.target.value);
     };
 
+    const handleAssociatedTowerNode = (e: SelectChangeEvent) => {
+        setFormData({
+            ...formData,
+            nodeId: "",
+            associatedTowerNode: e.target.value as string,
+        });
+    };
+
+    console.log(attachedAmplierNode.length);
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
@@ -279,7 +318,7 @@ const NodeDialog = ({
                             }
                         />
                     </Grid>
-                    {nodeType == "AMPLIFIER" && (
+                    {formData.type == "AMPLIFIER" && (
                         <Grid item xs={12}>
                             <FormControl
                                 variant="outlined"
@@ -288,21 +327,26 @@ const NodeDialog = ({
                                 <InputLabel
                                     shrink
                                     variant="outlined"
-                                    htmlFor="outlined-age-always-notched"
+                                    htmlFor="associatedTowerNode"
                                 >
                                     ASSOCIATED TOWER NODE
                                 </InputLabel>
                                 <Select
-                                    value={formData.type}
+                                    labelId="associatedTowerNodel"
+                                    id="associatedTowerNode"
+                                    sx={{
+                                        "& legend": { width: "190px" },
+                                    }}
+                                    onChange={handleAssociatedTowerNode}
+                                    value={formData.associatedTowerNode}
                                     variant="outlined"
-                                    onChange={handleNodeTypeChange}
                                     disabled={action == "editNode"}
                                     input={
                                         <OutlinedInput
                                             notched
                                             label="ASSOCIATED TOWER NODE"
-                                            name="node_type"
-                                            id="outlined-age-always-notched"
+                                            name="associatedTowerNode"
+                                            id="associatedTowerNode"
                                         />
                                     }
                                     MenuProps={{
@@ -317,26 +361,211 @@ const NodeDialog = ({
                                     }}
                                     className={classes.selectStyle}
                                 >
-                                    {associatedTowerNode.map(
-                                        ({ id, label, value }: any) => (
-                                            <MenuItem
-                                                key={id}
-                                                value={value}
-                                                sx={{
-                                                    m: 0,
-                                                    p: "6px 16px",
-                                                }}
-                                            >
+                                    {associatedTowerNodes.map(
+                                        ({ id, name }: any) => (
+                                            <MenuItem value={name} key={id}>
                                                 <Typography variant="body1">
-                                                    {label}
+                                                    {name}
                                                 </Typography>
                                             </MenuItem>
                                         )
                                     )}
+                                    <Divider />
+                                    <MenuItem
+                                        onClick={e => {
+                                            onAddTowerNode();
+                                            e.stopPropagation();
+                                        }}
+                                    >
+                                        <Button
+                                            variant="text"
+                                            sx={{
+                                                typography: "body1",
+                                                textTransform: "none",
+                                            }}
+                                        >
+                                            Add Tower Node
+                                        </Button>
+                                    </MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
                     )}
+                    {attachedAmplierNode.map((x: any, i: any) => {
+                        return (
+                            formData.type == "TOWER" && (
+                                <Fragment key={i}>
+                                    <Grid item xs={12}>
+                                        <Divider />
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        xs={12}
+                                        sx={{
+                                            pt: 4,
+                                        }}
+                                    >
+                                        <Stack
+                                            direction="row"
+                                            justifyContent="space-between"
+                                        >
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    fontStyle: "Bold",
+                                                }}
+                                            >
+                                                AMPLIFIER NODE
+                                            </Typography>
+                                            <IconButton
+                                                color="primary"
+                                                aria-label="remove-node"
+                                                component="span"
+                                                onClick={() =>
+                                                    handleRemoveClick(i)
+                                                }
+                                            >
+                                                <RemoveCircleOutlineIcon />
+                                            </IconButton>
+                                        </Stack>
+                                    </Grid>
+
+                                    <Fragment key={i}>
+                                        <Grid item xs={12} md={6}>
+                                            <FormControl
+                                                variant="outlined"
+                                                className={classes.formControl}
+                                            >
+                                                <InputLabel
+                                                    shrink
+                                                    variant="outlined"
+                                                    htmlFor="outlined-age-always-notched"
+                                                >
+                                                    NODE TYPE
+                                                </InputLabel>
+                                                <Select
+                                                    value={"AMPLIFIER"}
+                                                    variant="outlined"
+                                                    onChange={
+                                                        handleNodeTypeChange
+                                                    }
+                                                    disabled={
+                                                        action == "editNode"
+                                                    }
+                                                    input={
+                                                        <OutlinedInput
+                                                            notched
+                                                            label="NODE TYPE"
+                                                            name="node_type"
+                                                            id="outlined-age-always-notched"
+                                                        />
+                                                    }
+                                                    MenuProps={{
+                                                        disablePortal: false,
+                                                        PaperProps: {
+                                                            sx: {
+                                                                boxShadow:
+                                                                    "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
+                                                                borderRadius:
+                                                                    "4px",
+                                                            },
+                                                        },
+                                                    }}
+                                                    className={
+                                                        classes.selectStyle
+                                                    }
+                                                >
+                                                    {[
+                                                        {
+                                                            id: 2,
+                                                            label: "Amplifier",
+                                                            value: "AMPLIFIER",
+                                                        },
+                                                    ].map(
+                                                        ({
+                                                            id,
+                                                            label,
+                                                            value,
+                                                        }) => (
+                                                            <MenuItem
+                                                                key={id}
+                                                                value={value}
+                                                                sx={{
+                                                                    m: 0,
+                                                                    p: "6px 16px",
+                                                                }}
+                                                            >
+                                                                <Typography variant="body1">
+                                                                    {label}
+                                                                </Typography>
+                                                            </MenuItem>
+                                                        )
+                                                    )}
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={12} md={6}>
+                                            <TextField
+                                                fullWidth
+                                                label={"NODE NUMBER"}
+                                                name="nodeId"
+                                                value={x.nodeId}
+                                                onChange={e =>
+                                                    handleInputChange(e, i)
+                                                }
+                                                disabled={action == "editNode"}
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                                InputProps={{
+                                                    classes: {
+                                                        input: gclasses.inputFieldStyle,
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <TextField
+                                                fullWidth
+                                                label={"NODE NAME"}
+                                                name={"nodeName"}
+                                                value={x.nodeName}
+                                                onChange={e =>
+                                                    handleInputChange(e, i)
+                                                }
+                                                disabled={action == "editNode"}
+                                                InputLabelProps={{
+                                                    shrink: true,
+                                                }}
+                                                InputProps={{
+                                                    classes: {
+                                                        input: gclasses.inputFieldStyle,
+                                                    },
+                                                }}
+                                            />
+                                        </Grid>
+                                    </Fragment>
+
+                                    <Grid item xs={12} sx={{ pt: 2 }}>
+                                        {attachedAmplierNode.length - 1 === i &&
+                                            attachedAmplierNode.length < 2 && (
+                                                <Button
+                                                    variant="text"
+                                                    startIcon={<AddIcon />}
+                                                    onClick={handleAddClick}
+                                                    sx={{
+                                                        color: colors.primaryMain,
+                                                        pointer: "cursor",
+                                                    }}
+                                                >
+                                                    add amplifier node
+                                                </Button>
+                                            )}
+                                    </Grid>
+                                </Fragment>
+                            )
+                        );
+                    })}
 
                     {action == "editNode" && (
                         <Grid item xs={12}>

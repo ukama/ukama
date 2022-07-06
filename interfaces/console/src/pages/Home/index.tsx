@@ -129,6 +129,7 @@ const Home = () => {
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [availableTowerNode, setAvailableTowerNode] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -493,6 +494,12 @@ const Home = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
+
+            setAvailableTowerNode(
+                nodeRes?.getNodesByOrg.nodes.filter(
+                    item => item.type === "TOWER"
+                )
+            );
         }
     }, [nodeRes]);
 
@@ -741,6 +748,13 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
+                        associate: false,
+                        attached: [
+                            {
+                                name: "eli",
+                                nodeId: "123",
+                            },
+                        ],
                     },
                 },
             });
@@ -1010,6 +1024,7 @@ const Home = () => {
                     dialogTitle={showNodeDialog.title}
                     subTitle={showNodeDialog.subTitle}
                     handleNodeSubmitAction={handleNodeSubmitAction}
+                    associatedTowerNodes={availableTowerNode || []}
                 />
             )}
 
