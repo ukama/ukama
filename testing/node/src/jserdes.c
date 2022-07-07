@@ -228,7 +228,7 @@ static int deserialize_node_config_elem(NodeConfig **nodeConfig, json_t *json) {
 						  &(*nodeConfig)->mfgSWVersion, NULL);
 	ret |= get_json_entry(json, JSON_MFG_DATE, JSON_STRING,
 						  &(*nodeConfig)->mfgDate, NULL);
-	ret |= get_json_entry(json, JSON_OEM, JSON_STRING,
+	ret |= get_json_entry(json, JSON_MFG, JSON_STRING,
 						  &(*nodeConfig)->oem, NULL);
 	ret |= get_json_entry(json, JSON_STATUS, JSON_STRING,
 						  &(*nodeConfig)->status, NULL);

@@ -220,6 +220,34 @@ static inline int usys_memcmp(void *ptr1, void *ptr2, size_t num) {
     return memcmp(ptr1, ptr2, num);
 }
 
+/**
+ * @fn      char* usys_strdup(char*)
+ * @brief   Returns a pointer to a null-terminated byte string,
+ *          which is a duplicate of the string pointed to by str
+ *
+ * @param   str
+ * @return  On Success, Address of a null terminated duplicate string
+ *          On Failure, NULL
+ */
+static inline char* usys_strdup(char* str) {
+    return  strdup(str);
+}
+
+/**
+ * @fn      int usys_strndup(char*)
+ * @brief   Returns a pointer to a null-terminated byte string,
+ *          which is a duplicate of the string pointed to by str till nth
+ *          character
+ *
+ * @param   str
+ * @param   n
+ * @return  On Success, Address of a null terminated duplicate string
+ *          On Failure, NULL
+ */
+static inline char* usys_strndup(char* str, size_t n) {
+    return  strndup(str, n);
+}
+
 #ifdef __cplusplus
 }
 #endif

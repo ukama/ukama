@@ -1,10 +1,10 @@
 package pkg
 
 import (
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/msgbus"
 )
 

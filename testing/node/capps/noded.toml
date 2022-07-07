@@ -11,19 +11,21 @@
 [build-compile]
 	version="0.1"
 	static="false"
-	source="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/noded"
+	source="/distro/system/noded"
 	cmd="make"
-	bin_from="/home/kashif/work/ukama/repos/ukama/nodes/ukamaOS/distro/system/noded/build/noded"
+	bin_from="/distro/system/noded/build/noded"
 	bin_to="/sbin/"
-	
+
 # for [program:<exec>] in supervisor.conf
 [capp-exec]
 	name="noded"
 	version="latest"
-	autostart="true"
+	autostart="false"
 	autorestart="false"
+	startretries=5
 	bin="noded"
-	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--p /mfgdata/property/property.json --i /tmp/sys/inventory_db"
+	group="on-boot"
 
 # Nothing to see here. Move on

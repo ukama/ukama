@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 	"github.com/ukama/ukama/services/cloud/users/pkg/db"
@@ -10,17 +10,19 @@ import (
 	"github.com/ukama/ukama/services/common/msgbus"
 
 	uuid2 "github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	hsspb "github.com/ukama/ukama/services/cloud/hss/pb/gen"
 	pb "github.com/ukama/ukama/services/cloud/users/pb/gen"
 	pbclient "github.com/ukama/ukama/services/cloud/users/pb/gen/simmgr"
+	"github.com/ukama/ukama/services/common/errors"
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
+
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 const uuidParsingError = "Error parsing UUID"
@@ -34,11 +36,12 @@ type UserService struct {
 	simRepo        db.SimcardRepo
 	simProvider    sims.SimProvider
 	queuePub       msgbus.QPub
+	kratosClient   pkg.KratosClient
 }
 
 func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, simRepo db.SimcardRepo,
 	simProvider sims.SimProvider, simManager pbclient.SimManagerServiceClient, simManagerName string,
-	queuePub msgbus.QPub) *UserService {
+	queuePub msgbus.QPub, kratosClient pkg.KratosClient) *UserService {
 	return &UserService{userRepo: userRepo,
 		imsiService:    imsiProvider,
 		simRepo:        simRepo,
@@ -46,6 +49,7 @@ func NewUserService(userRepo db.UserRepo, imsiProvider pkg.ImsiClientProvider, s
 		simManagerName: simManagerName,
 		simProvider:    simProvider,
 		queuePub:       queuePub,
+		kratosClient:   kratosClient,
 	}
 }
 
@@ -453,7 +457,6 @@ func (u *UserService) deleteImsiFromHss(ctx context.Context, userId string) erro
 	if err != nil {
 		return errors.Wrap(err, "failed to connect to hss")
 	}
-
 	_, err = s.Delete(ctx, &hsspb.DeleteImsiRequest{
 		IdOneof: &hsspb.DeleteImsiRequest_UserId{
 			UserId: userId,
@@ -488,6 +491,27 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 		DataUsedBytes:      r.DataUsageInBytes,
 	}
 }
+func generateQrcode(qrcodeId string, qrcodeName string) string {
+<<<<<<< HEAD
+	
+	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
+	if qrGenerateError != nil {
+		 errors.Wrap(qrGenerateError, "failed to generate qrcode")
+	 }
+	 encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
+	return encodedData 
+=======
+
+	qrcode,err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
+	if err!=nil{
+		fmt.Printf("Could not generate qrcode :,%v",err)
+	}
+	
+	encodedData := base64.StdEncoding.EncodeToString(qrcode)
+	return encodedData
+>>>>>>> e477803450 (Fix linting error)
+}
+
 
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
 	logrus.Infof("Sending email to %s", email)
@@ -496,16 +520,21 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap(err, "failed to get qr code")
+		return errors.Wrap(err,"failed to get qr code")
 	}
-
+neworkOwner,err :=u.kratosClient.GetAccountName("a32485e4-d842-45da-bf3e-798889c68ad0")
+if err != nil {
+	return errors.Wrap(err, "failed to get network owner name")
+}
 	logrus.Infof("Publishing queue message")
 	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
 		To:           email,
 		TemplateName: "users-qr-code",
 		Values: map[string]any{
 			"Name": name,
-			"Qr":   fmt.Sprintf("Here your QR code: %s", resp.QrCode),
+			"networkOwner":neworkOwner,
+			"Qr":   generateQrcode(resp.QrCode,name),
+			"QrCodeLink":resp.QrCode,
 		},
 	})
 

@@ -8,11 +8,10 @@
 include ../../../config.mk
 
 # Targets
-TARGET:=noded
+TARGETBIN:=noded
 INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
-
 
 DISTRO_DIR:=../..
 
@@ -23,6 +22,7 @@ UNITY_ROOT:=$(DISTRO_DIR)/tools/unity
 VENDOR_DIR:=$(DISTRO_DIR)/vendor
 VENDOR_HEADERS_DIR:=$(VENDOR_DIR)/build/include
 VENDOR_LIBS_DIR:=$(VENDOR_DIR)/build/lib
+VENDOR_LIBS64_DIR:=$(VENDOR_DIR)/build/lib64
 
 # Platform
 PLATFORM_DIR:=$(DISTRO_DIR)/platform
@@ -32,6 +32,7 @@ PLATFORM_LIB_DIR:=$(PLATFORM_DIR)/build/
 PLATFORM_LIB:=usys 
 
 INC_HEADERS+=$(VENDOR_DIR)/headers/musl/
+INC_HEADERS+=$(DISTRO_DIR)/system/common/inc
 
 # JSON lib
 JSON_LIB:=jansson
@@ -60,7 +61,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 # Build
 BUILD_DIR:=build
 
-
 # Compilers and flags
 ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
@@ -68,6 +68,12 @@ XCC=$(XGCCPATH)$(XGCC)
 else
 XCC=gcc
 endif
+
+# VENDOR_PKG
+VENDOR_PKG = tomlc curl jansson ulfius
+
+# Platform Package
+PLATFORM_PKG = usys
 
 # Libraries
 ULFIUS_LIB_DEP=-lorcania 
@@ -103,6 +109,7 @@ CFLAGS+=-DHAVE_SYS_TIME_H
 LDFLAGS+=$(LDPATH)
 LDFLAGS+=-L$(PLATFORM_LIB_DIR) 
 LDFLAGS+=-L$(VENDOR_LIBS_DIR)
+LDFLAGS+=-L$(VENDOR_LIBS64_DIR)
 
 # Memory check and input flags
 MEMCHECK_REPORT := $(BUILD_DIR)/memcheck.report
@@ -149,10 +156,10 @@ $(info CFILES :: $(SVC_CFILES))
 $(info OBJFILES :: $(SVC_OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGET) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
+.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
 
 # Main target for building
-all: $(TARGET) $(INVENTORY) $(SCHEMA)
+all: $(TARGETBIN) $(INVENTORY) $(SCHEMA)
 	@echo Done.
 
 # CLANG FORMAT
@@ -207,28 +214,34 @@ checkcodestyle:
 	done
 	@echo "Ukama Coding Style check pass..!!"
 
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && $(MAKE) $@
+
+$(PLATFORM_PKG):
+	cd $(PLATFORM_DIR) && $(MAKE)
+
 # Build Target
-$(TARGET): $(SVC_OBJFILES)
-	@echo "Building $(TARGET)" 
+$(TARGETBIN): $(SVC_OBJFILES)
+	@echo "Building $(TARGETBIN)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
-$(INVENTORY): $(INVT_OBJFILES)
+$(INVENTORY): $(INVT_OBJFILES) 
 	@echo "Building $(INVENTORY)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
-#Build Schema utility
+# Build Schema utility
 $(SCHEMA): $(SCH_OBJFILES)
 	@echo "Building $(SCHEMA)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 	
 # Build Unit test binary
-$(UTEST):$(TEST_OBJFILES) $(TARGET)
+$(UTEST):$(TEST_OBJFILES) $(TARGETBIN)
 	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
-$(BUILD_DIR)/%.o: %.c 
+$(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) $(PLATFORM_PKG) 
 	mkdir -p $(dir $@)
 	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
@@ -240,7 +253,3 @@ memcheck: $(UTEST)
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
-

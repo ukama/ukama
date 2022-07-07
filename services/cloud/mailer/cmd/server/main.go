@@ -1,14 +1,14 @@
 package main
 
 import (
+	"os"
+
 	"github.com/ukama/ukama/services/cloud/mailer/pkg/http"
 	sig "github.com/ukama/ukama/services/common/signal"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/cloud/mailer/cmd/version"
 	"github.com/ukama/ukama/services/cloud/mailer/pkg"
-	uconf "github.com/ukama/ukama/services/common/config"
 	"github.com/ukama/ukama/services/common/metrics"
 
 	"github.com/num30/config"
@@ -53,8 +53,6 @@ func main() {
 // initConfig reads in config file, ENV variables, and flags if set.
 func initConfig() {
 	serviceConfig = &pkg.Config{}
-	httpConf := uconf.DefaultHTTPConfig()
-	serviceConfig.Server = &httpConf
 	reader := config.NewConfReader(pkg.ServiceName)
 	err := reader.Read(serviceConfig)
 	if err != nil {

@@ -9,14 +9,14 @@ import (
 )
 
 type requestMultiplier struct {
-	registryClient RegistryClient
-	queue          QueuePublisher
+	networkClient NetworkClient
+	queue         QueuePublisher
 }
 
-func NewRequestMultiplier(registryClient RegistryClient, queue QueuePublisher) pkg.RequestMultiplier {
+func NewRequestMultiplier(networkClient NetworkClient, queue QueuePublisher) pkg.RequestMultiplier {
 	return &requestMultiplier{
-		registryClient: registryClient,
-		queue:          queue,
+		networkClient: networkClient,
+		queue:         queue,
 	}
 }
 
@@ -34,7 +34,7 @@ func (r *requestMultiplier) Process(req *pkg.DevicesUpdateRequest) error {
 		return fmt.Errorf("device id in target is not supported")
 	}
 
-	nodes, err := r.registryClient.GetNodesList(orgName)
+	nodes, err := r.networkClient.GetNodesList(orgName)
 	if err != nil {
 		return err
 	}

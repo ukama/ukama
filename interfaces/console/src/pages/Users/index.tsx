@@ -56,6 +56,7 @@ const User = () => {
     const [newAddedUserName, setNewAddedUserName] = useState<any>();
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
+    const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [deactivateUserDialog, setDeactivateUserDialog] = useState({
         isShow: false,
         userId: "",
@@ -96,6 +97,7 @@ const User = () => {
                     type: "success",
                     show: true,
                 });
+                refetchResidents();
             }
         },
         onError: err => {
@@ -170,11 +172,14 @@ const User = () => {
     const [updateUserStatus, { loading: updateUserStatusLoading }] =
         useUpdateUserStatusMutation({
             onCompleted: res => {
+                setServiceStatusIndicator(
+                    res?.updateUserStatus?.ukama.services.data
+                );
                 if (res) {
                     setSelectedUser({
                         ...selectedUser,
-                        status: res.updateUserStatus.carrier.services.data,
-                        roaming: res.updateUserStatus.ukama.services.data,
+                        status: res.updateUserStatus.ukama.services.data,
+                        roaming: res.updateUserStatus.carrier.services.data,
                     });
                 }
             },
@@ -239,18 +244,6 @@ const User = () => {
         });
     };
 
-    const getSearchValue = (search: string) => {
-        if (search.length > 2) {
-            setUsers(
-                users.filter((_user: GetUsersDto) =>
-                    _user.name.toLocaleLowerCase().includes(search)
-                )
-            );
-        } else {
-            setUsers(usersRes?.getUsersByOrg || []);
-        }
-    };
-
     const handleUpdateUserStatus = (
         id: string,
         iccid: string,
@@ -312,6 +305,8 @@ const User = () => {
                     },
                 },
             });
+
+            refetchResidents();
         }
     };
 
@@ -338,10 +333,9 @@ const User = () => {
                         <ContainerHeader
                             title="My Users"
                             showButton={true}
-                            showSearchBox={true}
+                            showSearchBox={false}
                             buttonSize="medium"
-                            buttonTitle="INSTALL SIMS"
-                            handleSearchChange={getSearchValue}
+                            buttonTitle="ADD USERS"
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />
@@ -385,11 +379,12 @@ const User = () => {
                         loading={
                             userLoading || addUserLoading || updateUserLoading
                         }
-                        isOpen={simDialog.isShow}
+                        isOpen={true}
                         setUserForm={setSelectedUser}
-                        simDetailsTitle="SIM Details"
-                        userDetailsTitle="User Details"
+                        serviceStatusIndicator={serviceStatusIndicator}
                         handleClose={handleSimDialogClose}
+                        simDetailsTitle="SIM Details"
+                        userDetailsTitle="User Settings"
                         roamingLoading={updateUserRoamingLoading}
                         userStatusLoading={updateUserStatusLoading}
                         handleServiceAction={handleUpdateUserStatus}

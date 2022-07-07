@@ -129,6 +129,7 @@ const Home = () => {
     const [showInstallSim, setShowInstallSim] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
@@ -472,11 +473,14 @@ const Home = () => {
     const [updateUserStatus, { loading: updateUserStatusLoading }] =
         useUpdateUserStatusMutation({
             onCompleted: res => {
+                setServiceStatusIndicator(
+                    res.updateUserStatus.ukama.services.data
+                );
                 if (res) {
                     setSelectedUser({
                         ...selectedUser,
-                        status: res.updateUserStatus.carrier.services.data,
-                        roaming: res.updateUserStatus.ukama.services.data,
+                        status: res.updateUserStatus.ukama.services.data,
+                        roaming: res.updateUserStatus.carrier.services.data,
                     });
                 }
             },
@@ -780,11 +784,11 @@ const Home = () => {
         setIsSoftwaUpdate(true);
     }, []);
 
-    const handleNodeActions = useCallback((id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg.nodes.filter(
+    const handleNodeActions = (id: string, type: string) => {
+        const node = nodeRes?.getNodesByOrg?.nodes?.filter(
             item => item.id === id
         );
-        if (type == "edit" && node && node.length > 0) {
+        if (type === "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -797,13 +801,15 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else {
+        } else if (type === "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",
             });
+        } else if (type === "update") {
+            handleNodeUpdateAction();
         }
-    }, []);
+    };
 
     const handleCloseWelcome = () => {
         if (_isFirstVisit) {
@@ -963,7 +969,6 @@ const Home = () => {
                                 buttonTitle={"Update All"}
                             />
                             <NodeContainer
-                                handleNodeUpdate={handleNodeUpdateAction}
                                 items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
@@ -1071,6 +1076,7 @@ const Home = () => {
                     userStatusLoading={updateUserStatusLoading}
                     handleServiceAction={handleUpdateUserStatus}
                     handleSubmitAction={handleUserSubmitAction}
+                    serviceStatusIndicator={serviceStatusIndicator}
                     handleDeactivateAction={handleDeactivateAction}
                     handleUserRoamingAction={handleUserRoamingAction}
                 />

@@ -1,13 +1,15 @@
 package config
 
 import (
+	"fmt"
+	"strings"
 	"time"
-	cors "github.com/gin-contrib/cors"
+
 	"github.com/iamolegga/enviper"
 	"github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/ukama/ukama/services/common/rest"
+	"github.com/ukama/ukama/services/common/sql"
 )
 
 // Common properties for all configs.
@@ -17,12 +19,32 @@ type BaseConfig struct {
 }
 
 type Database struct {
-	Host       string
-	Password   string
+	Host       string `default:"localhost"`
+	Password   string `default:"Pass2020!"`
 	DbName     string
-	Username   string
-	SslEnabled bool
-	Port       int
+	Username   string `default:"postgres"`
+	SslEnabled bool   `default:"false"`
+	Port       int    `default:"5432"`
+}
+
+func (p Database) GetConnString() string {
+	sslMode := "disable"
+	if p.SslEnabled {
+		sslMode = "enable"
+	}
+
+	dsn := fmt.Sprintf("host=%s user=%s password=%s database=%s port=%d sslmode=%s",
+		p.Host, p.Username, p.Password, p.DbName, p.Port, sslMode)
+	return dsn
+}
+
+func (p Database) ChangeDbName(name string) sql.DbConfig {
+	p.DbName = name
+	return p
+}
+
+func (p Database) GetDbName() string {
+	return p.DbName
 }
 
 /*
@@ -62,17 +84,22 @@ type Queue struct {
 	Uri string `default:"amqp://guest:guest@localhost:5672"` // Env var name: QUEUE_URI or in file Queue: { Uri: "" }. Example: QUEUE_URI=amqp://guest:guest@localhost:5672/
 }
 
+// SafeString returns URI without password for logging purpose
+func (q *Queue) SafeString() string {
+	return q.Uri[strings.LastIndex(q.Uri, "@"):]
+}
+
 type Grpc struct {
-	Port int
+	Port int `default:"9090"`
 }
 
 type GrpcService struct {
-	Host string `default:"localhost:9090"`
+	Host    string        `default:"localhost:9090"`
 	Timeout time.Duration `default:"3s"`
 }
 
 type Metrics struct {
-	Port    int `default:"10250"`
+	Port    int  `default:"10250"`
 	Enabled bool `default:"true"`
 }
 
@@ -140,14 +167,6 @@ func DefaultDatabaseName(name string) Database {
 	}
 }
 
-func DefaultHTTPConfig() rest.HttpConfig {
-	return rest.HttpConfig{
-		Port: 8080,
-		Cors: cors.Config{
-			AllowOrigins: []string{"http://localhost", "https://localhost", "*"},
-		},
-	}
-}
 
 func DefaultForwardConfig() Forward {
 	return Forward{

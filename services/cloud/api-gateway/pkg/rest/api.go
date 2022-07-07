@@ -1,7 +1,8 @@
 package rest
 
 import (
-	pb "github.com/ukama/ukama/services/cloud/registry/pb/gen"
+	pb "github.com/ukama/ukama/services/cloud/network/pb/gen"
+	pbnode "github.com/ukama/ukama/services/cloud/node/pb/gen"
 )
 
 // Users group
@@ -77,15 +78,31 @@ type GetNodeRequest struct {
 	NodeId  string `path:"node" validate:"required"`
 }
 
-type AddNodeRequest struct {
-	OrgName  string `path:"org" validate:"required"`
-	NodeId   string `path:"node" validate:"required"`
-	NodeName string `json:"name" validate:"max=255"`
+// struct for creating or updating node
+type AddUpdateNodeRequest struct {
+	OrgName string     `path:"org" validate:"required"`
+	NodeId  string     `path:"node" validate:"required"`
+	Node    NodeModify `json:"node" validate:"required"`
+}
+
+type NodeModify struct {
+	Name     string        `json:"name,omitempty"`
+	Attached []*NodeAttach `json:"attached,omitempty"`
+}
+
+type NodeAttach struct {
+	NodeId string `json:"nodeId,omitempty" validate:"required"`
 }
 
 type DeleteNodeRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	NodeId  string `path:"node" validate:"required"`
+}
+
+type DetachNodeRequest struct {
+	OrgName        string `path:"org" validate:"required"`
+	NodeId         string `path:"node" validate:"required"`
+	AttachedNodeId string `path:"attachedId" validate:"required"`
 }
 
 func MapNodesList(pbList *pb.GetNodesResponse) *NodesList {
@@ -108,7 +125,7 @@ func mapPbNode(node *pb.Node) *Node {
 	}
 }
 
-func mapExtendeNode(node *pb.Node) *NodeExtended {
+func mapExtendeNode(node *pbnode.Node) *NodeExtended {
 	nx := &NodeExtended{
 		Node: Node{
 			NodeId: node.NodeId,
@@ -120,8 +137,17 @@ func mapExtendeNode(node *pb.Node) *NodeExtended {
 	if len(node.Attached) > 0 {
 		nx.Attached = make([]*Node, len(node.Attached))
 		for i, n := range node.Attached {
-			nx.Attached[i] = mapPbNode(n)
+			nx.Attached[i] = mapNodePbNode(n)
 		}
 	}
 	return nx
+}
+
+func mapNodePbNode(node *pbnode.Node) *Node {
+	return &Node{
+		NodeId: node.NodeId,
+		State:  pb.NodeState_name[int32(node.State)],
+		Type:   pb.NodeType_name[int32(node.Type)],
+		Name:   node.Name,
+	}
 }

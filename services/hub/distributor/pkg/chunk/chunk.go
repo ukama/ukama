@@ -12,7 +12,6 @@ import (
 
 	casync "github.com/folbricht/desync"
 	"github.com/gofrs/uuid"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/services/hub/distributor/pkg"
 	"github.com/ukama/ukama/services/hub/distributor/pkg/archiver"
@@ -232,7 +231,7 @@ func CreateArchivedChunk(ctx context.Context, storeCfg *pkg.StoreConfig, chunkCf
 
 	logrus.Debugf("Starting chunking process for %s from store %s, opt %+v tarOpt %+v.", content, store, opt, tarOpt)
 	if store == "" {
-		return nil, errors.New("requires store location from where contents needs to be copied")
+		return nil, fmt.Errorf("requires store location from where contents needs to be copied")
 	}
 
 	/* What to expect from content */

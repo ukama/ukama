@@ -20,7 +20,7 @@ var ServiceConf *Config
 func NewConfig() *Config {
 	return &Config{
 
-		Server: config.DefaultHTTPConfig(),
+		Server:        rest.DefaultHTTPConfig(),
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
 			Name: ServiceName,
