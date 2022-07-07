@@ -134,7 +134,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        memorytrxused: null,
+        uptimetrx: null,
     });
 
     const {
@@ -362,7 +362,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -378,8 +378,8 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                memorytrxused: {
-                    name: "Memory TRX",
+                uptimetrx: {
+                    name: "Uptime",
                     data: [],
                 },
             }));
@@ -405,7 +405,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
