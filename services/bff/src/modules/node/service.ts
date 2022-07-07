@@ -136,7 +136,7 @@ export class NodeService implements INodeService {
             logger.error(res);
             throw new Error(res.message);
         }
-        return res;
+        return NodeMapper.dtoToGetNodeDto(res);
     };
     getNodeStatus = async (
         data: GetNodeStatusInput,

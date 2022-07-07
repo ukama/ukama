@@ -26,6 +26,7 @@ export interface INodeService {
 }
 
 export interface INodeMapper {
+    dtoToGetNodeDto(res: NodeResponse): NodeResponse;
     dtoToNodesDto(orgId: string, req: OrgNodeResponse): OrgNodeResponseDto;
     dtoToMetricsDto(res: OrgMetricValueDto[]): MetricDto[];
     dtoToNodeStatusDto(res: MetricLatestValueRes): GetNodeStatusRes;
