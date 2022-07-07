@@ -29,10 +29,11 @@
 	version="latest"
 	depends_on="bootstrap"
 	wait_for="10s"
-	autostart="true"
+	autostart="false"
 	autorestart="false"
+	startretries=5
 	bin="mesh.d"
-	path="/sbin/" # path where the exec should be. Mathches build.bin_to
+	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--config /conf/mesh_config.toml"
 
 # Nothing to see here. Move on

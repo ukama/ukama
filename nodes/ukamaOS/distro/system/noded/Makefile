@@ -8,11 +8,10 @@
 include ../../../config.mk
 
 # Targets
-TARGET:=noded
+TARGETBIN:=noded
 INVENTORY:=genInventory
 SCHEMA:=genSchema
 UTEST:=nodeTest
-
 
 DISTRO_DIR:=../..
 
@@ -61,7 +60,6 @@ TEST_DIRS:=test $(UNITY_ROOT)/src
 # Build
 BUILD_DIR:=build
 
-
 # Compilers and flags
 ifdef XGCCPATH
 XCC=$(XGCCPATH)$(XGCC)
@@ -69,6 +67,12 @@ XCC=$(XGCCPATH)$(XGCC)
 else
 XCC=gcc
 endif
+
+# VENDOR_PKG
+VENDOR_PKG = tomlc curl jansson ulfius
+
+# Platform Package
+PLATFORM_PKG = usys
 
 # Libraries
 ULFIUS_LIB_DEP=-lorcania 
@@ -151,10 +155,10 @@ $(info CFILES :: $(SVC_CFILES))
 $(info OBJFILES :: $(SVC_OBJFILES))
 $(info INC :: $(INC_FILES))
 
-.PHONY: $(TARGET) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
+.PHONY: $(TARGETBIN) $(UTEST) $(BUILD) formatcodestyle checkcodestyle memcheck clean
 
 # Main target for building
-all: $(TARGET) $(INVENTORY) $(SCHEMA)
+all: $(TARGETBIN) $(INVENTORY) $(SCHEMA)
 	@echo Done.
 
 # CLANG FORMAT
@@ -209,28 +213,34 @@ checkcodestyle:
 	done
 	@echo "Ukama Coding Style check pass..!!"
 
+$(VENDOR_PKG):
+	cd $(VENDOR_DIR) && $(MAKE) $@
+
+$(PLATFORM_PKG):
+	cd $(PLATFORM_DIR) && $(MAKE)
+
 # Build Target
-$(TARGET): $(SVC_OBJFILES)
-	@echo "Building $(TARGET)" 
+$(TARGETBIN): $(SVC_OBJFILES)
+	@echo "Building $(TARGETBIN)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
 # Build Registry utility
-$(INVENTORY): $(INVT_OBJFILES)
+$(INVENTORY): $(INVT_OBJFILES) 
 	@echo "Building $(INVENTORY)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 
-#Build Schema utility
+# Build Schema utility
 $(SCHEMA): $(SCH_OBJFILES)
 	@echo "Building $(SCHEMA)" 
 	$(XCC) -o $(BUILD_DIR)/$@ $^ $(LDFLAGS) $(LIBS)
 	
 # Build Unit test binary
-$(UTEST):$(TEST_OBJFILES) $(TARGET)
+$(UTEST):$(TEST_OBJFILES) $(TARGETBIN)
 	$(XCC) -o $(BUILD_DIR)/$@ $(TEST_OBJFILES) $(LDFLAGS) $(LIBS) -l$(PLATFORM_LIB)
 	@echo CC: $(BUILD_DIR)/$@ 
 
 # Build Object files 
-$(BUILD_DIR)/%.o: %.c 
+$(BUILD_DIR)/%.o: %.c $(VENDOR_PKG) $(PLATFORM_PKG) 
 	mkdir -p $(dir $@)
 	$(XCC) $(CFLAGS) $(INC_FILES) -c $< -o $@
 
@@ -242,7 +252,3 @@ memcheck: $(UTEST)
 clean:
 	rm -rf $(BUILD_DIR)
 	@echo Cleaned.
-
-
-
-
