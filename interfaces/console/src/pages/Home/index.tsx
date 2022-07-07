@@ -69,7 +69,7 @@ import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     getMetricPayload,
-    getTowerNodeFromNodes,
+    // getTowerNodeFromNodes,
     isContainNodeUpdate,
 } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -356,6 +356,7 @@ const Home = () => {
             data: getMetricsRes,
             refetch: getMetricsRefetch,
             loading: getMetricLoading,
+            variables: lastMetricsFetchVariables,
         },
     ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
@@ -377,11 +378,24 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                memorytrxused: null,
+                memorytrxused: {
+                    name: "Memory TRX",
+                    data: [],
+                },
             }));
         },
         fetchPolicy: "network-only",
     });
+
+    const refetchMetrics = useCallback(() => {
+        if (getMetricsRes && getMetricsRes.getMetricsByTab.to) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
 
     useGetMetricsByTabSSubscription({
         onSubscriptionData: res => {
@@ -417,6 +431,10 @@ const Home = () => {
                     ..._prev,
                     ...filter,
                 }));
+
+                if (res.subscriptionData.data.getMetricsByTab[0].next) {
+                    refetchMetrics();
+                }
             }
         },
     });
@@ -504,7 +522,7 @@ const Home = () => {
         if (
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
+            !lastMetricsFetchVariables?.data.regPolling
         ) {
             getMetricsRefetch({
                 ...getMetricPollingCallPayload(
@@ -562,7 +580,7 @@ const Home = () => {
             tab: 4,
             regPolling: false,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
@@ -573,7 +591,7 @@ const Home = () => {
             from: from,
             regPolling: true,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
         });
 
     const handleAddNodeClose = () => {
