@@ -69,7 +69,7 @@ import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     getMetricPayload,
-    getTowerNodeFromNodes,
+    // getTowerNodeFromNodes,
     isContainNodeUpdate,
 } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -377,7 +377,10 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                memorytrxused: null,
+                memorytrxused: {
+                    name: "Memory TRX",
+                    data: [],
+                },
             }));
         },
         fetchPolicy: "network-only",
