@@ -31,6 +31,7 @@ extern "C" {
 #define DEF_NODE_PORT          "8095"
 #define DEF_NODED_EP           "/noded/v1/nodeinfo"
 #define DEF_REMOTE_SERVER      "http://localhost:8091"
+#define DEF_REMOTE_EP          "/notification"
 
 #ifdef __cplusplus
 }

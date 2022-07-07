@@ -15,8 +15,8 @@ extern "C" {
 #endif
 
 #include "config.h"
-#include "notify.h"
 #include "jserdes.h"
+#include "notify/notify.h"
 
 typedef int (*ServiceHandler)(JsonObj* json, char* type);
 
