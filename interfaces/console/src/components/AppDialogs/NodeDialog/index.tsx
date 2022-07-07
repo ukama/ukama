@@ -16,18 +16,16 @@ import {
     OutlinedInput,
     Divider,
     DialogContentText,
-    Alert,
 } from "@mui/material";
 import React, { Fragment, useState } from "react";
 import { colors } from "../../../theme";
-import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
+import { makeStyles } from "@mui/styles";
 import AddIcon from "@mui/icons-material/Add";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
-import ErrorIcon from "@mui/icons-material/Error";
 import CloseIcon from "@mui/icons-material/Close";
-import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS, NODE_TYPE } from "../../../constants";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
 
@@ -122,8 +120,7 @@ const NodeDialog = ({
         associatedTowerNode: nodeData.associatedTowerNode,
     });
 
-    const [error, setError] = useState("");
-    const [attachedAmplierNode, setAttachedAmplierNode] = useState([
+    const [attachedAmplierNode, setAttachedAmplierNode] = useState<any>([
         {
             nodeId: "",
             nodeName: "",
@@ -134,15 +131,16 @@ const NodeDialog = ({
         const list: any = [...attachedAmplierNode];
         list[index][name] = value;
         setAttachedAmplierNode(list);
+        setFormData({ ...formData, associatedTowerNode: attachedAmplierNode });
     };
-
+    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const handleRemoveClick = (index: number) => {
         const list = [...attachedAmplierNode];
         list.splice(index, 1);
         setAttachedAmplierNode(list);
     };
     const onAddTowerNode = () => {
-        //handle addTowerNode
+        setIsAssociatedTowerNode(true);
     };
 
     const handleAddClick = () => {
@@ -153,11 +151,14 @@ const NodeDialog = ({
     };
 
     const handleRegisterNode = () => {
-        if (!formData.name || !formData.nodeId) {
-            setError("Please fill all require vields");
+        setIsSubmitted(true);
+        if (
+            !formData.name ||
+            !formData.nodeId ||
+            !formData.associatedTowerNode
+        ) {
             return;
         }
-
         handleNodeSubmitAction(formData);
     };
 
@@ -172,8 +173,18 @@ const NodeDialog = ({
             associatedTowerNode: e.target.value as string,
         });
     };
+    const [nType, setNtype] = useState<any>("AMPLIFIER");
+    const [isAssociatedTowerNode, setIsAssociatedTowerNode] =
+        useState<boolean>(false);
+    const handleOptionalNodeType = (e: SelectChangeEvent) => {
+        setNtype(e.target.value);
+    };
+    const removeNodeTypefromArray = (from: number, to: number) => {
+        return NODE_TYPE.filter(function (value, index) {
+            return [from, to].indexOf(index) == -1;
+        });
+    };
 
-    console.log(attachedAmplierNode.length);
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
@@ -189,19 +200,7 @@ const NodeDialog = ({
                     <CloseIcon />
                 </IconButton>
             </Stack>
-            {error && (
-                <Alert
-                    sx={{
-                        mx: 3,
-                        mb: 1,
-                        color: theme => theme.palette.text.primary,
-                    }}
-                    severity={"error"}
-                    icon={<ErrorIcon sx={{ color: colors.red }} />}
-                >
-                    {error}
-                </Alert>
-            )}
+
             <DialogContent>
                 <DialogContentText>
                     <Typography
@@ -250,15 +249,7 @@ const NodeDialog = ({
                                 }}
                                 className={classes.selectStyle}
                             >
-                                {[
-                                    { id: 1, label: "Home", value: "HOME" },
-                                    {
-                                        id: 2,
-                                        label: "Amplifier",
-                                        value: "AMPLIFIER",
-                                    },
-                                    { id: 3, label: "Tower", value: "TOWER" },
-                                ].map(({ id, label, value }) => (
+                                {NODE_TYPE.map(({ id, label, value }) => (
                                     <MenuItem
                                         key={id}
                                         value={value}
@@ -286,6 +277,12 @@ const NodeDialog = ({
                                     nodeId: e.target.value.replace(/ /g, ""),
                                 })
                             }
+                            error={isSubmitted && formData.nodeId === ""}
+                            helperText={
+                                isSubmitted && formData.nodeId === ""
+                                    ? "Node number is required !"
+                                    : " "
+                            }
                             disabled={action == "editNode"}
                             InputLabelProps={{ shrink: true }}
                             name={formData.type}
@@ -304,6 +301,12 @@ const NodeDialog = ({
                             fullWidth
                             value={formData.name}
                             label={"NODE NAME"}
+                            error={isSubmitted && formData.name === ""}
+                            helperText={
+                                isSubmitted && formData.name === ""
+                                    ? "Node name is required !"
+                                    : " "
+                            }
                             InputLabelProps={{ shrink: true }}
                             InputProps={{
                                 classes: {
@@ -391,9 +394,11 @@ const NodeDialog = ({
                             </FormControl>
                         </Grid>
                     )}
+
                     {attachedAmplierNode.map((x: any, i: any) => {
                         return (
-                            formData.type == "TOWER" && (
+                            (formData.type == "TOWER" ||
+                                isAssociatedTowerNode == true) && (
                                 <Fragment key={i}>
                                     <Grid item xs={12}>
                                         <Divider />
@@ -415,7 +420,11 @@ const NodeDialog = ({
                                                     fontStyle: "Bold",
                                                 }}
                                             >
-                                                AMPLIFIER NODE
+                                                {formData.type == "TOWER" &&
+                                                    "AMPLIFIER NODE"}
+
+                                                {formData.type == "AMPLIFIER" &&
+                                                    "NEW TOWER NODE"}
                                             </Typography>
                                             <IconButton
                                                 color="primary"
@@ -444,11 +453,11 @@ const NodeDialog = ({
                                                     NODE TYPE
                                                 </InputLabel>
                                                 <Select
-                                                    value={"AMPLIFIER"}
                                                     variant="outlined"
                                                     onChange={
-                                                        handleNodeTypeChange
+                                                        handleOptionalNodeType
                                                     }
+                                                    value={nType}
                                                     disabled={
                                                         action == "editNode"
                                                     }
@@ -456,7 +465,7 @@ const NodeDialog = ({
                                                         <OutlinedInput
                                                             notched
                                                             label="NODE TYPE"
-                                                            name="node_type"
+                                                            name={x.type}
                                                             id="outlined-age-always-notched"
                                                         />
                                                     }
@@ -475,13 +484,12 @@ const NodeDialog = ({
                                                         classes.selectStyle
                                                     }
                                                 >
-                                                    {[
-                                                        {
-                                                            id: 2,
-                                                            label: "Amplifier",
-                                                            value: "AMPLIFIER",
-                                                        },
-                                                    ].map(
+                                                    {removeNodeTypefromArray(
+                                                        0,
+                                                        isAssociatedTowerNode
+                                                            ? 1
+                                                            : 2
+                                                    ).map(
                                                         ({
                                                             id,
                                                             label,
@@ -508,15 +516,24 @@ const NodeDialog = ({
                                             <TextField
                                                 fullWidth
                                                 label={"NODE NUMBER"}
-                                                name="nodeId"
                                                 value={x.nodeId}
-                                                onChange={e =>
+                                                onChange={(e: any) =>
                                                     handleInputChange(e, i)
                                                 }
-                                                disabled={action == "editNode"}
                                                 InputLabelProps={{
                                                     shrink: true,
                                                 }}
+                                                error={
+                                                    isSubmitted &&
+                                                    x.nodeId === ""
+                                                }
+                                                helperText={
+                                                    isSubmitted &&
+                                                    x.nodeId === ""
+                                                        ? "Node number is required !"
+                                                        : " "
+                                                }
+                                                name={"nodeId"}
                                                 InputProps={{
                                                     classes: {
                                                         input: gclasses.inputFieldStyle,
@@ -530,8 +547,18 @@ const NodeDialog = ({
                                                 label={"NODE NAME"}
                                                 name={"nodeName"}
                                                 value={x.nodeName}
-                                                onChange={e =>
-                                                    handleInputChange(e, i)
+                                                onChange={e => {
+                                                    handleInputChange(e, i);
+                                                }}
+                                                error={
+                                                    isSubmitted &&
+                                                    x.nodeName === ""
+                                                }
+                                                helperText={
+                                                    isSubmitted &&
+                                                    x.nodeName === ""
+                                                        ? "Node name is required !"
+                                                        : " "
                                                 }
                                                 disabled={action == "editNode"}
                                                 InputLabelProps={{
@@ -548,7 +575,8 @@ const NodeDialog = ({
 
                                     <Grid item xs={12} sx={{ pt: 2 }}>
                                         {attachedAmplierNode.length - 1 === i &&
-                                            attachedAmplierNode.length < 2 && (
+                                            attachedAmplierNode.length < 2 &&
+                                            !isAssociatedTowerNode && (
                                                 <Button
                                                     variant="text"
                                                     startIcon={<AddIcon />}

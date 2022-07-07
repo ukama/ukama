@@ -403,13 +403,8 @@ const Nodes = () => {
                 data: {
                     name: data.name,
                     nodeId: data.nodeId,
-                    associate: true,
-                    attached: [
-                        {
-                            name: "eli",
-                            nodeId: "123",
-                        },
-                    ],
+                    associate: data.associatedTowerNode.length ? true : false,
+                    attached: data.associatedTowerNode || [],
                 },
             },
         });

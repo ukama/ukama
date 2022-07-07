@@ -748,13 +748,10 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
-                        associate: false,
-                        attached: [
-                            {
-                                name: "eli",
-                                nodeId: "123",
-                            },
-                        ],
+                        associate: data.associatedTowerNode.length
+                            ? true
+                            : false,
+                        attached: data.associatedTowerNode || [],
                     },
                 },
             });
