@@ -55,32 +55,48 @@ static int read_entry(toml_table_t *table, char *key, char **destStr,
 	/* sanity check */
 	if (table == NULL || key == NULL) return FALSE;
 
-	datum = toml_string_in(table, key);
+	/* String or bool */
+	if((flag & DATUM_BOOL) || (flag & DATUM_STRING)) {
+	    datum = toml_string_in(table, key);
 
-	if (datum.ok) {
-		if (flag & DATUM_BOOL) {
-			if (strcasecmp(datum.u.s, "TRUE")==0) {
-				*destInt = TRUE;
-			} else if (strcasecmp(datum.u.s, "FALSE")==0) {
-				*destInt = FALSE;
-			} else {
-				log_error("[%s] is invalid, except 'true' or 'false'", key);
-				*destInt = -1;
-				ret = FALSE;
-			}
-		} else if (flag & DATUM_STRING) {
-			*destStr = strdup(datum.u.s);
-		} else {
-			ret = FALSE;
-		}
-	} else {
-		if (flag & DATUM_MANDATORY) {
-			log_error("[%s] is missing but is required", key);
-			return FALSE;
-		}
+	    if (datum.ok) {
+	        if (flag & DATUM_BOOL) {
+	            if (strcasecmp(datum.u.s, "TRUE")==0) {
+	                *destInt = TRUE;
+	            } else if (strcasecmp(datum.u.s, "FALSE")==0) {
+	                *destInt = FALSE;
+	            } else {
+	                log_error("[%s] is invalid, except 'true' or 'false'", key);
+	                *destInt = -1;
+	                ret = FALSE;
+	            }
+	        } else if (flag & DATUM_STRING) {
+	            *destStr = strdup(datum.u.s);
+	        } else {
+	            ret = FALSE;
+	        }
+	        free(datum.u.s);
+
+	    } else {
+	        if (flag & DATUM_MANDATORY) {
+	            log_error("[%s] is missing but is required", key);
+	            return FALSE;
+	        }
+	    }
 	}
 
-	if (datum.ok) free(datum.u.s);
+	/* For integer */
+	if(flag & DATUM_INT) {
+	    datum = toml_int_in(table, key);
+	    if (datum.ok) {
+	        *destInt = (int)datum.u.i;
+	    } else {
+	        if (flag & DATUM_MANDATORY) {
+	            log_error("[%s] is missing but is required", key);
+	            return FALSE;
+	        }
+	    }
+	}
 
 	return ret;
 }
@@ -154,6 +170,21 @@ static int read_capp_table(toml_table_t *table, Config *config,
 		if (!read_entry(table, KEY_WAIT_FOR, &capp->waitFor, NULL,
 						DATUM_STRING)) {
 			return FALSE;
+		}
+
+		if (!read_entry(table, KEY_GROUP, &capp->group, NULL,
+				DATUM_STRING)) {
+			return FALSE;
+		}
+
+		if (!read_entry(table, KEY_GROUP, &capp->group, NULL,
+						DATUM_STRING)) {
+					return FALSE;
+		}
+
+		if (!read_entry(table, KEY_RETRY, NULL, &capp->startretries,
+								DATUM_INT | DATUM_MANDATORY)) {
+					return FALSE;
 		}
 	} else {
 		return FALSE;
@@ -357,7 +388,7 @@ static int add_to_configs(Configs **configs, Config *config, char *fileName,
 	if (!ptr->valid && errorStr) {
 		ptr->errorStr = strdup(errorStr);
 	}
-  
+
 	return TRUE;
 }
 
@@ -370,18 +401,18 @@ static int is_valid_file(char *fileName) {
     struct stat statBuf;
 
 	if (fileName == NULL) return FALSE;
-	
+
 	if (stat(fileName, &statBuf) != 0) {
 	    return FALSE;
 	}
 
 	if (!S_ISREG(statBuf.st_mode)) {
 		return FALSE;
-	} 
+	}
 
 	return TRUE;
 }
-	
+
 /*
  * read_config_files -- read all the config files within the dir
  *
@@ -451,7 +482,7 @@ int read_config_files(Configs **configs, char *configDir) {
 
 	closedir(dir);
 	return ret;
-    
+
  failure:
 	free_configs(*configs);
 	if (config) free_config(config, BUILD_ONLY | CAPP_ONLY);
@@ -486,8 +517,8 @@ static int read_config_file(Config *config, char *fileName, char **error) {
 		return FALSE;
 	}
 
-	/* Allocate memory for error buffer. This will be freed if no error 
-	 * was found while parsing the toml file 
+	/* Allocate memory for error buffer. This will be freed if no error
+	 * was found while parsing the toml file
 	 */
 	*error = (char *)calloc(1, MAX_ERROR_BUFFER);
 	if (*error == NULL) {
@@ -594,6 +625,7 @@ void free_config(Config *config, int flag) {
 		if (capp->envs)    free(capp->envs);
 		if (capp->waitFor) free(capp->waitFor);
 		if (capp->dependsOn) free(capp->dependsOn);
+		if (capp->group) free (capp->group);
 
 		free(config->capp);
 	}

@@ -41,6 +41,8 @@
 #define KEY_AUTORESTART "autorestart"
 #define KEY_DEPENDS_ON  "depends_on"
 #define KEY_WAIT_FOR    "wait_for"
+#define KEY_GROUP       "group"
+#define KEY_RETRY       "startretries"
 
 #define VALUE_YES       "yes"
 #define VALUE_NO        "no"
@@ -48,6 +50,7 @@
 #define DATUM_BOOL      0x01
 #define DATUM_STRING    0x02
 #define DATUM_MANDATORY 0x04
+#define DATUM_INT       0x08
 
 #define BUILD_ONLY      0x08
 #define CAPP_ONLY       0x16
@@ -92,6 +95,8 @@ typedef struct capp_config_t {
 	char *waitFor;    /* time to wait before executing */
 	int  autostart;   /* autostart for supervisor.d */
 	int  autorestart; /* autorestart for supervisor.d */
+	int  startretries;/* Number of times app would be restarted.*/
+	char *group;	  /* nil, on-boot or sys-service */
 } CappConfig;
 
 typedef struct config_t {
@@ -106,7 +111,7 @@ typedef struct configs_t {
 	int    valid;
 	char   *errorStr;
 	Config *config;
-  
+
 	struct configs_t *next;
 } Configs;
 

@@ -7,6 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import BillingIcon from "@mui/icons-material/CreditCard";
 import { DataTableWithOptionColumns } from "./tableColumns";
+import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
 
 const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
@@ -78,6 +79,12 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
         Icon: DeleteIcon,
         title: "Delete",
         route: "delete",
+    },
+    {
+        id: 3,
+        Icon: UpdateIcon,
+        title: "Update available",
+        route: "update",
     },
 ];
 

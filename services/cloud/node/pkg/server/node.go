@@ -128,12 +128,20 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 			Name:   req.Name,
 		},
 	}
+	und, err := n.nodeRepo.Get("uk-090909-tnode-10-2121")
+	if err != nil {
+		logrus.Error("error getting the node, ", err.Error())
+		return resp, nil
+	}
+
 	n.pubEvent(&msgbus.NodeUpdateBody{
 		NodeId: req.GetNodeId(),
 		Name:   req.Name,
 	}, n.baseRoutingKey.SetActionUpdate().SetObject("node").MustBuild())
 
-	return resp, nil
+	return &pb.UpdateNodeResponse{
+		Node: dbNodeToPbNode(und),
+	}, nil
 }
 
 func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {

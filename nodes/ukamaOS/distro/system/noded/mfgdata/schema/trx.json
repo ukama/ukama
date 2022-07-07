@@ -1,202 +1,186 @@
 {
-    "header":{
-        "version":{
-            "major":2,
-            "minor":1
-        },
-        "indexTableOffset":64,
-        "indexTupleSize":24,
-        "indexTupleMaxCount":50,
-        "indexCurrentTuple":8,
-        "moduleCapability":"AUTONOMOUS",
-        "moduleMode":"MASTER",
-        "moduleDeviceOwner":"DEVICE_OWNER"
+  "header" : {
+    "version" : {
+      "major" : 2,
+      "minor" : 1
     },
-    "indexTable":[
-        {
-            "fieldId":3,
-            "payloadOffset":3776,
-            "payloadSize":167,
-            "payloadVersion":{
-                "major":0,
-                "minor":3
-            },
-            "payloadCRC":3421000616,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":4,
-            "payloadOffset":3968,
-            "payloadSize":744,
-            "payloadVersion":{
-                "major":2,
-                "minor":4
-            },
-            "payloadCRC":1876718055,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":5,
-            "payloadOffset":6400,
-            "payloadSize":151,
-            "payloadVersion":{
-                "major":2,
-                "minor":5
-            },
-            "payloadCRC":1086213052,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":6,
-            "payloadOffset":10496,
-            "payloadSize":151,
-            "payloadVersion":{
-                "major":2,
-                "minor":6
-            },
-            "payloadCRC":1973727029,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":7,
-            "payloadOffset":14592,
-            "payloadSize":153,
-            "payloadVersion":{
-                "major":2,
-                "minor":7
-            },
-            "payloadCRC":4150665426,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":8,
-            "payloadOffset":18688,
-            "payloadSize":153,
-            "payloadVersion":{
-                "major":2,
-                "minor":8
-            },
-            "payloadCRC":3124760747,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":9,
-            "payloadOffset":22784,
-            "payloadSize":151,
-            "payloadVersion":{
-                "major":2,
-                "minor":9
-            },
-            "payloadCRC":334372334,
-            "state":"ENABLED",
-            "valid":true
-        },
-        {
-            "fieldId":10,
-            "payloadOffset":26880,
-            "payloadSize":154,
-            "payloadVersion":{
-                "major":2,
-                "minor":10
-            },
-            "payloadCRC":3702013338,
-            "state":"ENABLED",
-            "valid":true
-        }
-    ],
-    "moduleInfo":{
-        "UUID":"UK-SA9001-TRX-A1-1103",
-        "name":"TRX",
-        "type":4,
-        "partNumber":"LTE-CNX-0XXXX",
-        "hwVersion":"REV-A",
-        "mac":"10:20:30:20:50:62",
-        "swVersion":{
-            "major":2,
-            "minor":1
-        },
-        "prodSwVersion":{
-            "major":2,
-            "minor":1
-        },
-        "manufacturingDate":"31-07-2020",
-        "manufacturerName":"CNX",
-        "deviceCount":6
+    "indexTableOffset" : 64,
+    "indexTupleSize" : 24,
+    "indexTupleMaxCount" : 50,
+    "indexCurrentTuple" : 8,
+    "moduleCapability" : "AUTONOMOUS",
+    "moduleMode" : "MASTER",
+    "moduleDeviceOwner" : "DEVICE_OWNER"
+  },
+  "indexTable" : [ {
+    "fieldId" : 3,
+    "payloadOffset" : 3776,
+    "payloadSize" : 167,
+    "payloadVersion" : {
+      "major" : 0,
+      "minor" : 3
     },
-    "moduleConfig":[
-        {
-            "name":"INA226",
-            "description":"DDR",
-            "type":2,
-            "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/2/ina226_1/",
-            "devHwAttrs":{
-                "bus":0,
-                "address":74
-            }
-        },
-        {
-            "name":"INA226",
-            "description":"CNX",
-            "type":2,
-            "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/2/ina226_2/",
-            "devHwAttrs":{
-                "bus":0,
-                "address":75
-            }
-        },
-        {
-            "name":"TMP464",
-            "description":"PMIC",
-            "type":1,
-            "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/1/tmp464_1/",
-            "devHwAttrs":{
-                "bus":0,
-                "address":72
-            }
-        },
-        {
-            "name":"TMP464",
-            "description":"DDR",
-            "type":1,
-            "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/1/tmp464_2/",
-            "devHwAttrs":{
-                "bus":0,
-                "address":73
-            }
-        },
-        {
-            "name":"SE98",
-            "description":"ADI",
-            "type":1,
-            "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/2/se98_1/",
-            "devHwAttrs":{
-                "bus":0,
-                "address":41
-            }
-        },
-        {
-            "name":"GPIO",
-            "description":"PowerGood",
-            "type":3,
-            "class":1,
-            "devSysFsFile":"/tmp/sys/class/gpio/gpio35/"
-        }
-    ],
-    "factoryConfig":"mfgdata/schema/fact.cfg",
-    "userConfig":"mfgdata/schema/user.cfg",
-    "factCalibaration":"mfgdata/schema/fact.calib",
-    "userCalibration":"mfgdata/schema/user.calib",
-    "bootstrapCerts":"mfgdata/schema/bs.certs",
-    "cloudCerts":"mfgdata/schema/cloud.certs"
+    "payloadCRC" : 3421000616,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 4,
+    "payloadOffset" : 3968,
+    "payloadSize" : 744,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 4
+    },
+    "payloadCRC" : 1876718055,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 5,
+    "payloadOffset" : 6400,
+    "payloadSize" : 151,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 5
+    },
+    "payloadCRC" : 1086213052,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 6,
+    "payloadOffset" : 10496,
+    "payloadSize" : 151,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 6
+    },
+    "payloadCRC" : 1973727029,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 7,
+    "payloadOffset" : 14592,
+    "payloadSize" : 153,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 7
+    },
+    "payloadCRC" : 4150665426,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 8,
+    "payloadOffset" : 18688,
+    "payloadSize" : 153,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 8
+    },
+    "payloadCRC" : 3124760747,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 9,
+    "payloadOffset" : 22784,
+    "payloadSize" : 151,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 9
+    },
+    "payloadCRC" : 334372334,
+    "state" : "ENABLED",
+    "valid" : true
+  }, {
+    "fieldId" : 10,
+    "payloadOffset" : 26880,
+    "payloadSize" : 154,
+    "payloadVersion" : {
+      "major" : 2,
+      "minor" : 10
+    },
+    "payloadCRC" : 3702013338,
+    "state" : "ENABLED",
+    "valid" : true
+  } ],
+  "moduleInfo" : {
+    "UUID" : "UK-9001-TRX-1103",
+    "name" : "TRX",
+    "type" : 4,
+    "partNumber" : "LTE-CNX-0XXXX",
+    "hwVersion" : "REV-A",
+    "mac" : "10:20:30:20:50:62",
+    "swVersion" : {
+      "major" : 2,
+      "minor" : 1
+    },
+    "prodSwVersion" : {
+      "major" : 2,
+      "minor" : 1
+    },
+    "manufacturingDate" : "31-07-2020",
+    "manufacturerName" : "CNX",
+    "deviceCount" : 6
+  },
+  "moduleConfig" : [ {
+    "name" : "INA226",
+    "description" : "DDR",
+    "type" : 2,
+    "class" : 2,
+    "devSysFsFile" : "/tmp/sys/class/hwmon/hwmon0/2/ina226_1/",
+    "devHwAttrs" : {
+      "bus" : 0,
+      "address" : 74
+    }
+  }, {
+    "name" : "INA226",
+    "description" : "CNX",
+    "type" : 2,
+    "class" : 2,
+    "devSysFsFile" : "/tmp/sys/class/hwmon/hwmon0/2/ina226_2/",
+    "devHwAttrs" : {
+      "bus" : 0,
+      "address" : 75
+    }
+  }, {
+    "name" : "TMP464",
+    "description" : "PMIC",
+    "type" : 1,
+    "class" : 2,
+    "devSysFsFile" : "/tmp/sys/class/hwmon/hwmon0/1/tmp464_1/",
+    "devHwAttrs" : {
+      "bus" : 0,
+      "address" : 72
+    }
+  }, {
+    "name" : "TMP464",
+    "description" : "DDR",
+    "type" : 1,
+    "class" : 2,
+    "devSysFsFile" : "/tmp/sys/class/hwmon/hwmon0/1/tmp464_2/",
+    "devHwAttrs" : {
+      "bus" : 0,
+      "address" : 73
+    }
+  }, {
+    "name" : "SE98",
+    "description" : "ADI",
+    "type" : 1,
+    "class" : 2,
+    "devSysFsFile" : "/tmp/sys/class/hwmon/hwmon0/2/se98_1/",
+    "devHwAttrs" : {
+      "bus" : 0,
+      "address" : 41
+    }
+  }, {
+    "name" : "GPIO",
+    "description" : "PowerGood",
+    "type" : 3,
+    "class" : 1,
+    "devSysFsFile" : "/tmp/sys/class/gpio/gpio35/"
+  } ],
+  "factoryConfig" : "mfgdata/schema/fact.cfg",
+  "userConfig" : "mfgdata/schema/user.cfg",
+  "factCalibaration" : "mfgdata/schema/fact.calib",
+  "userCalibration" : "mfgdata/schema/user.calib",
+  "bootstrapCerts" : "mfgdata/schema/bs.certs",
+  "cloudCerts" : "mfgdata/schema/cloud.certs"
 }

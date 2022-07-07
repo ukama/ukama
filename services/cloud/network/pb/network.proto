@@ -61,10 +61,10 @@ message Network {
 }
 
 message Node {
-    string nodeId = 1;
+    string nodeId = 1 [(validator.field) = { string_not_empty: true}];
     NodeState state = 4;
     NodeType type = 5;
-    string name = 6;
+    string name = 6 [(validator.field) = { string_not_empty: true}];
 }
 
 message ListRequest {
