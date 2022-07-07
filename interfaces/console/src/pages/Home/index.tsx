@@ -134,7 +134,7 @@ const Home = () => {
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        memorytrxused: null,
+        uptimetrx: null,
     });
 
     const {
@@ -361,7 +361,7 @@ const Home = () => {
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -377,7 +377,7 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                memorytrxused: null,
+                uptimetrx: null,
             }));
         },
         fetchPolicy: "network-only",
@@ -391,7 +391,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -562,7 +562,7 @@ const Home = () => {
             tab: 4,
             regPolling: false,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
@@ -573,7 +573,7 @@ const Home = () => {
             from: from,
             regPolling: true,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
         });
 
     const handleAddNodeClose = () => {

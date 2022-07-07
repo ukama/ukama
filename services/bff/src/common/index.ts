@@ -33,6 +33,7 @@ export const parseCookie = (ctx: Context): ParsedCookie => {
             Cookie: `ukama_session=${cookieObj["ukama_session"]}`,
         };
     }
+
     // return { header: header, orgId: cookieObj["id"] };
     return {
         header: {

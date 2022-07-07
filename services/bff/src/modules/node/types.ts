@@ -37,16 +37,7 @@ export class NodeDto {
 @ObjectType()
 export class AddNodeResponse {
     @Field()
-    nodeId: string;
-
-    @Field()
-    name: string;
-
-    @Field(() => ORG_NODE_STATE)
-    state: ORG_NODE_STATE;
-
-    @Field(() => NODE_TYPE)
-    type: NODE_TYPE;
+    success: boolean;
 }
 
 @ObjectType()

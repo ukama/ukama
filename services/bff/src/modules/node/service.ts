@@ -47,6 +47,7 @@ export class NodeService implements INodeService {
                 },
             },
         });
+
         if (checkError(res)) {
             logger.error(res);
             throw new Error(res.message);
@@ -67,6 +68,7 @@ export class NodeService implements INodeService {
                 },
             },
         });
+
         if (checkError(res)) {
             logger.error(res);
             throw new Error(res.message);

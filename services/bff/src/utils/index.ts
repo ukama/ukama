@@ -91,7 +91,7 @@ export const getMetricsByTab = (
             else return [];
 
         case GRAPHS_TAB.HOME:
-            return ["memorytrxused"];
+            return ["uptimetrx"];
 
         case GRAPHS_TAB.NODE_STATUS:
             if (nodeType === NODE_TYPE.HOME) return ["uptimetrx"];
