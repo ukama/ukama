@@ -377,7 +377,10 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                uptimetrx: null,
+                uptimetrx: {
+                    name: "Uptime",
+                    data: [],
+                },
             }));
         },
         fetchPolicy: "network-only",
