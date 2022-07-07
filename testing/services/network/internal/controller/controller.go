@@ -175,7 +175,7 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 			Labels:    labels,
 		},
 		Spec: v1.PodSpec{
-			RestartPolicy: v1.RestartPolicyOnFailure,
+			RestartPolicy: v1.RestartPolicyAlways,
 			Containers: []v1.Container{
 				v1.Container{
 					Name:  nodeId,
