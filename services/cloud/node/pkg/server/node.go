@@ -128,7 +128,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 			Name:   req.Name,
 		},
 	}
-	und, err := n.nodeRepo.Get("uk-090909-tnode-10-2121")
+	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		logrus.Error("error getting the node, ", err.Error())
 		return resp, nil

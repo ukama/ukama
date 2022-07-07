@@ -27,6 +27,7 @@ extern "C" {
 #define METHOD_LENGTH                   7
 #define URL_EXT_LENGTH                  64
 #define MAX_END_POINTS                  64
+#define MAX_URL_LENGTH                  128
 
 typedef struct _u_instance  UInst;
 typedef struct _u_instance  UInst;

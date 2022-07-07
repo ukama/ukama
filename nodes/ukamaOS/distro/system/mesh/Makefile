@@ -16,7 +16,7 @@ VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target.
-VENDOR_PKG = tomlc curl jansson ulfius
+VENDOR_PKG = tomlc curl jansson ulfius amqp libuuid
 
 # Setting up various compile and link flags.
 CFLAGS=-c
@@ -57,7 +57,7 @@ $(TARGET_EXEC): $(VENDOR_PKG) $(OBJFILES)
 	echo "Done."
 
 $(VENDOR_PKG):
-	cd $(VENDOR_DIR) && make $@
+	$(MAKE) -C $(VENDOR_DIR) $@
 
 %.o: %.c
 	$(XCC) $(CFLAGS) -c $< -o $@

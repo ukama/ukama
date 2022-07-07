@@ -69,7 +69,7 @@ import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     getMetricPayload,
-    getTowerNodeFromNodes,
+    // getTowerNodeFromNodes,
     isContainNodeUpdate,
 } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -356,6 +356,7 @@ const Home = () => {
             data: getMetricsRes,
             refetch: getMetricsRefetch,
             loading: getMetricLoading,
+            variables: lastMetricsFetchVariables,
         },
     ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
@@ -385,6 +386,16 @@ const Home = () => {
         },
         fetchPolicy: "network-only",
     });
+
+    const refetchMetrics = useCallback(() => {
+        if (getMetricsRes && getMetricsRes.getMetricsByTab.to) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
 
     useGetMetricsByTabSSubscription({
         onSubscriptionData: res => {
@@ -420,6 +431,10 @@ const Home = () => {
                     ..._prev,
                     ...filter,
                 }));
+
+                if (res.subscriptionData.data.getMetricsByTab[0].next) {
+                    refetchMetrics();
+                }
             }
         },
     });
@@ -507,7 +522,7 @@ const Home = () => {
         if (
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
+            !lastMetricsFetchVariables?.data.regPolling
         ) {
             getMetricsRefetch({
                 ...getMetricPollingCallPayload(

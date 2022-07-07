@@ -15,7 +15,7 @@ ifndef XGCCPATH
 endif
 
 ifeq ($(TARGETBOARD), $(LOCAL))
-PKG_CFG_PATH=${DEPDIR}/lib64/pkgconfig
+PKG_CFG_PATH=${DEPDIR}/lib/pkgconfig:${DEPDIR}/lib64/pkgconfig
 else
 PKG_CFG_PATH=${DEPDIR}/lib/pkgconfig
 endif
@@ -96,7 +96,7 @@ build: $(LIST)
 zlib:
 	$(call print_msg,"zlib")
 ifeq (,$(wildcard ${DEPDIR}/lib/libz.a))
-	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && sudo ../configure --static --prefix=$(DEPDIR) && \
+	(mkdir -p $@/$(BUILD_DIR) && cd $@/$(BUILD_DIR) && ../configure --static --prefix=$(DEPDIR) && \
 		$(MAKE) -j${NPROCS} CC=$(XCC) CFLAGS="${CFLAGS} -fPIC" && \
 		$(MAKE) -j${NPROCS} install)
 	$(call post_build_cleanup,$@/${BUILD_DIR})
@@ -220,14 +220,14 @@ ifeq (,$(wildcard ${DEPDIR}/lib/libssl.*))
 		--prefix=${DEPDIR} --openssldir=${DEPDIR} \
 		--with-zlib-lib=${DEPDIR}/lib \
 		--with-zlib-include=${DEPDIR}/include && \
-	make -j${NPROCS} && make -j${NPROCS} install
+	make -j${NPROCS} && make -j${NPROCS} install_sw
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
 else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
-curl: openssl
+curl: openssl gnutls 
 	$(call print_msg,"curl")
 ifeq (,$(wildcard ${DEPDIR}/lib/libcurl.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && \
@@ -246,7 +246,7 @@ endif
 
 nettle:
 	$(call print_msg,"nettle")
-ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.*))
+ifeq (,$(wildcard ${DEPDIR}/lib/libnettle.* ${DEPDIR}/lib64/libnettle.*))
 	(mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib \
 		-latomic" ../configure --prefix=${DEPDIR} --host=${HOST} \
@@ -304,11 +304,11 @@ endif
 
 p11-kit:
 	$(call print_msg,"p11-kit")
-ifeq (,$(wildcard ${DEPDIR}/lib/libcrypto.*))
-	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
+ifeq (,$(wildcard ${DEPDIR}/lib/libp11-kit.*))
+	mkdir -p $@/${BUILD_DIR} && cd $@ && autoreconf -fi && cd ${BUILD_DIR} && \
 	CC="${XCC}" CFLAGS="-I${DEPDIR}/include" LDFLAGS="-L${DEPDIR}/lib" \
 		../configure --prefix=${DEPDIR} --host=${HOST} --without-libffi \
-		--without-libtasn1 --without-systemd && \
+		--without-libtasn1 --without-systemd --without-bash-completion && \
 	make -j${NPROCS} && make -j${NPROCS} install
 	$(call post_build_cleanup,$@/${BUILD_DIR})
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
@@ -321,7 +321,7 @@ gnutls: p11-kit openssl nettle gmp
 ifeq (,$(wildcard ${DEPDIR}/lib/libgnutls.*))
 	mkdir -p $@/${BUILD_DIR} && cd $@/${BUILD_DIR} && \
 	CC="${XCC}" CXX="${XCXX}" CFLAGS="-I${DEPDIR}/include" \
-		LDFLAGS="-L${DEPDIR}/lib" ../configure --prefix=${DEPDIR} \
+		LDFLAGS="-L${DEPDIR}/lib -L${DEPDIR}/lib64" ../configure --prefix=${DEPDIR} \
 		--exec-prefix=${DEPDIR} GMP_LIBS=${DEPDIR}/lib \
 		--host=${HOST} --with-included-libtasn1 \
 		--disable-openssl-compatibility \
@@ -443,6 +443,7 @@ iproute2:
         $(MAKE) && $(MAKE) install DESTDIR=${DEPDIR} && \
         $(MAKE) clean)
 	@echo -e '\t' ${LIGHT_GREEN}Done${NO_COLOR}
+
 
 clean:
 	echo "Cleaning Dependencies."
