@@ -1,44 +1,11 @@
-import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
 import { NodeService } from "../service";
 import { parseCookie } from "../../../common";
 import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
+import { getNodes, getTowerNode, linkNodes } from "../../../utils";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { AddNodeDto, AddNodeResponse, LinkNodes, NodeObj } from "../types";
-
-const isTowerNode = (nodeId: string) => nodeId.includes("tnode");
-const getTowerNode = (payload: AddNodeDto): NodeObj => {
-    if (isTowerNode(payload.nodeId))
-        return { name: payload.name, nodeId: payload.nodeId };
-
-    if (payload.attached)
-        for (const node of payload.attached) {
-            if (isTowerNode(node.nodeId)) return node;
-        }
-    return { name: "", nodeId: "" };
-};
-const getNodes = (payload: AddNodeDto) => {
-    const nodes: NodeObj[] = [];
-    if (!isTowerNode(payload.nodeId)) {
-        nodes.push({ name: payload.name, nodeId: payload.nodeId });
-    }
-    if (payload.attached)
-        for (const node of payload.attached) {
-            if (!isTowerNode(node.nodeId))
-                nodes.push({ name: node.name, nodeId: node.nodeId });
-        }
-    return nodes;
-};
-const linkNodes = (nodes: NodeObj[], rootNodeId: string) => {
-    const nodesLinkingObj: LinkNodes = {
-        nodeId: rootNodeId,
-        attached: [],
-    };
-    for (const node of nodes) {
-        nodesLinkingObj.attached?.push({ nodeId: node.nodeId });
-    }
-    return nodesLinkingObj;
-};
 
 @Service()
 @Resolver()
