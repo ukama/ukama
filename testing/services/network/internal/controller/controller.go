@@ -200,8 +200,8 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		},
 	}
 
-	/* Fixing context time limit 30 days */
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Duration(internal.ServiceConfig.TtlHours)*time.Hour)
+	/* Fixing context time 5 s */
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	defer cancel() // releases resources if slowOperation completes before timeout elapses
 
 	_, err := c.cs.CoreV1().
