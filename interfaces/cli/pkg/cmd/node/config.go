@@ -2,12 +2,12 @@ package node
 
 import (
 	"fmt"
+	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"github.com/ukama/ukama/interfaces/cli/pkg/clients"
-	"github.com/ukama/ukama/interfaces/cli/pkg/cmd/config"
 )
 
 // Yep, that's config for node config command

@@ -7,6 +7,7 @@ import (
 
 type Logger interface {
 	Printf(format string, v ...interface{})
+	Errorf(format string, v ...interface{})
 }
 
 type logger struct {
