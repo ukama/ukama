@@ -2,18 +2,18 @@ package node
 
 import (
 	"fmt"
-	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"github.com/ukama/ukama/interfaces/cli/pkg/clients"
+	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 )
 
 // Yep, that's config for node config command
 type nodeConfigConfig struct {
-	config.GlobalConfig `mapstructure:",squash"`
-	Node                nodeConfig
+	pkg.GlobalConfig `mapstructure:",squash"`
+	Node             nodeConfig
 }
 
 type nodeConfig struct {

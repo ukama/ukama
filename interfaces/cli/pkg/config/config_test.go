@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
+	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"os"
 	"reflect"
 	"testing"
@@ -11,8 +12,8 @@ import (
 const bindedFlag = "id"
 
 type fullConfig struct {
-	GlobalConfig `mapstructure:",squash"`
-	Conf         LocalConfig
+	pkg.GlobalConfig `mapstructure:",squash"`
+	Conf             LocalConfig
 }
 
 type LocalConfig struct {
@@ -82,10 +83,10 @@ func subCommand(confReader ConfigReader, actualConf *fullConfig) *cobra.Command 
 }
 
 type dmParent struct {
-	GlobalConfig `mapstructure:",squash"`
-	Conf         dmSibling `flag:"notAllowed"`
-	PtrConf      *dmSibling
-	Par          int `flag:"par"`
+	pkg.GlobalConfig `mapstructure:",squash"`
+	Conf             dmSibling `flag:"notAllowed"`
+	PtrConf          *dmSibling
+	Par              int `flag:"par"`
 }
 
 type dmSibling struct {

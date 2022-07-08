@@ -1,0 +1,105 @@
+apiVersion: v1
+entries:
+  bootstrap:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2021-08-13T10:53:06.765956482Z"
+    dependencies:
+    - name: lookup
+      repository: ""
+      version: '*'
+    - name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.4.8
+    - name: lwm2m-bootstrap
+      repository: ""
+      version: '*'
+    - name: bootstrap-api
+      repository: ""
+      version: '*'
+    description: A Helm chart for Kubernetes
+    digest: 79b57d888716d7dc8a9fdd6803b2fae3643cb94ae636f6b7a6c28858c20d414b
+    name: bootstrap
+    type: application
+    urls:
+    - bootstrap-0.0.3.tgz
+    version: 0.0.3
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2021-08-13T10:53:06.759054062Z"
+    dependencies:
+    - name: lookup
+      repository: ""
+      version: '*'
+    - name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.4.8
+    - name: lwm2m-bootstrap
+      repository: ""
+      version: '*'
+    description: A Helm chart for Kubernetes
+    digest: 65a110e460a12c2e521f4d5f384546665687cc522bbfa51b5c766bc1d204b136
+    name: bootstrap
+    type: application
+    urls:
+    - bootstrap-0.0.2.tgz
+    version: 0.0.2
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2021-08-13T10:53:06.751261439Z"
+    dependencies:
+    - name: lookup
+      repository: ""
+      version: '*'
+    - name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.4.8
+    description: A Helm chart for Kubernetes
+    digest: 4de4cc964f0467033557ff856c27e2fcd195a20a27b470cade760e4912899c11
+    name: bootstrap
+    type: application
+    urls:
+    - bootstrap-0.0.1.tgz
+    version: 0.0.1
+  ukamax:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2021-08-13T10:53:06.918695028Z"
+    dependencies:
+    - name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 14.0.*
+    - name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 8.15.*
+    - name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.4.8
+    - name: mail
+      repository: https://bokysan.github.io/docker-postfix/
+      version: 3.3.0
+    description: A Helm chart for Kubernetes
+    digest: 2911bd80c8683c1c9dd82fcb1352c5a0813c8b06eaa9a3b9cc0e5d6d31e95dd8
+    name: ukamax
+    type: application
+    urls:
+    - ukamax-0.1.16.tgz
+    version: 0.1.16
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2021-08-13T10:53:06.897491866Z"
+    dependencies:
+    - name: prometheus
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 14.0.*
+    - name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 8.15.*
+    description: A Helm chart for Kubernetes
+    digest: deacd0b6d76844fd6e6c6352703509a50f8c0bdc5ab90918f210241636ff55c1
+    name: ukamax
+    type: application
+    urls:
+    - ukamax-0.1.15.tgz
+    version: 1.2.3
+generated: "2021-08-13T10:53:06.745188922Z"

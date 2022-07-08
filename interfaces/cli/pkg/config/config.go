@@ -16,11 +16,6 @@ import (
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 )
 
-// We have to keep all config in one struct.
-type GlobalConfig struct {
-	Verbose bool
-}
-
 /* CodefigReader allows commands to read configuration from config file, env vars or flags.
  Flags have precedence over env vars and evn vars have precedence over config file.
  Flags mapped to config struct filed automatically if their name includes path to field.

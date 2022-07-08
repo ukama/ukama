@@ -13,13 +13,24 @@ import (
 )
 
 type HelmClient struct {
-	log pkg.Logger
+	log           pkg.Logger
+	chartProvider *ChartProvider
 }
 
-func (h *HelmClient) InstallChart(repoToken string, chartName string, chartVersion string, namespace string) error {
-	// Download chart
-	cp := NewChartProvider(h.log, repoToken)
-	chartPath, err := cp.DownloadChart(chartName, chartVersion)
+func NewHelmClient(chartProvider *ChartProvider, log pkg.Logger) *HelmClient {
+	return &HelmClient{
+		log:           log,
+		chartProvider: chartProvider,
+	}
+}
+
+func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string) error {
+
+	chartPath, err := h.chartProvider.DownloadChart(chartName, chartVersion)
+	if err != nil {
+		h.log.Errorf("error downloading chart: %s", err)
+		return errors.Wrap(err, "error downloading chart")
+	}
 
 	var settings *cli.EnvSettings
 	settings = cli.New()
