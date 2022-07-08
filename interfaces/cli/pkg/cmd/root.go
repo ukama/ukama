@@ -4,8 +4,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/ukama/ukama/interfaces/cli/cmd/version"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
-	"github.com/ukama/ukama/interfaces/cli/pkg/cmd/config"
+	"github.com/ukama/ukama/interfaces/cli/pkg/cmd/deploy"
 	"github.com/ukama/ukama/interfaces/cli/pkg/cmd/node"
+	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 )
 
 func RootCommand() *cobra.Command {
@@ -24,6 +25,7 @@ func RootCommand() *cobra.Command {
 	// top level commands
 
 	rootCmd.AddCommand(node.NewNodeCommand(cfMgr))
+	rootCmd.AddCommand(deploy.NewDeployCommand(cfMgr))
 
 	return rootCmd
 }
