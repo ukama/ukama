@@ -15,7 +15,7 @@ package:
 
 # Go lint
 lint:
-	staticcheck ./...
+	golangci-lint run
 
 gen:
 	mockery --all --recursive --dir ./pkg

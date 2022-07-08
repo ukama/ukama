@@ -7,6 +7,7 @@ import (
 	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 	"github.com/ukama/ukama/interfaces/cli/pkg/helm"
 	"gopkg.in/yaml.v3"
+	"os"
 	"strings"
 )
 
@@ -58,14 +59,17 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 					namesapce = chartName
 				}
 
-				helmClient.InstallChart("ukamax", chartVer, namesapce)
+				err := helmClient.InstallChart("ukamax", chartVer, namesapce)
+				if err != nil {
+					logger.Errorf("Failed to install chart: %s", err)
+					os.Exit(1)
+				}
 			}
 		},
 	}
 
 	cmd.Flags().StringP("service", "s", "", "Service name")
 	cmd.Flags().StringP("baseDomain", "d", "", "Base domain")
-	cmd.MarkFlagRequired("baseDomain")
 
 	cmd.Flags().StringP("cloud", "c", "", "Cloud type")
 	cmd.Flags().StringP("aws.accessKey", "", "", "access key to access AWS account")

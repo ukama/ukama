@@ -8,7 +8,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/kube"
-	"log"
 	"os"
 )
 
@@ -32,8 +31,7 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 		return errors.Wrap(err, "error downloading chart")
 	}
 
-	var settings *cli.EnvSettings
-	settings = cli.New()
+	settings := cli.New()
 
 	chart, err := loader.Load(chartPath)
 	if err != nil {
@@ -44,7 +42,7 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	actionConfig := new(action.Configuration)
 
 	getter := settings.RESTClientGetter()
-	if err := actionConfig.Init(getter, namespace, os.Getenv("HELM_DRIVER"), debug); err != nil {
+	if err := actionConfig.Init(getter, namespace, os.Getenv("HELM_DRIVER"), h.debug); err != nil {
 		h.log.Errorf("Error loading kube config %+v\n", err)
 		return errors.Wrap(err, "error loading kube config")
 	}
@@ -67,7 +65,7 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	return nil
 }
 
-func debug(format string, v ...interface{}) {
+func (h *HelmClient) debug(format string, v ...interface{}) {
 	format = fmt.Sprintf("[debug] %s\n", format)
-	log.Output(2, fmt.Sprintf(format, v...))
+	h.log.Printf(format, v...)
 }
