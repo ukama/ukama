@@ -75,7 +75,7 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                 item
                 xs={8}
                 alignSelf="end"
-                sx={{ position: "relative", bottom: 4 }}
+                sx={{ position: "relative", top: 8 }}
             >
                 <LoadingWrapper
                     width="100%"
@@ -84,12 +84,18 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                     variant="text"
                     isLoading={dataLoading}
                 >
-                    <Typography variant="body2" textAlign={"end"}>
-                        {`${formatBytesToMB(
-                            parseInt(user?.dataPlan || "0") -
-                                parseInt(user?.dataUsage || "0")
-                        )} MB free data left`}
-                    </Typography>
+                    <Stack direction="column">
+                        <Typography variant="body2" textAlign={"end"}>
+                            {`${formatBytesToMB(
+                                parseInt(user?.dataPlan || "0") -
+                                    parseInt(user?.dataUsage || "0")
+                            )} MB free `}
+                        </Typography>
+
+                        <Typography variant="body2" textAlign={"end"}>
+                            {`data left`}
+                        </Typography>
+                    </Stack>
                 </LoadingWrapper>
             </Grid>
             <Grid item xs={12} display="grid" sx={{ pb: 2 }}>
