@@ -31,25 +31,31 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
             setDataLoading(false);
         }
     }, [loading, user]);
-
+    console.log(user);
     return (
         <Grid container spacing={{ xs: 1.5 }}>
             <Grid item xs={12} container>
                 <Grid item xs={10}>
                     <Typography variant="body2" color="textSecondary">
-                        {user.id}
+                        {user.id.substring(0, 20)}
                     </Typography>
                 </Grid>
-                <Grid item xs={2} container justifyContent="flex-end">
+                <Grid
+                    item
+                    xs={2}
+                    container
+                    justifyContent="flex-end"
+                    sx={{ position: "relative", bottom: 10 }}
+                >
                     <IconButton
                         edge="end"
-                        size="small"
                         onClick={() => handleMoreUserdetails(user)}
                     >
-                        <EditIcon />
+                        <EditIcon sx={{ fontSize: 25 }} />
                     </IconButton>
                 </Grid>
             </Grid>
+            <Stack direction="row"></Stack>
             <Grid item xs={12}>
                 <Typography variant="h5">{user.name}</Typography>
             </Grid>
