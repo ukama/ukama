@@ -4,6 +4,8 @@ on:
     paths:
         - "interfaces/console/**"
         - ".github/workflows/console.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:

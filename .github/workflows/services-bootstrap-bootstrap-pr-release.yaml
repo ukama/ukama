@@ -2,7 +2,7 @@
 # DON'T CHANGE IT MANUALLY TO AVOID YOUR CHANGES BEING OVERWRITTEN
 # USE workflow-template.yaml FOR MAKING CHANGES IN WORKFLOWS
 name: pr-release-bootstrap
-on:  
+on:    
   workflow_dispatch:
 
 jobs:  

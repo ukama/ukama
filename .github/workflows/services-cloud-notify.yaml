@@ -7,6 +7,8 @@ on:
     paths:
         - "services/cloud/notify/**"
         - ".github/workflows/services-cloud-notify.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  
