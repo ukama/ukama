@@ -1,10 +1,11 @@
-import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
 import { Service } from "typedi";
 import { NodeService } from "../service";
 import { parseCookie } from "../../../common";
 import { Context } from "../../../common/types";
 import { Authentication } from "../../../common/Authentication";
-import { AddNodeDto, AddNodeResponse, LinkNodes } from "../types";
+import { getNodes, getTowerNode, linkNodes } from "../../../utils";
+import { Resolver, Arg, Mutation, UseMiddleware, Ctx } from "type-graphql";
+import { AddNodeDto, AddNodeResponse, LinkNodes, NodeObj } from "../types";
 
 @Service()
 @Resolver()
@@ -18,30 +19,24 @@ export class AddNodeResolver {
         req: AddNodeDto,
         @Ctx() ctx: Context
     ): Promise<AddNodeResponse | null> {
-        const res = await this.nodeService.addNode(req, parseCookie(ctx));
-        if (req.attached && req.attached.length > 0) {
-            const nodesLinkingObj: LinkNodes = {
-                nodeId: req.nodeId,
-                attached: [],
-            };
-            if (req.associate) {
-                nodesLinkingObj.attached?.push({
-                    nodeId: req.attached[0].nodeId,
-                });
-            } else {
-                for (let i = 0; i < req.attached.length; i++) {
-                    nodesLinkingObj.attached?.push({
-                        nodeId: req.attached[i].nodeId,
-                    });
-                    await this.nodeService.addNode(
-                        req.attached[i],
-                        parseCookie(ctx)
-                    );
-                }
-            }
+        const nodes: NodeObj[] = getNodes(req);
+        const rootNode: NodeObj = getTowerNode(req);
+        const linkedNode: LinkNodes = linkNodes(nodes, rootNode?.nodeId || "");
 
-            await this.nodeService.linkNodes(nodesLinkingObj, parseCookie(ctx));
+        if (nodes.length > 0) {
+            for (const node of nodes) {
+                await this.nodeService.addNode(node, parseCookie(ctx));
+            }
         }
-        return res;
+
+        if (!req.associate) {
+            await this.nodeService.addNode(rootNode, parseCookie(ctx));
+        }
+
+        if (linkedNode.attached && linkedNode.attached.length > 0) {
+            await this.nodeService.linkNodes(linkedNode, parseCookie(ctx));
+        }
+
+        return { success: true };
     }
 }
