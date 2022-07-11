@@ -7,6 +7,8 @@ on:
     paths:
         - "services/factory/nmr/**"
         - ".github/workflows/services-factory-nmr.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  
