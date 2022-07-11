@@ -748,9 +748,7 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
-                        associate: data.associatedTowerNode.length
-                            ? true
-                            : false,
+                        associate: data.isAssiociatedTowerNode ? true : false,
                         attached: data.associatedTowerNode || [],
                     },
                 },
@@ -1021,7 +1019,7 @@ const Home = () => {
                     dialogTitle={showNodeDialog.title}
                     subTitle={showNodeDialog.subTitle}
                     handleNodeSubmitAction={handleNodeSubmitAction}
-                    associatedTowerNodes={availableTowerNode || []}
+                    towerNodesArrayList={availableTowerNode || []}
                 />
             )}
 

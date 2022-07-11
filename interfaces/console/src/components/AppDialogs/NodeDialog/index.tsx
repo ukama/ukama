@@ -96,7 +96,7 @@ type NodeDialogProps = {
     handleClose: any;
     subTitle2?: string;
     dialogTitle: string;
-    associatedTowerNodes?: any;
+    towerNodesArrayList?: any;
     handleNodeSubmitAction: Function;
 };
 
@@ -107,7 +107,8 @@ const NodeDialog = ({
     dialogTitle,
     action = "",
     handleClose,
-    associatedTowerNodes,
+    towerNodesArrayList,
+
     handleNodeSubmitAction,
 }: NodeDialogProps) => {
     const classes = useStyles();
@@ -118,12 +119,12 @@ const NodeDialog = ({
         nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
         associatedTowerNode: nodeData.associatedTowerNode,
+        isAssiociatedTowerNode: nodeData.isAssiociatedTowerNode,
     });
-
     const [attachedAmplierNode, setAttachedAmplierNode] = useState<any>([
         {
             nodeId: "",
-            nodeName: "",
+            name: "",
         },
     ]);
     const handleInputChange = (e: any, index: number) => {
@@ -131,7 +132,11 @@ const NodeDialog = ({
         const list: any = [...attachedAmplierNode];
         list[index][name] = value;
         setAttachedAmplierNode(list);
-        setFormData({ ...formData, associatedTowerNode: attachedAmplierNode });
+
+        setFormData({
+            ...formData,
+            associatedTowerNode: attachedAmplierNode,
+        });
     };
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const handleRemoveClick = (index: number) => {
@@ -146,31 +151,28 @@ const NodeDialog = ({
     const handleAddClick = () => {
         setAttachedAmplierNode([
             ...attachedAmplierNode,
-            { nodeId: "", nodeName: "" },
+            { nodeId: "", name: "" },
         ]);
-    };
-
-    const handleRegisterNode = () => {
-        setIsSubmitted(true);
-        if (
-            !formData.name ||
-            !formData.nodeId ||
-            !formData.associatedTowerNode
-        ) {
-            return;
-        }
-        handleNodeSubmitAction(formData);
     };
 
     const handleNodeTypeChange = (e: SelectChangeEvent) => {
         setFormData({ ...formData, nodeId: "", type: e.target.value });
     };
-
+    const [selectedToweNode, setSelectedToweNode] = useState("");
     const handleAssociatedTowerNode = (e: SelectChangeEvent) => {
+        setSelectedToweNode(e.target.value);
+        const getSelectedNodeInfo = towerNodesArrayList.filter(
+            (item: { name: string }) => item.name === e.target.value
+        );
+        const result = getSelectedNodeInfo.map(({ name, id }: any) => ({
+            name,
+            id,
+        }))[0];
+
         setFormData({
             ...formData,
-            nodeId: "",
-            associatedTowerNode: e.target.value as string,
+            isAssiociatedTowerNode: true,
+            associatedTowerNode: result,
         });
     };
     const [nType, setNtype] = useState<any>("AMPLIFIER");
@@ -184,7 +186,17 @@ const NodeDialog = ({
             return [from, to].indexOf(index) == -1;
         });
     };
-
+    const handleRegisterNode = () => {
+        setIsSubmitted(true);
+        if (
+            !formData.name ||
+            !formData.nodeId ||
+            !formData.associatedTowerNode
+        ) {
+            return;
+        }
+        handleNodeSubmitAction(formData);
+    };
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
@@ -341,7 +353,7 @@ const NodeDialog = ({
                                         "& legend": { width: "190px" },
                                     }}
                                     onChange={handleAssociatedTowerNode}
-                                    value={formData.associatedTowerNode}
+                                    value={selectedToweNode}
                                     variant="outlined"
                                     disabled={action == "editNode"}
                                     input={
@@ -364,7 +376,7 @@ const NodeDialog = ({
                                     }}
                                     className={classes.selectStyle}
                                 >
-                                    {associatedTowerNodes.map(
+                                    {towerNodesArrayList.map(
                                         ({ id, name }: any) => (
                                             <MenuItem value={name} key={id}>
                                                 <Typography variant="body1">
@@ -395,7 +407,7 @@ const NodeDialog = ({
                         </Grid>
                     )}
 
-                    {attachedAmplierNode.map((x: any, i: any) => {
+                    {attachedAmplierNode.map((x: any, i: number) => {
                         return (
                             (formData.type == "TOWER" ||
                                 isAssociatedTowerNode == true) && (
@@ -545,18 +557,16 @@ const NodeDialog = ({
                                             <TextField
                                                 fullWidth
                                                 label={"NODE NAME"}
-                                                name={"nodeName"}
-                                                value={x.nodeName}
+                                                name={"name"}
+                                                value={x.name}
                                                 onChange={e => {
                                                     handleInputChange(e, i);
                                                 }}
                                                 error={
-                                                    isSubmitted &&
-                                                    x.nodeName === ""
+                                                    isSubmitted && x.name === ""
                                                 }
                                                 helperText={
-                                                    isSubmitted &&
-                                                    x.nodeName === ""
+                                                    isSubmitted && x.name === ""
                                                         ? "Node name is required !"
                                                         : " "
                                                 }
