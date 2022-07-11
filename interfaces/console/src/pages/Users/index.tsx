@@ -341,7 +341,7 @@ const User = () => {
                         />
                         <Grid container spacing={2} mt={{ xs: 2, md: 4 }}>
                             {users.map((item: GetUsersDto) => (
-                                <Grid key={item.id} item xs={12} md={6} lg={3}>
+                                <Grid key={item.id} item xs={12} md={3} sm={6}>
                                     <Card
                                         variant="outlined"
                                         sx={{
