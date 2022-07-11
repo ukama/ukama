@@ -24,6 +24,7 @@ runs:
       id: vars_step
       run: |
         echo "::set-output name=sha-short::$(git rev-parse --short=7 HEAD)"
-        echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        export CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        echo  "::set-output name=branch::${CURR_BRANCH:-unknown}"
         export CURR_TAG=$(git tag --points-at HEAD)
         echo "::set-output name=tag::${CURR_TAG:-unknown}"
