@@ -31,7 +31,6 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
             setDataLoading(false);
         }
     }, [loading, user]);
-    console.log(user);
     return (
         <Grid container spacing={{ xs: 1.5 }}>
             <Grid item xs={12} container>
