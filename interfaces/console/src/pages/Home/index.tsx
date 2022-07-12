@@ -97,6 +97,7 @@ const Home = () => {
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
     const [userStatus, setUserStatus] = useState<boolean>(true);
+    const [updateNodeName, setUpdateNodeName] = useState<any>();
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -127,6 +128,7 @@ const Home = () => {
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
+    const [isUpdatAllNodes, setIsUpdatAllNodes] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
     const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
@@ -650,6 +652,7 @@ const Home = () => {
     };
     const handleCloseSoftwareUpdate = () => {
         setIsSoftwaUpdate(false);
+        setIsUpdatAllNodes(false);
     };
 
     const getStatus = (key: string) => {
@@ -701,6 +704,9 @@ const Home = () => {
             });
             setSimDialog({ isShow: true, type: "edit" });
         }
+    };
+    const handleAllNodeUpdate = () => {
+        setIsUpdatAllNodes(true);
     };
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
@@ -808,6 +814,9 @@ const Home = () => {
             });
         } else if (type === "update") {
             handleNodeUpdateAction();
+            if (node) {
+                setUpdateNodeName(node[0].name);
+            }
         }
     };
 
@@ -967,6 +976,7 @@ const Home = () => {
                                 )}
                                 buttonSize={"small"}
                                 buttonTitle={"Update All"}
+                                handleAllNodeUpdate={handleAllNodeUpdate}
                             />
                             <NodeContainer
                                 items={nodeRes?.getNodesByOrg.nodes || []}
@@ -1005,11 +1015,16 @@ const Home = () => {
                 submit={onUpdateAllNodes}
                 isOpen={isSoftwaUpdate}
                 handleClose={handleCloseSoftwareUpdate}
+                title={" Node Update Confirmation"}
+                content={`The software update for “ ${updateNodeName}’s Node” will disrupt your network, and will take approximately [insert time here]. Continue with update?`}
+            />
+
+            <SoftwareUpdateModal
+                submit={onUpdateAllNodes}
+                isOpen={isUpdatAllNodes}
+                handleClose={handleCloseSoftwareUpdate}
                 title={" Node Update all Confirmation"}
-                content={` The software updates for “Tryphena’s Node,” and
-                “Tryphena’s Node 2” will disrupt your network, and will
-                take approximately [insert time here]. Continue updating
-                all?`}
+                content={`The software updates for “Tryphena’s Node,” and “Tryphena’s Node 2” will disrupt your network, and will take approximately [insert time here]. Continue updating all?`}
             />
             {isWelcomeDialog && (
                 <BasicDialog
