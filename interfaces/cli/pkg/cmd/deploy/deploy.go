@@ -2,13 +2,16 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"github.com/ukama/ukama/interfaces/cli/pkg/config"
 	"github.com/ukama/ukama/interfaces/cli/pkg/helm"
 	"gopkg.in/yaml.v3"
-	"os"
-	"strings"
+	"helm.sh/helm/v3/pkg/cli/values"
 )
 
 type deployConfig struct {
@@ -36,6 +39,8 @@ type awsConfig struct {
 }
 
 func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
+	valueOpts := &values.Options{}
+
 	cmd := &cobra.Command{
 		Use:   "deploy",
 		Short: "Deploy Ukama service",
@@ -59,7 +64,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 					namesapce = chartName
 				}
 
-				err := helmClient.InstallChart("ukamax", chartVer, namesapce)
+				err := helmClient.InstallChart("ukamax", chartVer, namesapce, valueOpts)
 				if err != nil {
 					logger.Errorf("Failed to install chart: %s", err)
 					os.Exit(1)
@@ -81,6 +86,8 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	cmd.Flags().StringP("helmRepo", "r", "https://raw.githubusercontent.com/ukama/helm-charts/repo-index", "Helm repository url")
 
 	cmd.Flags().StringP("k8s.namespace", "", "", "Target Kubernetes namespace")
+	addValueOptionsFlags(cmd.Flags(), valueOpts)
+
 	return cmd
 }
 
@@ -92,6 +99,13 @@ func parsName(chartName string) (name string, version string) {
 		return chartName[:i], chartName[i+2:]
 	}
 
+}
+
+func addValueOptionsFlags(f *pflag.FlagSet, v *values.Options) {
+	f.StringSliceVarP(&v.ValueFiles, "values", "", []string{}, "specify values in a YAML file or a URL (can specify multiple)")
+	f.StringArrayVar(&v.Values, "set", []string{}, "set values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	f.StringArrayVar(&v.StringValues, "set-string", []string{}, "set STRING values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
+	f.StringArrayVar(&v.FileValues, "set-file", []string{}, "set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2)")
 }
 
 //ukama deploy --cloud AWS  --cloud.cloud.accessKeyId AKIAJXQZQZQZQZQZQZQ --cloud.secretAccessKey SECRET --baseDomain ukama.com --token UKAMA_ACCESS_KEY  // deploy all services and provision AWS cluster

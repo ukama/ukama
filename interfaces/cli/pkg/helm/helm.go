@@ -2,13 +2,16 @@ package helm
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"github.com/ukama/ukama/services/common/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/cli"
+	"helm.sh/helm/v3/pkg/cli/values"
+	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/kube"
-	"os"
 )
 
 type HelmClient struct {
@@ -23,7 +26,7 @@ func NewHelmClient(chartProvider *ChartProvider, log pkg.Logger) *HelmClient {
 	}
 }
 
-func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string) error {
+func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string, valueOpts *values.Options) error {
 
 	chartPath, err := h.chartProvider.DownloadChart(chartName, chartVersion)
 	if err != nil {
@@ -41,22 +44,32 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 
 	actionConfig := new(action.Configuration)
 
-	getter := settings.RESTClientGetter()
-	if err := actionConfig.Init(getter, namespace, os.Getenv("HELM_DRIVER"), h.debug); err != nil {
+	k8sClientGetter := settings.RESTClientGetter()
+	if err := actionConfig.Init(k8sClientGetter, namespace, os.Getenv("HELM_DRIVER"), h.debug); err != nil {
 		h.log.Errorf("Error loading kube config %+v\n", err)
 		return errors.Wrap(err, "error loading kube config")
 	}
 
-	kubeClient := kube.New(getter)
+	kubeClient := kube.New(k8sClientGetter)
 	kubeClient.Namespace = "cli-test"
 	actionConfig.KubeClient = kubeClient
+
+	//
+	path, err := genDefaulValues()
+
+	// prepare values
+	p := getter.All(settings)
+	vals, err := valueOpts.MergeValues(p)
+	if err != nil {
+		return err
+	}
 
 	iCli := action.NewInstall(actionConfig)
 	iCli.Namespace = namespace
 	iCli.ReleaseName = "my-release"
 	iCli.CreateNamespace = true
 	iCli.UseReleaseName = true
-	rel, err := iCli.Run(chart, nil)
+	rel, err := iCli.Run(chart, vals)
 	if err != nil {
 		h.log.Errorf("Error applying chart: %s\n", err)
 		return errors.Wrap(err, "error applying chart")
