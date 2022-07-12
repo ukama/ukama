@@ -11,22 +11,28 @@ type Docker struct {
 }
 
 type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	Metrics           config.Metrics
-	Server            rest.HttpConfig
-	ApiIf             config.ServiceApiIf
-	ServiceRouter     string
-	GitUser           string
-	GitPass           string
-	Docker            Docker
-	VmImage           string
-	BuilderImage      string
-	BuilderCmd        []string
-	RabbitUri         string
-	RepoServerUrl     string
-	Namespace         string
-	SecRef            string
-	CmRef             string
+	config.BaseConfig     `mapstructure:",squash"`
+	Metrics               config.Metrics
+	Server                rest.HttpConfig
+	ApiIf                 config.ServiceApiIf
+	ServiceRouter         string
+	GitUser               string
+	GitPass               string
+	Docker                Docker
+	BuilderRegCred        string `default:"dregcred"`
+	BuilderImage          string
+	BuilderCmd            []string
+	RabbitUri             string
+	VNodeRepoServerUrl    string
+	VNodeRepoName         string `default:"virtualnode"`
+	Namespace             string
+	BackOffLimit          int32 `default:"4"`
+	TimeToLive            int32 `default:"60"`
+	ActiveDeadLineSeconds int64 `default:"3600"`
+	SecRef                string
+	CmRef                 string
+	AwsKey                string
+	AwsSecret             string
 }
 
 var ServiceConfig *Config
@@ -39,7 +45,7 @@ var ServiceConfig *Config
 func NewConfig() *Config {
 
 	return &Config{
-		Server: config.DefaultHTTPConfig(),
+		Server: rest.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8081",
 		ApiIf: config.ServiceApiIf{
@@ -49,13 +55,7 @@ func NewConfig() *Config {
 					"ping": ServiceName, "path": "/ping",
 				},
 				{
-					"node": "*", "looking_for": "info", "path": "/node",
-				},
-				{
-					"looking_to": "create_node", "type": "*", "count": "*", "path": "/node",
-				},
-				{
-					"node": "*", "looking_to": "delete", "path": "/node",
+					"node": "*", "looking_for": "fact_node_info", "path": "/node",
 				},
 			},
 			F: config.Forward{

@@ -63,7 +63,7 @@ jobs:
     - name: OCI build and push
       working-directory: ${{ env.working-directory }}
       env:
-        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/factory
+        REGISTRY: 003664043471.dkr.ecr.us-east-1.amazonaws.com/virtual/factory
       run: |                        
             buildah bud -t $REGISTRY\:${{ steps.vars_step.outputs.sha-short }} \
                 -t $REGISTRY\:${{ steps.vars_step.outputs.branch }}-${{ github.run_number }} \
@@ -109,7 +109,8 @@ jobs:
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3.1.0
-        with:                
+        with:
+          args: --timeout=5m            
           working-directory: ${{ env.working-directory }}
 
 

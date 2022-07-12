@@ -7,16 +7,16 @@ import (
 )
 
 type Module struct {
-	ModuleID   ukama.ModuleID
-	Type       string    `form:"type" json:"type"`
-	PartNumber string    `form:"partNumber" json:"partNumber"`
-	HwVersion  string    `form:"hwVersion" json:"hwVersion"`
-	Mac        string    `form:"mac" json:"mac"`
-	SwVersion  string    `form:"swVersion" json:"swVersion"`
-	PSwVersion string    `form:"pSwVersion" json:"mfgSwVersion"`
-	MfgDate    time.Time `form:"mfgDate" json:"mfgDate"`
-	MfgName    string    `form:"mfgName" json:"mfgName"`
-	Status     string    `form:"status" json:"status"`
+	ModuleID   ukama.ModuleID `json:"moduleID"`
+	Type       string         `form:"type" json:"type"`
+	PartNumber string         `form:"partNumber" json:"partNumber"`
+	HwVersion  string         `form:"hwVersion" json:"hwVersion"`
+	Mac        string         `form:"mac" json:"mac"`
+	SwVersion  string         `form:"swVersion" json:"swVersion"`
+	PSwVersion string         `form:"pSwVersion" json:"mfgSwVersion"`
+	MfgDate    time.Time      `form:"mfgDate" json:"mfgDate"`
+	MfgName    string         `form:"mfgName" json:"mfgName"`
+	Status     string         `form:"status" json:"status"`
 }
 
 type Node struct {
@@ -28,7 +28,7 @@ type Node struct {
 	SwVersion     string       `json:"swVersion"`
 	PSwVersion    string       `json:"mfgSwVersion"`
 	AssemblyDate  time.Time    `json:"assemblyDate"`
-	OemName       string       `json:"oemName"`
+	OemName       string       `json:"oem"`
 	Modules       []Module     `json:"-"`
 	MfgTestStatus string       `json:"mfgTestStatus"`
 	Status        string       `json:"status"`
