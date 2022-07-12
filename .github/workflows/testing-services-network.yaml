@@ -7,6 +7,8 @@ on:
     paths:
         - "testing/services/network/**"
         - ".github/workflows/testing-services-network.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  
