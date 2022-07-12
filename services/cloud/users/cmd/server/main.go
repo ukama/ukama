@@ -86,13 +86,14 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func NewIccidPool(conf pkg.SimManager) (pbclient.SimPoolClient, io.Closer) {
+	log.Info("Connecting to simPool")
 	conn := createGrpcConn(conf)
 	return pbclient.NewSimPoolClient(conn), conn
 }
 
 func newSimManagerClient(conf pkg.SimManager) (client pbclient.SimManagerServiceClient, connection io.Closer) {
+	log.Info("Connecting to sim manager")
 	conn := createGrpcConn(conf)
-
 	return pbclient.NewSimManagerServiceClient(conn), conn
 }
 

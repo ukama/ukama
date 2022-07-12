@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -45,15 +46,20 @@ var routerConfig = &RouterConfig{
 	},
 }
 
+var testClientSet *Clients
+
 func init() {
 	gin.SetMode(gin.TestMode)
+	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+		Timeout: 1 * time.Second,
+	})
 }
 
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -68,7 +74,7 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
