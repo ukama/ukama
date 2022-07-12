@@ -6,21 +6,13 @@ import {
     Typography,
     DialogTitle,
     DialogActions,
+    DialogContentText,
     DialogContent,
     FormControlLabel,
 } from "@mui/material";
 import React from "react";
-import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
-
-const BootstrapDialog = styled(Dialog)(({ theme }) => ({
-    "& .MuiDialogContent-root": {
-        padding: theme.spacing(2),
-    },
-    "& .MuiDialogActions-root": {
-        padding: theme.spacing(1),
-    },
-}));
+import colors from "../../../theme/colors";
 
 export interface DialogTitleProps {
     id: string;
@@ -65,7 +57,7 @@ const SoftwareUpdateModal = ({
     submit,
     content,
     title,
-    btnLabel = "CONTINUE WITH UPDATE ALL",
+    btnLabel = "UPDATE ALL",
 }: softwareUpdateModalProps) => {
     const [checked, setChecked] = React.useState(false);
 
@@ -75,10 +67,12 @@ const SoftwareUpdateModal = ({
 
     return (
         <div>
-            <BootstrapDialog
-                onClose={handleClose}
-                aria-labelledby="customized-dialog-title"
+            <Dialog
                 open={isOpen}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+                sx={{ with: "100%" }}
             >
                 <BootstrapDialogTitle
                     id="customized-dialog-title"
@@ -87,11 +81,14 @@ const SoftwareUpdateModal = ({
                     {title}
                 </BootstrapDialogTitle>
                 <DialogContent>
-                    <Typography>{content}</Typography>
+                    <DialogContentText id="alert-dialog-description">
+                        <Typography sx={{ color: colors.black }}>
+                            {content}
+                        </Typography>
+                    </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ marginBottom: 2 }}>
+                <DialogActions>
                     <FormControlLabel
-                        sx={{ position: "relative", left: 10 }}
                         control={
                             <Checkbox
                                 checked={checked}
@@ -121,7 +118,7 @@ const SoftwareUpdateModal = ({
                         {btnLabel}
                     </Button>
                 </DialogActions>
-            </BootstrapDialog>
+            </Dialog>
         </div>
     );
 };
