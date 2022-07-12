@@ -7,6 +7,8 @@ on:
     paths:
         - "services/cloud/org/**"
         - ".github/workflows/services-cloud-org.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  
@@ -75,7 +77,7 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/ukama-helmfile.yaml"
+            filename: "releases/ukamax/dev.yaml"
             key: "orgImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}

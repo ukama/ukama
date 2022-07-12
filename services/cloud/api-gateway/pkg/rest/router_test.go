@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -45,15 +46,20 @@ var routerConfig = &RouterConfig{
 	},
 }
 
+var testClientSet *Clients
+
 func init() {
 	gin.SetMode(gin.TestMode)
+	testClientSet = NewClientsSet(&pkg.GrpcEndpoints{
+		Timeout: 1 * time.Second,
+	})
 }
 
 func TestPingRoute(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/ping", nil)
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -68,7 +74,7 @@ func TestGetOrg_Unauthorized(t *testing.T) {
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/orgs/org-name", nil)
 
-	r := NewRouter(NewDebugAuthMiddleware(), NewClientsSet(&pkg.GrpcEndpoints{}), routerConfig).f.Engine()
+	r := NewRouter(NewDebugAuthMiddleware(), testClientSet, routerConfig).f.Engine()
 
 	// act
 	r.ServeHTTP(w, req)
@@ -232,60 +238,70 @@ func TestGetNode(t *testing.T) {
 
 }
 
-func TestAddUpdateNode(t *testing.T) {
+func TestAddNode(t *testing.T) {
 	// arrange
+	nodeId := ukama.NewVirtualNodeId("homenode").String()
+	req, _ := http.NewRequest("PUT", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
+	req.Header.Set("token", "bearer 123")
 
-	tests := []struct {
-		name             string
-		isCreated        bool
-		expectedHttpCode int
-	}{
-		{
-			name:             "created",
-			isCreated:        true,
-			expectedHttpCode: http.StatusCreated,
+	w := httptest.NewRecorder()
+	net := &netmocks.NetworkServiceClient{}
+	o := &orgmocks.OrgServiceClient{}
+	nd := &nodemocks.NodeServiceClient{}
+
+	nd.On("GetNode", mock.Anything, mock.Anything).Return(&nodepb.GetNodeResponse{
+		Node: &nodepb.Node{
+			NodeId: nodeId,
+			Name:   "test-name",
+		}}, nil)
+	nd.On("AddNode", mock.Anything, mock.Anything).Return(&nodepb.AddNodeResponse{
+		Node: &nodepb.Node{
+			NodeId: nodeId,
+			Name:   "test-name",
 		},
-		{
-			name:             "updated",
-			isCreated:        false,
-			expectedHttpCode: http.StatusOK,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
+	}, nil)
 
-			nodeId := ukama.NewVirtualNodeId("homenode").String()
-			req, _ := http.NewRequest("PUT", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
-			req.Header.Set("token", "bearer 123")
+	net.On("AddNode", mock.Anything, mock.Anything).Return(&netpb.AddNodeResponse{}, nil)
 
-			w := httptest.NewRecorder()
-			net := &netmocks.NetworkServiceClient{}
-			o := &orgmocks.OrgServiceClient{}
-			nd := &nodemocks.NodeServiceClient{}
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+		Registry: client.NewRegistryFromClient(net, o, nd),
+	}, routerConfig).f.Engine()
 
-			if test.isCreated {
-				nd.On("GetNode", mock.Anything, mock.Anything).Return(nil, status.Error(codes.NotFound, ""))
-				nd.On("AddNode", mock.Anything, mock.Anything).Return(&nodepb.AddNodeResponse{}, nil)
-				net.On("AddNode", mock.Anything, mock.Anything).Return(&netpb.AddNodeResponse{}, nil)
-			} else {
-				nd.On("GetNode", mock.Anything, mock.Anything).Return(&nodepb.GetNodeResponse{
-					Node: &nodepb.Node{NodeId: nodeId}}, nil)
-				nd.On("UpdateNode", mock.Anything, mock.Anything).Return(&nodepb.UpdateNodeResponse{}, nil)
-			}
+	// act
+	r.ServeHTTP(w, req)
 
-			r := NewRouter(NewDebugAuthMiddleware(), &Clients{
-				Registry: client.NewRegistryFromClient(net, o, nd),
-			}, routerConfig).f.Engine()
+	// assert
+	fmt.Printf("Response: %s\n", w.Body.String())
+	assert.Equal(t, http.StatusCreated, w.Code)
+	net.AssertExpectations(t)
 
-			// act
-			r.ServeHTTP(w, req)
+}
 
-			// assert
-			fmt.Printf("Response: %s\n", w.Body.String())
-			assert.Equal(t, test.expectedHttpCode, w.Code)
-			net.AssertExpectations(t)
-		})
-	}
+func Test_UpdateNode(t *testing.T) {
+	nodeId := ukama.NewVirtualNodeId("homenode").String()
+	req, _ := http.NewRequest("PATCH", "/orgs/test-org/nodes/"+nodeId, strings.NewReader(`{ "name": "test-name" }`))
+	req.Header.Set("token", "bearer 123")
+
+	w := httptest.NewRecorder()
+	net := &netmocks.NetworkServiceClient{}
+	o := &orgmocks.OrgServiceClient{}
+	nd := &nodemocks.NodeServiceClient{}
+
+	nd.On("GetNode", mock.Anything, mock.Anything).Return(&nodepb.GetNodeResponse{
+		Node: &nodepb.Node{NodeId: nodeId}}, nil)
+	nd.On("UpdateNode", mock.Anything, mock.Anything).Return(&nodepb.UpdateNodeResponse{}, nil)
+
+	r := NewRouter(NewDebugAuthMiddleware(), &Clients{
+		Registry: client.NewRegistryFromClient(net, o, nd),
+	}, routerConfig).f.Engine()
+
+	// act
+	r.ServeHTTP(w, req)
+
+	// assert
+	fmt.Printf("Response: %s\n", w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
+	net.AssertExpectations(t)
 }
 
 func Test_HssMethods(t *testing.T) {

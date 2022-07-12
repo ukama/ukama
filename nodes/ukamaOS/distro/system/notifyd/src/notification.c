@@ -12,6 +12,7 @@
 #include "notify_macros.h"
 #include "web_client.h"
 
+#include "usys_api.h"
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
@@ -82,9 +83,9 @@ int notification_exit() {
 }
 
 int notify_send_notification(JsonObj* jNotify) {
-
-    return wc_forward_notification(gRemoteServer, "POST", jNotify);
-
+    char urlWithEp[MAX_URL_LENGTH] = {0};
+    usys_sprintf(urlWithEp, "%s%s", gRemoteServer, DEF_REMOTE_EP);
+    return wc_forward_notification(urlWithEp, "POST", jNotify);
 }
 
 void free_notification(Notification* notif) {

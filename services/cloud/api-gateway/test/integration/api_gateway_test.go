@@ -19,6 +19,8 @@ import (
 	"github.com/ukama/ukama/services/common/testing/kratos"
 )
 
+// Before running test for the first time you have to create a test account in Identity manager and provide email and password for it
+
 type TestConfig struct {
 	ApiUrl           string
 	KratosUrl        string

@@ -7,6 +7,8 @@ on:
     paths:
         - "services/cloud/network/**"
         - ".github/workflows/services-cloud-network.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  
@@ -75,7 +77,7 @@ jobs:
         - name: update gitops
           uses: denispalnitsky/gitops-release@v9
           with:
-            filename: "releases/ukamax-helmfile.yaml"
+            filename: "releases/ukamax/dev.yaml"
             key: "networkImageTag"
             value:  ${{ steps.vars_step.outputs.sha-short }}
             github-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}

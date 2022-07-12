@@ -78,15 +78,31 @@ type GetNodeRequest struct {
 	NodeId  string `path:"node" validate:"required"`
 }
 
-type AddNodeRequest struct {
-	OrgName  string `path:"org" validate:"required"`
-	NodeId   string `path:"node" validate:"required"`
-	NodeName string `json:"name" validate:"max=255"`
+// struct for creating or updating node
+type AddUpdateNodeRequest struct {
+	OrgName string     `path:"org" validate:"required"`
+	NodeId  string     `path:"node" validate:"required"`
+	Node    NodeModify `json:"node" validate:"required"`
+}
+
+type NodeModify struct {
+	Name     string        `json:"name,omitempty"`
+	Attached []*NodeAttach `json:"attached,omitempty"`
+}
+
+type NodeAttach struct {
+	NodeId string `json:"nodeId,omitempty" validate:"required"`
 }
 
 type DeleteNodeRequest struct {
 	OrgName string `path:"org" validate:"required"`
 	NodeId  string `path:"node" validate:"required"`
+}
+
+type DetachNodeRequest struct {
+	OrgName        string `path:"org" validate:"required"`
+	NodeId         string `path:"node" validate:"required"`
+	AttachedNodeId string `path:"attachedId" validate:"required"`
 }
 
 func MapNodesList(pbList *pb.GetNodesResponse) *NodesList {

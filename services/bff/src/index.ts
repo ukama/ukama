@@ -29,11 +29,29 @@ const initializeApp = async () => {
         ],
         credentials: true,
     };
+    // logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
     app.use(cors(corsOptions));
     app.use(cookieParser());
 
     const { server, schema } = await configureApolloServer();
-    server.applyMiddleware({ app, cors: false });
+    server.applyMiddleware({ app, cors: corsOptions });
+
+    app.use((req, res, next) => {
+        res.header("Access-Control-Allow-Origin", [
+            process.env.CONSOLE_APP_URL ?? "",
+            process.env.AUTH_APP_URL ?? "",
+        ]);
+        res.header(
+            "Access-Control-Allow-Headers",
+            "Origin, X-Requested-With, Content-Type, Accept"
+        );
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.header(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, DELETE, OPTIONS"
+        );
+        next();
+    });
 
     const httpServer = createServer(app);
     server.installSubscriptionHandlers(httpServer);
@@ -75,11 +93,16 @@ const initializeApp = async () => {
                     sameSite: "lax",
                     domain: process.env.DOMAIN,
                 });
-                res.status(200).send({ success: true });
+                res.setHeader(
+                    "Access-Control-Allow-Origin",
+                    process.env.AUTH_APP_URL ?? ""
+                );
+                res.setHeader("Access-Control-Allow-Credentials", "true");
+                res.send({ success: true });
                 res.end();
             }
         } else {
-            res.status(500).send({ success: false });
+            res.send({ success: false });
             res.end();
         }
     });

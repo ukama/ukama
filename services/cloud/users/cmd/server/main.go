@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
+	"io"
+	"os"
+
 	"github.com/ukama/ukama/services/cloud/users/pkg/server"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc/credentials/insecure"
-	"io"
-	"os"
 
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 
@@ -72,7 +73,9 @@ func runGrpcServer(gormdb sql.Db) {
 		sims.NewSimProvider(serviceConfig.SimTokenKey, simPool),
 		simMgr,
 		serviceConfig.SimManager.Name+":"+serviceConfig.SimManager.Host,
-		pub)
+		pub,
+		pkg.NewKratosClient(serviceConfig.KratoAdminUrl),
+	)
 
 	grpcServer := ugrpc.NewGrpcServer(serviceConfig.Grpc, func(s *grpc.Server) {
 
@@ -83,13 +86,14 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func NewIccidPool(conf pkg.SimManager) (pbclient.SimPoolClient, io.Closer) {
+	log.Info("Connecting to simPool")
 	conn := createGrpcConn(conf)
 	return pbclient.NewSimPoolClient(conn), conn
 }
 
 func newSimManagerClient(conf pkg.SimManager) (client pbclient.SimManagerServiceClient, connection io.Closer) {
+	log.Info("Connecting to sim manager")
 	conn := createGrpcConn(conf)
-
 	return pbclient.NewSimManagerServiceClient(conn), conn
 }
 

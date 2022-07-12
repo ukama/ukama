@@ -8,7 +8,7 @@
  */
 
 /*
- * virtualNode -- tool to create, destory, info stuff related to ukama's 
+ * virtualNode -- tool to create, destory, info stuff related to ukama's
  *                virtual node
  *
  */
@@ -65,7 +65,7 @@ void usage() {
 	printf("--V, --version                   version.\n");
 }
 
-/* 
+/*
  * set_log_level -- set the verbosity level for logs
  *
  */
@@ -222,6 +222,12 @@ int main (int argc, char *argv[]) {
 		exit(1);
 	}
 
+	/* Prepare environment for virtual node build */
+	if (!prepare_env_for_creating_virtual_node()) {
+		log_error("Unable to prepare environment for building virtual node.");
+		exit(1);
+	}
+
 	/* Build all them capps */
 	ptr = configs;
 	while (ptr) {
@@ -250,7 +256,7 @@ int main (int argc, char *argv[]) {
 	if (!create_vnode_image(target, configs, node)) {
 		log_error("Unable to create image for virtual node");
 		purge_vnode_image(node);
-		goto done;
+		exit(1);
 	}
 
  done:
