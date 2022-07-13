@@ -492,7 +492,6 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	}
 }
 func generateQrcode(qrcodeId string, qrcodeName string) string {
-<<<<<<< HEAD
 	
 	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
 	if qrGenerateError != nil {
@@ -500,16 +499,6 @@ func generateQrcode(qrcodeId string, qrcodeName string) string {
 	 }
 	 encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
 	return encodedData 
-=======
-
-	qrcode,err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
-	if err!=nil{
-		fmt.Printf("Could not generate qrcode :,%v",err)
-	}
-	
-	encodedData := base64.StdEncoding.EncodeToString(qrcode)
-	return encodedData
->>>>>>> e477803450 (Fix linting error)
 }
 
 
