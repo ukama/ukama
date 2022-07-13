@@ -34,9 +34,27 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
     return (
         <Grid container spacing={{ xs: 1.5 }}>
             <Grid item xs={12} container>
-                <Grid item xs={10}>
-                    <Typography variant="body2" color="textSecondary">
-                        {user.id.substring(0, 20)}
+                <Grid
+                    item
+                    xs={10}
+                    sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        width: "11rem",
+                        whiteSpace: "normal",
+                    }}
+                >
+                    <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        sx={{
+                            width: "200px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}
+                    >
+                        {user.id}
                     </Typography>
                 </Grid>
                 <Grid
