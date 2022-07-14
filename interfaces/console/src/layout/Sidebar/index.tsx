@@ -108,7 +108,7 @@ const Sidebar = (
                         >
                             <Typography
                                 variant="body1"
-                                fontWeight={title === page ? 600 : "normal"}
+                                fontWeight={title === page ? "bold" : "normal"}
                                 className={
                                     title !== page ? classes.listItemText : ""
                                 }
