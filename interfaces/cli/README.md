@@ -1,0 +1,40 @@
+# Ukama CLI
+
+## Configuration 
+
+Every command has it's own configuration structure. That is usually located in `pkg/cmd/<command>/config.go`.
+Values of config could be set via config file, environment variables of flags if `flag` tag is defined for the field.
+
+Here is an example: 
+``` go
+type deployConfig struct {		
+	BaseDomain       string      `flag:"baseDomain" validate:"required"`
+	Helm             *HelmConfig	
+}
+
+type HelmConfig struct {
+	RepoUrl string `flag:"helmRepo" default:"https://raw.githubusercontent.com/ukama/helm-charts/repo-index"`
+	Token   string `flag:"token"`
+}
+```
+
+We can set `BaseDomain` in three ways:
+- via command line `ukama deploy --baseDomain=<domain>`.
+- via environment variable `UKAMA_BASEDOMAIN=<domain>`
+- using config file `.ukama.yaml` like in example below
+```
+deploy:
+    baseDomain: example.com  
+```
+
+
+Here is the way to set nested value `Token`:
+- via command line `ukama deploy --=<token>`.
+- via environment variable `UKAMA_HELM_TOKEN=<token>`
+- using config file `.ukama.yaml` like in example below.
+```
+deploy:
+    helm:      
+      token: <token>
+```
+

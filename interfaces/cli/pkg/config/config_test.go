@@ -51,6 +51,7 @@ func Test_ConfigReader(t *testing.T) {
 	assert.Equal(t, "valFromConf", nc.Conf.FromConfig)
 	assert.Equal(t, valFromVar, nc.Conf.FromEnvVar)
 	assert.Equal(t, overrFromArgVal, nc.Conf.OverriddenByArg)
+	assert.Equal(t, overridenVar, nc.Conf.OverriddenByEvnVar)
 }
 
 func newTestRootCommand(confReader ConfigReader, actualConf *fullConfig) *cobra.Command {
@@ -101,4 +102,38 @@ func TestDumpStrunct(t *testing.T) {
 	assert.Equal(t, "id", m["conf.id"])
 	assert.Equal(t, "id", m["ptrconf.id"])
 	assert.Equal(t, "par", m["par"])
+}
+
+type fullConfigRef struct {
+	pkg.GlobalConfig `mapstructure:",squash"`
+	Conf             *LocalConfig `default:"{}"`
+}
+
+func TestEnvOverride(t *testing.T) {
+	// arrange
+	overridenVar := "overridenVar"
+
+	nc := fullConfigRef{}
+	confReader := NewConfMgr("testdata/test_conf.yaml", os.Stdout, os.Stderr)
+
+	cmd := &cobra.Command{
+		Use:   "node",
+		Short: "Access node",
+		Run: func(cmd *cobra.Command, args []string) {
+			confReader.ReadConfig("node", cmd.Flags(), &nc)
+		},
+	}
+	cmd.PersistentFlags().Bool("verbose", false, "verbose")
+	cmd.Flags().StringP("id", "i", "", "")
+	cmd.SetArgs([]string{"get", "--verbose", "true"})
+
+	os.Setenv("UKAMA_CONF_ID", overridenVar)
+	defer os.Unsetenv("UKAMA_CONF_ID")
+
+	// act
+	err := cmd.Execute()
+
+	// assert
+	assert.NoError(t, err)
+	assert.Equal(t, overridenVar, nc.Conf.Id)
 }

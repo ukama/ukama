@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/creasty/defaults"
 	"io"
 	"os"
 	"reflect"
@@ -56,6 +57,9 @@ func NewConfMgr(configFile string, stdout io.Writer, stderr io.Writer) *ConfMgr 
 }
 
 func (c *ConfMgr) ReadConfig(key string, flags *pflag.FlagSet, rawVal interface{}) {
+	if err := defaults.Set(rawVal); err != nil {
+		panic("Unable to set defaults. Error: " + err.Error())
+	}
 	c.lateFlagBinding(flags, rawVal)
 
 	if c.configFile != "" {

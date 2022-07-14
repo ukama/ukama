@@ -1,7 +1,7 @@
 .PHONY: build test package
 
 build:
-	go build cmd/main.go
+	go build  -o bin/ukama cmd/main.go
 
 test:
 	go test ./...

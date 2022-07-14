@@ -14,30 +14,6 @@ import (
 	"helm.sh/helm/v3/pkg/cli/values"
 )
 
-type deployConfig struct {
-	pkg.GlobalConfig `mapstructure:",squash"`
-	Cloud            string `flag:"cloud"`
-	Aws              *awsConfig
-	Service          []string `flag:"service"`
-	BaseDomain       string   `flag:"baseDomain" validate:"required"`
-	K8s              *k8sConfig
-	Helm             *helmConfig
-}
-
-type k8sConfig struct {
-	Namespace string `flag:"k8s.namespace"`
-}
-
-type helmConfig struct {
-	RepoUrl string `flag:"helmRepo"`
-	Token   string `flag:"token"`
-}
-
-type awsConfig struct {
-	AccessKey string `flag:"aws.accessKey"`
-	SecretKey string `flag:"aws.secret"`
-}
-
 func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	valueOpts := &values.Options{}
 
@@ -55,7 +31,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 			logger := pkg.NewLogger(cmd.OutOrStdout(), cmd.ErrOrStderr(), nc.Verbose)
 			chartProvider := helm.NewChartProvider(logger, nc.Helm.RepoUrl, nc.Helm.Token)
 
-			helmClient := helm.NewHelmClient(chartProvider, logger)
+			helmClient := helm.NewHelmClient(chartProvider, logger, nc.Verbose)
 
 			if len(nc.Service) == 1 && strings.HasPrefix(nc.Service[0], "ukama") {
 				chartName, chartVer := parsName(nc.Service[0])
@@ -83,7 +59,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	// Helm flags
 	cmd.Flags().StringP("token", "t", "", "Helm repository token")
 
-	cmd.Flags().StringP("helmRepo", "r", "https://raw.githubusercontent.com/ukama/helm-charts/repo-index", "Helm repository url")
+	cmd.Flags().StringP("helmRepo", "r", "", "Helm repository url")
 
 	cmd.Flags().StringP("k8s.namespace", "", "", "Target Kubernetes namespace")
 	addValueOptionsFlags(cmd.Flags(), valueOpts)

@@ -1,0 +1,188 @@
+# This file is used to deploy environments and to 
+global:
+  domain: "{{ .Values.baseDomain }}"
+  # enable Prometheus metrics endpoints in Ukama services
+  metricsEnabled: true
+  db:
+    host: postgres
+    user: postgres
+    password: DefaultPasswordPleaseUpdate!
+  amqp:
+    uri: "amqp://guest:{{ .Values.amqppass  }} }@localhost:5672"
+  bootstrapAuth:
+    clientId: "clientId"
+    clientSecret: "secret"
+    audience: "auidience"
+    auth0host: "host"
+   
+ukama-users:
+  usersConfig:      
+    simManager:
+      host: simManager
+      name: simManager
+    simTokenKey: "DEV KEY MUST BE CHANGED FOR PROD"
+    kratoAdminUrl: http://kratos-admin
+  testConfig: 
+    envVars: 
+      - name: "ICCID"
+        value: "{{ .Values.iccidForTest | default "8900000000009999999" }}"
+      - name: "USERSHOST"
+        value: users:9090
+
+rabbitmq: 
+  auth:
+    password: {{ .Values.amqppass  }} 
+    erlangCookie: uakama-rebbit-erlangCookie!
+  ingress: # for debugging purpose 
+    enabled: false
+    hostname: queue.{{ .Values.baseDomain }}
+  replicaCount: 1
+
+ukama-auth:  
+  ingress:
+      enabled: true
+
+ukama-gateway:
+  ingress:
+    enabled: true  
+  apiGatewayConfig:       
+    httpServices:
+      nodeMetrics:  {{ .Values.nodeMetricsUrl }}  #"http://node-metrics.node-metrics-dev:8080"
+    kratos:
+      url: "http://kratos-public"
+    cors:
+      allowOrigins: [ "https://app.{{ .Values.baseDomain }}" ]
+      allowCredentials: true
+      allowHeaders: [ "Origin", "Content-Length", "Content-Type", "Cookies", "credentials" ]
+
+ukama-device-gateway:
+  ingress:
+      enabled: true
+      hosts:
+      - host: device.{{ .Values.baseDomain }}
+        paths: 
+        - path: "/" 
+      
+kratos:
+  enabled: true
+  ingress:
+      public:
+        enabled: true
+        annotations:           
+          nginx.ingress.kubernetes.io/rewrite-target: /$2
+        hosts:
+          - host: auth.{{ .Values.baseDomain }}
+            paths: 
+            - path: /.api(/|$)(.*)
+              pathType: Prefix
+  kratos:
+    autoMigrate: false
+    development: false
+    config:
+      dsn: postgres://postgres:{{ .Values.postgresPass }}@postgres:5432/identity?sslmode=disable
+      courier:
+        smtp:
+          from_address: hello@{{ .Values.baseDomain }}
+          connection_uri: smtp://mail:587/?disable_starttls=true
+      secrets:
+        cookie:
+          - "THE_UKAMA_COOKIE_THAT_SHOULD_BE_CHANGED_ON_PROD" 
+      session:
+        lifespan: 168h
+        cookie:
+          name: ukama_session
+          domain: "{{ .Values.baseDomain }}"
+      serve:
+        public:          
+          base_url: https://auth.{{ .Values.baseDomain }}/.api
+          cors:
+            enabled: true
+            allowed_origins:              
+              - https://*.{{ .Values.baseDomain }}
+              - http://*.{{ .Values.baseDomain }}
+              
+      selfservice:
+        default_browser_return_url: https://app.{{ .Values.baseDomain }}
+        allowed_return_urls:
+          - https://app.{{ .Values.baseDomain }}
+        methods:
+          password:
+            enabled: true
+          oidc:
+            enabled: {{ .Values.googleOicd.enabled | default "false" }}}}  
+            config:
+              providers:
+                - id: google
+                  provider: google
+                  client_id: {{ .Values.googleOicd.id }}
+                  client_secret: {{ .Values.googleOicd.secret }} 
+                  mapper_url: file:///etc/config/kratos/oic-configuration/oidc.google.jsonnet
+                  scope:
+                    - email
+                    - profile
+                  requested_claims:
+                    id_token:
+                      email:
+                        essential: true
+                      email_verified:
+                        essential: true
+                      given_name:
+                        essential: true
+                      family_name: null
+        flows:
+          error:
+            ui_url: https://auth.{{ .Values.baseDomain }}/error
+          settings:
+            ui_url: https://auth.{{ .Values.baseDomain }}/settings
+            privileged_session_max_age: 15m
+          recovery:
+            enabled: true
+            ui_url: https://auth.{{ .Values.baseDomain }}/recovery
+          verification:
+            enabled: true
+            ui_url: https://auth.{{ .Values.baseDomain }}/verification
+            after:
+              default_browser_return_url: /auth/login?email-verification-status=true
+          logout:
+            after:
+              default_browser_return_url: https://auth.{{ .Values.baseDomain }}/auth/login
+          login:
+            ui_url: https://auth.{{ .Values.baseDomain }}/auth/login
+            lifespan: 15m
+            after:
+              password:
+                hooks:
+                  - hook: require_verified_address
+          registration:
+            lifespan: 15m
+            ui_url: https://auth.{{ .Values.baseDomain }}/auth/registration
+            after:
+              oidc:
+                hooks:
+                  - hook: session
+              password:
+                hooks:
+                  - hook: web_hook
+                    config: 
+                      url: http://rabbitmq:15672/api/exchanges/%2f/amq.topic/publish
+                      method: POST
+                      auth: 
+                        type: basic_auth
+                        config: 
+                          user: user
+                          password: {{ .Values.amqp.pass  }}                      
+      
+mail:
+  enabled: {{ .Values.persistenceLayer  | default "true" }}
+  config:
+    general:
+      RELAYHOST: {{ .Values.smtpRelayHost }} #  "email-smtp.us-east-1.amazonaws.com:587"
+      RELAYHOST_USERNAME: {{ .Values.smtpUsername | quote }}
+      RELAYHOST_PASSWORD: {{  .Values.smtpPassword | quote }}
+      ALLOWED_SENDER_DOMAINS: {{ .Values.baseDomain }}
+
+
+postgresql:
+  postgresqlDatabase: "identity"
+  auth:    
+    postgresPassword: {{ .Values.postgresPass  | quote }}

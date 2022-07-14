@@ -17,21 +17,21 @@ import (
 type HelmClient struct {
 	log           pkg.Logger
 	chartProvider *ChartProvider
+	verbose       bool
 }
 
-func NewHelmClient(chartProvider *ChartProvider, log pkg.Logger) *HelmClient {
+func NewHelmClient(chartProvider *ChartProvider, log pkg.Logger, verbose bool) *HelmClient {
 	return &HelmClient{
 		log:           log,
 		chartProvider: chartProvider,
+		verbose:       verbose,
 	}
 }
 
 func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string, valueOpts *values.Options) error {
-
 	chartPath, err := h.chartProvider.DownloadChart(chartName, chartVersion)
 	if err != nil {
-		h.log.Errorf("error downloading chart: %s", err)
-		return errors.Wrap(err, "error downloading chart")
+		return err
 	}
 
 	settings := cli.New()
@@ -51,11 +51,20 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	}
 
 	kubeClient := kube.New(k8sClientGetter)
-	kubeClient.Namespace = "cli-test"
+	kubeClient.Namespace = namespace
 	actionConfig.KubeClient = kubeClient
 
 	//
-	path, err := genDefaulValues()
+	path, err := h.chartProvider.RenderDefaultValues(chartName, map[string]string{
+		"baseDomain":     "exmple.com",
+		"amqppass":       "testPass",
+		"nodeMetricsUrl": "http://localhost:9091/metrics",
+		"postgresPass":   "pass",
+		"smtpRelayHost":  "smtp.example.com",
+		"smtpUsername":   "user",
+		"smtpPassword":   "pass",
+	})
+	valueOpts.ValueFiles = []string{path}
 
 	// prepare values
 	p := getter.All(settings)
@@ -69,6 +78,7 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	iCli.ReleaseName = "my-release"
 	iCli.CreateNamespace = true
 	iCli.UseReleaseName = true
+	iCli.Devel = h.verbose
 	rel, err := iCli.Run(chart, vals)
 	if err != nil {
 		h.log.Errorf("Error applying chart: %s\n", err)
