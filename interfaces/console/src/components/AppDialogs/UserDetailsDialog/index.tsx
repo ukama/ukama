@@ -20,7 +20,6 @@ import { formatBytes, formatBytesToMB } from "../../../utils";
 import { CenterContainer } from "../../../styles";
 import LoadingWrapper from "../../LoadingWrapper";
 import colors from "../../../theme/colors";
-import { width } from "@mui/system";
 
 type BasicDialogProps = {
     type: string;

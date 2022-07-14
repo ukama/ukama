@@ -115,21 +115,23 @@ const Sidebar = (
                             >
                                 {title}
                             </Typography>
-                            {title == "Nodes" && (
-                                <LoadingWrapper
-                                    isLoading={nodesLoading}
-                                    width={"120px"}
-                                    height={"20px"}
-                                >
-                                    <Chip
-                                        label={
-                                            nodesRes?.getNodesByOrg.totalNodes
-                                        }
-                                        size="small"
-                                        color="primary"
-                                    />
-                                </LoadingWrapper>
-                            )}
+                            {title == "Nodes" &&
+                                nodesRes?.getNodesByOrg.totalNodes && (
+                                    <LoadingWrapper
+                                        isLoading={nodesLoading}
+                                        width={"120px"}
+                                        height={"20px"}
+                                    >
+                                        <Chip
+                                            label={
+                                                nodesRes?.getNodesByOrg
+                                                    .totalNodes
+                                            }
+                                            size="small"
+                                            color="primary"
+                                        />
+                                    </LoadingWrapper>
+                                )}
                         </Stack>
                     </ListItemText>
                 </ListItem>
