@@ -20,6 +20,7 @@ import { formatBytes, formatBytesToMB } from "../../../utils";
 import { CenterContainer } from "../../../styles";
 import LoadingWrapper from "../../LoadingWrapper";
 import colors from "../../../theme/colors";
+import { width } from "@mui/system";
 
 type BasicDialogProps = {
     type: string;
@@ -196,6 +197,7 @@ const UserDetailsDialog = ({
                                                 height={"30px"}
                                             >
                                                 <Button
+                                                    sx={{ height: "100%" }}
                                                     color={statusButtonColor}
                                                     variant="outlined"
                                                     size="small"
