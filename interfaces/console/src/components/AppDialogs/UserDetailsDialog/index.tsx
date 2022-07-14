@@ -196,6 +196,7 @@ const UserDetailsDialog = ({
                                                 height={"30px"}
                                             >
                                                 <Button
+                                                    sx={{ height: "100%" }}
                                                     color={statusButtonColor}
                                                     variant="outlined"
                                                     size="small"
