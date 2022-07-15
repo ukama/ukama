@@ -320,7 +320,7 @@ const User = () => {
     };
 
     return (
-        <Box component="div" sx={{ height: "calc(100% - 3%)" }}>
+        <Box component="div" sx={{ height: "calc(100% - 8%)" }}>
             <LoadingWrapper
                 width="100%"
                 height="inherit"
@@ -329,7 +329,9 @@ const User = () => {
                 }
             >
                 {usersRes && usersRes?.getUsersByOrg?.length > 0 ? (
-                    <RoundedCard sx={{ borderRadius: "4px", overflow: "auto" }}>
+                    <RoundedCard
+                        sx={{ borderRadius: "4px", overflow: "hidden" }}
+                    >
                         <ContainerHeader
                             title="My Users"
                             showButton={true}
@@ -339,12 +341,29 @@ const User = () => {
                             handleButtonAction={handleSimInstallation}
                             stats={`${users.length}`}
                         />
-                        <Grid container spacing={2} mt={{ xs: 2, md: 4 }}>
+                        <Grid
+                            container
+                            columnSpacing={2}
+                            sx={{
+                                pr: 0.4,
+                                height: "calc(100% - 58px)",
+                                overflow: "scroll",
+                                mt: { xs: 2, md: 4 },
+                            }}
+                        >
                             {users.map((item: GetUsersDto) => (
-                                <Grid key={item.id} item xs={12} md={3} sm={6}>
+                                <Grid
+                                    key={item.id}
+                                    item
+                                    xs={12}
+                                    sm={6}
+                                    md={4}
+                                    lg={3}
+                                >
                                     <Card
                                         variant="outlined"
                                         sx={{
+                                            mb: 2,
                                             padding: "15px 18px 8px 18px",
                                         }}
                                     >

@@ -1,13 +1,13 @@
 import {
     Box,
     List,
+    Chip,
     Paper,
     Stack,
     Drawer,
     Toolbar,
     ListItem,
     Typography,
-    Chip,
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
@@ -95,7 +95,9 @@ const Sidebar = (
                         <Icon
                             fontSize="medium"
                             sx={{
-                                fill: _isDarkMod ? colors.white : colors.vulcan,
+                                fill: _isDarkMod
+                                    ? colors.solitude
+                                    : colors.vulcan,
                             }}
                         />
                     </ListItemIcon>
@@ -108,7 +110,12 @@ const Sidebar = (
                         >
                             <Typography
                                 variant="body1"
-                                fontWeight={title === page ? "bold" : "normal"}
+                                color={
+                                    _isDarkMod
+                                        ? colors.solitude
+                                        : "textColorPrimary"
+                                }
+                                fontWeight={title === page ? "600" : "normal"}
                                 className={
                                     title !== page ? classes.listItemText : ""
                                 }
