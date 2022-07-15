@@ -1,8 +1,13 @@
-import { Stack, Theme, useMediaQuery } from "@mui/material";
+import { IconButton, Stack, Theme, useMediaQuery } from "@mui/material";
 import { useEffect, useState } from "react";
 import Carousel from "react-material-ui-carousel";
+import { useRecoilValue } from "recoil";
 import { NodeCard } from "..";
 import { NodeDto } from "../../generated";
+import { isDarkmode } from "../../recoil";
+import { colors } from "../../theme";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 
 interface INodeSlider {
     items: NodeDto[];
@@ -10,9 +15,19 @@ interface INodeSlider {
 }
 
 const NodeSlider = ({ items = [], handleItemAction }: INodeSlider) => {
+    const _isDarkMod = useRecoilValue(isDarkmode);
     const small = useMediaQuery((theme: Theme) => theme.breakpoints.up("sm"));
     const medium = useMediaQuery((theme: Theme) => theme.breakpoints.up("md"));
     const [list, setList] = useState<any>([]);
+
+    const NavButtonStyle = {
+        p: 0.5,
+        backgroundColor: _isDarkMod ? colors.nightGrey12 : colors.white,
+        ":hover": {
+            opacity: 1,
+            backgroundColor: _isDarkMod ? colors.nightGrey12 : colors.white,
+        },
+    };
 
     useEffect(() => {
         const slides = [];
@@ -35,17 +50,44 @@ const NodeSlider = ({ items = [], handleItemAction }: INodeSlider) => {
             indicators={false}
             cycleNavigation={false}
             navButtonsAlwaysVisible
-            sx={{ width: "100%", minHeight: "240px", pt: 3, pb: 0 }}
+            sx={{
+                width: "100%",
+                minHeight: "240px",
+                pt: 3,
+                pb: 0,
+                div: {
+                    ":hover button": {
+                        backgroundColor: _isDarkMod
+                            ? colors.nightGrey12
+                            : colors.white,
+                        opacity: "1 !important",
+                    },
+                },
+            }}
+            NextIcon={
+                <IconButton sx={NavButtonStyle}>
+                    <KeyboardArrowRightIcon />
+                </IconButton>
+            }
+            PrevIcon={
+                <IconButton sx={NavButtonStyle}>
+                    <KeyboardArrowLeftIcon />
+                </IconButton>
+            }
             navButtonsProps={{
                 style: {
                     margin: 0,
+                    padding: 0,
+                    height: "fit-content",
+                    boxShadow:
+                        "0px 3px 1px -2px rgba(0, 0, 0, 0.1), 0px 2px 2px rgba(0, 0, 0, 0.07), 0px 1px 5px rgba(0, 0, 0, 0.06)",
                 },
             }}
         >
             {list.map(({ cid, item }: any) => (
                 <Stack
                     key={cid}
-                    spacing={2}
+                    spacing={4}
                     direction={"row"}
                     sx={{
                         justifyContent: {
