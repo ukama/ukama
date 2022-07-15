@@ -1,0 +1,20 @@
+name: test-tag
+on:
+  push:
+    tags:
+        - "*"
+
+jobs:  
+  build:    
+    name: test
+    runs-on: ubuntu-latest    
+    steps:
+    - uses: actions/checkout@v2
+  
+    - name: Init vars
+      id: vars_step
+      uses: ./.github/actions/git-vars
+    
+    - name: Print vars
+      run: "echo Tag:${{ steps.vars_step.outputs.tag }} Branch:${{ steps.vars_step.outputs.branch }} SHA:${{ steps.vars_step.outputs.sha-short }}"
+      working-directory: services/hub/hub

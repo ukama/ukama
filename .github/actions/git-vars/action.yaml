@@ -18,7 +18,6 @@ outputs:
 runs:
   using: "composite"
   steps:  
-
     - name: Init vars
       shell: bash
       id: vars_step
@@ -27,4 +26,4 @@ runs:
         export CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
         echo  "::set-output name=branch::${CURR_BRANCH:-unknown}"
         export CURR_TAG=$(git tag --points-at HEAD)
-        echo "::set-output name=tag::${CURR_TAG:-unknown}"
+        echo "::set-output name=tag::${CURR_TAG:-unknown-tag}"
