@@ -1508,6 +1508,21 @@ const NODE_IMAGES = {
     HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
 };
 
+const BILLING_PLANS = [
+    {
+        id: 1,
+        label: "Default roaming - $5/GB; prorated per MB",
+        value: "default",
+    },
+    { id: 2, label: "Set plan - $", value: "plan1" },
+    { id: 3, label: "Unlimited plan - ", value: "unlimited" },
+    {
+        id: 2,
+        label: "No plan - disables roaming for all residents.",
+        value: "no_plan",
+    },
+];
+
 export {
     RF_NODES,
     TimeZones,
@@ -1528,6 +1543,7 @@ export {
     STATS_OPTIONS,
     STATS_PERIOD,
     NodePageTabs,
+    BILLING_PLANS,
     UserActivation,
     ROAMING_SELECT,
     MASK_PLACEHOLDERS,
