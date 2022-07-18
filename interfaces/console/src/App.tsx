@@ -43,12 +43,9 @@ const App = () => {
             window.history.pushState(null, "", "/");
         }
         if ((id && name && email) || (_user.id && _user.name && _user.email)) {
+            setPage(getTitleFromPath(window.location.pathname));
+
             if (
-                doesHttpOnlyCookieExist("id") &&
-                doesHttpOnlyCookieExist("ukama_session")
-            ) {
-                setPage(getTitleFromPath(window.location.pathname));
-            } else if (
                 !doesHttpOnlyCookieExist("id") &&
                 doesHttpOnlyCookieExist("ukama_session")
             ) {
