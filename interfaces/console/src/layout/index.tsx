@@ -38,6 +38,7 @@ const Layout = (props: any) => {
                 spacing={{ xs: 2, md: 4 }}
                 sx={{
                     width: "100%",
+                    overflow: "auto",
                     pl: { xs: 2, md: 3, xl: 5 },
                     pr: { xs: 2, md: 3, xl: 5 },
                 }}

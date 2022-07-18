@@ -13,7 +13,7 @@ const StatsCard = ({ loading, metricData }: StatsCardProps) => {
                 <SkeletonRoundedCard variant="rectangular" height={337} />
             ) : (
                 <RoundedCard sx={{ minHeight: 337, display: "flex" }}>
-                    <ApexLineChart data={metricData["memorytrxused"]} />
+                    <ApexLineChart data={metricData["uptimetrx"]} />
                 </RoundedCard>
             )}
         </>

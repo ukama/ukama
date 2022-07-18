@@ -127,6 +127,6 @@ func (r *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeId []ukama.NodeI
 
 // DetachNode removes node from parent node
 func (r *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=?", detachNodeId.StringLowercase())
+	db := r.Db.GetGormDb().Exec("delete from attached_nodes where attached_id=(select id from nodes where node_id=?)", detachNodeId.StringLowercase())
 	return db.Error
 }

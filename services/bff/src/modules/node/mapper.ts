@@ -7,6 +7,7 @@ import {
     MetricDto,
     OrgMetricValueDto,
     GetNodeStatusRes,
+    NodeResponse,
 } from "./types";
 import * as defaultCasual from "casual";
 import { MetricLatestValueRes } from "../../common/types";
@@ -91,6 +92,10 @@ class NodeMapper implements INodeMapper {
         }
 
         return { uptime: uptime, status: status };
+    };
+    dtoToGetNodeDto = (res: NodeResponse): NodeResponse => {
+        const isTowerNode = res.nodeId.includes("tnode");
+        return { ...res, attached: isTowerNode ? res.attached : [] };
     };
 }
 export default <INodeMapper>new NodeMapper();

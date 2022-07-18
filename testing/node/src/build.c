@@ -41,7 +41,7 @@ int build_capp(Config *config) {
 	if (system(runMe) < 0) return FALSE;
 
 	sprintf(runMe, "%s build app %s \"%s\"", SCRIPT, build->source, build->cmd);
-	if (system(runMe) < 0) return FALSE;
+	if (system(runMe) != 0) return FALSE;
 
 	if (!build->staticFlag) {
 		/* set rpath for the executable */
@@ -56,13 +56,17 @@ int build_capp(Config *config) {
 			capp->name, capp->version, build->binTo);
 	if (system(runMe) < 0) return FALSE;
 
-	sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name, capp->version,
-			build->mkdir);
-	if (system(runMe) < 0) return FALSE;
+	if (build->mkdir) {
+		sprintf(runMe, "%s mkdir %s_%s/%s", SCRIPT, capp->name, capp->version,
+				build->mkdir);
+		if (system(runMe) < 0) return FALSE;
+	}
 
-	sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->from, capp->name,
-			capp->version, build->to);
-	if (system(runMe) < 0) return FALSE;
+	if (build->from) {
+		sprintf(runMe, "%s cp %s %s_%s/%s", SCRIPT, build->from, capp->name,
+				capp->version, build->to);
+		if (system(runMe) < 0) return FALSE;
+	}
 
 	if (!build->staticFlag) {
 	    sprintf(runMe, "%s libs %s %s_%s", SCRIPT, build->binFrom,

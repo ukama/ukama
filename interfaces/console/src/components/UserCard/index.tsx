@@ -2,7 +2,15 @@ import { colors } from "../../theme";
 import { useEffect, useState } from "react";
 import { GetUsersDto } from "../../generated";
 import { formatBytesToMB } from "../../utils";
-import { Grid, Button, Typography, LinearProgress, Stack } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+
+import {
+    Grid,
+    Typography,
+    IconButton,
+    LinearProgress,
+    Stack,
+} from "@mui/material";
 import LoadingWrapper from "../LoadingWrapper";
 
 type UserCardProps = {
@@ -23,14 +31,48 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
             setDataLoading(false);
         }
     }, [loading, user]);
-
     return (
         <Grid container spacing={{ xs: 1.5 }}>
-            <Grid item xs={12}>
-                <Typography variant="body2" color="textSecondary">
-                    {user.id}
-                </Typography>
+            <Grid item xs={12} container>
+                <Grid
+                    item
+                    xs={10}
+                    sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        width: "11rem",
+                        whiteSpace: "normal",
+                    }}
+                >
+                    <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        sx={{
+                            width: "200px",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}
+                    >
+                        {user.id}
+                    </Typography>
+                </Grid>
+                <Grid
+                    item
+                    xs={2}
+                    container
+                    justifyContent="flex-end"
+                    sx={{ position: "relative", bottom: 10 }}
+                >
+                    <IconButton
+                        edge="end"
+                        onClick={() => handleMoreUserdetails(user)}
+                    >
+                        <EditIcon sx={{ fontSize: 25 }} />
+                    </IconButton>
+                </Grid>
             </Grid>
+            <Stack direction="row"></Stack>
             <Grid item xs={12}>
                 <Typography variant="h5">{user.name}</Typography>
             </Grid>
@@ -52,7 +94,12 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                     </Stack>
                 </LoadingWrapper>
             </Grid>
-            <Grid item xs={8} alignSelf="end">
+            <Grid
+                item
+                xs={8}
+                alignSelf="end"
+                sx={{ position: "relative", top: 8 }}
+            >
                 <LoadingWrapper
                     width="100%"
                     height="23px"
@@ -60,15 +107,21 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                     variant="text"
                     isLoading={dataLoading}
                 >
-                    <Typography variant="body2" textAlign={"end"}>
-                        {`${formatBytesToMB(
-                            parseInt(user?.dataPlan || "0") -
-                                parseInt(user?.dataUsage || "0")
-                        )} MB free data left`}
-                    </Typography>
+                    <Stack direction="column">
+                        <Typography variant="body2" textAlign={"end"}>
+                            {`${formatBytesToMB(
+                                parseInt(user?.dataPlan || "0") -
+                                    parseInt(user?.dataUsage || "0")
+                            )} MB free `}
+                        </Typography>
+
+                        <Typography variant="body2" textAlign={"end"}>
+                            {`data left`}
+                        </Typography>
+                    </Stack>
                 </LoadingWrapper>
             </Grid>
-            <Grid item xs={12} display="grid">
+            <Grid item xs={12} display="grid" sx={{ pb: 2 }}>
                 <LoadingWrapper
                     width="100%"
                     height="8px"
@@ -91,14 +144,6 @@ const UserCard = ({ user, loading, handleMoreUserdetails }: UserCardProps) => {
                         }}
                     />
                 </LoadingWrapper>
-            </Grid>
-            <Grid item xs={12}>
-                <Button
-                    variant="text"
-                    onClick={() => handleMoreUserdetails(user)}
-                >
-                    VIEW MORE
-                </Button>
             </Grid>
         </Grid>
     );

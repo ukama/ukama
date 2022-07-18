@@ -16,17 +16,41 @@
 #include "ledger.h"
 #include "property.h"
 #include "service.h"
-#include "ulfius.h"
 
+#include "usys_api.h"
 #include "usys_error.h"
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
 
+#define NOTIFY_ALERT_EP       "/notify/v1/alert/"
+#define NOTIFY_EVENT_EP       "/notify/v1/event/"
+#define SERVICE_NAME          "noded"
+
 UInst serverInst;
-static char gNotifServer[128] = { 0 };
+static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
+
+/**
+ * @fn      void clean_noded_notif(NodedNotifDetails*)
+ * @brief   Clean all the memory allocated while assingemnt.
+ *
+ * @param   nodeAlerts
+ */
+void clean_noded_notifiocation( NodedNotifDetails *nodeAlerts) {
+    if (nodeAlerts) {
+        usys_free(nodeAlerts->serviceName);
+        usys_free(nodeAlerts->severity);
+        usys_free(nodeAlerts->deviceAttr);
+        usys_free(nodeAlerts->deviceAttrValue);
+        usys_free(nodeAlerts->deviceDesc);
+        usys_free(nodeAlerts->deviceName);
+        usys_free(nodeAlerts->moduleID);
+        usys_free(nodeAlerts->units);
+        nodeAlerts = NULL;
+    }
+}
 
 /**
  * @fn      int alert_details(DevObj*, Property*, uint16_t*)
@@ -121,10 +145,24 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
                         alertstate, pidx, prop[pidx].name,
                         value, prop[didx].units);
 
+        /* Notifications */
+        NodedNotifDetails nodeAlerts = {0};
+        nodeAlerts.serviceName = usys_strdup(SERVICE_NAME);
+        nodeAlerts.severity = usys_strdup(prop[pidx].name);
+        nodeAlerts.epochTime = usys_time(NULL);
+        nodeAlerts.moduleID = usys_strdup(obj->modUuid);
+        nodeAlerts.deviceName =  usys_strdup(obj->name);
+        nodeAlerts.deviceDesc = usys_strdup(obj->desc);
+        nodeAlerts.deviceAttr = usys_strdup(prop[didx].name);
+        nodeAlerts.dataType = prop[didx].dataType;
+        nodeAlerts.deviceAttrValue = usys_calloc(1, sizeof(double));
+        if (nodeAlerts.deviceAttrValue) {
+            *nodeAlerts.deviceAttrValue = value;
+        }
+        nodeAlerts.units = usys_strdup(prop[didx].units);
+
         /* Report alert */
-        ret = json_serialize_alert_data(&json, obj->modUuid, obj->name,
-                        obj->desc, prop[pidx].name, prop[pidx].dataType,
-                        adata->sValue, prop[didx].units);
+        ret = json_serialize_notification_data(&json, &nodeAlerts);
         if (ret != JSON_ENCODING_OK) {
             usys_log_error( "Web service alert callback function for "
                             "Device name %s Disc: %s Module UUID %s called "
@@ -132,15 +170,25 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
                             obj->name, obj->desc, obj->modUuid, *count);
             goto cleanup;
         } else {
+            char urlWithEp[MAX_URL_LENGTH] = {0};
+            usys_sprintf(urlWithEp, "%s%s%s",gNotifServer, NOTIFY_ALERT_EP,
+                            SERVICE_NAME);
+
             ulfius_init_request(&alertNotification);
             ulfius_init_response(&alertNotificationResp);
             ulfius_set_request_properties(&alertNotification,
-                            U_OPT_HTTP_VERB, "PUT",
-                            U_OPT_HTTP_URL, gNotifServer,
-                            U_OPT_HTTP_URL_APPEND, "alert",
+                            U_OPT_HTTP_VERB, "POST",
+                            U_OPT_HTTP_URL, urlWithEp,
                             U_OPT_TIMEOUT, 20,
-                            U_OPT_JSON_BODY, json,
                             U_OPT_NONE);
+
+            if(json) {
+                if(STATUS_OK != ulfius_set_json_body_request(&alertNotification,
+                                     json)) {
+                    goto cleanup;
+                }
+            }
+
             ret = ulfius_send_http_request(&alertNotification,
                             &alertNotificationResp);
             if (ret != STATUS_OK) {
@@ -151,7 +199,6 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
                                 " notification  response is %d.",
                                 alertNotificationResp.status);
             }
-            json_decref(json);
             ulfius_clean_request(&alertNotification);
         }
 
@@ -160,6 +207,10 @@ void web_service_alert_cb(DevObj *obj, AlertCallBackData **alertCbData, int *cou
         cleanup:
         usys_free(adata->sValue);
         usys_free(adata);
+        clean_noded_notifiocation(&nodeAlerts);
+        json_free(&json);
+        ulfius_clean_request(&alertNotification);
+        ulfius_clean_response(&alertNotificationResp);
 
     } else {
 

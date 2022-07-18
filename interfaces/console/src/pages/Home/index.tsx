@@ -69,7 +69,7 @@ import { TMetric } from "../../types";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import {
     getMetricPayload,
-    getTowerNodeFromNodes,
+    // getTowerNodeFromNodes,
     isContainNodeUpdate,
 } from "../../utils";
 import { DataBilling, DataUsage, UsersWithBG } from "../../assets/svg";
@@ -97,6 +97,7 @@ const Home = () => {
     const [isPsimAdded, setIsPsimAdded] = useState<boolean>(false);
     const [simFlow, setSimFlow] = useState<number>(1);
     const [userStatus, setUserStatus] = useState<boolean>(true);
+    const [updateNodeName, setUpdateNodeName] = useState<any>();
     const [showNodeDialog, setShowNodeDialog] = useState({
         type: "add",
         isShow: false,
@@ -127,13 +128,15 @@ const Home = () => {
     const [qrCodeId, setqrCodeId] = useState<any>();
     const [isSoftwaUpdate, setIsSoftwaUpdate] = useState<boolean>(false);
     const [showInstallSim, setShowInstallSim] = useState(false);
+    const [isUpdatAllNodes, setIsUpdatAllNodes] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
     );
     const [uptimeMetric, setUptimeMetrics] = useState<TMetric>({
-        memorytrxused: null,
+        uptimetrx: null,
     });
 
     const {
@@ -355,12 +358,13 @@ const Home = () => {
             data: getMetricsRes,
             refetch: getMetricsRefetch,
             loading: getMetricLoading,
+            variables: lastMetricsFetchVariables,
         },
     ] = useGetMetricsByTabLazyQuery({
         onCompleted: res => {
             if (res?.getMetricsByTab?.metrics.length > 0 && !isMetricPolling) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 setIsMetricPolling(true);
                 for (const element of res.getMetricsByTab.metrics) {
@@ -376,11 +380,24 @@ const Home = () => {
         },
         onError: () => {
             setUptimeMetrics(() => ({
-                memorytrxused: null,
+                uptimetrx: {
+                    name: "Uptime",
+                    data: [],
+                },
             }));
         },
         fetchPolicy: "network-only",
     });
+
+    const refetchMetrics = useCallback(() => {
+        if (getMetricsRes && getMetricsRes.getMetricsByTab.to) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
 
     useGetMetricsByTabSSubscription({
         onSubscriptionData: res => {
@@ -390,7 +407,7 @@ const Home = () => {
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
                 const _m: TMetric = {
-                    memorytrxused: null,
+                    uptimetrx: null,
                 };
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
@@ -416,6 +433,10 @@ const Home = () => {
                     ..._prev,
                     ...filter,
                 }));
+
+                if (res.subscriptionData.data.getMetricsByTab[0].next) {
+                    refetchMetrics();
+                }
             }
         },
     });
@@ -454,11 +475,14 @@ const Home = () => {
     const [updateUserStatus, { loading: updateUserStatusLoading }] =
         useUpdateUserStatusMutation({
             onCompleted: res => {
+                setServiceStatusIndicator(
+                    res.updateUserStatus.ukama.services.data
+                );
                 if (res) {
                     setSelectedUser({
                         ...selectedUser,
-                        status: res.updateUserStatus.carrier.services.data,
-                        roaming: res.updateUserStatus.ukama.services.data,
+                        status: res.updateUserStatus.ukama.services.data,
+                        roaming: res.updateUserStatus.carrier.services.data,
                     });
                 }
             },
@@ -500,7 +524,7 @@ const Home = () => {
         if (
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
+            !lastMetricsFetchVariables?.data.regPolling
         ) {
             getMetricsRefetch({
                 ...getMetricPollingCallPayload(
@@ -558,7 +582,7 @@ const Home = () => {
             tab: 4,
             regPolling: false,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
             to: Math.floor(Date.now() / 1000) - 10,
             from: Math.floor(Date.now() / 1000) - 180,
         });
@@ -569,7 +593,7 @@ const Home = () => {
             from: from,
             regPolling: true,
             nodeType: Node_Type.Home,
-            nodeId: getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
+            nodeId: "uk-sa2222-tnode-a6-0030", //getTowerNodeFromNodes(nodeRes?.getNodesByOrg.nodes || []),
         });
 
     const handleAddNodeClose = () => {
@@ -628,6 +652,7 @@ const Home = () => {
     };
     const handleCloseSoftwareUpdate = () => {
         setIsSoftwaUpdate(false);
+        setIsUpdatAllNodes(false);
     };
 
     const getStatus = (key: string) => {
@@ -679,6 +704,9 @@ const Home = () => {
             });
             setSimDialog({ isShow: true, type: "edit" });
         }
+    };
+    const handleAllNodeUpdate = () => {
+        setIsUpdatAllNodes(true);
     };
     const handleUserSubmitAction = () => {
         handleSimDialogClose();
@@ -762,11 +790,11 @@ const Home = () => {
         setIsSoftwaUpdate(true);
     }, []);
 
-    const handleNodeActions = useCallback((id: string, type: string) => {
-        const node = nodeRes?.getNodesByOrg?.nodes.filter(
+    const handleNodeActions = (id: string, type: string) => {
+        const node = nodeRes?.getNodesByOrg?.nodes?.filter(
             item => item.id === id
         );
-        if (type == "edit" && node) {
+        if (type === "edit" && node) {
             setShowNodeDialog({
                 ...showNodeDialog,
                 type: "editNode",
@@ -779,13 +807,18 @@ const Home = () => {
                     orgId: orgId,
                 },
             });
-        } else if (type == "delete") {
+        } else if (type === "delete") {
             setDeleteNodeDialog({
                 isShow: true,
                 nodeId: id || "",
             });
+        } else if (type === "update") {
+            handleNodeUpdateAction();
+            if (node) {
+                setUpdateNodeName(node[0].name);
+            }
         }
-    }, []);
+    };
 
     const handleCloseWelcome = () => {
         if (_isFirstVisit) {
@@ -943,9 +976,9 @@ const Home = () => {
                                 )}
                                 buttonSize={"small"}
                                 buttonTitle={"Update All"}
+                                handleAllNodeUpdate={handleAllNodeUpdate}
                             />
                             <NodeContainer
-                                handleNodeUpdate={handleNodeUpdateAction}
                                 items={nodeRes?.getNodesByOrg.nodes || []}
                                 handleItemAction={handleNodeActions}
                             />
@@ -982,11 +1015,16 @@ const Home = () => {
                 submit={onUpdateAllNodes}
                 isOpen={isSoftwaUpdate}
                 handleClose={handleCloseSoftwareUpdate}
+                title={" Node Update Confirmation"}
+                content={`The software update for “ ${updateNodeName}’s Node” will disrupt your network, and will take approximately [insert time here]. Continue with update?`}
+            />
+
+            <SoftwareUpdateModal
+                submit={onUpdateAllNodes}
+                isOpen={isUpdatAllNodes}
+                handleClose={handleCloseSoftwareUpdate}
                 title={" Node Update all Confirmation"}
-                content={` The software updates for “Tryphena’s Node,” and
-                “Tryphena’s Node 2” will disrupt your network, and will
-                take approximately [insert time here]. Continue updating
-                all?`}
+                content={`The software updates for “Tryphena’s Node,” and “Tryphena’s Node 2” will disrupt your network, and will take approximately [insert time here]. Continue updating all?`}
             />
             {isWelcomeDialog && (
                 <BasicDialog
@@ -1053,6 +1091,7 @@ const Home = () => {
                     userStatusLoading={updateUserStatusLoading}
                     handleServiceAction={handleUpdateUserStatus}
                     handleSubmitAction={handleUserSubmitAction}
+                    serviceStatusIndicator={serviceStatusIndicator}
                     handleDeactivateAction={handleDeactivateAction}
                     handleUserRoamingAction={handleUserRoamingAction}
                 />

@@ -4,6 +4,8 @@ on:
     paths:
         - "{{SERVICE}}/**"
         - ".github/workflows/{{WORKFLOW_PATH}}.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  

@@ -5,7 +5,6 @@ import {
     Dialog,
     Switch,
     Divider,
-    Tooltip,
     IconButton,
     Typography,
     DialogTitle,
@@ -17,10 +16,10 @@ import { ReactEventHandler } from "react";
 import { GetUserDto } from "../../../generated";
 import CloseIcon from "@mui/icons-material/Close";
 import EditableTextField from "../../EditableTextField";
-import InfoIcon from "@mui/icons-material/InfoOutlined";
 import { formatBytes, formatBytesToMB } from "../../../utils";
-import { CenterContainer, ContainerJustifySpaceBtw } from "../../../styles";
+import { CenterContainer } from "../../../styles";
 import LoadingWrapper from "../../LoadingWrapper";
+import colors from "../../../theme/colors";
 
 type BasicDialogProps = {
     type: string;
@@ -39,6 +38,7 @@ type BasicDialogProps = {
     handleDeactivateAction: Function;
     handleUserRoamingAction: Function;
     handleClose: ReactEventHandler;
+    serviceStatusIndicator: boolean;
 };
 
 const UserDetailsDialog = ({
@@ -52,11 +52,13 @@ const UserDetailsDialog = ({
     loading = true,
     roamingLoading,
     simDetailsTitle,
+    userStatusLoading,
     userDetailsTitle,
     handleSubmitAction,
     handleServiceAction,
     handleDeactivateAction,
     handleUserRoamingAction,
+    serviceStatusIndicator,
 }: BasicDialogProps) => {
     const {
         id,
@@ -69,11 +71,16 @@ const UserDetailsDialog = ({
         dataUsage,
         eSimNumber,
     } = user;
-    const statusText = status ? "ACTIVE" : "INACTIVE";
-    const statusButtonColor = status ? "error" : "primary";
-    const title = type === "add" ? "Add User" : "Edit User";
-    const statusAction = status ? "PAUSE SERVICE" : "RESUME SERVICE";
-    const colorActiveInactive = status ? "textDisabled" : "textSecondary";
+    const getTitle = (userName: string) => {
+        const title = type === "add" ? "Add User" : `${userName}`;
+        return title;
+    };
+
+    const statusAction = serviceStatusIndicator
+        ? "PAUSE SERVICE"
+        : "RESUME SERVICE";
+
+    const statusButtonColor = serviceStatusIndicator ? "error" : "primary";
     return (
         <Dialog
             key={id}
@@ -93,7 +100,23 @@ const UserDetailsDialog = ({
                         alignItems="center"
                         justifyContent="space-between"
                     >
-                        <DialogTitle>{title}</DialogTitle>
+                        <DialogTitle>
+                            <Stack
+                                direction="row"
+                                sx={{ alignItems: "center" }}
+                                spacing={1}
+                            >
+                                <Typography variant="h6">
+                                    {getTitle(name)}
+                                </Typography>
+                                <Typography
+                                    variant="h6"
+                                    sx={{ color: colors.black70 }}
+                                >
+                                    - eSim
+                                </Typography>
+                            </Stack>
+                        </DialogTitle>
                         <IconButton
                             onClick={handleClose}
                             sx={{ position: "relative", right: 8 }}
@@ -114,9 +137,9 @@ const UserDetailsDialog = ({
                                     <Typography variant="body1">
                                         {`${formatBytes(
                                             parseInt(dataUsage)
-                                        )}  data used, from ${formatBytesToMB(
+                                        )}  data used, 1 network, ${formatBytesToMB(
                                             parseInt(dataPlan)
-                                        )} MB.`}
+                                        )} roaming`}
                                     </Typography>
                                 </Grid>
                                 <Grid item xs={12}>
@@ -143,48 +166,40 @@ const UserDetailsDialog = ({
                                         }
                                     />
                                 </Grid>
-                            </Grid>
-                            <Grid item container spacing={1.5}>
-                                <Grid item xs={12}>
-                                    <Typography variant="subtitle2">
-                                        {simDetailsTitle}
-                                    </Typography>
-                                    <Divider />
-                                </Grid>
+
                                 <Grid item container>
                                     <Grid item xs={12}>
                                         <Typography
                                             variant="caption"
                                             color="textSecondary"
                                         >
-                                            STATUS
+                                            USER STATUS
                                         </Typography>
                                     </Grid>
-                                    <Grid item xs={12}>
-                                        <Stack
-                                            direction="row"
-                                            alignItems="center"
-                                            justifyContent="space-between"
-                                        >
+                                    <Grid item xs={12} container spacing={2}>
+                                        <Grid item xs={6}>
                                             <Typography variant="body2">
-                                                {statusText}
+                                                Users with paused service will
+                                                not incur any fees, [insert
+                                                other policy].
                                             </Typography>
-                                            <Stack spacing={1} direction="row">
+                                        </Grid>
+                                        <Grid
+                                            item
+                                            xs={6}
+                                            container
+                                            justifyContent="flex-end"
+                                        >
+                                            <LoadingWrapper
+                                                isLoading={userStatusLoading}
+                                                width={"150px"}
+                                                height={"30px"}
+                                            >
                                                 <Button
+                                                    sx={{ height: "100%" }}
                                                     color={statusButtonColor}
                                                     variant="outlined"
-                                                    onClick={() =>
-                                                        id &&
-                                                        handleDeactivateAction(
-                                                            id
-                                                        )
-                                                    }
-                                                >
-                                                    {"deactivate user"}
-                                                </Button>
-                                                <Button
-                                                    color={statusButtonColor}
-                                                    variant="outlined"
+                                                    size="small"
                                                     onClick={() => {
                                                         if (id && iccid)
                                                             handleServiceAction(
@@ -196,10 +211,110 @@ const UserDetailsDialog = ({
                                                 >
                                                     {statusAction}
                                                 </Button>
-                                            </Stack>
-                                        </Stack>
+                                            </LoadingWrapper>
+                                        </Grid>
                                     </Grid>
                                 </Grid>
+                                <Grid item container>
+                                    <Grid item xs={12}>
+                                        <Typography
+                                            variant="caption"
+                                            color="textSecondary"
+                                        >
+                                            USER REMOVAL
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} container spacing={2}>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2">
+                                                Once you deactivate a user,
+                                                [xyz].
+                                            </Typography>
+                                        </Grid>
+                                        <Grid
+                                            item
+                                            xs={6}
+                                            container
+                                            justifyContent="flex-end"
+                                        >
+                                            <Button
+                                                color={"error"}
+                                                variant="outlined"
+                                                onClick={() =>
+                                                    id &&
+                                                    handleDeactivateAction(id)
+                                                }
+                                            >
+                                                {"deactivate user"}
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                                <Grid item container>
+                                    <Grid item xs={12}>
+                                        <Typography
+                                            variant="caption"
+                                            color="textSecondary"
+                                        >
+                                            ENABLE ROAMING
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12} container spacing={2}>
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2">
+                                                Roaming allows users to connect
+                                                to networks outside their
+                                                networks for a fee.
+                                            </Typography>
+                                        </Grid>
+                                        <Grid
+                                            item
+                                            xs={6}
+                                            container
+                                            justifyContent="flex-end"
+                                        >
+                                            <LoadingWrapper
+                                                isLoading={roamingLoading}
+                                                width={"72px"}
+                                                height={"24px"}
+                                            >
+                                                <Switch
+                                                    size="small"
+                                                    value="active"
+                                                    sx={{
+                                                        position: "relative",
+                                                        left: 30,
+                                                    }}
+                                                    checked={roaming}
+                                                    disabled={
+                                                        !serviceStatusIndicator
+                                                    }
+                                                    onClick={(e: any) => {
+                                                        setUserForm({
+                                                            ...user,
+                                                            roaming:
+                                                                e.target
+                                                                    .checked,
+                                                        });
+                                                        handleUserRoamingAction &&
+                                                            handleUserRoamingAction(
+                                                                e.target.checked
+                                                            );
+                                                    }}
+                                                />
+                                            </LoadingWrapper>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+                            <Grid item container spacing={1.5}>
+                                <Grid item xs={12}>
+                                    <Typography variant="subtitle2">
+                                        {simDetailsTitle}
+                                    </Typography>
+                                    <Divider />
+                                </Grid>
+
                                 <Grid item container xs={12}>
                                     <Grid item xs={12}>
                                         <Typography
@@ -229,62 +344,6 @@ const UserDetailsDialog = ({
                                             {iccid}
                                         </Typography>
                                     </Grid>
-                                </Grid>
-                                <Grid item container xs={12}>
-                                    <Typography
-                                        alignSelf={"end"}
-                                        variant="caption"
-                                        color="textSecondary"
-                                    >
-                                        ROAMING
-                                    </Typography>
-                                    <ContainerJustifySpaceBtw
-                                        sx={{ alignItems: "center" }}
-                                    >
-                                        <Stack direction="row">
-                                            <Typography
-                                                variant="body2"
-                                                color={colorActiveInactive}
-                                                alignSelf={"end"}
-                                            >
-                                                {" Description of roaming. "}
-                                            </Typography>
-                                            <Tooltip
-                                                title="Explain roaming policy for CS folks."
-                                                placement="right"
-                                                arrow
-                                            >
-                                                <IconButton sx={{ p: 0 }}>
-                                                    <InfoIcon
-                                                        sx={{ height: 18 }}
-                                                    />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Stack>
-                                        <LoadingWrapper
-                                            isLoading={roamingLoading}
-                                            width={"72px"}
-                                            height={"24px"}
-                                        >
-                                            <Switch
-                                                size="small"
-                                                value="active"
-                                                checked={roaming}
-                                                disabled={!status}
-                                                onClick={(e: any) => {
-                                                    setUserForm({
-                                                        ...user,
-                                                        roaming:
-                                                            e.target.checked,
-                                                    });
-                                                    handleUserRoamingAction &&
-                                                        handleUserRoamingAction(
-                                                            e.target.checked
-                                                        );
-                                                }}
-                                            />
-                                        </LoadingWrapper>
-                                    </ContainerJustifySpaceBtw>
                                 </Grid>
                             </Grid>
                         </Grid>

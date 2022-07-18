@@ -37,16 +37,31 @@ export class NodeDto {
 @ObjectType()
 export class AddNodeResponse {
     @Field()
+    success: boolean;
+}
+
+@ObjectType()
+export class AttachedNodes {
+    @Field()
+    nodeId: string;
+}
+
+@ObjectType()
+export class LinkNodes {
+    @Field()
     nodeId: string;
 
+    @Field(() => [AttachedNodes])
+    attached?: AttachedNodes[];
+}
+
+@InputType()
+export class NodeObj {
     @Field()
     name: string;
 
-    @Field(() => ORG_NODE_STATE)
-    state: ORG_NODE_STATE;
-
-    @Field(() => NODE_TYPE)
-    type: NODE_TYPE;
+    @Field()
+    nodeId: string;
 }
 
 @InputType()
@@ -56,6 +71,12 @@ export class AddNodeDto {
 
     @Field()
     nodeId: string;
+
+    @Field(() => [NodeObj])
+    attached?: NodeObj[];
+
+    @Field()
+    associate: boolean;
 }
 
 @InputType()

@@ -1,6 +1,7 @@
 import {
     Box,
     List,
+    Chip,
     Paper,
     Stack,
     Drawer,
@@ -10,7 +11,7 @@ import {
     ListItemIcon,
     ListItemText,
 } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import { colors } from "../../theme";
 import { useRecoilValue } from "recoil";
 import { makeStyles } from "@mui/styles";
@@ -19,6 +20,7 @@ import { MenuItemType } from "../../types";
 import { useHistory } from "react-router-dom";
 import { LoadingWrapper } from "../../components";
 import { DRAWER_WIDTH, SIDEBAR_MENU1 } from "../../constants";
+import { useGetNodesByOrgLazyQuery } from "../../generated";
 
 const Logo = React.lazy(() =>
     import("../../assets/svg").then(module => ({
@@ -66,7 +68,13 @@ const Sidebar = (
     const classes = useStyles();
     const history = useHistory();
     const _isDarkMod = useRecoilValue(isDarkmode);
-
+    const [getNodesByOrg, { data: nodesRes, loading: nodesLoading }] =
+        useGetNodesByOrgLazyQuery({
+            fetchPolicy: "cache-and-network",
+        });
+    useEffect(() => {
+        getNodesByOrg();
+    }, []);
     const MenuList = (list: any) => (
         <List sx={{ padding: "8px 20px" }}>
             {list.map(({ id, title, Icon, route }: MenuItemType) => (
@@ -87,20 +95,51 @@ const Sidebar = (
                         <Icon
                             fontSize="medium"
                             sx={{
-                                fill: _isDarkMod ? colors.white : colors.vulcan,
+                                fill: _isDarkMod
+                                    ? colors.solitude
+                                    : colors.vulcan,
                             }}
                         />
                     </ListItemIcon>
                     <ListItemText>
-                        <Typography
-                            variant="body1"
-                            fontWeight={title === page ? "bold" : "normal"}
-                            className={
-                                title !== page ? classes.listItemText : ""
-                            }
+                        <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            spacing={1}
                         >
-                            {title}
-                        </Typography>
+                            <Typography
+                                variant="body1"
+                                color={
+                                    _isDarkMod
+                                        ? colors.solitude
+                                        : "textColorPrimary"
+                                }
+                                fontWeight={title === page ? "600" : "normal"}
+                                className={
+                                    title !== page ? classes.listItemText : ""
+                                }
+                            >
+                                {title}
+                            </Typography>
+                            {title == "Nodes" &&
+                                nodesRes?.getNodesByOrg.totalNodes && (
+                                    <LoadingWrapper
+                                        isLoading={nodesLoading}
+                                        width={"120px"}
+                                        height={"20px"}
+                                    >
+                                        <Chip
+                                            label={
+                                                nodesRes?.getNodesByOrg
+                                                    .totalNodes
+                                            }
+                                            size="small"
+                                            color="primary"
+                                        />
+                                    </LoadingWrapper>
+                                )}
+                        </Stack>
                     </ListItemText>
                 </ListItem>
             ))}

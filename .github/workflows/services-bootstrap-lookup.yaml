@@ -7,6 +7,8 @@ on:
     paths:
         - "services/bootstrap/lookup/**"
         - ".github/workflows/services-bootstrap-lookup.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  

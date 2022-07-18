@@ -19,7 +19,10 @@ type Users struct {
 }
 
 func NewUsers(host string, timeout time.Duration) *Users {
-	conn, err := grpc.Dial(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, host, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logrus.Fatalf("did not connect: %v", err)
 	}

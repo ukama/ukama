@@ -7,6 +7,8 @@ on:
     paths:
         - "services/cloud/org-metrics/**"
         - ".github/workflows/services-cloud-org-metrics.yaml"
+    tags:
+        - "*"
   workflow_dispatch:
 
 jobs:  

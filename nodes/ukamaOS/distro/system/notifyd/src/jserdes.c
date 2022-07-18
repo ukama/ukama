@@ -12,8 +12,8 @@
 #include "errorcode.h"
 #include "json_types.h"
 #include "node.h"
-#include "notify.h"
 #include "web_service.h"
+#include "notify/notify.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
