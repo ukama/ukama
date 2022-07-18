@@ -123,11 +123,7 @@ const Nodes = () => {
 
     const [
         registerNode,
-        {
-            loading: registerNodeLoading,
-            data: registerNodeRes,
-            error: registerNodeError,
-        },
+        { loading: registerNodeLoading, error: registerNodeError },
     ] = useAddNodeMutation({
         onCompleted: () => {
             setRegisterNodeNotification({
@@ -403,7 +399,9 @@ const Nodes = () => {
                 data: {
                     name: data.name,
                     nodeId: data.nodeId,
-                    associate: data.isAssiociatedTowerNode ? true : false,
+                    associate: data.isAssiociatedTowerNode
+                        ? true
+                        : false || false,
                     attached: data.associatedTowerNode || [],
                 },
             },

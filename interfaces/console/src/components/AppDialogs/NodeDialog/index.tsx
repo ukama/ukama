@@ -62,14 +62,12 @@ const useStyles = makeStyles(() => ({
 }));
 
 interface CustomProps {
-    // eslint-disable-next-line no-unused-vars
-    onChange: (event: { target: { name: string; value: string } }) => void;
     name: Node_Type;
 }
 
 const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
     function TextMaskCustom(props, _ref) {
-        const { onChange, ...other } = props;
+        const { ...other } = props;
         return (
             <IMaskInput
                 {...other}
@@ -80,9 +78,6 @@ const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
                 definitions={{
                     "#": /[a-zA-Z0-9]/,
                 }}
-                onAccept={(value: any) =>
-                    onChange({ target: { name: props.name, value } })
-                }
             />
         );
     }
@@ -128,11 +123,10 @@ const NodeDialog = ({
         },
     ]);
     const handleInputChange = (e: any, index: number) => {
-        const { name, value } = e.target;
+        const { id, value } = e.target;
         const list: any = [...attachedAmplierNode];
-        list[index][name] = value;
+        list[index][id] = id == "nodeId" ? value.replace(/ /g, "") : value;
         setAttachedAmplierNode(list);
-
         setFormData({
             ...formData,
             associatedTowerNode: attachedAmplierNode,
@@ -188,15 +182,17 @@ const NodeDialog = ({
     };
     const handleRegisterNode = () => {
         setIsSubmitted(true);
-        if (
-            !formData.name ||
-            !formData.nodeId ||
-            !formData.associatedTowerNode
-        ) {
+        if (!formData.name || !formData.nodeId) {
             return;
+        }
+        if (isAssociatedTowerNode) {
+            if (!formData.associatedTowerNode) {
+                return;
+            }
         }
         handleNodeSubmitAction(formData);
     };
+
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <Stack
@@ -529,9 +525,9 @@ const NodeDialog = ({
                                                 fullWidth
                                                 label={"NODE NUMBER"}
                                                 value={x.nodeId}
-                                                onChange={(e: any) =>
-                                                    handleInputChange(e, i)
-                                                }
+                                                onChange={(e: any) => {
+                                                    handleInputChange(e, i);
+                                                }}
                                                 InputLabelProps={{
                                                     shrink: true,
                                                 }}
@@ -545,8 +541,12 @@ const NodeDialog = ({
                                                         ? "Node number is required !"
                                                         : " "
                                                 }
-                                                name={"nodeId"}
+                                                id={"nodeId"}
+                                                name={"AMPLIFIER"}
+                                                spellCheck={false}
                                                 InputProps={{
+                                                    inputComponent:
+                                                        TextMaskCustom as any,
                                                     classes: {
                                                         input: gclasses.inputFieldStyle,
                                                     },
@@ -559,6 +559,7 @@ const NodeDialog = ({
                                                 label={"NODE NAME"}
                                                 name={"name"}
                                                 value={x.name}
+                                                id={"name"}
                                                 onChange={e => {
                                                     handleInputChange(e, i);
                                                 }}

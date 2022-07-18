@@ -748,7 +748,9 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
-                        associate: data.isAssiociatedTowerNode ? true : false,
+                        associate: data.isAssiociatedTowerNode
+                            ? true
+                            : false || false,
                         attached: data.associatedTowerNode || [],
                     },
                 },
