@@ -38,3 +38,16 @@ deploy:
       token: <token>
 ```
 
+
+# Deploy
+
+## Deploying service 
+
+You will need `kubectl` configured to access the cluster. 
+- Create secret with access to Ukama registry in target namespace  
+```
+    kubectl create secret docker-registry regcred \
+    --docker-server=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
+    --docker-username=AWS \
+    --docker-password=$(aws ecr get-login-password)
+```

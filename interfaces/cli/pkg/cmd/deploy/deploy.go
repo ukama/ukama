@@ -2,9 +2,6 @@ package deploy
 
 import (
 	"fmt"
-	"os"
-	"strings"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
@@ -12,7 +9,21 @@ import (
 	"github.com/ukama/ukama/interfaces/cli/pkg/helm"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/cli/values"
+	"os"
+	"strings"
 )
+
+var servicesDefaults = map[string]map[string]string{
+	"ukamax": {
+		"baseDomain":     "example.com",
+		"amqppass":       "testPass",
+		"nodeMetricsUrl": "http://localhost:9091/metrics",
+		"postgresPass":   "pass",
+		"smtpRelayHost":  "smtp.example.com",
+		"smtpUsername":   "user",
+		"smtpPassword":   "pass",
+	},
+}
 
 func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	valueOpts := &values.Options{}
@@ -39,8 +50,13 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 				if len(namesapce) == 0 {
 					namesapce = chartName
 				}
+				params, err := svcParamsToMap(chartName, nc.Helm.ServiceParams)
+				if err != nil {
+					logger.Errorf(err.Error())
+					os.Exit(1)
+				}
 
-				err := helmClient.InstallChart("ukamax", chartVer, namesapce, valueOpts)
+				err = helmClient.InstallChart(chartName, chartVer, namesapce, valueOpts, nc.Helm.IsUpgrade, params)
 				if err != nil {
 					logger.Errorf("Failed to install chart: %s", err)
 					os.Exit(1)
@@ -49,6 +65,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 		},
 	}
 
+	// Warning! Make sure that flags do not collide with Helm flags
 	cmd.Flags().StringP("service", "s", "", "Service name")
 	cmd.Flags().StringP("baseDomain", "d", "", "Base domain")
 
@@ -60,11 +77,27 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	cmd.Flags().StringP("token", "t", "", "Helm repository token")
 
 	cmd.Flags().StringP("helmRepo", "r", "", "Helm repository url")
+	cmd.Flags().BoolP("upgrade", "u", false, "Specify if upgrading already deployed chart")
 
 	cmd.Flags().StringP("k8s.namespace", "", "", "Target Kubernetes namespace")
 	addValueOptionsFlags(cmd.Flags(), valueOpts)
 
+	cmd.Flags().StringArrayP("svcParams", "p", []string{}, "Comma separated key=value pairs for service parameters")
+
 	return cmd
+}
+
+func svcParamsToMap(chartName string, params []string) (res map[string]string, err error) {
+	res = servicesDefaults[chartName]
+
+	for _, p := range params {
+		kv := strings.Split(p, "=")
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("Invalid service parameter: %s, Should have key=value format", p)
+		}
+		res[kv[0]] = kv[1]
+	}
+	return res, nil
 }
 
 func parsName(chartName string) (name string, version string) {

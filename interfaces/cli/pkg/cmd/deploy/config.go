@@ -17,8 +17,10 @@ type K8sConfig struct {
 }
 
 type HelmConfig struct {
-	RepoUrl string `flag:"helmRepo" default:"https://raw.githubusercontent.com/ukama/helm-charts/repo-index"`
-	Token   string `flag:"token"`
+	RepoUrl       string   `flag:"helmRepo" default:"https://raw.githubusercontent.com/ukama/helm-charts/repo-index"`
+	Token         string   `flag:"token"`
+	IsUpgrade     bool     `flag:"upgrade"`
+	ServiceParams []string `flag:"svcParams" default:"[]"`
 }
 
 type AwsConfig struct {

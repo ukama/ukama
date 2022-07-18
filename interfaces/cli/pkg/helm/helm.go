@@ -2,6 +2,8 @@ package helm
 
 import (
 	"fmt"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 	"os"
 
 	"github.com/ukama/ukama/interfaces/cli/pkg"
@@ -28,7 +30,12 @@ func NewHelmClient(chartProvider *ChartProvider, log pkg.Logger, verbose bool) *
 	}
 }
 
-func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string, valueOpts *values.Options) error {
+type HelmRun interface {
+	Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Release, error)
+}
+
+func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespace string, valueOpts *values.Options, isUpgrade bool,
+	mustSetParams map[string]string) error {
 	chartPath, err := h.chartProvider.DownloadChart(chartName, chartVersion)
 	if err != nil {
 		return err
@@ -55,36 +62,45 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	actionConfig.KubeClient = kubeClient
 
 	//
-	path, err := h.chartProvider.RenderDefaultValues(chartName, map[string]string{
-		"baseDomain":     "exmple.com",
-		"amqppass":       "testPass",
-		"nodeMetricsUrl": "http://localhost:9091/metrics",
-		"postgresPass":   "pass",
-		"smtpRelayHost":  "smtp.example.com",
-		"smtpUsername":   "user",
-		"smtpPassword":   "pass",
-	})
+	path, err := h.chartProvider.RenderDefaultValues(chartName, mustSetParams)
+	if err != nil {
+		return errors.Wrap(err, "error rendering default values")
+	}
 	valueOpts.ValueFiles = []string{path}
 
 	// prepare values
 	p := getter.All(settings)
 	vals, err := valueOpts.MergeValues(p)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error merging helm values")
+	}
+	releaseName := "my-release"
+	if isUpgrade { //
+		iCli := action.NewUpgrade(actionConfig)
+		iCli.Namespace = namespace
+		iCli.Devel = h.verbose
+		rel, err := iCli.Run(releaseName, chart, vals)
+		if err != nil {
+			h.log.Errorf("Error upgrading chart: %s\n", err)
+			return err
+		}
+		h.log.Printf("Successfully upgraded release: ", rel.Name)
+
+	} else { // fresh install
+		iCli := action.NewInstall(actionConfig)
+		iCli.Namespace = namespace
+		iCli.ReleaseName = releaseName
+		iCli.CreateNamespace = true
+		iCli.UseReleaseName = true
+		iCli.Devel = h.verbose
+		rel, err := iCli.Run(chart, vals)
+		if err != nil {
+			h.log.Errorf("Error applying chart: %s\n", err)
+			return errors.Wrap(err, "error applying chart")
+		}
+		h.log.Printf("Successfully installed release: ", rel.Name)
 	}
 
-	iCli := action.NewInstall(actionConfig)
-	iCli.Namespace = namespace
-	iCli.ReleaseName = "my-release"
-	iCli.CreateNamespace = true
-	iCli.UseReleaseName = true
-	iCli.Devel = h.verbose
-	rel, err := iCli.Run(chart, vals)
-	if err != nil {
-		h.log.Errorf("Error applying chart: %s\n", err)
-		return errors.Wrap(err, "error applying chart")
-	}
-	h.log.Printf("Successfully installed release: ", rel.Name)
 	return nil
 }
 
