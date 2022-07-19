@@ -52,6 +52,7 @@ const BillingDialog = ({
     handleSuccessAction,
 }: IBillingDialog) => {
     const [flow, setFlow] = useState(0);
+    const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
 
     const handleFlowChange = (i: number) => {
         if (flow === 2) handleSuccessAction();
@@ -63,15 +64,19 @@ const BillingDialog = ({
         handleCloseAction();
     };
 
+    const handleIsPaymentSuccess = (isSuccess: boolean) => {
+        setIsPaymentSuccess(isSuccess);
+    };
+
+    const isNextDiable = () => (flow === 1 && !isPaymentSuccess ? true : false);
+
     return (
         <Dialog
             fullWidth
             open={isOpen}
             maxWidth="sm"
-            onClose={() => handleClose()}
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
-            onBackdropClick={() => handleClose()}
         >
             <Stack
                 direction="row"
@@ -92,7 +97,11 @@ const BillingDialog = ({
                     {DialogList[flow].description}
                 </Typography>
                 {flow === 0 && <ChoosePlan />}
-                {flow === 1 && <PaymentForm />}
+                {flow === 1 && (
+                    <PaymentForm
+                        handleIsPaymentSuccess={handleIsPaymentSuccess}
+                    />
+                )}
                 {flow === 2 && <CustomizePref />}
                 {flow === 3 && <></>}
             </DialogContent>
@@ -123,6 +132,7 @@ const BillingDialog = ({
                         {flow !== 3 && (
                             <Button
                                 variant="contained"
+                                disabled={isNextDiable()}
                                 onClick={() => handleFlowChange(flow + 1)}
                             >
                                 {flow === 2 ? "Save" : "Next"}
