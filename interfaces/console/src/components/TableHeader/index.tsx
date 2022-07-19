@@ -3,14 +3,16 @@ import { HorizontalContainerJustify, HorizontalContainer } from "../../styles";
 
 type TableHeaderProps = {
     title: string;
-    buttonTitle: string;
-    handleButtonAction: Function;
+    buttonTitle?: string;
+    showSecondaryButton: boolean;
+    handleButtonAction?: any;
 };
 
 const TableHeader = ({
     title,
     buttonTitle,
     handleButtonAction,
+    showSecondaryButton,
 }: TableHeaderProps) => {
     return (
         <HorizontalContainerJustify sx={{ marginBottom: "18px" }}>
@@ -19,13 +21,15 @@ const TableHeader = ({
                     {title}
                 </Typography>
             </HorizontalContainer>
-            <Button
-                variant="outlined"
-                sx={{ width: "144px" }}
-                onClick={() => handleButtonAction()}
-            >
-                {buttonTitle}
-            </Button>
+            {showSecondaryButton && (
+                <Button
+                    variant="outlined"
+                    sx={{ width: "144px" }}
+                    onClick={() => handleButtonAction()}
+                >
+                    {buttonTitle}
+                </Button>
+            )}
         </HorizontalContainerJustify>
     );
 };

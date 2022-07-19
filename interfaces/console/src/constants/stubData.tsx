@@ -22,24 +22,24 @@ export const NodeAppLogs = [
 export const CurrentBillingData = [
     {
         id: 1,
-        name: "Tryphena Nelson 1",
+        date: "Tryphena Nelson 1",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        subtotal: "$5 / 20GB",
+        total: "View as PDF",
     },
     {
         id: 2,
-        name: "Tryphena Nelson 2",
+        date: "Tryphena Nelson 2",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        subtotal: "$5 / 20GB",
+        total: "View as PDF",
     },
     {
         id: 3,
-        name: "Tryphena Nelson 3",
+        date: "Tryphena Nelson 3",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        subtotal: "$5 / 20GB",
+        total: "View as PDF",
     },
 ];
 export const SpecsDocsData = [

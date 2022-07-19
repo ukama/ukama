@@ -6,6 +6,7 @@ import {
     TableCell,
     TableHead,
     Typography,
+    Button,
     TableContainer,
 } from "@mui/material";
 import { format } from "date-fns";
@@ -53,25 +54,6 @@ const SimpleDataTable = ({
             <Table stickyHeader>
                 <TableHead>
                     <TableRow>
-                        {rowSelection && (
-                            <TableCell padding="checkbox">
-                                <Checkbox
-                                    color="primary"
-                                    indeterminate={
-                                        selectedRows.length > 0 &&
-                                        selectedRows.length < totalRows
-                                    }
-                                    checked={
-                                        totalRows > 0 &&
-                                        selectedRows.length === totalRows
-                                    }
-                                    onChange={onRowsSelection}
-                                    inputProps={{
-                                        "aria-label": "select all desserts",
-                                    }}
-                                />
-                            </TableCell>
-                        )}
                         {columns?.map(column => (
                             <TableCell
                                 key={column.id}
@@ -102,22 +84,10 @@ const SimpleDataTable = ({
                             role={rowSelection ? "checkbox" : "row"}
                             onClick={() => onRowSelection(row.id)}
                         >
-                            {rowSelection && (
-                                <TableCell padding="checkbox">
-                                    <Checkbox
-                                        color="primary"
-                                        inputProps={{
-                                            "aria-labelledby": row.id,
-                                        }}
-                                        checked={selectedRows.includes(row.id)}
-                                    />
-                                </TableCell>
-                            )}
-
                             {columns?.map(
                                 (column: ColumnsWithOptions, index: number) => (
                                     <TableCell
-                                        key={`${row.name}-${index}`}
+                                        key={`${row.date}-${index}`}
                                         sx={{
                                             padding: 1,
                                             fontSize: "0.875rem",
@@ -127,16 +97,7 @@ const SimpleDataTable = ({
                                             variant={"body2"}
                                             sx={{ padding: "8px" }}
                                         >
-                                            {column.id === "name" ? (
-                                                <u>{row[column.id]}</u>
-                                            ) : column.id === "date" ? (
-                                                format(
-                                                    row[column.id],
-                                                    "dd MMM yyyy"
-                                                )
-                                            ) : (
-                                                row[column.id]
-                                            )}
+                                            {row[column.id]}
                                         </Typography>
                                     </TableCell>
                                 )

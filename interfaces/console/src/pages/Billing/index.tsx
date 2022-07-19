@@ -85,6 +85,7 @@ const Billing = () => {
                                         title={"Billing breakdown"}
                                         buttonTitle={"Export"}
                                         handleButtonAction={handleExport}
+                                        showSecondaryButton={true}
                                     />
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}
@@ -116,8 +117,7 @@ const Billing = () => {
                         <RoundedCard>
                             <TableHeader
                                 title={"Billing history"}
-                                buttonTitle={"Export"}
-                                handleButtonAction={handleExport}
+                                showSecondaryButton={false}
                             />
                             <SimpleDataTable
                                 rowSelection={true}
