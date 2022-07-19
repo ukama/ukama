@@ -58,7 +58,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 
 				err = helmClient.InstallChart(chartName, chartVer, namesapce, valueOpts, nc.Helm.IsUpgrade, params)
 				if err != nil {
-					logger.Errorf("Failed to install chart: %s", err)
+					logger.Errorf("Failed to install chart: %s\n", err)
 					os.Exit(1)
 				}
 			}
@@ -101,13 +101,20 @@ func svcParamsToMap(chartName string, params []string) (res map[string]string, e
 }
 
 func parsName(chartName string) (name string, version string) {
+
 	i := strings.LastIndex(chartName, "@v")
 	if i == -1 {
-		return chartName, ""
+		name = chartName
+		version = ""
 	} else {
-		return chartName[:i], chartName[i+2:]
+		name = chartName[:i]
+		version = chartName[i+2:]
+	}
+	if strings.EqualFold(name, "ukama") {
+		name = "ukamax"
 	}
 
+	return
 }
 
 func addValueOptionsFlags(f *pflag.FlagSet, v *values.Options) {

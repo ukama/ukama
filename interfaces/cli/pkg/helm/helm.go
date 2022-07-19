@@ -74,7 +74,7 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	if err != nil {
 		return errors.Wrap(err, "error merging helm values")
 	}
-	releaseName := "my-release"
+	releaseName := chartName + "-release"
 	if isUpgrade { //
 		iCli := action.NewUpgrade(actionConfig)
 		iCli.Namespace = namespace
