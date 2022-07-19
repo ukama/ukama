@@ -17,6 +17,7 @@ import NodeDropDown from "./NodeDropDown";
 import UserSettings from "./UserSettings";
 import NodeStatItem from "./NodeStatItem";
 import NodeRadioTab from "./NodeRadioTab";
+import BillingAlerts from "./BillingAlerts";
 import AlertSettings from "./AlertSettings";
 import NodeContainer from "./NodeContainer";
 import SimCardDesign from "./SimCardDesign";
@@ -83,6 +84,7 @@ export {
     GraphLoading,
     NetworkStatus,
     NodeContainer,
+    BillingAlerts,
     OptionsPopover,
     DeactivateUser,
     NodeNetworkTab,
