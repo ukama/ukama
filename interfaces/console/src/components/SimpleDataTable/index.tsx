@@ -23,6 +23,8 @@ interface SimpleDataTableInterface {
     selectedRows?: number[];
     rowSelection?: boolean;
     columns: ColumnsWithOptions[];
+    isHistoryTab?: boolean;
+    handleViewPdf?: any;
 }
 
 const SimpleDataTable = ({
@@ -30,7 +32,9 @@ const SimpleDataTable = ({
     dataset,
     maxHeight,
     totalRows = 0,
+    isHistoryTab = false,
     setSelectedRows,
+    handleViewPdf,
     selectedRows = [],
     rowSelection = false,
 }: SimpleDataTableInterface) => {
@@ -67,6 +71,17 @@ const SimpleDataTable = ({
                                 <b>{column.label}</b>
                             </TableCell>
                         ))}
+                        {isHistoryTab && (
+                            <TableCell
+                                style={{
+                                    padding: "0px 16px 12px 16px",
+                                    fontStyle: "600",
+                                    fontWeight: "600",
+                                }}
+                            >
+                                Invoice
+                            </TableCell>
+                        )}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -101,6 +116,20 @@ const SimpleDataTable = ({
                                         </Typography>
                                     </TableCell>
                                 )
+                            )}
+                            {isHistoryTab && (
+                                <TableCell>
+                                    <Button
+                                        variant="text"
+                                        sx={{
+                                            color: colors.primaryMain,
+                                            textTransform: "capitalize",
+                                        }}
+                                        onClick={handleViewPdf}
+                                    >
+                                        View as PDF
+                                    </Button>
+                                </TableCell>
                             )}
                         </TableRow>
                     ))}

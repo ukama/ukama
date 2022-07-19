@@ -4,6 +4,7 @@ import {
     CurrentBill,
     LoadingWrapper,
     BillingAlerts,
+    InvoiceViewerDialog,
 } from "../../components";
 import "../../i18n/i18n";
 import React, { useState } from "react";
@@ -13,6 +14,7 @@ import { CenterContainer, RoundedCard } from "../../styles";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
+import { BillHistoryInvoice } from "../../constants/stubData";
 
 const Billing = () => {
     const [billingAlert, setBillingAlert] = useState({
@@ -23,6 +25,7 @@ const Billing = () => {
     const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [showPdf, setShowPdf] = useState<boolean>(false);
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
@@ -36,7 +39,12 @@ const Billing = () => {
         /* TODO: Handle Alert notification action */
         setBillingAlert(prev => ({ ...prev, type: "error" }));
     };
-
+    const handleClodePdfViewer = () => {
+        setShowPdf(false);
+    };
+    const handleViewPdf = () => {
+        setShowPdf(true);
+    };
     return (
         <Box>
             <BillingAlerts
@@ -114,20 +122,28 @@ const Billing = () => {
                         </Grid>
                     )}
                     {tab === 1 && (
-                        <RoundedCard>
-                            <TableHeader
-                                title={"Billing history"}
-                                showSecondaryButton={false}
+                        <>
+                            <RoundedCard>
+                                <TableHeader
+                                    title={"Billing history"}
+                                    showSecondaryButton={false}
+                                />
+                                <SimpleDataTable
+                                    isHistoryTab={true}
+                                    rowSelection={true}
+                                    handleViewPdf={handleViewPdf}
+                                    selectedRows={selectedRows}
+                                    columns={CurrentBillColumns}
+                                    dataset={CurrentBillingData}
+                                    setSelectedRows={setSelectedRows}
+                                    totalRows={CurrentBillingData.length}
+                                />
+                            </RoundedCard>
+                            <InvoiceViewerDialog
+                                isOpen={true}
+                                data={BillHistoryInvoice}
                             />
-                            <SimpleDataTable
-                                rowSelection={true}
-                                selectedRows={selectedRows}
-                                columns={CurrentBillColumns}
-                                dataset={CurrentBillingData}
-                                setSelectedRows={setSelectedRows}
-                                totalRows={CurrentBillingData.length}
-                            />
-                        </RoundedCard>
+                        </>
                     )}
                 </Box>
             </LoadingWrapper>

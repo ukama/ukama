@@ -22,30 +22,31 @@ export const NodeAppLogs = [
 export const CurrentBillingData = [
     {
         id: 1,
-        date: "Tryphena Nelson 1",
+        date: " July 11 2022",
         dataUsage: " 20 GB  ",
-        subtotal: "$5 / 20GB",
-        total: "View as PDF",
+        total: "$5 ",
     },
     {
         id: 2,
-        date: "Tryphena Nelson 2",
+        date: "July 11 2022",
         dataUsage: " 20 GB  ",
-        subtotal: "$5 / 20GB",
-        total: "View as PDF",
+        total: "$5 ",
     },
     {
         id: 3,
-        date: "Tryphena Nelson 3",
+        date: "July 11 2022",
         dataUsage: " 20 GB  ",
-        subtotal: "$5 / 20GB",
-        total: "View as PDF",
+        total: "$5 ",
     },
 ];
 export const SpecsDocsData = [
     { id: 1, title: "PDF with Technical Specs", readingTime: "2 min read" },
     { id: 2, title: "PDF with Technical Specs", readingTime: "6 min read" },
     { id: 3, title: "PDF with Technical Specs", readingTime: "1 min read" },
+];
+export const BillHistoryInvoice = [
+    { id: 1, title: "Invoice Id", data: "678678-87-8" },
+    { id: 1, title: "Invoice Number", data: "678678-87-8" },
 ];
 export const NodeApps = [
     {

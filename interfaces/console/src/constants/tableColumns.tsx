@@ -21,12 +21,8 @@ const CurrentBillColumns: ColumnsWithOptions[] = [
         label: "Data Used",
     },
     {
-        id: "subtotal",
-        label: "subtotal",
-    },
-    {
         id: "total",
-        label: "total",
+        label: "Total",
     },
 ];
 const NodeAppsColumns = [

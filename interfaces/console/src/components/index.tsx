@@ -52,6 +52,7 @@ import {
     UserDetailsDialog,
     SoftwareUpdateModal,
     NodeAppDetailsDialog,
+    InvoiceViewerDialog,
     NodeSoftwareInfosDialog,
 } from "./AppDialogs";
 
@@ -107,6 +108,7 @@ export {
     ApexStackAreaChart,
     SoftwareUpdateModal,
     DataTableWithOptions,
+    InvoiceViewerDialog,
     NodeAppDetailsDialog,
     FormControlCheckboxes,
     NodeSoftwareInfosDialog,
