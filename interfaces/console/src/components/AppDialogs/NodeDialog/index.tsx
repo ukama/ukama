@@ -14,7 +14,6 @@ import {
     DialogActions,
     DialogContent,
     OutlinedInput,
-    Divider,
     DialogContentText,
 } from "@mui/material";
 import React, { useState } from "react";
@@ -114,26 +113,8 @@ const NodeDialog = ({
         associatedTowerNode: nodeData.associatedTowerNode,
         isAssiociatedTowerNode: nodeData.isAssiociatedTowerNode,
     });
-    const [attachedAmplierNode, setAttachedAmplierNode] = useState<any>([
-        {
-            nodeId: "",
-            name: "",
-        },
-    ]);
-    const handleInputChange = (e: any, index: number) => {
-        const { id, value } = e.target;
-        const list: any = [...attachedAmplierNode];
-        list[index][id] = id == "nodeId" ? value.replace(/ /g, "") : value;
-        setAttachedAmplierNode(list);
-        setFormData({
-            ...formData,
-            associatedTowerNode: attachedAmplierNode,
-        });
-    };
+
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
-    const onAddTowerNode = () => {
-        setIsAssociatedTowerNode(true);
-    };
 
     const getNodeArray = (data: any) => {
         setFormData({
@@ -161,24 +142,17 @@ const NodeDialog = ({
             associatedTowerNode: result,
         });
     };
-    const [isAssociatedTowerNode, setIsAssociatedTowerNode] =
-        useState<boolean>(false);
 
-    // const removeNodeTypefromArray = (from: number, to: number) => {
-    //     return NODE_TYPE.filter(function (value, index) {
-    //         return [from, to].indexOf(index) == -1;
-    //     });
-    // };
     const handleRegisterNode = () => {
         setIsSubmitted(true);
         if (!formData.name || !formData.nodeId) {
             return;
         }
-        if (isAssociatedTowerNode) {
-            if (!formData.associatedTowerNode) {
-                return;
-            }
+
+        if (!formData.associatedTowerNode) {
+            return;
         }
+
         handleNodeSubmitAction(formData);
     };
 
@@ -318,82 +292,9 @@ const NodeDialog = ({
                             }
                         />
                     </Grid>
-                    {formData.type == "AMPLIFIER" && (
-                        <Grid item xs={12}>
-                            <FormControl
-                                variant="outlined"
-                                className={classes.formControl}
-                            >
-                                <InputLabel
-                                    shrink
-                                    variant="outlined"
-                                    htmlFor="associatedTowerNode"
-                                >
-                                    ASSOCIATED TOWER NODE
-                                </InputLabel>
-                                <Select
-                                    labelId="associatedTowerNodel"
-                                    id="associatedTowerNode"
-                                    sx={{
-                                        "& legend": { width: "190px" },
-                                    }}
-                                    onChange={handleAssociatedTowerNode}
-                                    value={selectedToweNode}
-                                    variant="outlined"
-                                    disabled={action == "editNode"}
-                                    input={
-                                        <OutlinedInput
-                                            notched
-                                            label="ASSOCIATED TOWER NODE"
-                                            name="associatedTowerNode"
-                                            id="associatedTowerNode"
-                                        />
-                                    }
-                                    MenuProps={{
-                                        disablePortal: false,
-                                        PaperProps: {
-                                            sx: {
-                                                boxShadow:
-                                                    "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
-                                                borderRadius: "4px",
-                                            },
-                                        },
-                                    }}
-                                    className={classes.selectStyle}
-                                >
-                                    {towerNodesArrayList.map(
-                                        ({ id, name }: any) => (
-                                            <MenuItem value={name} key={id}>
-                                                <Typography variant="body1">
-                                                    {name}
-                                                </Typography>
-                                            </MenuItem>
-                                        )
-                                    )}
-                                    <Divider />
-                                    <MenuItem
-                                        onClick={e => {
-                                            onAddTowerNode();
-                                            e.stopPropagation();
-                                        }}
-                                    >
-                                        <Button
-                                            variant="text"
-                                            sx={{
-                                                typography: "body1",
-                                                textTransform: "none",
-                                            }}
-                                        >
-                                            Add Tower Node
-                                        </Button>
-                                    </MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-                    )}
 
                     {(formData.type == "TOWER" ||
-                        isAssociatedTowerNode == true) && (
+                        formData.type == "AMPLIFIER") && (
                         <AddNodeForm
                             nodeType={formData.type}
                             nodeArray={getNodeArray}
@@ -401,6 +302,7 @@ const NodeDialog = ({
                             handleAssociatedTowerNode={
                                 handleAssociatedTowerNode
                             }
+                            isSubmitted={isSubmitted}
                             selectedToweNode={selectedToweNode}
                         />
                     )}

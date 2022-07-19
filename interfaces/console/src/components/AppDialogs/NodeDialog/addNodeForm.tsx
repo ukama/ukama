@@ -79,19 +79,18 @@ const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
 
 type NodeDialogProps = {
     nodeArray: any;
-    removeNode?: any;
     towerNodesArrayList?: any;
-    handleAddNode?: any;
     selectedToweNode?: any;
-    nodeType?: any;
-    handleAssociatedTowerNode?: any;
+    isSubmitted: boolean;
+    nodeType: string;
+    handleAssociatedTowerNode: Function;
 };
 
 const AddNodeForm = ({
     nodeArray,
+    isSubmitted,
     nodeType,
     selectedToweNode,
-    handleAddNode,
     towerNodesArrayList,
     handleAssociatedTowerNode,
 }: NodeDialogProps) => {
@@ -112,29 +111,12 @@ const AddNodeForm = ({
         setAttachedAmplierNode(list);
         nodeArray(list);
     };
-    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
     const handleRemoveClick = (index: number) => {
         const list = [...attachedAmplierNode];
         list.splice(index, 1);
         setAttachedAmplierNode(list);
     };
 
-    // const handleAssociatedTowerNode = (e: SelectChangeEvent) => {
-    //     setSelectedToweNode(e.target.value);
-    //     const getSelectedNodeInfo = towerNodesArrayList.filter(
-    //         (item: { name: string }) => item.name === e.target.value
-    //     );
-    //     const result = getSelectedNodeInfo.map(({ name, id }: any) => ({
-    //         name,
-    //         id,
-    //     }))[0];
-
-    //     setFormData({
-    //         ...formData,
-    //         isAssiociatedTowerNode: true,
-    //         associatedTowerNode: result,
-    //     });
-    // };
     const handleAddClick = () => {
         setAttachedAmplierNode([
             ...attachedAmplierNode,
@@ -142,21 +124,24 @@ const AddNodeForm = ({
         ]);
     };
 
-    const [nType, setNtype] = useState<any>("AMPLIFIER");
     const [isAssociatedTowerNode, setIsAssociatedTowerNode] =
         useState<boolean>(false);
     const handleOptionalNodeType = (e: SelectChangeEvent) => {
         setNtype(e.target.value);
     };
+
     const onAddTowerNode = () => {
         setIsAssociatedTowerNode(true);
     };
+
     const removeNodeTypefromArray = (from: number, to: number) => {
         return NODE_TYPE.filter(function (value, index) {
             return [from, to].indexOf(index) == -1;
         });
     };
-
+    const [nType, setNtype] = useState<any>(
+        isAssociatedTowerNode ? "TOWER" : "AMPLIFIER"
+    );
     return (
         <>
             {nodeType == "AMPLIFIER" && (
@@ -206,7 +191,9 @@ const AddNodeForm = ({
                             {towerNodesArrayList.map(({ id, name }: any) => (
                                 <MenuItem value={name} key={id}>
                                     <Typography variant="body1">
-                                        {name}
+                                        {towerNodesArrayList.length
+                                            ? name
+                                            : "hello"}
                                     </Typography>
                                 </MenuItem>
                             ))}
@@ -234,174 +221,182 @@ const AddNodeForm = ({
 
             {attachedAmplierNode.map((x: any, i: number) => {
                 return (
-                    <Fragment key={i}>
-                        <Grid item xs={12}>
-                            <Divider />
-                        </Grid>
-                        <Grid
-                            item
-                            xs={12}
-                            sx={{
-                                pt: 4,
-                            }}
-                        >
-                            <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                            >
-                                <Typography
-                                    variant="body2"
-                                    sx={{
-                                        fontStyle: "Bold",
-                                    }}
-                                >
-                                    {nodeType == "TOWER" && "AMPLIFIER NODE"}
-
-                                    {nodeType == "AMPLIFIER" &&
-                                        "NEW TOWER NODE"}
-                                </Typography>
-                                <IconButton
-                                    color="primary"
-                                    aria-label="remove-node"
-                                    component="span"
-                                    onClick={() => handleRemoveClick(i)}
-                                >
-                                    <RemoveCircleOutlineIcon />
-                                </IconButton>
-                            </Stack>
-                        </Grid>
-
+                    (nodeType == "TOWER" || isAssociatedTowerNode == true) && (
                         <Fragment key={i}>
-                            <Grid item xs={12} md={6}>
-                                <FormControl
-                                    variant="outlined"
-                                    className={classes.formControl}
+                            <Grid item xs={12}>
+                                <Divider />
+                            </Grid>
+                            <Grid
+                                item
+                                xs={12}
+                                sx={{
+                                    pt: 4,
+                                }}
+                            >
+                                <Stack
+                                    direction="row"
+                                    justifyContent="space-between"
                                 >
-                                    <InputLabel
-                                        shrink
-                                        variant="outlined"
-                                        htmlFor="outlined-age-always-notched"
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            fontWeight: "600",
+                                        }}
                                     >
-                                        NODE TYPE
-                                    </InputLabel>
-                                    <Select
+                                        {nodeType == "TOWER" &&
+                                            "AMPLIFIER NODE"}
+
+                                        {nodeType == "AMPLIFIER" &&
+                                            "New Tower Node"}
+                                    </Typography>
+                                    <IconButton
+                                        color="primary"
+                                        aria-label="remove-node"
+                                        component="span"
+                                        onClick={() => handleRemoveClick(i)}
+                                    >
+                                        <RemoveCircleOutlineIcon />
+                                    </IconButton>
+                                </Stack>
+                            </Grid>
+
+                            <Fragment key={i}>
+                                <Grid item xs={12} md={6}>
+                                    <FormControl
                                         variant="outlined"
-                                        onChange={handleOptionalNodeType}
-                                        value={nType}
-                                        input={
-                                            <OutlinedInput
-                                                notched
-                                                label="NODE TYPE"
-                                                name={x.type}
-                                                id="outlined-age-always-notched"
-                                            />
-                                        }
-                                        MenuProps={{
-                                            disablePortal: false,
-                                            PaperProps: {
-                                                sx: {
-                                                    boxShadow:
-                                                        "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
-                                                    borderRadius: "4px",
+                                        className={classes.formControl}
+                                    >
+                                        <InputLabel
+                                            shrink
+                                            variant="outlined"
+                                            htmlFor="outlined-age-always-notched"
+                                        >
+                                            NODE TYPE
+                                        </InputLabel>
+                                        <Select
+                                            variant="outlined"
+                                            onChange={handleOptionalNodeType}
+                                            value={nType}
+                                            input={
+                                                <OutlinedInput
+                                                    notched
+                                                    label="NODE TYPE"
+                                                    name={x.type}
+                                                    id="outlined-age-always-notched"
+                                                />
+                                            }
+                                            MenuProps={{
+                                                disablePortal: false,
+                                                PaperProps: {
+                                                    sx: {
+                                                        boxShadow:
+                                                            "0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12)",
+                                                        borderRadius: "4px",
+                                                    },
                                                 },
+                                            }}
+                                            className={classes.selectStyle}
+                                        >
+                                            {removeNodeTypefromArray(
+                                                0,
+                                                isAssociatedTowerNode ? 1 : 2
+                                            ).map(({ id, label, value }) => (
+                                                <MenuItem
+                                                    key={id}
+                                                    value={value}
+                                                    sx={{
+                                                        m: 0,
+                                                        p: "6px 16px",
+                                                    }}
+                                                >
+                                                    <Typography variant="body1">
+                                                        {label}
+                                                    </Typography>
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField
+                                        fullWidth
+                                        label={"NODE NUMBER"}
+                                        value={x.nodeId}
+                                        onChange={(e: any) => {
+                                            handleInputChange(e, i);
+                                        }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        error={isSubmitted && x.nodeId === ""}
+                                        helperText={
+                                            isSubmitted && x.nodeId === ""
+                                                ? "Node number is required !"
+                                                : " "
+                                        }
+                                        id={"nodeId"}
+                                        name={
+                                            isAssociatedTowerNode
+                                                ? "TOWER"
+                                                : "AMPLIFIER"
+                                        }
+                                        spellCheck={false}
+                                        InputProps={{
+                                            inputComponent:
+                                                TextMaskCustom as any,
+                                            classes: {
+                                                input: gclasses.inputFieldStyle,
                                             },
                                         }}
-                                        className={classes.selectStyle}
-                                    >
-                                        {removeNodeTypefromArray(
-                                            0,
-                                            isAssociatedTowerNode ? 1 : 2
-                                        ).map(({ id, label, value }) => (
-                                            <MenuItem
-                                                key={id}
-                                                value={value}
-                                                sx={{
-                                                    m: 0,
-                                                    p: "6px 16px",
-                                                }}
-                                            >
-                                                <Typography variant="body1">
-                                                    {label}
-                                                </Typography>
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <TextField
-                                    fullWidth
-                                    label={"NODE NUMBER"}
-                                    value={x.nodeId}
-                                    onChange={(e: any) => {
-                                        handleInputChange(e, i);
-                                    }}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    error={isSubmitted && x.nodeId === ""}
-                                    helperText={
-                                        isSubmitted && x.nodeId === ""
-                                            ? "Node number is required !"
-                                            : " "
-                                    }
-                                    id={"nodeId"}
-                                    name={"AMPLIFIER"}
-                                    spellCheck={false}
-                                    InputProps={{
-                                        inputComponent: TextMaskCustom as any,
-                                        classes: {
-                                            input: gclasses.inputFieldStyle,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label={"NODE NAME"}
-                                    name={"name"}
-                                    value={x.name}
-                                    id={"name"}
-                                    onChange={e => {
-                                        handleInputChange(e, i);
-                                    }}
-                                    error={isSubmitted && x.name === ""}
-                                    helperText={
-                                        isSubmitted && x.name === ""
-                                            ? "Node name is required !"
-                                            : " "
-                                    }
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    InputProps={{
-                                        classes: {
-                                            input: gclasses.inputFieldStyle,
-                                        },
-                                    }}
-                                />
+                                    />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        label={"NODE NAME"}
+                                        name={"name"}
+                                        value={x.name}
+                                        id={"name"}
+                                        onChange={e => {
+                                            handleInputChange(e, i);
+                                        }}
+                                        error={isSubmitted && x.name === ""}
+                                        helperText={
+                                            isSubmitted && x.name === ""
+                                                ? "Node name is required !"
+                                                : " "
+                                        }
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            classes: {
+                                                input: gclasses.inputFieldStyle,
+                                            },
+                                        }}
+                                    />
+                                </Grid>
+                            </Fragment>
+
+                            <Grid item xs={12} sx={{ pt: 2 }}>
+                                {attachedAmplierNode.length - 1 === i &&
+                                    attachedAmplierNode.length < 2 &&
+                                    !isAssociatedTowerNode && (
+                                        <Button
+                                            variant="text"
+                                            startIcon={<AddIcon />}
+                                            onClick={handleAddClick}
+                                            sx={{
+                                                color: colors.primaryMain,
+                                                pointer: "cursor",
+                                            }}
+                                        >
+                                            add amplifier node
+                                        </Button>
+                                    )}
                             </Grid>
                         </Fragment>
-
-                        <Grid item xs={12} sx={{ pt: 2 }}>
-                            {attachedAmplierNode.length - 1 === i &&
-                                attachedAmplierNode.length < 2 &&
-                                !isAssociatedTowerNode && (
-                                    <Button
-                                        variant="text"
-                                        startIcon={<AddIcon />}
-                                        onClick={handleAddClick}
-                                        sx={{
-                                            color: colors.primaryMain,
-                                            pointer: "cursor",
-                                        }}
-                                    >
-                                        add amplifier node
-                                    </Button>
-                                )}
-                        </Grid>
-                    </Fragment>
+                    )
                 );
             })}
         </>
