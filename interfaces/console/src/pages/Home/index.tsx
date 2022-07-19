@@ -494,13 +494,12 @@ const Home = () => {
                     ...getFirstMetricCallPayload(),
                 },
             });
-
-            setAvailableTowerNode(
-                nodeRes?.getNodesByOrg.nodes.filter(
-                    item => item.type === "TOWER"
-                )
-            );
         }
+    }, [nodeRes]);
+    useEffect(() => {
+        setAvailableTowerNode(
+            nodeRes?.getNodesByOrg.nodes.filter(item => item.type === "TOWER")
+        );
     }, [nodeRes]);
 
     useEffect(() => {
