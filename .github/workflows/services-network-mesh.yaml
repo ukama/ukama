@@ -12,7 +12,6 @@ jobs:
   build:
     env: 
       working-directory: transport/mesh
-
     name: build and test
     runs-on: ubuntu-latest
     steps:
