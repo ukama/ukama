@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 
 	"github.com/ukama/ukama/services/cloud/users/pkg"
 	"github.com/ukama/ukama/services/cloud/users/pkg/db"
@@ -18,6 +19,7 @@ import (
 	"github.com/ukama/ukama/services/common/grpc"
 	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gorm.io/gorm"
@@ -492,15 +494,6 @@ func (u *UserService) pullUsage(ctx context.Context, simCard *pb.Sim) {
 	}
 }
 func generateQrcode(qrcodeId string, qrcodeName string) string {
-<<<<<<< HEAD
-	
-	qrCodeImageData, qrGenerateError := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
-	if qrGenerateError != nil {
-		 errors.Wrap(qrGenerateError, "failed to generate qrcode")
-	 }
-	 encodedData := base64.StdEncoding.EncodeToString(qrCodeImageData)
-	return encodedData 
-=======
 
 	qrcode,err := qrcode.Encode(qrcodeId, qrcode.Medium, 256)
 	if err!=nil{
@@ -509,9 +502,7 @@ func generateQrcode(qrcodeId string, qrcodeName string) string {
 	
 	encodedData := base64.StdEncoding.EncodeToString(qrcode)
 	return encodedData
->>>>>>> e477803450 (Fix linting error)
 }
-
 
 func (u *UserService) sendEmailToUser(ctx context.Context, email string, name string, iccid string) error {
 	logrus.Infof("Sending email to %s", email)
@@ -520,21 +511,31 @@ func (u *UserService) sendEmailToUser(ctx context.Context, email string, name st
 		Iccid: iccid,
 	})
 	if err != nil {
-		return errors.Wrap(err,"failed to get qr code")
+		return errors.Wrap(err, "failed to get qr code")
 	}
-neworkOwner,err :=u.kratosClient.GetAccountName("a32485e4-d842-45da-bf3e-798889c68ad0")
-if err != nil {
-	return errors.Wrap(err, "failed to get network owner name")
-}
+	md, ok := metadata.FromIncomingContext(ctx)
+	var noId string
+	if ok && len(md["x-requester"]) == 1 {
+		noId = md["x-requester"][0]
+	} else {
+		logrus.Errorf("Missing `x-requester` header in request")
+		return fmt.Errorf("missing `x-requester` header in request")
+	}
+
+	neworkOwner, err := u.kratosClient.GetAccountName(noId)
+	if err != nil {
+		return errors.Wrap(err, "failed to get network owner name")
+	}
+
 	logrus.Infof("Publishing queue message")
 	err = u.queuePub.PublishToQueue("mailer", &msgbus.MailMessage{
 		To:           email,
 		TemplateName: "users-qr-code",
 		Values: map[string]any{
-			"Name": name,
-			"networkOwner":neworkOwner,
-			"Qr":   generateQrcode(resp.QrCode,name),
-			"QrCodeLink":resp.QrCode,
+			"Name":         name,
+			"networkOwner": neworkOwner,
+			"Qr":           generateQrcode(resp.QrCode, name),
+			"QrCodeLink":   resp.QrCode,
 		},
 	})
 

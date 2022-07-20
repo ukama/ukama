@@ -176,6 +176,7 @@ const UserDetailsDialog = ({
                                             USER STATUS
                                         </Typography>
                                     </Grid>
+
                                     <Grid item xs={12} container spacing={2}>
                                         <Grid item xs={6}>
                                             <Typography variant="body2">
@@ -196,10 +197,10 @@ const UserDetailsDialog = ({
                                                 height={"30px"}
                                             >
                                                 <Button
-                                                    sx={{ height: "100%" }}
                                                     color={statusButtonColor}
                                                     variant="outlined"
                                                     size="small"
+                                                    sx={{ height: "80%" }}
                                                     onClick={() => {
                                                         if (id && iccid)
                                                             handleServiceAction(
@@ -240,6 +241,7 @@ const UserDetailsDialog = ({
                                             <Button
                                                 color={"error"}
                                                 variant="outlined"
+                                                size="small"
                                                 onClick={() =>
                                                     id &&
                                                     handleDeactivateAction(id)
