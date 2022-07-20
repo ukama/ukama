@@ -40,9 +40,6 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 				fmt.Fprintf(cmd.OutOrStdout(), "Deploy Config:\n '%s'\n", string(b))
 			}
 			logger := pkg.NewLogger(cmd.OutOrStdout(), cmd.ErrOrStderr(), nc.Verbose)
-			chartProvider := helm.NewChartProvider(logger, nc.Helm.RepoUrl, nc.Helm.Token)
-
-			helmClient := helm.NewHelmClient(chartProvider, logger, nc.Verbose)
 
 			if len(nc.Service) == 1 && strings.HasPrefix(nc.Service[0], "ukama") {
 				chartName, chartVer := parsName(nc.Service[0])
@@ -56,6 +53,24 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 					os.Exit(1)
 				}
 
+				if !nc.Helm.SkipDeps {
+					haveNginx, err := helm.IsNginxInstalled()
+					if err != nil {
+						logger.Errorf("Error checking for NGinx in cluster. Error: %s\n", err.Error())
+						os.Exit(1)
+					}
+
+					if !haveNginx {
+						err = installIngress(logger, nc.Verbose)
+						if err != nil {
+							logger.Errorf("Error installing ingress: %s\n", err.Error())
+							os.Exit(1)
+						}
+					}
+				}
+
+				chartProvider := helm.NewChartProvider(logger, nc.Helm.RepoUrl, nc.Helm.Token)
+				helmClient := helm.NewHelmClient(chartProvider, logger, nc.Verbose)
 				err = helmClient.InstallChart(chartName, chartVer, namesapce, valueOpts, nc.Helm.IsUpgrade, params)
 				if err != nil {
 					logger.Errorf("Failed to install chart: %s\n", err)
@@ -84,7 +99,19 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 
 	cmd.Flags().StringArrayP("svcParams", "p", []string{}, "Comma separated key=value pairs for service parameters")
 
+	cmd.Flags().BoolP("skipDeps", "", false, "Skip validation and installation of dependencies")
+
 	return cmd
+}
+
+func installIngress(log pkg.Logger, verbose bool) error {
+	chartProvider := helm.NewChartProvider(log, "https://github.com/kubernetes/ingress-nginx/releases/download/helm-chart-4.2.0/", "")
+	helmClient := helm.NewHelmClient(chartProvider, log, verbose)
+	err := helmClient.InstallChart("ingress-nginx", "4.2.0", "kube-system", &values.Options{}, false, nil)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func svcParamsToMap(chartName string, params []string) (res map[string]string, err error) {

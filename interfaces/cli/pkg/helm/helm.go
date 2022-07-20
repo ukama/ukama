@@ -5,6 +5,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 	"os"
+	"time"
 
 	"github.com/ukama/ukama/interfaces/cli/pkg"
 	"github.com/ukama/ukama/services/common/errors"
@@ -61,12 +62,13 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 	kubeClient.Namespace = namespace
 	actionConfig.KubeClient = kubeClient
 
-	//
-	path, err := h.chartProvider.RenderDefaultValues(chartName, mustSetParams)
-	if err != nil {
-		return errors.Wrap(err, "error rendering default values")
+	if mustSetParams != nil {
+		path, err := h.chartProvider.RenderDefaultValues(chartName, mustSetParams)
+		if err != nil {
+			return errors.Wrap(err, "error rendering default values")
+		}
+		valueOpts.ValueFiles = []string{path}
 	}
-	valueOpts.ValueFiles = []string{path}
 
 	// prepare values
 	p := getter.All(settings)
@@ -93,6 +95,8 @@ func (h *HelmClient) InstallChart(chartName string, chartVersion string, namespa
 		iCli.CreateNamespace = true
 		iCli.UseReleaseName = true
 		iCli.Devel = h.verbose
+		iCli.Wait = true
+		iCli.Timeout = 3 * time.Minute
 		rel, err := iCli.Run(chart, vals)
 		if err != nil {
 			h.log.Errorf("Error applying chart: %s\n", err)

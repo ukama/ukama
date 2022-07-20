@@ -21,6 +21,7 @@ type HelmConfig struct {
 	Token         string   `flag:"token"`
 	IsUpgrade     bool     `flag:"upgrade"`
 	ServiceParams []string `flag:"svcParams" default:"[]"`
+	SkipDeps      bool     `flag:"skipDeps" default:"false"`
 }
 
 type AwsConfig struct {
