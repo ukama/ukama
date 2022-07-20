@@ -9,12 +9,7 @@ const ChoosePlan = () => {
         setPlan(e.target.value);
     };
     return (
-        <RadioGroup
-            value={plan}
-            name="appearance-mode"
-            onChange={handleToggle}
-            sx={{ mt: 3 }}
-        >
+        <RadioGroup value={plan} onChange={handleToggle} sx={{ mt: 3 }}>
             {BILLING_PLANS.map(({ value, label }) => (
                 <Card
                     key={value}

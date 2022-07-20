@@ -40,9 +40,8 @@ const BillingDialog = ({
         handleCloseAction();
     };
 
-    const handleIsPaymentSuccess = (isSuccess: boolean) => {
+    const handleIsPaymentSuccess = (isSuccess: boolean) =>
         setIsPaymentSuccess(isSuccess);
-    };
 
     const isNextDiable = () => (flow === 1 && !isPaymentSuccess ? true : false);
 

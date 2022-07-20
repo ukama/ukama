@@ -51,7 +51,6 @@ const CustomizePref = () => {
                     max={100}
                     sx={{ height: 2 }}
                     value={sliderValue}
-                    aria-label="Disabled slider"
                     onChange={(_, value) => {
                         setSliderValue(value as number);
                         setDate(`${(value as number) / 10}`);

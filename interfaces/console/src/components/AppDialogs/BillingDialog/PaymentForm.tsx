@@ -1,4 +1,3 @@
-import { loadStripe } from "@stripe/stripe-js";
 import {
     CardElement,
     Elements,
@@ -6,9 +5,16 @@ import {
     useElements,
 } from "@stripe/react-stripe-js";
 import { useTheme } from "@mui/material";
+import { loadStripe } from "@stripe/stripe-js";
 interface ICheckoutForm {
     handleIsPaymentSuccess: Function;
 }
+
+interface IPaymentForm {
+    handleIsPaymentSuccess: Function;
+}
+
+const stripePromise = loadStripe("pk_test_6pRNASCoBOKtIshFeQd4XMUh");
 
 const CheckoutForm = ({ handleIsPaymentSuccess }: ICheckoutForm) => {
     const theme = useTheme();
@@ -83,12 +89,6 @@ const CheckoutForm = ({ handleIsPaymentSuccess }: ICheckoutForm) => {
         </form>
     );
 };
-
-const stripePromise = loadStripe("pk_test_6pRNASCoBOKtIshFeQd4XMUh");
-
-interface IPaymentForm {
-    handleIsPaymentSuccess: Function;
-}
 
 const PaymentForm = ({ handleIsPaymentSuccess }: IPaymentForm) => {
     return (
