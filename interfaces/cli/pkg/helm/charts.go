@@ -42,6 +42,10 @@ func (c *ChartProvider) DownloadChart(name string, version string) (string, erro
 	}
 
 	chartUrl := c.buildChartUrl(c.repo, c.repoToken, name, version)
+	err = os.RemoveAll(outputDir)
+	if err != nil {
+		c.log.Printf("Error cleaning up output dir: %s", err)
+	}
 	chartPath := path.Join(outputDir, "chart.tgz")
 
 	resp, err := c.restClient.R().
