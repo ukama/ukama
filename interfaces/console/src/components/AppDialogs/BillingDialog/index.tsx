@@ -13,6 +13,7 @@ import ChoosePlan from "./ChoosePlan";
 import PaymentForm from "./PaymentForm";
 import CustomizePref from "./CustomizePref";
 import CloseIcon from "@mui/icons-material/Close";
+import { BillingDialogList } from "../../../constants";
 import { HorizontalContainerJustify } from "../../../styles";
 
 interface IBillingDialog {
@@ -20,31 +21,6 @@ interface IBillingDialog {
     handleCloseAction: Function;
     handleSuccessAction: Function;
 }
-
-const DialogList = [
-    {
-        id: 0,
-        title: "Choose roaming plan",
-        description:
-            "Choose a roaming plan below, and it will apply to all residents that have roaming enabled. Your selection can always be changed later.",
-    },
-    {
-        id: 1,
-        title: "Enter payment information",
-        description: "Enter your payment information",
-    },
-    {
-        id: 2,
-        title: "Customize preferences",
-        description: "Monitor and budget data usage with these settings.",
-    },
-    {
-        id: 3,
-        title: "Payment set up successfully ",
-        description:
-            "Your payment and preferences have been set up successfully! You can change your settings at any time.",
-    },
-];
 
 const BillingDialog = ({
     isOpen,
@@ -83,7 +59,7 @@ const BillingDialog = ({
                 alignItems="center"
                 justifyContent="space-between"
             >
-                <DialogTitle>{DialogList[flow].title}</DialogTitle>
+                <DialogTitle>{BillingDialogList[flow].title}</DialogTitle>
                 <IconButton
                     onClick={() => handleClose()}
                     sx={{ position: "relative", right: 8 }}
@@ -94,7 +70,7 @@ const BillingDialog = ({
 
             <DialogContent>
                 <Typography variant="body1">
-                    {DialogList[flow].description}
+                    {BillingDialogList[flow].description}
                 </Typography>
                 {flow === 0 && <ChoosePlan />}
                 {flow === 1 && (
