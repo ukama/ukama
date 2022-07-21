@@ -7,14 +7,13 @@ import {
     InvoiceViewerDialog,
 } from "../../components";
 import "../../i18n/i18n";
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
 import { CenterContainer, RoundedCard } from "../../styles";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
-import { useReactToPrint } from "react-to-print";
 const Billing = () => {
     const [billingAlert, setBillingAlert] = useState({
         type: "info",
@@ -28,11 +27,7 @@ const Billing = () => {
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
-    const componentRef: any = useRef();
 
-    const handlePrint = useReactToPrint({
-        content: () => componentRef.current,
-    });
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
     const handleExport = () => {
@@ -147,10 +142,8 @@ const Billing = () => {
                                 />
                             </RoundedCard>
                             <InvoiceViewerDialog
-                                ref={componentRef}
                                 isOpen={showPdf}
                                 handleCloseAction={handleInvoiceDialog}
-                                handlePrint={handlePrint}
                             />
                         </>
                     )}
