@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -23,19 +24,17 @@ type Response struct {
 	} `json:"traits"`
 }
 
-
 func NewKratosClient(apiUrl string) KratosClient {
 	return &kratosClient{apiUrl: apiUrl}
 }
 func (i *kratosClient) GetAccountName(networkOwnerId string) (string, error) {
 	if len(networkOwnerId) <= 0 {
 		fmt.Println("Missing userId in the request")
-		
-	}
-	resp, err := http.Get(i.apiUrl + networkOwnerId)
-	if err != nil {
-		return "", errors.Wrap(err,"failed to get a response")
 
+	}
+	resp, err := http.Get(strings.TrimRight(i.apiUrl, "/") + "/admin/identities/" + networkOwnerId)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get a response")
 	}
 
 	defer resp.Body.Close()

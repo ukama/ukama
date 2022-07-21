@@ -1515,6 +1515,46 @@ const NODE_IMAGES = {
     HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
 };
 
+const BILLING_PLANS = [
+    {
+        id: 1,
+        label: "Default roaming - $5/GB; prorated per MB",
+        value: "default",
+    },
+    { id: 2, label: "Set plan - $", value: "plan1" },
+    { id: 3, label: "Unlimited plan - ", value: "unlimited" },
+    {
+        id: 2,
+        label: "No plan - disables roaming for all residents.",
+        value: "no_plan",
+    },
+];
+
+const BillingDialogList = [
+    {
+        id: 0,
+        title: "Choose roaming plan",
+        description:
+            "Choose a roaming plan below, and it will apply to all residents that have roaming enabled. Your selection can always be changed later.",
+    },
+    {
+        id: 1,
+        title: "Enter payment information",
+        description: "Enter your payment information",
+    },
+    {
+        id: 2,
+        title: "Customize preferences",
+        description: "Monitor and budget data usage with these settings.",
+    },
+    {
+        id: 3,
+        title: "Payment set up successfully ",
+        description:
+            "Your payment and preferences have been set up successfully! You can change your settings at any time.",
+    },
+];
+
 export {
     RF_NODES,
     TimeZones,
@@ -1535,8 +1575,10 @@ export {
     STATS_OPTIONS,
     STATS_PERIOD,
     NodePageTabs,
+    BILLING_PLANS,
     UserActivation,
     ROAMING_SELECT,
+    BillingDialogList,
     MASK_PLACEHOLDERS,
     INVOICE_LABEL_LIST,
     DEFAULT_RESPONSE,

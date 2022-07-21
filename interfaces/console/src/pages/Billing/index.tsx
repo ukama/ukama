@@ -5,6 +5,7 @@ import {
     LoadingWrapper,
     BillingAlerts,
     InvoiceViewerDialog,
+    BillingDialog,
 } from "../../components";
 import "../../i18n/i18n";
 import React, { useState } from "react";
@@ -15,6 +16,7 @@ import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
 const Billing = () => {
+    const [isBilling, setIsBilling] = useState(false);
     const [billingAlert, setBillingAlert] = useState({
         type: "info",
         btnText: "Enter now →",
@@ -38,8 +40,16 @@ const Billing = () => {
         setShowPdf(false);
     };
     const handleAlertAction = () => {
-        /* TODO: Handle Alert notification action */
         setBillingAlert(prev => ({ ...prev, type: "error" }));
+        setIsBilling(true);
+    };
+
+    const handleDialogClose = () => {
+        setIsBilling(false);
+    };
+
+    const handlePaymentSuccess = () => {
+        /* TODO: Handle payment success */
     };
 
     const handleViewPdf = () => {
@@ -58,13 +68,14 @@ const Billing = () => {
                 <Box component="div">
                     <Tabs
                         value={tab}
-                        onChange={handleTabChange}
                         sx={{ mt: 2, mb: 4 }}
+                        onChange={handleTabChange}
                     >
                         {BillingTabs.map(({ id, label, value }) => (
                             <Tab
                                 key={id}
                                 label={label}
+                                sx={{ px: 3 }}
                                 id={`billing-tab-${value}`}
                             />
                         ))}
@@ -149,6 +160,11 @@ const Billing = () => {
                     )}
                 </Box>
             </LoadingWrapper>
+            <BillingDialog
+                isOpen={isBilling}
+                handleCloseAction={handleDialogClose}
+                handleSuccessAction={() => handlePaymentSuccess()}
+            />
         </Box>
     );
 };

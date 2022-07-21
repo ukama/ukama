@@ -13,15 +13,14 @@ import {
 } from "@mui/material";
 import colors from "../../../theme/colors";
 import CloseIcon from "@mui/icons-material/Close";
-import React from "react";
+import React, { useRef } from "react";
 import { INVOICE_LABEL_LIST } from "../../../constants";
+import { useReactToPrint } from "react-to-print";
 
 type BasicDialogProps = {
     isOpen: boolean;
-    handlePrint: any;
     isClosable?: boolean;
     handleCloseAction: any;
-    ref: any;
 };
 const Logo = React.lazy(() =>
     import("../../../assets/svg").then(module => ({
@@ -32,10 +31,13 @@ const Logo = React.lazy(() =>
 const InvoiceViewerDialog = ({
     isOpen,
     handleCloseAction,
-    ref,
+
     isClosable = true,
-    handlePrint,
 }: BasicDialogProps) => {
+    const componentRef: any = useRef();
+    const handlePrint = useReactToPrint({
+        content: () => componentRef.current,
+    });
     return (
         <Dialog
             fullWidth
@@ -45,7 +47,7 @@ const InvoiceViewerDialog = ({
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
             onBackdropClick={() => isClosable && handleCloseAction()}
-            ref={ref}
+            ref={componentRef}
         >
             <Stack
                 direction="row"
@@ -69,7 +71,11 @@ const InvoiceViewerDialog = ({
                 <Grid container spacing={1} alignItems="center">
                     <Grid item xs={5}>
                         <Logo
-                            style={{ position: "relative", bottom: 100 }}
+                            style={{
+                                position: "relative",
+                                bottom: 100,
+                                right: 45,
+                            }}
                             width={"100%"}
                             height={"36px"}
                             color={colors.primaryMain}
