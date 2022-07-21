@@ -4,6 +4,7 @@ import (
 	"os"
 
 	bootstrap "github.com/ukama/ukama/services/bootstrap/client"
+	"github.com/ukama/ukama/services/common/metrics"
 	"github.com/ukama/ukama/services/common/msgbus"
 
 	db2 "github.com/ukama/ukama/services/cloud/network/pkg/db"
@@ -30,6 +31,7 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 	pkg.InstanceId = os.Getenv("POD_NAME")
 	initConfig()
+	metrics.StartMetricsServer(&svcConf.Metrics)
 	networkDb := initDb()
 	runGrpcServer(networkDb)
 }

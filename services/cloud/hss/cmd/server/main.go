@@ -15,6 +15,7 @@ import (
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/services/common/config"
 	ugrpc "github.com/ukama/ukama/services/common/grpc"
+	"github.com/ukama/ukama/services/common/metrics"
 
 	"github.com/ukama/ukama/services/common/sql"
 	"google.golang.org/grpc"
@@ -26,6 +27,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
+	metrics.StartMetricsServer(&serviceConfig.Metrics)
+
 	hssDb := initDb()
 	runGrpcServer(hssDb)
 }

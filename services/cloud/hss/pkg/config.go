@@ -9,6 +9,7 @@ type Config struct {
 	DB                config.Database
 	Grpc              config.Grpc
 	Queue             config.Queue
+	Metrics           config.Metrics
 }
 
 func NewConfig() *Config {
@@ -27,5 +28,6 @@ func NewConfig() *Config {
 		Grpc: config.Grpc{
 			Port: 9090,
 		},
+		Metrics: *config.DefaultMetrics(),
 	}
 }

@@ -1,10 +1,12 @@
 package main
 
 import (
+	"os"
+
 	"github.com/ukama/ukama/services/cloud/node/pkg/server"
 	uconf "github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/metrics"
 	"github.com/ukama/ukama/services/common/msgbus"
-	"os"
 
 	"github.com/num30/config"
 	"gopkg.in/yaml.v3"
@@ -30,6 +32,8 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	initConfig()
+	metrics.StartMetricsServer(serviceConfig.Metrics)
+
 	nodeDb := initDb()
 	runGrpcServer(nodeDb)
 }

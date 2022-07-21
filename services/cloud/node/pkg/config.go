@@ -9,4 +9,5 @@ type Config struct {
 	DB               *uconf.Database `default:"{}"`
 	Grpc             *uconf.Grpc     `default:"{}"`
 	Queue            *uconf.Queue    `default:"{}"`
+	Metrics          *uconf.Metrics  `default:"{}"`
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/ukama/ukama/services/common/metrics"
+
 	"github.com/ukama/ukama/services/cloud/api-gateway/cmd/version"
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg"
 	"github.com/ukama/ukama/services/cloud/api-gateway/pkg/rest"
@@ -22,6 +24,8 @@ func main() {
 	var authMiddleware rest.AuthMiddleware
 	authMiddleware = rest.NewKratosAuthMiddleware(&svcConf.Kratos,
 		clientSet.Registry, svcConf.DebugMode)
+
+	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	if svcConf.BypassAuthMode && svcConf.DebugMode {
 		authMiddleware = rest.NewDebugAuthMiddleware()
