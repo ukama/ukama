@@ -4,8 +4,7 @@ go 1.18
 
 replace github.com/ukama/ukama/interfaces/cli => ./
 
-require (
-	github.com/golangci/golangci-lint v1.44.2
+require (	
 	github.com/iamolegga/enviper v1.2.1
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.3.0
