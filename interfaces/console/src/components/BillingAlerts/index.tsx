@@ -16,7 +16,7 @@ const BillingAlerts = ({
 }: IBillingAlerts) => {
     return (
         <Alert icon={false} severity={type}>
-            <Stack direction={"row"} p={0} spacing={1}>
+            <Stack direction={"row"} p={0} px={1} spacing={1}>
                 <Typography variant="body1">{title}</Typography>
                 <Button
                     variant="text"
@@ -25,7 +25,6 @@ const BillingAlerts = ({
                         color: colors.primaryMain,
                         ":hover": {
                             color: theme => theme.palette.text.primary,
-                            backgroundColor: "none",
                         },
                     }}
                     onClick={() => onActionClick()}

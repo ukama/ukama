@@ -10,6 +10,7 @@ import NodeStatus from "./NodeStatus";
 import StatusCard from "./StatusCard";
 import TimeFilter from "./TimeFilter";
 import NodeSlider from "./NodesSlider";
+import SplitButton from "./SplitButton";
 import TableHeader from "./TableHeader";
 import CurrentBill from "./CurrentBill";
 import GraphLoading from "./GraphLoading";
@@ -44,10 +45,10 @@ import NodeStatsContainer from "./NodeStatsContainer";
 import ApexStackAreaChart from "./ApexStackAreaChart";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
-import SplitButton from "./SplitButton";
 import {
     NodeDialog,
     BasicDialog,
+    BillingDialog,
     DeactivateUser,
     UserDetailsDialog,
     SoftwareUpdateModal,
@@ -77,6 +78,7 @@ export {
     UserSettings,
     NodeStatItem,
     NodeRadioTab,
+    BillingDialog,
     DarkModToggle,
     ApexLineChart,
     AlertSettings,

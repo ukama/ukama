@@ -106,6 +106,10 @@ const theme = (isDarkmode: boolean) =>
                             padding: "0px",
                             minWidth: "auto",
                             color: isDarkmode ? colors.white : colors.darkGray,
+                            ":hover": {
+                                color: colors.primaryMain,
+                                backgroundColor: "transparent !important",
+                            },
                         },
                     },
                 },
