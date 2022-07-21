@@ -7,8 +7,7 @@ on:
     paths:
         - "services/cloud/hss/**"
         - ".github/workflows/services-cloud-hss.yaml"
-    tags:
-        - "*"
+ 
   workflow_dispatch:
 
 jobs:  

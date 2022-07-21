@@ -7,8 +7,6 @@ on:
     paths:
         - "services/bootstrap/bootstrap/**"
         - ".github/workflows/services-bootstrap-bootstrap.yaml"
-    tags:
-        - "*"
   workflow_dispatch:
 
 jobs:  

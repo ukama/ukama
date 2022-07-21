@@ -7,8 +7,7 @@ on:
     paths:
         - "services/hub/distributor/**"
         - ".github/workflows/services-hub-distributor.yaml"
-    tags:
-        - "*"
+ 
   workflow_dispatch:
 
 jobs:  

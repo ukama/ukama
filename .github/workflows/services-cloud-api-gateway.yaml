@@ -7,8 +7,6 @@ on:
     paths:
         - "services/cloud/api-gateway/**"
         - ".github/workflows/services-cloud-api-gateway.yaml"
-    tags:
-        - "*"
   workflow_dispatch:
 
 jobs:  
