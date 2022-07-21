@@ -13,6 +13,7 @@ import (
 	"github.com/ukama/ukama/services/cloud/device-gateway/pkg"
 	ccmd "github.com/ukama/ukama/services/common/cmd"
 	"github.com/ukama/ukama/services/common/config"
+	"github.com/ukama/ukama/services/common/metrics"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -76,6 +77,8 @@ func registerExtraHandlers(grcpMux *runtime.ServeMux) *http.ServeMux {
 func main() {
 	ccmd.ProcessVersionArgument(ServiceName, os.Args, version.Version)
 	initConfig()
+
+	metrics.StartMetricsServer(&svcConf.Metrics)
 
 	if err := run(); err != nil {
 		logrus.Fatal(err)

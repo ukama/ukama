@@ -9,6 +9,7 @@ type Config struct {
 	Port              int
 	Services          GrpcEndpoints `mapstructure:"services"`
 	SwaggerAssets     string
+	Metrics           config.Metrics
 }
 
 type GrpcEndpoints struct {
@@ -28,5 +29,6 @@ func NewConfig() *Config {
 			Hss:            "hss:9090",
 		},
 		SwaggerAssets: "swagger-ui",
+		Metrics:       *config.DefaultMetrics(),
 	}
 }
