@@ -116,16 +116,23 @@ const SimpleDataTable = ({
                                 )}
                                 {isHistoryTab && (
                                     <TableCell>
-                                        <Button
-                                            variant="text"
-                                            sx={{
-                                                color: colors.primaryMain,
-                                                textTransform: "capitalize",
-                                            }}
-                                            onClick={handleViewPdf}
+                                        <a
+                                            href={"https://docdro.id/J2v6TJO"}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            style={{ textDecoration: "none" }}
                                         >
-                                            View as PDF
-                                        </Button>
+                                            <Button
+                                                variant="text"
+                                                sx={{
+                                                    color: colors.primaryMain,
+                                                    textTransform: "capitalize",
+                                                }}
+                                                onClick={handleViewPdf}
+                                            >
+                                                View as PDF
+                                            </Button>
+                                        </a>
                                     </TableCell>
                                 )}
                             </TableRow>

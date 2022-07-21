@@ -4,7 +4,6 @@ import {
     CurrentBill,
     LoadingWrapper,
     BillingAlerts,
-    InvoiceViewerDialog,
     BillingDialog,
 } from "../../components";
 import "../../i18n/i18n";
@@ -25,7 +24,6 @@ const Billing = () => {
     const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
-    const [showPdf, setShowPdf] = useState<boolean>(false);
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
@@ -36,9 +34,6 @@ const Billing = () => {
         /* TODO: Handle export action */
     };
 
-    const handleInvoiceDialog = () => {
-        setShowPdf(false);
-    };
     const handleAlertAction = () => {
         setBillingAlert(prev => ({ ...prev, type: "error" }));
         setIsBilling(true);
@@ -53,7 +48,7 @@ const Billing = () => {
     };
 
     const handleViewPdf = () => {
-        setShowPdf(true);
+        //handle-pdf-vieew
     };
 
     return (
@@ -152,10 +147,6 @@ const Billing = () => {
                                     totalRows={CurrentBillingData.length}
                                 />
                             </RoundedCard>
-                            <InvoiceViewerDialog
-                                isOpen={showPdf}
-                                handleCloseAction={handleInvoiceDialog}
-                            />
                         </>
                     )}
                 </Box>
