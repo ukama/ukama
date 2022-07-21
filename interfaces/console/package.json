@@ -34,7 +34,6 @@
     "react-material-ui-carousel": "^3.2.0",
     "react-router-dom": "^5.2.1",
     "react-scripts": "4.0.3",
-    "react-to-print": "^2.14.7",
     "recoil": "^0.4.1",
     "recoil-persist": "^3.0.0",
     "three": "0.137.5",
