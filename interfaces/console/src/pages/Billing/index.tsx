@@ -14,7 +14,6 @@ import { CenterContainer, RoundedCard } from "../../styles";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
-
 const Billing = () => {
     const [isBilling, setIsBilling] = useState(false);
     const [billingAlert, setBillingAlert] = useState({
@@ -28,6 +27,7 @@ const Billing = () => {
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
+
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
     const handleExport = () => {
@@ -45,6 +45,10 @@ const Billing = () => {
 
     const handlePaymentSuccess = () => {
         /* TODO: Handle payment success */
+    };
+
+    const handleViewPdf = () => {
+        //handle-pdf-vieew
     };
 
     return (
@@ -96,6 +100,7 @@ const Billing = () => {
                                         title={"Billing breakdown"}
                                         buttonTitle={"Export"}
                                         handleButtonAction={handleExport}
+                                        showSecondaryButton={true}
                                     />
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}
@@ -124,21 +129,25 @@ const Billing = () => {
                         </Grid>
                     )}
                     {tab === 1 && (
-                        <RoundedCard>
-                            <TableHeader
-                                title={"Billing history"}
-                                buttonTitle={"Export"}
-                                handleButtonAction={handleExport}
-                            />
-                            <SimpleDataTable
-                                rowSelection={true}
-                                selectedRows={selectedRows}
-                                columns={CurrentBillColumns}
-                                dataset={CurrentBillingData}
-                                setSelectedRows={setSelectedRows}
-                                totalRows={CurrentBillingData.length}
-                            />
-                        </RoundedCard>
+                        <>
+                            <RoundedCard>
+                                <TableHeader
+                                    title={"Billing history"}
+                                    showSecondaryButton={false}
+                                />
+
+                                <SimpleDataTable
+                                    isHistoryTab={true}
+                                    rowSelection={true}
+                                    handleViewPdf={handleViewPdf}
+                                    selectedRows={selectedRows}
+                                    columns={CurrentBillColumns}
+                                    dataset={CurrentBillingData}
+                                    setSelectedRows={setSelectedRows}
+                                    totalRows={CurrentBillingData.length}
+                                />
+                            </RoundedCard>
+                        </>
                     )}
                 </Box>
             </LoadingWrapper>
