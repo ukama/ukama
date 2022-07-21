@@ -7,8 +7,7 @@ on:
     paths:
         - "services/cloud/dummy-sim-manager/**"
         - ".github/workflows/services-cloud-dummy-sim-manager.yaml"
-    tags:
-        - "*"
+ 
   workflow_dispatch:
 
 jobs:  

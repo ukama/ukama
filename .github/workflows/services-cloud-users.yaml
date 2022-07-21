@@ -7,8 +7,7 @@ on:
     paths:
         - "services/cloud/users/**"
         - ".github/workflows/services-cloud-users.yaml"
-    tags:
-        - "*"
+ 
   workflow_dispatch:
 
 jobs:  
