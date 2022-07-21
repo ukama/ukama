@@ -7,15 +7,14 @@ import {
     InvoiceViewerDialog,
 } from "../../components";
 import "../../i18n/i18n";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
 import { CenterContainer, RoundedCard } from "../../styles";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
-import { BillHistoryInvoice } from "../../constants/stubData";
-
+import { useReactToPrint } from "react-to-print";
 const Billing = () => {
     const [billingAlert, setBillingAlert] = useState({
         type: "info",
@@ -29,22 +28,29 @@ const Billing = () => {
     const handleMakePayment = () => {
         /* TODO: Handle make payment action */
     };
+    const componentRef: any = useRef();
+
+    const handlePrint = useReactToPrint({
+        content: () => componentRef.current,
+    });
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
     const handleExport = () => {
         /* TODO: Handle export action */
     };
 
+    const handleInvoiceDialog = () => {
+        setShowPdf(false);
+    };
     const handleAlertAction = () => {
         /* TODO: Handle Alert notification action */
         setBillingAlert(prev => ({ ...prev, type: "error" }));
     };
-    const handleClodePdfViewer = () => {
-        setShowPdf(false);
-    };
+
     const handleViewPdf = () => {
         setShowPdf(true);
     };
+
     return (
         <Box>
             <BillingAlerts
@@ -128,6 +134,7 @@ const Billing = () => {
                                     title={"Billing history"}
                                     showSecondaryButton={false}
                                 />
+
                                 <SimpleDataTable
                                     isHistoryTab={true}
                                     rowSelection={true}
@@ -140,8 +147,10 @@ const Billing = () => {
                                 />
                             </RoundedCard>
                             <InvoiceViewerDialog
-                                isOpen={true}
-                                data={BillHistoryInvoice}
+                                ref={componentRef}
+                                isOpen={showPdf}
+                                handleCloseAction={handleInvoiceDialog}
+                                handlePrint={handlePrint}
                             />
                         </>
                     )}

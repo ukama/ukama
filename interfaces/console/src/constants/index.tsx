@@ -1425,6 +1425,13 @@ const NodePageTabs = [
     { id: "node-tab-4", label: "Software", value: 4 },
     { id: "node-tab-5", label: "Schematic", value: 5 },
 ];
+const INVOICE_LABEL_LIST = [
+    { id: "1", label: "Invoice ID" },
+    { id: "2", label: "Invoice number" },
+    { id: "3", label: "Date" },
+    { id: "4", label: "Network name" },
+    { id: "5", label: "Status" },
+];
 
 const NodeResourcesTabConfigure: any = {
     HOME: [
@@ -1531,6 +1538,7 @@ export {
     UserActivation,
     ROAMING_SELECT,
     MASK_PLACEHOLDERS,
+    INVOICE_LABEL_LIST,
     DEFAULT_RESPONSE,
     LANGUAGE_OPTIONS,
     BASIC_MENU_ACTIONS,
