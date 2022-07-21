@@ -200,7 +200,7 @@ const UserDetailsDialog = ({
                                                     color={statusButtonColor}
                                                     variant="outlined"
                                                     size="small"
-                                                    sx={{ height: "80%" }}
+                                                    sx={{ height: "36px" }}
                                                     onClick={() => {
                                                         if (id && iccid)
                                                             handleServiceAction(
