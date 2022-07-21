@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/services/common/config"
-	"github.com/ukama/ukamaX/common/config"
 )
 
 type Config struct {
