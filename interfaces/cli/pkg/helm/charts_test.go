@@ -101,11 +101,3 @@ func TestBuildUrl(t *testing.T) {
 	tok := cp.buildChartUrl("http://example.com", "", "ukamax", "1.2.3")
 	assert.Equal(t, "http://example.com/ukamax-1.2.3.tgz", tok)
 }
-
-func TestIntegration(t *testing.T) {
-	cp := NewChartProvider(pkg.NewLogger(os.Stdout, os.Stderr, true), "https://raw.githubusercontent.com/ukama/helm-charts/standalone-ukamax", os.Getenv("GH_TOKEN"))
-	path, err := cp.downloadDefaultValues("ukamax")
-	if assert.NoError(t, err) {
-		assert.FileExists(t, path)
-	}
-}
