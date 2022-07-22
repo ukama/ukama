@@ -24,15 +24,9 @@ const Billing = () => {
     const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
-    const handleMakePayment = () => {
-        /* TODO: Handle make payment action */
-    };
 
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
-    const handleExport = () => {
-        /* TODO: Handle export action */
-    };
 
     const handleAlertAction = () => {
         setBillingAlert(prev => ({ ...prev, type: "error" }));
@@ -81,10 +75,8 @@ const Billing = () => {
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
                                     amount={"$20.00"}
-                                    title={"Amount due"}
-                                    dueDate={"*Due 11/10/2021"}
+                                    title="jully bill"
                                     periodOf={"10/10/2021 - 11/10/2021"}
-                                    handleMakePayment={handleMakePayment}
                                 />
                             </Grid>
                             <Grid xs={12} md={7} item>
@@ -98,9 +90,7 @@ const Billing = () => {
                                 <RoundedCard>
                                     <TableHeader
                                         title={"Billing breakdown"}
-                                        buttonTitle={"Export"}
-                                        handleButtonAction={handleExport}
-                                        showSecondaryButton={true}
+                                        showSecondaryButton={false}
                                     />
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}

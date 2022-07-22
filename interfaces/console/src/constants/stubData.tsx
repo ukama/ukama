@@ -45,10 +45,6 @@ export const SpecsDocsData = [
     { id: 3, title: "PDF with Technical Specs", readingTime: "1 min read" },
 ];
 
-export const BillHistoryInvoice = [
-    { id: 1, title: "Invoice Id", data: "678678-87-8" },
-    { id: 1, title: "Invoice Number", data: "678678-87-8" },
-];
 export const NodeApps = [
     {
         id: 1,
