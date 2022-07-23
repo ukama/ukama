@@ -4,8 +4,7 @@ on:
     paths:
         - "transport/mesh/**"
         - ".github/workflows/services-network-mesh.yaml"
-    tags:
-        - "*"
+
   workflow_dispatch:
 
 jobs:  
