@@ -44,6 +44,8 @@
 #define PREFIX_WEBSOCKET "/websocket"
 #define PREFIX_WEBSERVICE "*"
 
+#define EP_PING "/ping"
+
 #define MESH_CLIENT_AGENT "Mesh-client"
 #define MESH_CLIENT_VERSION "0.0.1"
 
