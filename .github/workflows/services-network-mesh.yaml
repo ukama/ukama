@@ -27,7 +27,10 @@ jobs:
     - name: Granting private modules access
       run: |
           git config --global url."https://none:${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}@github.com/ukama".insteadOf "https://github.com/ukama"     
-    
+  
+    - name: Checkout submodules
+      run: git submodule update --init --recursive
+
     - name: Building
       working-directory: ./transport/mesh
       env:
