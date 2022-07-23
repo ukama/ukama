@@ -17,6 +17,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <ulfius.h>
+#include <signal.h>
 
 #include "mesh.h"
 #include "config.h"
@@ -25,6 +26,13 @@
 #include "u_amqp.h"
 
 #define VERSION "0.0.1"
+
+typedef struct {
+
+	struct _u_instance *serverInst;
+	struct _u_instance *clientInst;
+	Config             *config;
+} ProcessState;
 
 /* Defined in network.c */
 extern int start_web_services(Config *config, UInst *clientInst);
@@ -35,6 +43,7 @@ WorkList *Transmit=NULL; /* Used by websocket to transmit packet between proxy*/
 WorkList *Receive=NULL;
 MapTable *IDTable=NULL; /* Client maintain a table of ip:port - UUID mapping */
 WAMQPConn *AMQPConn=NULL; /* Connection to AMQP exchange */
+ProcessState *processState=NULL;
 
 /*
  * usage -- Usage options for the Mesh.d
@@ -78,17 +87,63 @@ WorkList **get_receive(void) {
 	return &Receive;
 }
 
+/* SIGTERM handling routine. Gracefully exit the process
+ */
+void signal_term_handler(void) {
+
+	if (processState == NULL) exit(1);
+
+	if (processState->serverInst) {
+		ulfius_stop_framework(processState->serverInst);
+		ulfius_clean_instance(processState->serverInst);
+	}
+
+	if (processState->clientInst) {
+		ulfius_stop_framework(processState->clientInst);
+		ulfius_clean_instance(processState->clientInst);
+	}
+
+	if (processState->config) {
+		close_amqp_connection(processState->config->conn);
+		clear_config(processState->config);
+		free(processState->config);
+	}
+
+	exit(1);
+}
+
+/* setup SIGTERM catch
+ */
+void catch_sigterm(void) {
+
+	static struct sigaction saction;
+
+    memset(&saction, 0, sizeof(saction));
+
+    saction.sa_sigaction = signal_term_handler;
+	sigemptyset(&saction.sa_mask);
+    saction.sa_flags     = 0;
+
+    sigaction(SIGTERM, &saction, NULL);
+}
+
 int main (int argc, char *argv[]) {
 
 	int secure=FALSE, proxy=FALSE;
 	char *configFile=NULL;
 	char *debug=DEF_LOG_LEVEL;
 	Config *config=NULL;
-
 	struct _u_instance serverInst;
 	struct _u_instance clientInst;
 
-	/* Prase command line args. */
+	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
+	if (processState == NULL) return 1;
+	processState->serverInst = &serverInst;
+	processState->clientInst = &clientInst;
+
+	catch_sigterm();
+
+	/* Parse command line args. */
 	while (TRUE) {
 
 		int opt = 0;
@@ -153,6 +208,8 @@ int main (int argc, char *argv[]) {
 		log_error("Memory allocation failure: %d", sizeof(Config));
 		exit(1);
 	}
+
+	processState->config = config;
 
 	if (proxy)
 		config->proxy = TRUE;
