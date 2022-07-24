@@ -18,6 +18,14 @@ export const NodeAppLogs = [
         note: "It's working ",
     },
 ];
+export const PaymentCards = [
+    { id: 1, label: "American", value: "American Express - ending in 1234" },
+    {
+        id: 2,
+        label: "visa",
+        value: "Visa - ending in 1235",
+    },
+];
 
 export const CurrentBillingData = [
     {
