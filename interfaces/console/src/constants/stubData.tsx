@@ -19,11 +19,10 @@ export const NodeAppLogs = [
     },
 ];
 export const PaymentCards = [
-    { id: 1, label: "American", value: "American Express - ending in 1234" },
     {
-        id: 2,
+        id: 1,
         label: "visa",
-        value: "Visa - ending in 1235",
+        value: "None set up",
     },
 ];
 

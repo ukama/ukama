@@ -42,9 +42,7 @@ const PaymentCard = ({
     onAddPaymentMethod,
 }: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState(
-        "American Express - ending in 1234"
-    );
+    const [paymentMethod, setPaymentMethod] = React.useState("None set up");
 
     const handleChange = (event: SelectChangeEvent) => {
         setPaymentMethod(event.target.value as string);

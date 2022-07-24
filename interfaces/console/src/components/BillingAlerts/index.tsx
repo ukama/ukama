@@ -36,7 +36,7 @@ const BillingAlerts = ({
                     }}
                     onClick={() => onActionClick()}
                 >
-                    {btnText}
+                    <Typography variant="body1"> {btnText}</Typography>
                 </Button>
             </Stack>
         </Alert>

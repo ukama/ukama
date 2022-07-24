@@ -32,7 +32,11 @@ const Billing = () => {
         setTab(value);
 
     const handleAlertAction = () => {
-        setBillingAlert(prev => ({ ...prev, type: "error" }));
+        setBillingAlert(prev => ({
+            ...prev,
+            type: "error",
+            title: "Service will be paused unless you set up your payment information.",
+        }));
         setIsBilling(true);
     };
 
@@ -105,6 +109,7 @@ const Billing = () => {
                                         title={"Billing breakdown"}
                                         showSecondaryButton={false}
                                     />
+
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}
                                         dataset={CurrentBillingData}
