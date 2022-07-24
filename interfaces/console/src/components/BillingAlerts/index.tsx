@@ -15,7 +15,14 @@ const BillingAlerts = ({
     onActionClick,
 }: IBillingAlerts) => {
     return (
-        <Alert icon={false} severity={type}>
+        <Alert
+            icon={false}
+            severity={type}
+            sx={{
+                background: type == "info" ? colors.white : colors.lightRed,
+                color: colors.black,
+            }}
+        >
             <Stack direction={"row"} p={0} px={1} spacing={1}>
                 <Typography variant="body1">{title}</Typography>
                 <Button
