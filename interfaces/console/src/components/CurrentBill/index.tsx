@@ -1,6 +1,7 @@
 import { RoundedCard } from "../../styles";
-import { Typography, Divider } from "@mui/material";
-
+import { Typography, Divider, Stack } from "@mui/material";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import colors from "../../theme/colors";
 type CurrentBillProps = {
     title: string;
     amount: string;
@@ -10,9 +11,13 @@ type CurrentBillProps = {
 const CurrentBill = ({ title, amount, periodOf }: CurrentBillProps) => {
     return (
         <RoundedCard>
-            <Typography variant="h6" sx={{ textTransform: "capitalize" }}>
-                {title}
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="h6" sx={{ textTransform: "capitalize" }}>
+                    {title}
+                </Typography>
+                <PictureAsPdfIcon sx={{ color: colors.primaryMain }} />
+            </Stack>
+
             <Typography variant="body2">{periodOf}</Typography>
 
             <Divider />

@@ -12,7 +12,8 @@ import {
     InputLabel,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
-
+import { useRecoilValue } from "recoil";
+import { isDarkmode } from "../../recoil";
 import colors from "../../theme/colors";
 const useStyles = makeStyles(() => ({
     "&.MuiFormHelperText-root.Mui-error": {
@@ -43,6 +44,7 @@ const PaymentCard = ({
 }: IPaymentProps) => {
     const classes = useStyles();
     const [paymentMethod, setPaymentMethod] = React.useState("None set up");
+    const _isDarkMod = useRecoilValue(isDarkmode);
 
     const handleChange = (event: SelectChangeEvent) => {
         setPaymentMethod(event.target.value as string);
@@ -120,7 +122,10 @@ const PaymentCard = ({
                     </MenuItem>
                 </Select>
             </FormControl>
-            <Typography variant="caption" sx={{ color: colors.black54 }}>
+            <Typography
+                variant="caption"
+                sx={{ color: _isDarkMod ? colors.white : colors.black54 }}
+            >
                 *Automatically charged to card EOD on the last day of the
                 billing cycle
             </Typography>
