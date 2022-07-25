@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Install Dependencies
-      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf uuid-dev libmicrohttpd-dev libpthread-stubs0-dev liborcania-dev libyder-dev libulfius-dev   -y
+      run:  sudo apt-get update && sudo apt-get install bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc-arm-linux-gnueabihf automake-1.15 bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf uuid-dev libmicrohttpd-dev libpthread-stubs0-dev liborcania-dev libyder-dev libjansson-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev zlib1g-dev -y
 
       # init vars required for tag generation
     - name: Init vars
