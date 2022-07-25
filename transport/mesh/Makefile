@@ -5,6 +5,8 @@
 # Makefile for the Mesh (server)
 #
 
+include ../../nodes/ukamaOS/config.mk
+
 # some generic defs.
 CC   = gcc
 ARCH = X86_64
@@ -24,7 +26,14 @@ VENDOR_LIB   = $(VENDOR_BUILD)/lib/
 VENDOR_LIB64 = $(VENDOR_BUILD)/lib64/
 
 # Packages needed to compile target
-VENDOR_PKG = ulfius tomlc jansson amqp protobuf-c
+VENDOR_PKG=orcania
+VENDOR_PKG+=yder
+VENDOR_PKG+=libmicrohttpd
+VENDOR_PKG+=ulfius
+VENDOR_PKG+=tomlc
+VENDOR_PKG+=jansson
+VENDOR_PKG+=amqp
+VENDOR_PKG+=protobuf-c
 
 # Setting up various compile and link flags.
 CFLAGS=-c
@@ -41,7 +50,7 @@ LDFLAGS+=-L${VENDOR_LIB}
 LDFLAGS+=-L${VENDOR_LIB64}
 
 # Libraries needed.
-ULFIUS_LIB=-lmicrohttpd -lorcania -lyder -lgnutls -lnettle
+ULFIUS_LIB=-lulfius -lorcania -lyder -lmicrohttpd -lgnutls -lnettle
 ULFIUS_LIB+=-lhogweed -lp11-kit -lz -lulfius
 CURL_LIB=-lcurl -lssl -lcrypto
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
