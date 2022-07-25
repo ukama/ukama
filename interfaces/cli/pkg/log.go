@@ -8,6 +8,8 @@ import (
 type Logger interface {
 	Printf(format string, v ...interface{})
 	Errorf(format string, v ...interface{})
+	Stdout() io.Writer
+	Stderr() io.Writer
 }
 
 type logger struct {
@@ -34,4 +36,12 @@ func (l logger) Errorf(format string, v ...interface{}) {
 	if l.verbose {
 		fmt.Fprintf(l.stderr, format, v...)
 	}
+}
+
+func (l logger) Stdout() io.Writer {
+	return l.stdout
+}
+
+func (l logger) Stderr() io.Writer {
+	return l.stderr
 }

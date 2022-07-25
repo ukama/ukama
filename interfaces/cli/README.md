@@ -1,5 +1,13 @@
 # Ukama CLI
 
+## Install 
+### Prerequsites 
+
+To provision AWS cluster you will need:
+- AWS CLI. Refer to [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) for installation instructions.
+- Kops. Refer to [Kops](https://kops.sigs.k8s.io/getting_started/install/) for installation instructions.
+
+
 ## Configuration 
 
 Every command has it's own configuration structure. That is usually located in `pkg/cmd/<command>/config.go`.
