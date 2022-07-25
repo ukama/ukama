@@ -105,7 +105,7 @@ const UserActivation = {
 
 const BillingTabs = [
     { id: 0, label: "CURRENT BILL", value: "1" },
-    { id: 1, label: "HISTORY", value: "2" },
+    { id: 1, label: "BILLING HISTORY", value: "2" },
 ];
 
 const TimeZones = [
