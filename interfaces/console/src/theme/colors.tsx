@@ -20,6 +20,7 @@ const colors = {
     black38: "#9E9E9E",
     error: "#F50533",
     white: "#FFFFFF",
+    lightRed: "E30000",
     white70: "#F7F7F7",
     white60: "#E6E9F0",
     white38: "#EFEFEF",

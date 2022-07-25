@@ -45,6 +45,7 @@ import NodeStatsContainer from "./NodeStatsContainer";
 import ApexStackAreaChart from "./ApexStackAreaChart";
 import DataTableWithOptions from "./DataTableWithOptions";
 import FormControlCheckboxes from "./FormControlCheckboxes";
+import PaymentCard from "./PaymentCard";
 import {
     NodeDialog,
     BasicDialog,
@@ -62,6 +63,7 @@ export {
     NodeCard,
     UserCard,
     TabPanel,
+    PaymentCard,
     NodeGroup,
     NodeSlider,
     EmptyView,

@@ -5,15 +5,18 @@ import {
     LoadingWrapper,
     BillingAlerts,
     BillingDialog,
+    PaymentCard,
 } from "../../components";
 import "../../i18n/i18n";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { isSkeltonLoading } from "../../recoil";
-import { CenterContainer, RoundedCard } from "../../styles";
+import { RoundedCard } from "../../styles";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
+import { PaymentCards } from "../../constants/stubData";
+
 const Billing = () => {
     const [isBilling, setIsBilling] = useState(false);
     const [billingAlert, setBillingAlert] = useState({
@@ -24,18 +27,16 @@ const Billing = () => {
     const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
-    const handleMakePayment = () => {
-        /* TODO: Handle make payment action */
-    };
 
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
-    const handleExport = () => {
-        /* TODO: Handle export action */
-    };
 
     const handleAlertAction = () => {
-        setBillingAlert(prev => ({ ...prev, type: "error" }));
+        setBillingAlert(prev => ({
+            ...prev,
+            type: "error",
+            title: "Service will be paused unless you set up your payment information.",
+        }));
         setIsBilling(true);
     };
 
@@ -50,7 +51,12 @@ const Billing = () => {
     const handleViewPdf = () => {
         //handle-pdf-vieew
     };
-
+    const handlePaymentMethod = () => {
+        //get-payment-method
+    };
+    const addPaymentMethod = () => {
+        //handle add pyament method
+    };
     return (
         <Box>
             <BillingAlerts
@@ -81,27 +87,29 @@ const Billing = () => {
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
                                     amount={"$20.00"}
-                                    title={"Amount due"}
-                                    dueDate={"*Due 11/10/2021"}
+                                    title="jully bill"
                                     periodOf={"10/10/2021 - 11/10/2021"}
-                                    handleMakePayment={handleMakePayment}
                                 />
                             </Grid>
                             <Grid xs={12} md={7} item>
                                 <RoundedCard>
-                                    <CenterContainer>
-                                        Under Developement :)
-                                    </CenterContainer>
+                                    <PaymentCard
+                                        title={"Payment settings"}
+                                        handlePaymentMethod={
+                                            handlePaymentMethod
+                                        }
+                                        paymentMethodData={PaymentCards}
+                                        onAddPaymentMethod={addPaymentMethod}
+                                    />
                                 </RoundedCard>
                             </Grid>
                             <Grid xs={12} item>
                                 <RoundedCard>
                                     <TableHeader
                                         title={"Billing breakdown"}
-                                        buttonTitle={"Export"}
-                                        handleButtonAction={handleExport}
-                                        showSecondaryButton={true}
+                                        showSecondaryButton={false}
                                     />
+
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}
                                         dataset={CurrentBillingData}

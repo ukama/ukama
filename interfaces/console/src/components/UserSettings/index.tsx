@@ -39,7 +39,7 @@ const UserSettings = () => {
 
     const handleAccountSettings = () => {
         window.location.replace(
-            `${process.env.REACT_APP_AUTH_URL}userAccountSettings?mode=${
+            `${process.env.REACT_APP_AUTH_URL}/userAccountSettings?mode=${
                 _isDarkMod ? 1 : 0
             }`
         );
