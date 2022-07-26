@@ -96,7 +96,6 @@ const AddNodeForm = ({
 }: NodeDialogProps) => {
     const classes = useStyles();
     const gclasses = globalUseStyles();
-
     const [attachedAmplierNode, setAttachedAmplierNode] = useState<any>([
         {
             nodeId: "",
@@ -188,15 +187,16 @@ const AddNodeForm = ({
                             }}
                             className={classes.selectStyle}
                         >
-                            {towerNodesArrayList.map(({ id, name }: any) => (
-                                <MenuItem value={name} key={id}>
-                                    <Typography variant="body1">
-                                        {towerNodesArrayList.length
-                                            ? name
-                                            : "hello"}
-                                    </Typography>
-                                </MenuItem>
-                            ))}
+                            {towerNodesArrayList &&
+                                towerNodesArrayList.map(({ id, name }: any) => (
+                                    <MenuItem value={name} key={id}>
+                                        <Typography variant="body1">
+                                            {towerNodesArrayList.length
+                                                ? name
+                                                : "hello"}
+                                        </Typography>
+                                    </MenuItem>
+                                ))}
                             <Divider />
                             <MenuItem
                                 onClick={e => {

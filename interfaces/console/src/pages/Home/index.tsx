@@ -729,6 +729,7 @@ const Home = () => {
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
+
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
 

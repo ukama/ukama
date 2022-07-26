@@ -149,10 +149,6 @@ const NodeDialog = ({
             return;
         }
 
-        if (!formData.associatedTowerNode) {
-            return;
-        }
-
         handleNodeSubmitAction(formData);
     };
 
