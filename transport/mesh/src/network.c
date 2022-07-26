@@ -66,6 +66,10 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
 	ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_WEBSERVICE, NULL, 0,
 							   &callback_webservice, config);
 
+	/* Add ping EP for liveliness */
+	ulfius_add_endpoint_by_val(instance, "GET", EP_PING, NULL, 0,
+							   &callback_ping, config);
+
 	/* default endpoint. */
 	ulfius_set_default_endpoint(instance, &callback_default_webservice, config);
 }
@@ -143,7 +147,8 @@ int start_websocket_server(Config *cfg, UInst *serverInst) {
   
 	/* open connection for both admin and client webservices */
 	if (start_framework(cfg, serverInst, WEB_SOCKETS)==FALSE) {
-		log_error("Failed to start websocket at remote port %s", cfg->remoteAccept);
+		log_error("Failed to start websocket at remote port %s",
+				  cfg->remoteAccept);
 		return FALSE;
 	}
   
