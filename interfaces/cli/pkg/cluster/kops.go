@@ -21,20 +21,30 @@ const KOPS_BIN = "kops"
 type KopsWrapper struct {
 	log             pkg.Logger
 	stateBucketName string // s3 bucket name without s3://
+	debugMode       bool
 }
 
-func NewKopsWrapper(log pkg.Logger, stateBucketName string) *KopsWrapper {
+func NewKopsWrapper(log pkg.Logger, stateBucketName string, debugMode bool) *KopsWrapper {
 	return &KopsWrapper{
 		log:             log,
 		stateBucketName: stateBucketName,
+		debugMode:       debugMode,
 	}
 }
 
-func (k *KopsWrapper) createBucket(name string) error {
+func (k *KopsWrapper) createBucket(name string, region string) error {
+	k.log.Printf("Creating bucket %s", name)
+	if len(name) == 0 {
+		return fmt.Errorf("bucket name is empty")
+	}
+
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return errors.Wrap(err, "failed to load aws config")
 	}
+
+	// use us-east-1 for all cluster states
+	cfg.Region = "us-east-1"
 
 	// Create an Amazon S3 service client
 	client := s3.NewFromConfig(cfg)
@@ -51,6 +61,8 @@ func (k *KopsWrapper) createBucket(name string) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create bucket")
 	}
+
+	k.log.Debugf("Bucket %s created", name)
 	return nil
 }
 
@@ -70,13 +82,19 @@ func (k *KopsWrapper) ProvisionAwsCluster(dnsName string, region string) error {
 
 	zones := strings.Join([]string{region + "a", region + "b"}, ",")
 
-	k.log.Printf("Provisioning cluster %s", dnsName)
+	err := k.createBucket(k.stateBucketName, region)
+	if err != nil {
+		return errors.Wrap(err, "failed to create or access bucket")
+	}
 
-	cmd := k.getKopsCmd("create", "cluster", "--dns", "public", dnsName, "--zones", zones, "--cloud", "aws", "--state", k.s3BucketFullUrl())
-	err := cmd.Start()
+	k.log.Printf("Provisioning cluster %s\n", dnsName)
+
+	err = k.runKopsCmd("create", "cluster", "--yes", "--dns", "public", dnsName, "--zones", zones, "--cloud", "aws", "--state", k.s3BucketFullUrl())
+
 	if err != nil {
 		return errors.Wrap(err, "failed to create cluster")
 	}
+	k.log.Printf("Waiting for cluster %s to come up", dnsName)
 
 	err = k.Validate(dnsName, true)
 	if err != nil {
@@ -86,11 +104,15 @@ func (k *KopsWrapper) ProvisionAwsCluster(dnsName string, region string) error {
 	return nil
 }
 
-func (k *KopsWrapper) getKopsCmd(args ...string) *exec.Cmd {
+func (k *KopsWrapper) runKopsCmd(args ...string) error {
+	if k.debugMode {
+		args = append(args, "-v", "9")
+	}
 	cmd := exec.Command(KOPS_BIN, args...)
 	cmd.Stdout = k.log.Stdout()
 	cmd.Stderr = k.log.Stderr()
-	return cmd
+	k.log.Debugf("Running command: %s", cmd.String())
+	return cmd.Run()
 }
 
 func (k *KopsWrapper) s3BucketFullUrl() string {
@@ -98,13 +120,14 @@ func (k *KopsWrapper) s3BucketFullUrl() string {
 }
 
 func (k *KopsWrapper) Validate(name string, wait bool) error {
+	k.log.Printf("Validating cluster %s", name)
 	// kops validate cluster --wait 10m --name kopscluster.dev.ukama.com --state s3://kops-bucket-test-denis
 	args := []string{"validate", "cluster", "--name", name, "--state", k.s3BucketFullUrl()}
 	if wait {
 		args = append(args, "--wait", "15m")
 	}
 	k.log.Printf("Validating cluster %s", name)
-	err := k.getKopsCmd(args...).Run()
+	err := k.runKopsCmd(args...)
 	if err != nil {
 		return errors.Wrap(err, "failed to validate cluster")
 	}

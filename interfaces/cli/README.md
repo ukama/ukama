@@ -1,13 +1,5 @@
 # Ukama CLI
 
-## Install 
-### Prerequsites 
-
-To provision AWS cluster you will need:
-- AWS CLI. Refer to [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) for installation instructions.
-- Kops. Refer to [Kops](https://kops.sigs.k8s.io/getting_started/install/) for installation instructions.
-
-
 ## Configuration 
 
 Every command has it's own configuration structure. That is usually located in `pkg/cmd/<command>/config.go`.
@@ -58,4 +50,25 @@ You will need `kubectl` configured to access the cluster.
     --docker-server=${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
     --docker-username=AWS \
     --docker-password=$(aws ecr get-login-password)
+```
+
+Deploy ukama service(helm chart) by running below command
+```
+ukama deploy --service ukama@v0.1.149-dev --baseDomain ukama-test.com
+```
+
+## Provision Cluster
+### Prerequsites 
+
+To provision AWS cluster you will need:
+- AWS CLI. Refer to [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) for installation instructions.
+- Kops. Refer to [Kops](https://kops.sigs.k8s.io/getting_started/install/) for installation instructions.
+
+Make sure you run `aws configure` to set up your credentials.
+
+
+Deploying cluster:
+
+```
+ukama deploy cluster --bucket ukama-cluster-cli-denis-eu-1 --dns test-denis.k8s.local --verbose --region eu-central-1
 ```

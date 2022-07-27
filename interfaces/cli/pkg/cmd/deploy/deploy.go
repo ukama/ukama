@@ -2,6 +2,9 @@ package deploy
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/ukama/ukama/interfaces/cli/pkg"
@@ -9,8 +12,6 @@ import (
 	"github.com/ukama/ukama/interfaces/cli/pkg/helm"
 	"gopkg.in/yaml.v3"
 	"helm.sh/helm/v3/pkg/cli/values"
-	"os"
-	"strings"
 )
 
 var servicesDefaults = map[string]map[string]string{
@@ -100,6 +101,8 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	cmd.Flags().StringArrayP("svcParams", "p", []string{}, "Comma separated key=value pairs for service parameters")
 
 	cmd.Flags().BoolP("skipDeps", "", false, "Skip validation and installation of dependencies")
+
+	cmd.AddCommand(NewDeployClusterCommand(confReader))
 
 	return cmd
 }
