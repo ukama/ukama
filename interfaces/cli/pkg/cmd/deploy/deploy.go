@@ -92,7 +92,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 	// Helm flags
 	cmd.Flags().StringP("token", "t", "", "Helm repository token")
 
-	cmd.Flags().StringP("helmRepo", "r", "", "Helm repository url")
+	cmd.Flags().StringP("helmRepo", "r", "https://raw.githubusercontent.com/ukama/helm-charts/repo-index", "Helm repository url")
 	cmd.Flags().BoolP("upgrade", "u", false, "Specify if upgrading already deployed chart")
 
 	cmd.Flags().StringP("k8s.namespace", "", "", "Target Kubernetes namespace")
@@ -123,7 +123,7 @@ func svcParamsToMap(chartName string, params []string) (res map[string]string, e
 	for _, p := range params {
 		kv := strings.Split(p, "=")
 		if len(kv) != 2 {
-			return nil, fmt.Errorf("Invalid service parameter: %s, Should have key=value format", p)
+			return nil, fmt.Errorf("invalid service parameter: %s, Should have key=value format", p)
 		}
 		res[kv[0]] = kv[1]
 	}
@@ -153,9 +153,3 @@ func addValueOptionsFlags(f *pflag.FlagSet, v *values.Options) {
 	f.StringArrayVar(&v.StringValues, "set-string", []string{}, "set STRING values on the command line (can specify multiple or separate values with commas: key1=val1,key2=val2)")
 	f.StringArrayVar(&v.FileValues, "set-file", []string{}, "set values from respective files specified via the command line (can specify multiple or separate values with commas: key1=path1,key2=path2)")
 }
-
-//ukama deploy --cloud AWS  --cloud.cloud.accessKeyId AKIAJXQZQZQZQZQZQZQ --cloud.secretAccessKey SECRET --baseDomain ukama.com --token UKAMA_ACCESS_KEY  // deploy all services and provision AWS cluster
-//ukama deploy --service ukama@v1.0.1  --cloud AWS --cloud.accessKeyId AKIAJXQZQZQZQZQZQZQ --cloud.secretAccessKey SECRET --baseDomain ukama.com --token UKAMA_ACCESS_KEY // deploys ukamax helm v1.0.1 chart and provision AWS cluster
-//ukama deploy --service ukama  --clusterName ukama-dev --smtpRelayHost mail.ukama.com --smtpRelayHostUsername user --smtpRelayHostPassword pass --baseDomain ukama.com --token UKAMA_ACCESS_KEY // deploys ukamax helm chart to ukama-dev cluster
-//ukama deploy --service ukama  --service metrics --service hub --cloud AWS  --cloud.accessKeyId AKIAJXQZQZQZQZQZQZQ --cloud.secretAccessKey SECRET --baseDomain ukama.com --token UKAMA_ACCESS_KEY  // deploy latest versions of metrics , hub, ukama and provision cluster
-//ukama deploy --cloud AWS_EKS --cloud.accessKeyId AKIAJXQZQZQZQZQZQZQ --cloud.secretAccessKey SECRET --baseDomain ukama.com --token UKAMA_ACCESS_KEY // deploy latest version of all services and provision AWS cluster
