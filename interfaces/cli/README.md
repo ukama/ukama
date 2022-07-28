@@ -42,8 +42,9 @@ deploy:
 # Deploy
 
 ## Deploying service 
+### Prerequsites 
 
-You will need `kubectl` configured to access the cluster. 
+- You will need `kubectl` configured to access the cluster. 
 - Create secret with access to Ukama registry in target namespace  
 ```
     kubectl create secret docker-registry regcred \
@@ -51,10 +52,11 @@ You will need `kubectl` configured to access the cluster.
     --docker-username=AWS \
     --docker-password=$(aws ecr get-login-password)
 ```
+### Example
 
 Deploy ukama service(helm chart) by running below command
 ```
-ukama deploy --service ukama@v0.1.149-dev --baseDomain ukama-test.com
+ukama deploy --service ukama@v0.1.151-dev  --svcParams baseDomain=denis.k8s.local --token $HELM_CHART_REPO_TOKEN
 ```
 
 ## Provision Cluster

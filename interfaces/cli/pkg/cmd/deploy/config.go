@@ -7,7 +7,6 @@ type deployConfig struct {
 	Cloud            string `flag:"cloud"`
 	Aws              *AwsConfig
 	Service          []string    `flag:"service"`
-	BaseDomain       string      `flag:"baseDomain" validate:"required"`
 	K8s              *K8sConfig  `default:"{}"`
 	Helm             *HelmConfig `default:"{}"`
 }

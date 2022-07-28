@@ -83,7 +83,7 @@ func NewDeployCommand(confReader config.ConfigReader) *cobra.Command {
 
 	// Warning! Make sure that flags do not collide with Helm flags
 	cmd.Flags().StringP("service", "s", "", "Service name")
-	cmd.Flags().StringP("baseDomain", "d", "", "Base domain")
+	//cmd.Flags().StringP("baseDomain", "d", "", "Base domain")
 
 	cmd.Flags().StringP("cloud", "c", "", "Cloud type")
 	cmd.Flags().StringP("aws.accessKey", "", "", "access key to access AWS account")
