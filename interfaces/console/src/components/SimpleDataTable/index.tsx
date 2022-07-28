@@ -130,7 +130,9 @@ const SimpleDataTable = ({
                                                 }}
                                                 onClick={handleViewPdf}
                                             >
-                                                View as PDF
+                                                <Typography variant="body2">
+                                                    View as PDF
+                                                </Typography>
                                             </Button>
                                         </a>
                                     </TableCell>
