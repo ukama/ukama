@@ -16,7 +16,6 @@ import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
 import { PaymentCards } from "../../constants/stubData";
-
 const Billing = () => {
     const [isBilling, setIsBilling] = useState(false);
     const [billingAlert, setBillingAlert] = useState({
@@ -51,11 +50,14 @@ const Billing = () => {
     const handleViewPdf = () => {
         //handle-pdf-vieew
     };
-    const handlePaymentMethod = () => {
-        //get-payment-method
-    };
+
     const addPaymentMethod = () => {
-        //handle add pyament method
+        setBillingAlert(prev => ({
+            ...prev,
+            type: "error",
+            title: "Service will be paused unless you set up your payment information.",
+        }));
+        setIsBilling(true);
     };
     return (
         <Box>
@@ -87,7 +89,7 @@ const Billing = () => {
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
                                     amount={"$20.00"}
-                                    title="jully bill"
+                                    title="July bill"
                                     periodOf={"10/10/2021 - 11/10/2021"}
                                 />
                             </Grid>
@@ -95,9 +97,6 @@ const Billing = () => {
                                 <RoundedCard>
                                     <PaymentCard
                                         title={"Payment settings"}
-                                        handlePaymentMethod={
-                                            handlePaymentMethod
-                                        }
                                         paymentMethodData={PaymentCards}
                                         onAddPaymentMethod={addPaymentMethod}
                                     />
@@ -121,6 +120,8 @@ const Billing = () => {
                                             display: "flex",
                                             margin: "18px 0px",
                                             justifyContent: "flex-end",
+                                            position: "relative",
+                                            right: 18,
                                         }}
                                     >
                                         <Typography

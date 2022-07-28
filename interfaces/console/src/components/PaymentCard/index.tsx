@@ -9,6 +9,7 @@ import {
     Button,
     MenuItem,
     Select,
+    Stack,
     InputLabel,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
@@ -32,23 +33,20 @@ const useStyles = makeStyles(() => ({
 
 interface IPaymentProps {
     title: string;
-    handlePaymentMethod: Function;
     paymentMethodData: any;
-    onAddPaymentMethod: Function;
+    onAddPaymentMethod: any;
 }
 const PaymentCard = ({
     title,
-    handlePaymentMethod,
     paymentMethodData,
     onAddPaymentMethod,
 }: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState("None set up");
+    const [paymentMethod, setPaymentMethod] = React.useState("None set up .");
     const _isDarkMod = useRecoilValue(isDarkmode);
 
     const handleChange = (event: SelectChangeEvent) => {
         setPaymentMethod(event.target.value as string);
-        handlePaymentMethod(event.target.value as string);
     };
     return (
         <Box>
@@ -100,26 +98,27 @@ const PaymentCard = ({
                                 p: "6px 16px",
                             }}
                         >
-                            <Typography variant="body1">{value}</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Typography variant="body1">{value}</Typography>
+                                <Button
+                                    variant="text"
+                                    sx={{
+                                        textTransform: "none",
+                                        color: colors.primaryMain,
+                                        ":hover": {
+                                            color: theme =>
+                                                theme.palette.text.primary,
+                                        },
+                                    }}
+                                    onClick={onAddPaymentMethod}
+                                >
+                                    <Typography variant="body1">
+                                        {"Enter Now"}
+                                    </Typography>
+                                </Button>
+                            </Stack>
                         </MenuItem>
                     ))}
-                    <Divider />
-                    <MenuItem
-                        onClick={e => {
-                            onAddPaymentMethod();
-                            e.stopPropagation();
-                        }}
-                    >
-                        <Button
-                            variant="text"
-                            sx={{
-                                typography: "body1",
-                                textTransform: "none",
-                            }}
-                        >
-                            + Add payment method
-                        </Button>
-                    </MenuItem>
                 </Select>
             </FormControl>
             <Typography

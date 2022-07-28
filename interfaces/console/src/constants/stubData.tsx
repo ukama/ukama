@@ -21,8 +21,8 @@ export const NodeAppLogs = [
 export const PaymentCards = [
     {
         id: 1,
-        label: "visa",
-        value: "None set up",
+        label: "no_payment_method_Set",
+        value: "None set up .",
     },
 ];
 
