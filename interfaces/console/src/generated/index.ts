@@ -37,6 +37,8 @@ export type ActivateUserResponse = {
 };
 
 export type AddNodeDto = {
+  associate: Scalars['Boolean'];
+  attached: Array<NodeObj>;
   name: Scalars['String'];
   nodeId: Scalars['String'];
 };
@@ -84,6 +86,11 @@ export type ApiMethodDataDto = {
   params?: Maybe<Scalars['String']>;
   path: Scalars['String'];
   type: Api_Method_Type;
+};
+
+export type AttachedNodes = {
+  __typename?: 'AttachedNodes';
+  nodeId: Scalars['String'];
 };
 
 export type BillHistoryDto = {
@@ -285,6 +292,12 @@ export type HeaderType = {
   Cookie: Scalars['String'];
 };
 
+export type LinkNodes = {
+  __typename?: 'LinkNodes';
+  attached: Array<AttachedNodes>;
+  nodeId: Scalars['String'];
+};
+
 export type Meta = {
   __typename?: 'Meta';
   count: Scalars['Float'];
@@ -461,6 +474,11 @@ export type NodeDto = {
   updateDescription: Scalars['String'];
   updateShortNote: Scalars['String'];
   updateVersion: Scalars['String'];
+};
+
+export type NodeObj = {
+  name: Scalars['String'];
+  nodeId: Scalars['String'];
 };
 
 export type NodeResponse = {
