@@ -40,7 +40,7 @@ const CustomizePref = () => {
     const [sliderValue, setSliderValue] = useState(20);
     const [isSendAlerts, setIsSendAlerts] = useState(true);
     return (
-        <Stack>
+        <Stack mt={1}>
             <Typography variant="subtitle2">
                 Alert me when my data reaches
             </Typography>
@@ -71,11 +71,7 @@ const CustomizePref = () => {
                     InputProps={{
                         inputComponent: TextMaskCustom as any,
                         endAdornment: (
-                            <Typography
-                                variant="body1"
-                                fontSize={16}
-                                color={"primary"}
-                            >
+                            <Typography variant="body1" fontSize={16}>
                                 GB
                             </Typography>
                         ),

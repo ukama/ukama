@@ -29,7 +29,7 @@ const ChoosePlan = () => {
                         control={<Radio />}
                         sx={{
                             m: 0,
-                            px: 3,
+                            px: 2,
                             py: 1,
                             width: "100%",
                             typography: "body1",
