@@ -32,8 +32,8 @@ const useStyles = makeStyles(() => ({
 
 interface IPaymentProps {
     title: string;
-    handlePaymentMethod: Function;
     paymentMethodData: any;
+    handlePaymentMethod: Function;
     onAddPaymentMethod: Function;
 }
 const PaymentCard = ({
@@ -104,18 +104,14 @@ const PaymentCard = ({
                         </MenuItem>
                     ))}
                     <Divider />
-                    <MenuItem
-                        onClick={e => {
-                            onAddPaymentMethod();
-                            e.stopPropagation();
-                        }}
-                    >
+                    <MenuItem>
                         <Button
                             variant="text"
                             sx={{
                                 typography: "body1",
                                 textTransform: "none",
                             }}
+                            onClick={() => onAddPaymentMethod()}
                         >
                             + Add payment method
                         </Button>

@@ -10,15 +10,18 @@ import {
 import "../../i18n/i18n";
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
-import { isSkeltonLoading } from "../../recoil";
 import { RoundedCard } from "../../styles";
-import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
+import { isSkeltonLoading } from "../../recoil";
+import { PaymentCards } from "../../constants/stubData";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
-import { PaymentCards } from "../../constants/stubData";
+import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 
 const Billing = () => {
-    const [isBilling, setIsBilling] = useState(false);
+    const [isBilling, setIsBilling] = useState({
+        isShow: false,
+        isOnlypaymentFlow: false,
+    });
     const [billingAlert, setBillingAlert] = useState({
         type: "info",
         btnText: "Enter now →",
@@ -37,11 +40,11 @@ const Billing = () => {
             type: "error",
             title: "Service will be paused unless you set up your payment information.",
         }));
-        setIsBilling(true);
+        setIsBilling({ isShow: true, isOnlypaymentFlow: false });
     };
 
     const handleDialogClose = () => {
-        setIsBilling(false);
+        setIsBilling({ isShow: false, isOnlypaymentFlow: false });
     };
 
     const handlePaymentSuccess = () => {
@@ -56,6 +59,7 @@ const Billing = () => {
     };
     const addPaymentMethod = () => {
         //handle add pyament method
+        setIsBilling({ isShow: true, isOnlypaymentFlow: true });
     };
     return (
         <Box>
@@ -159,11 +163,14 @@ const Billing = () => {
                     )}
                 </Box>
             </LoadingWrapper>
-            <BillingDialog
-                isOpen={isBilling}
-                handleCloseAction={handleDialogClose}
-                handleSuccessAction={() => handlePaymentSuccess()}
-            />
+            {isBilling.isShow && (
+                <BillingDialog
+                    isOpen={isBilling.isShow}
+                    handleCloseAction={handleDialogClose}
+                    initPaymentFlow={isBilling.isOnlypaymentFlow}
+                    handleSuccessAction={() => handlePaymentSuccess()}
+                />
+            )}
         </Box>
     );
 };
