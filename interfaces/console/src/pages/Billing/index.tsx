@@ -54,9 +54,7 @@ const Billing = () => {
     const handleViewPdf = () => {
         //handle-pdf-vieew
     };
-    const handlePaymentMethod = () => {
-        //get-payment-method
-    };
+
     const addPaymentMethod = () => {
         //handle add pyament method
         setIsBilling({ isShow: true, isOnlypaymentFlow: true });
@@ -91,7 +89,7 @@ const Billing = () => {
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
                                     amount={"$20.00"}
-                                    title="jully bill"
+                                    title="July bill"
                                     periodOf={"10/10/2021 - 11/10/2021"}
                                 />
                             </Grid>
@@ -99,9 +97,6 @@ const Billing = () => {
                                 <RoundedCard>
                                     <PaymentCard
                                         title={"Payment settings"}
-                                        handlePaymentMethod={
-                                            handlePaymentMethod
-                                        }
                                         paymentMethodData={PaymentCards}
                                         onAddPaymentMethod={addPaymentMethod}
                                     />
@@ -125,6 +120,8 @@ const Billing = () => {
                                             display: "flex",
                                             margin: "18px 0px",
                                             justifyContent: "flex-end",
+                                            position: "relative",
+                                            right: 18,
                                         }}
                                     >
                                         <Typography

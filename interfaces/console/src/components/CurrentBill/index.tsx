@@ -12,9 +12,7 @@ const CurrentBill = ({ title, amount, periodOf }: CurrentBillProps) => {
     return (
         <RoundedCard>
             <Stack direction="row" spacing={1} alignItems="center">
-                <Typography variant="h6" sx={{ textTransform: "capitalize" }}>
-                    {title}
-                </Typography>
+                <Typography variant="h6">{title}</Typography>
                 <PictureAsPdfIcon sx={{ color: colors.primaryMain }} />
             </Stack>
 
