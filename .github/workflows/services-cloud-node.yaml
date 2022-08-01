@@ -7,6 +7,7 @@ on:
     paths:
         - "services/cloud/node/**"
         - ".github/workflows/services-cloud-node.yaml"
+ 
   workflow_dispatch:
 
 jobs:  

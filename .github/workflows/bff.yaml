@@ -4,6 +4,7 @@ on:
     paths:
         - "services/bff/**"
         - ".github/workflows/bff.yaml"
+ 
   workflow_dispatch:
 
 jobs:

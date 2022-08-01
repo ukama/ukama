@@ -7,6 +7,7 @@ on:
     paths:
         - "services/hub/hub/**"
         - ".github/workflows/services-hub-hub.yaml"
+ 
   workflow_dispatch:
 
 jobs:  

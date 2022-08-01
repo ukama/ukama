@@ -11,21 +11,24 @@ type Docker struct {
 }
 
 type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	Metrics           config.Metrics
-	Server            rest.HttpConfig
-	ApiIf             config.ServiceApiIf
-	DB                config.Database
-	ServiceRouter     string
-	GitUser           string
-	GitPass           string
-	Docker            Docker
-	NodeImage         string
-	NodeCmd           []string
-	Kubeconfig        string
-	Queue             config.Queue
-	RepoServerUrl     string
-	Namespace         string
+	config.BaseConfig             `mapstructure:",squash"`
+	Metrics                       config.Metrics
+	Server                        rest.HttpConfig
+	ApiIf                         config.ServiceApiIf
+	DB                            config.Database
+	ServiceRouter                 string
+	GitUser                       string
+	GitPass                       string
+	Docker                        Docker
+	NodeImage                     string
+	NodeCmd                       []string
+	Kubeconfig                    string
+	Queue                         config.Queue
+	RepoServerUrl                 string
+	Namespace                     string `default:"default"`
+	TerminationGracePeriodSeconds int64  `default:"60"`
+	ActiveDeadlineSeconds         int64  `default:"60"`
+	TtlHours                      int64  `default:"720"` /* 30 days */
 }
 
 var ServiceConfig *Config
@@ -38,7 +41,7 @@ var ServiceConfig *Config
 func NewConfig() *Config {
 
 	return &Config{
-		Server: config.DefaultHTTPConfig(),
+		Server: rest.DefaultHTTPConfig(),
 
 		ServiceRouter: "http://localhost:8091",
 		ApiIf: config.ServiceApiIf{
@@ -55,6 +58,9 @@ func NewConfig() *Config {
 				},
 				{
 					"node": "*", "looking_to": "vnode_power_off", "org": "*", "path": "/node",
+				},
+				{
+					"node": "*", "looking_to": "vnode_delete", "org": "*", "path": "/node",
 				},
 				{
 					"looking_for": "vnode_list", "path": "/list",

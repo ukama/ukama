@@ -37,12 +37,12 @@ import {
 import Fab from "@mui/material/Fab";
 import { TMetric } from "../../types";
 import { globalUseStyles } from "../../styles";
-import React, { useEffect, useState } from "react";
 import { Box, Grid, Tab, Tabs } from "@mui/material";
 import { SpecsDocsData } from "../../constants/stubData";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { NodePageTabs, NODE_ACTIONS } from "../../constants";
+import React, { useCallback, useEffect, useState } from "react";
 import { isSkeltonLoading, snackbarMessage } from "../../recoil";
 
 let abortController = new AbortController();
@@ -128,7 +128,7 @@ const Nodes = () => {
         onCompleted: () => {
             setRegisterNodeNotification({
                 id: "addNodeSuccess",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                message: `Your node registered successfully!`,
                 type: "success",
                 show: true,
             });
@@ -169,8 +169,9 @@ const Nodes = () => {
         getMetrics,
         {
             data: getMetricsRes,
-            refetch: getMetricsRefetch,
             loading: metricsLoading,
+            refetch: getMetricsRefetch,
+            variables: lastMetricsFetchVariables,
         },
     ] = useGetMetricsByTabLazyQuery({
         context: {
@@ -184,17 +185,13 @@ const Nodes = () => {
                 setIsMetricPolling(true);
 
                 for (const element of res.getMetricsByTab.metrics) {
-                    if (!metrics[element.type]) {
-                        _m[element.type] = {
-                            name: element.name,
-                            data: element.data,
-                        };
-                    }
+                    _m[element.type] = {
+                        name: element.name,
+                        data: element.data,
+                    };
                 }
-                const filter = Object.fromEntries(
-                    Object.entries(_m).filter(([_, v]) => v !== null)
-                );
-                setMetrics((_prev: TMetric) => ({ ...filter }));
+
+                setMetrics((_prev: TMetric) => ({ ..._m }));
             }
         },
         onError: () => {
@@ -208,6 +205,16 @@ const Nodes = () => {
         fetchPolicy: "network-only",
     });
 
+    const refetchMetrics = useCallback(() => {
+        if (getMetricsRes && getMetricsRes.getMetricsByTab.to) {
+            getMetricsRefetch({
+                ...getMetricPollingCallPayload(
+                    getMetricsRes?.getMetricsByTab.to
+                ),
+            });
+        }
+    }, [getMetricsRes]);
+
     useGetMetricsByTabSSubscription({
         fetchPolicy: "network-only",
         onSubscriptionData: res => {
@@ -216,10 +223,12 @@ const Nodes = () => {
                 res?.subscriptionData?.data?.getMetricsByTab &&
                 res?.subscriptionData?.data?.getMetricsByTab.length > 0
             ) {
-                const _m: TMetric = getMetricsInitObj();
+                const _m: TMetric = {};
+
                 for (const element of res.subscriptionData.data
                     .getMetricsByTab) {
                     const metric = metrics[element.type];
+
                     if (
                         metric &&
                         metric.data &&
@@ -234,14 +243,20 @@ const Nodes = () => {
                         };
                     }
                 }
-                const filter = Object.fromEntries(
-                    Object.entries(_m).filter(([_, v]) => v !== null)
-                );
 
                 setMetrics((_prev: TMetric) => ({
                     ..._prev,
-                    ...filter,
+                    ..._m,
                 }));
+
+                let next = false;
+                for (const element of res.subscriptionData.data
+                    .getMetricsByTab) {
+                    if (!next && element.next) next = true;
+                }
+                if (next) {
+                    refetchMetrics();
+                }
             }
         },
     });
@@ -309,7 +324,7 @@ const Nodes = () => {
             isMetricPolling &&
             getMetricsRes &&
             getMetricsRes.getMetricsByTab.next &&
-            getMetricsRes?.getMetricsByTab.metrics.length > 0
+            !lastMetricsFetchVariables?.data.regPolling
         ) {
             getMetricsRefetch({
                 ...getMetricPollingCallPayload(

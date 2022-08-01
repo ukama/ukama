@@ -7,6 +7,7 @@ on:
     paths:
         - "services/cloud/mailer/**"
         - ".github/workflows/services-cloud-mailer.yaml"
+ 
   workflow_dispatch:
 
 jobs:  

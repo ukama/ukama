@@ -49,7 +49,6 @@ const Header = ({
     isLoading,
 }: HeaderProps) => {
     const history = useHistory();
-    const showDivider = _pageName !== "Billing" ? true : false;
     const ref = useRef(null);
     const _user = useRecoilValue(user);
     const resetPageName = useResetRecoilState(pageName);
@@ -120,7 +119,7 @@ const Header = ({
         resetData();
         resetPageName();
         setSkeltonLoading(true);
-        window.location.replace(`${process.env.REACT_APP_AUTH_URL}logout`);
+        window.location.replace(`${process.env.REACT_APP_AUTH_URL}/logout`);
     };
     return (
         <Box component="div">
@@ -290,7 +289,7 @@ const Header = ({
                         </Stack>
                     </LoadingWrapper>
                 </Toolbar>
-                {showDivider && <Divider ref={ref} sx={{ m: "0px" }} />}
+                <Divider ref={ref} sx={{ m: "0px" }} />
             </AppBar>
         </Box>
     );

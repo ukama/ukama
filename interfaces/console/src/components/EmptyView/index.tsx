@@ -14,6 +14,7 @@ const EmptyView = ({ title, icon: Icon, size = "medium" }: IEmptyView) => {
                 height: "100%",
                 width: "100%",
                 display: "flex",
+                alignSelf: "center",
                 justifyContent: "center",
                 alignItems: "center",
             }}

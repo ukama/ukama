@@ -7,6 +7,7 @@ on:
     paths:
         - "services/cloud/net/**"
         - ".github/workflows/services-cloud-net.yaml"
+ 
   workflow_dispatch:
 
 jobs:  

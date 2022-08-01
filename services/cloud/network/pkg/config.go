@@ -13,4 +13,5 @@ type Config struct {
 	BootstrapUrl      string
 	Queue             config.Queue
 	Debug             bootstrap.DebugConf
+	Metrics           config.Metrics
 }

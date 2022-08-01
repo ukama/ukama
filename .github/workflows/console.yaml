@@ -4,6 +4,7 @@ on:
     paths:
         - "interfaces/console/**"
         - ".github/workflows/console.yaml"
+ 
   workflow_dispatch:
 
 jobs:

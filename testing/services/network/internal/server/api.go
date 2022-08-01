@@ -27,7 +27,6 @@ type RespGetNode struct {
 }
 
 type ReqGetNodeList struct {
-	NodeID     string `query:"node" validate:"required"`
 	LookingFor string `query:"looking_for" validate:"eq=vnode_list,required"`
 }
 
@@ -37,5 +36,5 @@ type RespGetNodeList struct {
 
 type ReqDeleteNode struct {
 	NodeID    string `query:"node" validate:"required"`
-	LookingTo string `query:"looking_for" validate:"eq=vnode_delete,required"`
+	LookingTo string `query:"looking_to" validate:"eq=vnode_delete,required"`
 }

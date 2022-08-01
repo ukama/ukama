@@ -29,6 +29,7 @@ const initializeApp = async () => {
         ],
         credentials: true,
     };
+    // logger.info(`CORS ALLOW: ${JSON.stringify(corsOptions)}`);
     app.use(cors(corsOptions));
     app.use(cookieParser());
 

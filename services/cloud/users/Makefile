@@ -14,7 +14,8 @@ lint:
 	golangci-lint run
 
 deps:
-	go install
+	make -f ../../Makefile go-install
+
 
 gen:
 	protoc -I ./pb -I ../../common/pb/dep --go_out=. --go-grpc_out=. --go-grpc_opt=require_unimplemented_servers=true --govalidators_out=. \

@@ -7,6 +7,7 @@ on:
     paths:
         - "services/cloud/org/**"
         - ".github/workflows/services-cloud-org.yaml"
+ 
   workflow_dispatch:
 
 jobs:  

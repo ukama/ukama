@@ -102,7 +102,7 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - HSSHOST=hss:9091
+      - HSSHOST=hss:9090
     restart: always
     networks:
       - ukama-net
@@ -117,7 +117,9 @@ services:
       - DB_PASSWORD=ThisIsUkamaXPass
       - DB_USER=postgres
       - QUEUE_URI=amqp://guest:guest@rabbitmq:5672
-      - HSSHOST=hss:9091
+      - HSSHOST=hss:9090
+      - SIMMANAGER_HOST=simmanager:9090
+      - SIMMANAGER_TIMEOUT=3s
     restart: always
     networks:
       - ukama-net  
@@ -222,7 +224,7 @@ services:
       - DEBUGMODE=true
       - SERVICES_HSS=hss:9091
 
-  sim-manager:
+  simmanager:
     build: ./dummy-sim-manager
     ports:
       - "9096:9090"

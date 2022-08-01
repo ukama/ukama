@@ -105,6 +105,17 @@ func getVirtNodeId(name string) string {
 
 /* Starting build virtual node watcher routine */
 func (c *Controller) ControllerInit() error {
+
+	/* For listing already running virtual nodes in network  */
+	pods, err := c.cs.CoreV1().Pods(c.ns).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		logrus.Errorf("Network:: Error getting pods: %v\n", err)
+		return err
+	}
+	for _, pod := range pods.Items {
+		logrus.Tracef("Network:: Pod Name: %s\n", pod.Name)
+	}
+
 	return c.WatcherForNodes(context.TODO(), c.PublishEvent)
 }
 
@@ -164,13 +175,13 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 			Labels:    labels,
 		},
 		Spec: v1.PodSpec{
-			RestartPolicy: v1.RestartPolicyOnFailure,
+			RestartPolicy: v1.RestartPolicyAlways,
 			Containers: []v1.Container{
 				v1.Container{
-					Name:    nodeId,
-					Image:   image,
-					Command: command,
-					Args:    []string{},
+					Name:  nodeId,
+					Image: image,
+					//Command: command,
+					Args: []string{},
 					Env: []v1.EnvVar{
 						{
 							Name:  "UUID",
@@ -183,11 +194,14 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 					},
 				},
 			},
+			Hostname:                      nodeId,
+			TerminationGracePeriodSeconds: &internal.ServiceConfig.TerminationGracePeriodSeconds,
+			ActiveDeadlineSeconds:         &internal.ServiceConfig.ActiveDeadlineSeconds,
 		},
 	}
 
-	/* Fixing context time limit 30 days */
-	ctx, cancel := context.WithTimeout(context.TODO(), 720*time.Hour)
+	/* Fixing context time 5 s */
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Second)
 	defer cancel() // releases resources if slowOperation completes before timeout elapses
 
 	_, err := c.cs.CoreV1().
@@ -198,7 +212,7 @@ func (c *Controller) CreateNode(nodeId string, image string, command []string, n
 		return err
 	}
 
-	logrus.Debugf("PowerOn success for node %s", nodeId)
+	logrus.Infof("PowerOn poweron initiated for node %s", nodeId)
 
 	return err
 
@@ -237,7 +251,7 @@ func (c *Controller) GetNodeRuntimeStatus(nodeId string) (*string, error) {
 /* Go routine to start build process */
 func (c *Controller) PowerOnNode(nodeId string, org string) error {
 
-	containerImage := internal.ServiceConfig.NodeImage
+	containerImage := internal.ServiceConfig.NodeImage + ":" + nodeId
 
 	entryCommand := internal.ServiceConfig.NodeCmd
 
@@ -247,6 +261,7 @@ func (c *Controller) PowerOnNode(nodeId string, org string) error {
 		return fmt.Errorf("%s not expected nodeid format", nodeId)
 	}
 
+	logrus.Debugf("Starting node %s with Image %s and start up %s", nodeId, containerImage, entryCommand)
 	err := c.CreateNode(nodeId, containerImage, entryCommand, *nodeType, org)
 	if err != nil {
 		logrus.Errorf("Create Node instance failed for %s. Error: %s", nodeId, err.Error())
@@ -261,7 +276,7 @@ func (c *Controller) PowerOffNode(nodeId string) error {
 	/* Virtual Node Name */
 	vnName := getVirtNodeName(nodeId)
 
-	logrus.Debugf("Node %s powerOff requested.", nodeId)
+	logrus.Infof("Node %s powerOff requested.", nodeId)
 	err := c.cs.CoreV1().Pods(c.ns).Delete(context.Background(), vnName, metav1.DeleteOptions{})
 	if err != nil {
 		logrus.Errorf("Delete Node failed for %s. Error: %s", nodeId, err.Error())
@@ -381,7 +396,7 @@ func (c *Controller) PublishEvent(uuid string, state string) error {
 		logrus.Errorf("Router:: fail marshal: %s", err.Error())
 		return err
 	}
-	logrus.Debugf("Router:: Proto data for message is %+v and MsgClient %+v", data, c.m)
+	logrus.Debugf("Router:: Proto data for message is %+v \n MsgClient %+v", data, c.m)
 
 	// Publish a message
 	err = c.m.Publish(data, msgbus.DeviceQ.Queue, msgbus.DeviceQ.Exchange, routingKey, msgbus.DeviceQ.ExchangeType)

@@ -1,5 +1,6 @@
 import { Meta } from "../common/types";
 import { GRAPHS_TAB, GRAPH_FILTER, NODE_TYPE } from "../constants";
+import { AddNodeDto, NodeObj, LinkNodes } from "../modules/node/types";
 
 export const getPaginatedOutput = (
     page: number,
@@ -91,7 +92,7 @@ export const getMetricsByTab = (
             else return [];
 
         case GRAPHS_TAB.HOME:
-            return ["memorytrxused"];
+            return ["uptimetrx"];
 
         case GRAPHS_TAB.NODE_STATUS:
             if (nodeType === NODE_TYPE.HOME) return ["uptimetrx"];
@@ -170,4 +171,41 @@ export const converCookieToObj = (cookie: string) => {
         }, {});
     }
     return null;
+};
+
+export const isTowerNode = (nodeId: string): boolean =>
+    nodeId.includes("tnode");
+
+export const getTowerNode = (payload: AddNodeDto): NodeObj => {
+    if (isTowerNode(payload.nodeId))
+        return { name: payload.name, nodeId: payload.nodeId };
+
+    if (payload.attached)
+        for (const node of payload.attached) {
+            if (isTowerNode(node.nodeId)) return node;
+        }
+    return { name: "", nodeId: "" };
+};
+
+export const getNodes = (payload: AddNodeDto): NodeObj[] => {
+    const nodes: NodeObj[] = [];
+    if (!isTowerNode(payload.nodeId)) {
+        nodes.push({ name: payload.name, nodeId: payload.nodeId });
+    }
+    if (payload.attached)
+        for (const node of payload.attached) {
+            if (!isTowerNode(node.nodeId))
+                nodes.push({ name: node.name, nodeId: node.nodeId });
+        }
+    return nodes;
+};
+export const linkNodes = (nodes: NodeObj[], rootNodeId: string): LinkNodes => {
+    const nodesLinkingObj: LinkNodes = {
+        nodeId: rootNodeId,
+        attached: [],
+    };
+    for (const node of nodes) {
+        nodesLinkingObj.attached?.push({ nodeId: node.nodeId });
+    }
+    return nodesLinkingObj;
 };

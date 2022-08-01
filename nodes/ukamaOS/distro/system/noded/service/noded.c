@@ -15,8 +15,8 @@
 #include "usys_types.h"
 
 #define DEV_PROPERTY_JSON "mfgdata/property/property.json"
-#define INVENTORY_DB "/tmp/sys/cnode_inventory_db"
-#define NOTIF_SERVER_URL "http://localhost:8090/"
+#define INVENTORY_DB "/tmp/sys/tnode_inventory_db"
+#define NOTIF_SERVER_URL "http://localhost:8085"
 #define DEF_LOG_LEVEL "TRACE"
 
 #define NODED_VERSION "0.0.0"

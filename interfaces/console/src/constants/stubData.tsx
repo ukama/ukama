@@ -18,28 +18,32 @@ export const NodeAppLogs = [
         note: "It's working ",
     },
 ];
+export const PaymentCards = [
+    {
+        id: 1,
+        label: "visa",
+        value: "None set up",
+    },
+];
 
 export const CurrentBillingData = [
     {
         id: 1,
-        name: "Tryphena Nelson 1",
+        date: " July 11 2022",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        total: "$5 ",
     },
     {
         id: 2,
-        name: "Tryphena Nelson 2",
+        date: "July 11 2022",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        total: "$5 ",
     },
     {
         id: 3,
-        name: "Tryphena Nelson 3",
+        date: "July 11 2022",
         dataUsage: " 20 GB  ",
-        rate: "$5 / 20GB",
-        subTotal: 10,
+        total: "$5 ",
     },
 ];
 export const SpecsDocsData = [
@@ -47,6 +51,7 @@ export const SpecsDocsData = [
     { id: 2, title: "PDF with Technical Specs", readingTime: "6 min read" },
     { id: 3, title: "PDF with Technical Specs", readingTime: "1 min read" },
 ];
+
 export const NodeApps = [
     {
         id: 1,

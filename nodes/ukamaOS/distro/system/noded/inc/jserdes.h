@@ -16,6 +16,7 @@ extern "C" {
 
 #include "json_types.h"
 #include "web_service.h"
+#include "notify/notify.h"
 
 #include "usys_types.h"
 
@@ -139,6 +140,25 @@ int json_serialize_node_cfg(JsonObj** obj, NodeCfg* uCfg, uint8_t count);
  *          On Failure, NodeD JSON error code
  */
 int json_serialize_node_info(JsonObj** obj, NodeInfo* nodeInfo);
+
+/**
+ * @fn      int json_serialize_notification_data(JsonObj**, NodedNotifDetails*)
+ * @brief   Serialize the noded notifications.
+ *
+ * @param   json
+ * @param   notif
+ * @return  On Success, JSON_ENCODING_OK (STATUS_OK)
+ *          On Failure, NodeD JSON error code
+ */
+int json_serialize_notification_data(JsonObj **json,
+                NodedNotifDetails *notif);
+/**
+ * @fn      void json_free(JsonObj*)
+ * @brief   Free the json object
+ *
+ * @param   json
+ */
+void json_free(JsonObj** json);
 
 #ifdef __cplusplus
 }

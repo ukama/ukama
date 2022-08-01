@@ -7,6 +7,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import UsersIcon from "@mui/icons-material/PeopleAlt";
 import BillingIcon from "@mui/icons-material/CreditCard";
 import { DataTableWithOptionColumns } from "./tableColumns";
+import UpdateIcon from "@mui/icons-material/SystemUpdateAltRounded";
 
 const DRAWER_WIDTH = 200;
 const APP_VERSION = "v0.0.1";
@@ -96,6 +97,12 @@ const BASIC_MENU_ACTIONS: MenuItemType[] = [
         title: "Delete",
         route: "delete",
     },
+    {
+        id: 3,
+        Icon: UpdateIcon,
+        title: "Update available",
+        route: "update",
+    },
 ];
 
 const DEACTIVATE_EDIT_ACTION_MENU: MenuItemType[] = [
@@ -115,7 +122,7 @@ const UserActivation = {
 
 const BillingTabs = [
     { id: 0, label: "CURRENT BILL", value: "1" },
-    { id: 1, label: "HISTORY", value: "2" },
+    { id: 1, label: "BILLING HISTORY", value: "2" },
 ];
 
 const TimeZones = [
@@ -1518,6 +1525,46 @@ const NODE_IMAGES = {
     HOME: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_home_node.png",
 };
 
+const BILLING_PLANS = [
+    {
+        id: 1,
+        label: "Default roaming - $5/GB; prorated per MB",
+        value: "default",
+    },
+    { id: 2, label: "Set plan - $", value: "plan1" },
+    { id: 3, label: "Unlimited plan - ", value: "unlimited" },
+    {
+        id: 2,
+        label: "No plan - disables roaming for all residents.",
+        value: "no_plan",
+    },
+];
+
+const BillingDialogList = [
+    {
+        id: 0,
+        title: "Choose roaming plan",
+        description:
+            "Choose a roaming plan below, and it will apply to all residents that have roaming enabled. Your selection can always be changed later.",
+    },
+    {
+        id: 1,
+        title: "Enter payment information",
+        description: "Enter your payment information",
+    },
+    {
+        id: 2,
+        title: "Customize preferences",
+        description: "Monitor and budget data usage with these settings.",
+    },
+    {
+        id: 3,
+        title: "Payment set up successfully ",
+        description:
+            "Your payment and preferences have been set up successfully! You can change your settings at any time.",
+    },
+];
+
 export {
     RF_NODES,
     TimeZones,
@@ -1538,8 +1585,10 @@ export {
     STATS_OPTIONS,
     STATS_PERIOD,
     NodePageTabs,
+    BILLING_PLANS,
     UserActivation,
     ROAMING_SELECT,
+    BillingDialogList,
     MASK_PLACEHOLDERS,
     DEFAULT_RESPONSE,
     LANGUAGE_OPTIONS,

@@ -7,6 +7,7 @@ import (
 
 	"github.com/ukama/ukama/services/cloud/users/pkg/server"
 	"github.com/ukama/ukama/services/cloud/users/pkg/sims"
+	"github.com/ukama/ukama/services/common/metrics"
 	"github.com/ukama/ukama/services/common/msgbus"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -33,6 +34,9 @@ func main() {
 	pkg.InstanceId = os.Getenv("POD_NAME")
 
 	initConfig()
+
+	metrics.StartMetricsServer(&serviceConfig.Metrics)
+
 	usersDb := initDb()
 	runGrpcServer(usersDb)
 }
@@ -86,13 +90,14 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func NewIccidPool(conf pkg.SimManager) (pbclient.SimPoolClient, io.Closer) {
+	log.Info("Connecting to simPool")
 	conn := createGrpcConn(conf)
 	return pbclient.NewSimPoolClient(conn), conn
 }
 
 func newSimManagerClient(conf pkg.SimManager) (client pbclient.SimManagerServiceClient, connection io.Closer) {
+	log.Info("Connecting to sim manager")
 	conn := createGrpcConn(conf)
-
 	return pbclient.NewSimManagerServiceClient(conn), conn
 }
 

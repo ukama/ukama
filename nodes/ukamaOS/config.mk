@@ -72,6 +72,8 @@ ifeq ($(LOCAL), $(TARGETBOARD))
 	XGXX            = g++
 	HOST            = $(shell gcc -dumpmachine)
 	OPENSSLTARGET   = linux-generic64
+	GCCPATH        = $(shell which gcc)
+	XGCCPATH       = $(dir $(GCCPATH))
 endif
 
 export

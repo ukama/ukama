@@ -118,16 +118,16 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 	jobs := b.clientset.BatchV1().Jobs(b.currentNamespace)
 
 	/* Tries 4 time before matking it as fail.*/
-	var backOffLimit int32 = 4
+	var backOffLimit int32 = internal.ServiceConfig.BackOffLimit
 
 	/* Priviliged mode : mercy!! (because of dind for linuxkit build)
 	Would be removed with our microCE
 	*/
 	var priviligemode bool = true
-	var timetolive int32 = 60
+	var timetolive int32 = internal.ServiceConfig.TimeToLive
 
 	/* Add a time period for job to complete if not completetd within that time frame remove it.*/
-	var activeDeadlineSeconds int64 = 90 * 60
+	var activeDeadlineSeconds int64 = internal.ServiceConfig.ActiveDeadLineSeconds
 
 	/* Job spec */
 	jobSpec := &batchv1.Job{
@@ -141,15 +141,15 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 				Spec: v1.PodSpec{
 					Containers: []v1.Container{
 						{
-							Name:    *jobName,
-							Image:   *image,
-							Command: cmd,
+							Name:  *jobName,
+							Image: *image,
+							//Command: cmd,
 							SecurityContext: &v1.SecurityContext{
 								Privileged: &priviligemode,
 							},
 							Env: []v1.EnvVar{
 								{
-									Name:  "UUID",
+									Name:  "VNODE_ID",
 									Value: *jobName,
 								},
 								{
@@ -178,14 +178,57 @@ func (b *Build) LaunchBuildJob(jobName *string, image *string, cmd []string, nod
 								},
 								{
 									Name:  "REPO_SERVER_URL",
-									Value: internal.ServiceConfig.RepoServerUrl,
+									Value: internal.ServiceConfig.VNodeRepoServerUrl,
+								},
+								{
+									Name:  "REPO_NAME",
+									Value: internal.ServiceConfig.VNodeRepoName,
+								},
+								{
+									Name:  "AWS_ACCESS_KEY_ID",
+									Value: internal.ServiceConfig.AwsKey,
+								},
+								{
+									Name:  "AWS_SECRET_ACCESS_KEY",
+									Value: internal.ServiceConfig.AwsSecret,
+								},
+							},
+
+							EnvFrom: []v1.EnvFromSource{
+								{
+									ConfigMapRef: &v1.ConfigMapEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: internal.ServiceConfig.CmRef,
+										},
+									},
+								},
+								{
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: internal.ServiceConfig.SecRef,
+										},
+									},
+								},
+							},
+							EnvFrom: []v1.EnvFromSource{
+								{
+									ConfigMapRef: &v1.ConfigMapEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: internal.ServiceConfig.CmRef,
+										},
+									},
+									SecretRef: &v1.SecretEnvSource{
+										LocalObjectReference: v1.LocalObjectReference{
+											Name: internal.ServiceConfig.SecRef,
+										},
+									},
 								},
 							},
 						},
 					},
 					ImagePullSecrets: []v1.LocalObjectReference{
 						{
-							Name: "dregcred",
+							Name: internal.ServiceConfig.BuilderRegCred,
 						},
 					},
 					RestartPolicy: v1.RestartPolicyOnFailure,

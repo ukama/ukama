@@ -136,6 +136,17 @@ int callback_default_webservice(const URequest *request, UResponse *response,
 }
 
 /*
+ * callback_ping --
+ *
+ */
+int callback_ping(const URequest *request, UResponse *response,
+						void *data) {
+
+	ulfius_set_string_body_response(response, 200, "ok");
+	return U_CALLBACK_CONTINUE;
+}
+
+/*
  * callback_webservice --
  *
  */

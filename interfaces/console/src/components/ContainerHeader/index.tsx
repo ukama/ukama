@@ -13,6 +13,7 @@ type ContainerHeaderProps = {
     showButton?: boolean;
     showSearchBox?: boolean;
     handleSearchChange?: Function;
+    handleAllNodeUpdate?: Function;
     handleButtonAction?: Function;
 };
 
@@ -27,6 +28,9 @@ const ContainerHeader = ({
     title,
     stats,
     buttonTitle,
+    handleAllNodeUpdate = () => {
+        /* Default empty function */
+    },
     showButton = false,
     buttonSize = "large",
     showSearchBox = false,
@@ -132,7 +136,7 @@ const ContainerHeader = ({
                     }}
                     size={buttonSize}
                     variant="contained"
-                    onClick={() => handleButtonAction()}
+                    onClick={() => handleAllNodeUpdate()}
                 >
                     {buttonTitle}
                 </Button>
