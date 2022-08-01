@@ -119,19 +119,6 @@ const PaymentCard = ({
                             </Stack>
                         </MenuItem>
                     ))}
-                    <Divider />
-                    <MenuItem>
-                        <Button
-                            variant="text"
-                            sx={{
-                                typography: "body1",
-                                textTransform: "none",
-                            }}
-                            onClick={() => onAddPaymentMethod()}
-                        >
-                            + Add payment method
-                        </Button>
-                    </MenuItem>
                 </Select>
             </FormControl>
             <Typography
