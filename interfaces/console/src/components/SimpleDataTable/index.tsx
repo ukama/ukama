@@ -83,6 +83,9 @@ const SimpleDataTable = ({
                             <TableRow
                                 key={row.id}
                                 sx={{
+                                    "&:last-child th, &:last-child td": {
+                                        borderBottom: isHistoryTab ? 0 : null,
+                                    },
                                     ":hover": {
                                         backgroundColor: _isDarkMode
                                             ? colors.nightGrey
