@@ -223,7 +223,37 @@ subscription getMetricsByTabS {
         }
     }
 }
+query getCurrentBill {
+    getCurrentBill {
+        bill {
+            id
+            name
+            dataUsed
+            rate
+            subtotal
+        }
+        total
+        billMonth
+        dueDate
+    }
+}
+query getBillHistory {
+    getBillHistory {
+        id
+        date
+        description
+        totalUsage
+        subtotal
+    }
+}
 
+query getDataBill($data: DATA_BILL_FILTER!) {
+    getDataBill(filter: $data) {
+        id
+        dataBill
+        billDue
+    }
+}
 mutation updateUserStatus($data: UpdateUserServiceInput!) {
     updateUserStatus(data: $data) {
         iccid
