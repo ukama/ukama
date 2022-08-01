@@ -18,18 +18,19 @@ import { HorizontalContainerJustify } from "../../../styles";
 
 interface IBillingDialog {
     isOpen: boolean;
+    initPaymentFlow: boolean;
     handleCloseAction: Function;
     handleSuccessAction: Function;
 }
 
 const BillingDialog = ({
     isOpen,
+    initPaymentFlow,
     handleCloseAction,
     handleSuccessAction,
 }: IBillingDialog) => {
-    const [flow, setFlow] = useState(0);
+    const [flow, setFlow] = useState(initPaymentFlow ? 2 : 0);
     const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
-
     const handleFlowChange = (i: number) => {
         if (flow === 2) handleSuccessAction();
         setFlow(i);
@@ -43,7 +44,7 @@ const BillingDialog = ({
     const handleIsPaymentSuccess = (isSuccess: boolean) =>
         setIsPaymentSuccess(isSuccess);
 
-    const isNextDiable = () => (flow === 1 && !isPaymentSuccess ? true : false);
+    const isNextDiable = () => (flow === 2 && !isPaymentSuccess ? true : false);
 
     return (
         <Dialog
@@ -72,12 +73,12 @@ const BillingDialog = ({
                     {BillingDialogList[flow].description}
                 </Typography>
                 {flow === 0 && <ChoosePlan />}
-                {flow === 1 && (
+                {flow === 1 && <CustomizePref />}
+                {flow === 2 && (
                     <PaymentForm
                         handleIsPaymentSuccess={handleIsPaymentSuccess}
                     />
                 )}
-                {flow === 2 && <CustomizePref />}
                 {flow === 3 && <></>}
             </DialogContent>
 
@@ -88,7 +89,9 @@ const BillingDialog = ({
                         color={"primary"}
                         sx={{
                             visibility:
-                                flow !== 0 && flow !== 3 ? "visible" : "hidden",
+                                flow !== 0 && flow !== 3 && !initPaymentFlow
+                                    ? "visible"
+                                    : "hidden",
                         }}
                         onClick={() => handleFlowChange(flow - 1)}
                     >
@@ -110,7 +113,7 @@ const BillingDialog = ({
                                 disabled={isNextDiable()}
                                 onClick={() => handleFlowChange(flow + 1)}
                             >
-                                {flow === 2 ? "Save" : "Next"}
+                                Next
                             </Button>
                         )}
                     </Stack>

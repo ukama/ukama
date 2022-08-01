@@ -7,6 +7,7 @@ import {
     SelectChangeEvent,
     Button,
     MenuItem,
+    Divider,
     Select,
     Stack,
     InputLabel,
@@ -101,6 +102,7 @@ const PaymentCard = ({
                                 <Typography variant="body1">{value}</Typography>
                                 <Button
                                     variant="text"
+                                    onClick={onAddPaymentMethod}
                                     sx={{
                                         textTransform: "none",
                                         color: colors.primaryMain,
@@ -109,7 +111,6 @@ const PaymentCard = ({
                                                 theme.palette.text.primary,
                                         },
                                     }}
-                                    onClick={onAddPaymentMethod}
                                 >
                                     <Typography variant="body1">
                                         {"Enter Now"}
@@ -118,6 +119,19 @@ const PaymentCard = ({
                             </Stack>
                         </MenuItem>
                     ))}
+                    <Divider />
+                    <MenuItem>
+                        <Button
+                            variant="text"
+                            sx={{
+                                typography: "body1",
+                                textTransform: "none",
+                            }}
+                            onClick={() => onAddPaymentMethod()}
+                        >
+                            + Add payment method
+                        </Button>
+                    </MenuItem>
                 </Select>
             </FormControl>
             <Typography
