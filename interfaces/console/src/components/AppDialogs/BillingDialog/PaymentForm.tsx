@@ -84,7 +84,7 @@ const CheckoutForm = ({ handleIsPaymentSuccess }: ICheckoutForm) => {
                 }}
                 onClick={() => handleIsPaymentSuccess(true)}
             >
-                Pay
+                Submit payment information
             </button>
         </form>
     );
