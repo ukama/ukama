@@ -41,7 +41,7 @@ const PaymentCard = ({
     onAddPaymentMethod,
 }: IPaymentProps) => {
     const classes = useStyles();
-    const [paymentMethod, setPaymentMethod] = React.useState("None set up .");
+    const [paymentMethod, setPaymentMethod] = React.useState("None set up.");
     const _isDarkMod = useRecoilValue(isDarkmode);
 
     const handleChange = (event: SelectChangeEvent) => {
@@ -65,6 +65,7 @@ const PaymentCard = ({
                     value={paymentMethod}
                     variant="outlined"
                     onChange={handleChange}
+                    IconComponent={() => null}
                     sx={{
                         "& legend": { width: "135px" },
                     }}
@@ -112,7 +113,7 @@ const PaymentCard = ({
                                     }}
                                 >
                                     <Typography variant="body1">
-                                        {"Enter Now"}
+                                        {"Enter now"}
                                     </Typography>
                                 </Button>
                             </Stack>
