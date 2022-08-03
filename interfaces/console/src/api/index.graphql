@@ -26,14 +26,6 @@ subscription getLatestConnectedUsers {
     }
 }
 
-query getDataBill($filter: DATA_BILL_FILTER!) {
-    getDataBill(filter: $filter) {
-        id
-        dataBill
-        billDue
-    }
-}
-
 subscription getLatestDataBill {
     getDataBill {
         id
@@ -41,7 +33,30 @@ subscription getLatestDataBill {
         billDue
     }
 }
-
+query getBillHistory {
+    getBillHistory {
+        id
+        date
+        description
+        totalUsage
+        subtotal
+    }
+}
+# Write your query or mutation here
+query getCurrentBill {
+    getCurrentBill {
+        bill {
+            id
+            name
+            dataUsed
+            rate
+            subtotal
+        }
+        total
+        billMonth
+        dueDate
+    }
+}
 query getAlerts($data: PaginationDto!) {
     getAlerts(data: $data) {
         meta {
@@ -182,10 +197,7 @@ mutation updateUser($userId: String!, $data: UserInputDto!) {
 }
 mutation addNode($data: AddNodeDto!) {
     addNode(data: $data) {
-        nodeId
-        state
-        type
-        name
+        success
     }
 }
 mutation updateNode($data: UpdateNodeDto!) {
@@ -194,6 +206,14 @@ mutation updateNode($data: UpdateNodeDto!) {
         state
         type
         name
+    }
+}
+
+query getDataBill($data: DATA_BILL_FILTER!) {
+    getDataBill(filter: $data) {
+        id
+        dataBill
+        billDue
     }
 }
 query getMetricsByTab($data: MetricsByTabInputDTO!) {

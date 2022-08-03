@@ -128,7 +128,7 @@ const Nodes = () => {
         onCompleted: () => {
             setRegisterNodeNotification({
                 id: "addNodeSuccess",
-                message: `Your node registered successfully!`,
+                message: `Your Node has been registered successfully!`,
                 type: "success",
                 show: true,
             });

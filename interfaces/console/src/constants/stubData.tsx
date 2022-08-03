@@ -26,26 +26,6 @@ export const PaymentCards = [
     },
 ];
 
-export const CurrentBillingData = [
-    {
-        id: 1,
-        date: " July 11 2022",
-        dataUsage: " 20 GB  ",
-        total: "$5 ",
-    },
-    {
-        id: 2,
-        date: "July 11 2022",
-        dataUsage: " 20 GB  ",
-        total: "$5 ",
-    },
-    {
-        id: 3,
-        date: "July 11 2022",
-        dataUsage: " 20 GB  ",
-        total: "$5 ",
-    },
-];
 export const SpecsDocsData = [
     { id: 1, title: "PDF with Technical Specs", readingTime: "2 min read" },
     { id: 2, title: "PDF with Technical Specs", readingTime: "6 min read" },
