@@ -16,7 +16,10 @@ import { PaymentCards } from "../../constants/stubData";
 import { CurrentBillColumns } from "../../constants/tableColumns";
 import { BillingTabs, CurrentBillingData } from "../../constants";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
-
+import {
+    useGetBillHistoryQuery,
+    useGetCurrentBillQuery,
+} from "../../generated";
 const Billing = () => {
     const [isBilling, setIsBilling] = useState({
         isShow: false,
@@ -30,7 +33,12 @@ const Billing = () => {
     const [tab, setTab] = useState<number>(0);
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const { data: billingHistoryRes, loading: billingHistoryLoading } =
+        useGetBillHistoryQuery();
 
+    const { data: currentBill, loading: currenBillLoading } =
+        useGetCurrentBillQuery();
+    console.log("HISTORY", billingHistoryRes?.getBillHistory);
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
 
@@ -56,9 +64,14 @@ const Billing = () => {
     };
 
     const addPaymentMethod = () => {
-        //handle add pyament method
         setIsBilling({ isShow: true, isOnlypaymentFlow: true });
     };
+    const totalCurrentBill: number | undefined =
+        currentBill?.getCurrentBill?.bill.reduce(
+            (totalCurrentBill, currentItem) =>
+                (totalCurrentBill = totalCurrentBill + currentItem.subtotal),
+            0
+        );
     return (
         <Box>
             <BillingAlerts
@@ -67,7 +80,7 @@ const Billing = () => {
                 onActionClick={handleAlertAction}
                 type={billingAlert.type as AlertColor}
             />
-            <LoadingWrapper isLoading={_isSkeltonLoading} height={"90%"}>
+            <LoadingWrapper isLoading={_isSkeltonLoading} height={"300px"}>
                 <Box component="div">
                     <Tabs
                         value={tab}
@@ -88,9 +101,10 @@ const Billing = () => {
                         <Grid container item spacing={2}>
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
-                                    amount={"$20.00"}
-                                    title="July bill"
-                                    periodOf={"10/10/2021 - 11/10/2021"}
+                                    amount={`$ ${currentBill?.getCurrentBill?.total}`}
+                                    billMonth={`${currentBill?.getCurrentBill?.billMonth}`}
+                                    dueDate={`${currentBill?.getCurrentBill?.dueDate}`}
+                                    loading={currenBillLoading}
                                 />
                             </Grid>
                             <Grid xs={12} md={7} item>
@@ -111,7 +125,9 @@ const Billing = () => {
 
                                     <SimpleDataTable
                                         columns={CurrentBillColumns}
-                                        dataset={CurrentBillingData}
+                                        dataset={
+                                            currentBill?.getCurrentBill?.bill
+                                        }
                                     />
 
                                     <div
@@ -121,7 +137,7 @@ const Billing = () => {
                                             margin: "18px 0px",
                                             justifyContent: "flex-end",
                                             position: "relative",
-                                            right: 18,
+                                            right: 48,
                                         }}
                                     >
                                         <Typography
@@ -130,7 +146,7 @@ const Billing = () => {
                                                 width: "20%",
                                             }}
                                         >
-                                            $20.00
+                                            {`$ ${totalCurrentBill}`}
                                         </Typography>
                                     </div>
                                 </RoundedCard>

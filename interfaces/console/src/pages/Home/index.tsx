@@ -216,7 +216,7 @@ const Home = () => {
                 if (res?.addNode) {
                     setNodeToastNotification({
                         id: "addNodeSuccess",
-                        message: `${res?.addNode?.name} has been registered successfully!`,
+                        message: `Your Node has been registered successfully!`,
                         type: "success",
                         show: true,
                     });
@@ -277,9 +277,10 @@ const Home = () => {
     } = useGetDataBillQuery({
         skip: true,
         variables: {
-            filter: billingStatusFilter,
+            data: billingStatusFilter,
         },
     });
+
     const {
         data: dataUsageRes,
         loading: dataUsageloading,
@@ -576,7 +577,6 @@ const Home = () => {
         setIsEsimAdded(false);
         setShowInstallSim(false);
     };
-
     const getFirstMetricCallPayload = () =>
         getMetricPayload({
             tab: 4,
@@ -769,6 +769,8 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
+                        associate: false,
+                        attached: [],
                     },
                 },
             });

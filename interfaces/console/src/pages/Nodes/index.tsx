@@ -132,7 +132,7 @@ const Nodes = () => {
         onCompleted: () => {
             setRegisterNodeNotification({
                 id: "addNodeSuccess",
-                message: `${registerNodeRes?.addNode?.name} has been registered successfully!`,
+                message: `Your Node has been registered successfully!`,
                 type: "success",
                 show: true,
             });
@@ -418,6 +418,8 @@ const Nodes = () => {
                 data: {
                     name: data.name,
                     nodeId: data.nodeId,
+                    associate: false,
+                    attached: [],
                 },
             },
         });

@@ -14,7 +14,7 @@ import { colors } from "../../theme";
 import { ColumnsWithOptions } from "../../types";
 
 interface SimpleDataTableInterface {
-    dataset: Object[];
+    dataset: any;
     maxHeight?: number;
     totalRows?: number;
     setSelectedRows?: any;

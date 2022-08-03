@@ -13,16 +13,16 @@ const DataTableWithOptionColumns: ColumnsWithOptions[] = [
 
 const CurrentBillColumns: ColumnsWithOptions[] = [
     {
-        id: "date",
-        label: "Date",
+        id: "name",
+        label: "Name",
     },
     {
-        id: "dataUsage",
+        id: "rate",
         label: "Data Used",
     },
     {
-        id: "total",
-        label: "Total",
+        id: "subtotal",
+        label: "SubTotal",
     },
 ];
 const NodeAppsColumns = [
