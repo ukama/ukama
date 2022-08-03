@@ -131,6 +131,7 @@ const Home = () => {
     const [isUpdatAllNodes, setIsUpdatAllNodes] = useState(false);
     const [isMetricPolling, setIsMetricPolling] = useState<boolean>(false);
     const setNodeToastNotification = useSetRecoilState(snackbarMessage);
+    const [availableTowerNode, setAvailableTowerNode] = useState<any>();
     const [serviceStatusIndicator, setServiceStatusIndicator] = useState<any>();
     const [billingStatusFilter, setBillingStatusFilter] = useState(
         Data_Bill_Filter.July
@@ -520,6 +521,11 @@ const Home = () => {
             });
         }
     }, [nodeRes]);
+    useEffect(() => {
+        setAvailableTowerNode(
+            nodeRes?.getNodesByOrg.nodes.filter(item => item.type === "TOWER")
+        );
+    }, [nodeRes]);
 
     useEffect(() => {
         if (
@@ -751,6 +757,7 @@ const Home = () => {
     const onUpdateAllNodes = () => {
         /* TODO: Handle Node Updates */
     };
+
     const handleSimDialogClose = () =>
         setSimDialog({ ...simDialog, isShow: false });
 
@@ -769,8 +776,10 @@ const Home = () => {
                     data: {
                         name: data.name,
                         nodeId: data.nodeId,
-                        associate: false,
-                        attached: [],
+                        associate: data.isAssiociatedTowerNode
+                            ? true
+                            : false || false,
+                        attached: data.associatedTowerNode || [],
                     },
                 },
             });
@@ -1050,6 +1059,7 @@ const Home = () => {
                     dialogTitle={showNodeDialog.title}
                     subTitle={showNodeDialog.subTitle}
                     handleNodeSubmitAction={handleNodeSubmitAction}
+                    towerNodesArrayList={availableTowerNode || []}
                 />
             )}
 

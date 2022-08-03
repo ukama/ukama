@@ -414,8 +414,10 @@ const Nodes = () => {
                 data: {
                     name: data.name,
                     nodeId: data.nodeId,
-                    associate: false,
-                    attached: [],
+                    associate: data.isAssiociatedTowerNode
+                        ? true
+                        : false || false,
+                    attached: data.associatedTowerNode || [],
                 },
             },
         });

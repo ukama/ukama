@@ -15,19 +15,17 @@ import {
     DialogContent,
     OutlinedInput,
     DialogContentText,
-    Alert,
 } from "@mui/material";
 import React, { useState } from "react";
 import { colors } from "../../../theme";
-import { makeStyles } from "@mui/styles";
 import { IMaskInput } from "react-imask";
+import { makeStyles } from "@mui/styles";
 import { Node_Type } from "../../../generated";
 import { globalUseStyles } from "../../../styles";
-import ErrorIcon from "@mui/icons-material/Error";
 import CloseIcon from "@mui/icons-material/Close";
-import { MASK_BY_TYPE, MASK_PLACEHOLDERS } from "../../../constants";
+import { MASK_BY_TYPE, MASK_PLACEHOLDERS, NODE_TYPE } from "../../../constants";
 import { SelectChangeEvent } from "@mui/material/Select/SelectInput";
-
+import AddNodeForm from "./addNodeForm";
 const useStyles = makeStyles(() => ({
     basicDialogHeaderStyle: {
         padding: "0px 0px 18px 0px",
@@ -61,14 +59,12 @@ const useStyles = makeStyles(() => ({
 }));
 
 interface CustomProps {
-    // eslint-disable-next-line no-unused-vars
-    onChange: (event: { target: { name: string; value: string } }) => void;
     name: Node_Type;
 }
 
 const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
     function TextMaskCustom(props, _ref) {
-        const { onChange, ...other } = props;
+        const { ...other } = props;
         return (
             <IMaskInput
                 {...other}
@@ -79,9 +75,6 @@ const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomProps>(
                 definitions={{
                     "#": /[a-zA-Z0-9]/,
                 }}
-                onAccept={(value: any) =>
-                    onChange({ target: { name: props.name, value } })
-                }
             />
         );
     }
@@ -95,6 +88,7 @@ type NodeDialogProps = {
     handleClose: any;
     subTitle2?: string;
     dialogTitle: string;
+    towerNodesArrayList?: any;
     handleNodeSubmitAction: Function;
 };
 
@@ -105,6 +99,8 @@ const NodeDialog = ({
     dialogTitle,
     action = "",
     handleClose,
+    towerNodesArrayList,
+
     handleNodeSubmitAction,
 }: NodeDialogProps) => {
     const classes = useStyles();
@@ -114,20 +110,47 @@ const NodeDialog = ({
         name: nodeData.name,
         nodeId: nodeData.nodeId,
         orgId: nodeData.orgId,
+        associatedTowerNode: nodeData.associatedTowerNode,
+        isAssiociatedTowerNode: nodeData.isAssiociatedTowerNode,
     });
-    const [error, setError] = useState("");
+
+    const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+
+    const getNodeArray = (data: any) => {
+        setFormData({
+            ...formData,
+            associatedTowerNode: data,
+        });
+    };
+    const handleNodeTypeChange = (e: SelectChangeEvent) => {
+        setFormData({ ...formData, nodeId: "", type: e.target.value });
+    };
+    const [selectedToweNode, setSelectedToweNode] = useState("");
+    const handleAssociatedTowerNode = (e: SelectChangeEvent) => {
+        setSelectedToweNode(e.target.value);
+        const getSelectedNodeInfo = towerNodesArrayList.filter(
+            (item: { name: string }) => item.name === e.target.value
+        );
+        const result = getSelectedNodeInfo.map(({ name, id }: any) => ({
+            name,
+            id,
+        }))[0];
+
+        setFormData({
+            ...formData,
+            isAssiociatedTowerNode: true,
+            associatedTowerNode: result,
+        });
+    };
 
     const handleRegisterNode = () => {
+        setIsSubmitted(true);
         if (!formData.name || !formData.nodeId) {
-            setError("Please fill all require vields");
             return;
         }
 
         handleNodeSubmitAction(formData);
     };
-
-    const handleNodeTypeChange = (e: SelectChangeEvent) =>
-        setFormData({ ...formData, nodeId: "", type: e.target.value });
 
     return (
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -144,19 +167,7 @@ const NodeDialog = ({
                     <CloseIcon />
                 </IconButton>
             </Stack>
-            {error && (
-                <Alert
-                    sx={{
-                        mx: 3,
-                        mb: 1,
-                        color: theme => theme.palette.text.primary,
-                    }}
-                    severity={"error"}
-                    icon={<ErrorIcon sx={{ color: colors.red }} />}
-                >
-                    {error}
-                </Alert>
-            )}
+
             <DialogContent>
                 <DialogContentText>
                     <Typography
@@ -205,15 +216,7 @@ const NodeDialog = ({
                                 }}
                                 className={classes.selectStyle}
                             >
-                                {[
-                                    { id: 1, label: "Home", value: "HOME" },
-                                    {
-                                        id: 2,
-                                        label: "Amplifier",
-                                        value: "AMPLIFIER",
-                                    },
-                                    { id: 3, label: "Tower", value: "TOWER" },
-                                ].map(({ id, label, value }) => (
+                                {NODE_TYPE.map(({ id, label, value }) => (
                                     <MenuItem
                                         key={id}
                                         value={value}
@@ -232,28 +235,7 @@ const NodeDialog = ({
                     </Grid>
                     <Grid item xs={12} md={6}>
                         <TextField
-                            required
                             fullWidth
-                            value={formData.name}
-                            label={"NODE NAME"}
-                            InputLabelProps={{ shrink: true }}
-                            InputProps={{
-                                classes: {
-                                    input: gclasses.inputFieldStyle,
-                                },
-                            }}
-                            onChange={(e: any) =>
-                                setFormData({
-                                    ...formData,
-                                    name: e.target.value,
-                                })
-                            }
-                        />
-                    </Grid>
-                    <Grid item xs={12}>
-                        <TextField
-                            fullWidth
-                            required
                             value={formData.nodeId}
                             label={"NODE NUMBER"}
                             onChange={(e: any) =>
@@ -261,6 +243,12 @@ const NodeDialog = ({
                                     ...formData,
                                     nodeId: e.target.value.replace(/ /g, ""),
                                 })
+                            }
+                            error={isSubmitted && formData.nodeId === ""}
+                            helperText={
+                                isSubmitted && formData.nodeId === ""
+                                    ? "Node number is required !"
+                                    : " "
                             }
                             disabled={action == "editNode"}
                             InputLabelProps={{ shrink: true }}
@@ -275,21 +263,44 @@ const NodeDialog = ({
                             }}
                         />
                     </Grid>
-                    {action == "editNode" && (
-                        <Grid item xs={12}>
-                            <TextField
-                                fullWidth
-                                value={formData.orgId}
-                                disabled={true}
-                                label={"ORGANIZATION ID"}
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{
-                                    classes: {
-                                        input: gclasses.inputFieldStyle,
-                                    },
-                                }}
-                            />
-                        </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            value={formData.name}
+                            label={"NODE NAME"}
+                            error={isSubmitted && formData.name === ""}
+                            helperText={
+                                isSubmitted && formData.name === ""
+                                    ? "Node name is required !"
+                                    : " "
+                            }
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{
+                                classes: {
+                                    input: gclasses.inputFieldStyle,
+                                },
+                            }}
+                            onChange={(e: any) =>
+                                setFormData({
+                                    ...formData,
+                                    name: e.target.value,
+                                })
+                            }
+                        />
+                    </Grid>
+
+                    {(formData.type == "TOWER" ||
+                        formData.type == "AMPLIFIER") && (
+                        <AddNodeForm
+                            nodeType={formData.type}
+                            nodeArray={getNodeArray}
+                            towerNodesArrayList={towerNodesArrayList}
+                            handleAssociatedTowerNode={
+                                handleAssociatedTowerNode
+                            }
+                            isSubmitted={isSubmitted}
+                            selectedToweNode={selectedToweNode}
+                        />
                     )}
                 </Grid>
             </DialogContent>

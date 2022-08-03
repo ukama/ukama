@@ -24,6 +24,23 @@ const TABLE_EXPORT_OPTIONS = [
     { id: 2, label: "WORD", value: "WORD" },
     { id: 3, label: "PDF", value: "PDF" },
 ];
+const NODE_TYPE = [
+    {
+        id: 1,
+        label: "Home",
+        value: "HOME",
+    },
+    {
+        id: 2,
+        label: "Amplifier",
+        value: "AMPLIFIER",
+    },
+    {
+        id: 3,
+        label: "Tower",
+        value: "TOWER",
+    },
+];
 const LANGUAGE_OPTIONS = [
     { id: 1, label: "🇺🇸  English, US", value: "en" },
     { id: 2, label: "🇫🇷  French, France", value: "fr" },
@@ -1573,6 +1590,7 @@ export {
     BASIC_MENU_ACTIONS,
     TABLE_EXPORT_OPTIONS,
     HealtChartsConfigure,
+    NODE_TYPE,
     NodeResourcesTabConfigure,
     DataTableWithOptionColumns,
     DEACTIVATE_EDIT_ACTION_MENU,
