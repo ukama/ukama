@@ -30,7 +30,6 @@ const BillingDialog = ({
     handleSuccessAction,
 }: IBillingDialog) => {
     const [flow, setFlow] = useState(initPaymentFlow ? 2 : 0);
-    const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
     const handleFlowChange = (i: number) => {
         if (flow === 2) handleSuccessAction();
         setFlow(i);
@@ -41,10 +40,7 @@ const BillingDialog = ({
         handleCloseAction();
     };
 
-    const handleIsPaymentSuccess = (isSuccess: boolean) =>
-        setIsPaymentSuccess(isSuccess);
-
-    const isNextDiable = () => (flow === 2 && !isPaymentSuccess ? true : false);
+    const handleIsPaymentSuccess = () => handleFlowChange(flow + 1);
 
     return (
         <Dialog
@@ -76,49 +72,57 @@ const BillingDialog = ({
                 {flow === 1 && <CustomizePref />}
                 {flow === 2 && (
                     <PaymentForm
+                        handleCloseAction={handleClose}
+                        isPaymentOnly={initPaymentFlow}
                         handleIsPaymentSuccess={handleIsPaymentSuccess}
+                        handleBackAction={() => handleFlowChange(flow - 1)}
                     />
                 )}
                 {flow === 3 && <></>}
             </DialogContent>
 
-            <DialogActions>
-                <HorizontalContainerJustify>
-                    <Button
-                        variant="text"
-                        color={"primary"}
-                        sx={{
-                            visibility:
-                                flow !== 0 && flow !== 3 && !initPaymentFlow
-                                    ? "visible"
-                                    : "hidden",
-                        }}
-                        onClick={() => handleFlowChange(flow - 1)}
-                    >
-                        Back
-                    </Button>
-
-                    <Stack direction={"row"} alignItems="center" spacing={2}>
+            {flow !== 2 && (
+                <DialogActions>
+                    <HorizontalContainerJustify>
                         <Button
-                            variant={flow === 3 ? "contained" : "text"}
+                            variant="text"
                             color={"primary"}
-                            onClick={() => handleClose()}
+                            sx={{
+                                visibility:
+                                    flow !== 0 && flow !== 3 && !initPaymentFlow
+                                        ? "visible"
+                                        : "hidden",
+                            }}
+                            onClick={() => handleFlowChange(flow - 1)}
                         >
-                            Close
+                            Back
                         </Button>
 
-                        {flow !== 3 && (
+                        <Stack
+                            spacing={2}
+                            direction={"row"}
+                            alignItems="center"
+                        >
                             <Button
-                                variant="contained"
-                                disabled={isNextDiable()}
-                                onClick={() => handleFlowChange(flow + 1)}
+                                color={"primary"}
+                                variant={flow === 3 ? "contained" : "text"}
+                                onClick={() => handleClose()}
                             >
-                                Next
+                                Close
                             </Button>
-                        )}
-                    </Stack>
-                </HorizontalContainerJustify>
-            </DialogActions>
+
+                            {flow !== 3 && (
+                                <Button
+                                    variant="contained"
+                                    onClick={() => handleFlowChange(flow + 1)}
+                                >
+                                    Next
+                                </Button>
+                            )}
+                        </Stack>
+                    </HorizontalContainerJustify>
+                </DialogActions>
+            )}
         </Dialog>
     );
 };

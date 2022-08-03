@@ -1526,10 +1526,10 @@ const BILLING_PLANS = [
         label: "Default roaming - $5/GB; prorated per MB",
         value: "default",
     },
-    { id: 2, label: "Set plan - $", value: "plan1" },
-    { id: 3, label: "Unlimited plan - ", value: "unlimited" },
+    { id: 2, label: "Unlimited plan - ", value: "unlimited" },
+    { id: 3, label: "Set plan - $", value: "plan1" },
     {
-        id: 2,
+        id: 4,
         label: "No plan - disables roaming for all residents.",
         value: "no_plan",
     },
@@ -1544,13 +1544,13 @@ const BillingDialogList = [
     },
     {
         id: 1,
-        title: "Enter payment information",
-        description: "Enter your payment information",
+        title: "Customize preferences",
+        description: "Monitor and budget data usage with these settings.",
     },
     {
         id: 2,
-        title: "Customize preferences",
-        description: "Monitor and budget data usage with these settings.",
+        title: "Enter payment information",
+        description: "Enter your payment information",
     },
     {
         id: 3,
