@@ -13,8 +13,11 @@ import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { isSkeltonLoading } from "../../recoil";
 import { PaymentCards } from "../../constants/stubData";
-import { CurrentBillColumns } from "../../constants/tableColumns";
-import { BillingTabs, CurrentBillingData } from "../../constants";
+import {
+    CurrentBillColumns,
+    historyyBilling,
+} from "../../constants/tableColumns";
+import { BillingTabs } from "../../constants";
 import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
 import {
     useGetBillHistoryQuery,
@@ -38,7 +41,6 @@ const Billing = () => {
 
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
-    console.log("HISTORY", billingHistoryRes?.getBillHistory);
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
 
@@ -160,17 +162,26 @@ const Billing = () => {
                                     title={"Billing history"}
                                     showSecondaryButton={false}
                                 />
-
-                                <SimpleDataTable
-                                    isHistoryTab={true}
-                                    rowSelection={true}
-                                    handleViewPdf={handleViewPdf}
-                                    selectedRows={selectedRows}
-                                    columns={CurrentBillColumns}
-                                    dataset={CurrentBillingData}
-                                    setSelectedRows={setSelectedRows}
-                                    totalRows={CurrentBillingData.length}
-                                />
+                                <LoadingWrapper
+                                    isLoading={billingHistoryLoading}
+                                    height={200}
+                                >
+                                    <SimpleDataTable
+                                        isHistoryTab={true}
+                                        rowSelection={true}
+                                        handleViewPdf={handleViewPdf}
+                                        selectedRows={selectedRows}
+                                        columns={historyyBilling}
+                                        dataset={
+                                            billingHistoryRes?.getBillHistory
+                                        }
+                                        setSelectedRows={setSelectedRows}
+                                        totalRows={
+                                            billingHistoryRes?.getBillHistory
+                                                .length
+                                        }
+                                    />
+                                </LoadingWrapper>
                             </RoundedCard>
                         </>
                     )}

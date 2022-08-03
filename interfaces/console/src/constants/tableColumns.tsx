@@ -25,6 +25,20 @@ const CurrentBillColumns: ColumnsWithOptions[] = [
         label: "SubTotal",
     },
 ];
+const historyyBilling: ColumnsWithOptions[] = [
+    {
+        id: "date",
+        label: "Date",
+    },
+    {
+        id: "subtotal",
+        label: "Subtotal",
+    },
+    {
+        id: "totalUsage",
+        label: "Total Usage",
+    },
+];
 const NodeAppsColumns = [
     {
         id: "version",
@@ -43,4 +57,9 @@ const NodeAppsColumns = [
     },
 ];
 
-export { DataTableWithOptionColumns, NodeAppsColumns, CurrentBillColumns };
+export {
+    DataTableWithOptionColumns,
+    NodeAppsColumns,
+    historyyBilling,
+    CurrentBillColumns,
+};

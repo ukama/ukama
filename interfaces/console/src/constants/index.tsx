@@ -1494,12 +1494,7 @@ const SIM_TYPES = [
     { id: 1, title: "Physical SIM", type: "Physical SIM" },
 ];
 
-export {
-    NodeApps,
-    NodeAppLogs,
-    SimCardData,
-    CurrentBillingData,
-} from "./stubData";
+export { NodeApps, NodeAppLogs, SimCardData } from "./stubData";
 
 const NODE_IMAGES = {
     TOWER: "https://ukama-site-assets.s3.amazonaws.com/images/ukama_tower_node.png",

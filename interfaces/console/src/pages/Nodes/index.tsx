@@ -123,11 +123,7 @@ const Nodes = () => {
 
     const [
         registerNode,
-        {
-            loading: registerNodeLoading,
-            data: registerNodeRes,
-            error: registerNodeError,
-        },
+        { loading: registerNodeLoading, error: registerNodeError },
     ] = useAddNodeMutation({
         onCompleted: () => {
             setRegisterNodeNotification({
