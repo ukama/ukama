@@ -31,14 +31,14 @@ const NODE_TYPE = [
         value: "HOME",
     },
     {
-        id: 2,
-        label: "Amplifier",
-        value: "AMPLIFIER",
-    },
-    {
         id: 3,
         label: "Tower",
         value: "TOWER",
+    },
+    {
+        id: 2,
+        label: "Amplifier",
+        value: "AMPLIFIER",
     },
 ];
 const LANGUAGE_OPTIONS = [
