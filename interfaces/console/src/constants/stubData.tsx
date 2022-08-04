@@ -22,7 +22,7 @@ export const PaymentCards = [
     {
         id: 1,
         label: "no_payment_method_Set",
-        value: "None set up .",
+        value: "None set up.",
     },
 ];
 
