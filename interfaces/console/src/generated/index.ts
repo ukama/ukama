@@ -45,10 +45,7 @@ export type AddNodeDto = {
 
 export type AddNodeResponse = {
   __typename?: 'AddNodeResponse';
-  name: Scalars['String'];
-  nodeId: Scalars['String'];
-  state: Org_Node_State;
-  type: Node_Type;
+  success: Scalars['Boolean'];
 };
 
 export type AddUserServiceRes = {
@@ -728,17 +725,20 @@ export type GetLatestConnectedUsersSubscriptionVariables = Exact<{ [key: string]
 
 export type GetLatestConnectedUsersSubscription = { __typename?: 'Subscription', getConnectedUsers: { __typename?: 'ConnectedUserDto', totalUser: string } };
 
-export type GetDataBillQueryVariables = Exact<{
-  filter: Data_Bill_Filter;
-}>;
-
-
-export type GetDataBillQuery = { __typename?: 'Query', getDataBill: { __typename?: 'DataBillDto', id: string, dataBill: number, billDue: number } };
-
 export type GetLatestDataBillSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetLatestDataBillSubscription = { __typename?: 'Subscription', getDataBill: { __typename?: 'DataBillDto', id: string, dataBill: number, billDue: number } };
+
+export type GetBillHistoryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetBillHistoryQuery = { __typename?: 'Query', getBillHistory: Array<{ __typename?: 'BillHistoryDto', id: string, date: string, description: string, totalUsage: number, subtotal: number }> };
+
+export type GetCurrentBillQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type GetCurrentBillQuery = { __typename?: 'Query', getCurrentBill: { __typename?: 'BillResponse', total: number, billMonth: string, dueDate: string, bill: Array<{ __typename?: 'CurrentBillDto', id: string, name: string, dataUsed: number, rate: number, subtotal: number }> } };
 
 export type GetAlertsQueryVariables = Exact<{
   data: PaginationDto;
@@ -830,7 +830,7 @@ export type AddNodeMutationVariables = Exact<{
 }>;
 
 
-export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'AddNodeResponse', nodeId: string, state: Org_Node_State, type: Node_Type, name: string } };
+export type AddNodeMutation = { __typename?: 'Mutation', addNode: { __typename?: 'AddNodeResponse', success: boolean } };
 
 export type UpdateNodeMutationVariables = Exact<{
   data: UpdateNodeDto;
@@ -838,6 +838,13 @@ export type UpdateNodeMutationVariables = Exact<{
 
 
 export type UpdateNodeMutation = { __typename?: 'Mutation', updateNode: { __typename?: 'OrgNodeDto', nodeId: string, state: Org_Node_State, type: Node_Type, name: string } };
+
+export type GetDataBillQueryVariables = Exact<{
+  data: Data_Bill_Filter;
+}>;
+
+
+export type GetDataBillQuery = { __typename?: 'Query', getDataBill: { __typename?: 'DataBillDto', id: string, dataBill: number, billDue: number } };
 
 export type GetMetricsByTabQueryVariables = Exact<{
   data: MetricsByTabInputDto;
@@ -1024,43 +1031,6 @@ export function useGetLatestConnectedUsersSubscription(baseOptions?: Apollo.Subs
       }
 export type GetLatestConnectedUsersSubscriptionHookResult = ReturnType<typeof useGetLatestConnectedUsersSubscription>;
 export type GetLatestConnectedUsersSubscriptionResult = Apollo.SubscriptionResult<GetLatestConnectedUsersSubscription>;
-export const GetDataBillDocument = gql`
-    query getDataBill($filter: DATA_BILL_FILTER!) {
-  getDataBill(filter: $filter) {
-    id
-    dataBill
-    billDue
-  }
-}
-    `;
-
-/**
- * __useGetDataBillQuery__
- *
- * To run a query within a React component, call `useGetDataBillQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetDataBillQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetDataBillQuery({
- *   variables: {
- *      filter: // value for 'filter'
- *   },
- * });
- */
-export function useGetDataBillQuery(baseOptions: Apollo.QueryHookOptions<GetDataBillQuery, GetDataBillQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetDataBillQuery, GetDataBillQueryVariables>(GetDataBillDocument, options);
-      }
-export function useGetDataBillLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDataBillQuery, GetDataBillQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetDataBillQuery, GetDataBillQueryVariables>(GetDataBillDocument, options);
-        }
-export type GetDataBillQueryHookResult = ReturnType<typeof useGetDataBillQuery>;
-export type GetDataBillLazyQueryHookResult = ReturnType<typeof useGetDataBillLazyQuery>;
-export type GetDataBillQueryResult = Apollo.QueryResult<GetDataBillQuery, GetDataBillQueryVariables>;
 export const GetLatestDataBillDocument = gql`
     subscription getLatestDataBill {
   getDataBill {
@@ -1092,6 +1062,87 @@ export function useGetLatestDataBillSubscription(baseOptions?: Apollo.Subscripti
       }
 export type GetLatestDataBillSubscriptionHookResult = ReturnType<typeof useGetLatestDataBillSubscription>;
 export type GetLatestDataBillSubscriptionResult = Apollo.SubscriptionResult<GetLatestDataBillSubscription>;
+export const GetBillHistoryDocument = gql`
+    query getBillHistory {
+  getBillHistory {
+    id
+    date
+    description
+    totalUsage
+    subtotal
+  }
+}
+    `;
+
+/**
+ * __useGetBillHistoryQuery__
+ *
+ * To run a query within a React component, call `useGetBillHistoryQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetBillHistoryQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetBillHistoryQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetBillHistoryQuery(baseOptions?: Apollo.QueryHookOptions<GetBillHistoryQuery, GetBillHistoryQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetBillHistoryQuery, GetBillHistoryQueryVariables>(GetBillHistoryDocument, options);
+      }
+export function useGetBillHistoryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetBillHistoryQuery, GetBillHistoryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetBillHistoryQuery, GetBillHistoryQueryVariables>(GetBillHistoryDocument, options);
+        }
+export type GetBillHistoryQueryHookResult = ReturnType<typeof useGetBillHistoryQuery>;
+export type GetBillHistoryLazyQueryHookResult = ReturnType<typeof useGetBillHistoryLazyQuery>;
+export type GetBillHistoryQueryResult = Apollo.QueryResult<GetBillHistoryQuery, GetBillHistoryQueryVariables>;
+export const GetCurrentBillDocument = gql`
+    query getCurrentBill {
+  getCurrentBill {
+    bill {
+      id
+      name
+      dataUsed
+      rate
+      subtotal
+    }
+    total
+    billMonth
+    dueDate
+  }
+}
+    `;
+
+/**
+ * __useGetCurrentBillQuery__
+ *
+ * To run a query within a React component, call `useGetCurrentBillQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrentBillQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrentBillQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCurrentBillQuery(baseOptions?: Apollo.QueryHookOptions<GetCurrentBillQuery, GetCurrentBillQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCurrentBillQuery, GetCurrentBillQueryVariables>(GetCurrentBillDocument, options);
+      }
+export function useGetCurrentBillLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCurrentBillQuery, GetCurrentBillQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCurrentBillQuery, GetCurrentBillQueryVariables>(GetCurrentBillDocument, options);
+        }
+export type GetCurrentBillQueryHookResult = ReturnType<typeof useGetCurrentBillQuery>;
+export type GetCurrentBillLazyQueryHookResult = ReturnType<typeof useGetCurrentBillLazyQuery>;
+export type GetCurrentBillQueryResult = Apollo.QueryResult<GetCurrentBillQuery, GetCurrentBillQueryVariables>;
 export const GetAlertsDocument = gql`
     query getAlerts($data: PaginationDto!) {
   getAlerts(data: $data) {
@@ -1622,10 +1673,7 @@ export type UpdateUserMutationOptions = Apollo.BaseMutationOptions<UpdateUserMut
 export const AddNodeDocument = gql`
     mutation addNode($data: AddNodeDto!) {
   addNode(data: $data) {
-    nodeId
-    state
-    type
-    name
+    success
   }
 }
     `;
@@ -1691,6 +1739,43 @@ export function useUpdateNodeMutation(baseOptions?: Apollo.MutationHookOptions<U
 export type UpdateNodeMutationHookResult = ReturnType<typeof useUpdateNodeMutation>;
 export type UpdateNodeMutationResult = Apollo.MutationResult<UpdateNodeMutation>;
 export type UpdateNodeMutationOptions = Apollo.BaseMutationOptions<UpdateNodeMutation, UpdateNodeMutationVariables>;
+export const GetDataBillDocument = gql`
+    query getDataBill($data: DATA_BILL_FILTER!) {
+  getDataBill(filter: $data) {
+    id
+    dataBill
+    billDue
+  }
+}
+    `;
+
+/**
+ * __useGetDataBillQuery__
+ *
+ * To run a query within a React component, call `useGetDataBillQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetDataBillQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetDataBillQuery({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useGetDataBillQuery(baseOptions: Apollo.QueryHookOptions<GetDataBillQuery, GetDataBillQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetDataBillQuery, GetDataBillQueryVariables>(GetDataBillDocument, options);
+      }
+export function useGetDataBillLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetDataBillQuery, GetDataBillQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetDataBillQuery, GetDataBillQueryVariables>(GetDataBillDocument, options);
+        }
+export type GetDataBillQueryHookResult = ReturnType<typeof useGetDataBillQuery>;
+export type GetDataBillLazyQueryHookResult = ReturnType<typeof useGetDataBillLazyQuery>;
+export type GetDataBillQueryResult = Apollo.QueryResult<GetDataBillQuery, GetDataBillQueryVariables>;
 export const GetMetricsByTabDocument = gql`
     query getMetricsByTab($data: MetricsByTabInputDTO!) {
   getMetricsByTab(data: $data) {

@@ -13,16 +13,30 @@ const DataTableWithOptionColumns: ColumnsWithOptions[] = [
 
 const CurrentBillColumns: ColumnsWithOptions[] = [
     {
+        id: "name",
+        label: "Name",
+    },
+    {
+        id: "rate",
+        label: "Data Used",
+    },
+    {
+        id: "subtotal",
+        label: "SubTotal",
+    },
+];
+const historyyBilling: ColumnsWithOptions[] = [
+    {
         id: "date",
         label: "Date",
     },
     {
-        id: "dataUsage",
-        label: "Data Used",
+        id: "subtotal",
+        label: "Subtotal",
     },
     {
-        id: "total",
-        label: "Total",
+        id: "totalUsage",
+        label: "Total Usage",
     },
 ];
 const NodeAppsColumns = [
@@ -43,4 +57,9 @@ const NodeAppsColumns = [
     },
 ];
 
-export { DataTableWithOptionColumns, NodeAppsColumns, CurrentBillColumns };
+export {
+    DataTableWithOptionColumns,
+    NodeAppsColumns,
+    historyyBilling,
+    CurrentBillColumns,
+};
