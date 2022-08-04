@@ -178,8 +178,8 @@ const NodeDialog = ({
                         {subTitle}
                     </Typography>
                 </DialogContentText>
-                <Grid container rowSpacing={2.75} columnSpacing={2.75} mt={2}>
-                    <Grid item xs={12} md={6}>
+                <Grid container columnSpacing={2} mt={2}>
+                    <Grid item xs={12} md={4}>
                         <FormControl
                             variant="outlined"
                             className={classes.formControl}
@@ -233,7 +233,7 @@ const NodeDialog = ({
                             </Select>
                         </FormControl>
                     </Grid>
-                    <Grid item xs={12} md={6}>
+                    <Grid item xs={12} md={8}>
                         <TextField
                             fullWidth
                             value={formData.nodeId}
