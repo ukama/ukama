@@ -6,6 +6,7 @@ import {
     TableHead,
     Typography,
     Button,
+    Stack,
     TableContainer,
 } from "@mui/material";
 import { useRecoilValue } from "recoil";
@@ -125,13 +126,32 @@ const SimpleDataTable = ({
                                             variant="text"
                                             sx={{
                                                 color: colors.primaryMain,
-                                                textTransform: "capitalize",
                                             }}
                                             onClick={handleViewPdf}
                                         >
-                                            <Typography variant="body2">
-                                                View as PDF
-                                            </Typography>
+                                            <Stack direction="row" spacing={1}>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        textTransform:
+                                                            "capitalize",
+                                                    }}
+                                                >
+                                                    View
+                                                </Typography>
+                                                <Typography
+                                                    variant="body2"
+                                                    sx={{
+                                                        textTransform:
+                                                            "lowercase",
+                                                    }}
+                                                >
+                                                    as
+                                                </Typography>
+                                                <Typography variant="body2">
+                                                    PDF
+                                                </Typography>
+                                            </Stack>
                                         </Button>
                                     </a>
                                 </TableCell>
