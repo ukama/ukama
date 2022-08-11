@@ -113,7 +113,7 @@ const NodeDialog = ({
         associatedTowerNode: nodeData.associatedTowerNode,
         isAssiociatedTowerNode: nodeData.isAssiociatedTowerNode,
     });
-
+    useState<boolean>(false);
     const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
     const getNodeArray = (data: any) => {
@@ -139,7 +139,10 @@ const NodeDialog = ({
         setFormData({
             ...formData,
             isAssiociatedTowerNode: true,
-            associatedTowerNode: result,
+            associatedTowerNode: {
+                name: result.name,
+                nodeId: result.id,
+            },
         });
     };
 
