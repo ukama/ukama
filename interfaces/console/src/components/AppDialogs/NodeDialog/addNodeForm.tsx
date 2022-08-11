@@ -138,6 +138,7 @@ const AddNodeForm = ({
             return [from, to].indexOf(index) == -1;
         });
     };
+
     const [nType, setNtype] = useState<any>(
         isAssociatedTowerNode ? "TOWER" : "AMPLIFIER"
     );
@@ -299,7 +300,7 @@ const AddNodeForm = ({
                                         >
                                             {removeNodeTypefromArray(
                                                 0,
-                                                isAssociatedTowerNode ? 1 : 2
+                                                nodeType == "TOWER" ? 1 : 2
                                             ).map(({ id, label, value }) => (
                                                 <MenuItem
                                                     key={id}
