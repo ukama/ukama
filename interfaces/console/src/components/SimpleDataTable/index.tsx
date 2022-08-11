@@ -5,8 +5,7 @@ import {
     TableCell,
     TableHead,
     Typography,
-    Button,
-    Stack,
+    Link,
     TableContainer,
 } from "@mui/material";
 import { useRecoilValue } from "recoil";
@@ -30,10 +29,8 @@ const SimpleDataTable = ({
     columns,
     dataset,
     maxHeight,
-
     isHistoryTab = false,
     setSelectedRows,
-    handleViewPdf,
     selectedRows = [],
     rowSelection = false,
 }: SimpleDataTableInterface) => {
@@ -122,37 +119,16 @@ const SimpleDataTable = ({
                                         rel="noreferrer"
                                         style={{ textDecoration: "none" }}
                                     >
-                                        <Button
-                                            variant="text"
-                                            sx={{
-                                                color: colors.primaryMain,
-                                            }}
-                                            onClick={handleViewPdf}
+                                        <Link
+                                            href="https://docdro.id/J2v6TJO"
+                                            underline="none"
+                                            target="_blank"
+                                            rel="noreferrer"
                                         >
-                                            <Stack direction="row" spacing={1}>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        textTransform:
-                                                            "capitalize",
-                                                    }}
-                                                >
-                                                    View
-                                                </Typography>
-                                                <Typography
-                                                    variant="body2"
-                                                    sx={{
-                                                        textTransform:
-                                                            "lowercase",
-                                                    }}
-                                                >
-                                                    as
-                                                </Typography>
-                                                <Typography variant="body2">
-                                                    PDF
-                                                </Typography>
-                                            </Stack>
-                                        </Button>
+                                            <Typography variant="body2">
+                                                {"View as PDF"}
+                                            </Typography>
+                                        </Link>
                                     </a>
                                 </TableCell>
                             )}
