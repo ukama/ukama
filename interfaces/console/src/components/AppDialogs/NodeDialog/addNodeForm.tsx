@@ -12,7 +12,7 @@ import {
     OutlinedInput,
     Divider,
 } from "@mui/material";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { colors } from "../../../theme";
 import { IMaskInput } from "react-imask";
 import { makeStyles } from "@mui/styles";
@@ -102,7 +102,6 @@ const AddNodeForm = ({
             name: "",
         },
     ]);
-
     const handleInputChange = (e: any, index: number) => {
         const { id, value } = e.target;
         const list: any = [...attachedAmplierNode];
@@ -122,7 +121,8 @@ const AddNodeForm = ({
             { nodeId: "", name: "" },
         ]);
     };
-
+    const [showInitialAmplifierNode, setShowInitialAmplifierNode] =
+        useState<boolean>(false);
     const [isAssociatedTowerNode, setIsAssociatedTowerNode] =
         useState<boolean>(false);
     const handleOptionalNodeType = (e: SelectChangeEvent) => {
@@ -138,9 +138,18 @@ const AddNodeForm = ({
             return [from, to].indexOf(index) == -1;
         });
     };
+
     const [nType, setNtype] = useState<any>(
         isAssociatedTowerNode ? "TOWER" : "AMPLIFIER"
     );
+    const showAddButton = () => {
+        setShowInitialAmplifierNode(true);
+    };
+    useEffect(() => {
+        if (attachedAmplierNode.length == 0) {
+            setShowInitialAmplifierNode(false);
+        }
+    }, [attachedAmplierNode]);
     return (
         <>
             {nodeType == "AMPLIFIER" && (
@@ -218,10 +227,25 @@ const AddNodeForm = ({
                     </FormControl>
                 </Grid>
             )}
-
+            {nodeType == "TOWER" && showInitialAmplifierNode == false && (
+                <Grid item xs={12} sx={{ pt: 2 }}>
+                    <Button
+                        variant="text"
+                        startIcon={<AddIcon />}
+                        onClick={showAddButton}
+                        sx={{
+                            color: colors.primaryMain,
+                            pointer: "cursor",
+                        }}
+                    >
+                        add amplifier node
+                    </Button>
+                </Grid>
+            )}
             {attachedAmplierNode.map((x: any, i: number) => {
                 return (
-                    (nodeType == "TOWER" || isAssociatedTowerNode == true) && (
+                    (showInitialAmplifierNode == true ||
+                        isAssociatedTowerNode == true) && (
                         <Fragment key={i}>
                             <Grid item xs={12}>
                                 <Divider />
@@ -254,6 +278,11 @@ const AddNodeForm = ({
                                         aria-label="remove-node"
                                         component="span"
                                         onClick={() => handleRemoveClick(i)}
+                                        sx={{
+                                            position: "relative",
+                                            bottom: 10,
+                                            left: 10,
+                                        }}
                                     >
                                         <RemoveCircleOutlineIcon />
                                     </IconButton>
@@ -261,7 +290,7 @@ const AddNodeForm = ({
                             </Grid>
 
                             <Fragment key={i}>
-                                <Grid item xs={12} md={6}>
+                                <Grid item xs={12} md={4}>
                                     <FormControl
                                         variant="outlined"
                                         className={classes.formControl}
@@ -299,7 +328,7 @@ const AddNodeForm = ({
                                         >
                                             {removeNodeTypefromArray(
                                                 0,
-                                                isAssociatedTowerNode ? 1 : 2
+                                                nodeType == "TOWER" ? 1 : 2
                                             ).map(({ id, label, value }) => (
                                                 <MenuItem
                                                     key={id}
@@ -317,7 +346,7 @@ const AddNodeForm = ({
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={6}>
+                                <Grid item xs={12} md={8}>
                                     <TextField
                                         fullWidth
                                         label={"NODE NUMBER"}
