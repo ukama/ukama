@@ -608,7 +608,7 @@ const Nodes = () => {
                     linkText={"here"}
                     showActionButton={false}
                     buttonTitle="Install sims"
-                    description="Your nodes have not arrived yet. View their status"
+                    description="We are working hard on polishing the nodes and delivering them to you! Check up on their status"
                 />
             )}
             <NodeAppDetailsDialog

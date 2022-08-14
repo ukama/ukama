@@ -383,9 +383,9 @@ const User = () => {
                     <PagePlaceholder
                         hyperlink=""
                         showActionButton={true}
-                        buttonTitle="Install sims"
+                        buttonTitle="ADD USERS"
                         handleAction={handleSimInstallation}
-                        description="No users on network. Install SIMs to get started."
+                        description="No users on network. Add users to get started."
                     />
                 )}
 
