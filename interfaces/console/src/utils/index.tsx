@@ -1,7 +1,6 @@
 import { TObject } from "../types";
 import { format, intervalToDuration } from "date-fns";
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from "../generated";
-
 const getTitleFromPath = (path: string) => {
     switch (path) {
         case "/":
@@ -35,7 +34,7 @@ const getColorByType = (type: Alert_Type) => {
 const getStatusByType = (status: string) => {
     if (status === "DOWN") return "Your network is down.";
     else if (status === "ONLINE") return "Your network is online and well:";
-    else return "Your network is offline; no nodes connected.";
+    else return `Your network is offline; no nodes connected.`;
 };
 
 const parseObjectInNameValue = (obj: any) => {

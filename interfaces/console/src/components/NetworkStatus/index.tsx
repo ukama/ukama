@@ -2,22 +2,27 @@ import { LoadingWrapper } from "..";
 import { colors } from "../../theme";
 import { getStatusByType } from "../../utils";
 import { Network_Status } from "../../generated";
-import { Typography, Grid, Button, Stack, useMediaQuery } from "@mui/material";
-
-const DOT = (color: string) => (
-    <span style={{ color: `${color}`, fontSize: "24px", marginRight: 14 }}>
-        ●
-    </span>
-);
+import {
+    Typography,
+    Grid,
+    Button,
+    Stack,
+    Box,
+    useMediaQuery,
+} from "@mui/material";
+import SignalCellularOffIcon from "@mui/icons-material/SignalCellularOff";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { ReactNode } from "react";
+const DOT = (icon: ReactNode) => <Box>{icon}</Box>;
 
 const getIconByStatus = (status: string) => {
     switch (status) {
         case "DOWN":
-            return DOT(colors.red);
+            return DOT(<CheckCircleIcon sx={{ color: colors.green }} />);
         case "ONLINE":
-            return DOT(colors.green);
+            return DOT(<CheckCircleIcon sx={{ color: colors.green }} />);
         default:
-            return DOT(colors.nightGrey16);
+            return DOT(<SignalCellularOffIcon />);
     }
 };
 
@@ -41,6 +46,7 @@ const NetworkStatus = ({
     statusType = Network_Status.Undefined,
 }: NetworkStatusProps) => {
     const isSmall = useMediaQuery("(max-width:600px)");
+
     return (
         <Grid container spacing={2}>
             <Grid item xs={12} md={8}>
