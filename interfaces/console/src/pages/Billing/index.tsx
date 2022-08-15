@@ -8,7 +8,7 @@ import {
     PaymentCard,
 } from "../../components";
 import "../../i18n/i18n";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
 import { isSkeltonLoading, isDarkmode } from "../../recoil";
@@ -51,21 +51,12 @@ const Billing = () => {
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const { data: billingHistoryRes, loading: billingHistoryLoading } =
         useGetBillHistoryQuery();
-    const [currentBillAmount, setCurrentBillAmount] = useState<any>();
     const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
 
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
     const handleTabChange = (event: React.SyntheticEvent, value: any) =>
         setTab(value);
-
-    useEffect(() => {
-        if (currentBill == undefined || null) {
-            setCurrentBillAmount("0.00");
-        } else {
-            setCurrentBillAmount(currentBill?.getCurrentBill?.total);
-        }
-    });
 
     const handleAlertAction = () => {
         setBillingAlert(prev => ({
@@ -126,7 +117,10 @@ const Billing = () => {
                         <Grid container item spacing={2}>
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
-                                    amount={`$ ${currentBillAmount}`}
+                                    amount={`$ ${
+                                        currentBill?.getCurrentBill?.total ||
+                                        "0.00"
+                                    }`}
                                     billMonth={`${
                                         currentBill
                                             ? currentBill?.getCurrentBill
