@@ -8,3 +8,4 @@ export { UsersWithBG } from "./UsersWithBG";
 export { ThermometerIcon } from "./ThermometerIcon";
 export { SettingsArrowIcon } from "./SettingsArrowIcon";
 export { PagePlaceholderSvg } from "./PagePlaceholderSvg";
+export { NoBillYet } from "./NoBillYet";

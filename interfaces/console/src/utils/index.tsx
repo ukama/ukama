@@ -1,7 +1,8 @@
 import { TObject } from "../types";
 import { format, intervalToDuration } from "date-fns";
 import { Alert_Type, Graphs_Tab, NodeDto, Node_Type } from "../generated";
-
+import { Typography } from "@mui/material";
+import colors from "../theme/colors";
 const getTitleFromPath = (path: string) => {
     switch (path) {
         case "/":
@@ -31,11 +32,23 @@ const getColorByType = (type: Alert_Type) => {
             return "success";
     }
 };
+const NetworkStatusLabel = ({ message }: any) => {
+    return (
+        <Typography variant="h6">
+            Your <span style={{ color: colors.primaryMain }}>network</span>{" "}
+            {message}
+        </Typography>
+    );
+};
 
 const getStatusByType = (status: string) => {
-    if (status === "DOWN") return "Your network is down.";
-    else if (status === "ONLINE") return "Your network is online and well:";
-    else return "Unknown status.";
+    if (status === "DOWN") return <NetworkStatusLabel message="is down." />;
+    else if (status === "ONLINE")
+        return <NetworkStatusLabel message="is online and well:" />;
+    else
+        return (
+            <NetworkStatusLabel message=" is offline; no nodes connected." />
+        );
 };
 
 const parseObjectInNameValue = (obj: any) => {
