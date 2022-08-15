@@ -57,6 +57,7 @@
     "nock": "^13.2.0",
     "node-schedule": "^2.1.0",
     "reflect-metadata": "^0.1.13",
+    "stripe": "^10.2.0",
     "ts-node-dev": "^1.1.8",
     "type-graphql": "^1.1.1",
     "typedi": "^0.10.0",

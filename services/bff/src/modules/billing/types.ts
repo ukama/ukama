@@ -1,4 +1,4 @@
-import { Field, ObjectType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
 
 @ObjectType()
 export class CurrentBillDto {
@@ -67,4 +67,24 @@ export class BillHistoryResponse {
 
     @Field(() => [BillHistoryDto])
     data: BillHistoryDto[];
+}
+@ObjectType()
+export class StripeCustomer {
+    @Field()
+    id: string;
+
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
+}
+
+@InputType()
+export class CreateCustomerDto {
+    @Field()
+    name: string;
+
+    @Field()
+    email: string;
 }

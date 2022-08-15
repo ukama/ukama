@@ -5,8 +5,10 @@ import {
     Box,
     FormControl,
     SelectChangeEvent,
+    Button,
     MenuItem,
     Select,
+    Stack,
     InputLabel,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
@@ -33,7 +35,11 @@ interface IPaymentProps {
     paymentMethodData: any;
     onAddPaymentMethod: any;
 }
-const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
+const PaymentCard = ({
+    title,
+    paymentMethodData,
+    onAddPaymentMethod,
+}: IPaymentProps) => {
     const classes = useStyles();
     const [paymentMethod, setPaymentMethod] = React.useState("None set up.");
     const _isDarkMod = useRecoilValue(isDarkmode);
@@ -60,7 +66,6 @@ const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
                     variant="outlined"
                     onChange={handleChange}
                     IconComponent={() => null}
-                    inputProps={{ readOnly: true }}
                     sx={{
                         "& legend": { width: "135px" },
                     }}
@@ -93,7 +98,25 @@ const PaymentCard = ({ title, paymentMethodData }: IPaymentProps) => {
                                 p: "6px 16px",
                             }}
                         >
-                            <Typography variant="body1">{value}</Typography>
+                            <Stack direction="row" spacing={1}>
+                                <Typography variant="body1">{value}</Typography>
+                                <Button
+                                    variant="text"
+                                    onClick={onAddPaymentMethod}
+                                    sx={{
+                                        textTransform: "none",
+                                        color: colors.primaryMain,
+                                        ":hover": {
+                                            color: theme =>
+                                                theme.palette.text.primary,
+                                        },
+                                    }}
+                                >
+                                    <Typography variant="body1">
+                                        {"Enter now"}
+                                    </Typography>
+                                </Button>
+                            </Stack>
                         </MenuItem>
                     ))}
                 </Select>
