@@ -18,11 +18,11 @@ const CurrentBillColumns: ColumnsWithOptions[] = [
     },
     {
         id: "rate",
-        label: "Data Used",
+        label: "Data used",
     },
     {
         id: "subtotal",
-        label: "SubTotal",
+        label: "Subtotal",
     },
 ];
 const historyyBilling: ColumnsWithOptions[] = [

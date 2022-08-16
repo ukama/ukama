@@ -165,7 +165,6 @@ const Billing = () => {
                                                 style={{
                                                     width: "100%",
                                                     display: "flex",
-
                                                     justifyContent: "flex-end",
                                                 }}
                                             >
@@ -173,6 +172,8 @@ const Billing = () => {
                                                     variant={"h6"}
                                                     sx={{
                                                         width: "20%",
+                                                        position: "relative",
+                                                        right: 50,
                                                     }}
                                                 >
                                                     {`$ ${totalCurrentBill}`}
