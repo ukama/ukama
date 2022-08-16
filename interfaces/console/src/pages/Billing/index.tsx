@@ -8,40 +8,32 @@ import {
     PaymentCard,
 } from "../../components";
 import "../../i18n/i18n";
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { RoundedCard } from "../../styles";
-import { isSkeltonLoading, isDarkmode } from "../../recoil";
-import { PaymentCards } from "../../constants/stubData";
-import colors from "../../theme/colors";
 import {
     CurrentBillColumns,
     historyyBilling,
 } from "../../constants/tableColumns";
-import { NoBillYet } from "../../assets/svg";
-import { BillingTabs } from "../../constants";
-
-import {
-    Box,
-    Grid,
-    Tabs,
-    Typography,
-    Stack,
-    Tab,
-    AlertColor,
-} from "@mui/material";
 import {
     useGetBillHistoryQuery,
     useGetCurrentBillQuery,
     useRetrivePaymentMethodsQuery,
 } from "../../generated";
+import {
+    AlertColor,
+    Tabs,
+    Tab,
+    Grid,
+    Typography,
+    Stack,
+    Box,
+} from "@mui/material";
 import { useState } from "react";
+import colors from "../../theme/colors";
 import { useRecoilValue } from "recoil";
 import { RoundedCard } from "../../styles";
+import { NoBillYet } from "../../assets/svg";
 import { SelectItemType } from "../../types";
 import { BillingTabs } from "../../constants";
-import { isSkeltonLoading } from "../../recoil";
-import { Box, Grid, Tabs, Typography, Tab, AlertColor } from "@mui/material";
+import { isSkeltonLoading, isDarkmode } from "../../recoil";
 
 const Billing = () => {
     const [isBilling, setIsBilling] = useState({
