@@ -1043,9 +1043,8 @@ const Home = () => {
                     isOpen={isWelcomeDialog}
                     title={"Welcome to Ukama Console!"}
                     description={
-                        "This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]. "
+                        " This is where you can manage your network, and troubleshoot things, if necessary. For now, while your nodes have not shipped, you can monitor your users’ data usage, and [insert other main use]."
                     }
-                    labelSuccessBtn={"continue to console"}
                     handleCloseAction={handleCloseWelcome}
                 />
             )}

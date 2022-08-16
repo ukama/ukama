@@ -8,10 +8,28 @@ import {
     PaymentCard,
 } from "../../components";
 import "../../i18n/i18n";
+import React, { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { RoundedCard } from "../../styles";
+import { isSkeltonLoading, isDarkmode } from "../../recoil";
+import { PaymentCards } from "../../constants/stubData";
+import colors from "../../theme/colors";
 import {
     CurrentBillColumns,
     historyyBilling,
 } from "../../constants/tableColumns";
+import { NoBillYet } from "../../assets/svg";
+import { BillingTabs } from "../../constants";
+
+import {
+    Box,
+    Grid,
+    Tabs,
+    Typography,
+    Stack,
+    Tab,
+    AlertColor,
+} from "@mui/material";
 import {
     useGetBillHistoryQuery,
     useGetCurrentBillQuery,
@@ -36,6 +54,8 @@ const Billing = () => {
         title: "Set up your payment information securely at any time.",
     });
     const [tab, setTab] = useState<number>(0);
+    const _isDarkmode = useRecoilValue(isDarkmode);
+
     const _isSkeltonLoading = useRecoilValue(isSkeltonLoading);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [cardsList, setCardsList] = useState<SelectItemType[]>([
@@ -43,6 +63,7 @@ const Billing = () => {
     ]);
     const { data: billingHistoryRes, loading: billingHistoryLoading } =
         useGetBillHistoryQuery();
+    const isSkeltonLoad = useRecoilValue(isSkeltonLoading);
 
     const { data: currentBill, loading: currenBillLoading } =
         useGetCurrentBillQuery();
@@ -120,9 +141,22 @@ const Billing = () => {
                         <Grid container item spacing={2}>
                             <Grid xs={12} md={5} item>
                                 <CurrentBill
-                                    amount={`$ ${currentBill?.getCurrentBill?.total}`}
-                                    billMonth={`${currentBill?.getCurrentBill?.billMonth}`}
-                                    dueDate={`${currentBill?.getCurrentBill?.dueDate}`}
+                                    amount={`$ ${
+                                        currentBill?.getCurrentBill?.total ||
+                                        "0.00"
+                                    }`}
+                                    billMonth={`${
+                                        currentBill
+                                            ? currentBill?.getCurrentBill
+                                                  ?.billMonth
+                                            : ""
+                                    }`}
+                                    dueDate={`${
+                                        currentBill
+                                            ? currentBill?.getCurrentBill
+                                                  ?.dueDate
+                                            : ""
+                                    }`}
                                     loading={currenBillLoading}
                                 />
                             </Grid>
@@ -141,33 +175,48 @@ const Billing = () => {
                                         title={"Billing breakdown"}
                                         showSecondaryButton={false}
                                     />
+                                    {totalCurrentBill !== undefined || null ? (
+                                        <>
+                                            <SimpleDataTable
+                                                columns={CurrentBillColumns}
+                                                dataset={
+                                                    currentBill?.getCurrentBill
+                                                        ?.bill
+                                                }
+                                            />
 
-                                    <SimpleDataTable
-                                        columns={CurrentBillColumns}
-                                        dataset={
-                                            currentBill?.getCurrentBill?.bill
-                                        }
-                                    />
-
-                                    <div
-                                        style={{
-                                            width: "100%",
-                                            display: "flex",
-                                            margin: "18px 0px",
-                                            justifyContent: "flex-end",
-                                            position: "relative",
-                                            right: 48,
-                                        }}
-                                    >
-                                        <Typography
-                                            variant={"h6"}
-                                            sx={{
-                                                width: "20%",
-                                            }}
+                                            <div
+                                                style={{
+                                                    width: "100%",
+                                                    display: "flex",
+                                                    justifyContent: "flex-end",
+                                                }}
+                                            >
+                                                <Typography
+                                                    variant={"h6"}
+                                                    sx={{
+                                                        width: "20%",
+                                                        position: "relative",
+                                                        right: 50,
+                                                    }}
+                                                >
+                                                    {`$ ${totalCurrentBill}`}
+                                                </Typography>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <Stack
+                                            direction="column"
+                                            spacing={2}
+                                            justifyItems={"center"}
+                                            alignItems={"center"}
                                         >
-                                            {`$ ${totalCurrentBill}`}
-                                        </Typography>
-                                    </div>
+                                            <NoBillYet />
+                                            <Typography variant="body1">
+                                                Nothing in your bill yet!
+                                            </Typography>
+                                        </Stack>
+                                    )}
                                 </RoundedCard>
                             </Grid>
                         </Grid>
@@ -180,24 +229,56 @@ const Billing = () => {
                                     showSecondaryButton={false}
                                 />
                                 <LoadingWrapper
-                                    isLoading={billingHistoryLoading}
+                                    isLoading={
+                                        isSkeltonLoad || billingHistoryLoading
+                                    }
                                     height={200}
                                 >
-                                    <SimpleDataTable
-                                        isHistoryTab={true}
-                                        rowSelection={true}
-                                        handleViewPdf={handleViewPdf}
-                                        selectedRows={selectedRows}
-                                        columns={historyyBilling}
-                                        dataset={
-                                            billingHistoryRes?.getBillHistory
-                                        }
-                                        setSelectedRows={setSelectedRows}
-                                        totalRows={
-                                            billingHistoryRes?.getBillHistory
-                                                .length
-                                        }
-                                    />
+                                    {billingHistoryRes !== undefined || null ? (
+                                        <SimpleDataTable
+                                            isHistoryTab={true}
+                                            rowSelection={true}
+                                            handleViewPdf={handleViewPdf}
+                                            selectedRows={selectedRows}
+                                            columns={historyyBilling}
+                                            dataset={
+                                                billingHistoryRes?.getBillHistory
+                                            }
+                                            setSelectedRows={setSelectedRows}
+                                            totalRows={
+                                                billingHistoryRes
+                                                    ?.getBillHistory.length
+                                            }
+                                        />
+                                    ) : (
+                                        <Box
+                                            display="flex"
+                                            justifyContent="center"
+                                            alignItems="center"
+                                            minHeight="60vh"
+                                        >
+                                            <Stack
+                                                direction="column"
+                                                spacing={2}
+                                            >
+                                                <NoBillYet
+                                                    color={
+                                                        _isDarkmode
+                                                            ? colors.white38
+                                                            : colors.silver
+                                                    }
+                                                    color2={
+                                                        _isDarkmode
+                                                            ? colors.nightGrey12
+                                                            : colors.white
+                                                    }
+                                                />
+                                                <Typography variant="body1">
+                                                    No bill History yet!
+                                                </Typography>
+                                            </Stack>
+                                        </Box>
+                                    )}
                                 </LoadingWrapper>
                             </RoundedCard>
                         </>

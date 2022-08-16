@@ -141,6 +141,21 @@ const AddNodeForm = ({
     const [nType, setNtype] = useState<any>(
         isAssociatedTowerNode ? "TOWER" : "AMPLIFIER"
     );
+
+    const showAddButton = () => {
+        setShowInitialAmplifierNode(true);
+    };
+    
+    useEffect(() => {
+        if (attachedAmplierNode.length == 0) {
+            setShowInitialAmplifierNode(false);
+            setAttachedAmplierNode([
+                ...attachedAmplierNode,
+                { nodeId: "", name: "" },
+            ]);
+        }
+    }, [attachedAmplierNode]);
+
     return (
         <>
             {nodeType == "AMPLIFIER" && (
@@ -218,7 +233,21 @@ const AddNodeForm = ({
                     </FormControl>
                 </Grid>
             )}
-
+            {nodeType == "TOWER" && showInitialAmplifierNode == false && (
+                <Grid item xs={12}>
+                    <Button
+                        variant="text"
+                        startIcon={<AddIcon />}
+                        onClick={showAddButton}
+                        sx={{
+                            color: colors.primaryMain,
+                            pointer: "cursor",
+                        }}
+                    >
+                        add amplifier node
+                    </Button>
+                </Grid>
+            )}
             {attachedAmplierNode.map((x: any, i: number) => {
                 return (
                     (nodeType == "TOWER" || isAssociatedTowerNode == true) && (
